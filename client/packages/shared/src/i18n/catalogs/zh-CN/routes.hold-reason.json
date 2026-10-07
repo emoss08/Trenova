@@ -16,6 +16,7 @@
   "Loading hold reason...": "正在加载扣留原因...",
   "Makes this reason visible to customers in the portal.": "让客户可在门户中看到此原因。",
   "Manage and configure hold reasons for your organization": "管理并配置您组织的扣留原因",
+  "No hold reasons yet": "尚无暂停原因",
   "Prevents assigning or dispatching power/trailer until this hold is cleared.": "在此扣留解除前，禁止指派或派出牵引车／挂车。",
   "Prevents invoicing or moving to billable states while the hold is active.": "扣留生效期间，禁止开具发票或转入可开单状态。",
   "Prevents marking stops delivered or closing freight until this hold clears.": "在此扣留解除前，禁止将停靠点标记为已交货或结案货载。",

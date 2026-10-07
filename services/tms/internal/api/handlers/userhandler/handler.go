@@ -507,6 +507,7 @@ func (h *Handler) updateMySettings(c *gin.Context) {
 			Timezone:   req.Timezone,
 			TimeFormat: req.TimeFormat,
 			Locale:     req.Locale,
+			SessionID:  authCtx.SessionID,
 		},
 	)
 	if err != nil {

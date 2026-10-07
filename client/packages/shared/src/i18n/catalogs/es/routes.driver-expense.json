@@ -9,6 +9,7 @@
   "Failed to review expense": "No se pudo revisar el gasto",
   "Incurred": "Incurrido",
   "Incurred {0} · Submitted {1}{2}": "Incurrido el {0} · Presentado el {1}{2}",
+  "No driver expenses yet": "Aún no hay gastos de conductores",
   "No receipt attached — consider asking the driver for one before approving.": "No hay recibo adjunto: considere pedírselo al conductor antes de aprobar.",
   "Note (optional)": "Nota (opcional)",
   "Pay code:": "Código de pago:",

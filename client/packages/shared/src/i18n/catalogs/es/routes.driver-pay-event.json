@@ -4,6 +4,7 @@
   "Held pay skips settlement generation and auto-attach until you release it. The reason is shown to anyone reviewing the driver's pay.": "El pago retenido se omite en la generación de liquidaciones y en el adjunto automático hasta que lo libere. El motivo se muestra a quien revise el pago del conductor.",
   "Hold this pay event — it skips settlement generation until released": "Retener este evento de pago: se omite en la generación de liquidaciones hasta que se libere",
   "Hold {0, plural, one {# pay event} other {# pay events}}": "Retener {0, plural, one {# evento de pago} other {# eventos de pago}}",
+  "No pay events yet": "Aún no hay eventos de pago",
   "None of the selected pay events are on hold.": "Ninguno de los eventos de pago seleccionados está retenido.",
   "On hold: {0}. Click to release so the event settles normally.": "Retenido: {0}. Haga clic para liberarlo y que el evento se liquide normalmente.",
   "Only accrued, unheld pay events can be held.": "Solo pueden retenerse los eventos de pago devengados y no retenidos.",

@@ -11,6 +11,7 @@
   "Loading tries...": "Cargando los intentos...",
   "Month-end close in progress": "Cierre de mes en curso",
   "Next try": "Próximo intento",
+  "No sync records yet": "Aún no hay registros de sincronización",
   "Not tried yet.": "Aún no se ha intentado.",
   "Nothing is sent to {0} until setup is finished: confirm the mappings, then choose a start date.": "No se envía nada a {0} hasta que termine la configuración: confirme las asignaciones y luego elija una fecha de inicio.",
   "Open an example": "Abrir un ejemplo",

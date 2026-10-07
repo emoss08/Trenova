@@ -11,6 +11,7 @@
   "Late minutes": "遲到分鐘數",
   "Late {0}m": "延誤 {0} 分鐘",
   "Loading service failure...": "正在載入服務失誤...",
+  "No service failures yet": "尚無服務缺失",
   "Open · {0, plural, one {# minute after grace} other {# minutes after grace}}": "未結 · {0, plural, other {超過寬限時間 # 分鐘}}",
   "Operations notes": "營運備註",
   "Overrides apply only to this failure.": "覆寫僅適用於此筆失誤。",

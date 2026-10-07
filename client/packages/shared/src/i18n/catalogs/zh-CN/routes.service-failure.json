@@ -11,6 +11,7 @@
   "Late minutes": "迟到分钟数",
   "Late {0}m": "迟到 {0} 分钟",
   "Loading service failure...": "正在加载服务失误...",
+  "No service failures yet": "尚无服务失败",
   "Open · {0, plural, one {# minute after grace} other {# minutes after grace}}": "未结 · {0, plural, other {超出宽限期 # 分钟}}",
   "Operations notes": "运营备注",
   "Overrides apply only to this failure.": "覆盖仅适用于此笔失误。",

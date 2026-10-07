@@ -73,6 +73,7 @@ export default function StoredMileageTable() {
     <>
       <DataTable<StoredMileageRow>
         name="Stored Mileage"
+        emptyTitle={t("No stored mileages yet")}
         queryKey="stored-mileage-list"
         graphql={storedMileageTableGraphQLConfig}
         resource={Resource.StoredMileage}

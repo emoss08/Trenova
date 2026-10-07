@@ -8,6 +8,7 @@
   "How the money was disbursed — cash, an EFS/Comdata money code, or a fuel card load.": "Cómo se desembolsó el dinero: efectivo, un código de dinero EFS/Comdata o una carga en la tarjeta de combustible.",
   "Issued date": "Fecha de emisión",
   "Money code / check number": "Código de dinero / número de cheque",
+  "No pay advances yet": "Aún no hay anticipos de pago",
   "Only outstanding or partially recovered advances can be written off.": "Solo pueden cancelarse los anticipos pendientes o parcialmente recuperados.",
   "Outstanding minor": "Pendiente en unidades menores",
   "Pay advance": "Anticipo de pago",

@@ -100,6 +100,7 @@ export default function DistanceProfileTable() {
     <>
       <DataTable<DistanceProfileRow>
         name="Distance Profile"
+        emptyTitle={t("No distance profiles yet")}
         queryKey="distance-profile-list"
         graphql={distanceProfileTableGraphQLConfig}
         resource={Resource.DistanceProfile}

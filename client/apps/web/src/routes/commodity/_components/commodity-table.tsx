@@ -63,6 +63,7 @@ export default function CommodityTable() {
   return (
     <DataTable<CommodityRow>
       name="Commodity"
+      emptyTitle={t("No commodities yet")}
       queryKey="commodity-list"
       graphql={commodityTableGraphQLConfig}
       resource={Resource.Commodity}

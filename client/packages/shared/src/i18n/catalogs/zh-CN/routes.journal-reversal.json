@@ -7,6 +7,7 @@
   "Enter the journal entry ID to reverse": "请输入要冲销的分录 ID",
   "Explain why this journal entry needs to be reversed": "说明此分录需要冲销的原因",
   "New journal reversal": "新增分录冲销",
+  "No journal reversals yet": "尚无日记账冲销",
   "Original entry": "原始分录",
   "Original journal entry": "原始分录",
   "Original journal entry ID": "原始分录 ID",

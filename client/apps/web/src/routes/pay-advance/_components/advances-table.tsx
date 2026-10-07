@@ -101,6 +101,7 @@ export default function AdvancesTable() {
     <>
       <DataTable<PayAdvanceRow>
         name="Pay Advance"
+        emptyTitle={t("No pay advances yet")}
         queryKey="pay-advance-list"
         graphql={payAdvanceTableGraphQLConfig}
         resource={Resource.PayAdvance}

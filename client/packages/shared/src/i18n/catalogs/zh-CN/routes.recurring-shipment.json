@@ -30,6 +30,7 @@
   "Max occurrences": "最多发生次数",
   "Next pickup": "下次取货",
   "No days blocked": "没有封锁的日子",
+  "No recurring shipments yet": "尚无周期性运单",
   "Nothing generated yet. Runs appear here as the schedule fires.": "尚未生成任何项目。排程触发后，运行记录会显示于此。",
   "Occurrence times are interpreted here, so the schedule holds across daylight saving shifts.": "发生时点依此时区解读，因此排程在夏令时变动时仍然成立。",
   "Only Active series generate. Pause to hold the lane without losing its history.": "只有“生效中”的系列会生成运单。暂停可保留线路与其历史记录。",

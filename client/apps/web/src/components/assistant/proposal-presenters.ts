@@ -179,7 +179,7 @@ function columnText(column: DefinitionColumn): string {
     case "max":
       return translate("max of {0}", field);
     default:
-      return translate("{0} of {1}", agg.replaceAll("_", " "), field);
+      return translate("{0} ({1})", field, agg);
   }
 }
 

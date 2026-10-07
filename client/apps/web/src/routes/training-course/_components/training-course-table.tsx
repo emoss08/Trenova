@@ -153,6 +153,7 @@ export default function TrainingCourseTable() {
   return (
     <DataTable<TrainingCourseRow>
       name="Training Course"
+      emptyTitle={t("No training courses yet")}
       queryKey={TRAINING_COURSE_LIST_KEY}
       graphql={trainingCourseTableGraphQLConfig}
       resource={Resource.TrainingCourse}

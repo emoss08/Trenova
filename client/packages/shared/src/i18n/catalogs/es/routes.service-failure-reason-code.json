@@ -9,6 +9,7 @@
   "Lower sort values appear first.": "Los valores de orden más bajos aparecen primero.",
   "Manage operational exception reasons and EDI 214 defaults": "Gestione los motivos de excepción operativa y los valores predeterminados de EDI 214",
   "Name shown to operations and billing users.": "Nombre que ven los usuarios de operaciones y facturación.",
+  "No service failure reason codes yet": "Aún no hay códigos de motivo de fallo de servicio",
   "Ordering": "Orden",
   "Reactivate": "Reactivar",
   "Reason code activated": "Código de motivo activado",

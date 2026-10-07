@@ -14,6 +14,7 @@ export default function OrderTable() {
   return (
     <DataTable<OrderRow>
       name="Order"
+      emptyTitle={t("No orders yet")}
       queryKey="order-list"
       graphql={orderTableGraphQLConfig}
       resource={Resource.Order}

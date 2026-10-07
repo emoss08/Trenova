@@ -3,7 +3,7 @@ import {
   readyAttachments,
   type ComposerPayload,
 } from "@/components/assistant/composer-types";
-import { COMPACT_COMMAND } from "@/components/assistant/composer-commands";
+import { COMPACT_COMMAND, COMPACT_TEXT } from "@/components/assistant/composer-commands";
 import type { Suggestion } from "@/components/assistant/suggestions";
 import { useComposerDictation } from "@/components/assistant/use-composer-dictation";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
@@ -170,7 +170,7 @@ export function DeskComposer({
     !lock;
 
   const send = (content: string) => {
-    if (onCompact && content.trim() === COMPACT_COMMAND.template) {
+    if (onCompact && content.trim() === COMPACT_TEXT) {
       if (!busy && !compacting && !lock) {
         onChange("");
         onCompact();

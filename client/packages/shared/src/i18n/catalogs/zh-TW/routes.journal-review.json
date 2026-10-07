@@ -2,6 +2,7 @@
   "Journals from invoices, payments, adjustments and settlements wait here until someone approves and posts them.": "來自發票、付款、調整與結算的分錄會在此等待，直到有人核准並過帳。",
   "Journals from invoices, payments, adjustments and settlements wait here until someone posts them.": "來自發票、付款、調整與結算的分錄會在此等待，直到有人過帳。",
   "Journals now post on their own. These were written while posting was manual and still need a person.": "分錄現在會自動過帳。這些是在手動過帳期間建立的，仍需要人員處理。",
+  "No journal entries yet": "尚無分錄",
   "None of the selected entries is approved yet.": "所選分錄皆尚未核准。",
   "None of the selected entries is awaiting approval.": "所選分錄皆不在等待核准。",
   "Oldest waiting": "等待最久",

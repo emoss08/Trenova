@@ -13,6 +13,7 @@
   "Inactive courses drop out of the required matrix and cannot be assigned.": "Los cursos inactivos salen de la matriz de obligatorios y no se pueden asignar.",
   "Name and code identify the course on worker records and in Dash.": "El nombre y el código identifican el curso en las fichas de los trabajadores y en Dash.",
   "No score": "Sin puntuación",
+  "No training courses yet": "Aún no hay cursos de capacitación",
   "One-time": "De una sola vez",
   "Only active courses with no open assignments can be deactivated.": "Solo pueden desactivarse los cursos activos sin asignaciones abiertas.",
   "Only inactive courses can be restored.": "Solo pueden restaurarse los cursos inactivos.",

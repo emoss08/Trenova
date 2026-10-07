@@ -131,6 +131,7 @@ export default function ServiceFailureTable({ shipmentId }: ServiceFailureTableP
   return (
     <DataTable<ServiceFailureRow>
       name="Service Failure"
+      emptyTitle={t("No service failures yet")}
       queryKey="service-failure-list"
       graphql={graphql}
       resource={Resource.ServiceFailure}

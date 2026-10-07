@@ -70,6 +70,7 @@ export default function FiscalYearTable() {
     <>
       <DataTable<FiscalYearRow>
         name="Fiscal Year"
+        emptyTitle={t("No fiscal years yet")}
         queryKey="fiscal-year-list"
         graphql={fiscalYearTableGraphQLConfig}
         resource={Resource.FiscalYear}

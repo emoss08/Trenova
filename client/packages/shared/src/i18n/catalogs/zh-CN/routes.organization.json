@@ -38,6 +38,7 @@
   "Manage verified sender identities and route email purposes to the right provider profile.": "管理已验证的发件人身份，并将各邮件用途导向正确的提供商配置文件。",
   "No active email profiles found.": "找不到启用中的邮件配置文件。",
   "No email logs yet.": "尚无邮件日志。",
+  "No email profiles yet": "尚无邮件配置",
   "Operational notes for admins choosing sender identities.": "供管理员选择发件人身份时参考的作业备注。",
   "Optional reply destination. Blank uses the sender email.": "选填的回复地址。留空则使用发件人的电子邮件。",
   "Purpose assignments": "用途分配",

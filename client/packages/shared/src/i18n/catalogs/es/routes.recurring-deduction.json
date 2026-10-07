@@ -8,6 +8,7 @@
   "Every settlement withholds each cycle; monthly withholds only on the first settlement of each month.": "Cada liquidación retiene en cada ciclo; la opción mensual retiene solo en la primera liquidación de cada mes.",
   "Future settlements skip the deduction; history is kept.": "Las liquidaciones futuras omiten la deducción; se conserva el historial.",
   "Future settlements withhold the deduction again.": "Las liquidaciones futuras vuelven a aplicar la deducción.",
+  "No recurring deductions yet": "Aún no hay deducciones recurrentes",
   "No selected deductions can move to that status.": "Ninguna de las deducciones seleccionadas puede pasar a ese estado.",
   "Optional last day the deduction applies; leave blank for open-ended.": "Último día opcional en que se aplica la deducción; déjelo en blanco para que sea indefinida.",
   "Pause to skip upcoming settlements without losing history; completed deductions stop permanently.": "Haga una pausa para omitir las próximas liquidaciones sin perder el historial; las deducciones completadas se detienen de forma permanente.",

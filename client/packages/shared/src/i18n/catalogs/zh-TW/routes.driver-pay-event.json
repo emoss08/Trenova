@@ -4,6 +4,7 @@
   "Held pay skips settlement generation and auto-attach until you release it. The reason is shown to anyone reviewing the driver's pay.": "暫扣的薪酬在您解除前不會納入結算產生與自動附加。原因會顯示給檢視該駕駛員薪酬的人。",
   "Hold this pay event — it skips settlement generation until released": "暫扣此薪酬事件 — 在解除前不會納入結算產生",
   "Hold {0, plural, one {# pay event} other {# pay events}}": "暫扣 {0, plural, other {# 筆薪酬事件}}",
+  "No pay events yet": "尚無薪酬事件",
   "None of the selected pay events are on hold.": "所選的薪酬事件皆未處於暫扣狀態。",
   "On hold: {0}. Click to release so the event settles normally.": "扣留中：{0}。按一下以解除，讓此事件正常結算。",
   "Only accrued, unheld pay events can be held.": "僅已計提且未暫扣的薪酬事件可暫扣。",

@@ -79,6 +79,7 @@ function PartnersWorkspace() {
       <PendingConnectionsPanel />
       <DataTable<EDIPartner>
         name="EDI Connection"
+        emptyTitle={t("No EDI connections yet")}
         queryKey="edi-partner-list"
         resource={Resource.EDI}
         columns={columns}
@@ -97,6 +98,7 @@ function MappingProfilesWorkspace() {
     <Outer>
       <DataTable<EDIMappingProfileRow>
         name="EDI Mapping Profile"
+        emptyTitle={t("No EDI mapping profiles yet")}
         queryKey="edi-mapping-profile-list"
         resource={Resource.EDI}
         columns={columns}
@@ -116,6 +118,7 @@ function CommunicationProfilesWorkspace() {
     <Outer>
       <DataTable<EDICommunicationProfileRow>
         name="EDI Communication Profile"
+        emptyTitle={t("No EDI communication profiles yet")}
         queryKey="edi-communication-profile-list"
         resource={Resource.EDI}
         columns={columns}
@@ -247,6 +250,7 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
     <Outer>
       <DataTable<EDITransferRow>
         name="EDI Transfer"
+        emptyTitle={t("No EDI transfers yet")}
         queryKey={
           direction === "inbound" ? "edi-inbound-transfer-list" : "edi-outbound-transfer-list"
         }
@@ -346,6 +350,7 @@ function MessagesWorkspace() {
     <Outer>
       <DataTable<EDIMessageRow>
         name="EDI Message"
+        emptyTitle={t("No EDI messages yet")}
         queryKey="edi-message-list"
         resource={Resource.EDI}
         columns={columns}
@@ -414,6 +419,7 @@ function InboundFilesWorkspace() {
     <Outer>
       <DataTable<EDIInboundFileRow>
         name="EDI Inbound File"
+        emptyTitle={t("No EDI inbound files yet")}
         queryKey="edi-inbound-file-list"
         resource={Resource.EDI}
         columns={columns}
@@ -438,6 +444,7 @@ function TestCasesWorkspace() {
       <div className="flex flex-col p-1">
         <DataTable<EDITestCaseTableRow>
           name="EDI Test Case"
+          emptyTitle={t("No EDI test cases yet")}
           queryKey="edi-test-case-list"
           resource={Resource.EDI}
           columns={columns}

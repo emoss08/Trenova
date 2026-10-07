@@ -79,6 +79,7 @@ export default function DistanceOverrideTable() {
     <>
       <DataTable<DistanceOverrideRow>
         name="Distance Override"
+        emptyTitle={t("No distance overrides yet")}
         queryKey="distance-override-list"
         graphql={distanceOverrideTableGraphQLConfig}
         resource={Resource.DistanceOverride}

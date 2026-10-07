@@ -100,6 +100,7 @@
   "No lane in scope carries a rate this change could move.": "Ninguna ruta dentro del alcance tiene una tarifa que este cambio pueda modificar.",
   "No lanes yet. An active agreement needs at least one, otherwise nothing can price against it.": "Todavía no hay rutas. Un acuerdo activo necesita al menos una; de lo contrario, nada puede tarificarse con él.",
   "No negotiated accessorials. Without one, every accessorial is priced at the organization default instead of at what the contract says.": "No hay cargos accesorios negociados. Sin ellos, todos los cargos accesorios se tarifican al valor predeterminado de la organización en lugar de a lo que dice el contrato.",
+  "No rate agreements yet": "Aún no hay acuerdos de tarifas",
   "No simulation has run yet": "Todavía no se ha ejecutado ninguna simulación",
   "No versions recorded yet": "Todavía no se han registrado versiones",
   "Not sure how to lay out the sheet? Start from the template.": "¿No sabe cómo estructurar la hoja? Empiece por la plantilla.",

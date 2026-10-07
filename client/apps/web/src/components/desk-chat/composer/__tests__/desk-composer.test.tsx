@@ -4,7 +4,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { MemoryRouter } from "react-router";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { registerCatalogSource, setLocale, translate } from "@trenova/shared/i18n/runtime";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { useDeskAttachments } from "../desk-attachments";
 import { DeskComposer } from "../desk-composer";
 
@@ -72,7 +73,7 @@ function renderComposer(props: Parameters<typeof Harness>[0]) {
     </QueryClientProvider>,
   );
 
-  return screen.getByRole("textbox", { name: "Message the Desk" });
+  return screen.getByRole("textbox", { name: translate("Message the Desk") });
 }
 
 /**
@@ -164,5 +165,48 @@ describe("DeskComposer sending", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
     expect(onSend).toHaveBeenCalledWith("What's in this?", expect.anything());
+  });
+});
+
+/**
+ * A slash command is shown, and asks the agent, in the language on screen: a
+ * person reading Spanish sees the command described in Spanish and sends the
+ * Spanish question.
+ */
+describe("DeskComposer slash commands in another language", () => {
+  beforeAll(async () => {
+    await registerCatalogSource({
+      es: async () => ({
+        "Where a shipment is and what is holding it up": "Dónde está un envío y qué lo retiene",
+        "What is the status of shipment {0} right now, and is anything holding it up?":
+          "¿Cuál es el estado del envío {0} ahora mismo y hay algo que lo retenga?",
+      }),
+    });
+    await setLocale("es");
+  });
+
+  afterAll(async () => {
+    await setLocale("en");
+  });
+
+  it("describes the command and sends its question in Spanish", () => {
+    const onSend = vi.fn();
+    const box = renderComposer({ initial: "/status S12345", onSend });
+
+    expect(screen.getByText("Dónde está un envío y qué lo retiene")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "¿Cuál es el estado del envío S12345 ahora mismo y hay algo que lo retenga?",
+        {
+          exact: false,
+        },
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.keyDown(box, { key: "Enter" });
+    expect(onSend).toHaveBeenCalledWith(
+      "¿Cuál es el estado del envío S12345 ahora mismo y hay algo que lo retenga?",
+      { attachments: [], mentions: [] },
+    );
   });
 });

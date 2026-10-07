@@ -22,6 +22,7 @@
   "Matches a regional lane": "Coincide con una ruta regional",
   "Matches one facility pair": "Coincide con un par de instalaciones",
   "No carriers yet. Add carriers in the order they should be offered the freight — rank 1 goes first.": "Aún no hay transportistas. Agréguelos en el orden en que se les debe ofrecer la carga: el orden 1 va primero.",
+  "No routing guides yet": "Aún no hay guías de enrutamiento",
   "Offer order — rank 1 is tendered first.": "Orden de la oferta: el orden 1 se ofrece primero.",
   "Offer what this carrier's contract says today. The rate above is kept for a lane no contract covers.": "Ofrezca lo que diga hoy el contrato de este transportista. La tarifa de arriba se conserva para una ruta que ningún contrato cubra.",
   "Only Active guides are matched when a move is tendered.": "Solo se comparan las guías activas cuando se ofrece un tramo.",

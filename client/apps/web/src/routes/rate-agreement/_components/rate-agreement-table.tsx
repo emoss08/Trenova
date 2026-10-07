@@ -93,6 +93,7 @@ export default function RateAgreementTable() {
     <>
       <DataTable<RateAgreementRow>
         name="Rate Agreement"
+        emptyTitle={t("No rate agreements yet")}
         queryKey="rate-agreement-list"
         graphql={rateAgreementTableGraphQLConfig}
         resource={Resource.RateAgreement}

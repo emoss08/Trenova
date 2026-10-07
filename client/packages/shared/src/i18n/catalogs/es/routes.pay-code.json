@@ -9,6 +9,7 @@
   "Every selected pay code already has that status.": "Todos los códigos de pago seleccionados ya tienen ese estado.",
   "Human-readable label displayed next to the code throughout the app.": "Etiqueta legible que se muestra junto al código en toda la aplicación.",
   "Inactive codes stay on historical records but disappear from new-entry dropdowns.": "Los códigos inactivos permanecen en los registros históricos pero desaparecen de los desplegables de nuevas entradas.",
+  "No pay codes yet": "Aún no hay códigos de pago",
   "Optional internal note explaining when and how the code should be used.": "Nota interna opcional que explique cuándo y cómo debe usarse el código.",
   "Optional note about when this code applies": "Nota opcional sobre cuándo se aplica este código",
   "Pay code activated — it appears in dropdowns again": "Código de pago activado — vuelve a aparecer en las listas desplegables",

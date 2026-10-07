@@ -485,7 +485,45 @@ func (s *Service) UpdateMySettings(
 		user.Locale = req.Locale
 	}
 
-	return s.Update(ctx, user, tenantInfo.UserID)
+	updated, err := s.Update(ctx, user, tenantInfo.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.Locale != "" {
+		s.refreshSessionLocale(ctx, req.SessionID, tenantInfo.UserID, req.Locale)
+	}
+
+	return updated, nil
+}
+
+func (s *Service) refreshSessionLocale(
+	ctx context.Context,
+	sessionID, userID pulid.ID,
+	locale string,
+) {
+	if sessionID.IsNil() {
+		return
+	}
+
+	log := s.l.With(
+		zap.String("operation", "refreshSessionLocale"),
+		zap.String("sessionID", sessionID.String()),
+	)
+
+	sess, err := s.sr.Get(ctx, sessionID)
+	if err != nil {
+		log.Warn("failed to load session for locale refresh", zap.Error(err))
+		return
+	}
+	if sess.UserID != userID || sess.Locale == locale {
+		return
+	}
+
+	sess.Locale = locale
+	if err = s.sr.Update(ctx, sess); err != nil {
+		log.Warn("failed to refresh session locale", zap.Error(err))
+	}
 }
 
 func (s *Service) ChangeMyPassword(

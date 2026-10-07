@@ -123,6 +123,7 @@ export function DataTable<TData extends Record<string, any>>({
   refetchIntervalMs,
   onCellEditCommit,
   renderEmptyState,
+  emptyTitle,
   scopeFilters: ownScopeFilters = NO_SCOPE_FILTERS,
   enableExport = true,
   pageSizeOptions,
@@ -966,6 +967,7 @@ export function DataTable<TData extends Record<string, any>>({
                   <DataTableEmptyState
                     columns={emptyColumns}
                     hasActiveFilters={hasActiveFilters}
+                    title={emptyTitle}
                     onClearFilters={handleClearFilters}
                     addRecord={hasActiveFilters ? undefined : defaultCreate}
                   />

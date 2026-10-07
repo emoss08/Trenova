@@ -8,6 +8,7 @@
   "Inactive templates cannot be used for new reviews.": "Las plantillas inactivas no se pueden usar para nuevas evaluaciones.",
   "Items are copied when a review starts": "Los elementos se copian al iniciarse una evaluación",
   "Name and code identify the template when someone starts a review.": "El nombre y el código identifican la plantilla cuando alguien inicia una evaluación.",
+  "No review templates yet": "Aún no hay plantillas de revisión",
   "One-off": "Puntual",
   "Only active templates with no open reviews can be deactivated.": "Solo pueden desactivarse las plantillas activas sin evaluaciones abiertas.",
   "Open reviews": "Evaluaciones abiertas",

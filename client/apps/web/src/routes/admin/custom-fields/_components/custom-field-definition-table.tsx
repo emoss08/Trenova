@@ -104,6 +104,7 @@ export default function CustomFieldDefinitionTable() {
     <>
       <DataTable<CustomFieldDefinitionRow>
         name="Custom Field Definition"
+        emptyTitle={t("No custom field definitions yet")}
         queryKey="custom-field-definition-list"
         graphql={customFieldDefinitionTableGraphQLConfig}
         resource={Resource.CustomFieldDefinition}

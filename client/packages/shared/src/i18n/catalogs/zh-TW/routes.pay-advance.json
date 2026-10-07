@@ -8,6 +8,7 @@
   "How the money was disbursed — cash, an EFS/Comdata money code, or a fuel card load.": "款項的撥付方式 — 現金、EFS／Comdata 金流代碼，或油卡儲值。",
   "Issued date": "核發日期",
   "Money code / check number": "金流代碼／支票號碼",
+  "No pay advances yet": "尚無薪酬預支",
   "Only outstanding or partially recovered advances can be written off.": "僅未清償或部分回收的預支款可沖銷。",
   "Outstanding minor": "未清償（最小幣值單位）",
   "Pay advance": "薪酬預支",

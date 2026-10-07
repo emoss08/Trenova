@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
@@ -11,6 +12,7 @@ type UpdateMySettingsRequest struct {
 	Timezone   string                 `json:"timezone"`
 	TimeFormat domaintypes.TimeFormat `json:"timeFormat"`
 	Locale     string                 `json:"locale"`
+	SessionID  pulid.ID               `json:"-"`
 }
 
 func (r *UpdateMySettingsRequest) Validate() error {

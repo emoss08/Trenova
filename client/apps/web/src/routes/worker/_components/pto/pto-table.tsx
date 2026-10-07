@@ -186,6 +186,7 @@ export default function PTODataTable() {
       <DataTable<WorkerPTORow>
         queryKey="worker-pto-list"
         name="Worker PTO"
+        emptyTitle={t("No PTO requests yet")}
         resource={Resource.WorkerPTO}
         columns={columns}
         graphql={workerTableGraphQLConfigs.pto}

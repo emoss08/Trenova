@@ -3,6 +3,7 @@ package reportresolver
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/trenova/shared/i18n"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
@@ -750,7 +751,7 @@ func reportCatalogToModel(
 			continue
 		}
 
-		entities = append(entities, catalogEntityToModel(entity, detail))
+		entities = append(entities, catalogEntityToModel(i18n.FromContext(ctx), entity, detail))
 	}
 
 	return &gqlmodel.ReportCatalog{
@@ -769,6 +770,7 @@ func hasReportReadOperation(detail *services.ResourcePermissionDetail) bool {
 }
 
 func catalogEntityToModel(
+	locale i18n.Locale,
 	entity *reportcatalog.Entity,
 	detail *services.ResourcePermissionDetail,
 ) *gqlmodel.ReportCatalogEntity {
@@ -788,7 +790,7 @@ func catalogEntityToModel(
 		for _, ev := range field.EnumValues {
 			enumValues = append(enumValues, &gqlmodel.ReportCatalogEnumValue{
 				Value: ev.Value,
-				Label: ev.Label,
+				Label: i18n.Translate(locale, ev.Label),
 			})
 		}
 
@@ -799,8 +801,8 @@ func catalogEntityToModel(
 
 		fields = append(fields, &gqlmodel.ReportCatalogField{
 			Key:          field.Key,
-			Label:        field.Label,
-			Description:  nilIfEmpty(field.Description),
+			Label:        i18n.Translate(locale, field.Label),
+			Description:  nilIfEmpty(i18n.Translate(locale, field.Description)),
 			Type:         string(field.Type),
 			Format:       nilIfEmpty(string(field.Format)),
 			Nullable:     field.Nullable,
@@ -818,7 +820,7 @@ func catalogEntityToModel(
 		edge := &entity.Edges[i]
 		edges = append(edges, &gqlmodel.ReportCatalogEdge{
 			Name:        edge.Name,
-			Label:       edge.Label,
+			Label:       i18n.Translate(locale, edge.Label),
 			Target:      edge.Target,
 			Cardinality: string(edge.Cardinality),
 			Traversable: edge.Traversable,
@@ -828,9 +830,9 @@ func catalogEntityToModel(
 	return &gqlmodel.ReportCatalogEntity{
 		Key:               entity.Key,
 		Resource:          entity.Resource.String(),
-		Label:             entity.Label,
-		PluralLabel:       entity.PluralLabel,
-		Description:       nilIfEmpty(entity.Description),
+		Label:             i18n.Translate(locale, entity.Label),
+		PluralLabel:       i18n.Translate(locale, entity.PluralLabel),
+		Description:       nilIfEmpty(i18n.Translate(locale, entity.Description)),
 		Category:          entity.Category,
 		OwnScopeSupported: entity.OwnershipColumn != "",
 		Fields:            fields,

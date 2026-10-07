@@ -61,6 +61,7 @@ export default function ReportRunsTable({ definitionId }: { definitionId?: strin
   return (
     <DataTable<ReportRun>
       name="Report Run"
+      emptyTitle={t("No report runs yet")}
       queryKey={REPORT_RUN_LIST_QUERY_KEY}
       graphql={graphql}
       resource={Resource.Report}

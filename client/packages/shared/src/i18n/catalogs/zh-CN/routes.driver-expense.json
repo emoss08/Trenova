@@ -9,6 +9,7 @@
   "Failed to review expense": "审核费用失败",
   "Incurred": "已发生",
   "Incurred {0} · Submitted {1}{2}": "发生于 {0} · 提交于 {1}{2}",
+  "No driver expenses yet": "尚无司机费用",
   "No receipt attached — consider asking the driver for one before approving.": "未附收据 — 批准前建议先向司机索取。",
   "Note (optional)": "备注（可选）",
   "Pay code:": "薪酬代码：",

@@ -12,6 +12,7 @@
   "Failed to resolve dispute": "解决争议失败",
   "Missing Pay": "薪酬缺失",
   "Missing Reimbursement": "报销缺失",
+  "No settlement disputes yet": "尚无结算争议",
   "Only open disputes can be moved to review.": "仅未结的争议可转入审查。",
   "Optional — routes the adjustment to that code's GL account when posting.": "选填 — 过账时将此调整导向该代码的总账科目。",
   "Resolution note": "处理备注",

@@ -12,6 +12,7 @@
   "Failed to resolve dispute": "No se pudo resolver la disputa",
   "Missing Pay": "Pago faltante",
   "Missing Reimbursement": "Reembolso faltante",
+  "No settlement disputes yet": "Aún no hay disputas de liquidación",
   "Only open disputes can be moved to review.": "Solo las disputas abiertas pueden pasar a revisión.",
   "Optional — routes the adjustment to that code's GL account when posting.": "Opcional: dirige el ajuste a la cuenta del libro mayor de ese código al contabilizar.",
   "Resolution note": "Nota de la resolución",

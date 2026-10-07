@@ -16,6 +16,7 @@
   "Invoice balances and the GL were updated.": "Se actualizaron los saldos de las facturas y la contabilidad general.",
   "Loading open invoices…": "Cargando las facturas abiertas…",
   "NSF check, posted to wrong customer, ...": "Cheque sin fondos, contabilizado al cliente equivocado, ...",
+  "No customer payments yet": "Aún no hay pagos de clientes",
   "Nothing applied — the full amount is unapplied cash": "Nada aplicado: el importe completo queda como efectivo sin aplicar",
   "Nothing has been posted to the ledger yet": "Todavía no se ha contabilizado nada en el libro mayor",
   "Nothing to apply": "Nada que aplicar",

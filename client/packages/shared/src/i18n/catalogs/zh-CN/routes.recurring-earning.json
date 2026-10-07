@@ -6,6 +6,7 @@
   "Every settlement pays each cycle; monthly pays only on the first settlement of each month.": "“每次结算”在每个周期皆支付；“每月”则仅于每月第一笔结算支付。",
   "Future settlements include the earning again.": "后续结算将恢复纳入此薪酬。",
   "Future settlements skip the earning; history is kept.": "后续结算会跳过此薪酬；历史记录仍保留。",
+  "No recurring earnings yet": "尚无周期性薪酬",
   "No selected earnings can move to that status.": "所选的薪酬皆无法转为该状态。",
   "Optional last day the earning applies; leave blank for open-ended.": "选填的薪酬最后适用日；留空即为无期限。",
   "Paid / cap": "已支付／上限",

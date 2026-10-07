@@ -90,6 +90,7 @@ export default function SCIMGroupRoleMappingsTable({
   return (
     <DataTable<SCIMGroupRoleMappingRow>
       name="SCIM Group Role Mapping"
+      emptyTitle={t("No SCIM group role mappings yet")}
       queryKey={queryKey}
       graphql={graphql}
       columns={columns}

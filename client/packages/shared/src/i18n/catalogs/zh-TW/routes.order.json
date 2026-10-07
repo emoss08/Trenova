@@ -51,6 +51,7 @@
   "No leg is ready to invoice yet. A leg must be completed or ready to invoice before it can be billed.": "目前尚無可開立發票的區段。區段必須為已完成或可開立發票，才能進行計費。",
   "No legs": "無航段",
   "No order charges": "無訂單費用",
+  "No orders yet": "尚無訂單",
   "One leg produces a standalone invoice rather than a grouped one covering the order. The order's remaining legs will have to be billed separately.": "單一區段會產生獨立發票，而非涵蓋整筆訂單的合併發票。該訂單其餘區段須另行計費。",
   "Order canceled": "訂單已取消",
   "Order closed": "訂單已結案",

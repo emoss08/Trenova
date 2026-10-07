@@ -157,6 +157,7 @@ export default function CredentialTypeTable() {
   return (
     <DataTable<WorkerCredentialTypeRow>
       name="Credential Type"
+      emptyTitle={t("No credential types yet")}
       queryKey={WORKER_CREDENTIAL_TYPE_LIST_KEY}
       graphql={workerCredentialTypeTableGraphQLConfig}
       resource={Resource.WorkerCredentialType}

@@ -241,6 +241,7 @@ function AgentToolsTable({ agentIds }: { agentIds: readonly string[] }) {
   return (
     <DataTable<AgentToolSafetyRow>
       name="Agent Tool"
+      emptyTitle={t("No agent tools yet")}
       queryKey={AGENT_TOOL_SAFETY_LIST_KEY}
       graphql={graphql}
       resource={Resource.AgentDefinition}

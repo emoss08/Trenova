@@ -24,6 +24,7 @@
   "Interest": "利息",
   "Interest rate": "利率",
   "Last interest": "最近一次利息",
+  "No escrow accounts yet": "尚无履约保证账户",
   "No transactions yet": "尚无交易",
   "One active escrow account per driver; contributions flow in from settlements via a recurring deduction.": "每位司机一个生效中的履约保证账户；提缴通过周期性扣款自结算流入。",
   "Only owner-operators are listed — contractors and drivers on an owner-operator pay profile.": "仅列出自营车主 — 即采用自营车主薪酬配置文件的承揽人与司机。",

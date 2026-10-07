@@ -63,6 +63,7 @@ export default function EquipmentTypeTable() {
   return (
     <DataTable<EquipmentType>
       name="Equipment Type"
+      emptyTitle={t("No equipment types yet")}
       queryKey="equipment-type-list"
       resource={Resource.EquipmentType}
       columns={columns}

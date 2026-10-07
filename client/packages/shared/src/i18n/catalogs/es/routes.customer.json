@@ -116,6 +116,7 @@
   "Memos": "Notas",
   "Minimum invoice amount": "Importe mínimo de factura",
   "Monthly percentage applied to the overdue balance after the grace period expires.": "Porcentaje mensual que se aplica al saldo vencido tras expirar el período de gracia.",
+  "No customers yet": "Aún no hay clientes",
   "Number of days after the invoice due date before late charges begin accruing.": "Número de días tras la fecha de vencimiento de la factura antes de que empiecen a acumularse los recargos por mora.",
   "Number of invoice copies to generate per billing run. Additional copies are often required for customers with multiple AP departments.": "Número de copias de la factura que se generan por cada ejecución de facturación. A menudo se requieren copias adicionales para clientes con varios departamentos de cuentas por pagar.",
   "Only consolidate with other shipments from this same customer — never mix with other customers' freight. Requires 'Allow Consolidation' to be enabled.": "Consolidar solo con otros envíos de este mismo cliente; nunca mezclar con carga de otros clientes. Requiere que esté activado «Permitir la consolidación».",

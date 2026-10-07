@@ -2,6 +2,7 @@
   "Journals from invoices, payments, adjustments and settlements wait here until someone approves and posts them.": "Los asientos de facturas, pagos, ajustes y liquidaciones esperan aquí hasta que alguien los apruebe y contabilice.",
   "Journals from invoices, payments, adjustments and settlements wait here until someone posts them.": "Los asientos de facturas, pagos, ajustes y liquidaciones esperan aquí hasta que alguien los contabilice.",
   "Journals now post on their own. These were written while posting was manual and still need a person.": "Los asientos ahora se contabilizan solos. Estos se crearon cuando la contabilización era manual y todavía necesitan a una persona.",
+  "No journal entries yet": "Aún no hay asientos contables",
   "None of the selected entries is approved yet.": "Ninguno de los asientos seleccionados está aprobado todavía.",
   "None of the selected entries is awaiting approval.": "Ninguno de los asientos seleccionados está en espera de aprobación.",
   "Oldest waiting": "El más antiguo en espera",

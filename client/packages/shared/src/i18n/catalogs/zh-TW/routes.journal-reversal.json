@@ -7,6 +7,7 @@
   "Enter the journal entry ID to reverse": "請輸入要沖銷的分錄 ID",
   "Explain why this journal entry needs to be reversed": "說明此分錄需要沖銷的原因",
   "New journal reversal": "新增分錄沖銷",
+  "No journal reversals yet": "尚無分錄沖銷",
   "Original entry": "原始分錄",
   "Original journal entry": "原始分錄",
   "Original journal entry ID": "原始分錄 ID",

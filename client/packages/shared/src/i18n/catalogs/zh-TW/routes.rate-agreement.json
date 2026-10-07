@@ -100,6 +100,7 @@
   "No lane in scope carries a rate this change could move.": "範圍內沒有任何路線的運價會受此變更影響。",
   "No lanes yet. An active agreement needs at least one, otherwise nothing can price against it.": "尚無路線。有效的協議至少需要一條路線，否則無法據以計價。",
   "No negotiated accessorials. Without one, every accessorial is priced at the organization default instead of at what the contract says.": "沒有議定的附加費。若無議定，所有附加費將以組織預設值計價，而非依合約規定。",
+  "No rate agreements yet": "尚無費率協議",
   "No simulation has run yet": "尚未執行任何模擬",
   "No versions recorded yet": "尚未記錄任何版本",
   "Not sure how to lay out the sheet? Start from the template.": "不確定表單該如何編排？請從範本開始。",

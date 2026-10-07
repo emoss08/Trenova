@@ -27,6 +27,7 @@
   "Name and code identify the policy on worker records and reports.": "名稱與代碼可於駕駛員紀錄與報表中識別此政策。",
   "Negative floor": "負餘額下限",
   "New workers are enrolled in this policy from their hire date.": "新進駕駛員自到職日起即適用此政策。",
+  "No PTO policies yet": "尚無 PTO 政策",
   "Off auto-approves requests and books the days immediately.": "關閉時會自動核准申請並立即登錄該天數。",
   "Off keeps balances informational — requests are never blocked.": "關閉時餘額僅供參考 — 申請絕不會被擋下。",
   "On for drivers who work seven-day schedules. Off counts only Monday–Friday against a request and skips observed holidays.": "採七日班表的駕駛員請開啟。關閉時申請僅計算週一至週五，並略過國定假日。",

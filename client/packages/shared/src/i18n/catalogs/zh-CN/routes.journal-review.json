@@ -2,6 +2,7 @@
   "Journals from invoices, payments, adjustments and settlements wait here until someone approves and posts them.": "来自发票、付款、调整和结算的分录会在此等待，直到有人批准并过账。",
   "Journals from invoices, payments, adjustments and settlements wait here until someone posts them.": "来自发票、付款、调整和结算的分录会在此等待，直到有人过账。",
   "Journals now post on their own. These were written while posting was manual and still need a person.": "分录现在会自动过账。这些是在手动过账期间创建的，仍需人工处理。",
+  "No journal entries yet": "尚无分录",
   "None of the selected entries is approved yet.": "所选分录均尚未批准。",
   "None of the selected entries is awaiting approval.": "所选分录均不在等待批准。",
   "Oldest waiting": "等待时间最长",

@@ -5,6 +5,7 @@ import { NuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/test
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { DataTable } from "../data-table";
+import { DataTableEmptyState } from "../data-table-empty-state";
 
 type TestRow = { id: string; name: string; amount: number };
 
@@ -132,6 +133,20 @@ describe("DataTable empty state", () => {
     expect(last.searchParams.get("query")).toBeNull();
   });
 
+  it("names the table's own records when it passes an empty title", () => {
+    renderTable({ emptyTitle: "No shipments yet" });
+
+    expect(screen.getByRole("heading", { name: "No shipments yet" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "No records yet" })).not.toBeInTheDocument();
+  });
+
+  it("says nothing matches, not its empty title, when a search emptied the table", () => {
+    renderTable({ emptyTitle: "No shipments yet" }, "?query=alice");
+
+    expect(screen.getByRole("heading", { name: "Nothing matches" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "No shipments yet" })).not.toBeInTheDocument();
+  });
+
   it("lets a table draw its own empty state and tells it whether filters are on", () => {
     renderTable({
       renderEmptyState: ({ hasActiveFilters }) => (
@@ -153,5 +168,45 @@ describe("DataTable empty state", () => {
 
     expect(screen.getByText("Alice")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "No records yet" })).not.toBeInTheDocument();
+  });
+});
+
+describe("DataTableEmptyState", () => {
+  const columns = [{ label: "Name" }];
+
+  it("shows the table's own title when nothing is recorded and no filter is on", () => {
+    render(
+      <DataTableEmptyState
+        columns={columns}
+        hasActiveFilters={false}
+        onClearFilters={vi.fn()}
+        title="No customers yet"
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "No customers yet" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "No records yet" })).not.toBeInTheDocument();
+  });
+
+  it("says nothing matches when a filter is on, whatever its title", () => {
+    render(
+      <DataTableEmptyState
+        columns={columns}
+        hasActiveFilters
+        onClearFilters={vi.fn()}
+        title="No customers yet"
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Nothing matches" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "No customers yet" })).not.toBeInTheDocument();
+  });
+
+  it("falls back to the generic title without one", () => {
+    render(
+      <DataTableEmptyState columns={columns} hasActiveFilters={false} onClearFilters={vi.fn()} />,
+    );
+
+    expect(screen.getByRole("heading", { name: "No records yet" })).toBeInTheDocument();
   });
 });

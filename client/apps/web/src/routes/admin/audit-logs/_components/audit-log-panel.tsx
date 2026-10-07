@@ -20,6 +20,7 @@ import {
   formatFieldLabel,
   isRecordValue,
   isSensitiveOmittedValue,
+  auditEntryTitle,
   normalizeAuditChanges,
   operationLabel,
   resourceLabel,
@@ -161,7 +162,7 @@ export function AuditLogPanel({ open, onOpenChange, row }: DataTablePanelProps<A
     <DataTablePanelContainer
       open={open}
       onOpenChange={onOpenChange}
-      title={row.comment || `${operationLabel(row.operation)} ${resourceLabel(row.resource)}`}
+      title={row.comment || auditEntryTitle(row.operation, row.resource)}
       description={t(
         "Recorded on {0}",
         formatToUserTimezone(row.timestamp, { showTimeZone: true }),

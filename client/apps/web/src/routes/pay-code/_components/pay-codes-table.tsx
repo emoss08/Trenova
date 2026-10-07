@@ -111,6 +111,7 @@ export default function PayCodesTable() {
   return (
     <DataTable<PayCodeRow>
       name="Pay Code"
+      emptyTitle={t("No pay codes yet")}
       queryKey="pay-code-list"
       graphql={payCodeTableGraphQLConfig}
       resource={Resource.PayCode}

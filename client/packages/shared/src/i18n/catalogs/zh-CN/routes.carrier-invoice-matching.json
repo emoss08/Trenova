@@ -51,7 +51,6 @@
   "No carrier in the master matches this invoice's SCAC or DOT number.": "主档中没有承运商匹配此发票的 SCAC 或 DOT 号码。",
   "No carrier invoice fits that search. Clear it to see the list again.": "没有承运商发票匹配该搜索条件。清除后即可重新查看列表。",
   "No carrier link": "未关联承运商",
-  "No invoices yet": "尚无发票",
   "No match fits the search and chips. Widen them, or clear them to see everything open.": "没有比对结果符合搜索条件与筛选标签。请放宽条件，或清除后查看所有未结项目。",
   "No matches yet": "尚无比对结果",
   "Nothing needs attention": "没有需要处理的项目",

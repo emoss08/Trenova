@@ -19,6 +19,7 @@
   "Journal submitted for approval": "分录已送审批准",
   "Journal {0}": "分录 {0}",
   "New manual journal": "新增手工分录",
+  "No manual journals yet": "尚无手工日记账",
   "Rejection reason...": "拒绝原因...",
   "Request #": "申请编号",
   "Requested fiscal year. The posting period is resolved from the accounting date.": "所要求的会计年度。过账期间会依会计日期判定。",

@@ -90,6 +90,7 @@
   "Never auto-approve": "No aprobar automáticamente nunca",
   "Never convert": "No convertir nunca",
   "Never require": "No exigir nunca",
+  "No detention policies yet": "Aún no hay políticas de demoras",
   "No start date": "Sin fecha de inicio",
   "No stops matched this policy in the selected window.": "Ninguna parada coincidió con esta política en la ventana seleccionada.",
   "No tiers yet. A ladder must start at minute 0 of billable detention and run contiguously; the final rung may be open-ended.": "Todavía no hay tramos. Una escala debe empezar en el minuto 0 de demoras facturables y ser continua; el último escalón puede quedar abierto.",

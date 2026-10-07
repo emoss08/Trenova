@@ -78,6 +78,7 @@ export default function Table() {
     <>
       <DataTable<TrailerRow>
         name="Trailer"
+        emptyTitle={t("No trailers yet")}
         queryKey="trailer-list"
         graphql={equipmentTableGraphQLConfigs.trailer}
         resource={Resource.Trailer}

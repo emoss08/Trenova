@@ -306,6 +306,7 @@ export default function FormulaTemplatesDataTable() {
     <>
       <DataTable<FormulaTemplateRow>
         name="Formula Template"
+        emptyTitle={t("No formula templates yet")}
         queryKey="formula-template-list"
         graphql={formulaTemplateTableGraphQLConfig}
         columns={columns}

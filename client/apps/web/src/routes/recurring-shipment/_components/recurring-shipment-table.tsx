@@ -97,6 +97,7 @@ export default function RecurringShipmentTable() {
     <>
       <DataTable<RecurringShipmentRow>
         name="Recurring Shipment"
+        emptyTitle={t("No recurring shipments yet")}
         queryKey="recurring-shipment-list"
         graphql={recurringShipmentTableGraphQLConfig}
         resource={Resource.RecurringShipment}

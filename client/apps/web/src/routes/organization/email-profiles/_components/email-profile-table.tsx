@@ -128,6 +128,7 @@ export default function EmailProfileTable() {
     <>
       <DataTable<EmailProfile>
         name="Email Profile"
+        emptyTitle={t("No email profiles yet")}
         queryKey={emailProfileQueryKey}
         graphql={emailProfileTableGraphQLConfig}
         resource={Resource.EmailProfile}

@@ -4,11 +4,16 @@ import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import type { AuditEntryRow } from "@/lib/graphql/audit-log-table";
 import { Resource } from "@trenova/shared/types/permission";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { auditOperationFilterOptions, operationLabel, resourceLabel } from "./audit-log-formatters";
+import {
+  auditOperationFilterOptions,
+  operationLabel,
+  resourceLabel,
+  resourceSourceLabel,
+} from "./audit-log-formatters";
 
 const auditResourceFilterOptions = Object.values(Resource).map((value) => ({
   value,
-  label: resourceLabel(value),
+  label: resourceSourceLabel(value),
 }));
 
 export function getColumns(t: TranslateFn): ColumnDef<AuditEntryRow>[] {

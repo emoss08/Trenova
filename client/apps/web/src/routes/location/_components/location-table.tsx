@@ -63,6 +63,7 @@ export default function LocationTable() {
   return (
     <DataTable<LocationRow>
       name="Location"
+      emptyTitle={t("No locations yet")}
       queryKey="location-list"
       graphql={locationTableGraphQLConfig}
       resource={Resource.Location}

@@ -30,6 +30,7 @@
   "Max occurrences": "Ocurrencias máximas",
   "Next pickup": "Próxima recogida",
   "No days blocked": "No hay días bloqueados",
+  "No recurring shipments yet": "Aún no hay envíos recurrentes",
   "Nothing generated yet. Runs appear here as the schedule fires.": "Aún no se ha generado nada. Las ejecuciones aparecen aquí a medida que se dispara la programación.",
   "Occurrence times are interpreted here, so the schedule holds across daylight saving shifts.": "Las horas de las ocurrencias se interpretan aquí, de modo que la programación se mantiene a través de los cambios de horario de verano.",
   "Only Active series generate. Pause to hold the lane without losing its history.": "Solo generan las series activas. Haga una pausa para detener la ruta sin perder su historial.",

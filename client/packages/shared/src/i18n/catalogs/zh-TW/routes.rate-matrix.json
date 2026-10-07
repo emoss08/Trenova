@@ -18,6 +18,7 @@
   "Loading rates": "正在載入費率",
   "Match mode": "比對模式",
   "No axes yet. A matrix with no axes can never be looked up, so every lane pointing at it would quietly price nothing.": "尚無軸。沒有軸的矩陣永遠無法查找，因此所有指向它的路線都會悄悄算不出任何價格。",
+  "No rate matrices yet": "尚無費率矩陣",
   "Nothing prices this coordinate — a lane landing here rates at nothing": "此座標沒有任何定價 — 落在此處的路線算不出費率",
   "Origin zone": "起點區域",
   "Outside every band": "不在任何級距內",

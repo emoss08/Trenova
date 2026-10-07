@@ -27,6 +27,7 @@
   "Name and code identify the policy on worker records and reports.": "El nombre y el código identifican la política en las fichas de los trabajadores y en los informes.",
   "Negative floor": "Mínimo negativo",
   "New workers are enrolled in this policy from their hire date.": "Los trabajadores nuevos quedan sujetos a esta política desde su fecha de contratación.",
+  "No PTO policies yet": "Aún no hay políticas de PTO",
   "Off auto-approves requests and books the days immediately.": "Desactivado, aprueba automáticamente las solicitudes y reserva los días de inmediato.",
   "Off keeps balances informational — requests are never blocked.": "Desactivado, los saldos son solo informativos: las solicitudes nunca se bloquean.",
   "On for drivers who work seven-day schedules. Off counts only Monday–Friday against a request and skips observed holidays.": "Actívelo para conductores con horarios de siete días. Desactivado, solo cuenta de lunes a viernes en una solicitud y omite los días festivos observados.",

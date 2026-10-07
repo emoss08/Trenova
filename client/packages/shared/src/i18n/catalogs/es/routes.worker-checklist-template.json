@@ -12,6 +12,7 @@
   "Items are copied when a checklist starts": "Los elementos se copian cuando se inicia una lista de comprobación",
   "Lay out the steps a worker goes through when they join or leave, and who owns each one.": "Establezca los pasos por los que pasa un trabajador cuando se incorpora o se marcha, y quién es responsable de cada uno.",
   "Name and code identify the checklist; the trigger decides when it starts on its own.": "El nombre y el código identifican la lista de comprobación; el activador decide cuándo se inicia por sí sola.",
+  "No checklist templates yet": "Aún no hay plantillas de listas de verificación",
   "Onboarding and offboarding checklists that start automatically from a hire, rehire or termination — with who owns each step and when it is due.": "Listas de comprobación de incorporación y baja que se inician automáticamente a partir de una contratación, readmisión o baja, con el responsable de cada paso y su fecha de vencimiento.",
   "Onboarding completion marks the worker DQF-ready.": "Al completar la incorporación, el trabajador queda marcado como listo para el DQF.",
   "Only active templates can be deactivated.": "Solo se pueden desactivar las plantillas activas.",

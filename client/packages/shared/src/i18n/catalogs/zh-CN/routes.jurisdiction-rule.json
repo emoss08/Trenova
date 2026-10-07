@@ -18,6 +18,7 @@
   "Movement confined to daylight hours": "行驶仅限日间时段",
   "Movement restricted at weekends": "周末行驶受限",
   "Movement restricted on public holidays": "法定假日行驶受限",
+  "No jurisdiction rules yet": "尚无辖区规则",
   "No source recorded for these limits.": "这些限额未登记来源。",
   "Oversize and overweight limits per state. These limits are shared across every organization; record a carrier override to hold your own fleet to something stricter.": "各州的超限与超重限制。这些限制为所有组织共用；若要以更严格的标准要求自家车队，请记录承运商覆盖。",
   "Per mile fee": "每英里费用",
