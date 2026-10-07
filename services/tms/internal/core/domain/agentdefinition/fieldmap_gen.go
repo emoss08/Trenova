@@ -10,3 +10,10 @@ import "github.com/emoss08/trenova/pkg/buncolgen"
 func (e *Definition) GetStaticFieldMap() map[string]string {
 	return buncolgen.DefinitionFieldMap
 }
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DefinitionVersion].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.DefinitionVersionFieldMap] instead of parsing struct tags via reflection.
+func (e *DefinitionVersion) GetStaticFieldMap() map[string]string {
+	return buncolgen.DefinitionVersionFieldMap
+}

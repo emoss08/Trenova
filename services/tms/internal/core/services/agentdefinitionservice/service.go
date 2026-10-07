@@ -2,6 +2,7 @@ package agentdefinitionservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"slices"
 	"strings"
 
@@ -27,7 +28,9 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
+	DB           ports.DBConnection
 	Repo         repositories.AgentDefinitionRepository
+	Versions     repositories.AgentDefinitionVersionRepository
 	Tools        services.AgentToolRegistry
 	QueryTools   services.AgentQueryToolRegistry
 	Contexts     services.RuntimeContextBuilder
@@ -46,7 +49,9 @@ type Params struct {
 
 type Service struct {
 	l           *zap.Logger
+	db          ports.DBConnection
 	repo        repositories.AgentDefinitionRepository
+	versions    repositories.AgentDefinitionVersionRepository
 	tools       services.AgentToolRegistry
 	queryTools  services.AgentQueryToolRegistry
 	contexts    services.RuntimeContextBuilder
@@ -61,7 +66,9 @@ type Service struct {
 func New(p Params) services.AgentDefinitionService {
 	return &Service{
 		l:           p.Logger.Named("service.agentdefinition"),
+		db:          p.DB,
 		repo:        p.Repo,
+		versions:    p.Versions,
 		tools:       p.Tools,
 		queryTools:  p.QueryTools,
 		contexts:    p.Contexts,
@@ -129,12 +136,12 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	created, err := s.save(ctx, req, actor, func(saveCtx context.Context) (
+	created, err := s.save(ctx, req, actor, s.versioned(func(saveCtx context.Context) (
 		*agentdefinition.Definition,
 		error,
 	) {
 		return s.repo.Create(saveCtx, definition)
-	})
+	}, nil, actor))
 	if err != nil {
 		return nil, err
 	}
@@ -179,14 +186,19 @@ func (s *Service) Update(
 		}
 	}
 
-	saved, err := s.save(ctx, req, actor, func(saveCtx context.Context) (
+	saved, err := s.save(ctx, req, actor, s.versioned(func(saveCtx context.Context) (
 		*agentdefinition.Definition,
 		error,
 	) {
 		return s.repo.Update(saveCtx, &updated)
-	})
+	}, &previous, actor))
 	if err != nil {
-		return nil, err
+		return nil, s.editConflict(ctx, &conflictRequest{
+			tenantInfo: req.TenantInfo,
+			agentID:    req.ID,
+			loaded:     req.Version,
+			cause:      err,
+		})
 	}
 
 	if scheduleChanged(&previous, saved) || !typeutils.EqualPtr(previous.EndsAt, saved.EndsAt) ||
@@ -205,10 +217,10 @@ func (s *Service) save(
 	ctx context.Context,
 	req *services.SaveAgentDefinitionRequest,
 	actor *services.RequestActor,
-	write func(ctx context.Context) (*agentdefinition.Definition, error),
+	write saveFunc,
 ) (*agentdefinition.Definition, error) {
 	if req.Access == nil {
-		return write(ctx)
+		return s.inTransaction(ctx, write)
 	}
 	if s.access == nil {
 		return nil, errortypes.NewBusinessError(

@@ -58,9 +58,20 @@ func (s *Service) Patch(
 		}
 	}
 
-	saved, err := s.repo.Update(ctx, &updated)
+	loaded := updated.Version
+	saved, err := s.inTransaction(ctx, s.versioned(func(saveCtx context.Context) (
+		*agentdefinition.Definition,
+		error,
+	) {
+		return s.repo.Update(saveCtx, &updated)
+	}, &previous, actor))
 	if err != nil {
-		return nil, err
+		return nil, s.editConflict(ctx, &conflictRequest{
+			tenantInfo: req.TenantInfo,
+			agentID:    req.ID,
+			loaded:     loaded,
+			cause:      err,
+		})
 	}
 	if saved == nil {
 		return nil, errortypes.NewNotFoundError("Agent not found")

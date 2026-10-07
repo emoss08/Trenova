@@ -76,6 +76,11 @@ func (s *Sanitizer) ExtractParams(err error) map[string]string {
 	return nil
 }
 
+func (s *Sanitizer) ExtractConflict(err error) *errortypes.EditConflict {
+	conflict, _ := errortypes.EditConflictOf(err)
+	return conflict
+}
+
 func (s *Sanitizer) ExtractUsageStats(err error) any {
 	var conflictErr *errortypes.ConflictError
 	if errors.As(err, &conflictErr) {

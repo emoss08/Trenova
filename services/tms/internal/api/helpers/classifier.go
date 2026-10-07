@@ -47,6 +47,7 @@ func NewDefaultClassifier() *ChainClassifier {
 	return NewChainClassifier(
 		ClassifierFunc(classifyTimeout),
 		ClassifierFunc(classifyRequestTooLarge),
+		ClassifierFunc(classifyEditConflict),
 		ClassifierFunc(classifyValidation),
 		ClassifierFunc(classifyFormula),
 		ClassifierFunc(classifyBadRequest),
@@ -191,6 +192,13 @@ func classifyNotFound(err error) (ProblemType, bool) {
 func classifyRateLimit(err error) (ProblemType, bool) {
 	if errortypes.IsRateLimitError(err) {
 		return ProblemTypeRateLimit, true
+	}
+	return "", false
+}
+
+func classifyEditConflict(err error) (ProblemType, bool) {
+	if errortypes.IsEditConflictError(err) {
+		return ProblemTypeConflict, true
 	}
 	return "", false
 }

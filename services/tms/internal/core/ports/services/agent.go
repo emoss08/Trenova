@@ -316,7 +316,11 @@ type UpdateAgentControlRequest struct {
 	// PersonMonthlyMessages is absent to leave the allowance as it is.
 	PersonMonthlyMessages *int
 	LearningOff           *bool
-	TenantInfo            pagination.TenantInfo
+	// Version is the version the person loaded. When it is given and someone
+	// saved since, the update is refused with what they changed; absent, the
+	// update applies to whatever is there.
+	Version    *int64
+	TenantInfo pagination.TenantInfo
 }
 
 type AgentControlService interface {

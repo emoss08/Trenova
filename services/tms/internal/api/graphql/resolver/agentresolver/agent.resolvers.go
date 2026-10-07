@@ -485,6 +485,7 @@ func (r *MutationResolver) UpdateAgentControl(ctx context.Context, input gqlmode
 		AITrainingConsent:      input.AiTrainingConsent,
 		PersonMonthlyMessages:  input.PersonMonthlyMessages,
 		LearningOff:            input.LearningOff,
+		Version:                base.Int64Ptr(input.Version),
 		TenantInfo:             base.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 }

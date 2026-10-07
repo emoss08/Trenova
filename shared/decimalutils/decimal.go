@@ -15,3 +15,12 @@ func NullEqual(a, b decimal.NullDecimal) bool {
 
 	return a.Decimal.Equal(b.Decimal)
 }
+
+// PtrEqual compares two optional decimals by value; both absent is equal.
+func PtrEqual(a, b *decimal.Decimal) bool {
+	if a == nil || b == nil {
+		return a == nil && b == nil
+	}
+
+	return a.Equal(*b)
+}

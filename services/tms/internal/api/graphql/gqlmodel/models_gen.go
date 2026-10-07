@@ -390,7 +390,11 @@ type AgentControlInput struct {
 	// Absent leaves the per-person monthly allowance as it is; 0 is unlimited.
 	PersonMonthlyMessages *int `json:"personMonthlyMessages,omitempty"`
 	// Absent leaves whether agents learn from their work as it is.
-	LearningOff            *bool `json:"learningOff,omitempty"`
+	LearningOff *bool `json:"learningOff,omitempty"`
+	// The version the person loaded. When someone saved since, the update is
+	// refused with who saved, when and what they changed. Absent applies the
+	// update to whatever is there.
+	Version                *int  `json:"version,omitempty"`
 	BillingAgentEnabled    *bool `json:"billingAgentEnabled,omitempty"`
 	DecisionTimeoutSeconds *int  `json:"decisionTimeoutSeconds,omitempty"`
 }

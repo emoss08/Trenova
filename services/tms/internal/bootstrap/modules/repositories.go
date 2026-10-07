@@ -197,6 +197,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/servicefailurereasoncoderepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/servicefailurerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/servicetyperepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/settingversionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/settlementcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentadditionalchargerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentboardrepository"
@@ -375,6 +376,8 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	agentdecisionrepository.New,
 	agentcontrolrepository.New,
 	agentdefinitionrepository.New,
+	agentdefinitionrepository.NewVersionRepository,
+	settingversionrepository.New,
 	agentscorecardrepository.New,
 	agenttooltrustrepository.New,
 	conversationrepository.New,

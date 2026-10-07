@@ -2348,6 +2348,9 @@ models:
         resolver: true
       delegates:
         resolver: true
+  AgentDefinitionVersion:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentdefinition.DefinitionVersion
   AgentCapabilityMode:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AgentCapabilityMode

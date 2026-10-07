@@ -736,6 +736,12 @@ export type AgentControlInput = {
   /** Absent leaves the promotion threshold as it is; 1 to 1000 approvals. */
   promotionThreshold?: number | null | undefined;
   shadowMode: boolean;
+  /**
+   * The version the person loaded. When someone saved since, the update is
+   * refused with who saved, when and what they changed. Absent applies the
+   * update to whatever is there.
+   */
+  version?: number | null | undefined;
 };
 
 /** How sensitive a field an agent's tools may show. */

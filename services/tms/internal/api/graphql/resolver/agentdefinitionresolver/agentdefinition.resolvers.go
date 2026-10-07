@@ -328,3 +328,43 @@ func (r *QueryResolver) AgentCapabilities(ctx context.Context, agentID string) (
 		AgentID:    id,
 	}, actorutil.FromAuthContext(authCtx))
 }
+
+func (r *QueryResolver) AgentDefinitionVersions(ctx context.Context, agentID string, limit *int) ([]*agentdefinition.DefinitionVersion, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	definitionID, err := pulid.MustParse(agentID)
+	if err != nil {
+		return nil, err
+	}
+
+	req := &repositories.ListAgentDefinitionVersionsRequest{
+		TenantInfo:        base.TenantInfo(authCtx),
+		AgentDefinitionID: definitionID,
+	}
+	if limit != nil {
+		req.Limit = *limit
+	}
+
+	return r.AgentDefinitionService.ListVersions(ctx, req)
+}
+
+func (r *QueryResolver) AgentDefinitionVersionDraft(ctx context.Context, agentID string, version int) (*agentdefinition.Definition, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	definitionID, err := pulid.MustParse(agentID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AgentDefinitionService.RestoreVersion(ctx, &repositories.GetAgentDefinitionVersionRequest{
+		TenantInfo:        base.TenantInfo(authCtx),
+		AgentDefinitionID: definitionID,
+		Version:           int64(version),
+	})
+}

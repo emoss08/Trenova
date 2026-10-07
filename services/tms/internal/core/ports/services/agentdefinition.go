@@ -169,6 +169,14 @@ type AgentDefinitionService interface {
 		req repositories.DeleteAgentDefinitionRequest,
 		actor *RequestActor,
 	) error
+	ListVersions(
+		ctx context.Context,
+		req *repositories.ListAgentDefinitionVersionsRequest,
+	) ([]*agentdefinition.DefinitionVersion, error)
+	RestoreVersion(
+		ctx context.Context,
+		req *repositories.GetAgentDefinitionVersionRequest,
+	) (*agentdefinition.Definition, error)
 	Templates() []AgentTemplateDescriptor
 	ToolCatalog(ctx context.Context, tenantInfo pagination.TenantInfo) ([]ToolCatalogEntry, error)
 	EventKinds() []agent.EventDescriptor

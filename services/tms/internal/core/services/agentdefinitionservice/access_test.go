@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -51,7 +53,7 @@ func TestSave_SetsAccessOnlyWhenAsked(t *testing.T) {
 	t.Parallel()
 
 	access := &recordingAccess{}
-	svc := &Service{l: zap.NewNop(), access: access}
+	svc := &Service{l: zap.NewNop(), db: dbtest.NopConnection{}, access: access}
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
 	saved, err := svc.save(t.Context(), &serviceports.SaveAgentDefinitionRequest{
@@ -95,7 +97,7 @@ func TestSave_AnAccessRefusalRefusesTheSave(t *testing.T) {
 func TestSave_WithoutTheAccessServiceAccessIsRefused(t *testing.T) {
 	t.Parallel()
 
-	svc := &Service{l: zap.NewNop()}
+	svc := &Service{l: zap.NewNop(), db: dbtest.NopConnection{}}
 
 	_, err := svc.save(t.Context(), &serviceports.SaveAgentDefinitionRequest{
 		Access: &serviceports.AgentAccessWrite{Mode: agentdefinition.AccessEveryone},

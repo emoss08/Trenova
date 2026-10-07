@@ -89,6 +89,7 @@ func (h *ErrorHandler) HandleError(c *gin.Context, err error) {
 		WithTraceID(requestID).
 		WithErrors(validationErrors).
 		WithUsageStats(usageStats).
+		WithConflict(h.sanitizer.ExtractConflict(err)).
 		WithParams(params).
 		Build()
 

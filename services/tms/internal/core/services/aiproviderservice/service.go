@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
@@ -24,7 +25,9 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
+	DB           ports.DBConnection
 	Repo         repositories.AIProviderRepository
+	Versions     repositories.SettingVersionRepository
 	Encryption   *encryptionservice.Service
 	Prober       *Prober
 	AuditService services.AuditService
@@ -44,7 +47,9 @@ type EndpointProber interface {
 
 type Service struct {
 	l          *zap.Logger
+	db         ports.DBConnection
 	repo       repositories.AIProviderRepository
+	versions   repositories.SettingVersionRepository
 	encryption *encryptionservice.Service
 	prober     EndpointProber
 	audit      services.AuditService
@@ -65,7 +70,9 @@ func New(p Params) *Service {
 
 	return &Service{
 		l:          p.Logger.Named("service.aiprovider"),
+		db:         p.DB,
 		repo:       p.Repo,
+		versions:   p.Versions,
 		encryption: p.Encryption,
 		prober:     p.Prober,
 		audit:      p.AuditService,
@@ -137,7 +144,9 @@ func (s *Service) Create(
 		return nil, multiErr
 	}
 
-	created, err := s.repo.Create(ctx, provider)
+	created, err := s.save(ctx, func(txCtx context.Context) (*aiprovider.Provider, error) {
+		return s.repo.Create(txCtx, provider)
+	}, actor)
 	if err != nil {
 		return nil, err
 	}
@@ -187,9 +196,16 @@ func (s *Service) Update(
 		return nil, multiErr
 	}
 
-	saved, err := s.repo.Update(ctx, &updated)
+	saved, err := s.save(ctx, func(txCtx context.Context) (*aiprovider.Provider, error) {
+		return s.repo.Update(txCtx, &updated)
+	}, actor)
 	if err != nil {
-		return nil, err
+		return nil, s.explainConflict(ctx, &conflictRequest{
+			tenantInfo: req.TenantInfo,
+			providerID: req.ID,
+			loaded:     req.Version,
+			cause:      err,
+		})
 	}
 
 	s.logAudit(&auditParams{

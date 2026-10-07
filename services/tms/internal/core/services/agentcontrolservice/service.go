@@ -3,6 +3,11 @@ package agentcontrolservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/settingversion"
+	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/emoss08/trenova/internal/core/services/editconflict"
+	"github.com/uptrace/bun"
+
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -23,14 +28,18 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
+	DB           ports.DBConnection
 	Repo         repositories.AgentControlRepository
+	Versions     repositories.SettingVersionRepository
 	Definitions  repositories.AgentDefinitionRepository
 	AuditService services.AuditService
 }
 
 type Service struct {
 	l           *zap.Logger
+	db          ports.DBConnection
 	repo        repositories.AgentControlRepository
+	versions    repositories.SettingVersionRepository
 	definitions repositories.AgentDefinitionRepository
 	audit       services.AuditService
 	now         func() int64
@@ -39,7 +48,9 @@ type Service struct {
 func New(p Params) services.AgentControlService {
 	return &Service{
 		l:           p.Logger.Named("service.agentcontrol"),
+		db:          p.DB,
 		repo:        p.Repo,
+		versions:    p.Versions,
 		definitions: p.Definitions,
 		audit:       p.AuditService,
 		now:         timeutils.NowUnix,
@@ -75,6 +86,11 @@ func (s *Service) Update(
 	}
 
 	previous := *control
+	loaded := control.Version
+	if req.Version != nil {
+		loaded = *req.Version
+		control.Version = loaded
+	}
 	control.ShadowMode = req.ShadowMode
 	if req.EarnedAutonomy != nil {
 		control.EarnedAutonomy = *req.EarnedAutonomy
@@ -96,9 +112,9 @@ func (s *Service) Update(
 		return nil, me
 	}
 
-	updated, err := s.repo.Update(ctx, control)
+	updated, err := s.save(ctx, control, actor)
 	if err != nil {
-		return nil, err
+		return nil, s.explainConflict(ctx, req.TenantInfo, loaded, err)
 	}
 
 	definition, err := s.applyLegacyUpdate(ctx, req)
@@ -125,6 +141,61 @@ func (s *Service) Update(
 	}
 
 	return updated, nil
+}
+
+// save writes the controls and the version they become together.
+func (s *Service) save(
+	ctx context.Context,
+	control *tenant.AgentControl,
+	actor *services.RequestActor,
+) (*tenant.AgentControl, error) {
+	var updated *tenant.AgentControl
+	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		var txErr error
+		updated, txErr = s.repo.Update(txCtx, control)
+		if txErr != nil {
+			return txErr
+		}
+		return editconflict.Record(txCtx, s.versions, &editconflict.RecordRequest{
+			TenantInfo: pagination.TenantInfo{OrgID: updated.OrganizationID, BuID: updated.BusinessUnitID},
+			Kind:       settingversion.KindAgentControl,
+			SubjectID:  updated.ID,
+			Version:    updated.Version,
+			Snapshot:   updated,
+			AuthorID:   actor.AuditActor().UserID,
+		})
+	})
+	if err != nil {
+		return nil, err
+	}
+	return updated, nil
+}
+
+func (s *Service) explainConflict(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	loaded int64,
+	cause error,
+) error {
+	if !errortypes.IsVersionMismatchError(cause) {
+		return cause
+	}
+	current, err := s.repo.GetOrCreate(ctx, tenantInfo)
+	if err != nil {
+		return cause
+	}
+
+	return editconflict.Explain(ctx, s.versions, s.l, &editconflict.ExplainRequest[tenant.AgentControl]{
+		TenantInfo:     tenantInfo,
+		Kind:           settingversion.KindAgentControl,
+		SubjectID:      current.ID,
+		Loaded:         loaded,
+		Current:        current,
+		CurrentVersion: current.Version,
+		UpdatedAt:      current.UpdatedAt,
+		Rules:          tenant.AgentControlChangeRules,
+		Cause:          cause,
+	})
 }
 
 func (s *Service) applyTrainingConsent(

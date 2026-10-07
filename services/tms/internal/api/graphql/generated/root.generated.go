@@ -2119,6 +2119,8 @@ type QueryResolver interface {
 	AgentControl(ctx context.Context) (*tenant.AgentControl, error)
 	AgentDefinitions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentDefinitionConnection, error)
 	AgentDefinition(ctx context.Context, id string) (*agentdefinition.Definition, error)
+	AgentDefinitionVersions(ctx context.Context, agentID string, limit *int) ([]*agentdefinition.DefinitionVersion, error)
+	AgentDefinitionVersionDraft(ctx context.Context, agentID string, version int) (*agentdefinition.Definition, error)
 	MyAgents(ctx context.Context, input gqlmodel.MyAgentsInput) (*gqlmodel.MyAgentConnection, error)
 	SuggestedAgentAudience(ctx context.Context, agentID string) (*gqlmodel.AgentAudienceSuggestion, error)
 	AgentAccessPreview(ctx context.Context, input gqlmodel.AgentAccessPreviewInput) (*gqlmodel.AgentAccessPreview, error)
@@ -5814,6 +5816,12 @@ input AgentControlInput {
   personMonthlyMessages: Int
   "Absent leaves whether agents learn from their work as it is."
   learningOff: Boolean
+  """
+  The version the person loaded. When someone saved since, the update is
+  refused with who saved, when and what they changed. Absent applies the
+  update to whatever is there.
+  """
+  version: Int
   billingAgentEnabled: Boolean
     @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   decisionTimeoutSeconds: Int
@@ -6200,9 +6208,32 @@ type AgentAccessPreview {
   sensitiveTools: [String!]!
 }
 
+"""
+An agent as it stood after one save. Each save of an agent becomes a version,
+written with the save, so the history never names a save that did not happen.
+"""
+type AgentDefinitionVersion {
+  id: ID!
+  "The agent's version number after this save."
+  version: Int!
+  "What this save changed, in the builder's words, or Created."
+  summary: String!
+  "Who saved it. Absent for a save made by the system or by a removed user."
+  author: User
+  createdAt: Timestamp!
+}
+
 extend type Query {
   agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
   agentDefinition(id: ID!): AgentDefinition
+  "An agent's saves, newest first. At most 50."
+  agentDefinitionVersions(agentId: ID!, limit: Int): [AgentDefinitionVersion!]!
+  """
+  An earlier version of an agent as a draft of the agent as it is now: that
+  version's settings on the current version number, so saving the draft
+  replaces the agent the way any edit does. Saves nothing.
+  """
+  agentDefinitionVersionDraft(agentId: ID!, version: Int!): AgentDefinition!
   "The chat agents the caller may use, enabled and by name."
   myAgents(input: MyAgentsInput!): MyAgentConnection!
   "Each role's coverage of an agent's tools, for choosing who may use it."

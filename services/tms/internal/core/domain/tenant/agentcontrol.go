@@ -3,6 +3,7 @@ package tenant
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/editchange"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -139,4 +140,34 @@ func (ac *AgentControl) GetOrganizationID() pulid.ID {
 
 func (ac *AgentControl) GetBusinessUnitID() pulid.ID {
 	return ac.BusinessUnitID
+}
+
+// AgentControlChangeRules name, in the organization-wide editor's words, the
+// settings a person edits there.
+var AgentControlChangeRules = []editchange.Rule[AgentControl]{
+	{
+		Field: "shadowMode", Label: "Pause every agent",
+		Same: func(a, b *AgentControl) bool { return a.ShadowMode == b.ShadowMode },
+	},
+	{
+		Field: "earnedAutonomy", Label: "Earned autonomy",
+		Same: func(a, b *AgentControl) bool {
+			return a.EarnedAutonomy == b.EarnedAutonomy &&
+				a.PromotionThreshold == b.PromotionThreshold
+		},
+	},
+	{
+		Field: "learningOff", Label: "Learn from their work",
+		Same: func(a, b *AgentControl) bool { return a.LearningOff == b.LearningOff },
+	},
+	{
+		Field: "personMonthlyMessages", Label: "Monthly allowance",
+		Same: func(a, b *AgentControl) bool {
+			return a.PersonMonthlyMessages == b.PersonMonthlyMessages
+		},
+	},
+	{
+		Field: "aiTrainingConsent", Label: "Share corrections",
+		Same: func(a, b *AgentControl) bool { return a.AITrainingConsent == b.AITrainingConsent },
+	},
 }

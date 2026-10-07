@@ -4,6 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/settingversion"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/pkg/dberror"
+
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -36,8 +40,34 @@ func (f *fakeControls) Update(
 	_ context.Context,
 	entity *tenant.AgentControl,
 ) (*tenant.AgentControl, error) {
+	if entity.Version != f.control.Version {
+		return nil, dberror.CreateVersionMismatchError("AgentControl", entity.ID.String())
+	}
+	entity.Version++
 	f.updated = entity
 	return entity, nil
+}
+
+type settingVersions struct {
+	created []*settingversion.SettingVersion
+}
+
+func (v *settingVersions) Create(_ context.Context, version *settingversion.SettingVersion) error {
+	v.created = append(v.created, version)
+	return nil
+}
+
+func (v *settingVersions) LatestAt(
+	_ context.Context,
+	req *repositories.GetSettingVersionAtRequest,
+) (*settingversion.SettingVersion, error) {
+	var best *settingversion.SettingVersion
+	for _, version := range v.created {
+		if version.Version <= req.Version && (best == nil || version.Version > best.Version) {
+			best = version
+		}
+	}
+	return best, nil
 }
 
 type absentDefinitions struct {
@@ -55,7 +85,9 @@ func newTestService(control *tenant.AgentControl) (*Service, *fakeControls) {
 	controls := &fakeControls{control: control}
 	return &Service{
 		l:           zap.NewNop(),
+		db:          dbtest.NopConnection{},
 		repo:        controls,
+		versions:    &settingVersions{},
 		definitions: absentDefinitions{},
 		audit:       &mocks.NoopAuditService{},
 		now:         func() int64 { return consentChangedAt },
@@ -196,3 +228,63 @@ func TestAgentControlAuditComment(t *testing.T) {
 	assert.Equal(t, "Agent control updated",
 		agentControlAuditComment(false, &tenant.AgentControl{AITrainingConsent: true}))
 }
+
+func TestUpdateRecordsTheVersionTheControlsBecome(t *testing.T) {
+	t.Parallel()
+
+	svc, _ := newTestService(defaultControl())
+	author := pulid.MustNew("usr_")
+
+	updated, err := svc.Update(t.Context(), &services.UpdateAgentControlRequest{
+		ShadowMode: true,
+		TenantInfo: pagination.TenantInfo{OrgID: "org_test", BuID: "bu_test"},
+	}, userActor(author))
+
+	require.NoError(t, err)
+	versions := svc.versions.(*settingVersions).created
+	require.Len(t, versions, 1)
+	assert.Equal(t, settingversion.KindAgentControl, versions[0].Kind)
+	assert.Equal(t, updated.Version, versions[0].Version)
+	assert.Equal(t, author, *versions[0].AuthorID)
+	assert.Equal(t, true, versions[0].Snapshot["shadowMode"])
+}
+
+func TestUpdateOnAStaleVersionSaysWhoChangedWhat(t *testing.T) {
+	t.Parallel()
+
+	svc, _ := newTestService(defaultControl())
+	tenantInfo := pagination.TenantInfo{OrgID: "org_test", BuID: "bu_test"}
+	_, err := svc.Update(t.Context(), &services.UpdateAgentControlRequest{
+		ShadowMode: false,
+		Version:    int64Ptr(0),
+		TenantInfo: tenantInfo,
+	}, userActor(pulid.MustNew("usr_")))
+	require.NoError(t, err)
+
+	svc.repo.(*fakeControls).control.Version = 1
+	svc.repo.(*fakeControls).control.LearningOff = true
+	versions := svc.versions.(*settingVersions)
+	versions.created = append(versions.created, &settingversion.SettingVersion{
+		Kind:     settingversion.KindAgentControl,
+		Version:  1,
+		Snapshot: map[string]any{"learningOff": true},
+		Author:   &tenant.User{Name: "Sarah Alvarez"},
+	})
+	versions.created[0].Version = 0
+
+	_, err = svc.Update(t.Context(), &services.UpdateAgentControlRequest{
+		ShadowMode: true,
+		Version:    int64Ptr(0),
+		TenantInfo: tenantInfo,
+	}, userActor(pulid.MustNew("usr_")))
+
+	edit, ok := errortypes.EditConflictOf(err)
+	require.True(t, ok)
+	assert.Equal(t, int64(1), edit.Version)
+	assert.Equal(t, "Sarah Alvarez", edit.UpdatedByName)
+	assert.Equal(t, []errortypes.EditConflictChange{
+		{Field: "learningOff", Label: "Learn from their work"},
+	}, edit.Changes)
+}
+
+func int64Ptr(v int64) *int64 { return &v }

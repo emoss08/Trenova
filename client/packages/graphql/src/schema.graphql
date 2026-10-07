@@ -2637,6 +2637,12 @@ input AgentControlInput {
   """Absent leaves the promotion threshold as it is; 1 to 1000 approvals."""
   promotionThreshold: Int
   shadowMode: Boolean!
+  """
+  The version the person loaded. When someone saved since, the update is
+  refused with who saved, when and what they changed. Absent applies the
+  update to whatever is there.
+  """
+  version: Int
 }
 
 """How sensitive a field an agent's tools may show."""
@@ -2824,6 +2830,23 @@ type AgentDefinitionConnection {
 type AgentDefinitionEdge {
   cursor: String!
   node: AgentDefinition!
+}
+
+"""
+An agent as it stood after one save. Each save of an agent becomes a version,
+written with the save, so the history never names a save that did not happen.
+"""
+type AgentDefinitionVersion {
+  """
+  Who saved it. Absent for a save made by the system or by a removed user.
+  """
+  author: User
+  createdAt: Timestamp!
+  id: ID!
+  """What this save changed, in the builder's words, or Created."""
+  summary: String!
+  """The agent's version number after this save."""
+  version: Int!
 }
 
 input AgentDelegateTopicInput {
@@ -18975,6 +18998,14 @@ type Query {
   agentCapabilities(agentId: ID!): AgentCapabilities!
   agentControl: AgentControl!
   agentDefinition(id: ID!): AgentDefinition
+  """
+  An earlier version of an agent as a draft of the agent as it is now: that
+  version's settings on the current version number, so saving the draft
+  replaces the agent the way any edit does. Saves nothing.
+  """
+  agentDefinitionVersionDraft(agentId: ID!, version: Int!): AgentDefinition!
+  """An agent's saves, newest first. At most 50."""
+  agentDefinitionVersions(agentId: ID!, limit: Int): [AgentDefinitionVersion!]!
   agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
   agentEvalCase(id: ID!): AgentEvalCase
   agentEvalCases(input: DataTableConnectionInput!): AgentEvalCaseConnection!

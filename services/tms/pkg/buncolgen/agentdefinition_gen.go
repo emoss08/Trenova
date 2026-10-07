@@ -553,3 +553,180 @@ var DefinitionFilter = struct {
 		return NewFieldFilter("updatedAt", op, value)
 	},
 }
+
+// ---------------------------------------------------------------------------
+// DefinitionVersion — table "agent_definition_versions", alias "agdv"
+// ---------------------------------------------------------------------------
+
+// DefinitionVersionTable holds the table name, alias, and primary key columns
+// for the "agent_definition_versions" table. The alias "agdv" is used in all generated
+// SQL fragments (e.g. "agdv.id = ?").
+var DefinitionVersionTable = TableInfo{
+	Name:       "agent_definition_versions",
+	Alias:      "agdv",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// DefinitionVersionColumns provides type-safe column references for the "agent_definition_versions" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(DefinitionVersionColumns.ID.String())
+//	// SELECT agdv.id FROM agent_definition_versions AS agdv
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(DefinitionVersionColumns.ID.Eq(), id)           // WHERE agdv.id = ?
+//	q.Order(DefinitionVersionColumns.CreatedAt.OrderDesc())  // ORDER BY agdv.created_at DESC
+var DefinitionVersionColumns = struct {
+	ID                Column // "id" → qualified: "agdv.id"
+	BusinessUnitID    Column // "business_unit_id" → qualified: "agdv.business_unit_id"
+	OrganizationID    Column // "organization_id" → qualified: "agdv.organization_id"
+	AgentDefinitionID Column // "agent_definition_id" → qualified: "agdv.agent_definition_id"
+	Version           Column // "version" → qualified: "agdv.version"
+	Snapshot          Column // "snapshot" → qualified: "agdv.snapshot"
+	AuthorID          Column // "author_id" → qualified: "agdv.author_id"
+	Summary           Column // "summary" → qualified: "agdv.summary"
+	CreatedAt         Column // "created_at" → qualified: "agdv.created_at"
+}{
+	ID:                NewColumn("id", "agdv"),
+	BusinessUnitID:    NewColumn("business_unit_id", "agdv"),
+	OrganizationID:    NewColumn("organization_id", "agdv"),
+	AgentDefinitionID: NewColumn("agent_definition_id", "agdv"),
+	Version:           NewColumn("version", "agdv"),
+	Snapshot:          NewColumn("snapshot", "agdv"),
+	AuthorID:          NewColumn("author_id", "agdv"),
+	Summary:           NewColumn("summary", "agdv"),
+	CreatedAt:         NewColumn("created_at", "agdv"),
+}
+
+// DefinitionVersionFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by DefinitionVersion.GetStaticFieldMap().
+var DefinitionVersionFieldMap = map[string]string{
+	"id":                "id",
+	"businessUnitId":    "business_unit_id",
+	"organizationId":    "organization_id",
+	"agentDefinitionId": "agent_definition_id",
+	"version":           "version",
+	"snapshot":          "snapshot",
+	"authorId":          "author_id",
+	"summary":           "summary",
+	"createdAt":         "created_at",
+}
+
+// DefinitionVersionInsertableColumns lists column names suitable for INSERT statements on the "agent_definition_versions" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var DefinitionVersionInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"agent_definition_id",
+	"version",
+	"snapshot",
+	"author_id",
+	"summary",
+	"created_at",
+}
+
+// DefinitionVersionRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(DefinitionVersionRelations.Author)
+//	// Bun eager-loads the Author association via a separate query
+var DefinitionVersionRelations = struct {
+	Author string
+}{
+	Author: "Author",
+}
+
+// DefinitionVersionScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE agdv.organization_id = ? AND agdv.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.DefinitionVersionScopeTenant(sq, ti).
+//		Where(buncolgen.DefinitionVersionColumns.ID.Eq(), id)
+func DefinitionVersionScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, DefinitionVersionColumns.OrganizationID, DefinitionVersionColumns.BusinessUnitID, ti)
+}
+
+// DefinitionVersionScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.DefinitionVersionScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.DefinitionVersionColumns.ID.In(), bun.List(ids))
+//	})
+func DefinitionVersionScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, DefinitionVersionColumns.OrganizationID, DefinitionVersionColumns.BusinessUnitID, ti)
+}
+
+// DefinitionVersionScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.DefinitionVersionScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.DefinitionVersionColumns.ID.Eq(), id)
+//	})
+func DefinitionVersionScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, DefinitionVersionColumns.OrganizationID, DefinitionVersionColumns.BusinessUnitID, ti)
+}
+
+// DefinitionVersionApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.DefinitionVersionApplyTenant(tenantInfo))
+func DefinitionVersionApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(DefinitionVersionColumns.OrganizationID, DefinitionVersionColumns.BusinessUnitID, ti)
+}
+
+// DefinitionVersionFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "agent_definition_versions" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	DefinitionVersionFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var DefinitionVersionFilter = struct {
+	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	AgentDefinitionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
+	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	Snapshot          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "snapshot" → DB: "snapshot"
+	AuthorID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "authorId" → DB: "author_id"
+	Summary           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "summary" → DB: "summary"
+	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	AgentDefinitionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("agentDefinitionId", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	Snapshot: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("snapshot", op, value)
+	},
+	AuthorID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("authorId", op, value)
+	},
+	Summary: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("summary", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+}
