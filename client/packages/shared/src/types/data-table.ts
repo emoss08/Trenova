@@ -214,9 +214,26 @@ export type DataTableGroup = {
  * drops collapsed groups with a `notin` filter, so a collapsed group costs no
  * rows. Group totals come from the caller, who can count past the page.
  */
+/** The filters that drop collapsed groups from the server's pages. */
+export type DataTableGroupScope = {
+  fieldFilters: FieldFilter[];
+  filterGroups: FilterGroup[];
+};
+
 export type DataTableGrouping<TData> = {
   field: string;
   direction?: SortDirection;
+  /**
+   * Sorted right after the group field, ahead of the person's own sort, so
+   * rows whose group field ties but whose key differs (two customers with one
+   * name) never interleave.
+   */
+  tieBreakers?: SortField[];
+  /**
+   * How collapsed groups are dropped when a key is not the field's own value,
+   * such as the day of a timestamp. Defaults to `field notin keys`.
+   */
+  collapsedScope?: (keys: readonly DataTableGroupKey[]) => DataTableGroupScope;
   groups: DataTableGroup[];
   getGroupKey: (row: TData) => DataTableGroupKey;
   collapsedKeys: readonly DataTableGroupKey[];

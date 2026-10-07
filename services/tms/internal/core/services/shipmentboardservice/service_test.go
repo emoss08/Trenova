@@ -21,8 +21,19 @@ import (
 type stubBoardRepo struct {
 	stageRows   []*repositories.ShipmentStageSummaryRow
 	counts      map[shipment.QuickFilter]int
+	groupRows   []*repositories.ShipmentBoardGroupRow
 	lastScope   *repositories.ShipmentBoardScope
 	lastFilters []shipment.QuickFilterSpec
+	lastGroups  *repositories.SummarizeShipmentBoardGroupsRequest
+}
+
+func (s *stubBoardRepo) GroupSummary(
+	_ context.Context,
+	req *repositories.SummarizeShipmentBoardGroupsRequest,
+) ([]*repositories.ShipmentBoardGroupRow, error) {
+	s.lastScope = req.Scope
+	s.lastGroups = req
+	return s.groupRows, nil
 }
 
 func (s *stubBoardRepo) StageSummary(
@@ -202,4 +213,44 @@ func TestQuickFilterCountsCountsEveryCountableFilter(t *testing.T) {
 	assert.True(t, basis.last.Margin)
 	assert.True(t, basis.last.Detention)
 	assert.Len(t, repo.lastFilters, len(shipment.CountableQuickFilters()))
+}
+
+func TestGroupSummaryCountsGroupsInTheBoardsScopeAndZone(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubBoardRepo{groupRows: []*repositories.ShipmentBoardGroupRow{
+		{Key: "2026-10-07", Count: 5, Revenue: decimal.NewFromInt(4200)},
+		{Key: "", Count: 1, Revenue: decimal.Zero},
+	}}
+	basis := &stubBasis{}
+	svc := NewWithDependencies(&Dependencies{Repo: repo, QuickFilters: basis})
+
+	req := scopeRequest(shipment.Quick(shipment.QuickFilterLate))
+	groups, err := svc.GroupSummary(t.Context(), &services.SummarizeShipmentBoardGroupsRequest{
+		Scope:   req,
+		GroupBy: shipment.BoardGroupingDeliveryDate,
+	})
+	require.NoError(t, err)
+	require.Len(t, groups, 2)
+	assert.Equal(t, "2026-10-07", groups[0].Key)
+	assert.Equal(t, 5, groups[0].Count)
+	assert.True(t, groups[0].Revenue.Equal(decimal.NewFromInt(4200)))
+	assert.Empty(t, groups[1].Key)
+	assert.Equal(t, shipment.BoardGroupingDeliveryDate, repo.lastGroups.GroupBy)
+	assert.Equal(t, req.Timezone, repo.lastGroups.Timezone)
+	assert.Len(t, repo.lastScope.Options.QuickFilters, 1)
+}
+
+func TestGroupSummaryRefusesAGroupingTheBoardDoesNotOffer(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubBoardRepo{}
+	svc := NewWithDependencies(&Dependencies{Repo: repo, QuickFilters: &stubBasis{}})
+
+	_, err := svc.GroupSummary(t.Context(), &services.SummarizeShipmentBoardGroupsRequest{
+		Scope:   scopeRequest(),
+		GroupBy: shipment.BoardGrouping("Stage"),
+	})
+	require.Error(t, err)
+	assert.Nil(t, repo.lastGroups)
 }

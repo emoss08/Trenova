@@ -1,6 +1,7 @@
 import {
   getCapacityUnitMatchesGraphQL,
   getShipmentBoardCapabilitiesGraphQL,
+  getShipmentBoardGroupsGraphQL,
   getShipmentBriefingGraphQL,
   getShipmentCapacityGraphQL,
   getShipmentCoverageSuggestionsGraphQL,
@@ -13,6 +14,7 @@ import { fetchGraphQLData } from "@/hooks/data-table/use-data-table-query";
 import { shipmentBoardTableGraphQLConfig } from "@/lib/graphql/shipment";
 import type {
   CapacityUnitKind,
+  ShipmentBoardGrouping,
   ShipmentBoardScopeInput,
   ShipmentQuickFilter,
 } from "@trenova/graphql/generated/graphql";
@@ -27,6 +29,10 @@ export const shipmentBoard = createQueryKeys("shipmentBoard", {
   stageSummary: (input: ShipmentBoardScopeInput) => ({
     queryKey: ["stage-summary", input],
     queryFn: ({ signal }) => getShipmentStageSummaryGraphQL(input, { signal }),
+  }),
+  groups: (input: ShipmentBoardScopeInput, groupBy: ShipmentBoardGrouping) => ({
+    queryKey: ["groups", groupBy, input],
+    queryFn: ({ signal }) => getShipmentBoardGroupsGraphQL(input, groupBy, { signal }),
   }),
   quickFilterCounts: (input: ShipmentBoardScopeInput) => ({
     queryKey: ["quick-filter-counts", input],

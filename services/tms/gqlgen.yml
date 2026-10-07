@@ -3632,6 +3632,9 @@ models:
   ShipmentQuickFilter:
     model:
       - github.com/emoss08/trenova/internal/core/domain/shipment.QuickFilter
+  ShipmentBoardGrouping:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/shipment.BoardGrouping
   EtaVerdict:
     model:
       - github.com/emoss08/trenova/internal/core/services/shipmenttracking.Verdict

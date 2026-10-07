@@ -43,6 +43,25 @@ type ShipmentStageSummaryReader interface {
 	) ([]*ShipmentStageSummary, error)
 }
 
+type ShipmentBoardGroup struct {
+	Key     string
+	Label   string
+	Count   int
+	Revenue decimal.Decimal
+}
+
+type SummarizeShipmentBoardGroupsRequest struct {
+	Scope   *ShipmentBoardScopeRequest
+	GroupBy shipment.BoardGrouping
+}
+
+type ShipmentBoardGroupSummarizer interface {
+	GroupSummary(
+		ctx context.Context,
+		req *SummarizeShipmentBoardGroupsRequest,
+	) ([]*ShipmentBoardGroup, error)
+}
+
 type ShipmentQuickFilterCount struct {
 	Filter shipment.QuickFilter
 	Count  int

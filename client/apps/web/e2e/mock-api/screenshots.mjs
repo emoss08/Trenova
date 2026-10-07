@@ -29,6 +29,10 @@ const SHOTS = [
   { name: "quick-filter-chip", scenario: {}, act: pickQuickFilter },
   { name: "lane-pinned", scenario: {}, act: scrollTableSideways },
   { name: "group-collapsed", scenario: {}, act: (page) => page.getByRole("button", { name: /^Collapse / }).first().click() },
+  { name: "group-menu", scenario: {}, act: (page) => page.getByRole("button", { name: "Group by" }).click() },
+  { name: "group-delivery-date", scenario: {}, act: (page) => groupBy(page, "Delivery date") },
+  { name: "group-customer", scenario: {}, act: (page) => groupBy(page, "Customer") },
+  { name: "group-owner", scenario: {}, act: (page) => groupBy(page, "Owner") },
   { name: "asset-no-ai", scenario: { operationType: "asset", ai: false } },
   { name: "brokerage", scenario: { operationType: "brokerage" } },
   { name: "asset-no-hos", scenario: { operationType: "asset", hos: false } },
@@ -36,6 +40,12 @@ const SHOTS = [
   { name: "narrow-1000", scenario: {}, viewport: { width: 1000, height: 820 } },
   { name: "narrow-800", scenario: {}, viewport: { width: 800, height: 820 } },
 ];
+
+async function groupBy(page, label) {
+  await page.getByRole("button", { name: "Group by" }).click();
+  await page.getByRole("radio", { name: label }).click();
+  await page.waitForTimeout(1500);
+}
 
 async function expandFirstRow(page) {
   await page.locator("tbody tr").filter({ hasText: /S2610-/ }).first().click();

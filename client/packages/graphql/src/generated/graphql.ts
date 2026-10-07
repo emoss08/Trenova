@@ -6042,6 +6042,16 @@ export type ShipmentBillingTransferFailureCode =
   /** The transfer failed for a reason outside the billing policy. */
   | 'Unexpected';
 
+/**
+ * A way to group the board other than by stage. Dates are the local day, in the
+ * board's time zone, of the first pickup or the last delivery.
+ */
+export type ShipmentBoardGrouping =
+  | 'Customer'
+  | 'DeliveryDate'
+  | 'Owner'
+  | 'ShipDate';
+
 export type ShipmentBoardScopeInput = {
   fieldFilters?: Array<FieldFilterInput> | null | undefined;
   filterGroups?: Array<FilterGroupInput> | null | undefined;
@@ -13647,6 +13657,14 @@ export type ShipmentStageSummaryQueryVariables = Exact<{
 
 
 export type ShipmentStageSummaryQuery = { shipmentStageSummary: Array<{ stage: ShipmentStage, rank: number, count: number, revenue: string }> };
+
+export type ShipmentBoardGroupsQueryVariables = Exact<{
+  input: ShipmentBoardScopeInput;
+  groupBy: ShipmentBoardGrouping;
+}>;
+
+
+export type ShipmentBoardGroupsQuery = { shipmentBoardGroups: Array<{ key: string, label: string, count: number, revenue: string }> };
 
 export type ShipmentQuickFilterCountsQueryVariables = Exact<{
   input: ShipmentBoardScopeInput;
@@ -25585,6 +25603,7 @@ export const ServiceTypeTableDocument = {"__meta__":{"kind":"query","name":"Serv
 export const ShipmentTypeTableDocument = {"__meta__":{"kind":"query","name":"ShipmentTypeTable","hash":"sha256:2be2cf7c6760639a92a3977f36a489f31e14b4c27edae1049a9589cce837a534"}} as unknown as TypedDocumentString<ShipmentTypeTableQuery, ShipmentTypeTableQueryVariables>;
 export const ShipmentBoardCapabilitiesDocument = {"__meta__":{"kind":"query","name":"ShipmentBoardCapabilities","hash":"sha256:aa7e88780f37bb5a758b0290855c8d761b5bc1d418cf4c1766478e43c0787484"}} as unknown as TypedDocumentString<ShipmentBoardCapabilitiesQuery, ShipmentBoardCapabilitiesQueryVariables>;
 export const ShipmentStageSummaryDocument = {"__meta__":{"kind":"query","name":"ShipmentStageSummary","hash":"sha256:8bbb27b2f871a92d7144ecd277f764f615822a8680ff1f1342af69c3905becb3"}} as unknown as TypedDocumentString<ShipmentStageSummaryQuery, ShipmentStageSummaryQueryVariables>;
+export const ShipmentBoardGroupsDocument = {"__meta__":{"kind":"query","name":"ShipmentBoardGroups","hash":"sha256:1195b8f048bff9fb416732aa429f5353aee392f01b80767ab29424a2d809fb85"}} as unknown as TypedDocumentString<ShipmentBoardGroupsQuery, ShipmentBoardGroupsQueryVariables>;
 export const ShipmentQuickFilterCountsDocument = {"__meta__":{"kind":"query","name":"ShipmentQuickFilterCounts","hash":"sha256:0ec841b49e41c32139149b1d0a7e5c4faf08e719514173109c253ee88945f489"}} as unknown as TypedDocumentString<ShipmentQuickFilterCountsQuery, ShipmentQuickFilterCountsQueryVariables>;
 export const ShipmentBriefingDocument = {"__meta__":{"kind":"query","name":"ShipmentBriefing","hash":"sha256:8d288c00fdf7739e6945c9905d440371774c84e2e1b91e7712b01efdf1720017"}} as unknown as TypedDocumentString<ShipmentBriefingQuery, ShipmentBriefingQueryVariables>;
 export const ShipmentCapacityDocument = {"__meta__":{"kind":"query","name":"ShipmentCapacity","hash":"sha256:3afe71c443b98e096c0542ad6ab51196c9178a529bd0dd4fa9360f78a10e7a1c"}} as unknown as TypedDocumentString<ShipmentCapacityQuery, ShipmentCapacityQueryVariables>;

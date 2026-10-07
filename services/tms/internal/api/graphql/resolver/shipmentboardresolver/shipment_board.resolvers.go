@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentsuggestion"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
@@ -361,4 +362,26 @@ func (r *QueryResolver) ShipmentWatchlist(
 	}
 
 	return watchlistToModel(watchlist), nil
+}
+
+//nolint:gocritic // gqlgen resolver signature is generated with a value input parameter
+func (r *QueryResolver) ShipmentBoardGroups(
+	ctx context.Context,
+	input gqlmodel.ShipmentBoardScopeInput,
+	groupBy shipment.BoardGrouping,
+) ([]*gqlmodel.ShipmentBoardGroup, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipment, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	groups, err := r.BoardGroups.GroupSummary(ctx, &services.SummarizeShipmentBoardGroupsRequest{
+		Scope:   scopeRequestFromGraphQL(&input, base.TenantInfo(authCtx)),
+		GroupBy: groupBy,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return boardGroupsToModel(groups), nil
 }

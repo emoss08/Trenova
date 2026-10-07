@@ -30,7 +30,7 @@ import {
   fetchAllRows,
 } from "@/lib/data-table-export";
 import { Download01Icon } from "@trenova/shared/components/icons";
-import { groupedScopeFilters, groupedSort } from "@/lib/data-table-grouping";
+import { groupedScope, groupedSort } from "@/lib/data-table-grouping";
 import { resolveGraphQLVariableSources } from "@/lib/data-table-variables";
 import { queries } from "@/lib/queries";
 import { stableStringify } from "@/lib/stable-stringify";
@@ -309,17 +309,24 @@ export function DataTable<TData extends Record<string, any>>({
 
   const zeroBasedPageIndex = pageIndex - 1;
   const effectiveSort = useMemo(() => groupedSort(grouping, sort), [grouping, sort]);
-  const collapsedGroupFilters = useMemo(
-    () => groupedScopeFilters(grouping),
+  const collapsedGroupScope = useMemo(
+    () => groupedScope(grouping),
     // oxlint-disable-next-line react-hooks/exhaustive-deps
-    [grouping?.field, grouping?.collapsedKeys],
+    [grouping?.field, grouping?.collapsedKeys, grouping?.collapsedScope],
   );
   const scopeFilters = useMemo(
     () =>
-      collapsedGroupFilters.length > 0
-        ? [...ownScopeFilters, ...collapsedGroupFilters]
+      collapsedGroupScope.fieldFilters.length > 0
+        ? [...ownScopeFilters, ...collapsedGroupScope.fieldFilters]
         : ownScopeFilters,
-    [collapsedGroupFilters, ownScopeFilters],
+    [collapsedGroupScope, ownScopeFilters],
+  );
+  const effectiveFilterGroups = useMemo(
+    () =>
+      collapsedGroupScope.filterGroups.length > 0
+        ? [...collapsedGroupScope.filterGroups, ...filterGroups]
+        : filterGroups,
+    [collapsedGroupScope, filterGroups],
   );
   const cursorScopeKey = useMemo(
     () =>
@@ -328,7 +335,7 @@ export function DataTable<TData extends Record<string, any>>({
         query,
         scopeFilters,
         fieldFilters,
-        filterGroups,
+        filterGroups: effectiveFilterGroups,
         sort: effectiveSort,
         graphql: {
           connectionKey: graphql.connectionKey,
@@ -336,7 +343,7 @@ export function DataTable<TData extends Record<string, any>>({
           ...resolveGraphQLVariableSources(graphql, pageSize),
         },
       }),
-    [effectiveSort, fieldFilters, filterGroups, graphql, pageSize, query, scopeFilters],
+    [effectiveSort, fieldFilters, effectiveFilterGroups, graphql, pageSize, query, scopeFilters],
   );
   const scopedCursorState =
     cursorState.scopeKey === cursorScopeKey ? cursorState : EMPTY_CURSOR_STATE;
@@ -347,10 +354,10 @@ export function DataTable<TData extends Record<string, any>>({
     () => ({
       query,
       fieldFilters: scopeFilters.length > 0 ? [...scopeFilters, ...fieldFilters] : fieldFilters,
-      filterGroups,
+      filterGroups: effectiveFilterGroups,
       sort: effectiveSort,
     }),
-    [query, scopeFilters, fieldFilters, filterGroups, effectiveSort],
+    [query, scopeFilters, fieldFilters, effectiveFilterGroups, effectiveSort],
   );
 
   const queryOptions = useMemo(
@@ -425,11 +432,20 @@ export function DataTable<TData extends Record<string, any>>({
 
   const collapsedGroupKeys = grouping?.collapsedKeys ?? EMPTY_GROUP_KEYS;
   const [settledCollapsedKeys, setSettledCollapsedKeys] = useState(collapsedGroupKeys);
+  const groupOrderKey = grouping
+    ? [grouping.field, ...(grouping.tieBreakers ?? []).map((entry) => entry.field)].join("\u0000")
+    : "";
+  const [settledGroupOrderKey, setSettledGroupOrderKey] = useState(groupOrderKey);
   useEffect(() => {
     if (dataQuery.data && !dataQuery.isPlaceholderData) {
       setSettledCollapsedKeys(collapsedGroupKeys);
+      setSettledGroupOrderKey(groupOrderKey);
     }
-  }, [collapsedGroupKeys, dataQuery.data, dataQuery.isPlaceholderData]);
+  }, [collapsedGroupKeys, groupOrderKey, dataQuery.data, dataQuery.isPlaceholderData]);
+  // The previous page is kept on screen while the next loads, but rows sorted
+  // for one grouping cannot be laid out under another's headers.
+  const regrouping = dataQuery.isPlaceholderData && settledGroupOrderKey !== groupOrderKey;
+  const isLoadingPage = dataQuery.isLoading || regrouping;
   const loadingGroupKeys = useMemo(
     () =>
       dataQuery.isPlaceholderData
@@ -439,7 +455,7 @@ export function DataTable<TData extends Record<string, any>>({
   );
 
   const cursorPageInfo = dataQuery.data?.pageInfo ?? null;
-  const currentPageResults = dataQuery.data?.results;
+  const currentPageResults = regrouping ? undefined : dataQuery.data?.results;
   const currentPageRowCount = currentPageResults?.length ?? 0;
   const totalCount = cursorPageInfo
     ? (cursorPageInfo.totalCount ?? scopedCursorState.totalCount)
@@ -834,7 +850,7 @@ export function DataTable<TData extends Record<string, any>>({
 
   // An empty page is drawn as the table it will become rather than as a
   // table with no rows, so the header row and the pager step aside for it.
-  const isEmpty = !dataQuery.isLoading && !dataQuery.isError && currentPageRowCount === 0;
+  const isEmpty = !isLoadingPage && !dataQuery.isError && currentPageRowCount === 0;
   const hasCollapsedGroups = (grouping?.collapsedKeys.length ?? 0) > 0;
   const emptyColumns = useMemo(
     () => emptyTableColumns(table.getVisibleLeafColumns()),
@@ -858,7 +874,7 @@ export function DataTable<TData extends Record<string, any>>({
 
   return (
     <DataTableProvider
-      isLoading={dataQuery.isLoading}
+      isLoading={isLoadingPage}
       table={table}
       columns={tableColumns}
       isPanelOpen={isPanelOpen}
@@ -1000,7 +1016,7 @@ export function DataTable<TData extends Record<string, any>>({
                     <DataTableBody
                       table={table}
                       columns={tableColumns}
-                      isLoading={dataQuery.isLoading}
+                      isLoading={isLoadingPage}
                       contextMenuActions={contextMenuActions}
                       onRowClick={handleRowClick}
                       getFormatClass={compiledFormatRules}
