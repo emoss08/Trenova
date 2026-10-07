@@ -960,6 +960,111 @@ type AITrainingExportHistoryEntry {
   validationExamples: Int!
 }
 
+"""A change to how AI is set up that the last 30 days of runs argue for."""
+type AITuneUp {
+  agent: AITuneUpAgent
+  computedAt: Timestamp!
+  dismissedUntil: Timestamp
+  evidence: AITuneUpEvidence!
+  id: ID!
+  kind: AITuneUpKind!
+  """The provider moved behind."""
+  otherProvider: AITuneUpProvider
+  """
+  The provider the change acts on: the one moved ahead, or the one given the task.
+  """
+  provider: AITuneUpProvider
+  status: AITuneUpStatus!
+  task: AITask
+  toolName: String
+  version: Int!
+}
+
+"""The agent a tune-up changes."""
+type AITuneUpAgent {
+  accent: String!
+  icon: String!
+  id: ID!
+  name: String!
+}
+
+"""
+What the runs showed. Each kind fills what its sentence names; the rest are
+zero.
+"""
+type AITuneUpEvidence {
+  approvals: Int!
+  approvalsPerWeek: Float!
+  """Calls the provider that catches the failures answered."""
+  calls: Int!
+  """Calls the provider first in line failed."""
+  failed: Int!
+  """The tier the tool runs at on the agent now."""
+  fromTier: AgentAutonomyTier
+  """When the agent last ran, or was created when it never has."""
+  idleSince: Timestamp!
+  lastRunAt: Timestamp
+  """
+  Share of the recorded writes people answered that matched what they did, 0 to 1.
+  """
+  matchRate: Float!
+  """The model the provider that would take the task serves."""
+  model: String!
+  """Writes the agent recorded in shadow."""
+  recorded: Int!
+  rejections: Int!
+  """Failed calls the next provider answered."""
+  rescued: Int!
+  """Approvals in a row that changed nothing."""
+  streak: Int!
+  tasks: [AITask!]!
+  """The tier it would move to."""
+  toTier: AgentAutonomyTier
+  """Tools the agent holds."""
+  tools: Int!
+  wouldFail: Int!
+}
+
+"""What a tune-up would change."""
+enum AITuneUpKind {
+  """Give a task nothing serves to a provider that can take it."""
+  AssignTask
+  """
+  Take an agent whose recorded proposals match what people did out of shadow.
+  """
+  LeaveShadow
+  """
+  Let a tool its agent's people keep approving unchanged run one tier more freely.
+  """
+  RaiseToolTier
+  """Put a provider that keeps catching a failing one ahead of it."""
+  ReorderProviders
+  """Turn off a chat agent nobody has asked anything in two weeks."""
+  TurnOffIdleAgent
+}
+
+"""A provider a tune-up names."""
+type AITuneUpProvider {
+  id: ID!
+  kind: AIProviderKind!
+  name: String!
+}
+
+enum AITuneUpStatus {
+  Applied
+  Dismissed
+  Open
+}
+
+"""The tune-ups offered now, worked out nightly."""
+type AITuneUps {
+  """When they were last worked out; null before the first time."""
+  computedAt: Timestamp
+  items: [AITuneUp!]!
+  """How many days of runs they are drawn from."""
+  windowDays: Int!
+}
+
 """One calendar day of model usage, in the timezone it was asked for."""
 type AIUsageDay {
   calls: Int!
@@ -16530,6 +16635,8 @@ type Mutation {
   """
   amendIftaReturn(id: ID!, reason: String!): IFTAReturn!
   amendWorkerEmploymentEvent(input: AmendWorkerEmploymentEventInput!): WorkerEmploymentEvent!
+  """Makes the change a tune-up suggests."""
+  applyAITuneUp(id: ID!, version: Int!): AITuneUp!
   """
   Posts a payment recorded in the accounting system in Trenova: the customer payment and credits, or the settlement payment.
   """
@@ -16872,6 +16979,10 @@ type Mutation {
   Puts away, for the caller, the notice that a provider is failing, up to the failure they saw.
   """
   dismissAIProviderFailure(lastFailureAt: Timestamp!, providerId: ID!): Boolean!
+  """
+  Puts a tune-up away for some days, 30 unless given; the same change is not suggested again until then.
+  """
+  dismissAITuneUp(days: Int, id: ID!, version: Int!): AITuneUp!
   """Keeps both sides as they are, with a reason."""
   dismissAccountingDrift(input: DismissAccountingDriftInput!): AccountingDriftFinding!
   """
@@ -17151,6 +17262,8 @@ type Mutation {
   respondToMyShiftSwap(input: RespondToMyShiftSwapInput!): ShiftSwapRequest!
   """Brings a put-away failure notice back."""
   restoreAIProviderFailure(providerId: ID!): Boolean!
+  """Brings a put-away tune-up back."""
+  restoreAITuneUp(id: ID!, version: Int!): AITuneUp!
   restoreMyNotifications(ids: [ID!]!): Boolean!
   restoreNotifications(ids: [ID!]!): Boolean!
   restorePerformanceReviewTemplate(id: ID!, version: Int): PerformanceReviewTemplate!
@@ -19381,6 +19494,7 @@ type Query {
   Training exports that included this organization's AI corrections, newest first.
   """
   aiTrainingExportHistory: [AITrainingExportHistoryEntry!]!
+  aiTuneUps: AITuneUps!
   """
   Model usage day by day for the last days (default 7, at most 90), ending
   today, oldest first. A day with no calls is listed with zeros. Days are read

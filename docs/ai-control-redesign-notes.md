@@ -76,3 +76,26 @@ User, Page, Tools, Memory).
 The spec asks for SQLite migrations alongside the PostgreSQL ones. Trenova is not using
 SQLite going forward, so this work adds none, and the ones added earlier in it were
 removed.
+
+## Tune-ups (§8.10)
+
+- **Stored, not cached.** The spec says tune-ups are computed nightly and cached per tenant. They
+  live in `ai_tune_ups`, one row per suggested change keyed by a fingerprint (kind and what it
+  changes), because a dismissal has to outlast a cache: it is a row with `dismissed_until`, and the
+  nightly run updates the evidence of a dismissed row without offering it again until then. Redis
+  holds only when a tenant's set was last worked out (`ai-control:tune-ups:computed:{org}:{bu}`,
+  26 hours), so the first read after a missed night works it out once.
+- **Typed, not prose.** `aiTuneUps` returns the kind, the agent or providers it names and the
+  evidence as numbers; the client writes the sentence, so it is translated like every other string.
+  `applyAITuneUp(id, version)` makes the change through the same service a person would use (agent
+  patch, trust promotion, provider reorder or task assignment), so it is versioned and audited the
+  same way, and the row is marked applied only once the change went through.
+- **Thresholds.** A tool is suggested at the organization's promotion threshold and only while
+  earned autonomy is off (when it is on the system promotes the tool itself). A reorder needs the
+  provider first in line to have failed a task at least 10 times and a fifth of its calls, and the
+  next one to have caught at least 5 of those failures while failing no more than 1 in 20 of its
+  own. Shadow and idle follow §6.1 (85% over 20 recorded proposals; 14 days); idle applies to chat
+  agents only, since a scheduled or event agent waits for its schedule or its event.
+- **Reorder.** Applying goes through the provider service's `Reorder` (which the Providers tab's
+  drag to reorder will expose as its own mutation): it takes every provider once and writes
+  priorities 10, 20, 30… for the ones whose place changed.

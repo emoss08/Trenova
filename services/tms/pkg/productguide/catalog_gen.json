@@ -1,5 +1,5 @@
 {
-  "version": "sha256:df7442eacac915ed37632a68f6140ec088f28f6c5e0b060a686f588fb9a329fc",
+  "version": "sha256:7fb051efd4c2b605dbbf81305d1b85c912eceb5b0e643c7286fb034ba9776d3d",
   "modules": [
     {
       "id": "home",
@@ -2281,8 +2281,8 @@
         "AI & Automation",
         "AI control"
       ],
-      "description": "Providers say where AI work goes, agents say what it may do, extensions add what they can reach, quality says how well they do it, activity shows what it did, and the audit trail keeps a signed record of it.",
-      "summary": "AI control is the one place for everything AI in the organization. A rail down the left side holds ten sections: **Overview**, **Agents**, **Providers**, **Extensions**, **Memory**, **Retrieval**, **Safety**, **Quality**, **Activity** and **Audit trail**. Providers say where AI work goes (the model endpoints Trenova calls and which AI tasks each one handles), agents say what AI may do (their instructions, tools, autonomy and trigger), extensions add abilities that work only for agents, such as searching the web, using the organization's own account with the vendor, memory holds the standing instructions and facts agents read, retrieval shows whether agents find memories, documents and inbound email by meaning and what indexing them costs, safety shows what each tool and agent can do without a person, quality says how well each agent does its work, activity shows what agents did: their runs, the changes they proposed, multi-step plans, replays and exceptions, and the audit trail keeps a signed record of every run, model call, tool call and decision for compliance to read, check and export.\n\n**Overview** opens with one sentence from Nova saying what is true now: how many agents are on and working, how many proposals wait on a person, a provider that can't connect and any task with no provider, each linked to where to act on it. Below it are the week's figures (model calls with the days they failed, median response, tokens and spend), a notice for a provider that is failing, **Usage by feature**, the agents at work and every agent at a glance, and the **Organization-wide** settings. With no provider connected, it walks through connecting one. Administrators use this page to set up providers and agents; reviewers use **Activity** to approve or reject what agents propose.",
+      "description": "AI control is the one place for everything AI in the organization.",
+      "summary": "AI control is the one place for everything AI in the organization. A rail down the left side holds ten sections: **Overview**, **Agents**, **Providers**, **Extensions**, **Memory**, **Retrieval**, **Safety**, **Quality**, **Activity** and **Audit trail**. Providers say where AI work goes (the model endpoints Trenova calls and which AI tasks each one handles), agents say what AI may do (their instructions, tools, autonomy and trigger), extensions add abilities that work only for agents, such as searching the web, using the organization's own account with the vendor, memory holds the standing instructions and facts agents read, retrieval shows whether agents find memories, documents and inbound email by meaning and what indexing them costs, safety shows what each tool and agent can do without a person, quality says how well each agent does its work, activity shows what agents did: their runs, the changes they proposed, multi-step plans, replays and exceptions, and the audit trail keeps a signed record of every run, model call, tool call and decision for compliance to read, check and export.\n\n**Overview** opens with one sentence from Nova saying what is true now: how many agents are on and working, how many proposals wait on a person, a provider that can't connect and any task with no provider, each linked to where to act on it. Below it are the week's figures (model calls with the days they failed, median response, tokens and spend), a notice for a provider that is failing, **Tune-ups** drawn from the last 30 days of runs, **Usage by feature**, the agents at work and every agent at a glance, and the **Organization-wide** settings. With no provider connected, it walks through connecting one. Administrators use this page to set up providers and agents; reviewers use **Activity** to approve or reject what agents propose.",
       "requires": [
         {
           "resource": "agent_control",
@@ -2609,6 +2609,24 @@
             "Open [AI control](/admin/agent-control) on **Overview**.",
             "Press and hold **Hold to pause all agents** beside Nova's sentence until it fills. Agents keep running and recording what they would do, but nothing they propose is offered for a decision or executed. Select **Resume agents** to let them surface their work again.",
             "In **Organization-wide**, select **Edit** to turn **Earned autonomy** on or off and choose the **Clean approvals** in a row before a tool moves up a tier on that agent. Before you save, it lists the tools that have already earned it; they move up when you save."
+          ]
+        },
+        {
+          "title": "Apply a suggested tune-up",
+          "keywords": [
+            "tune-ups",
+            "suggestions",
+            "recommendations",
+            "improve AI setup",
+            "reorder providers",
+            "idle agent",
+            "leave shadow",
+            "assign task"
+          ],
+          "steps": [
+            "Open [AI control](/admin/agent-control) on **Overview**. **Tune-ups** lists changes to how AI is set up that the last 30 days of runs argue for, worked out each night: let a tool people keep approving unchanged move up a tier (only while earned autonomy is off), put a provider ahead of one that keeps failing when it catches the failures, take an agent out of shadow once its recorded proposals match what people did, give a task nothing handles to a provider that can take it, and turn off a chat agent nobody has asked anything in two weeks.",
+            "Each row says what the runs showed and what the change gains. Select the action on the row (**Raise it**, **Reorder**, **Go live**, **Assign** or **Turn off**) to make the change.",
+            "Select the close button on the row to dismiss it (its label is **Dismiss for 30 days**); the same change is not suggested again for 30 days. Select **Undo** in the notice to bring it back. Operational work, such as a proposal waiting on a person, stays in Watchtower."
           ]
         },
         {

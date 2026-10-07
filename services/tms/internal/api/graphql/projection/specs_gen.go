@@ -14,6 +14,8 @@ var AIFeedbackSpec TypeSpec
 
 var AIProviderSpec TypeSpec
 
+var AITuneUpSpec TypeSpec
+
 var AccessorialChargeSpec TypeSpec
 
 var AccountTypeSpec TypeSpec
@@ -42,6 +44,8 @@ var AgentDecisionSpec TypeSpec
 
 var AgentDefinitionSpec TypeSpec
 
+var AgentDefinitionVersionSpec TypeSpec
+
 var AgentEvalCaseSpec TypeSpec
 
 var AgentEvaluationSpec TypeSpec
@@ -63,6 +67,8 @@ var AgentRunSpec TypeSpec
 var AgentRunEventSpec TypeSpec
 
 var AgentSuiteRunSpec TypeSpec
+
+var AgentTestPromptSpec TypeSpec
 
 var AgentToolTrustSpec TypeSpec
 
@@ -1389,6 +1395,65 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	AITuneUpSpec = TypeSpec{
+		TypeName: "AITuneUp",
+		FieldMap: buncolgen.TuneUpFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:    "agent",
+				Special: "agent",
+			},
+			{
+				Name:    "provider",
+				Special: "provider",
+			},
+			{
+				Name:    "otherProvider",
+				Special: "otherProvider",
+			},
+			{
+				Name:        "toolName",
+				FieldMapKey: "toolName",
+			},
+			{
+				Name:        "task",
+				FieldMapKey: "task",
+			},
+			{
+				Name:        "evidence",
+				FieldMapKey: "evidence",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "dismissedUntil",
+				FieldMapKey: "dismissedUntil",
+			},
+			{
+				Name:        "computedAt",
+				FieldMapKey: "computedAt",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
 			},
 		},
 	}
@@ -2826,6 +2891,40 @@ func init() {
 		},
 	}
 
+	AgentDefinitionVersionSpec = TypeSpec{
+		TypeName: "AgentDefinitionVersion",
+		FieldMap: buncolgen.DefinitionVersionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "summary",
+				FieldMapKey: "summary",
+			},
+			{
+				Name:        "author",
+				FieldMapKey: "authorId",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
 	AgentEvalCaseSpec = TypeSpec{
 		TypeName: "AgentEvalCase",
 		FieldMap: buncolgen.EvalCaseFieldMap,
@@ -4061,6 +4160,29 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	AgentTestPromptSpec = TypeSpec{
+		TypeName: "AgentTestPrompt",
+		FieldMap: buncolgen.TestPromptFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "prompt",
+				FieldMapKey: "prompt",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
 			},
 		},
 	}

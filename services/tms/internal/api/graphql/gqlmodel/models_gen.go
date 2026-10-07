@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/core/domain/aituneup"
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
@@ -215,6 +216,33 @@ type AIRetrievalSettingsPatchInput struct {
 	InboundMessagesEnabled   graphql.Omittable[*bool]   `json:"inboundMessagesEnabled,omitempty"`
 	MonthlyIndexingBudgetUsd graphql.Omittable[*string] `json:"monthlyIndexingBudgetUsd,omitempty"`
 	Paused                   graphql.Omittable[*bool]   `json:"paused,omitempty"`
+}
+
+// A change to how AI is set up that the last 30 days of runs argue for.
+type AITuneUp struct {
+	ID    string                  `json:"id"`
+	Kind  aituneup.Kind           `json:"kind"`
+	Agent *services.AITuneUpAgent `json:"agent,omitempty"`
+	// The provider the change acts on: the one moved ahead, or the one given the task.
+	Provider *services.AITuneUpProvider `json:"provider,omitempty"`
+	// The provider moved behind.
+	OtherProvider  *services.AITuneUpProvider `json:"otherProvider,omitempty"`
+	ToolName       *string                    `json:"toolName,omitempty"`
+	Task           *aiprovider.Task           `json:"task,omitempty"`
+	Evidence       *aituneup.Evidence         `json:"evidence"`
+	Status         aituneup.Status            `json:"status"`
+	DismissedUntil *int                       `json:"dismissedUntil,omitempty"`
+	ComputedAt     int                        `json:"computedAt"`
+	Version        int                        `json:"version"`
+}
+
+// The tune-ups offered now, worked out nightly.
+type AITuneUps struct {
+	Items []*AITuneUp `json:"items"`
+	// When they were last worked out; null before the first time.
+	ComputedAt *int `json:"computedAt,omitempty"`
+	// How many days of runs they are drawn from.
+	WindowDays int `json:"windowDays"`
 }
 
 // Model usage by feature as a table: searchable by feature, filterable and

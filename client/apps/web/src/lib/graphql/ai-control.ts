@@ -4,6 +4,11 @@ import {
   AgentRunTableDocument,
   AgentRunTableRowFieldsFragmentDoc,
   AiControlSummaryDocument,
+  AiTuneUpFieldsFragmentDoc,
+  AiTuneUpsDocument,
+  ApplyAiTuneUpDocument,
+  DismissAiTuneUpDocument,
+  RestoreAiTuneUpDocument,
   AiProviderFailureFieldsFragmentDoc,
   AiUsageDailyDocument,
   DismissAiProviderFailureDocument,
@@ -12,6 +17,7 @@ import {
   type AiControlSummaryQuery,
   type AiControlTab,
   type AiProviderFailureFieldsFragment,
+  type AiTuneUpFieldsFragment,
   type AiUsageDailyQuery,
 } from "@trenova/graphql/generated/graphql";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
@@ -29,6 +35,8 @@ export type AIControlSummary = Omit<RawSummary, "facts" | "visibleFailures"> & {
 };
 export type ToolPromotion = AgentPromotionPreviewQuery["agentPromotionPreview"][number];
 export type AIUsageDay = AiUsageDailyQuery["aiUsageDaily"][number];
+export type AITuneUp = Omit<AiTuneUpFieldsFragment, " $fragmentName">;
+export type AITuneUps = { items: AITuneUp[]; computedAt: number | null; windowDays: number };
 
 export async function fetchAIControlSummary(
   tab: AiControlTab,
@@ -140,4 +148,47 @@ export async function fetchWorkingRuns(options?: RequestOptions): Promise<Workin
       startedAt: row.startedAt,
     };
   });
+}
+
+export async function fetchAITuneUps(options?: RequestOptions): Promise<AITuneUps> {
+  const data = await requestGraphQL({
+    document: AiTuneUpsDocument,
+    operationName: "AITuneUps",
+    signal: options?.signal,
+  });
+  const { items, computedAt, windowDays } = data.aiTuneUps;
+  return {
+    computedAt,
+    windowDays,
+    items: items.map((item) => getFragmentData(AiTuneUpFieldsFragmentDoc, item)),
+  };
+}
+
+export type TuneUpDecision = { id: string; version: number };
+
+export async function applyAITuneUp({ id, version }: TuneUpDecision): Promise<AITuneUp> {
+  const data = await requestGraphQL({
+    document: ApplyAiTuneUpDocument,
+    operationName: "ApplyAITuneUp",
+    variables: { id, version },
+  });
+  return getFragmentData(AiTuneUpFieldsFragmentDoc, data.applyAITuneUp);
+}
+
+export async function dismissAITuneUp({ id, version }: TuneUpDecision): Promise<AITuneUp> {
+  const data = await requestGraphQL({
+    document: DismissAiTuneUpDocument,
+    operationName: "DismissAITuneUp",
+    variables: { id, version },
+  });
+  return getFragmentData(AiTuneUpFieldsFragmentDoc, data.dismissAITuneUp);
+}
+
+export async function restoreAITuneUp({ id, version }: TuneUpDecision): Promise<AITuneUp> {
+  const data = await requestGraphQL({
+    document: RestoreAiTuneUpDocument,
+    operationName: "RestoreAITuneUp",
+    variables: { id, version },
+  });
+  return getFragmentData(AiTuneUpFieldsFragmentDoc, data.restoreAITuneUp);
 }

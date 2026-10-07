@@ -147,6 +147,8 @@
   --foreground: oklch(0.205 0 0);
   --foreground-muted: oklch(0.51 0 0);
   --foreground-subtle: oklch(0.53 0 0);
+  /* Faint: placeholder dashes and decoration beside a value, never the value itself. */
+  --foreground-faint: oklch(0.7 0 0);
   --foreground-on-solid: oklch(1 0 0);
 
   /* Borders --------------------------------------------------------------
@@ -536,6 +538,7 @@
   --foreground: oklch(0.946 0 0);
   --foreground-muted: oklch(0.709 0 0);
   --foreground-subtle: oklch(0.65 0 0);
+  --foreground-faint: oklch(0.46 0 0);
 
   /* Dark tone fills are the LIGHT end of their ramp — success sits at 0.645 —
      so the near-white this held before drew 2.5:1 on a solid badge. The ink

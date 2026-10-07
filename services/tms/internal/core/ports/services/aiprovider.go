@@ -97,6 +97,17 @@ type AIProviderRoutePreviewRequest struct {
 	Draft      AIProviderRoutingDraft
 }
 
+type ReorderAIProvidersRequest struct {
+	TenantInfo  pagination.TenantInfo
+	ProviderIDs []pulid.ID
+}
+
+type AssignAIProviderTaskRequest struct {
+	TenantInfo pagination.TenantInfo
+	ProviderID pulid.ID
+	Task       aiprovider.Task
+}
+
 type AIProviderService interface {
 	List(
 		ctx context.Context,
@@ -125,6 +136,16 @@ type AIProviderService interface {
 		req repositories.DeleteAIProviderRequest,
 		actor *RequestActor,
 	) error
+	Reorder(
+		ctx context.Context,
+		req *ReorderAIProvidersRequest,
+		actor *RequestActor,
+	) ([]*aiprovider.Provider, error)
+	AssignTask(
+		ctx context.Context,
+		req *AssignAIProviderTaskRequest,
+		actor *RequestActor,
+	) (*aiprovider.Provider, error)
 	// RoutePreview says where each task goes now and where it would go with
 	// the draft saved. It saves nothing.
 	RoutePreview(

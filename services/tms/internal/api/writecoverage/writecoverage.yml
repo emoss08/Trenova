@@ -185,6 +185,15 @@ writes:
   "mutation dismissAIProviderFailure":
     exempt: user-preference
     reason: "Puts away a notice on one person's own overview; it changes nothing anyone else sees."
+  "mutation applyAITuneUp":
+    exempt: agent-administration
+    reason: "Applies a change to how agents and providers are set up that the runs suggested; it is the human check on AI setup."
+  "mutation dismissAITuneUp":
+    exempt: agent-administration
+    reason: "Puts away a suggested change to AI setup; it changes no record an agent works on."
+  "mutation restoreAITuneUp":
+    exempt: agent-administration
+    reason: "Brings back a suggested change to AI setup that was put away."
   "mutation restoreAIProviderFailure":
     exempt: user-preference
     reason: "Brings back a notice one person put away on their own overview."

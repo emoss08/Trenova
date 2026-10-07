@@ -89,7 +89,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 260 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 30 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 46 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 72 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 75 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 48 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 44 |
@@ -97,23 +97,23 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1003 writes: 524 GraphQL mutations and 479 REST writes, after merging 72 REST routes into the mutation they duplicate.
+1006 writes: 527 GraphQL mutations and 479 REST writes, after merging 72 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 386 |
-| Exempt | 614 |
+| Exempt | 617 |
 | — Security | 78 |
 | — Configuration | 260 |
 | — User preference | 30 |
 | — Infrastructure | 46 |
-| — Agent administration | 72 |
+| — Agent administration | 75 |
 | — Counterparty | 33 |
 | — Read-only | 48 |
 | — Attestation | 44 |
 | — Duplicate | 3 |
 | **Pending** | **3** |
-| Total | 1003 |
+| Total | 1006 |
 
 Of the 389 writes an agent should be able to make, 386 have a tool (99%).
 
@@ -142,7 +142,7 @@ The writes no tool performs yet, and what the tool would do.
 | agentquality | 6 | 0 | 6 | 0 |
 | agentrun | 1 | 0 | 1 | 0 |
 | aiaudit | 3 | 0 | 3 | 0 |
-| aicontrol | 2 | 0 | 2 | 0 |
+| aicontrol | 5 | 0 | 5 | 0 |
 | aifeedback | 2 | 0 | 2 | 0 |
 | aiprovider | 4 | 0 | 4 | 0 |
 | airetrieval | 2 | 0 | 2 | 0 |
@@ -444,8 +444,11 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `mutation applyAITuneUp` | Exempt, agent-administration: Applies a change to how agents and providers are set up that the runs suggested; it is the human check on AI setup. |
 | `mutation dismissAIProviderFailure` | Exempt, user-preference: Puts away a notice on one person's own overview; it changes nothing anyone else sees. |
+| `mutation dismissAITuneUp` | Exempt, agent-administration: Puts away a suggested change to AI setup; it changes no record an agent works on. |
 | `mutation restoreAIProviderFailure` | Exempt, user-preference: Brings back a notice one person put away on their own overview. |
+| `mutation restoreAITuneUp` | Exempt, agent-administration: Brings back a suggested change to AI setup that was put away. |
 
 ### aifeedback
 

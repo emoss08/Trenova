@@ -37,6 +37,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aicorrectionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aifeedbackrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aiproviderrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aituneuprepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/airetrievalrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aiusagerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/apikeyrepository"
@@ -383,6 +384,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	agentshadowrepository.New,
 	aicontrolfactsrepository.New,
 	aiproviderrepository.NewDismissalRepository,
+	aituneuprepository.New,
 	agentdefinitionrepository.NewTestPromptRepository,
 	agentscorecardrepository.New,
 	agenttooltrustrepository.New,

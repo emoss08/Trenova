@@ -212,6 +212,33 @@ func (r *repository) ListEnabled(
 	})
 }
 
+func (r *repository) ListOrdered(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) ([]*aiprovider.Provider, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiprovider.Provider, error) {
+		cols := buncolgen.ProviderColumns
+		entities := make([]*aiprovider.Provider, 0, defaultTaskCandidates)
+
+		err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.ProviderScopeTenant(sq, tenantInfo)
+			}).
+			Order(cols.Priority.OrderAsc(), cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
+			Scan(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("list ai providers in routing order: %w", err)
+		}
+
+		for idx, entity := range entities {
+			entities[idx] = entity.Redacted()
+		}
+		return entities, nil
+	})
+}
+
 // buildProvidersForTaskQuery is split out so the rendered SQL can be asserted
 // without a live database. The task argument has to reach PostgreSQL as an
 // array literal, and a Go slice and a pgdialect.Array are indistinguishable to

@@ -1,8 +1,4 @@
 import { describeToolCall } from "@/components/assistant/tool-presentation";
-import { EditFieldRow } from "@/components/edit-sheet/field-row";
-import type { EditFields } from "@/components/edit-sheet/change-review";
-import { EditSheet, type EditSection } from "@/components/edit-sheet/edit-sheet";
-import { useEditFlow } from "@/components/edit-sheet/use-edit-flow";
 import {
   AGENT_CONTROL_QUERY_KEY,
   fetchAgentControl,
@@ -12,18 +8,19 @@ import {
 import type { ToolPromotion } from "@/lib/graphql/ai-control";
 import { queries } from "@/lib/queries";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Settings01Icon } from "@trenova/shared/components/icons";
-import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
-import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
-import { Switch } from "@trenova/shared/components/ui/switch";
+import { formatList } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { Controller, useForm, useWatch, type Control } from "react-hook-form";
 import { toast } from "sonner";
 import { personAllowanceOptions, promotionThresholdOptions } from "../agent-control-options";
-import { tierLabel } from "../safety/safety-model";
+import type { EditFields } from "../edit/change-review";
+import { EditSheet, type EditSection } from "../edit/edit-sheet";
+import { Callout, F } from "../edit/fields";
+import { useEditFlow } from "../edit/use-edit-flow";
+import { Ic } from "../kit/ic";
+import { Seg, Switch } from "../kit/layout";
 import { TrainingExportHistory } from "../training-export-history";
 import {
   policyFormSchema,
@@ -75,8 +72,8 @@ export function PolicyEditor({ open, control, onClose }: PolicyEditorProps) {
       toast.success(
         moved > 0
           ? moved === 1
-            ? t("Saved. 1 tool moved up a tier")
-            : t("Saved. {0} tools moved up a tier", moved)
+            ? t("Saved · 1 tool moved up a tier")
+            : t("Saved · {0} tools moved up a tier", moved)
           : t("Saved"),
       );
       return toPolicyForm(saved);
@@ -98,7 +95,7 @@ export function PolicyEditor({ open, control, onClose }: PolicyEditorProps) {
     promotionThreshold: { label: t("Clean approvals") },
     learnsFromWork: { label: t("Learning") },
     personMonthlyMessages: {
-      label: t("Monthly allowance"),
+      label: t("Allowance"),
       format: (value) =>
         typeof value === "number" && value > 0 ? value.toLocaleString() : t("Unlimited"),
     },
@@ -110,94 +107,114 @@ export function PolicyEditor({ open, control, onClose }: PolicyEditorProps) {
       id: "earned",
       label: t("Earned autonomy"),
       keys: ["earnedAutonomy", "promotionThreshold"],
-      actions: <HeaderSwitch control={form.control} name="earnedAutonomy" label={t("Earned autonomy")} />,
-      note: t(
-        "When a tool's proposals are approved unchanged this many times in a row, the tool moves up one tier on that agent, never above the agent's ceiling. A rejection or a failed run takes an earned tier back. Each change is audited and announced.",
+      actions: (
+        <HeaderSwitch control={form.control} name="earnedAutonomy" label={t("Earned autonomy")} />
       ),
-      content: values.earnedAutonomy ? (
+      content: (
         <>
-          <EditFieldRow label={t("Clean approvals")} hint={t("In a row, before a tool moves up")}>
-            <Controller
-              control={form.control}
-              name="promotionThreshold"
-              render={({ field }) => (
-                <SegmentedControl<string>
-                  aria-label={t("Clean approvals")}
-                  value={String(field.value)}
-                  onValueChange={(next) => field.onChange(Number(next))}
-                  items={promotionThresholdOptions(field.value).map((option) => ({
-                    value: String(option.value),
-                    label: option.label,
-                  }))}
-                />
-              )}
-            />
-          </EditFieldRow>
+          <p className="es-note">
+            {t(
+              "A tool moves up a tier after a run of clean approvals — never past the agent's ceiling. When a tool's proposals are approved unchanged this many times in a row, it moves up one tier on that agent. A rejection or a failed run takes an earned tier back. Each change is audited and announced.",
+            )}
+          </p>
+          {values.earnedAutonomy && (
+            <F label={t("Clean approvals in a row")}>
+              <Controller
+                control={form.control}
+                name="promotionThreshold"
+                render={({ field }) => (
+                  <Seg
+                    v={field.value}
+                    label={t("Clean approvals in a row")}
+                    opts={promotionThresholdOptions(field.value).map(
+                      (option) => [option.value, option.label] as const,
+                    )}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+            </F>
+          )}
           {promotes && <PromotionPreview loading={preview.isLoading} promotions={preview.data} />}
         </>
-      ) : null,
+      ),
     },
     {
       id: "learn",
       label: t("Learn from their work"),
       keys: ["learnsFromWork"],
-      actions: <HeaderSwitch control={form.control} name="learnsFromWork" label={t("Learn from their work")} />,
-      note: t(
-        "Once a conversation goes quiet or a background run settles, the agent looks back over it and keeps what it learned as memory. Each person's saving preference still applies, and lessons shared beyond one person wait for someone allowed to approve them.",
+      actions: (
+        <HeaderSwitch
+          control={form.control}
+          name="learnsFromWork"
+          label={t("Learn from their work")}
+        />
       ),
-      content:
-        !values.learnsFromWork && loaded.learnsFromWork ? (
-          <Alert variant="warning" size="sm">
-            <AlertDescription>
+      content: (
+        <>
+          <p className="es-note">
+            {t(
+              "When a conversation settles, the agent keeps the lesson as memory. If something went wrong, took several tries or a person corrected it, the agent keeps a preference, a fact or the steps that worked. Lessons shared beyond one person wait for approval, and anything drawn from outside content is only ever offered. Each agent also has its own switch.",
+            )}
+          </p>
+          {!values.learnsFromWork && loaded.learnsFromWork && (
+            <Callout tone="w">
               {t(
                 "Every agent stops keeping lessons, whatever its own switch says. Memories already kept stay.",
               )}
-            </AlertDescription>
-          </Alert>
-        ) : null,
+            </Callout>
+          )}
+        </>
+      ),
     },
     {
       id: "allowance",
-      label: t("Monthly allowance"),
+      label: t("Monthly allowance per person"),
       keys: ["personMonthlyMessages"],
-      note: t(
-        "How many questions each person may ask the agents in a calendar month. Desk warns them as they get close and says when it refreshes. Each agent's own budget and daily limit still apply.",
-      ),
       content: (
-        <EditFieldRow label={t("Per person")} hint={t("Questions each month")}>
-          <Controller
-            control={form.control}
-            name="personMonthlyMessages"
-            render={({ field }) => (
-              <SegmentedControl<string>
-                aria-label={t("Monthly allowance")}
-                value={String(field.value)}
-                onValueChange={(next) => field.onChange(Number(next))}
-                items={personAllowanceOptions(field.value).map((value) => ({
-                  value: String(value),
-                  label: value === 0 ? t("Unlimited") : value.toLocaleString(),
-                }))}
-              />
+        <>
+          <p className="es-note">
+            {t(
+              "How many questions each person may ask the agents in a calendar month. Desk warns people as they get close and says when it refreshes. Each agent's own budget and daily limit still apply.",
             )}
-          />
-        </EditFieldRow>
+          </p>
+          <F label={t("Questions per person")}>
+            <Controller
+              control={form.control}
+              name="personMonthlyMessages"
+              render={({ field }) => (
+                <Seg
+                  v={field.value}
+                  label={t("Questions per person")}
+                  opts={personAllowanceOptions(field.value).map(
+                    (value) => [value, value === 0 ? t("Unlimited") : value.toLocaleString()] as const,
+                  )}
+                  onChange={field.onChange}
+                />
+              )}
+            />
+          </F>
+        </>
       ),
     },
     {
       id: "share",
-      label: t("Share corrections"),
+      label: t("Share corrections for model training"),
       keys: ["aiTrainingConsent"],
-      actions: <HeaderSwitch control={form.control} name="aiTrainingConsent" label={t("Share corrections")} />,
-      note: t(
-        "When someone creates a shipment from a document, Trenova keeps what was read beside what they confirmed. Turn this on to let those corrections be anonymized and used to improve the models that read documents for every customer. Turning it off keeps this organization's corrections out of any training after the change.",
+      actions: (
+        <HeaderSwitch
+          control={form.control}
+          name="aiTrainingConsent"
+          label={t("Share corrections for model training")}
+        />
       ),
       content: (
         <>
-          {control.aiTrainingConsentChangedAt ? (
-            <p className="text-xs text-muted-foreground">
-              {t("Last changed {0}", formatUnixDateTime(control.aiTrainingConsentChangedAt))}
-            </p>
-          ) : null}
+          <p className="es-note">
+            {t(
+              "Anonymized document corrections help improve extraction for every customer. Trenova keeps what was read from a document beside what a person confirmed, so accuracy can be measured. Turning this on lets those corrections be anonymized and used for training. Turning it off keeps them out of any training after the change.",
+            )}
+          </p>
           <TrainingExportHistory />
         </>
       ),
@@ -212,8 +229,8 @@ export function PolicyEditor({ open, control, onClose }: PolicyEditorProps) {
       fields={fields}
       sections={sections}
       icon={
-        <span className="flex size-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-          <Settings01Icon className="size-4" />
+        <span className="src-i">
+          <Ic n="cog" s={15} />
         </span>
       }
       title={t("Organization-wide")}
@@ -235,9 +252,7 @@ function HeaderSwitch({
     <Controller
       control={control}
       name={name}
-      render={({ field }) => (
-        <Switch checked={field.value} onCheckedChange={field.onChange} aria-label={label} />
-      )}
+      render={({ field }) => <Switch on={field.value} onChange={field.onChange} label={label} />}
     />
   );
 }
@@ -252,47 +267,30 @@ function PromotionPreview({
   const t = useT();
 
   if (loading) {
-    return (
-      <Alert variant="info" size="sm">
-        <AlertDescription>{t("Checking which tools have earned it…")}</AlertDescription>
-      </Alert>
-    );
+    return <Callout tone="i">{t("Checking which tools have earned it…")}</Callout>;
   }
   if (!promotions || promotions.length === 0) {
     return (
-      <Alert variant="success" size="sm">
-        <AlertDescription>
-          {t("No tool has a long enough streak yet. Nothing changes when you save.")}
-        </AlertDescription>
-      </Alert>
+      <Callout tone="k">
+        {t("No tool has a long enough streak yet. Nothing changes when you save.")}
+      </Callout>
     );
   }
 
+  const named = formatList(
+    promotions.map((promotion) =>
+      t("{0} on {1}", describeToolCall(promotion.toolName, null).title, promotion.agentName),
+    ),
+  );
+
   return (
-    <Alert variant="info" size="sm">
-      <AlertDescription className="flex flex-col gap-1.5">
-        <span>
-          {promotions.length === 1
-            ? t("1 tool has enough clean approvals already, so it moves up a tier when you save.")
-            : t(
-                "{0} tools have enough clean approvals already, so they move up a tier when you save.",
-                promotions.length,
-              )}
-        </span>
-        <ul className="flex flex-col gap-0.5">
-          {promotions.map((promotion) => (
-            <li key={`${promotion.agentName}:${promotion.toolName}`}>
-              {t(
-                "{0} on {1}: {2} → {3}",
-                describeToolCall(promotion.toolName, null).title,
-                promotion.agentName,
-                tierLabel(t, promotion.from),
-                tierLabel(t, promotion.to),
-              )}
-            </li>
-          ))}
-        </ul>
-      </AlertDescription>
-    </Alert>
+    <Callout tone="i">
+      {promotions.length === 1
+        ? t("{0} has enough clean approvals already, so it moves up a tier when you save.", named)
+        : t(
+            "{0} have enough clean approvals already, so they move up a tier when you save.",
+            named,
+          )}
+    </Callout>
   );
 }

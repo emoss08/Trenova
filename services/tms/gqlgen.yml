@@ -4270,6 +4270,26 @@ models:
     fields:
       visibleFailures:
         resolver: true
+  AITuneUpKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aituneup.Kind
+  AITuneUpStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aituneup.Status
+  AITuneUpEvidence:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aituneup.Evidence
+    fields:
+      fromTier:
+        resolver: true
+      toTier:
+        resolver: true
+  AITuneUpAgent:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AITuneUpAgent
+  AITuneUpProvider:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AITuneUpProvider
   AIUsageDay:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AIUsageDay

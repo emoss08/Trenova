@@ -3,9 +3,14 @@ package aicontrolresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/aicontrolsummary"
+	"github.com/emoss08/trenova/internal/core/domain/aituneup"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -113,4 +118,115 @@ func (r *QueryResolver) AiControlSummary(ctx context.Context, tab aicontrolsumma
 		TenantInfo: base.TenantInfo(authCtx),
 		Tab:        tab,
 	})
+}
+
+func (r *MutationResolver) ApplyAITuneUp(ctx context.Context, id string, version int) (*gqlmodel.AITuneUp, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentControl, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	tuneUpID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	tenantInfo := base.TenantInfo(authCtx)
+	tuneUp, err := r.AiTuneUpService.Get(ctx, repositories.GetAITuneUpRequest{TenantInfo: tenantInfo, ID: tuneUpID})
+	if err != nil {
+		return nil, err
+	}
+	if err = r.requireApplyPermission(ctx, tuneUp.Kind); err != nil {
+		return nil, err
+	}
+
+	view, err := r.AiTuneUpService.Apply(ctx, &services.AITuneUpDecisionRequest{
+		TenantInfo: tenantInfo,
+		ID:         tuneUpID,
+		Version:    int64(version),
+	}, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+	return tuneUpModel(view), nil
+}
+
+func (r *MutationResolver) DismissAITuneUp(ctx context.Context, id string, version int, days *int) (*gqlmodel.AITuneUp, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentControl, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	tuneUpID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	request := &services.AITuneUpDecisionRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		ID:         tuneUpID,
+		Version:    int64(version),
+	}
+	if days != nil {
+		request.Days = *days
+	}
+
+	view, err := r.AiTuneUpService.Dismiss(ctx, request, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+	return tuneUpModel(view), nil
+}
+
+func (r *MutationResolver) RestoreAITuneUp(ctx context.Context, id string, version int) (*gqlmodel.AITuneUp, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentControl, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	tuneUpID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	view, err := r.AiTuneUpService.Restore(ctx, &services.AITuneUpDecisionRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		ID:         tuneUpID,
+		Version:    int64(version),
+	}, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+	return tuneUpModel(view), nil
+}
+
+func (r *QueryResolver) AiTuneUps(ctx context.Context) (*gqlmodel.AITuneUps, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentControl, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	list, err := r.AiTuneUpService.List(ctx, base.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]*gqlmodel.AITuneUp, 0, len(list.Items))
+	for _, view := range list.Items {
+		items = append(items, tuneUpModel(view))
+	}
+	out := &gqlmodel.AITuneUps{Items: items, WindowDays: list.WindowDays}
+	if list.ComputedAt != nil {
+		computedAt := int(*list.ComputedAt)
+		out.ComputedAt = &computedAt
+	}
+	return out, nil
+}
+
+func (r *AITuneUpEvidenceResolver) FromTier(ctx context.Context, obj *aituneup.Evidence) (*agent.AutonomyTier, error) {
+	return optionalTier(obj.FromTier), nil
+}
+
+func (r *AITuneUpEvidenceResolver) ToTier(ctx context.Context, obj *aituneup.Evidence) (*agent.AutonomyTier, error) {
+	return optionalTier(obj.ToTier), nil
 }

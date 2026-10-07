@@ -53,10 +53,21 @@ type ProviderFailure struct {
 	LastFailureAt int64    `json:"lastFailureAt"`
 }
 
+// ProviderRef names a provider a sentence links to.
+type ProviderRef struct {
+	ProviderID pulid.ID `json:"providerId"`
+	Name       string   `json:"name"`
+}
+
 // Facts are what a tab's sentence may say. Nothing else may be said.
 type Facts struct {
-	Agents      AgentCounts       `json:"agents"`
-	ProvidersOn int               `json:"providersOn"`
+	Agents         AgentCounts `json:"agents"`
+	ProvidersOn    int         `json:"providersOn"`
+	ProvidersTotal int         `json:"providersTotal"`
+	// WeekCalls is the model calls of the last seven days.
+	WeekCalls int `json:"weekCalls"`
+	// AwaitingKey is a provider whose protocol needs a key and that has none.
+	AwaitingKey *ProviderRef `json:"awaitingKey,omitempty"`
 	Failing     []ProviderFailure `json:"failing"`
 	// Uncovered is the tasks no enabled provider can take.
 	Uncovered int `json:"uncovered"`
@@ -72,6 +83,7 @@ func (f *Facts) Numbers() []int {
 	numbers := []int{
 		f.Agents.Total, f.Agents.On, f.Agents.Working, f.Agents.Waiting,
 		f.Agents.Shadow, f.Agents.ShadowRecorded, f.ProvidersOn, f.Uncovered, len(f.Failing),
+		f.ProvidersTotal, f.WeekCalls,
 	}
 	for _, failure := range f.Failing {
 		numbers = append(numbers, failure.FailedCalls)
@@ -87,12 +99,19 @@ func (f *Facts) Hash(tab Tab) string {
 	for _, number := range []int{
 		f.Agents.Total, f.Agents.On, f.Agents.Working, f.Agents.Waiting,
 		f.Agents.Shadow, f.Agents.ShadowRecorded, f.ProvidersOn, f.Uncovered,
+		f.ProvidersTotal, f.WeekCalls,
 	} {
 		builder.WriteByte('|')
 		builder.WriteString(strconv.Itoa(number))
 	}
 	builder.WriteString("|paused=")
 	builder.WriteString(strconv.FormatBool(f.Paused))
+	if f.AwaitingKey != nil {
+		builder.WriteString("|key=")
+		builder.WriteString(f.AwaitingKey.ProviderID.String())
+		builder.WriteByte(':')
+		builder.WriteString(f.AwaitingKey.Name)
+	}
 	failing := slices.Clone(f.Failing)
 	slices.SortFunc(failing, func(a, b ProviderFailure) int { return strings.Compare(a.Name, b.Name) })
 	for _, failure := range failing {

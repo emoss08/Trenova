@@ -1,8 +1,8 @@
-# Shipments board mock API
+# Mock API
 
 A dependency-free Node server that stands in for the TMS API, so the shipments board
-(`/shipment-management/shipments`) can be run, clicked through and screenshotted without
-Postgres, Redis, Temporal or an AI provider. It answers the REST session endpoints the app
+(`/shipment-management/shipments`) and AI control (`/admin/agent-control`) can be run, clicked
+through and screenshotted without Postgres, Redis, Temporal or an AI provider. It answers the REST session endpoints the app
 shell needs and every GraphQL operation the board sends, from a deterministic fixture.
 
 ## Run it
@@ -36,6 +36,8 @@ anchor. A scenario is set from the environment when the server starts, or at any
 | `hos` | `true` \| `false` | `true` | HOS rings, sublines and HOS suggestions |
 | `maps` | `true` \| `false` | `false` | Map view shows the map or "not connected" |
 | `listRows` | number | `3` | Rows on the hazardous materials list, for checking a short and a long list page |
+| `aiProviders` | `configured` \| `many` \| `none` | `configured` | AI control: the prototype's three providers (one failing), five cloud providers, or none |
+| `aiPaused` | `true` \| `false` | `false` | Every agent paused in shadow |
 
 ```bash
 curl -X POST localhost:8080/__mock/scenario \
@@ -45,7 +47,7 @@ curl -X POST localhost:8080/__mock/scenario \
 
 `GET /__mock/scenario` returns the current scenario and its anchor (Unix seconds).
 Environment equivalents: `MOCK_BOARD`, `MOCK_AI=0`, `MOCK_OPERATION_TYPE`, `MOCK_HOS=0`,
-`MOCK_MAPS=1`, `MOCK_LIST_ROWS`.
+`MOCK_MAPS=1`, `MOCK_LIST_ROWS`, `MOCK_AI_PROVIDERS`, `MOCK_AI_PAUSED=1`.
 
 The board briefing is stored the way the server stores it: written on the first read of a
 scenario, read unchanged after that, and written again (its `generation` going up) only once
@@ -79,6 +81,20 @@ makes the script exit non-zero.
 
 `CHROMIUM_PATH`, `APP_URL`, `MOCK_API_URL` and `SETTLE_MS` override the defaults.
 
+AI control has its own walkthrough, the same way:
+
+```bash
+node e2e/mock-api/ai-control-screenshots.mjs [outDir] [name,name,...]
+```
+
+It writes to `e2e/mock-api/screenshots/ai-control` by default and covers every tab in its
+scenarios and the panels each one opens. The AI control data is the design handoff's demo set
+(`fixtures/aicontrol.mjs`); the provider catalog, extension catalog, agent tool catalog and event
+kinds in `fixtures/ai/` are dumped from the Go service, so names and labels are the real ones.
+Regenerate them after the registry changes with a throwaway test that marshals
+`aiproviderhandler`'s catalog, `agentextensionservice.ListCatalog`,
+`agentdefinitionservice.buildToolCatalog` (parameters stripped) and `agent.KnownEvents()`.
+
 ## Layout
 
 ```
@@ -86,7 +102,11 @@ server.mjs            HTTP entry: CORS, scenario endpoint, REST and GraphQL disp
 state.mjs             Scenario defaults, stage mapping and the mutable board state
 fixtures/board.mjs    Shipments, drivers and carriers ported from the design prototype
 fixtures/session.mjs  Signed-in user and permission manifest
+fixtures/aicontrol.mjs  Agents, providers, runs, usage and tune-ups for AI control
+fixtures/ai/          Catalogs dumped from the Go service
 handlers/rest.mjs     REST routes the shell and board call
 handlers/graphql.mjs  GraphQL operations, keyed by operation name
-screenshots.mjs       Playwright walkthrough of every scenario
+handlers/aicontrol.mjs  AI control's GraphQL operations and REST routes
+screenshots.mjs       Playwright walkthrough of every board scenario
+ai-control-screenshots.mjs  Playwright walkthrough of AI control
 ```

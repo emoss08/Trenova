@@ -45,6 +45,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/aiauditjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/aicorrectionjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/aifeedbackjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/aituneupjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/auditjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
@@ -216,6 +217,7 @@ func OptionsFor(e *edition.Edition) fx.Option {
 		fx.Provide(aitraininghistoryservice.NewEmpty),
 		fx.Provide(aidocumentservice.NewContract),
 		aifeedbackjobs.Module,
+		aituneupjobs.Module,
 		decisioncommitjobs.Module,
 		retrievaljobs.Module,
 		iftajobs.Module,

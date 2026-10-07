@@ -1,3 +1,4 @@
+import { AI_HANDLERS } from "./aicontrol.mjs";
 import { hash, stageOf, stageRankOf, STAGE_RANKS } from "../state.mjs";
 
 const HOUR = 3600;
@@ -859,6 +860,7 @@ const SHELL_HANDLERS = {
 
 const HANDLERS = {
   ...SHELL_HANDLERS,
+  ...AI_HANDLERS,
   ShipmentBoardTable: (state, v) => ({ shipments: shipmentConnection(state, v.input, v.includeTotalCount) }),
   ShipmentDetail: (state, v) => {
     const s = state.shipments.find((x) => x.id === v.id);

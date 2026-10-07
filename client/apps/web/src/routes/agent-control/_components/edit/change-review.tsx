@@ -1,9 +1,8 @@
 import { isPlainList, listDelta, previewValue } from "@/lib/edit-diff";
-import { Button } from "@trenova/shared/components/ui/button";
-import { ArrowRightIcon, ReverseLeftIcon } from "@trenova/shared/components/icons";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { ReactNode } from "react";
 import { type FieldValues, type UseFormReturn, get } from "react-hook-form";
+import { Ic } from "../kit/ic";
 import type { EditFlow } from "./use-edit-flow";
 
 /** How an editor names and shows one of its fields in a change review. */
@@ -29,12 +28,10 @@ export function ChangeReview<T extends FieldValues>({ form, flow, fields }: Chan
   const count = flow.changed.length;
 
   return (
-    <div className="flex max-h-80 flex-col gap-1 overflow-y-auto p-3">
-      <div className="flex items-baseline gap-2 pb-1">
-        <span className="font-medium">
-          {count === 1 ? t("Review 1 change") : t("Review {0} changes", count)}
-        </span>
-        <span className="text-xs text-muted-foreground">{t("Undo any one before saving")}</span>
+    <div className="es-rv" role="dialog" aria-label={t("Unsaved changes")}>
+      <div className="es-rvh">
+        <b>{count === 1 ? t("Review 1 change") : t("Review {0} changes", count)}</b>
+        <span>{t("Undo any one before saving")}</span>
       </div>
       {flow.changed.map((key) => (
         <ChangeRow
@@ -63,19 +60,18 @@ function ChangeRow({
   const t = useT();
 
   return (
-    <div className="flex items-center gap-3 rounded-control px-2 py-1.5 hover:bg-muted">
-      <span className="w-40 shrink-0 truncate text-xs text-muted-foreground">{field.label}</span>
-      <span className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 text-xs">
-        <ChangeValue field={field} before={before} after={after} />
-      </span>
-      <Button
-        size="icon-xs"
-        variant="ghost"
-        onClick={onUndo}
+    <div className="cr">
+      <span className="cr-l">{field.label}</span>
+      <ChangeValue field={field} before={before} after={after} />
+      <button
+        type="button"
+        className="ib xs"
+        title={t("Undo this change")}
         aria-label={t("Undo the change to {0}", field.label)}
+        onClick={onUndo}
       >
-        <ReverseLeftIcon className="size-3" />
-      </Button>
+        <Ic n="undo" s={11} />
+      </button>
     </div>
   );
 }
@@ -93,27 +89,27 @@ function ChangeValue({
     const { added, removed } = listDelta(before, after);
     const name = field.item ?? String;
     return (
-      <>
+      <span className="cr-v">
         {added.map((value) => (
-          <span key={`+${value}`} className="text-success">
+          <em key={`+${value}`} className="ad">
             + {name(value)}
-          </span>
+          </em>
         ))}
         {removed.map((value) => (
-          <span key={`-${value}`} className="text-danger line-through">
+          <em key={`-${value}`} className="rm">
             − {name(value)}
-          </span>
+          </em>
         ))}
-      </>
+      </span>
     );
   }
 
   const write = field.format ?? previewValue;
   return (
-    <>
-      <span className="text-muted-foreground line-through">{write(before)}</span>
-      <ArrowRightIcon className="size-3 text-muted-foreground" />
-      <span className="font-medium">{write(after)}</span>
-    </>
+    <span className="cr-v">
+      <s>{write(before)}</s>
+      <Ic n="arrowR" s={11} />
+      <b>{write(after)}</b>
+    </span>
   );
 }

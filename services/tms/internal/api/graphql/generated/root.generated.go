@@ -148,6 +148,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/domain/aitraining"
+	"github.com/emoss08/trenova/internal/core/domain/aituneup"
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/briefing"
@@ -253,6 +254,7 @@ type ResolverRoot interface {
 	AIFeedback() AIFeedbackResolver
 	AIProvider() AIProviderResolver
 	AIRouteChoice() AIRouteChoiceResolver
+	AITuneUpEvidence() AITuneUpEvidenceResolver
 	AccessorialCharge() AccessorialChargeResolver
 	AccountingAppCredential() AccountingAppCredentialResolver
 	AccountingAppSettings() AccountingAppSettingsResolver
@@ -528,6 +530,11 @@ type AIProviderResolver interface {
 
 type AIRouteChoiceResolver interface {
 	ProviderID(ctx context.Context, obj *aiprovider.RouteChoice) (*string, error)
+}
+
+type AITuneUpEvidenceResolver interface {
+	FromTier(ctx context.Context, obj *aituneup.Evidence) (*agent.AutonomyTier, error)
+	ToTier(ctx context.Context, obj *aituneup.Evidence) (*agent.AutonomyTier, error)
 }
 
 type AccessorialChargeResolver interface {
@@ -1508,6 +1515,9 @@ type MutationResolver interface {
 	VerifyAIAuditChain(ctx context.Context) (*services.AIAuditChainStatus, error)
 	DismissAIProviderFailure(ctx context.Context, providerID string, lastFailureAt int) (bool, error)
 	RestoreAIProviderFailure(ctx context.Context, providerID string) (bool, error)
+	ApplyAITuneUp(ctx context.Context, id string, version int) (*gqlmodel.AITuneUp, error)
+	DismissAITuneUp(ctx context.Context, id string, version int, days *int) (*gqlmodel.AITuneUp, error)
+	RestoreAITuneUp(ctx context.Context, id string, version int) (*gqlmodel.AITuneUp, error)
 	SetMyAIFeedback(ctx context.Context, input gqlmodel.SetMyAIFeedbackInput) (*aifeedback.Feedback, error)
 	ClearMyAIFeedback(ctx context.Context, input gqlmodel.AIFeedbackTargetInput) (bool, error)
 	UpdateAIRetrievalSettings(ctx context.Context, input gqlmodel.AIRetrievalSettingsPatchInput) (*services.AIRetrievalStatus, error)
@@ -2192,6 +2202,7 @@ type QueryResolver interface {
 	AiAuditExports(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIAuditExportConnection, error)
 	AiAuditExport(ctx context.Context, id string) (*aiaudit.AIAuditExport, error)
 	AiControlSummary(ctx context.Context, tab aicontrolsummary.Tab) (*aicontrolsummary.Summary, error)
+	AiTuneUps(ctx context.Context) (*gqlmodel.AITuneUps, error)
 	MyAIFeedback(ctx context.Context, input gqlmodel.MyAIFeedbackInput) ([]*aifeedback.Feedback, error)
 	AiFeedback(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIFeedbackConnection, error)
 	AgentFeedbackSummary(ctx context.Context, agentDefinitionID string, window *int) (*services.AgentFeedbackSummary, error)
@@ -3182,6 +3193,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AIFeedback":                         func() any { return r.AIFeedback() },
 			"AIProvider":                         func() any { return r.AIProvider() },
 			"AIRouteChoice":                      func() any { return r.AIRouteChoice() },
+			"AITuneUpEvidence":                   func() any { return r.AITuneUpEvidence() },
 			"AccessorialCharge":                  func() any { return r.AccessorialCharge() },
 			"AccountingAppCredential":            func() any { return r.AccountingAppCredential() },
 			"AccountingAppSettings":              func() any { return r.AccountingAppSettings() },
@@ -8101,6 +8113,116 @@ extend type Mutation {
   dismissAIProviderFailure(providerId: ID!, lastFailureAt: Timestamp!): Boolean!
   "Brings a put-away failure notice back."
   restoreAIProviderFailure(providerId: ID!): Boolean!
+}
+
+"What a tune-up would change."
+enum AITuneUpKind {
+  "Let a tool its agent's people keep approving unchanged run one tier more freely."
+  RaiseToolTier
+  "Put a provider that keeps catching a failing one ahead of it."
+  ReorderProviders
+  "Take an agent whose recorded proposals match what people did out of shadow."
+  LeaveShadow
+  "Give a task nothing serves to a provider that can take it."
+  AssignTask
+  "Turn off a chat agent nobody has asked anything in two weeks."
+  TurnOffIdleAgent
+}
+
+enum AITuneUpStatus {
+  Open
+  Applied
+  Dismissed
+}
+
+"The agent a tune-up changes."
+type AITuneUpAgent {
+  id: ID!
+  name: String!
+  icon: String!
+  accent: String!
+}
+
+"A provider a tune-up names."
+type AITuneUpProvider {
+  id: ID!
+  name: String!
+  kind: AIProviderKind!
+}
+
+"""
+What the runs showed. Each kind fills what its sentence names; the rest are
+zero.
+"""
+type AITuneUpEvidence {
+  "The tier the tool runs at on the agent now."
+  fromTier: AgentAutonomyTier
+  "The tier it would move to."
+  toTier: AgentAutonomyTier
+  "Approvals in a row that changed nothing."
+  streak: Int!
+  approvals: Int!
+  approvalsPerWeek: Float!
+  rejections: Int!
+  "Calls the provider that catches the failures answered."
+  calls: Int!
+  "Calls the provider first in line failed."
+  failed: Int!
+  "Failed calls the next provider answered."
+  rescued: Int!
+  "Writes the agent recorded in shadow."
+  recorded: Int!
+  "Share of the recorded writes people answered that matched what they did, 0 to 1."
+  matchRate: Float!
+  wouldFail: Int!
+  tasks: [AITask!]!
+  "The model the provider that would take the task serves."
+  model: String!
+  lastRunAt: Timestamp
+  "When the agent last ran, or was created when it never has."
+  idleSince: Timestamp!
+  "Tools the agent holds."
+  tools: Int!
+}
+
+"A change to how AI is set up that the last 30 days of runs argue for."
+type AITuneUp {
+  id: ID!
+  kind: AITuneUpKind!
+  agent: AITuneUpAgent
+  "The provider the change acts on: the one moved ahead, or the one given the task."
+  provider: AITuneUpProvider
+  "The provider moved behind."
+  otherProvider: AITuneUpProvider
+  toolName: String
+  task: AITask
+  evidence: AITuneUpEvidence!
+  status: AITuneUpStatus!
+  dismissedUntil: Timestamp
+  computedAt: Timestamp!
+  version: Int!
+}
+
+"The tune-ups offered now, worked out nightly."
+type AITuneUps {
+  items: [AITuneUp!]!
+  "When they were last worked out; null before the first time."
+  computedAt: Timestamp
+  "How many days of runs they are drawn from."
+  windowDays: Int!
+}
+
+extend type Query {
+  aiTuneUps: AITuneUps!
+}
+
+extend type Mutation {
+  "Makes the change a tune-up suggests."
+  applyAITuneUp(id: ID!, version: Int!): AITuneUp!
+  "Puts a tune-up away for some days, 30 unless given; the same change is not suggested again until then."
+  dismissAITuneUp(id: ID!, version: Int!, days: Int): AITuneUp!
+  "Brings a put-away tune-up back."
+  restoreAITuneUp(id: ID!, version: Int!): AITuneUp!
 }
 `, BuiltIn: false},
 	{Name: "../schema/aifeedback.graphqls", Input: `"The kind of AI output a rating is about."

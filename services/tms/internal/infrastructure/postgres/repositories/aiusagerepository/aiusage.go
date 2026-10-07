@@ -6,6 +6,7 @@ import (
 	"github.com/shopspring/decimal"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -384,5 +385,53 @@ func (r *repository) EvaluationCost(
 		}
 
 		return scanCost(ctx, q, "evaluation cost")
+	})
+}
+
+type providerTaskRow struct {
+	ProviderID string `bun:"provider_id"`
+	Task       string `bun:"task"`
+	Calls      int    `bun:"calls"`
+	Failed     int    `bun:"failed"`
+	Rescued    int    `bun:"rescued"`
+}
+
+func (r *repository) ProviderTaskTotals(
+	ctx context.Context,
+	req repositories.AIUsageProviderTaskRequest,
+) ([]repositories.AIUsageProviderTaskTotals, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]repositories.AIUsageProviderTaskTotals, error) {
+		cols := buncolgen.AIUsageRecordColumns
+		var rows []providerTaskRow
+		if err := r.db.DBForContext(ctx).NewSelect().
+			Model((*aiusage.AIUsageRecord)(nil)).
+			ColumnExpr(cols.ProviderID.Qualified()+" AS provider_id").
+			ColumnExpr(cols.Task.Qualified()+" AS task").
+			ColumnExpr("COUNT(*) AS calls").
+			ColumnExpr("COUNT(*) FILTER (WHERE NOT "+cols.Succeeded.Qualified()+") AS failed").
+			ColumnExpr("COUNT(*) FILTER (WHERE "+cols.Succeeded.Qualified()+" AND "+
+				cols.Failover.Qualified()+") AS rescued").
+			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+			Where(cols.CreatedAt.Gte(), req.Since).
+			Where(cols.ProviderID.IsNotNull()).
+			GroupExpr(cols.ProviderID.Qualified()).
+			GroupExpr(cols.Task.Qualified()).
+			Scan(ctx, &rows); err != nil {
+			return nil, fmt.Errorf("total ai usage by provider and task: %w", err)
+		}
+
+		totals := make([]repositories.AIUsageProviderTaskTotals, 0, len(rows))
+		for i := range rows {
+			row := &rows[i]
+			totals = append(totals, repositories.AIUsageProviderTaskTotals{
+				ProviderID: pulidFrom(row.ProviderID),
+				Task:       aiprovider.Task(row.Task),
+				Calls:      row.Calls,
+				Failed:     row.Failed,
+				Rescued:    row.Rescued,
+			})
+		}
+		return totals, nil
 	})
 }

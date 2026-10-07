@@ -1,17 +1,7 @@
-import { SectionPanel } from "@/components/section-panel";
 import type { AgentControl } from "@/lib/graphql/agent-control";
-import {
-  Award01Icon,
-  Database01Icon,
-  Dataflow03Icon,
-  Edit02Icon,
-  GraduationHat01Icon,
-  Speedometer03Icon,
-  type IconComponent,
-} from "@trenova/shared/components/icons";
-import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
+import { Ic, type IcName } from "../kit/ic";
+import { SecH } from "../kit/layout";
 
 type OrganizationWideProps = {
   control: AgentControl;
@@ -32,9 +22,9 @@ export function OrganizationWide({
 }: OrganizationWideProps) {
   const t = useT();
 
-  const rows: { icon: IconComponent; label: string; value: string; on: boolean }[] = [
+  const rows: { icon: IcName; label: string; value: string; on: boolean }[] = [
     {
-      icon: Award01Icon,
+      icon: "award",
       label: t("Earned autonomy"),
       value: control.earnedAutonomy
         ? t("On · after {0} clean", control.promotionThreshold)
@@ -42,13 +32,13 @@ export function OrganizationWide({
       on: control.earnedAutonomy,
     },
     {
-      icon: GraduationHat01Icon,
+      icon: "brain",
       label: t("Learn from their work"),
       value: control.learningOff ? t("Off") : t("On"),
       on: !control.learningOff,
     },
     {
-      icon: Speedometer03Icon,
+      icon: "gauge",
       label: t("Monthly allowance"),
       value:
         control.personMonthlyMessages > 0
@@ -57,7 +47,7 @@ export function OrganizationWide({
       on: control.personMonthlyMessages > 0,
     },
     {
-      icon: Database01Icon,
+      icon: "database",
       label: t("Share corrections"),
       value: control.aiTrainingConsent ? t("On") : t("Off"),
       on: control.aiTrainingConsent,
@@ -65,72 +55,42 @@ export function OrganizationWide({
   ];
 
   return (
-    <SectionPanel
-      title={t("Organization-wide")}
-      action={
-        canEdit ? (
-          <Button size="xs" variant="outline" onClick={onEdit}>
-            <Edit02Icon className="size-3" />
-            {t("Edit")}
-          </Button>
-        ) : undefined
-      }
-    >
-      <ul className="flex flex-col p-1.5">
+    <section className="sec">
+      <SecH
+        t={t("Organization-wide")}
+        r={
+          canEdit ? (
+            <button type="button" className="btn sm" onClick={onEdit}>
+              <Ic n="edit" s={12} />
+              {t("Edit")}
+            </button>
+          ) : undefined
+        }
+      />
+      <div className="os">
         {rows.map((row) => (
-          <li key={row.label}>
-            <SettingRow {...row} onClick={canEdit ? onEdit : undefined} />
-          </li>
+          <button
+            key={row.label}
+            type="button"
+            className="os-r"
+            disabled={!canEdit}
+            onClick={onEdit}
+          >
+            <Ic n={row.icon} s={13} />
+            <span>{row.label}</span>
+            <em className={row.on ? "on" : undefined}>{row.value}</em>
+          </button>
         ))}
         {routing && (
-          <li>
-            <SettingRow
-              icon={Dataflow03Icon}
-              label={t("Routing")}
-              value={t("{0} of {1} covered", routing.covered, routing.total)}
-              on={routing.covered === routing.total}
-              warn={routing.covered < routing.total}
-              onClick={onOpenRouting}
-            />
-          </li>
+          <button type="button" className="os-r" onClick={onOpenRouting}>
+            <Ic n="route" s={13} />
+            <span>{t("Routing")}</span>
+            <em className={routing.covered === routing.total ? "on" : "w"}>
+              {t("{0} of {1} covered", routing.covered, routing.total)}
+            </em>
+          </button>
         )}
-      </ul>
-    </SectionPanel>
-  );
-}
-
-function SettingRow({
-  icon: Icon,
-  label,
-  value,
-  on,
-  warn = false,
-  onClick,
-}: {
-  icon: IconComponent;
-  label: string;
-  value: string;
-  on: boolean;
-  warn?: boolean;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      disabled={!onClick}
-      onClick={onClick}
-      className="ui-focus-ring flex w-full items-center gap-2.5 rounded-control px-2 py-1.5 text-left text-sm enabled:hover:bg-muted"
-    >
-      <Icon className="size-3.5 text-muted-foreground" />
-      <span className="flex-1 truncate">{label}</span>
-      <em
-        className={cn(
-          "text-xs not-italic",
-          warn ? "text-warning" : on ? "text-foreground" : "text-muted-foreground",
-        )}
-      >
-        {value}
-      </em>
-    </button>
+      </div>
+    </section>
   );
 }

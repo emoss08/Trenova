@@ -10,11 +10,14 @@ import (
 type Deps struct {
 	*base.Core
 	AiControlSummaryService services.AIControlSummaryService
+	AiTuneUpService         services.AITuneUpService
 }
 
 type AIControlSegmentResolver struct{ *Deps }
 
 type AIControlSummaryResolver struct{ *Deps }
+
+type AITuneUpEvidenceResolver struct{ *Deps }
 
 type MutationResolver struct{ *Deps }
 

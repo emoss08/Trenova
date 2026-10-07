@@ -61,6 +61,7 @@ type AIProviderRepository interface {
 	// ListEnabled lists the enabled providers in the order the router tries
 	// them: by priority, then by age.
 	ListEnabled(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*aiprovider.Provider, error)
+	ListOrdered(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*aiprovider.Provider, error)
 	Create(ctx context.Context, entity *aiprovider.Provider) (*aiprovider.Provider, error)
 	Update(ctx context.Context, entity *aiprovider.Provider) (*aiprovider.Provider, error)
 	Delete(ctx context.Context, req DeleteAIProviderRequest) error

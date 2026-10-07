@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
@@ -135,10 +136,52 @@ func (s *Service) ready(ctx context.Context, req *services.PromoteReadyRequest) 
 				Streak:            row.Streak,
 				From:              current,
 				To:                next,
+				Approvals:         row.Approvals,
+				Rejections:        row.Rejections,
+				TrackedSince:      row.CreatedAt,
 			},
 			row:        row,
 			definition: definition,
 		})
 	}
 	return out, nil
+}
+
+func (s *Service) PromoteTool(
+	ctx context.Context,
+	req *services.PromoteToolRequest,
+) (*services.ToolPromotion, error) {
+	ready, err := s.ready(ctx, &req.PromoteReadyRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	for idx := range ready {
+		tool := &ready[idx]
+		if tool.definition.ID != req.AgentDefinitionID || tool.row.ToolName != req.ToolName {
+			continue
+		}
+		change := tierChange{
+			tenant:     req.TenantInfo,
+			definition: tool.definition,
+			row:        tool.row,
+			current:    tool.promotion.From,
+			decidedBy:  req.DecidedBy,
+			at:         timeutils.NowUnix(),
+		}
+		moved, moveErr := s.moveTier(ctx, change, tool.promotion.To, true)
+		if moveErr != nil {
+			return nil, moveErr
+		}
+		if !moved {
+			break
+		}
+		s.logTierChange(change, tool.promotion.To,
+			"Tool promoted from a tune-up: its streak had met the threshold")
+		return &tool.promotion, nil
+	}
+
+	return nil, errortypes.NewBusinessError(
+		"{0} is no longer ready to move up a tier on this agent", req.ToolName,
+	)
 }

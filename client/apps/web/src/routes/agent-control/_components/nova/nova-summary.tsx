@@ -1,19 +1,19 @@
-import { StreamedText, type StreamedSegment } from "@/components/streamed-text";
+import type { AIControlSegment } from "@/lib/graphql/ai-control";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import type { ReactNode } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
+import { novaTarget, type NovaTarget } from "./use-nova-segments";
 
 type NovaSummaryProps = {
   /** The tab the sentence heads, as it is named beside Nova. */
   context: string;
-  segments: StreamedSegment[];
-  /** Restarts the sentence's arrival when it changes; the same sentence never arrives twice. */
-  streamKey: string;
+  segments: readonly AIControlSegment[] | undefined;
   /** Something is working right now, so the ring turns. */
   working?: boolean;
   loading?: boolean;
-  /** The one control the tab offers beside its sentence. */
+  onTarget: (target: NovaTarget) => void;
+  /** The one control the tab offers beside its sentence, with its note under it. */
   control?: ReactNode;
 };
 
@@ -24,41 +24,74 @@ type NovaSummaryProps = {
 export function NovaSummary({
   context,
   segments,
-  streamKey,
   working = false,
   loading = false,
+  onTarget,
   control,
 }: NovaSummaryProps) {
   const t = useT();
+  const sentence = (segments ?? []).map((segment) => segment.text).join("");
 
   return (
-    <section className="flex flex-col gap-4 border-b border-border pb-5 md:flex-row md:items-end">
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
-        <span className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span
-            aria-hidden
-            className={cn(
-              "size-4 rounded-full bg-[conic-gradient(from_0deg,var(--brand),transparent_70%)]",
-              working && "motion-safe:animate-spin",
-            )}
-          />
-          <b className="font-medium text-foreground">{t("Nova")}</b>
+    <section className="hero rh">
+      <div className="hero-s">
+        <span className="who">
+          <span className={cn("dm", working && "spin")} />
+          <b>{t("Nova")}</b>
           <span>{context}</span>
         </span>
         {loading ? (
-          <div className="flex flex-col gap-2" aria-busy>
-            <Skeleton className="h-5 w-11/12" />
-            <Skeleton className="h-5 w-2/3" />
+          <div className="mt-2.5 flex flex-col gap-2" aria-busy>
+            <Skeleton className="h-6 w-11/12" />
+            <Skeleton className="h-6 w-2/3" />
           </div>
         ) : (
-          <StreamedText
-            segments={segments}
-            streamKey={streamKey}
-            className="max-w-4xl text-lg/relaxed text-muted-foreground"
-          />
+          <p key={sentence} className="say">
+            {(segments ?? []).map((segment, index) => (
+              <Segment key={index} segment={segment} onTarget={onTarget} />
+            ))}
+          </p>
         )}
       </div>
-      {control && <div className="flex shrink-0 flex-col items-start gap-1.5 md:items-end">{control}</div>}
+      {control && <div className="hc">{control}</div>}
     </section>
   );
+}
+
+function Segment({
+  segment,
+  onTarget,
+}: {
+  segment: AIControlSegment;
+  onTarget: (target: NovaTarget) => void;
+}) {
+  const target = novaTarget(segment);
+  if (target) {
+    const open = () => onTarget(target);
+    const onKeyDown = (event: KeyboardEvent<HTMLSpanElement>) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        open();
+      }
+    };
+    return (
+      <span
+        role="link"
+        tabIndex={0}
+        className={cn("ref", segment.tone === "danger" && "d", segment.tone === "warn" && "w")}
+        onClick={open}
+        onKeyDown={onKeyDown}
+      >
+        {segment.text}
+      </span>
+    );
+  }
+  if (segment.strong) {
+    return (
+      <b className={cn(segment.tone === "danger" && "t-d", segment.tone === "warn" && "t-w")}>
+        {segment.text}
+      </b>
+    );
+  }
+  return <>{segment.text}</>;
 }

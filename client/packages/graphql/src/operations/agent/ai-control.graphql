@@ -100,3 +100,77 @@ query AIUsageFeatures(
     }
   }
 }
+
+fragment AITuneUpFields on AITuneUp {
+  id
+  kind
+  agent {
+    id
+    name
+    icon
+    accent
+  }
+  provider {
+    id
+    name
+    kind
+  }
+  otherProvider {
+    id
+    name
+    kind
+  }
+  toolName
+  task
+  evidence {
+    fromTier
+    toTier
+    streak
+    approvals
+    approvalsPerWeek
+    rejections
+    calls
+    failed
+    rescued
+    recorded
+    matchRate
+    wouldFail
+    tasks
+    model
+    lastRunAt
+    idleSince
+    tools
+  }
+  status
+  dismissedUntil
+  computedAt
+  version
+}
+
+query AITuneUps {
+  aiTuneUps {
+    computedAt
+    windowDays
+    items {
+      ...AITuneUpFields
+    }
+  }
+}
+
+mutation ApplyAITuneUp($id: ID!, $version: Int!) {
+  applyAITuneUp(id: $id, version: $version) {
+    ...AITuneUpFields
+  }
+}
+
+mutation DismissAITuneUp($id: ID!, $version: Int!, $days: Int) {
+  dismissAITuneUp(id: $id, version: $version, days: $days) {
+    ...AITuneUpFields
+  }
+}
+
+mutation RestoreAITuneUp($id: ID!, $version: Int!) {
+  restoreAITuneUp(id: $id, version: $version) {
+    ...AITuneUpFields
+  }
+}

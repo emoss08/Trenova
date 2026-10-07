@@ -1,5 +1,6 @@
 import {
   fetchAIControlSummary,
+  fetchAITuneUps,
   fetchAIUsageDaily,
   fetchAgentPromotionPreview,
   fetchWorkingRuns,
@@ -20,6 +21,10 @@ export const aiControl = createQueryKeys("aiControl", {
   workingRuns: () => ({
     queryKey: ["working"],
     queryFn: ({ signal }: { signal?: AbortSignal }) => fetchWorkingRuns({ signal }),
+  }),
+  tuneUps: () => ({
+    queryKey: ["tune-ups"],
+    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchAITuneUps({ signal }),
   }),
   daily: (days: number, timezone: string) => ({
     queryKey: [days, timezone],

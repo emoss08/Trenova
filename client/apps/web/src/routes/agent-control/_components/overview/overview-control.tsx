@@ -1,13 +1,12 @@
-import { HoldButton } from "@/components/hold-button";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { AGENT_CONTROL_QUERY_KEY, updateAgentControl, type AgentControl } from "@/lib/graphql/agent-control";
 import { queries } from "@/lib/queries";
-import { PauseCircleIcon, PlayCircleIcon, PlusIcon } from "@trenova/shared/components/icons";
-import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { controlInput } from "../agent-control-options";
+import { Ic } from "../kit/ic";
+import { Hold } from "../kit/layout";
 
 type OverviewControlProps = {
   control: AgentControl | undefined;
@@ -51,11 +50,11 @@ export function OverviewControl({
   if (noProvider) {
     return (
       <>
-        <Button size="lg" onClick={onConnectProvider}>
-          <PlusIcon className="size-3.5" />
+        <button type="button" className="btn ink lg" onClick={onConnectProvider}>
+          <Ic n="plus" s={13} />
           {t("Connect a provider")}
-        </Button>
-        <span className="text-xs text-muted-foreground">{t("Takes about a minute")}</span>
+        </button>
+        <span>{t("Takes about a minute")}</span>
       </>
     );
   }
@@ -67,29 +66,28 @@ export function OverviewControl({
   if (control.shadowMode) {
     return (
       <>
-        <Button size="lg" isLoading={pause.isPending} onClick={() => pause.mutate(false)}>
-          <PlayCircleIcon className="size-3.5" />
+        <button
+          type="button"
+          className="btn ink lg"
+          disabled={pause.isPending}
+          onClick={() => pause.mutate(false)}
+        >
+          <Ic n="play" s={12} />
           {t("Resume agents")}
-        </Button>
-        <span className="text-xs text-muted-foreground">{t("Every agent is paused")}</span>
+        </button>
+        <span>{t("Every agent is paused")}</span>
       </>
     );
   }
 
   return (
     <>
-      <div className="w-60">
-        <HoldButton
-          tone="warning"
-          icon={PauseCircleIcon}
-          label={t("Hold to pause all agents")}
-          doneLabel={t("Pausing")}
-          done={pause.isPending}
-          disabled={pause.isPending}
-          onConfirm={() => pause.mutate(true)}
-        />
-      </div>
-      <span className="text-xs text-muted-foreground">{t("They keep running in shadow")}</span>
+      <Hold
+        label={t("Hold to pause all agents")}
+        disabled={pause.isPending}
+        onDone={() => pause.mutate(true)}
+      />
+      <span>{t("They keep running in shadow")}</span>
     </>
   );
 }

@@ -7,7 +7,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
 import { NovaSummary } from "../nova/nova-summary";
-import { useNovaSegments } from "../nova/use-nova-segments";
 import { useNovaTargets } from "../nova/use-nova-targets";
 import { PolicyEditor } from "../policy/policy-editor";
 import { AgentsAtWork } from "./agents-at-work";
@@ -16,6 +15,7 @@ import { OVERVIEW_WINDOW_DAYS, OverviewFigures } from "./overview-figures";
 import { OverviewControl } from "./overview-control";
 import { ProviderFailureStrip } from "./provider-failure-strip";
 import { SetupSteps } from "./setup-steps";
+import { TuneUps } from "./tune-ups";
 import { UsageByFeature } from "./usage-by-feature";
 
 /** The sentence is reread a few seconds after a read that left a model rewording it. */
@@ -53,7 +53,6 @@ export default function OverviewTab({ onOpenProviders, onOpenAgents }: OverviewT
   const summary = summaryQuery.data;
   const facts = summary?.facts;
   const noProvider = facts ? facts.providersOn === 0 : false;
-  const segments = useNovaSegments(summary?.segments, onTarget);
 
   const editProvider = useCallback(
     (providerId: string) => go({ tab: "providers", panel: { mode: "edit", entityId: providerId } }),
@@ -64,13 +63,13 @@ export default function OverviewTab({ onOpenProviders, onOpenAgents }: OverviewT
   const busiest = Math.max(0, ...(usageQuery.data?.byFeature ?? []).map((slice) => slice.calls));
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="tabp ov2">
       <NovaSummary
         context={t("AI control")}
-        segments={segments}
-        streamKey={summary ? `${summary.factsHash}:${summary.narrated}` : "loading"}
+        segments={summary?.segments}
         loading={summaryQuery.isLoading}
         working={Boolean(facts && facts.agents.working > 0 && !facts.paused && !noProvider)}
+        onTarget={onTarget}
         control={
           <OverviewControl
             control={controlQuery.data}
@@ -98,11 +97,12 @@ export default function OverviewTab({ onOpenProviders, onOpenAgents }: OverviewT
         <ProviderFailureStrip failures={summary.visibleFailures} onEditProvider={editProvider} />
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="flex min-w-0 flex-col gap-6">
+      <div className="ov">
+        <div className="ov-m">
+          {!noProvider && <TuneUps />}
           {!noProvider && <UsageByFeature days={OVERVIEW_WINDOW_DAYS} busiest={busiest} />}
         </div>
-        <aside className="flex min-w-0 flex-col gap-6">
+        <aside className="ov-a">
           <AgentsAtWork
             idleReason={noProvider ? "no-provider" : facts?.paused ? "paused" : null}
             onOpenAgents={onOpenAgents}

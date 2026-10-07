@@ -103,3 +103,26 @@ export function aiUsageFeatureLabel(feature: AiUsageFeature | null, t: Translate
       return t("Other");
   }
 }
+
+/**
+ * A token count in millions, the way AI control's figures and tables print it: "3.1",
+ * "0.4", "0.04". The unit is left to the caller, which draws it smaller.
+ */
+export function formatMillions(count: number): string {
+  if (!Number.isFinite(count) || count <= 0) {
+    return "0";
+  }
+  const millions = count / 1_000_000;
+  if (millions >= 10) {
+    return Math.round(millions).toString();
+  }
+  return millions >= 0.1 ? millions.toFixed(1) : millions.toFixed(2);
+}
+
+/** A latency the way AI control's tables print it: "210ms" under a second, "1.4s" above. */
+export function formatLatencyCompact(ms: number): string {
+  if (!Number.isFinite(ms) || ms < 0) {
+    return "—";
+  }
+  return ms < 1000 ? `${Math.round(ms)}ms` : `${(ms / 1000).toFixed(1)}s`;
+}

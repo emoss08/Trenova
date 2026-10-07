@@ -137,6 +137,7 @@ type Resolver struct {
 	aIFeedback                         *aifeedbackresolver.AIFeedbackResolver
 	aIProvider                         *aiproviderresolver.AIProviderResolver
 	aIRouteChoice                      *aiproviderresolver.AIRouteChoiceResolver
+	aITuneUpEvidence                   *aicontrolresolver.AITuneUpEvidenceResolver
 	accessorialCharge                  *accessorialchargeresolver.AccessorialChargeResolver
 	accountingAppCredential            *accountingsyncresolver.AccountingAppCredentialResolver
 	accountingAppSettings              *accountingsyncresolver.AccountingAppSettingsResolver
@@ -438,6 +439,7 @@ func FromServices(s *Services) *Resolver {
 	aicontrolDeps := &aicontrolresolver.Deps{
 		Core:                    s.Core,
 		AiControlSummaryService: s.AiControlSummaryService,
+		AiTuneUpService:         s.AiTuneUpService,
 	}
 	aifeedbackDeps := &aifeedbackresolver.Deps{
 		Core:              s.Core,
@@ -992,6 +994,7 @@ func FromServices(s *Services) *Resolver {
 		aIFeedback:                   &aifeedbackresolver.AIFeedbackResolver{Deps: aifeedbackDeps},
 		aIProvider:                   &aiproviderresolver.AIProviderResolver{Deps: aiproviderDeps},
 		aIRouteChoice:                &aiproviderresolver.AIRouteChoiceResolver{Deps: aiproviderDeps},
+		aITuneUpEvidence:             &aicontrolresolver.AITuneUpEvidenceResolver{Deps: aicontrolDeps},
 		accessorialCharge:            &accessorialchargeresolver.AccessorialChargeResolver{Deps: accessorialchargeDeps},
 		accountingAppCredential:      &accountingsyncresolver.AccountingAppCredentialResolver{Deps: accountingsyncDeps},
 		accountingAppSettings:        &accountingsyncresolver.AccountingAppSettingsResolver{Deps: accountingsyncDeps},
@@ -1450,6 +1453,10 @@ func (r *Resolver) AIProvider() generated.AIProviderResolver {
 
 func (r *Resolver) AIRouteChoice() generated.AIRouteChoiceResolver {
 	return r.aIRouteChoice
+}
+
+func (r *Resolver) AITuneUpEvidence() generated.AITuneUpEvidenceResolver {
+	return r.aITuneUpEvidence
 }
 
 func (r *Resolver) AccessorialCharge() generated.AccessorialChargeResolver {

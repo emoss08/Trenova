@@ -608,22 +608,13 @@
       "routes/desk"
     ]
   },
-  "1 tool has enough clean approvals already, so it moves up a tier when you save.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "1 unsaved change": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/agent-control"
     ]
   },
   "1 value changed": {
@@ -5167,6 +5158,15 @@
       "api/graphql"
     ]
   },
+  "A provider in this tune-up no longer exists": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aituneupservice"
+    ]
+  },
   "A published version cannot be edited. Create a new draft from it instead, so the bytes a customer already received stay reproducible.": {
     "sites": 1,
     "scope": [
@@ -7272,6 +7272,15 @@
       "domain/agentquality"
     ]
   },
+  "A tool moves up a tier after a run of clean approvals — never past the agent's ceiling. When a tool's proposals are approved unchanged this many times in a row, it moves up one tier on that agent. A rejection or a failed run takes an earned tier back. Each change is audited and announced.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "A tool result names its tool": {
     "sites": 1,
     "scope": [
@@ -8007,7 +8016,7 @@
       "routes/edi"
     ]
   },
-  "AI Control sections": {
+  "AI & Automation": {
     "sites": 1,
     "scope": [
       "ts"
@@ -8251,6 +8260,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "AI tune-ups": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "AM": {
@@ -8784,6 +8802,15 @@
       "apps/dash/_components"
     ]
   },
+  "About 1 approval a week": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "About an inbound message": {
     "sites": 1,
     "scope": [
@@ -8791,6 +8818,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "About {0} approvals a week": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "About {0} per carrier per month at this depth. Pulling the same carrier again this month is not billed twice.": {
@@ -15900,6 +15936,15 @@
       "apps/web/lib"
     ]
   },
+  "Allowance": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Allowed Rear Overhang (ft)": {
     "sites": 1,
     "scope": [
@@ -18346,6 +18391,15 @@
       "apps/web/components"
     ]
   },
+  "Anonymized document corrections help improve extraction for every customer. Trenova keeps what was read from a document beside what a person confirmed, so accuracy can be measured. Turning this on lets those corrections be anonymized and used for training. Turning it off keeps them out of any training after the change.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Another active AS2 profile already uses this local and partner AS2 ID pair": {
     "sites": 1,
     "scope": [
@@ -20598,6 +20652,33 @@
       "apps/dash/_components"
     ]
   },
+  "Approved unchanged {0} times in a row · 1 rejection before that": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Approved unchanged {0} times in a row · never rejected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Approved unchanged {0} times in a row · {1} rejections before that": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Approved {0}": {
     "sites": 2,
     "scope": [
@@ -22192,12 +22273,13 @@
     ]
   },
   "Assign": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "routes/agent-control",
       "routes/billing-queue",
       "routes/dispatch-console",
       "routes/fuel-card",
@@ -34777,12 +34859,11 @@
     ]
   },
   "Changed": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "apps/web/lib",
       "routes/agent-control",
       "routes/formula-template",
@@ -38215,7 +38296,7 @@
     ]
   },
   "Clean approvals": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -38225,6 +38306,15 @@
   },
   "Clean approvals for {0}": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Clean approvals in a row": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -38851,12 +38941,12 @@
     ]
   },
   "Close (Esc)": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/agent-control"
     ]
   },
   "Close account": {
@@ -47106,6 +47196,7 @@
       "apps/web/hooks",
       "apps/web/lib",
       "routes/admin",
+      "routes/agent-control",
       "routes/random-testing"
     ]
   },
@@ -57646,8 +57737,8 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/admin",
+      "routes/agent-control",
       "routes/desk",
       "routes/fuel-purchase",
       "routes/home",
@@ -57662,7 +57753,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/agent-control"
     ]
   },
   "Discard a staged statement before it is committed": {
@@ -57698,7 +57789,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/agent-control"
     ]
   },
   "Discard any unapplied JSON edits and reload from the current Rule Builder state.": {
@@ -57815,7 +57906,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/agent-control"
     ]
   },
   "Discarded": {
@@ -58074,11 +58165,12 @@
     ]
   },
   "Dismiss for 30 days": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/insights"
     ]
   },
@@ -58166,6 +58258,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Dismissed · it won't be suggested again for 30 days": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Dismissed — the invoice does not bill this assignment.": {
@@ -69408,7 +69509,7 @@
     ]
   },
   "Every agent": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -75899,6 +76000,24 @@
       "routes/carrier-monitoring"
     ]
   },
+  "Fewer agents to choose from in Desk": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Fewer approvals to make": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Fewer empty miles from the driver's projected location to the pickup.": {
     "sites": 1,
     "scope": [
@@ -75906,6 +76025,24 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "Fewer retries on {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Fewer retries on {0} tasks": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Fewest cases to compare scores": {
@@ -79898,6 +80035,15 @@
       "routes/worker"
     ]
   },
+  "From the last {0} days of runs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "From the provider's price list. Leave empty if unknown.": {
     "sites": 1,
     "scope": [
@@ -82015,6 +82161,15 @@
       "routes/admin"
     ]
   },
+  "Give {0} to {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Giving up {0}{1}": {
     "sites": 1,
     "scope": [
@@ -82050,6 +82205,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Go live": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Go to": {
@@ -84086,6 +84250,7 @@
     ],
     "areas": [
       "apps/web/components",
+      "routes/agent-control",
       "routes/desk"
     ]
   },
@@ -84225,7 +84390,7 @@
     ]
   },
   "Hide until it fails again": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -85656,7 +85821,7 @@
       "routes/scheduling"
     ]
   },
-  "How many questions each person may ask the agents in a calendar month. Desk warns them as they get close and says when it refreshes. Each agent's own budget and daily limit still apply.": {
+  "How many questions each person may ask the agents in a calendar month. Desk warns people as they get close and says when it refreshes. Each agent's own budget and daily limit still apply.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -87622,15 +87787,6 @@
     "areas": [
       "routes/accounting-drift",
       "routes/carrier-sourcing"
-    ]
-  },
-  "In a row, before a tool moves up": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "In effect": {
@@ -94027,7 +94183,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
+      "routes/agent-control",
       "routes/formula-template"
     ]
   },
@@ -94094,7 +94250,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/agent-control"
     ]
   },
   "Keep notes under 2000 characters": {
@@ -95498,15 +95654,6 @@
     "areas": [
       "apps/web/components",
       "routes/admin"
-    ]
-  },
-  "Last changed {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Last checked": {
@@ -97367,6 +97514,15 @@
       "apps/dash/_components"
     ]
   },
+  "Let {0} run on its own for {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Lets a request go below zero down to the floor set here.": {
     "sites": 1,
     "scope": [
@@ -98998,7 +99154,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/agent-control"
     ]
   },
   "Load workflow": {
@@ -107144,13 +107300,22 @@
     ]
   },
   "Monthly allowance": {
-    "sites": 5,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "domain/tenant",
+      "routes/agent-control"
+    ]
+  },
+  "Monthly allowance per person": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/agent-control"
     ]
   },
@@ -107840,6 +108005,15 @@
     "areas": [
       "apps/web/components",
       "routes/edi"
+    ]
+  },
+  "Move {0} to {1} for {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Move {0}.": {
@@ -111736,15 +111910,6 @@
       "routes/agent-control"
     ]
   },
-  "No agents yet. Build one from the roster.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "No analysis captured.": {
     "sites": 1,
     "scope": [
@@ -112251,7 +112416,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/agent-control"
     ]
   },
   "No changes between versions": {
@@ -116299,6 +116464,24 @@
       "routes/agent-control"
     ]
   },
+  "Nobody has asked it anything since {0} · it holds 1 tool": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Nobody has asked it anything since {0} · it holds {1} tools": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Nobody has been put on this plan yet.": {
     "sites": 1,
     "scope": [
@@ -118281,6 +118464,24 @@
       "apps/web/lib"
     ]
   },
+  "Nothing handles it now.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Nothing handles it, so search matches words only.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Nothing has accrued to this statement yet": {
     "sites": 1,
     "scope": [
@@ -118471,7 +118672,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/agent-control"
     ]
   },
   "Nothing is indexed yet": {
@@ -119177,6 +119378,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Nothing to tune": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Nothing uncovered fits right now.": {
@@ -121305,15 +121515,6 @@
     ]
   },
   "Once a conversation goes quiet or a background run settles, its agent looks back over it when something went wrong, took several tries or was corrected. Each lesson it keeps is a memory in the list below.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "Once a conversation goes quiet or a background run settles, the agent looks back over it and keeps what it learned as memory. Each person's saving preference still applies, and lessons shared beyond one person wait for someone allowed to approve them.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -125201,13 +125402,12 @@
     ]
   },
   "Open {0}": {
-    "sites": 11,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/agent-control",
       "routes/carrier-sourcing",
       "routes/desk",
       "routes/inbox",
@@ -130404,15 +130604,6 @@
       "apps/web/hooks"
     ]
   },
-  "Partial: {0} of {1} calls unpriced": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Partially assigned": {
     "sites": 2,
     "scope": [
@@ -131410,15 +131601,6 @@
     ],
     "areas": [
       "routes/carrier-monitoring"
-    ]
-  },
-  "Pausing": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Pausing...": {
@@ -133007,15 +133189,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "Per person": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Per settlement period": {
@@ -139913,6 +140086,15 @@
       "service/agentdecisionservice"
     ]
   },
+  "Proposals start reaching Desk": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Proposals update when it finishes.": {
     "sites": 1,
     "scope": [
@@ -140599,15 +140781,6 @@
     ],
     "areas": [
       "routes/admin",
-      "routes/agent-control"
-    ]
-  },
-  "Providers say where AI work goes, agents say what it may do, extensions add what they can reach, quality says how well they do it, activity shows what it did, and the audit trail keeps a signed record of it.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
       "routes/agent-control"
     ]
   },
@@ -141376,6 +141549,15 @@
       "apps/web/components"
     ]
   },
+  "Put {0} ahead of {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Puts the first rows in the message body, so recipients read the answer without opening a file.": {
     "sites": 1,
     "scope": [
@@ -141807,15 +141989,6 @@
       "apps/dash/routes"
     ]
   },
-  "Questions each month": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Questions outside its work go to these agents": {
     "sites": 1,
     "scope": [
@@ -141823,6 +141996,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Questions per person": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Queue": {
@@ -142281,6 +142463,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Raise it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Raise the accrual once a worker has served long enough. The highest tier they qualify for wins.": {
@@ -150888,12 +151079,13 @@
     ]
   },
   "Reorder": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/agent-control"
     ]
   },
   "Reorder column": {
@@ -155802,7 +155994,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/agent-control"
     ]
   },
   "Review all {0}": {
@@ -156315,7 +156507,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/agent-control"
     ]
   },
   "Review {0} you can't cover": {
@@ -157811,6 +158003,15 @@
     "areas": [
       "domain/distanceprofile",
       "domain/storedmileage"
+    ]
+  },
+  "Routing, autonomy and the roster all look right for how your agents are being used.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Row": {
@@ -160695,7 +160896,6 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/admin",
       "routes/agent-control"
     ]
@@ -160826,7 +161026,16 @@
       "apps/web/components"
     ]
   },
-  "Saved. 1 tool moved up a tier": {
+  "Saved · 1 tool moved up a tier": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Saved · {0} tools moved up a tier": {
     "sites": 1,
     "scope": [
       "ts"
@@ -160853,22 +161062,13 @@
       "routes/admin"
     ]
   },
-  "Saved. {0} tools moved up a tier": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Saving": {
     "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
+      "routes/agent-control",
       "routes/intake"
     ]
   },
@@ -162675,6 +162875,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "Search by meaning": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Search by name": {
     "sites": 1,
     "scope": [
@@ -164000,7 +164209,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/agent-control"
     ]
   },
   "See what a customer has accumulated this period, which invoices it becomes, and bill it early if you have to.": {
@@ -169119,7 +169328,7 @@
     ]
   },
   "Settings": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -169882,13 +170091,22 @@
     ]
   },
   "Share corrections": {
-    "sites": 5,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "domain/tenant",
+      "routes/agent-control"
+    ]
+  },
+  "Share corrections for model training": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/agent-control"
     ]
   },
@@ -173822,7 +174040,7 @@
       "service/formula"
     ]
   },
-  "Slowest 5% took {0} or more": {
+  "Slowest 5% took {0}s or more": {
     "sites": 1,
     "scope": [
       "ts"
@@ -174324,7 +174542,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components",
+      "routes/agent-control",
       "routes/desk",
       "routes/home",
       "routes/org-structure"
@@ -174384,15 +174602,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Something else": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Something looks wrong": {
@@ -180569,6 +180778,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Take {0} out of shadow": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Taken off the period before it is paid.": {
@@ -189651,6 +189869,15 @@
       "service/orderservice"
     ]
   },
+  "The order must name every provider once; reload the list and try again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiproviderservice"
+    ]
+  },
   "The org default applies for everyone without a personal default": {
     "sites": 1,
     "scope": [
@@ -198366,6 +198593,15 @@
       "routes/billing-queue"
     ]
   },
+  "This tune-up was already applied or put away": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aituneupservice"
+    ]
+  },
   "This user is not an active member of your organization": {
     "sites": 1,
     "scope": [
@@ -199896,7 +200132,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/agent-control"
     ]
   },
   "To currency is required": {
@@ -203887,6 +204123,24 @@
       "apps/web/lib"
     ]
   },
+  "Tune-up": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Tune-ups": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Turn": {
     "sites": 1,
     "scope": [
@@ -204006,12 +204260,13 @@
     ]
   },
   "Turn off": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/agent-control"
     ]
   },
   "Turn off for a company-policy test that is not made under 49 CFR 382.": {
@@ -205370,7 +205625,7 @@
     ]
   },
   "Undo": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -205388,7 +205643,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/agent-control"
     ]
   },
   "Undo changes": {
@@ -205406,7 +205661,16 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/agent-control"
+    ]
+  },
+  "Undo this change": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Unenroll inactive carriers": {
@@ -206034,6 +206298,15 @@
       "domain/agent"
     ]
   },
+  "Unknown task": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiproviderservice"
+    ]
+  },
   "Unknown template status: {0}": {
     "sites": 1,
     "scope": [
@@ -206059,6 +206332,15 @@
     ],
     "areas": [
       "service/aiusageservice"
+    ]
+  },
+  "Unknown tune-up": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aituneupservice"
     ]
   },
   "Unknown user": {
@@ -206476,12 +206758,13 @@
     ]
   },
   "Unsaved changes": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
+      "routes/agent-control",
       "routes/desk"
     ]
   },
@@ -210188,7 +210471,7 @@
     ]
   },
   "View": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -215226,7 +215509,7 @@
       "routes/desk"
     ]
   },
-  "When a tool's proposals are approved unchanged this many times in a row, the tool moves up one tier on that agent, never above the agent's ceiling. A rejection or a failed run takes an earned tier back. Each change is audited and announced.": {
+  "When a conversation settles, the agent keeps the lesson as memory. If something went wrong, took several tries or a person corrected it, the agent keeps a preference, a fact or the steps that worked. Lessons shared beyond one person wait for approval, and anything drawn from outside content is only ever offered. Each agent also has its own switch.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -215550,15 +215833,6 @@
     ],
     "areas": [
       "routes/service-failure-reason-code"
-    ]
-  },
-  "When someone creates a shipment from a document, Trenova keeps what was read beside what they confirmed. Turn this on to let those corrections be anonymized and used to improve the models that read documents for every customer. Turning it off keeps this organization's corrections out of any training after the change.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "When someone matches more than one home screen, the highest priority wins.": {
@@ -217919,15 +218193,6 @@
       "routes/agent-control"
     ]
   },
-  "With failures": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "With no end date this runs until you call it back. Set one if you are covering a specific absence.": {
     "sites": 1,
     "scope": [
@@ -218248,6 +218513,15 @@
     ],
     "areas": [
       "routes/reconciliation-summary"
+    ]
+  },
+  "Work out each organization's AI tune-ups from the last 30 days of runs": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Work queue": {
@@ -227376,6 +227650,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "words only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "worker is required": {
     "sites": 1,
     "scope": [
@@ -231266,6 +231549,15 @@
       "routes/formula-template"
     ]
   },
+  "{0} failed {1} times in {2} days; {3} answered {4} of them": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} failed, {1} skipped": {
     "sites": 1,
     "scope": [
@@ -231518,6 +231810,15 @@
       "apps/web/components"
     ]
   },
+  "{0} has enough clean approvals already, so it moves up a tier when you save.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} has finished \"{1}\".": {
     "sites": 1,
     "scope": [
@@ -231552,6 +231853,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} has never run": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} has no app to connect through. Add your own {0} app's keys on this page, or ask the server's administrator to configure one for the whole server.": {
@@ -231700,6 +232010,24 @@
       "template/agent.proposal_reminder.email"
     ]
   },
+  "{0} hasn't run in {1} days": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0} have enough clean approvals already, so they move up a tier when you save.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} held (": {
     "sites": 1,
     "scope": [
@@ -231788,15 +232116,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "{0} in · {1} out": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "{0} in, {1} out tokens": {
@@ -232035,6 +232354,15 @@
       "api/graphql"
     ]
   },
+  "{0} is live": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} is live and ready for your first records.": {
     "sites": 1,
     "scope": [
@@ -232060,6 +232388,15 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "{0} is no longer ready to move up a tier on this agent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttrustservice"
     ]
   },
   "{0} is not a US state abbreviation": {
@@ -232418,6 +232755,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} is off": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} is on for your agents": {
@@ -233088,6 +233434,15 @@
       "routes/desk"
     ]
   },
+  "{0} moved up a tier for {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} moved.": {
     "sites": 1,
     "scope": [
@@ -233343,6 +233698,24 @@
     ],
     "areas": [
       "routes/detention-desk"
+    ]
+  },
+  "{0} now goes before {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0} now goes to {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} now only runs on its own.": {
@@ -233789,6 +234162,15 @@
       "routes/org-structure"
     ]
   },
+  "{0} on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} on it": {
     "sites": 1,
     "scope": [
@@ -233844,12 +234226,13 @@
     ]
   },
   "{0} on {1}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/agent-control"
     ]
   },
   "{0} on {1}, opens in a new tab": {
@@ -233859,15 +234242,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "{0} on {1}: {2} → {3}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "{0} onboarding step(s) remaining before this partner is production-ready.": {
@@ -234214,6 +234588,24 @@
       "apps/web/components"
     ]
   },
+  "{0} recorded proposals · {1} match what people did · none would have failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0} recorded proposals · {1} match what people did · {2} would have failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} records are kept by the bookkeeper and are not created from Trenova": {
     "sites": 2,
     "scope": [
@@ -234243,7 +234635,7 @@
     ]
   },
   "{0} regressed": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -234522,7 +234914,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/agent-control"
     ]
   },
   "{0} scenario(s) fail; approval is blocked until they pass": {
@@ -234713,6 +235105,15 @@
       "routes/agent-control"
     ]
   },
+  "{0} starts working": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} still due": {
     "sites": 1,
     "scope": [
@@ -234848,15 +235249,6 @@
       "routes/worker"
     ]
   },
-  "{0} tools have enough clean approvals already, so they move up a tier when you save.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "{0} total": {
     "sites": 1,
     "scope": [
@@ -234962,7 +235354,7 @@
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/agent-control"
     ]
   },
   "{0} used": {
@@ -235029,11 +235421,12 @@
     ]
   },
   "{0} waiting": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/carrier-monitoring",
       "routes/fuel-feed-run",
       "routes/home"
@@ -235379,6 +235772,24 @@
     ],
     "areas": [
       "routes/recurring-shipment"
+    ]
+  },
+  "{0} {1} already serves {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0} {1} can take it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} {1} days available on the start date{2}": {
@@ -236231,6 +236642,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "{0}M in · {1}M out": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0}d": {

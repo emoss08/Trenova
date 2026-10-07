@@ -241,6 +241,9 @@ type ToolPromotion struct {
 	Streak            int                `json:"streak"`
 	From              agent.AutonomyTier `json:"from"`
 	To                agent.AutonomyTier `json:"to"`
+	Approvals         int                `json:"approvals"`
+	Rejections        int                `json:"rejections"`
+	TrackedSince      int64              `json:"trackedSince"`
 }
 
 type PromoteReadyRequest struct {
@@ -249,6 +252,12 @@ type PromoteReadyRequest struct {
 	Threshold int
 	// DecidedBy is who turned earned autonomy on, or lowered its threshold.
 	DecidedBy pulid.ID
+}
+
+type PromoteToolRequest struct {
+	PromoteReadyRequest
+	AgentDefinitionID pulid.ID
+	ToolName          string
 }
 
 type AgentTrustService interface {
@@ -260,6 +269,7 @@ type AgentTrustService interface {
 	// lowered: they earned it before there was a clean approval to promote
 	// them on.
 	PromoteReady(ctx context.Context, req *PromoteReadyRequest) ([]ToolPromotion, error)
+	PromoteTool(ctx context.Context, req *PromoteToolRequest) (*ToolPromotion, error)
 	RecordDecision(
 		ctx context.Context,
 		proposal *agent.AgentProposal,

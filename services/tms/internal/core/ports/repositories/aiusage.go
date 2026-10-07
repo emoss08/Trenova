@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -121,4 +122,21 @@ type AIUsageRepository interface {
 	Summary(ctx context.Context, req AIUsageSummaryRequest) (*AIUsageSummary, error)
 	RecentFailures(ctx context.Context, req AIUsageFailuresRequest) ([]AIUsageFailure, error)
 	CostByDefinition(ctx context.Context, req AIUsageCostRequest) (*AIUsageCost, error)
+	ProviderTaskTotals(
+		ctx context.Context,
+		req AIUsageProviderTaskRequest,
+	) ([]AIUsageProviderTaskTotals, error)
+}
+
+type AIUsageProviderTaskRequest struct {
+	TenantInfo pagination.TenantInfo
+	Since      int64
+}
+
+type AIUsageProviderTaskTotals struct {
+	ProviderID pulid.ID
+	Task       aiprovider.Task
+	Calls      int
+	Failed     int
+	Rescued    int
 }

@@ -8,7 +8,12 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/aicontrolsummary"
+	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/core/domain/aituneup"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -21,6 +26,11 @@ var Shard = &gqlexec.Shard{
 		{Name: "AIControlSegment", Implementors: []string{"AIControlSegment"}},
 		{Name: "AIControlSummary", Implementors: []string{"AIControlSummary"}},
 		{Name: "AIProviderFailure", Implementors: []string{"AIProviderFailure"}},
+		{Name: "AITuneUp", Implementors: []string{"AITuneUp"}},
+		{Name: "AITuneUpAgent", Implementors: []string{"AITuneUpAgent"}},
+		{Name: "AITuneUpEvidence", Implementors: []string{"AITuneUpEvidence"}},
+		{Name: "AITuneUpProvider", Implementors: []string{"AITuneUpProvider"}},
+		{Name: "AITuneUps", Implementors: []string{"AITuneUps"}},
 	},
 	Fields: []gqlexec.Fields{
 		{Object: "AIControlAgentCounts", Fields: []*gqlexec.Field{
@@ -323,6 +333,405 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
 			},
 		}},
+		{Object: "AITuneUp", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AITuneUp)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "kind",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AITuneUp)
+					return obj.Kind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAITuneUpKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaituneupᚐKind),
+			},
+			{
+				Name:      "agent",
+				HasChild:  true,
+				ChildType: "AITuneUpAgent",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AITuneUp)
+					return obj.Agent, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAITuneUpAgent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAITuneUpAgent),
+			},
+			{
+				Name:      "provider",
+				HasChild:  true,
+				ChildType: "AITuneUpProvider",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AITuneUp)
+					return obj.Provider, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAITuneUpProvider2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAITuneUpProvider),
+			},
+			{
+				Name:      "otherProvider",
+				HasChild:  true,
+				ChildType: "AITuneUpProvider",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AITuneUp)
+					return obj.OtherProvider, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAITuneUpProvider2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAITuneUpProvider),
+			},
+			{
+				Name:     "toolName",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AITuneUp)
+					return obj.ToolName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:     "task",
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AITuneUp)
+					return obj.Task, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAITask2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiproviderᚐTask),
+			},
+			{
+				Name:      "evidence",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AITuneUpEvidence",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AITuneUp)
+					return obj.Evidence, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAITuneUpEvidence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaituneupᚐEvidence),
+			},
+			{
+				Name:     "status",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AITuneUp)
+					return obj.Status, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAITuneUpStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaituneupᚐStatus),
+			},
+			{
+				Name:     "dismissedUntil",
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AITuneUp)
+					return obj.DismissedUntil, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+			{
+				Name:     "computedAt",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AITuneUp)
+					return obj.ComputedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "version",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AITuneUp)
+					return obj.Version, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
+		{Object: "AITuneUpAgent", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AITuneUpAgent)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AITuneUpAgent)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "icon",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AITuneUpAgent)
+					return obj.Icon, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "accent",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AITuneUpAgent)
+					return obj.Accent, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "AITuneUpEvidence", Fields: []*gqlexec.Field{
+			{
+				Name:       "fromTier",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aituneup.Evidence)
+					return gqlexec.Resolver[resolverAITuneUpEvidence](ec, "AITuneUpEvidence").FromTier(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOAgentAutonomyTier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐAutonomyTier),
+			},
+			{
+				Name:       "toTier",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aituneup.Evidence)
+					return gqlexec.Resolver[resolverAITuneUpEvidence](ec, "AITuneUpEvidence").ToTier(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOAgentAutonomyTier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐAutonomyTier),
+			},
+			{
+				Name:     "streak",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aituneup.Evidence)
+					return obj.Streak, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "approvals",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aituneup.Evidence)
+					return obj.Approvals, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "approvalsPerWeek",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aituneup.Evidence)
+					return obj.ApprovalsPerWeek, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+			},
+			{
+				Name:     "rejections",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aituneup.Evidence)
+					return obj.Rejections, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "calls",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aituneup.Evidence)
+					return obj.Calls, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "failed",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aituneup.Evidence)
+					return obj.Failed, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "rescued",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aituneup.Evidence)
+					return obj.Rescued, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "recorded",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aituneup.Evidence)
+					return obj.Recorded, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "matchRate",
+				NonNull:  true,
+				ChildErr: errNoChild10,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aituneup.Evidence)
+					return obj.MatchRate, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNFloat2float64),
+			},
+			{
+				Name:     "wouldFail",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aituneup.Evidence)
+					return obj.WouldFail, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "tasks",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aituneup.Evidence)
+					return obj.Tasks, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAITask2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiproviderᚐTaskᚄ),
+			},
+			{
+				Name:     "model",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aituneup.Evidence)
+					return obj.Model, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "lastRunAt",
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aituneup.Evidence)
+					return obj.LastRunAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "idleSince",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aituneup.Evidence)
+					return obj.IdleSince, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "tools",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aituneup.Evidence)
+					return obj.Tools, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
+		{Object: "AITuneUpProvider", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AITuneUpProvider)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AITuneUpProvider)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "kind",
+				NonNull:  true,
+				ChildErr: errNoChild11,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AITuneUpProvider)
+					return obj.Kind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAIProviderKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiproviderᚐKind),
+			},
+		}},
+		{Object: "AITuneUps", Fields: []*gqlexec.Field{
+			{
+				Name:      "items",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AITuneUp",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AITuneUps)
+					return obj.Items, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAITuneUp2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAITuneUpᚄ),
+			},
+			{
+				Name:     "computedAt",
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AITuneUps)
+					return obj.ComputedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+			{
+				Name:     "windowDays",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AITuneUps)
+					return obj.WindowDays, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
 			{
 				Name:       "dismissAIProviderFailure",
@@ -348,6 +757,45 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
+			{
+				Name:       "applyAITuneUp",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "AITuneUp",
+				Args:       field_Mutation_applyAITuneUp_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApplyAITuneUp(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
+				},
+				Marshal: gqlexec.Marshal(marshalNAITuneUp2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAITuneUp),
+			},
+			{
+				Name:       "dismissAITuneUp",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "AITuneUp",
+				Args:       field_Mutation_dismissAITuneUp_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DismissAITuneUp(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["days"].(*int))
+				},
+				Marshal: gqlexec.Marshal(marshalNAITuneUp2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAITuneUp),
+			},
+			{
+				Name:       "restoreAITuneUp",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "AITuneUp",
+				Args:       field_Mutation_restoreAITuneUp_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RestoreAITuneUp(ctx, fc.Args["id"].(string), fc.Args["version"].(int))
+				},
+				Marshal: gqlexec.Marshal(marshalNAITuneUp2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAITuneUp),
+			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
@@ -364,11 +812,24 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNAIControlSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicontrolsummaryᚐSummary),
 			},
+			{
+				Name:       "aiTuneUps",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "AITuneUps",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					return gqlexec.Resolver[resolverQuery](ec, "Query").AiTuneUps(ctx)
+				},
+				Marshal: gqlexec.Marshal(marshalNAITuneUps2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAITuneUps),
+			},
 		}},
 	},
 	Resolvers: []gqlexec.ResolverRequirement{
 		{Root: "AIControlSegment", Check: func(r any) bool { _, ok := r.(resolverAIControlSegment); return ok }},
 		{Root: "AIControlSummary", Check: func(r any) bool { _, ok := r.(resolverAIControlSummary); return ok }},
+		{Root: "AITuneUpEvidence", Check: func(r any) bool { _, ok := r.(resolverAITuneUpEvidence); return ok }},
 		{Root: "Mutation", Check: func(r any) bool { _, ok := r.(resolverMutation); return ok }},
 		{Root: "Query", Check: func(r any) bool { _, ok := r.(resolverQuery); return ok }},
 	},
@@ -384,22 +845,37 @@ type resolverAIControlSummary interface {
 	VisibleFailures(ctx context.Context, obj *aicontrolsummary.Summary) ([]*aicontrolsummary.ProviderFailure, error)
 }
 
+type resolverAITuneUpEvidence interface {
+	FromTier(ctx context.Context, obj *aituneup.Evidence) (*agent.AutonomyTier, error)
+	ToTier(ctx context.Context, obj *aituneup.Evidence) (*agent.AutonomyTier, error)
+}
+
 type resolverMutation interface {
 	DismissAIProviderFailure(ctx context.Context, providerID string, lastFailureAt int) (bool, error)
 	RestoreAIProviderFailure(ctx context.Context, providerID string) (bool, error)
+	ApplyAITuneUp(ctx context.Context, id string, version int) (*gqlmodel.AITuneUp, error)
+	DismissAITuneUp(ctx context.Context, id string, version int, days *int) (*gqlmodel.AITuneUp, error)
+	RestoreAITuneUp(ctx context.Context, id string, version int) (*gqlmodel.AITuneUp, error)
 }
 
 type resolverQuery interface {
 	AiControlSummary(ctx context.Context, tab aicontrolsummary.Tab) (*aicontrolsummary.Summary, error)
+	AiTuneUps(ctx context.Context) (*gqlmodel.AITuneUps, error)
 }
 
 var (
-	errNoChild0 = errors.New("field of type Int does not have child fields")
-	errNoChild1 = errors.New("field of type Boolean does not have child fields")
-	errNoChild2 = errors.New("field of type String does not have child fields")
-	errNoChild3 = errors.New("field of type ID does not have child fields")
-	errNoChild4 = errors.New("field of type AIControlTab does not have child fields")
-	errNoChild5 = errors.New("field of type Timestamp does not have child fields")
+	errNoChild0  = errors.New("field of type Int does not have child fields")
+	errNoChild1  = errors.New("field of type Boolean does not have child fields")
+	errNoChild2  = errors.New("field of type String does not have child fields")
+	errNoChild3  = errors.New("field of type ID does not have child fields")
+	errNoChild4  = errors.New("field of type AIControlTab does not have child fields")
+	errNoChild5  = errors.New("field of type Timestamp does not have child fields")
+	errNoChild6  = errors.New("field of type AITuneUpKind does not have child fields")
+	errNoChild7  = errors.New("field of type AITask does not have child fields")
+	errNoChild8  = errors.New("field of type AITuneUpStatus does not have child fields")
+	errNoChild9  = errors.New("field of type AgentAutonomyTier does not have child fields")
+	errNoChild10 = errors.New("field of type Float does not have child fields")
+	errNoChild11 = errors.New("field of type AIProviderKind does not have child fields")
 )
 
 func field_Mutation_dismissAIProviderFailure_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -436,6 +912,77 @@ func field_Mutation_restoreAIProviderFailure_args(ctx context.Context, ec *gqlex
 	return args, nil
 }
 
+func field_Mutation_applyAITuneUp_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "version",
+		func(ctx context.Context, v any) (int, error) {
+			return unmarshalNInt2int(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["version"] = arg1
+	return args, nil
+}
+
+func field_Mutation_dismissAITuneUp_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 3)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "version",
+		func(ctx context.Context, v any) (int, error) {
+			return unmarshalNInt2int(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["version"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "days",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["days"] = arg2
+	return args, nil
+}
+
+func field_Mutation_restoreAITuneUp_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "version",
+		func(ctx context.Context, v any) (int, error) {
+			return unmarshalNInt2int(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["version"] = arg1
+	return args, nil
+}
+
 func field_Query_aiControlSummary_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "tab",
@@ -460,9 +1007,22 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func marshalNAIControlAgentCounts2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicontrolsummaryᚐAgentCounts(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aicontrolsummary.AgentCounts) graphql.Marshaler {
@@ -529,6 +1089,78 @@ func marshalNAIProviderFailure2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "AIProviderFailure", v)
 }
 
+func marshalNAIProviderKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiproviderᚐKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiprovider.Kind) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNAITask2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiproviderᚐTask(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiprovider.Task) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNAITask2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiproviderᚐTaskᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aiprovider.Task) graphql.Marshaler {
+	return gqlexec.List[aiprovider.Task]{
+		Elem:        marshalNAITask2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiproviderᚐTask,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNAITuneUp2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAITuneUpᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.AITuneUp) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.AITuneUp]{
+		Elem:        marshalNAITuneUp2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAITuneUp,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNAITuneUp2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAITuneUp(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AITuneUp) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AITuneUp", v)
+}
+
+func marshalNAITuneUpEvidence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaituneupᚐEvidence(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aituneup.Evidence) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AITuneUpEvidence", v)
+}
+
+func marshalNAITuneUpKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaituneupᚐKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aituneup.Kind) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNAITuneUpStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaituneupᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aituneup.Status) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNAITuneUps2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAITuneUps(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AITuneUps) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AITuneUps", v)
+}
+
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
 	res := graphql.MarshalBoolean(v)
 	if res == graphql.Null {
@@ -537,8 +1169,24 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
+func marshalNFloat2float64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v float64) graphql.Marshaler {
+	res := graphql.MarshalFloatContext(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return graphql.WrapContextMarshaler(ctx, res)
+}
+
 func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNID2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalID(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
@@ -561,11 +1209,49 @@ func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
+func marshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
 	res := graphql.MarshalInt64(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
+	return res
+}
+
+func marshalOAITask2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiproviderᚐTask(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiprovider.Task) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func marshalOAITuneUpAgent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAITuneUpAgent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AITuneUpAgent) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AITuneUpAgent", v)
+}
+
+func marshalOAITuneUpProvider2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAITuneUpProvider(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *services.AITuneUpProvider) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AITuneUpProvider", v)
+}
+
+func marshalOAgentAutonomyTier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐAutonomyTier(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.AutonomyTier) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
 	return res
 }
 
@@ -582,5 +1268,21 @@ func marshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Sel
 		return graphql.Null
 	}
 	res := graphql.MarshalString(*v)
+	return res
+}
+
+func marshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt(*v)
+	return res
+}
+
+func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt64(*v)
 	return res
 }

@@ -1,0 +1,111 @@
+{
+    "items": [
+        {
+            "type": "Exa",
+            "name": "Web search",
+            "vendor": "Exa",
+            "summary": "Let agents search the web and read pages when an answer is not in Trenova.",
+            "description": "Agents can look up current regulations, rules and public information \u2014 hours of service, ELD requirements, hazmat placarding, IFTA filing \u2014 and cite the page and its date instead of answering from memory. Government sites are ranked first and marked as official.",
+            "category": "WebResearch",
+            "categoryLabel": "Web research",
+            "brandDomain": "exa.ai",
+            "docsUrl": "https://exa.ai/docs/reference/search",
+            "websiteUrl": "https://exa.ai",
+            "pricingUrl": "https://exa.ai/pricing",
+            "capabilities": [
+                "Searches the web and returns the most relevant passages from each page",
+                "Ranks government sites (.gov, .gc.ca, .gob.mx) first and marks them official",
+                "Reads a full page the search returned, in parts for long documents",
+                "Answers cite the page and its publication date"
+            ],
+            "tools": [
+                {
+                    "name": "web_search",
+                    "label": "Search the web",
+                    "description": "Finds public pages about a topic and returns short passages from each."
+                },
+                {
+                    "name": "web_read",
+                    "label": "Read a web page",
+                    "description": "Reads the full text of a page a search returned."
+                }
+            ],
+            "dataNotice": "Search queries and the addresses of pages agents read are sent to Exa. Queries that contain Trenova record IDs, email addresses or phone numbers are refused before they leave Trenova. After an agent reads web content, any change it wants to make for the rest of that turn waits for a person's approval.",
+            "featured": true,
+            "sortOrder": 10,
+            "releasedAt": 1790121600,
+            "enabled": false,
+            "configured": false,
+            "availability": "SelectedAgents",
+            "configSpec": [
+                {
+                    "key": "apiKey",
+                    "label": "API key",
+                    "type": "password",
+                    "required": true,
+                    "sensitive": true,
+                    "placeholder": "Your Exa API key",
+                    "helpText": "Create a key at dashboard.exa.ai. Trenova stores it encrypted and only sends it to api.exa.ai."
+                },
+                {
+                    "key": "searchType",
+                    "label": "Search depth",
+                    "type": "select",
+                    "required": false,
+                    "sensitive": false,
+                    "helpText": "Auto balances speed and quality. Fast answers quickest. Deep reads more of the web and costs more per search.",
+                    "default": "auto",
+                    "options": [
+                        "auto",
+                        "fast",
+                        "deep"
+                    ]
+                },
+                {
+                    "key": "resultsPerSearch",
+                    "label": "Results per search",
+                    "type": "number",
+                    "required": false,
+                    "sensitive": false,
+                    "helpText": "How many pages one search returns to the agent, from 1 to 10. More results cost more and take more of the agent's attention.",
+                    "default": "5"
+                },
+                {
+                    "key": "dailyRequestLimit",
+                    "label": "Daily request limit",
+                    "type": "number",
+                    "required": false,
+                    "sensitive": false,
+                    "helpText": "The most searches and page reads all agents in this organization may make in a day (UTC). Agents are told the limit is reached rather than retrying.",
+                    "default": "200"
+                },
+                {
+                    "key": "excludedDomains",
+                    "label": "Excluded sites",
+                    "type": "string",
+                    "required": false,
+                    "sensitive": false,
+                    "placeholder": "example.com, *.example.org",
+                    "helpText": "Sites agents never receive results from, separated by commas. Use *.example.com to exclude every subdomain."
+                }
+            ],
+            "supportsTestConnect": true,
+            "dailyRequestLimit": 200,
+            "usage": {
+                "requestsToday": 0,
+                "requestsThisMonth": 0,
+                "failuresThisMonth": 0,
+                "costThisMonthUsd": "0"
+            },
+            "enabledAt": null,
+            "updatedAt": 0,
+            "version": 0
+        }
+    ],
+    "categories": [
+        {
+            "value": "WebResearch",
+            "label": "Web research"
+        }
+    ]
+}

@@ -1,4 +1,3 @@
-import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { usePermission } from "@/hooks/use-permission";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -28,8 +27,10 @@ import {
   type RailView,
   type SafetyView,
 } from "./ai-control-tabs";
-import { ControlRail } from "./_components/control-rail";
-import { buildRailItems, resolveRailView } from "./_components/rail-items";
+import { PageHead } from "./_components/kit/page-head";
+import { Seg } from "./_components/kit/layout";
+import { buildRailItems, resolveRailView, tabCounts } from "./_components/rail-items";
+import "./ai-control.css";
 import { useAIControlStats } from "./_components/overview/use-ai-control-stats";
 import { extensionState } from "./_components/extensions/extension-roster";
 import { RETRIEVAL_STALE_MS, retrievalRailState } from "./_components/retrieval/retrieval-model";
@@ -50,10 +51,9 @@ const AuditTab = lazy(() => import("./_components/audit/audit-tab"));
 /**
  * One place for everything AI in the organization: where work goes
  * (providers), what it may do (agents), and what it did (activity). The
- * sections run down a rail that carries their counts, and the one open
- * section takes the rest of the width. A section with several tables lists
- * them under its row and shows one at a time, because every table on the
- * page keeps its paging, filters and open row in the same address keys.
+ * tabs carry what each one holds, and a tab with several tables shows one
+ * at a time under a segmented choice, because every table on the page keeps
+ * its paging, filters and open row in the same address keys.
  */
 export function AgentControlPage() {
   const t = useT();
@@ -107,6 +107,40 @@ export function AgentControlPage() {
   const extensionsOn = useMemo(
     () => extensionItems?.filter((item) => extensionState(item) === "on").length ?? 0,
     [extensionItems],
+  );
+  const counts = useMemo(
+    () =>
+      tabCounts(
+        stats.isLoading
+          ? undefined
+          : {
+              providersEnabled: stats.providersEnabled,
+              providersTotal: stats.providersTotal,
+              agentsEnabled: stats.counts?.agentsEnabled ?? 0,
+              agentsTotal: stats.counts?.agentsTotal ?? 0,
+              pendingProposals: stats.counts?.pendingProposals ?? 0,
+              runsLast24h: stats.counts?.runsLast24h ?? 0,
+              memoriesActive: stats.counts?.memoriesActive ?? 0,
+              extensionsOn,
+              extensionsTotal: extensionItems?.length ?? 0,
+              qualityRegressions,
+              retrieval: retrievalState,
+              auditVerification,
+            },
+        t,
+      ),
+    [
+      auditVerification,
+      extensionItems?.length,
+      extensionsOn,
+      qualityRegressions,
+      retrievalState,
+      stats.counts,
+      stats.isLoading,
+      stats.providersEnabled,
+      stats.providersTotal,
+      t,
+    ],
   );
   const items = useMemo(
     () =>
@@ -168,7 +202,7 @@ export function AgentControlPage() {
   );
 
   // A section the reader may not open falls back to the overview rather
-  // than rendering nothing under a selected rail row, and a view the reader
+  // than rendering nothing under a selected tab, and a view the reader
   // may not open falls back to the section's first.
   const activeTab: AIControlTab = items.some((item) => item.tab === tab) ? tab : "overview";
   const activeItem = items.find((item) => item.tab === activeTab);
@@ -186,29 +220,30 @@ export function AgentControlPage() {
     (next: AIControlTab, nextView?: RailView) => navigate({ tab: next, view: nextView }),
     [navigate],
   );
+  const selectTab = useCallback((next: AIControlTab) => select(next), [select]);
   const openProviders = useCallback(() => select("providers"), [select]);
   const openAgents = useCallback(() => select("agents"), [select]);
   const openAuditExports = useCallback(() => select("audit", "exports"), [select]);
+  const tabs = useMemo(() => items.map((item) => item.tab), [items]);
 
   return (
-    <PageLayout
-      pageHeaderProps={{
-        title: t("AI control"),
-        description: t(
-          "Providers say where AI work goes, agents say what it may do, extensions add what they can reach, quality says how well they do it, activity shows what it did, and the audit trail keeps a signed record of it.",
-        ),
-      }}
-    >
-      <div className="grid min-w-0 gap-4 md:grid-cols-[13.5rem_minmax(0,1fr)] md:gap-6">
-        <ControlRail items={items} active={activeTab} activeView={activeView} onSelect={select} />
-
-        <div className="min-w-0">
+    <div className="aic">
+      <div className="pg">
+        <PageHead tabs={tabs} active={activeTab} counts={counts} onSelect={selectTab} />
+        <div key={activeTab} className="tab-in">
+          {activeItem && activeItem.children.length > 1 && activeView && (
+            <div className="vw">
+              <Seg
+                v={activeView}
+                opts={activeItem.children.map((child) => [child.view, child.label] as const)}
+                onChange={(view) => select(activeTab, view)}
+                label={t("View")}
+              />
+            </div>
+          )}
           <DataTableLazyComponent>
             {activeTab === "overview" && (
-              <OverviewTab
-                onOpenProviders={openProviders}
-                onOpenAgents={openAgents}
-              />
+              <OverviewTab onOpenProviders={openProviders} onOpenAgents={openAgents} />
             )}
             {activeTab === "agents" && <AgentsTab />}
             {activeTab === "providers" && <ProvidersTab />}
@@ -224,7 +259,7 @@ export function AgentControlPage() {
           </DataTableLazyComponent>
         </div>
       </div>
-    </PageLayout>
+    </div>
   );
 }
 

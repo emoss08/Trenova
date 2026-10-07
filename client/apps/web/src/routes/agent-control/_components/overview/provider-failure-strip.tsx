@@ -6,13 +6,12 @@ import {
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import { PlugIcon, XCloseIcon } from "@trenova/shared/components/icons";
-import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { toast } from "sonner";
-import { ProviderMark } from "../providers/provider-mark";
+import { Ic } from "../kit/ic";
+import { Mark } from "../kit/marks";
 
 type ProviderFailureStripProps = {
   failures: readonly AIProviderFailure[];
@@ -29,11 +28,11 @@ export function ProviderFailureStrip({ failures, onEditProvider }: ProviderFailu
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <>
       {failures.map((failure) => (
         <FailureRow key={failure.providerId} failure={failure} onEditProvider={onEditProvider} />
       ))}
-    </div>
+    </>
   );
 }
 
@@ -47,7 +46,6 @@ function FailureRow({
   const t = useT();
   const queryClient = useQueryClient();
   const providersQuery = useQuery(queries.aiProvider.list());
-  const catalogQuery = useQuery(queries.aiProvider.catalog());
   const provider = providersQuery.data?.find((candidate) => candidate.id === failure.providerId);
 
   const refresh = useCallback(
@@ -85,22 +83,17 @@ function FailureRow({
     },
   });
 
+  const testing = test.isPending;
+
   return (
-    <div
-      role="status"
-      className="flex flex-wrap items-center gap-3 rounded-surface border border-danger-border bg-danger-subtle px-4 py-3"
-    >
-      <span className="relative shrink-0">
-        {provider ? (
-          <ProviderMark provider={provider} presets={catalogQuery.data?.presets ?? []} />
-        ) : (
-          <span className="block size-7 rounded-md bg-muted" />
-        )}
-        <span className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full border-2 border-card bg-danger motion-safe:animate-pulse" />
+    <div className="ovb" role="status">
+      <span className="ovb-i">
+        <Mark provider={provider ?? { name: failure.name }} s={28} />
+        <i />
       </span>
-      <div className="flex min-w-0 flex-1 flex-col">
-        <b className="text-sm font-semibold">{t("{0} can't connect", failure.name)}</b>
-        <span className="text-xs text-muted-foreground">
+      <div className="ovb-t">
+        <b>{t("{0} can't connect", failure.name)}</b>
+        <span>
           {failure.failedCalls === 1
             ? t("1 failed call in the last day · its tasks fall to the next provider in line")
             : t(
@@ -109,29 +102,33 @@ function FailureRow({
               )}
         </span>
       </div>
-      <div className="flex items-center gap-1.5">
-        <Button
-          size="sm"
-          variant="outline"
-          isLoading={test.isPending}
-          loadingText={t("Testing")}
-          onClick={() => test.mutate()}
-        >
-          <PlugIcon className="size-3" />
-          {t("Test again")}
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => onEditProvider(failure.providerId)}>
+      <div className="ovb-a">
+        <button type="button" className="btn sm" disabled={testing} onClick={() => test.mutate()}>
+          {testing ? (
+            <>
+              <i className="spn" />
+              {t("Testing")}
+            </>
+          ) : (
+            <>
+              <Ic n="plug" s={12} />
+              {t("Test again")}
+            </>
+          )}
+        </button>
+        <button type="button" className="btn sm" onClick={() => onEditProvider(failure.providerId)}>
           {t("Edit connection")}
-        </Button>
-        <Button
-          size="icon-sm"
-          variant="ghost"
+        </button>
+        <button
+          type="button"
+          className="ib"
+          title={t("Hide until it fails again")}
           aria-label={t("Hide until it fails again")}
           disabled={dismiss.isPending}
           onClick={() => dismiss.mutate()}
         >
-          <XCloseIcon className="size-3.5" />
-        </Button>
+          <Ic n="x" s={13} />
+        </button>
       </div>
     </div>
   );

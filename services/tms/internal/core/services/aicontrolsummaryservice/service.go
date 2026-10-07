@@ -26,6 +26,7 @@ const (
 	shadowWindow = 30 * 24 * time.Hour
 	// failureWindow is how far back a provider's failed calls are read.
 	failureWindow = 24 * time.Hour
+	weekWindow    = 7 * 24 * time.Hour
 	// narratedTTL keeps a model's sentence for as long as its facts hold.
 	narratedTTL = 24 * time.Hour
 	// plainTTL keeps the plain sentence after a model declined or failed,
@@ -46,6 +47,7 @@ type Params struct {
 	Controls   repositories.AgentControlRepository
 	Cache      repositories.AIControlSummaryCache
 	Dismissals repositories.AIProviderFailureDismissalRepository
+	Usage      repositories.AIUsageRepository
 	Completion services.CompletionService `optional:"true"`
 }
 
@@ -56,6 +58,7 @@ type Service struct {
 	controls   repositories.AgentControlRepository
 	cache      repositories.AIControlSummaryCache
 	dismissals repositories.AIProviderFailureDismissalRepository
+	usage      repositories.AIUsageRepository
 	completion services.CompletionService
 	inflight   singleflight.Group
 	now        func() time.Time
@@ -73,6 +76,7 @@ func New(p Params) *Service {
 		controls:   p.Controls,
 		cache:      p.Cache,
 		dismissals: p.Dismissals,
+		usage:      p.Usage,
 		completion: p.Completion,
 		now:        time.Now,
 		detach:     func(run func()) { go run() },
@@ -198,13 +202,38 @@ func (s *Service) Facts(
 		return nil, err
 	}
 
+	all, err := s.providers.ListOrdered(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	week, err := s.usage.Summary(ctx, repositories.AIUsageSummaryRequest{
+		TenantInfo: tenantInfo,
+		Since:      now.Add(-weekWindow).Unix(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return &aicontrolsummary.Facts{
-		Agents:      counts,
-		ProvidersOn: len(enabled),
-		Failing:     failingProviders(enabled, failures),
-		Uncovered:   uncoveredTasks(enabled),
-		Paused:      control.ShadowMode,
+		Agents:         counts,
+		ProvidersOn:    len(enabled),
+		ProvidersTotal: len(all),
+		WeekCalls:      week.Totals.Calls,
+		AwaitingKey:    awaitingKey(all),
+		Failing:        failingProviders(enabled, failures),
+		Uncovered:      uncoveredTasks(enabled),
+		Paused:         control.ShadowMode,
 	}, nil
+}
+
+func awaitingKey(providers []*aiprovider.Provider) *aicontrolsummary.ProviderRef {
+	for _, provider := range providers {
+		if provider.Kind.RequiresAPIKey() && !provider.HasAPIKey {
+			return &aicontrolsummary.ProviderRef{ProviderID: provider.ID, Name: provider.Name}
+		}
+	}
+	return nil
 }
 
 // failingProviders names the enabled providers whose last call failed.

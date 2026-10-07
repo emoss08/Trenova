@@ -110,6 +110,10 @@ aliases:
 virtuals:
   AICorrection:
     - accuracy
+  AITuneUp:
+    - agent
+    - provider
+    - otherProvider
   ExtractionRollout:
     - serving
   AccountingDriftFinding:

@@ -1,12 +1,11 @@
 import { queries } from "@/lib/queries";
-import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { ProviderMark } from "../providers/provider-mark";
+import { Mark } from "../kit/marks";
 
-/** How many presets the first step offers; the editor offers every one. */
-const PRESETS_SHOWN = 6;
+/** The presets the first step offers, in order; the editor offers every one. */
+const SETUP_PRESETS = ["anthropic", "openai", "groq", "openrouter", "ollama", "vllm"];
 
 type SetupStepsProps = {
   agentCount: number;
@@ -20,7 +19,10 @@ type SetupStepsProps = {
 export function SetupSteps({ agentCount, onPickPreset }: SetupStepsProps) {
   const t = useT();
   const catalogQuery = useQuery(queries.aiProvider.catalog());
-  const presets = (catalogQuery.data?.presets ?? []).slice(0, PRESETS_SHOWN);
+  const presets = SETUP_PRESETS.flatMap((key) => {
+    const preset = catalogQuery.data?.presets.find((candidate) => candidate.key === key);
+    return preset ? [preset] : [];
+  });
 
   const steps = [
     {
@@ -44,44 +46,33 @@ export function SetupSteps({ agentCount, onPickPreset }: SetupStepsProps) {
   ];
 
   return (
-    <ol className="flex flex-col gap-4">
-      {steps.map((step, index) => (
-        <li key={step.title} className="flex gap-3">
-          <span
-            className={cn(
-              "flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-medium tabular-nums",
-              step.current
-                ? "border-foreground bg-foreground text-background"
-                : "border-border text-muted-foreground",
-            )}
-          >
-            {index + 1}
-          </span>
-          <div className="flex min-w-0 flex-col gap-1">
-            <b className={cn("text-sm font-semibold", !step.current && "text-muted-foreground")}>
-              {step.title}
-            </b>
-            <p className="text-xs text-muted-foreground">{step.body}</p>
-            {step.current && (
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
-                {presets.map((preset) => (
-                  <Button key={preset.key} size="sm" variant="outline" onClick={() => onPickPreset(preset.key)}>
-                    <ProviderMark
-                      provider={{ name: preset.label, kind: preset.kind, baseUrl: preset.baseUrl }}
-                      presets={catalogQuery.data?.presets ?? []}
-                      size={16}
-                    />
-                    {preset.label}
-                  </Button>
-                ))}
-                <Button size="sm" variant="ghost" onClick={() => onPickPreset(null)}>
-                  {t("Something else")}
-                </Button>
-              </div>
-            )}
-          </div>
-        </li>
-      ))}
-    </ol>
+    <section className="setup">
+      <ol className="steps">
+        {steps.map((step, index) => (
+          <li key={step.title} className={cn(step.current && "cur")}>
+            <span className="st-n">{index + 1}</span>
+            <div>
+              <b>{step.title}</b>
+              <p>{step.body}</p>
+              {step.current && (
+                <div className="pre">
+                  {presets.map((preset) => (
+                    <button
+                      key={preset.key}
+                      type="button"
+                      className="pre-b"
+                      onClick={() => onPickPreset(preset.key)}
+                    >
+                      <Mark provider={{ name: preset.label }} s={20} />
+                      {preset.label.replace(/\s*\(self-hosted\)$/, "")}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }

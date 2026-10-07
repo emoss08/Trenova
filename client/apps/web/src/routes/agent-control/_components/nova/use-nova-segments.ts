@@ -1,7 +1,4 @@
-import type { StreamedSegment } from "@/components/streamed-text";
 import type { AIControlSegment } from "@/lib/graphql/ai-control";
-import { useT } from "@trenova/shared/i18n/use-t";
-import { useMemo } from "react";
 
 export type NovaTarget =
   | { kind: "watchtower" }
@@ -28,30 +25,4 @@ export function novaTarget(segment: AIControlSegment): NovaTarget | null {
     default:
       return null;
   }
-}
-
-/** The server's sentence as the streamed text draws it, each link wired to where it leads. */
-export function useNovaSegments(
-  segments: readonly AIControlSegment[] | undefined,
-  onTarget: (target: NovaTarget) => void,
-): StreamedSegment[] {
-  const t = useT();
-
-  return useMemo(
-    () =>
-      (segments ?? []).map((segment) => {
-        const target = novaTarget(segment);
-        const tone =
-          segment.tone === "danger" ? "danger" : segment.tone === "warn" ? "warning" : undefined;
-        return {
-          text: segment.text,
-          emphasis: segment.strong,
-          tone,
-          ...(target
-            ? { onActivate: () => onTarget(target), label: t("Open {0}", segment.text.trim()) }
-            : {}),
-        };
-      }),
-    [onTarget, segments, t],
-  );
 }

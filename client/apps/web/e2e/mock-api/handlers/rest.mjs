@@ -1,8 +1,10 @@
+import { AI_ROUTES } from "./aicontrol.mjs";
 import { ORG, permissionManifest, USER } from "../fixtures/session.mjs";
 
 const EMPTY_PAGE = { results: [], count: 0, next: null, prev: null };
 
 const ROUTES = [
+  ...AI_ROUTES,
   ["GET", /^\/api\/v1\/users\/me\/?$/, () => USER],
   ["GET", /^\/api\/v1\/me\/permissions\/?$/, () => permissionManifest()],
   ["GET", /^\/api\/v1\/me\/permissions\/version\/?$/, () => ({ checksum: "mock", expiresAt: Math.floor(Date.now() / 1000) + 86400 })],

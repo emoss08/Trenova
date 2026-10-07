@@ -1,5 +1,3 @@
-import { Avatar, AvatarFallback } from "@trenova/shared/components/ui/avatar";
-import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { getNameInitials } from "@trenova/shared/lib/utils";
@@ -25,30 +23,27 @@ export function ConflictBar({ conflict, onLoadTheirs, onKeepMine }: ConflictBarP
   const when = formatSecondsAgo(seenAt - conflict.updatedAt);
 
   return (
-    <div className="border-b border-border bg-warning-subtle px-4 py-2.5" role="alert">
-      <div className="flex flex-wrap items-center gap-2">
-        <Avatar size="sm">
-          <AvatarFallback>{getNameInitials(conflict.updatedByName, "?")}</AvatarFallback>
-        </Avatar>
-        <span className="min-w-0 flex-1">
-          {t("{0} saved changes {1} while you were editing.", who, when)}
-        </span>
+    <div className="es-cx" role="alert">
+      <div className="es-cxr">
+        <span className="me sm">{getNameInitials(conflict.updatedByName, "?")}</span>
+        <span>{t("{0} saved changes {1} while you were editing.", who, when)}</span>
+        <span className="sp" />
         {conflict.changes.length > 0 && (
-          <Button size="sm" variant="ghost" onClick={() => setOpen((shown) => !shown)}>
+          <button type="button" className="btn sm" onClick={() => setOpen((shown) => !shown)}>
             {open ? t("Hide") : t("See theirs")}
-          </Button>
+          </button>
         )}
         {onLoadTheirs && (
-          <Button size="sm" variant="outline" onClick={onLoadTheirs}>
+          <button type="button" className="btn sm" onClick={onLoadTheirs}>
             {t("Load theirs")}
-          </Button>
+          </button>
         )}
-        <Button size="sm" onClick={onKeepMine}>
+        <button type="button" className="btn sm ink" onClick={onKeepMine}>
           {t("Keep mine")}
-        </Button>
+        </button>
       </div>
       {open && (
-        <ul className="mt-2 list-disc pl-10 text-xs text-muted-foreground">
+        <ul className="es-cxl">
           {conflict.changes.map((change) => (
             <li key={change.field}>{change.label}</li>
           ))}

@@ -1,4 +1,9 @@
-import { aiUsageFeatureLabel, formatLatency, formatTokens, formatUsd } from "@/lib/ai-usage-format";
+import {
+  aiUsageFeatureLabel,
+  formatLatencyCompact,
+  formatMillions,
+  formatUsd,
+} from "@/lib/ai-usage-format";
 import type { AIUsageFeatureRow } from "@/lib/graphql/ai-usage-features-table";
 import type { AiUsageFeature } from "@trenova/graphql/generated/graphql";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
@@ -27,9 +32,9 @@ export function getUsageFeatureColumns(t: TranslateFn, busiest: number): ColumnD
       accessorKey: "feature",
       header: t("Feature"),
       cell: ({ row }) => (
-        <span className="font-medium">{aiUsageFeatureLabel(row.original.feature ?? null, t)}</span>
+        <b className="rg">{aiUsageFeatureLabel(row.original.feature ?? null, t)}</b>
       ),
-      size: 240,
+      size: 230,
       meta: {
         label: t("Feature"),
         apiField: "feature",
@@ -50,13 +55,13 @@ export function getUsageFeatureColumns(t: TranslateFn, busiest: number): ColumnD
       cell: ({ row }) => {
         const { calls, failed } = row.original;
         return (
-          <span className="flex items-center gap-3">
-            <span className="w-14 tabular-nums">{calls.toLocaleString()}</span>
-            <span className="relative flex h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-              <span className="h-full bg-foreground/40" style={{ width: `${(calls / scale) * 100}%` }} />
+          <span className="ucl">
+            <span className="mono">{calls.toLocaleString()}</span>
+            <span className="ubar">
+              <i style={{ width: `${(calls / scale) * 100}%` }} />
               {failed > 0 && (
-                <span
-                  className="h-full bg-danger"
+                <i
+                  className="f"
                   style={{ width: `${Math.max(MIN_FAILED_BAR_PERCENT, (failed / scale) * 100)}%` }}
                 />
               )}
@@ -64,7 +69,7 @@ export function getUsageFeatureColumns(t: TranslateFn, busiest: number): ColumnD
           </span>
         );
       },
-      size: 220,
+      size: 190,
       meta: { label: t("Calls"), apiField: "calls", filterable: true, sortable: true, filterType: "number" },
     },
     {
@@ -73,11 +78,11 @@ export function getUsageFeatureColumns(t: TranslateFn, busiest: number): ColumnD
       header: t("Failed"),
       cell: ({ row }) =>
         row.original.failed > 0 ? (
-          <span className="tabular-nums text-danger">{row.original.failed.toLocaleString()}</span>
+          <span className="mono t-d">{row.original.failed.toLocaleString()}</span>
         ) : (
-          <span className="text-muted-foreground">—</span>
+          <span className="dim">—</span>
         ),
-      size: 90,
+      size: 80,
       meta: { label: t("Failed"), apiField: "failed", filterable: true, sortable: true, filterType: "number" },
     },
     {
@@ -85,11 +90,11 @@ export function getUsageFeatureColumns(t: TranslateFn, busiest: number): ColumnD
       accessorFn: (row) => row.inputTokens + row.outputTokens,
       header: t("Tokens"),
       cell: ({ row }) => (
-        <span className="tabular-nums">
-          {formatTokens(row.original.inputTokens + row.original.outputTokens)}
+        <span className="mono">
+          {`${formatMillions(row.original.inputTokens + row.original.outputTokens)}M`}
         </span>
       ),
-      size: 100,
+      size: 90,
       meta: { label: t("Tokens"), apiField: "tokens", filterable: false, sortable: true, filterType: "number" },
     },
     {
@@ -98,11 +103,11 @@ export function getUsageFeatureColumns(t: TranslateFn, busiest: number): ColumnD
       header: t("Spend"),
       cell: ({ row }) =>
         row.original.pricedCalls > 0 ? (
-          <span className="tabular-nums">{formatUsd(row.original.costUsd) ?? "—"}</span>
+          <span className="mono">{formatUsd(row.original.costUsd) ?? "—"}</span>
         ) : (
-          <span className="text-muted-foreground">—</span>
+          <span className="dim">—</span>
         ),
-      size: 100,
+      size: 80,
       meta: { label: t("Spend"), apiField: "costUsd", filterable: false, sortable: true, filterType: "number" },
     },
     {
@@ -111,11 +116,11 @@ export function getUsageFeatureColumns(t: TranslateFn, busiest: number): ColumnD
       header: t("Median"),
       cell: ({ row }) =>
         row.original.latencyP50Ms > 0 ? (
-          <span className="tabular-nums">{formatLatency(row.original.latencyP50Ms)}</span>
+          <span className="mono">{formatLatencyCompact(row.original.latencyP50Ms)}</span>
         ) : (
-          <span className="text-muted-foreground">—</span>
+          <span className="dim">—</span>
         ),
-      size: 100,
+      size: 90,
       meta: {
         label: t("Median"),
         apiField: "latencyP50Ms",

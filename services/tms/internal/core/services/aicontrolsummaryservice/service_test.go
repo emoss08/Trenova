@@ -40,10 +40,33 @@ func (f *factsRepo) ProviderFailures(
 type providerRepo struct {
 	repositories.AIProviderRepository
 	enabled []*aiprovider.Provider
+	off     []*aiprovider.Provider
 }
 
 func (p *providerRepo) ListEnabled(context.Context, pagination.TenantInfo) ([]*aiprovider.Provider, error) {
 	return p.enabled, nil
+}
+
+func (p *providerRepo) ListOrdered(context.Context, pagination.TenantInfo) ([]*aiprovider.Provider, error) {
+	all := make([]*aiprovider.Provider, 0, len(p.enabled)+len(p.off))
+	for _, provider := range append(append([]*aiprovider.Provider{}, p.enabled...), p.off...) {
+		all = append(all, provider.Redacted())
+	}
+	return all, nil
+}
+
+type usageRepo struct {
+	repositories.AIUsageRepository
+	calls int
+	since int64
+}
+
+func (u *usageRepo) Summary(
+	_ context.Context,
+	req repositories.AIUsageSummaryRequest,
+) (*repositories.AIUsageSummary, error) {
+	u.since = req.Since
+	return &repositories.AIUsageSummary{Totals: repositories.AIUsageTotals{Calls: u.calls}}, nil
 }
 
 type controlRepo struct {
@@ -125,6 +148,7 @@ func newService(cache *memoryCache, model *completion, enabled ...*aiprovider.Pr
 		facts:     &factsRepo{counts: aicontrolsummary.AgentCounts{Total: 3, On: 2, Waiting: 4}},
 		providers: &providerRepo{enabled: enabled},
 		controls:  &controlRepo{},
+		usage:     &usageRepo{calls: 1284},
 		cache:     cache,
 		now:       func() time.Time { return time.Unix(1_800_000_000, 0) },
 		detach:    func(run func()) { run() },
@@ -175,7 +199,8 @@ func TestSummaryRewordsOnceAndThenReadsWhatWasKept(t *testing.T) {
 	assert.False(t, second.Pending)
 	assert.Equal(t, "Two agents are on and 4 proposals are waiting on someone in Watchtower.",
 		aicontrolsummary.Text(second.Segments))
-	assert.Equal(t, aicontrolsummary.ToneWarn, second.Segments[1].Tone, "the link keeps its tone")
+	assert.Equal(t, aicontrolsummary.TonePlain, second.Segments[1].Tone,
+		"the link keeps the plain sentence's tone, not one the model chose")
 
 	_, err = svc.Summary(t.Context(), request())
 	require.NoError(t, err)
@@ -270,4 +295,34 @@ func TestAcceptRefusesALinkThePlainSentenceDoesNotHave(t *testing.T) {
 	}, facts, plain)
 
 	assert.False(t, ok)
+}
+
+func TestFactsCountEveryProviderTheWeekAndAKeyStillMissing(t *testing.T) {
+	t.Parallel()
+
+	on := &aiprovider.Provider{
+		ID: pulid.MustNew("aiprv_"), Name: "Local", Kind: aiprovider.KindOllama, Enabled: true,
+		Tasks: []aiprovider.Task{aiprovider.TaskGeneral},
+	}
+	keyed := &aiprovider.Provider{
+		ID: pulid.MustNew("aiprv_"), Name: "OpenAI", Kind: aiprovider.KindOpenAIResponses, APIKey: "sealed",
+	}
+	keyless := &aiprovider.Provider{
+		ID: pulid.MustNew("aiprv_"), Name: "Anthropic", Kind: aiprovider.KindAnthropicMessages,
+	}
+	svc := newService(newMemoryCache(), nil, on)
+	svc.providers = &providerRepo{enabled: []*aiprovider.Provider{on}, off: []*aiprovider.Provider{keyed, keyless}}
+	usage := &usageRepo{calls: 1284}
+	svc.usage = usage
+
+	facts, err := svc.Facts(t.Context(), pagination.TenantInfo{})
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, facts.ProvidersOn)
+	assert.Equal(t, 3, facts.ProvidersTotal)
+	assert.Equal(t, 1284, facts.WeekCalls)
+	assert.Equal(t, int64(1_800_000_000-7*24*60*60), usage.since)
+	require.NotNil(t, facts.AwaitingKey)
+	assert.Equal(t, "Anthropic", facts.AwaitingKey.Name)
+	assert.Equal(t, keyless.ID, facts.AwaitingKey.ProviderID)
 }

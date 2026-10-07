@@ -1,11 +1,11 @@
-import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
-import { formatLatency, formatTokens, formatUsd } from "@/lib/ai-usage-format";
+import { formatMillions, formatUsd } from "@/lib/ai-usage-format";
 import { queries } from "@/lib/queries";
-import { PlusIcon } from "@trenova/shared/components/icons";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { resolveUserTimezone } from "@trenova/shared/lib/date";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { Ic } from "../kit/ic";
+import { Figs } from "../kit/layout";
 import { DailyCallBars } from "./daily-call-bars";
 
 /** The window the overview's figures cover. */
@@ -17,6 +17,10 @@ type OverviewFiguresProps = {
   /** Opens a provider's editor, to give it a price. Absent when no provider is on. */
   onSetPrices?: () => void;
 };
+
+function seconds(ms: number, digits: number): string {
+  return (ms / 1000).toFixed(digits);
+}
 
 /** The week in four figures: calls with their failures, response time, tokens and spend. */
 export function OverviewFigures({ onSetPrices }: OverviewFiguresProps) {
@@ -37,76 +41,78 @@ export function OverviewFigures({ onSetPrices }: OverviewFiguresProps) {
   const failed = usage?.failed ?? 0;
   const okShare = calls > 0 ? ((calls - failed) / calls) * 100 : 100;
   const priced = (usage?.pricedCalls ?? 0) > 0;
+  const inputTokens = usage?.inputTokens ?? 0;
+  const outputTokens = usage?.outputTokens ?? 0;
+  const pending = "…";
 
   return (
-    <KpiStrip minItemWidth="11rem">
-      <KpiStripItem
-        size="lg"
-        label={t("Model calls · {0} days", OVERVIEW_WINDOW_DAYS)}
-        value={loading ? "…" : calls.toLocaleString()}
-        sub={
-          <span className="flex items-center gap-2">
-            {dailyQuery.data && <DailyCallBars days={dailyQuery.data} />}
-            <span>
-              {failed > 0 && (
-                <span className="text-danger">{t("{0} failed", failed.toLocaleString())} · </span>
-              )}
-              {t("{0}% ok", okShare.toFixed(1))}
+    <Figs
+      items={[
+        {
+          label: t("Model calls · {0} days", OVERVIEW_WINDOW_DAYS),
+          value: loading ? pending : calls.toLocaleString(),
+          sub: (
+            <span className="fsub">
+              {dailyQuery.data && <DailyCallBars days={dailyQuery.data} />}
+              <span>
+                {failed > 0 && (
+                  <>
+                    <span className="t-d">{t("{0} failed", failed.toLocaleString())}</span>
+                    {" · "}
+                  </>
+                )}
+                {t("{0}% ok", okShare.toFixed(1))}
+              </span>
             </span>
-          </span>
-        }
-      />
-      <KpiStripItem
-        size="lg"
-        label={t("Median response")}
-        value={loading ? "…" : calls > 0 ? formatLatency(usage?.latencyP50Ms ?? 0) : "—"}
-        sub={
-          calls > 0
-            ? t("Slowest 5% took {0} or more", formatLatency(usage?.latencyP95Ms ?? 0))
-            : t("No calls yet")
-        }
-      />
-      <KpiStripItem
-        size="lg"
-        label={t("Tokens")}
-        value={
-          loading ? "…" : formatTokens((usage?.inputTokens ?? 0) + (usage?.outputTokens ?? 0))
-        }
-        sub={t(
-          "{0} in · {1} out",
-          formatTokens(usage?.inputTokens ?? 0),
-          formatTokens(usage?.outputTokens ?? 0),
-        )}
-      />
-      <KpiStripItem
-        size="lg"
-        label={t("Spend")}
-        value={
-          loading ? (
-            "…"
+          ),
+        },
+        {
+          label: t("Median response"),
+          value: loading ? (
+            pending
+          ) : calls > 0 ? (
+            <>
+              {seconds(usage?.latencyP50Ms ?? 0, 2)}
+              <small>s</small>
+            </>
+          ) : (
+            "—"
+          ),
+          sub:
+            calls > 0
+              ? t("Slowest 5% took {0}s or more", seconds(usage?.latencyP95Ms ?? 0, 1))
+              : t("No calls yet"),
+        },
+        {
+          label: t("Tokens"),
+          value: loading ? (
+            pending
+          ) : (
+            <>
+              {formatMillions(inputTokens + outputTokens)}
+              <small>M</small>
+            </>
+          ),
+          sub: t("{0}M in · {1}M out", formatMillions(inputTokens), formatMillions(outputTokens)),
+        },
+        {
+          label: t("Spend"),
+          value: loading ? (
+            pending
           ) : priced ? (
             (formatUsd(usage?.costUsd) ?? "—")
           ) : onSetPrices ? (
-            <button
-              type="button"
-              onClick={onSetPrices}
-              className="ui-focus-ring inline-flex items-center gap-1 rounded-control border border-dashed border-border-strong px-2 py-0.5 text-sm font-medium text-muted-foreground hover:text-foreground"
-            >
-              <PlusIcon className="size-3" />
+            <button type="button" className="fset" onClick={onSetPrices}>
+              <Ic n="plus" s={12} />
               {t("Set prices")}
             </button>
           ) : (
             "—"
-          )
-        }
-        sub={
-          priced
-            ? usage && usage.pricedCalls < usage.calls
-              ? t("Partial: {0} of {1} calls unpriced", usage.calls - usage.pricedCalls, usage.calls)
-              : t("Across every provider")
-            : t("No provider has a price yet")
-        }
-      />
-    </KpiStrip>
+          ),
+          sub: priced ? t("Across every provider") : t("No provider has a price yet"),
+          tone: priced ? undefined : "dim",
+        },
+      ]}
+    />
   );
 }

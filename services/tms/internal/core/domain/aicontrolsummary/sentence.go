@@ -68,26 +68,51 @@ func Plain(tab Tab, facts *Facts) []Segment {
 func overviewSentence(f *Facts) []Segment {
 	if f.NoProvider() {
 		return []Segment{
-			text("No model provider is on, so "),
-			strong(count(f.Agents.On, "agent", "agents")),
-			text(" can't run yet. "),
-			link("Connect a provider", TargetProviders, TonePlain),
-			text(" to start."),
+			text("Nothing can answer yet. Your "),
+			strong(count(f.Agents.Total, "agent", "agents")),
+			text(" " + isAre(f.Agents.Total) + " set up and waiting for a model provider — " +
+				"connect one and they start on their own."),
 		}
+	}
+
+	if f.Paused {
+		out := []Segment{
+			text("Every agent is "),
+			{Text: "paused", Strong: true, Tone: ToneWarn},
+			text(". They keep running and recording what they would do, but nothing is offered or executed"),
+		}
+		if f.Agents.Waiting > 0 {
+			out = append(out,
+				text(" — "),
+				link(count(f.Agents.Waiting, "proposal", "proposals"), TargetWatchtower, TonePlain),
+				text(" "+isAre(f.Agents.Waiting)+" held until you resume"),
+			)
+		}
+		return append(out, text("."))
 	}
 
 	out := []Segment{strong(count(f.Agents.On, "agent", "agents"))}
 	out = append(out, text(" "+isAre(f.Agents.On)+" on"))
-	switch {
-	case f.Paused:
-		out = append(out, text(", all paused in shadow"))
-	case f.Agents.Working > 0:
+	if f.Agents.Working > 0 {
 		out = append(out, text(", "), strong(strconv.Itoa(f.Agents.Working)), text(" working right now"))
 	}
 	out = append(out, text(". "))
-	out = append(out, waitingClause(f)...)
-	out = append(out, failingClause(f)...)
-	out = append(out, uncoveredClause(f)...)
+
+	failing := failingLink(f)
+	switch {
+	case f.Agents.Waiting > 0 && len(failing) > 0:
+		out = append(out, waitingLink(f, TonePlain), text(" "+waitWaits(f.Agents.Waiting)+
+			" on a person in Watchtower, and "))
+		out = append(out, failing...)
+		out = append(out, text(" can't connect. "))
+	case f.Agents.Waiting > 0:
+		out = append(out, waitingLink(f, TonePlain), text(" "+waitWaits(f.Agents.Waiting)+
+			" on a person in Watchtower. "))
+	case len(failing) > 0:
+		out = append(out, failing...)
+		out = append(out, text(" can't connect. "))
+	}
+	out = append(out, uncoveredClause(f, ToneWarn)...)
 	return trimEnd(out)
 }
 
@@ -101,15 +126,20 @@ func agentsSentence(f *Facts) []Segment {
 			text(" "+isAre(f.Agents.Working)+" working right now"))
 	}
 	out = append(out, text(". "))
-	out = append(out, waitingClause(f)...)
-	if f.Agents.Shadow > 0 {
+	if f.Agents.Waiting > 0 {
 		out = append(out,
-			strong(count(f.Agents.Shadow, "agent", "agents")),
-			text(" run in "),
+			link(count(f.Agents.Waiting, "proposal", "proposals"), TargetAgentsWait, ToneWarn),
+			text(" "+waitWaits(f.Agents.Waiting)+" on a person. "),
+		)
+	}
+	if f.Agents.Shadow > 0 {
+		one := f.Agents.Shadow == 1
+		out = append(out,
+			text(count(f.Agents.Shadow, "agent", "agents")+" "+pick(one, "runs", "run")+" in "),
 			link("shadow", TargetAgentsShadow, TonePlain),
-			text(" and have recorded "),
-			strong(strconv.Itoa(f.Agents.ShadowRecorded)),
-			text(" proposals nobody has seen. "),
+			text(" and "+pick(one, "has", "have")+" recorded "+
+				count(f.Agents.ShadowRecorded, "proposal", "proposals")+
+				" nobody has seen — worth a look before you let "+pick(one, "it", "them")+" go live. "),
 		)
 	}
 	return trimEnd(out)
@@ -123,58 +153,70 @@ func providersSentence(f *Facts) []Segment {
 		}
 	}
 	out := []Segment{
-		strong(count(f.ProvidersOn, "provider", "providers")),
-		text(" " + isAre(f.ProvidersOn) + " on. "),
+		strong(strconv.Itoa(f.ProvidersOn) + " of " + strconv.Itoa(f.ProvidersTotal)),
+		text(" providers " + isAre(f.ProvidersOn) + " taking work — " +
+			count(f.WeekCalls, "call", "calls") + " this week. "),
 	}
-	out = append(out, failingClause(f)...)
-	out = append(out, uncoveredClause(f)...)
-	if len(f.Failing) == 0 && f.Uncovered == 0 {
-		out = append(out, text("Every task has a provider, and none is failing."))
+	switch len(f.Failing) {
+	case 0:
+	case 1:
+		out = append(out, failingLink(f)...)
+		out = append(out, text(" is failing to connect, so its tasks fall through to the next in line. "))
+	default:
+		out = append(out, failingLink(f)...)
+		out = append(out, text(" are failing to connect, so their tasks fall through to the next in line. "))
 	}
+	if f.AwaitingKey != nil {
+		out = append(out,
+			Segment{
+				Text:       f.AwaitingKey.Name,
+				Target:     TargetProvider,
+				ProviderID: f.AwaitingKey.ProviderID.String(),
+				Tone:       ToneWarn,
+			},
+			text(" is waiting for a key. "),
+		)
+	}
+	out = append(out, uncoveredClause(f, TonePlain)...)
 	return trimEnd(out)
 }
 
-func waitingClause(f *Facts) []Segment {
-	if f.Agents.Waiting == 0 {
-		return nil
-	}
-	return []Segment{
-		link(count(f.Agents.Waiting, "proposal", "proposals"), TargetWatchtower, ToneWarn),
-		text(" " + waitWaits(f.Agents.Waiting) + " on a person in Watchtower. "),
-	}
+func waitingLink(f *Facts, tone Tone) Segment {
+	return link(count(f.Agents.Waiting, "proposal", "proposals"), TargetWatchtower, tone)
 }
 
-func failingClause(f *Facts) []Segment {
+func failingLink(f *Facts) []Segment {
 	switch len(f.Failing) {
 	case 0:
 		return nil
 	case 1:
 		failure := f.Failing[0]
-		return []Segment{
-			{
-				Text:       failure.Name,
-				Target:     TargetProvider,
-				ProviderID: failure.ProviderID.String(),
-				Tone:       ToneDanger,
-			},
-			text(" can't connect. "),
-		}
+		return []Segment{{
+			Text:       failure.Name,
+			Target:     TargetProvider,
+			ProviderID: failure.ProviderID.String(),
+			Tone:       ToneDanger,
+		}}
 	default:
-		return []Segment{
-			link(count(len(f.Failing), "provider", "providers"), TargetProviders, ToneDanger),
-			text(" can't connect. "),
-		}
+		return []Segment{link(count(len(f.Failing), "provider", "providers"), TargetProviders, ToneDanger)}
 	}
 }
 
-func uncoveredClause(f *Facts) []Segment {
+func uncoveredClause(f *Facts, tone Tone) []Segment {
 	if f.Uncovered == 0 {
 		return nil
 	}
 	return []Segment{
-		link(count(f.Uncovered, "task", "tasks"), TargetRouting, ToneWarn),
-		text(" " + hasHave(f.Uncovered) + " nowhere to go. "),
+		link(count(f.Uncovered, "task", "tasks")+" "+hasHave(f.Uncovered), TargetRouting, tone),
+		text(" nowhere to go. "),
 	}
+}
+
+func pick(one bool, singular, plural string) string {
+	if one {
+		return singular
+	}
+	return plural
 }
 
 func text(value string) Segment   { return Segment{Text: value} }
@@ -188,7 +230,26 @@ func count(n int, one, many string) string {
 	if n == 1 {
 		return "1 " + one
 	}
-	return strconv.Itoa(n) + " " + many
+	return grouped(n) + " " + many
+}
+
+func grouped(n int) string {
+	digits := strconv.Itoa(n)
+	if n < 0 || len(digits) <= 3 {
+		return digits
+	}
+	var builder strings.Builder
+	lead := len(digits) % 3
+	if lead > 0 {
+		builder.WriteString(digits[:lead])
+	}
+	for idx := lead; idx < len(digits); idx += 3 {
+		if builder.Len() > 0 {
+			builder.WriteByte(',')
+		}
+		builder.WriteString(digits[idx : idx+3])
+	}
+	return builder.String()
 }
 
 func isAre(n int) string {

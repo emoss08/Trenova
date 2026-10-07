@@ -207,6 +207,20 @@ func (f *fakeUsage) CostByDefinition(
 	return &repositories.AIUsageCost{}, nil
 }
 
+func (f *fakeUsage) Daily(
+	context.Context,
+	repositories.AIUsageDailyRequest,
+) ([]repositories.AIUsageDayTotals, error) {
+	return []repositories.AIUsageDayTotals{}, nil
+}
+
+func (f *fakeUsage) ProviderTaskTotals(
+	context.Context,
+	repositories.AIUsageProviderTaskRequest,
+) ([]repositories.AIUsageProviderTaskTotals, error) {
+	return []repositories.AIUsageProviderTaskTotals{}, nil
+}
+
 func (f *fakeUsage) SurfaceCost(
 	context.Context,
 	repositories.AIUsageSurfaceCostRequest,

@@ -26,7 +26,7 @@ read, check and export.
 working, how many proposals wait on a person, a provider that can't connect and any task with no
 provider, each linked to where to act on it. Below it are the week's figures (model calls with the
 days they failed, median response, tokens and spend), a notice for a provider that is failing,
-**Usage by feature**, the agents at work and every agent at a glance, and the **Organization-wide**
+**Tune-ups** drawn from the last 30 days of runs, **Usage by feature**, the agents at work and every agent at a glance, and the **Organization-wide**
 settings. With no provider connected, it walks through connecting one. Administrators use this page to set
 up providers and agents; reviewers use **Activity** to approve or reject what agents propose.
 
@@ -225,6 +225,20 @@ Keywords: kill switch, stop AI, shadow mode, earned autonomy
 3. In **Organization-wide**, select **Edit** to turn **Earned autonomy** on or off and choose the
    **Clean approvals** in a row before a tool moves up a tier on that agent. Before you save, it
    lists the tools that have already earned it; they move up when you save.
+
+### Apply a suggested tune-up
+Keywords: tune-ups, suggestions, recommendations, improve AI setup, reorder providers, idle agent, leave shadow, assign task
+1. Open [AI control](/admin/agent-control) on **Overview**. **Tune-ups** lists changes to how AI is
+   set up that the last 30 days of runs argue for, worked out each night: let a tool people keep
+   approving unchanged move up a tier (only while earned autonomy is off), put a provider ahead of
+   one that keeps failing when it catches the failures, take an agent out of shadow once its
+   recorded proposals match what people did, give a task nothing handles to a provider that can
+   take it, and turn off a chat agent nobody has asked anything in two weeks.
+2. Each row says what the runs showed and what the change gains. Select the action on the row
+   (**Raise it**, **Reorder**, **Go live**, **Assign** or **Turn off**) to make the change.
+3. Select the close button on the row to dismiss it (its label is **Dismiss for 30 days**); the same change is not suggested again for 30 days. Select **Undo**
+   in the notice to bring it back. Operational work, such as a proposal waiting on a person, stays
+   in Watchtower.
 
 ### See what agents can do without a person
 Keywords: AI safety, autonomy, what can the AI do on its own, auto execute, approval, tool policy, egress, prompt injection, outside text, sensitive tools, audit agents

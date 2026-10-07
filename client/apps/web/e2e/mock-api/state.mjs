@@ -1,3 +1,4 @@
+import { createAIState } from "./fixtures/aicontrol.mjs";
 import { buildShipments, CARRIERS, createDriverPool } from "./fixtures/board.mjs";
 
 export const SCENARIO_DEFAULTS = {
@@ -10,6 +11,10 @@ export const SCENARIO_DEFAULTS = {
   maps: process.env.MOCK_MAPS === "1",
   // rows in the generic list pages (hazardous materials), for checking a short and a long list
   listRows: Number(process.env.MOCK_LIST_ROWS ?? 3),
+  // AI control: configured (the prototype's three) | many | none
+  aiProviders: process.env.MOCK_AI_PROVIDERS ?? "configured",
+  // every agent paused in shadow
+  aiPaused: process.env.MOCK_AI_PAUSED === "1",
 };
 
 const STAGE_RANK = { Late: 1, NeedsCoverage: 2, Moving: 3, Scheduled: 4, Delivered: 5, Canceled: 6 };
@@ -58,6 +63,7 @@ export function createState(scenario) {
     scenario,
     anchor,
     now: () => anchor + Math.floor((Date.now() - startedAt) / 1000),
+    ai: createAIState(anchor, scenario),
     shipments,
     drivers: scenario.board === "quiet" ? pool.slice(0, 4) : scenario.board === "high" ? pool : pool.slice(0, 9),
     carriers: CARRIERS.map((carrier) => ({ ...carrier })),

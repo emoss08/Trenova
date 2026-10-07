@@ -115,3 +115,44 @@ func TestPromoteReadyBelowTheStreakDoesNothing(t *testing.T) {
 	assert.Empty(t, promoted)
 	assert.Empty(t, h.trust.marks)
 }
+
+func TestPromoteToolMovesOnlyTheToolNamed(t *testing.T) {
+	t.Parallel()
+
+	h := readyHarness(t, 12, agent.TierAutoExecute)
+
+	promoted, err := h.svc.PromoteTool(t.Context(), &services.PromoteToolRequest{
+		PromoteReadyRequest: *readyRequest(h, 10),
+		AgentDefinitionID:   h.definitions.definition.ID,
+		ToolName:            "assign_move",
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, promoted)
+	assert.Equal(t, agent.TierAutoExecute, promoted.To)
+	require.Len(t, h.trust.marks, 1)
+	assert.True(t, h.trust.marks[0].Promoted)
+}
+
+func TestPromoteToolRefusesAToolThatIsNotReady(t *testing.T) {
+	t.Parallel()
+
+	h := readyHarness(t, 12, agent.TierAutoExecute)
+
+	_, err := h.svc.PromoteTool(t.Context(), &services.PromoteToolRequest{
+		PromoteReadyRequest: *readyRequest(h, 10),
+		AgentDefinitionID:   h.definitions.definition.ID,
+		ToolName:            "release_hold",
+	})
+	require.Error(t, err)
+
+	short := readyHarness(t, 4, agent.TierAutoExecute)
+	_, err = short.svc.PromoteTool(t.Context(), &services.PromoteToolRequest{
+		PromoteReadyRequest: *readyRequest(short, 10),
+		AgentDefinitionID:   short.definitions.definition.ID,
+		ToolName:            "assign_move",
+	})
+	require.Error(t, err)
+	assert.Empty(t, h.trust.marks)
+	assert.Empty(t, short.trust.marks)
+}
