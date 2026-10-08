@@ -150,6 +150,7 @@ func (s *Service) Overview(
 			overview.OpenRegressions++
 		}
 	}
+	overview.WorstRegression = worstRegression(latest)
 	overview.AgentsScored = len(scores)
 	overview.QualityScore = meanPointer(scores)
 
@@ -173,6 +174,28 @@ func (s *Service) Overview(
 	overview.EvalUnpricedCalls = spend.UnpricedCalls
 
 	return overview, nil
+}
+
+func worstRegression(latest []*agentquality.SuiteRun) *agentquality.SuiteRun {
+	var worst *agentquality.SuiteRun
+	for _, run := range latest {
+		if run == nil || !run.Regression {
+			continue
+		}
+		if worst == nil || regressionDrop(run) > regressionDrop(worst) {
+			worst = run
+		}
+	}
+
+	return worst
+}
+
+func regressionDrop(run *agentquality.SuiteRun) float64 {
+	if run == nil || run.QualityScore == nil || run.BaselineScore == nil {
+		return 0
+	}
+
+	return *run.BaselineScore - *run.QualityScore
 }
 
 func qualityPoints(runs []*agentquality.SuiteRun) []*services.AgentQualityPoint {

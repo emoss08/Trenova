@@ -259,35 +259,41 @@ Keywords: AI safety, autonomy, what can the AI do on its own, auto execute, appr
 
 ### Check how well an agent is doing
 Keywords: AI quality, agent score, regression, satisfaction, thumbs down, golden set, evaluation cases, nightly sweep, eval budget, agent got worse
-1. Open [AI control](/admin/agent-control) and select **Quality** in the rail. Quality lists its
-   tables under it in the rail: **Agents**, **Suite runs**, **Worst-rated answers**,
-   **Golden set** and **Settings**.
-2. Read the figures at the top: **Satisfaction** (the share of rated answers that were thumbs
-   up), **Ratings**, **Quality score** (how the agents score against their golden sets),
-   **Regressions**, and **Eval spend this month** against the monthly budget.
-3. In **Agents**, each agent is listed with its satisfaction against the window before, a line of
-   its recent suite scores, and how its **Last run** went: **Completed**, **Skipped** (nothing
-   about the agent or its cases changed), **Budget stopped** or **Failed**. An agent whose score
-   fell shows **Regressed**. Select **Filter** to narrow by **Last run** or **Regressed**, and
-   **Sort** to order by **Satisfaction** or **Quality score**.
-4. Select an agent's row to open it. **Quality over time** shows its scores. To score it now
-   instead of waiting for the nightly sweep, select **Run suite now**. Select **Its suite runs**
-   or **Its worst-rated answers** to open those tables narrowed to the agent; **Show every agent**
-   widens them again.
-5. In **Suite runs**, each run shows its **Status**, **Quality score**, **Cases** and
-   **What changed** about the agent since the run before, such as its instructions, tools or
-   model. Select a run to read it, then **See the cases** to list what each case scored; select a
+1. Open [AI control](/admin/agent-control) and select **Quality** in the rail. The sentence at the
+   top says how the agents score against their golden sets, how many of the answers people rated
+   they liked, and which agent fell furthest after its last change. Select its name, or the
+   button beside the sentence, to open that agent.
+2. Read the figures: **Satisfaction** (the share of rated answers that were thumbs up),
+   **Ratings**, **Quality score**, **Regressions** still open, and **Eval spend this month**
+   against the monthly budget.
+3. Under **View**, choose **Agents**, **Suite runs**, **Worst rated**, **Golden set** or
+   **Document extraction**.
+4. In **Agents**, each agent is listed with its **Quality score** and a line of its recent runs,
+   the **Change** against its recent median, and how its **Last run** went: **Completed**,
+   **Skipped** (nothing about the agent or its cases changed), **Budget stopped** or **Failed**.
+   **Display** shows **Satisfaction** and **Ratings**. Select **Filter** to narrow by
+   **Last run** or **Regressed**, and **Sort** to order by **Quality score**.
+5. Select an agent to open it: its score and the change, **Satisfaction**, the
+   **Regression threshold**, the **Judge**, **Cases per night**, **What changed** and the answers
+   rated **Lowest rated**. Select **Run suite now** to score it without waiting for the night,
+   **Open agent** to edit it, or **All runs** to list its suite runs; **Show every agent** widens
+   them again.
+6. In **Suite runs**, each run shows its **Status**, **Cases asked** and **Quality score**. Select
+   a run to read its **Score**, **Change**, **Cost** and **What changed**, with a square for every
+   case: red ones scored below the bar. **See the cases** lists what each case scored; select a
    case to read the reply and the judge's note. **Back to suite runs** returns to the runs.
-6. **Worst-rated answers** lists the answers people rated down in the last 30 days, most disliked
-   first. Select one to read the question, the answer and **Why**. Select **Open the
-   conversation** to read one you were part of.
-7. Keep the cases the agents are scored against in **Golden set**: **Activate** a candidate
+7. **Worst rated** lists the answers people rated down in the last 30 days, most disliked first.
+   Select one to read **The question**, **The answer** and **What they said**. Select
+   **Add to golden set** to score the agent against it every night, **Write a memory** to tell
+   the agents what was wrong, or **Open the conversation** to read one you were part of.
+8. Keep the cases the agents are scored against in **Golden set**: **Activate** a candidate
    captured from a decided proposal, **Add case** to write one by hand, or **Quarantine** a case
    that is no longer fair.
-8. In **Settings**, turn **Run the nightly sweep** on or off, choose the **Hour it starts**, set
-   **Most cases per agent**, the **Nightly budget (USD)** and **Monthly budget (USD)**, the
-   **Regression threshold (points)**, and whether to **Have a judge read a sample**. Then select
-   **Save settings**.
+9. In **Agents**, select **Sweep settings** to change the **Nightly sweep**: when it should
+   **Start at**, the **Cases per agent**, and when to **Rerun an unchanged agent after**; turn the
+   **Judge model** on and choose its **Share of answers**; set the **Regression threshold** and
+   the **Fewest cases to compare**; and the **Budget** **Per night** and **Per month**. Select
+   **Save changes**. Changing these needs permission to update AI control and the golden set.
 
 ### Try a new document extraction model on real documents
 Keywords: shadow traffic, shadow model, candidate model, fine-tuned model, compare extraction models, A/B test extraction, new extraction provider, model rollout
@@ -485,10 +491,10 @@ longer holds.
 Opening the page needs read access to AI control. Each section in the rail appears only for
 people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions,
 agent memory); a section someone cannot open is left out. **Safety** appears for people who may
-read agents, and **Quality** for people who may read the evaluation suite. **Worst-rated answers**
-and satisfaction need read access to agent feedback, **Run suite now** needs create access to the
-evaluation suite, and changing **Settings** needs update access to both the evaluation suite and
-AI control, because the budgets are spend. The organization-wide switches need
+read agents, and **Quality** for people who may read the evaluation suite. **Worst rated**
+and satisfaction need read access to agent feedback, **Run suite now** and **Add to golden set**
+need create access to the evaluation suite, and changing **Sweep settings** needs update access to
+both the evaluation suite and AI control, because the budgets are spend. The organization-wide switches need
 update access to AI control, deciding proposals needs update access to agent proposals, and
 **Test** on a provider needs manage access to AI providers. Viewing **Extensions** needs read
 access to agent extensions, and turning one on, changing its settings or testing it needs update
@@ -518,7 +524,7 @@ needs update access to both agents and roles; someone without update access to r
 save the rest of an agent as long as they leave who can use it as it was. The same grants can be managed from a role's page
 on [Roles](/admin/roles), under **Agents**.
 
-Every night, at the hour chosen in **Settings** (in the organization's timezone unless another
+Every night, at the hour chosen in **Sweep settings** (in the organization's timezone unless another
 is chosen there), each agent with active cases is replayed against a sample of its golden set
 with every write simulated. The sample always includes the cases the agent failed most recently
 and is otherwise spread across where the cases came from; it is the same sample for the same run.

@@ -155,12 +155,9 @@ export function buildRailItems(
       children: [
         { view: "agents", label: t("Agents") },
         { view: "runs", label: t("Suite runs") },
-        ...(permissions.ratings
-          ? [{ view: "ratings" as const, label: t("Worst-rated answers") }]
-          : []),
+        ...(permissions.ratings ? [{ view: "ratings" as const, label: t("Worst rated") }] : []),
         { view: "golden", label: t("Golden set") },
         { view: "extraction", label: t("Document extraction") },
-        { view: "settings", label: t("Settings") },
       ],
     });
   }
@@ -250,9 +247,7 @@ export function tabCounts(
     extensions: counts.extensionsOn > 0 ? { text: t("{0} on", counts.extensionsOn) } : null,
     memory: counts.memoriesActive > 0 ? { text: String(counts.memoriesActive) } : null,
     retrieval:
-      counts.retrieval && !counts.retrieval.available
-        ? { text: t("words only"), tone: "w" }
-        : null,
+      counts.retrieval && !counts.retrieval.available ? { text: t("words only"), tone: "w" } : null,
     quality:
       counts.qualityRegressions > 0
         ? { text: t("{0} regressed", counts.qualityRegressions), tone: "d" }

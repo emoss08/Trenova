@@ -35,26 +35,27 @@ type AgentQualityOverviewRequest struct {
 }
 
 type AgentQualityOverview struct {
-	WindowDays          int      `json:"windowDays"`
-	Since               int64    `json:"since"`
-	RatingsVisible      bool     `json:"ratingsVisible"`
-	Satisfaction        *float64 `json:"satisfaction"`
-	Ratings             int      `json:"ratings"`
-	QualityScore        *float64 `json:"qualityScore"`
-	AgentsScored        int      `json:"agentsScored"`
-	SuiteRuns           int      `json:"suiteRuns"`
-	Regressions         int      `json:"regressions"`
-	OpenRegressions     int      `json:"openRegressions"`
-	EvalSpendMonthUSD   string   `json:"evalSpendMonthUsd"`
-	EvalUnpricedCalls   int      `json:"evalUnpricedCalls"`
-	MonthlyBudgetUSD    string   `json:"monthlyBudgetUsd"`
-	MonthStartedAt      int64    `json:"monthStartedAt"`
-	SweepEnabled        bool     `json:"sweepEnabled"`
-	NextSweepHourLocal  int      `json:"nextSweepHourLocal"`
-	NextSweepTimezone   string   `json:"nextSweepTimezone"`
-	AgentsWithCases     int      `json:"agentsWithCases"`
-	JudgeEnabled        bool     `json:"judgeEnabled"`
-	RegressionThreshold float64  `json:"regressionThreshold"`
+	WindowDays          int                    `json:"windowDays"`
+	Since               int64                  `json:"since"`
+	RatingsVisible      bool                   `json:"ratingsVisible"`
+	Satisfaction        *float64               `json:"satisfaction"`
+	Ratings             int                    `json:"ratings"`
+	QualityScore        *float64               `json:"qualityScore"`
+	AgentsScored        int                    `json:"agentsScored"`
+	SuiteRuns           int                    `json:"suiteRuns"`
+	Regressions         int                    `json:"regressions"`
+	OpenRegressions     int                    `json:"openRegressions"`
+	EvalSpendMonthUSD   string                 `json:"evalSpendMonthUsd"`
+	EvalUnpricedCalls   int                    `json:"evalUnpricedCalls"`
+	MonthlyBudgetUSD    string                 `json:"monthlyBudgetUsd"`
+	MonthStartedAt      int64                  `json:"monthStartedAt"`
+	SweepEnabled        bool                   `json:"sweepEnabled"`
+	NextSweepHourLocal  int                    `json:"nextSweepHourLocal"`
+	NextSweepTimezone   string                 `json:"nextSweepTimezone"`
+	AgentsWithCases     int                    `json:"agentsWithCases"`
+	JudgeEnabled        bool                   `json:"judgeEnabled"`
+	RegressionThreshold float64                `json:"regressionThreshold"`
+	WorstRegression     *agentquality.SuiteRun `json:"worstRegression"`
 }
 
 type AgentQualityRequest struct {

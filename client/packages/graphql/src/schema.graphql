@@ -4512,6 +4512,10 @@ type AgentQualityOverview {
   suiteRuns: Int!
   sweepEnabled: Boolean!
   windowDays: Int!
+  """
+  The open regression that fell furthest below its agent's recent median; null when none is open.
+  """
+  worstRegression: AgentSuiteRun
 }
 
 """One scored suite run on an agent's quality line."""

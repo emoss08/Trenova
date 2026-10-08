@@ -59,16 +59,9 @@ export const safetyAgentsParser = parseAsArrayOf(parseAsString)
 /**
  * Quality is one table at a time: the agents, their suite runs (and a run's
  * cases), the answers people liked least, the golden set, and the sweep's
- * settings.
+ * extraction.
  */
-export const qualityViews = [
-  "agents",
-  "runs",
-  "ratings",
-  "golden",
-  "extraction",
-  "settings",
-] as const;
+export const qualityViews = ["agents", "runs", "ratings", "golden", "extraction"] as const;
 export type QualityView = (typeof qualityViews)[number];
 
 export const QUALITY_VIEW_PARAM = "quality";

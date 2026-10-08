@@ -10,20 +10,19 @@ import {
 } from "@/lib/graphql/agent-quality";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
-import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
+import { Callout } from "../edit/fields";
+import { Ic } from "../kit/ic";
+import { Tile } from "../kit/marks";
+import { ReadSheet } from "../kit/read-sheet";
+import { KV, Pts } from "../kit/values";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps, RowAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
-import {
-  AlertCircleIcon,
-  AlertTriangleIcon,
-  ArrowLeftIcon,
-  ListChecksIcon,
-} from "@trenova/shared/components/icons";
+import { AlertCircleIcon, ArrowLeftIcon, ListChecksIcon } from "@trenova/shared/components/icons";
 import { useQueryState } from "nuqs";
 import { useCallback, useMemo } from "react";
 import {
@@ -41,7 +40,15 @@ import {
   getSuiteRunColumns,
   readJudge,
 } from "./quality-columns";
-import { QUALITY_STALE_MS, formatShare, formatUsd } from "./quality-model";
+import {
+  QUALITY_STALE_MS,
+  caseOutcome,
+  caseOutcomeLabel,
+  formatShare,
+  formatUsd,
+  pointsChange,
+  type CaseOutcome,
+} from "./quality-model";
 
 const RUN_TIME_FORMAT = {
   month: "short",
@@ -106,7 +113,12 @@ function SuiteRunsTable({ agentId }: { agentId: string | null }) {
       TablePanel={SuiteRunPanel}
       enableCreateAction={false}
       enableReadOnlyPanel
-      initialColumnVisibility={{ regression: false }}
+      initialColumnVisibility={{
+        regression: false,
+        change: false,
+        costUsd: false,
+        changeSummary: false,
+      }}
     />
   );
 
@@ -122,78 +134,133 @@ function SuiteRunsTable({ agentId }: { agentId: string | null }) {
   );
 }
 
-/** One suite run, read-only, with the way to what each of its cases scored. */
+/** One suite run, read-only: what it scored, against what, and a square for every case. */
 function SuiteRunPanel({ open, onOpenChange, row }: DataTablePanelProps<AgentSuiteRunRow>) {
   const t = useT();
   const [agentId] = useQueryState(QUALITY_AGENT_PARAM, qualityAgentParser);
   const openCases = useOpenCases(agentId);
+  const run = open ? row : null;
 
   return (
-    <DataTablePanelContainer
-      open={open}
-      onOpenChange={onOpenChange}
-      title={row?.agentName ?? t("Suite run")}
-      description={
-        row ? formatUnixInUserTimezone(row.finishedAt ?? row.startedAt, RUN_TIME_FORMAT) : undefined
-      }
-      size="lg"
-      footer={
-        row && row.status !== "Skipped" ? (
-          <Button size="sm" onClick={() => openCases(row.id)}>
-            <ListChecksIcon className="size-3.5" />
-            {t("See the cases")}
-          </Button>
-        ) : undefined
+    <ReadSheet
+      open={run !== null}
+      onClose={() => onOpenChange(false)}
+      label={run ? t("Suite run · {0}", run.agentName) : t("Suite run")}
+      head={
+        run && (
+          <>
+            <Tile agent={{ id: run.agentDefinitionId, name: run.agentName }} s={36} />
+            <div className="sh-t">
+              <b>{t("Suite run · {0}", run.agentName)}</b>
+              <span>
+                {formatUnixInUserTimezone(run.finishedAt ?? run.startedAt, RUN_TIME_FORMAT)}
+              </span>
+            </div>
+            <SuiteRunStatusBadge status={run.status} />
+          </>
+        )
       }
     >
-      {row ? <SuiteRunDetails run={row} /> : null}
-    </DataTablePanelContainer>
+      {run && (
+        <>
+          <SuiteRunDetails run={run} />
+          {run.status !== "Skipped" && (
+            <div className="ad-bar sh-f">
+              <span className="sp" />
+              <button type="button" className="xa" onClick={() => openCases(run.id)}>
+                <Ic n="table" s={13} />
+                {t("See the cases")}
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </ReadSheet>
   );
 }
 
 function SuiteRunDetails({ run }: { run: AgentSuiteRunRow }) {
   const t = useT();
+  const asked = run.casesPassed + run.casesFailed;
 
   return (
-    <div className="flex flex-col gap-3">
-      {run.regression ? (
-        <Alert variant="warning" size="sm">
-          <AlertTriangleIcon />
-          <AlertDescription>
+    <>
+      {run.regression && (
+        <div className="sh-p">
+          <Callout tone="w">
             {run.comments || t("The agent's score fell after it changed.")}
-          </AlertDescription>
-        </Alert>
-      ) : null}
-      <DescriptionList layout="stacked" columns={2}>
-        <DescriptionItem label={t("Status")}>
-          <SuiteRunStatusBadge status={run.status} />
-        </DescriptionItem>
-        <DescriptionItem label={t("Quality score")}>
-          {formatShare(run.qualityScore)}
-        </DescriptionItem>
-        <DescriptionItem label={t("Recent median")}>
-          {formatShare(run.baselineScore)}
-        </DescriptionItem>
-        <DescriptionItem label={t("Cost")}>{formatUsd(run.costUsd)}</DescriptionItem>
-        <DescriptionItem label={t("Cases")}>
-          {t(
-            "{0} passed, {1} failed, {2} skipped",
-            run.casesPassed,
-            run.casesFailed,
-            run.casesSkipped,
-          )}
-        </DescriptionItem>
-        <DescriptionItem label={t("Hard failures")}>{run.hardFailures}</DescriptionItem>
-        <DescriptionItem label={t("What changed")} span="full">
-          {run.changeSummary}
-        </DescriptionItem>
-        {run.comments && !run.regression ? (
-          <DescriptionItem label={t("Comments")} span="full">
-            {run.comments}
-          </DescriptionItem>
-        ) : null}
-      </DescriptionList>
-    </div>
+          </Callout>
+        </div>
+      )}
+      <KV
+        items={[
+          [t("Score"), formatShare(run.qualityScore)],
+          [t("Change"), <Pts key="change" value={pointsChange(run)} />],
+          [t("Cases asked"), t("{0} of {1}", asked, run.casesTotal)],
+          [t("Cost"), formatUsd(run.costUsd)],
+          [t("Recent median"), formatShare(run.baselineScore)],
+          [t("Hard failures"), run.hardFailures],
+          [t("What changed"), run.changeSummary],
+          run.comments && !run.regression ? [t("Comments"), run.comments] : null,
+        ]}
+      />
+      <div className="sh-p">
+        <h4 className="sh-k">{t("Cases")}</h4>
+        {run.status === "Skipped" ? (
+          <p className="ad-h">
+            {t("Nothing about the agent or its cases changed since its last run.")}
+          </p>
+        ) : (
+          <CaseSquares run={run} />
+        )}
+      </div>
+    </>
+  );
+}
+
+const SQUARE_CLASS: Record<CaseOutcome, string | undefined> = {
+  passed: undefined,
+  failed: "f",
+  unasked: "z",
+};
+
+function CaseSquares({ run }: { run: AgentSuiteRunRow }) {
+  const t = useT();
+  const cases = useQuery({
+    ...queries.agentQuality.suiteRunCases(run.id),
+    staleTime: QUALITY_STALE_MS,
+  });
+
+  if (cases.isError) {
+    return <p className="ad-h">{t("This run's cases could not be loaded.")}</p>;
+  }
+  if (!cases.data) {
+    return <p className="ad-h">{t("Loading…")}</p>;
+  }
+
+  return (
+    <>
+      <div className="cases" role="list" aria-label={t("Cases")}>
+        {cases.data.map((evaluation, index) => {
+          const outcome = caseOutcome(evaluation);
+          const ordinal = evaluation.suiteOrdinal ?? index + 1;
+          return (
+            <i
+              key={evaluation.id}
+              role="listitem"
+              className={SQUARE_CLASS[outcome]}
+              title={t("Case {0} · {1}", ordinal, caseOutcomeLabel(t, outcome))}
+              aria-label={t("Case {0} · {1}", ordinal, caseOutcomeLabel(t, outcome))}
+            />
+          );
+        })}
+      </div>
+      <p className="ad-h">
+        {run.status === "BudgetStopped"
+          ? t("The evaluation budget ran out before every case was asked.")
+          : t("Each square is a golden case; red ones scored below the bar.")}
+      </p>
+    </>
   );
 }
 

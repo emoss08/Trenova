@@ -2,7 +2,7 @@ import type { AIRetrievalStatus } from "@/lib/graphql/ai-retrieval";
 import { formatNumber } from "@trenova/shared/i18n/format";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
+import { Hero, Ref } from "../kit/hero";
 import { Ic } from "../kit/ic";
 import { retrievalSentence } from "./retrieval-model";
 
@@ -33,106 +33,86 @@ export function RetrievalHero({
   const strong = (children: React.ReactNode) => <b>{children}</b>;
   const mono = (children: React.ReactNode) => <b className="mono">{children}</b>;
 
-  return (
-    <section className="hero rh">
-      <div className="hero-s">
-        <span className="who">
-          <span className={cn("dm", sentence.kind === "indexing" && "spin")} />
-          <b>{t("Nova")}</b>
-          <span>{t("Retrieval")}</span>
-        </span>
-        <p className="say" key={sentence.kind}>
-          {sentence.kind === "unrouted" &&
-            rt(
-              "Agents search by <b>keyword only</b>. Nothing handles the Embedding task, so <b>{0, plural, one {# item is} other {# items are}}</b> waiting to be searchable by meaning.",
-              { b: strong },
-              sentence.waiting,
-            )}
-          {sentence.kind === "paused" &&
-            (sentence.budget
-              ? rt(
-                  "Indexing is <w>paused</w>: this month's budget is spent. Agents search by keyword until it resumes.",
-                  { w: (children) => <b className="t-w">{children}</b> },
-                )
-              : rt("Indexing is <w>paused</w>. Agents search by keyword until it resumes.", {
-                  w: (children) => <b className="t-w">{children}</b>,
-                }))}
-          {sentence.kind === "indexing" &&
-            rt(
-              "Indexing under <m>{0}</m>. <b>{1}</b> to go — searches use keywords for anything not done yet.",
-              { m: mono, b: strong },
-              sentence.model,
-              formatNumber(sentence.waiting),
-            )}
-          {sentence.kind === "done" &&
-            (sentence.failed > 0
-              ? rt(
-                  "Everything is searchable by meaning under <m>{0}</m>, except <f>{1, plural, one {# item that failed} other {# items that failed}}</f>.",
-                  {
-                    m: mono,
-                    f: (children) => (
-                      <span
-                        role="link"
-                        tabIndex={0}
-                        className="ref d"
-                        onClick={onShowFailed}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            onShowFailed();
-                          }
-                        }}
-                      >
-                        {children}
-                      </span>
-                    ),
-                  },
-                  sentence.model,
-                  sentence.failed,
-                )
-              : rt(
-                  "Everything is searchable by meaning under <m>{0}</m>.",
-                  { m: mono },
-                  sentence.model,
-                ))}
-        </p>
-      </div>
-      <div className="hc">
-        {sentence.kind === "unrouted" ? (
-          <>
-            <button type="button" className="btn ink lg" onClick={onRoute}>
-              {t("Route Embedding")}
+  const control =
+    sentence.kind === "unrouted" ? (
+      <>
+        <button type="button" className="btn ink lg" onClick={onRoute}>
+          {t("Route Embedding")}
+        </button>
+        <span>{t("Pick a provider on Providers")}</span>
+      </>
+    ) : (
+      <>
+        {canUpdate &&
+          (status.settings.paused ? (
+            <button
+              type="button"
+              className="btn ink lg"
+              disabled={busy}
+              onClick={() => onPause(false)}
+            >
+              <Ic n="play" s={12} />
+              {t("Resume indexing")}
             </button>
-            <span>{t("Pick a provider on Providers")}</span>
-          </>
-        ) : (
-          <>
-            {canUpdate &&
-              (status.settings.paused ? (
-                <button
-                  type="button"
-                  className="btn ink lg"
-                  disabled={busy}
-                  onClick={() => onPause(false)}
-                >
-                  <Ic n="play" s={12} />
-                  {t("Resume indexing")}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="btn lg"
-                  disabled={busy}
-                  onClick={() => onPause(true)}
-                >
-                  <Ic n="pause" s={13} w={2.2} />
-                  {t("Pause indexing")}
-                </button>
-              ))}
-            {routedTo && <span>{t("Routed to {0}", routedTo)}</span>}
-          </>
+          ) : (
+            <button type="button" className="btn lg" disabled={busy} onClick={() => onPause(true)}>
+              <Ic n="pause" s={13} w={2.2} />
+              {t("Pause indexing")}
+            </button>
+          ))}
+        {routedTo && <span>{t("Routed to {0}", routedTo)}</span>}
+      </>
+    );
+
+  return (
+    <Hero
+      context={t("Retrieval")}
+      working={sentence.kind === "indexing"}
+      sentenceKey={sentence.kind}
+      control={control}
+    >
+      {sentence.kind === "unrouted" &&
+        rt(
+          "Agents search by <b>keyword only</b>. Nothing handles the Embedding task, so <b>{0, plural, one {# item is} other {# items are}}</b> waiting to be searchable by meaning.",
+          { b: strong },
+          sentence.waiting,
         )}
-      </div>
-    </section>
+      {sentence.kind === "paused" &&
+        (sentence.budget
+          ? rt(
+              "Indexing is <w>paused</w>: this month's budget is spent. Agents search by keyword until it resumes.",
+              { w: (children) => <b className="t-w">{children}</b> },
+            )
+          : rt("Indexing is <w>paused</w>. Agents search by keyword until it resumes.", {
+              w: (children) => <b className="t-w">{children}</b>,
+            }))}
+      {sentence.kind === "indexing" &&
+        rt(
+          "Indexing under <m>{0}</m>. <b>{1}</b> to go — searches use keywords for anything not done yet.",
+          { m: mono, b: strong },
+          sentence.model,
+          formatNumber(sentence.waiting),
+        )}
+      {sentence.kind === "done" &&
+        (sentence.failed > 0
+          ? rt(
+              "Everything is searchable by meaning under <m>{0}</m>, except <f>{1, plural, one {# item that failed} other {# items that failed}}</f>.",
+              {
+                m: mono,
+                f: (children) => (
+                  <Ref tone="d" onOpen={onShowFailed}>
+                    {children}
+                  </Ref>
+                ),
+              },
+              sentence.model,
+              sentence.failed,
+            )
+          : rt(
+              "Everything is searchable by meaning under <m>{0}</m>.",
+              { m: mono },
+              sentence.model,
+            ))}
+    </Hero>
   );
 }

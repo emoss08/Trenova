@@ -41,9 +41,9 @@ export type Fig = {
 };
 
 /** A row of figures separated by rules. */
-export function Figs({ items }: { items: Fig[] }) {
+export function Figs({ items, label }: { items: Fig[]; label?: string }) {
   return (
-    <section className="figs" style={{ "--n": items.length } as CSSProperties}>
+    <section className="figs" aria-label={label} style={{ "--n": items.length } as CSSProperties}>
       {items.map((item) => (
         <div key={item.label} className="fg">
           <span className="lbl">{item.label}</span>

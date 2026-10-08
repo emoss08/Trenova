@@ -1631,6 +1631,24 @@
       "routes/shipment"
     ]
   },
+  "<a>{0}</a> dropped {1, plural, one {# point} other {# points}} after its last change.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "<a>{0}</a> regressed after its last change.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "<actor>Offer to {0}</actor> expired on <target/>": {
     "sites": 1,
     "scope": [
@@ -4279,6 +4297,15 @@
       "routes/dash-control"
     ]
   },
+  "A drop this large below the recent median flags the agent and tells its owners.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "A drug or alcohol test is awaiting a result": {
     "sites": 1,
     "scope": [
@@ -5435,15 +5462,6 @@
     ],
     "areas": [
       "domain/airetrieval"
-    ]
-  },
-  "A model reads some answers against their rubric. It never overrides a hard check, and what it costs counts toward the budget.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "A move must have at least two stops": {
@@ -7176,6 +7194,15 @@
       "domain/report"
     ]
   },
+  "A run that scored fewer cases is not compared with the median.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "A run that takes longer is stopped": {
     "sites": 1,
     "scope": [
@@ -7358,6 +7385,15 @@
     ]
   },
   "A search waited too long for the provider and fell back to keywords. Check the provider's health on the Providers tab.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "A second model grades a sample of answers against their rubric. It never overrides a hard check, and what it costs counts toward the budget.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -8004,7 +8040,7 @@
       "service/agentmemoryservice"
     ]
   },
-  "A suite can still be run by hand from an agent's page.": {
+  "A suite can still be run by hand from an agent's sheet.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -12252,15 +12288,6 @@
       "routes/worker"
     ]
   },
-  "Active cases": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Active communication profile": {
     "sites": 1,
     "scope": [
@@ -12805,6 +12832,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Add a golden case first": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Add a jurisdiction rule, visible to every organization": {
@@ -14575,6 +14611,15 @@
       "apps/web/components"
     ]
   },
+  "Add to golden set": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Add to settlement": {
     "sites": 1,
     "scope": [
@@ -14876,6 +14921,15 @@
     ]
   },
   "Added to the evaluation set as an active case": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Added to {0}'s golden set": {
     "sites": 1,
     "scope": [
       "ts"
@@ -16504,15 +16558,6 @@
       "routes/agent-control"
     ]
   },
-  "Agent quality figures": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Agent quality regressed": {
     "sites": 1,
     "scope": [
@@ -16798,6 +16843,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Agents score <b>{0}</b> against their golden sets, and people liked <b>{1}</b> of the answers they rated.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Agents score <b>{0}</b> against their golden sets.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Agents search by <b>keyword only</b>. Nothing handles the Embedding task, so <b>{0, plural, one {# item is} other {# items are}}</b> waiting to be searchable by meaning.": {
@@ -17267,7 +17330,7 @@
     ]
   },
   "All": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "ts"
     ],
@@ -17779,6 +17842,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "All runs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "All scopes": {
@@ -18576,6 +18648,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Already in {0}'s golden set": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Already kept": {
@@ -19636,6 +19717,15 @@
     ]
   },
   "An agent that no longer exists": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "An agent whose instructions, tools, model and cases have not changed is skipped until its last run is this old.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -21276,6 +21366,15 @@
     ],
     "areas": [
       "service/aifeedbackservice"
+    ]
+  },
+  "Answer not kept": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Answer one message to the shipment import assistant, streaming the reply": {
@@ -31311,6 +31410,15 @@
       "routes/random-testing"
     ]
   },
+  "Below the bar": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Below the pass mark": {
     "sites": 2,
     "scope": [
@@ -34327,6 +34435,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Budget": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Budget and model": {
@@ -39092,6 +39209,15 @@
       "routes/osha"
     ]
   },
+  "Case {0} · {1}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Case {0}-{1} · not recordable.": {
     "sites": 1,
     "scope": [
@@ -39130,6 +39256,15 @@
       "routes/agent-control"
     ]
   },
+  "Cases asked": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Cases by log column": {
     "sites": 1,
     "scope": [
@@ -39140,6 +39275,24 @@
     ]
   },
   "Cases failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Cases per agent": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Cases per night": {
     "sites": 1,
     "scope": [
       "ts"
@@ -39739,7 +39892,7 @@
     ]
   },
   "Change": {
-    "sites": 6,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -40272,15 +40425,6 @@
       "routes/rate-agreement"
     ]
   },
-  "Changes apply from the next sweep.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Changes at {0} will be picked up automatically.": {
     "sites": 1,
     "scope": [
@@ -40555,7 +40699,7 @@
       "routes/recurring-shipment"
     ]
   },
-  "Changing these needs the right to update AI Control and the golden set.": {
+  "Changing these needs the right to update AI control and the golden set.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -46488,13 +46632,12 @@
     ]
   },
   "Comment": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/agent-control",
       "routes/worker"
     ]
   },
@@ -52400,7 +52543,7 @@
     ]
   },
   "Cost": {
-    "sites": 20,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -59854,15 +59997,6 @@
       "packages/shared/lib",
       "routes/osha",
       "routes/worker"
-    ]
-  },
-  "Days before an unchanged agent runs again": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Days before expiration to flag as expiring soon": {
@@ -74070,6 +74204,15 @@
       "routes/billing-queue"
     ]
   },
+  "Each square is a golden case; red ones scored below the bar.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Each stack is split into documents. Check where each one goes, then file them together.": {
     "sites": 1,
     "scope": [
@@ -85560,7 +85703,7 @@
     ]
   },
   "Failed": {
-    "sites": 55,
+    "sites": 54,
     "scope": [
       "go",
       "ts"
@@ -87674,6 +87817,15 @@
       "routes/invoice"
     ]
   },
+  "Failed · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Failed — retake needed": {
     "sites": 1,
     "scope": [
@@ -88256,8 +88408,8 @@
       "routes/agent-control"
     ]
   },
-  "Fewest cases to compare scores": {
-    "sites": 1,
+  "Fewest cases to compare": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -95638,6 +95790,15 @@
       "routes/agent-control"
     ]
   },
+  "Golden case": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Golden set": {
     "sites": 1,
     "scope": [
@@ -96995,15 +97156,6 @@
       "apps/web/types"
     ]
   },
-  "Have a judge read a sample": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Hawaii (HI)": {
     "sites": 1,
     "scope": [
@@ -97962,7 +98114,7 @@
     ]
   },
   "Hidden": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -99075,15 +99227,6 @@
       "domain/shipment"
     ]
   },
-  "Hour it starts": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Hour must be between 0 and 23": {
     "sites": 1,
     "scope": [
@@ -100036,15 +100179,6 @@
     ],
     "areas": [
       "routes/detention-policy"
-    ]
-  },
-  "How people rated its answers and how it scores against its golden set.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "How raw minutes collapse onto the billing increment. Rounding errors are a leading cause of rejected detention invoices.": {
@@ -108321,7 +108455,7 @@
     ]
   },
   "Its suite runs": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -108357,7 +108491,7 @@
     ]
   },
   "Its worst-rated answers": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -108998,7 +109132,16 @@
     ]
   },
   "Judge": {
-    "sites": 2,
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Judge model": {
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -116696,12 +116839,13 @@
     ]
   },
   "Loading…": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/agent-control",
       "routes/desk",
       "routes/shipment"
     ]
@@ -117590,6 +117734,15 @@
       "apps/web/components"
     ]
   },
+  "Look at {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Look back over a conversation once it goes quiet and keep what the agent learned": {
     "sites": 1,
     "scope": [
@@ -117990,6 +118143,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "Lowest rated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Lumper": {
@@ -125187,15 +125349,6 @@
       "routes/agent-control"
     ]
   },
-  "Monthly budget (USD)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Monthly cap": {
     "sites": 1,
     "scope": [
@@ -125475,15 +125628,6 @@
     ],
     "areas": [
       "service/shipmentservice"
-    ]
-  },
-  "Most cases per agent": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Most freedom any agent gets": {
@@ -129880,7 +130024,16 @@
       "routes/worker"
     ]
   },
-  "Nightly budget (USD)": {
+  "Nightly sweep": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Nightly sweep · {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -130490,6 +130643,24 @@
     ]
   },
   "No agent exceptions yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "No agent has a golden set yet, so nothing is scored.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "No agent has been scored against its golden set yet.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -134468,6 +134639,15 @@
       "routes/agent-control"
     ]
   },
+  "No ratings yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No raw payload is retained for this snapshot": {
     "sites": 1,
     "scope": [
@@ -136974,7 +137154,7 @@
     ]
   },
   "Not asked": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -138275,6 +138455,15 @@
       "routes/agent-control"
     ]
   },
+  "Nothing about the agent or its cases changed since its last run.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Nothing announced.": {
     "sites": 1,
     "scope": [
@@ -139253,6 +139442,15 @@
       "apps/web/components"
     ]
   },
+  "Nothing rated down.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Nothing readable came attached. The desk can build the load from the text.": {
     "sites": 1,
     "scope": [
@@ -140141,7 +140339,7 @@
     ]
   },
   "Nova": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -140960,7 +141158,7 @@
     ]
   },
   "Off": {
-    "sites": 26,
+    "sites": 27,
     "scope": [
       "ts"
     ],
@@ -145098,6 +145296,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Open agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Open agents with sensitive tools": {
@@ -152552,7 +152759,7 @@
     ]
   },
   "Passed": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -154997,6 +155204,15 @@
       "routes/org-structure"
     ]
   },
+  "People liked <b>{0}</b> of the answers they rated.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "People on the plan": {
     "sites": 1,
     "scope": [
@@ -155234,6 +155450,24 @@
     ]
   },
   "Per million tokens": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Per month": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Per night": {
     "sites": 2,
     "scope": [
       "ts"
@@ -158695,15 +158929,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Points below the median of the recent runs.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Points cannot be negative": {
@@ -164885,16 +165110,7 @@
     ]
   },
   "Quality": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "Quality over time": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -164903,7 +165119,7 @@
     ]
   },
   "Quality score": {
-    "sites": 7,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -164911,16 +165127,7 @@
       "routes/agent-control"
     ]
   },
-  "Quality settings": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "Quality settings saved": {
+  "Quality score over the recent runs": {
     "sites": 1,
     "scope": [
       "ts"
@@ -165145,7 +165352,7 @@
     ]
   },
   "Question": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -167660,7 +167867,7 @@
     ]
   },
   "Ratings": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -173670,8 +173877,8 @@
       "routes/agent-control"
     ]
   },
-  "Regression threshold (points)": {
-    "sites": 1,
+  "Regression threshold": {
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -176577,6 +176784,15 @@
       "routes/agent-control"
     ]
   },
+  "Replays each agent's cases and scores the answers.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Replays of a proposed contract against freight that already moved, and what it would have charged": {
     "sites": 1,
     "scope": [
@@ -178567,6 +178783,15 @@
     ],
     "areas": [
       "service/invoiceadjustmentcontrolservice"
+    ]
+  },
+  "Rerun an unchanged agent after": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Rerun an unchanged agent at least every 90 days": {
@@ -184738,15 +184963,6 @@
       "apps/web/components"
     ]
   },
-  "Run the nightly sweep": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Run the plan": {
     "sites": 1,
     "scope": [
@@ -184945,6 +185161,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Running {0}'s suite": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Running — this is not finished yet.": {
@@ -186816,12 +187041,11 @@
     ]
   },
   "Save settings": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control",
       "routes/organization"
     ]
   },
@@ -188924,7 +189148,7 @@
     ]
   },
   "Score": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -196235,7 +196459,7 @@
     ]
   },
   "Settings": {
-    "sites": 13,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -197240,6 +197464,15 @@
       "routes/invoice"
     ]
   },
+  "Share of answers": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Share of available drivers currently holding work; average empty miles across covered moves with a live position.": {
     "sites": 1,
     "scope": [
@@ -197256,15 +197489,6 @@
     ],
     "areas": [
       "routes/detention-intelligence"
-    ]
-  },
-  "Share of cases the judge reads": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Share of documents": {
@@ -204173,6 +204397,15 @@
       "routes/admin"
     ]
   },
+  "Start at": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Start backfill": {
     "sites": 1,
     "scope": [
@@ -205262,7 +205495,7 @@
     ]
   },
   "Status": {
-    "sites": 324,
+    "sites": 323,
     "scope": [
       "go",
       "ts"
@@ -206559,6 +206792,15 @@
       "routes/shipment"
     ]
   },
+  "Stops a sweep when either is reached.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Stops appear here the moment an arrival is recorded, with the free-time clock and the notice deadline already running.": {
     "sites": 1,
     "scope": [
@@ -207782,8 +208024,8 @@
       "routes/agent-control"
     ]
   },
-  "Suite run started": {
-    "sites": 1,
+  "Suite run · {0}": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -208420,6 +208662,24 @@
     ],
     "areas": [
       "domain/agentquality"
+    ]
+  },
+  "Sweep settings": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Sweep settings saved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Switch artifact": {
@@ -213228,6 +213488,15 @@
       "domain/worker"
     ]
   },
+  "The answer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The answer cannot pre-date the query": {
     "sites": 1,
     "scope": [
@@ -216722,6 +216991,15 @@
       "routes/agent-control"
     ]
   },
+  "The evaluation budget ran out before every case was asked.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The event was already acknowledged": {
     "sites": 1,
     "scope": [
@@ -219012,6 +219290,15 @@
       "domain/worker"
     ]
   },
+  "The nightly replay of each agent's golden set": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The nightly run computes what it would raise and writes nothing; use the Late Charges page to raise memos by hand.": {
     "sites": 1,
     "scope": [
@@ -219046,6 +219333,15 @@
     ],
     "areas": [
       "routes/billing-control"
+    ]
+  },
+  "The nightly sweep is off": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "The note that goes with it, when there is one.": {
@@ -220194,15 +220490,6 @@
       "routes/edi"
     ]
   },
-  "The quality settings could not be loaded.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "The quantity threshold that triggers reporting requirements.": {
     "sites": 1,
     "scope": [
@@ -220249,7 +220536,7 @@
     ]
   },
   "The question": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -222595,15 +222882,6 @@
     ],
     "areas": [
       "routes/detention-policy"
-    ]
-  },
-  "The sweep runs once a night at this hour and skips an agent whose instructions, tools, model and cases have not changed since its last run, until that run is older than the rerun period. Evaluation stops for the night when either budget is spent.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "The sync ledger could not be loaded.": {
@@ -227979,6 +228257,15 @@
       "service/agentevaluationservice"
     ]
   },
+  "This run's cases could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "This scenario could not be priced": {
     "sites": 1,
     "scope": [
@@ -229880,7 +230167,7 @@
     ]
   },
   "Timezone": {
-    "sites": 12,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -231169,7 +231456,7 @@
     ]
   },
   "Tools": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -231189,6 +231476,15 @@
     ]
   },
   "Tools held": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Tools it used": {
     "sites": 1,
     "scope": [
       "ts"
@@ -247310,6 +247606,15 @@
       "routes/org-structure"
     ]
   },
+  "What they said": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "What this agent can do": {
     "sites": 3,
     "scope": [
@@ -250031,7 +250336,7 @@
     ]
   },
   "Why": {
-    "sites": 12,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -251906,7 +252211,7 @@
       "routes/detention-intelligence"
     ]
   },
-  "Worst-rated answers": {
+  "Worst rated": {
     "sites": 1,
     "scope": [
       "ts"
@@ -252057,6 +252362,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Write a memory": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Write a summary the worker will read": {
@@ -258512,15 +258826,6 @@
       "routes/agent-control"
     ]
   },
-  "in its golden set": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "in the books": {
     "sites": 1,
     "scope": [
@@ -259121,15 +259426,6 @@
       "routes/agent-control"
     ]
   },
-  "no earlier runs to compare": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "no limit matched": {
     "sites": 1,
     "scope": [
@@ -259194,6 +259490,15 @@
     ]
   },
   "no vector size": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "none open": {
     "sites": 1,
     "scope": [
       "ts"
@@ -259913,15 +260218,6 @@
     ]
   },
   "reads with": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "recent median {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -260972,6 +261268,15 @@
       "routes/desk"
     ]
   },
+  "up to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "usable by everyone": {
     "sites": 1,
     "scope": [
@@ -261977,13 +262282,14 @@
     ]
   },
   "{0, plural, one {# day} other {# days}}": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "packages/shared/lib",
+      "routes/agent-control",
       "routes/desk",
       "routes/jurisdiction-rule",
       "routes/training-course",
@@ -262436,6 +262742,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0, plural, one {# golden case} other {# golden cases}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0, plural, one {# hold released} other {# holds released}}": {
@@ -263321,7 +263636,7 @@
     ]
   },
   "{0, plural, one {# rating} other {# ratings}}": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -263595,15 +263910,6 @@
     ],
     "areas": [
       "routes/onboarding"
-    ]
-  },
-  "{0, plural, one {# scored run} other {# scored runs}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "{0, plural, one {# selected event was} other {# selected events were}} not open and left unchanged.": {
@@ -263933,6 +264239,24 @@
     ],
     "areas": [
       "template/notification.dash.obligations_digest"
+    ]
+  },
+  "{0, plural, one {# thumbs down} other {# thumbs down}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {# thumbs down} other {# thumbs down}}, {1, plural, one {# up} other {# up}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0, plural, one {# tile} other {# tiles}}": {
@@ -264834,6 +265158,15 @@
     ],
     "areas": [
       "routes/ifta-tax-rate"
+    ]
+  },
+  "{0, plural, one {Quality score, last # run} other {Quality score, last # runs}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0, plural, one {Ran # lookup} other {Ran # lookups}}": {
@@ -267202,15 +267535,6 @@
     ],
     "areas": [
       "routes/carrier-sourcing"
-    ]
-  },
-  "{0} down, {1} up · {2}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "{0} dpi": {
@@ -270194,6 +270518,15 @@
       "routes/time-attendance"
     ]
   },
+  "{0} of answers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} of charges on shipment {1}. A payer who gains a share gets a queue item; a payer left with nothing has theirs canceled.": {
     "sites": 1,
     "scope": [
@@ -270285,7 +270618,7 @@
     ]
   },
   "{0} of {1}": {
-    "sites": 20,
+    "sites": 22,
     "scope": [
       "ts"
     ],
@@ -270928,7 +271261,7 @@
     ]
   },
   "{0} passed, {1} failed, {2} skipped": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -271140,7 +271473,7 @@
     ]
   },
   "{0} pts": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -273157,6 +273490,24 @@
       "apps/web/components"
     ]
   },
+  "{0} · last run {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0} · never run": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} · next {1}": {
     "sites": 2,
     "scope": [
@@ -274377,6 +274728,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "{0}{1} pts": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0}{1} · {2} gal": {
