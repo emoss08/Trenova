@@ -1,4 +1,3 @@
-import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { CopyIconButton } from "@/components/copy-icon-button";
 import { SectionPanel } from "@/components/section-panel";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
@@ -20,6 +19,8 @@ import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
 import type { ReactNode } from "react";
+import { Ic } from "../kit/ic";
+import { ReadSheet } from "../kit/read-sheet";
 import { HeldByChips } from "../safety/safety-badges";
 import { TraceLink } from "../trace-link";
 import { AuditOutcomeBadge } from "./audit-badges";
@@ -28,6 +29,7 @@ import {
   auditEventRecordPath,
   auditKindLabel,
   auditTierLabel,
+  isSealed,
   tierSourceLabel,
 } from "./audit-model";
 
@@ -42,44 +44,70 @@ export function AuditEventPanel({ open, onOpenChange, row }: DataTablePanelProps
   const [{ panelEntityId }] = useQueryStates(panelSearchParamsParser);
   const id = row?.id ?? panelEntityId ?? "";
   const detail = useQuery({ ...queries.aiAudit.event(id), enabled: open && id !== "" });
+  const chain = useQuery({ ...queries.aiAudit.chainStatus(), enabled: open });
   const event = detail.data ?? null;
+  const kind = event?.kind ?? row?.kind;
+  const title = kind ? auditKindLabel(t, kind) : t("Event");
+  const sealed = event ? isSealed(event.seq, chain.data) : null;
 
   return (
-    <DataTablePanelContainer
+    <ReadSheet
       open={open}
-      onOpenChange={onOpenChange}
-      title={event ? auditKindLabel(t, event.kind) : row ? auditKindLabel(t, row.kind) : t("Event")}
-      description={
-        event
-          ? t("#{0} · {1}", event.seq.toLocaleString(), formatUnixDateTimeMedium(event.occurredAt))
-          : undefined
+      onClose={() => onOpenChange(false)}
+      label={title}
+      head={
+        <>
+          <span className="src-i">
+            <Ic n="receipt" s={15} />
+          </span>
+          <div className="sh-t">
+            <b>{title}</b>
+            {event && (
+              <span className="mono">
+                {t(
+                  "#{0} · {1}",
+                  event.seq.toLocaleString(),
+                  formatUnixDateTimeMedium(event.occurredAt),
+                )}
+              </span>
+            )}
+          </div>
+          {sealed === true && (
+            <span className="seal">
+              <Ic n="lock" s={11} />
+              {t("Sealed")}
+            </span>
+          )}
+          {sealed === false && <span className="seal p">{t("Next check")}</span>}
+        </>
       }
-      size="lg"
     >
-      {detail.isError ? (
-        <Alert variant="destructive" size="sm">
-          <AlertCircleIcon />
-          <AlertDescription>
-            {t("This event could not be loaded. Try again shortly.")}
-          </AlertDescription>
-        </Alert>
-      ) : detail.isSuccess && event === null ? (
-        <Alert size="sm">
-          <AlertCircleIcon />
-          <AlertDescription>
-            {t("This event is not on your organization's trail, or retention has removed it.")}
-          </AlertDescription>
-        </Alert>
-      ) : event ? (
-        <AuditEventDetailSections event={event} />
-      ) : (
-        <div className="flex flex-col gap-3" aria-busy>
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-          <Skeleton className="h-40" />
-        </div>
-      )}
-    </DataTablePanelContainer>
+      <div className="sh-p">
+        {detail.isError ? (
+          <Alert variant="destructive" size="sm">
+            <AlertCircleIcon />
+            <AlertDescription>
+              {t("This event could not be loaded. Try again shortly.")}
+            </AlertDescription>
+          </Alert>
+        ) : detail.isSuccess && event === null ? (
+          <Alert size="sm">
+            <AlertCircleIcon />
+            <AlertDescription>
+              {t("This event is not on your organization's trail, or retention has removed it.")}
+            </AlertDescription>
+          </Alert>
+        ) : event ? (
+          <AuditEventDetailSections event={event} />
+        ) : (
+          <div className="flex flex-col gap-3" aria-busy>
+            <Skeleton className="h-24" />
+            <Skeleton className="h-24" />
+            <Skeleton className="h-40" />
+          </div>
+        )}
+      </div>
+    </ReadSheet>
   );
 }
 

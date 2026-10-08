@@ -27887,7 +27887,7 @@
     ]
   },
   "Audit trail": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -41662,6 +41662,15 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "Checking the chain from the last sealed row…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Checking the product guide…": {
@@ -80702,6 +80711,24 @@
       "routes/agent-control"
     ]
   },
+  "Every agent action is written to a <b>chain</b>, unsigned because no signing key is configured.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Every agent action is written to a <b>signed chain</b>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Every agent holds this tool": {
     "sites": 1,
     "scope": [
@@ -81533,6 +81560,15 @@
     ]
   },
   "Every row in the range is in the file, so its chain can be checked end to end.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Every row is sealed.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -84716,15 +84752,6 @@
       "domain/permission"
     ]
   },
-  "Export the trail from the Trail view. Each file is signed row by row, keeps its SHA-256 here, and can be downloaded by the person who asked for it until it expires.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Export to CSV": {
     "sites": 3,
     "scope": [
@@ -84744,7 +84771,7 @@
     ]
   },
   "Export trail": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -84759,15 +84786,6 @@
     ],
     "areas": [
       "domain/permission"
-    ]
-  },
-  "Export trail…": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Export training course data": {
@@ -107947,6 +107965,15 @@
       "routes/agent-control"
     ]
   },
+  "It has not been checked yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "It has {0, plural, one {# stop} other {# stops}}.": {
     "sites": 1,
     "scope": [
@@ -108188,6 +108215,42 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "It was last checked {0} and <d>no longer matches</d> at #{1}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "It was last checked {0} and <d>no longer matches</d>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "It was last checked {0} and <w>could not be checked</w> past a key that is no longer configured.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "It was last checked {0} and is <k>intact</k> through #{1}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "It was the last document in the stack, so the stack is discarded too.": {
@@ -129775,6 +129838,15 @@
       "routes/agent-control"
     ]
   },
+  "Next check": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Next control number cannot exceed the maximum": {
     "sites": 1,
     "scope": [
@@ -138887,6 +138959,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Nothing has been written to the audit trail yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Nothing has happened yet.": {
@@ -189496,6 +189577,15 @@
       "packages/shared/components"
     ]
   },
+  "Sealed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Sealed through": {
     "sites": 1,
     "scope": [
@@ -191283,6 +191373,15 @@
     ],
     "areas": [
       "routes/accounting-control"
+    ]
+  },
+  "Select Export trail to write a file. Each file is signed row by row, keeps its SHA-256 here, and can be downloaded by the person who asked for it until it expires.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Select FX gain account": {
@@ -265567,6 +265666,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "{0, plural, one {The newest row is sealed at the next check.} other {The # newest rows are sealed at the next check.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0, plural, one {The one that didn't go through stayed as it was.} other {The # that didn't go through stayed as they were.}} {1, plural, one {The one that went through is final.} other {The # that went through are final.}}": {

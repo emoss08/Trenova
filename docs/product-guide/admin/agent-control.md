@@ -367,10 +367,13 @@ Keywords: extraction accuracy over time, model drift, accuracy dropped, provider
 
 ### Read what agents did on the audit trail
 Keywords: AI audit trail, agent audit log, who approved, what did the agent do, AI compliance, tool calls, model calls, AI decisions, evaluations
-1. Open [AI control](/admin/agent-control) and select **Audit trail** in the rail, then **Trail**.
-2. Read the figures at the top: **Chain** says whether the trail is **Signed** with a key held
-   outside the database or **Unsigned**, **Sealed through** is the last row the trail has sealed,
-   and **Last verified** is what the last check found.
+1. Open [AI control](/admin/agent-control) and select **Audit trail** in the rail, then **Trail**
+   under **View**.
+2. The sentence at the top says whether every agent action is written to a signed chain, when it
+   was last checked and what that found, and how many of the newest rows wait to be sealed. The
+   figures say the same: **Chain** is **Signed** with a key held outside the database or
+   **Unsigned**, **Sealed through** is the last row the trail has sealed, and **Last verified** is
+   what the last check found.
 3. Choose the range at the left of the bar above the table: **Last 24 hours**, **Last 7 days**
    (where it starts), **Last 30 days**, **Last 90 days**, or pick days on the calendar and select
    **Apply**. Select **Every agent** to narrow to one agent, pick a person in **Anyone** to see the
@@ -382,13 +385,14 @@ Keywords: AI audit trail, agent audit log, who approved, what did the agent do, 
    **Tier**, **Model**, **Tainted** or **Trace**.
 5. Select a row to read the event in full: **Who**, **What**, **Why** (the tier, what set it and
    what held it back), **Changed** (the record, its versions, and the audit log entries
-   **Matched by time**), **Provenance**, **Model**, **Arguments**, **Trace** and **Chain**.
+   **Matched by time**), **Provenance**, **Model**, **Arguments**, **Trace** and **Chain**. Its
+   header says **Sealed** once the row is in the sealed chain, or **Next check** until then.
 
 ### Check that the audit trail has not been changed
 Keywords: verify audit trail, hash chain, tamper evidence, audit integrity, signing key
 1. Open [AI control](/admin/agent-control) and select **Audit trail** in the rail.
-2. Select **Verify now**. The check runs in the background and the button shows **Verifying…**
-   until its result is stored.
+2. Select **Verify now** beside the sentence. The check runs in the background; the button shows
+   **Verifying…** until its result is stored, and the trail is also checked every night on its own.
 3. Read **Last verified**: **Verified** means every row still matches its chain, **Mismatch**
    means a row was changed or removed and says at which row, and **Key missing** means a row names
    a signing key that is no longer configured.
@@ -397,14 +401,15 @@ Keywords: verify audit trail, hash chain, tamper evidence, audit integrity, sign
 Keywords: download audit trail, AI audit export, CSV, JSON, auditor, compliance export, SHA-256
 1. Open [AI control](/admin/agent-control), select **Audit trail** in the rail and narrow the
    trail if you want to export part of it.
-2. Select **Export trail…**.
+2. Select **Export trail** above the table. On **Exports**, **Export trail** exports the whole
+   trail without the trail's filters.
 3. Choose the **Format**, CSV or JSON, set **From** and **To**, and leave **Use current filters** on to
    carry the agent, person, evaluations and table filters into the file, or turn it off to export
    every row in the range.
 4. Select **Export**. A small export downloads at once and shows its rows, size and SHA-256;
    **Download again** fetches it again. A large one is written in the background: you are
    notified when it is ready, and **Open exports** shows it.
-5. Select **Exports** in the rail to see every export with its status, **Rows**, **Size**,
+5. Select **Exports** under **View** to see every export with its status, **Rows**, **Size**,
    **SHA-256**, **Chain** (**Complete** or **Filtered**) and when it **Expires**. Select
    **Download** on your own export to download it.
 
@@ -548,7 +553,7 @@ Watchtower item is raised (critical when a case failed a hard check), and the pe
 update AI control are told once, with what changed.
 
 The **Audit trail** section appears for people with read access to the AI audit trail; reading
-agent runs does not grant it. **Verify now** needs the same read access. **Export trail…** and
+agent runs does not grant it. **Verify now** needs the same read access. **Export trail** and
 **Download** need export access to the AI audit trail, and only the person who asked for an export
 can download it; the file can be downloaded until it expires, seven days after it was written
 unless the organization's configuration says otherwise. Requesting and downloading an export are

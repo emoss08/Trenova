@@ -14,7 +14,10 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Download01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { Ic } from "../kit/ic";
 import { getAuditExportColumns } from "./audit-export-columns";
+import { DEFAULT_AUDIT_SCOPE, UNFILTERED_AUDIT_TABLE } from "./audit-model";
+import { ExportTrailDialog } from "./export-trail-dialog";
 
 /** Exports change as a background file is written; realtime moves the table, this is the fallback. */
 const EXPORTS_REFRESH_MS = 30_000;
@@ -38,7 +41,7 @@ function ExportsEmpty({ hasActiveFilters, onClearFilters }: DataTableEmptyStateR
         hasActiveFilters
           ? t("No export fits the filters. Clear them to see every one.")
           : t(
-              "Export the trail from the Trail view. Each file is signed row by row, keeps its SHA-256 here, and can be downloaded by the person who asked for it until it expires.",
+              "Select Export trail to write a file. Each file is signed row by row, keeps its SHA-256 here, and can be downloaded by the person who asked for it until it expires.",
             )
       }
       columns={EMPTY_COLUMNS}
@@ -57,6 +60,7 @@ export default function AuditExportsView() {
   const t = useT();
   const { allowed: canExport } = usePermission(Resource.AIAuditTrail, Operation.Export);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const download = useCallback(
     async (row: AIAuditExportRow) => {
@@ -96,17 +100,40 @@ export default function AuditExportsView() {
   ];
 
   return (
-    <DataTable<AIAuditExportRow>
-      name="AI Audit Export"
-      queryKey={AI_AUDIT_EXPORT_LIST_KEY}
-      graphql={aiAuditExportTableGraphQLConfig}
-      resource={Resource.AIAuditTrail}
-      columns={columns}
-      contextMenuActions={contextMenuActions}
-      enableExport={false}
-      enableCreateAction={false}
-      refetchIntervalMs={EXPORTS_REFRESH_MS}
-      renderEmptyState={(state) => <ExportsEmpty {...state} />}
-    />
+    <>
+      <DataTable<AIAuditExportRow>
+        name="AI Audit Export"
+        queryKey={AI_AUDIT_EXPORT_LIST_KEY}
+        graphql={aiAuditExportTableGraphQLConfig}
+        resource={Resource.AIAuditTrail}
+        columns={columns}
+        contextMenuActions={contextMenuActions}
+        enableExport={false}
+        enableCreateAction={false}
+        refetchIntervalMs={EXPORTS_REFRESH_MS}
+        renderEmptyState={(state) => <ExportsEmpty {...state} />}
+        toolbar={
+          canExport
+            ? {
+                trailing: (
+                  <button type="button" className="btn ink" onClick={() => setExportOpen(true)}>
+                    <Ic n="download" s={13} />
+                    {t("Export trail")}
+                  </button>
+                ),
+              }
+            : undefined
+        }
+      />
+      {canExport && (
+        <ExportTrailDialog
+          open={exportOpen}
+          onOpenChange={setExportOpen}
+          scope={DEFAULT_AUDIT_SCOPE}
+          table={UNFILTERED_AUDIT_TABLE}
+          onOpenExports={() => setExportOpen(false)}
+        />
+      )}
+    </>
   );
 }

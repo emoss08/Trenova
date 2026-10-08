@@ -16,7 +16,7 @@ vi.mock("@/lib/graphql/ai-audit", async (importOriginal) => {
   };
 });
 
-const { ChainStatusStrip } = await import("../chain-status");
+const { ChainStatusHeader } = await import("../chain-status");
 const { queries } = await import("@/lib/queries");
 
 /** A signed chain last verified clean, as aiAuditChainStatus returns it. */
@@ -54,7 +54,7 @@ function renderStrip() {
   client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <ChainStatusStrip />
+      <ChainStatusHeader />
     </QueryClientProvider>,
   );
 }
@@ -68,7 +68,7 @@ afterEach(() => {
   cleanup();
 });
 
-describe("ChainStatusStrip", () => {
+describe("ChainStatusHeader", () => {
   it("says whether the chain is signed, how far it is sealed and what its last check found", async () => {
     fetchAIAuditChainStatus.mockResolvedValue(chainStatus());
     renderStrip();
@@ -78,6 +78,36 @@ describe("ChainStatusStrip", () => {
     expect(screen.getByText("#1,200")).toBeInTheDocument();
     expect(screen.getByText("Verified")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /verify now/i })).toBeEnabled();
+    expect(screen.getByText("signed chain")).toBeInTheDocument();
+    expect(screen.getByText("intact")).toHaveClass("t-k");
+    expect(screen.getByText(/through #1,150\./)).toBeInTheDocument();
+    expect(
+      screen.getByText(/The 4 newest rows are sealed at the next check\./),
+    ).toBeInTheDocument();
+  });
+
+  it("says every row is sealed when the seal has caught up", async () => {
+    fetchAIAuditChainStatus.mockResolvedValue(chainStatus({ sealedThroughSeq: 1_204 }));
+    renderStrip();
+
+    expect(await screen.findByText(/Every row is sealed\./)).toBeInTheDocument();
+  });
+
+  it("says nothing has been written to an empty trail", async () => {
+    fetchAIAuditChainStatus.mockResolvedValue(
+      chainStatus({
+        lastSeq: 0,
+        sealedThroughSeq: 0,
+        lastVerifiedAt: null,
+        lastVerificationStatus: null,
+      }),
+    );
+    renderStrip();
+
+    expect(
+      await screen.findByText("Nothing has been written to the audit trail yet."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Nothing recorded yet")).toBeInTheDocument();
   });
 
   // Unsigned is not an error: the trail is still chained, only with plain
@@ -97,6 +127,8 @@ describe("ChainStatusStrip", () => {
     expect(screen.getByText("Plain SHA-256; no signing key is configured")).toBeInTheDocument();
     expect(screen.getByText("Not yet verified")).toBeInTheDocument();
     expect(screen.getByText("Never checked")).toBeInTheDocument();
+    expect(screen.getByText(/unsigned because no signing key is configured/)).toBeInTheDocument();
+    expect(screen.getByText(/It has not been checked yet\./)).toBeInTheDocument();
   });
 
   it("holds the button while a check starts, then while it runs, until its result arrives", async () => {
@@ -117,6 +149,7 @@ describe("ChainStatusStrip", () => {
     expect(
       screen.getByText("The result appears here when the check finishes."),
     ).toBeInTheDocument();
+    expect(screen.getByText("Checking the chain from the last sealed row…")).toBeInTheDocument();
 
     // The status read again while the check runs: more rows have been sealed,
     // but no result is stored yet, and the server's status never says it is
@@ -165,6 +198,7 @@ describe("ChainStatusStrip", () => {
     renderStrip();
 
     expect(await screen.findByText("Mismatch")).toBeInTheDocument();
+    expect(screen.getByText("no longer matches")).toHaveClass("t-d");
     expect(
       screen.getByText(/The trail no longer matches its chain at #812: hash does not recompute/),
     ).toBeInTheDocument();
