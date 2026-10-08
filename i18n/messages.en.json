@@ -262,6 +262,15 @@
       "routes/edi"
     ]
   },
+  "${0} spent this month": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "${0} spent this month · across every run": {
     "sites": 1,
     "scope": [
@@ -2714,6 +2723,25 @@
     ],
     "areas": [
       "domain/journalreversal"
+    ]
+  },
+  "A cap is an amount in dollars": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "A cap must be more than $0": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "routes/agent-control"
     ]
   },
   "A cap on the policy, or on the worker's tenure tier, stops accrual above it. A policy marked informational shows the figures without holding requests to them.": {
@@ -6055,6 +6083,15 @@
       "routes/worker"
     ]
   },
+  "A price is an amount in dollars": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "A print has no scan profile": {
     "sites": 1,
     "scope": [
@@ -7692,15 +7729,6 @@
       "domain/invoicerun"
     ]
   },
-  "A small model on the office GPU server; cheap enough for every request.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "A source is required": {
     "sites": 1,
     "scope": [
@@ -9333,16 +9361,7 @@
     ]
   },
   "AI provider": {
-    "sites": 5,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "AI provider removed": {
-    "sites": 1,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -9528,7 +9547,7 @@
     ]
   },
   "API key": {
-    "sites": 4,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -9540,23 +9559,13 @@
       "routes/shipment"
     ]
   },
-  "API key (leave blank to keep the existing key)": {
+  "API key (optional)": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "API key (optional)": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin",
-      "routes/agent-control"
+      "routes/admin"
     ]
   },
   "API key created": {
@@ -10375,12 +10384,14 @@
     ]
   },
   "Access": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "domain/aiprovider"
+      "domain/aiprovider",
+      "routes/agent-control"
     ]
   },
   "Access boundaries": {
@@ -11249,6 +11260,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Accounts are mapped by hand": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Accounts payable account": {
@@ -13106,6 +13126,15 @@
       "routes/worker"
     ]
   },
+  "Add a provider": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Add a service failure reason code": {
     "sites": 1,
     "scope": [
@@ -13218,6 +13247,15 @@
       "domain/permission"
     ]
   },
+  "Add an API key to turn {0} on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Add an agent": {
     "sites": 3,
     "scope": [
@@ -13273,6 +13311,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Add and turn on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Add any extra detail about this location": {
@@ -13802,6 +13849,15 @@
       "routes/agent-control"
     ]
   },
+  "Add key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Add lane": {
     "sites": 1,
     "scope": [
@@ -14112,12 +14168,13 @@
     ]
   },
   "Add provider": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/agent-control"
     ]
   },
   "Add rate": {
@@ -14356,6 +14413,15 @@
       "apps/web/lib"
     ]
   },
+  "Add the base URL": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Add the carrier's DOT number before running carrier intelligence": {
     "sites": 1,
     "scope": [
@@ -14565,12 +14631,22 @@
     ]
   },
   "Add {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control",
+      "routes/worker"
+    ]
+  },
+  "Add {0} key": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/worker"
+      "routes/agent-control"
     ]
   },
   "Add {0} legs": {
@@ -14756,12 +14832,13 @@
     ]
   },
   "Added {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/agent-control"
     ]
   },
   "Added {0} accessorial": {
@@ -14771,6 +14848,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Added {0} by {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Adding...": {
@@ -15937,12 +16023,13 @@
     ]
   },
   "Advanced": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
+      "routes/agent-control",
       "routes/edi"
     ]
   },
@@ -16688,6 +16775,15 @@
     ]
   },
   "Agents you choose": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Agents, the assistant and document reading all route through a provider. Start with a hosted model, or point Trenova at one on your own network.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -18075,15 +18171,6 @@
     ],
     "areas": [
       "routes/settlement-control"
-    ]
-  },
-  "Allow private network access": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Allow shipment drafts to be generated for shipment documents.": {
@@ -21268,15 +21355,6 @@
       "packages/shared/lib",
       "routes/carrier-sourcing",
       "routes/fuel-management"
-    ]
-  },
-  "Any OpenAI-compatible server": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Any commodity": {
@@ -25145,20 +25223,12 @@
     ]
   },
   "Asking {0}…": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
-    ]
-  },
-  "Asks a model that can think to do so before it answers, and shows the thinking in the panel. Off sends nothing, so a model that reasons by default (GPT-5 and later, Claude Opus 5.5 and Fable) still thinks; choose None to stop it. Opus 5.5 and Fable cannot stop thinking, so None asks them for the least they allow. Any setting but Off is rejected by a model that cannot reason.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
+      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -25709,11 +25779,12 @@
     ]
   },
   "Assign to {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/worker"
     ]
   },
@@ -25967,6 +26038,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Assigned; an earlier provider takes it first": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Assigning": {
@@ -26700,6 +26780,24 @@
       "routes/fuel-card"
     ]
   },
+  "At least {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
+  "At least {0} seconds": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "At maintenance": {
     "sites": 1,
     "scope": [
@@ -26819,6 +26917,15 @@
       "routes/invoice"
     ]
   },
+  "At most {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "At most {0} characters": {
     "sites": 1,
     "scope": [
@@ -26891,6 +26998,15 @@
       "service/formulaassistantservice"
     ]
   },
+  "At most {0} seconds": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types"
+    ]
+  },
   "At most {0} texts can be embedded in one request": {
     "sites": 1,
     "scope": [
@@ -26923,6 +27039,15 @@
       "routes/home",
       "routes/worker",
       "service/briefingservice"
+    ]
+  },
+  "At the cap": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "At the lab": {
@@ -28060,15 +28185,6 @@
       "routes/rate-agreement"
     ]
   },
-  "Auto — read it from the model ID": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Auto-accept within tolerance": {
     "sites": 1,
     "scope": [
@@ -28815,14 +28931,13 @@
     ]
   },
   "Availability": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
-      "routes/admin",
-      "routes/agent-control"
+      "routes/admin"
     ]
   },
   "Availability is required": {
@@ -30376,7 +30491,7 @@
     ]
   },
   "Base URL": {
-    "sites": 15,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -31334,6 +31449,33 @@
       "routes/ifta-return"
     ]
   },
+  "Between {0} and {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Between {0} and {1} seconds": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Between {0} and {1} tokens": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Between {0} and {1} tokens.": {
     "sites": 1,
     "scope": [
@@ -32257,15 +32399,6 @@
       "api/handlers"
     ]
   },
-  "Billing diagnosis proposes changes against your ledger, so it only runs on a provider marked trusted. Open-weight models vary a lot in how reliably they follow tool definitions — verify this one before trusting it.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Billing distance profile is required": {
     "sites": 1,
     "scope": [
@@ -32347,6 +32480,15 @@
     ],
     "areas": [
       "domain/detention"
+    ]
+  },
+  "Billing holds wait for a person": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Billing increment cannot exceed 24 hours": {
@@ -34126,15 +34268,6 @@
       "routes/agent-control"
     ]
   },
-  "Budget — older Claude models": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Build": {
     "sites": 2,
     "scope": [
@@ -34277,6 +34410,15 @@
     ],
     "areas": [
       "domain/integration"
+    ]
+  },
+  "Built-in rules check scope": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Bulk action failed": {
@@ -34669,6 +34811,15 @@
       "routes/agent-control"
     ]
   },
+  "By effort": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "By endpoint": {
     "sites": 2,
     "scope": [
@@ -34714,6 +34865,15 @@
       "routes/fleet-safety",
       "routes/my-team",
       "routes/org-structure"
+    ]
+  },
+  "By token budget": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "By {0} · {1}": {
@@ -35299,7 +35459,7 @@
     ]
   },
   "Calls": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -35466,7 +35626,7 @@
     ]
   },
   "Cancel": {
-    "sites": 281,
+    "sites": 280,
     "scope": [
       "ts"
     ],
@@ -39142,15 +39302,6 @@
       "routes/agent-control"
     ]
   },
-  "Ceiling for a single reply.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Ceilings": {
     "sites": 1,
     "scope": [
@@ -41339,6 +41490,15 @@
       "go/other"
     ]
   },
+  "Choose": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Choose Customize to add the queues and numbers you want to land on.": {
     "sites": 1,
     "scope": [
@@ -41429,15 +41589,6 @@
     ],
     "areas": [
       "routes/customer-ledger"
-    ]
-  },
-  "Choose a deployment": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Choose a dispute reason": {
@@ -41720,15 +41871,6 @@
     ],
     "areas": [
       "routes/inbox"
-    ]
-  },
-  "Choose a size": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Choose a stack to file": {
@@ -47835,6 +47977,33 @@
       "routes/worker"
     ]
   },
+  "Concurrent calls": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Concurrent calls cannot exceed 64": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
+    ]
+  },
+  "Concurrent calls must be at least 1": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
+    ]
+  },
   "Condition": {
     "sites": 4,
     "scope": [
@@ -49042,7 +49211,7 @@
       "routes/carrier-monitoring"
     ]
   },
-  "Connect a hosted API, a gateway such as OpenRouter, or a model server on your own hardware. AI features stay off until a provider is assigned to a task.": {
+  "Connect a model provider": {
     "sites": 1,
     "scope": [
       "ts"
@@ -49051,7 +49220,7 @@
       "routes/agent-control"
     ]
   },
-  "Connect a model provider": {
+  "Connect a model to wake your agents": {
     "sites": 1,
     "scope": [
       "ts"
@@ -49353,6 +49522,15 @@
       "routes/carrier-monitoring"
     ]
   },
+  "Connected · {0} ms": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Connected, but the model returned a different dimension than configured": {
     "sites": 1,
     "scope": [
@@ -49453,7 +49631,7 @@
     ]
   },
   "Connection": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -49461,6 +49639,7 @@
     "areas": [
       "domain/aiprovider",
       "routes/admin",
+      "routes/agent-control",
       "routes/edi"
     ]
   },
@@ -53362,6 +53541,15 @@
       "routes/agent-control"
     ]
   },
+  "Counted from the first call": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Counted once per role across the route, not once per state.": {
     "sites": 1,
     "scope": [
@@ -56853,15 +57041,6 @@
     ],
     "areas": [
       "routes/reports"
-    ]
-  },
-  "Custom endpoint": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Custom field activated": {
@@ -63841,15 +64020,6 @@
       "routes/agent-control"
     ]
   },
-  "Deployment": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Deposits read off the bank statement and their match state": {
     "sites": 1,
     "scope": [
@@ -64171,7 +64341,7 @@
     ]
   },
   "Description": {
-    "sites": 179,
+    "sites": 181,
     "scope": [
       "go",
       "ts"
@@ -65916,15 +66086,6 @@
       "domain/ratematrix"
     ]
   },
-  "Dimensions": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Dimensions cannot have an aggregation": {
     "sites": 1,
     "scope": [
@@ -65932,24 +66093,6 @@
     ],
     "areas": [
       "service/reporting"
-    ]
-  },
-  "Dimensions do not match": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "Dimensions match": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Dimensions vs tightest limit": {
@@ -66206,15 +66349,6 @@
     ]
   },
   "Disabled agents can't be talked to, scheduled or started by events": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "Disabled providers are skipped entirely.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -69237,7 +69371,7 @@
       "routes/billing-queue"
     ]
   },
-  "Documents are sent with social security, card and bank account numbers masked. Only one embedding model is searched at a time; providers with the same model and size back each other up.": {
+  "Documents are filed by hand": {
     "sites": 1,
     "scope": [
       "ts"
@@ -69325,6 +69459,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Documents wait for manual entry": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Documents will be sent to {0}": {
@@ -70037,6 +70180,15 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "Drag to reorder": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Drag to resize, double-click to reset": {
@@ -73777,6 +73929,15 @@
     ]
   },
   "Each task goes to the first provider in order that takes it.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Each task goes to the first provider, in order, that's on, assigned and — where marked <shield/> — trusted. Click a cell to assign or unassign.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -74205,7 +74366,7 @@
     ]
   },
   "Edit connection": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -74366,15 +74527,6 @@
       "routes/worker"
     ]
   },
-  "Edit provider": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Edit review drafts": {
     "sites": 1,
     "scope": [
@@ -74529,7 +74681,7 @@
     ]
   },
   "Edit {0}": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "ts"
     ],
@@ -74759,15 +74911,6 @@
     ],
     "areas": [
       "domain/rateagreement"
-    ]
-  },
-  "Effort — Claude Opus 4.6, Sonnet 4.6 and later": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Efs": {
@@ -75620,6 +75763,15 @@
       "routes/agent-control"
     ]
   },
+  "Embedding input": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Embedding input style is invalid": {
     "sites": 1,
     "scope": [
@@ -75681,15 +75833,6 @@
     ],
     "areas": [
       "domain/aiprovider"
-    ]
-  },
-  "Embeddings are priced on input alone. Leave empty if unknown.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Emergency": {
@@ -76557,7 +76700,7 @@
     ]
   },
   "Enabled": {
-    "sites": 17,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -76955,13 +77098,12 @@
     ]
   },
   "Endpoint": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/agent-control"
+      "apps/web/components"
     ]
   },
   "Endpoint URL": {
@@ -77115,15 +77257,6 @@
     ],
     "areas": [
       "routes/dispatch-control"
-    ]
-  },
-  "Enforced by the server (JSON schema)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Enforcement": {
@@ -77877,15 +78010,6 @@
     ],
     "areas": [
       "routes/formula-template"
-    ]
-  },
-  "Enter the API key": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Enter the API key again: the endpoint changed, and the saved key is not sent to a new one": {
@@ -79634,6 +79758,15 @@
     ]
   },
   "Evaluations": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Evaluations go unscored": {
     "sites": 1,
     "scope": [
       "ts"
@@ -81788,15 +81921,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Exactly as the endpoint names it.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Exactly one of debit or credit amount must be greater than zero": {
@@ -84788,7 +84912,7 @@
     ]
   },
   "Extra request fields": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -85265,7 +85389,7 @@
     ]
   },
   "Failed": {
-    "sites": 54,
+    "sites": 55,
     "scope": [
       "go",
       "ts"
@@ -87888,6 +88012,15 @@
       "routes/admin"
     ]
   },
+  "Fetch models": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Fetched": {
     "sites": 3,
     "scope": [
@@ -88894,15 +89027,6 @@
     ],
     "areas": [
       "routes/fuel-purchase"
-    ]
-  },
-  "Fills in the endpoint and output settings for a known deployment. Everything stays editable.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Filter": {
@@ -90340,6 +90464,15 @@
       "packages/shared/components"
     ]
   },
+  "Fix the base URL": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Fix the values above to see what they would do.": {
     "sites": 1,
     "scope": [
@@ -91138,15 +91271,6 @@
       "routes/worker"
     ]
   },
-  "For the next administrator. Where the endpoint runs and why it handles the tasks it does.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "For {0}": {
     "sites": 2,
     "scope": [
@@ -91903,6 +92027,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Formulas are written by hand": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Fortnightly": {
@@ -92704,15 +92837,6 @@
     ]
   },
   "From the last {0} days of runs": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "From the provider's price list. Leave empty if unknown.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -95030,7 +95154,7 @@
     ]
   },
   "Give it a name": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -95313,6 +95437,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Goes to": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Going live after {0} shadow proposals": {
@@ -96347,6 +96480,15 @@
       "routes/time-attendance"
     ]
   },
+  "Hand to next": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Hand your approvals to somebody else while you are away. Cover widens what they can act on; it never widens what you could approve yourself.": {
     "sites": 1,
     "scope": [
@@ -96482,8 +96624,8 @@
       "routes/inbox"
     ]
   },
-  "Handles these tasks": {
-    "sites": 1,
+  "Handles": {
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -97847,6 +97989,15 @@
       "routes/worker"
     ]
   },
+  "Hide {0} off": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "High": {
     "sites": 8,
     "scope": [
@@ -98678,7 +98829,34 @@
       "routes/edi"
     ]
   },
-  "Hosted endpoints": {
+  "Hosted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Hosted · API key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Hosted · needs an API key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Hosted · no key": {
     "sites": 1,
     "scope": [
       "ts"
@@ -99544,15 +99722,6 @@
       "routes/fuel-management"
     ]
   },
-  "How much the endpoint guarantees, and how far a single reply may go.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "How much the flat amount goes up from one band to the next.": {
     "sites": 1,
     "scope": [
@@ -99697,6 +99866,15 @@
       "apps/web/types"
     ]
   },
+  "How requests are shaped for this endpoint. The defaults suit most models.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "How stale or missing intelligence is treated when a carrier is used.": {
     "sites": 1,
     "scope": [
@@ -99769,15 +99947,6 @@
       "routes/holiday"
     ]
   },
-  "How the endpoint is told a stored document from a search query.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "How the final amount is rounded": {
     "sites": 1,
     "scope": [
@@ -99812,15 +99981,6 @@
     ],
     "areas": [
       "routes/customer"
-    ]
-  },
-  "How the model is asked to think. Auto reads the model ID, which works for the IDs Anthropic, Bedrock and Vertex use. Behind a gateway alias the ID says nothing and is read as an older model, so a current model refuses every reasoning level; choose Effort for it.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "How the money moved — ACH, cheque, fuel card.": {
@@ -99957,15 +100117,6 @@
     ],
     "areas": [
       "routes/customer"
-    ]
-  },
-  "How this endpoint appears when assigning work.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "How this guide is referenced across dispatch": {
@@ -102137,6 +102288,15 @@
       "api/handlers"
     ]
   },
+  "Inbound mail is sorted by hand": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Inbound mailboxes": {
     "sites": 2,
     "scope": [
@@ -103079,12 +103239,13 @@
     ]
   },
   "Input": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/agent-control"
     ]
   },
   "Input context hash is required": {
@@ -103114,25 +103275,16 @@
       "domain/extractioneval"
     ]
   },
+  "Input price": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Input price per million tokens": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "Input price, USD per million tokens": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "Input style": {
     "sites": 1,
     "scope": [
       "ts"
@@ -103271,6 +103423,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Insights show without narration": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Inspect": {
@@ -107307,6 +107468,15 @@
       "routes/desk"
     ]
   },
+  "It handles no tasks.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "It has {0, plural, one {# stop} other {# stops}}.": {
     "sites": 1,
     "scope": [
@@ -107807,6 +107977,15 @@
       "routes/agent-control"
     ]
   },
+  "Its 1 task falls to the next provider in line.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Its answer was withheld": {
     "sites": 1,
     "scope": [
@@ -107888,6 +108067,15 @@
       "routes/agent-control"
     ]
   },
+  "Its tasks fall to the next provider in line. The stored key is deleted.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Its text is what payroll or the payee reads next, so a run that has read outside text proposes it rather than writing it.": {
     "sites": 1,
     "scope": [
@@ -107924,6 +108112,15 @@
       "routes/agent-control"
     ]
   },
+  "Its {0} tasks fall to the next provider in line.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "JSON": {
     "sites": 2,
     "scope": [
@@ -107951,7 +108148,16 @@
       "routes/edi"
     ]
   },
-  "JSON merged into every request to this endpoint, for the fields its server takes that the protocol does not define. Copy them from the provider's own example. What this system sets — the model, the messages, the tools, the schema and whether the call streams — cannot be overridden here.": {
+  "JSON merged under the fields Trenova sets, for options the endpoint takes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "JSON mode": {
     "sites": 1,
     "scope": [
       "ts"
@@ -107967,6 +108173,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "JSON schema": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Job Position": {
@@ -109069,6 +109284,15 @@
       "packages/shared/types"
     ]
   },
+  "Keep old key 24h": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Keep one Temporal schedule behind every conversation schedule": {
     "sites": 1,
     "scope": [
@@ -109231,6 +109455,15 @@
       "packages/shared/types",
       "routes/accounting-drift",
       "routes/accounting-inbound"
+    ]
+  },
+  "Keep the old key working for 24 hours": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Keep the question to 20,000 characters": {
@@ -109713,7 +109946,7 @@
     ]
   },
   "Key": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -109815,7 +110048,7 @@
       "domain/apikey"
     ]
   },
-  "Key stored": {
+  "Key saved, but the test failed": {
     "sites": 1,
     "scope": [
       "ts"
@@ -109871,7 +110104,7 @@
     ]
   },
   "Kind": {
-    "sites": 19,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -110568,7 +110801,7 @@
     ]
   },
   "Last 7 days": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -112151,15 +112384,6 @@
       "apps/web/components"
     ]
   },
-  "Leave blank to use the provider default.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Leave blank to use the template name and the period end date.": {
     "sites": 1,
     "scope": [
@@ -112315,6 +112539,15 @@
       "routes/agent-control"
     ]
   },
+  "Leave empty for your own hardware; spend shows as —.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Leave empty if it never expires": {
     "sites": 1,
     "scope": [
@@ -112412,6 +112645,15 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "Leave empty to use {0}'s default endpoint.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Leave empty to watch all records": {
@@ -113636,6 +113878,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Limits and price": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Limits on what this carrier may be paid relative to what the load sells for.": {
@@ -115548,15 +115799,6 @@
       "packages/shared/components"
     ]
   },
-  "Loading deployments…": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Loading difference...": {
     "sites": 1,
     "scope": [
@@ -116280,15 +116522,6 @@
       "routes/location"
     ]
   },
-  "Local qwen": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Local record": {
     "sites": 2,
     "scope": [
@@ -116323,6 +116556,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Local {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Local, regional, OTR or team": {
@@ -117430,15 +117672,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Lower runs first. Providers behind it act as fallbacks.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Lower sort values appear first.": {
@@ -118961,15 +119194,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Many self-hosted servers need no credential. Leave blank if yours does not.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Map": {
@@ -120731,15 +120955,6 @@
       "routes/agent-control"
     ]
   },
-  "Max tokens": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Max tokens cannot exceed 200000": {
     "sites": 1,
     "scope": [
@@ -121391,6 +121606,15 @@
       "routes/agent-control"
     ]
   },
+  "May reach a server on your own network.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "May read restricted records like pay and medical files.": {
     "sites": 1,
     "scope": [
@@ -121401,6 +121625,15 @@
     ]
   },
   "May take tasks that read sensitive records": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "May take tasks that read sensitive records, like billing diagnosis.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -121593,7 +121826,7 @@
     ]
   },
   "Median": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -123777,7 +124010,7 @@
     ]
   },
   "Model": {
-    "sites": 31,
+    "sites": 33,
     "scope": [
       "go",
       "ts"
@@ -123788,6 +124021,15 @@
       "routes/agent-control",
       "routes/tractor",
       "routes/trailer"
+    ]
+  },
+  "Model ID": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Model call": {
@@ -123836,15 +124078,14 @@
     ]
   },
   "Model is required": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/types",
-      "domain/aiprovider",
-      "routes/agent-control"
+      "domain/aiprovider"
     ]
   },
   "Model must be between 0 and 50 characters": {
@@ -124663,6 +124904,15 @@
       "routes/agent-control"
     ]
   },
+  "Monthly cap": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Monthly indexing budget (USD)": {
     "sites": 1,
     "scope": [
@@ -124709,12 +124959,13 @@
     ]
   },
   "Monthly spend cap": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/agent-control"
     ]
   },
   "Monthly spend cap cannot be negative": {
@@ -124961,6 +125212,15 @@
       "routes/carrier"
     ]
   },
+  "Most tokens per reply": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Motion": {
     "sites": 2,
     "scope": [
@@ -125140,6 +125400,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Move down": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Move every rate for a customer, a carrier, or across the board.": {
@@ -125393,6 +125662,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "Move up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Move {0}": {
@@ -125993,7 +126271,7 @@
     ]
   },
   "Name": {
-    "sites": 163,
+    "sites": 165,
     "scope": [
       "go",
       "ts"
@@ -126269,7 +126547,7 @@
     ]
   },
   "Name is required": {
-    "sites": 149,
+    "sites": 148,
     "scope": [
       "go",
       "ts"
@@ -126327,7 +126605,6 @@
       "go/other",
       "packages/shared/types",
       "routes/admin",
-      "routes/agent-control",
       "routes/edi",
       "service/ediservice",
       "service/formulatemplateservice",
@@ -127025,15 +127302,6 @@
       "routes/agent-control"
     ]
   },
-  "Needed to reach a model server on your own network. Link-local addresses stay blocked either way.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Needing attention": {
     "sites": 3,
     "scope": [
@@ -127091,6 +127359,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Needs a key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Needs a look": {
@@ -128378,6 +128655,15 @@
       "apps/web/config"
     ]
   },
+  "New key ••••{0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "New lane": {
     "sites": 1,
     "scope": [
@@ -128546,7 +128832,7 @@
     ]
   },
   "New provider": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -129328,15 +129614,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "No AI providers yet": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "No API key is set, so mail arrives without its body or attachments and waits for a person.": {
@@ -130317,7 +130594,25 @@
       "routes/detention-desk"
     ]
   },
+  "No calls this week": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No calls yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "No calls yet.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -130336,7 +130631,7 @@
     ]
   },
   "No cap": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -132939,6 +133234,15 @@
       "domain/agentextension"
     ]
   },
+  "No morning briefing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No moves were included in this load tender.": {
     "sites": 1,
     "scope": [
@@ -133692,7 +133996,7 @@
       "service/airetrievalstatusservice"
     ]
   },
-  "No providers match that search.": {
+  "No providers yet": {
     "sites": 1,
     "scope": [
       "ts"
@@ -134947,6 +135251,15 @@
       "routes/accounting-sync"
     ]
   },
+  "No task changes where it goes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No task tools": {
     "sites": 1,
     "scope": [
@@ -134957,15 +135270,6 @@
     ]
   },
   "No task tools. It explains how things work and can't read or change records.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "No tasks assigned": {
     "sites": 1,
     "scope": [
       "ts"
@@ -135848,7 +136152,7 @@
     ]
   },
   "None": {
-    "sites": 32,
+    "sites": 35,
     "scope": [
       "go",
       "ts"
@@ -135859,6 +136163,7 @@
       "go/other",
       "packages/shared/lib",
       "routes/admin",
+      "routes/agent-control",
       "routes/carrier-settlement-workspace",
       "routes/carrier-sourcing",
       "routes/edi",
@@ -136074,15 +136379,6 @@
     ],
     "areas": [
       "routes/time-attendance"
-    ]
-  },
-  "None — the least thinking the model allows (fastest)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Normal": {
@@ -136323,12 +136619,13 @@
     ]
   },
   "Not assigned": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "packages/shared/lib",
+      "routes/agent-control",
       "routes/worker"
     ]
   },
@@ -136748,6 +137045,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Not listed by the endpoint": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Not listening": {
@@ -139543,6 +139849,15 @@
       "routes/worker"
     ]
   },
+  "Nowhere": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Nowhere else to put it": {
     "sites": 1,
     "scope": [
@@ -139550,6 +139865,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "Nowhere · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Nudge or recover live tenders whose offers are overdue": {
@@ -140263,7 +140587,7 @@
     ]
   },
   "Off": {
-    "sites": 27,
+    "sites": 28,
     "scope": [
       "ts"
     ],
@@ -140361,15 +140685,6 @@
     "areas": [
       "apps/web/lib",
       "routes/osha"
-    ]
-  },
-  "Off — send no reasoning setting": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Offboarding": {
@@ -141246,6 +141561,24 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "On your network": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "On your network · no key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "On your team": {
@@ -143564,15 +143897,6 @@
     ],
     "areas": [
       "service/shipmentmoveservice"
-    ]
-  },
-  "Only point this at a model server you operate. Trenova still refuses link-local addresses, so cloud metadata endpoints remain unreachable.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Only posted customer payments can be applied": {
@@ -146885,6 +147209,15 @@
       "routes/formula-template"
     ]
   },
+  "Or fetch the list this provider actually serves.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Or paste one of these links into your browser:": {
     "sites": 1,
     "scope": [
@@ -148654,20 +148987,12 @@
     ]
   },
   "Output": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
-    ]
-  },
-  "Output and limits": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
+      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -148680,8 +149005,8 @@
       "domain/agentdefinition"
     ]
   },
-  "Output price, USD per million tokens": {
-    "sites": 1,
+  "Output price": {
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -152133,6 +152458,15 @@
       "routes/admin"
     ]
   },
+  "Paste an API key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Paste the full document text here...": {
     "sites": 1,
     "scope": [
@@ -154508,6 +154842,15 @@
       "routes/jurisdiction-rule"
     ]
   },
+  "Per million tokens": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Per order": {
     "sites": 1,
     "scope": [
@@ -156136,6 +156479,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Pick a model": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Pick a pattern": {
@@ -157944,15 +158296,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Point Trenova at a model endpoint and choose which work it handles. Start from a preset, or configure any OpenAI-compatible server directly.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Point {0} at this address": {
@@ -160790,6 +161133,15 @@
       "routes/fuel-purchase"
     ]
   },
+  "Price per million tokens": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Price quoted to the customer for the whole order, including expected extra charges.": {
     "sites": 1,
     "scope": [
@@ -160842,6 +161194,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "Prices saved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Pricing": {
@@ -161197,7 +161558,7 @@
     ]
   },
   "Priority": {
-    "sites": 20,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -161206,7 +161567,6 @@
       "apps/web/lib",
       "go/other",
       "routes/admin",
-      "routes/agent-control",
       "routes/customer",
       "routes/detention-policy",
       "routes/rate-agreement",
@@ -161268,6 +161628,15 @@
     ],
     "areas": [
       "routes/admin",
+      "routes/agent-control"
+    ]
+  },
+  "Priority {0} of {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/agent-control"
     ]
   },
@@ -161368,7 +161737,7 @@
     ]
   },
   "Private network": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -162090,6 +162459,15 @@
       "domain/agent"
     ]
   },
+  "Prompted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Proof of delivery": {
     "sites": 6,
     "scope": [
@@ -162449,15 +162827,6 @@
       "routes/agent-control"
     ]
   },
-  "Protocol": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Protocol is required": {
     "sites": 1,
     "scope": [
@@ -162608,7 +162977,7 @@
     ]
   },
   "Provider": {
-    "sites": 33,
+    "sites": 34,
     "scope": [
       "go",
       "ts"
@@ -163049,7 +163418,7 @@
     ]
   },
   "Providers": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -167605,6 +167974,15 @@
       "apps/web/lib"
     ]
   },
+  "Read from the model": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Read from the provider's API.": {
     "sites": 1,
     "scope": [
@@ -168930,7 +169308,7 @@
     ]
   },
   "Reasoning": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -172414,11 +172792,12 @@
     ]
   },
   "Refresh": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/carrier-settlement-workspace",
       "routes/detention-intelligence",
       "routes/fleet-safety",
@@ -173939,7 +174318,7 @@
     ]
   },
   "Remove": {
-    "sites": 25,
+    "sites": 27,
     "scope": [
       "ts"
     ],
@@ -173970,15 +174349,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Remove AI provider": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Remove a customer's template override": {
@@ -174437,7 +174807,7 @@
     ]
   },
   "Remove provider": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -174663,7 +175033,7 @@
     ]
   },
   "Remove {0}": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -174696,17 +175066,8 @@
       "routes/agent-control"
     ]
   },
-  "Remove {0}. Any task routed only to this provider will stop working until another one is assigned.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Remove {0}?": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -175432,6 +175793,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Replace key": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Replace occurrences of one value with another.": {
@@ -176845,15 +177215,6 @@
       "routes/manual-journal"
     ]
   },
-  "Requested in the prompt": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Requested on": {
     "sites": 3,
     "scope": [
@@ -177363,15 +177724,6 @@
       "routes/billing-queue"
     ]
   },
-  "Required before this provider can handle tasks that change financial records.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Required confirmed": {
     "sites": 1,
     "scope": [
@@ -177436,15 +177788,6 @@
       "routes/worker"
     ]
   },
-  "Required for an OpenAI-compatible endpoint.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Required for driver types": {
     "sites": 2,
     "scope": [
@@ -177453,15 +177796,6 @@
     "areas": [
       "routes/training-course",
       "routes/worker-credential-type"
-    ]
-  },
-  "Required for this provider. Stored encrypted and never shown again.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Required items must settle before the checklist closes.": {
@@ -183705,15 +184039,6 @@
       "domain/agent"
     ]
   },
-  "Run it yourself": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Run key is required": {
     "sites": 1,
     "scope": [
@@ -185697,6 +186022,15 @@
       "routes/formula-template"
     ]
   },
+  "Save and test": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Save as v{0}": {
     "sites": 1,
     "scope": [
@@ -185725,7 +186059,7 @@
     ]
   },
   "Save changes": {
-    "sites": 46,
+    "sites": 47,
     "scope": [
       "ts"
     ],
@@ -186253,17 +186587,8 @@
       "apps/web/components"
     ]
   },
-  "Save, then use Test on the card to check the endpoint honours JSON schemas.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Saved": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -186506,6 +186831,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Saving the new order": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Saving {0} as headquarters": {
@@ -187890,15 +188224,6 @@
       "domain/formulatemplate"
     ]
   },
-  "Schema honoured": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Schema is invalid": {
     "sites": 1,
     "scope": [
@@ -187915,15 +188240,6 @@
     ],
     "areas": [
       "domain/formulatemplate"
-    ]
-  },
-  "Schema not honoured": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Schema version is required": {
@@ -187966,6 +188282,15 @@
       "routes/admin",
       "routes/detention-policy",
       "routes/invoice-register"
+    ]
+  },
+  "Scope checks use built-in rules": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Scope classification": {
@@ -189064,7 +189389,7 @@
     ]
   },
   "Search providers": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -189347,6 +189672,15 @@
   },
   "Search tools": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Search uses words only": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -199423,6 +199757,15 @@
       "routes/scheduling"
     ]
   },
+  "Show {0} off": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Showing": {
     "sites": 1,
     "scope": [
@@ -200936,6 +201279,15 @@
       "routes/admin"
     ]
   },
+  "So nothing fails while other systems switch over.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Social Security and Medicare taxes payable": {
     "sites": 1,
     "scope": [
@@ -200991,15 +201343,6 @@
       "apps/web/components",
       "apps/web/lib",
       "go/other"
-    ]
-  },
-  "Some OpenAI-compatible servers accept a schema and ignore it — test the connection to find out before relying on it.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Some carriers were not offered": {
@@ -203426,15 +203769,6 @@
       "routes/agent-control"
     ]
   },
-  "Start from a preset": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Start from a standard": {
     "sites": 1,
     "scope": [
@@ -203698,6 +204032,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Start with http:// or https://": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Start with when it should run, like “every Monday at 8am”, then what to ask": {
@@ -205159,7 +205502,7 @@
     ]
   },
   "Stop": {
-    "sites": 15,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -205875,6 +206218,15 @@
       "service/documentservice"
     ]
   },
+  "Stored encrypted and never shown again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Stored encrypted and never shown again. Enter it again whenever the client ID changes.": {
     "sites": 1,
     "scope": [
@@ -205891,6 +206243,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Stored encrypted and never shown again. It will take {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Stored encrypted. Nobody, including you, can read it back.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Stored mileage deactivated": {
@@ -206050,7 +206420,7 @@
     ]
   },
   "Structured output": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -208290,6 +208660,15 @@
       "apps/web/lib"
     ]
   },
+  "Tables are filtered by hand": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Tag management": {
     "sites": 1,
     "scope": [
@@ -208442,6 +208821,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Takes {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Taking off a carrier who has confirmed the rate breaks an executed agreement, so it is a proposal a person decides, as is one the service would refuse or that cannot be read; a carrier who has not confirmed comes off once a person approves it.": {
@@ -208898,7 +209286,7 @@
     ]
   },
   "Task": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -210768,7 +211156,7 @@
     ]
   },
   "Test connection": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -210776,6 +211164,15 @@
       "routes/admin",
       "routes/agent-control",
       "routes/edi"
+    ]
+  },
+  "Test draft": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Test email queued": {
@@ -210814,6 +211211,15 @@
       "domain/worker"
     ]
   },
+  "Test {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Tested and ready for use": {
     "sites": 1,
     "scope": [
@@ -210821,15 +211227,6 @@
     ],
     "areas": [
       "packages/shared/types"
-    ]
-  },
-  "Tested {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Testing": {
@@ -210841,6 +211238,15 @@
       "packages/shared/types",
       "routes/agent-control",
       "routes/worker"
+    ]
+  },
+  "Testing connection…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Testing standing": {
@@ -210859,6 +211265,15 @@
     ],
     "areas": [
       "routes/admin",
+      "routes/agent-control"
+    ]
+  },
+  "Testing…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/agent-control"
     ]
   },
@@ -212481,6 +212896,15 @@
       "apps/web/components"
     ]
   },
+  "The assistant can't answer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The assistant cannot be used here": {
     "sites": 1,
     "scope": [
@@ -213390,6 +213814,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "The chain": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "The change could not be saved.": {
@@ -215623,6 +216056,15 @@
       "domain/ratesimulation"
     ]
   },
+  "The endpoint did not answer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The endpoint did not answer in time": {
     "sites": 1,
     "scope": [
@@ -215630,6 +216072,15 @@
     ],
     "areas": [
       "service/aiproviderservice"
+    ]
+  },
+  "The endpoint lists no models. Type the ID it serves.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "The endpoint replied with no content": {
@@ -221498,6 +221949,15 @@
       "routes/detention-desk"
     ]
   },
+  "The stored key is deleted.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The stored provider payload could not be read": {
     "sites": 1,
     "scope": [
@@ -221812,6 +222272,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "The test could not run": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "The text": {
@@ -222289,15 +222758,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "The vector size the model returns. A reply of any other size is refused.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "The verification could not be started — try again shortly": {
@@ -223305,6 +223765,15 @@
       "routes/agent-control"
     ]
   },
+  "They keep their place in line and are skipped until turned on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "They show on the rota with no rostered days until they are.": {
     "sites": 1,
     "scope": [
@@ -223332,6 +223801,15 @@
       "apps/web/components"
     ]
   },
+  "Thinking": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Thinking it through…": {
     "sites": 1,
     "scope": [
@@ -223339,15 +223817,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Thinking style": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Thinking style applies only to Anthropic Messages providers": {
@@ -223522,6 +223991,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "This address is on your own network. Turn on Private network so Trenova can reach it.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "This adds Trenova's vetted standard rating templates (Flat Rate, Per Mile, Per CWT, and more) to your organization as Active templates. Templates you already have are left untouched.": {
@@ -225618,6 +226096,15 @@
       "routes/desk"
     ]
   },
+  "This kind of endpoint has no default; give its address.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "This kind of record is not created from Trenova": {
     "sites": 2,
     "scope": [
@@ -226380,7 +226867,7 @@
       "routes/agent-control"
     ]
   },
-  "This protocol has no embedding endpoint. Use an OpenAI, OpenAI-compatible or Ollama provider for embeddings.": {
+  "This provider takes it first": {
     "sites": 1,
     "scope": [
       "ts"
@@ -226389,7 +226876,7 @@
       "routes/agent-control"
     ]
   },
-  "This provider may reach your internal network": {
+  "This provider was removed": {
     "sites": 1,
     "scope": [
       "ts"
@@ -227249,15 +227736,6 @@
     "areas": [
       "domain/aifeedback",
       "service/aifeedbackservice"
-    ]
-  },
-  "This task can change financial records": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "This task can change financial records, so it can only be served by a provider marked trusted": {
@@ -228715,6 +229193,33 @@
       "routes/shipment"
     ]
   },
+  "Timeout": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Timeout cannot exceed 600 seconds": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
+    ]
+  },
+  "Timeout must be at least 5 seconds": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
+    ]
+  },
   "Timesheet": {
     "sites": 1,
     "scope": [
@@ -229490,7 +229995,7 @@
     ]
   },
   "Tokens": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -233459,6 +233964,15 @@
       "routes/admin"
     ]
   },
+  "Trust it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Trust the agent earned": {
     "sites": 1,
     "scope": [
@@ -233469,16 +233983,7 @@
     ]
   },
   "Trusted": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "Trusted for financial work": {
-    "sites": 1,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -233841,7 +234346,7 @@
     ]
   },
   "Turn off": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -233878,12 +234383,22 @@
     ]
   },
   "Turn on": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/agent-control"
+    ]
+  },
+  "Turn on Private network": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "routes/agent-control"
     ]
   },
   "Turn on Trenova Capture, set the scan profiles people pick from, and see every computer paired to scan": {
@@ -235056,6 +235571,15 @@
     "areas": [
       "apps/dash/routes",
       "routes/worker"
+    ]
+  },
+  "Unchanged": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Unclassified": {
@@ -236565,6 +237089,15 @@
       "domain/telematics"
     ]
   },
+  "Unrouted work is refused": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Unsafe": {
     "sites": 2,
     "scope": [
@@ -236879,6 +237412,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Until then": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Until you author one, everyone lands on the home screen Trenova ships for their role.": {
@@ -238755,6 +239297,15 @@
       "routes/edi"
     ]
   },
+  "Used to show spend on the overview.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Used to verify inbound signatures and signed MDNs from this partner.": {
     "sites": 1,
     "scope": [
@@ -239254,15 +239805,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Valid JSON only (no schema)": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Valid for": {
@@ -239836,8 +240378,8 @@
       "routes/formula-template"
     ]
   },
-  "Vectors from this model are what agents search by meaning. Changing the model or its size re-indexes everything it has embedded.": {
-    "sites": 1,
+  "Vector size": {
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -245153,6 +245695,15 @@
       "routes/rate-agreement"
     ]
   },
+  "What happens at the cap is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
+    ]
+  },
   "What happens to a shipment no rate agreement covers. Falling back to a formula template is exactly how rating worked before agreements existed.": {
     "sites": 1,
     "scope": [
@@ -245406,12 +245957,14 @@
     ]
   },
   "What it handles": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "domain/aiprovider"
+      "domain/aiprovider",
+      "routes/agent-control"
     ]
   },
   "What it is": {
@@ -247165,6 +247718,15 @@
       "apps/web/components"
     ]
   },
+  "When you save": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "When your subscriptions match database changes, notifications will appear here.": {
     "sites": 1,
     "scope": [
@@ -247355,15 +247917,6 @@
     ],
     "areas": [
       "routes/carrier"
-    ]
-  },
-  "Where requests go and how they are authenticated.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Where search by meaning stands could not be loaded. Try again shortly.": {
@@ -249472,15 +250025,6 @@
       "apps/web/lib"
     ]
   },
-  "With both prices set, every call and every turn shows what it cost.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "With no end date this runs until you call it back. Set one if you are covering a specific absence.": {
     "sites": 1,
     "scope": [
@@ -249801,24 +250345,6 @@
     ],
     "areas": [
       "packages/shared/types"
-    ]
-  },
-  "Work is offered in this order. A cheap model can take a task first and hand off when it cannot.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "Work is offered to providers in priority order. Assign a cheap model to high-volume tasks and keep a stronger one behind it.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Work item assigned": {
@@ -253020,6 +253546,15 @@
       "apps/dash/_components"
     ]
   },
+  "Your network · no key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Your new password is active. Any other sessions on this account have been signed out.": {
     "sites": 1,
     "scope": [
@@ -254060,6 +254595,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "at once": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "at risk": {
@@ -256964,6 +257508,15 @@
       "routes/formula-template"
     ]
   },
+  "first for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "first {0} shown": {
     "sites": 1,
     "scope": [
@@ -257422,6 +257975,15 @@
       "routes/worker"
     ]
   },
+  "last used {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "last {0} months": {
     "sites": 1,
     "scope": [
@@ -257674,6 +258236,15 @@
       "routes/worker"
     ]
   },
+  "needs key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "needs your approval": {
     "sites": 1,
     "scope": [
@@ -257827,7 +258398,34 @@
       "apps/web/lib"
     ]
   },
+  "no vector size": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "none would have failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "not trusted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "not used yet": {
     "sites": 1,
     "scope": [
       "ts"
@@ -258009,6 +258607,15 @@
     ],
     "areas": [
       "routes/fiscal-year"
+    ]
+  },
+  "old key works until {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "oldest {0}d": {
@@ -258454,15 +259061,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "qwen3:32b": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "rate agreement": {
@@ -259118,6 +259716,15 @@
       "routes/agent-control"
     ]
   },
+  "then {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "this card": {
     "sites": 1,
     "scope": [
@@ -259215,15 +259822,6 @@
     ],
     "areas": [
       "apps/dash/_components"
-    ]
-  },
-  "this provider": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "throttled": {
@@ -259972,15 +260570,6 @@
       "routes/onboarding"
     ]
   },
-  "{ \"chat_template_kwargs\": { \"enable_thinking\": true }, \"reasoning_budget\": 16384 }": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "{\"LTL\":\"M\"}": {
     "sites": 1,
     "scope": [
@@ -259997,6 +260586,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{\"top_k\": 40}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{\"transactionSet\":\"204\"}": {
@@ -260722,15 +261320,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "{0, plural, one {# dimension} other {# dimensions}}": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "{0, plural, one {# dispute moved to review} other {# disputes moved to review}}": {
@@ -264525,7 +265114,7 @@
     ]
   },
   "{0} added": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -265001,6 +265590,15 @@
       "routes/admin"
     ]
   },
+  "{0} calls · {1}% failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} can only receive documents.": {
     "sites": 1,
     "scope": [
@@ -265292,6 +265890,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} context": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} copy": {
@@ -267344,7 +267951,7 @@
     ]
   },
   "{0} is off": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -267353,7 +267960,7 @@
     ]
   },
   "{0} is on": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -267362,6 +267969,15 @@
     ]
   },
   "{0} is on for your agents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0} is on · {1} now covered": {
     "sites": 1,
     "scope": [
       "ts"
@@ -268358,6 +268974,15 @@
       "routes/desk"
     ]
   },
+  "{0} needs a trusted provider. It's assigned here but will be skipped.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} negative margin": {
     "sites": 1,
     "scope": [
@@ -268744,7 +269369,7 @@
     ]
   },
   "{0} of {1} covered": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -269529,6 +270154,15 @@
       "apps/web/components"
     ]
   },
+  "{0} providers · top to bottom": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} pts": {
     "sites": 1,
     "scope": [
@@ -269739,7 +270373,7 @@
     ]
   },
   "{0} removed": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -270501,6 +271135,15 @@
     ],
     "areas": [
       "routes/detention-intelligence"
+    ]
+  },
+  "{0} takes it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} tax + {1} surcharge, in {2}": {
@@ -271756,6 +272399,15 @@
       "routes/carrier-sourcing"
     ]
   },
+  "{0} · {1} ms": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} · {1} points": {
     "sites": 1,
     "scope": [
@@ -272644,7 +273296,7 @@
     ]
   },
   "{0}s": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],

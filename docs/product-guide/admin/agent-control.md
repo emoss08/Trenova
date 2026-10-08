@@ -33,34 +33,58 @@ up providers and agents; reviewers use **Activity** to approve or reject what ag
 ## Tasks
 
 ### Connect an AI provider
-Keywords: add LLM, model endpoint, OpenAI, API key, gateway, self-hosted model
-1. Open [AI control](/admin/agent-control) and select **Providers** in the rail.
-2. Select **New provider**.
-3. Optionally pick a **Deployment** under **Start from a preset** to fill in the endpoint and
-   output settings for a known deployment.
-4. Under **Endpoint**, fill in **Name**, **Protocol**, **Model**, **Base URL** and the API key if
-   the provider needs one.
-5. Under **Routing**, choose the AI tasks in **Handles these tasks** and set **Priority** (lower
-   runs first; providers behind it act as fallbacks). Turn on **Trusted for financial work** only
-   for a provider that may take tasks that read sensitive records.
-6. Leave **Enabled** on and select **Save**.
-7. Back on the provider's card, select **Test** to check the endpoint answers and honours JSON
-   schemas.
+Keywords: add LLM, model endpoint, OpenAI, API key, gateway, self-hosted model, Ollama, vLLM
+1. Open [AI control](/admin/agent-control) and select **Providers**.
+2. Select **New provider** and pick the vendor, under **Hosted** or **On your network**. With no
+   provider yet, pick it from **Connect a model to wake your agents**.
+3. Under **Connection**, check **Name**, **Kind** and **Base URL**. A base URL on your own network
+   needs **Private network**; select **Turn on Private network** when the editor asks.
+4. Under **Model**, select **Fetch models** to pick from what the endpoint actually serves, or
+   type the **Model ID**.
+5. Paste the **Key** under **API key** when the provider needs one.
+6. Under **What it handles**, choose the tasks. **When you save** lists every task whose provider
+   changes.
+7. Select **Test draft**. When it connects, the save button reads **Add and turn on**; otherwise
+   **Add provider** saves it off until it passes.
+
+### Order providers and route tasks
+Keywords: provider priority, fallback, routing, which provider, reorder providers, assign task
+1. Open [AI control](/admin/agent-control) and select **Providers**.
+2. **The chain** lists providers top to bottom; each task goes to the first one that is on,
+   assigned and, for tasks marked with a shield, **Trusted**. Drag a row to reorder, or open it and
+   select **Move up** or **Move down**.
+3. Under **Routing**, select a cell to assign or unassign a task. **Goes to** shows where each task
+   lands, and a task nothing takes says what happens instead.
+4. Providers that are off keep their place in line; select **Show** to list them.
+
+### Limit what a provider may spend or how long it waits
+Keywords: timeout, concurrency, monthly cap, spend limit, budget per provider, price per million tokens
+1. Open the provider in **Providers** and select **Edit connection**.
+2. Under **Limits and price**, set **Timeout** and **Concurrent calls**. A call past the timeout,
+   or past the concurrent limit, moves to the next provider.
+3. Set **Monthly spend cap** and choose **At the cap**: **Hand to next** passes work on, **Stop**
+   fails it. Set **Input price** and **Output price** so spend can be counted.
+4. Select **Save changes**.
+
+### Replace a provider's API key
+Keywords: rotate key, new API key, key rotation, expired key, leaked key
+1. Open the provider in **Providers** and select **Edit connection**.
+2. Under **API key**, paste the new key into **Replace key**.
+3. Leave **Keep the old key working for 24 hours** on so calls fall back to the old key while
+   other systems switch over, then select **Save changes**.
 
 ### Set up an embedding provider
 Keywords: embeddings, embedding model, semantic search, search by meaning, vector search, Voyage, Gemini embeddings, OpenAI embeddings, nomic-embed-text, retrieval
-1. Open [AI control](/admin/agent-control) and select **Providers** in the rail.
-2. Select **New provider** and, under **Start from a preset**, pick one of the embedding presets:
-   Voyage AI, Gemini, OpenAI, or Ollama for a model on your own hardware. The preset fills in the
-   endpoint, the model, and the embedding task.
-3. Under **Routing**, **Handles these tasks** shows **Embedding** ticked. An embedding model serves
-   nothing else, so leave the other tasks for a separate provider. Anthropic has no embedding
-   endpoint, so the task cannot be ticked on an Anthropic provider.
-4. Under **Embedding**, check **Dimensions** matches the vector size the model returns and set
-   **Input style** to how the endpoint tells a stored document from a search query.
-5. Enter the API key, optionally the **Input price, USD per million tokens**, and select **Save**.
-6. Select **Test** on the provider's card. The test asks for one embedding and fails when the
-   model returns a different size than **Dimensions**.
+1. Open [AI control](/admin/agent-control) and select **Providers**.
+2. Select **New provider** and pick one of the embedding vendors: Voyage AI, Gemini, OpenAI, or
+   Ollama for a model on your own hardware. It fills in the endpoint, the model and the
+   **Embedding** task.
+3. An embedding model serves nothing else, so leave the other tasks under **What it handles** for a
+   separate provider. Anthropic has no embedding endpoint.
+4. Under **Advanced**, check **Vector size** matches what the model returns and set **Embedding
+   input** to how the endpoint tells a stored document from a search query.
+5. Paste the key, select **Test draft**, then **Add and turn on**. The test asks for one embedding
+   and fails when the model returns a different size.
 
 ### Let agents search the web
 Keywords: web search, internet, Exa, look up regulations, ELD rules, hours of service, current information, extension marketplace

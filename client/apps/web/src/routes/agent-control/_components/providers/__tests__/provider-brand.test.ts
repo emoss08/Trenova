@@ -41,6 +41,15 @@ describe("providerBrandDomain", () => {
     ).toBeNull();
   });
 
+  it("names Ollama on a private endpoint, since only Ollama speaks its protocol", () => {
+    expect(
+      providerBrandDomain({ kind: "Ollama", baseUrl: "http://localhost:11434" }, presets),
+    ).toBe("ollama.com");
+    expect(
+      providerBrandDomain({ kind: "Ollama", baseUrl: "http://10.0.0.5:11434" }, presets),
+    ).toBe("ollama.com");
+  });
+
   it("falls back to the protocol's vendor when no endpoint is set", () => {
     expect(providerBrandDomain({ kind: "AnthropicMessages", baseUrl: "" }, presets)).toBe(
       "anthropic.com",

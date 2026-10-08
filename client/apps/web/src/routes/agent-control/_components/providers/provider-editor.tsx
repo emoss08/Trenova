@@ -23,7 +23,7 @@ import { formatRelativeTime } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium, formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
-import { cn } from "@trenova/shared/lib/utils";
+import { cn, formatFileSize } from "@trenova/shared/lib/utils";
 import { useCallback, useMemo, useState } from "react";
 import {
   FormProvider,
@@ -893,7 +893,7 @@ function ModelSection({ models, local }: { models: EndpointModels; local: boolea
     if (option.contextWindow) {
       parts.push(t("{0} context", formatContext(option.contextWindow)));
     }
-    if (option.sizeBytes) parts.push(formatBytes(option.sizeBytes));
+    if (option.sizeBytes) parts.push(formatFileSize(option.sizeBytes));
     if (option.loaded) parts.push(t("loaded"));
     return parts.join(" · ");
   };
@@ -957,11 +957,6 @@ function ModelSection({ models, local }: { models: EndpointModels; local: boolea
   );
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes >= 1e9) return `${(bytes / 1e9).toFixed(1)} GB`;
-  if (bytes >= 1e6) return `${Math.round(bytes / 1e6)} MB`;
-  return `${Math.round(bytes / 1e3)} KB`;
-}
 
 /** Where each task goes once the editor is saved, for the tasks that change. */
 function RouteImpact({

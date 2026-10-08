@@ -60,7 +60,9 @@ export function providerBrandDomain(
     return null;
   }
   if (isPrivateHost(host)) {
-    return null;
+    // A private host could be any server, but Ollama's own protocol is spoken
+    // by Ollama alone, so that one still names its vendor.
+    return provider.kind === "Ollama" ? (KIND_VENDOR_DOMAIN.Ollama ?? null) : null;
   }
 
   const preset = presets.find(
