@@ -24747,6 +24747,15 @@
       "apps/web/components"
     ]
   },
+  "Ask an AI provider's endpoint which models it serves": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Ask an admin": {
     "sites": 1,
     "scope": [
@@ -42062,6 +42071,15 @@
     ],
     "areas": [
       "service/agentdecisionqueueservice"
+    ]
+  },
+  "Choose at least one task": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiproviderservice"
     ]
   },
   "Choose at least one teammate to share with": {
@@ -77162,11 +77180,12 @@
     ]
   },
   "Endpoint is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "api/graphql",
       "domain/notification"
     ]
   },
@@ -124172,14 +124191,15 @@
     ]
   },
   "Model is required": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/types",
-      "domain/aiprovider"
+      "domain/aiprovider",
+      "service/aiproviderservice"
     ]
   },
   "Model must be between 0 and 50 characters": {
@@ -161968,6 +161988,15 @@
     ]
   },
   "Probe an AI provider once and record whether it answered": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Probe an unsaved AI provider once and record nothing": {
     "sites": 1,
     "scope": [
       "go"
@@ -229409,6 +229438,15 @@
       "domain/aiprovider"
     ]
   },
+  "Timeout must be between 5 and 600 seconds": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiproviderservice"
+    ]
+  },
   "Timesheet": {
     "sites": 1,
     "scope": [
@@ -236530,6 +236568,15 @@
       "service/workeremploymentservice"
     ]
   },
+  "Unknown embedding input style": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiproviderservice"
+    ]
+  },
   "Unknown entity \"{0}\"": {
     "sites": 3,
     "scope": [
@@ -236666,6 +236713,15 @@
       "domain/worker"
     ]
   },
+  "Unknown provider kind": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
+    ]
+  },
   "Unknown quick action: {0}": {
     "sites": 1,
     "scope": [
@@ -236783,6 +236839,15 @@
       "service/captureservice"
     ]
   },
+  "Unknown structured output mode": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiproviderservice"
+    ]
+  },
   "Unknown tab": {
     "sites": 1,
     "scope": [
@@ -236802,7 +236867,7 @@
     ]
   },
   "Unknown task": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -241071,12 +241136,13 @@
     ]
   },
   "Version is required": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "service/aiproviderservice"
     ]
   },
   "Version is required to update a memory": {
@@ -265890,12 +265956,13 @@
     ]
   },
   "{0} cannot be cleared": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go"
     ],
     "areas": [
-      "api/graphql"
+      "api/graphql",
+      "service/aiproviderservice"
     ]
   },
   "{0} cannot be edited yet": {
