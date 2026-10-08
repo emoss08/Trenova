@@ -16,9 +16,9 @@ func (s *Service) Patch(
 	req *services.PatchAIProviderRequest,
 	actor *services.RequestActor,
 ) (*aiprovider.Provider, error) {
-	if req.Version <= 0 {
+	if req.Version < 0 {
 		return nil, errortypes.NewValidationError(
-			"version", errortypes.ErrRequired, "Version is required",
+			"version", errortypes.ErrInvalid, "Version is not valid",
 		)
 	}
 
@@ -30,7 +30,7 @@ func (s *Service) Patch(
 	saved, previous, err := s.modify(ctx, &modifyRequest{
 		tenantInfo: req.TenantInfo,
 		providerID: req.ID,
-		version:    req.Version,
+		version:    &req.Version,
 		actor:      actor,
 		edit: func(provider *aiprovider.Provider) {
 			for _, edit := range edits {

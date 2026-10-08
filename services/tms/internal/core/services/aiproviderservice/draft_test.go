@@ -2,6 +2,7 @@ package aiproviderservice
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
@@ -168,4 +169,19 @@ func TestPatchEdits_RefusesToClearARequiredSwitch(t *testing.T) {
 	}
 	assert.False(t, provider.Enabled)
 	assert.True(t, provider.Trusted, "a field left out is left alone")
+}
+
+func TestPatch_AcceptsAProviderThatWasNeverEdited(t *testing.T) {
+	t.Parallel()
+
+	notFound := errors.New("provider not found")
+	svc := newTestService(&fakeProviderRepo{getErr: notFound}, &fakeProber{})
+	on := true
+
+	_, err := svc.Patch(t.Context(), &services.PatchAIProviderRequest{
+		ID:      pulid.MustNew("aiprv_"),
+		Version: 0,
+		Enabled: optional.Some(&on),
+	}, nil)
+	require.ErrorIs(t, err, notFound, "version 0 is a provider's first version, not a missing one")
 }

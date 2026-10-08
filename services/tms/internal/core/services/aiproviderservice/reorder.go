@@ -117,8 +117,8 @@ func (s *Service) AssignTask(
 type modifyRequest struct {
 	tenantInfo pagination.TenantInfo
 	providerID pulid.ID
-	// version is the version the editor loaded; zero takes the stored one.
-	version int64
+	// version is the version the editor loaded; nil takes the stored one.
+	version *int64
 	actor   *services.RequestActor
 	edit    func(*aiprovider.Provider)
 }
@@ -139,9 +139,9 @@ func (s *Service) modify(
 	updated := *existing
 	updated.Tasks = slices.Clone(existing.Tasks)
 	loaded := existing.Version
-	if req.version != 0 {
-		loaded = req.version
-		updated.Version = req.version
+	if req.version != nil {
+		loaded = *req.version
+		updated.Version = *req.version
 	}
 	req.edit(&updated)
 
