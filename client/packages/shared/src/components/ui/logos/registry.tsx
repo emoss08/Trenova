@@ -27,10 +27,11 @@ export type BrandMark = ComponentType<{ className?: string }>;
  * them means a logo renders with no API key, no network request and no layout
  * shift, which the Brandfetch CDN cannot promise.
  *
- * Each is redrawn flat in one colour from the vendor's own geometry, used to
- * name that vendor in a list of endpoints and nothing else. The Azure, Bedrock,
- * DeepInfra and Voyage marks are taken from LobeHub's icon set
- * (@lobehub/icons-static-svg 1.95.1, MIT, Copyright (c) LobeHub).
+ * Each keeps its vendor's own colours, and is used to name that vendor in a
+ * list of endpoints and nothing else. A vendor whose mark is black (Anthropic,
+ * OpenAI, OpenRouter, Ollama, Groq, LM Studio) draws it in the text colour, so it stays
+ * legible in either theme. The coloured marks are taken from LobeHub's icon
+ * set (@lobehub/icons-static-svg 1.95.1, MIT, Copyright (c) LobeHub).
  */
 const MARKS_BY_PRESET: Record<string, BrandMark> = {
   anthropic: AnthropicLogo,

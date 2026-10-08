@@ -163,6 +163,8 @@ const SHOTS = [
   { name: "providers-light", scenario: {}, query: "?tab=providers", colorScheme: "light" },
   { name: "providers-many", scenario: { aiProviders: "many" }, query: "?tab=providers" },
   { name: "providers-empty", scenario: { aiProviders: "none" }, query: "?tab=providers" },
+  { name: "providers-empty-light", scenario: { aiProviders: "none" }, query: "?tab=providers", colorScheme: "light" },
+  { name: "providers-many-light", scenario: { aiProviders: "many" }, query: "?tab=providers", colorScheme: "light" },
   {
     name: "providers-show-off",
     scenario: { aiProviders: "many" },
