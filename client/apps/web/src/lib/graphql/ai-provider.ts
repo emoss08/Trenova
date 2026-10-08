@@ -2,6 +2,8 @@ import {
   AiProviderCardFieldsFragmentDoc,
   AiProviderCardsDocument,
   AiProviderDetailDocument,
+  AiProviderLimitFieldsFragmentDoc,
+  AiProviderLimitsDocument,
   AiProviderModelsDocument,
   AiProviderUsageDailyDocument,
   AiRoutePreviewDocument,
@@ -9,6 +11,7 @@ import {
   ReorderAiProvidersDocument,
   TestAiProviderDraftDocument,
   type AiProviderCardFieldsFragment,
+  type AiProviderLimitFieldsFragment,
   type AiProviderDraftTestInput,
   type AiProviderEndpointInput,
   type AiProviderModelsQuery,
@@ -23,7 +26,13 @@ import { requestGraphQL } from "@trenova/shared/lib/graphql";
 
 export type AIProviderRow = AiProviderCardFieldsFragment;
 export type AIProviderTestOutcome = NonNullable<AIProviderRow["lastTest"]>;
-export type AIProviderKeyInfo = NonNullable<AIProviderRow["apiKey"]>;
+/**
+ * A provider's limits and key, asked for apart from its card so the many places that
+ * list providers do not depend on them; only the providers tab and its editor read them.
+ */
+export type AIProviderLimits = Omit<AiProviderLimitFieldsFragment, " $fragmentName">;
+export type AIProviderWithLimits = AIProviderRow & AIProviderLimits;
+export type AIProviderKeyInfo = NonNullable<AIProviderLimits["apiKey"]>;
 export type AIProviderModelOption = AiProviderModelsQuery["aiProviderModels"][number];
 export type AIProviderDraftTestResult = TestAiProviderDraftMutation["testAIProviderDraft"];
 export type AITaskRoute = AiRoutePreviewQuery["aiRoutePreview"][number];
@@ -64,7 +73,7 @@ export async function fetchAIProviders(options?: RequestOptions): Promise<AIProv
 export async function fetchAIProvider(
   id: string,
   options?: RequestOptions,
-): Promise<AIProviderRow | null> {
+): Promise<AIProviderWithLimits | null> {
   const data = await requestGraphQL({
     document: AiProviderDetailDocument,
     operationName: "AIProviderDetail",
@@ -72,7 +81,37 @@ export async function fetchAIProvider(
     signal: options?.signal,
   });
 
-  return data.aiProvider ? getFragmentData(AiProviderCardFieldsFragmentDoc, data.aiProvider) : null;
+  if (!data.aiProvider) {
+    return null;
+  }
+  return {
+    ...getFragmentData(AiProviderCardFieldsFragmentDoc, data.aiProvider),
+    ...limitsOf(getFragmentData(AiProviderLimitFieldsFragmentDoc, data.aiProvider)),
+  };
+}
+
+function limitsOf(fragment: AiProviderLimitFieldsFragment): AIProviderLimits {
+  const { " $fragmentName": _marker, ...limits } = fragment;
+  return limits;
+}
+
+/** Every provider's limits and key, by provider ID. */
+export async function fetchAIProviderLimits(
+  options?: RequestOptions,
+): Promise<Map<string, AIProviderLimits>> {
+  const data = await requestGraphQL({
+    document: AiProviderLimitsDocument,
+    operationName: "AIProviderLimits",
+    variables: { input: { first: 100 } },
+    signal: options?.signal,
+  });
+
+  return new Map(
+    data.aiProviders.edges.map((edge) => {
+      const limits = limitsOf(getFragmentData(AiProviderLimitFieldsFragmentDoc, edge.node));
+      return [String(limits.id), limits] as const;
+    }),
+  );
 }
 
 /** The models an endpoint says it serves, asked of the endpoint itself. */

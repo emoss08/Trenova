@@ -108096,6 +108096,15 @@
       "routes/agent-control"
     ]
   },
+  "Its limits and key are still loading.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Its note is what accounts payable reads about the carrier's invoice, so a run that has read outside text proposes it.": {
     "sites": 1,
     "scope": [
@@ -265887,6 +265896,15 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "{0} cannot be edited yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} cannot be filtered": {

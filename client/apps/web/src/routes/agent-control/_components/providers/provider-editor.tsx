@@ -4,6 +4,7 @@ import {
   type AIProviderDraftTestResult,
   type AIProviderModelOption,
   type AIProviderRow,
+  type AIProviderWithLimits,
   type AITaskRoute,
 } from "@/lib/graphql/ai-provider";
 import { queries } from "@/lib/queries";
@@ -68,7 +69,7 @@ const ROUTE_PREVIEW_DEBOUNCE_MS = 250;
 
 /** What the editor is open on: a saved provider, or a new one from a preset. */
 export type ProviderEditorTarget =
-  | { kind: "edit"; provider: AIProviderRow }
+  | { kind: "edit"; provider: AIProviderWithLimits }
   | { kind: "create"; preset: AIProviderPreset };
 
 type ProviderEditorProps = {
@@ -596,11 +597,7 @@ export function ProviderEditor({
         fields={fields}
         sections={sections}
         icon={
-          <Mark
-            provider={mark}
-            preset={target.kind === "create" ? target.preset : null}
-            s={36}
-          />
+          <Mark provider={mark} preset={target.kind === "create" ? target.preset : null} s={36} />
         }
         title={
           saved ? t("Edit {0}", saved.name) : t("Add {0}", values.name.trim() || t("provider"))
@@ -799,7 +796,7 @@ function FieldChips({ metas }: { metas: readonly TaskMeta[] }) {
 }
 
 /** The current key, described: its ends, who added it, when it was last used. */
-function StoredKey({ info }: { info: NonNullable<AIProviderRow["apiKey"]> }) {
+function StoredKey({ info }: { info: NonNullable<AIProviderWithLimits["apiKey"]> }) {
   const t = useT();
   const [now] = useState(() => Math.floor(Date.now() / 1000));
   const added = info.addedBy?.name
@@ -956,7 +953,6 @@ function ModelSection({ models, local }: { models: EndpointModels; local: boolea
     </F>
   );
 }
-
 
 /** Where each task goes once the editor is saved, for the tasks that change. */
 function RouteImpact({

@@ -2,6 +2,7 @@ import type {
   AIProviderDraftTest,
   AIProviderRoutingDraft,
   AIProviderRow,
+  AIProviderWithLimits,
 } from "@/lib/graphql/ai-provider";
 import {
   aiProviderKindSchema,
@@ -142,7 +143,7 @@ function extraBodyToText(value: unknown): string {
 }
 
 /** A saved provider as its editor opens it. The key field starts empty: the secret never comes back. */
-export function editorValuesFromProvider(provider: AIProviderRow): ProviderEditorValues {
+export function editorValuesFromProvider(provider: AIProviderWithLimits): ProviderEditorValues {
   return {
     name: provider.name,
     description: provider.description,

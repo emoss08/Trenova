@@ -31,6 +31,13 @@ fragment AIProviderCardFields on AIProvider {
     detail
     testedAt
   }
+  version
+  createdAt
+  updatedAt
+}
+
+fragment AIProviderLimitFields on AIProvider {
+  id
   timeoutSeconds
   maxConcurrent
   monthlyCapUsd
@@ -47,9 +54,6 @@ fragment AIProviderCardFields on AIProvider {
     lastUsedAt
     previousKeyExpiresAt
   }
-  version
-  createdAt
-  updatedAt
 }
 
 query AIProviderCards($input: DataTableConnectionInput!) {
@@ -68,6 +72,17 @@ query AIProviderCards($input: DataTableConnectionInput!) {
 query AIProviderDetail($id: ID!) {
   aiProvider(id: $id) {
     ...AIProviderCardFields
+    ...AIProviderLimitFields
+  }
+}
+
+query AIProviderLimits($input: DataTableConnectionInput!) {
+  aiProviders(input: $input) {
+    edges {
+      node {
+        ...AIProviderLimitFields
+      }
+    }
   }
 }
 

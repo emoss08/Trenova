@@ -205,6 +205,9 @@ export const PROVIDER_HANDLERS = {
   AIProviderDetail: (state, v) => ({
     aiProvider: state.ai.providers.find((provider) => provider.node.id === v.id)?.node ?? null,
   }),
+  AIProviderLimits: (state) => ({
+    aiProviders: { edges: state.ai.providers.map((provider) => ({ node: provider.node })) },
+  }),
   AIRoutePreview: (state, v) => ({ aiRoutePreview: routePreview(state, v.draft) }),
   AIProviderModels: (_state, v) => ({
     aiProviderModels: (MODELS[v.input.kind] ?? []).map(([id, contextWindow, sizeBytes, embedding, price, loaded]) => ({

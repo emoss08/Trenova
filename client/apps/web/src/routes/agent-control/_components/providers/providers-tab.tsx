@@ -80,6 +80,7 @@ export default function ProvidersTab() {
 
   const listQuery = useQuery(queries.aiProvider.list());
   const catalogQuery = useQuery(queries.aiProvider.catalog());
+  const limitsQuery = useQuery(queries.aiProvider.limits());
   const summaryQuery = useQuery({
     ...queries.aiControl.summary("Providers"),
     staleTime: SUMMARY_STALE_MS,
@@ -313,10 +314,23 @@ export default function ProvidersTab() {
     setMenuOpen(false);
     setEditor({ kind: "create", preset });
   }, []);
-  const editProvider = useCallback((provider: AIProviderRow) => {
-    setOpenId(null);
-    setEditor({ kind: "edit", provider });
-  }, []);
+  const editProvider = useCallback(
+    (provider: AIProviderRow) => {
+      const limits = limitsQuery.data?.get(provider.id);
+      if (!limits) {
+        toast.error(t("{0} cannot be edited yet", provider.name), {
+          description:
+            limitsQuery.error instanceof Error
+              ? limitsQuery.error.message
+              : t("Its limits and key are still loading."),
+        });
+        return;
+      }
+      setOpenId(null);
+      setEditor({ kind: "edit", provider: { ...provider, ...limits } });
+    },
+    [limitsQuery.data, limitsQuery.error, t],
+  );
   const scrollTo = useCallback((id: string) => {
     window.setTimeout(
       () => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }),

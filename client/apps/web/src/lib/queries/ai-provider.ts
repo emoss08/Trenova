@@ -1,5 +1,6 @@
 import {
   fetchAIProvider,
+  fetchAIProviderLimits,
   fetchAIProviderModels,
   fetchAIProviders,
   fetchAIProviderUsageDaily,
@@ -15,6 +16,10 @@ export const aiProvider = createQueryKeys("aiProvider", {
   list: () => ({
     queryKey: ["ai-provider-list"],
     queryFn: ({ signal }: { signal?: AbortSignal }) => fetchAIProviders({ signal }),
+  }),
+  limits: () => ({
+    queryKey: ["ai-provider-limits"],
+    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchAIProviderLimits({ signal }),
   }),
   detail: (id: string) => ({
     queryKey: ["ai-provider", id],
