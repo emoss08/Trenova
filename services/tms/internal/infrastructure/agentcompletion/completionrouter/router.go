@@ -45,6 +45,11 @@ type Params struct {
 	Metrics  *metrics.Registry                      `optional:"true"`
 	Breakers repositories.ProviderBreakerRepository `optional:"true"`
 	Quota    serviceports.QuotaGuard                `optional:"true"`
+	// Spend, Slots and Keys enforce each provider's monthly cap and calls at
+	// once, and record when its key was last used.
+	Spend serviceports.AIProviderSpendService  `optional:"true"`
+	Slots repositories.ProviderSlotRepository  `optional:"true"`
+	Keys  repositories.AIProviderKeyRepository `optional:"true"`
 }
 
 type Service struct {
@@ -61,6 +66,9 @@ type Service struct {
 	// health rests a provider that keeps failing, so a turn does not pay for
 	// attempts on a provider that is down before reaching one that is up.
 	health *providerHealth
+	// limits holds each provider to its cap, its calls at once and its
+	// timeout.
+	limits *providerLimits
 	// pause waits out a backoff. It is a field so tests can count the waits
 	// instead of sitting through them.
 	pause func(ctx context.Context, wait time.Duration) error
@@ -93,6 +101,7 @@ func newService(p Params) *Service {
 		genAI:         p.Metrics.GenAI(),
 		adapters:      modeladapter.NewRegistry(),
 		health:        newProviderHealth(nil).share(p.Breakers, logger),
+		limits:        newProviderLimits(&p),
 		pause:         pauseFor,
 		clients:       make(map[bool]*http.Client, 2),
 		streamClients: make(map[bool]*http.Client, 2),
@@ -190,6 +199,9 @@ func (s *Service) candidatesFor(
 
 	ready, err := s.awake(ctx, usable)
 	if err != nil {
+		return nil, err
+	}
+	if ready, err = s.underCap(ctx, req.TenantInfo, ready); err != nil {
 		return nil, err
 	}
 
@@ -335,6 +347,7 @@ func (s *Service) runAmong(
 			failover:    idx > 0,
 		})
 		if attemptErr == nil {
+			s.touchKey(ctx, provider, req.TenantInfo)
 			outcome.LatencyMs = latency.Milliseconds()
 			outcome.CostUSD = provider.CostFor(outcome.InputTokens, outcome.OutputTokens)
 
@@ -391,12 +404,21 @@ func (s *Service) attempt(
 		return nil, err
 	}
 
-	apiKey, err := s.resolveAPIKey(provider)
+	timeout := provider.ResolvedTimeout()
+	release, err := s.claimSlot(ctx, provider, timeout)
 	if err != nil {
 		return nil, err
 	}
+	defer release()
 
-	resp, err := s.executeWithRetry(ctx, adapter, s.callFor(provider, apiKey, req))
+	limited := s.withDeadline(ctx, timeout)
+	var resp *modeladapter.Response
+	err = limited.finish(s.withKeyFallback(provider, func(apiKey string) error {
+		var callErr error
+		resp, callErr = s.executeWithRetry(limited.ctx, adapter, s.callFor(provider, apiKey, req))
+
+		return callErr
+	}))
 	if err != nil {
 		return nil, err
 	}
