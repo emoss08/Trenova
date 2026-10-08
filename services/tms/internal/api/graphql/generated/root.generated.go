@@ -2196,6 +2196,7 @@ type QueryResolver interface {
 	AgentException(ctx context.Context, id string) (*agent.AgentException, error)
 	AgentControl(ctx context.Context) (*tenant.AgentControl, error)
 	AgentPromotionPreview(ctx context.Context, threshold int) ([]*services.ToolPromotion, error)
+	AgentActivitySummary(ctx context.Context, since int) (*gqlmodel.AgentActivitySummary, error)
 	AgentDefinitions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentDefinitionConnection, error)
 	AgentInstructionLint(ctx context.Context, input gqlmodel.AgentInstructionLintInput) ([]*agentlint.Finding, error)
 	AgentShadowReport(ctx context.Context, agentID string, days *int) (*agentshadow.Report, error)
@@ -6017,6 +6018,39 @@ extend type Mutation {
   dismissAgentMemorySuggestion(id: ID!, version: Int!): AgentMemory!
   resolveAgentException(id: ID!, input: AgentExceptionResolveInput!): AgentException!
   updateAgentControl(input: AgentControlInput!): AgentControl!
+}
+
+"""
+What the organization's agents did since a moment the reader names (the start of their day),
+for the head of Activity. Counts a reader may not see are null.
+"""
+type AgentActivitySummary {
+  since: Timestamp!
+  "Runs started since then."
+  runs: Int!
+  "Runs started since then that failed."
+  runsFailed: Int!
+  "Runs working now, whenever they started."
+  runsWorking: Int!
+  "Runs waiting on a person's decision, whenever they started."
+  runsAwaiting: Int!
+  "Proposals waiting on a person; null without read access to agent proposals."
+  pendingProposals: Int
+  "When the longest-waiting proposal was made; null when none waits or it may not be read."
+  oldestPendingAt: Timestamp
+  "Exceptions open or in review; null without read access to agent exceptions."
+  openExceptions: Int
+  "The days the decisions below are counted over."
+  decisionWindowDays: Int!
+  "Proposals people decided in the window; null without read access to agent proposals."
+  decided: Int
+  "The share of those approved exactly as proposed; null when none was decided or it may not be read."
+  approvedAsProposed: Float
+}
+
+extend type Query {
+  "What agents did since the moment given, at most 31 days ago."
+  agentActivitySummary(since: Timestamp!): AgentActivitySummary!
 }
 `, BuiltIn: false},
 	{Name: "../schema/agentdefinition.graphqls", Input: `enum AgentTemplate {

@@ -166,7 +166,10 @@ export function buildRailItems(
     const pending = counts?.pendingProposals ?? 0;
     const children: RailItem["children"] = [{ view: "runs", label: t("Runs") }];
     if (permissions.proposals) {
-      children.push({ view: "proposals", label: t("Proposals") });
+      children.push({
+        view: "proposals",
+        label: pending > 0 ? t("Proposals · {0}", pending) : t("Proposals"),
+      });
       children.push({ view: "plans", label: t("Plans") });
     }
     children.push({ view: "evaluations", label: t("Evaluations") });

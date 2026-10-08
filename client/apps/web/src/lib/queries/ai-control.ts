@@ -6,6 +6,7 @@ import {
   fetchAgentRoster,
   fetchWorkingRuns,
 } from "@/lib/graphql/ai-control";
+import { fetchAgentActivitySummary } from "@/lib/graphql/agent-activity";
 import type { AiControlTab } from "@trenova/graphql/generated/graphql";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
@@ -13,6 +14,10 @@ export const aiControl = createQueryKeys("aiControl", {
   summary: (tab: AiControlTab) => ({
     queryKey: [tab],
     queryFn: ({ signal }: { signal?: AbortSignal }) => fetchAIControlSummary(tab, { signal }),
+  }),
+  activity: (since: number) => ({
+    queryKey: [since],
+    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchAgentActivitySummary(since, { signal }),
   }),
   promotionPreview: (threshold: number) => ({
     queryKey: [threshold],
@@ -33,6 +38,7 @@ export const aiControl = createQueryKeys("aiControl", {
   }),
   daily: (days: number, timezone: string) => ({
     queryKey: [days, timezone],
-    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchAIUsageDaily(days, timezone, { signal }),
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      fetchAIUsageDaily(days, timezone, { signal }),
   }),
 });

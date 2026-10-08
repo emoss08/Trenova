@@ -678,6 +678,7 @@
   "Active shipments with no usable assignment, and the revenue waiting on them": "Envíos activos sin una asignación utilizable y los ingresos que dependen de ellos",
   "Active template versions cannot be archived": "Las versiones de plantilla activas no se pueden archivar",
   "Activity": "Actividad",
+  "Activity can be summarized from at most {0} days ago": "La actividad solo puede resumirse desde hace como máximo {0} días",
   "Activity cannot be longer than 255 characters": "La actividad no puede superar los 255 caracteres",
   "Activity in a non-member jurisdiction": "Actividad en una jurisdicción no miembro",
   "Activity is required": "La actividad es obligatoria",

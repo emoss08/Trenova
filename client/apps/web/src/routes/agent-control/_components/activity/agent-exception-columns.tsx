@@ -7,7 +7,7 @@ import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { ResolutionBadge, resolutionChoices, SeverityBadge, severityChoices } from "./agent-badges";
 import { AgentSubjectCell } from "./agent-subject-cell";
 
-function categoryLabel(value: string): string {
+export function categoryLabel(value: string): string {
   return toTitleCase(value.replace(/([a-z])([A-Z])/g, "$1 $2"));
 }
 

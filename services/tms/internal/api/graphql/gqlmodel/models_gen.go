@@ -472,6 +472,32 @@ type AgentAccessPreviewInput struct {
 	AccessMode agentdefinition.AccessMode `json:"accessMode"`
 }
 
+// What the organization's agents did since a moment the reader names (the start of their day),
+// for the head of Activity. Counts a reader may not see are null.
+type AgentActivitySummary struct {
+	Since int `json:"since"`
+	// Runs started since then.
+	Runs int `json:"runs"`
+	// Runs started since then that failed.
+	RunsFailed int `json:"runsFailed"`
+	// Runs working now, whenever they started.
+	RunsWorking int `json:"runsWorking"`
+	// Runs waiting on a person's decision, whenever they started.
+	RunsAwaiting int `json:"runsAwaiting"`
+	// Proposals waiting on a person; null without read access to agent proposals.
+	PendingProposals *int `json:"pendingProposals,omitempty"`
+	// When the longest-waiting proposal was made; null when none waits or it may not be read.
+	OldestPendingAt *int `json:"oldestPendingAt,omitempty"`
+	// Exceptions open or in review; null without read access to agent exceptions.
+	OpenExceptions *int `json:"openExceptions,omitempty"`
+	// The days the decisions below are counted over.
+	DecisionWindowDays int `json:"decisionWindowDays"`
+	// Proposals people decided in the window; null without read access to agent proposals.
+	Decided *int `json:"decided,omitempty"`
+	// The share of those approved exactly as proposed; null when none was decided or it may not be read.
+	ApprovedAsProposed *float64 `json:"approvedAsProposed,omitempty"`
+}
+
 // How much of an agent one role could use, and whether it is granted the agent.
 type AgentAudienceRole struct {
 	Role     *permission.Role                 `json:"role"`

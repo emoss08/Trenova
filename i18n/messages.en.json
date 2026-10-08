@@ -2009,6 +2009,24 @@
       "routes/shipment"
     ]
   },
+  "<b>{0, plural, one {# run} other {# runs}}</b> today, <f>{1} failed</f>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "<b>{0, plural, one {# run} other {# runs}}</b> today.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "<b>{0, plural, one {# tool} other {# tools}}</b> can send outside the organization, and every one waits for approval.": {
     "sites": 1,
     "scope": [
@@ -2043,6 +2061,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "<e>{0, plural, one {# exception is} other {# exceptions are}}</e> still open.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "<name>{0}</name> activated {1}": {
@@ -2226,6 +2253,15 @@
     ]
   },
   "<open>{0, plural, one {# agent} other {# agents}}</open> everyone can use hold some of them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "<p>{0, plural, one {# proposal waits} other {# proposals wait}}</p> on a person.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -12497,7 +12533,7 @@
     ]
   },
   "Activity": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -12511,6 +12547,15 @@
       "routes/desk",
       "routes/invoice",
       "routes/shipment"
+    ]
+  },
+  "Activity can be summarized from at most {0} days ago": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentactivitysummaryservice"
     ]
   },
   "Activity cannot be longer than 255 characters": {
@@ -12538,6 +12583,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Activity figures": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Activity in a non-member jurisdiction": {
@@ -16179,7 +16233,7 @@
     ]
   },
   "Affected": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -16281,7 +16335,7 @@
     ]
   },
   "Agent": {
-    "sites": 26,
+    "sites": 27,
     "scope": [
       "ts"
     ],
@@ -23094,7 +23148,7 @@
     ]
   },
   "Approve": {
-    "sites": 36,
+    "sites": 37,
     "scope": [
       "ts"
     ],
@@ -23538,7 +23592,7 @@
     ]
   },
   "Approve with changes": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -23698,6 +23752,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Approved as proposed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Approved by {0}": {
@@ -29109,7 +29172,7 @@
     ]
   },
   "Autonomy": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -29442,14 +29505,15 @@
     ]
   },
   "Awaiting a decision": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "domain/worker",
-      "packages/shared/lib"
+      "packages/shared/lib",
+      "routes/agent-control"
     ]
   },
   "Awaiting answer": {
@@ -41429,6 +41493,15 @@
       "apps/web/components"
     ]
   },
+  "Check providers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Check report run": {
     "sites": 1,
     "scope": [
@@ -48440,7 +48513,7 @@
     ]
   },
   "Confidence": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -60739,6 +60812,15 @@
       "routes/desk"
     ]
   },
+  "Decided {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Decides how many invoices a period produces. Choose nothing for a single statement.": {
     "sites": 1,
     "scope": [
@@ -67060,7 +67142,7 @@
     ]
   },
   "Dismiss": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "ts"
     ],
@@ -79314,7 +79396,7 @@
     ]
   },
   "Error": {
-    "sites": 13,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -82306,7 +82388,7 @@
     ]
   },
   "Exception": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -82317,6 +82399,7 @@
       "go/other",
       "packages/shared/components",
       "packages/shared/lib",
+      "routes/agent-control",
       "routes/bank-receipt",
       "routes/billing-queue",
       "routes/desk"
@@ -85703,7 +85786,7 @@
     ]
   },
   "Failed": {
-    "sites": 54,
+    "sites": 55,
     "scope": [
       "go",
       "ts"
@@ -96868,7 +96951,7 @@
     ]
   },
   "Handed by {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -116839,7 +116922,7 @@
     ]
   },
   "Loading…": {
-    "sites": 9,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -120160,7 +120243,7 @@
     ]
   },
   "Mark in review": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -120258,6 +120341,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Mark resolved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Mark retrieval sources changed since they were indexed, per organization": {
@@ -138343,7 +138435,7 @@
     ]
   },
   "Notes": {
-    "sites": 51,
+    "sites": 52,
     "scope": [
       "go",
       "ts"
@@ -139837,6 +139929,15 @@
     ],
     "areas": [
       "routes/settlement-workspace"
+    ]
+  },
+  "Nothing waits on a person.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Nothing was changed.": {
@@ -141735,6 +141836,15 @@
     ],
     "areas": [
       "routes/journal-review"
+    ]
+  },
+  "Oldest waiting {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Ollama": {
@@ -146272,7 +146382,7 @@
     ]
   },
   "Open the run": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -146380,6 +146490,15 @@
     ]
   },
   "Open to everyone, and holds <tools>{0, plural, one {# tool that leaves the organization} other {# tools that leave the organization}}</tools>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Open trace": {
     "sites": 1,
     "scope": [
       "ts"
@@ -163143,7 +163262,7 @@
     ]
   },
   "Proposal": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -163345,6 +163464,15 @@
       "apps/web/hooks"
     ]
   },
+  "Proposals · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Propose": {
     "sites": 6,
     "scope": [
@@ -163375,7 +163503,7 @@
     ]
   },
   "Proposed": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -174041,7 +174169,7 @@
     ]
   },
   "Reject": {
-    "sites": 31,
+    "sites": 32,
     "scope": [
       "ts"
     ],
@@ -176030,7 +176158,7 @@
     ]
   },
   "Reopen": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -176668,7 +176796,7 @@
     ]
   },
   "Replay against the current agent": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -185312,6 +185440,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "Runs today": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Runs without a person": {
@@ -197225,7 +197362,7 @@
     ]
   },
   "Severity": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -204800,7 +204937,7 @@
     ]
   },
   "Started": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -205495,7 +205632,7 @@
     ]
   },
   "Status": {
-    "sites": 323,
+    "sites": 322,
     "scope": [
       "go",
       "ts"
@@ -206246,6 +206383,15 @@
     ],
     "areas": [
       "service/agenttoolservice"
+    ]
+  },
+  "Still running": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Still stuck?": {
@@ -207231,7 +207377,7 @@
     ]
   },
   "Subject": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -208144,7 +208290,7 @@
     ]
   },
   "Summary": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -221725,6 +221871,15 @@
       "routes/agent-control"
     ]
   },
+  "The run read an email or document written outside the organization before proposing this. Check the details before approving.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The run was abandoned without completing and has been marked failed": {
     "sites": 1,
     "scope": [
@@ -223291,15 +223446,6 @@
     ]
   },
   "The training exports that included this organization could not be loaded": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "The transcript could not be loaded. Try again shortly.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -228212,6 +228358,15 @@
       "routes/agent-control"
     ]
   },
+  "This run could not be loaded. Try again shortly.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "This run has no id to follow.": {
     "sites": 1,
     "scope": [
@@ -228240,7 +228395,7 @@
     ]
   },
   "This run no longer exists.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -231291,6 +231446,15 @@
       "domain/shipmentbrief"
     ]
   },
+  "Took": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Tool": {
     "sites": 15,
     "scope": [
@@ -233664,15 +233828,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "Transcript": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Transfer": {
@@ -246449,6 +246604,15 @@
       "routes/agent-control"
     ]
   },
+  "What agents did today could not be loaded. Try again shortly.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "What agents learned": {
     "sites": 1,
     "scope": [
@@ -246649,11 +246813,12 @@
     ]
   },
   "What happened": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/osha",
       "routes/worker"
     ]
@@ -246912,12 +247077,13 @@
     ]
   },
   "What it did": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/agent-control"
     ]
   },
   "What it found": {
@@ -259507,6 +259673,15 @@
       "routes/agent-control"
     ]
   },
+  "none running now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "none would have failed": {
     "sites": 1,
     "scope": [
@@ -259595,6 +259770,15 @@
     ],
     "areas": [
       "routes/detention-intelligence"
+    ]
+  },
+  "of today's runs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "of {0}": {
@@ -263903,6 +264087,15 @@
       "routes/agent-control"
     ]
   },
+  "{0, plural, one {# running now} other {# running now}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0, plural, one {# sample record} other {# sample records}}": {
     "sites": 1,
     "scope": [
@@ -264744,6 +264937,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0, plural, one {Decide # proposal} other {Decide # proposals}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0, plural, one {Deleted in # day} other {Deleted in # days}}": {
@@ -265702,7 +265904,7 @@
     ]
   },
   "{0, plural, one {last # day} other {last # days}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],

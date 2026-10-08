@@ -252,6 +252,7 @@ type Params struct {
 	ExtractionRolloutService     services.ExtractionRolloutService
 	AITrainingHistoryService     services.AITrainingHistoryService
 	AgentQualityService          services.AgentQualityService
+	AgentActivityService         services.AgentActivityService
 	AgentExceptionService        services.AgentExceptionService
 	AgentDecisionService         services.AgentDecisionService
 	AgentDecisionQueueService    services.AgentDecisionQueueService
@@ -451,6 +452,7 @@ type Services struct {
 	ExtractionRolloutService     services.ExtractionRolloutService
 	AiTrainingHistoryService     services.AITrainingHistoryService
 	AgentQualityService          services.AgentQualityService
+	AgentActivityService         services.AgentActivityService
 	AgentExceptionService        services.AgentExceptionService
 	AgentDecisionService         services.AgentDecisionService
 	AgentDecisionQueueService    services.AgentDecisionQueueService
@@ -656,6 +658,7 @@ func newServices(p *Params) *Services {
 		ExtractionRolloutService:     p.ExtractionRolloutService,
 		AiTrainingHistoryService:     p.AITrainingHistoryService,
 		AgentQualityService:          p.AgentQualityService,
+		AgentActivityService:         p.AgentActivityService,
 		AgentExceptionService:        p.AgentExceptionService,
 		AgentDecisionService:         p.AgentDecisionService,
 		AgentDecisionQueueService:    p.AgentDecisionQueueService,

@@ -397,6 +397,7 @@ func FromServices(s *Services) *Resolver {
 		AgentMemoryService:        s.AgentMemoryService,
 		AgentReflectionService:    s.AgentReflectionService,
 		AgentEvaluationService:    s.AgentEvaluationService,
+		AgentActivityService:      s.AgentActivityService,
 		AgentExceptionService:     s.AgentExceptionService,
 		AgentDecisionService:      s.AgentDecisionService,
 		AgentDecisionQueueService: s.AgentDecisionQueueService,

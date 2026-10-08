@@ -185,9 +185,16 @@ Keywords: disable agent, enable agent, start run, delete agent, shadow mode, sim
 
 ### Approve or reject what an agent proposed
 Keywords: agent decisions, pending proposals, review agent changes, approve plan, preview agent change
-1. Open [AI control](/admin/agent-control), select **Activity** in the rail and then
-   **Proposals**.
-2. Right-click a pending proposal and choose **Approve**, **Approve with changes** or **Reject**.
+1. Open [AI control](/admin/agent-control) and select **Activity** in the rail. The sentence at
+   the top says how many runs there were today and how many failed, how many proposals wait on a
+   person, and how many exceptions are still open; select any of them to open the runs, proposals
+   or exceptions narrowed to it. The figures show **Runs today**, **Failed**,
+   **Awaiting a decision** and how many were **Approved as proposed** over the last week.
+2. Select the button beside the sentence, or **Proposals** under **View**. Select a pending
+   proposal to read it, its **Autonomy** and **Confidence**, and a warning when its run read an
+   email or document written outside the organization; then select **Approve**,
+   **Approve with changes** or **Reject**. **Open the run** shows the run that proposed it. The
+   same choices are on the row's menu when you right-click it.
 3. Read **What changes** in the dialog: each record the change would touch and its values before
    and after, worked out from the records as they are now. Anything you may not see reads
    **Hidden by your data access**. **Approve and run** stays off until it has loaded, and for a
@@ -404,13 +411,18 @@ Keywords: download audit trail, AI audit export, CSV, JSON, auditor, compliance 
 ### Read or download what an agent run did
 Keywords: run transcript, agent run log, what did the agent say, download transcript, background run, scheduled run
 1. Open [AI control](/admin/agent-control), select **Activity** in the rail and then **Runs**.
-2. Select a run to open it: its **Status**, what it was **Started by**, the **Model** and its
-   **Summary**.
-3. Open **Transcript** to read what the agent said and thought and each tool it called, with what
+2. Select a run to open it: why it failed if it did, the **Agent**, what it was **Started by**,
+   the **Model** and how long it **Took**.
+3. Under **What it did**, read what the agent said and thought and each tool it called, with what
    it sent and got back. A long run keeps its opening and its end; the stretch left out between
    them is counted where it fell.
 4. Select **Download** to save the transcript as a Markdown file, laid out the way a downloaded
-   conversation is, with the number of messages left out stated in it.
+   conversation is, with the number of messages left out stated in it. **Open trace** opens the
+   run's trace where a tracing backend is configured, and a failed run offers
+   **Check providers**.
+5. Exceptions are cases an agent could not settle on its own. Under **View**, select
+   **Exceptions** and select one to read **What happened**, then **Mark in review**,
+   **Mark resolved** or **Dismiss** it; **Open the run** shows the run it came from.
 
 ### Find the trace of an agent's work
 Keywords: trace id, tracing, OpenTelemetry, Tempo, Jaeger, span

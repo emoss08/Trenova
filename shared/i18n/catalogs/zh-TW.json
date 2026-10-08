@@ -678,6 +678,7 @@
   "Active shipments with no usable assignment, and the revenue waiting on them": "尚無可用派車的進行中運單，以及等待其實現的收入",
   "Active template versions cannot be archived": "有效的範本版本無法封存",
   "Activity": "活動紀錄",
+  "Activity can be summarized from at most {0} days ago": "活動最多只能彙總 {0} 天前起的資料",
   "Activity cannot be longer than 255 characters": "活動不得超過 255 個字元",
   "Activity in a non-member jurisdiction": "非會員轄區的營運活動",
   "Activity is required": "活動為必填",

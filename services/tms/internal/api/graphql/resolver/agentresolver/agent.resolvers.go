@@ -860,3 +860,23 @@ func (r *QueryResolver) AgentPromotionPreview(ctx context.Context, threshold int
 	}
 	return out, nil
 }
+
+func (r *QueryResolver) AgentActivitySummary(ctx context.Context, since int) (*gqlmodel.AgentActivitySummary, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentRun, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	summary, err := r.AgentActivityService.Summary(ctx, &services.AgentActivitySummaryRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		Since:      int64(since),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return ActivitySummaryToModel(summary, ActivityVisibility{
+		Proposals:  r.HasPermission(ctx, authCtx, permission.ResourceAgentProposal, permission.OpRead),
+		Exceptions: r.HasPermission(ctx, authCtx, permission.ResourceAgentException, permission.OpRead),
+	}), nil
+}

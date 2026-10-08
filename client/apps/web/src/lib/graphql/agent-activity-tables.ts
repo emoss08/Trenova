@@ -4,6 +4,7 @@ import {
   AgentPlanTableDocument,
   AgentProposalTableDocument,
   AgentRunDetailDocument,
+  AgentRunTableRowFieldsFragmentDoc,
   AgentRunTableDocument,
   AgentRunTranscriptFieldsFragmentDoc,
   type AgentRunTranscriptFieldsFragment,
@@ -23,23 +24,35 @@ export type AgentRunRow = DataTableConfigRow<typeof agentRunTableGraphQLConfig>;
 export type AgentRunTranscript = Omit<AgentRunTranscriptFieldsFragment, " $fragmentName">;
 export type AgentRunTranscriptMessage = AgentRunTranscript["messages"][number];
 
-/**
- * What a run's model said and the tools it called, or null for a run filed
- * before transcripts were kept, one that said nothing, or one that is not the
- * reader's organization's.
- */
-export async function fetchAgentRunTranscript(
+export type AgentRunDetail = {
+  run: AgentRunRow;
+  /**
+   * What the run's model said and the tools it called, or null for a run filed before
+   * transcripts were kept or one that said nothing.
+   */
+  transcript: AgentRunTranscript | null;
+};
+
+/** One run with its transcript, or null when it is not the reader's organization's. */
+export async function fetchAgentRunDetail(
   id: string,
   options?: { signal?: AbortSignal },
-): Promise<AgentRunTranscript | null> {
+): Promise<AgentRunDetail | null> {
   const data = await requestGraphQL({
     document: AgentRunDetailDocument,
     operationName: "AgentRunDetail",
     variables: { id },
     signal: options?.signal,
   });
+  if (!data.agentRun) {
+    return null;
+  }
+  const { transcript, ...run } = data.agentRun;
 
-  return getFragmentData(AgentRunTranscriptFieldsFragmentDoc, data.agentRun?.transcript) ?? null;
+  return {
+    run: getFragmentData(AgentRunTableRowFieldsFragmentDoc, run) as AgentRunRow,
+    transcript: getFragmentData(AgentRunTranscriptFieldsFragmentDoc, transcript) ?? null,
+  };
 }
 
 export const agentProposalTableGraphQLConfig = defineDataTableGraphQLConfig({
