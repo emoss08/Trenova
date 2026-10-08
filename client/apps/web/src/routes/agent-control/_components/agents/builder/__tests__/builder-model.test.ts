@@ -2,7 +2,10 @@ import type { ToolCatalogEntry } from "@/types/assistant";
 import { describe, expect, it } from "vitest";
 import { agentFormDefaults, type AgentFormValues } from "../../agent-form-schema";
 import {
+  aboveCeiling,
+  capToCeiling,
   changeTiers,
+  startingTier,
   dateIn,
   endOfDay,
   checklist,
@@ -67,11 +70,15 @@ describe("startValues", () => {
 describe("triggerProblem", () => {
   it("names what each trigger is missing", () => {
     expect(triggerProblem(values({ triggerMode: "Event", eventKinds: [] }))).toBe("events");
-    expect(triggerProblem(values({ triggerMode: "Scheduled", cronExpression: "  " }))).toBe("schedule");
+    expect(triggerProblem(values({ triggerMode: "Scheduled", cronExpression: "  " }))).toBe(
+      "schedule",
+    );
     expect(triggerProblem(values({ triggerMode: "Scheduled", cronExpression: "0 17 L * *" }))).toBe(
       "badSchedule",
     );
-    expect(triggerProblem(values({ triggerMode: "Continuous", intervalSeconds: 30 }))).toBe("interval");
+    expect(triggerProblem(values({ triggerMode: "Continuous", intervalSeconds: 30 }))).toBe(
+      "interval",
+    );
     expect(triggerProblem(values({ triggerMode: "Continuous", intervalSeconds: 60 }))).toBeNull();
     expect(triggerProblem(values({ triggerMode: "Chat" }))).toBeNull();
   });
@@ -85,13 +92,27 @@ describe("checklist and readiness", () => {
   });
 
   it("is ready only when every required part is done and the draft was tried as it stands", () => {
-    const status = checklist({ values: base, findings: 0, openRisk: 0, chosen: 3, tried: "d1", draft: "d1" });
+    const status = checklist({
+      values: base,
+      findings: 0,
+      openRisk: 0,
+      chosen: 3,
+      tried: "d1",
+      draft: "d1",
+    });
     expect(Object.values(status).every((value) => value === "ok")).toBe(true);
     expect(readiness(status)).toEqual({ done: 5, of: 5 });
   });
 
   it("warns of lint findings, outside reach and a draft changed since it was tried", () => {
-    const status = checklist({ values: base, findings: 2, openRisk: 1, chosen: 3, tried: "d1", draft: "d2" });
+    const status = checklist({
+      values: base,
+      findings: 2,
+      openRisk: 1,
+      chosen: 3,
+      tried: "d1",
+      draft: "d2",
+    });
     expect(status.instr).toBe("warn");
     expect(status.tools).toBe("warn");
     expect(status.test).toBe("warn");
@@ -107,7 +128,12 @@ describe("checklist and readiness", () => {
       tried: null,
       draft: "d",
     });
-    expect([status.who, status.instr, status.tools, status.test]).toEqual(["todo", "todo", "todo", "todo"]);
+    expect([status.who, status.instr, status.tools, status.test]).toEqual([
+      "todo",
+      "todo",
+      "todo",
+      "todo",
+    ]);
   });
 });
 
@@ -163,5 +189,73 @@ describe("endOfDay and dateIn", () => {
 
   it("is nothing for a date it cannot read", () => {
     expect(endOfDay("31/10/2026", "UTC")).toBeNull();
+  });
+});
+
+/**
+ * A tool may be set above the agent's ceiling; it then runs at the ceiling. The builder
+ * names every such tool at once and offers the ceiling they ask for, instead of a refusal
+ * per tool.
+ */
+describe("tools set above the ceiling", () => {
+  const catalog = [
+    { name: "create_customer", kind: "action" },
+    { name: "update_customer", kind: "action" },
+    { name: "assign_move", kind: "action" },
+    { name: "get_customer", kind: "query" },
+  ] as ToolCatalogEntry[];
+
+  it("names every held action tool above the ceiling and the highest tier they ask for", () => {
+    expect(
+      aboveCeiling(
+        {
+          autonomyCeiling: "Propose",
+          toolNames: ["create_customer", "update_customer", "assign_move", "get_customer"],
+          toolTiers: {
+            create_customer: "AutoExecute",
+            update_customer: "ActWithApproval",
+            assign_move: "Propose",
+            get_customer: "AutoExecute",
+          },
+        },
+        catalog,
+      ),
+    ).toEqual({ tools: ["create_customer", "update_customer"], highest: "AutoExecute" });
+  });
+
+  it("ignores a tier left by a tool the agent no longer holds", () => {
+    expect(
+      aboveCeiling(
+        {
+          autonomyCeiling: "Propose",
+          toolNames: ["assign_move"],
+          toolTiers: { create_customer: "AutoExecute" },
+        },
+        catalog,
+      ),
+    ).toEqual({ tools: [], highest: null });
+  });
+
+  it("holds every tier at the ceiling and leaves the rest as they are", () => {
+    expect(
+      capToCeiling(
+        {
+          create_customer: "AutoExecute",
+          update_customer: "ActWithApproval",
+          assign_move: "Propose",
+        },
+        "ActWithApproval",
+      ),
+    ).toEqual({
+      create_customer: "ActWithApproval",
+      update_customer: "ActWithApproval",
+      assign_move: "Propose",
+    });
+  });
+
+  it("starts a new tool at the lower of its own most and the ceiling", () => {
+    expect(startingTier("AutoExecute", "Propose")).toBe("Propose");
+    expect(startingTier("Propose", "AutoExecute")).toBe("Propose");
+    expect(startingTier(undefined, "ActWithApproval")).toBe("ActWithApproval");
   });
 });

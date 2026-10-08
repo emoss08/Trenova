@@ -91,19 +91,8 @@ export const agentFormSchema = saveAgentDefinitionRequestSchema
       });
     }
 
-    // A limit or tier left behind by a tool the agent no longer holds has no
-    // box to clear it from, so it is not an error: the save drops it.
-    const selected = new Set(values.toolNames);
-    for (const [tool, tier] of Object.entries(values.toolTiers)) {
-      if (selected.has(tool) && !tierWithin(tier, values.autonomyCeiling)) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["toolTiers"],
-          message: translate("{0} cannot act above the agent's ceiling", tool),
-        });
-        break;
-      }
-    }
+    // A tool set above the ceiling is not refused: the server runs it at the ceiling, and
+    // the builder names every such tool and offers to raise the ceiling.
   });
 
 export type AgentFormValues = z.infer<typeof agentFormSchema>;

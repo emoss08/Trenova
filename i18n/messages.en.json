@@ -98534,6 +98534,15 @@
       "routes/settlement-workspace"
     ]
   },
+  "Hold them at {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Hold this fleet to a stricter limit than a state requires": {
     "sites": 2,
     "scope": [
@@ -165503,6 +165512,15 @@
     ],
     "areas": [
       "routes/pto-policy"
+    ]
+  },
+  "Raise the ceiling to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Raise the weekly books reconciliation for every syncing accounting connection": {
@@ -265853,15 +265871,6 @@
       "routes/dispatch-console"
     ]
   },
-  "{0} cannot act above the agent's ceiling": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "{0} cannot be applied: {1}": {
     "sites": 1,
     "scope": [
@@ -268350,6 +268359,15 @@
     ],
     "areas": [
       "domain/worker"
+    ]
+  },
+  "{0} is set above the ceiling, so it runs as {1}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} is set by this system and cannot be overridden": {
@@ -271558,6 +271576,24 @@
   },
   "{0} tools": {
     "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0} tools are set above the ceiling, so they run as {1}: {2} and {3} more.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0} tools are set above the ceiling, so they run as {1}: {2}.": {
+    "sites": 1,
     "scope": [
       "ts"
     ],

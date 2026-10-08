@@ -120,7 +120,9 @@ describe("agentFormSchema", () => {
     expect(issuesOf(values({ triggerMode: "Continuous", intervalSeconds: 60 }))).toEqual({});
   });
 
-  it("refuses a tool tier above the ceiling, but not one left by a removed tool", () => {
+  // The server holds a tool set above the ceiling at the ceiling when the agent runs, and
+  // the builder offers to raise the ceiling, so the form does not refuse it.
+  it("accepts a tool tier above the ceiling, and one left by a removed tool", () => {
     expect(
       issuesOf(
         values({
@@ -129,7 +131,7 @@ describe("agentFormSchema", () => {
           toolTiers: { assign_move: "AutoExecute" },
         }),
       ),
-    ).toHaveProperty("toolTiers");
+    ).toEqual({});
     expect(
       issuesOf(
         values({

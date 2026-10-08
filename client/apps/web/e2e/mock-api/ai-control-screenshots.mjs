@@ -134,6 +134,19 @@ const SHOTS = [
     },
   },
   {
+    name: "builder-above-ceiling",
+    scenario: {},
+    query: "?tab=agents&panelType=edit&panelEntityId=agd_dispatch",
+    act: async (page) => {
+      await page.getByRole("button", { name: /Tools and autonomy/ }).click();
+      await page.waitForTimeout(600);
+      await page.getByRole("radio", { name: /Every change is a proposal/ }).click();
+      await page.waitForTimeout(500);
+      await page.locator(".cal.w").first().scrollIntoViewIfNeeded();
+      await page.waitForTimeout(300);
+    },
+  },
+  {
     name: "builder-tool-picker",
     scenario: {},
     query: "?tab=agents&panelType=edit&panelEntityId=agd_dispatch",

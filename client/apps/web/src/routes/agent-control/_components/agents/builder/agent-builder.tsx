@@ -1,9 +1,6 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { agentAccessPreviewRequest } from "@/lib/graphql/agent-access";
-import {
-  fetchAgentDefinition,
-  fetchAgentVersionDraft,
-} from "@/lib/graphql/agent-builder";
+import { fetchAgentDefinition, fetchAgentVersionDraft } from "@/lib/graphql/agent-builder";
 import { agentControlQueryOptions } from "@/lib/graphql/agent-control";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
@@ -44,6 +41,7 @@ import {
   checklist,
   chosenTools,
   readiness,
+  startingTier,
   startValues,
   triggerProblem,
   type BuilderStart,
@@ -104,7 +102,13 @@ type AgentBuilderProps = {
  * canvas section by section, and a panel to try the unsaved draft. A new agent opens on
  * "What should it do?" and starts in shadow.
  */
-export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }: AgentBuilderProps) {
+export function AgentBuilder({
+  agent,
+  start,
+  onClose,
+  onOpenActivity,
+  onOpened,
+}: AgentBuilderProps) {
   const t = useT();
   const queryClient = useQueryClient();
   const timezone = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone, []);
@@ -349,11 +353,13 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
   const giveTool = useCallback(
     (name: string) => {
       if (values.toolNames.includes(name)) return;
-      const rule = rules.get(name);
-      const top = (rule?.promotableTier as AutonomyTier | undefined) ?? values.autonomyCeiling;
+      const most = rules.get(name)?.promotableTier as AutonomyTier | undefined;
       set("toolNames", [...values.toolNames, name]);
       if (catalog.find((tool) => tool.name === name)?.kind === "action") {
-        set("toolTiers", { ...values.toolTiers, [name]: top });
+        set("toolTiers", {
+          ...values.toolTiers,
+          [name]: startingTier(most, values.autonomyCeiling),
+        });
       }
     },
     [catalog, rules, set, values.autonomyCeiling, values.toolNames, values.toolTiers],
@@ -408,7 +414,10 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
     instructions: {
       label: t("Instructions"),
       format: (value) =>
-        t("{0} words", (typeof value === "string" ? value : "").split(/\s+/).filter(Boolean).length),
+        t(
+          "{0} words",
+          (typeof value === "string" ? value : "").split(/\s+/).filter(Boolean).length,
+        ),
     },
     guardrails: { label: t("Never") },
     triggerMode: { label: t("Starts when") },
@@ -430,11 +439,17 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
         return tool ? toolTitle(tool) : String(name);
       },
     },
-    toolTiers: { label: t("Tool freedom"), format: (value) => t("{0} set", Object.keys(value ?? {}).length) },
+    toolTiers: {
+      label: t("Tool freedom"),
+      format: (value) => t("{0} set", Object.keys(value ?? {}).length),
+    },
     toolDailyLimits: {
       label: t("Daily tool limits"),
       format: (value) =>
-        t("{0} set", Object.values((value ?? {}) as Record<string, number | null>).filter(Boolean).length),
+        t(
+          "{0} set",
+          Object.values((value ?? {}) as Record<string, number | null>).filter(Boolean).length,
+        ),
     },
     autonomyCeiling: { label: t("Ceiling") },
     dataAccessCeiling: { label: t("Data access") },
@@ -499,7 +514,12 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
             : t("No events yet");
   const learningOffForAll = controlQuery.data?.learningOff ?? false;
   const entries: RailEntry[] = [
-    { id: "who", label: t("Identity"), summary: values.name.trim() || t("Unnamed"), status: status.who },
+    {
+      id: "who",
+      label: t("Identity"),
+      summary: values.name.trim() || t("Unnamed"),
+      status: status.who,
+    },
     {
       id: "instr",
       label: t("Instructions"),
@@ -521,9 +541,7 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
       id: "limits",
       label: t("Budget and model"),
       summary: `${
-        values.monthlyBudgetUsd === null
-          ? t("No cap")
-          : t("${0}/mo", values.monthlyBudgetUsd)
+        values.monthlyBudgetUsd === null ? t("No cap") : t("${0}/mo", values.monthlyBudgetUsd)
       } · ${values.outputMode === "Report" ? t("reports") : t("conversational")}`,
       status: status.limits,
     },
@@ -592,7 +610,10 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
                 {t("Agents")}
               </button>
               <span className="ab-sl">/</span>
-              <Tile agent={{ name: values.name, icon: values.icon, accent: values.accent }} s={22} />
+              <Tile
+                agent={{ name: values.name, icon: values.icon, accent: values.accent }}
+                s={22}
+              />
               <b className="ab-n">{values.name.trim() || t("New agent")}</b>
               {!intro && (
                 <div className="rel">
@@ -680,7 +701,10 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
                               kind: "item",
                               icon: <Ic n="copy" s={14} />,
                               label: t("Duplicate"),
-                              onSelect: () => void duplicate().catch(() => toast.error(t("It could not be duplicated"))),
+                              onSelect: () =>
+                                void duplicate().catch(() =>
+                                  toast.error(t("It could not be duplicated")),
+                                ),
                             },
                             {
                               kind: "item",
@@ -711,7 +735,9 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
                               kind: "item",
                               icon: <Ic n={agent.systemKey ? "lock" : "trash"} s={14} />,
                               label: agent.systemKey ? t("System agent") : t("Remove agent"),
-                              note: agent.systemKey ? t("Started by Trenova; turn it off instead") : undefined,
+                              note: agent.systemKey
+                                ? t("Started by Trenova; turn it off instead")
+                                : undefined,
                               danger: !agent.systemKey,
                               disabled: Boolean(agent.systemKey),
                               onSelect: () => setRemoving(true),
@@ -773,7 +799,10 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
                     modeNote={
                       mode === "live"
                         ? t("It's set to go live when you save")
-                        : t("It stays in {0} until you switch it", modeLabels[mode].label.toLowerCase())
+                        : t(
+                            "It stays in {0} until you switch it",
+                            modeLabels[mode].label.toLowerCase(),
+                          )
                     }
                     versions={versionsQuery.data ?? null}
                     currentVersion={agent?.version ?? 0}
@@ -789,12 +818,18 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
                           <Ic n="eyeOff" s={14} />
                           <div>
                             <b>
-                              {t("Going live after {0} shadow proposals", shadow.recorded.toLocaleString())}
+                              {t(
+                                "Going live after {0} shadow proposals",
+                                shadow.recorded.toLocaleString(),
+                              )}
                             </b>
                             <span>
                               {[
                                 shadow.matchRate !== null && shadow.matchRate !== undefined
-                                  ? t("{0}% matched what people did", Math.round(shadow.matchRate * 100))
+                                  ? t(
+                                      "{0}% matched what people did",
+                                      Math.round(shadow.matchRate * 100),
+                                    )
                                   : t("No one has answered one yet"),
                                 shadow.wouldReject === 1
                                   ? t("1 would have been rejected")

@@ -2011,4 +2011,6 @@
 @media (prefers-reduced-motion:reduce){.aic .mg-orb{display:none}}
 .aic .mkt-t.sk{min-height:180px;cursor:default}
 .aic .ex-a>.tile{flex:none}
+.aic .cal-a{display:flex;flex:none;flex-wrap:wrap;gap:6px}
+.aic .cal+.bench{margin-top:12px}
 }

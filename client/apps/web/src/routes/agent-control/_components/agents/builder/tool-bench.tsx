@@ -4,7 +4,7 @@ import type { AutonomyTier, ToolCatalogEntry } from "@/types/assistant";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo, useState, type CSSProperties, type MouseEvent } from "react";
-import { Sel } from "../../edit/fields";
+import { Callout, Sel } from "../../edit/fields";
 import { Ic } from "../../kit/ic";
 import { Seg } from "../../kit/layout";
 import { tierWithin } from "../agent-form-schema";
@@ -17,7 +17,7 @@ import {
   toolTitle,
 } from "../tool-catalog";
 import { useDraftField } from "./block";
-import { changeTiers } from "./builder-model";
+import { aboveCeiling, capToCeiling, changeTiers, startingTier } from "./builder-model";
 
 /** How far each class of work reaches, nearest first. */
 const EGRESS_ORDER: readonly AgentEgressClass[] = [
@@ -98,6 +98,9 @@ type ToolBenchProps = {
   rules: ReadonlyMap<string, AgentToolPolicy>;
 };
 
+/** How many tools the note above the bench names before it counts the rest. */
+const NAMED_ABOVE_CEILING = 3;
+
 /**
  * What the agent can read and change, how much freedom each change gets, and the limits
  * that hold however each tool is set: the ceiling, data access and how long a proposal
@@ -133,6 +136,11 @@ export function ToolBench({ catalog, rules }: ToolBenchProps) {
   const implied = useMemo(() => impliedReads(toolNames, catalog), [catalog, toolNames]);
   const { byTier } = changeTiers({ toolNames, toolTiers, autonomyCeiling: ceiling }, catalog);
   const counts = TIER_ORDER.map((tier) => byTier[tier]);
+  const over = aboveCeiling({ toolNames, toolTiers, autonomyCeiling: ceiling }, catalog);
+  const overTitles = over.tools.map((name) => {
+    const tool = catalog.find((entry) => entry.name === name);
+    return tool ? toolTitle(tool) : name;
+  });
 
   const maxTier = (tool: ToolCatalogEntry): AutonomyTier =>
     (rules.get(tool.name)?.promotableTier as AutonomyTier | undefined) ?? "AutoExecute";
@@ -160,308 +168,364 @@ export function ToolBench({ catalog, rules }: ToolBenchProps) {
   };
 
   return (
-    <div className="bench">
-      <div className="bench-l">
-        <div className="bench-tb">
-          <button type="button" className="btn sm" onClick={() => setPicking(true)}>
-            <Ic n="plus" s={12} />
-            {t("Add tools")}
-          </button>
-          <label className="srch">
-            <Ic n="search" s={13} />
-            <input
-              value={query}
-              aria-label={t("Filter this agent's tools")}
-              placeholder={t("Filter this agent's tools")}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-            {query && (
+    <>
+      {over.highest && (
+        <Callout
+          tone="w"
+          action={
+            <span className="cal-a">
               <button
                 type="button"
-                className="ib xs"
-                aria-label={t("Clear the filter")}
-                onClick={() => setQuery("")}
+                className="btn sm ink"
+                onClick={() => setCeiling(over.highest!)}
               >
-                <Ic n="x" s={11} />
+                {t("Raise the ceiling to {0}", tierName(over.highest, t))}
               </button>
-            )}
-          </label>
-          <div className="seg sm" role="radiogroup" aria-label={t("Show")}>
-            {(
-              [
-                ["all", t("All"), held.length],
-                ["act", t("Changes"), changes.length],
-                ["read", t("Reads"), reads.length],
-              ] as const
-            ).map(([key, label, count]) => (
               <button
-                key={key}
                 type="button"
-                role="radio"
-                aria-checked={filter === key}
-                className={filter === key ? "on" : undefined}
-                onClick={() => setFilter(key)}
+                className="btn sm"
+                onClick={() => setToolTiers(capToCeiling(toolTiers, ceiling))}
               >
-                {label}
-                <em className="mono">{count}</em>
+                {t("Hold them at {0}", tierName(ceiling, t))}
               </button>
-            ))}
-          </div>
-        </div>
-        <div className="bench-hd" aria-hidden>
-          <span>{t("Tool")}</span>
-          <span>{t("Freedom")}</span>
-          <span>{t("Daily limit")}</span>
-          <span />
-        </div>
-        <div className="bench-list">
-          {groups.map((group) => (
-            <div key={group.resource} className="bg">
-              <div className="bg-h">
-                {group.label}
-                <em className="mono">{group.tools.length}</em>
-              </div>
-              {[...group.tools]
-                .sort((a, b) =>
-                  a.kind === b.kind
-                    ? toolTitle(a).localeCompare(toolTitle(b))
-                    : a.kind === "action"
-                      ? 1
-                      : -1,
-                )
-                .map((tool) => {
-                  const change = tool.kind === "action";
-                  const own = (toolTiers[tool.name] as AutonomyTier | undefined) ?? ceiling;
-                  const top = maxTier(tool);
-                  const rule = rules.get(tool.name);
-                  const egress = furthest(rule);
-                  const outside = rule ? rule.readsExternal !== "Never" : false;
-                  const title = toolTitle(tool);
-                  return (
-                    <div key={tool.name} className="br">
-                      <span className="br-t">
-                        <Dot egress={egress} label={egressLabel(egress, t)} />
-                        <span>
-                          <b>{title}</b>
-                          <em>
-                            {change ? egressLabel(egress, t) : t("Reads")}
-                            {outside ? ` · ${t("outside text")}` : ""}
-                          </em>
-                        </span>
-                      </span>
-                      {change ? (
-                        <span
-                          className={cn("t3", !tierWithin(own, ceiling) && "capped")}
-                          role="radiogroup"
-                          aria-label={t("Freedom for {0}", title)}
-                        >
-                          {TIER_ORDER.map((tier) => {
-                            const over = !tierWithin(tier, top);
-                            const above = !tierWithin(tier, ceiling);
-                            return (
-                              <button
-                                key={tier}
-                                type="button"
-                                role="radio"
-                                aria-checked={own === tier}
-                                disabled={over}
-                                className={cn(own === tier && "on", above && "above")}
-                                title={
-                                  over
-                                    ? t("This tool can't go past {0}", tierName(top, t))
-                                    : above
-                                      ? t("Above the ceiling — runs as {0}", tierName(ceiling, t))
-                                      : undefined
-                                }
-                                onClick={() => setToolTiers({ ...toolTiers, [tool.name]: tier })}
-                              >
-                                {over && <Ic n="lock" s={9} />}
-                                {tierName(tier, t)}
-                              </button>
-                            );
-                          })}
-                        </span>
-                      ) : (
-                        <span className="br-rd">{t("Always runs")}</span>
-                      )}
-                      {change ? (
-                        <label className="br-lim">
-                          <input
-                            className="mono"
-                            inputMode="numeric"
-                            aria-label={t("Daily limit for {0}", title)}
-                            value={limits[tool.name] ? String(limits[tool.name]) : ""}
-                            placeholder={t("No limit")}
-                            onChange={(event) => setLimit(tool.name, event.target.value)}
-                          />
-                          <span>{t("/day")}</span>
-                        </label>
-                      ) : (
-                        <span className="br-rd dim">—</span>
-                      )}
-                      <button
-                        type="button"
-                        className="ib xs br-x"
-                        title={t("Remove {0}", title)}
-                        aria-label={t("Remove {0}", title)}
-                        onClick={() => remove(tool.name)}
-                      >
-                        <Ic n="x" s={11} />
-                      </button>
-                    </div>
-                  );
-                })}
-            </div>
-          ))}
-          {held.length === 0 && (
-            <div className="bench-e">
-              <b>{t("No tools yet")}</b>
-              <span>{t("Without tools it can only explain how Trenova works.")}</span>
-              <button type="button" className="btn sm ink" onClick={() => setPicking(true)}>
-                <Ic n="plus" s={12} />
-                {t("Add tools")}
-              </button>
-            </div>
-          )}
-          {held.length > 0 && groups.length === 0 && (
-            <div className="bench-e">
-              <span>{t("Nothing matches.")}</span>
-            </div>
-          )}
-        </div>
-        <div className={cn("bench-ft", alsoOpen && "open")}>
-          <button
-            type="button"
-            className="bf"
-            aria-expanded={alsoOpen}
-            onClick={() => setAlsoOpen((open) => !open)}
-          >
-            <Ic n="chevR" s={11} />
-            <span>{t("Also held")}</span>
-            <em className="mono">{core.length + implied.length}</em>
-            <span className="bf-s">
-              {implied.length
-                ? t("{0} every agent has · {1} that come with your tools", core.length, implied.length)
-                : t("{0} every agent has", core.length)}
             </span>
-          </button>
-          {alsoOpen && (
-            <div className="bf-g">
-              <span className="bf-k">{t("Every agent")}</span>
-              <div className="bf-c">
-                {core.map((tool) => (
-                  <span key={tool.name} className="bfc">
-                    {toolTitle(tool)}
-                  </span>
-                ))}
-              </div>
-              {implied.length > 0 && (
-                <>
-                  <span className="bf-k">{t("With your tools")}</span>
-                  <div className="bf-c">
-                    {implied.map((entry) => {
-                      const by = entry.neededBy.map(toolTitle).join(", ");
-                      return (
-                        <span key={entry.tool.name} className="bfc" title={t("Needed by {0}", by)}>
-                          {toolTitle(entry.tool)}
-                          <em>{t("for {0}", by)}</em>
-                        </span>
-                      );
-                    })}
-                  </div>
-                </>
+          }
+        >
+          {over.tools.length === 1
+            ? t(
+                "{0} is set above the ceiling, so it runs as {1}.",
+                overTitles[0],
+                tierName(ceiling, t),
+              )
+            : overTitles.length <= NAMED_ABOVE_CEILING
+              ? t(
+                  "{0} tools are set above the ceiling, so they run as {1}: {2}.",
+                  over.tools.length,
+                  tierName(ceiling, t),
+                  overTitles.join(", "),
+                )
+              : t(
+                  "{0} tools are set above the ceiling, so they run as {1}: {2} and {3} more.",
+                  over.tools.length,
+                  tierName(ceiling, t),
+                  overTitles.slice(0, NAMED_ABOVE_CEILING).join(", "),
+                  overTitles.length - NAMED_ABOVE_CEILING,
+                )}
+        </Callout>
+      )}
+      <div className="bench">
+        <div className="bench-l">
+          <div className="bench-tb">
+            <button type="button" className="btn sm" onClick={() => setPicking(true)}>
+              <Ic n="plus" s={12} />
+              {t("Add tools")}
+            </button>
+            <label className="srch">
+              <Ic n="search" s={13} />
+              <input
+                value={query}
+                aria-label={t("Filter this agent's tools")}
+                placeholder={t("Filter this agent's tools")}
+                onChange={(event) => setQuery(event.target.value)}
+              />
+              {query && (
+                <button
+                  type="button"
+                  className="ib xs"
+                  aria-label={t("Clear the filter")}
+                  onClick={() => setQuery("")}
+                >
+                  <Ic n="x" s={11} />
+                </button>
               )}
+            </label>
+            <div className="seg sm" role="radiogroup" aria-label={t("Show")}>
+              {(
+                [
+                  ["all", t("All"), held.length],
+                  ["act", t("Changes"), changes.length],
+                  ["read", t("Reads"), reads.length],
+                ] as const
+              ).map(([key, label, count]) => (
+                <button
+                  key={key}
+                  type="button"
+                  role="radio"
+                  aria-checked={filter === key}
+                  className={filter === key ? "on" : undefined}
+                  onClick={() => setFilter(key)}
+                >
+                  {label}
+                  <em className="mono">{count}</em>
+                </button>
+              ))}
             </div>
-          )}
-        </div>
-      </div>
-      <aside className="bench-r">
-        <div className="bx">
-          <span className="bx-l">{t("Ceiling")}</span>
-          <div className="cl" role="radiogroup" aria-label={t("Ceiling")}>
-            {TIER_ORDER.map((tier) => (
-              <button
-                key={tier}
-                type="button"
-                role="radio"
-                aria-checked={ceiling === tier}
-                className={cn("cl-o", ceiling === tier && "on")}
-                onClick={() => setCeiling(tier)}
-              >
-                <span className="cl-r" />
-                <span>
-                  <b>{tierName(tier, t)}</b>
-                  <em>{ceilingNote[tier]}</em>
-                </span>
-              </button>
-            ))}
           </div>
-          <span className="bx-h">{t("No tool goes past this, whatever it's set to.")}</span>
-        </div>
-        <div className="bx">
-          <span className="bx-l">
-            {changes.length === 1
-              ? t("How its 1 change runs")
-              : t("How its {0} changes run", changes.length)}
-          </span>
-          <span className="dist">
-            {counts.map((count, index) =>
-              count ? <i key={index} className={`d${index}`} style={{ flex: count }} /> : null,
+          <div className="bench-hd" aria-hidden>
+            <span>{t("Tool")}</span>
+            <span>{t("Freedom")}</span>
+            <span>{t("Daily limit")}</span>
+            <span />
+          </div>
+          <div className="bench-list">
+            {groups.map((group) => (
+              <div key={group.resource} className="bg">
+                <div className="bg-h">
+                  {group.label}
+                  <em className="mono">{group.tools.length}</em>
+                </div>
+                {[...group.tools]
+                  .sort((a, b) =>
+                    a.kind === b.kind
+                      ? toolTitle(a).localeCompare(toolTitle(b))
+                      : a.kind === "action"
+                        ? 1
+                        : -1,
+                  )
+                  .map((tool) => {
+                    const change = tool.kind === "action";
+                    const own = (toolTiers[tool.name] as AutonomyTier | undefined) ?? ceiling;
+                    const top = maxTier(tool);
+                    const rule = rules.get(tool.name);
+                    const egress = furthest(rule);
+                    const outside = rule ? rule.readsExternal !== "Never" : false;
+                    const title = toolTitle(tool);
+                    return (
+                      <div key={tool.name} className="br">
+                        <span className="br-t">
+                          <Dot egress={egress} label={egressLabel(egress, t)} />
+                          <span>
+                            <b>{title}</b>
+                            <em>
+                              {change ? egressLabel(egress, t) : t("Reads")}
+                              {outside ? ` · ${t("outside text")}` : ""}
+                            </em>
+                          </span>
+                        </span>
+                        {change ? (
+                          <span
+                            className={cn("t3", !tierWithin(own, ceiling) && "capped")}
+                            role="radiogroup"
+                            aria-label={t("Freedom for {0}", title)}
+                          >
+                            {TIER_ORDER.map((tier) => {
+                              const over = !tierWithin(tier, top);
+                              const above = !tierWithin(tier, ceiling);
+                              return (
+                                <button
+                                  key={tier}
+                                  type="button"
+                                  role="radio"
+                                  aria-checked={own === tier}
+                                  disabled={over}
+                                  className={cn(own === tier && "on", above && "above")}
+                                  title={
+                                    over
+                                      ? t("This tool can't go past {0}", tierName(top, t))
+                                      : above
+                                        ? t("Above the ceiling — runs as {0}", tierName(ceiling, t))
+                                        : undefined
+                                  }
+                                  onClick={() => setToolTiers({ ...toolTiers, [tool.name]: tier })}
+                                >
+                                  {over && <Ic n="lock" s={9} />}
+                                  {tierName(tier, t)}
+                                </button>
+                              );
+                            })}
+                          </span>
+                        ) : (
+                          <span className="br-rd">{t("Always runs")}</span>
+                        )}
+                        {change ? (
+                          <label className="br-lim">
+                            <input
+                              className="mono"
+                              inputMode="numeric"
+                              aria-label={t("Daily limit for {0}", title)}
+                              value={limits[tool.name] ? String(limits[tool.name]) : ""}
+                              placeholder={t("No limit")}
+                              onChange={(event) => setLimit(tool.name, event.target.value)}
+                            />
+                            <span>{t("/day")}</span>
+                          </label>
+                        ) : (
+                          <span className="br-rd dim">—</span>
+                        )}
+                        <button
+                          type="button"
+                          className="ib xs br-x"
+                          title={t("Remove {0}", title)}
+                          aria-label={t("Remove {0}", title)}
+                          onClick={() => remove(tool.name)}
+                        >
+                          <Ic n="x" s={11} />
+                        </button>
+                      </div>
+                    );
+                  })}
+              </div>
+            ))}
+            {held.length === 0 && (
+              <div className="bench-e">
+                <b>{t("No tools yet")}</b>
+                <span>{t("Without tools it can only explain how Trenova works.")}</span>
+                <button type="button" className="btn sm ink" onClick={() => setPicking(true)}>
+                  <Ic n="plus" s={12} />
+                  {t("Add tools")}
+                </button>
+              </div>
             )}
-            {changes.length === 0 && <i className="dz0" />}
-          </span>
-          <div className="dist-l">
-            {TIER_ORDER.map((tier, index) => (
-              <span key={tier}>
-                <i className={`d${index}`} />
-                {tierName(tier, t)}
-                <b className="mono">{counts[index]}</b>
+            {held.length > 0 && groups.length === 0 && (
+              <div className="bench-e">
+                <span>{t("Nothing matches.")}</span>
+              </div>
+            )}
+          </div>
+          <div className={cn("bench-ft", alsoOpen && "open")}>
+            <button
+              type="button"
+              className="bf"
+              aria-expanded={alsoOpen}
+              onClick={() => setAlsoOpen((open) => !open)}
+            >
+              <Ic n="chevR" s={11} />
+              <span>{t("Also held")}</span>
+              <em className="mono">{core.length + implied.length}</em>
+              <span className="bf-s">
+                {implied.length
+                  ? t(
+                      "{0} every agent has · {1} that come with your tools",
+                      core.length,
+                      implied.length,
+                    )
+                  : t("{0} every agent has", core.length)}
               </span>
-            ))}
+            </button>
+            {alsoOpen && (
+              <div className="bf-g">
+                <span className="bf-k">{t("Every agent")}</span>
+                <div className="bf-c">
+                  {core.map((tool) => (
+                    <span key={tool.name} className="bfc">
+                      {toolTitle(tool)}
+                    </span>
+                  ))}
+                </div>
+                {implied.length > 0 && (
+                  <>
+                    <span className="bf-k">{t("With your tools")}</span>
+                    <div className="bf-c">
+                      {implied.map((entry) => {
+                        const by = entry.neededBy.map(toolTitle).join(", ");
+                        return (
+                          <span
+                            key={entry.tool.name}
+                            className="bfc"
+                            title={t("Needed by {0}", by)}
+                          >
+                            {toolTitle(entry.tool)}
+                            <em>{t("for {0}", by)}</em>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
-        <div className="bx">
-          <span className="bx-l">{t("Data access")}</span>
-          <Seg
-            v={dataAccess}
-            className="sm"
-            label={t("Data access")}
-            opts={[
-              ["Internal", t("Internal")],
-              ["Restricted", t("Restricted")],
-            ]}
-            onChange={setDataAccess}
-          />
-          <span className="bx-h">
-            {dataAccess === "Restricted"
-              ? t("May read restricted records like pay and medical files.")
-              : t("Reads internal records only. Pay, medical and other restricted data stay out.")}
-          </span>
-        </div>
-        <div className="bx">
-          <span className="bx-l">{t("Proposals expire after")}</span>
-          <Sel
-            value={timeout}
-            onChange={setTimeoutSeconds}
-            label={t("Proposals expire after")}
-            options={[
-              ...DECISION_TIMEOUTS.map((seconds) => [seconds, timeouts[seconds]] as const),
-              ...((DECISION_TIMEOUTS as readonly number[]).includes(timeout)
-                ? []
-                : [[timeout, t("{0} hours", Math.round(timeout / 3600))] as const]),
-            ]}
-          />
-          <span className="bx-h">{t("An undecided proposal is withdrawn after this.")}</span>
-        </div>
-      </aside>
-      <ToolPickerDialog
-        open={picking}
-        onClose={() => setPicking(false)}
-        tools={selectable}
-        coreCount={core.length}
-        rules={rules}
-      />
-    </div>
+        <aside className="bench-r">
+          <div className="bx">
+            <span className="bx-l">{t("Ceiling")}</span>
+            <div className="cl" role="radiogroup" aria-label={t("Ceiling")}>
+              {TIER_ORDER.map((tier) => (
+                <button
+                  key={tier}
+                  type="button"
+                  role="radio"
+                  aria-checked={ceiling === tier}
+                  className={cn("cl-o", ceiling === tier && "on")}
+                  onClick={() => setCeiling(tier)}
+                >
+                  <span className="cl-r" />
+                  <span>
+                    <b>{tierName(tier, t)}</b>
+                    <em>{ceilingNote[tier]}</em>
+                  </span>
+                </button>
+              ))}
+            </div>
+            <span className="bx-h">{t("No tool goes past this, whatever it's set to.")}</span>
+          </div>
+          <div className="bx">
+            <span className="bx-l">
+              {changes.length === 1
+                ? t("How its 1 change runs")
+                : t("How its {0} changes run", changes.length)}
+            </span>
+            <span className="dist">
+              {counts.map((count, index) =>
+                count ? <i key={index} className={`d${index}`} style={{ flex: count }} /> : null,
+              )}
+              {changes.length === 0 && <i className="dz0" />}
+            </span>
+            <div className="dist-l">
+              {TIER_ORDER.map((tier, index) => (
+                <span key={tier}>
+                  <i className={`d${index}`} />
+                  {tierName(tier, t)}
+                  <b className="mono">{counts[index]}</b>
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="bx">
+            <span className="bx-l">{t("Data access")}</span>
+            <Seg
+              v={dataAccess}
+              className="sm"
+              label={t("Data access")}
+              opts={[
+                ["Internal", t("Internal")],
+                ["Restricted", t("Restricted")],
+              ]}
+              onChange={setDataAccess}
+            />
+            <span className="bx-h">
+              {dataAccess === "Restricted"
+                ? t("May read restricted records like pay and medical files.")
+                : t(
+                    "Reads internal records only. Pay, medical and other restricted data stay out.",
+                  )}
+            </span>
+          </div>
+          <div className="bx">
+            <span className="bx-l">{t("Proposals expire after")}</span>
+            <Sel
+              value={timeout}
+              onChange={setTimeoutSeconds}
+              label={t("Proposals expire after")}
+              options={[
+                ...DECISION_TIMEOUTS.map((seconds) => [seconds, timeouts[seconds]] as const),
+                ...((DECISION_TIMEOUTS as readonly number[]).includes(timeout)
+                  ? []
+                  : [[timeout, t("{0} hours", Math.round(timeout / 3600))] as const]),
+              ]}
+            />
+            <span className="bx-h">{t("An undecided proposal is withdrawn after this.")}</span>
+          </div>
+        </aside>
+        <ToolPickerDialog
+          open={picking}
+          onClose={() => setPicking(false)}
+          tools={selectable}
+          coreCount={core.length}
+          rules={rules}
+        />
+      </div>
+    </>
   );
 }
 
@@ -497,9 +561,8 @@ function ToolPickerDialog({ open, onClose, tools, coreCount, rules }: ToolPicker
     const next = toggleTool(toolNames, toolTiers, tool.name, on);
     setToolNames(next.selected);
     if (on && tool.kind === "action") {
-      const top = (rules.get(tool.name)?.promotableTier as AutonomyTier | undefined) ?? "AutoExecute";
-      const tier = tierWithin(top, ceiling) ? top : ceiling;
-      setToolTiers({ ...next.tiers, [tool.name]: tier });
+      const most = rules.get(tool.name)?.promotableTier as AutonomyTier | undefined;
+      setToolTiers({ ...next.tiers, [tool.name]: startingTier(most ?? "AutoExecute", ceiling) });
     } else {
       setToolTiers(next.tiers);
     }
@@ -580,9 +643,7 @@ function ToolPickerDialog({ open, onClose, tools, coreCount, rules }: ToolPicker
                               className={cn("tpk-r", on && "on")}
                               onClick={() => toggle(tool)}
                             >
-                              <span className="tpk-c">
-                                {on && <Ic n="check" s={11} w={3} />}
-                              </span>
+                              <span className="tpk-c">{on && <Ic n="check" s={11} w={3} />}</span>
                               <span className="tpk-t">
                                 <b>{toolTitle(tool)}</b>
                                 <em>
@@ -625,4 +686,3 @@ function ToolPickerDialog({ open, onClose, tools, coreCount, rules }: ToolPicker
     </Dialog.Root>
   );
 }
-

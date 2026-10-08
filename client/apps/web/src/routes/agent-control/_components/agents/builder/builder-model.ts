@@ -1,8 +1,8 @@
 import type { AgentIconName } from "@/components/agent-identity/agent-identity";
 import { cronRunsBetween, parseCronSchedule, wallClockAt } from "@/lib/cron";
 import type { AutonomyTier, ToolCatalogEntry, TriggerMode } from "@/types/assistant";
-import { agentFormDefaults, type AgentFormValues } from "../agent-form-schema";
-import { effectiveTier, splitCoreTools } from "../tool-catalog";
+import { agentFormDefaults, tierWithin, type AgentFormValues } from "../agent-form-schema";
+import { effectiveTier, splitCoreTools, TIER_ORDER } from "../tool-catalog";
 
 export const BUILDER_STARTS = ["chat", "scheduled", "event", "blank"] as const;
 export type BuilderStart = (typeof BUILDER_STARTS)[number];
@@ -64,7 +64,10 @@ export type TriggerProblem = "events" | "schedule" | "badSchedule" | "interval" 
 
 /** Why the agent's trigger cannot be saved as it stands, or null. */
 export function triggerProblem(
-  values: Pick<AgentFormValues, "triggerMode" | "cronExpression" | "eventKinds" | "intervalSeconds">,
+  values: Pick<
+    AgentFormValues,
+    "triggerMode" | "cronExpression" | "eventKinds" | "intervalSeconds"
+  >,
 ): TriggerProblem {
   switch (values.triggerMode) {
     case "Event":
@@ -217,4 +220,42 @@ export function endOfDay(date: string, timezone: string): number | null {
 export function dateIn(unix: number, timezone: string): string {
   const wall = wallClockAt(unix, timezone);
   return `${wall.year}-${String(wall.month).padStart(2, "0")}-${String(wall.day).padStart(2, "0")}`;
+}
+
+/** The held action tools set above the ceiling, and the highest tier any of them asks for. */
+export function aboveCeiling(
+  values: Pick<AgentFormValues, "toolNames" | "toolTiers" | "autonomyCeiling">,
+  catalog: readonly ToolCatalogEntry[],
+): { tools: string[]; highest: AutonomyTier | null } {
+  const actions = new Set(
+    catalog.filter((tool) => tool.kind === "action").map((tool) => tool.name),
+  );
+  const tools: string[] = [];
+  let highest: AutonomyTier | null = null;
+  for (const name of values.toolNames) {
+    const tier = values.toolTiers[name] as AutonomyTier | undefined;
+    if (!tier || !actions.has(name) || tierWithin(tier, values.autonomyCeiling)) continue;
+    tools.push(name);
+    if (!highest || !tierWithin(tier, highest)) highest = tier;
+  }
+  return { tools, highest };
+}
+
+/** Every tier held at the ceiling; tiers already within it stay as they are. */
+export function capToCeiling(
+  toolTiers: Readonly<Record<string, AutonomyTier>>,
+  ceiling: AutonomyTier,
+): Record<string, AutonomyTier> {
+  return Object.fromEntries(
+    Object.entries(toolTiers).map(([name, tier]) => [
+      name,
+      tierWithin(tier, ceiling) ? tier : ceiling,
+    ]),
+  );
+}
+
+/** Where a newly given tool starts: the lower of the most it may do and the ceiling. */
+export function startingTier(most: AutonomyTier | undefined, ceiling: AutonomyTier): AutonomyTier {
+  if (!most) return ceiling;
+  return TIER_ORDER.indexOf(most) < TIER_ORDER.indexOf(ceiling) ? most : ceiling;
 }
