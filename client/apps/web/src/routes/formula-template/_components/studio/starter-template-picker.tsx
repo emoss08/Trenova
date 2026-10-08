@@ -47,7 +47,7 @@ export function StarterTemplatePicker() {
       if (!getValues("description")?.trim()) {
         setValue("description", source.description ?? "", { shouldDirty: true });
       }
-      toast.success(`Copied from ${source.name}`, {
+      toast.success(t("Copied from {0}", source.name), {
         description: t("The formula, variables, lines, and charge policy are in the editor."),
       });
     } catch {

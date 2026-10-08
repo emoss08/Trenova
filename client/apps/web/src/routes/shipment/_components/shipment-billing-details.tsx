@@ -377,16 +377,14 @@ function ContractRateAppliedAlert({
       </AlertTitle>
       <AlertDescription>
         <span>
-          {t(
-            "The rating method and base rate below came from the contract {0} . Change any of them and this shipment is priced by hand instead.",
-            rate.accessorials.length > 0
-              ? t(
-                  ", along with {0} automatic {1}",
-                  rate.accessorials.length,
-                  rate.accessorials.length === 1 ? "charge" : "charges",
-                )
-              : "",
-          )}
+          {rate.accessorials.length > 0
+            ? t(
+                "The rating method and base rate below came from the contract, along with {0, plural, one {# automatic charge} other {# automatic charges}}. Change any of them and this shipment is priced by hand instead.",
+                rate.accessorials.length,
+              )
+            : t(
+                "The rating method and base rate below came from the contract. Change any of them and this shipment is priced by hand instead.",
+              )}
         </span>
         <Button
           type="button"

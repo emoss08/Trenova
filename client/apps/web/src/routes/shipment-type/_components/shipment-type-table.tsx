@@ -16,6 +16,7 @@ import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./shipment-type-columns";
 import { ShipmentTypePanel } from "./shipment-type-panel";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const INLINE_EDITABLE_FIELDS = new Set<keyof ShipmentTypeRow>(["code", "description"]);
 
@@ -34,9 +35,9 @@ export default function ShipmentTypeTable() {
           status: status as ShipmentType["status"],
         }),
         {
-          loading: "Updating status...",
-          success: "Status updated successfully",
-          error: "Failed to update status",
+          loading: translate("Updating status..."),
+          success: translate("Status updated successfully"),
+          error: translate("Failed to update status"),
           finally: async () => {
             await queryClient.invalidateQueries({
               queryKey: ["shipment-type-list"],
@@ -87,6 +88,7 @@ export default function ShipmentTypeTable() {
   return (
     <DataTable<ShipmentTypeRow>
       name="Shipment Type"
+      emptyTitle={t("No shipment types yet")}
       queryKey="shipment-type-list"
       graphql={shipmentTypeTableGraphQLConfig}
       resource={Resource.ShipmentType}

@@ -10,6 +10,7 @@
   "Choose a new password": "設定新密碼",
   "Choose a password you are not already using": "請選擇一組您尚未使用的密碼",
   "Choose the workspace for this session.": "選擇本次工作階段使用的工作區。",
+  "Confirm your new password": "確認您的新密碼",
   "Contacting network": "正在連線網路",
   "Continue to Dash": "前往 Dash",
   "Continue with {0}": "使用 {0} 繼續",
@@ -17,6 +18,7 @@
   "Enter one of the recovery codes you saved when you set up two-factor authentication.": "請輸入您設定雙重驗證時儲存的其中一組復原碼。",
   "Enter the address you sign in with and we'll send you a link to choose a new password.": "請輸入您登入所用的電子郵件地址，我們會寄送連結供您設定新密碼。",
   "Enter your code": "輸入您的代碼",
+  "Enter your current password": "輸入您目前的密碼",
   "Entering Trenova": "正在進入 Trenova",
   "Entering {0}": "正在進入 {0}",
   "Enterprise": "企業版",
@@ -33,6 +35,7 @@
   "Open your authenticator app and enter the six-digit code for Trenova.": "請開啟驗證器應用程式並輸入 Trenova 的六位數代碼。",
   "Opening workspace": "正在開啟工作區",
   "Organizations": "組織",
+  "Password must be at least {0} characters": "密碼至少須為 {0} 個字元",
   "Passwords do not match": "兩次輸入的密碼不一致",
   "Remembered it? Go back.": "想起來了嗎？返回上一頁。",
   "Request a new link": "申請新的連結",
@@ -60,5 +63,6 @@
   "Your new password is active. Any other sessions on this account have been signed out.": "您的新密碼已生效。此帳戶的其他工作階段皆已登出。",
   "{0, plural, one {# role} other {# roles}}{1}": "{0, plural, other {# 個角色}}{1}",
   "{0, plural, one {permission} other {permissions}}": "{0, plural, other {項權限}}",
+  "{0} of {1} selected": "已選取 {1} 中的 {0} 個",
   "· {0} {1, plural, one {permission} other {permissions}}": "· {0} {1, plural, other {項權限}}"
 }

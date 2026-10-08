@@ -111,7 +111,7 @@ export function CashApplicationEditor({
                             setValue(`applications.${index}.shortPayAmount`, 0);
                           }
                         }}
-                        aria-label={`Apply to invoice ${row.invoiceNumber}`}
+                        aria-label={t("Apply to invoice {0}", row.invoiceNumber)}
                       />
                     </TableCell>
                     <TableCell className="py-1.5">
@@ -140,7 +140,7 @@ export function CashApplicationEditor({
                       <NumberField
                         control={control}
                         name={`applications.${index}.appliedAmount`}
-                        aria-label={`Applied amount for ${row.invoiceNumber}`}
+                        aria-label={t("Applied amount for {0}", row.invoiceNumber)}
                         placeholder="0.00"
                         decimalScale={2}
                         fixedDecimalScale
@@ -151,7 +151,7 @@ export function CashApplicationEditor({
                       <NumberField
                         control={control}
                         name={`applications.${index}.shortPayAmount`}
-                        aria-label={`Short-pay amount for ${row.invoiceNumber}`}
+                        aria-label={t("Short-pay amount for {0}", row.invoiceNumber)}
                         placeholder="0.00"
                         decimalScale={2}
                         fixedDecimalScale

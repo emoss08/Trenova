@@ -1,3 +1,4 @@
+import { defineLabels } from "@trenova/shared/i18n/labels";
 /**
  * Labels and money shaping for benefits and compensation.
  *
@@ -18,7 +19,7 @@ export const BENEFIT_PLAN_TYPE_ORDER = [
 
 export type BenefitPlanTypeValue = (typeof BENEFIT_PLAN_TYPE_ORDER)[number];
 
-export const BENEFIT_PLAN_TYPE_LABELS: Record<string, string> = {
+export const BENEFIT_PLAN_TYPE_LABELS: Record<string, string> = defineLabels({
   Medical: "Medical",
   Dental: "Dental",
   Vision: "Vision",
@@ -26,7 +27,7 @@ export const BENEFIT_PLAN_TYPE_LABELS: Record<string, string> = {
   Disability: "Disability",
   Retirement: "Retirement",
   Other: "Other",
-};
+});
 
 export function benefitPlanTypeLabel(value: string): string {
   return BENEFIT_PLAN_TYPE_LABELS[value] ?? value;
@@ -41,31 +42,29 @@ export const COVERAGE_TIER_ORDER = [
 
 export type CoverageTierValue = (typeof COVERAGE_TIER_ORDER)[number];
 
-export const COVERAGE_TIER_LABELS: Record<string, string> = {
+export const COVERAGE_TIER_LABELS: Record<string, string> = defineLabels({
   Employee: "Employee only",
   EmployeeSpouse: "Employee and spouse",
   EmployeeChildren: "Employee and children",
   Family: "Family",
-};
+});
 
 export function coverageTierLabel(value: string): string {
   return COVERAGE_TIER_LABELS[value] ?? value;
 }
 
-export const ENROLLMENT_STATUS_LABELS: Record<string, string> = {
+export const ENROLLMENT_STATUS_LABELS: Record<string, string> = defineLabels({
   Pending: "Not started",
   Active: "Covered",
   Waived: "Declined",
   Ended: "Ended",
-};
+});
 
 export function enrollmentStatusLabel(value: string): string {
   return ENROLLMENT_STATUS_LABELS[value] ?? value;
 }
 
-export function enrollmentStatusTone(
-  value: string,
-): "success" | "danger" | "warning" | "neutral" {
+export function enrollmentStatusTone(value: string): "success" | "danger" | "warning" | "neutral" {
   switch (value) {
     case "Active":
       return "success";
@@ -78,11 +77,11 @@ export function enrollmentStatusTone(
   }
 }
 
-export const DEDUCTION_KIND_LABELS: Record<string, string> = {
+export const DEDUCTION_KIND_LABELS: Record<string, string> = defineLabels({
   Standard: "Deduction",
   Garnishment: "Garnishment",
   Benefit: "Benefit",
-};
+});
 
 export function deductionKindLabel(value: string): string {
   return DEDUCTION_KIND_LABELS[value] ?? value;

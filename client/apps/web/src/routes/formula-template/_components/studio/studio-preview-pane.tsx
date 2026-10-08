@@ -90,7 +90,7 @@ function RoundingNotice({ rounding }: { rounding: RoundingResult }) {
   const t = useT();
 
   const modeLabel = ROUNDING_MODE_LABELS[rounding.mode] ?? rounding.mode;
-  const places = rounding.precision === 1 ? "1 decimal" : `${rounding.precision} decimals`;
+  const places = t("{0, plural, one {# decimal} other {# decimals}}", rounding.precision);
 
   if (!rounding.applied) {
     return (

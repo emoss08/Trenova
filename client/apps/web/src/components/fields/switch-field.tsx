@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FormControlProps, WarningProps } from "@trenova/shared/types/fields";
 import { Controller, type FieldValues } from "react-hook-form";
@@ -40,6 +41,7 @@ export function SwitchField<T extends FieldValues>({
   "aria-describedby": ariaDescribedBy,
   ...props
 }: SwitchFieldProps<T>) {
+  const t = useT();
   const inputId = `switch-${name}`;
   const descriptionId = `${inputId}-description`;
   const errorId = `${inputId}-error`;
@@ -92,7 +94,7 @@ export function SwitchField<T extends FieldValues>({
                     render={
                       <button
                         type="button"
-                        aria-label={`About ${label}`}
+                        aria-label={t("About {0}", label)}
                         className="ui-focus-ring text-muted-foreground/70 hover:bg-muted hover:text-foreground inline-flex size-4 shrink-0 items-center justify-center rounded-sm transition-colors"
                       >
                         <InfoCircleIcon className="size-3" />

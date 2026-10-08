@@ -58,6 +58,7 @@ export default function AccessorialChargeTable() {
   return (
     <DataTable<AccessorialChargeRow>
       name="Accessorial Charge"
+      emptyTitle={t("No accessorial charges yet")}
       queryKey="accessorial-charge-list"
       graphql={accessorialChargeTableGraphQLConfig}
       resource={Resource.AccessorialCharge}

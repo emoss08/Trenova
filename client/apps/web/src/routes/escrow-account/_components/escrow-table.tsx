@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
-import { runBulkAction } from "@/lib/bulk-run";
+import { notifyBulkOutcome, settleAll } from "@/lib/bulk-outcome";
 import {
   closeEscrowAccount,
   escrowAccountTableGraphQLConfig,
@@ -23,6 +23,7 @@ import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./escrow-columns";
 import { EscrowPanel } from "./escrow-panel";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export default function EscrowTable() {
   const t = useT();
@@ -47,9 +48,23 @@ export default function EscrowTable() {
   const confirmClose = useCallback(async () => {
     setPending(true);
     try {
-      await runBulkAction(closeRows, (row) => closeEscrowAccount(row.id), {
-        noun: "escrow account",
-        verb: "closed",
+      notifyBulkOutcome(await settleAll(closeRows, (row) => closeEscrowAccount(row.id)), {
+        succeeded: (count) =>
+          translate(
+            "{0, plural, one {# escrow account closed} other {# escrow accounts closed}}",
+            count,
+          ),
+        partial: (succeeded, failed) =>
+          translate(
+            "{0, plural, one {# escrow account closed} other {# escrow accounts closed}}, {1} failed",
+            succeeded,
+            failed,
+          ),
+        allFailed: (failed) =>
+          translate(
+            "{0, plural, one {The selected escrow account failed} other {All # selected escrow accounts failed}}",
+            failed,
+          ),
       });
       await queryClient.invalidateQueries({ queryKey: ["escrow-account-list"] });
       setCloseRows([]);
@@ -77,6 +92,7 @@ export default function EscrowTable() {
     <>
       <DataTable<EscrowAccountRow>
         name="Escrow Account"
+        emptyTitle={t("No escrow accounts yet")}
         queryKey="escrow-account-list"
         graphql={escrowAccountTableGraphQLConfig}
         resource={Resource.EscrowAccount}

@@ -2,6 +2,10 @@
   "Current processing status of this accessorial charge (active, pending approval, etc.)": "此附加費目前的處理狀態（生效中、待核准等）",
   "Detailed explanation of the accessorial service provided, including any special conditions or requirements for FMCSA compliance": "所提供附加服務的詳細說明，包含 FMCSA 合規所需的任何特殊條件或要求",
   "Manage and configure accessorial charges for your organization": "管理並設定您組織的附加費",
+  "No accessorial charges yet": "尚無附加費",
   "Standard industry or company-specific code identifying this accessorial service (e.g., LUM for lumper fee)": "識別此附加服務的業界標準或公司自訂代碼（例如裝卸工費為 LUM）",
+  "The fixed dollar amount charged": "收取的固定金額",
+  "The percentage applied to the linehaul rate": "套用於幹線運費的百分比",
+  "The rate per unit (e.g., per hour, per mile)": "每單位費率（例如每小時、每英里）",
   "Unit of measure for this charge (mile, hour, day, stop)": "此費用的計量單位（英里、小時、天、停靠點）"
 }

@@ -1,3 +1,4 @@
+import type { RichTag } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
 import trenovaLogo from "@/assets/logo.webp";
 import { InputField } from "@/components/fields/input-field";
@@ -30,11 +31,12 @@ export type SpecIntegrationVendor = {
   name: string;
   logoLight?: string;
   logoDark?: string;
-  headline: string;
-  blurb: string;
-  docsLabel: string;
+  /** Read when shown, so it follows the language on screen. */
+  readonly headline: string;
+  /** The sentence that points at the vendor's documentation, its link wrapped in `link`. */
+  docs: (link: RichTag) => ReactNode;
   docsUrl: string;
-  prerequisite?: string;
+  readonly prerequisite?: string;
 };
 
 const NO_MULTILINE_KEYS: ReadonlySet<string> = new Set();
@@ -81,9 +83,10 @@ export function SpecIntegrationField({
   multiline?: boolean;
   renderOptionLabel?: (field: ConfigFieldSpec, option: string) => string;
 }) {
+  const t = useT();
   const name = `configuration.${field.key}` as const;
   const label =
-    field.sensitive && hasStoredValue ? `${field.label} (leave blank to keep)` : field.label;
+    field.sensitive && hasStoredValue ? t("{0} (leave blank to keep)", field.label) : field.label;
   const placeholder = field.sensitive && hasStoredValue ? "********" : field.placeholder;
 
   if (field.sensitive) {
@@ -264,6 +267,7 @@ export function SpecIntegrationFooter({
 }
 
 export function SpecIntegrationHeader({ vendor }: { vendor: SpecIntegrationVendor }) {
+  const t = useT();
   const { theme } = useTheme();
   const logo = theme === "dark" ? (vendor.logoDark ?? vendor.logoLight) : vendor.logoLight;
 
@@ -279,7 +283,7 @@ export function SpecIntegrationHeader({ vendor }: { vendor: SpecIntegrationVendo
         {logo ? (
           <LazyImage
             src={logo}
-            alt={`${vendor.name} Logo`}
+            alt={t("{0} logo", vendor.name)}
             className="h-8 max-w-24 object-contain"
           />
         ) : (
@@ -291,7 +295,9 @@ export function SpecIntegrationHeader({ vendor }: { vendor: SpecIntegrationVendo
       <DialogHeader>
         <DialogTitle>{vendor.headline}</DialogTitle>
         <DialogDescription>
-          {vendor.blurb} <ExternalLink href={vendor.docsUrl}>{vendor.docsLabel}</ExternalLink>
+          {vendor.docs((label) => (
+            <ExternalLink href={vendor.docsUrl}>{label}</ExternalLink>
+          ))}
         </DialogDescription>
       </DialogHeader>
     </div>

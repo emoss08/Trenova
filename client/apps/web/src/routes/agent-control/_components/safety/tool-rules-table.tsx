@@ -32,6 +32,7 @@ export default function ToolRulesTable() {
   return (
     <DataTable<AgentToolRuleRow>
       name="Tool Rule"
+      emptyTitle={t("No tool rules yet")}
       queryKey={AGENT_TOOL_RULE_LIST_KEY}
       graphql={agentToolRuleTableGraphQLConfig}
       resource={Resource.AgentDefinition}

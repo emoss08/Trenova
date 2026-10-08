@@ -19,6 +19,7 @@ import {
 } from "@trenova/shared/types/pto-policy";
 import { InfoCircleIcon, PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
 
 const POLICY_STATUS_OPTIONS = [
   { value: "Active", label: "Active", color: "var(--success)" },
@@ -28,16 +29,16 @@ const POLICY_STATUS_OPTIONS = [
 
 const YEAR_BASIS_OPTIONS = (Object.keys(PTO_YEAR_BASIS_LABELS) as PTOYearBasis[]).map((value) => ({
   value,
-  label: PTO_YEAR_BASIS_LABELS[value],
+  label: sourceLabels(PTO_YEAR_BASIS_LABELS)[value],
 }));
 
 const ACCRUAL_METHOD_OPTIONS = (Object.keys(PTO_ACCRUAL_METHOD_LABELS) as PTOAccrualMethod[]).map(
-  (value) => ({ value, label: PTO_ACCRUAL_METHOD_LABELS[value] }),
+  (value) => ({ value, label: sourceLabels(PTO_ACCRUAL_METHOD_LABELS)[value] }),
 );
 
 const TERMINATION_OPTIONS = (
   Object.keys(PTO_TERMINATION_ACTION_LABELS) as PTOTerminationAction[]
-).map((value) => ({ value, label: PTO_TERMINATION_ACTION_LABELS[value] }));
+).map((value) => ({ value, label: sourceLabels(PTO_TERMINATION_ACTION_LABELS)[value] }));
 
 function amountLabel(method: PTOAccrualMethod): string {
   switch (method) {
@@ -104,8 +105,11 @@ export function PTOPolicyForm({
               placeholder={t("Select a status")}
               description={
                 isEdit && openAssignmentCount > 0
-                  ? `${openAssignmentCount} worker${openAssignmentCount === 1 ? " is" : "s are"} assigned; reassign them before deactivating.`
-                  : "Only active policies can be assigned to workers."
+                  ? t(
+                      "{0, plural, one {# worker is assigned; reassign them before deactivating.} other {# workers are assigned; reassign them before deactivating.}}",
+                      openAssignmentCount,
+                    )
+                  : t("Only active policies can be assigned to workers.")
               }
             />
           </FormControl>
@@ -300,7 +304,7 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
             size="sm"
             variant="ghost"
             className="size-7"
-            aria-label={`Remove rule ${index + 1}`}
+            aria-label={t("Remove rule {0}", index + 1)}
             onClick={onRemove}
           >
             <Trash01Icon className="size-3.5" />
@@ -455,7 +459,7 @@ function RuleRow({ index, onRemove }: { index: number; onRemove?: () => void }) 
                   size="sm"
                   variant="ghost"
                   className="mb-0.5 size-7"
-                  aria-label={`Remove tier ${tierIndex + 1} from rule ${index + 1}`}
+                  aria-label={t("Remove tier {0} from rule {1}", tierIndex + 1, index + 1)}
                   onClick={() => tiersArray.remove(tierIndex)}
                 >
                   <Trash01Icon className="size-3.5" />

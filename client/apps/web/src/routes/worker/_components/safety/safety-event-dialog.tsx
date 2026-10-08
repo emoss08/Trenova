@@ -42,23 +42,28 @@ import { useEffect, useMemo } from "react";
 import { FormProvider, useForm, useFormState, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { useSafetyInvalidation } from "./use-safety-invalidation";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
 
 const KIND_OPTIONS = safetyEventKindSchema.options.map((value) => ({
   value,
-  label: SAFETY_EVENT_KIND_LABELS[value],
+  label: sourceLabels(SAFETY_EVENT_KIND_LABELS)[value],
 }));
 const SEVERITY_OPTIONS = safetySeveritySchema.options.map((value) => ({
   value,
-  label: SAFETY_SEVERITY_LABELS[value],
+  label: sourceLabels(SAFETY_SEVERITY_LABELS)[value],
 }));
 const RESULT_OPTIONS = inspectionResultSchema.options.map((value) => ({
   value,
-  label: INSPECTION_RESULT_LABELS[value],
+  label: sourceLabels(INSPECTION_RESULT_LABELS)[value],
 }));
-const LEVEL_OPTIONS = [1, 2, 3, 4, 5, 6].map((level) => ({
-  value: String(level),
-  label: `Level ${level}`,
-}));
+const LEVEL_OPTIONS = [
+  { value: "1", label: "Level 1" },
+  { value: "2", label: "Level 2" },
+  { value: "3", label: "Level 3" },
+  { value: "4", label: "Level 4" },
+  { value: "5", label: "Level 5" },
+  { value: "6", label: "Level 6" },
+];
 
 export type SafetyEventDialogProps = {
   open: boolean;
@@ -192,11 +197,14 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
         : createWorkerSafetyEvent({ ...shared, workerId, points: values.points });
     },
     onSuccess: (saved) => {
-      toast.success(isEdit ? "Safety event updated" : "Safety event recorded", {
+      toast.success(isEdit ? t("Safety event updated") : t("Safety event recorded"), {
         description:
           saved.activePoints > 0
-            ? `${saved.activePoints} point${saved.activePoints === 1 ? "" : "s"} added to the scorecard.`
-            : "No points added to the scorecard.",
+            ? t(
+                "{0, plural, one {# point} other {# points}} added to the scorecard.",
+                saved.activePoints,
+              )
+            : t("No points added to the scorecard."),
       });
       void invalidate();
       onOpenChange(false);
@@ -350,8 +358,8 @@ export function SafetyEventDialog({ open, onOpenChange, workerId, event }: Safet
                   min={0}
                   description={
                     suggested.data == null
-                      ? "Points count for two years."
-                      : `Suggested ${suggested.data} for this kind and severity.`
+                      ? t("Points count for two years.")
+                      : t("Suggested {0} for this kind and severity.", suggested.data)
                   }
                 />
               </FormControl>

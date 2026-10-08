@@ -42,6 +42,7 @@ import {
 import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
 import { formatUnixDateTimeOrDash } from "@trenova/shared/lib/date";
+import { formatRelativeTime } from "@trenova/shared/i18n/format";
 
 function formatTimestamp(ts: number): string {
   return formatUnixDateTimeOrDash(ts);
@@ -49,11 +50,7 @@ function formatTimestamp(ts: number): string {
 
 function relativeTime(ts: number): string {
   if (!ts) return "";
-  const diff = Math.floor(Date.now() / 1000 - ts);
-  if (diff < 60) return `${diff}s ago`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
+  return formatRelativeTime(-Math.floor(Date.now() / 1000 - ts), "narrow");
 }
 
 function statusVariant(status: string): "neutral" | "success" | "danger" | "warning" | "info" {
@@ -231,11 +228,11 @@ function ActionButton({
   const mutation = useMutation({
     mutationFn,
     onSuccess: () => {
-      toast.success(`${label} initiated`);
+      toast.success(t("{0} initiated", label));
       onSuccess();
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : `${label} failed`);
+      toast.error(error instanceof Error ? error.message : t("{0} failed", label));
     },
   });
 
@@ -611,7 +608,7 @@ function ErrorsBanner({ errors }: { errors: string[] }) {
     <div className="border-danger-border bg-danger-subtle rounded-lg border p-3">
       <div className="text-destructive flex items-center gap-2 text-sm font-medium">
         <AlertTriangleIcon className="size-4" />
-        {t("{0} {1} detected", errors.length, errors.length === 1 ? "error" : "errors")}
+        {t("{0, plural, one {# error detected} other {# errors detected}}", errors.length)}
       </div>
       <div className="mt-2 space-y-1">
         {errors.map((err, i) => (

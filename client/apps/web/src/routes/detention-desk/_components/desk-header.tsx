@@ -12,7 +12,7 @@ import {
 import { Button } from "@trenova/shared/components/ui/button";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { formatCountdown } from "@trenova/shared/lib/detention";
-import { cn, formatCurrency, pluralize } from "@trenova/shared/lib/utils";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { Mail01Icon, RefreshCw02Icon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import type { DetentionDeskState } from "./use-detention-desk";
@@ -27,15 +27,16 @@ const NOTICE_PREVIEW_LIMIT = 5;
  * ticking as if the data were live.
  */
 export function DeskLivePulse({ desk }: { desk: DetentionDeskState }) {
+  const t = useT();
   const { isError, isLoading, isFetching, updatedSecondsAgo } = desk;
 
   const label = isError
-    ? "Not refreshing"
+    ? t("Not refreshing")
     : isLoading
-      ? "Connecting"
+      ? t("Connecting")
       : isFetching
-        ? "Syncing"
-        : `Updated ${formatSecondsAgo(updatedSecondsAgo ?? 0)}`;
+        ? t("Syncing")
+        : t("Updated {0}", formatSecondsAgo(updatedSecondsAgo ?? 0));
 
   return (
     <span
@@ -82,7 +83,7 @@ export function DeskHeaderActions({ desk }: { desk: DetentionDeskState }) {
           disabled={sendNotices.isPending}
         >
           <Mail01Icon className="size-3.5" />
-          {t("Send {0} {1}", noticeQueue.length, pluralize("notice", noticeQueue.length))}
+          {t("{0, plural, one {Send # notice} other {Send # notices}}", noticeQueue.length)}
         </Button>
       )}
 
@@ -104,9 +105,8 @@ export function DeskHeaderActions({ desk }: { desk: DetentionDeskState }) {
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg font-semibold">
               {t(
-                "Send {0} detention {1}?",
+                "{0, plural, one {Send # detention notice?} other {Send # detention notices?}}",
                 noticeQueue.length,
-                pluralize("notice", noticeQueue.length),
               )}
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -152,7 +152,7 @@ export function DeskHeaderActions({ desk }: { desk: DetentionDeskState }) {
                 )
               }
             >
-              {t("Send {0}", pluralize("notice", noticeQueue.length))}
+              {t("{0, plural, one {Send notice} other {Send notices}}", noticeQueue.length)}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

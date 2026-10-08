@@ -1,3 +1,4 @@
+import { isRecordEntityType, RECORD_LINKS } from "@/config/record-links";
 import { decisionRequestOf } from "@/components/assistant/decision-requests";
 import { presentProposal } from "@/components/assistant/proposal-presenters";
 import { useApiMutation } from "@/hooks/use-api-mutation";
@@ -15,7 +16,7 @@ import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { queries } from "@/lib/queries";
 import type { AssistantArtifact, AssistantProposal } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useT } from "@trenova/shared/i18n/use-t";
+import { type TranslateFn, useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { humanizeToolName } from "@/components/assistant/proposal-state";
 import { useMemo, useState } from "react";
@@ -38,6 +39,7 @@ import { DeskBillingItem } from "./desk-billing-item";
 import { useDeskBillingStore } from "./desk-billing-store";
 import { DeskRecordView } from "./desk-record-view";
 import { Cell } from "./desk-table-body";
+import { useRichT } from "@trenova/shared/i18n/rich";
 
 const PHASE_PILL: Record<string, string> = {
   failed: "dk-warn",
@@ -100,7 +102,11 @@ export function DeskRecordBody({ artifact }: { artifact: AssistantArtifact }) {
       <div className="dk-ax-rec-h">
         <div>
           <div className="dk-ax-big">{title}</div>
-          {card.entity !== "" && <div className="dk-ax-sub">{humanizeToolName(card.entity)}</div>}
+          {card.entity !== "" && (
+            <div className="dk-ax-sub">
+              {entityName(card.entity, t)}
+            </div>
+          )}
         </div>
         {statusText !== "" && (
           <span className={cn("dk-ax-pill dk-lg", phase ? PHASE_PILL[phase] : "")}>
@@ -590,6 +596,7 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
 /** A view described in words and opened live: what it filters, what it left out, and the way in. */
 export function DeskViewBody({ artifact }: { artifact: AssistantArtifact }) {
   const t = useT();
+  const rt = useRichT();
   const view = useMemo(() => composedViewFrom(artifact), [artifact]);
   const navigation = useMemo(() => navigationFrom(artifact), [artifact]);
   if (view) {
@@ -609,7 +616,7 @@ export function DeskViewBody({ artifact }: { artifact: AssistantArtifact }) {
         </p>
         <div className="dk-ax-vprev">
           <div className="dk-ax-vbar">
-            <span>{humanizeToolName(view.entity)}</span>
+            <span>{entityName(view.entity, t)}</span>
             <em>{t("{0, plural, one {# filter} other {# filters}}", view.filterCount)}</em>
             {view.count !== null && (
               <b>
@@ -633,13 +640,14 @@ export function DeskViewBody({ artifact }: { artifact: AssistantArtifact }) {
           <div key={entry.phrase} className="dk-ax-warn">
             <ArtIcon name="warn" size={13} />
             <span>
-              {t("Left out")} <b>“{entry.phrase}”</b>. {asSentence(entry.reason)}
+              {rt("Left out <b>“{0}”</b>.", { b: (c) => <b>{c}</b> }, entry.phrase)}{" "}
+              {asSentence(entry.reason)}
             </span>
           </div>
         ))}
         <Link className="dk-ax-btn dk-ink dk-wide" to={view.path}>
           <ArtIcon name="ext" size={13} />
-          {t("Open in {0}", humanizeToolName(view.entity))}
+          {t("Open in {0}", entityName(view.entity, t))}
         </Link>
       </div>
     );
@@ -831,4 +839,13 @@ export function DeskReportRunBody({ artifact }: { artifact: AssistantArtifact })
       <ReportRunCard run={run} />
     </div>
   );
+}
+
+/**
+ * entityName names a record type or a report dataset in the reader's language: a record
+ * type by its record-link label, a dataset ("shipments") by its humanized name, which the
+ * catalog holds for every dataset the app has a page for.
+ */
+function entityName(entity: string, t: TranslateFn): string {
+  return isRecordEntityType(entity) ? t(RECORD_LINKS[entity].label) : t(humanizeToolName(entity));
 }

@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { BillingDetailUnselected } from "@/components/billing/billing-empty";
 import { SettlementPeriodEmpty } from "@/components/settlements/settlement-period-empty";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -109,14 +110,15 @@ export default function Workspace() {
     onSuccess: (batch) => {
       toast.success(
         batch.settlementCount > 0
-          ? `Batch up to date — ${batch.settlementCount} settlement${
-              batch.settlementCount === 1 ? "" : "s"
-            }`
-          : "Batch created — no carriers had pending cost events",
+          ? t(
+              "Batch up to date — {0, plural, one {# settlement} other {# settlements}}",
+              batch.settlementCount,
+            )
+          : t("Batch created — no carriers had pending cost events"),
       );
       refresh();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to generate settlements"),
+    onError: (error: Error) => toast.error(error.message || t("Failed to generate settlements")),
   });
 
   if (summaryLoading || !summary) {
@@ -151,8 +153,11 @@ export default function Workspace() {
               onClick={() => generateMutation.mutate()}
               title={
                 summary.pendingEventCount === 0
-                  ? "No pending cost events are waiting — there is nothing to generate"
-                  : `Build one settlement per carrier from ${summary.pendingEventCount} pending cost events`
+                  ? t("No pending cost events are waiting — there is nothing to generate")
+                  : t(
+                      "Build one settlement per carrier from {0, plural, one {# pending cost event} other {# pending cost events}}",
+                      summary.pendingEventCount,
+                    )
               }
             >
               <AssistMark className="size-3.5" />
@@ -216,9 +221,13 @@ export default function Workspace() {
 
 function periodEmptyDescription(pendingEventCount: number, pendingCarrierCount: number) {
   if (pendingEventCount === 0) {
-    return "Cost events accrue automatically as carrier-covered moves complete. Once there is pending cost, generate the period's settlements from here.";
+    return translate(
+      "Cost events accrue automatically as carrier-covered moves complete. Once there is pending cost, generate the period's settlements from here.",
+    );
   }
-  const events = `${pendingEventCount} cost event${pendingEventCount === 1 ? "" : "s"}`;
-  const carriers = `${pendingCarrierCount} carrier${pendingCarrierCount === 1 ? "" : "s"}`;
-  return `${events} across ${carriers} are waiting to be settled. Generating builds one draft statement per carrier, with linehaul, fuel and accessorial cost lines pulled in on their own.`;
+  return translate(
+    "Waiting to be settled: {0, plural, one {# cost event} other {# cost events}} across {1, plural, one {# carrier} other {# carriers}}. Generating builds one draft statement per carrier, with linehaul, fuel and accessorial cost lines pulled in on their own.",
+    pendingEventCount,
+    pendingCarrierCount,
+  );
 }

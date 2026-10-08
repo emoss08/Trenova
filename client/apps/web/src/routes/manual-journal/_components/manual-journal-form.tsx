@@ -16,6 +16,7 @@ import type { ManualJournalLine } from "@/types/manual-journal";
 import { CheckCircleIcon, Scales01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 function mapToJournalEntryLines(lines: ManualJournalLine[]): JournalEntryLine[] {
   return lines.map((l) => ({
@@ -113,7 +114,7 @@ export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
               control={control}
               name="description"
               label={t("Description")}
-              rules={{ required: "Description is required" }}
+              rules={{ required: translate("Description is required") }}
               disabled={!isDraft}
               description={t("A short summary that will appear on the posted journal entry.")}
               placeholder={t("e.g. Accrue December fuel invoices")}
@@ -136,7 +137,7 @@ export function ManualJournalForm({ isDraft = true }: ManualJournalFormProps) {
               control={control}
               name="accountingDate"
               label={t("Accounting date")}
-              rules={{ required: "Accounting date is required" }}
+              rules={{ required: translate("Accounting date is required") }}
               disabled={!isDraft}
               description={t(
                 "The GL date for this entry. It must fall within an open fiscal period.",

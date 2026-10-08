@@ -39,6 +39,7 @@ import { memo, useCallback, useMemo, useState } from "react";
 import { OuterContent } from "./layout";
 import { ConsoleToolbar, EmptyState, ErrorState, RowSkeleton } from "./shared";
 import { outcomeVariant, riskVariant } from "./utils";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 const activityViewOptions: Array<{ value: ActivityViewValue; label: string }> = [
   { value: "auth", label: "Auth events" },
@@ -47,12 +48,12 @@ const activityViewOptions: Array<{ value: ActivityViewValue; label: string }> = 
   { value: "mfa", label: "MFA authenticators" },
 ];
 
-const activityViewButtonLabels: Record<ActivityViewValue, string> = {
+const activityViewButtonLabels: Record<ActivityViewValue, string> = defineLabels({
   auth: "Auth events",
   risk: "Risk decisions",
   identities: "External identities",
   mfa: "MFA authenticators",
-};
+});
 
 function getActivityViewIcon(view: ActivityViewValue) {
   switch (view) {

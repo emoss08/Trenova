@@ -15,6 +15,7 @@ export default function HoldReasonTable() {
   return (
     <DataTable<HoldReason>
       name="Hold Reason"
+      emptyTitle={t("No hold reasons yet")}
       queryKey="hold-reason-list"
       graphql={holdReasonTableGraphQLConfig}
       resource={Resource.HoldReason}

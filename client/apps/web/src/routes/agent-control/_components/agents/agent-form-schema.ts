@@ -7,6 +7,7 @@ import {
   type AutonomyTier,
   type SaveAgentDefinitionRequest,
 } from "@/types/assistant";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import { canDelegate, savedDelegates, type DelegateSummary } from "./delegates";
 
@@ -34,7 +35,9 @@ export const agentFormSchema = saveAgentDefinitionRequestSchema
     /** The agents this one may hand work to; the form always sends the whole list. */
     delegateIds: z
       .array(z.string())
-      .max(MAX_DELEGATES, `An agent can ask at most ${MAX_DELEGATES} other agents`)
+      .max(MAX_DELEGATES, {
+        error: () => translate("An agent can ask at most {0} other agents", MAX_DELEGATES),
+      })
       .default([]),
     /**
      * Who may use it. Saved with the agent, but only when asked:
@@ -44,7 +47,10 @@ export const agentFormSchema = saveAgentDefinitionRequestSchema
     /** The roles granted it, kept whatever the mode. */
     accessRoleIds: z
       .array(z.string())
-      .max(MAX_ACCESS_ROLES, `An agent can be granted to at most ${MAX_ACCESS_ROLES} roles at once`)
+      .max(MAX_ACCESS_ROLES, {
+        error: () =>
+          translate("An agent can be granted to at most {0} roles at once", MAX_ACCESS_ROLES),
+      })
       .default([]),
     /** The agent looks back over its work and keeps what it learned; saved as its opposite, learningOff. */
     learnsFromWork: z.boolean().default(true),
@@ -57,7 +63,7 @@ export const agentFormSchema = saveAgentDefinitionRequestSchema
         ctx.addIssue({
           code: "custom",
           path: ["delegateIds", index],
-          message: "This agent is already on the list",
+          message: translate("This agent is already on the list"),
         });
       }
       seen.add(id);
@@ -67,21 +73,21 @@ export const agentFormSchema = saveAgentDefinitionRequestSchema
       ctx.addIssue({
         code: "custom",
         path: ["cronExpression"],
-        message: "A schedule is required for a scheduled agent",
+        message: translate("A schedule is required for a scheduled agent"),
       });
     }
     if (values.triggerMode === "Event" && values.eventKinds.length === 0) {
       ctx.addIssue({
         code: "custom",
         path: ["eventKinds"],
-        message: "Choose at least one event that starts this agent",
+        message: translate("Choose at least one event that starts this agent"),
       });
     }
     if (values.triggerMode === "Continuous" && values.intervalSeconds < 60) {
       ctx.addIssue({
         code: "custom",
         path: ["intervalSeconds"],
-        message: "A continuous agent runs at most once a minute",
+        message: translate("A continuous agent runs at most once a minute"),
       });
     }
 
@@ -93,7 +99,7 @@ export const agentFormSchema = saveAgentDefinitionRequestSchema
         ctx.addIssue({
           code: "custom",
           path: ["toolTiers"],
-          message: `${tool} cannot act above the agent's ceiling`,
+          message: translate("{0} cannot act above the agent's ceiling", tool),
         });
         break;
       }

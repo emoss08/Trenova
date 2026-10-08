@@ -84,6 +84,7 @@ import { DataTableRefreshPill } from "./data-table-refresh-pill";
 import { DataTableSelectionBanner } from "./data-table-selection-banner";
 import { createSelectionColumn } from "./data-table-selection-column";
 import { DataTableToolbar } from "./data-table-toolbar";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const BULK_SELECT_MAX = 1000;
 const COLUMN_DRAG_MODIFIERS = [restrictToHorizontalAxis];
@@ -122,6 +123,7 @@ export function DataTable<TData extends Record<string, any>>({
   refetchIntervalMs,
   onCellEditCommit,
   renderEmptyState,
+  emptyTitle,
   scopeFilters: ownScopeFilters = NO_SCOPE_FILTERS,
   enableExport = true,
   pageSizeOptions,
@@ -184,8 +186,8 @@ export function DataTable<TData extends Record<string, any>>({
     if (defaultOnClick && !actions.some((action) => action.id === "default-create")) {
       actions.unshift({
         id: "default-create",
-        label: `New ${toSentenceFragment(name)}`,
-        description: `Create a new ${toSentenceFragment(name)} from scratch.`,
+        label: t("New {0}", toSentenceFragment(name)),
+        description: t("Create a new record from scratch."),
         onClick: defaultOnClick,
       });
     }
@@ -199,6 +201,7 @@ export function DataTable<TData extends Record<string, any>>({
     name,
     onAddRecordProp,
     openPanelCreate,
+    t,
   ]);
 
   const openPanelEdit = useCallback(
@@ -556,7 +559,8 @@ export function DataTable<TData extends Record<string, any>>({
       setRowSelection(selection);
     } catch (error) {
       toast.error(t("Selection failed"), {
-        description: error instanceof Error ? error.message : "Could not load all matching rows.",
+        description:
+          error instanceof Error ? error.message : translate("Could not load all matching rows."),
       });
     } finally {
       setIsSelectingAll(false);
@@ -961,11 +965,11 @@ export function DataTable<TData extends Record<string, any>>({
                   renderEmptyState({ hasActiveFilters, onClearFilters: handleClearFilters })
                 ) : (
                   <DataTableEmptyState
-                    name={name}
                     columns={emptyColumns}
                     hasActiveFilters={hasActiveFilters}
+                    title={emptyTitle}
                     onClearFilters={handleClearFilters}
-                    onAddRecord={hasActiveFilters ? undefined : defaultCreate?.onClick}
+                    addRecord={hasActiveFilters ? undefined : defaultCreate}
                   />
                 )}
               </div>
@@ -991,7 +995,9 @@ export function DataTable<TData extends Record<string, any>>({
                       // rather than one table with padding patched over it.
                       density === "compact" && cn(DENSITY_COMPACT_ROW, "[&_td]:py-0.5"),
                     )}
-                    containerClassName="bleed:h-full bleed:max-h-none bleed:rounded-none bleed:border-0 max-h-[calc(65vh_-_var(--top-bar-height))] rounded-lg border border-border"
+                    // The vertical track starts below the sticky column header, so the
+                    // scrollbar runs beside the rows and never over the header.
+                    containerClassName="bleed:h-full bleed:max-h-none bleed:rounded-none bleed:border-0 max-h-[calc(65vh_-_var(--top-bar-height))] rounded-lg border border-border [&>[data-slot=scroll-area-scrollbar][data-orientation=vertical]]:top-(--row-head-h)!"
                     style={{ ...columnSizeVars, minWidth: `${totalSize}px` }}
                   >
                     <TableHeader className="sticky top-0 z-20">

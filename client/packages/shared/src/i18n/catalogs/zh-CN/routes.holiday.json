@@ -9,9 +9,13 @@
   "Could not remove the date": "无法移除此日期",
   "Edit date": "编辑日期",
   "Every year": "每年",
+  "Every {0}": "每 {0}",
+  "Every {0}.": "每 {0}。",
   "Holidays are skipped when a policy counts weekdays only. Blackouts stop time off from being requested on that day.": "当政策仅计算平日时会跳过假日。封锁日期则使该日无法申请休假。",
   "How the calendar is used": "此日历的用途",
   "How the date is listed on the calendar.": "此日期在日历上的显示方式。",
+  "It no longer applies to any year.": "它不再适用于任何年份。",
+  "It no longer applies to {0}.": "它不再适用于 {0}。",
   "Keep": "保留",
   "Next year": "下一年",
   "Nothing on the calendar for {0}.": "{0} 的日历上没有任何项目。",
@@ -21,8 +25,10 @@
   "Previous year": "上一年",
   "Repeats every year": "每年重复",
   "The calendar could not be loaded. Try again in a moment.": "无法加载日历。请稍后再试。",
+  "The day the holiday or blackout falls on.": "节假日或禁用期所在的日期。",
   "This applies to every year.": "此设置适用于每一年。",
   "Workers will be able to request this date off again.": "员工将可再次申请此日期休假。",
   "e.g. Jul 4": "例如：7 月 4 日",
-  "e.g. Office closed; dispatch runs a skeleton crew": "例如：办公室休息；调度仅留最低人力"
+  "e.g. Office closed; dispatch runs a skeleton crew": "例如：办公室休息；调度仅留最低人力",
+  "{0} updated": "{0} 已更新"
 }

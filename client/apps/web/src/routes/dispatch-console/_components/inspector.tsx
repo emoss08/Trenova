@@ -301,10 +301,9 @@ function MoveInspector({
           {move.originCity}, {move.originState} → {move.destinationCity}, {move.destinationState}
         </span>
         <span className="text-muted-foreground text-2xs">
-          {t(
-            "Pickup {0}",
-            move.originWindowStart > 0 ? formatUnixDateTime(move.originWindowStart) : "unscheduled",
-          )}
+          {move.originWindowStart > 0
+            ? t("Pickup {0}", formatUnixDateTime(move.originWindowStart))
+            : t("Pickup unscheduled")}
         </span>
       </div>
 

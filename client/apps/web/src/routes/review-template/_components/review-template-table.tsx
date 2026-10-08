@@ -56,8 +56,19 @@ export default function ReviewTemplateTable() {
         archivePerformanceReviewTemplate(row.id, row.version),
       );
       notifyBulkOutcome(outcome, {
-        entity: "template",
-        verbPast: t("Deactivated"),
+        succeeded: (count) =>
+          t("Deactivated {0, plural, one {# template} other {# templates}}", count),
+        partial: (succeeded, failed) =>
+          t(
+            "Deactivated {0, plural, one {# template} other {# templates}}; {1} failed",
+            succeeded,
+            failed,
+          ),
+        allFailed: (failed) =>
+          t(
+            "{0, plural, one {The selected template failed} other {All # selected templates failed}}",
+            failed,
+          ),
         skipped: rows.length - eligible.length,
       });
       await invalidate();
@@ -76,8 +87,19 @@ export default function ReviewTemplateTable() {
         restorePerformanceReviewTemplate(row.id, row.version),
       );
       notifyBulkOutcome(outcome, {
-        entity: "template",
-        verbPast: t("Restored"),
+        succeeded: (count) =>
+          t("Restored {0, plural, one {# template} other {# templates}}", count),
+        partial: (succeeded, failed) =>
+          t(
+            "Restored {0, plural, one {# template} other {# templates}}; {1} failed",
+            succeeded,
+            failed,
+          ),
+        allFailed: (failed) =>
+          t(
+            "{0, plural, one {The selected template failed} other {All # selected templates failed}}",
+            failed,
+          ),
         skipped: rows.length - eligible.length,
       });
       await invalidate();
@@ -139,6 +161,7 @@ export default function ReviewTemplateTable() {
   return (
     <DataTable<ReviewTemplateRow>
       name="Review Template"
+      emptyTitle={t("No review templates yet")}
       queryKey={REVIEW_TEMPLATE_LIST_KEY}
       graphql={reviewTemplateTableGraphQLConfig}
       resource={Resource.PerformanceReviewTemplate}

@@ -7,6 +7,7 @@ import {
   DataTableRowStateContext,
 } from "@/contexts/data-table-row-context";
 import {
+  columnHeaderLabel,
   columnSizeVar,
   pinnedCellClass,
   pinnedCellStyle,
@@ -85,6 +86,7 @@ function DataTableRowInner<TData extends RowData>({
   isCursor,
   isExpanded,
 }: DataTableRowProps<TData>) {
+  const t = useT();
   const isClickable = !!(onRowClick || (hasPanel && canOpenPanel));
   const hasContextMenu = hasRowActions || (hasPanel && canOpenPanel);
   const rowState = useMemo(
@@ -150,7 +152,7 @@ function DataTableRowInner<TData extends RowData>({
               key={cell.id}
               role="cell"
               data-column-id={cell.column.id}
-              aria-label={`${cell.column.id} cell`}
+              aria-label={t("{0} cell", columnHeaderLabel(cell.column))}
               onDoubleClick={
                 canEdit && !isEditing && !isClickable
                   ? (e) => {
@@ -173,7 +175,7 @@ function DataTableRowInner<TData extends RowData>({
                   {canEdit && (
                     <button
                       type="button"
-                      aria-label={`Edit ${cell.column.id}`}
+                      aria-label={t("Edit {0}", columnHeaderLabel(cell.column))}
                       onClick={(e) => {
                         e.stopPropagation();
                         cell.startEditing();

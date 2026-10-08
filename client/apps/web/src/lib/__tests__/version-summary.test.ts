@@ -1,5 +1,6 @@
 import type { RateAgreementVersion } from "@trenova/shared/types/rate";
-import { describe, expect, it } from "vitest";
+import { registerCatalogSource, setLocale } from "@trenova/shared/i18n/runtime";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { describeVersion } from "../version-summary";
 
 const CHARGE_ID = "acc_01K2ZX8Y4M5N6P7Q8R9S0T1V2W";
@@ -80,5 +81,35 @@ describe("describeVersion", () => {
 
   it("shows a dash when nothing is recorded", () => {
     expect(describeVersion(version({}))).toBe("—");
+  });
+});
+
+describe("describeVersion in another language", () => {
+  beforeAll(async () => {
+    await registerCatalogSource({
+      es: async () => ({
+        "{0}: {1}": "{0}: {1}",
+        Amount: "Importe",
+        "Effective from": "Vigente desde",
+        "Fuel terms": "Términos de combustible",
+      }),
+    });
+    await setLocale("es");
+  });
+
+  afterAll(async () => {
+    await setLocale("en");
+  });
+
+  it("names every field in the reader's language", () => {
+    const v = version({
+      changeSummary: {
+        agreementEffectiveFrom: { from: 1, to: 2 },
+        [`accessorialTerms.${CHARGE_ID}.amount`]: { from: "25", to: "40" },
+        "fuelTerms.capAmount": { from: null, to: "500" },
+      },
+      accessorialNames: { [CHARGE_ID]: "DETENTION" },
+    });
+    expect(describeVersion(v)).toBe("Vigente desde, DETENTION: Importe, Términos de combustible");
   });
 });

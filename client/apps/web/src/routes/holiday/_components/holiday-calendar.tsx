@@ -102,10 +102,10 @@ export function HolidayCalendar() {
   const removeMutation = useMutation({
     mutationFn: (entry: OrgHolidayRow) => deleteOrgHoliday(entry.id),
     onSuccess: async (_, entry) => {
-      toast.success(`${entry.name} removed`, {
+      toast.success(t("{0} removed", entry.name), {
         description: entry.recursAnnually
-          ? "It no longer applies to any year."
-          : `It no longer applies to ${formatUtcDate(entry.holidayDate)}.`,
+          ? t("It no longer applies to any year.")
+          : t("It no longer applies to {0}.", formatUtcDate(entry.holidayDate)),
       });
       setPendingDelete(null);
       await invalidate();
@@ -324,6 +324,7 @@ function MonthCard({
   isCurrentYear: boolean;
   onDayClick: (isoDate: string, month: number, day: number) => void;
 }) {
+  const t = useT();
   const leading = new Date(Date.UTC(year, month, 1)).getUTCDay();
   const total = daysInMonth(year, month);
   const today = new Date();
@@ -353,7 +354,9 @@ function MonthCard({
             <button
               key={key}
               type="button"
-              aria-label={label ? `${label} on ${formatUtcDate(marked![0].date)}` : undefined}
+              aria-label={
+                label ? t("{0} on {1}", label, formatUtcDate(marked![0].date)) : undefined
+              }
               title={label}
               onClick={() => onDayClick(key, month, day)}
               className={cn(
@@ -437,7 +440,7 @@ function EntryRow({
             variant="ghost"
             size="icon"
             className="size-7"
-            aria-label={`Edit ${entry.name}`}
+            aria-label={t("Edit {0}", entry.name)}
             onClick={onEdit}
           >
             <Edit02Icon className="size-3.5" />
@@ -449,7 +452,7 @@ function EntryRow({
             variant="ghost"
             size="icon"
             className="text-destructive size-7"
-            aria-label={`Remove ${entry.name}`}
+            aria-label={t("Remove {0}", entry.name)}
             onClick={onRemove}
           >
             <Trash01Icon className="size-3.5" />

@@ -35,6 +35,7 @@ export default function AgentEvaluationTable() {
     <>
       <DataTable<AgentEvaluationRow>
         name="Agent Evaluation"
+        emptyTitle={t("No agent evaluations yet")}
         queryKey={AGENT_EVALUATION_LIST_KEY}
         graphql={agentEvaluationTableGraphQLConfig}
         resource={Resource.AgentRun}

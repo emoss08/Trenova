@@ -42,6 +42,7 @@ import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { formatSettlementMonthDay } from "@trenova/shared/lib/date";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export function DriverContextRail({
   workerId,
@@ -150,7 +151,7 @@ function UnsettledPaySection({
       toast.success(t("Pay event added to the settlement"));
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to add pay event"),
+    onError: (error: Error) => toast.error(error.message || translate("Failed to add pay event")),
   });
 
   const releaseMutation = useMutation({
@@ -159,7 +160,7 @@ function UnsettledPaySection({
       toast.success(t("Hold released — the event will settle normally"));
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to release hold"),
+    onError: (error: Error) => toast.error(error.message || translate("Failed to release hold")),
   });
 
   if (isLoading) {
@@ -283,7 +284,7 @@ function HoldDialog({
       onOpenChange(false);
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to hold pay event"),
+    onError: (error: Error) => toast.error(error.message || translate("Failed to hold pay event")),
   });
 
   return (
@@ -345,12 +346,12 @@ function EarningsSection({ workerId, onChanged }: { workerId: string; onChanged:
     onSuccess: (_updated, earning) => {
       toast.success(
         earning.status === "Paused"
-          ? "Earning resumed"
-          : "Earning paused — upcoming settlements will skip it",
+          ? translate("Earning resumed")
+          : translate("Earning paused — upcoming settlements will skip it"),
       );
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to update earning"),
+    onError: (error: Error) => toast.error(error.message || translate("Failed to update earning")),
   });
 
   if (isLoading) {
@@ -446,12 +447,13 @@ function DeductionsSection({ workerId, onChanged }: { workerId: string; onChange
     onSuccess: (_updated, deduction) => {
       toast.success(
         deduction.status === "Paused"
-          ? "Deduction resumed"
-          : "Deduction paused — upcoming settlements will skip it",
+          ? translate("Deduction resumed")
+          : translate("Deduction paused — upcoming settlements will skip it"),
       );
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to update deduction"),
+    onError: (error: Error) =>
+      toast.error(error.message || translate("Failed to update deduction")),
   });
 
   if (isLoading) {

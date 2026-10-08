@@ -12,6 +12,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { emailPurposes } from "./email-profile-constants";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const purposeAssignmentsSchema = z.object({
   General: z.string(),
@@ -70,7 +71,8 @@ export function PurposeAssignmentsPanel() {
     },
     onError: (error) => {
       toast.error(t("Failed to update purpose assignments"), {
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        description:
+          error instanceof Error ? error.message : translate("An unexpected error occurred"),
       });
     },
   });

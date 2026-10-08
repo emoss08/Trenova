@@ -33,16 +33,16 @@ export default function RecurringShipmentTable() {
   const handleGenerateNow = useCallback(
     (series: RecurringShipmentRow) => {
       toast.promise(apiService.recurringShipmentService.generate(series.id), {
-        loading: "Generating shipment...",
+        loading: t("Generating shipment..."),
         success: (result) =>
           result.shipment?.proNumber
-            ? `Shipment ${result.shipment.proNumber} generated from "${series.name}"`
-            : `Occurrence processed for "${series.name}"`,
-        error: "Failed to generate shipment",
+            ? t('Shipment {0} generated from "{1}"', result.shipment.proNumber, series.name)
+            : t('Occurrence processed for "{0}"', series.name),
+        error: t("Failed to generate shipment"),
         finally: invalidate,
       });
     },
-    [invalidate],
+    [invalidate, t],
   );
 
   const handleToggleStatus = useCallback(
@@ -51,17 +51,17 @@ export default function RecurringShipmentTable() {
       toast.promise(
         apiService.recurringShipmentService.updateStatus(series.id, nextStatus, series.version),
         {
-          loading: nextStatus === "Paused" ? "Pausing series..." : "Resuming series...",
+          loading: nextStatus === "Paused" ? t("Pausing series...") : t("Resuming series..."),
           success:
             nextStatus === "Paused"
-              ? `"${series.name}" paused — no shipments will generate until resumed`
-              : `"${series.name}" resumed — the schedule restarts from the next future pickup`,
-          error: "Failed to update series status",
+              ? t('"{0}" paused — no shipments will generate until resumed', series.name)
+              : t('"{0}" resumed — the schedule restarts from the next future pickup', series.name),
+          error: t("Failed to update series status"),
           finally: invalidate,
         },
       );
     },
-    [invalidate],
+    [invalidate, t],
   );
 
   const rowActions = useMemo<RowAction<RecurringShipmentRow>[]>(
@@ -97,6 +97,7 @@ export default function RecurringShipmentTable() {
     <>
       <DataTable<RecurringShipmentRow>
         name="Recurring Shipment"
+        emptyTitle={t("No recurring shipments yet")}
         queryKey="recurring-shipment-list"
         graphql={recurringShipmentTableGraphQLConfig}
         resource={Resource.RecurringShipment}

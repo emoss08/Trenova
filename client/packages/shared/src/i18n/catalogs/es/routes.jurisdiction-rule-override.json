@@ -10,6 +10,7 @@
   "Leave blank to defer to the state. A value above the state limit is rejected.": "Déjelo en blanco para seguir lo que fije el estado. Se rechaza cualquier valor superior al límite estatal.",
   "Loading carrier override...": "Cargando la anulación del transportista...",
   "Narrows": "Más estricto",
+  "No carrier overrides yet": "Aún no hay anulaciones de transportistas",
   "Our trailer fleet and insurance terms are narrower than this state allows": "Nuestra flota de remolques y nuestras condiciones de seguro son más restrictivas de lo que permite este estado",
   "Override removed": "Anulación eliminada",
   "Permit lead time": "Plazo de obtención del permiso",

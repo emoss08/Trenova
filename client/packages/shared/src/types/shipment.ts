@@ -17,6 +17,7 @@ import {
 } from "./helpers";
 import { locationSchema } from "./location";
 import { userSchema } from "./user";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const shipmentStatusSchema = z.enum([
   "New",
@@ -174,7 +175,7 @@ export const stopScheduleTypeSchema = z.enum(["Open", "Appointment"]);
 export type StopScheduleType = z.infer<typeof stopScheduleTypeSchema>;
 
 const stopBaseSchema = z.object({
-  locationId: z.string().min(1, { error: "Location is required" }),
+  locationId: z.string().min(1, { error: () => translate("Location is required") }),
   status: stopStatusSchema.default("New"),
   type: stopTypeSchema.default("Pickup"),
   scheduleType: stopScheduleTypeSchema.default("Open"),
@@ -209,9 +210,9 @@ export const stopUpdateSchema = stopReadMetadataSchema.extend({
 export type StopUpdateInput = z.infer<typeof stopUpdateSchema>;
 
 export const assignmentPayloadSchema = z.object({
-  primaryWorkerId: z.string().min(1, { error: "Primary Worker is required" }),
+  primaryWorkerId: z.string().min(1, { error: () => translate("Primary Worker is required") }),
   secondaryWorkerId: nullableStringSchema,
-  tractorId: z.string().min(1, { error: "Tractor is required" }),
+  tractorId: z.string().min(1, { error: () => translate("Tractor is required") }),
   trailerId: nullableStringSchema,
 });
 export type AssignmentPayload = z.infer<typeof assignmentPayloadSchema>;
@@ -313,8 +314,8 @@ const carrierAssignmentAccessorialPayloadSchema = z.object({
   accessorialChargeId: nullableStringSchema,
   description: z
     .string()
-    .min(1, { error: "Description is required" })
-    .max(255, { error: "Description must be at most 255 characters" }),
+    .min(1, { error: () => translate("Description is required") })
+    .max(255, { error: () => translate("Description must be at most 255 characters") }),
   amount: decimalNumberSchema("Amount is required", "Amount cannot be negative"),
 });
 export type CarrierAssignmentAccessorialPayload = z.infer<
@@ -322,7 +323,7 @@ export type CarrierAssignmentAccessorialPayload = z.infer<
 >;
 
 export const carrierAssignmentPayloadSchema = z.object({
-  carrierId: z.string().min(1, { error: "Carrier is required" }),
+  carrierId: z.string().min(1, { error: () => translate("Carrier is required") }),
   rateMethod: carrierRateMethodSchema,
   baseRate: decimalNumberSchema("Base rate is required", "Base rate cannot be negative"),
   fuelSurcharge: decimalNumberSchema(
@@ -330,15 +331,21 @@ export const carrierAssignmentPayloadSchema = z.object({
     "Fuel surcharge cannot be negative",
   ).nullish(),
   accessorials: z.array(carrierAssignmentAccessorialPayloadSchema),
-  proNumber: z.string().max(50, { error: "Pro number must be at most 50 characters" }),
-  externalDriverName: z.string().max(255, { error: "Driver name must be at most 255 characters" }),
-  externalDriverPhone: z.string().max(20, { error: "Driver phone must be at most 20 characters" }),
+  proNumber: z
+    .string()
+    .max(50, { error: () => translate("Pro number must be at most 50 characters") }),
+  externalDriverName: z
+    .string()
+    .max(255, { error: () => translate("Driver name must be at most 255 characters") }),
+  externalDriverPhone: z
+    .string()
+    .max(20, { error: () => translate("Driver phone must be at most 20 characters") }),
   externalTractorNumber: z
     .string()
-    .max(50, { error: "Tractor number must be at most 50 characters" }),
+    .max(50, { error: () => translate("Tractor number must be at most 50 characters") }),
   externalTrailerNumber: z
     .string()
-    .max(50, { error: "Trailer number must be at most 50 characters" }),
+    .max(50, { error: () => translate("Trailer number must be at most 50 characters") }),
   overrideInsuranceWarning: z.boolean(),
 
   /**
@@ -464,7 +471,7 @@ export const chargeAllocationSchema = z.object({
   additionalChargeId: nullableStringSchema,
   orderChargeId: nullableStringSchema,
   chargeKind: chargeAllocationKindSchema.optional(),
-  billToCustomerId: z.string().min(1, { error: "Payer is required" }),
+  billToCustomerId: z.string().min(1, { error: () => translate("Payer is required") }),
   method: chargeAllocationMethodSchema.default("Percent"),
   percent: decimalStringSchema,
   amount: decimalStringSchema,
@@ -517,10 +524,16 @@ export function chargeAllocationsRefinement(
 }
 
 const additionalChargeBaseSchema = z.object({
-  accessorialChargeId: z.string().min(1, { error: "Accessorial Charge is required" }),
+  accessorialChargeId: z
+    .string()
+    .min(1, { error: () => translate("Accessorial Charge is required") }),
   method: accessorialChargeMethodSchema.default("Flat"),
   amount: decimalStringSchema.default(0),
-  unit: z.number().int().min(1, { error: "Unit must be at least 1" }).default(1),
+  unit: z
+    .number()
+    .int()
+    .min(1, { error: () => translate("Unit must be at least 1") })
+    .default(1),
   allocations: z.array(chargeAllocationSchema).default([]),
 });
 
@@ -602,16 +615,16 @@ export const additionalChargeCreateSchema = additionalChargeBaseSchema
 export type AdditionalChargeCreateInput = z.infer<typeof additionalChargeCreateSchema>;
 
 const shipmentCommodityBaseSchema = z.object({
-  commodityId: z.string().min(1, { error: "Commodity is required" }),
+  commodityId: z.string().min(1, { error: () => translate("Commodity is required") }),
   pieces: z
-    .number({ error: "Pieces is required" })
+    .number({ error: () => translate("Pieces is required") })
     .int()
-    .min(1, { error: "Pieces must be at least 1" })
+    .min(1, { error: () => translate("Pieces must be at least 1") })
     .default(1),
   weight: z
-    .number({ error: "Weight is required" })
+    .number({ error: () => translate("Weight is required") })
     .int()
-    .nonnegative({ error: "Weight cannot be negative" })
+    .nonnegative({ error: () => translate("Weight cannot be negative") })
     .default(0),
   lengthFeet: decimalStringSchema,
   widthFeet: decimalStringSchema,
@@ -676,9 +689,9 @@ const shipmentBaseSchema = z.object({
   orderId: nullableStringSchema,
   orderNumber: nullableStringSchema,
   orderStatus: nullableStringSchema,
-  serviceTypeId: z.string().min(1, { error: "Service Type is required" }),
-  shipmentTypeId: z.string().min(1, { error: "Shipment Type is required" }),
-  customerId: z.string().min(1, { error: "Customer is required" }),
+  serviceTypeId: z.string().min(1, { error: () => translate("Service Type is required") }),
+  shipmentTypeId: z.string().min(1, { error: () => translate("Shipment Type is required") }),
+  customerId: z.string().min(1, { error: () => translate("Customer is required") }),
   billToCustomerId: nullableStringSchema,
   freightTerms: freightTermsSchema.default("Prepaid"),
   freightAllocations: z.array(chargeAllocationSchema).default([]),
@@ -845,8 +858,8 @@ export const duplicateShipmentRequestSchema = z.object({
   count: z
     .number()
     .int()
-    .min(1, { error: "Count must be at least 1" })
-    .max(20, { error: "Count must be between 1 and 20" })
+    .min(1, { error: () => translate("Count must be at least 1") })
+    .max(20, { error: () => translate("Count must be between 1 and 20") })
     .default(1),
   overrideDates: z.boolean().default(false),
 });
@@ -887,7 +900,7 @@ export type RecordStopActualPayload = {
 };
 
 export const transferOwnershipSchema = z.object({
-  ownerId: z.string().min(1, { error: "Owner is required" }),
+  ownerId: z.string().min(1, { error: () => translate("Owner is required") }),
 });
 export type TransferOwnershipPayload = z.infer<typeof transferOwnershipSchema>;
 
@@ -1024,10 +1037,12 @@ export const previousRatesResponseSchema = z.object({
 export type PreviousRatesResponse = z.infer<typeof previousRatesResponseSchema>;
 
 export const getPreviousRatesRequestSchema = z.object({
-  originLocationId: z.string().min(1, { error: "Origin Location is required" }),
-  destinationLocationId: z.string().min(1, { error: "Destination Location is required" }),
-  shipmentTypeId: z.string().min(1, { error: "Shipment Type is required" }),
-  serviceTypeId: z.string().min(1, { error: "Service Type is required" }),
+  originLocationId: z.string().min(1, { error: () => translate("Origin Location is required") }),
+  destinationLocationId: z
+    .string()
+    .min(1, { error: () => translate("Destination Location is required") }),
+  shipmentTypeId: z.string().min(1, { error: () => translate("Shipment Type is required") }),
+  serviceTypeId: z.string().min(1, { error: () => translate("Service Type is required") }),
   customerId: optionalStringSchema,
   excludeShipmentId: optionalStringSchema,
 });
@@ -1035,7 +1050,7 @@ export const getPreviousRatesRequestSchema = z.object({
 export type GetPreviousRatesRequest = z.infer<typeof getPreviousRatesRequestSchema>;
 
 export const transferToBillingRequestSchema = z.object({
-  shipmentId: z.string().min(1, { error: "Shipment ID is required" }),
+  shipmentId: z.string().min(1, { error: () => translate("Shipment ID is required") }),
   billType: defaultBillTypeSchema,
 });
 

@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { humanizeToolName } from "./proposal-state";
 import {
   classifyValues,
@@ -10,6 +11,7 @@ import {
   recordLabel,
   type DisplayType,
 } from "./readable-values";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export { humanizeKey, recordLabel };
 
@@ -26,7 +28,7 @@ export function isWebTool(name: string): boolean {
  * humanized name, so a new tool is never shown as an identifier, just less
  * warmly than a known one.
  */
-const TOOL_TITLES: Record<string, string> = {
+const TOOL_TITLES: Record<string, string> = defineLabels({
   recall_memory: "Recall what was recorded",
   get_my_home_layout: "Read your home page",
   list_home_widgets: "List home page widgets",
@@ -158,7 +160,7 @@ const TOOL_TITLES: Record<string, string> = {
   pause_accounting_sync: "Pause accounting sync",
   resume_accounting_sync: "Resume accounting sync",
   request_accounting_backfill: "Request accounting backfill",
-};
+});
 
 /** Argument keys that name the record a tool was about, most specific first. */
 const SUBJECT_KEYS = [
@@ -225,9 +227,11 @@ function describeFilter(filter: ToolFilter): string {
 
   const operator = typeof filter.operator === "string" ? filter.operator : "";
 
+  // Each shape is one message, so a language can put the field after its condition.
   if (typeof filter.days === "number") {
-    const span = operator === "lastndays" ? "last" : "next";
-    return `${field} ${span} ${filter.days}d`;
+    return operator === "lastndays"
+      ? translate("{0} last {1}d", field, filter.days)
+      : translate("{0} next {1}d", field, filter.days);
   }
   if (Array.isArray(filter.values)) {
     return `${field} ${filter.values.join("/")}`;
@@ -236,10 +240,10 @@ function describeFilter(filter: ToolFilter): string {
     return `${field} ${filter.value}`;
   }
   if (operator === "isnull") {
-    return `${field} empty`;
+    return translate("{0} empty", field);
   }
   if (operator === "isnotnull") {
-    return `${field} set`;
+    return translate("{0} set", field);
   }
 
   return `${field} ${operator}`.trim();

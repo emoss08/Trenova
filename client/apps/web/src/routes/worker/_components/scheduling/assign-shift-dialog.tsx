@@ -213,7 +213,10 @@ export function AssignShiftDialog({
                     name="cycleOffsetWeeks"
                     label={t("Rotation offset (weeks)")}
                     placeholder="0"
-                    description={`0 to ${(preview?.cycleWeeks ?? 1) - 1}. Two workers on the same shift at different offsets alternate.`}
+                    description={t(
+                      "0 to {0}. Two workers on the same shift at different offsets alternate.",
+                      (preview?.cycleWeeks ?? 1) - 1,
+                    )}
                   />
                 </FormControl>
               ) : null}

@@ -12,13 +12,13 @@ const POLICY_STATUS_CHOICES = [
   { value: "Draft", label: "Draft", color: "var(--foreground-subtle)" },
 ];
 
-function ruleSummary(row: PTOPolicyRow): string[] {
+function ruleSummary(row: PTOPolicyRow, t: TranslateFn): string[] {
   return row.rules.map((rule) => {
     const type =
       ptoTypeChoices.find((choice) => choice.value === rule.ptoType)?.label ?? rule.ptoType;
-    if (rule.accrualMethod === "None") return `${type}: tracked`;
-    if (rule.accrualMethod === "Monthly") return `${type}: ${rule.accrualAmountDays}/mo`;
-    return `${type}: ${rule.accrualAmountDays}/yr`;
+    if (rule.accrualMethod === "None") return t("{0}: tracked", type);
+    if (rule.accrualMethod === "Monthly") return t("{0}: {1}/mo", type, rule.accrualAmountDays);
+    return t("{0}: {1}/yr", type, rule.accrualAmountDays);
   });
 }
 
@@ -85,7 +85,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PTOPolicyRow>[] {
       header: t("Tracked types"),
       cell: ({ row }) => (
         <div className="flex flex-wrap gap-1">
-          {ruleSummary(row.original).map((summary) => (
+          {ruleSummary(row.original, t).map((summary) => (
             <Badge key={summary} variant="neutral" className="px-1.5 py-0 text-2xs">
               {summary}
             </Badge>
@@ -97,7 +97,7 @@ export function getColumns(t: TranslateFn): ColumnDef<PTOPolicyRow>[] {
         apiField: "rules",
         filterable: false,
         sortable: false,
-        exportValue: (row: PTOPolicyRow) => ruleSummary(row).join("; "),
+        exportValue: (row: PTOPolicyRow) => ruleSummary(row, t).join("; "),
       },
     },
     {

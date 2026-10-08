@@ -5,9 +5,11 @@
   "Creates a draft settlement for every carrier with pending cost events in the current period.": "Crea una liquidación en borrador para cada transportista con eventos de costo pendientes en el período actual.",
   "Export remittance CSV": "Exportar el CSV de remesa",
   "Generate pay-period AP runs, review totals, and export remittance files.": "Genere corridas de cuentas por pagar por período, revise los totales y exporte los archivos de remesa.",
+  "No carrier settlement batches yet": "Aún no hay lotes de liquidación de transportistas",
   "Period start": "Inicio del período",
   "Settlement count": "Cantidad de liquidaciones",
   "Settlements can auto-post on approval based on your carrier settlement control policy.": "Las liquidaciones pueden contabilizarse automáticamente al aprobarse, según su política de control de liquidación de transportistas.",
   "Total gross minor": "Total bruto en unidades menores",
-  "Total net minor": "Total neto en unidades menores"
+  "Total net minor": "Total neto en unidades menores",
+  "{0, plural, one {Batch generated: # settlement} other {Batch generated: # settlements}}": "{0, plural, one {Lote generado: # liquidación} other {Lote generado: # liquidaciones}}"
 }

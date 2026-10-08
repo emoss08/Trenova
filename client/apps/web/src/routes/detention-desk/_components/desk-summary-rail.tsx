@@ -4,7 +4,6 @@ import {
   type DeskFloorStats,
   type DeskSummary,
 } from "@trenova/shared/lib/detention";
-import { pluralize } from "@trenova/shared/lib/utils";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { DeskMoney } from "./desk-money";
 
@@ -28,28 +27,32 @@ export function DeskSummaryRail({ summary, floor }: DeskSummaryRailProps) {
         value={<DeskMoney value={summary.amountAtRisk} />}
         sub={
           summary.total === 0
-            ? "Nothing on a dock"
-            : `${summary.total} ${pluralize("stop", summary.total)} · avg ${formatDetentionMinutes(
-                floor.averageOnSiteMinutes,
-              )} on site`
+            ? t("Nothing on a dock")
+            : t(
+                "{0, plural, one {# stop} other {# stops}} · avg {1} on site",
+                summary.total,
+                formatDetentionMinutes(floor.averageOnSiteMinutes),
+              )
         }
       />
       <KpiStripItem
         label={t("Notice window")}
         value={summary.noticesDue}
         sub={
-          summary.noticesDue > 0 ? "Must go out before the deadline" : "The notice queue is clear"
+          summary.noticesDue > 0
+            ? t("Must go out before the deadline")
+            : t("The notice queue is clear")
         }
       />
       <KpiStripItem
         label={t("Uncollectable")}
         value={<DeskMoney value={summary.amountLost} precise={false} />}
-        sub={`${summary.lost} ${pluralize("stop", summary.lost)} past the notice deadline`}
+        sub={t("{0, plural, one {# stop} other {# stops}} past the notice deadline", summary.lost)}
       />
       <KpiStripItem
         label={t("Longest wait")}
         value={formatDetentionMinutes(floor.longestOnSiteMinutes)}
-        sub={floor.longestLocationName || "Nothing on a dock"}
+        sub={floor.longestLocationName || t("Nothing on a dock")}
       />
     </KpiStrip>
   );

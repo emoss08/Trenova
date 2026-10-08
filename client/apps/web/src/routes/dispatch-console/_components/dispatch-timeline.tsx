@@ -146,6 +146,27 @@ function buildRows(
   return rows;
 }
 
+function timeOffTitle(t: ReturnType<typeof useT>, type: string): string {
+  switch (type) {
+    case "Personal":
+      return t("Personal time off");
+    case "Vacation":
+      return t("Vacation time off");
+    case "Sick":
+      return t("Sick time off");
+    case "Holiday":
+      return t("Holiday time off");
+    case "Bereavement":
+      return t("Bereavement time off");
+    case "Maternity":
+      return t("Maternity time off");
+    case "Paternity":
+      return t("Paternity time off");
+    default:
+      return t("Time off ({0})", type);
+  }
+}
+
 function barGeometry(start: number, end: number, range: TimeRange, pxPerHour: number) {
   const left = secondsToXForRange(start, range, pxPerHour);
   const right = secondsToXForRange(end, range, pxPerHour);
@@ -332,7 +353,7 @@ function DriverLaneRow({
           return (
             <div
               key={`${pto.startDate}-${pto.endDate}-${pto.type}`}
-              title={`${pto.type} time off`}
+              title={timeOffTitle(t, pto.type)}
               className="absolute inset-y-0 flex items-center justify-center bg-accent-violet/15"
               style={{ left: geometry.left, width: geometry.width }}
             >
@@ -386,11 +407,7 @@ function UnassignedLaneRow({
         <div className="flex min-w-0 flex-col">
           <span className="text-warning truncate text-xs font-medium">{t("Uncovered")}</span>
           <span className="text-muted-foreground truncate text-3xs tabular-nums">
-            {t(
-              "{0} {1} · drag onto a driver",
-              row.spans.length,
-              row.spans.length === 1 ? "move" : "moves",
-            )}
+            {t("{0, plural, one {# move} other {# moves}} · drag onto a driver", row.spans.length)}
           </span>
         </div>
       </div>

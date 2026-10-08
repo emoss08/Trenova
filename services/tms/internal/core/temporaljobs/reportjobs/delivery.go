@@ -97,7 +97,7 @@ func (a *Activities) DeliverScheduledRunActivity(
 		BuID:   run.BusinessUnitID,
 		UserID: run.RequestedByID,
 	}
-	_, title, _ := a.runDisplayMetadata(ctx, run, runnerTenant)
+	_, _, title, _ := a.runDisplayMetadata(ctx, run, runnerTenant)
 
 	result := &DeliverRunResult{}
 

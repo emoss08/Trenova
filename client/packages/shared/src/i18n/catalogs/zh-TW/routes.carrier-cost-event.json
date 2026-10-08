@@ -1,8 +1,10 @@
 {
   "Carrier cost events": "承運業者成本事件",
+  "Cost Event — {0}": "成本事件 — {0}",
   "Cost events accrue automatically when a carrier-covered shipment reaches your configured pay trigger and are locked once attached to a settlement.": "當由承運業者承運的運單達到您設定的付款觸發條件時，成本事件會自動計提，並在附加至結算後鎖定。",
   "Event date": "事件日期",
   "Event type": "事件類型",
+  "No carrier cost events yet": "尚無承運業者成本事件",
   "Purchased-transportation cost accrued as carrier-covered shipments deliver — the source ledger behind every carrier settlement.": "由承運業者承運的運單完成交貨時所計提的外購運力成本 — 每筆承運業者結算背後的來源帳冊。",
   "Unsettled": "未結算"
 }

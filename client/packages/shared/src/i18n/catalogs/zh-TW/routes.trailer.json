@@ -7,6 +7,7 @@
   "Locating...": "定位中...",
   "Manage and configure trailers for your organization": "管理並設定您組織的拖車",
   "Max load weight": "最大載重",
+  "No trailers yet": "尚無拖車",
   "Registration state": "註冊州別",
   "Samsara asset ID": "Samsara 資產 ID",
   "Set the trailer's new location. The system will create and complete an empty reposition move automatically.": "設定此拖車的新位置。系統會自動建立並完成一段空車調度運程。",
@@ -24,5 +25,6 @@
   "The type of equipment the trailer is categorized under.": "此拖車所歸類的設備類型。",
   "The unique registration number assigned to the trailer.": "指派給此拖車的唯一註冊號碼。",
   "Trailer located successfully": "拖車位置已成功更新",
-  "Trailer status updated successfully": "拖車狀態已成功更新"
+  "Trailer status updated successfully": "拖車狀態已成功更新",
+  "Updated last inspection date to {0}": "已將上次稽查日期更新為 {0}"
 }

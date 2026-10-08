@@ -5,13 +5,22 @@
   "Held pay skips settlement generation and auto-attach until you release it. The reason is shown to anyone reviewing the driver's pay.": "暫扣的薪酬在您解除前不會納入結算產生與自動附加。原因會顯示給檢視該駕駛員薪酬的人。",
   "Hold this pay event — it skips settlement generation until released": "暫扣此薪酬事件 — 在解除前不會納入結算產生",
   "Hold {0, plural, one {# pay event} other {# pay events}}": "暫扣 {0, plural, other {# 筆薪酬事件}}",
+  "No pay events yet": "尚無薪酬事件",
   "None of the selected pay events are on hold.": "所選的薪酬事件皆未處於暫扣狀態。",
+  "On hold: {0}. Click to release so the event settles normally.": "扣留中：{0}。按一下以解除，讓此事件正常結算。",
   "Only accrued, unheld pay events can be held.": "僅已計提且未暫扣的薪酬事件可暫扣。",
+  "Pay Event — {0}": "薪酬事件 — {0}",
   "Pay event held — it will skip settlement generation until released": "薪酬事件已暫扣 — 在解除前不會納入結算產生",
   "Pay events accrue automatically when a shipment reaches your configured pay trigger and are locked once settled.": "運單達到您設定的付款觸發條件時，薪酬事件會自動計提，並在結算後鎖定。",
   "Qty × rate": "數量 × 費率",
   "Real-time driver earnings accrued as shipments deliver — the source ledger behind every settlement.": "運單完成交貨時即時計提的駕駛員薪酬 — 每筆結算背後的來源帳冊。",
   "Release holds": "解除暫扣",
   "e.g. Awaiting signed BOL from the shipper": "例如：等待託運人簽署的提單",
-  "e.g. Awaiting signed BOLs for this batch": "例如：等待此批次已簽署的提單"
+  "e.g. Awaiting signed BOLs for this batch": "例如：等待此批次已簽署的提單",
+  "{0, plural, one {# hold released} other {# holds released}}": "{0, plural, other {已解除 # 筆扣留}}",
+  "{0, plural, one {# hold released} other {# holds released}}, {1} failed": "{0, plural, other {已解除 # 筆扣留}}，{1} 筆失敗",
+  "{0, plural, one {# pay event held} other {# pay events held}}": "{0, plural, other {已扣留 # 筆薪酬事件}}",
+  "{0, plural, one {# pay event held} other {# pay events held}}, {1} failed": "{0, plural, other {已扣留 # 筆薪酬事件}}，{1} 筆失敗",
+  "{0, plural, one {The selected hold failed} other {All # selected holds failed}}": "{0, plural, other {所選的 # 筆扣留皆失敗}}",
+  "{0, plural, one {The selected pay event failed} other {All # selected pay events failed}}": "{0, plural, other {所選的 # 筆薪酬事件皆失敗}}"
 }

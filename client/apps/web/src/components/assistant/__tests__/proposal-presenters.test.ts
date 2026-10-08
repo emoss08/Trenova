@@ -242,7 +242,7 @@ describe("presentProposal", () => {
     );
 
     expect(view.title).toBe("Rotate tires");
-    expect(view.summary).toBe("Run rotate tires with the values below.");
+    expect(view.summary).toBe("Run this tool with the values below.");
     expect(view.highlights).toEqual([
       { label: "mileage", value: "120000" },
       { label: "notes", value: "—" },

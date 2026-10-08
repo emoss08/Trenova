@@ -7,6 +7,7 @@
   "Locating...": "Localizando...",
   "Manage and configure trailers for your organization": "Gestione y configure los remolques de su organización",
   "Max load weight": "Peso máximo de carga",
+  "No trailers yet": "Aún no hay remolques",
   "Registration state": "Estado de matriculación",
   "Samsara asset ID": "ID de activo de Samsara",
   "Set the trailer's new location. The system will create and complete an empty reposition move automatically.": "Establezca la nueva ubicación del remolque. El sistema creará y completará automáticamente un tramo de reposicionamiento en vacío.",
@@ -24,5 +25,6 @@
   "The type of equipment the trailer is categorized under.": "El tipo de equipo bajo el que se clasifica el remolque.",
   "The unique registration number assigned to the trailer.": "El número de matrícula único asignado al remolque.",
   "Trailer located successfully": "El remolque se ubicó correctamente",
-  "Trailer status updated successfully": "El estado del remolque se actualizó correctamente"
+  "Trailer status updated successfully": "El estado del remolque se actualizó correctamente",
+  "Updated last inspection date to {0}": "Fecha de la última inspección actualizada a {0}"
 }

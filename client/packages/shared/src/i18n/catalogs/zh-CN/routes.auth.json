@@ -10,6 +10,7 @@
   "Choose a new password": "设置新密码",
   "Choose a password you are not already using": "请选择一组您尚未使用的密码",
   "Choose the workspace for this session.": "选择本次会话使用的工作区。",
+  "Confirm your new password": "确认您的新密码",
   "Contacting network": "正在连接网络",
   "Continue to Dash": "前往 Dash",
   "Continue with {0}": "使用 {0} 继续",
@@ -17,6 +18,7 @@
   "Enter one of the recovery codes you saved when you set up two-factor authentication.": "请输入您设置双重验证时保存的其中一个恢复码。",
   "Enter the address you sign in with and we'll send you a link to choose a new password.": "请输入您登录所用的电子邮件地址，我们会发送链接供您设置新密码。",
   "Enter your code": "输入您的代码",
+  "Enter your current password": "输入您的当前密码",
   "Entering Trenova": "正在进入 Trenova",
   "Entering {0}": "正在进入 {0}",
   "Enterprise": "企业版",
@@ -33,6 +35,7 @@
   "Open your authenticator app and enter the six-digit code for Trenova.": "请打开验证器应用并输入 Trenova 的六位数代码。",
   "Opening workspace": "正在打开工作区",
   "Organizations": "组织",
+  "Password must be at least {0} characters": "密码至少需 {0} 个字符",
   "Passwords do not match": "两次输入的密码不一致",
   "Remembered it? Go back.": "想起来了吗？返回上一页。",
   "Request a new link": "申请新的链接",
@@ -60,5 +63,6 @@
   "Your new password is active. Any other sessions on this account have been signed out.": "您的新密码已生效。此账户的其他会话皆已登出。",
   "{0, plural, one {# role} other {# roles}}{1}": "{0, plural, other {# 个角色}}{1}",
   "{0, plural, one {permission} other {permissions}}": "{0, plural, other {项权限}}",
+  "{0} of {1} selected": "已选择 {0}/{1}",
   "· {0} {1, plural, one {permission} other {permissions}}": "· {0} {1, plural, other {项权限}}"
 }

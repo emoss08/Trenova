@@ -196,11 +196,11 @@ export function SelectField<T extends FieldValues>({
                     const item = optionMap.get(value.toLowerCase());
                     if (!item) return 0;
                     if (!search) return 1;
-                    return item.label.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+                    return t(item.label).toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
                   }}
                 >
                   <CommandInput
-                    placeholder={`Search ${label?.toLowerCase()}...`}
+                    placeholder={label ? t("Search {0}…", label.toLowerCase()) : t("Search…")}
                     onValueChange={(value) => setSearchValue(value)}
                   />
                   <CommandList>

@@ -99,9 +99,16 @@ const RELATIVE_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
   ["minute", 60],
 ];
 
-export function formatRelativeTime(deltaSeconds: number): string {
+/**
+ * formatRelativeTime writes a signed offset in seconds as the reader's language does: "3 days
+ * ago", "in 2 hours". `narrow` is the compact form a dense row uses ("3d ago", "hace 3 días").
+ */
+export function formatRelativeTime(
+  deltaSeconds: number,
+  style: Intl.RelativeTimeFormatStyle = "long",
+): string {
   const locale = intlLocale();
-  const options: Intl.RelativeTimeFormatOptions = { numeric: "auto" };
+  const options: Intl.RelativeTimeFormatOptions = { numeric: "auto", style };
   const formatter = cachedFormatter(
     relativeTimeFormatters,
     locale,
@@ -116,4 +123,32 @@ export function formatRelativeTime(deltaSeconds: number): string {
   }
 
   return formatter.format(Math.round(deltaSeconds), "second");
+}
+
+const ordinalRules = new Map<string, Intl.PluralRules>();
+const ENGLISH_ORDINAL_SUFFIX: Partial<Record<Intl.LDMLPluralRule, string>> = {
+  one: "st",
+  two: "nd",
+  few: "rd",
+  other: "th",
+};
+
+/**
+ * formatOrdinal writes a position the way the reader's language does inside a sentence:
+ * "15th" in English, where the suffix carries the meaning. Spanish and Chinese put the
+ * marker in the sentence itself ("el día 15", "15 日"), so the message holds it and the
+ * number stays plain.
+ */
+export function formatOrdinal(value: number): string {
+  const locale = getLocale();
+  if (locale !== DEFAULT_LOCALE) return formatNumber(value);
+
+  const tag = intlLocale(locale);
+  const rule = cachedFormatter(
+    ordinalRules,
+    tag,
+    { type: "ordinal" },
+    () => new Intl.PluralRules(tag, { type: "ordinal" }),
+  ).select(value);
+  return `${formatNumber(value)}${ENGLISH_ORDINAL_SUFFIX[rule] ?? ENGLISH_ORDINAL_SUFFIX.other}`;
 }

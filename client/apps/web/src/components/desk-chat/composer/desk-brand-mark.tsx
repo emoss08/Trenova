@@ -17,6 +17,7 @@ const PATHS: Record<string, string> = {
 const VIEW_BOX: Record<string, string> = { groq: "0.54 0.39 32 32" };
 
 /** What a vendor is called where a person reads it. */
+// i18n-ignore: vendor brand names, written the same in every language
 export const VENDOR_NAMES: Record<string, string> = {
   anthropic: "Anthropic",
   openai: "OpenAI",
@@ -34,10 +35,12 @@ export const VENDOR_NAMES: Record<string, string> = {
 
 /** The shared logo set's marks for the vendors the Desk does not draw itself. */
 const SHARED_MARKS = new Map(
-  ["openrouter", "together", "fireworks", "bedrock", "ollama", "vllm", "lmstudio"].flatMap((key) => {
-    const Mark = brandMarkFor({ presetKey: key });
-    return Mark ? [[key, <Mark key={key} className="size-full" />] as const] : [];
-  }),
+  ["openrouter", "together", "fireworks", "bedrock", "ollama", "vllm", "lmstudio"].flatMap(
+    (key) => {
+      const Mark = brandMarkFor({ presetKey: key });
+      return Mark ? [[key, <Mark key={key} className="size-full" />] as const] : [];
+    },
+  ),
 );
 
 /** The vendors the Auto reel and rain draw, in the order they turn up. */

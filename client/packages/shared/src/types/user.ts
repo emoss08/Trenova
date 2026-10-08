@@ -10,6 +10,7 @@ import {
 } from "./helpers";
 import { roleSchema, roleSummaryArraySchema } from "./role";
 import { createLimitOffsetResponse } from "./server";
+import { translate } from "@trenova/shared/i18n/runtime";
 export { apiErrorResponseSchema, type ApiErrorResponse } from "./errors";
 
 export const TimeFormat = z.enum(["12-hour", "24-hour"]);
@@ -73,12 +74,12 @@ export const userSchema = z.object({
   currentOrganizationId: optionalStringSchema,
 
   status: statusSchema,
-  name: z.string().min(1, { error: "Name is required" }),
-  username: z.string().min(1, { error: "Username is required" }),
-  emailAddress: z.email().min(1, { error: "Email address is required" }),
+  name: z.string().min(1, { error: () => translate("Name is required") }),
+  username: z.string().min(1, { error: () => translate("Username is required") }),
+  emailAddress: z.email().min(1, { error: () => translate("Email address is required") }),
   profilePicUrl: optionalStringSchema,
   thumbnailUrl: optionalStringSchema,
-  timezone: z.string().min(1, { error: "Timezone is required" }),
+  timezone: z.string().min(1, { error: () => translate("Timezone is required") }),
   timeFormat: TimeFormat.default("12-hour"),
   locale: z.enum(LOCALES).default(DEFAULT_LOCALE),
   isLocked: z.boolean().default(false),
@@ -97,9 +98,11 @@ export type UserResponse = z.infer<typeof userResponseSchema>;
 
 export const loginRequestSchema = z.object({
   emailAddress: z.email({
-    error: "Please enter a valid email address",
+    error: () => translate("Please enter a valid email address"),
   }),
-  password: z.string({ error: "Password is required" }).min(1, "Password is required"),
+  password: z
+    .string({ error: () => translate("Password is required") })
+    .min(1, { error: () => translate("Password is required") }),
   organizationSlug: z.string().optional(),
 });
 
@@ -120,7 +123,7 @@ export const loginResponseSchema = z.object({
 export type LoginResponse = z.infer<typeof loginResponseSchema>;
 
 export const updateMySettingsSchema = z.object({
-  timezone: z.string().min(1, { error: "Timezone is required" }),
+  timezone: z.string().min(1, { error: () => translate("Timezone is required") }),
   timeFormat: TimeFormat,
   locale: z.enum(LOCALES),
 });
@@ -128,9 +131,9 @@ export const updateMySettingsSchema = z.object({
 export type UpdateMySettings = z.infer<typeof updateMySettingsSchema>;
 
 export const changeMyPasswordSchema = z.object({
-  currentPassword: z.string().min(1, { error: "Current password is required" }),
-  newPassword: z.string().min(1, { error: "New password is required" }),
-  confirmPassword: z.string().min(1, { error: "Confirm password is required" }),
+  currentPassword: z.string().min(1, { error: () => translate("Current password is required") }),
+  newPassword: z.string().min(1, { error: () => translate("New password is required") }),
+  confirmPassword: z.string().min(1, { error: () => translate("Confirm password is required") }),
 });
 
 export type ChangeMyPassword = z.infer<typeof changeMyPasswordSchema>;

@@ -174,7 +174,7 @@ function CatalogItemCard({ item, canConfigure, logoURL, onOpen }: CatalogItemCar
               {logoURL ? (
                 <LazyImage
                   src={logoURL}
-                  alt={`${item.name} logo`}
+                  alt={t("{0} logo", item.name)}
                   className={cn("size-24 object-contain", logoSize?.imageClassName)}
                 />
               ) : (
@@ -199,7 +199,7 @@ function CatalogItemCard({ item, canConfigure, logoURL, onOpen }: CatalogItemCar
             <div className="flex items-center gap-2">
               <Switch
                 checked={item.enabled}
-                aria-label={`${item.name} integration enabled`}
+                aria-label={t("{0} integration enabled", item.name)}
                 onCheckedChange={() => onOpen(item.type)}
                 disabled={!canConfigure}
               />

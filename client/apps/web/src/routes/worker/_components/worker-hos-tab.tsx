@@ -30,7 +30,7 @@ import {
   toUserWallClock,
   userWallClockNow,
 } from "@trenova/shared/lib/date";
-import { cn, metersToMiles, pluralize, toTitleCase } from "@trenova/shared/lib/utils";
+import { cn, metersToMiles, toTitleCase } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { format, formatDistanceToNowStrict, startOfDay, subDays } from "date-fns";
 import {
@@ -103,7 +103,7 @@ function getDutyStatusMeta(dutyStatus: string | null): { label: string; variant:
 
 function limitLabel(limitMs: number): string {
   const hours = Math.round(limitMs / HOUR_MS);
-  return `${hours}h limit`;
+  return translate("{0}h limit", hours);
 }
 
 function clockTone(remainingMs: number, baseTone: RingGaugeTone): RingGaugeTone {
@@ -213,6 +213,7 @@ function HosClockCard({
   baseTone?: RingGaugeTone;
   extra?: string;
 }) {
+  const t = useT();
   const clamped = Math.max(remainingMs, 0);
 
   return (
@@ -222,7 +223,7 @@ function HosClockCard({
         size={104}
         strokeWidth={7}
         tone={clockTone(clamped, baseTone)}
-        aria-label={`${label} time remaining`}
+        aria-label={t("{0} time remaining", label)}
       >
         <span className={KPI_VALUE_LG_CLASS}>{formatClockDurationMs(clamped)}</span>
       </RingGauge>
@@ -295,11 +296,11 @@ function ActiveViolationAlert({ state }: { state: WorkerHosState }) {
   const parts: string[] = [];
   if (state.shiftDrivingViolationMs > 0) {
     parts.push(
-      `Shift driving limit exceeded by ${formatDurationMs(state.shiftDrivingViolationMs)}`,
+      t("Shift driving limit exceeded by {0}", formatDurationMs(state.shiftDrivingViolationMs)),
     );
   }
   if (state.cycleViolationMs > 0) {
-    parts.push(`Cycle limit exceeded by ${formatDurationMs(state.cycleViolationMs)}`);
+    parts.push(t("Cycle limit exceeded by {0}", formatDurationMs(state.cycleViolationMs)));
   }
 
   return (
@@ -622,11 +623,14 @@ function DailySummaryRow({ dailyLog }: { dailyLog: WorkerHosDailyLog }) {
     { label: t("On duty"), value: formatDurationMs(dailyLog.onDutyDurationMs) },
     { label: t("Off duty"), value: formatDurationMs(dailyLog.offDutyDurationMs) },
     { label: t("Sleeper"), value: formatDurationMs(dailyLog.sleeperBerthDurationMs) },
-    { label: t("Distance"), value: `${metersToMiles(dailyLog.driveDistanceMeters).toFixed(1)} mi` },
+    {
+      label: t("Distance"),
+      value: t("{0} mi", metersToMiles(dailyLog.driveDistanceMeters).toFixed(1)),
+    },
   ];
   if (dailyLog.vehicleNames && dailyLog.vehicleNames.length > 0) {
     chips.push({
-      label: pluralize("Vehicle", dailyLog.vehicleNames.length),
+      label: t("{0, plural, one {Vehicle} other {Vehicles}}", dailyLog.vehicleNames.length),
       value: dailyLog.vehicleNames.join(", "),
     });
   }
@@ -852,7 +856,7 @@ function FormSubmissionRow({ submission }: { submission: WorkerFormSubmission })
       <CollapsibleTrigger
         className="hover:bg-muted/50 flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors disabled:cursor-default disabled:hover:bg-transparent"
         disabled={!hasFields}
-        aria-label={`Toggle fields for ${submission.templateName}`}
+        aria-label={t("Toggle fields for {0}", submission.templateName)}
       >
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{submission.templateName}</p>
@@ -862,7 +866,7 @@ function FormSubmissionRow({ submission }: { submission: WorkerFormSubmission })
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Badge variant="neutral">
-            {submission.fields.length} {pluralize("field", submission.fields.length)}
+            {t("{0, plural, one {# field} other {# fields}}", submission.fields.length)}
           </Badge>
           {hasFields ? (
             <ChevronDownIcon
@@ -960,9 +964,9 @@ function HosLiveState({
   const t = useT();
 
   const statusMeta = getDutyStatusMeta(state.dutyStatus);
-  const cycleExtras: string[] = [`Tomorrow: ${formatDurationMs(state.cycleTomorrowMs)}`];
+  const cycleExtras: string[] = [t("Tomorrow: {0}", formatDurationMs(state.cycleTomorrowMs))];
   if (state.cycleStartedAt) {
-    cycleExtras.push(`Started ${formatUnixDate(state.cycleStartedAt)}`);
+    cycleExtras.push(t("Started {0}", formatUnixDate(state.cycleStartedAt)));
   }
 
   return (

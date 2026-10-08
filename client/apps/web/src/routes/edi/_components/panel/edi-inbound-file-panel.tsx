@@ -61,7 +61,11 @@ export function InboundFilePanel({
       open={open}
       onOpenChange={onOpenChange}
       title={detail.fileName}
-      description={`Received via ${detail.method} · ${formatToUserTimezone(detail.receivedAt)}`}
+      description={t(
+        "Received via {0} · {1}",
+        detail.method,
+        formatToUserTimezone(detail.receivedAt),
+      )}
       size="lg"
       footer={
         <>
@@ -128,7 +132,7 @@ export function InboundFilePanel({
           </DetailField>
         </DetailSection>
         {file?.messages && file.messages.length > 0 && (
-          <DetailSection title={`Transactions (${file.messages.length})`} fullWidth>
+          <DetailSection title={t("Transactions ({0})", file.messages.length)} fullWidth>
             <div className="flex flex-col gap-2">
               {file.messages.map((message) => (
                 <div

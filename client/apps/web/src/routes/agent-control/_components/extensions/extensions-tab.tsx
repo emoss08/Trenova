@@ -28,12 +28,13 @@ import {
   type ExtensionStatusFilter,
 } from "./extension-roster";
 import { ExtensionSettingsDialog } from "./extension-settings-dialog";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
-const SORT_LABELS: Record<ExtensionSort, string> = {
+const SORT_LABELS: Record<ExtensionSort, string> = defineLabels({
   featured: "Featured",
   name: "Name",
   newest: "Newest",
-};
+});
 
 /**
  * The extension marketplace: capabilities an organization turns on for its

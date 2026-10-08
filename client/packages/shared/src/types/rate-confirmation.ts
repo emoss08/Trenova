@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { nullableArraySchema, nullableStringSchema, optionalStringSchema } from "./helpers";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export const rateConfirmationStatusSchema = z.enum(["Generated", "Sent", "Confirmed", "Voided"]);
 export type RateConfirmationStatus = z.infer<typeof rateConfirmationStatusSchema>;
@@ -11,11 +12,11 @@ export const rateConfirmationViaSchema = z.enum([
 ]);
 export type RateConfirmationVia = z.infer<typeof rateConfirmationViaSchema>;
 
-export const RATE_CONFIRMATION_VIA_LABEL: Record<RateConfirmationVia, string> = {
+export const RATE_CONFIRMATION_VIA_LABEL: Record<RateConfirmationVia, string> = defineLabels({
   Dispatcher: "Confirmed by dispatcher",
   TenderAcceptance: "Signed via tender acceptance",
   PublicSignature: "Signed publicly",
-};
+});
 
 // The Go domain serializes Via fields without omitempty, so an unset value
 // arrives as "" and must normalize to null rather than fail parsing.

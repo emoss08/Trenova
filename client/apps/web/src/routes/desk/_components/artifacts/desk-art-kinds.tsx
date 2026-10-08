@@ -1,6 +1,7 @@
 import type { AssistantArtifact } from "@/types/assistant";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { ReactNode } from "react";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 const ICONS = {
   bill: (
@@ -165,7 +166,7 @@ export type DeskArtKind =
   | "extract"
   | "bill";
 
-const KIND_LABELS: Record<DeskArtKind, string> = {
+const KIND_LABELS: Record<DeskArtKind, string> = defineLabels({
   table: "Table",
   record: "Record",
   rate: "Rate explanation",
@@ -178,7 +179,7 @@ const KIND_LABELS: Record<DeskArtKind, string> = {
   decision: "Decision",
   extract: "Extraction",
   bill: "Billing item",
-};
+});
 
 export function deskArtKind(artifact: Pick<AssistantArtifact, "kind" | "payload">): DeskArtKind {
   switch (artifact.kind) {

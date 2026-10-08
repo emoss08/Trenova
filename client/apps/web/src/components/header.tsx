@@ -31,6 +31,7 @@ import { toast } from "sonner";
 import { SystemInformation } from "./system-information";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export function Header() {
   return (
@@ -129,7 +130,9 @@ export function FavoriteToggle({ className }: { className?: string }) {
     invalidateQueries: [queries.pageFavorite.all._def, queries.pageFavorite.check._def],
     optimisticUpdate: (_variables, currentData) => !currentData,
     onSuccess: (result) => {
-      toast.success(result.favorited ? "Added to favorites" : "Removed from favorites");
+      toast.success(
+        result.favorited ? translate("Added to favorites") : translate("Removed from favorites"),
+      );
     },
   });
 

@@ -116,10 +116,8 @@ export function BillStatementDialog({
           {held > 0 && (
             <p className="text-muted-foreground text-xs">
               {t(
-                "{0, plural, one {# invoice} other {# invoices}} under the customer's minimum {1} skipped, and {2} shipments roll into next period.",
+                "{0, plural, one {# invoice under the customer's minimum is skipped, and its shipments roll into next period.} other {# invoices under the customer's minimum are skipped, and their shipments roll into next period.}}",
                 held,
-                held === 1 ? "is" : "are",
-                held === 1 ? "its" : "their",
               )}
             </p>
           )}

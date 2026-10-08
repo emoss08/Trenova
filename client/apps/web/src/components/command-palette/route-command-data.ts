@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { isNavGroup, type NavGroup, type NavItem, type NavModule } from "@/config/navigation.types";
 import type { SidebarLink } from "@/components/sidebar-nav";
 import { Settings01Icon } from "@trenova/shared/components/icons";
@@ -146,8 +147,8 @@ export function buildRouteCommandGroups(
     const group = link.group || "Administration";
     const title = link.title;
     const subtitle = link.group
-      ? `Administration > ${link.group} > ${link.title}`
-      : `Administration > ${link.title}`;
+      ? translate("Administration > {0} > {1}", link.group, link.title)
+      : translate("Administration > {0}", link.title);
     const command = createCommandItem(
       `admin:${title.toLowerCase().replace(/\s+/g, "-")}`,
       title,

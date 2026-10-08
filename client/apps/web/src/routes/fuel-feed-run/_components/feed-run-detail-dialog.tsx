@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   FUEL_FEED_RUN_LIST_KEY,
@@ -69,7 +70,9 @@ export function FeedRunDetailDialog({
       toast.success(describeResolve(result), {
         description:
           result.queued > 0
-            ? "The rows still waiting need their card assigned, or the unit they name added."
+            ? translate(
+                "The rows still waiting need their card assigned, or the unit they name added.",
+              )
             : undefined,
       });
       await Promise.all([
@@ -127,7 +130,7 @@ export function FeedRunDetailDialog({
             isLoading={isPending}
             loadingText={t("Working them out...")}
             disabled={!batch || held === 0}
-            title={held === 0 ? "This run has nothing waiting" : undefined}
+            title={held === 0 ? t("This run has nothing waiting") : undefined}
           >
             <RefreshCw02Icon className="size-4" />
             {t("Work rows out again")}
@@ -140,11 +143,22 @@ export function FeedRunDetailDialog({
 
 function describeResolve(result: FuelPurchaseImportResolveResult): string {
   if (result.committed > 0) {
-    return `Posted ${result.committed} of ${result.reviewed} held rows`;
+    return translate(
+      "Posted {0} of {1, plural, one {# held row} other {# held rows}}",
+      result.committed,
+      result.reviewed,
+    );
   }
   if (result.resolved > 0) {
-    return `${result.resolved} of ${result.reviewed} rows are ready to commit`;
+    return translate(
+      "{0} of {1, plural, one {# row is} other {# rows are}} ready to commit",
+      result.resolved,
+      result.reviewed,
+    );
   }
 
-  return `None of the ${result.reviewed} held rows could be worked out yet`;
+  return translate(
+    "{0, plural, one {The # held row could not be worked out yet} other {None of the # held rows could be worked out yet}}",
+    result.reviewed,
+  );
 }

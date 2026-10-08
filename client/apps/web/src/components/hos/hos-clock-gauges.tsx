@@ -73,17 +73,14 @@ export function HosClockGauge({
           size={size}
           strokeWidth={strokeWidth}
           tone={SEVERITY_TONE[tone]}
-          aria-label={`${label} time remaining`}
+          aria-label={t("{0} time remaining", label)}
         />
         <div className="flex min-w-0 flex-col">
           <span className="text-muted-foreground text-2xs leading-tight font-semibold">
             {label}
           </span>
           <span
-            className={cn(
-              "text-2xs leading-tight font-semibold tabular-nums",
-              SEVERITY_TEXT[tone],
-            )}
+            className={cn("text-2xs leading-tight font-semibold tabular-nums", SEVERITY_TEXT[tone])}
           >
             {formatClockDurationMs(clamped)}
           </span>

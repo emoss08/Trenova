@@ -158,7 +158,7 @@ export function ShipmentRecordActionsProvider({ children }: { children: ReactNod
       toast.success(t("Document uploaded successfully"));
     },
     onError: (error) => {
-      toast.error(`Upload failed: ${error.message}`);
+      toast.error(t("Upload failed: {0}", error.message));
     },
   });
 
@@ -196,15 +196,21 @@ export function ShipmentRecordActionsProvider({ children }: { children: ReactNod
     [uploadFiles, uploadShipmentId],
   );
 
-  const handleFilesRejected = useCallback((rejectedFiles: RejectedFile[]) => {
-    rejectedFiles.forEach(({ file, reason }) => {
-      if (reason === "size") {
-        toast.error(`File too large: ${file.name}`, {
-          description: `Maximum file size is 50MB. This file is ${formatFileSize(file.size)}.`,
-        });
-      }
-    });
-  }, []);
+  const handleFilesRejected = useCallback(
+    (rejectedFiles: RejectedFile[]) => {
+      rejectedFiles.forEach(({ file, reason }) => {
+        if (reason === "size") {
+          toast.error(t("File too large: {0}", file.name), {
+            description: t(
+              "Maximum file size is 50MB. This file is {0}.",
+              formatFileSize(file.size),
+            ),
+          });
+        }
+      });
+    },
+    [t],
+  );
 
   const handleUploadClose = useCallback(() => {
     setIsUploadOpen(false);
@@ -362,7 +368,7 @@ export function ShipmentRecordActionsProvider({ children }: { children: ReactNod
         disabled={!uploadShipmentId}
         description={
           uploadDocumentType
-            ? `This upload will be classified as ${uploadDocumentType.documentTypeName}.`
+            ? t("This upload will be classified as {0}.", uploadDocumentType.documentTypeName)
             : undefined
         }
       />

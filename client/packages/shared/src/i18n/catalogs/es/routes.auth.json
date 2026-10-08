@@ -10,6 +10,7 @@
   "Choose a new password": "Elija una nueva contraseña",
   "Choose a password you are not already using": "Elija una contraseña que no esté usando ya",
   "Choose the workspace for this session.": "Elija el espacio de trabajo para esta sesión.",
+  "Confirm your new password": "Confirme su nueva contraseña",
   "Contacting network": "Contactando con la red",
   "Continue to Dash": "Continuar a Dash",
   "Continue with {0}": "Continuar con {0}",
@@ -17,6 +18,7 @@
   "Enter one of the recovery codes you saved when you set up two-factor authentication.": "Introduzca uno de los códigos de recuperación que guardó al configurar la autenticación de dos factores.",
   "Enter the address you sign in with and we'll send you a link to choose a new password.": "Introduzca la dirección con la que inicia sesión y le enviaremos un enlace para elegir una nueva contraseña.",
   "Enter your code": "Introduzca su código",
+  "Enter your current password": "Ingrese su contraseña actual",
   "Entering Trenova": "Entrando en Trenova",
   "Entering {0}": "Entrando en {0}",
   "Enterprise": "Empresarial",
@@ -33,6 +35,7 @@
   "Open your authenticator app and enter the six-digit code for Trenova.": "Abra su aplicación de autenticación e introduzca el código de seis dígitos de Trenova.",
   "Opening workspace": "Abriendo el espacio de trabajo",
   "Organizations": "Organizaciones",
+  "Password must be at least {0} characters": "La contraseña debe tener al menos {0} caracteres",
   "Passwords do not match": "Las contraseñas no coinciden",
   "Remembered it? Go back.": "¿Ya la recordó? Vuelva atrás.",
   "Request a new link": "Solicitar un enlace nuevo",
@@ -60,5 +63,6 @@
   "Your new password is active. Any other sessions on this account have been signed out.": "Su nueva contraseña está activa. Se cerraron todas las demás sesiones de esta cuenta.",
   "{0, plural, one {# role} other {# roles}}{1}": "{0, plural, one {# rol} other {# roles}}{1}",
   "{0, plural, one {permission} other {permissions}}": "{0, plural, one {permiso} other {permisos}}",
+  "{0} of {1} selected": "{0} de {1} seleccionados",
   "· {0} {1, plural, one {permission} other {permissions}}": "· {0} {1, plural, one {permiso} other {permisos}}"
 }

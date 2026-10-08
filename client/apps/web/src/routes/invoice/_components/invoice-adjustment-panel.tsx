@@ -27,6 +27,7 @@ import {
   InvoiceAdjustmentSupportingDocumentsSection,
   InvoiceAdjustmentTypeSelector,
 } from "./invoice-adjustment-dialog-sections";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export function InvoiceAdjustmentPanel({ invoice }: { invoice: Invoice }) {
   const t = useT();
@@ -164,8 +165,8 @@ export function InvoiceAdjustmentPanel({ invoice }: { invoice: Invoice }) {
       void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
       toast.success(
         result.status === "PendingApproval"
-          ? "Adjustment submitted for approval"
-          : "Adjustment executed",
+          ? translate("Adjustment submitted for approval")
+          : translate("Adjustment executed"),
       );
       setOpen(false);
       setDraft(null);

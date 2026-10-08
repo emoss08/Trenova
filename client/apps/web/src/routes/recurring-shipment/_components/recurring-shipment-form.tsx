@@ -20,6 +20,7 @@ import { CalendarClockIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { BlackoutDatesField } from "./blackout-dates-field";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 function timezoneLabel(timezone: string | undefined): string {
   if (!timezone) return "the series timezone";
@@ -44,10 +45,7 @@ function SchedulePreview() {
 
   const cadence = describeCron(cronExpression ?? "");
 
-  const lead =
-    leadTimeDays && leadTimeDays > 0
-      ? `created ${leadTimeDays} day${leadTimeDays === 1 ? "" : "s"} ahead of pickup`
-      : "created the same day as pickup";
+  const leadDays = leadTimeDays && leadTimeDays > 0 ? leadTimeDays : 0;
 
   return (
     <div className="border-border bg-muted/30 flex items-start gap-2 rounded-lg border p-3">
@@ -69,11 +67,20 @@ function SchedulePreview() {
         </span>
         <span className="text-2xs text-muted-foreground">
           {autoGenerate
-            ? t("Shipments are {0}.", lead)
-            : t(
-                "Auto-generation is off — occurrences wait for someone to generate them, and would be {0}.",
-                lead,
-              )}
+            ? leadDays > 0
+              ? t(
+                  "{0, plural, one {Shipments are created # day ahead of pickup.} other {Shipments are created # days ahead of pickup.}}",
+                  leadDays,
+                )
+              : t("Shipments are created the same day as pickup.")
+            : leadDays > 0
+              ? t(
+                  "{0, plural, one {Auto-generation is off — occurrences wait for someone to generate them, and would be created # day ahead of pickup.} other {Auto-generation is off — occurrences wait for someone to generate them, and would be created # days ahead of pickup.}}",
+                  leadDays,
+                )
+              : t(
+                  "Auto-generation is off — occurrences wait for someone to generate them, and would be created the same day as pickup.",
+                )}
         </span>
       </div>
     </div>
@@ -136,7 +143,7 @@ export function RecurringShipmentForm({ mode }: { mode: "create" | "edit" }) {
               name="sourceShipmentId"
               label={t("Source shipment")}
               placeholder={t("Search by Pro # or BOL...")}
-              rules={{ required: "Source shipment is required" }}
+              rules={{ required: translate("Source shipment is required") }}
               description={t(
                 "Every generated shipment copies this one's stops, commodities, and charges. Changing it does not touch shipments already generated.",
               )}

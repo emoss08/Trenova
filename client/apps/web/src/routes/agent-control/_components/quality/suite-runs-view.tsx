@@ -97,6 +97,7 @@ function SuiteRunsTable({ agentId }: { agentId: string | null }) {
   const table = (
     <DataTable<AgentSuiteRunRow>
       name="Suite Run"
+      emptyTitle={t("No suite runs yet")}
       queryKey={AGENT_SUITE_RUN_LIST_KEY}
       graphql={graphql}
       resource={Resource.AgentEvalSuite}
@@ -244,6 +245,7 @@ function SuiteRunCases({ suiteRunId, agentId }: { suiteRunId: string; agentId: s
       </div>
       <DataTable<AgentSuiteRunCaseRow>
         name="Suite Run Case"
+        emptyTitle={t("No suite run cases yet")}
         queryKey={AGENT_SUITE_RUN_CASE_LIST_KEY}
         graphql={graphql}
         resource={Resource.AgentEvalSuite}

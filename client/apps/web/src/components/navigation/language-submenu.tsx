@@ -23,6 +23,7 @@ import type { UpdateMySettings, User } from "@trenova/shared/types/user";
 import { Translate01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 type PersistArgs = {
   next: Locale;
@@ -96,6 +97,7 @@ export function LanguageSubmenu() {
   const t = useT();
   const active = useLocale();
   const user = useAuthStore((s) => s.user);
+  const queryClient = useQueryClient();
 
   const { mutateAsync: saveLocale } = useApiMutation<User, UpdateMySettings>({
     mutationFn: (values) => apiService.userService.updateMySettings(values),
@@ -126,13 +128,17 @@ export function LanguageSubmenu() {
         previous,
         user,
         save: saveLocale,
-        onSaved: () =>
+        onSaved: () => {
+          // What the server renders - the report catalog, messages it composed - follows
+          // the stored preference, so it is fetched again once the server holds the new one.
+          void queryClient.invalidateQueries();
           toast.success(t("Language updated"), {
             description: t("Your emails and documents will use it too."),
-          }),
+          });
+        },
       });
     },
-    [active, pending, user, saveLocale, t],
+    [active, pending, user, saveLocale, t, queryClient],
   );
 
   // Warming the catalog on hover turns the click into a cache hit in the common case, so

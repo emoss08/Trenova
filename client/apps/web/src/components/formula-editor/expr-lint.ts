@@ -165,7 +165,7 @@ function lintBrackets(expression: string, diagnostics: ExprDiagnostic[]) {
           from: index,
           to: index + 1,
           severity: "error",
-          message: `Unmatched '${char}'`,
+          message: translate("Unmatched '{0}'", char),
         });
       }
     }
@@ -178,7 +178,7 @@ function lintBrackets(expression: string, diagnostics: ExprDiagnostic[]) {
       from: unclosed.index,
       to: unclosed.index + 1,
       severity: "error",
-      message: `Unclosed '${unclosed.char}'`,
+      message: translate("Unclosed '{0}'", unclosed.char),
     });
   }
 }
@@ -217,8 +217,8 @@ export function lintExpression(expression: string, known: KnownIdentifiers): Exp
           to: token.to,
           severity: "error",
           message: suggestion
-            ? `Unknown function '${callee}'. Did you mean '${suggestion}'?`
-            : `Unknown function '${callee}'`,
+            ? translate("Unknown function '{0}'. Did you mean '{1}'?", callee, suggestion)
+            : translate("Unknown function '{0}'", callee),
         });
       }
       continue;
@@ -231,8 +231,11 @@ export function lintExpression(expression: string, known: KnownIdentifiers): Exp
         to: token.to,
         severity: "warning",
         message: suggestion
-          ? `Unknown variable '${token.name}'. Did you mean '${suggestion}'?`
-          : `Unknown variable '${token.name}'. Declare it as a custom variable or pick one from the reference.`,
+          ? translate("Unknown variable '{0}'. Did you mean '{1}'?", token.name, suggestion)
+          : translate(
+              "Unknown variable '{0}'. Declare it as a custom variable or pick one from the reference.",
+              token.name,
+            ),
       });
     }
   }

@@ -3,6 +3,7 @@ package compiler
 
 import (
 	"fmt"
+	"github.com/emoss08/trenova/shared/i18n"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
@@ -65,7 +66,7 @@ func (e *emitter) buildOutputColumns() ([]outputColumn, error) {
 		})
 	}
 
-	disambiguateLabels(e.v, outputs)
+	e.labels.disambiguateLabels(e.v, outputs)
 
 	return outputs, nil
 }
@@ -341,7 +342,11 @@ func (e *emitter) pivotExpansions(col *validatedColumn) ([]outputColumn, error) 
 			pivotSuffix:   suffix,
 			explicitLabel: col.spec.Label != "",
 			expr:          applyTransform(expr, col.spec.Transform),
-			column:        e.outputResultColumn(col, value, defaultLabel(col)+" ("+suffix+")"),
+			column: e.outputResultColumn(
+				col,
+				value,
+				e.labels.pivotLabel(e.labels.defaultLabel(col), suffix),
+			),
 		})
 	}
 
@@ -367,10 +372,17 @@ func (e *emitter) pivotExpansions(col *validatedColumn) ([]outputColumn, error) 
 		outputs = append(outputs, outputColumn{
 			id:            col.spec.ID + pivotIDSeparator + pivotOtherValue,
 			sourceID:      col.spec.ID,
-			pivotSuffix:   "Other",
+			pivotSuffix:   i18n.Translate(e.labels.locale, "Other"),
 			explicitLabel: col.spec.Label != "",
 			expr:          applyTransform(expr, col.spec.Transform),
-			column:        e.outputResultColumn(col, pivotOtherValue, defaultLabel(col)+" (Other)"),
+			column: e.outputResultColumn(
+				col,
+				pivotOtherValue,
+				e.labels.pivotLabel(
+					e.labels.defaultLabel(col),
+					i18n.Translate(e.labels.locale, "Other"),
+				),
+			),
 		})
 	}
 
@@ -380,15 +392,15 @@ func (e *emitter) pivotExpansions(col *validatedColumn) ([]outputColumn, error) 
 func (e *emitter) pivotValueLabel(value string) string {
 	for i := range e.v.pivotRef.field.EnumValues {
 		if e.v.pivotRef.field.EnumValues[i].Value == value {
-			return e.v.pivotRef.field.EnumValues[i].Label
+			return e.labels.text(e.v.pivotRef.field.EnumValues[i].Label)
 		}
 	}
 	if e.v.pivotRef.field.Type == reportcatalog.FieldBool {
 		switch value {
 		case "true":
-			return "Yes"
+			return i18n.Translate(e.labels.locale, "Yes")
 		case "false":
-			return "No"
+			return i18n.Translate(e.labels.locale, "No")
 		}
 	}
 	return value
@@ -451,7 +463,7 @@ func (e *emitter) computedResultColumn(
 
 	label := labelOverride
 	if label == "" {
-		label = defaultLabel(col)
+		label = e.labels.defaultLabel(col)
 	}
 
 	resultType := columnValueType(e.v, col)
@@ -473,7 +485,7 @@ func (e *emitter) resultColumn(
 ) services.ReportResultColumn {
 	label := labelOverride
 	if label == "" {
-		label = defaultLabel(col)
+		label = e.labels.defaultLabel(col)
 	}
 
 	format := col.ref.field.Format

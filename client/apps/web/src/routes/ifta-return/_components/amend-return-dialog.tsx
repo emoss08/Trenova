@@ -20,6 +20,7 @@ import { FormProvider, useForm, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { invalidateIftaReturn, invalidateOnVersionMismatch } from "./queries";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const AMEND_REASON_MIN = 10;
 const AMEND_REASON_MAX = 500;
@@ -29,9 +30,9 @@ export const amendReturnSchema = z.object({
     .string()
     .trim()
     .min(AMEND_REASON_MIN, {
-      message: "Give at least ten characters saying what the amendment corrects.",
+      error: () => translate("Give at least ten characters saying what the amendment corrects."),
     })
-    .max(AMEND_REASON_MAX, { message: "Keep the reason under 500 characters." }),
+    .max(AMEND_REASON_MAX, { error: () => translate("Keep the reason under 500 characters.") }),
 });
 
 export type AmendReturnValues = z.infer<typeof amendReturnSchema>;
@@ -67,7 +68,7 @@ export function AmendReturnDialog({ open, onOpenChange, ret, period }: AmendRetu
     resourceName: "IFTA Return",
     mutationFn: (values) => amendIftaReturn({ id: ret.id, reason: values.reason.trim() }),
     onSuccess: async (created) => {
-      toast.success(`Amendment ${created.amendmentNumber} opened`, {
+      toast.success(t("Amendment {0} opened", created.amendmentNumber), {
         description: t(
           "It is a fresh draft for the same quarter. The filed return is left exactly as it was.",
         ),

@@ -18,6 +18,7 @@ import {
   type QueryClient,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 const FEED_PAGE_SIZE = 30;
 const UNREAD_COUNT_REFETCH_INTERVAL = 60_000;
@@ -161,12 +162,12 @@ function adjustUnreadCount(queryClient: QueryClient, delta: number, scope: Notif
   );
 }
 
-const ACTION_ERRORS: Record<NotificationAction, string> = {
+const ACTION_ERRORS: Record<NotificationAction, string> = defineLabels({
   read: "Couldn't mark as read",
   unread: "Couldn't mark as unread",
   dismiss: "Couldn't archive notification",
   restore: "Couldn't restore notification",
-};
+});
 
 const ACTION_FNS: Record<
   NotificationAction,

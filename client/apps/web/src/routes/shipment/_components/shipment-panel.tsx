@@ -160,7 +160,9 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
     {
       value: "service-failures",
       label:
-        serviceFailureCount > 0 ? `Service Failures (${serviceFailureCount})` : "Service Failures",
+        serviceFailureCount > 0
+          ? t("Service Failures ({0})", serviceFailureCount)
+          : t("Service Failures"),
       icon: AlertTriangleIcon,
       hideFooter: true,
       content: ShipmentServiceFailuresTab,
@@ -181,7 +183,7 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
     },
     {
       value: "comments",
-      label: commentCount > 0 ? `Comments (${commentCount})` : "Comments",
+      label: commentCount > 0 ? t("Comments ({0})", commentCount) : t("Comments"),
       icon: MessageSquare01Icon,
       manageScroll: true,
       hideFooter: true,

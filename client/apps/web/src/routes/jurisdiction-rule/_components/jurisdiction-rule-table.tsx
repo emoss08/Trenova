@@ -17,6 +17,7 @@ export default function JurisdictionRuleTable() {
   return (
     <DataTable<JurisdictionRuleRow>
       name="Jurisdiction Rule"
+      emptyTitle={t("No jurisdiction rules yet")}
       queryKey="jurisdiction-rule-list"
       graphql={jurisdictionRuleTableGraphQLConfig}
       resource={Resource.JurisdictionRule}

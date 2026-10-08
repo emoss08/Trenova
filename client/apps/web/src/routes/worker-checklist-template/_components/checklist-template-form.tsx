@@ -31,32 +31,33 @@ import {
   Trash01Icon,
 } from "@trenova/shared/components/icons";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
+import { defineLabels, sourceLabels } from "@trenova/shared/i18n/labels";
 
 const KIND_OPTIONS = checklistKindSchema.options.map((value) => ({
   value,
-  label: CHECKLIST_KIND_LABELS[value],
+  label: sourceLabels(CHECKLIST_KIND_LABELS)[value],
 }));
 const TRIGGER_OPTIONS = checklistTriggerSchema.options.map((value) => ({
   value,
-  label: CHECKLIST_TRIGGER_LABELS[value],
+  label: sourceLabels(CHECKLIST_TRIGGER_LABELS)[value],
 }));
 const ITEM_KIND_OPTIONS = checklistItemKindSchema.options.map((value) => ({
   value,
-  label: CHECKLIST_ITEM_KIND_LABELS[value],
+  label: sourceLabels(CHECKLIST_ITEM_KIND_LABELS)[value],
 }));
 const OWNER_OPTIONS = checklistOwnerSchema.options.map((value) => ({
   value,
-  label: CHECKLIST_OWNER_LABELS[value],
+  label: sourceLabels(CHECKLIST_OWNER_LABELS)[value],
 }));
 
-const ITEM_KIND_HINT: Record<string, string> = {
+const ITEM_KIND_HINT: Record<string, string> = defineLabels({
   Document: "Completes itself when a worker document of this type is on file.",
   Credential: "Completes itself when the worker holds a valid credential of this type.",
   Task: "Ticked off by the owner when done.",
   Equipment: "Ticked off by the owner when issued or returned.",
   PortalAccess:
     "Completes itself from Dash access — granted for onboarding, revoked for offboarding.",
-};
+});
 
 export function ChecklistTemplateForm({
   isEdit,
@@ -134,8 +135,11 @@ export function ChecklistTemplateForm({
               placeholder={t("Select a status")}
               description={
                 isEdit && openChecklistCount > 0
-                  ? `${openChecklistCount} checklist${openChecklistCount === 1 ? " is" : "s are"} in progress from this template; they keep their items either way.`
-                  : "Inactive templates cannot be started."
+                  ? t(
+                      "{0, plural, one {# checklist is in progress from this template; they keep their items either way.} other {# checklists are in progress from this template; they keep their items either way.}}",
+                      openChecklistCount,
+                    )
+                  : t("Inactive templates cannot be started.")
               }
             />
           </FormControl>
@@ -270,7 +274,7 @@ function ItemRow({
               size="icon"
               variant="ghost"
               className="text-muted-foreground hover:text-destructive size-7"
-              aria-label={`Remove item ${index + 1}`}
+              aria-label={t("Remove item {0}", index + 1)}
               onClick={onRemove}
             >
               <Trash01Icon className="size-3.5" />

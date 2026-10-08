@@ -8,6 +8,7 @@ import type { AIProviderRow } from "@/lib/graphql/ai-provider";
 import type { AIProviderPreset } from "@/types/ai-provider";
 import { z } from "zod";
 import type { ProviderFormValues } from "./build-save-payload";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 /**
  * The save contract plus the two things only the form knows: which preset
@@ -23,7 +24,7 @@ export const providerFormSchema = saveAIProviderRequestSchema
       .refine(
         (value) =>
           value === "" || (EMBEDDING_DIMENSIONS as readonly number[]).includes(Number(value)),
-        { message: "Embedding dimensions must be 768, 1024 or 1536" },
+        { error: () => translate("Embedding dimensions must be 768, 1024 or 1536") },
       ),
     preset: z.string().default(""),
     tasks: z.array(aiTaskSchema).nullable().default(null),
@@ -46,13 +47,13 @@ export const providerFormSchema = saveAIProviderRequestSchema
         try {
           parsed = JSON.parse(trimmed);
         } catch {
-          ctx.addIssue({ code: "custom", message: "This is not valid JSON" });
+          ctx.addIssue({ code: "custom", message: translate("This is not valid JSON") });
           return;
         }
         if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
           ctx.addIssue({
             code: "custom",
-            message: 'Extra fields must be a JSON object, like {"top_k": 40}',
+            message: translate('Extra fields must be a JSON object, like {"top_k": 40}'),
           });
         }
       }),

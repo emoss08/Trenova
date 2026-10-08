@@ -7,6 +7,7 @@ import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/
 import { Input } from "@trenova/shared/components/ui/input";
 import { PlusIcon, Trash01Icon } from "@trenova/shared/components/icons";
 import { Controller, useFieldArray, useFormContext, useWatch } from "react-hook-form";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export type ReceiptLineValues = {
   receiptDate: string;
@@ -62,7 +63,7 @@ export function ImportBatchForm() {
               name="source"
               label={t("Source")}
               placeholder={t("e.g. Chase, Wells Fargo")}
-              rules={{ required: "Source is required" }}
+              rules={{ required: translate("Source is required") }}
               description={t("The bank or institution this batch originates from.")}
               clearable
             />
@@ -72,7 +73,7 @@ export function ImportBatchForm() {
               control={control}
               name="reference"
               label={t("Reference")}
-              rules={{ required: "Reference is required" }}
+              rules={{ required: translate("Reference is required") }}
               placeholder={t("e.g. Statement 2026-04")}
               description={t("A unique identifier for this batch, such as a statement number.")}
             />
@@ -107,7 +108,7 @@ export function ImportBatchForm() {
                     <Controller
                       control={control}
                       name={`receipts.${index}.receiptDate`}
-                      rules={{ required: "Required" }}
+                      rules={{ required: translate("Required") }}
                       render={({ field: f, fieldState }) => (
                         <Input
                           {...f}
@@ -122,10 +123,11 @@ export function ImportBatchForm() {
                       control={control}
                       name={`receipts.${index}.amount`}
                       rules={{
-                        required: "Required",
+                        required: translate("Required"),
                         validate: (v) => {
                           const num = parseFloat(v);
-                          if (Number.isNaN(num) || num <= 0) return "Must be > 0";
+                          if (Number.isNaN(num) || num <= 0)
+                            return translate("Must be greater than 0");
                           return true;
                         },
                       }}
@@ -145,7 +147,7 @@ export function ImportBatchForm() {
                     <Controller
                       control={control}
                       name={`receipts.${index}.referenceNumber`}
-                      rules={{ required: "Required" }}
+                      rules={{ required: translate("Required") }}
                       render={({ field: f, fieldState }) => (
                         <Input
                           {...f}

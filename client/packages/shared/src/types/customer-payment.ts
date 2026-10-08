@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { nullableStringSchema, optionalStringSchema, tenantInfoSchema } from "./helpers";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const customerPaymentStatusSchema = z.enum(["Posted", "Reversed"]);
 export type CustomerPaymentStatus = z.infer<typeof customerPaymentStatusSchema>;
@@ -53,22 +54,26 @@ export const cashApplicationRowSchema = z.object({
   daysPastDue: z.number().int(),
   openAmountMinor: z.number().int(),
   checked: z.boolean(),
-  appliedAmount: z.number().min(0, "Applied amount cannot be negative"),
-  shortPayAmount: z.number().min(0, "Short-pay amount cannot be negative"),
+  appliedAmount: z.number().min(0, { error: () => translate("Applied amount cannot be negative") }),
+  shortPayAmount: z
+    .number()
+    .min(0, { error: () => translate("Short-pay amount cannot be negative") }),
 });
 export type CashApplicationRow = z.infer<typeof cashApplicationRowSchema>;
 
 export const recordPaymentSchema = z.object({
-  customerId: z.string().min(1, "Customer is required"),
+  customerId: z.string().min(1, { error: () => translate("Customer is required") }),
   paymentDate: z
-    .number({ error: "Payment date is required" })
+    .number({ error: () => translate("Payment date is required") })
     .int()
-    .positive("Payment date is required"),
+    .positive({ error: () => translate("Payment date is required") }),
   accountingDate: z
-    .number({ error: "Accounting date is required" })
+    .number({ error: () => translate("Accounting date is required") })
     .int()
-    .positive("Accounting date is required"),
-  amount: z.number({ error: "Amount is required" }).positive("Amount must be greater than zero"),
+    .positive({ error: () => translate("Accounting date is required") }),
+  amount: z
+    .number({ error: () => translate("Amount is required") })
+    .positive({ error: () => translate("Amount must be greater than zero") }),
   paymentMethod: paymentMethodSchema,
   referenceNumber: optionalStringSchema,
   memo: optionalStringSchema,
@@ -78,9 +83,9 @@ export type RecordPaymentFormValues = z.infer<typeof recordPaymentSchema>;
 
 export const applyUnappliedSchema = z.object({
   accountingDate: z
-    .number({ error: "Accounting date is required" })
+    .number({ error: () => translate("Accounting date is required") })
     .int()
-    .positive("Accounting date is required"),
+    .positive({ error: () => translate("Accounting date is required") }),
   applications: z.array(cashApplicationRowSchema),
 });
 export type ApplyUnappliedFormValues = z.infer<typeof applyUnappliedSchema>;

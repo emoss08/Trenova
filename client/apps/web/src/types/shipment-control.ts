@@ -5,6 +5,7 @@ import {
   timestampSchema,
   versionSchema,
 } from "@trenova/shared/types/helpers";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const shipmentControlSchema = z
   .object({
@@ -18,7 +19,7 @@ export const shipmentControlSchema = z
     maxShipmentWeightLimit: z
       .number()
       .int()
-      .min(0, { message: "Max shipment weight limit must be non-negative" }),
+      .min(0, { error: () => translate("Max shipment weight limit must be non-negative") }),
     autoDelayShipments: z.boolean(),
     autoDelayShipmentsThreshold: z.number().int().nullish(),
     detentionThreshold: z.number().int().nullish(),
@@ -46,7 +47,7 @@ export const shipmentControlSchema = z
     },
     {
       path: ["autoDelayShipmentsThreshold"],
-      message: "Delay threshold must be greater than 0 when auto delay is enabled",
+      error: () => translate("Delay threshold must be greater than 0 when auto delay is enabled"),
     },
   )
   .refine(
@@ -58,7 +59,7 @@ export const shipmentControlSchema = z
     },
     {
       path: ["detentionChargeId"],
-      message: "Detention charge is required when tracking detention time",
+      error: () => translate("Detention charge is required when tracking detention time"),
     },
   )
   .refine(
@@ -70,7 +71,8 @@ export const shipmentControlSchema = z
     },
     {
       path: ["detentionThreshold"],
-      message: "Detention threshold must be greater than 0 when tracking detention time",
+      error: () =>
+        translate("Detention threshold must be greater than 0 when tracking detention time"),
     },
   )
   .refine(
@@ -85,7 +87,8 @@ export const shipmentControlSchema = z
     },
     {
       path: ["autoCancelShipmentsThreshold"],
-      message: "Auto cancel threshold must be greater than 0 when auto cancel is enabled",
+      error: () =>
+        translate("Auto cancel threshold must be greater than 0 when auto cancel is enabled"),
     },
   );
 

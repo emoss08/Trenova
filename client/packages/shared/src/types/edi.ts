@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { nullableArraySchema, nullableStringSchema } from "./helpers";
 import { createLimitOffsetResponse } from "./server";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const ediPartnerKindSchema = z.enum(["Internal", "External"]);
 export const ediConnectionMethodSchema = z.enum(["Internal", "AS2", "SFTP", "VAN"]);
@@ -1415,11 +1416,20 @@ export const createTemplateDraftSchema = z.object({
 export type CreateTemplateDraft = z.infer<typeof createTemplateDraftSchema>;
 
 export const createTemplateFormSchema = createTemplateDraftSchema.extend({
-  documentTypeId: z.string().min(1, "Document type is required"),
-  name: z.string().trim().min(1, "Name is required"),
+  documentTypeId: z.string().min(1, { error: () => translate("Document type is required") }),
+  name: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Name is required") }),
   standard: ediStandardSchema.default("X12"),
-  x12Version: z.string().trim().min(1, "X12 version is required"),
-  functionalGroupId: z.string().trim().min(1, "Functional group is required"),
+  x12Version: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("X12 version is required") }),
+  functionalGroupId: z
+    .string()
+    .trim()
+    .min(1, { error: () => translate("Functional group is required") }),
 });
 
 export type CreateTemplateFormValues = z.infer<typeof createTemplateFormSchema>;

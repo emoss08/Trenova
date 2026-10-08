@@ -116,6 +116,7 @@
   "Memos": "通知单",
   "Minimum invoice amount": "最低发票金额",
   "Monthly percentage applied to the overdue balance after the grace period expires.": "宽限期届满后，对逾期余额按月计收的百分比。",
+  "No customers yet": "尚无客户",
   "Number of days after the invoice due date before late charges begin accruing.": "发票到期日后经过几天才开始累计逾期费用。",
   "Number of invoice copies to generate per billing run. Additional copies are often required for customers with multiple AP departments.": "每次计费作业生成的发票份数。若客户有多个应付账款部门，通常会需要额外份数。",
   "Only consolidate with other shipments from this same customer — never mix with other customers' freight. Requires 'Allow Consolidation' to be enabled.": "仅与此同一客户的其他运单合并 — 绝不与其他客户的货物混装。须先启用“允许合并”。",

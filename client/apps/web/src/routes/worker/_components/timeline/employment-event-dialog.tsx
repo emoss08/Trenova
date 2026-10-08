@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { FleetCodeAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
@@ -29,7 +30,7 @@ import { getTodayDate } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { WORKER_LEAVE_TYPE_LABELS, type WorkerLeaveType } from "@trenova/shared/types/worker";
 import {
-  EMPLOYMENT_EVENT_LABELS,
+  employmentEventLabel,
   EMPLOYMENT_EVENT_REQUIRES_REASON,
   employmentEventAmendSchema,
   employmentEventFormSchema,
@@ -43,6 +44,7 @@ import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form"
 import { toast } from "sonner";
 import { employmentEventMeta, employmentSnapshot, recordableKinds } from "./employment-event-meta";
 import { useEmploymentInvalidation } from "./use-employment-invalidation";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
 
 export type EmploymentSheetWorker = {
   fleetCodeId?: string | null;
@@ -68,7 +70,7 @@ export type EmploymentEventSheetProps = {
 const EMPTY_HISTORY: readonly Pick<WorkerEmploymentEventRow, "kind">[] = [];
 
 const LEAVE_TYPE_OPTIONS = (Object.keys(WORKER_LEAVE_TYPE_LABELS) as WorkerLeaveType[]).map(
-  (value) => ({ value, label: WORKER_LEAVE_TYPE_LABELS[value] }),
+  (value) => ({ value, label: sourceLabels(WORKER_LEAVE_TYPE_LABELS)[value] }),
 );
 
 function ptoDays(value: string): string {
@@ -80,33 +82,80 @@ function ptoDays(value: string): string {
 
 export function describeCascade(cascade: EmploymentCascade): string {
   const parts: string[] = [];
-  if (cascade.ptoAssignmentEnded) parts.push("Ended the PTO policy assignment");
-  if (cascade.payAssignmentEnded) parts.push("Ended the pay assignment");
+  if (cascade.ptoAssignmentEnded) parts.push(translate("Ended the PTO policy assignment"));
+  if (cascade.payAssignmentEnded) parts.push(translate("Ended the pay assignment"));
   if (cascade.upcomingPtoCancelled > 0) {
     parts.push(
-      `Cancelled ${cascade.upcomingPtoCancelled} upcoming PTO request${cascade.upcomingPtoCancelled === 1 ? "" : "s"}`,
+      translate(
+        "Cancelled {0, plural, one {# upcoming PTO request} other {# upcoming PTO requests}}",
+        cascade.upcomingPtoCancelled,
+      ),
     );
   }
-  if (cascade.defaultPolicyApplied) parts.push("Enrolled in the default PTO policy");
+  if (cascade.defaultPolicyApplied) parts.push(translate("Enrolled in the default PTO policy"));
   if (Number(cascade.ptoPaidOutDays) > 0) {
-    parts.push(`Paid out ${ptoDays(cascade.ptoPaidOutDays)} PTO days`);
+    parts.push(
+      translate(
+        "Paid out {0} PTO {1, plural, one {day} other {days}}",
+        ptoDays(cascade.ptoPaidOutDays),
+        Number(cascade.ptoPaidOutDays),
+      ),
+    );
   }
   if (Number(cascade.ptoForfeitedDays) > 0) {
-    parts.push(`Forfeited ${ptoDays(cascade.ptoForfeitedDays)} PTO days`);
+    parts.push(
+      translate(
+        "Forfeited {0} PTO {1, plural, one {day} other {days}}",
+        ptoDays(cascade.ptoForfeitedDays),
+        Number(cascade.ptoForfeitedDays),
+      ),
+    );
   }
-  if (cascade.portalAccessRevoked) parts.push("Revoked the driver portal sign-in");
+  if (cascade.portalAccessRevoked) parts.push(translate("Revoked the driver portal sign-in"));
   if (cascade.trainingAssigned > 0) {
     parts.push(
-      `Opened ${cascade.trainingAssigned} required course${cascade.trainingAssigned === 1 ? "" : "s"}`,
+      translate(
+        "Opened {0, plural, one {# required course} other {# required courses}}",
+        cascade.trainingAssigned,
+      ),
     );
   }
-  if (cascade.checklistStarted) parts.push("Started the matching checklist");
+  if (cascade.checklistStarted) parts.push(translate("Started the matching checklist"));
   if (cascade.checklistsClosed > 0) {
     parts.push(
-      `Closed ${cascade.checklistsClosed} checklist${cascade.checklistsClosed === 1 ? "" : "s"} the event made moot`,
+      translate(
+        "Closed {0, plural, one {# checklist} other {# checklists}} the event made moot",
+        cascade.checklistsClosed,
+      ),
     );
   }
-  return parts.length > 0 ? parts.join(" · ") : "The timeline has been updated.";
+  return parts.length > 0 ? parts.join(" · ") : translate("The timeline has been updated.");
+}
+
+function currentDriverType(driverType: string): string {
+  switch (driverType) {
+    case "Local":
+      return translate("Currently Local.");
+    case "Regional":
+      return translate("Currently Regional.");
+    case "OTR":
+      return translate("Currently OTR.");
+    case "Team":
+      return translate("Currently Team.");
+    default:
+      return translate("Currently {0}.", driverType);
+  }
+}
+
+function currentWorkerType(workerType: string): string {
+  switch (workerType) {
+    case "Employee":
+      return translate("Currently Employee.");
+    case "Contractor":
+      return translate("Currently Contractor.");
+    default:
+      return translate("Currently {0}.", workerType);
+  }
 }
 
 export function EmploymentEventSheet(props: EmploymentEventSheetProps) {
@@ -199,14 +248,17 @@ function RecordSheet({
         leaveType: values.kind === "LeaveStarted" ? (values.leaveType ?? undefined) : undefined,
       }),
     onSuccess: (result) => {
-      toast.success(`${EMPLOYMENT_EVENT_LABELS[kind] ?? "Event"} recorded`, {
+      toast.success(kind ? t("{0} recorded", employmentEventLabel(kind)) : t("Event recorded"), {
         description: describeCascade(result.cascade),
       });
       // The termination stands either way, so a portal failure is a follow-up
       // task for the recorder rather than a failed save.
       if (result.cascade.portalRevocationError) {
         toast.warning(t("Revoke the driver portal sign-in by hand"), {
-          description: `The worker is terminated but Dash access is still open: ${result.cascade.portalRevocationError}`,
+          description: t(
+            "The worker is terminated but Dash access is still open: {0}",
+            result.cascade.portalRevocationError,
+          ),
         });
       }
       void invalidate();
@@ -216,7 +268,7 @@ function RecordSheet({
   });
 
   const kindOptions = useMemo(
-    () => kinds.map((value) => ({ value, label: EMPLOYMENT_EVENT_LABELS[value] })),
+    () => kinds.map((value) => ({ value, label: employmentEventLabel(value) })),
     [kinds],
   );
 
@@ -311,7 +363,7 @@ function RecordSheet({
                       options={driverTypeChoices}
                       isClearable
                       placeholder={t("Select a driver type")}
-                      description={`Currently ${worker.driverType}.`}
+                      description={currentDriverType(worker.driverType)}
                     />
                   </FormControl>
                   <FormControl>
@@ -322,7 +374,7 @@ function RecordSheet({
                       options={workerTypeChoices}
                       isClearable
                       placeholder={t("Select a worker type")}
-                      description={`Currently ${worker.type}.`}
+                      description={currentWorkerType(worker.type)}
                     />
                   </FormControl>
                 </>
@@ -390,7 +442,9 @@ function RecordSheet({
               >
                 {isPending
                   ? t("Saving...")
-                  : t("Record {0}", EMPLOYMENT_EVENT_LABELS[kind] ?? "event")}
+                  : kind
+                    ? t("Record {0}", employmentEventLabel(kind))
+                    : t("Record event")}
               </Button>
             </DialogFooter>
           </Form>
@@ -464,7 +518,7 @@ function AmendSheet({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("Amend {0}", meta.label.toLowerCase())}</DialogTitle>
+          <DialogTitle>{t("Amend {0}", t(meta.label))}</DialogTitle>
           <DialogDescription>
             {t(
               "Correct the date, reason or notes. What the event already did to the worker stays as it is — record a new event to change state again.",

@@ -12,6 +12,7 @@ import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./equipment-type-columns";
 import { EquipmentTypePanel } from "./equipment-type-panel";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export default function EquipmentTypeTable() {
   const t = useT();
@@ -28,9 +29,9 @@ export default function EquipmentTypeTable() {
           status: status as EquipmentType["status"],
         }),
         {
-          loading: "Updating status...",
-          success: "Status updated successfully",
-          error: "Failed to update status",
+          loading: translate("Updating status..."),
+          success: translate("Status updated successfully"),
+          error: translate("Failed to update status"),
           finally: async () => {
             await queryClient.invalidateQueries({
               queryKey: ["equipment-type-list"],
@@ -62,6 +63,7 @@ export default function EquipmentTypeTable() {
   return (
     <DataTable<EquipmentType>
       name="Equipment Type"
+      emptyTitle={t("No equipment types yet")}
       queryKey="equipment-type-list"
       resource={Resource.EquipmentType}
       columns={columns}

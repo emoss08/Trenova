@@ -1,11 +1,19 @@
 {
   "Every time a connected fuel card feed has read your transactions, and what became of the rows. Rows a run could not place wait here until the card they were on is assigned or the unit they name is added.": "Cada vez que una fuente conectada de tarjetas de combustible ha leído sus transacciones, y qué ocurrió con las filas. Las filas que una ejecución no pudo ubicar esperan aquí hasta que se asigne la tarjeta en la que estaban o se agregue la unidad que indican.",
+  "Nothing new from {0}": "Nada nuevo de {0}",
+  "Posted {0} of {1, plural, one {# held row} other {# held rows}}": "Se contabilizaron {0} de {1, plural, one {# fila retenida} other {# filas retenidas}}",
   "Read from the provider's API.": "Leído de la API del proveedor.",
   "Read {0}.": "Leído {0}.",
   "Review rows": "Revisar las filas",
   "Sync now": "Sincronizar ahora",
+  "The rows still waiting need their card assigned, or the unit they name added.": "Las filas que siguen en espera necesitan que se les asigne su tarjeta o que se agregue la unidad que indican.",
+  "This run has nothing waiting": "Esta ejecución no tiene nada pendiente",
   "Work rows out again": "Volver a resolver las filas",
   "Working them out...": "Resolviéndolas...",
+  "{0, plural, one {# row is} other {# rows are}} waiting on a card assignment or a missing unit.": "{0, plural, one {# fila está} other {# filas están}} a la espera de una asignación de tarjeta o de una unidad faltante.",
+  "{0, plural, one {The # held row could not be worked out yet} other {None of the # held rows could be worked out yet}}": "{0, plural, one {La # fila retenida aún no se pudo resolver} other {Ninguna de las # filas retenidas se pudo resolver aún}}",
+  "{0} of {1, plural, one {# row is} other {# rows are}} ready to commit": "{0} de {1, plural, one {# fila está lista} other {# filas están listas}} para confirmar",
   "{0} run": "{0} ejecución",
-  "{0} {1} posted, {2} waiting.": "{0} {1} contabilizados, {2} pendientes."
+  "{0} {1} posted, {2} waiting.": "{0} {1} contabilizados, {2} pendientes.",
+  "{0}: {1} posted of {2} read": "{0}: {1} contabilizados de {2} leídos"
 }

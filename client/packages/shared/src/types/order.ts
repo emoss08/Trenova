@@ -6,6 +6,7 @@ import {
   versionSchema,
 } from "./helpers";
 import { chargeAllocationSchema, chargeAllocationsRefinement } from "./shipment";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const orderStatusSchema = z.enum([
   "Draft",
@@ -21,13 +22,13 @@ export type OrderStatus = z.infer<typeof orderStatusSchema>;
 
 export const orderSchema = z.object({
   ...tenantInfoSchema.shape,
-  customerId: z.string().min(1, { error: "Customer is required" }),
+  customerId: z.string().min(1, { error: () => translate("Customer is required") }),
   ownerId: optionalStringSchema,
   status: orderStatusSchema,
   orderNumber: optionalStringSchema,
   poNumber: optionalStringSchema,
   bol: optionalStringSchema,
-  currencyCode: z.string().min(1, { error: "Currency code is required" }),
+  currencyCode: z.string().min(1, { error: () => translate("Currency code is required") }),
   quotedAmount: decimalStringSchema,
   baseAmount: decimalStringSchema,
   totalAmount: decimalStringSchema,
@@ -48,10 +49,13 @@ export type OrderFormValues = z.input<typeof orderSchema>;
 
 export const orderChargeFormSchema = z
   .object({
-    description: z.string().trim().min(1, { error: "Description is required" }),
+    description: z
+      .string()
+      .trim()
+      .min(1, { error: () => translate("Description is required") }),
     amount: z
-      .number({ error: "Amount is required" })
-      .positive({ error: "Amount must be greater than zero" }),
+      .number({ error: () => translate("Amount is required") })
+      .positive({ error: () => translate("Amount must be greater than zero") }),
     allocations: z.array(chargeAllocationSchema).default([]),
   })
   .superRefine((charge, ctx) => {

@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type {
   ReportCatalog,
   ReportCatalogEntity,
@@ -104,6 +105,7 @@ export function preferReferenceField(
   const edge = owner?.edges.find((candidate) => candidate.name === lastEdge);
   if (!owner || !edge || edge.cardinality !== "one") return ref;
 
+  // i18n-ignore: catalog field key
   const foreignKey = `${lastEdge}Id`;
   const field = owner.fields.find(
     (candidate) =>
@@ -228,58 +230,94 @@ function qualifiedFieldLabel(index: CatalogIndex, entityKey: string, ref: Report
   return joinLabelSegments([lastEdgeLabel, field?.label ?? ref.field]);
 }
 
-function prefixed(prefix: string, base: string): string {
-  return base.toLowerCase().startsWith(prefix.toLowerCase()) ? base : `${prefix} ${base}`;
+const SLOT = "\uE000";
+
+// The server's labeler applies the same rule: an aggregation's message is skipped when the
+// label already carries, as whole words, the words the translated message adds — "Total
+// Charge" under "Total {0}", or "Cargo total" whichever side of {0} the message puts "total".
+function unlessRepeated(base: string, rendered: string, shape: string): string {
+  const at = shape.indexOf(SLOT);
+  if (at < 0) return rendered;
+  const before = shape.slice(0, at).trim().toLowerCase();
+  const after = shape
+    .slice(at + SLOT.length)
+    .trim()
+    .toLowerCase();
+  if (before !== "" && after !== "") return rendered;
+  const words = before || after;
+  return words !== "" && containsWords(base.toLowerCase(), words) ? base : rendered;
 }
 
-const BUCKET_SUFFIXES: Record<NonNullable<ReportColumnSpec["bucket"]>, string> = {
-  day: "Day",
-  week: "Week",
-  month: "Month",
-  quarter: "Quarter",
-  year: "Year",
-};
+function containsWords(label: string, words: string): boolean {
+  return (
+    label === words ||
+    label.startsWith(`${words} `) ||
+    label.endsWith(` ${words}`) ||
+    label.includes(` ${words} `)
+  );
+}
+
+function bucketLabel(bucket: NonNullable<ReportColumnSpec["bucket"]>, base: string): string {
+  switch (bucket) {
+    case "day":
+      return translate("{0} (Day)", base);
+    case "week":
+      return translate("{0} (Week)", base);
+    case "month":
+      return translate("{0} (Month)", base);
+    case "quarter":
+      return translate("{0} (Quarter)", base);
+    default:
+      return translate("{0} (Year)", base);
+  }
+}
 
 /**
  * The header the server will generate when the column carries no explicit
- * label — shown as the placeholder so renaming starts from what you'd get.
+ * label — shown as the placeholder so renaming starts from what you'd get. The catalog
+ * arrives in the reader's language and both sides compose the same messages over it.
  */
 export function defaultColumnLabel(
   index: CatalogIndex,
   ir: ReportIR,
   column: ReportColumnSpec,
 ): string {
-  if (!column.ref) return "Calculation";
+  if (!column.ref) return translate("Calculation");
 
   const entity = resolvePathEntity(index, ir.entity, column.ref.path);
   const field = resolveField(index, ir.entity, column.ref);
   const base = qualifiedFieldLabel(index, ir.entity, column.ref);
 
   if (column.kind === "measure") {
-    const identity = column.ref.field === "id";
+    const subject = column.ref.field === "id" ? (entity?.pluralLabel ?? base) : base;
+    const epoch = field?.type === "epoch";
     switch (column.agg) {
       case "sum":
-        return prefixed("Total", base);
+        return unlessRepeated(base, translate("Total {0}", base), translate("Total {0}", SLOT));
       case "avg":
-        return prefixed("Average", base);
+        return unlessRepeated(base, translate("Average {0}", base), translate("Average {0}", SLOT));
       case "min":
-        return prefixed(field?.type === "epoch" ? "Earliest" : "Minimum", base);
+        return epoch
+          ? unlessRepeated(base, translate("Earliest {0}", base), translate("Earliest {0}", SLOT))
+          : unlessRepeated(base, translate("Minimum {0}", base), translate("Minimum {0}", SLOT));
       case "max":
-        return prefixed(field?.type === "epoch" ? "Latest" : "Maximum", base);
+        return epoch
+          ? unlessRepeated(base, translate("Latest {0}", base), translate("Latest {0}", SLOT))
+          : unlessRepeated(base, translate("Maximum {0}", base), translate("Maximum {0}", SLOT));
       case "count":
-        return identity ? `${entity?.pluralLabel ?? base} Count` : `${base} Count`;
+        return translate("{0} Count", subject);
       case "count_distinct":
-        return `Distinct ${identity ? (entity?.pluralLabel ?? base) : base}`;
+        return translate("Distinct {0}", subject);
       default:
         return base;
     }
   }
 
   if (column.kind === "dimension" && column.bucket) {
-    return `${base} (${BUCKET_SUFFIXES[column.bucket]})`;
+    return bucketLabel(column.bucket, base);
   }
   if (column.kind === "dimension" && bandIsSet(column.band)) {
-    return `${base} (Range)`;
+    return translate("{0} (Range)", base);
   }
 
   return base;
@@ -289,7 +327,7 @@ export function defaultColumnLabel(
 export function pivotValueLabel(field: ReportCatalogField | undefined, value: string): string {
   const enumValue = field?.enumValues.find((candidate) => candidate.value === value);
   if (enumValue) return enumValue.label;
-  if (field?.type === "bool") return value === "true" ? "Yes" : "No";
+  if (field?.type === "bool") return value === "true" ? translate("Yes") : translate("No");
   return value;
 }
 

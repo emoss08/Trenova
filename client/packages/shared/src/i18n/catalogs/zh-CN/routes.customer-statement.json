@@ -11,7 +11,7 @@
   "Failed to load.": "加载失败。",
   "No customer specified.": "未指定客户。",
   "Nothing in this period": "此期间无任何项目",
-  "Opening balance": "期初余额",
+  "Statement as of {0}": "截至 {0} 的对账单",
   "Statement date": "对账单日期",
   "Statement totals": "对账单合计",
   "Transaction history": "交易历史"

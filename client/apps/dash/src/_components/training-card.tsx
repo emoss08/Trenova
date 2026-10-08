@@ -29,6 +29,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const DASH_TRAINING_KEY = "dash-training";
 
@@ -116,13 +117,13 @@ function TrainingRow({ item }: { item: PortalTraining }) {
     onSuccess: async (saved) => {
       toast.success(
         saved.status === "Completed"
-          ? `${item.name} is done — nice work.`
-          : `Thanks — your carrier will enter your ${item.name} result.`,
+          ? t("{0} is done — nice work.", item.name)
+          : t("Thanks — your carrier will enter your {0} result.", item.name),
       );
       await queryClient.invalidateQueries({ queryKey: [DASH_TRAINING_KEY] });
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Could not confirm. Try again.");
+      toast.error(error.message || translate("Could not confirm. Try again."));
     },
   });
 
@@ -186,7 +187,7 @@ function TrainingRow({ item }: { item: PortalTraining }) {
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex h-8 items-center gap-1 rounded-md border border-border px-2.5 text-xs font-medium hover:bg-muted"
-                aria-label={`Open course ${item.name}`}
+                aria-label={t("Open course {0}", item.name)}
                 onClick={() => {
                   if (open && item.status === "Assigned") start.mutate();
                 }}
@@ -199,7 +200,7 @@ function TrainingRow({ item }: { item: PortalTraining }) {
               <Button
                 size="sm"
                 className="h-8"
-                aria-label={`I've completed ${item.name}`}
+                aria-label={t("I've completed {0}", item.name)}
                 disabled={acknowledge.isPending}
                 onClick={() => acknowledge.mutate()}
               >

@@ -56,10 +56,12 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+import { defineLabels } from "@trenova/shared/i18n/labels";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 type ReasonAction = "reject" | "void";
 
-const lineCategoryLabels: Record<string, string> = {
+const lineCategoryLabels: Record<string, string> = defineLabels({
   Earning: "Earnings",
   Reimbursement: "Reimbursements",
   GuaranteeTopUp: "Guarantee Top-Up",
@@ -68,7 +70,7 @@ const lineCategoryLabels: Record<string, string> = {
   AdvanceRecovery: "Advance Recoveries",
   EscrowContribution: "Escrow Contributions",
   Adjustment: "Manual Adjustments",
-};
+});
 
 const lineCategoryOrder = [
   "Earning",
@@ -319,15 +321,15 @@ function SettlementActions({
     onSuccess: (_data, action) => {
       toast.success(
         {
-          submit: "Settlement submitted for approval",
-          approve: "Settlement approved",
-          post: "Settlement posted to the general ledger",
-          recalculate: "Settlement recalculated from current pay events",
-        }[action] ?? "Settlement updated",
+          submit: translate("Settlement submitted for approval"),
+          approve: translate("Settlement approved"),
+          post: translate("Settlement posted to the general ledger"),
+          recalculate: translate("Settlement recalculated from current pay events"),
+        }[action] ?? translate("Settlement updated"),
       );
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Settlement action failed"),
+    onError: (error: Error) => toast.error(error.message || translate("Settlement action failed")),
   });
 
   const status = settlement.status as DriverSettlementStatus;
@@ -458,12 +460,14 @@ function ReasonDialog({
         ? rejectDriverSettlement({ settlementId, reason })
         : voidDriverSettlement({ settlementId, reason }),
     onSuccess: () => {
-      toast.success(action === "reject" ? "Settlement rejected" : "Settlement voided");
+      toast.success(
+        action === "reject" ? translate("Settlement rejected") : translate("Settlement voided"),
+      );
       setReason("");
       onOpenChange(false);
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Action failed"),
+    onError: (error: Error) => toast.error(error.message || translate("Action failed")),
   });
 
   return (
@@ -527,7 +531,8 @@ function MarkPaidDialog({
       onOpenChange(false);
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to mark settlement paid"),
+    onError: (error: Error) =>
+      toast.error(error.message || translate("Failed to mark settlement paid")),
   });
 
   return (
@@ -621,7 +626,7 @@ function AddAdjustmentDialog({
       onOpenChange(false);
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to add adjustment"),
+    onError: (error: Error) => toast.error(error.message || translate("Failed to add adjustment")),
   });
 
   return (
@@ -710,7 +715,8 @@ function SettlementLines({
       toast.success(t("Adjustment removed"));
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to remove adjustment"),
+    onError: (error: Error) =>
+      toast.error(error.message || translate("Failed to remove adjustment")),
   });
 
   const detachMutation = useMutation({
@@ -720,7 +726,8 @@ function SettlementLines({
       toast.success(t("Pay event returned to the unsettled pool"));
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to remove pay event"),
+    onError: (error: Error) =>
+      toast.error(error.message || translate("Failed to remove pay event")),
   });
   const canDetach = !readOnly && settlement.status === "Draft";
 
@@ -823,10 +830,10 @@ function SettlementTimeline({ settlement }: { settlement: SettlementDetailData }
     { label: t("Posted"), at: settlement.postedAt },
     {
       label: settlement.paymentMethod
-        ? `Paid via ${settlement.paymentMethod}${
-            settlement.paymentReference ? ` (${settlement.paymentReference})` : ""
-          }`
-        : "Paid",
+        ? settlement.paymentReference
+          ? t("Paid via {0} ({1})", settlement.paymentMethod, settlement.paymentReference)
+          : t("Paid via {0}", settlement.paymentMethod)
+        : t("Paid"),
       at: settlement.paidAt,
     },
     { label: t("Voided"), at: settlement.voidedAt },

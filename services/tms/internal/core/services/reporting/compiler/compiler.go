@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"context"
+	"github.com/emoss08/trenova/shared/i18n"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
@@ -125,7 +126,7 @@ func (c *Compiler) compile(
 		return nil, err
 	}
 
-	return c.emit(req, v, plan, az)
+	return c.emit(i18n.FromContext(ctx), req, v, plan, az)
 }
 
 func (c *Compiler) complexity(v *validatedDef, plan *joinPlan) services.ReportComplexity {

@@ -35,6 +35,7 @@ function getValueType(value: JsonValue): string {
 }
 
 function getPreview(value: JsonValue): string {
+  // i18n-ignore: code-style value preview, as a browser console prints it
   if (Array.isArray(value)) return `Array(${value.length})`;
   if (typeof value === "object" && value !== null) {
     const keys = Object.keys(value);
@@ -70,6 +71,7 @@ function JsonNode({
   copyPath,
   searchQuery,
 }: JsonNodeProps) {
+  const t = useT();
   const shouldDefaultCollapse =
     typeof defaultCollapsed === "number" ? depth >= defaultCollapsed : defaultCollapsed;
 
@@ -146,7 +148,7 @@ function JsonNode({
           <button
             type="button"
             onClick={handleCopyPath}
-            aria-label={`Copy path ${path}`}
+            aria-label={t("Copy path {0}", path)}
             className="text-muted-foreground hover:text-foreground ml-1 text-xs opacity-0 transition-opacity group-hover:opacity-100"
           >
             {copied ? <CheckIcon className="size-3" /> : <Copy01Icon className="size-3" />}
@@ -208,7 +210,7 @@ function JsonNode({
           <button
             type="button"
             onClick={handleCopyPath}
-            aria-label={`Copy path ${path}`}
+            aria-label={t("Copy path {0}", path)}
             className="text-muted-foreground hover:text-foreground ml-1 text-xs opacity-0 transition-opacity group-hover:opacity-100"
           >
             {copied ? <CheckIcon className="size-3" /> : <Copy01Icon className="size-3" />}

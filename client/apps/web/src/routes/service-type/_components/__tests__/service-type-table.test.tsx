@@ -96,8 +96,8 @@ describe("ServiceTypeTable inline cell editing", () => {
     patchMock.mockResolvedValue({});
     const { invalidateSpy } = renderServiceTypeTable();
 
-    fireEvent.click(screen.getByLabelText("Edit description"));
-    const input = await screen.findByRole("textbox", { name: "Edit description" });
+    fireEvent.click(screen.getByLabelText("Edit Description"));
+    const input = await screen.findByRole("textbox", { name: "Edit Description" });
     expect(input).toHaveValue("Less than truckload");
 
     fireEvent.change(input, { target: { value: "Volume LTL" } });
@@ -112,27 +112,27 @@ describe("ServiceTypeTable inline cell editing", () => {
         refetchType: "all",
       });
     });
-    expect(screen.queryByRole("textbox", { name: "Edit description" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: "Edit Description" })).not.toBeInTheDocument();
   });
 
   it("rejects clearing the code and keeps the editor open", async () => {
     renderServiceTypeTable();
 
-    fireEvent.click(screen.getByLabelText("Edit code"));
-    const input = await screen.findByRole("textbox", { name: "Edit code" });
+    fireEvent.click(screen.getByLabelText("Edit Code"));
+    const input = await screen.findByRole("textbox", { name: "Edit Code" });
     expect(input).toHaveValue("LTL");
 
     fireEvent.change(input, { target: { value: "" } });
     fireEvent.keyDown(input, { key: "Enter" });
 
     await waitFor(() => {
-      expect(screen.getByRole("textbox", { name: "Edit code" })).toBeInTheDocument();
+      expect(screen.getByRole("textbox", { name: "Edit Code" })).toBeInTheDocument();
     });
     expect(patchMock).not.toHaveBeenCalled();
   });
 
   it("does not offer inline editing on the timestamp column", () => {
     renderServiceTypeTable();
-    expect(screen.queryByLabelText("Edit createdAt")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Edit Created At")).not.toBeInTheDocument();
   });
 });

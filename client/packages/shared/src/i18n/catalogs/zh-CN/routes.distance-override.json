@@ -6,6 +6,7 @@
   "Distance override deleted": "距离覆盖已删除",
   "Failed to delete distance override": "无法删除距离覆盖",
   "Intermediate stops": "中途停靠点",
+  "No distance overrides yet": "尚无距离覆盖",
   "No intermediate stops configured.": "尚未配置中途停靠点。",
   "Optionally scope this override to a specific customer": "可选择将此覆盖限定于特定客户",
   "Override calculated distances between location pairs for routing and billing adjustments": "覆盖地点配对之间的计算距离，供路径规划与计费调整使用",

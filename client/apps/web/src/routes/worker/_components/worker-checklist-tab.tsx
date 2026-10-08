@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { InfoPopover } from "@/components/info-popover";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -122,7 +123,9 @@ export default function WorkerChecklistTab({ workerId }: { workerId: string }) {
       completeWorkerChecklistItem({ id: item.id, version: item.version }),
     onSuccess: (checklist) => {
       toast.success(
-        checklist.status === "Completed" ? "Checklist complete" : "Item completed",
+        checklist.status === "Completed"
+          ? translate("Checklist complete")
+          : translate("Item completed"),
         checklist.status === "Completed"
           ? { description: t("Every required item is settled.") }
           : undefined,
@@ -154,7 +157,7 @@ export default function WorkerChecklistTab({ workerId }: { workerId: string }) {
   const start = useMutation({
     mutationFn: (id: string) => startWorkerChecklist({ workerId, templateId: id }),
     onSuccess: (checklist) => {
-      toast.success(`${checklist.name} started`);
+      toast.success(t("{0} started", checklist.name));
       setTemplateId("");
       void invalidate();
     },
@@ -349,10 +352,10 @@ function SectionHeading({
 function describeCycle(cycle: EmploymentCycle): string {
   const opened = cycle.openedBy ? formatUnixDateMedium(cycle.openedBy.effectiveAt) : null;
   const closed = cycle.closedBy ? formatUnixDateMedium(cycle.closedBy.effectiveAt) : null;
-  if (opened && closed) return `Employment ${opened} – ${closed}`;
-  if (opened) return `Employment from ${opened}`;
-  if (closed) return `Employment to ${closed}`;
-  return "Undated";
+  if (opened && closed) return translate("Employment {0} – {1}", opened, closed);
+  if (opened) return translate("Employment from {0}", opened);
+  if (closed) return translate("Employment to {0}", closed);
+  return translate("Undated");
 }
 
 /**

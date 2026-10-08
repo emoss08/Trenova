@@ -45,6 +45,7 @@ export function CorrectionsTable() {
   return (
     <DataTable<AICorrectionRow>
       name="AI Correction"
+      emptyTitle={t("No AI corrections yet")}
       queryKey={AI_CORRECTION_LIST_KEY}
       graphql={aiCorrectionTableGraphQLConfig}
       resource={Resource.AgentEvalSuite}

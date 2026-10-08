@@ -35,9 +35,10 @@ export function OverflowTabsList({
   activeValue,
   onSelect,
   className,
-  moreLabel = "More",
+  moreLabel,
 }: OverflowTabsListProps) {
   const t = useT();
+  const resolvedMoreLabel = moreLabel ?? t("More");
 
   const containerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
@@ -115,10 +116,16 @@ export function OverflowTabsList({
                 "cursor-pointer rounded-md text-muted-foreground transition-colors outline-none hover:bg-accent hover:text-foreground ui-focus-ring",
                 hiddenActive && "text-foreground",
               )}
-              aria-label={hiddenActive ? `${hiddenActive.label} (more tabs)` : `${moreLabel} tabs`}
+              aria-label={
+                hiddenActive
+                  ? t("{0} (more tabs)", t(hiddenActive.label))
+                  : moreLabel
+                    ? t("{0} tabs", moreLabel)
+                    : t("More tabs")
+              }
             >
               {hiddenActive?.icon ? <hiddenActive.icon className="mr-1 size-4" /> : null}
-              {hiddenActive ? hiddenActive.label : moreLabel}
+              {hiddenActive ? t(hiddenActive.label) : resolvedMoreLabel}
               <ChevronDownIcon className="size-3.5" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-auto min-w-44">
@@ -152,7 +159,7 @@ export function OverflowTabsList({
             </div>
           ))}
           <div data-measure-more className={measureTabClassName}>
-            {moreLabel}
+            {resolvedMoreLabel}
             <ChevronDownIcon className="size-3.5" />
           </div>
         </div>

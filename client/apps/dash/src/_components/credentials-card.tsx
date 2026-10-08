@@ -16,6 +16,7 @@ import { Camera01Icon, IdCardIcon, ShieldTickIcon } from "@trenova/shared/compon
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useDashFeatures } from "./use-dash-features";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const DASH_CREDENTIALS_KEY = "dash-credentials";
 
@@ -111,7 +112,7 @@ function CredentialRow({ item, canUpload }: { item: PortalCredential; canUpload:
     },
     onError: (error: Error) => {
       setFileName(null);
-      toast.error(error.message || "Upload failed. Try again.");
+      toast.error(error.message || translate("Upload failed. Try again."));
     },
   });
 
@@ -176,7 +177,7 @@ function CredentialRow({ item, canUpload }: { item: PortalCredential; canUpload:
               variant="outline"
               size="sm"
               className="h-8"
-              aria-label={`Upload renewed ${item.name}`}
+              aria-label={t("Upload renewed {0}", item.name)}
               disabled={upload.isPending}
               onClick={() => fileInputRef.current?.click()}
             >

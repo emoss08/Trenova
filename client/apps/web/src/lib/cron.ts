@@ -1,12 +1,14 @@
-const WEEKDAY_NAMES = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
+import { dateTimeFormatter, formatList } from "@trenova/shared/i18n/format";
+import { translate } from "@trenova/shared/i18n/runtime";
+
+const SUNDAY_EPOCH_MS = Date.UTC(2023, 0, 1);
+const DAY_MS = 86_400_000;
+
+export function weekdayName(day: number): string {
+  return dateTimeFormatter({ weekday: "long", timeZone: "UTC" }).format(
+    new Date(SUNDAY_EPOCH_MS + (day % 7) * DAY_MS),
+  );
+}
 
 function parseNumber(field: string, min: number, max: number): number | null {
   if (!/^\d+$/.test(field)) return null;
@@ -40,12 +42,10 @@ function weekdayList(field: string): string | null {
   for (const part of field.split(",")) {
     const day = parseNumber(part, 0, 7);
     if (day === null) return null;
-    names.push(WEEKDAY_NAMES[day % 7]);
+    names.push(weekdayName(day));
   }
   if (names.length === 0) return null;
-  if (names.length === 1) return names[0];
-  if (names.length === 2) return `${names[0]} and ${names[1]}`;
-  return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
+  return formatList(names);
 }
 
 /**
@@ -65,21 +65,21 @@ export function describeCron(expression: string): string | null {
   const time = formatTime(hour, minute);
 
   if (domField === "*" && dowField === "*") {
-    return `Daily at ${time}`;
+    return translate("Daily at {0}", time);
   }
 
   if (domField === "*" && dowField === "1-5") {
-    return `Weekdays at ${time}`;
+    return translate("Weekdays at {0}", time);
   }
 
   if (domField === "*") {
     const days = weekdayList(dowField);
-    return days ? `Weekly on ${days} at ${time}` : null;
+    return days ? translate("Weekly on {0} at {1}", days, time) : null;
   }
 
   if (dowField === "*") {
     const day = parseNumber(domField, 1, 31);
-    return day !== null ? `Monthly on the ${ordinal(day)} at ${time}` : null;
+    return day !== null ? translate("Monthly on the {0} at {1}", ordinal(day), time) : null;
   }
 
   return null;

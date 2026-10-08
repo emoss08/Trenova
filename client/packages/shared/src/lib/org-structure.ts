@@ -1,3 +1,4 @@
+import { defineLabels } from "@trenova/shared/i18n/labels";
 /**
  * Labels and shaping for the org chart: the departments headcount is read by,
  * and the scopes a manager can hand over while they are away.
@@ -17,7 +18,7 @@ export const JOB_DEPARTMENT_ORDER = [
 
 export type JobDepartmentValue = (typeof JOB_DEPARTMENT_ORDER)[number];
 
-export const JOB_DEPARTMENT_LABELS: Record<string, string> = {
+export const JOB_DEPARTMENT_LABELS: Record<string, string> = defineLabels({
   Operations: "Operations",
   Safety: "Safety",
   Maintenance: "Maintenance",
@@ -27,27 +28,27 @@ export const JOB_DEPARTMENT_LABELS: Record<string, string> = {
   HumanResources: "Human Resources",
   Executive: "Executive",
   Other: "Other",
-};
+});
 
 export function jobDepartmentLabel(value: string): string {
   return JOB_DEPARTMENT_LABELS[value] ?? value;
 }
 
-export const APPROVAL_SCOPE_LABELS: Record<string, string> = {
+export const APPROVAL_SCOPE_LABELS: Record<string, string> = defineLabels({
   All: "Everything",
   TimeOff: "Time off only",
   Expenses: "Expenses only",
-};
+});
 
 export function approvalScopeLabel(value: string): string {
   return APPROVAL_SCOPE_LABELS[value] ?? value;
 }
 
-export const APPROVAL_SCOPE_HINTS: Record<string, string> = {
+export const APPROVAL_SCOPE_HINTS: Record<string, string> = defineLabels({
   All: "Every approval this manager can make.",
   TimeOff: "Time-off requests only. Expenses stay with the manager.",
   Expenses: "Expense claims only. Time off stays with the manager.",
-};
+});
 
 export function approvalScopeHint(value: string): string {
   return APPROVAL_SCOPE_HINTS[value] ?? "";
@@ -69,12 +70,12 @@ export function delegationState(
   return "active";
 }
 
-export const DELEGATION_STATE_LABELS: Record<DelegationState, string> = {
+export const DELEGATION_STATE_LABELS: Record<DelegationState, string> = defineLabels({
   scheduled: "Starts later",
   active: "In force",
   ended: "Finished",
   revoked: "Called back",
-};
+});
 
 export function delegationStateTone(
   state: DelegationState,

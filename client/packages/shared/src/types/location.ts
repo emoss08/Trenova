@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { nullableStringSchema, statusSchema, tenantInfoSchema } from "./helpers";
 import { usStateSchema } from "./us-state";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const locationGeofenceTypeSchema = z.enum(["auto", "circle", "rectangle", "draw"]);
 
@@ -33,30 +34,35 @@ export const locationTimezoneSchema = z
   .nullish()
   .transform((value) => value ?? "")
   .refine((value) => value === "" || isKnownTimezone(value), {
-    error: "Timezone must be a valid IANA zone",
+    error: () => translate("Timezone must be a valid IANA zone"),
   });
 
 export const locationSchema = z.object({
   ...tenantInfoSchema.shape,
   status: statusSchema,
-  code: z.string().max(32, { error: "Code must be 32 characters or less" }).optional(),
+  code: z
+    .string()
+    .max(32, { error: () => translate("Code must be 32 characters or less") })
+    .optional(),
   name: z
     .string()
-    .min(1, { error: "Name is required" })
-    .max(255, { error: "Name must be 255 characters or less" }),
-  locationCategoryId: z.string().min(1, { error: "Location category is required" }),
+    .min(1, { error: () => translate("Name is required") })
+    .max(255, { error: () => translate("Name must be 255 characters or less") }),
+  locationCategoryId: z
+    .string()
+    .min(1, { error: () => translate("Location category is required") }),
   description: nullableStringSchema,
   addressLine1: z
     .string()
-    .min(1, { error: "Address line 1 is required" })
-    .max(150, { error: "Address line 1 must be 150 characters or less" }),
+    .min(1, { error: () => translate("Address line 1 is required") })
+    .max(150, { error: () => translate("Address line 1 must be 150 characters or less") }),
   addressLine2: nullableStringSchema,
   city: z
     .string()
-    .min(1, { error: "City is required" })
-    .max(100, { error: "City must be 100 characters or less" }),
-  stateId: z.string().min(1, { error: "State is required" }),
-  postalCode: z.string().min(1, { error: "Postal code is required" }),
+    .min(1, { error: () => translate("City is required") })
+    .max(100, { error: () => translate("City must be 100 characters or less") }),
+  stateId: z.string().min(1, { error: () => translate("State is required") }),
+  postalCode: z.string().min(1, { error: () => translate("Postal code is required") }),
   timezone: locationTimezoneSchema,
   isGeocoded: z.boolean().default(false),
   longitude: z.number().nullable().optional(),

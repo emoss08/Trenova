@@ -53,13 +53,13 @@ export function RecognitionList({ recognitions, canDelete, busy, onDelete }: Rec
                   </p>
                 </div>
                 <RowActionsMenu
-                  label={`Actions for ${recognition.title}`}
+                  label={t("Actions for {0}", recognition.title)}
                   actions={
                     canDelete
                       ? [
                           {
                             id: "remove",
-                            label: `Remove ${recognition.title}`,
+                            label: t("Remove {0}", recognition.title),
                             icon: Trash01Icon,
                             disabled: busy,
                             destructive: true,

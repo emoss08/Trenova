@@ -14,10 +14,10 @@
   "Manage and configure tractors for your organization": "Gestione y configure los tractocamiones de su organización",
   "No defects": "Sin defectos",
   "No inspections reported for this tractor.": "No se han comunicado inspecciones para este tractocamión.",
+  "No tractors yet": "Aún no hay tractocamiones",
   "Only IFTA-qualified units count toward the quarterly return. Turn this off for yard tractors, pickups under 26,001 lb GVW, and units that never leave the base jurisdiction.": "Solo las unidades aptas para IFTA cuentan en la declaración trimestral. Desactívelo para tractocamiones de patio, camionetas de menos de 26,001 lb de peso bruto y unidades que nunca salen de la jurisdicción base.",
   "Safe": "Seguro",
   "Samsara vehicle ID": "ID de vehículo de Samsara",
-  "Telematics": "Telemática",
   "Telematics not connected": "Telemática no conectada",
   "The U.S. state where the tractor is licensed.": "El estado de EE. UU. donde está matriculado el tractocamión.",
   "The Vehicle Identification Number (VIN) of the tractor.": "El número de identificación del vehículo (VIN) del tractocamión.",
@@ -32,7 +32,9 @@
   "The specific model of the tractor.": "El modelo específico del tractocamión.",
   "The type of equipment the tractor is categorized under.": "El tipo de equipo bajo el que se clasifica el tractocamión.",
   "The unique registration number assigned to the tractor.": "El número de matrícula único asignado al tractocamión.",
+  "Toggle defects for {0} inspection": "Mostrar u ocultar los defectos de la inspección {0}",
   "Tractor status updated successfully": "El estado del tractocamión se actualizó correctamente",
   "Worker assignment": "Asignación de trabajador",
-  "· {0} unresolved": "· {0} sin resolver"
+  "{0, plural, one {# defect} other {# defects}}": "{0, plural, one {# defecto} other {# defectos}}",
+  "{0, plural, one {# defect} other {# defects}} · {1} unresolved": "{0, plural, one {# defecto} other {# defectos}} · {1} sin resolver"
 }

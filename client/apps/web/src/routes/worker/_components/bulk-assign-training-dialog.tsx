@@ -30,9 +30,10 @@ import { useEffect, useMemo } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const formSchema = z.object({
-  courseIds: z.array(z.string()).min(1, "Choose at least one course"),
+  courseIds: z.array(z.string()).min(1, { error: () => translate("Choose at least one course") }),
   dueAt: z.number().int().nullable(),
   notes: z.string().nullable(),
 });
@@ -118,9 +119,8 @@ export function BulkAssignTrainingDialog({
           <DialogTitle>{t("Assign training")}</DialogTitle>
           <DialogDescription>
             {t(
-              "Opens the courses you choose for {0} selected {1}. Anyone who already has a course open keeps the assignment they have.",
+              "Opens the courses you choose for {0, plural, one {# selected worker} other {# selected workers}}. Anyone who already has a course open keeps the assignment they have.",
               workers.length,
-              workers.length === 1 ? "worker" : "workers",
             )}
           </DialogDescription>
         </DialogHeader>
@@ -224,8 +224,8 @@ export function BulkAssignTrainingDialog({
  * separately from failures, because "already enrolled" is not a problem.
  */
 export function describeBulkAssign(result: BulkAssignTrainingResult): string {
-  const parts = [`${result.assignedCount} assigned`];
-  if (result.skippedCount > 0) parts.push(`${result.skippedCount} already open`);
-  if (result.failedCount > 0) parts.push(`${result.failedCount} failed`);
+  const parts = [translate("{0} assigned", result.assignedCount)];
+  if (result.skippedCount > 0) parts.push(translate("{0} already open", result.skippedCount));
+  if (result.failedCount > 0) parts.push(translate("{0} failed", result.failedCount));
   return parts.join(", ");
 }

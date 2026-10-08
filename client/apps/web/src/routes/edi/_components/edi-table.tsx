@@ -79,6 +79,7 @@ function PartnersWorkspace() {
       <PendingConnectionsPanel />
       <DataTable<EDIPartner>
         name="EDI Connection"
+        emptyTitle={t("No EDI connections yet")}
         queryKey="edi-partner-list"
         resource={Resource.EDI}
         columns={columns}
@@ -97,6 +98,7 @@ function MappingProfilesWorkspace() {
     <Outer>
       <DataTable<EDIMappingProfileRow>
         name="EDI Mapping Profile"
+        emptyTitle={t("No EDI mapping profiles yet")}
         queryKey="edi-mapping-profile-list"
         resource={Resource.EDI}
         columns={columns}
@@ -116,6 +118,7 @@ function CommunicationProfilesWorkspace() {
     <Outer>
       <DataTable<EDICommunicationProfileRow>
         name="EDI Communication Profile"
+        emptyTitle={t("No EDI communication profiles yet")}
         queryKey="edi-communication-profile-list"
         resource={Resource.EDI}
         columns={columns}
@@ -156,8 +159,19 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
       );
       await invalidateEDITransfers(queryClient);
       notifyEDIBulkOutcome(result, {
-        entity: "transfer",
-        verbPast: t("Queued approval for"),
+        succeeded: (count) =>
+          t("Queued approval for {0, plural, one {# transfer} other {# transfers}}", count),
+        partial: (succeeded, failed) =>
+          t(
+            "Queued approval for {0, plural, one {# transfer} other {# transfers}}; {1} failed",
+            succeeded,
+            failed,
+          ),
+        allFailed: (failed) =>
+          t(
+            "{0, plural, one {The selected transfer failed} other {All # selected transfers failed}}",
+            failed,
+          ),
         skipped: rows.length - eligible.length,
       });
     },
@@ -187,8 +201,19 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
         );
         await invalidateEDITransfers(queryClient);
         notifyEDIBulkOutcome(result, {
-          entity: "transfer",
-          verbPast: t("Rejected"),
+          succeeded: (count) =>
+            t("Rejected {0, plural, one {# transfer} other {# transfers}}", count),
+          partial: (succeeded, failed) =>
+            t(
+              "Rejected {0, plural, one {# transfer} other {# transfers}}; {1} failed",
+              succeeded,
+              failed,
+            ),
+          allFailed: (failed) =>
+            t(
+              "{0, plural, one {The selected transfer failed} other {All # selected transfers failed}}",
+              failed,
+            ),
         });
         setRejectOpen(false);
         setRejectRows([]);
@@ -225,6 +250,7 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
     <Outer>
       <DataTable<EDITransferRow>
         name="EDI Transfer"
+        emptyTitle={t("No EDI transfers yet")}
         queryKey={
           direction === "inbound" ? "edi-inbound-transfer-list" : "edi-outbound-transfer-list"
         }
@@ -245,7 +271,10 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
       <EDIReasonDialog
         open={rejectOpen}
         onOpenChange={setRejectOpen}
-        title={`Reject ${rejectRows.length} Load Tender(s)`}
+        title={t(
+          "{0, plural, one {Reject # Load Tender} other {Reject # Load Tenders}}",
+          rejectRows.length,
+        )}
         description={t(
           "The rejection reason is sent back to the trading partner on the outbound 990 response.",
         )}
@@ -284,8 +313,19 @@ function MessagesWorkspace() {
       );
       await invalidateEDIMessages(queryClient);
       notifyEDIBulkOutcome(result, {
-        entity: "message",
-        verbPast: t("Queued delivery retry for"),
+        succeeded: (count) =>
+          t("Queued delivery retry for {0, plural, one {# message} other {# messages}}", count),
+        partial: (succeeded, failed) =>
+          t(
+            "Queued delivery retry for {0, plural, one {# message} other {# messages}}; {1} failed",
+            succeeded,
+            failed,
+          ),
+        allFailed: (failed) =>
+          t(
+            "{0, plural, one {The selected message failed} other {All # selected messages failed}}",
+            failed,
+          ),
         skipped: rows.length - eligible.length,
       });
     },
@@ -310,6 +350,7 @@ function MessagesWorkspace() {
     <Outer>
       <DataTable<EDIMessageRow>
         name="EDI Message"
+        emptyTitle={t("No EDI messages yet")}
         queryKey="edi-message-list"
         resource={Resource.EDI}
         columns={columns}
@@ -346,8 +387,14 @@ function InboundFilesWorkspace() {
       );
       await invalidateEDIInboundFiles(queryClient);
       notifyEDIBulkOutcome(result, {
-        entity: "file",
-        verbPast: t("Reprocessed"),
+        succeeded: (count) => t("Reprocessed {0, plural, one {# file} other {# files}}", count),
+        partial: (succeeded, failed) =>
+          t("Reprocessed {0, plural, one {# file} other {# files}}; {1} failed", succeeded, failed),
+        allFailed: (failed) =>
+          t(
+            "{0, plural, one {The selected file failed} other {All # selected files failed}}",
+            failed,
+          ),
         skipped: rows.length - eligible.length,
       });
     },
@@ -372,6 +419,7 @@ function InboundFilesWorkspace() {
     <Outer>
       <DataTable<EDIInboundFileRow>
         name="EDI Inbound File"
+        emptyTitle={t("No EDI inbound files yet")}
         queryKey="edi-inbound-file-list"
         resource={Resource.EDI}
         columns={columns}
@@ -396,6 +444,7 @@ function TestCasesWorkspace() {
       <div className="flex flex-col p-1">
         <DataTable<EDITestCaseTableRow>
           name="EDI Test Case"
+          emptyTitle={t("No EDI test cases yet")}
           queryKey="edi-test-case-list"
           resource={Resource.EDI}
           columns={columns}

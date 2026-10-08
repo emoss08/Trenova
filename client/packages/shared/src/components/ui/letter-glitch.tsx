@@ -188,6 +188,7 @@ const LetterGlitch = ({
     // Use the actual canvas dimensions for clearing
     const dpr = window.devicePixelRatio || 1;
     ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+    // i18n-ignore: canvas font value
     ctx.font = `${fontSize}px monospace`;
     ctx.textBaseline = "top";
 

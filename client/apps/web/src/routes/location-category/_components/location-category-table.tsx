@@ -15,6 +15,7 @@ export default function LocationCategoryTable() {
   return (
     <DataTable<LocationCategory>
       name="Location Category"
+      emptyTitle={t("No location categories yet")}
       queryKey="location-category-list"
       graphql={locationCategoryTableGraphQLConfig}
       resource={Resource.LocationCategory}

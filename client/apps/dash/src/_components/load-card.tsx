@@ -24,28 +24,30 @@ import {
   originStop,
   stopPlace,
 } from "./use-loads";
+import { defineLabels } from "@trenova/shared/i18n/labels";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export function stopTimeLabel(stop: PortalStop): string {
   if (stop.actualDeparture) {
-    return `Departed ${formatRange(stop.actualDeparture, stop.actualDeparture)}`;
+    return translate("Departed {0}", formatRange(stop.actualDeparture, stop.actualDeparture));
   }
   if (stop.actualArrival) {
-    return `Arrived ${formatRange(stop.actualArrival, stop.actualArrival)}`;
+    return translate("Arrived {0}", formatRange(stop.actualArrival, stop.actualArrival));
   }
   if (stop.scheduledWindowStart) {
     const day = formatRange(stop.scheduledWindowStart, stop.scheduledWindowStart);
     const time = formatUnixTime(stop.scheduledWindowStart);
     return `${day}, ${time}`;
   }
-  return "Not scheduled";
+  return translate("Not scheduled");
 }
 
-export const stopTypeLabels: Record<string, string> = {
+export const stopTypeLabels: Record<string, string> = defineLabels({
   Pickup: "Pickup",
   Delivery: "Delivery",
   SplitPickup: "Split pickup",
   SplitDelivery: "Split delivery",
-};
+});
 
 export function LoadPayChip({ load }: { load: PortalLoad }) {
   if (load.payGrossMinor == null) {
@@ -75,8 +77,8 @@ export function LoadCard({ load }: { load: PortalLoad }) {
     formatMiles(load.distanceMiles),
     formatWeight(load.weight),
     formatPieces(load.pieces),
-    load.tractorCode ? `Truck ${load.tractorCode}` : null,
-    load.isPrimary ? null : "Co-driver",
+    load.tractorCode ? t("Truck {0}", load.tractorCode) : null,
+    load.isPrimary ? null : t("Co-driver"),
   ].filter(Boolean);
 
   return (
@@ -152,14 +154,19 @@ export function StopTimeline({
     mutationFn: ({ stopId, action }: { stopId: string; action: PortalStopAction }) =>
       recordMyStopAction({ moveId: moveId ?? "", stopId, action }),
     onSuccess: async (_, variables) => {
-      toast.success(variables.action === "Arrive" ? "Arrival recorded" : "Departure recorded");
+      toast.success(
+        variables.action === "Arrive"
+          ? translate("Arrival recorded")
+          : translate("Departure recorded"),
+      );
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["dash-loads"] }),
         queryClient.invalidateQueries({ queryKey: ["dash-period-summary"] }),
         queryClient.invalidateQueries({ queryKey: ["dash-recent-pay-events"] }),
       ]);
     },
-    onError: (error: Error) => toast.error(error.message || "We couldn't record that. Try again."),
+    onError: (error: Error) =>
+      toast.error(error.message || translate("We couldn't record that. Try again.")),
   });
 
   const activeStops = stops.filter((stop) => stop.status !== "Canceled");

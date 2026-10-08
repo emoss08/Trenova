@@ -1,4 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
+import { formatRelativeTime } from "@trenova/shared/i18n/format";
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
 import type { Anniversary, CoverSource, RecentStarter, TerminalGroup } from "@/lib/my-team";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -60,7 +62,7 @@ export function ByTerminalPanel({ groups, total }: ByTerminalProps) {
               </div>
               <div
                 role="img"
-                aria-label={`${group.code}: ${group.count} of ${total}`}
+                aria-label={t("{0}: {1} of {2}", group.code, group.count, total)}
                 className="bg-muted h-1 w-full overflow-hidden rounded-full"
               >
                 <div
@@ -111,9 +113,8 @@ export function ComingUpPanel({ anniversaries, starters }: ComingUpProps) {
                   <span className="text-muted-foreground text-2xs flex items-center gap-1">
                     <Award01Icon className="size-3" aria-hidden />
                     {t(
-                      "{0} {1} on {2}",
+                      "{0, plural, one {# year} other {# years}} on {1}",
                       item.years,
-                      item.years === 1 ? "year" : "years",
                       formatUnixMonthDay(item.onDate),
                     )}
                   </span>
@@ -151,15 +152,15 @@ export function ComingUpPanel({ anniversaries, starters }: ComingUpProps) {
 }
 
 function describeInDays(days: number): string {
-  if (days === 0) return "Today";
-  if (days === 1) return "Tomorrow";
-  return `In ${days}d`;
+  if (days === 0) return translate("Today");
+  if (days === 1) return translate("Tomorrow");
+  return formatRelativeTime(days * 86_400, "narrow");
 }
 
 function describeDaysAgo(days: number): string {
-  if (days === 0) return "Today";
-  if (days === 1) return "Yesterday";
-  return `${days}d ago`;
+  if (days === 0) return translate("Today");
+  if (days === 1) return translate("Yesterday");
+  return formatRelativeTime(-days * 86_400, "narrow");
 }
 
 type ApprovalCoverProps = {

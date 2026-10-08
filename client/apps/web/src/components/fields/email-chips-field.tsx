@@ -1,4 +1,5 @@
 import { FieldWrapper } from "@/components/fields/field-components";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { XCloseIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
@@ -37,6 +38,7 @@ export function EmailChipsField<T extends FieldValues>({
   rules?: RegisterOptions<T, FieldPath<T>>;
   className?: string;
 }) {
+  const t = useT();
   const [draft, setDraft] = useState("");
   const [invalidDraft, setInvalidDraft] = useState<string | null>(null);
   const inputId = `email-chips-${name}`;
@@ -83,7 +85,7 @@ export function EmailChipsField<T extends FieldValues>({
             description={description}
             error={
               invalidDraft
-                ? `"${invalidDraft}" is not a valid email address`
+                ? t('"{0}" is not a valid email address', invalidDraft)
                 : fieldState.error?.message
             }
             className={className}
@@ -105,7 +107,7 @@ export function EmailChipsField<T extends FieldValues>({
                   <span className="truncate">{email}</span>
                   <button
                     type="button"
-                    aria-label={`Remove ${email}`}
+                    aria-label={t("Remove {0}", email)}
                     className="ui-focus-ring text-muted-foreground hover:text-foreground rounded-xs transition-colors"
                     onClick={(event) => {
                       event.stopPropagation();

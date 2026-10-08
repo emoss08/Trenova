@@ -94,8 +94,8 @@ export function SafetyScorecardCard({
               />
             </span>
           }
-          sub={`of ${scorecard.pointsAtRiskThreshold} before at-risk`}
-          hint={`of ${scorecard.pointsAtRiskThreshold} before at-risk`}
+          sub={t("of {0} before at-risk", scorecard.pointsAtRiskThreshold)}
+          hint={t("of {0} before at-risk", scorecard.pointsAtRiskThreshold)}
         />
         <KpiStripItem
           label={t("Inspections")}
@@ -180,6 +180,7 @@ function MetricValue({ value, unit }: { value: string; unit?: string }) {
  * at-risk line is the end of the bar.
  */
 function ThresholdBar({ value, watch, atRisk }: { value: number; watch: number; atRisk: number }) {
+  const t = useT();
   const max = Math.max(atRisk, value, 1);
   const fill = Math.min(100, (value / max) * 100);
   const watchAt = Math.min(100, (watch / max) * 100);
@@ -195,7 +196,7 @@ function ThresholdBar({ value, watch, atRisk }: { value: number; watch: number; 
       <span
         className="bg-foreground/50 absolute -top-0.5 -bottom-0.5 block w-0.5 rounded-full"
         style={{ left: `calc(${watchAt}% - 1px)` }}
-        title={`Watch at ${watch}`}
+        title={t("Watch at {0}", watch)}
       />
     </span>
   );

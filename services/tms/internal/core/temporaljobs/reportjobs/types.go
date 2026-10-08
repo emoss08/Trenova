@@ -26,6 +26,7 @@ type PreparedRun struct {
 	Params         map[string]any `json:"params"`
 	OrgTimezone    string         `json:"orgTimezone"`
 	RequestedBy    string         `json:"requestedBy"`
+	Locale         string         `json:"locale,omitempty"`
 	MaxRunSeconds  int64          `json:"maxRunSeconds"`
 	// WantDigest asks the executor to keep a bounded sample of the rows for an
 	// inline email table. It is only ever set for schedules that render one.

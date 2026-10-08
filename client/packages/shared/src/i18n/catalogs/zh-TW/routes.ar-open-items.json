@@ -4,7 +4,9 @@
   "Failed to load open items. Try refreshing the page.": "無法載入未結項目。請嘗試重新整理頁面。",
   "Open item totals": "未結項目合計",
   "Outstanding invoices and their payment status across all customers.": "所有客戶的未結發票及其付款狀態。",
+  "Select invoice {0}": "選取發票 {0}",
   "Select invoices from a single customer to apply a payment": "請選擇同一客戶的發票以沖抵付款",
+  "Totals · {0, plural, one {# invoice} other {# invoices}}": "合計 · {0, plural, other {# 張發票}}",
   "open invoices": "未結發票",
   "weighted by open $": "依未結金額加權",
   "{0} selected · {1}": "已選 {0} 筆 · {1}"

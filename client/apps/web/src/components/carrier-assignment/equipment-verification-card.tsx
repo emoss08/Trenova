@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { RelativeTime } from "@/components/carrier-intelligence/relative-time";
 import { carrierIntelProviderLabel, joinPresent } from "@/lib/carrier-intelligence";
@@ -77,7 +78,7 @@ export function useEquipmentVerificationLabels() {
 
 function identifierSummary(verification: CarrierEquipmentVerification): string {
   if (verification.vin) {
-    return `VIN ${verification.vin}`;
+    return translate("VIN {0}", verification.vin);
   }
   if (verification.plateNumber) {
     return verification.plateState

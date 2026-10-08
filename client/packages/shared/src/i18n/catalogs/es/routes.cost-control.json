@@ -14,6 +14,7 @@
   "Expense accounts whose postings feed this category when GL actuals are enabled.": "Cuentas de gastos cuyas contabilizaciones alimentan esta categoría cuando los reales del libro mayor están habilitados.",
   "Fixed costs": "Costos fijos",
   "Fleet miles per gallon": "Millas por galón de la flota",
+  "GL Actual": "Real del libro mayor",
   "GL actuals": "Reales del libro mayor",
   "Inactive categories are excluded from the cost-per-mile total.": "Las categorías inactivas se excluyen del total de costo por milla.",
   "Include Deadhead Miles": "Incluir las millas en vacío",

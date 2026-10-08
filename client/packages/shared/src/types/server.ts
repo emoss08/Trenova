@@ -1,4 +1,5 @@
 import z from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export type GenericLimitOffsetResponse<T> = {
   results: T[];
@@ -35,11 +36,14 @@ export function createLimitOffsetResponse<ItemType extends z.ZodType>(itemSchema
 export const paginationInfoSchema = z.object({
   limit: z
     .number()
-    .min(1, "Limit must be at least 1")
-    .max(100, "Limit must be at most 100")
-    .positive("Limit must be a positive number")
+    .min(1, { error: () => translate("Limit must be at least 1") })
+    .max(100, { error: () => translate("Limit must be at most 100") })
+    .positive({ error: () => translate("Limit must be a positive number") })
     .optional(),
-  offset: z.number().min(0, "Offset must be at least 0").optional(),
+  offset: z
+    .number()
+    .min(0, { error: () => translate("Offset must be at least 0") })
+    .optional(),
 });
 
 export type PaginationInfo = z.infer<typeof paginationInfoSchema>;

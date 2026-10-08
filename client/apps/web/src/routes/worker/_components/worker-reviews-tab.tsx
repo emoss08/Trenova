@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { ReviewCard, type ReviewPermissions } from "./reviews/review-card";
 import { ReviewEditorDialog } from "./reviews/review-editor-dialog";
 import { useReviewInvalidation } from "./reviews/use-review-invalidation";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export default function WorkerReviewsTab({ workerId }: { workerId: string }) {
   const t = useT();
@@ -78,8 +79,8 @@ export default function WorkerReviewsTab({ workerId }: { workerId: string }) {
     onSuccess: (review) => {
       toast.success(t("Review closed"), {
         description: review.nextReviewAt
-          ? "The next review is scheduled from the template cadence."
-          : "Filed on the worker's record.",
+          ? translate("The next review is scheduled from the template cadence.")
+          : translate("Filed on the worker's record."),
       });
       void invalidate();
     },

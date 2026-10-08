@@ -1,3 +1,4 @@
+import { STOP_TYPE_LABELS } from "@trenova/shared/lib/stop-type";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { LocationAutocompleteField } from "@/components/autocomplete-fields";
 import { AutoCompleteDateTimeField } from "@/components/fields/date-field/datetime-field";
@@ -45,13 +46,6 @@ type SplitMoveFormValues = {
   newDeliveryScheduledWindowEnd: number | null;
   pieces: number | null;
   weight: number | null;
-};
-
-const stopTypeLabels: Record<StopType, string> = {
-  Pickup: "Pickup",
-  Delivery: "Delivery",
-  SplitPickup: "Split Pickup",
-  SplitDelivery: "Split Delivery",
 };
 
 function MiniLocationDisplay({
@@ -123,7 +117,7 @@ function MiniStopRow({
           ) : null}
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
-          <Badge variant="neutral">{stopTypeLabels[stopType]}</Badge>
+          <Badge variant="neutral">{STOP_TYPE_LABELS[stopType]}</Badge>
           {time ? (
             <span className="text-2xs text-muted-foreground">
               {time.date} {time.time}

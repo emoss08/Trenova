@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -27,6 +28,22 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { InstantPayDialog } from "./instant-pay-dialog";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+
+export function batchUpToDateMessage(batch: {
+  settlementCount: number;
+  exceptionCount: number;
+}): string {
+  return batch.exceptionCount > 0
+    ? translate(
+        "Batch up to date — {0, plural, one {# settlement} other {# settlements}}, {1} need review",
+        batch.settlementCount,
+        batch.exceptionCount,
+      )
+    : translate(
+        "Batch up to date — {0, plural, one {# settlement} other {# settlements}}",
+        batch.settlementCount,
+      );
+}
 
 export function UnsettledDriversDialog({
   open,
@@ -67,31 +84,34 @@ export function UnsettledDriversDialog({
     onSuccess: (settlement, worker) => {
       if (!settlement) {
         toast.info(
-          `${worker.workerName} already has a settlement this period — new accruals attach to it automatically`,
+          t(
+            "{0} already has a settlement this period — new accruals attach to it automatically",
+            worker.workerName,
+          ),
         );
         return;
       }
       toast.success(
-        `Draft ${settlement.settlementNumber} created for ${worker.workerName} — pay date set to today`,
+        t(
+          "Draft {0} created for {1} — pay date set to today",
+          settlement.settlementNumber,
+          worker.workerName,
+        ),
       );
       void refetch();
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to settle driver"),
+    onError: (error: Error) => toast.error(error.message || t("Failed to settle driver")),
   });
 
   const generateAllMutation = useMutation({
     mutationFn: () => generateSettlementBatch({}),
     onSuccess: (batch) => {
-      toast.success(
-        `Batch up to date — ${batch.settlementCount} settlement${
-          batch.settlementCount === 1 ? "" : "s"
-        }${batch.exceptionCount > 0 ? `, ${batch.exceptionCount} need review` : ""}`,
-      );
+      toast.success(batchUpToDateMessage(batch));
       void refetch();
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to generate settlements"),
+    onError: (error: Error) => toast.error(error.message || t("Failed to generate settlements")),
   });
 
   const list = workers ?? [];

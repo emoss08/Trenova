@@ -159,15 +159,15 @@ function ResultView({ result, stale }: { result: BacktestResult; stale: boolean 
   const riskChips = [
     result.stopsForfeited > 0 && {
       tone: "warn" as const,
-      text: `${result.stopsForfeited} forfeited to late arrival`,
+      text: t("{0} forfeited to late arrival", result.stopsForfeited),
     },
     result.stopsSuppressed > 0 && {
       tone: "bad" as const,
-      text: `${result.stopsSuppressed} suppressed, no notice`,
+      text: t("{0} suppressed, no notice", result.stopsSuppressed),
     },
     result.negativeMarginStops > 0 && {
       tone: "bad" as const,
-      text: `${result.negativeMarginStops} negative margin`,
+      text: t("{0} negative margin", result.negativeMarginStops),
     },
     result.truncated && { tone: "neutral" as const, text: t("Sample truncated") },
   ].filter((chip): chip is { tone: "warn" | "bad" | "neutral"; text: string } => Boolean(chip));

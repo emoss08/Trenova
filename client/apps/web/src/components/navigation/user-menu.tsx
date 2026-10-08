@@ -52,7 +52,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
             render={
               <button
                 type="button"
-                aria-label={`Account menu for ${displayName}`}
+                aria-label={t("Account menu for {0}", displayName)}
                 className="hover:ring-ring/40 inline-flex rounded-full transition-shadow hover:ring-2 data-popup-open:ring-2"
               />
             }

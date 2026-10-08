@@ -1,11 +1,19 @@
 {
   "Every time a connected fuel card feed has read your transactions, and what became of the rows. Rows a run could not place wait here until the card they were on is assigned or the unit they name is added.": "已連線的油卡資料來源每次讀取您交易的紀錄，以及各資料列的處理結果。無法歸位的資料列會留在此處，直到其所屬卡片獲指派，或其所指的車輛被新增為止。",
+  "Nothing new from {0}": "{0} 沒有新內容",
+  "Posted {0} of {1, plural, one {# held row} other {# held rows}}": "已過帳 {1, plural, other {# 筆暫留列}}中的 {0} 筆",
   "Read from the provider's API.": "自供應商 API 讀取。",
   "Read {0}.": "已閱讀 {0}。",
   "Review rows": "審查資料列",
   "Sync now": "立即同步",
+  "The rows still waiting need their card assigned, or the unit they name added.": "仍在等候的資料列需要指派卡片，或新增其所指定的車輛。",
+  "This run has nothing waiting": "此執行沒有任何待處理項目",
   "Work rows out again": "重新處理資料列",
   "Working them out...": "處理中...",
+  "{0, plural, one {# row is} other {# rows are}} waiting on a card assignment or a missing unit.": "{0, plural, other {有 # 列}}正在等待卡片指派或缺少的車輛。",
+  "{0, plural, one {The # held row could not be worked out yet} other {None of the # held rows could be worked out yet}}": "{0, plural, other {# 筆暫留列皆尚無法處理}}",
+  "{0} of {1, plural, one {# row is} other {# rows are}} ready to commit": "{1, plural, other {# 列}}中有 {0} 列可供提交",
   "{0} run": "{0} 次執行",
-  "{0} {1} posted, {2} waiting.": "{0} {1} 已過帳，{2} 待處理。"
+  "{0} {1} posted, {2} waiting.": "{0} {1} 已過帳，{2} 待處理。",
+  "{0}: {1} posted of {2} read": "{0}：已讀取 {2} 筆，已過帳 {1} 筆"
 }

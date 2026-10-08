@@ -95,7 +95,7 @@ export function BasicsCard({ basics, inferred }: BasicsCardProps) {
               </span>
               <span
                 role="img"
-                aria-label={`${csaBasicLabel(basic.basic)}: ${basic.weightedScore} weighted`}
+                aria-label={t("{0}: {1} weighted", csaBasicLabel(basic.basic), basic.weightedScore)}
                 className="bg-muted flex h-1.5 w-full max-w-md overflow-hidden rounded-full"
               >
                 <span

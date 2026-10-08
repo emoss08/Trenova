@@ -1,6 +1,9 @@
 import type { Tone } from "@/components/kpi/tone";
 import type { AssistantProposal } from "@/types/assistant";
+import { formatList } from "@trenova/shared/i18n/format";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { argumentRows, humanizeToolName } from "./proposal-state";
+import { defineLabels, translateLabel } from "@trenova/shared/i18n/labels";
 
 export type ProposalFact = { label: string; value: string };
 
@@ -58,10 +61,6 @@ function facts(...entries: (ProposalFact | null)[]): ProposalFact[] {
   return entries.filter((entry): entry is ProposalFact => entry !== null);
 }
 
-function plural(count: number, singular: string, pluralWord: string): string {
-  return `${count} ${count === 1 ? singular : pluralWord}`;
-}
-
 /**
  * A PULID is a storage key, not a name. Putting one in a sentence asks a person
  * to match 26 characters by eye to decide whether a change is the one they
@@ -82,10 +81,12 @@ export function shortRef(value: string): string {
 
 /** Splits `MissingBOL` into `Missing BOL` without breaking the initialism. */
 function humanizeEnum(value: string): string {
-  return value
-    .replace(/([a-z0-9])([A-Z])/gu, "$1 $2")
-    .replace(/([A-Z]+)([A-Z][a-z])/gu, "$1 $2")
-    .trim();
+  return translateLabel(
+    value
+      .replace(/([a-z0-9])([A-Z])/gu, "$1 $2")
+      .replace(/([A-Z]+)([A-Z][a-z])/gu, "$1 $2")
+      .trim(),
+  );
 }
 
 /**
@@ -145,7 +146,9 @@ function definitionFacts(definition: unknown): ProposalFact[] {
 
   return facts(
     fact("Columns", columns.filter((column) => column !== "").join(", ")),
-    filterCount > 0 ? fact("Filters", plural(filterCount, "filter", "filters")) : null,
+    filterCount > 0
+      ? fact("Filters", translate("{0, plural, one {# filter} other {# filters}}", filterCount))
+      : null,
     fact("Parameters", parameters.filter((name) => name !== "").join(", ")),
   );
 }
@@ -162,7 +165,22 @@ function columnText(column: DefinitionColumn): string {
   if (agg === "") {
     return field;
   }
-  return `${agg.replaceAll("_", " ")} of ${field}`;
+  switch (agg) {
+    case "count":
+      return translate("count of {0}", field);
+    case "count_distinct":
+      return translate("count distinct of {0}", field);
+    case "sum":
+      return translate("sum of {0}", field);
+    case "avg":
+      return translate("avg of {0}", field);
+    case "min":
+      return translate("min of {0}", field);
+    case "max":
+      return translate("max of {0}", field);
+    default:
+      return translate("{0} ({1})", field, agg);
+  }
 }
 
 function countFilters(group: { filters?: unknown; groups?: unknown } | undefined): number {
@@ -190,7 +208,7 @@ const REPORT_METADATA_KEYS = [
   "status",
 ] as const;
 
-const REPORT_METADATA_LABELS: Record<(typeof REPORT_METADATA_KEYS)[number], string> = {
+const REPORT_METADATA_LABELS: Record<(typeof REPORT_METADATA_KEYS)[number], string> = defineLabels({
   name: "Name",
   description: "Description",
   category: "Category",
@@ -198,7 +216,123 @@ const REPORT_METADATA_LABELS: Record<(typeof REPORT_METADATA_KEYS)[number], stri
   visibility: "Visibility",
   defaultFormat: "Format",
   status: "Status",
-};
+});
+
+function reportMetadataNoun(key: (typeof REPORT_METADATA_KEYS)[number]): string {
+  switch (key) {
+    case "name":
+      return translate("name");
+    case "description":
+      return translate("description");
+    case "category":
+      return translate("category");
+    case "tags":
+      return translate("tags");
+    case "visibility":
+      return translate("visibility");
+    case "defaultFormat":
+      return translate("format");
+    case "status":
+      return translate("status");
+  }
+}
+
+function createReportSummary(name: string, shared: boolean, dataset: string): string {
+  if (name) {
+    if (shared) {
+      return dataset
+        ? translate("Save “{0}” as a new shared report on the {1} dataset.", name, dataset)
+        : translate("Save “{0}” as a new shared report.", name);
+    }
+    return dataset
+      ? translate("Save “{0}” as a new report on the {1} dataset.", name, dataset)
+      : translate("Save “{0}” as a new report.", name);
+  }
+  if (shared) {
+    return dataset
+      ? translate("Save a new shared report on the {0} dataset.", dataset)
+      : translate("Save a new shared report.");
+  }
+  return dataset
+    ? translate("Save a new report on the {0} dataset.", dataset)
+    : translate("Save a new report.");
+}
+
+function createLocationSummary(name: string, place: string): string {
+  if (name) {
+    return place
+      ? translate(
+          "Add “{0}” to your locations in {1}, so a stop can be booked there. Its code is assigned when it is saved.",
+          name,
+          place,
+        )
+      : translate(
+          "Add “{0}” to your locations, so a stop can be booked there. Its code is assigned when it is saved.",
+          name,
+        );
+  }
+  return place
+    ? translate(
+        "Add a new location to your locations in {0}, so a stop can be booked there. Its code is assigned when it is saved.",
+        place,
+      )
+    : translate(
+        "Add a new location to your locations, so a stop can be booked there. Its code is assigned when it is saved.",
+      );
+}
+
+function forkReportSummary(key: string, name: string): string {
+  if (key) {
+    return name
+      ? translate("Make a copy of the built-in {0} report named “{1}”.", key, name)
+      : translate("Make a copy of the built-in {0} report.", key);
+  }
+  return name
+    ? translate("Make a copy of the built-in report named “{0}”.", name)
+    : translate("Make a copy of the built-in report.");
+}
+
+function requestDocsSummary(who: string, count: number, pro: string): string {
+  if (who) {
+    return pro
+      ? translate(
+          "Ask {1} for {0, plural, one {# document} other {# documents}} on shipment {2}.",
+          count,
+          who,
+          pro,
+        )
+      : translate("Ask {1} for {0, plural, one {# document} other {# documents}}.", count, who);
+  }
+  return pro
+    ? translate(
+        "Ask the customer for {0, plural, one {# document} other {# documents}} on shipment {1}.",
+        count,
+        pro,
+      )
+    : translate("Ask the customer for {0, plural, one {# document} other {# documents}}.", count);
+}
+
+function createShipmentSummary(bol: string, stops: number, fromDocument: boolean): string {
+  if (bol) {
+    return fromDocument
+      ? translate(
+          "Enter a new shipment for BOL {1} with {0, plural, one {# stop} other {# stops}}, read from an uploaded document.",
+          stops,
+          bol,
+        )
+      : translate(
+          "Enter a new shipment for BOL {1} with {0, plural, one {# stop} other {# stops}}.",
+          stops,
+          bol,
+        );
+  }
+  return fromDocument
+    ? translate(
+        "Enter a new shipment with {0, plural, one {# stop} other {# stops}}, read from an uploaded document.",
+        stops,
+      )
+    : translate("Enter a new shipment with {0, plural, one {# stop} other {# stops}}.", stops);
+}
 
 /** "needs_attention" reads as "Needs attention"; a file format reads as its acronym. */
 function reportMetadataValue(key: (typeof REPORT_METADATA_KEYS)[number], value: unknown): string {
@@ -226,9 +360,7 @@ const PRESENTERS: Record<string, Presenter> = {
 
     return {
       title: "Create a report",
-      summary: `Save ${name ? `“${name}”` : "a new report"} as a new ${
-        visibility === "shared" ? "shared " : ""
-      }report${dataset ? ` on the ${dataset} dataset` : ""}.`,
+      summary: createReportSummary(name, visibility === "shared", dataset),
       highlights: facts(
         ...definitionFacts(args.definition),
         fact("Category", text(args.category)),
@@ -242,22 +374,19 @@ const PRESENTERS: Record<string, Presenter> = {
   },
 
   update_report: (args) => {
-    const changed = REPORT_METADATA_KEYS.filter((key) => args[key] !== undefined).map((key) =>
-      REPORT_METADATA_LABELS[key].toLowerCase(),
+    const changed = REPORT_METADATA_KEYS.filter((key) => args[key] !== undefined).map(
+      reportMetadataNoun,
     );
     if (args.definition !== undefined) {
-      changed.push("definition");
+      changed.push(translate("definition"));
     }
-    const what =
-      changed.length === 0
-        ? "settings"
-        : changed.length === 1
-          ? changed[0]
-          : `${changed.slice(0, -1).join(", ")} and ${changed[changed.length - 1]}`;
 
     return {
       title: "Change a report",
-      summary: `Change this report's ${what}.`,
+      summary:
+        changed.length === 0
+          ? translate("Change this report's settings.")
+          : translate("Change this report's {0}.", formatList(changed)),
       highlights: facts(
         ...REPORT_METADATA_KEYS.map((key) =>
           args[key] === undefined
@@ -282,9 +411,7 @@ const PRESENTERS: Record<string, Presenter> = {
 
     return {
       title: "Create a location",
-      summary: `Add ${name ? `“${name}”` : "a new location"} to your locations${
-        place ? ` in ${place}` : ""
-      }, so a stop can be booked there. Its code is assigned when it is saved.`,
+      summary: createLocationSummary(name, place),
       highlights: facts(
         fact("Name", name),
         fact("Address", [street, place].filter((part) => part !== "").join(", ")),
@@ -305,9 +432,12 @@ const PRESENTERS: Record<string, Presenter> = {
 
   evaluate_service_failures: (args) => ({
     title: "Check for service failures",
-    summary: `Run the late-stop check on this shipment${
-      args.force === true ? ", re-checking stops already evaluated" : ""
-    }.`,
+    summary:
+      args.force === true
+        ? translate(
+            "Run the late-stop check on this shipment, re-checking stops already evaluated.",
+          )
+        : translate("Run the late-stop check on this shipment."),
     highlights: [],
     covered: ["shipmentId", "force"],
     reversible: true,
@@ -329,7 +459,11 @@ const PRESENTERS: Record<string, Presenter> = {
 
     return {
       title: "Message the driver",
-      summary: `Send driver ${shortRef(text(args.workerId)) || "?"} “${text(args.title)}” in Dash.`,
+      summary: translate(
+        "Send driver {0} “{1}” in Dash.",
+        shortRef(text(args.workerId)) || "?",
+        text(args.title),
+      ),
       severity:
         priority === "critical" || priority === "high"
           ? { label: humanizeEnum(priority[0].toUpperCase() + priority.slice(1)), tone: "warning" }
@@ -342,7 +476,10 @@ const PRESENTERS: Record<string, Presenter> = {
 
   email_customer: (args) => ({
     title: "Email the customer",
-    summary: `Send this shipment's customer “${text(args.subject)}” from the organization's letterhead.`,
+    summary: translate(
+      "Send this shipment's customer “{0}” from the organization's letterhead.",
+      text(args.subject),
+    ),
     highlights: facts(fact("Message", text(args.body))),
     covered: ["shipmentId", "profileId", "subject", "body"],
     reversible: false,
@@ -366,7 +503,10 @@ const PRESENTERS: Record<string, Presenter> = {
 
   waive_detention: (args) => ({
     title: "Waive detention",
-    summary: `Waive this detention charge as ${midSentence(humanizeEnum(text(args.reason)))}.`,
+    summary: translate(
+      "Waive this detention charge as {0}.",
+      midSentence(humanizeEnum(text(args.reason))),
+    ),
     highlights: facts(fact("Note", text(args.note))),
     covered: ["occurrenceId", "reason", "note"],
     reversible: false,
@@ -378,9 +518,7 @@ const PRESENTERS: Record<string, Presenter> = {
 
     return {
       title: "Copy a report",
-      summary: `Make a copy of the built-in ${key || "report"} report${
-        name ? ` named “${name}”` : ""
-      }.`,
+      summary: forkReportSummary(key, name),
       highlights: [],
       covered: ["reportKey", "name"],
       reversible: true,
@@ -390,14 +528,12 @@ const PRESENTERS: Record<string, Presenter> = {
   request_missing_docs: (args) => {
     const to = list(args.to);
     const documents = list(args.requestedDocuments);
-    const who = text(args.customerName) || to.join(", ") || "the customer";
+    const who = text(args.customerName) || to.join(", ");
     const pro = text(args.shipmentProNumber);
 
     return {
       title: "Email the customer",
-      summary: `Ask ${who} for ${plural(documents.length, "document", "documents")}${
-        pro ? ` on shipment ${pro}` : ""
-      }.`,
+      summary: requestDocsSummary(who, documents.length, pro),
       highlights: facts(
         fact("To", to.join(", ")),
         fact("Asking for", documents.join(", ")),
@@ -421,17 +557,16 @@ const PRESENTERS: Record<string, Presenter> = {
 
     return {
       title: "Correct charge codes",
-      summary: `Replace the additional charges on this billing item with ${plural(
+      summary: translate(
+        "Replace the additional charges on this billing item with {0, plural, one {# charge} other {# charges}}.",
         charges.length,
-        "charge",
-        "charges",
-      )}.`,
+      ),
       highlights: charges.slice(0, 4).map((charge, index) => {
         const entry = (charge ?? {}) as Args;
         const name =
           text(entry.description) ||
           shortRef(text(entry.accessorialChargeId)) ||
-          `Charge ${index + 1}`;
+          translate("Charge {0}", index + 1);
         const amount = text(entry.amount);
 
         return { label: name, value: amount === "" ? "—" : amount };
@@ -448,9 +583,9 @@ const PRESENTERS: Record<string, Presenter> = {
 
     return {
       title: "Assign a driver",
-      summary: `Put driver ${driver || "?"} on this move${
-        tractor ? ` with tractor ${tractor}` : ""
-      }.`,
+      summary: tractor
+        ? translate("Put driver {0} on this move with tractor {1}.", driver || "?", tractor)
+        : translate("Put driver {0} on this move.", driver || "?"),
       highlights: facts(
         fact("Driver", driver),
         fact("Second driver", shortRef(text(args.secondaryWorkerId))),
@@ -473,16 +608,12 @@ const PRESENTERS: Record<string, Presenter> = {
 
     return {
       title: "Enter a shipment",
-      summary: `Enter a new shipment${bol ? ` for BOL ${bol}` : ""} with ${plural(
-        stops,
-        "stop",
-        "stops",
-      )}${args.sourceDocumentId ? ", read from an uploaded document" : ""}.`,
+      summary: createShipmentSummary(bol, stops, Boolean(args.sourceDocumentId)),
       highlights: facts(
         fact("Customer", shortRef(text(draft.customerId))),
         fact("Service type", shortRef(text(draft.serviceTypeId))),
         fact("Pieces", text(draft.pieces)),
-        fact("Weight", text(draft.weight) ? `${text(draft.weight)} lb` : ""),
+        fact("Weight", text(draft.weight) ? translate("{0} lb", text(draft.weight)) : ""),
         fact("Freight charge", text(draft.freightChargeAmount)),
         fact("Source document", shortRef(text(args.sourceDocumentId))),
       ),
@@ -496,14 +627,20 @@ const PRESENTERS: Record<string, Presenter> = {
 
     return {
       title: "Change a shipment",
-      summary: `Change ${changed.length === 0 ? "nothing" : changed.map((key) => midSentence(humanizeEnum(key))).join(", ")} on this shipment.`,
+      summary:
+        changed.length === 0
+          ? translate("Change nothing on this shipment.")
+          : translate(
+              "Change {0} on this shipment.",
+              changed.map((key) => midSentence(humanizeEnum(key))).join(", "),
+            ),
       highlights: facts(
         fact("Customer", shortRef(text(args.customerId))),
         fact("Service type", shortRef(text(args.serviceTypeId))),
         fact("Shipment type", shortRef(text(args.shipmentTypeId))),
         fact("BOL", text(args.bol)),
         fact("Pieces", text(args.pieces)),
-        fact("Weight", text(args.weight) ? `${text(args.weight)} lb` : ""),
+        fact("Weight", text(args.weight) ? translate("{0} lb", text(args.weight)) : ""),
         fact(
           "Temperature",
           [text(args.temperatureMin), text(args.temperatureMax)].filter(Boolean).join(" to "),
@@ -528,11 +665,14 @@ const PRESENTERS: Record<string, Presenter> = {
 
   tender_move_to_routing_guide: (args) => ({
     title: "Tender down the routing guide",
-    summary: `Offer this move to carriers down ${
-      args.routingGuideId
-        ? `routing guide ${shortRef(text(args.routingGuideId))}`
-        : "the lane's routing guide"
-    }, in the guide's order at its rates.`,
+    summary: args.routingGuideId
+      ? translate(
+          "Offer this move to carriers down routing guide {0}, in the guide's order at its rates.",
+          shortRef(text(args.routingGuideId)),
+        )
+      : translate(
+          "Offer this move to carriers down the lane's routing guide, in the guide's order at its rates.",
+        ),
     highlights: facts(fact("Routing guide", shortRef(text(args.routingGuideId)))),
     covered: ["shipmentMoveId", "routingGuideId"],
     reversible: true,
@@ -540,15 +680,23 @@ const PRESENTERS: Record<string, Presenter> = {
 
   tender_move_to_carriers: (args) => {
     const lines = Array.isArray(args.lines) ? (args.lines as Args[]) : [];
-    const mode = text(args.mode) === "SpotSequential" ? "one after another" : "all at once";
+    const sequential = text(args.mode) === "SpotSequential";
 
     return {
       title: "Tender to carriers",
-      summary: `Offer this move to ${plural(lines.length, "carrier", "carriers")} ${mode} at the rates below.`,
+      summary: sequential
+        ? translate(
+            "Offer this move to {0, plural, one {# carrier} other {# carriers}} one after another at the rates below.",
+            lines.length,
+          )
+        : translate(
+            "Offer this move to {0, plural, one {# carrier} other {# carriers}} all at once at the rates below.",
+            lines.length,
+          ),
       highlights: facts(
         ...lines.map((line, index) =>
           fact(
-            `Carrier ${index + 1}`,
+            translate("Carrier {0}", index + 1),
             [
               shortRef(text(line.carrierId)),
               text(line.rate)
@@ -571,7 +719,10 @@ const PRESENTERS: Record<string, Presenter> = {
 
     return {
       title: "Post invoices",
-      summary: `Post ${count === 1 ? "1 draft invoice" : `${count} draft invoices`} to the ledger and queue each for the accounting system.`,
+      summary: translate(
+        "Post {0, plural, one {# draft invoice} other {# draft invoices}} to the ledger and queue each for the accounting system.",
+        count,
+      ),
       covered: ["invoiceIds"],
       reversible: false,
     };
@@ -582,7 +733,10 @@ const PRESENTERS: Record<string, Presenter> = {
 
     return {
       title: "Send invoices",
-      summary: `Email ${count === 1 ? "1 invoice" : `${count} invoices`} to the customers they bill, as their billing profiles say.`,
+      summary: translate(
+        "Email {0, plural, one {# invoice} other {# invoices}} to the customers they bill, as their billing profiles say.",
+        count,
+      ),
       covered: ["invoiceIds"],
       reversible: false,
     };
@@ -593,7 +747,10 @@ const PRESENTERS: Record<string, Presenter> = {
 
     return {
       title: "Approve billing items",
-      summary: `Approve ${count === 1 ? "1 billing item" : `${count} billing items`}, creating the draft invoice each bills on.`,
+      summary: translate(
+        "Approve {0, plural, one {# billing item} other {# billing items}}, creating the draft invoice each bills on.",
+        count,
+      ),
       highlights: facts(fact("Review notes", text(args.reviewNotes))),
       covered: ["billingQueueItemIds", "reviewNotes"],
       reversible: false,
@@ -605,7 +762,10 @@ const PRESENTERS: Record<string, Presenter> = {
 
     return {
       title: "Approve driver settlements",
-      summary: `Approve ${plural(count, "driver settlement", "driver settlements")}, committing to pay each driver what it comes to.`,
+      summary: translate(
+        "Approve {0, plural, one {# driver settlement} other {# driver settlements}}, committing to pay each driver what it comes to.",
+        count,
+      ),
       covered: ["settlementIds"],
       reversible: false,
     };
@@ -616,7 +776,10 @@ const PRESENTERS: Record<string, Presenter> = {
 
     return {
       title: "Post driver settlements",
-      summary: `Post ${plural(count, "approved driver settlement", "approved driver settlements")} to the ledger, queue ${count === 1 ? "it" : "each"} for the accounting system and tell ${count === 1 ? "the driver" : "each driver"}.`,
+      summary: translate(
+        "{0, plural, one {Post # approved driver settlement to the ledger, queue it for the accounting system and tell the driver.} other {Post # approved driver settlements to the ledger, queue each for the accounting system and tell each driver.}}",
+        count,
+      ),
       covered: ["settlementIds"],
       reversible: false,
     };
@@ -627,7 +790,10 @@ const PRESENTERS: Record<string, Presenter> = {
 
     return {
       title: "Approve carrier settlements",
-      summary: `Approve ${plural(count, "carrier settlement", "carrier settlements")}, committing to pay each carrier what it comes to.`,
+      summary: translate(
+        "Approve {0, plural, one {# carrier settlement} other {# carrier settlements}}, committing to pay each carrier what it comes to.",
+        count,
+      ),
       covered: ["settlementIds"],
       reversible: false,
     };
@@ -638,7 +804,10 @@ const PRESENTERS: Record<string, Presenter> = {
 
     return {
       title: "Post carrier settlements",
-      summary: `Post ${plural(count, "approved carrier settlement", "approved carrier settlements")} to the ledger and queue ${count === 1 ? "it" : "each"} for the accounting system.`,
+      summary: translate(
+        "{0, plural, one {Post # approved carrier settlement to the ledger and queue it for the accounting system.} other {Post # approved carrier settlements to the ledger and queue each for the accounting system.}}",
+        count,
+      ),
       covered: ["settlementIds"],
       reversible: false,
     };
@@ -659,8 +828,8 @@ const PRESENTERS: Record<string, Presenter> = {
     return {
       title: "Flag for review",
       summary: category
-        ? `Record a ${midSentence(category)} case for a person to resolve.`
-        : "Record a case for a person to resolve.",
+        ? translate("Record a {0} case for a person to resolve.", midSentence(category))
+        : translate("Record a case for a person to resolve."),
       severity: severityOf(text(args.severity)),
       highlights: facts(
         fact("What the agent found", text(args.attemptSummary)),
@@ -686,7 +855,9 @@ const PRESENTERS: Record<string, Presenter> = {
 
     return {
       title: "Attach a document",
-      summary: `Attach ${file || "a document"} to this shipment's billing item.`,
+      summary: file
+        ? translate("Attach {0} to this shipment's billing item.", file)
+        : translate("Attach a document to this shipment's billing item."),
       highlights: facts(
         fact("File", file),
         fact("Type", text(args.contentType)),
@@ -717,7 +888,7 @@ export function presentProposal(proposal: AssistantProposal): ProposalView {
   if (!presenter) {
     return {
       title: humanizeToolName(proposal.toolName),
-      summary: `Run ${humanizeToolName(proposal.toolName).toLowerCase()} with the values below.`,
+      summary: translate("Run this tool with the values below."),
       severity: null,
       // Nothing is known about an unrecognised tool, so nothing is assumed to
       // be noise: every argument it would send is on the face of the card.

@@ -23,15 +23,15 @@ import type {
   DispatchAssignMoveToCarrierInput,
   DispatchPlanInput,
 } from "@trenova/graphql/generated/graphql";
-import {
-  TENDER_MODE_LABEL,
-  type RecordTenderResponsePayload,
-  type SpotTenderPayload,
-  type WaterfallTenderPayload,
+import type {
+  RecordTenderResponsePayload,
+  SpotTenderPayload,
+  WaterfallTenderPayload,
 } from "@trenova/shared/types/tender";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 /**
  * An undoable step. Assignment is reversible in the domain, so the console treats
@@ -44,15 +44,24 @@ type UndoStep =
 
 const MAX_UNDO_DEPTH = 25;
 
-function describeResult(result: DispatchBulkAssignResult, verb: string): void {
+function describeResult(result: DispatchBulkAssignResult, action: "assigned" | "unassigned"): void {
   if (result.failed === 0) {
-    toast.success(`${verb} ${result.succeeded} move${result.succeeded === 1 ? "" : "s"}`);
+    toast.success(
+      action === "assigned"
+        ? translate("{0, plural, one {Assigned # move} other {Assigned # moves}}", result.succeeded)
+        : translate(
+            "{0, plural, one {Unassigned # move} other {Unassigned # moves}}",
+            result.succeeded,
+          ),
+    );
     return;
   }
 
   const firstFailure = result.results.find((item) => !item.success);
   toast.warning(
-    `${verb} ${result.succeeded}, ${result.failed} failed`,
+    action === "assigned"
+      ? translate("Assigned {0}, {1} failed", result.succeeded, result.failed)
+      : translate("Unassigned {0}, {1} failed", result.succeeded, result.failed),
     firstFailure?.error ? { description: firstFailure.error } : undefined,
   );
 }
@@ -105,7 +114,7 @@ export function useDispatchActions() {
   const assignMutation = useMutation({
     mutationFn: (input: DispatchAssignMoveInput[]) => assignDispatchMovesGraphQL(input),
     onSuccess: (result) => {
-      describeResult(result, "Assigned");
+      describeResult(result, "assigned");
 
       // Only successful moves are undoable; queueing a failed one would make undo
       // unassign work that was never assigned here.
@@ -122,7 +131,7 @@ export function useDispatchActions() {
     mutationFn: (params: { moveIds: string[]; restore?: DispatchAssignMoveInput[] }) =>
       unassignDispatchMovesGraphQL(params.moveIds),
     onSuccess: (result, params) => {
-      describeResult(result, "Unassigned");
+      describeResult(result, "unassigned");
 
       if (params.restore && params.restore.length > 0) {
         const succeeded = new Set(
@@ -183,7 +192,10 @@ export function useDispatchActions() {
       const skipped = result.screening?.skipped.length ?? 0;
       if (skipped > 0) {
         toast.warning(t("Waterfall tender started with skipped carriers"), {
-          description: `${skipped} routing-guide carrier(s) were skipped for eligibility.`,
+          description: t(
+            "{0, plural, one {# routing-guide carrier was skipped for eligibility.} other {# routing-guide carriers were skipped for eligibility.}}",
+            skipped,
+          ),
         });
       } else {
         toast.success(t("Waterfall tender started"), {
@@ -198,12 +210,19 @@ export function useDispatchActions() {
   const spotTenderMutation = useMutation({
     mutationFn: (payload: SpotTenderPayload) => apiService.tenderService.createSpot(payload),
     onSuccess: (tender) => {
-      toast.success(`${TENDER_MODE_LABEL[tender.mode]} tender sent`, {
-        description:
-          tender.mode === "SpotBroadcast"
-            ? "Every carrier on the tender has been offered the move."
-            : "The first carrier on the tender has been offered the move.",
-      });
+      toast.success(
+        tender.mode === "SpotBroadcast"
+          ? t("Spot broadcast tender sent")
+          : tender.mode === "SpotSequential"
+            ? t("Spot sequential tender sent")
+            : t("Waterfall tender sent"),
+        {
+          description:
+            tender.mode === "SpotBroadcast"
+              ? t("Every carrier on the tender has been offered the move.")
+              : t("The first carrier on the tender has been offered the move."),
+        },
+      );
       invalidateTenders();
     },
     onError: (error: unknown) => {
@@ -231,7 +250,9 @@ export function useDispatchActions() {
       apiService.tenderService.recordResponse(params.offerId, params.payload),
     onSuccess: (_data, params) => {
       toast.success(
-        params.payload.action === "Accept" ? "Acceptance recorded" : "Decline recorded",
+        params.payload.action === "Accept"
+          ? translate("Acceptance recorded")
+          : translate("Decline recorded"),
       );
       invalidateTenders();
     },
@@ -243,7 +264,10 @@ export function useDispatchActions() {
     onSuccess: (plan: DispatchPlan) => {
       if (plan.shadowMode) {
         toast.info(t("Shadow mode: nothing was assigned"), {
-          description: `${plan.assignments.length} pairing(s) would have been proposed.`,
+          description: t(
+            "{0, plural, one {# pairing would have been proposed.} other {# pairings would have been proposed.}}",
+            plan.assignments.length,
+          ),
         });
         return;
       }

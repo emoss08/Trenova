@@ -23,7 +23,10 @@
   "Mileage bands": "里程级距",
   "Minimum per move": "每个运程下限",
   "No drivers assigned yet. Assign drivers here, or from the Pay tab on the worker.": "尚未指派任何司机。可在此指派，或自司机的“薪酬”标签页指派。",
+  "No pay profiles yet": "尚无薪酬配置",
   "Pay components": "薪酬组成",
+  "Pay profile activated": "薪酬配置已启用",
+  "Pay profile deactivated — existing assignments keep paying until reassigned": "薪酬配置已停用——现有分配在重新分配前仍会继续支付",
   "Per diem daily cap": "每日津贴上限",
   "Profiles become assignable to drivers again.": "配置文件将恢复为可指派给司机。",
   "Profiles can no longer be assigned; existing assignments keep paying.": "配置文件将无法再指派；既有指派仍持续发薪。",
@@ -38,5 +41,11 @@
   "What is being paid — linehaul, stop pay, detention, hazmat premium, and so on.": "支付的项目 — 干线运费、停靠费、滞留费、危险品加给等。",
   "When to use this pay package": "何时使用此薪酬组合",
   "Which revenue the percentage applies to: linehaul only, linehaul plus fuel surcharge, or total.": "百分比所适用的收入范围：仅干线运费、干线运费加燃油附加费，或总额。",
-  "e.g. OTR Company Driver - Standard": "例如：长途自有司机 - 标准"
+  "e.g. OTR Company Driver - Standard": "例如：长途自有司机 - 标准",
+  "{0, plural, one {# pay profile activated} other {# pay profiles activated}}": "{0, plural, other {已启用 # 个薪酬配置文件}}",
+  "{0, plural, one {# pay profile activated} other {# pay profiles activated}}, {1} failed": "{0, plural, other {已启用 # 个薪酬配置文件}}，{1} 个失败",
+  "{0, plural, one {# pay profile deactivated} other {# pay profiles deactivated}}": "{0, plural, other {已停用 # 个薪酬配置文件}}",
+  "{0, plural, one {# pay profile deactivated} other {# pay profiles deactivated}}, {1} failed": "{0, plural, other {已停用 # 个薪酬配置文件}}，{1} 个失败",
+  "{0, plural, one {The selected pay profile failed} other {All # selected pay profiles failed}}": "{0, plural, other {所选的 # 个薪酬配置文件均失败}}",
+  "{0} ({1, plural, one {# band} other {# bands}})": "{0}（{1, plural, other {# 个区间}}）"
 }

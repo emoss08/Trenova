@@ -50,8 +50,18 @@ export default function TrainingCourseTable() {
         archiveTrainingCourse(row.id, row.version),
       );
       notifyBulkOutcome(outcome, {
-        entity: "course",
-        verbPast: t("Deactivated"),
+        succeeded: (count) => t("Deactivated {0, plural, one {# course} other {# courses}}", count),
+        partial: (succeeded, failed) =>
+          t(
+            "Deactivated {0, plural, one {# course} other {# courses}}; {1} failed",
+            succeeded,
+            failed,
+          ),
+        allFailed: (failed) =>
+          t(
+            "{0, plural, one {The selected course failed} other {All # selected courses failed}}",
+            failed,
+          ),
         skipped: rows.length - eligible.length,
       });
       await invalidate();
@@ -70,8 +80,18 @@ export default function TrainingCourseTable() {
         restoreTrainingCourse(row.id, row.version),
       );
       notifyBulkOutcome(outcome, {
-        entity: "course",
-        verbPast: t("Restored"),
+        succeeded: (count) => t("Restored {0, plural, one {# course} other {# courses}}", count),
+        partial: (succeeded, failed) =>
+          t(
+            "Restored {0, plural, one {# course} other {# courses}}; {1} failed",
+            succeeded,
+            failed,
+          ),
+        allFailed: (failed) =>
+          t(
+            "{0, plural, one {The selected course failed} other {All # selected courses failed}}",
+            failed,
+          ),
         skipped: rows.length - eligible.length,
       });
       await invalidate();
@@ -133,6 +153,7 @@ export default function TrainingCourseTable() {
   return (
     <DataTable<TrainingCourseRow>
       name="Training Course"
+      emptyTitle={t("No training courses yet")}
       queryKey={TRAINING_COURSE_LIST_KEY}
       graphql={trainingCourseTableGraphQLConfig}
       resource={Resource.TrainingCourse}

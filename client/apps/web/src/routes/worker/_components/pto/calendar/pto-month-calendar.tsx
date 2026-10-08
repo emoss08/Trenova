@@ -457,7 +457,7 @@ function LegendChip({
       type="button"
       aria-pressed={!hidden}
       aria-label={t(entry.label)}
-      title={hidden ? `Show ${entry.label}` : `Hide ${entry.label}`}
+      title={hidden ? t("Show {0}", t(entry.label)) : t("Hide {0}", t(entry.label))}
       onClick={onToggle}
       className={cn(
         "ui-focus-ring inline-flex h-5.5 items-center gap-1 rounded-md border px-1.5 text-xs font-medium transition-colors outline-none",
@@ -649,7 +649,7 @@ function DayOverflow({
           <button
             type="button"
             data-testid={`pto-overflow-${day.key}`}
-            aria-label={`${count} more on ${day.key}`}
+            aria-label={t("{0} more on {1}", count, day.key)}
             onMouseDown={(event) => event.stopPropagation()}
             className="text-muted-foreground hover:bg-accent hover:text-foreground absolute left-1 z-10 inline-flex h-4 items-center rounded-md px-1 text-2xs font-medium tabular-nums transition-colors"
             style={{ top }}
@@ -676,13 +676,14 @@ function SpanBar({
   active: boolean;
   onActiveChange: (id: string | null) => void;
 }) {
+  const t = useT();
   const pto = segment.item;
   const meta = ptoTypeMeta(pto.type);
   const left = `${(segment.startCol / 7) * 100}%`;
   const width = `${((segment.endCol - segment.startCol + 1) / 7) * 100}%`;
   const top = HEADER_HEIGHT + segment.lane * (LANE_HEIGHT + LANE_GAP);
   const name = ptoWorkerName(pto);
-  const summary = `${name} · ${meta.label} · ${formatRange(pto.startDate, pto.endDate)}`;
+  const summary = `${name} · ${t(meta.label)} · ${formatRange(pto.startDate, pto.endDate)}`;
 
   return (
     <Popover>
@@ -692,7 +693,7 @@ function SpanBar({
             type="button"
             data-testid={`pto-span-${pto.id}`}
             data-active={active ? "true" : undefined}
-            aria-label={pto.status === "Requested" ? `${summary} (requested)` : summary}
+            aria-label={pto.status === "Requested" ? t("{0} (requested)", summary) : summary}
             title={summary}
             onMouseDown={(event) => event.stopPropagation()}
             onMouseEnter={() => onActiveChange(pto.id ?? null)}

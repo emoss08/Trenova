@@ -62,6 +62,7 @@ import {
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 type ReasonAction = "reject" | "void";
 
@@ -253,15 +254,15 @@ function SettlementActions({
     onSuccess: (_data, action) => {
       toast.success(
         {
-          submit: "Settlement submitted for approval",
-          approve: "Settlement approved",
-          post: "Settlement posted to the general ledger",
-          recalculate: "Settlement recalculated from current cost events",
-        }[action] ?? "Settlement updated",
+          submit: translate("Settlement submitted for approval"),
+          approve: translate("Settlement approved"),
+          post: translate("Settlement posted to the general ledger"),
+          recalculate: translate("Settlement recalculated from current cost events"),
+        }[action] ?? translate("Settlement updated"),
       );
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Settlement action failed"),
+    onError: (error: Error) => toast.error(error.message || translate("Settlement action failed")),
   });
 
   const status = settlement.status as CarrierSettlementStatus;
@@ -387,7 +388,7 @@ function BatchCsvExportButton({ batchId }: { batchId: string }) {
       URL.revokeObjectURL(url);
       toast.success(t("Remittance CSV downloaded"));
     },
-    onError: (error: Error) => toast.error(error.message || "Export failed"),
+    onError: (error: Error) => toast.error(error.message || translate("Export failed")),
   });
 
   return (
@@ -425,12 +426,14 @@ function ReasonDialog({
         ? rejectCarrierSettlement({ settlementId, reason })
         : voidCarrierSettlement({ settlementId, reason }),
     onSuccess: () => {
-      toast.success(action === "reject" ? "Settlement rejected" : "Settlement voided");
+      toast.success(
+        action === "reject" ? translate("Settlement rejected") : translate("Settlement voided"),
+      );
       setReason("");
       onOpenChange(false);
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Action failed"),
+    onError: (error: Error) => toast.error(error.message || translate("Action failed")),
   });
 
   return (
@@ -501,7 +504,8 @@ function MarkPaidDialog({
       onOpenChange(false);
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to mark settlement paid"),
+    onError: (error: Error) =>
+      toast.error(error.message || translate("Failed to mark settlement paid")),
   });
 
   return (
@@ -596,7 +600,7 @@ function AddAdjustmentDialog({
       onOpenChange(false);
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to add adjustment"),
+    onError: (error: Error) => toast.error(error.message || translate("Failed to add adjustment")),
   });
 
   return (
@@ -679,7 +683,8 @@ function SettlementLines({
       toast.success(t("Adjustment removed"));
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to remove adjustment"),
+    onError: (error: Error) =>
+      toast.error(error.message || translate("Failed to remove adjustment")),
   });
 
   if (grouped.length === 0) {
@@ -946,10 +951,10 @@ function SettlementTimeline({ settlement }: { settlement: SettlementDetailData }
     { label: t("Posted"), at: settlement.postedAt },
     {
       label: settlement.paymentMethod
-        ? `Paid via ${settlement.paymentMethod}${
-            settlement.paymentReference ? ` (${settlement.paymentReference})` : ""
-          }`
-        : "Paid",
+        ? settlement.paymentReference
+          ? t("Paid via {0} ({1})", settlement.paymentMethod, settlement.paymentReference)
+          : t("Paid via {0}", settlement.paymentMethod)
+        : t("Paid"),
       at: settlement.paidAt,
     },
     { label: t("Voided"), at: settlement.voidedAt },

@@ -5,6 +5,7 @@ import {
   optionalStringSchema,
   tenantInfoSchema,
 } from "@trenova/shared/types/helpers";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const recurringShipmentStatusSchema = z.enum(["Active", "Paused", "Expired"]);
 
@@ -30,17 +31,20 @@ const laneEntitySchema = z
 
 export const recurringShipmentSchema = z.object({
   ...tenantInfoSchema.shape,
-  sourceShipmentId: z.string().min(1, { error: "Source shipment is required" }),
+  sourceShipmentId: z.string().min(1, { error: () => translate("Source shipment is required") }),
   customerId: optionalStringSchema,
   originLocationId: optionalStringSchema,
   destinationLocationId: optionalStringSchema,
   enteredById: optionalStringSchema,
   lastGeneratedShipmentId: optionalStringSchema,
-  name: z.string().min(1, { error: "Name is required" }).max(100),
+  name: z
+    .string()
+    .min(1, { error: () => translate("Name is required") })
+    .max(100),
   description: optionalStringSchema,
   status: recurringShipmentStatusSchema,
-  cronExpression: z.string().min(1, { error: "A schedule is required" }),
-  timezone: z.string().min(1, { error: "Timezone is required" }),
+  cronExpression: z.string().min(1, { error: () => translate("A schedule is required") }),
+  timezone: z.string().min(1, { error: () => translate("Timezone is required") }),
   startDate: nullableIntegerSchema,
   endDate: nullableIntegerSchema,
   maxOccurrences: nullableIntegerSchema,

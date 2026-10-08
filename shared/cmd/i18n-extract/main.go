@@ -40,6 +40,7 @@ var messageFields = map[string]struct{}{
 	"Detail":      {},
 	"Description": {},
 	"Label":       {},
+	"PluralLabel": {},
 	"Summary":     {},
 	"Subject":     {},
 
@@ -88,6 +89,28 @@ var noMessage = map[string]struct{}{
 	"NewPlanRefusalError":             {},
 }
 
+var translatorCalls = map[string]int{
+	"T":         1,
+	"Translate": 1,
+}
+
+var labelledGeneratedFiles = map[string]struct{}{
+	"catalog_gen.go": {},
+}
+
+func isTranslatorCall(fun ast.Expr) (int, bool) {
+	sel, ok := fun.(*ast.SelectorExpr)
+	if !ok {
+		return 0, false
+	}
+	pkg, ok := sel.X.(*ast.Ident)
+	if !ok || pkg.Name != "i18n" {
+		return 0, false
+	}
+	idx, ok := translatorCalls[sel.Sel.Name]
+	return idx, ok
+}
+
 func isErrortypesConstructor(name string) bool {
 	return strings.HasPrefix(name, "New") && strings.HasSuffix(name, "Error")
 }
@@ -128,7 +151,14 @@ func (e *extractor) walkDir(root string) error {
 		if !strings.HasSuffix(path, ".go") {
 			return nil
 		}
-		if strings.HasSuffix(path, "_test.go") || strings.HasSuffix(path, "_gen.go") {
+		if strings.HasSuffix(path, "_test.go") {
+			return nil
+		}
+		if _, labelled := labelledGeneratedFiles[filepath.Base(path)]; strings.HasSuffix(
+			path,
+			"_gen.go",
+		) &&
+			!labelled {
 			return nil
 		}
 		return e.parseFile(path)
@@ -161,6 +191,21 @@ func (e *extractor) parseFile(path string) error {
 
 		call, ok := n.(*ast.CallExpr)
 		if !ok {
+			return true
+		}
+
+		if idx, ok := isTranslatorCall(call.Fun); ok {
+			if idx < len(call.Args) {
+				if msg, isLiteral := stringLiteral(call.Args[idx]); isLiteral &&
+					strings.TrimSpace(msg) != "" {
+					e.entries = append(e.entries, entry{
+						Message: msg,
+						File:    filepath.ToSlash(rel),
+						Line:    e.fset.Position(call.Pos()).Line,
+						Callee:  "i18n",
+					})
+				}
+			}
 			return true
 		}
 

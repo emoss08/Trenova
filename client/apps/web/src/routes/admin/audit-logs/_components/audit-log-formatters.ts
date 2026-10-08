@@ -2,6 +2,7 @@ import { translate } from "@trenova/shared/i18n/runtime";
 import type { BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import type { SelectOption } from "@trenova/shared/types/fields";
+import { defineLabels, sourceLabels, translateLabel } from "@trenova/shared/i18n/labels";
 
 type AuditChangeType = "added" | "removed" | "changed";
 
@@ -74,7 +75,7 @@ export function normalizeAuditChanges(changes: Record<string, unknown>): Normali
     .sort((left, right) => left.path.localeCompare(right.path));
 }
 
-const operationLabels = {
+const operationLabels = defineLabels({
   read: "Read",
   create: "Create",
   update: "Update",
@@ -95,7 +96,7 @@ const operationLabels = {
   unlock: "Unlock",
   activate: "Activate",
   reopen: "Reopen",
-} as const;
+} as const);
 
 const operationFilterOrder: (keyof typeof operationLabels)[] = [
   "read",
@@ -122,7 +123,7 @@ const operationFilterOrder: (keyof typeof operationLabels)[] = [
 
 export const auditOperationFilterOptions: SelectOption[] = operationFilterOrder.map((value) => ({
   value,
-  label: operationLabels[value],
+  label: sourceLabels(operationLabels)[value],
 }));
 
 export function operationLabel(operation: string) {
@@ -157,12 +158,22 @@ export function operationVariant(operation: string): BadgeVariant {
   }
 }
 
-export function resourceLabel(resource: string) {
+/** resourceSourceLabel is a resource key in English words, for data built once at import. */
+export function resourceSourceLabel(resource: string) {
   return resource
     .split("_")
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+export function resourceLabel(resource: string) {
+  return translateLabel(resourceSourceLabel(resource));
+}
+
+/** auditEntryTitle names an entry with no comment by what was done to what. */
+export function auditEntryTitle(operation: string, resource: string) {
+  return translate("{0} · {1}", resourceLabel(resource), operationLabel(operation));
 }
 
 export function userInitials(name?: string) {
@@ -207,9 +218,9 @@ export function changeTypeVariant(type: AuditChangeType): BadgeVariant {
 }
 
 export function formatAuditValue(value: unknown): string {
-  if (value === undefined) return "Not set";
+  if (value === undefined) return translate("Not set");
   if (value === null) return "null";
-  if (typeof value === "string") return value.length === 0 ? "Empty string" : value;
+  if (typeof value === "string") return value.length === 0 ? translate("Empty string") : value;
   if (typeof value === "number" || typeof value === "bigint") {
     return String(value);
   }
@@ -218,14 +229,17 @@ export function formatAuditValue(value: unknown): string {
   }
   if (Array.isArray(value)) {
     return value.length === 0
-      ? "Empty array"
-      : `Array with ${value.length} item${value.length === 1 ? "" : "s"}`;
+      ? translate("Empty array")
+      : translate("{0, plural, one {Array with # item} other {Array with # items}}", value.length);
   }
   if (isRecord(value)) {
     const keys = Object.keys(value);
     return keys.length === 0
-      ? "Empty object"
-      : `Object with ${keys.length} field${keys.length === 1 ? "" : "s"}`;
+      ? translate("Empty object")
+      : translate(
+          "{0, plural, one {Object with # field} other {Object with # fields}}",
+          keys.length,
+        );
   }
   return JSON.stringify(value) ?? "";
 }

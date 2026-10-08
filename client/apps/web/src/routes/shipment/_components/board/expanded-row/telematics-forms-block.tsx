@@ -10,7 +10,7 @@ import {
 } from "@trenova/shared/components/ui/collapsible";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDateTime } from "@trenova/shared/lib/date";
-import { cn, pluralize } from "@trenova/shared/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertOctagonIcon,
@@ -71,7 +71,7 @@ function SubmissionRow({ submission }: { submission: ShipmentFormSubmission }) {
       <CollapsibleTrigger
         className="hover:bg-muted/50 flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors disabled:cursor-default disabled:hover:bg-transparent"
         disabled={!hasFields}
-        aria-label={`Toggle fields for ${submission.templateName}`}
+        aria-label={t("Toggle fields for {0}", submission.templateName)}
       >
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
@@ -91,9 +91,8 @@ function SubmissionRow({ submission }: { submission: ShipmentFormSubmission }) {
           {submission.applied ? (
             <Badge variant="success">
               {t(
-                "Applied {0} {1}",
+                "{0, plural, one {Applied # field} other {Applied # fields}}",
                 submission.appliedFields,
-                pluralize("field", submission.appliedFields),
               )}
             </Badge>
           ) : (

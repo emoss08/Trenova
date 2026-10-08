@@ -50,7 +50,10 @@ export function markFiledSchema(finalizedAt: number | null, latestFiledAt: numbe
         z
           .string()
           .max(FILING_REFERENCE_MAX, {
-            message: `Keep the reference under ${FILING_REFERENCE_MAX} characters.`,
+            message: translate(
+              "{0, plural, one {Keep the reference under # character.} other {Keep the reference under # characters.}}",
+              FILING_REFERENCE_MAX,
+            ),
           })
           .nullable(),
       ),

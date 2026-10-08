@@ -14,6 +14,7 @@
   "Expense accounts whose postings feed this category when GL actuals are enabled.": "启用总账实际数时，其过账数据会馈入此类别的费用科目。",
   "Fixed costs": "固定成本",
   "Fleet miles per gallon": "车队每加仑英里数",
+  "GL Actual": "总账实际数",
   "GL actuals": "总账实际数",
   "Inactive categories are excluded from the cost-per-mile total.": "已停用的类别不计入每英里成本合计。",
   "Include Deadhead Miles": "纳入空驶里程",

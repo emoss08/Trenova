@@ -17,6 +17,7 @@ import {
   tenderCarrierSummarySchema,
   tenderChannelSchema,
 } from "./tender";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export const routingGuideEntrySchema = z.object({
   ...tenantInfoSchema.shape,
@@ -59,15 +60,20 @@ export type LaneMatchMode = (typeof LANE_MATCH_MODES)[number];
 const routingGuideEntryPayloadSchema = z.object({
   id: optionalStringSchema,
   version: versionSchema,
-  carrierId: z.string().min(1, { error: "Carrier is required" }),
-  rank: z.number({ error: "Rank is required" }).int().min(1, { error: "Rank must be at least 1" }),
+  carrierId: z.string().min(1, { error: () => translate("Carrier is required") }),
+  rank: z
+    .number({ error: () => translate("Rank is required") })
+    .int()
+    .min(1, { error: () => translate("Rank must be at least 1") }),
   rateMethod: carrierRateMethodSchema,
   rate: decimalNumberSchema("Rate is required", "Rate cannot be negative"),
   offerTtlSeconds: z
-    .number({ error: "Offer expiry is required" })
+    .number({ error: () => translate("Offer expiry is required") })
     .int()
-    .min(MIN_OFFER_TTL_SECONDS, { error: "Offer expiry must be at least 5 minutes" })
-    .max(MAX_OFFER_TTL_SECONDS, { error: "Offer expiry cannot exceed 7 days" }),
+    .min(MIN_OFFER_TTL_SECONDS, {
+      error: () => translate("Offer expiry must be at least 5 minutes"),
+    })
+    .max(MAX_OFFER_TTL_SECONDS, { error: () => translate("Offer expiry cannot exceed 7 days") }),
   channel: tenderChannelSchema,
   /**
    * Offers what the carrier's contract says today rather than the rate below.
@@ -95,8 +101,8 @@ export const routingGuidePayloadSchema = z
     version: versionSchema,
     name: z
       .string()
-      .min(1, { error: "Name is required" })
-      .max(255, { error: "Name must be at most 255 characters" }),
+      .min(1, { error: () => translate("Name is required") })
+      .max(255, { error: () => translate("Name must be at most 255 characters") }),
     description: z.string().nullish(),
     status: statusSchema,
     originLocationId: nullableStringSchema,
@@ -107,7 +113,7 @@ export const routingGuidePayloadSchema = z
     destinationState: z.string().nullish(),
     entries: z
       .array(routingGuideEntryPayloadSchema)
-      .min(1, { error: "At least one carrier entry is required" }),
+      .min(1, { error: () => translate("At least one carrier entry is required") }),
   })
   .superRefine((payload, ctx) => {
     const origin = laneSideTier(payload.originLocationId, payload.originCity, payload.originState);
@@ -169,11 +175,11 @@ export const routingGuidePayloadSchema = z
 export type RoutingGuidePayload = z.infer<typeof routingGuidePayloadSchema>;
 export type RoutingGuidePayloadInput = z.input<typeof routingGuidePayloadSchema>;
 
-export const ROUTING_GUIDE_TIER_LABEL: Record<number, string> = {
+export const ROUTING_GUIDE_TIER_LABEL: Record<number, string> = defineLabels({
   3: "Exact locations",
   2: "City to city",
   1: "State to state",
-};
+});
 
 type LaneLike = {
   originLocationId?: string | null;

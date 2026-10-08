@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { statusSchema, tenantInfoSchema } from "./helpers";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const rateUnitSchema = z.enum(["Mile", "Hour", "Day", "Stop"]);
 
@@ -15,10 +16,10 @@ export const accessorialChargeSchema = z
 
     status: statusSchema,
     code: z
-      .string({ error: "Code is required" })
-      .min(3, { error: "Code must be at least 3 characters" })
-      .max(10, { error: "Code must be less than 10 characters" }),
-    description: z.string().min(1, { error: "Description is required" }),
+      .string({ error: () => translate("Code is required") })
+      .min(3, { error: () => translate("Code must be at least 3 characters") })
+      .max(10, { error: () => translate("Code must be less than 10 characters") }),
+    description: z.string().min(1, { error: () => translate("Description is required") }),
     method: accessorialChargeMethodSchema,
     rateUnit: rateUnitSchema.optional(),
     amount: z.preprocess(
@@ -31,7 +32,7 @@ export const accessorialChargeSchema = z
         );
         return isNaN(parsed) ? undefined : parsed;
       },
-      z.number().min(0.01, { message: "Amount must be greater than zero" }),
+      z.number().min(0.01, { error: () => translate("Amount must be greater than zero") }),
     ),
   })
   .refine(
@@ -44,7 +45,7 @@ export const accessorialChargeSchema = z
     },
     {
       path: ["rateUnit"],
-      message: "Rate unit is required when method is PerUnit",
+      error: () => translate("Rate unit is required when method is PerUnit"),
     },
   );
 

@@ -37,6 +37,7 @@ import type { ChangeEvent, ComponentType } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 type UserSettingsDialogProps = {
   open: boolean;
@@ -171,7 +172,9 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
       } catch (error) {
         toast.error(t("Unsupported profile picture"), {
           description:
-            error instanceof Error ? error.message : "Please choose a JPG, PNG, or WEBP file.",
+            error instanceof Error
+              ? error.message
+              : translate("Please choose a JPG, PNG, or WEBP file."),
         });
       }
     },
@@ -199,7 +202,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
       toast.success(t("Profile picture removed"));
     } catch (error) {
       toast.error(t("Failed to remove profile picture"), {
-        description: error instanceof Error ? error.message : "Please try again.",
+        description: error instanceof Error ? error.message : translate("Please try again."),
       });
     }
 
@@ -324,7 +327,7 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
                     name="timeFormat"
                     label={t("Time format")}
                     options={timeFormatChoices}
-                    rules={{ required: "Time format is required" }}
+                    rules={{ required: translate("Time format is required") }}
                   />
                 </FormControl>
               </FormGroup>

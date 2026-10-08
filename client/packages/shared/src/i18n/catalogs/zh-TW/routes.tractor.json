@@ -14,10 +14,10 @@
   "Manage and configure tractors for your organization": "管理並設定您組織的牽引車",
   "No defects": "無缺失",
   "No inspections reported for this tractor.": "此牽引車沒有回報任何檢查紀錄。",
+  "No tractors yet": "尚無牽引車",
   "Only IFTA-qualified units count toward the quarterly return. Turn this off for yard tractors, pickups under 26,001 lb GVW, and units that never leave the base jurisdiction.": "只有符合 IFTA 資格的車輛計入季度申報。場區牽引車、總重低於 26,001 磅的皮卡，以及從不離開基地管轄區的車輛請關閉此項。",
   "Safe": "安全",
   "Samsara vehicle ID": "Samsara 車輛 ID",
-  "Telematics": "車聯網",
   "Telematics not connected": "車聯網尚未連線",
   "The U.S. state where the tractor is licensed.": "此牽引車註冊所在的美國州別。",
   "The Vehicle Identification Number (VIN) of the tractor.": "此牽引車的車輛識別號碼（VIN）。",
@@ -32,7 +32,9 @@
   "The specific model of the tractor.": "此牽引車的具體型號。",
   "The type of equipment the tractor is categorized under.": "此牽引車所歸類的設備類型。",
   "The unique registration number assigned to the tractor.": "指派給此牽引車的唯一註冊號碼。",
+  "Toggle defects for {0} inspection": "切換 {0} 稽查的缺失",
   "Tractor status updated successfully": "牽引車狀態已成功更新",
   "Worker assignment": "駕駛員指派",
-  "· {0} unresolved": "· {0} 項未解決"
+  "{0, plural, one {# defect} other {# defects}}": "{0, plural, other {# 項缺失}}",
+  "{0, plural, one {# defect} other {# defects}} · {1} unresolved": "{0, plural, other {# 項缺失}} · {1} 項未解決"
 }

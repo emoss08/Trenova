@@ -16,6 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { useBoardActions } from "../use-board-actions";
 import { useShipmentBoardUrl } from "../url-state";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 const TONE_DOT: Record<ShipmentSuggestionTone, string> = {
   Danger: "bg-danger",
@@ -24,19 +25,21 @@ const TONE_DOT: Record<ShipmentSuggestionTone, string> = {
   Brand: "bg-brand",
 };
 
-const KIND_LABEL: Record<ShipmentSuggestion["kind"], string> = {
+const KIND_LABEL: Record<ShipmentSuggestion["kind"], string> = defineLabels({
   Coverage: "Coverage",
   Tender: "Tender",
   DelayNotice: "Delay notice",
   HoursOfService: "Hours of service",
   Detention: "Detention",
   Retender: "Tender",
-};
+});
 
 type Handled = { key: string; summary: string };
 
 const due = (unix: number | null | undefined) =>
-  unix ? formatToUserTimezone(unix, { showTimeZone: false, showSeconds: false, showDate: false }) : null;
+  unix
+    ? formatToUserTimezone(unix, { showTimeZone: false, showSeconds: false, showDate: false })
+    : null;
 
 /**
  * The board's suggested actions, one at a time. The current item states what
@@ -50,7 +53,10 @@ export function ActionQueue() {
   const timezone = useUserTimezone();
   const [, setUrl] = useShipmentBoardUrl();
   const actions = useBoardActions();
-  const { data, isLoading } = useQuery({ ...queries.shipmentBoard.suggestions(timezone), staleTime: 15_000 });
+  const { data, isLoading } = useQuery({
+    ...queries.shipmentBoard.suggestions(timezone),
+    staleTime: 15_000,
+  });
   const [handled, setHandled] = useState<Handled[]>([]);
   const [lastDone, setLastDone] = useState<Handled | null>(null);
 
@@ -102,7 +108,10 @@ export function ActionQueue() {
         return;
       case "NotifyCustomer":
         if (item.shipmentId && primary.message) {
-          actions.notifyDelay.mutate({ shipmentId: item.shipmentId, message: primary.message }, finish);
+          actions.notifyDelay.mutate(
+            { shipmentId: item.shipmentId, message: primary.message },
+            finish,
+          );
         }
         return;
       case "ApproveDetention":
@@ -117,7 +126,8 @@ export function ActionQueue() {
     }
   };
 
-  const later = (item: ShipmentSuggestion) => actions.decide.mutate({ key: item.key, decision: "Later" });
+  const later = (item: ShipmentSuggestion) =>
+    actions.decide.mutate({ key: item.key, decision: "Later" });
 
   const undo = (record: Handled) => {
     actions.undo.mutate(record.key);
@@ -155,7 +165,10 @@ export function ActionQueue() {
   }
 
   return (
-    <section aria-label={ai ? t("Suggested actions") : t("Exceptions")} className="flex flex-col gap-3">
+    <section
+      aria-label={ai ? t("Suggested actions") : t("Exceptions")}
+      className="flex flex-col gap-3"
+    >
       <header className="flex items-center justify-between">
         <span className="text-muted-foreground text-xs font-medium">
           {ai ? t("Suggested actions") : t("Exceptions")}
@@ -173,7 +186,11 @@ export function ActionQueue() {
               key={index}
               className={cn(
                 "h-[3px] flex-1 rounded-full",
-                index < doneCount ? "bg-success" : index === doneCount ? "bg-foreground" : "bg-foreground/10",
+                index < doneCount
+                  ? "bg-success"
+                  : index === doneCount
+                    ? "bg-foreground"
+                    : "bg-foreground/10",
               )}
             />
           ))}
@@ -184,7 +201,11 @@ export function ActionQueue() {
         <div className="text-success flex items-center gap-1.5 text-sm">
           <CheckIcon className="size-3.5 shrink-0" />
           <span className="min-w-0 flex-1 truncate">{lastDone.summary}</span>
-          <button type="button" className="ui-focus-ring text-foreground rounded-sm underline underline-offset-2" onClick={() => undo(lastDone)}>
+          <button
+            type="button"
+            className="ui-focus-ring text-foreground rounded-sm underline underline-offset-2"
+            onClick={() => undo(lastDone)}
+          >
             {t("Undo")}
           </button>
         </div>
@@ -194,7 +215,7 @@ export function ActionQueue() {
         <article key={current.key} className="animate-slide-in flex flex-col gap-2">
           <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
             <span aria-hidden className={cn("size-1.5 rounded-full", TONE_DOT[current.tone])} />
-            <span className="font-medium">{t(KIND_LABEL[current.kind])}</span>
+            <span className="font-medium">{KIND_LABEL[current.kind]}</span>
             {due(current.dueAt) ? <span>· {t("due {0}", due(current.dueAt) ?? "")}</span> : null}
           </div>
           <h3 className="text-lg leading-snug font-semibold text-pretty">{current.title}</h3>
@@ -203,13 +224,11 @@ export function ActionQueue() {
             <p className="font-mono text-xs tabular-nums">{current.impact.join(" · ")}</p>
           ) : null}
           <div className="flex flex-wrap items-center gap-1.5 pt-1">
-            <Button
-              size="sm"
-              onClick={() => approve(current)}
-              disabled={pending}
-            >
+            <Button size="sm" onClick={() => approve(current)} disabled={pending}>
               {ai ? current.primary.label : current.manualLabel}
-              <Kbd className="border-current/30 bg-transparent text-current">{formatShortcut("↵")}</Kbd>
+              <Kbd className="border-current/30 bg-transparent text-current">
+                {formatShortcut("↵")}
+              </Kbd>
             </Button>
             {current.shipmentId ? (
               <Button size="sm" variant="outline" onClick={() => review(current)}>
@@ -244,10 +263,19 @@ export function ActionQueue() {
               onClick={() => review(item)}
               className="ui-focus-ring hover:bg-surface-hover -mx-2 flex h-7 items-center gap-2 rounded-md px-2 text-left text-sm"
             >
-              <span aria-hidden className={cn("size-1.5 shrink-0 rounded-full", TONE_DOT[item.tone])} />
-              <span className={cn("min-w-0 flex-1 truncate", item.deferred && "text-muted-foreground")}>{item.title}</span>
+              <span
+                aria-hidden
+                className={cn("size-1.5 shrink-0 rounded-full", TONE_DOT[item.tone])}
+              />
+              <span
+                className={cn("min-w-0 flex-1 truncate", item.deferred && "text-muted-foreground")}
+              >
+                {item.title}
+              </span>
               {due(item.dueAt) ? (
-                <span className="text-muted-foreground font-mono text-xs tabular-nums">{due(item.dueAt)}</span>
+                <span className="text-muted-foreground font-mono text-xs tabular-nums">
+                  {due(item.dueAt)}
+                </span>
               ) : null}
             </button>
           ))}

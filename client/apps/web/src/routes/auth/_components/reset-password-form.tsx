@@ -7,6 +7,7 @@ import { z } from "zod";
 import { AuthCardBody } from "./auth-card";
 import { AuthErrorText, AuthSubmit, AuthTextField } from "./auth-field";
 import { StepCrumbs, StepHeading } from "./auth-primitives";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const MIN_PASSWORD_LENGTH = 8;
 
@@ -14,13 +15,13 @@ export const MIN_PASSWORD_LENGTH = 8;
 // too-short password is refused before it burns the single-use link.
 export const resetPasswordSchema = z
   .object({
-    newPassword: z
-      .string()
-      .min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`),
-    confirmPassword: z.string().min(1, "Confirm your new password"),
+    newPassword: z.string().min(MIN_PASSWORD_LENGTH, {
+      error: () => translate("Password must be at least {0} characters", MIN_PASSWORD_LENGTH),
+    }),
+    confirmPassword: z.string().min(1, { error: () => translate("Confirm your new password") }),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Passwords do not match",
+    error: () => translate("Passwords do not match"),
     path: ["confirmPassword"],
   });
 

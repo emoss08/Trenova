@@ -6,12 +6,11 @@ import type {
 import { RowActionsMenu, type RowAction } from "@/components/row-actions-menu";
 import { TrainingHealthBadge } from "@trenova/shared/components/training-health-badge";
 import { formatUnixDate } from "@trenova/shared/lib/date";
-import { describeTrainingTiming } from "@trenova/shared/lib/training";
+import { describeTrainingRecordOn, describeTrainingTiming } from "@trenova/shared/lib/training";
 import { cn } from "@trenova/shared/lib/utils";
 import {
   TRAINING_CATEGORY_LABELS,
   TRAINING_DELIVERY_LABELS,
-  WORKER_TRAINING_STATUS_LABELS,
   type TrainingCategory,
   type TrainingDelivery,
   type WorkerTrainingStatus,
@@ -69,7 +68,7 @@ export function TrainingSlotRow({
   const caption = [
     TRAINING_CATEGORY_LABELS[course.category as TrainingCategory],
     TRAINING_DELIVERY_LABELS[course.delivery as TrainingDelivery],
-    course.durationMinutes > 0 ? `${course.durationMinutes} min` : null,
+    course.durationMinutes > 0 ? t("{0} min", course.durationMinutes) : null,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -95,7 +94,7 @@ export function TrainingSlotRow({
       });
       actions.push({
         id: "cancel",
-        label: `Cancel ${course.name} assignment`,
+        label: t("Cancel {0} assignment", course.name),
         icon: SlashCircle01Icon,
         disabled: busy,
         destructive: true,
@@ -143,39 +142,39 @@ export function TrainingSlotRow({
 
       <div className="col-start-2 row-start-1 flex items-center justify-end gap-2 sm:col-start-3">
         <TrainingHealthBadge health={health} />
-        <RowActionsMenu label={`Actions for ${course.name}`} actions={actions} />
+        <RowActionsMenu label={t("Actions for {0}", course.name)} actions={actions} />
       </div>
     </div>
   );
 }
 
 function RecordFacts({ record }: { record: WorkerTrainingRecordRow | null | undefined }) {
+  const t = useT();
   if (!record) return null;
   const facts: string[] = [];
-  const status = WORKER_TRAINING_STATUS_LABELS[record.status as WorkerTrainingStatus];
-  if (record.status === "Assigned" || record.status === "InProgress") {
-    facts.push(`${status} ${formatUnixDate(record.assignedAt)}`);
+  const status = record.status as WorkerTrainingStatus;
+  if (status === "Assigned" || status === "InProgress") {
+    facts.push(describeTrainingRecordOn(status, record.assignedAt));
     if (record.acknowledgedAt) {
-      facts.push(`Acknowledged by the driver ${formatUnixDate(record.acknowledgedAt)}`);
+      facts.push(t("Acknowledged by the driver {0}", formatUnixDate(record.acknowledgedAt)));
     } else if (record.startedAt) {
-      facts.push(`Opened ${formatUnixDate(record.startedAt)}`);
+      facts.push(t("Opened {0}", formatUnixDate(record.startedAt)));
     }
   } else if (record.completedAt) {
-    facts.push(`${status} ${formatUnixDate(record.completedAt)}`);
-    if (record.score) facts.push(`Score ${Number(record.score).toFixed(0)}%`);
-    if (record.expiresAt) facts.push(`Valid until ${formatUnixDate(record.expiresAt)}`);
-  } else if (record.status === "Waived") {
-    facts.push(`Waived${record.waivedReason ? ` — ${record.waivedReason}` : ""}`);
+    facts.push(describeTrainingRecordOn(status, record.completedAt));
+    if (record.score) facts.push(t("Score {0}%", Number(record.score).toFixed(0)));
+    if (record.expiresAt) facts.push(t("Valid until {0}", formatUnixDate(record.expiresAt)));
+  } else if (status === "Waived") {
+    facts.push(record.waivedReason ? t("Waived — {0}", record.waivedReason) : t("Waived"));
   }
-  if (record.document) {
-    facts.push("Certificate on file");
-  }
+  const certificate = record.document ? t("Certificate on file") : null;
+  if (certificate) facts.push(certificate);
   return (
     <p className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 truncate">
       {facts.map((fact, index) => (
         <span key={fact} className="flex items-center gap-1">
           {index > 0 ? <span aria-hidden>·</span> : null}
-          {fact === "Certificate on file" ? <FileCheck02Icon className="size-3" /> : null}
+          {fact === certificate ? <FileCheck02Icon className="size-3" /> : null}
           {fact}
         </span>
       ))}

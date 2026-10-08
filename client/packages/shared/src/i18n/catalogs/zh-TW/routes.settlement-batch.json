@@ -1,9 +1,12 @@
 {
   "A label for this payroll run; if left blank it is named after the period end date.": "此次薪資作業的標籤；留空時會以期間結束日期命名。",
+  "Batch generated: {0, plural, one {# settlement} other {# settlements}}": "已產生批次：{0, plural, other {# 筆結算}}",
+  "Batch generated: {0, plural, one {# settlement} other {# settlements}}, {1, plural, one {# needs review} other {# need review}}": "已產生批次：{0, plural, other {# 筆結算}}，{1, plural, other {# 筆需要審查}}",
   "Clean settlements can auto-approve based on your settlement control policy; anything with exceptions stays in review.": "依您的結算控制政策，無異常的結算可自動核准；有例外者則留在審查中。",
   "Creates a draft settlement for every driver with accrued pay in the current period.": "為本期有已計提薪酬的每位駕駛員建立結算草稿。",
   "Export payroll CSV": "匯出薪資 CSV",
   "Generate pay-period batches, monitor exceptions, and export payroll files.": "產生薪資期間批次、監控例外，並匯出薪資檔案。",
+  "No settlement batches yet": "尚無結算批次",
   "Payroll CSV downloaded": "薪資 CSV 已下載",
   "Settlement batch": "結算批次"
 }

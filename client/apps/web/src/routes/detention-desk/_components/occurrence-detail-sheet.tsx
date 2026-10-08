@@ -1,4 +1,5 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { type TranslateFn, useT } from "@trenova/shared/i18n/use-t";
+import type { NoticeDeliveryStatus, NoticeKind } from "@trenova/shared/types/detention";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
@@ -52,6 +53,7 @@ import { z } from "zod";
 import { CalculationReceipt } from "./calculation-receipt";
 import { useInvalidateDetention, useSendDetentionNotice } from "./use-detention-actions";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const METER_TRANSITION = { type: "spring", stiffness: 160, damping: 28, mass: 0.7 } as const;
 
@@ -60,12 +62,12 @@ const WEAK_SCORE = 65;
 
 const waiveFormSchema = z.object({
   reason: waiverReasonSchema,
-  note: z.string().min(1, { error: "Explain why this charge is being forgiven" }),
+  note: z.string().min(1, { error: () => translate("Explain why this charge is being forgiven") }),
 });
 type WaiveFormValues = z.infer<typeof waiveFormSchema>;
 
 const disputeFormSchema = z.object({
-  note: z.string().min(1, { error: "Record what the customer is disputing" }),
+  note: z.string().min(1, { error: () => translate("Record what the customer is disputing") }),
 });
 type DisputeFormValues = z.infer<typeof disputeFormSchema>;
 
@@ -110,14 +112,16 @@ function MoneySummary({ occurrence }: { occurrence: DetentionOccurrence }) {
       <KpiStripItem
         label={t("Billable")}
         value={formatCurrency(occurrence.billableAmount, occurrence.currency)}
-        sub={`${formatDetentionMinutes(occurrence.roundedMinutes)} of ${formatDetentionMinutes(
-          occurrence.rawDwellMinutes,
-        )}`}
+        sub={t(
+          "{0} of {1}",
+          formatDetentionMinutes(occurrence.roundedMinutes),
+          formatDetentionMinutes(occurrence.rawDwellMinutes),
+        )}
       />
       <KpiStripItem
         label={t("Driver pay")}
         value={formatCurrency(occurrence.driverPayAmount, occurrence.currency)}
-        sub={`${formatDetentionMinutes(occurrence.driverPayMinutes)} payable`}
+        sub={t("{0} payable", formatDetentionMinutes(occurrence.driverPayMinutes))}
       />
       <KpiStripItem
         label={t("Net margin")}
@@ -250,10 +254,11 @@ function NoticeHistory({ notices }: { notices: DetentionNotice[] }) {
                   NOTICE_DELIVERY_DOT[notice.deliveryStatus],
                 )}
               />
-              <span className="truncate">{t("{0} notice", toTitleCase(notice.kind))}</span>
+              <span className="truncate">{noticeKindLabel(notice.kind, t)}</span>
               <span className="text-muted-foreground shrink-0">
-                {toTitleCase(notice.deliveryStatus)}
-                {notice.satisfiesRequirement ? ` ${t("· in window")}` : ""}
+                {notice.satisfiesRequirement
+                  ? t("{0} · in window", deliveryStatusLabel(notice.deliveryStatus, t))
+                  : deliveryStatusLabel(notice.deliveryStatus, t)}
               </span>
             </span>
             <span className="text-2xs text-muted-foreground shrink-0 tabular-nums">
@@ -676,4 +681,34 @@ export function OccurrenceDetailSheet({ occurrenceId, onOpenChange }: Occurrence
       </SheetContent>
     </Sheet>
   );
+}
+
+function noticeKindLabel(kind: NoticeKind, t: TranslateFn): string {
+  switch (kind) {
+    case "Warning":
+      return t("Warning notice");
+    case "Started":
+      return t("Started notice");
+    case "Update":
+      return t("Update notice");
+    case "Final":
+      return t("Final notice");
+  }
+}
+
+function deliveryStatusLabel(status: NoticeDeliveryStatus, t: TranslateFn): string {
+  switch (status) {
+    case "Queued":
+      return t("Queued");
+    case "Sent":
+      return t("Sent");
+    case "Delivered":
+      return t("Delivered");
+    case "Opened":
+      return t("Opened");
+    case "Bounced":
+      return t("Bounced");
+    case "Failed":
+      return t("Failed");
+  }
 }

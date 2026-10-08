@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type {
   SuggestionFetcher,
   SuggestionPage,
@@ -100,7 +101,7 @@ export const fetchAllEntityRefCandidates: SuggestionFetcher = async (query, page
     result.items.push({
       id: option.id,
       label: option.label,
-      description: fleetCode ? `Fleet: ${fleetCode}` : null,
+      description: fleetCode ? translate("Fleet: {0}", fleetCode) : null,
       kind: "worker",
     });
   }

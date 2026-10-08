@@ -30,9 +30,7 @@ export function LinearFeetBar({
   return (
     <div className="border-border rounded-lg border p-3">
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-xs text-muted-foreground font-medium">
-          {t("Linear feet")}
-        </span>
+        <span className="text-xs text-muted-foreground font-medium">{t("Linear feet")}</span>
         <span className={cn("text-xs font-semibold tabular-nums", isOver && "text-destructive")}>
           {t("{0} / {1} ft", totalLinearFeet.toFixed(1), trailerLengthFeet)}
         </span>
@@ -50,7 +48,7 @@ export function LinearFeetBar({
                   key={c.name}
                   className={cn("h-full first:rounded-l-full last:rounded-r-full", c.palette.barBg)}
                   style={{ width: `${Math.min(pct, 100)}%` }}
-                  title={`${c.name}: ${c.lengthFeet.toFixed(1)}ft`}
+                  title={t("{0}: {1}ft", c.name, c.lengthFeet.toFixed(1))}
                 />
               );
             })}

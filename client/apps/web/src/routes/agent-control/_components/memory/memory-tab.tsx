@@ -67,6 +67,7 @@ export default function MemoryTab() {
       <AgentReflections />
       <DataTable<AgentMemoryRow>
         name="Memory"
+        emptyTitle={t("No memories yet")}
         queryKey={AGENT_MEMORY_LIST_KEY}
         graphql={agentMemoryTableGraphQLConfig}
         resource={Resource.AgentMemory}

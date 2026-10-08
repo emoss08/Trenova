@@ -59,6 +59,7 @@ export default function ServiceFailureReasonCodeTable() {
   return (
     <DataTable<ServiceFailureReasonCodeRow>
       name="Service Failure Reason Code"
+      emptyTitle={t("No service failure reason codes yet")}
       queryKey="service-failure-reason-code-list"
       graphql={serviceFailureReasonCodeTableGraphQLConfig}
       resource={Resource.ServiceFailureReasonCode}

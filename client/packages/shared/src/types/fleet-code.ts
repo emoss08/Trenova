@@ -7,21 +7,22 @@ import {
   tenantInfoSchema,
 } from "./helpers";
 import { userSchema } from "./user";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const fleetCodeSchema = z.object({
   ...tenantInfoSchema.shape,
 
   status: statusSchema,
   code: z
-    .string({ error: "Code must be a string" })
-    .min(1, { error: "Code is required" })
-    .max(10, { error: "Code must be less than 10 characters" }),
+    .string({ error: () => translate("Code must be a string") })
+    .min(1, { error: () => translate("Code is required") })
+    .max(10, { error: () => translate("Code must be less than 10 characters") }),
   description: optionalStringSchema,
   revenueGoal: decimalStringSchema,
   deadheadGoal: decimalStringSchema,
   color: optionalStringSchema,
   managerId: z.string().min(1, {
-    error: "Manager is required",
+    error: () => translate("Manager is required"),
   }),
   manager: userSchema.nullish(),
 });

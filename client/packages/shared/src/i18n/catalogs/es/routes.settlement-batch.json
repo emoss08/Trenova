@@ -1,9 +1,12 @@
 {
   "A label for this payroll run; if left blank it is named after the period end date.": "Una etiqueta para esta corrida de nómina; si se deja en blanco, se nombra con la fecha de fin del período.",
+  "Batch generated: {0, plural, one {# settlement} other {# settlements}}": "Lote generado: {0, plural, one {# liquidación} other {# liquidaciones}}",
+  "Batch generated: {0, plural, one {# settlement} other {# settlements}}, {1, plural, one {# needs review} other {# need review}}": "Lote generado: {0, plural, one {# liquidación} other {# liquidaciones}}, {1, plural, one {# requiere revisión} other {# requieren revisión}}",
   "Clean settlements can auto-approve based on your settlement control policy; anything with exceptions stays in review.": "Las liquidaciones sin incidencias pueden aprobarse automáticamente según su política de control de liquidaciones; todo lo que tenga excepciones permanece en revisión.",
   "Creates a draft settlement for every driver with accrued pay in the current period.": "Crea una liquidación en borrador para cada conductor con pago devengado en el período actual.",
   "Export payroll CSV": "Exportar el CSV de nómina",
   "Generate pay-period batches, monitor exceptions, and export payroll files.": "Genere lotes por período de pago, controle las excepciones y exporte los archivos de nómina.",
+  "No settlement batches yet": "Aún no hay lotes de liquidación",
   "Payroll CSV downloaded": "Se descargó el CSV de nómina",
   "Settlement batch": "Lote de liquidación"
 }

@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import {
   FavoriteToggle,
   HeaderBreadcrumbs,
@@ -23,15 +24,16 @@ export const WORKSPACE_HEADER_HEIGHT_CLASS = "h-10";
  * "Modules" label so the control never disappears.
  */
 function ModulesTrigger() {
+  const t = useT();
   const { activeModule } = useSidebarNavigation();
-  const label = activeModule ? moduleDisplayLabel(activeModule) : "Modules";
+  const label = activeModule ? moduleDisplayLabel(activeModule) : t("Modules");
 
   return (
     <ModulesMenu
       trigger={
         <button
           type="button"
-          aria-label={activeModule ? `Switch module (current: ${label})` : "Open modules"}
+          aria-label={activeModule ? t("Switch module (current: {0})", label) : t("Open modules")}
           className={cn(
             "flex h-7 max-w-56 items-center gap-1.5 rounded-md pr-1.5 pl-1 text-sm font-medium transition-colors outline-none",
             "ui-focus-ring text-foreground hover:bg-muted data-popup-open:bg-muted",

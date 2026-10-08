@@ -1,5 +1,4 @@
 {
-  "Adjustments": "调整",
   "Adjustments minor": "调整（最小币值单位）",
   "Appears as the line item on the carrier's statement — say what and when.": "会以明细项目显示于承运商的对账单上 — 请说明项目与时间。",
   "Batch CSV": "批次 CSV",
@@ -16,6 +15,7 @@
   "Net payable": "应付净额",
   "Net payable minor": "应付净额（最小币值单位）",
   "Net {0} days": "净 {0} 天",
+  "No carrier settlements yet": "尚无承运商结算",
   "No rate confirmations on the covered moves.": "已承运的运程上没有费率确认书。",
   "No remit-to address on file — set it on the carrier record.": "尚未登录汇款地址 — 请于承运商资料中设置。",
   "Positive amounts add cost owed to the carrier (detention, lumper); negative amounts deduct (damage claim, advance recovery).": "正值会增加应付给承运商的成本（滞留费、装卸工费）；负值则会扣除（损害索赔、预付款回收）。",
@@ -24,6 +24,7 @@
   "Records the disbursement to the carrier and posts the cash journal (debit accounts payable, credit cash) plus the ledger payment entry.": "记录支付给承运商的款项，并过账现金日记账（借记应付账款、贷记现金）及账册付款分录。",
   "Remit to": "汇款至",
   "Settlement marked paid — cash journal and ledger payment recorded": "结算已标记为已付款 — 现金日记账与账册付款均已记录",
+  "Settlement recalculated from current cost events": "已根据当前成本事件重新计算结算",
   "The check number or ACH trace so the payment reconciles against the bank.": "支票号码或 ACH 追踪码，以便款项与银行核对。",
   "Traced back to the accrued cost event": "可回溯至已计提的成本事件",
   "Voiding releases cost events back to the accrual pool and reverses any GL postings.": "作废会将成本事件释放回计提池，并冲销任何总账分录。",

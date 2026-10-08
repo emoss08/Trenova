@@ -69,7 +69,7 @@ export function OpenItemsTable({
           <Checkbox
             checked={row.getIsSelected()}
             onCheckedChange={(checked) => row.toggleSelected(checked === true)}
-            aria-label={`Select invoice ${row.original.invoiceNumber}`}
+            aria-label={t("Select invoice {0}", row.original.invoiceNumber)}
             onClick={(e) => e.stopPropagation()}
           />
         ),
@@ -270,7 +270,7 @@ export function OpenItemsTable({
           <TableFooter className="bg-muted/40">
             <TableRow className="hover:bg-transparent">
               <TableCell colSpan={8} className="py-2 text-right text-xs font-medium">
-                {t("Totals · {0} {1}", items.length, items.length === 1 ? "invoice" : "invoices")}
+                {t("Totals · {0, plural, one {# invoice} other {# invoices}}", items.length)}
               </TableCell>
               <TableCell className="py-2 text-right">
                 <AmountDisplay value={totals.total} className="text-xs font-semibold" />

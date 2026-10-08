@@ -3,10 +3,12 @@
   "Contribute to escrow account": "提缴至履约保证账户",
   "Deducted / cap": "已扣款／上限",
   "Deduction code that categorizes the withholding and routes it to the code's GL account when one is mapped.": "将此扣款分类的扣款代码；若该代码已映射总账科目，则导向该科目。",
+  "Deduction paused": "扣款已暂停",
   "Deduction stops automatically once this lifetime total is reached.": "累计达到此总额后，扣款会自动停止。",
   "Every settlement withholds each cycle; monthly withholds only on the first settlement of each month.": "“每次结算”在每个周期皆扣款；“每月”则仅于每月第一笔结算扣款。",
   "Future settlements skip the deduction; history is kept.": "后续结算会跳过此扣款；历史记录仍保留。",
   "Future settlements withhold the deduction again.": "后续结算将恢复此扣款。",
+  "No recurring deductions yet": "尚无周期性扣款",
   "No selected deductions can move to that status.": "所选的扣款皆无法转为该状态。",
   "Optional last day the deduction applies; leave blank for open-ended.": "选填的扣款最后适用日；留空即为无期限。",
   "Pause to skip upcoming settlements without losing history; completed deductions stop permanently.": "暂停即可跳过接下来的结算而不失去历史记录；已完成的扣款则永久停止。",
@@ -17,5 +19,10 @@
   "The deduction begins applying to settlements whose period ends after this date.": "此扣款自期间结束日晚于此日期的结算开始套用。",
   "The deduction links to the driver's active escrow account when saved. Open an escrow account for the driver first if one doesn't exist.": "保存时，此扣款会关联至司机生效中的履约保证账户。若尚无账户，请先为该司机开立。",
   "The driver whose settlements this deduction is withheld from.": "此扣款所扣除的对象司机。",
-  "e.g. Occupational accident insurance": "例如：职业伤害保险"
+  "e.g. Occupational accident insurance": "例如：职业伤害保险",
+  "{0, plural, one {# deduction paused} other {# deductions paused}}": "{0, plural, other {已暂停 # 笔扣款}}",
+  "{0, plural, one {# deduction paused} other {# deductions paused}}, {1} failed": "{0, plural, other {已暂停 # 笔扣款}}，{1} 笔失败",
+  "{0, plural, one {# deduction resumed} other {# deductions resumed}}": "{0, plural, other {已恢复 # 笔扣款}}",
+  "{0, plural, one {# deduction resumed} other {# deductions resumed}}, {1} failed": "{0, plural, other {已恢复 # 笔扣款}}，{1} 笔失败",
+  "{0, plural, one {The selected deduction failed} other {All # selected deductions failed}}": "{0, plural, other {所选的 # 笔扣款均失败}}"
 }

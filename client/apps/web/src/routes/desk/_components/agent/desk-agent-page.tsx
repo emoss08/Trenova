@@ -20,12 +20,13 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useNavigate, useSearchParams } from "react-router";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
-const MODE_LABEL: Record<AgentCapabilityMode, string> = {
+const MODE_LABEL: Record<AgentCapabilityMode, string> = defineLabels({
   Allowed: "Allowed",
   AskFirst: "Ask first",
   Off: "Off",
-};
+});
 
 const wholeDollars = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -264,7 +265,7 @@ function ToolSection({
                     className={cn(option.selected && "dk-on")}
                     onClick={() => onMode(tool, option.mode)}
                   >
-                    {t(MODE_LABEL[option.mode])}
+                    {MODE_LABEL[option.mode]}
                   </button>
                 ))}
               </div>

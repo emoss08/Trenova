@@ -29,6 +29,7 @@
   "Written by {0}": "由 {0} 寫入",
   "e.g. Deadhead from Amarillo to the Dallas yard after the drop": "例如：卸貨後自 Amarillo 空駛至達拉斯場區",
   "the quarter": "該季度",
+  "{0, plural, one {Up to # character.} other {Up to # characters.}}": "{0, plural, other {最多 # 個字元。}}",
   "{0} miles in {1} on {2}{3} will be removed outright.": "{2}{3} 在 {1} 行駛的 {0} 英里將被完全移除。",
   "{0}{1} · {2} mi": "{0}{1} · {2} 英里"
 }

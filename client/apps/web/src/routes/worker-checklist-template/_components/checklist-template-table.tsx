@@ -57,8 +57,19 @@ export default function ChecklistTemplateTable() {
         archiveWorkerChecklistTemplate(row.id, row.version),
       );
       notifyBulkOutcome(outcome, {
-        entity: "template",
-        verbPast: t("Deactivated"),
+        succeeded: (count) =>
+          t("Deactivated {0, plural, one {# template} other {# templates}}", count),
+        partial: (succeeded, failed) =>
+          t(
+            "Deactivated {0, plural, one {# template} other {# templates}}; {1} failed",
+            succeeded,
+            failed,
+          ),
+        allFailed: (failed) =>
+          t(
+            "{0, plural, one {The selected template failed} other {All # selected templates failed}}",
+            failed,
+          ),
         skipped: rows.length - eligible.length,
       });
       await invalidate();
@@ -77,8 +88,19 @@ export default function ChecklistTemplateTable() {
         restoreWorkerChecklistTemplate(row.id, row.version),
       );
       notifyBulkOutcome(outcome, {
-        entity: "template",
-        verbPast: t("Restored"),
+        succeeded: (count) =>
+          t("Restored {0, plural, one {# template} other {# templates}}", count),
+        partial: (succeeded, failed) =>
+          t(
+            "Restored {0, plural, one {# template} other {# templates}}; {1} failed",
+            succeeded,
+            failed,
+          ),
+        allFailed: (failed) =>
+          t(
+            "{0, plural, one {The selected template failed} other {All # selected templates failed}}",
+            failed,
+          ),
         skipped: rows.length - eligible.length,
       });
       await invalidate();
@@ -139,6 +161,7 @@ export default function ChecklistTemplateTable() {
   return (
     <DataTable<WorkerChecklistTemplateRow>
       name="Checklist Template"
+      emptyTitle={t("No checklist templates yet")}
       queryKey={WORKER_CHECKLIST_TEMPLATE_LIST_KEY}
       graphql={workerChecklistTemplateTableGraphQLConfig}
       resource={Resource.WorkerChecklistTemplate}

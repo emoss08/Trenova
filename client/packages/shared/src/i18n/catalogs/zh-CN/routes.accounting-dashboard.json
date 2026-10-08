@@ -27,10 +27,13 @@
   "awaiting application": "待冲抵",
   "not yet due": "尚未到期",
   "target < {0}d · vs 4 weeks ago": "目标 < {0} 天 · 与四周前相比",
+  "target {0}d": "目标 {0} 天",
   "total open": "未结总额",
   "trailing 91 days": "过去 91 天",
   "weekly, collected vs due": "每周，已收款与应收对比",
+  "{0, plural, one {# open invoice} other {# open invoices}}": "{0, plural, other {# 张未结发票}}",
   "{0} applications in period": "期间内冲抵 {0} 笔",
   "{0} inv · oldest {1}d": "{0} 张发票 · 最久 {1} 天",
+  "{0} past due": "{0} 已逾期",
   "{0}d past due": "逾期 {0} 天"
 }

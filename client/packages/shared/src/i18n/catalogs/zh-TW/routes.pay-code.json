@@ -9,8 +9,11 @@
   "Every selected pay code already has that status.": "所選的薪酬代碼皆已處於該狀態。",
   "Human-readable label displayed next to the code throughout the app.": "在應用程式各處顯示於代碼旁的易讀標籤。",
   "Inactive codes stay on historical records but disappear from new-entry dropdowns.": "已停用的代碼會保留在歷史紀錄上，但不再出現於新增項目的下拉選單中。",
+  "No pay codes yet": "尚無薪酬代碼",
   "Optional internal note explaining when and how the code should be used.": "選填的內部備註，說明此代碼的使用時機與方式。",
   "Optional note about when this code applies": "關於此代碼適用時機的選填備註",
+  "Pay code activated — it appears in dropdowns again": "薪酬代碼已啟用 — 將再次出現在下拉選單中",
+  "Pay code deactivated — it stays on historical records only": "薪酬代碼已停用 — 僅保留在歷史記錄中",
   "Prefills the amount when creating recurring earnings or deductions with this code.": "以此代碼建立週期性薪酬或扣款時，會預先填入此金額。",
   "Reimbursement": "補助款",
   "Select GL account": "選擇總帳科目",
@@ -22,5 +25,10 @@
   "Your carrier's catalog of earning and deduction codes — behavior flags and GL account mappings drive how each code settles and posts.": "貴承運業者的薪酬與扣款代碼目錄 — 行為旗標與總帳科目對應決定各代碼的結算與過帳方式。",
   "e.g. CHAINPAY": "例如：CHAINPAY",
   "e.g. Chain-Up Pay": "例如：加裝雪鏈津貼",
+  "{0, plural, one {# pay code activated} other {# pay codes activated}}": "{0, plural, other {已啟用 # 個薪酬代碼}}",
+  "{0, plural, one {# pay code activated} other {# pay codes activated}}, {1} failed": "{0, plural, other {已啟用 # 個薪酬代碼}}，{1} 筆失敗",
+  "{0, plural, one {# pay code deactivated} other {# pay codes deactivated}}": "{0, plural, other {已停用 # 個薪酬代碼}}",
+  "{0, plural, one {# pay code deactivated} other {# pay codes deactivated}}, {1} failed": "{0, plural, other {已停用 # 個薪酬代碼}}，{1} 筆失敗",
+  "{0, plural, one {The selected pay code failed} other {All # selected pay codes failed}}": "{0, plural, other {所選的 # 個薪酬代碼皆失敗}}",
   "· excl. guarantee": "· 不含保證額"
 }

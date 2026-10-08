@@ -92,7 +92,13 @@ export function AdjustBalanceDialog({
       }),
     onSuccess: (entry) => {
       toast.success(t("Balance adjusted"), {
-        description: `${entry.ptoType} balance is now ${entry.balanceAfterDays} days.`,
+        description: t(
+          "{0} balance is now {1, plural, one {# day} other {# days}}.",
+          t(
+            ptoTypeChoices.find((choice) => choice.value === entry.ptoType)?.label ?? entry.ptoType,
+          ),
+          entry.balanceAfterDays,
+        ),
       });
       onAdjusted?.();
       onOpenChange(false);
@@ -147,8 +153,10 @@ export function AdjustBalanceDialog({
                   rules={{ required: true }}
                   description={
                     current
-                      ? `Current ${current.balanceDays}${preview ? ` → ${preview}` : ""}`
-                      : "Days to add, or remove with a minus sign."
+                      ? preview
+                        ? t("Current {0} → {1}", current.balanceDays, preview)
+                        : t("Current {0}", current.balanceDays)
+                      : t("Days to add, or remove with a minus sign.")
                   }
                 />
               </FormControl>

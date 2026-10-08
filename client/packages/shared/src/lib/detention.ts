@@ -9,16 +9,18 @@ import {
   type ScoreBand,
 } from "../types/detention";
 import { formatCurrency } from "./utils";
+import { defineLabels } from "@trenova/shared/i18n/labels";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 /** Plain-language names for the ceiling that stopped a charge from growing. */
-export const CAP_KIND_LABEL: Record<CapKind, string> = {
+export const CAP_KIND_LABEL: Record<CapKind, string> = defineLabels({
   None: "No cap",
   MaxBillableMinutes: "Minutes cap",
   MaxChargePerStop: "Stop cap",
   MaxChargePerDay: "Daily cap",
   MaxChargePerShipment: "Shipment cap",
   LayoverBoundary: "Layover boundary",
-};
+});
 
 /**
  * Formats a money delta with an explicit sign so a gain can never be misread as
@@ -72,20 +74,20 @@ export function formatCountdown(minutes: number | null | undefined): string {
   }
 
   if (minutes <= 0) {
-    return `${formatDetentionMinutes(minutes)} overdue`;
+    return translate("{0} overdue", formatDetentionMinutes(minutes));
   }
 
-  return `in ${formatDetentionMinutes(minutes)}`;
+  return translate("in {0}", formatDetentionMinutes(minutes));
 }
 
-export const URGENCY_LABEL: Record<DeskUrgency, string> = {
+export const URGENCY_LABEL: Record<DeskUrgency, string> = defineLabels({
   NoticeOverdue: "Notice overdue",
   NoticeDueSoon: "Notice due soon",
   Accruing: "Accruing",
   FreeTimeEnding: "Free time ending",
   Lost: "Not collectable",
   Normal: "Within free time",
-};
+});
 
 export type UrgencyStyle = {
   /** The accrued portion of the clock bar. */
@@ -134,14 +136,14 @@ export const URGENCY_STYLES: Record<DeskUrgency, UrgencyStyle> = {
 };
 
 /** What the notice state means for the charge, said the way a clerk would say it. */
-export const NOTIFICATION_STATUS_LABEL: Record<DetentionNotificationStatus, string> = {
+export const NOTIFICATION_STATUS_LABEL: Record<DetentionNotificationStatus, string> = defineLabels({
   NotRequired: "No notice required",
   Pending: "Notice not sent",
   Sent: "Notice sent",
   Late: "Notice sent late",
   Missed: "Notice missed",
   Failed: "Notice failed",
-};
+});
 
 export const SCORE_BAND_STYLES: Record<ScoreBand, string> = {
   Strong: "bg-success-subtle text-success-foreground",
@@ -158,7 +160,7 @@ export function scoreBand(score: number): ScoreBand {
   return "AtRisk";
 }
 
-export const OCCURRENCE_STATUS_LABEL: Record<OccurrenceStatus, string> = {
+export const OCCURRENCE_STATUS_LABEL: Record<OccurrenceStatus, string> = defineLabels({
   Accruing: "Accruing",
   Pending: "Pending review",
   Approved: "Approved",
@@ -166,7 +168,7 @@ export const OCCURRENCE_STATUS_LABEL: Record<OccurrenceStatus, string> = {
   Waived: "Waived",
   Disputed: "Disputed",
   NotBillable: "Not billable",
-};
+});
 
 /**
  * Status as a single dot. Amber marks the two states that are waiting on a

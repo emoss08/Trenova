@@ -15,10 +15,11 @@ import {
 } from "@trenova/shared/types/worker-credential";
 import { InfoCircleIcon } from "@trenova/shared/components/icons";
 import { useFormContext, useWatch } from "react-hook-form";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
 
 const CATEGORY_OPTIONS = credentialCategorySchema.options.map((value) => ({
   value,
-  label: CREDENTIAL_CATEGORY_LABELS[value],
+  label: sourceLabels(CREDENTIAL_CATEGORY_LABELS)[value],
 }));
 
 type CredentialTypeFormProps = {
@@ -95,10 +96,15 @@ export function CredentialTypeForm({
               placeholder={t("Select a status")}
               description={
                 profileField
-                  ? "Mirrors a worker-profile field and cannot be deactivated."
+                  ? t("Mirrors a worker-profile field and cannot be deactivated.")
                   : isEdit && activeCredentialCount > 0
-                    ? `${activeCredentialCount} worker${activeCredentialCount === 1 ? " holds" : "s hold"} this credential; archive those first to deactivate.`
-                    : "Inactive types are hidden from pickers and stop counting toward compliance."
+                    ? t(
+                        "{0, plural, one {# worker holds this credential; archive those first to deactivate.} other {# workers hold this credential; archive those first to deactivate.}}",
+                        activeCredentialCount,
+                      )
+                    : t(
+                        "Inactive types are hidden from pickers and stop counting toward compliance.",
+                      )
               }
             />
           </FormControl>

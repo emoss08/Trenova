@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import { describeApiError } from "@/lib/api-error-message";
@@ -65,16 +66,16 @@ function getChargeWarnings(
   additionalCharges: AdditionalCharge[],
 ): string[] {
   const warnings: string[] = [];
-  if (totalCharge === 0) warnings.push("Total charge is $0.00");
+  if (totalCharge === 0) warnings.push(translate("Total charge is $0.00"));
   if (freightCharge === 0 && additionalCharges.length > 0)
-    warnings.push("Freight charge is $0.00 but accessorial charges exist");
+    warnings.push(translate("Freight charge is $0.00 but accessorial charges exist"));
   for (const charge of additionalCharges) {
     if (Number(charge.amount ?? 0) < 0) {
-      warnings.push("One or more charges have a negative amount");
+      warnings.push(translate("One or more charges have a negative amount"));
       break;
     }
   }
-  if (freightCharge < 0) warnings.push("Freight charge is negative");
+  if (freightCharge < 0) warnings.push(translate("Freight charge is negative"));
   return warnings;
 }
 
@@ -83,13 +84,17 @@ function formatChargeBreakdown(charge: AdditionalCharge): string {
   const unit = charge.unit ?? 1;
   switch (charge.method) {
     case "PerUnit":
-      return `${formatCurrency(amount)} × ${unit} units`;
+      return translate(
+        "{0} × {1, plural, one {# unit} other {# units}}",
+        formatCurrency(amount),
+        unit,
+      );
     case "Percentage":
-      return `${amount}% of line haul`;
+      return translate("{0}% of line haul", amount);
     case "Flat":
-      return unit > 1 ? `${formatCurrency(amount)} × ${unit}` : "Flat";
+      return unit > 1 ? `${formatCurrency(amount)} × ${unit}` : translate("Flat");
     default:
-      return "Flat";
+      return translate("Flat");
   }
 }
 

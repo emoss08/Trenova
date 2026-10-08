@@ -17,15 +17,16 @@ import {
   type TrainingCourseFormValues,
 } from "@trenova/shared/types/worker-training";
 import { useFormContext, useWatch } from "react-hook-form";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
 
 const CATEGORY_OPTIONS = trainingCategorySchema.options.map((value) => ({
   value,
-  label: TRAINING_CATEGORY_LABELS[value],
+  label: sourceLabels(TRAINING_CATEGORY_LABELS)[value],
 }));
 
 const DELIVERY_OPTIONS = trainingDeliverySchema.options.map((value) => ({
   value,
-  label: TRAINING_DELIVERY_LABELS[value],
+  label: sourceLabels(TRAINING_DELIVERY_LABELS)[value],
 }));
 
 type TrainingCourseFormProps = {
@@ -91,8 +92,11 @@ export function TrainingCourseForm({ isEdit, openRecordCount = 0 }: TrainingCour
               placeholder={t("Select a status")}
               description={
                 isEdit && openRecordCount > 0
-                  ? `${openRecordCount} worker${openRecordCount === 1 ? " has" : "s have"} this course open; finish or cancel those first to deactivate.`
-                  : "Inactive courses drop out of the required matrix and cannot be assigned."
+                  ? t(
+                      "{0, plural, one {# worker has} other {# workers have}} this course open; finish or cancel those first to deactivate.",
+                      openRecordCount,
+                    )
+                  : t("Inactive courses drop out of the required matrix and cannot be assigned.")
               }
             />
           </FormControl>

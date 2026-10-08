@@ -1,3 +1,5 @@
+import { formatNumber } from "@trenova/shared/i18n/format";
+import { translate } from "@trenova/shared/i18n/runtime";
 import type {
   AssessedJurisdiction,
   EscortRole,
@@ -6,21 +8,22 @@ import type {
   PermitRequirement,
   RestrictionKind,
 } from "../types/permit";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
-export const ESCORT_ROLE_LABELS: Record<EscortRole, string> = {
+export const ESCORT_ROLE_LABELS: Record<EscortRole, string> = defineLabels({
   Front: "Front escort",
   Rear: "Rear escort",
   Police: "Police escort",
   RouteSurvey: "Route survey",
-};
+});
 
-export const RESTRICTION_LABELS: Record<RestrictionKind, string> = {
+export const RESTRICTION_LABELS: Record<RestrictionKind, string> = defineLabels({
   DaylightOnly: "Daylight movement only",
   RushHour: "Rush hour restriction",
   Weekend: "Weekend restriction",
   Holiday: "Holiday restriction",
   NightOnly: "Night movement only",
-};
+});
 
 /**
  * Renders a decimal foot measurement the way an operator says it out loud.
@@ -42,7 +45,7 @@ export function formatFeetInches(value: number): string {
 
 export function formatPounds(value: number): string {
   if (!Number.isFinite(value)) return "—";
-  return `${Math.round(value).toLocaleString()} lbs`;
+  return translate("{0} lbs", formatNumber(Math.round(value)));
 }
 
 export type CargoDimensions = {
@@ -203,12 +206,18 @@ export function requirementStateCode(requirement: PermitRequirement): string {
  * in the unit that dimension is measured in.
  */
 export function describeExceedance(exceedance: Exceedance): string {
-  const over =
-    exceedance.trigger === "Weight"
-      ? formatPounds(exceedance.overBy)
-      : formatFeetInches(exceedance.overBy);
-
-  return `${exceedance.trigger.toLowerCase()} ${over} over`;
+  switch (exceedance.trigger) {
+    case "Weight":
+      return translate("weight {0} over", formatPounds(exceedance.overBy));
+    case "Width":
+      return translate("width {0} over", formatFeetInches(exceedance.overBy));
+    case "Height":
+      return translate("height {0} over", formatFeetInches(exceedance.overBy));
+    case "Length":
+      return translate("length {0} over", formatFeetInches(exceedance.overBy));
+    default:
+      return translate("superload {0} over", formatFeetInches(exceedance.overBy));
+  }
 }
 
 /**
@@ -221,10 +230,14 @@ export function describeRequirement(requirement: PermitRequirement): string {
   const exceedances = requirement.exceedances ?? [];
 
   if (exceedances.length === 0) {
-    return `${code} permit required`;
+    return translate("{0} permit required", code);
   }
 
-  return `${code} permit required (${exceedances.map(describeExceedance).join(", ")})`;
+  return translate(
+    "{0} permit required ({1})",
+    code,
+    exceedances.map(describeExceedance).join(", "),
+  );
 }
 
 export type EscortSummaryEntry = {
@@ -355,22 +368,22 @@ export function overriddenLimits(override: {
   const applied: string[] = [];
 
   if (override.maxWidthFeet != null) {
-    applied.push(`Width ${formatFeetInches(override.maxWidthFeet)}`);
+    applied.push(translate("Width {0}", formatFeetInches(override.maxWidthFeet)));
   }
   if (override.maxHeightFeet != null) {
-    applied.push(`Height ${formatFeetInches(override.maxHeightFeet)}`);
+    applied.push(translate("Height {0}", formatFeetInches(override.maxHeightFeet)));
   }
   if (override.maxLengthFeet != null) {
-    applied.push(`Length ${formatFeetInches(override.maxLengthFeet)}`);
+    applied.push(translate("Length {0}", formatFeetInches(override.maxLengthFeet)));
   }
   if (override.maxWeightPounds != null) {
     applied.push(formatPounds(override.maxWeightPounds));
   }
   if (override.permitLeadTimeDays != null) {
-    applied.push(`${override.permitLeadTimeDays}d lead`);
+    applied.push(translate("{0}d lead", override.permitLeadTimeDays));
   }
-  if (override.daylightOnly) applied.push("Daylight only");
-  if (override.holidayRestricted) applied.push("No holidays");
+  if (override.daylightOnly) applied.push(translate("Daylight only"));
+  if (override.holidayRestricted) applied.push(translate("No holidays"));
 
   return applied;
 }

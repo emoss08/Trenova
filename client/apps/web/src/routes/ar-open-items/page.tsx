@@ -185,13 +185,13 @@ export function AROpenItemsPage() {
             <KpiStripItem
               label={t("Current")}
               value={formatCurrency(stats.currentAmount / 100)}
-              sub={`${stats.currentCount} items`}
+              sub={t("{0, plural, one {# item} other {# items}}", stats.currentCount)}
               tone="success"
             />
             <KpiStripItem
               label={t("Overdue")}
               value={formatCurrency(stats.overdueAmount / 100)}
-              sub={`${stats.overdueCount} items`}
+              sub={t("{0, plural, one {# item} other {# items}}", stats.overdueCount)}
               tone={stats.overdueAmount > 0 ? "danger" : undefined}
             />
             <KpiStripItem

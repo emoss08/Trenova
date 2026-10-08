@@ -14,6 +14,7 @@ export default function AuditLogTable() {
   return (
     <DataTable<AuditEntryRow>
       name="Audit Entry"
+      emptyTitle={t("No audit entries yet")}
       queryKey="audit-entry-list"
       graphql={auditLogTableGraphQLConfig}
       resource={Resource.AuditLog}

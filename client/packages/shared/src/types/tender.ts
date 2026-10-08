@@ -8,6 +8,7 @@ import {
   tenantInfoSchema,
 } from "./helpers";
 import { carrierRateMethodSchema } from "./shipment";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export const MIN_OFFER_TTL_SECONDS = 300;
 export const MAX_OFFER_TTL_SECONDS = 604800;
@@ -44,16 +45,16 @@ export type TenderChannel = z.infer<typeof tenderChannelSchema>;
 export const tenderResponseSourceSchema = z.enum(["Email", "EDI", "Manual"]);
 export type TenderResponseSource = z.infer<typeof tenderResponseSourceSchema>;
 
-export const TENDER_MODE_LABEL: Record<TenderMode, string> = {
+export const TENDER_MODE_LABEL: Record<TenderMode, string> = defineLabels({
   Waterfall: "Waterfall",
   SpotBroadcast: "Spot broadcast",
   SpotSequential: "Spot sequential",
-};
+});
 
-export const TENDER_CHANNEL_LABEL: Record<TenderChannel, string> = {
+export const TENDER_CHANNEL_LABEL: Record<TenderChannel, string> = defineLabels({
   Email: "Email",
   EDI: "EDI",
-};
+});
 
 export const TENDER_RESPONSE_SOURCE_LABEL: Record<TenderResponseSource, string> = {
   Email: "via email link",
@@ -140,7 +141,7 @@ export const waterfallTenderResultSchema = tenderSchema.extend({
 export type WaterfallTenderResult = z.infer<typeof waterfallTenderResultSchema>;
 
 export const waterfallTenderPayloadSchema = z.object({
-  shipmentMoveId: z.string().min(1, { error: "Shipment move is required" }),
+  shipmentMoveId: z.string().min(1, { error: () => translate("Shipment move is required") }),
   routingGuideId: nullableStringSchema,
 });
 export type WaterfallTenderPayload = z.infer<typeof waterfallTenderPayloadSchema>;
@@ -159,14 +160,16 @@ const emailFormatSchema = z.email();
  */
 export const spotTenderLinePayloadSchema = z
   .object({
-    carrierId: z.string().min(1, { error: "Carrier is required" }),
+    carrierId: z.string().min(1, { error: () => translate("Carrier is required") }),
     rateMethod: carrierRateMethodSchema,
     rate: decimalNumberSchema("Rate is required", "Rate cannot be negative"),
     offerTtlSeconds: z
-      .number({ error: "Offer expiry is required" })
+      .number({ error: () => translate("Offer expiry is required") })
       .int()
-      .min(MIN_OFFER_TTL_SECONDS, { error: "Offer expiry must be at least 5 minutes" })
-      .max(MAX_OFFER_TTL_SECONDS, { error: "Offer expiry cannot exceed 7 days" }),
+      .min(MIN_OFFER_TTL_SECONDS, {
+        error: () => translate("Offer expiry must be at least 5 minutes"),
+      })
+      .max(MAX_OFFER_TTL_SECONDS, { error: () => translate("Offer expiry cannot exceed 7 days") }),
     channel: tenderChannelSchema,
     email: z.string().default("").optional(),
   })
@@ -185,11 +188,11 @@ export type SpotTenderLinePayload = z.infer<typeof spotTenderLinePayloadSchema>;
 
 export const spotTenderPayloadSchema = z
   .object({
-    shipmentMoveId: z.string().min(1, { error: "Shipment move is required" }),
+    shipmentMoveId: z.string().min(1, { error: () => translate("Shipment move is required") }),
     mode: spotTenderModeSchema,
     lines: z
       .array(spotTenderLinePayloadSchema)
-      .min(1, { error: "At least one carrier line is required" }),
+      .min(1, { error: () => translate("At least one carrier line is required") }),
     overrideInsuranceWarnings: z.boolean().default(false),
   })
   .superRefine((payload, ctx) => {
@@ -221,8 +224,8 @@ export const emptySpotTenderLine: SpotTenderLinePayload = {
 export const cancelTenderPayloadSchema = z.object({
   reason: z
     .string()
-    .min(1, { error: "A cancellation reason is required" })
-    .max(500, { error: "Reason must be at most 500 characters" }),
+    .min(1, { error: () => translate("A cancellation reason is required") })
+    .max(500, { error: () => translate("Reason must be at most 500 characters") }),
 });
 export type CancelTenderPayload = z.infer<typeof cancelTenderPayloadSchema>;
 
@@ -234,7 +237,7 @@ export const recordTenderResponsePayloadSchema = z
     action: tenderResponseActionSchema,
     declineReason: z
       .string()
-      .max(500, { error: "Reason must be at most 500 characters" })
+      .max(500, { error: () => translate("Reason must be at most 500 characters") })
       .default(""),
   })
   .superRefine((payload, ctx) => {

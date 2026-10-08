@@ -135,6 +135,7 @@ export default function WorstRatedTable() {
   const table = (
     <DataTable<AgentWorstRatedRow>
       name="Worst-Rated Answer"
+      emptyTitle={t("No worst-rated answers yet")}
       queryKey={AGENT_WORST_RATED_LIST_KEY}
       graphql={graphql}
       resource={Resource.AgentFeedback}

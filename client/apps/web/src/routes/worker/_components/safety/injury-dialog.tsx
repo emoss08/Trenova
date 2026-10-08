@@ -46,6 +46,7 @@ import {
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { FormProvider, useForm, useFormState, useWatch, type Resolver } from "react-hook-form";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const CLASSIFICATION_OPTIONS = oshaCaseClassificationSchema.options.map((value) => ({
   value,
@@ -219,10 +220,10 @@ export function InjuryDialog({
         : recordWorkerInjury({ ...shared, workerId });
     },
     onSuccess: (saved) => {
-      toast.success(isEdit ? "Case updated" : "Case recorded", {
-        description: `Case ${saved.caseYear}-${saved.caseNumber} · ${
-          saved.recordable ? "on the OSHA 300 log" : "not recordable"
-        }.`,
+      toast.success(isEdit ? translate("Case updated") : translate("Case recorded"), {
+        description: saved.recordable
+          ? translate("Case {0}-{1} · on the OSHA 300 log.", saved.caseYear, saved.caseNumber)
+          : translate("Case {0}-{1} · not recordable.", saved.caseYear, saved.caseNumber),
       });
       void queryClient.invalidateQueries({ queryKey: [WORKER_INJURIES_KEY, workerId] });
       void queryClient.invalidateQueries({ queryKey: ["osha-log"] });

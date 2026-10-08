@@ -69,7 +69,7 @@ export function DataTableConfigItem({
     onSuccess: () => {
       onViewDeleted?.(config.id);
       toast.success(t("View deleted"), {
-        description: `"${config.name}" has been deleted.`,
+        description: t('"{0}" has been deleted.', config.name),
       });
     },
     onSettled: refetchConfigurations,
@@ -81,7 +81,7 @@ export function DataTableConfigItem({
     onSuccess: (updated: TableConfiguration) => {
       onApplyConfig(updated.tableConfig, { id: updated.id, name: updated.name });
       toast.success(t("Default view updated"), {
-        description: `"${updated.name}" is now your default view and has been applied.`,
+        description: t('"{0}" is now your default view and has been applied.', updated.name),
       });
     },
     onSettled: refetchConfigurations,
@@ -93,11 +93,11 @@ export function DataTableConfigItem({
     resourceName: "Table Configuration",
     onSuccess: (updated: TableConfiguration) => {
       toast.success(
-        updated.isOrgDefault ? "Organization default set" : "Organization default removed",
+        updated.isOrgDefault ? t("Organization default set") : t("Organization default removed"),
         {
           description: updated.isOrgDefault
-            ? `"${updated.name}" is now the default view for everyone in your organization.`
-            : `"${updated.name}" is no longer the organization default.`,
+            ? t('"{0}" is now the default view for everyone in your organization.', updated.name)
+            : t('"{0}" is no longer the organization default.', updated.name),
         },
       );
     },
@@ -118,7 +118,7 @@ export function DataTableConfigItem({
     onSuccess: (updated: TableConfiguration) => {
       onViewPersisted?.(updated);
       toast.success(t("View updated"), {
-        description: `"${updated.name}" now matches the current table state.`,
+        description: t('"{0}" now matches the current table state.', updated.name),
       });
     },
     onSettled: refetchConfigurations,
@@ -129,7 +129,7 @@ export function DataTableConfigItem({
     resourceName: "Table Configuration",
     onSuccess: (created: TableConfiguration) => {
       toast.success(t("View duplicated"), {
-        description: `"${created.name}" has been added to your views.`,
+        description: t('"{0}" has been added to your views.', created.name),
       });
     },
     onSettled: refetchConfigurations,
@@ -156,7 +156,7 @@ export function DataTableConfigItem({
       <button
         type="button"
         onClick={handleApply}
-        title={config.description || `Apply "${config.name}"`}
+        title={config.description || t('Apply "{0}"', config.name)}
         className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left"
       >
         {config.visibility === "Private" ? (
@@ -209,8 +209,8 @@ export function DataTableConfigItem({
                   dropdownOpen && "opacity-100",
                 )}
                 type="button"
-                title={`${config.name} view options`}
-                aria-label={`${config.name} view options`}
+                title={t("{0} view options", config.name)}
+                aria-label={t("{0} view options", config.name)}
                 aria-expanded={dropdownOpen}
               >
                 <DotsHorizontalIcon className="text-muted-foreground size-4" />

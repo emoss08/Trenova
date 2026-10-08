@@ -1,4 +1,4 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { RowActionsMenu, type RowAction } from "@/components/row-actions-menu";
 import type { EmploymentVerificationRow } from "@/lib/graphql/worker-dqf";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -49,6 +49,25 @@ function stageIndex(status: string): number {
  * answered — with the dates that prove each stage and the next thing to do.
  * A silent employer reaches the end too: the chases on record are the answer.
  */
+function verificationMethodCaption(t: TranslateFn, method: string): string {
+  switch (method) {
+    case "Email":
+      return t("by email");
+    case "Fax":
+      return t("by fax");
+    case "Mail":
+      return t("by mail");
+    case "Phone":
+      return t("by phone");
+    case "Portal":
+      return t("by portal");
+    case "Other":
+      return t("by other");
+    default:
+      return t("by {0}", verificationMethodLabel(method).toLowerCase());
+  }
+}
+
 export function EmployerRow({
   verification,
   permissions,
@@ -92,7 +111,7 @@ export function EmployerRow({
           ? "Close as no response"
           : next.action === "drugAlcohol"
             ? "Record the drug and alcohol history"
-            : `Edit ${verification.employerName}`,
+            : t("Edit {0}", verification.employerName),
       icon: Edit02Icon,
       onSelect: () => onEdit(verification),
     });
@@ -100,7 +119,7 @@ export function EmployerRow({
   if (permissions.canDelete && !settled) {
     actions.push({
       id: "delete",
-      label: `Remove ${verification.employerName}`,
+      label: t("Remove {0}", verification.employerName),
       icon: Trash01Icon,
       destructive: true,
       disabled: busy,
@@ -111,18 +130,18 @@ export function EmployerRow({
   const period =
     verification.employedFrom || verification.employedTo
       ? `${verification.employedFrom ? formatUnixDate(verification.employedFrom) : "?"} – ${
-          verification.employedTo ? formatUnixDate(verification.employedTo) : "present"
+          verification.employedTo ? formatUnixDate(verification.employedTo) : t("present")
         }`
       : null;
   const meta = [
     period,
-    `by ${verificationMethodLabel(verification.method).toLowerCase()}`,
-    verification.requestedAt ? `requested ${formatUnixDate(verification.requestedAt)}` : null,
+    verificationMethodCaption(t, verification.method),
+    verification.requestedAt ? t("requested {0}", formatUnixDate(verification.requestedAt)) : null,
     verification.followUpCount > 0
-      ? `${verification.followUpCount} chase${verification.followUpCount === 1 ? "" : "s"}`
+      ? t("{0, plural, one {# chase} other {# chases}}", verification.followUpCount)
       : null,
     verification.responseReceivedAt
-      ? `answered ${formatUnixDate(verification.responseReceivedAt)}`
+      ? t("answered {0}", formatUnixDate(verification.responseReceivedAt))
       : null,
   ]
     .filter(Boolean)
@@ -210,7 +229,7 @@ export function EmployerRow({
           <p className="text-muted-foreground text-xs">{verification.findings}</p>
         ) : null}
       </div>
-      <RowActionsMenu label={`Actions for ${verification.employerName}`} actions={actions} />
+      <RowActionsMenu label={t("Actions for {0}", verification.employerName)} actions={actions} />
     </li>
   );
 }

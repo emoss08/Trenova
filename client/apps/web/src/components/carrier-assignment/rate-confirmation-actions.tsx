@@ -29,6 +29,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export function rateConfirmationQueryKey(moveId: string) {
   return ["move-rate-confirmations", moveId] as const;
@@ -68,12 +69,16 @@ export function RateConfirmationActions({
     onSuccess: (rateCon) => {
       toast.success(
         rateCon.revision > 1
-          ? `Rate confirmation regenerated — revision ${rateCon.revision} filed, prior revision voided`
-          : "Rate confirmation generated and filed",
+          ? t(
+              "Rate confirmation regenerated — revision {0} filed, prior revision voided",
+              rateCon.revision,
+            )
+          : t("Rate confirmation generated and filed"),
       );
       invalidate();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to generate rate confirmation"),
+    onError: (error: Error) =>
+      toast.error(error.message || t("Failed to generate rate confirmation")),
   });
 
   const sendMutation = useMutation({
@@ -81,12 +86,12 @@ export function RateConfirmationActions({
     onSuccess: (rateCon) => {
       toast.success(
         rateCon.sentToEmails
-          ? `Rate confirmation sent to ${rateCon.sentToEmails}`
-          : "Rate confirmation sent",
+          ? t("Rate confirmation sent to {0}", rateCon.sentToEmails)
+          : t("Rate confirmation sent"),
       );
       invalidate();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to send rate confirmation"),
+    onError: (error: Error) => toast.error(error.message || t("Failed to send rate confirmation")),
   });
 
   if (isLoading) {
@@ -253,7 +258,7 @@ function MarkConfirmedDialog({
       onOpenChange(false);
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to confirm"),
+    onError: (error: Error) => toast.error(error.message || translate("Failed to confirm")),
   });
 
   return (
@@ -312,7 +317,7 @@ function VoidRateConfirmationDialog({
       onOpenChange(false);
       onChanged();
     },
-    onError: (error: Error) => toast.error(error.message || "Failed to void"),
+    onError: (error: Error) => toast.error(error.message || translate("Failed to void")),
   });
 
   return (

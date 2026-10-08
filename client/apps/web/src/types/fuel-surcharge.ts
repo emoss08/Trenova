@@ -43,18 +43,21 @@ export const fuelIndexSchema = z.object({
   ...tenantInfoSchema.shape,
   name: z
     .string()
-    .min(1, { message: "Name is required" })
-    .max(100, { message: "Name must be less than 100 characters" }),
+    .min(1, { error: () => translate("Name is required") })
+    .max(100, { error: () => translate("Name must be less than 100 characters") }),
   code: z
     .string()
-    .min(1, { message: "Code is required" })
-    .max(50, { message: "Code must be less than 50 characters" }),
+    .min(1, { error: () => translate("Code is required") })
+    .max(50, { error: () => translate("Code must be less than 50 characters") }),
   description: optionalStringSchema,
   source: fuelIndexSourceSchema,
   fuelType: fuelTypeSchema.default("Diesel"),
   region: optionalStringSchema,
   eiaSeriesId: optionalStringSchema,
-  currency: z.string().length(3, { message: "Currency must be 3 characters" }).default("USD"),
+  currency: z
+    .string()
+    .length(3, { error: () => translate("Currency must be 3 characters") })
+    .default("USD"),
   isActive: z.boolean().default(true),
 });
 
@@ -75,7 +78,7 @@ export const fuelSurchargeTableRowSchema = z.object({
       );
       return isNaN(parsed) ? undefined : parsed;
     },
-    z.number({ message: "Value is required" }),
+    z.number({ error: () => translate("Value is required") }),
   ),
   sortOrder: z.number().int().min(0).default(0),
 });
@@ -89,16 +92,18 @@ export const fuelSurchargeProgramSchema = z
     ...tenantInfoSchema.shape,
     name: z
       .string()
-      .min(1, { message: "Name is required" })
-      .max(100, { message: "Name must be less than 100 characters" }),
+      .min(1, { error: () => translate("Name is required") })
+      .max(100, { error: () => translate("Name must be less than 100 characters") }),
     code: z
       .string()
-      .min(1, { message: "Code is required" })
-      .max(50, { message: "Code must be less than 50 characters" }),
+      .min(1, { error: () => translate("Code is required") })
+      .max(50, { error: () => translate("Code must be less than 50 characters") }),
     description: optionalStringSchema,
     status: fuelSurchargeProgramStatusSchema.default("Active"),
-    fuelIndexId: z.string().min(1, { message: "Fuel index is required" }),
-    accessorialChargeId: z.string().min(1, { message: "Accessorial charge is required" }),
+    fuelIndexId: z.string().min(1, { error: () => translate("Fuel index is required") }),
+    accessorialChargeId: z
+      .string()
+      .min(1, { error: () => translate("Accessorial charge is required") }),
     method: fuelSurchargeProgramMethodSchema,
     pegPrice: decimalStringSchema,
     increment: decimalStringSchema,
@@ -122,13 +127,13 @@ export const fuelSurchargeProgramSchema = z
     tableRows: z.array(fuelSurchargeTableRowSchema).default([]),
   })
   .superRefine((data, ctx) => {
-    const requirePositive = (field: keyof typeof data, label: string) => {
+    const requirePositive = (field: keyof typeof data, message: () => string) => {
       const value = data[field];
       if (value === null || value === undefined || Number(value) <= 0) {
         ctx.addIssue({
           code: "custom",
           path: [field],
-          message: `${label} is required and must be greater than zero`,
+          message: message(),
         });
       }
     };
@@ -141,8 +146,12 @@ export const fuelSurchargeProgramSchema = z
           message: translate("Peg price is required and must not be negative"),
         });
       }
-      requirePositive("increment", "Increment");
-      requirePositive("incrementRate", "Rate per increment");
+      requirePositive("increment", () =>
+        translate("Increment is required and must be greater than zero"),
+      );
+      requirePositive("incrementRate", () =>
+        translate("Rate per increment is required and must be greater than zero"),
+      );
     }
 
     if (data.method === "PerMileMPG") {
@@ -153,7 +162,9 @@ export const fuelSurchargeProgramSchema = z
           message: translate("Peg price is required and must not be negative"),
         });
       }
-      requirePositive("milesPerGallon", "Miles per gallon");
+      requirePositive("milesPerGallon", () =>
+        translate("Miles per gallon is required and must be greater than zero"),
+      );
     }
 
     if (TABLE_METHODS.has(data.method)) {

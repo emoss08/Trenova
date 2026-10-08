@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const oshaCaseClassificationSchema = z.enum([
   "NotRecordable",
@@ -51,7 +52,7 @@ export const injuryFormSchema = z
     occurredAt: z.number(),
     reportedAt: z.number().nullable(),
     returnedToWorkAt: z.number().nullable(),
-    description: z.string().min(1, "Describe what happened"),
+    description: z.string().min(1, { error: () => translate("Describe what happened") }),
     location: z.string().max(255).nullable(),
     bodyPart: z.string().max(100).nullable(),
     harmfulAgent: z.string().max(255).nullable(),
@@ -76,7 +77,7 @@ export const injuryFormSchema = z
       values.classification === "DaysAway" ||
       values.classification === "Death",
     {
-      message: "A case with days away from work is a days-away case",
+      error: () => translate("A case with days away from work is a days-away case"),
       path: ["classification"],
     },
   )
@@ -88,22 +89,22 @@ export const injuryFormSchema = z
       values.classification === "DaysAway" ||
       values.classification === "Death",
     {
-      message: "A case with restricted days is recordable",
+      error: () => translate("A case with restricted days is recordable"),
       path: ["classification"],
     },
   )
   .refine((values) => values.claimStatus === "NotFiled" || Boolean(values.claimFiledAt), {
-    message: "Record when the claim was filed",
+    error: () => translate("Record when the claim was filed"),
     path: ["claimFiledAt"],
   })
   .refine((values) => values.claimStatus !== "Closed" || Boolean(values.claimClosedAt), {
-    message: "Record when the claim was closed",
+    error: () => translate("Record when the claim was closed"),
     path: ["claimClosedAt"],
   })
   .refine(
     (values) => values.returnedToWorkAt === null || values.returnedToWorkAt >= values.occurredAt,
     {
-      message: "The return to work cannot pre-date the injury",
+      error: () => translate("The return to work cannot pre-date the injury"),
       path: ["returnedToWorkAt"],
     },
   );

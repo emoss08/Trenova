@@ -9,9 +9,13 @@
   "Could not remove the date": "No se pudo quitar la fecha",
   "Edit date": "Editar fecha",
   "Every year": "Todos los años",
+  "Every {0}": "Cada {0}",
+  "Every {0}.": "Cada {0}.",
   "Holidays are skipped when a policy counts weekdays only. Blackouts stop time off from being requested on that day.": "Los días festivos se omiten cuando una política cuenta solo días entre semana. Los bloqueos impiden solicitar tiempo libre ese día.",
   "How the calendar is used": "Cómo se usa el calendario",
   "How the date is listed on the calendar.": "Cómo aparece la fecha en el calendario.",
+  "It no longer applies to any year.": "Ya no se aplica a ningún año.",
+  "It no longer applies to {0}.": "Ya no se aplica a {0}.",
   "Keep": "Conservar",
   "Next year": "El próximo año",
   "Nothing on the calendar for {0}.": "No hay nada en el calendario para {0}.",
@@ -21,8 +25,10 @@
   "Previous year": "El año anterior",
   "Repeats every year": "Se repite todos los años",
   "The calendar could not be loaded. Try again in a moment.": "No se pudo cargar el calendario. Vuelva a intentarlo en un momento.",
+  "The day the holiday or blackout falls on.": "El día en que cae el festivo o el bloqueo.",
   "This applies to every year.": "Esto se aplica a todos los años.",
   "Workers will be able to request this date off again.": "Los trabajadores podrán volver a solicitar este día libre.",
   "e.g. Jul 4": "p. ej., 4 de julio",
-  "e.g. Office closed; dispatch runs a skeleton crew": "p. ej., Oficina cerrada; despacho opera con personal mínimo"
+  "e.g. Office closed; dispatch runs a skeleton crew": "p. ej., Oficina cerrada; despacho opera con personal mínimo",
+  "{0} updated": "{0} actualizado"
 }

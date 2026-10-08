@@ -8,6 +8,7 @@
   "How this zone is identified and whether it is live.": "此區域的識別方式，以及是否生效中。",
   "Name a market area once and price against it, instead of listing every postal prefix it covers": "為市場區域命名一次即可據以定價，不必逐一列出其涵蓋的所有郵遞區號前綴",
   "No places yet. A zone with no members matches nothing, so every lane written against it would quietly never apply.": "尚無地點。沒有成員的區域不會比對到任何項目，因此依其設定的路線都將永遠不會套用。",
+  "No rate zones yet": "尚無費率區域",
   "Place type": "地點類型",
   "Place {0}": "地點 {0}",
   "Rate zone": "費率區域",

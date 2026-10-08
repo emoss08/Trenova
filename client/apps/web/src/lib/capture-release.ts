@@ -65,6 +65,7 @@ export function developmentInstallScript(serverUrl: string): string {
   return [
     "$msi = (Get-ChildItem .\\TrenovaCapture-*-x64.msi | Sort-Object LastWriteTime | Select-Object -Last 1).FullName",
     "Unblock-File $msi",
+    // i18n-ignore: PowerShell install command
     `msiexec /i $msi TRENOVAURL=${address} AUTOUPDATE=0 /l*v "$env:TEMP\\trenova-capture-install.log"`,
   ].join("\n");
 }

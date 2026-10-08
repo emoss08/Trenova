@@ -1,6 +1,7 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import { z } from "zod";
 import { driverTypeSchema } from "./worker";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export const credentialCategorySchema = z.enum([
   "License",
@@ -19,7 +20,7 @@ export type CredentialStatus = z.infer<typeof credentialStatusSchema>;
 export const credentialHealthSchema = z.enum(["Valid", "ExpiringSoon", "Expired", "Missing"]);
 export type CredentialHealth = z.infer<typeof credentialHealthSchema>;
 
-export const CREDENTIAL_CATEGORY_LABELS: Record<CredentialCategory, string> = {
+export const CREDENTIAL_CATEGORY_LABELS: Record<CredentialCategory, string> = defineLabels({
   License: "License",
   Medical: "Medical",
   Endorsement: "Endorsement",
@@ -27,14 +28,14 @@ export const CREDENTIAL_CATEGORY_LABELS: Record<CredentialCategory, string> = {
   Certification: "Certification",
   Background: "Background check",
   Other: "Other",
-};
+});
 
-export const CREDENTIAL_HEALTH_LABELS: Record<CredentialHealth, string> = {
+export const CREDENTIAL_HEALTH_LABELS: Record<CredentialHealth, string> = defineLabels({
   Valid: "Valid",
   ExpiringSoon: "Expiring soon",
   Expired: "Expired",
   Missing: "Missing",
-};
+});
 
 const optionalTrimmed = (max: number, message: string) =>
   z
@@ -51,14 +52,16 @@ export const credentialTypeFormSchema = z.object({
   code: z
     .string()
     .trim()
-    .min(1, { message: "Code is required" })
-    .max(50, { message: "Code cannot exceed 50 characters" })
-    .regex(/^[A-Za-z0-9_-]+$/, { message: "Letters, digits, dashes and underscores only" }),
+    .min(1, { error: () => translate("Code is required") })
+    .max(50, { error: () => translate("Code cannot exceed 50 characters") })
+    .regex(/^[A-Za-z0-9_-]+$/, {
+      error: () => translate("Letters, digits, dashes and underscores only"),
+    }),
   name: z
     .string()
     .trim()
-    .min(1, { message: "Name is required" })
-    .max(100, { message: "Name cannot exceed 100 characters" }),
+    .min(1, { error: () => translate("Name is required") })
+    .max(100, { error: () => translate("Name cannot exceed 100 characters") }),
   description: optionalTrimmed(1000, "Description cannot exceed 1000 characters"),
   category: credentialCategorySchema,
   status: z.enum(["Active", "Inactive"]),
@@ -67,9 +70,13 @@ export const credentialTypeFormSchema = z.object({
   renewalWindowDays: z
     .number()
     .int()
-    .min(0, { message: "Cannot be negative" })
-    .max(365, { message: "Cannot exceed 365 days" }),
-  validityMonths: z.number().int().min(1, { message: "Must be at least one month" }).nullable(),
+    .min(0, { error: () => translate("Cannot be negative") })
+    .max(365, { error: () => translate("Cannot exceed 365 days") }),
+  validityMonths: z
+    .number()
+    .int()
+    .min(1, { error: () => translate("Must be at least one month") })
+    .nullable(),
   requiresNumber: z.boolean(),
   requiresDocument: z.boolean(),
 });
@@ -77,7 +84,7 @@ export type CredentialTypeFormValues = z.infer<typeof credentialTypeFormSchema>;
 
 export const credentialFormSchema = z
   .object({
-    credentialTypeId: z.string().min(1, { message: "Choose a credential type" }),
+    credentialTypeId: z.string().min(1, { error: () => translate("Choose a credential type") }),
     number: optionalTrimmed(100, "Number cannot exceed 100 characters"),
     issuingAuthority: optionalTrimmed(100, "Issuing authority cannot exceed 100 characters"),
     issuedAt: z.number().int().positive().nullable(),

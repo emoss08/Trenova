@@ -2,12 +2,14 @@
 import { cn } from "@trenova/shared/lib/utils";
 import type { Header } from "@trenova/shared/types/data-table";
 import type { RowData } from "@tanstack/react-table";
+import { useT } from "@trenova/shared/i18n/use-t";
 
 export function DataTableColumnResizeHandle<TData extends RowData>({
   header,
 }: {
   header: Header<TData, unknown>;
 }) {
+  const t = useT();
   const { column } = header;
   const { minSize, maxSize } = column.columnDef;
   const hasFixedSize = minSize !== undefined && minSize === maxSize;
@@ -19,8 +21,8 @@ export function DataTableColumnResizeHandle<TData extends RowData>({
     <div
       role="separator"
       aria-orientation="vertical"
-      aria-label={`Resize ${column.id} column`}
-      title="Drag to resize, double-click to reset"
+      aria-label={t("Resize {0} column", column.id)}
+      title={t("Drag to resize, double-click to reset")}
       data-resizing={isResizing || undefined}
       onMouseDown={header.getResizeHandler()}
       onTouchStart={header.getResizeHandler()}

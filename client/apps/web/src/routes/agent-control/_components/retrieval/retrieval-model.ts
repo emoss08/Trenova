@@ -14,6 +14,7 @@ import type {
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { BadgeAttrProps } from "@trenova/shared/lib/status-phase";
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 /** The index moves with the indexer, a batch at a time; half a minute old is still true. */
 export const RETRIEVAL_STALE_MS = 30_000;
@@ -380,8 +381,8 @@ export const retrievalSettingsSchema = z.object({
   monthlyIndexingBudgetCents: z
     .number()
     .int()
-    .min(0, "A budget cannot be negative")
-    .max(10_000_000, "A budget is at most 100,000"),
+    .min(0, { error: () => translate("A budget cannot be negative") })
+    .max(10_000_000, { error: () => translate("A budget is at most 100,000") }),
 });
 
 export type RetrievalSettingsFormValues = z.infer<typeof retrievalSettingsSchema>;

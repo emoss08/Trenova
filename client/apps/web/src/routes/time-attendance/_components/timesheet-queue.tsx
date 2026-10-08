@@ -55,29 +55,30 @@ import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { activeQueueQuery, paidQueueQuery } from "./queries";
 import { TimesheetsEmpty } from "./time-attendance-empty";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 type FilterValues = { workerId: string };
 
-const SEGMENT_LABELS: Record<QueueSegment, string> = {
+const SEGMENT_LABELS: Record<QueueSegment, string> = defineLabels({
   Submitted: "Awaiting approval",
   Open: "Open",
   Approved: "Approved",
   Locked: "Paid",
-};
+});
 
-const EMPTY_TITLES: Record<QueueSegment, string> = {
+const EMPTY_TITLES: Record<QueueSegment, string> = defineLabels({
   Submitted: "Nothing awaiting approval",
   Open: "No open weeks",
   Approved: "Nothing approved",
   Locked: "Nothing paid yet",
-};
+});
 
-const EMPTY_DESCRIPTIONS: Record<QueueSegment, string> = {
+const EMPTY_DESCRIPTIONS: Record<QueueSegment, string> = defineLabels({
   Submitted: "A week somebody hands over lands here, with the hours frozen as they were.",
   Open: "Weeks still being worked, and any sent back for another look, land here.",
   Approved: "A week a manager has signed off waits here until payroll picks it up.",
   Locked: "A week goes here once a payroll run has carried it.",
-};
+});
 
 function hourSegments(sheet: {
   regularMinutes: number;
@@ -137,15 +138,12 @@ export function TimesheetQueue({ now }: { now: number }) {
   const paid = useQuery({ ...paidQueueQuery(filter), enabled: segment === "Locked" });
 
   const counts = useMemo(() => countBySegment(active.data ?? []), [active.data]);
-  const segmentItems = useMemo<SegmentedControlItem<QueueSegment>[]>(
-    () => [
-      { value: "Submitted", label: SEGMENT_LABELS.Submitted, caption: String(counts.Submitted) },
-      { value: "Open", label: SEGMENT_LABELS.Open, caption: String(counts.Open) },
-      { value: "Approved", label: SEGMENT_LABELS.Approved, caption: String(counts.Approved) },
-      { value: "Locked", label: SEGMENT_LABELS.Locked },
-    ],
-    [counts],
-  );
+  const segmentItems: SegmentedControlItem<QueueSegment>[] = [
+    { value: "Submitted", label: SEGMENT_LABELS.Submitted, caption: String(counts.Submitted) },
+    { value: "Open", label: SEGMENT_LABELS.Open, caption: String(counts.Open) },
+    { value: "Approved", label: SEGMENT_LABELS.Approved, caption: String(counts.Approved) },
+    { value: "Locked", label: SEGMENT_LABELS.Locked },
+  ];
 
   const sheets = segment === "Locked" ? paid : active;
   const rows = useMemo(
@@ -159,10 +157,10 @@ export function TimesheetQueue({ now }: { now: number }) {
     onSuccess: (_data, input) => {
       toast.success(
         input.status === "Approved"
-          ? "Week approved"
+          ? translate("Week approved")
           : input.status === "Rejected"
-            ? "Week sent back"
-            : "Week handed over",
+            ? translate("Week sent back")
+            : translate("Week handed over"),
       );
       void queryClient.invalidateQueries({ queryKey: [TIMESHEETS_KEY] });
       void queryClient.invalidateQueries({ queryKey: [TIMESHEET_KEY] });
@@ -310,11 +308,11 @@ function QueueRow({
     sheet.status === "Submitted" && sheet.submittedAt ? waitingDays(sheet.submittedAt, now) : null;
 
   const meta = [
-    `${sheet.entryCount} punch${sheet.entryCount === 1 ? "" : "es"}`,
+    t("{0, plural, one {# punch} other {# punches}}", sheet.entryCount),
     sheet.status !== "Submitted" && sheet.submittedAt
-      ? `handed over ${formatShiftDate(sheet.submittedAt)}`
+      ? t("handed over {0}", formatShiftDate(sheet.submittedAt))
       : null,
-    sheet.approvedAt ? `approved ${formatShiftDate(sheet.approvedAt)}` : null,
+    sheet.approvedAt ? t("approved {0}", formatShiftDate(sheet.approvedAt)) : null,
     sheet.status === "Rejected" && sheet.decisionNote ? sheet.decisionNote : null,
   ].filter(Boolean);
 
@@ -356,7 +354,7 @@ function QueueRow({
           size="sm"
           showLegend={false}
           className="min-w-0 flex-1"
-          aria-label={`${name}'s hours`}
+          aria-label={t("{0}'s hours", name)}
           formatValue={formatHours}
           segments={hourSegments(sheet)}
         />

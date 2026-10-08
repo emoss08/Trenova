@@ -1,9 +1,11 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import type {
   RateSimulation,
   RateSimulationSummary,
   RuleCoverage,
   RuleOutcome,
 } from "../types/rate";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 /**
  * Reading a simulation.
@@ -71,11 +73,11 @@ export function runProgress(simulation: RateSimulation | undefined): number | nu
   return Math.min(1, done / summary.shipmentCount);
 }
 
-const OUTCOME_LABEL: Record<RuleOutcome, string> = {
+const OUTCOME_LABEL: Record<RuleOutcome, string> = defineLabels({
   Won: "Priced shipments",
   Lost: "Always outranked",
   NeverFired: "Never matched",
-};
+});
 
 export function ruleOutcomeLabel(outcome: RuleOutcome): string {
   return OUTCOME_LABEL[outcome] ?? outcome;
@@ -92,15 +94,31 @@ export function ruleOutcomeLabel(outcome: RuleOutcome): string {
 export function ruleCoverageNote(row: RuleCoverage): string {
   switch (row.outcome) {
     case "NeverFired":
-      return "No shipment in this window matched this lane. It may be written for freight you do not move.";
+      return translate(
+        "No shipment in this window matched this lane. It may be written for freight you do not move.",
+      );
     case "Lost":
       return row.lostToLabel
-        ? `Matched ${row.lostCount} shipments and never won — ${row.lostToLabel} covers the same freight more narrowly.`
-        : `Matched ${row.lostCount} shipments and never won: something narrower covers the same freight.`;
+        ? translate(
+            "{0, plural, one {Matched # shipment} other {Matched # shipments}} and never won — {1} covers the same freight more narrowly.",
+            row.lostCount,
+            row.lostToLabel,
+          )
+        : translate(
+            "{0, plural, one {Matched # shipment} other {Matched # shipments}} and never won: something narrower covers the same freight.",
+            row.lostCount,
+          );
     case "Won":
       return row.lostCount > 0
-        ? `Priced ${row.wonCount} shipments, outranked on ${row.lostCount}.`
-        : `Priced ${row.wonCount} shipments.`;
+        ? translate(
+            "{0, plural, one {Priced # shipment} other {Priced # shipments}}, outranked on {1}.",
+            row.wonCount,
+            row.lostCount,
+          )
+        : translate(
+            "{0, plural, one {Priced # shipment.} other {Priced # shipments.}}",
+            row.wonCount,
+          );
     default:
       return "";
   }
@@ -126,25 +144,39 @@ export function summaryHeadline(simulation: RateSimulation | undefined): string 
   if (!simulation) return "";
 
   if (simulation.status === "Failed") {
-    return simulation.error || "This simulation did not finish.";
+    return simulation.error || translate("This simulation did not finish.");
   }
 
   if (!isTerminal(simulation)) {
-    return "Replaying shipments…";
+    return translate("Replaying shipments…");
   }
 
   const summary = simulation.summary;
   if (!summary || summary.evaluatedCount === 0) {
-    return "No shipments in this window could be priced, so there is nothing to compare.";
+    return translate(
+      "No shipments in this window could be priced, so there is nothing to compare.",
+    );
   }
 
   const direction = deltaDirection(summary);
   if (direction === "flat") {
-    return `Across ${summary.evaluatedCount} shipments this contract charges exactly what they were billed.`;
+    return translate(
+      "{0, plural, one {Across # shipment} other {Across # shipments}} this contract charges exactly what they were billed.",
+      summary.evaluatedCount,
+    );
   }
 
-  const verb = direction === "up" ? "more" : "less";
   const magnitude = Math.abs(summary.totalDeltaPct);
 
-  return `Across ${summary.evaluatedCount} shipments this contract charges ${magnitude}% ${verb} than they were billed.`;
+  return direction === "up"
+    ? translate(
+        "{0, plural, one {Across # shipment} other {Across # shipments}} this contract charges {1}% more than they were billed.",
+        summary.evaluatedCount,
+        magnitude,
+      )
+    : translate(
+        "{0, plural, one {Across # shipment} other {Across # shipments}} this contract charges {1}% less than they were billed.",
+        summary.evaluatedCount,
+        magnitude,
+      );
 }

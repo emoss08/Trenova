@@ -46,8 +46,18 @@ export default function PTOPolicyTable() {
       }
       const outcome = await settleAll(eligible, (row) => archivePtoPolicy(row.id, row.version));
       notifyBulkOutcome(outcome, {
-        entity: "policy",
-        verbPast: t("Archived"),
+        succeeded: (count) => t("Archived {0, plural, one {# policy} other {# policies}}", count),
+        partial: (succeeded, failed) =>
+          t(
+            "Archived {0, plural, one {# policy} other {# policies}}; {1} failed",
+            succeeded,
+            failed,
+          ),
+        allFailed: (failed) =>
+          t(
+            "{0, plural, one {The selected policy failed} other {All # selected policies failed}}",
+            failed,
+          ),
         skipped: rows.length - eligible.length,
       });
       await invalidate();
@@ -64,8 +74,18 @@ export default function PTOPolicyTable() {
       }
       const outcome = await settleAll(eligible, (row) => restorePtoPolicy(row.id, row.version));
       notifyBulkOutcome(outcome, {
-        entity: "policy",
-        verbPast: t("Restored"),
+        succeeded: (count) => t("Restored {0, plural, one {# policy} other {# policies}}", count),
+        partial: (succeeded, failed) =>
+          t(
+            "Restored {0, plural, one {# policy} other {# policies}}; {1} failed",
+            succeeded,
+            failed,
+          ),
+        allFailed: (failed) =>
+          t(
+            "{0, plural, one {The selected policy failed} other {All # selected policies failed}}",
+            failed,
+          ),
         skipped: rows.length - eligible.length,
       });
       await invalidate();
@@ -127,6 +147,7 @@ export default function PTOPolicyTable() {
   return (
     <DataTable<PTOPolicyRow>
       name="PTO Policy"
+      emptyTitle={t("No PTO policies yet")}
       queryKey={PTO_POLICY_LIST_KEY}
       graphql={ptoPolicyTableGraphQLConfig}
       resource={Resource.PTOPolicy}

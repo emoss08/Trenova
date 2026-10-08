@@ -7,9 +7,10 @@ import { z } from "zod";
 import { AuthCardBody } from "./auth-card";
 import { AuthErrorText, AuthSubmit, AuthTextField } from "./auth-field";
 import { AuthTray, StepCrumbs, StepHeading } from "./auth-primitives";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const forgotPasswordSchema = z.object({
-  emailAddress: z.email({ error: "Please enter a valid email address" }),
+  emailAddress: z.email({ error: () => translate("Please enter a valid email address") }),
 });
 
 export type ForgotPasswordRequest = z.infer<typeof forgotPasswordSchema>;

@@ -17,6 +17,7 @@ export default function PaymentsTable() {
   return (
     <DataTable<CustomerPaymentRow>
       name="Customer Payment"
+      emptyTitle={t("No customer payments yet")}
       queryKey="customer-payment-list"
       graphql={customerPaymentTableGraphQLConfig}
       resource={Resource.CustomerPayment}

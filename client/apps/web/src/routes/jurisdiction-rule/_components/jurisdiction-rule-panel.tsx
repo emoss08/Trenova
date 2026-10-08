@@ -1,3 +1,4 @@
+import { describeJurisdictionVerification } from "@/lib/jurisdiction-verification";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
@@ -19,6 +20,7 @@ import { FormProvider, type Resolver, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { JurisdictionRuleForm } from "./jurisdiction-rule-form";
 import { JurisdictionRuleVerifyDialog } from "./jurisdiction-rule-verify-dialog";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const QUERY_KEY = "jurisdiction-rule-list";
 
@@ -137,8 +139,8 @@ function JurisdictionRuleEditPanel({
 
       toast.success(t("Changes have been saved"), {
         description: clearedVerification
-          ? "A limit changed, so this rule is unverified again and needs re-checking."
-          : "Jurisdiction rule updated successfully",
+          ? translate("A limit changed, so this rule is unverified again and needs re-checking.")
+          : translate("Jurisdiction rule updated successfully"),
       });
       void queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
     },
@@ -146,12 +148,15 @@ function JurisdictionRuleEditPanel({
     resourceName: "Jurisdiction Rule",
   });
 
-  const verificationLabel = row?.verifiedAt
-    ? `${row.verificationState} on ${formatToUserTimezone(row.verifiedAt, {
-        showTime: false,
-        showTimeZone: false,
-      })}`
-    : (row?.verificationState ?? "Unverified");
+  const verificationLabel = describeJurisdictionVerification(
+    row?.verificationState ?? "Unverified",
+    row?.verifiedAt
+      ? formatToUserTimezone(row.verifiedAt, {
+          showTime: false,
+          showTimeZone: false,
+        })
+      : null,
+  );
 
   return (
     <>

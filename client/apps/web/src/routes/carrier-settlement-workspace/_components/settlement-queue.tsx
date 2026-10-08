@@ -11,9 +11,9 @@ import {
   BulkMarkPaidDialog,
   CARRIER_MARK_PAID_METHODS,
 } from "@/components/settlements/bulk-mark-paid-dialog";
-import { runBulkAction } from "@/lib/bulk-run";
+import { notifyBulkOutcome, settleAll } from "@/lib/bulk-outcome";
 import {
-  carrierLifecycleVerbs,
+  carrierLifecycleMessages,
   eligibleCarrierSettlements,
   type CarrierSettlementLifecycleAction,
 } from "@/lib/carrier-settlement-lifecycle";
@@ -35,6 +35,7 @@ import {
 } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export type QueueFilter = "all" | "Draft" | "PendingApproval" | "Approved" | "Posted" | "Paid";
 
@@ -218,7 +219,7 @@ export function SettlementQueue({
                     className="mt-0.5"
                     checked={checkedIds.has(settlement.id)}
                     onCheckedChange={() => toggleChecked(settlement.id)}
-                    aria-label={`Select settlement for ${carrierName(settlement)}`}
+                    aria-label={t("Select settlement for {0}", carrierName(settlement))}
                   />
                   <button
                     type="button"
@@ -288,29 +289,26 @@ function BulkActionBar({
       paymentReference?: string;
     }) => {
       const eligible = eligibleRows(input.action);
-      await runBulkAction(
-        eligible,
-        (settlement) => {
-          switch (input.action) {
-            case "Submit":
-              return submitCarrierSettlement({ settlementId: settlement.id });
-            case "Approve":
-              return approveCarrierSettlement({ settlementId: settlement.id });
-            case "Post":
-              return postCarrierSettlement({ settlementId: settlement.id });
-            case "MarkPaid":
-              return markCarrierSettlementPaid({
-                settlementId: settlement.id,
-                paymentMethod: input.paymentMethod ?? "Check",
-                paymentReference: input.paymentReference || undefined,
-              });
-          }
-        },
-        { noun: "settlement", verb: carrierLifecycleVerbs[input.action] },
-      );
+      const outcome = await settleAll(eligible, (settlement) => {
+        switch (input.action) {
+          case "Submit":
+            return submitCarrierSettlement({ settlementId: settlement.id });
+          case "Approve":
+            return approveCarrierSettlement({ settlementId: settlement.id });
+          case "Post":
+            return postCarrierSettlement({ settlementId: settlement.id });
+          case "MarkPaid":
+            return markCarrierSettlementPaid({
+              settlementId: settlement.id,
+              paymentMethod: input.paymentMethod ?? "Check",
+              paymentReference: input.paymentReference || undefined,
+            });
+        }
+      });
+      notifyBulkOutcome(outcome, carrierLifecycleMessages(input.action));
     },
     onSuccess: () => onComplete(),
-    onError: (error: Error) => toast.error(error.message || "Bulk action failed"),
+    onError: (error: Error) => toast.error(error.message || translate("Bulk action failed")),
   });
 
   const actionButton = (
@@ -328,7 +326,10 @@ function BulkActionBar({
         className="h-7 text-xs"
         disabled={mutation.isPending}
         onClick={onClick ?? (() => mutation.mutate({ action }))}
-        title={`Applies to the ${count} selected settlement${count === 1 ? "" : "s"} in an eligible status; others are skipped`}
+        title={t(
+          "Applies to the {0, plural, one {# selected settlement} other {# selected settlements}} in an eligible status; others are skipped",
+          count,
+        )}
       >
         {icon}
         {label} ({count})

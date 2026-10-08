@@ -27,6 +27,7 @@ import { ApprovalImpactPanel } from "./approval-impact-panel";
 import { ReadinessPanel } from "./readiness-panel";
 import { ReviewDiffPanel } from "./review-diff-panel";
 import { ReviewHistory } from "./review-history";
+import { defineLabels, type LabelMap } from "@trenova/shared/i18n/labels";
 
 export type ApprovalAction = "submit" | "approve" | "reject" | "requestChanges";
 
@@ -39,60 +40,81 @@ export const COMMENT_REQUIRED_ACTIONS: ReadonlySet<ApprovalAction> = new Set([
 const ACTION_CONFIG: Record<
   ApprovalAction,
   {
-    title: string;
-    description: string;
-    confirmLabel: string;
-    loadingLabel: string;
-    successMessage: string;
-    commentLabel: string;
-    commentPlaceholder: string;
+    copy: LabelMap<{
+      title: string;
+      description: string;
+      confirmLabel: string;
+      loadingLabel: string;
+      successMessage: string;
+      failureTitle: string;
+      failureFallback: string;
+      commentLabel: string;
+      commentPlaceholder: string;
+    }>;
     icon: React.ComponentType<{ className?: string }>;
     destructive: boolean;
   }
 > = {
   submit: {
-    title: "Submit for review",
-    description: "Send this template to a reviewer for approval before it can be activated.",
-    confirmLabel: "Submit for review",
-    loadingLabel: "Submitting...",
-    successMessage: "Template submitted for review",
-    commentLabel: "Comment (optional)",
-    commentPlaceholder: "Describe what changed and why it needs review",
+    copy: defineLabels({
+      title: "Submit for review",
+      description: "Send this template to a reviewer for approval before it can be activated.",
+      confirmLabel: "Submit for review",
+      loadingLabel: "Submitting...",
+      successMessage: "Template submitted for review",
+      failureTitle: "Could not submit template",
+      failureFallback: "Failed to submit the template.",
+      commentLabel: "Comment (optional)",
+      commentPlaceholder: "Describe what changed and why it needs review",
+    }),
     icon: Send01Icon,
     destructive: false,
   },
   approve: {
-    title: "Approve template",
-    description: "Approving activates this template so it can be used to rate shipments.",
-    confirmLabel: "Approve",
-    loadingLabel: "Approving...",
-    successMessage: "Template approved and activated",
-    commentLabel: "Comment (optional)",
-    commentPlaceholder: "Add an approval note",
+    copy: defineLabels({
+      title: "Approve template",
+      description: "Approving activates this template so it can be used to rate shipments.",
+      confirmLabel: "Approve",
+      loadingLabel: "Approving...",
+      successMessage: "Template approved and activated",
+      failureTitle: "Could not approve template",
+      failureFallback: "Failed to approve the template.",
+      commentLabel: "Comment (optional)",
+      commentPlaceholder: "Add an approval note",
+    }),
     icon: CheckIcon,
     destructive: false,
   },
   reject: {
-    title: "Reject template",
-    description:
-      "Rejecting closes this review round and archives the template; it cannot rate shipments until someone resubmits it from the archive. Use Request Changes to send it back to the author instead.",
-    confirmLabel: "Reject",
-    loadingLabel: "Rejecting...",
-    successMessage: "Template rejected and archived",
-    commentLabel: "Comment (required)",
-    commentPlaceholder: "Explain why this template is being rejected",
+    copy: defineLabels({
+      title: "Reject template",
+      description:
+        "Rejecting closes this review round and archives the template; it cannot rate shipments until someone resubmits it from the archive. Use Request Changes to send it back to the author instead.",
+      confirmLabel: "Reject",
+      loadingLabel: "Rejecting...",
+      successMessage: "Template rejected and archived",
+      failureTitle: "Could not reject template",
+      failureFallback: "Failed to reject the template.",
+      commentLabel: "Comment (required)",
+      commentPlaceholder: "Explain why this template is being rejected",
+    }),
     icon: XCloseIcon,
     destructive: true,
   },
   requestChanges: {
-    title: "Request changes",
-    description:
-      "Send the template back to its author with what needs fixing. The round stays open, so their resubmission continues this review.",
-    confirmLabel: "Request changes",
-    loadingLabel: "Sending...",
-    successMessage: "Changes requested; the author has been notified",
-    commentLabel: "What needs to change (required)",
-    commentPlaceholder: "e.g. Guard totalWeight with coalesce; the hazmat surcharge should be $200",
+    copy: defineLabels({
+      title: "Request changes",
+      description:
+        "Send the template back to its author with what needs fixing. The round stays open, so their resubmission continues this review.",
+      confirmLabel: "Request changes",
+      loadingLabel: "Sending...",
+      successMessage: "Changes requested; the author has been notified",
+      failureTitle: "Could not request changes on template",
+      failureFallback: "Failed to request changes on the template.",
+      commentLabel: "What needs to change (required)",
+      commentPlaceholder:
+        "e.g. Guard totalWeight with coalesce; the hazmat surcharge should be $200",
+    }),
     icon: MessageAlertSquareIcon,
     destructive: false,
   },
@@ -121,6 +143,7 @@ export function ApprovalActionDialog({
   // the check itself failed and the server must be the judge.
   const [ready, setReady] = useState<boolean | null>(null);
   const config = ACTION_CONFIG[action];
+  const copy = config.copy;
   const Icon = config.icon;
   const gated = action === "submit" || action === "approve";
 
@@ -149,7 +172,7 @@ export function ApprovalActionDialog({
       }
     },
     onSuccess: () => {
-      toast.success(config.successMessage);
+      toast.success(copy.successMessage);
       void invalidateFormulaTemplate(queryClient);
       onOpenChange(false);
     },
@@ -157,9 +180,9 @@ export function ApprovalActionDialog({
       // The server says exactly why a review step was refused: a self
       // approval, a failing scenario, an invalid expression. That reason is
       // the whole point of the dialog, so it stays on screen.
-      const reason = describeApiError(error, `Failed to ${action} the template.`);
+      const reason = describeApiError(error, copy.failureFallback);
       setServerError(reason);
-      toast.error(`Could not ${action} template`, { description: reason });
+      toast.error(copy.failureTitle, { description: reason });
     },
   });
 
@@ -189,10 +212,10 @@ export function ApprovalActionDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Icon className="size-4" />
-            {t(config.title)}
+            {copy.title}
             {template?.name && <span className="text-muted-foreground">— {template.name}</span>}
           </DialogTitle>
-          <DialogDescription>{t(config.description)}</DialogDescription>
+          <DialogDescription>{copy.description}</DialogDescription>
         </DialogHeader>
 
         {gated && open && template?.id && (
@@ -209,7 +232,7 @@ export function ApprovalActionDialog({
 
         <div className="space-y-1.5 py-2">
           <label htmlFor="approval-comment" className="text-xs font-medium">
-            {config.commentLabel}
+            {copy.commentLabel}
           </label>
           <Textarea
             id="approval-comment"
@@ -218,7 +241,7 @@ export function ApprovalActionDialog({
               setComment(e.target.value);
               setShowCommentError(false);
             }}
-            placeholder={config.commentPlaceholder}
+            placeholder={copy.commentPlaceholder}
             minRows={3}
             maxRows={6}
             isInvalid={commentInvalid}
@@ -250,10 +273,10 @@ export function ApprovalActionDialog({
             variant={config.destructive ? "destructive" : "default"}
             onClick={handleConfirm}
             isLoading={mutation.isPending}
-            loadingText={config.loadingLabel}
+            loadingText={copy.loadingLabel}
             disabled={gated && ready === false}
           >
-            {config.confirmLabel}
+            {copy.confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

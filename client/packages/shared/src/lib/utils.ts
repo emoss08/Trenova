@@ -1,4 +1,5 @@
-import { numberFormatter } from "@trenova/shared/i18n/format";
+import { formatNumber, numberFormatter } from "@trenova/shared/i18n/format";
+import { translate } from "@trenova/shared/i18n/runtime";
 import type { Location } from "@trenova/shared/types/location";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -113,10 +114,6 @@ export function formatIdentityProviderName(name: string): string {
   return name
     .replace(/azure\s*ad/gi, "Entra ID")
     .replace(/microsoft entra id/gi, "Microsoft Entra ID");
-}
-
-export function pluralize(word: string, count: number) {
-  return count === 1 ? word : `${word}s`;
 }
 
 export function upperFirst(str: string): string {
@@ -277,11 +274,26 @@ export function downloadJsonFile(filename: string, data: unknown): void {
 }
 
 export function formatFileSize(bytes: number): string {
-  if (bytes <= 0) return "0 B";
-  const units = ["B", "KB", "MB", "GB", "TB"];
-  const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  if (bytes <= 0) return translate("{0} B", formatNumber(0));
+  const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), 4);
   const value = bytes / 1024 ** exponent;
-  return `${value >= 100 || exponent === 0 ? Math.round(value) : value.toFixed(1)} ${units[exponent]}`;
+  const digits = value >= 100 || exponent === 0 ? 0 : 1;
+  const amount = formatNumber(value, {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
+  switch (exponent) {
+    case 0:
+      return translate("{0} B", amount);
+    case 1:
+      return translate("{0} KB", amount);
+    case 2:
+      return translate("{0} MB", amount);
+    case 3:
+      return translate("{0} GB", amount);
+    default:
+      return translate("{0} TB", amount);
+  }
 }
 
 export function chunk<T>(items: readonly T[], size: number): T[][] {

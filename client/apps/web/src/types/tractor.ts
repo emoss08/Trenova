@@ -14,21 +14,22 @@ import {
 import { usStateRelationSchema } from "@trenova/shared/types/us-state";
 import { iftaFuelTypeSchema } from "@trenova/shared/types/fuel-ifta-enums";
 import { workerSchema } from "@trenova/shared/types/worker";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const tractorSchema = z.object({
   ...tenantInfoSchema.shape,
   status: equipmentStatusSchema,
   code: z.string().min(1, {
-    message: "Code is required",
+    error: () => translate("Code is required"),
   }),
   equipmentTypeId: z.string().min(1, {
-    message: "Equipment Type is required",
+    error: () => translate("Equipment Type is required"),
   }),
   equipmentManufacturerId: z.string().min(1, {
-    message: "Equipment Manufacturer is required",
+    error: () => translate("Equipment Manufacturer is required"),
   }),
   primaryWorkerId: z.string().min(1, {
-    message: "Primary Worker is required",
+    error: () => translate("Primary Worker is required"),
   }),
   secondaryWorkerId: nullableStringSchema,
   fleetCodeId: nullableStringSchema,

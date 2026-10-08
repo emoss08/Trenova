@@ -102,7 +102,12 @@ export function PayrollPanel() {
   const { mutate: generate, isPending: generating } = useMutation({
     mutationFn: () => generatePayrollExport({ periodStart, periodEnd }),
     onSuccess: (run) => {
-      toast.success(`Run created over ${run.timesheetCount} timesheet(s)`);
+      toast.success(
+        t(
+          "{0, plural, one {Run created over # timesheet} other {Run created over # timesheets}}",
+          run.timesheetCount,
+        ),
+      );
       void queryClient.invalidateQueries({ queryKey: [PAYROLL_EXPORTS_KEY] });
       void queryClient.invalidateQueries({ queryKey: [TIMESHEETS_KEY] });
     },
@@ -126,8 +131,11 @@ export function PayrollPanel() {
           tone={readySheets.length > 0 ? "success" : "muted"}
           sub={
             readySheets.length > 0
-              ? `${readySummary.workers} ${readySummary.workers === 1 ? "person" : "people"} in the period`
-              : "Approved weeks in the period not yet sent"
+              ? t(
+                  "{0, plural, one {# person in the period} other {# people in the period}}",
+                  readySummary.workers,
+                )
+              : t("Approved weeks in the period not yet sent")
           }
         />
         <KpiStripItem
@@ -135,14 +143,22 @@ export function PayrollPanel() {
           value={formatHours(readySummary.totalMinutes)}
           sub={
             readySummary.overtimeMinutes > 0
-              ? `${formatHours(readySummary.overtimeMinutes)} of it overtime, on ${readySummary.overtimeWeeks} week${readySummary.overtimeWeeks === 1 ? "" : "s"}`
-              : "Regular, overtime and paid leave together"
+              ? t(
+                  "{0} of it overtime, on {1, plural, one {# week} other {# weeks}}",
+                  formatHours(readySummary.overtimeMinutes),
+                  readySummary.overtimeWeeks,
+                )
+              : t("Regular, overtime and paid leave together")
           }
         />
         <KpiStripItem
           label={t("Runs sent")}
           value={String(live.length)}
-          sub={runs.length > live.length ? `${runs.length - live.length} voided` : "None voided"}
+          sub={
+            runs.length > live.length
+              ? t("{0} voided", runs.length - live.length)
+              : t("None voided")
+          }
         />
       </KpiStrip>
 
@@ -238,7 +254,12 @@ export function PayrollPanel() {
                   <CompositionBar
                     size="sm"
                     showLegend={false}
-                    aria-label={`${sheet.worker ? `${sheet.worker.firstName} ${sheet.worker.lastName}` : sheet.workerId}'s hours`}
+                    aria-label={t(
+                      "{0}'s hours",
+                      sheet.worker
+                        ? `${sheet.worker.firstName} ${sheet.worker.lastName}`
+                        : sheet.workerId,
+                    )}
                     formatValue={formatHours}
                     segments={hourSegments(sheet)}
                   />
@@ -319,7 +340,7 @@ function ExportRow({ run, onVoid }: { run: PayrollExportRow; onVoid: () => void 
       link.click();
       URL.revokeObjectURL(url);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not build the file");
+      toast.error(error instanceof Error ? error.message : translate("Could not build the file"));
     } finally {
       setDownloading(false);
     }

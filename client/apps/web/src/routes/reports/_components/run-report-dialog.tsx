@@ -110,7 +110,7 @@ export function RunReportDialog({
       {
         onSuccess: () => {
           onOpenChange(false);
-          toast.success(`"${reportName}" queued for generation`, {
+          toast.success(t('"{0}" queued for generation', reportName), {
             action: {
               label: t("View runs"),
               onClick: () => navigate("/reports/runs"),

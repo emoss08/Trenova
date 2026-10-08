@@ -1,11 +1,14 @@
 {
+  "Advance": "Anticipo",
   "Advance written off": "Anticipo cancelado",
+  "Advance {0}": "Anticipo {0}",
   "Cash and money-code advances that are automatically recovered from the driver's next settlement.": "Anticipos en efectivo y por código de dinero que se recuperan automáticamente de la próxima liquidación del conductor.",
   "Context for reviewers — what the advance covered, e.g. a lumper fee or breakdown repair.": "Contexto para los revisores: qué cubrió el anticipo, p. ej., una tarifa de estibador o una reparación por avería.",
   "Forgives each advance's remaining balance — nothing more is recovered from settlements. This cannot be undone, and the reason is recorded on every advance.": "Condona el saldo restante de cada anticipo: no se recupera nada más de las liquidaciones. Esto no se puede deshacer, y el motivo queda registrado en cada anticipo.",
   "How the money was disbursed — cash, an EFS/Comdata money code, or a fuel card load.": "Cómo se desembolsó el dinero: efectivo, un código de dinero EFS/Comdata o una carga en la tarjeta de combustible.",
   "Issued date": "Fecha de emisión",
   "Money code / check number": "Código de dinero / número de cheque",
+  "No pay advances yet": "Aún no hay anticipos de pago",
   "Only outstanding or partially recovered advances can be written off.": "Solo pueden cancelarse los anticipos pendientes o parcialmente recuperados.",
   "Outstanding minor": "Pendiente en unidades menores",
   "Pay advance": "Anticipo de pago",
@@ -20,6 +23,10 @@
   "Write off advance": "Cancelar el anticipo",
   "Write off remaining balance": "Cancelar el saldo restante",
   "Write off {0, plural, one {# advance} other {# advances}}": "Cancelar {0, plural, one {# anticipo} other {# anticipos}}",
+  "Write-off failed": "La cancelación de deuda falló",
   "Write-off reason: {0}": "Motivo de la cancelación: {0}",
-  "e.g. Driver terminated — balance uncollectible": "p. ej., Conductor dado de baja: saldo incobrable"
+  "e.g. Driver terminated — balance uncollectible": "p. ej., Conductor dado de baja: saldo incobrable",
+  "{0, plural, one {# advance written off} other {# advances written off}}": "{0, plural, one {# anticipo cancelado} other {# anticipos cancelados}}",
+  "{0, plural, one {# advance written off} other {# advances written off}}, {1} failed": "{0, plural, one {# anticipo cancelado} other {# anticipos cancelados}}, {1} fallaron",
+  "{0, plural, one {The selected advance failed} other {All # selected advances failed}}": "{0, plural, one {Falló el anticipo seleccionado} other {Fallaron los # anticipos seleccionados}}"
 }

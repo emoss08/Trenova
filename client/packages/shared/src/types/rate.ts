@@ -5,6 +5,7 @@ import {
   statusSchema,
   tenantInfoSchema,
 } from "./helpers";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 /**
  * An identifier the agreement endpoints may echo back as JSON null: rules and
@@ -62,13 +63,13 @@ export const rateZoneSchema = z.object({
   ...tenantInfoSchema.shape,
 
   code: z
-    .string({ error: "Code is required" })
-    .min(2, { error: "Code must be at least 2 characters" })
-    .max(50, { error: "Code must be less than 50 characters" }),
+    .string({ error: () => translate("Code is required") })
+    .min(2, { error: () => translate("Code must be at least 2 characters") })
+    .max(50, { error: () => translate("Code must be less than 50 characters") }),
   name: z
-    .string({ error: "Name is required" })
-    .min(1, { error: "Name is required" })
-    .max(100, { error: "Name must be less than 100 characters" }),
+    .string({ error: () => translate("Name is required") })
+    .min(1, { error: () => translate("Name is required") })
+    .max(100, { error: () => translate("Name must be less than 100 characters") }),
   description: z.string().max(500).default(""),
   kind: rateZoneKindSchema.default("Custom"),
   status: statusSchema.default("Active"),
@@ -127,10 +128,13 @@ export const rateMatrixSchema = z.object({
   ...tenantInfoSchema.shape,
 
   code: z
-    .string({ error: "Code is required" })
-    .min(2, { error: "Code must be at least 2 characters" })
-    .max(64, { error: "Code must be less than 64 characters" }),
-  name: z.string({ error: "Name is required" }).min(1, { error: "Name is required" }).max(100),
+    .string({ error: () => translate("Code is required") })
+    .min(2, { error: () => translate("Code must be at least 2 characters") })
+    .max(64, { error: () => translate("Code must be less than 64 characters") }),
+  name: z
+    .string({ error: () => translate("Name is required") })
+    .min(1, { error: () => translate("Name is required") })
+    .max(100),
   description: z.string().max(500).default(""),
   status: statusSchema.default("Active"),
   /**
@@ -140,8 +144,8 @@ export const rateMatrixSchema = z.object({
    * from the lane that reads it.
    */
   formulaTemplateId: z
-    .string({ error: "Formula template is required" })
-    .min(1, { error: "Formula template is required" }),
+    .string({ error: () => translate("Formula template is required") })
+    .min(1, { error: () => translate("Formula template is required") }),
   /** Server-derived for list views; never sent back. */
   formulaTemplateName: optionalStringSchema,
   currency: z.string().length(3).default("USD"),
@@ -324,19 +328,19 @@ export const rateAgreementRuleSchema = z
   })
   .refine((rule) => Boolean(rule.formulaTemplateId) || Boolean(rule.rateMatrixId), {
     path: ["formulaTemplateId"],
-    message: "A lane prices by a formula template or a rate matrix",
+    error: () => translate("A lane prices by a formula template or a rate matrix"),
   })
   .refine((rule) => !(rule.formulaTemplateId && rule.rateMatrixId), {
     path: ["formulaTemplateId"],
-    message: "A lane prices by a formula template or a rate matrix, not both",
+    error: () => translate("A lane prices by a formula template or a rate matrix, not both"),
   })
   .refine((rule) => !rule.rateMatrixId || rule.rate == null, {
     path: ["rate"],
-    message: "A matrix rated lane reads its rates from the matrix cells",
+    error: () => translate("A matrix rated lane reads its rates from the matrix cells"),
   })
   .refine((rule) => !rule.rateMatrixId || (rule.breaks?.length ?? 0) === 0, {
     path: ["breaks"],
-    message: "Weight breaks only apply to a formula rated lane",
+    error: () => translate("Weight breaks only apply to a formula rated lane"),
   });
 export type RateAgreementRule = z.infer<typeof rateAgreementRuleSchema>;
 
@@ -344,7 +348,7 @@ export const rateAgreementAccessorialSchema = z.object({
   ...tenantInfoSchema.shape,
 
   rateAgreementId: optionalStringSchema,
-  accessorialChargeId: z.string({ error: "Accessorial charge is required" }),
+  accessorialChargeId: z.string({ error: () => translate("Accessorial charge is required") }),
   method: z.enum(["Flat", "PerUnit", "Percentage"]),
   // Go stores this nullzero, so an unset unit arrives as "" rather than null.
   rateUnit: z
@@ -378,7 +382,9 @@ export const rateAgreementFuelBindingSchema = z
     organizationId: optionalStringSchema,
     businessUnitId: optionalStringSchema,
     rateAgreementId: optionalStringSchema,
-    fuelSurchargeProgramId: z.string({ error: "Fuel surcharge program is required" }),
+    fuelSurchargeProgramId: z.string({
+      error: () => translate("Fuel surcharge program is required"),
+    }),
     waived: z.boolean().default(false),
     pegPriceOverride: decimalStringSchema,
     incrementRateOverride: decimalStringSchema,
@@ -392,7 +398,7 @@ export const rateAgreementFuelBindingSchema = z
         binding.capAmount == null),
     {
       path: ["waived"],
-      message: "A waived fuel binding cannot also override the program's terms",
+      error: () => translate("A waived fuel binding cannot also override the program's terms"),
     },
   );
 export type RateAgreementFuelBinding = z.infer<typeof rateAgreementFuelBindingSchema>;
@@ -464,10 +470,13 @@ export const rateAgreementSchema = z
     carrierId: z.string().nullish(),
 
     code: z
-      .string({ error: "Code is required" })
-      .min(2, { error: "Code must be at least 2 characters" })
-      .max(50, { error: "Code must be less than 50 characters" }),
-    name: z.string({ error: "Name is required" }).min(1, { error: "Name is required" }).max(150),
+      .string({ error: () => translate("Code is required") })
+      .min(2, { error: () => translate("Code must be at least 2 characters") })
+      .max(50, { error: () => translate("Code must be less than 50 characters") }),
+    name: z
+      .string({ error: () => translate("Name is required") })
+      .min(1, { error: () => translate("Name is required") })
+      .max(150),
     description: z.string().max(2000).default(""),
     agreementType: rateAgreementTypeSchema.default("Contract"),
     status: rateAgreementStatusSchema.default("Draft"),
@@ -504,15 +513,18 @@ export const rateAgreementSchema = z
   })
   .refine((agreement) => agreement.partyType !== "Customer" || Boolean(agreement.customerId), {
     path: ["customerId"],
-    message: "A customer agreement needs a customer",
+    error: () => translate("A customer agreement needs a customer"),
   })
   .refine((agreement) => agreement.partyType !== "Carrier" || Boolean(agreement.carrierId), {
     path: ["carrierId"],
-    message: "A carrier agreement needs a carrier",
+    error: () => translate("A carrier agreement needs a carrier"),
   })
   .refine(
     (agreement) => agreement.effectiveTo == null || agreement.effectiveTo > agreement.effectiveFrom,
-    { path: ["effectiveTo"], message: "The end date must fall after the start date" },
+    {
+      path: ["effectiveTo"],
+      error: () => translate("The end date must fall after the start date"),
+    },
   );
 export type RateAgreement = z.infer<typeof rateAgreementSchema>;
 
@@ -806,17 +818,19 @@ export type RateSimulationSummary = z.infer<typeof rateSimulationSummarySchema>;
 export const rateSimulationSchema = z.object({
   ...tenantInfoSchema.shape,
 
-  rateAgreementId: z.string({ error: "An agreement to simulate is required" }).min(1),
+  rateAgreementId: z
+    .string({ error: () => translate("An agreement to simulate is required") })
+    .min(1),
   name: z
-    .string({ error: "Name is required" })
-    .min(1, { error: "Name is required" })
-    .max(150, { error: "Name must be less than 150 characters" }),
+    .string({ error: () => translate("Name is required") })
+    .min(1, { error: () => translate("Name is required") })
+    .max(150, { error: () => translate("Name must be less than 150 characters") }),
   description: z.string().max(500).default(""),
   status: rateSimulationStatusSchema.default("Pending"),
   partyType: ratePartyTypeSchema.default("Customer"),
 
-  sampleFrom: z.number({ error: "A start date is required" }).int(),
-  sampleTo: z.number({ error: "An end date is required" }).int(),
+  sampleFrom: z.number({ error: () => translate("A start date is required") }).int(),
+  sampleTo: z.number({ error: () => translate("An end date is required") }).int(),
   sampleLimit: z.number().int().min(0).default(0),
 
   summary: rateSimulationSummarySchema.nullish(),
@@ -967,9 +981,9 @@ export type RateIncreasePlan = z.infer<typeof rateIncreasePlanSchema>;
 /** What an upload needs before a file means anything: where, and from when. */
 export const rateImportUploadSchema = z.object({
   rateAgreementId: z
-    .string({ error: "An agreement is required" })
-    .min(1, { error: "An agreement is required" }),
-  effectiveFrom: z.number({ error: "An effective date is required" }).int(),
+    .string({ error: () => translate("An agreement is required") })
+    .min(1, { error: () => translate("An agreement is required") }),
+  effectiveFrom: z.number({ error: () => translate("An effective date is required") }).int(),
 });
 export type RateImportUploadValues = z.infer<typeof rateImportUploadSchema>;
 

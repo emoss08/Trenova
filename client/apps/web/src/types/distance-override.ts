@@ -2,17 +2,24 @@ import { z } from "zod";
 import { customerSchema } from "@trenova/shared/types/customer";
 import { nullableStringSchema, tenantInfoSchema } from "@trenova/shared/types/helpers";
 import { locationSchema } from "@trenova/shared/types/location";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const distanceOverrideIntermediateStopSchema = z.object({
-  locationId: z.string().min(1, { error: "Intermediate stop location is required" }),
+  locationId: z
+    .string()
+    .min(1, { error: () => translate("Intermediate stop location is required") }),
 });
 
 export const distanceOverrideSchema = z.object({
   ...tenantInfoSchema.shape,
-  originLocationId: z.string().min(1, { error: "Origin location is required" }),
-  destinationLocationId: z.string().min(1, { error: "Destination location is required" }),
+  originLocationId: z.string().min(1, { error: () => translate("Origin location is required") }),
+  destinationLocationId: z
+    .string()
+    .min(1, { error: () => translate("Destination location is required") }),
   customerId: nullableStringSchema,
-  distance: z.coerce.number().min(0, { error: "Distance must be greater than or equal to 0" }),
+  distance: z.coerce
+    .number()
+    .min(0, { error: () => translate("Distance must be greater than or equal to 0") }),
   intermediateStops: z.array(distanceOverrideIntermediateStopSchema).optional().default([]),
   originLocation: locationSchema.nullish(),
   destinationLocation: locationSchema.nullish(),

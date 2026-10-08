@@ -317,9 +317,12 @@ function BatchCard({
 
 /** What an approval will do when its undo window closes, e.g. "Assign biller on 11 items". */
 function approvedWhat(title: string, facts: ApprovalFacts, t: TranslateFn): string {
+  // A presenter's title is English source text from the catalog; translate it here, where
+  // it is put into the sentence.
+  const shown = t(title);
   return facts.count > 0
-    ? t("{0} on {1}", title, recordCount(facts.resource, facts.count, t))
-    : title;
+    ? t("{0} on {1}", shown, recordCount(facts.resource, facts.count, t))
+    : shown;
 }
 
 function CardRow({
@@ -400,7 +403,7 @@ function CardRow({
     const all = facts.wouldFail !== null || refusedCount >= facts.count;
     const reasons = refusalReasons(facts.refused)
       .slice(0, 3)
-      .map(([reason, n]) => `${n} ${reason.charAt(0).toLowerCase()}${reason.slice(1)}`);
+      .map(([reason, n]) => t("{0} ({1})", reason, n));
     return (
       <div className="dk-dcx dk-ec-would" role="group" aria-label={t("Would be refused")}>
         <span className="dk-dcx-i">

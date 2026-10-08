@@ -1,11 +1,14 @@
 {
+  "Advance": "预支",
   "Advance written off": "预支款已冲销",
+  "Advance {0}": "预支款 {0}",
   "Cash and money-code advances that are automatically recovered from the driver's next settlement.": "现金与资金代码预支款，会自司机的下一次结算中自动回收。",
   "Context for reviewers — what the advance covered, e.g. a lumper fee or breakdown repair.": "供审查人员参考的背景 — 此预支款的用途，例如装卸工费或故障维修。",
   "Forgives each advance's remaining balance — nothing more is recovered from settlements. This cannot be undone, and the reason is recorded on every advance.": "豁免各笔预支款的剩余余额 — 不再自结算中回收。此操作无法撤销，且原因会记录于每笔预支款上。",
   "How the money was disbursed — cash, an EFS/Comdata money code, or a fuel card load.": "款项的拨付方式 — 现金、EFS／Comdata 资金代码，或油卡充值。",
   "Issued date": "核发日期",
   "Money code / check number": "资金代码／支票号码",
+  "No pay advances yet": "尚无薪酬预支",
   "Only outstanding or partially recovered advances can be written off.": "仅未清偿或部分回收的预支款可冲销。",
   "Outstanding minor": "未清偿（最小币值单位）",
   "Pay advance": "薪酬预支",
@@ -20,6 +23,10 @@
   "Write off advance": "冲销预支款",
   "Write off remaining balance": "冲销剩余余额",
   "Write off {0, plural, one {# advance} other {# advances}}": "冲销 {0, plural, other {# 笔预支款}}",
+  "Write-off failed": "冲销失败",
   "Write-off reason: {0}": "冲销原因：{0}",
-  "e.g. Driver terminated — balance uncollectible": "例如：司机已离职 — 余额无法收回"
+  "e.g. Driver terminated — balance uncollectible": "例如：司机已离职 — 余额无法收回",
+  "{0, plural, one {# advance written off} other {# advances written off}}": "{0, plural, other {已冲销 # 笔预支款}}",
+  "{0, plural, one {# advance written off} other {# advances written off}}, {1} failed": "{0, plural, other {已冲销 # 笔预支款}}，{1} 笔失败",
+  "{0, plural, one {The selected advance failed} other {All # selected advances failed}}": "{0, plural, other {所选的 # 笔预支款均失败}}"
 }

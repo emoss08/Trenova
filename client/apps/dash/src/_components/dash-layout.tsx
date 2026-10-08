@@ -34,11 +34,12 @@ export function useDashProfile() {
 function NotificationBell() {
   const { data: unreadCount } = useUnreadNotificationCount("mine");
   const count = unreadCount ?? 0;
+  const t = useT();
 
   return (
     <NavLink
       to="/dash/notifications"
-      aria-label={count > 0 ? `Notifications (${count} unread)` : "Notifications"}
+      aria-label={count > 0 ? t("Notifications ({0} unread)", count) : t("Notifications")}
       className={({ isActive }) =>
         cn(
           "relative flex size-8 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground",

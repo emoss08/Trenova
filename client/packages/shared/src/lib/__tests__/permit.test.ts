@@ -1,3 +1,4 @@
+import { registerCatalogSource, setLocale } from "@trenova/shared/i18n/runtime";
 import { describe, expect, it } from "vitest";
 import {
   describeCommodityDimensions,
@@ -595,6 +596,39 @@ describe("describeExceedance", () => {
         superload: false,
       }),
     ).toBe("weight 12,000 lbs over");
+  });
+
+  it("writes the dimension and the amount in the reader's language", async () => {
+    await registerCatalogSource({
+      es: async () => ({
+        "width {0} over": "ancho excedido en {0}",
+        "weight {0} over": "peso excedido en {0}",
+        "{0} lbs": "{0} lb",
+      }),
+    });
+    await setLocale("es");
+    try {
+      expect(
+        describeExceedance({
+          trigger: "Width",
+          limit: 8.5,
+          actual: 12.5,
+          overBy: 4,
+          superload: false,
+        }),
+      ).toBe("ancho excedido en 4'");
+      expect(
+        describeExceedance({
+          trigger: "Weight",
+          limit: 80000,
+          actual: 92000,
+          overBy: 12000,
+          superload: false,
+        }),
+      ).toBe(`peso excedido en ${(12000).toLocaleString("es-419")} lb`);
+    } finally {
+      await setLocale("en");
+    }
   });
 });
 

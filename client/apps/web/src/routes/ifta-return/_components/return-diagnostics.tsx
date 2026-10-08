@@ -26,13 +26,14 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
-import { pluralize } from "@trenova/shared/lib/utils";
 import type { BadgeVariant } from "@trenova/shared/types/badge";
 import { IFTA_FUEL_TYPE_LABELS } from "@trenova/shared/types/fuel-ifta-enums";
 import { CheckCircleIcon, RouteIcon, Settings01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
+import { useRichT } from "@trenova/shared/i18n/rich";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 export const DISTANCE_CONTROLS_PATH = "/admin/distance-controls";
 
@@ -42,11 +43,11 @@ const TONE_BADGE: Record<IftaProblemTone, BadgeVariant> = {
   info: "neutral",
 };
 
-const TONE_LABEL: Record<IftaProblemTone, string> = {
+const TONE_LABEL: Record<IftaProblemTone, string> = defineLabels({
   danger: "Blocks filing",
   warn: "Check",
   info: "Note",
-};
+});
 
 function ProblemDetail({ jurisdictionCode, fuelType, amount }: IftaReturnView["problems"][number]) {
   const parts: string[] = [];
@@ -75,7 +76,7 @@ function CountFigure({
     <div className="bg-muted/30 rounded-lg border p-3" title={hint}>
       <p className="text-muted-foreground text-xs font-medium">{label}</p>
       <p className="mt-1 text-sm font-semibold tabular-nums">
-        {count} {pluralize("move", count)}
+        {t("{0, plural, one {# move} other {# moves}}", count)}
       </p>
       <p className="text-muted-foreground mt-0.5 text-xs tabular-nums">
         {t("{0} miles", formatIftaMeasure(miles, IFTA_MILES_DISPLAY_SCALE))}
@@ -91,6 +92,7 @@ type ReturnDiagnosticsProps = {
 
 export function ReturnDiagnostics({ ret, canBackfill }: ReturnDiagnosticsProps) {
   const t = useT();
+  const rt = useRichT();
 
   const [backfillOpen, setBackfillOpen] = useState(false);
   const mismatch = problemTotals(ret.problems, "MileageMismatch");
@@ -170,13 +172,20 @@ export function ReturnDiagnostics({ ret, canBackfill }: ReturnDiagnosticsProps) 
             <Settings01Icon className="size-4" />
             <AlertTitle>{t("Some moves were never broken down by jurisdiction")}</AlertTitle>
             <AlertDescription>
-              {t("Routed miles are only split state by state while")}{" "}
-              <span className="font-medium">{t("Capture jurisdiction miles")}</span> {t("is on in")}{" "}
-              <Link to={DISTANCE_CONTROLS_PATH} className="text-brand font-medium hover:underline">
-                {t("distance controls")}
-              </Link>
-              {t(
-                ". Switch it on for future routes, and backfill the moves already run — each one is a billable distance request, so size the job with the dry run first.",
+              {rt(
+                "Routed miles are only split state by state while <b>{0}</b> is on in <link>distance controls</link>. Switch it on for future routes, and backfill the moves already run — each one is a billable distance request, so size the job with the dry run first.",
+                {
+                  b: (c) => <span className="font-medium">{c}</span>,
+                  link: (c) => (
+                    <Link
+                      to={DISTANCE_CONTROLS_PATH}
+                      className="text-brand font-medium hover:underline"
+                    >
+                      {c}
+                    </Link>
+                  ),
+                },
+                t("Capture jurisdiction miles"),
               )}
             </AlertDescription>
           </Alert>
@@ -247,8 +256,8 @@ function BackfillSession({
     onSuccess: (result) => {
       toast.success(t("Backfill started"), {
         description: result.workflowId
-          ? `Workflow ${result.workflowId}. Recompute the return once it finishes.`
-          : "Recompute the return once it finishes.",
+          ? t("Workflow {0}. Recompute the return once it finishes.", result.workflowId)
+          : t("Recompute the return once it finishes."),
       });
       onOpenChange(false);
     },
@@ -279,7 +288,7 @@ function BackfillSession({
         ) : (
           <div className="flex flex-col gap-1">
             <span className="font-semibold tabular-nums">
-              {dryRun.unattributedMoves} {pluralize("move", dryRun.unattributedMoves)}
+              {t("{0, plural, one {# move} other {# moves}}", dryRun.unattributedMoves)}
             </span>
             <span className="text-muted-foreground text-xs tabular-nums">
               {t(

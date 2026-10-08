@@ -1,3 +1,4 @@
+import { translate } from "@trenova/shared/i18n/runtime";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { benefitPlanTypeLabel } from "@trenova/shared/lib/benefits";
 import { describeShiftPattern } from "@trenova/shared/lib/scheduling";
@@ -2591,11 +2592,11 @@ export function trainingCourseOptionSummary(option: GraphQLSelectOption) {
   const delivery = selectOptionMetaString(option, "delivery") as TrainingDelivery;
   const parts = [TRAINING_DELIVERY_LABELS[delivery] ?? delivery];
   const minutes = selectOptionMetaNumber(option, "durationMinutes");
-  if (minutes) parts.push(`${minutes} min`);
+  if (minutes) parts.push(translate("{0} min", minutes));
   const passingScore = selectOptionMetaString(option, "passingScore");
-  if (passingScore) parts.push(`pass ≥ ${Number(passingScore).toFixed(0)}%`);
+  if (passingScore) parts.push(translate("pass ≥ {0}%", Number(passingScore).toFixed(0)));
   const validityMonths = selectOptionMetaNumber(option, "validityMonths");
-  if (validityMonths) parts.push(`valid ${validityMonths} mo`);
+  if (validityMonths) parts.push(translate("valid {0} mo", validityMonths));
 
   return parts.filter(Boolean).join(" · ");
 }
@@ -2625,9 +2626,13 @@ export function PerformanceReviewTemplateAutocompleteField<T extends FieldValues
 function reviewTemplateOptionSummary(option: GraphQLSelectOption) {
   const itemCount = selectOptionMetaNumber(option, "itemCount") ?? 0;
   const cadenceMonths = selectOptionMetaNumber(option, "cadenceMonths");
-  const items = `${itemCount} item${itemCount === 1 ? "" : "s"}`;
-
-  return cadenceMonths ? `${items} · every ${cadenceMonths} months` : items;
+  return cadenceMonths
+    ? translate(
+        "{0, plural, one {# item} other {# items}} · {1, plural, one {every # month} other {every # months}}",
+        itemCount,
+        cadenceMonths,
+      )
+    : translate("{0, plural, one {# item} other {# items}}", itemCount);
 }
 
 export function PtoPolicyAutocompleteField<T extends FieldValues>({

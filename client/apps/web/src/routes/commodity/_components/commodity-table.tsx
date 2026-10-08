@@ -12,6 +12,7 @@ import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./commodity-columns";
 import { CommodityPanel } from "./commodity-panel";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export default function CommodityTable() {
   const t = useT();
@@ -28,9 +29,9 @@ export default function CommodityTable() {
           status: status as Commodity["status"],
         }),
         {
-          loading: "Updating status...",
-          success: "Status updated successfully",
-          error: "Failed to update status",
+          loading: translate("Updating status..."),
+          success: translate("Status updated successfully"),
+          error: translate("Failed to update status"),
           finally: async () => {
             await queryClient.invalidateQueries({
               queryKey: ["commodity-list"],
@@ -62,6 +63,7 @@ export default function CommodityTable() {
   return (
     <DataTable<CommodityRow>
       name="Commodity"
+      emptyTitle={t("No commodities yet")}
       queryKey="commodity-list"
       graphql={commodityTableGraphQLConfig}
       resource={Resource.Commodity}

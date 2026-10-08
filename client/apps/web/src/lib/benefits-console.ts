@@ -1,4 +1,5 @@
 import { BENEFIT_PLAN_TYPE_ORDER, benefitPlanTypeLabel } from "@trenova/shared/lib/benefits";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 const SECONDS_IN_DAY = 86_400;
 
@@ -170,13 +171,13 @@ export function enrollmentStanding(enrollment: EnrollmentLike, now: number): Enr
   return "covered";
 }
 
-export const ENROLLMENT_STANDING_LABELS: Record<EnrollmentStanding, string> = {
+export const ENROLLMENT_STANDING_LABELS: Record<EnrollmentStanding, string> = defineLabels({
   starting: "Starts soon",
   covered: "Covered",
   ending: "Ending soon",
   declined: "Declined",
   ended: "Ended",
-};
+});
 
 export function enrollmentStandingTone(
   standing: EnrollmentStanding,

@@ -1,3 +1,4 @@
+import { stopTypeLabel } from "@trenova/shared/lib/stop-type";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Metadata } from "@/components/metadata";
 import { publicLinkErrorKind, type PublicLinkErrorKind } from "@/components/public-page/error-kind";
@@ -55,7 +56,7 @@ function RateConfirmationSummary({
         </CardTitle>
         <p className="text-muted-foreground text-xs">
           {[
-            rateConfirmation.shipmentProNumber && `PRO ${rateConfirmation.shipmentProNumber}`,
+            rateConfirmation.shipmentProNumber && t("PRO {0}", rateConfirmation.shipmentProNumber),
             rateConfirmation.revisionLabel,
           ]
             .filter(Boolean)
@@ -68,7 +69,7 @@ function RateConfirmationSummary({
           {rateConfirmation.stops.map((stop) => (
             <SummaryRow
               key={`${stop.sequence}-${stop.type}`}
-              label={`Stop ${stop.sequence} · ${stop.type}`}
+              label={t("Stop {0} · {1}", stop.sequence, stopTypeLabel(stop.type))}
               value={stopSummary(stop)}
             />
           ))}

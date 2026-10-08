@@ -81,10 +81,21 @@ export default function RandomTestingConsole() {
     onSuccess: (draw) => {
       const short =
         draw.drugSelected < draw.drugTarget || draw.alcoholSelected < draw.alcoholTarget;
-      toast.success(`Drew ${draw.periodKey}`, {
+      toast.success(t("Drew {0}", draw.periodKey), {
         description: short
-          ? `The pool is smaller than the target: ${draw.drugSelected} of ${draw.drugTarget} drug and ${draw.alcoholSelected} of ${draw.alcoholTarget} alcohol.`
-          : `${draw.drugSelected} for drug testing and ${draw.alcoholSelected} for alcohol, from ${draw.poolSize} drivers.`,
+          ? t(
+              "The pool is smaller than the target: {0} of {1} drug and {2} of {3} alcohol.",
+              draw.drugSelected,
+              draw.drugTarget,
+              draw.alcoholSelected,
+              draw.alcoholTarget,
+            )
+          : t(
+              "{0} for drug testing and {1} for alcohol, from {2, plural, one {# driver} other {# drivers}}.",
+              draw.drugSelected,
+              draw.alcoholSelected,
+              draw.poolSize,
+            ),
       });
       void invalidate();
       setOpenDrawId(draw.id);
@@ -207,7 +218,7 @@ export default function RandomTestingConsole() {
           "Each pool names the drivers in the hat and the annual rates its draws must meet. The strip is this year's rounds: filled is final, dashed is drawn but not final, red was never drawn.",
         )}
         count={pools.length}
-        hint={`Rounds in ${year}`}
+        hint={t("Rounds in {0}", year)}
         action={
           canCreate ? (
             <Button size="xs" variant="outline" onClick={() => setPoolDialog({ pool: null })}>
@@ -245,8 +256,8 @@ export default function RandomTestingConsole() {
         )}
         hint={
           rounds.length === draws.length
-            ? `${draws.length} round${draws.length === 1 ? "" : "s"}`
-            : `${rounds.length} of ${draws.length}`
+            ? t("{0, plural, one {# round} other {# rounds}}", draws.length)
+            : t("{0} of {1}", rounds.length, draws.length)
         }
         action={
           <>
@@ -254,7 +265,7 @@ export default function RandomTestingConsole() {
               <Button
                 size="xs"
                 variant="outline"
-                aria-label={`Clear pool ${selectedPool.code}`}
+                aria-label={t("Clear pool {0}", selectedPool.code)}
                 onClick={() => setPoolId(null)}
               >
                 {selectedPool.code}

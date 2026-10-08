@@ -1,3 +1,5 @@
+import { translate } from "@trenova/shared/i18n/runtime";
+
 export type X12ElementDefinition = {
   position: number;
   label: string;
@@ -216,13 +218,13 @@ export function getSegmentDefinition(segmentId: string) {
 }
 
 export function getSegmentLabel(segmentId: string) {
-  return getSegmentDefinition(segmentId)?.label ?? "Unknown segment";
+  return getSegmentDefinition(segmentId)?.label ?? translate("Unknown segment");
 }
 
 export function getElementLabel(segmentId: string, position: number) {
   return (
     getSegmentDefinition(segmentId)?.elements.find((element) => element.position === position)
-      ?.label ?? `Element ${String(position).padStart(2, "0")}`
+      ?.label ?? translate("Element {0}", String(position).padStart(2, "0"))
   );
 }
 

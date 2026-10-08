@@ -1,4 +1,4 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { type TranslateFn, useT } from "@trenova/shared/i18n/use-t";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
@@ -15,7 +15,6 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { disciplinaryLevelMeta } from "@trenova/shared/lib/safety";
 import {
   rescindActionFormSchema,
   type DisciplinaryLevel,
@@ -78,15 +77,13 @@ export function RescindActionDialog({
     },
   });
 
-  const label = action
-    ? disciplinaryLevelMeta(action.level as DisciplinaryLevel).label.toLowerCase()
-    : "action";
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t("Rescind this {0}", label)}</DialogTitle>
+          <DialogTitle>
+            {rescindTitle(action?.level as DisciplinaryLevel | undefined, t)}
+          </DialogTitle>
           <DialogDescription>
             {t(
               "Use this when the action should not have been issued. It stops counting toward the next rung immediately; the row and your reason stay on the record.",
@@ -130,4 +127,23 @@ export function RescindActionDialog({
       </DialogContent>
     </Dialog>
   );
+}
+
+function rescindTitle(level: DisciplinaryLevel | undefined, t: TranslateFn): string {
+  switch (level) {
+    case "Coaching":
+      return t("Rescind this coaching");
+    case "VerbalWarning":
+      return t("Rescind this verbal warning");
+    case "WrittenWarning":
+      return t("Rescind this written warning");
+    case "FinalWarning":
+      return t("Rescind this final warning");
+    case "Suspension":
+      return t("Rescind this suspension");
+    case "Termination":
+      return t("Rescind this termination");
+    default:
+      return t("Rescind this action");
+  }
 }

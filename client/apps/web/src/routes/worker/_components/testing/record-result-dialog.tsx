@@ -106,8 +106,10 @@ export function RecordResultDialog({
       );
       toast.success(t("Result recorded"), {
         description: violation
-          ? "A violation has been opened. The driver is prohibited from safety-sensitive duty until the return-to-duty process is complete."
-          : `Filed as ${dotTestResultLabel(saved.result).toLowerCase()}.`,
+          ? t(
+              "A violation has been opened. The driver is prohibited from safety-sensitive duty until the return-to-duty process is complete.",
+            )
+          : t("Filed as {0}.", t(dotTestResultLabel(saved.result))),
       });
       void invalidate();
       onOpenChange(false);

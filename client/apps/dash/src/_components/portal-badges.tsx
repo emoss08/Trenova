@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 
 type BadgeVariant = React.ComponentProps<typeof Badge>["variant"];
 
@@ -33,13 +34,13 @@ export function DisputeStatusBadge({ status }: { status: string }) {
   return <Badge variant={entry.variant}>{t(entry.label)}</Badge>;
 }
 
-export const disputeCategoryLabels: Record<string, string> = {
+export const disputeCategoryLabels: Record<string, string> = defineLabels({
   MissingPay: "Missing pay",
   IncorrectRate: "Incorrect rate",
   IncorrectDeduction: "Incorrect deduction",
   MissingReimbursement: "Missing reimbursement",
   Other: "Something else",
-};
+});
 
 const ptoStatusVariants: Record<string, { label: string; variant: BadgeVariant }> = {
   Requested: { label: "Requested", variant: "info" },
@@ -55,7 +56,7 @@ export function PtoStatusBadge({ status }: { status: string }) {
   return <Badge variant={entry.variant}>{t(entry.label)}</Badge>;
 }
 
-export const ptoTypeLabels: Record<string, string> = {
+export const ptoTypeLabels: Record<string, string> = defineLabels({
   Personal: "Personal",
   Vacation: "Vacation",
   Sick: "Sick",
@@ -63,7 +64,7 @@ export const ptoTypeLabels: Record<string, string> = {
   Bereavement: "Bereavement",
   Maternity: "Maternity",
   Paternity: "Paternity",
-};
+});
 
 const expenseStatusVariants: Record<string, { label: string; variant: BadgeVariant }> = {
   Pending: { label: "Pending", variant: "info" },

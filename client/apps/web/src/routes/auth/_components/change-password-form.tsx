@@ -10,21 +10,22 @@ import { AuthCardBody } from "./auth-card";
 import { AuthErrorText, AuthSubmit, AuthTextField } from "./auth-field";
 import { StepCrumbs, StepHeading } from "./auth-primitives";
 import { MIN_PASSWORD_LENGTH } from "./reset-password-form";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const forcedChangePasswordSchema = z
   .object({
-    currentPassword: z.string().min(1, "Enter your current password"),
-    newPassword: z
-      .string()
-      .min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`),
-    confirmPassword: z.string().min(1, "Confirm your new password"),
+    currentPassword: z.string().min(1, { error: () => translate("Enter your current password") }),
+    newPassword: z.string().min(MIN_PASSWORD_LENGTH, {
+      error: () => translate("Password must be at least {0} characters", MIN_PASSWORD_LENGTH),
+    }),
+    confirmPassword: z.string().min(1, { error: () => translate("Confirm your new password") }),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Passwords do not match",
+    error: () => translate("Passwords do not match"),
     path: ["confirmPassword"],
   })
   .refine((data) => data.newPassword !== data.currentPassword, {
-    message: "Choose a password you are not already using",
+    error: () => translate("Choose a password you are not already using"),
     path: ["newPassword"],
   });
 

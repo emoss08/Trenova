@@ -25,6 +25,7 @@ import type {
   ShipmentCommentCreateInput,
   ShipmentCommentUpdateInput,
 } from "@/types/shipment-comment";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 type CreateCommentVariables = ShipmentCommentCreateInput & { clientRef: string };
 
@@ -195,8 +196,8 @@ export function useCommentMutations(shipmentId: string) {
       const conflict = error instanceof Error && /not found|version|conflict/i.test(error.message);
       toast.error(
         conflict
-          ? "Comment changed elsewhere — refreshed with the latest version"
-          : "Failed to update comment",
+          ? translate("Comment changed elsewhere — refreshed with the latest version")
+          : translate("Failed to update comment"),
       );
     },
   });
@@ -267,7 +268,10 @@ export function useCommentMutations(shipmentId: string) {
     onError: (error, { pinned }, context) => {
       context?.restore();
       const message = error instanceof Error && error.message ? error.message : null;
-      toast.error(message ?? (pinned ? "Failed to pin comment" : "Failed to unpin comment"));
+      toast.error(
+        message ??
+          (pinned ? translate("Failed to pin comment") : translate("Failed to unpin comment")),
+      );
     },
   });
 
@@ -289,7 +293,9 @@ export function useCommentMutations(shipmentId: string) {
     },
     onError: (_error, { resolved }, context) => {
       context?.restore();
-      toast.error(resolved ? "Failed to resolve comment" : "Failed to reopen comment");
+      toast.error(
+        resolved ? translate("Failed to resolve comment") : translate("Failed to reopen comment"),
+      );
     },
   });
 

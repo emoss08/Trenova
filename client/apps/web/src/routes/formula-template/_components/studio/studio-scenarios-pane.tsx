@@ -40,6 +40,7 @@ import { toast } from "sonner";
 import { ScenarioDialog, type ScenarioPrefill } from "./scenario-dialog";
 import type { LivePreviewState } from "./use-live-preview";
 import type { LiveScenariosState } from "./use-live-scenarios";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 type StudioScenariosPaneProps = {
   templateId: string | null;
@@ -106,7 +107,7 @@ function ScenarioRow({
                 variant="ghost"
                 size="icon-xs"
                 onClick={onEdit}
-                aria-label={`Edit scenario ${scenario.name}`}
+                aria-label={t("Edit scenario {0}", scenario.name)}
               >
                 <Edit02Icon className="size-3" />
               </Button>
@@ -123,7 +124,7 @@ function ScenarioRow({
                 size="icon-xs"
                 onClick={onDelete}
                 className="hover:text-destructive"
-                aria-label={`Delete scenario ${scenario.name}`}
+                aria-label={t("Delete scenario {0}", scenario.name)}
               >
                 <Trash01Icon className="size-3" />
               </Button>
@@ -182,7 +183,7 @@ export function StudioScenariosPane({
       return apiService.formulaTemplateService.createTestCase(templateId, input);
     },
     onSuccess: async () => {
-      toast.success(editing ? "Scenario updated" : "Scenario added");
+      toast.success(editing ? translate("Scenario updated") : translate("Scenario added"));
       setDialogOpen(false);
       setEditing(null);
       onPinConsumed();

@@ -14,8 +14,10 @@
   "Select a customer...": "选择客户…",
   "Statement": "对账单",
   "Statement-style transaction history with the customer's AR profile.": "以对账单形式呈现的交易历史，并附客户的应收账款概况。",
+  "Totals · {0, plural, one {# entry} other {# entries}}": "合计 · {0, plural, other {# 条分录}}",
   "d avg": "天平均",
   "no credit limit set": "未设置信用额度",
   "of {0} limit": "共 {0} 额度",
-  "{0} overdue · {1} open": "逾期 {0} · 未结 {1}"
+  "{0} overdue · {1} open": "逾期 {0} · 未结 {1}",
+  "{0} · {1}d past due": "{0} · 已逾期 {1} 天"
 }

@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { translate } from "@trenova/shared/i18n/runtime";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -123,25 +124,25 @@ function getStatusLabel(status?: string): string {
   const normalized = normalizeWorkflowStatus(status);
   switch (normalized) {
     case "running":
-      return "Running";
+      return translate("Running");
     case "completed":
-      return "Completed";
+      return translate("Completed");
     case "failed":
-      return "Failed";
+      return translate("Failed");
     case "canceled":
-      return "Canceled";
+      return translate("Canceled");
     case "terminated":
-      return "Terminated";
+      return translate("Terminated");
     case "timed_out":
-      return "Timed Out";
+      return translate("Timed Out");
     case "continued_as_new":
-      return "Continued As New";
+      return translate("Continued As New");
     case "paused":
-      return "Paused";
+      return translate("Paused");
     case "unspecified":
-      return "Queued";
+      return translate("Queued");
     default:
-      return "Unknown";
+      return translate("Unknown");
   }
 }
 
@@ -334,7 +335,11 @@ export function SamsaraWorkerSyncCard({
             }
           : null,
       );
-      appendLog("success", "sync", `Workflow started: ${response.workflowId} (${response.runId})`);
+      appendLog(
+        "success",
+        "sync",
+        t("Workflow started: {0} ({1})", response.workflowId, response.runId),
+      );
       toast.success(t("Samsara worker sync started"), {
         description: t("Monitoring the workflow run now."),
       });
@@ -357,7 +362,7 @@ export function SamsaraWorkerSyncCard({
           appendLog(
             "warn",
             "sync",
-            `Workflow already running, attached to ${parsedUsageStats.data.workflowId}`,
+            t("Workflow already running, attached to {0}", parsedUsageStats.data.workflowId),
           );
           toast.info(t("Sync already running"), {
             description: t("Switched to monitoring the existing workflow run."),
@@ -367,14 +372,18 @@ export function SamsaraWorkerSyncCard({
       }
 
       if (error instanceof ApiRequestError) {
-        appendLog("error", "sync", error.data.detail || error.data.title || "Failed to start sync");
+        appendLog(
+          "error",
+          "sync",
+          error.data.detail || error.data.title || t("Failed to start sync"),
+        );
         toast.error(t("Failed to start sync"), {
           description: error.data.detail || error.data.title,
         });
         return;
       }
 
-      appendLog("error", "sync", "Unable to submit the sync request right now.");
+      appendLog("error", "sync", t("Unable to submit the sync request right now."));
       toast.error(t("Failed to start sync"), {
         description: t("Unable to submit the sync request right now."),
       });
@@ -387,7 +396,10 @@ export function SamsaraWorkerSyncCard({
       appendLog(
         "info",
         "drift",
-        `Drift detection complete: ${response.totalDrifts} drift(s) found`,
+        t(
+          "{0, plural, one {Drift detection complete: # drift found} other {Drift detection complete: # drifts found}}",
+          response.totalDrifts,
+        ),
       );
       toast.success(t("Worker drift detection complete"));
       await queryClient.invalidateQueries({
@@ -399,14 +411,14 @@ export function SamsaraWorkerSyncCard({
         appendLog(
           "error",
           "drift",
-          error.data.detail || error.data.title || "Failed to detect worker drift",
+          error.data.detail || error.data.title || t("Failed to detect worker drift"),
         );
         toast.error(t("Failed to detect worker drift"), {
           description: error.data.detail || error.data.title,
         });
         return;
       }
-      appendLog("error", "drift", "Failed to detect worker drift");
+      appendLog("error", "drift", t("Failed to detect worker drift"));
       toast.error(t("Failed to detect worker drift"));
     },
   });
@@ -417,10 +429,17 @@ export function SamsaraWorkerSyncCard({
       appendLog(
         "success",
         "drift",
-        `Drift repair completed: repaired ${response.repairedWorkers}, failed ${response.failedWorkers}`,
+        t(
+          "Drift repair completed: {0} repaired, {1} failed",
+          response.repairedWorkers,
+          response.failedWorkers,
+        ),
       );
       toast.success(t("Worker drift repair completed"), {
-        description: `Repaired ${response.repairedWorkers} worker(s).`,
+        description: t(
+          "{0, plural, one {Repaired # worker.} other {Repaired # workers.}}",
+          response.repairedWorkers,
+        ),
       });
       await Promise.all([
         queryClient.invalidateQueries({
@@ -440,14 +459,14 @@ export function SamsaraWorkerSyncCard({
         appendLog(
           "error",
           "drift",
-          error.data.detail || error.data.title || "Failed to repair worker drift",
+          error.data.detail || error.data.title || t("Failed to repair worker drift"),
         );
         toast.error(t("Failed to repair worker drift"), {
           description: error.data.detail || error.data.title,
         });
         return;
       }
-      appendLog("error", "drift", "Failed to repair worker drift");
+      appendLog("error", "drift", t("Failed to repair worker drift"));
       toast.error(t("Failed to repair worker drift"));
     },
   });
@@ -464,13 +483,13 @@ export function SamsaraWorkerSyncCard({
         appendLog(
           "warn",
           "retry",
-          firstFailure?.message || "Worker retry request completed with issues",
+          firstFailure?.message || t("Worker retry request completed with issues"),
         );
         toast.error(t("Worker retry failed"), {
-          description: firstFailure?.message || "Unable to repair mapping for this worker.",
+          description: firstFailure?.message || t("Unable to repair mapping for this worker."),
         });
       } else {
-        appendLog("success", "retry", `Queued worker ${workerID} for resync`);
+        appendLog("success", "retry", t("Queued worker {0} for resync", workerID));
         toast.success(t("Worker retry queued"), {
           description: t("The worker mapping was repaired and will be picked up on next sync."),
         });
@@ -487,14 +506,18 @@ export function SamsaraWorkerSyncCard({
     },
     onError: (error) => {
       if (error instanceof ApiRequestError) {
-        appendLog("error", "retry", error.data.detail || error.data.title || "Worker retry failed");
+        appendLog(
+          "error",
+          "retry",
+          error.data.detail || error.data.title || t("Worker retry failed"),
+        );
         toast.error(t("Worker retry failed"), {
           description: error.data.detail || error.data.title,
         });
         return;
       }
 
-      appendLog("error", "retry", "Worker retry failed");
+      appendLog("error", "retry", t("Worker retry failed"));
       toast.error(t("Worker retry failed"));
     },
     onSettled: () => {
@@ -517,7 +540,7 @@ export function SamsaraWorkerSyncCard({
     setTrackedWorkflowId(null);
     setTrackedRunId(null);
     setShowAllFailures(false);
-    appendLog("error", "workflow", "Tracked workflow not found. Cleared active tracking.");
+    appendLog("error", "workflow", t("Tracked workflow not found. Cleared active tracking."));
 
     toast.error(t("Sync workflow not found"), {
       description: t("Tracking was cleared. Start a new sync to continue."),
@@ -557,14 +580,14 @@ export function SamsaraWorkerSyncCard({
             ? "success"
             : "debug",
         "workflow",
-        `Status changed to ${getStatusLabel(statusResponse.status)}`,
+        t("Status changed to {0}", getStatusLabel(statusResponse.status)),
       );
     }
 
     if (normalizedStatus === "running") {
-      appendLog("debug", "workflow", "Heartbeat: sync workflow is still running");
+      appendLog("debug", "workflow", t("Heartbeat: sync workflow is still running"));
     }
-  }, [isTrackingWorkflow, normalizedStatus, statusResponse, appendLog]);
+  }, [isTrackingWorkflow, normalizedStatus, statusResponse, appendLog, t]);
 
   useEffect(() => {
     if (!statusResponse || !trackedWorkflowId) {
@@ -585,20 +608,32 @@ export function SamsaraWorkerSyncCard({
           appendLog(
             "warn",
             "sync",
-            `Completed with issues: ${statusResponse.result?.failed ?? 0} worker record(s) failed`,
+            t(
+              "{0, plural, one {Completed with issues: # worker record failed} other {Completed with issues: # worker records failed}}",
+              statusResponse.result?.failed ?? 0,
+            ),
           );
           toast.error(t("Samsara sync completed with issues"), {
-            description: `${statusResponse.result?.failed ?? 0} worker record(s) failed to sync.`,
+            description: t(
+              "{0, plural, one {# worker record failed to sync.} other {# worker records failed to sync.}}",
+              statusResponse.result?.failed ?? 0,
+            ),
           });
         } else {
-          appendLog("success", "sync", "Completed successfully with no failures");
+          appendLog("success", "sync", t("Completed successfully with no failures"));
           toast.success(t("Samsara sync completed successfully"));
         }
       } else {
         appendLog(
           "error",
           "sync",
-          `Workflow ended in ${getStatusLabel(statusResponse.status)}: ${statusResponse.error || "no details"}`,
+          statusResponse.error
+            ? t(
+                "Workflow ended in {0}: {1}",
+                getStatusLabel(statusResponse.status),
+                statusResponse.error,
+              )
+            : t("Workflow ended in {0} with no details", getStatusLabel(statusResponse.status)),
         );
         toast.error(t("Samsara sync did not complete"), {
           description: statusResponse.error || getStatusLabel(statusResponse.status),
@@ -671,7 +706,7 @@ export function SamsaraWorkerSyncCard({
     setTrackedRunId(null);
     setShowAllFailures(false);
     setSyncProgressBaseline(null);
-    appendLog("info", "workflow", "Cleared tracked run from UI");
+    appendLog("info", "workflow", t("Cleared tracked run from UI"));
   };
 
   const handleCopyFailure = async (message: string) => {
@@ -692,7 +727,9 @@ export function SamsaraWorkerSyncCard({
   };
 
   const activeStatusVariant = getStatusVariant(normalizedStatus, failedRecords);
-  const currentStatusLabel = isTrackingWorkflow ? getStatusLabel(statusResponse?.status) : "Idle";
+  const currentStatusLabel = isTrackingWorkflow
+    ? getStatusLabel(statusResponse?.status)
+    : t("Idle");
 
   const content = (
     <div className="space-y-4">

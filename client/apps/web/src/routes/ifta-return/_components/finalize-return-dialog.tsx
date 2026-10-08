@@ -19,7 +19,6 @@ import {
   AlertDialogTitle,
 } from "@trenova/shared/components/ui/alert-dialog";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import { pluralize } from "@trenova/shared/lib/utils";
 import { IFTA_FUEL_TYPE_LABELS } from "@trenova/shared/types/fuel-ifta-enums";
 import { Lock01Icon } from "@trenova/shared/components/icons";
 import { toast } from "sonner";
@@ -72,9 +71,8 @@ export function FinalizeReturnDialog({
             {missing.length > 0 ? (
               <span className="mt-2 block">
                 {t(
-                  "{0} member {1} has no published rate, so finalizing is refused. Publish the missing rates, recompute, then finalize.",
+                  "{0, plural, one {# member line has no published rate, so finalizing is refused.} other {# member lines have no published rate, so finalizing is refused.}} Publish the missing rates, recompute, then finalize.",
                   missing.length,
-                  pluralize("line", missing.length),
                 )}
               </span>
             ) : null}

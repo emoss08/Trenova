@@ -12,6 +12,7 @@ import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./location-columns";
 import { LocationPanel } from "./location-panel";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export default function LocationTable() {
   const t = useT();
@@ -28,9 +29,9 @@ export default function LocationTable() {
           status: status as Location["status"],
         }),
         {
-          loading: "Updating status...",
-          success: "Status updated successfully",
-          error: "Failed to update status",
+          loading: translate("Updating status..."),
+          success: translate("Status updated successfully"),
+          error: translate("Failed to update status"),
           finally: async () => {
             await queryClient.invalidateQueries({
               queryKey: ["location-list"],
@@ -62,6 +63,7 @@ export default function LocationTable() {
   return (
     <DataTable<LocationRow>
       name="Location"
+      emptyTitle={t("No locations yet")}
       queryKey="location-list"
       graphql={locationTableGraphQLConfig}
       resource={Resource.Location}

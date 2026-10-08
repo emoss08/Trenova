@@ -23,7 +23,10 @@
   "Mileage bands": "里程級距",
   "Minimum per move": "每個運程下限",
   "No drivers assigned yet. Assign drivers here, or from the Pay tab on the worker.": "尚未指派任何駕駛員。可在此指派，或自駕駛員的「薪酬」分頁指派。",
+  "No pay profiles yet": "尚無薪酬設定檔",
   "Pay components": "薪酬組成",
+  "Pay profile activated": "薪酬設定檔已啟用",
+  "Pay profile deactivated — existing assignments keep paying until reassigned": "薪酬設定檔已停用 — 現有指派會持續支付，直到重新指派",
   "Per diem daily cap": "每日津貼上限",
   "Profiles become assignable to drivers again.": "設定檔將恢復為可指派給駕駛員。",
   "Profiles can no longer be assigned; existing assignments keep paying.": "設定檔將無法再指派；既有指派仍持續給薪。",
@@ -38,5 +41,11 @@
   "What is being paid — linehaul, stop pay, detention, hazmat premium, and so on.": "給付的項目 — 幹線運費、停靠費、滯留費、危險品加給等。",
   "When to use this pay package": "何時使用此薪酬組合",
   "Which revenue the percentage applies to: linehaul only, linehaul plus fuel surcharge, or total.": "百分比所適用的收入範圍：僅幹線運費、幹線運費加燃油附加費，或總額。",
-  "e.g. OTR Company Driver - Standard": "例如：長途自有駕駛員 - 標準"
+  "e.g. OTR Company Driver - Standard": "例如：長途自有駕駛員 - 標準",
+  "{0, plural, one {# pay profile activated} other {# pay profiles activated}}": "{0, plural, other {已啟用 # 個薪酬設定檔}}",
+  "{0, plural, one {# pay profile activated} other {# pay profiles activated}}, {1} failed": "{0, plural, other {已啟用 # 個薪酬設定檔}}，{1} 筆失敗",
+  "{0, plural, one {# pay profile deactivated} other {# pay profiles deactivated}}": "{0, plural, other {已停用 # 個薪酬設定檔}}",
+  "{0, plural, one {# pay profile deactivated} other {# pay profiles deactivated}}, {1} failed": "{0, plural, other {已停用 # 個薪酬設定檔}}，{1} 筆失敗",
+  "{0, plural, one {The selected pay profile failed} other {All # selected pay profiles failed}}": "{0, plural, other {所選的 # 個薪酬設定檔皆失敗}}",
+  "{0} ({1, plural, one {# band} other {# bands}})": "{0}（{1, plural, other {# 個級距}}）"
 }

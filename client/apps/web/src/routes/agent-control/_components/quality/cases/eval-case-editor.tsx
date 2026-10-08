@@ -156,7 +156,7 @@ function ToolsSection() {
               label={t("Tool choice")}
               options={toolMatchModes.map((mode) => ({
                 value: mode,
-                label: t(TOOL_MODE_LABEL[mode]),
+                label: TOOL_MODE_LABEL[mode],
               }))}
             />
           </FormControl>

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const timesheetStatusSchema = z.enum([
   "Open",
@@ -21,31 +22,47 @@ const MINUTES_IN_DAY = 24 * 60;
  */
 export const recordTimeEntryFormSchema = z
   .object({
-    clockedInAt: z.number().int().positive("A start time is required"),
-    clockedOutAt: z.number().int().positive("A finish time is required"),
-    breakMinutes: z.number().int().min(0, "A break cannot be negative").max(MINUTES_IN_DAY),
+    clockedInAt: z
+      .number()
+      .int()
+      .positive({ error: () => translate("A start time is required") }),
+    clockedOutAt: z
+      .number()
+      .int()
+      .positive({ error: () => translate("A finish time is required") }),
+    breakMinutes: z
+      .number()
+      .int()
+      .min(0, { error: () => translate("A break cannot be negative") })
+      .max(MINUTES_IN_DAY),
     note: z.string().max(500).nullable(),
-    reason: z.string().min(1, "Changing somebody's hours needs a reason").max(500),
+    reason: z
+      .string()
+      .min(1, { error: () => translate("Changing somebody's hours needs a reason") })
+      .max(500),
   })
   .refine((values) => values.clockedOutAt > values.clockedInAt, {
-    message: "An entry cannot end before it began",
+    error: () => translate("An entry cannot end before it began"),
     path: ["clockedOutAt"],
   })
   // A punch nobody closed until the next day is a forgotten clock-out rather
   // than a day somebody worked straight through.
   .refine((values) => (values.clockedOutAt - values.clockedInAt) / 60 <= MINUTES_IN_DAY, {
-    message: "An entry cannot be longer than a day — correct the finish time",
+    error: () => translate("An entry cannot be longer than a day — correct the finish time"),
     path: ["clockedOutAt"],
   })
   .refine((values) => values.breakMinutes < (values.clockedOutAt - values.clockedInAt) / 60, {
-    message: "The break is as long as the entry — nothing would be paid",
+    error: () => translate("The break is as long as the entry — nothing would be paid"),
     path: ["breakMinutes"],
   });
 export type RecordTimeEntryFormValues = z.infer<typeof recordTimeEntryFormSchema>;
 
 /** Taking a punch off the record. The reason is required for the same reason a correction's is. */
 export const removeTimeEntryFormSchema = z.object({
-  reason: z.string().min(1, "Removing somebody's hours needs a reason").max(500),
+  reason: z
+    .string()
+    .min(1, { error: () => translate("Removing somebody's hours needs a reason") })
+    .max(500),
 });
 export type RemoveTimeEntryFormValues = z.infer<typeof removeTimeEntryFormSchema>;
 
@@ -55,12 +72,18 @@ export type RemoveTimeEntryFormValues = z.infer<typeof removeTimeEntryFormSchema
  */
 export const payrollExportFormSchema = z
   .object({
-    periodStart: z.number().int().positive("A period start is required"),
-    periodEnd: z.number().int().positive("A period end is required"),
+    periodStart: z
+      .number()
+      .int()
+      .positive({ error: () => translate("A period start is required") }),
+    periodEnd: z
+      .number()
+      .int()
+      .positive({ error: () => translate("A period end is required") }),
     note: z.string().max(500).nullable(),
   })
   .refine((values) => values.periodEnd > values.periodStart, {
-    message: "A period cannot end before it begins",
+    error: () => translate("A period cannot end before it begins"),
     path: ["periodEnd"],
   });
 export type PayrollExportFormValues = z.infer<typeof payrollExportFormSchema>;
@@ -70,6 +93,9 @@ export type PayrollExportFormValues = z.infer<typeof payrollExportFormSchema>;
  * reason is required: nobody can explain the reopening afterwards otherwise.
  */
 export const voidPayrollExportFormSchema = z.object({
-  reason: z.string().min(1, "Voiding a run needs a reason").max(500),
+  reason: z
+    .string()
+    .min(1, { error: () => translate("Voiding a run needs a reason") })
+    .max(500),
 });
 export type VoidPayrollExportFormValues = z.infer<typeof voidPayrollExportFormSchema>;

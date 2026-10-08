@@ -6,6 +6,7 @@
   "Attached document": "附件文件",
   "Choose a status": "選擇狀態",
   "Choose who it binds": "選擇其拘束對象",
+  "Could not attach the document": "無法附加文件",
   "Document attached": "文件已附加",
   "Drivers open it from Dash. PDFs and images are accepted.": "駕駛員可自 Dash 開啟。支援 PDF 與圖片。",
   "Drop a PDF here, or click to choose": "將 PDF 拖曳至此，或點擊選擇",
@@ -24,7 +25,9 @@
   "Only a policy in force can be signed; a retired one is kept so old signatures still point at something.": "只有生效中的政策才能簽署；已停用的政策會保留，讓舊的簽署仍有所指向。",
   "Optional line a driver sees before opening the policy.": "駕駛員開啟政策前會看到的選填說明。",
   "Policies drivers are bound by today": "駕駛員目前受其拘束的政策",
+  "Policy published": "政策已發布",
   "Policy text": "政策內文",
+  "Policy updated": "政策已更新",
   "Publish a handbook or a policy and everybody it applies to is asked to read and sign it from Dash.": "發布手冊或政策後，所有適用者都會被要求自 Dash 閱讀並簽署。",
   "Publish a policy": "發佈政策",
   "Read only": "唯讀",
@@ -58,5 +61,6 @@
   "e.g. Jan 1": "例如：1 月 1 日",
   "{0} of {1} signed": "已簽署 {0}／共 {1}",
   "{0} still to sign.": "尚有 {0} 份待簽署。",
-  "{0} · from {1}": "{0} · 來自 {1}"
+  "{0} · read": "{0} · 已讀",
+  "{0} · signed “{1}”": "{0} · 已簽署「{1}」"
 }

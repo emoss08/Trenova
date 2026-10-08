@@ -28,10 +28,12 @@ import { useEffect } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
 import { useSafetyInvalidation } from "./use-safety-invalidation";
+import { sourceLabels } from "@trenova/shared/i18n/labels";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 const KIND_OPTIONS = recognitionKindSchema.options.map((value) => ({
   value,
-  label: RECOGNITION_KIND_LABELS[value],
+  label: sourceLabels(RECOGNITION_KIND_LABELS)[value],
 }));
 
 export type RecognitionDialogProps = {
@@ -89,8 +91,8 @@ export function RecognitionDialog({ open, onOpenChange, workerId }: RecognitionD
     onSuccess: (saved) => {
       toast.success(t("Recognition recorded"), {
         description: saved.visibleToWorker
-          ? "The driver will see it in Dash."
-          : "Kept internal — the driver will not see it.",
+          ? translate("The driver will see it in Dash.")
+          : translate("Kept internal — the driver will not see it."),
       });
       void invalidate();
       onOpenChange(false);

@@ -157,7 +157,7 @@ export function CasePanel({ open, onOpenChange, row }: DataTablePanelProps<Extra
                     update.mutate({ id: evalCase.id, input: { version: evalCase.version, status } })
                   }
                 >
-                  {t(CASE_STATUS_ACTION[status])}
+                  {CASE_STATUS_ACTION[status]}
                 </Button>
               ))}
               <Button

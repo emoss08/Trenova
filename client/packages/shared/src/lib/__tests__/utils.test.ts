@@ -1,17 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
   chunk,
-  getNameInitials,
   downloadJsonFile,
   downloadTextFile,
-  toTitleCase,
-  pluralize,
-  upperFirst,
-  truncateText,
   formatCurrency,
+  formatFileSize,
   formatLocation,
+  getNameInitials,
   initials,
   metersToMiles,
+  toTitleCase,
+  truncateText,
+  upperFirst,
 } from "@trenova/shared/lib/utils";
 import { afterEach, vi } from "vitest";
 
@@ -83,20 +83,6 @@ describe("toTitleCase", () => {
 
   it("handles ALL_CAPS input", () => {
     expect(toTitleCase("FIRST_NAME")).toBe("First Name");
-  });
-});
-
-describe("pluralize", () => {
-  it("returns singular when count is 1", () => {
-    expect(pluralize("item", 1)).toBe("item");
-  });
-
-  it("returns plural when count is 0", () => {
-    expect(pluralize("item", 0)).toBe("items");
-  });
-
-  it("returns plural when count is 2", () => {
-    expect(pluralize("item", 2)).toBe("items");
   });
 });
 
@@ -374,5 +360,14 @@ describe("chunk", () => {
     expect(() => chunk([1], 0)).toThrow(RangeError);
     expect(() => chunk([1], -1)).toThrow(RangeError);
     expect(() => chunk([1], 1.5)).toThrow(RangeError);
+  });
+});
+
+describe("formatFileSize", () => {
+  it("picks the unit and keeps one decimal below 100", () => {
+    expect(formatFileSize(0)).toBe("0 B");
+    expect(formatFileSize(512)).toBe("512 B");
+    expect(formatFileSize(1536)).toBe("1.5 KB");
+    expect(formatFileSize(150 * 1024 * 1024)).toBe("150 MB");
   });
 });

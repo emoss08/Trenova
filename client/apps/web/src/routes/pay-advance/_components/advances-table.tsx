@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
-import { runBulkAction } from "@/lib/bulk-run";
+import { notifyBulkOutcome, settleAll } from "@/lib/bulk-outcome";
 import {
   payAdvanceTableGraphQLConfig,
   writeOffPayAdvance,
@@ -24,6 +24,7 @@ import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./advance-columns";
 import { AdvancePanel } from "./advance-panel";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export default function AdvancesTable() {
   const t = useT();
@@ -52,10 +53,28 @@ export default function AdvancesTable() {
   const confirmWriteOff = useCallback(async () => {
     setPending(true);
     try {
-      await runBulkAction(
-        writeOffRows,
-        (row) => writeOffPayAdvance({ advanceId: row.id, reason: reason.trim() }),
-        { noun: "advance", verb: "written off" },
+      notifyBulkOutcome(
+        await settleAll(writeOffRows, (row) =>
+          writeOffPayAdvance({ advanceId: row.id, reason: reason.trim() }),
+        ),
+        {
+          succeeded: (count) =>
+            translate(
+              "{0, plural, one {# advance written off} other {# advances written off}}",
+              count,
+            ),
+          partial: (succeeded, failed) =>
+            translate(
+              "{0, plural, one {# advance written off} other {# advances written off}}, {1} failed",
+              succeeded,
+              failed,
+            ),
+          allFailed: (failed) =>
+            translate(
+              "{0, plural, one {The selected advance failed} other {All # selected advances failed}}",
+              failed,
+            ),
+        },
       );
       await queryClient.invalidateQueries({ queryKey: ["pay-advance-list"] });
       await queryClient.invalidateQueries({ queryKey: ["worker-pay-advances"] });
@@ -82,6 +101,7 @@ export default function AdvancesTable() {
     <>
       <DataTable<PayAdvanceRow>
         name="Pay Advance"
+        emptyTitle={t("No pay advances yet")}
         queryKey="pay-advance-list"
         graphql={payAdvanceTableGraphQLConfig}
         resource={Resource.PayAdvance}

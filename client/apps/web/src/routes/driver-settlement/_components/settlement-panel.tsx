@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import type { DriverSettlementRow } from "@/lib/graphql/driver-settlement";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -9,6 +10,8 @@ export function SettlementPanel({
   mode,
   row,
 }: DataTablePanelProps<DriverSettlementRow>) {
+  const t = useT();
+
   if (mode !== "edit" || !row) {
     return null;
   }
@@ -17,7 +20,7 @@ export function SettlementPanel({
     <DataTablePanelContainer
       open={open}
       onOpenChange={onOpenChange}
-      title={`Settlement ${row.settlementNumber}`}
+      title={t("Settlement {0}", row.settlementNumber)}
       description={row.worker ? `${row.worker.firstName} ${row.worker.lastName}`.trim() : undefined}
       size="xl"
     >

@@ -19,6 +19,7 @@ import {
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { useDashFeatures } from "./use-dash-features";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export function LoadDocuments({ shipmentId }: { shipmentId: string }) {
   const t = useT();
@@ -48,7 +49,7 @@ export function LoadDocuments({ shipmentId }: { shipmentId: string }) {
       setDocumentTypeId(null);
       await queryClient.invalidateQueries({ queryKey: ["dash-load-documents", shipmentId] });
     },
-    onError: (error: Error) => toast.error(error.message || "Upload failed. Try again."),
+    onError: (error: Error) => toast.error(error.message || translate("Upload failed. Try again.")),
   });
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {

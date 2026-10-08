@@ -1,5 +1,6 @@
 import type { DataRetention } from "@/types/data-retention";
 import { z } from "zod";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 export const AI_FEEDBACK_RETENTION_MIN_DAYS = 30;
 export const AI_FEEDBACK_RETENTION_DEFAULT_DAYS = 730;
@@ -13,28 +14,40 @@ export const AI_CORRECTION_RETENTION_MIN_DAYS = 30;
 export const AI_CORRECTION_RETENTION_DEFAULT_DAYS = 730;
 
 export const dataRetentionFormSchema = z.object({
-  auditRetentionPeriod: z.number().int().min(1, "Audit retention must be at least 1 day"),
+  auditRetentionPeriod: z
+    .number()
+    .int()
+    .min(1, { error: () => translate("Audit retention must be at least 1 day") }),
   ediInboundFileRetentionPeriod: z
     .number()
     .int()
-    .min(0, "EDI inbound file retention cannot be negative"),
-  ediMessageRetentionPeriod: z.number().int().min(0, "EDI message retention cannot be negative"),
+    .min(0, { error: () => translate("EDI inbound file retention cannot be negative") }),
+  ediMessageRetentionPeriod: z
+    .number()
+    .int()
+    .min(0, { error: () => translate("EDI message retention cannot be negative") }),
   aiFeedbackRetentionPeriod: z
     .number()
     .int()
-    .min(AI_FEEDBACK_RETENTION_MIN_DAYS, "AI feedback retention must be at least 30 days"),
+    .min(AI_FEEDBACK_RETENTION_MIN_DAYS, {
+      error: () => translate("AI feedback retention must be at least 30 days"),
+    }),
   agentEvalCaseRetentionPeriod: z
     .number()
     .int()
-    .min(0, "Agent evaluation case retention cannot be negative"),
+    .min(0, { error: () => translate("Agent evaluation case retention cannot be negative") }),
   aiAuditRetentionPeriod: z
     .number()
-    .int("AI audit trail retention must be a whole number of days")
-    .min(AI_AUDIT_RETENTION_MIN_DAYS, "AI audit trail retention must be at least 365 days"),
+    .int({ error: () => translate("AI audit trail retention must be a whole number of days") })
+    .min(AI_AUDIT_RETENTION_MIN_DAYS, {
+      error: () => translate("AI audit trail retention must be at least 365 days"),
+    }),
   aiCorrectionRetentionPeriod: z
     .number()
-    .int("AI correction retention must be a whole number of days")
-    .min(AI_CORRECTION_RETENTION_MIN_DAYS, "AI correction retention must be at least 30 days"),
+    .int({ error: () => translate("AI correction retention must be a whole number of days") })
+    .min(AI_CORRECTION_RETENTION_MIN_DAYS, {
+      error: () => translate("AI correction retention must be at least 30 days"),
+    }),
 });
 
 export type DataRetentionFormValues = z.infer<typeof dataRetentionFormSchema>;
