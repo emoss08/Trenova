@@ -2271,6 +2271,18 @@ models:
   AIProviderTestOutcome:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aiprovider.TestOutcome
+  AIProviderCapAction:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aiprovider.CapAction
+  AIProviderKeyInfo:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aiprovider.KeyInfo
+    fields:
+      addedBy:
+        resolver: true
+  AIProviderDraftTestResult:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.TestAIProviderResult
   AIProviderKind:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aiprovider.Kind

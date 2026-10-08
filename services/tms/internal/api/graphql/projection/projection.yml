@@ -186,6 +186,8 @@ virtuals:
     - agents
   AIProvider:
     - hasApiKey
+    - monthSpendUsd
+    - apiKey
   Carrier:
     - intelligence
     - openIntelEventCount

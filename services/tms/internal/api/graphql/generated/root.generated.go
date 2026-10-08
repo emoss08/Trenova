@@ -253,6 +253,7 @@ type ResolverRoot interface {
 	AICorrection() AICorrectionResolver
 	AIFeedback() AIFeedbackResolver
 	AIProvider() AIProviderResolver
+	AIProviderKeyInfo() AIProviderKeyInfoResolver
 	AIRouteChoice() AIRouteChoiceResolver
 	AITuneUpEvidence() AITuneUpEvidenceResolver
 	AccessorialCharge() AccessorialChargeResolver
@@ -527,6 +528,13 @@ type AIFeedbackResolver interface {
 type AIProviderResolver interface {
 	InputCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
 	OutputCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
+	MonthlyCapUsd(ctx context.Context, obj *aiprovider.Provider) (*string, error)
+	MonthSpendUsd(ctx context.Context, obj *aiprovider.Provider) (string, error)
+	APIKey(ctx context.Context, obj *aiprovider.Provider) (*aiprovider.KeyInfo, error)
+}
+
+type AIProviderKeyInfoResolver interface {
+	AddedBy(ctx context.Context, obj *aiprovider.KeyInfo) (*tenant.User, error)
 }
 
 type AIRouteChoiceResolver interface {
@@ -1528,6 +1536,9 @@ type MutationResolver interface {
 	RestoreAITuneUp(ctx context.Context, id string, version int) (*gqlmodel.AITuneUp, error)
 	SetMyAIFeedback(ctx context.Context, input gqlmodel.SetMyAIFeedbackInput) (*aifeedback.Feedback, error)
 	ClearMyAIFeedback(ctx context.Context, input gqlmodel.AIFeedbackTargetInput) (bool, error)
+	TestAIProviderDraft(ctx context.Context, input gqlmodel.AIProviderDraftTestInput) (*services.TestAIProviderResult, error)
+	ReorderAIProviders(ctx context.Context, ids []string) ([]*aiprovider.Provider, error)
+	PatchAIProvider(ctx context.Context, id string, version int, input gqlmodel.AIProviderPatchInput) (*aiprovider.Provider, error)
 	UpdateAIRetrievalSettings(ctx context.Context, input gqlmodel.AIRetrievalSettingsPatchInput) (*services.AIRetrievalStatus, error)
 	ReindexAIRetrievalSource(ctx context.Context, sourceType airetrieval.SourceType) (*services.AIRetrievalStatus, error)
 	CreateBenefitPlan(ctx context.Context, input gqlmodel.BenefitPlanInput) (*driverpay.BenefitPlan, error)
@@ -2216,6 +2227,7 @@ type QueryResolver interface {
 	MyAIFeedback(ctx context.Context, input gqlmodel.MyAIFeedbackInput) ([]*aifeedback.Feedback, error)
 	AiFeedback(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIFeedbackConnection, error)
 	AgentFeedbackSummary(ctx context.Context, agentDefinitionID string, window *int) (*services.AgentFeedbackSummary, error)
+	AiProviderModels(ctx context.Context, input gqlmodel.AIProviderEndpointInput) ([]*gqlmodel.AIProviderModelOption, error)
 	AiProviders(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIProviderConnection, error)
 	AiProvider(ctx context.Context, id string) (*aiprovider.Provider, error)
 	AiRoutePreview(ctx context.Context, draft gqlmodel.AIProviderRoutingDraftInput) ([]*aiprovider.TaskRoute, error)
@@ -2225,7 +2237,7 @@ type QueryResolver interface {
 	AiTrainingExportHistory(ctx context.Context) ([]*aitraining.ExportHistoryEntry, error)
 	AiUsageFeatures(ctx context.Context, input gqlmodel.DataTableConnectionInput, days *int) (*gqlmodel.AIUsageFeatureConnection, error)
 	AiUsageSummary(ctx context.Context, since *int) (*services.AIUsageSummary, error)
-	AiUsageDaily(ctx context.Context, days *int, timezone *string) ([]*services.AIUsageDay, error)
+	AiUsageDaily(ctx context.Context, days *int, timezone *string, providerID *string) ([]*services.AIUsageDay, error)
 	APIKeys(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.APIKeyConnection, error)
 	APIKey(ctx context.Context, id string) (*apikey.Key, error)
 	AttentionSummary(ctx context.Context) (*gqlmodel.AttentionSummary, error)
@@ -3202,6 +3214,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AICorrection":                       func() any { return r.AICorrection() },
 			"AIFeedback":                         func() any { return r.AIFeedback() },
 			"AIProvider":                         func() any { return r.AIProvider() },
+			"AIProviderKeyInfo":                  func() any { return r.AIProviderKeyInfo() },
 			"AIRouteChoice":                      func() any { return r.AIRouteChoice() },
 			"AITuneUpEvidence":                   func() any { return r.AITuneUpEvidence() },
 			"AccessorialCharge":                  func() any { return r.AccessorialCharge() },
@@ -8636,9 +8649,44 @@ type AIProvider {
   trusted: Boolean!
   enabled: Boolean!
   lastTest: AIProviderTestOutcome
+  "How long one call may take before it fails and the task moves to the next provider."
+  timeoutSeconds: Int!
+  "Calls this provider takes at once across every server. Past it, work moves to the next provider."
+  maxConcurrent: Int!
+  "Most this provider may spend in a calendar month, in USD. Null means no cap."
+  monthlyCapUsd: Decimal
+  "What happens to a task once the monthly cap is reached."
+  onCap: AIProviderCapAction!
+  "Spend so far this calendar month (UTC), over the calls that carried a price."
+  monthSpendUsd: Decimal!
+  "The stored credential, described without the secret. Null when none is stored."
+  apiKey: AIProviderKeyInfo
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"What a provider does with a task once its monthly cap is reached."
+enum AIProviderCapAction {
+  "The task goes to the next provider in line."
+  Next
+  "The task fails rather than moving on."
+  Stop
+}
+
+"""
+A stored credential, described without the secret: enough of its ends to tell
+two keys apart, who added it and when it was last used.
+"""
+type AIProviderKeyInfo {
+  "The vendor prefix the key starts with, such as sk-ant-; empty when it has none."
+  prefix: String!
+  lastFour: String!
+  addedAt: Timestamp!
+  addedBy: User
+  lastUsedAt: Timestamp
+  "While the key it replaced is still kept as a fallback, when that stops."
+  previousKeyExpiresAt: Timestamp
 }
 
 type AIProviderEdge {
@@ -8684,11 +8732,83 @@ type AITaskRoute {
   changed: Boolean!
 }
 
+"""
+An endpoint as an editor holds it, before it is saved. With providerId and no
+apiKey, the provider's stored key is used.
+"""
+input AIProviderEndpointInput {
+  providerId: ID
+  kind: AIProviderKind!
+  baseUrl: String!
+  apiKey: String
+  allowPrivateNetwork: Boolean!
+}
+
+"One model an endpoint says it serves."
+type AIProviderModelOption {
+  id: String!
+  displayName: String!
+  "Tokens of context, when the endpoint or the model id says."
+  contextWindow: Int
+  "Bytes on disk, for a model a local server holds."
+  sizeBytes: Float
+  "A local server has it in memory now."
+  loaded: Boolean!
+  embedding: Boolean!
+  inputCostPerMillion: Decimal
+  outputCostPerMillion: Decimal
+}
+
+input AIProviderDraftTestInput {
+  endpoint: AIProviderEndpointInput!
+  model: String!
+  structuredOutputMode: AIStructuredOutputMode
+  tasks: [AITask!]!
+  embeddingDimensions: Int
+  embeddingInputStyle: AIEmbeddingInputStyle
+  timeoutSeconds: Int
+}
+
+"What a probe of an unsaved endpoint revealed, with a next step when it failed."
+type AIProviderDraftTestResult {
+  success: Boolean!
+  message: String!
+  "The endpoint's own words, such as the transport error."
+  detail: String!
+  "What to try next. Empty when it worked."
+  hint: String!
+  modelIdentifier: String!
+  schemaHonoured: Boolean!
+  latencyMs: Int!
+}
+
+"The fields of a provider that change on their own, from its row and read sheet."
+input AIProviderPatchInput {
+  enabled: Boolean @goField(omittable: true)
+  trusted: Boolean @goField(omittable: true)
+  allowPrivateNetwork: Boolean @goField(omittable: true)
+  tasks: [AITask!] @goField(omittable: true)
+  "A new credential. It replaces the stored one and is never returned."
+  apiKey: String @goField(omittable: true)
+  inputCostPerMillion: Decimal @goField(omittable: true)
+  outputCostPerMillion: Decimal @goField(omittable: true)
+}
+
 extend type Query {
+  "The models an endpoint serves, asked of the endpoint itself."
+  aiProviderModels(input: AIProviderEndpointInput!): [AIProviderModelOption!]!
   aiProviders(input: DataTableConnectionInput!): AIProviderConnection!
   aiProvider(id: ID!): AIProvider
   "Where each task goes now and where it would go with the draft saved. Saves nothing."
   aiRoutePreview(draft: AIProviderRoutingDraftInput!): [AITaskRoute!]!
+}
+
+extend type Mutation {
+  "Probes an unsaved endpoint once and records nothing."
+  testAIProviderDraft(input: AIProviderDraftTestInput!): AIProviderDraftTestResult!
+  "Sets the routing order: the first ID takes work first. Every provider must be listed once."
+  reorderAIProviders(ids: [ID!]!): [AIProvider!]!
+  patchAIProvider(id: ID!, version: Int!, input: AIProviderPatchInput!): AIProvider!
 }
 `, BuiltIn: false},
 	{Name: "../schema/airetrieval.graphqls", Input: `"What retrieval indexes by meaning."
@@ -9045,9 +9165,10 @@ extend type Query {
   """
   Model usage day by day for the last days (default 7, at most 90), ending
   today, oldest first. A day with no calls is listed with zeros. Days are read
-  in the IANA timezone given, UTC when absent.
+  in the IANA timezone given, UTC when absent. With providerId, only that
+  provider's calls.
   """
-  aiUsageDaily(days: Int, timezone: String): [AIUsageDay!]!
+  aiUsageDaily(days: Int, timezone: String, providerId: ID): [AIUsageDay!]!
 }
 `, BuiltIn: false},
 	{Name: "../schema/api_key.graphqls", Input: `type ApiKey {

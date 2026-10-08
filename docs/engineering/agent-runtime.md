@@ -23,6 +23,7 @@ Temporal returns succeeds.
 | Table compose, agent drafting and instruction tightening | `StructuredCompletionWorkflow` | `agent-chat-queue` |
 | Briefing regenerate | `WriteBriefingWorkflow` | `agent-chat-queue` |
 | AI provider test | `TestAIProviderWorkflow` | `agent-chat-queue` |
+| Provider editor: model list and unsaved test | `ListAIProviderModelsWorkflow`, `TestAIProviderDraftWorkflow` | `agent-chat-queue` |
 | Agent builder dry run | `AgentDryRunWorkflow`, one per try | `agent-chat-queue` |
 | Event-driven and scheduled agent runs | `AgentRunWorkflow` | `agent-background-queue` |
 | An agent's schedule firing | `AgentScheduledRunWorkflow` | `agent-background-queue` |
@@ -1025,6 +1026,10 @@ stops waiting cancels a call that was theirs alone.
   they are turns of the formula assistant.
 - `TestAIProviderWorkflow` probes once and never retries: the administrator is
   asking whether the connection works now.
+- `ListAIProviderModelsWorkflow` and `TestAIProviderDraftWorkflow` ask an endpoint
+  the editor has not saved, once each. A key typed into the editor is encrypted
+  before it is handed over, so workflow history holds only ciphertext, and a
+  stored key is used only for the endpoint it was entered for.
 - `WriteBriefingWorkflow` rewrites a day's page.
 
 Two people testing the same provider, or rewriting the same page, share one

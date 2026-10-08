@@ -196,9 +196,56 @@ type AIProviderConnection struct {
 	TotalCount *int              `json:"totalCount,omitempty"`
 }
 
+type AIProviderDraftTestInput struct {
+	Endpoint             *AIProviderEndpointInput         `json:"endpoint"`
+	Model                string                           `json:"model"`
+	StructuredOutputMode *aiprovider.StructuredOutputMode `json:"structuredOutputMode,omitempty"`
+	Tasks                []aiprovider.Task                `json:"tasks"`
+	EmbeddingDimensions  *int                             `json:"embeddingDimensions,omitempty"`
+	EmbeddingInputStyle  *aiprovider.EmbeddingInputStyle  `json:"embeddingInputStyle,omitempty"`
+	TimeoutSeconds       *int                             `json:"timeoutSeconds,omitempty"`
+}
+
 type AIProviderEdge struct {
 	Node   *aiprovider.Provider `json:"node"`
 	Cursor string               `json:"cursor"`
+}
+
+// An endpoint as an editor holds it, before it is saved. With providerId and no
+// apiKey, the provider's stored key is used.
+type AIProviderEndpointInput struct {
+	ProviderID          *string         `json:"providerId,omitempty"`
+	Kind                aiprovider.Kind `json:"kind"`
+	BaseURL             string          `json:"baseUrl"`
+	APIKey              *string         `json:"apiKey,omitempty"`
+	AllowPrivateNetwork bool            `json:"allowPrivateNetwork"`
+}
+
+// One model an endpoint says it serves.
+type AIProviderModelOption struct {
+	ID          string `json:"id"`
+	DisplayName string `json:"displayName"`
+	// Tokens of context, when the endpoint or the model id says.
+	ContextWindow *int `json:"contextWindow,omitempty"`
+	// Bytes on disk, for a model a local server holds.
+	SizeBytes *float64 `json:"sizeBytes,omitempty"`
+	// A local server has it in memory now.
+	Loaded               bool    `json:"loaded"`
+	Embedding            bool    `json:"embedding"`
+	InputCostPerMillion  *string `json:"inputCostPerMillion,omitempty"`
+	OutputCostPerMillion *string `json:"outputCostPerMillion,omitempty"`
+}
+
+// The fields of a provider that change on their own, from its row and read sheet.
+type AIProviderPatchInput struct {
+	Enabled             graphql.Omittable[*bool]             `json:"enabled,omitempty"`
+	Trusted             graphql.Omittable[*bool]             `json:"trusted,omitempty"`
+	AllowPrivateNetwork graphql.Omittable[*bool]             `json:"allowPrivateNetwork,omitempty"`
+	Tasks               graphql.Omittable[[]aiprovider.Task] `json:"tasks,omitempty"`
+	// A new credential. It replaces the stored one and is never returned.
+	APIKey               graphql.Omittable[*string] `json:"apiKey,omitempty"`
+	InputCostPerMillion  graphql.Omittable[*string] `json:"inputCostPerMillion,omitempty"`
+	OutputCostPerMillion graphql.Omittable[*string] `json:"outputCostPerMillion,omitempty"`
 }
 
 // A provider as its editor holds it, reduced to what decides where tasks go.

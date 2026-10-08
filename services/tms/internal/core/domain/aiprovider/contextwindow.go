@@ -36,17 +36,27 @@ var contextWindows = []struct {
 // is configured with. Model ids are free text, so a model this cannot place
 // gets DefaultContextWindow.
 func ContextWindowFor(model string) int {
-	id := strings.ToLower(strings.TrimSpace(model))
-	if id == "" {
-		return DefaultContextWindow
-	}
-	for _, window := range contextWindows {
-		if window.pattern.MatchString(id) {
-			return window.tokens
-		}
+	if tokens, ok := KnownContextWindow(model); ok {
+		return tokens
 	}
 
 	return DefaultContextWindow
+}
+
+// KnownContextWindow is the window of a model family this can place by its
+// id, and false for any other id.
+func KnownContextWindow(model string) (int, bool) {
+	id := strings.ToLower(strings.TrimSpace(model))
+	if id == "" {
+		return 0, false
+	}
+	for _, window := range contextWindows {
+		if window.pattern.MatchString(id) {
+			return window.tokens, true
+		}
+	}
+
+	return 0, false
 }
 
 // ConfiguredContextWindow is the window the provider is configured with, or

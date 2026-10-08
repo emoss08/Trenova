@@ -45,6 +45,7 @@ func (s *Service) Daily(
 		TenantInfo: req.TenantInfo,
 		Since:      first.Unix(),
 		Timezone:   location.String(),
+		ProviderID: req.ProviderID,
 	})
 	if err != nil {
 		return nil, err

@@ -20,6 +20,7 @@ func TestKeyPrefix_ReadsTheVendorPrefix(t *testing.T) {
 		{"openai legacy", "sk-AbCdEfGhIjKlMnOpQrStUvWxYz012345", "sk-"},
 		{"openrouter", "sk-or-v1-0123456789abcdef0123456789abcdef", "sk-or-"},
 		{"groq", "gsk_AbCdEfGhIjKlMnOpQrStUvWxYz012345", "gsk_"},
+		{"voyage", "pa-AbCdEfGhIjKlMnOpQrStUvWxYz012345", "pa-"},
 		{"nvidia", "nvapi-AbCdEfGhIjKlMnOpQrStUvWxYz012345", "nvapi-"},
 		{"google", "AIzaSyAbCdEfGhIjKlMnOpQrStUvWxYz01234", "AIza"},
 		{"surrounding space", "  gsk_AbCdEfGhIjKlMnOpQrStUvWxYz012345\n", "gsk_"},

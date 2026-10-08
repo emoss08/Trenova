@@ -1385,6 +1385,30 @@ func init() {
 				FieldMapKey: "lastTest",
 			},
 			{
+				Name:        "timeoutSeconds",
+				FieldMapKey: "timeoutSeconds",
+			},
+			{
+				Name:        "maxConcurrent",
+				FieldMapKey: "maxConcurrent",
+			},
+			{
+				Name:        "monthlyCapUsd",
+				FieldMapKey: "monthlyCapUsd",
+			},
+			{
+				Name:        "onCap",
+				FieldMapKey: "onCap",
+			},
+			{
+				Name:    "monthSpendUsd",
+				Special: "monthSpendUsd",
+			},
+			{
+				Name:    "apiKey",
+				Special: "apiKey",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},

@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/99designs/gqlgen/graphql"
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
@@ -20,35 +19,12 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-func requiredOmittable[T any](
-	field, label string,
-	value graphql.Omittable[*T],
-) (carrierintelservice.Optional[T], error) {
-	if !value.IsSet() {
-		return carrierintelservice.Optional[T]{}, nil
-	}
-	ptr := value.Value()
-	if ptr == nil {
-		return carrierintelservice.Optional[T]{}, errortypes.NewValidationError(
-			field, errortypes.ErrRequired, "{0} cannot be cleared", label,
-		)
-	}
-	return carrierintelservice.Some(*ptr), nil
-}
-
-func nullableIntOmittable(value graphql.Omittable[*int]) carrierintelservice.Optional[*int] {
-	if !value.IsSet() {
-		return carrierintelservice.Optional[*int]{}
-	}
-	return carrierintelservice.Some(value.Value())
-}
-
 func controlPatchFromInput(
 	input *gqlmodel.CarrierIntelControlPatchInput,
 ) (*carrierintelservice.ControlPatch, error) {
 	patch := &carrierintelservice.ControlPatch{
 		ConfirmEstimatedCost: base.BoolValue(input.ConfirmEstimatedCost),
-		DailyFullProfileCap:  nullableIntOmittable(input.DailyFullProfileCap),
+		DailyFullProfileCap:  base.NullableOmittable(input.DailyFullProfileCap),
 	}
 	if input.Version != nil {
 		version := int64(*input.Version)
@@ -69,103 +45,103 @@ func controlPatchFromInput(
 	}
 
 	var e error
-	patch.EnrollmentPolicy, e = requiredOmittable(
+	patch.EnrollmentPolicy, e = base.RequiredOmittable(
 		"enrollmentPolicy",
 		"Enrollment policy",
 		input.EnrollmentPolicy,
 	)
 	collect(e)
-	patch.RecentUsageDays, e = requiredOmittable(
+	patch.RecentUsageDays, e = base.RequiredOmittable(
 		"recentUsageDays",
 		"Recent usage window",
 		input.RecentUsageDays,
 	)
 	collect(e)
-	patch.IncludeOpenTenders, e = requiredOmittable(
+	patch.IncludeOpenTenders, e = base.RequiredOmittable(
 		"includeOpenTenders",
 		"Include open tenders",
 		input.IncludeOpenTenders,
 	)
 	collect(e)
-	patch.AutoEnrollOnCreate, e = requiredOmittable(
+	patch.AutoEnrollOnCreate, e = base.RequiredOmittable(
 		"autoEnrollOnCreate",
 		"Automatic enrollment",
 		input.AutoEnrollOnCreate,
 	)
 	collect(e)
-	patch.AutoUnenrollOnInactive, e = requiredOmittable(
+	patch.AutoUnenrollOnInactive, e = base.RequiredOmittable(
 		"autoUnenrollOnInactive", "Automatic unenrollment", input.AutoUnenrollOnInactive,
 	)
 	collect(e)
-	patch.ExclusiveWatchlist, e = requiredOmittable(
+	patch.ExclusiveWatchlist, e = base.RequiredOmittable(
 		"exclusiveWatchlist",
 		"Exclusive watchlist",
 		input.ExclusiveWatchlist,
 	)
 	collect(e)
-	patch.PollIntervalMinutes, e = requiredOmittable(
+	patch.PollIntervalMinutes, e = base.RequiredOmittable(
 		"pollIntervalMinutes",
 		"Poll interval",
 		input.PollIntervalMinutes,
 	)
 	collect(e)
-	patch.SnapshotTTLHours, e = requiredOmittable(
+	patch.SnapshotTTLHours, e = base.RequiredOmittable(
 		"snapshotTtlHours",
 		"Snapshot freshness",
 		input.SnapshotTTLHours,
 	)
 	collect(e)
-	patch.FullProfileTTLDays, e = requiredOmittable(
+	patch.FullProfileTTLDays, e = base.RequiredOmittable(
 		"fullProfileTtlDays",
 		"Full profile freshness",
 		input.FullProfileTTLDays,
 	)
 	collect(e)
-	patch.PreTenderRefreshEnabled, e = requiredOmittable(
+	patch.PreTenderRefreshEnabled, e = base.RequiredOmittable(
 		"preTenderRefreshEnabled", "Pre-tender refresh", input.PreTenderRefreshEnabled,
 	)
 	collect(e)
-	patch.PreTenderMaxAgeHours, e = requiredOmittable(
+	patch.PreTenderMaxAgeHours, e = base.RequiredOmittable(
 		"preTenderMaxAgeHours", "Pre-tender freshness", input.PreTenderMaxAgeHours,
 	)
 	collect(e)
-	patch.HardMaxAgeHours, e = requiredOmittable(
+	patch.HardMaxAgeHours, e = base.RequiredOmittable(
 		"hardMaxAgeHours",
 		"Maximum intelligence age",
 		input.HardMaxAgeHours,
 	)
 	collect(e)
-	patch.ConfirmBlockingChanges, e = requiredOmittable(
+	patch.ConfirmBlockingChanges, e = base.RequiredOmittable(
 		"confirmBlockingChanges", "Confirm blocking changes", input.ConfirmBlockingChanges,
 	)
 	collect(e)
-	patch.OutagePolicy, e = requiredOmittable("outagePolicy", "Outage policy", input.OutagePolicy)
+	patch.OutagePolicy, e = base.RequiredOmittable("outagePolicy", "Outage policy", input.OutagePolicy)
 	collect(e)
-	patch.AutoDisqualifyOnBlock, e = requiredOmittable(
+	patch.AutoDisqualifyOnBlock, e = base.RequiredOmittable(
 		"autoDisqualifyOnBlock", "Automatic disqualification", input.AutoDisqualifyOnBlock,
 	)
 	collect(e)
-	patch.AutoApplySafetyRating, e = requiredOmittable(
+	patch.AutoApplySafetyRating, e = base.RequiredOmittable(
 		"autoApplySafetyRating", "Automatic safety rating sync", input.AutoApplySafetyRating,
 	)
 	collect(e)
-	patch.SoftCapPercent, e = requiredOmittable(
+	patch.SoftCapPercent, e = base.RequiredOmittable(
 		"softCapPercent",
 		"Soft cap percent",
 		input.SoftCapPercent,
 	)
 	collect(e)
-	patch.RawRetentionDays, e = requiredOmittable(
+	patch.RawRetentionDays, e = base.RequiredOmittable(
 		"rawRetentionDays",
 		"Raw payload retention",
 		input.RawRetentionDays,
 	)
 	collect(e)
-	patch.SnapshotHistoryLimit, e = requiredOmittable(
+	patch.SnapshotHistoryLimit, e = base.RequiredOmittable(
 		"snapshotHistoryLimit", "Snapshot history", input.SnapshotHistoryLimit,
 	)
 	collect(e)
-	patch.SelfMonitoringEnabled, e = requiredOmittable(
+	patch.SelfMonitoringEnabled, e = base.RequiredOmittable(
 		"selfMonitoringEnabled", "Self-monitoring", input.SelfMonitoringEnabled,
 	)
 	collect(e)

@@ -35,6 +35,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/shopspring/decimal"
 	"github.com/vikstrous/dataloadgen"
 	"go.uber.org/fx"
 )
@@ -55,6 +56,7 @@ type FactoryParams struct {
 	PayProfileActiveAssignmentCount           *PayProfileActiveAssignmentCountLoaderFactory
 	PTOPolicyOpenAssignmentCount              *PTOPolicyOpenAssignmentCountLoaderFactory
 	ShiftTemplateActiveAssignmentCount        *ShiftTemplateActiveAssignmentCountLoaderFactory
+	AIProviderMonthSpend                      *AIProviderMonthSpendLoaderFactory
 	WorkerChecklistTemplateOpenChecklistCount *WorkerChecklistTemplateOpenChecklistCountLoaderFactory
 	WorkerCredentialTypeActiveCredentialCount *WorkerCredentialTypeActiveCredentialCountLoaderFactory
 	TrainingCourseOpenRecordCount             *TrainingCourseOpenRecordCountLoaderFactory
@@ -118,6 +120,7 @@ type Factory struct {
 	payProfileActiveAssignmentCount           *PayProfileActiveAssignmentCountLoaderFactory
 	pTOPolicyOpenAssignmentCount              *PTOPolicyOpenAssignmentCountLoaderFactory
 	shiftTemplateActiveAssignmentCount        *ShiftTemplateActiveAssignmentCountLoaderFactory
+	aiProviderMonthSpend                      *AIProviderMonthSpendLoaderFactory
 	workerChecklistTemplateOpenChecklistCount *WorkerChecklistTemplateOpenChecklistCountLoaderFactory
 	workerCredentialTypeActiveCredentialCount *WorkerCredentialTypeActiveCredentialCountLoaderFactory
 	trainingCourseOpenRecordCount             *TrainingCourseOpenRecordCountLoaderFactory
@@ -181,6 +184,7 @@ type Loaders struct {
 	PayProfileActiveAssignmentCount           *dataloadgen.Loader[string, int]
 	PTOPolicyOpenAssignmentCount              *dataloadgen.Loader[string, int]
 	ShiftTemplateActiveAssignmentCount        *dataloadgen.Loader[string, int]
+	AIProviderMonthSpend                      *dataloadgen.Loader[string, decimal.Decimal]
 	WorkerChecklistTemplateOpenChecklistCount *dataloadgen.Loader[string, int]
 	WorkerCredentialTypeActiveCredentialCount *dataloadgen.Loader[string, int]
 	TrainingCourseOpenRecordCount             *dataloadgen.Loader[string, int]
@@ -248,6 +252,7 @@ func NewFactory(p FactoryParams) *Factory {
 		payProfileActiveAssignmentCount:           p.PayProfileActiveAssignmentCount,
 		pTOPolicyOpenAssignmentCount:              p.PTOPolicyOpenAssignmentCount,
 		shiftTemplateActiveAssignmentCount:        p.ShiftTemplateActiveAssignmentCount,
+		aiProviderMonthSpend:                      p.AIProviderMonthSpend,
 		workerChecklistTemplateOpenChecklistCount: p.WorkerChecklistTemplateOpenChecklistCount,
 		workerCredentialTypeActiveCredentialCount: p.WorkerCredentialTypeActiveCredentialCount,
 		trainingCourseOpenRecordCount:             p.TrainingCourseOpenRecordCount,
@@ -327,6 +332,7 @@ func (f *Factory) NewForTenant(tenantInfo pagination.TenantInfo) *Loaders {
 		ShiftTemplateActiveAssignmentCount: f.shiftTemplateActiveAssignmentCount.NewForTenant(
 			tenantInfo,
 		),
+		AIProviderMonthSpend: f.aiProviderMonthSpend.NewForTenant(tenantInfo),
 		WorkerChecklistTemplateOpenChecklistCount: f.workerChecklistTemplateOpenChecklistCount.NewForTenant(
 			tenantInfo,
 		),

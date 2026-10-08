@@ -10,7 +10,8 @@ import (
 )
 
 // ChangeRules name, in the provider editor's words, the settings a person
-// edits there. The API key is never compared: it is not kept in a version.
+// edits there. The API key itself is never compared, since it is not kept in
+// a version; its prefix, last four and when it was added are.
 var ChangeRules = []editchange.Rule[Provider]{
 	{
 		Field: "name", Label: "Name",
@@ -58,6 +59,23 @@ var ChangeRules = []editchange.Rule[Provider]{
 		Same: func(a, b *Provider) bool {
 			return decimalutils.PtrEqual(a.InputCostPerMillion, b.InputCostPerMillion) &&
 				decimalutils.PtrEqual(a.OutputCostPerMillion, b.OutputCostPerMillion)
+		},
+	},
+	{
+		Field: "timeoutSeconds", Label: "Limits",
+		Same: func(a, b *Provider) bool {
+			return a.TimeoutSeconds == b.TimeoutSeconds &&
+				a.MaxConcurrent == b.MaxConcurrent &&
+				decimalutils.PtrEqual(a.MonthlyCapUSD, b.MonthlyCapUSD) &&
+				a.OnCap == b.OnCap
+		},
+	},
+	{
+		Field: "apiKey", Label: "API key",
+		Same: func(a, b *Provider) bool {
+			return a.APIKeyPrefix == b.APIKeyPrefix &&
+				a.APIKeyLastFour == b.APIKeyLastFour &&
+				typeutils.EqualPtr(a.APIKeyAddedAt, b.APIKeyAddedAt)
 		},
 	},
 	{

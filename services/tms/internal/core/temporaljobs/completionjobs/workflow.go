@@ -50,6 +50,47 @@ func TestAIProviderWorkflow(
 	return &result, nil
 }
 
+// ListAIProviderModelsWorkflow asks an endpoint once which models it serves.
+// The list is read while an administrator picks a model, so a failure is
+// shown to them rather than retried behind their back.
+func ListAIProviderModelsWorkflow(
+	ctx workflow.Context,
+	payload *ListAIProviderModelsPayload,
+) ([]serviceports.AIProviderModelOption, error) {
+	var a *Activities
+	listCtx := workflow.WithActivityOptions(ctx, waitedOptions(
+		ctx, payload.Request.TenantInfo.OrgID, 1, "List the endpoint's models",
+	))
+
+	var result []serviceports.AIProviderModelOption
+	if err := workflow.ExecuteActivity(listCtx, a.ListAIProviderModelsActivity, payload).
+		Get(listCtx, &result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// TestAIProviderDraftWorkflow probes an unsaved endpoint once, for the same
+// reason a saved provider's test is not retried.
+func TestAIProviderDraftWorkflow(
+	ctx workflow.Context,
+	payload *TestAIProviderDraftPayload,
+) (*serviceports.AIProviderDraftTestResult, error) {
+	var a *Activities
+	testCtx := workflow.WithActivityOptions(ctx, waitedOptions(
+		ctx, payload.Request.TenantInfo.OrgID, 1, "Test the unsaved provider",
+	))
+
+	var result serviceports.AIProviderDraftTestResult
+	if err := workflow.ExecuteActivity(testCtx, a.TestAIProviderDraftActivity, payload).
+		Get(testCtx, &result); err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
 // WriteBriefingWorkflow writes a day's briefing for a person who asked for it
 // again.
 func WriteBriefingWorkflow(

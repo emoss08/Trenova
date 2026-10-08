@@ -117,8 +117,10 @@ func (s *Service) AssignTask(
 type modifyRequest struct {
 	tenantInfo pagination.TenantInfo
 	providerID pulid.ID
-	actor      *services.RequestActor
-	edit       func(*aiprovider.Provider)
+	// version is the version the editor loaded; zero takes the stored one.
+	version int64
+	actor   *services.RequestActor
+	edit    func(*aiprovider.Provider)
 }
 
 func (s *Service) modify(
@@ -136,6 +138,11 @@ func (s *Service) modify(
 	previous := existing.Redacted()
 	updated := *existing
 	updated.Tasks = slices.Clone(existing.Tasks)
+	loaded := existing.Version
+	if req.version != 0 {
+		loaded = req.version
+		updated.Version = req.version
+	}
 	req.edit(&updated)
 
 	multiErr := errortypes.NewMultiError()
@@ -151,7 +158,7 @@ func (s *Service) modify(
 		return nil, nil, s.explainConflict(ctx, &conflictRequest{
 			tenantInfo: req.tenantInfo,
 			providerID: req.providerID,
-			loaded:     existing.Version,
+			loaded:     loaded,
 			cause:      err,
 		})
 	}

@@ -272,6 +272,15 @@ writes:
     reason: "A person's rating of an agent's answer; an agent rating itself would be meaningless."
 
   # aiprovider
+  "mutation patchAIProvider":
+    exempt: agent-administration
+    reason: "Configures the model providers agents run on, including their API keys."
+  "mutation reorderAIProviders":
+    exempt: agent-administration
+    reason: "Sets the order in which the model providers agents run on take work."
+  "mutation testAIProviderDraft":
+    exempt: read-only
+    reason: "Tests an unsaved provider's credentials once and returns the result; it saves nothing."
   "DELETE /api/v1/ai-providers/:providerID/":
     exempt: agent-administration
     reason: "Configures the model providers agents run on, including their API keys."

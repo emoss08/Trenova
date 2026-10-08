@@ -136,6 +136,7 @@ type Resolver struct {
 	aICorrection                       *extractionevalresolver.AICorrectionResolver
 	aIFeedback                         *aifeedbackresolver.AIFeedbackResolver
 	aIProvider                         *aiproviderresolver.AIProviderResolver
+	aIProviderKeyInfo                  *aiproviderresolver.AIProviderKeyInfoResolver
 	aIRouteChoice                      *aiproviderresolver.AIRouteChoiceResolver
 	aITuneUpEvidence                   *aicontrolresolver.AITuneUpEvidenceResolver
 	accessorialCharge                  *accessorialchargeresolver.AccessorialChargeResolver
@@ -996,6 +997,7 @@ func FromServices(s *Services) *Resolver {
 		aICorrection:                 &extractionevalresolver.AICorrectionResolver{Deps: extractionevalDeps},
 		aIFeedback:                   &aifeedbackresolver.AIFeedbackResolver{Deps: aifeedbackDeps},
 		aIProvider:                   &aiproviderresolver.AIProviderResolver{Deps: aiproviderDeps},
+		aIProviderKeyInfo:            &aiproviderresolver.AIProviderKeyInfoResolver{Deps: aiproviderDeps},
 		aIRouteChoice:                &aiproviderresolver.AIRouteChoiceResolver{Deps: aiproviderDeps},
 		aITuneUpEvidence:             &aicontrolresolver.AITuneUpEvidenceResolver{Deps: aicontrolDeps},
 		accessorialCharge:            &accessorialchargeresolver.AccessorialChargeResolver{Deps: accessorialchargeDeps},
@@ -1162,6 +1164,7 @@ func FromServices(s *Services) *Resolver {
 			aiauditMutation:               &aiauditMutation{Deps: aiauditDeps},
 			aicontrolMutation:             &aicontrolMutation{Deps: aicontrolDeps},
 			aifeedbackMutation:            &aifeedbackMutation{Deps: aifeedbackDeps},
+			aiproviderMutation:            &aiproviderMutation{Deps: aiproviderDeps},
 			airetrievalMutation:           &airetrievalMutation{Deps: airetrievalDeps},
 			benefitsMutation:              &benefitsMutation{Deps: benefitsDeps},
 			billingqueueMutation:          &billingqueueMutation{Deps: billingqueueDeps},
@@ -1453,6 +1456,10 @@ func (r *Resolver) AIFeedback() generated.AIFeedbackResolver {
 
 func (r *Resolver) AIProvider() generated.AIProviderResolver {
 	return r.aIProvider
+}
+
+func (r *Resolver) AIProviderKeyInfo() generated.AIProviderKeyInfoResolver {
+	return r.aIProviderKeyInfo
 }
 
 func (r *Resolver) AIRouteChoice() generated.AIRouteChoiceResolver {
@@ -2068,6 +2075,7 @@ type mutationResolver struct {
 	*aiauditMutation
 	*aicontrolMutation
 	*aifeedbackMutation
+	*aiproviderMutation
 	*airetrievalMutation
 	*benefitsMutation
 	*billingqueueMutation
@@ -2571,6 +2579,7 @@ type (
 	aiauditMutation               = aiauditresolver.MutationResolver
 	aicontrolMutation             = aicontrolresolver.MutationResolver
 	aifeedbackMutation            = aifeedbackresolver.MutationResolver
+	aiproviderMutation            = aiproviderresolver.MutationResolver
 	airetrievalMutation           = airetrievalresolver.MutationResolver
 	benefitsMutation              = benefitsresolver.MutationResolver
 	billingqueueMutation          = billingqueueresolver.MutationResolver

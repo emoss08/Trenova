@@ -847,6 +847,16 @@ func (p *Provider) validateTasks(multiErr *errortypes.MultiError) {
 	}
 }
 
+// ValidateEndpoint checks only where the provider is reached and with what,
+// for an endpoint an editor asks about before it is saved.
+func (p *Provider) ValidateEndpoint(multiErr *errortypes.MultiError) {
+	if !p.Kind.IsValid() {
+		multiErr.Add("kind", errortypes.ErrInvalid, "Unknown provider kind")
+		return
+	}
+	p.validateEndpoint(multiErr)
+}
+
 func (p *Provider) validateEndpoint(multiErr *errortypes.MultiError) {
 	if !p.Kind.IsValid() {
 		return

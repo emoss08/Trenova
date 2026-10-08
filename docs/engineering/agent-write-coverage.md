@@ -89,31 +89,31 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 260 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 30 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 46 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 75 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 77 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
-| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 50 |
+| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 51 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 44 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 3 |
 
 ## Totals
 
-1008 writes: 529 GraphQL mutations and 479 REST writes, after merging 72 REST routes into the mutation they duplicate.
+1011 writes: 532 GraphQL mutations and 479 REST writes, after merging 72 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 386 |
-| Exempt | 619 |
+| Exempt | 622 |
 | — Security | 78 |
 | — Configuration | 260 |
 | — User preference | 30 |
 | — Infrastructure | 46 |
-| — Agent administration | 75 |
+| — Agent administration | 77 |
 | — Counterparty | 33 |
-| — Read-only | 50 |
+| — Read-only | 51 |
 | — Attestation | 44 |
 | — Duplicate | 3 |
 | **Pending** | **3** |
-| Total | 1008 |
+| Total | 1011 |
 
 Of the 389 writes an agent should be able to make, 386 have a tool (99%).
 
@@ -144,7 +144,7 @@ The writes no tool performs yet, and what the tool would do.
 | aiaudit | 3 | 0 | 3 | 0 |
 | aicontrol | 5 | 0 | 5 | 0 |
 | aifeedback | 2 | 0 | 2 | 0 |
-| aiprovider | 4 | 0 | 4 | 0 |
+| aiprovider | 7 | 0 | 7 | 0 |
 | airetrieval | 2 | 0 | 2 | 0 |
 | apikey | 4 | 0 | 4 | 0 |
 | assignment | 1 | 0 | 1 | 0 |
@@ -463,6 +463,9 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `mutation patchAIProvider` | Exempt, agent-administration: Configures the model providers agents run on, including their API keys. |
+| `mutation reorderAIProviders` | Exempt, agent-administration: Sets the order in which the model providers agents run on take work. |
+| `mutation testAIProviderDraft` | Exempt, read-only: Tests an unsaved provider's credentials once and returns the result; it saves nothing. |
 | `DELETE /api/v1/ai-providers/:providerID/`<br>aiproviderhandler.remove | Exempt, agent-administration: Configures the model providers agents run on, including their API keys. |
 | `POST /api/v1/ai-providers/`<br>aiproviderhandler.create | Exempt, agent-administration: Configures the model providers agents run on, including their API keys. |
 | `POST /api/v1/ai-providers/:providerID/test/`<br>aiproviderhandler.test | Exempt, read-only: Tests the provider credentials and returns the result. |

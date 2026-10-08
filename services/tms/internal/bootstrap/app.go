@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
 	"github.com/emoss08/trenova/internal/core/services/aiauditservice"
 	"github.com/emoss08/trenova/internal/core/services/aidocumentservice"
+	"github.com/emoss08/trenova/internal/core/services/aiproviderspendservice"
 	"github.com/emoss08/trenova/internal/core/services/aitraininghistoryservice"
 	"github.com/emoss08/trenova/internal/core/services/analyticsservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantfollowupservice"
@@ -200,6 +201,7 @@ func OptionsFor(e *edition.Edition) fx.Option {
 		assistantfollowupservice.Module,
 		conversationscheduleservice.Module,
 		conversationschedulejobs.Module,
+		aiproviderspendservice.Module,
 		completionrouter.Module,
 		recurringshipmentjobs.Module,
 		settlementjobs.Module,

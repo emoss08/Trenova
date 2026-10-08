@@ -60,6 +60,15 @@ func (f *fakeProber) Probe(
 	return f.result
 }
 
+func (f *fakeProber) ListModels(
+	_ context.Context,
+	_ *aiprovider.Provider,
+	apiKey string,
+) ([]services.AIProviderModelOption, error) {
+	f.seen = apiKey
+	return nil, nil
+}
+
 func newTestService(repo *fakeProviderRepo, prober *fakeProber) *Service {
 	return &Service{
 		l:    zap.NewNop(),
@@ -155,6 +164,20 @@ func (f *fakeTester) Test(
 ) (*services.TestAIProviderResult, error) {
 	f.asked = append(f.asked, req)
 
+	return f.result, nil
+}
+
+func (f *fakeTester) ListModels(
+	_ context.Context,
+	_ *services.ProbeAIProviderModelsRequest,
+) ([]services.AIProviderModelOption, error) {
+	return nil, nil
+}
+
+func (f *fakeTester) TestDraft(
+	_ context.Context,
+	_ *services.ProbeAIProviderDraftRequest,
+) (*services.AIProviderDraftTestResult, error) {
 	return f.result, nil
 }
 
@@ -282,13 +305,13 @@ func TestApply_RefusesAPrivateNetworkTheServerDisallows(t *testing.T) {
 	req := saveRequest(provider, "http://10.0.0.5:11434", nil)
 	req.AllowPrivateNetwork = true
 
-	err := svc.apply(provider, req)
+	err := svc.apply(provider, req, nil)
 
 	require.Error(t, err)
 	assert.False(t, provider.AllowPrivateNetwork)
 
 	svc.ai = nil
-	require.NoError(t, svc.apply(provider, req), "an absent setting keeps self-hosted models working")
+	require.NoError(t, svc.apply(provider, req, nil), "an absent setting keeps self-hosted models working")
 	assert.True(t, provider.AllowPrivateNetwork)
 }
 
@@ -304,10 +327,10 @@ func TestApply_KeepsTheThinkingStyleTheAdministratorChose(t *testing.T) {
 	req := saveRequest(provider, "https://gateway.example.com", nil)
 	req.ThinkingStyle = aiprovider.ThinkingStyleEffort
 
-	require.NoError(t, svc.apply(provider, req))
+	require.NoError(t, svc.apply(provider, req, nil))
 	assert.Equal(t, aiprovider.ThinkingStyleEffort, provider.ThinkingStyle)
 
 	req.ThinkingStyle = ""
-	require.NoError(t, svc.apply(provider, req))
+	require.NoError(t, svc.apply(provider, req, nil))
 	assert.Equal(t, aiprovider.ThinkingStyleAuto, provider.ThinkingStyle)
 }

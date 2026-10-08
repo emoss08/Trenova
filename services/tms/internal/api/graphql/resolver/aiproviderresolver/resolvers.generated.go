@@ -12,8 +12,12 @@ type Deps struct {
 	AiProviderService services.AIProviderService
 }
 
+type AIProviderKeyInfoResolver struct{ *Deps }
+
 type AIProviderResolver struct{ *Deps }
 
 type AIRouteChoiceResolver struct{ *Deps }
+
+type MutationResolver struct{ *Deps }
 
 type QueryResolver struct{ *Deps }

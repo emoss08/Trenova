@@ -21,6 +21,7 @@ var graphQLLoaderModule = fx.Module("api-graphql-loaders", fx.Provide(
 	loaders.NewPayProfileActiveAssignmentCountLoaderFactory,
 	loaders.NewPTOPolicyOpenAssignmentCountLoaderFactory,
 	loaders.NewShiftTemplateActiveAssignmentCountLoaderFactory,
+	loaders.NewAIProviderMonthSpendLoaderFactory,
 	loaders.NewWorkerChecklistTemplateOpenChecklistCountLoaderFactory,
 	loaders.NewWorkerCredentialTypeActiveCredentialCountLoaderFactory,
 	loaders.NewTrainingCourseOpenRecordCountLoaderFactory,

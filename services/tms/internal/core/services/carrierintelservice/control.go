@@ -13,16 +13,14 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/optional"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
 
-type Optional[T any] struct {
-	Set   bool
-	Value T
-}
+type Optional[T any] = optional.Value[T]
 
-func Some[T any](v T) Optional[T] { return Optional[T]{Set: true, Value: v} }
+func Some[T any](v T) Optional[T] { return optional.Some(v) }
 
 type ControlPatch struct {
 	EnrollmentPolicy        Optional[carrierintel.EnrollmentPolicy]
@@ -54,11 +52,7 @@ type ControlPatch struct {
 }
 
 func applyPatch[T any](field *T, opt Optional[T]) bool {
-	if !opt.Set {
-		return false
-	}
-	*field = opt.Value
-	return true
+	return opt.Apply(field)
 }
 
 func (s *Service) UpdateControl(
