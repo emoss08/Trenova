@@ -2576,23 +2576,12 @@
     ]
   },
   "A budget cannot be negative": {
-    "sites": 2,
-    "scope": [
-      "go",
-      "ts"
-    ],
-    "areas": [
-      "domain/agentdefinition",
-      "routes/agent-control"
-    ]
-  },
-  "A budget is at most 100,000": {
     "sites": 1,
     "scope": [
-      "ts"
+      "go"
     ],
     "areas": [
-      "routes/agent-control"
+      "domain/agentdefinition"
     ]
   },
   "A bulk action may target at most 500 records": {
@@ -16792,6 +16781,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Agents search by <b>keyword only</b>. Nothing handles the Embedding task, so <b>{0, plural, one {# item is} other {# items are}}</b> waiting to be searchable by meaning.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Agents searching and reading public web pages on a person's behalf, through an enabled extension": {
@@ -34341,6 +34339,15 @@
       "routes/agent-control"
     ]
   },
+  "Budget set to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Budget spent": {
     "sites": 1,
     "scope": [
@@ -40219,15 +40226,6 @@
       "routes/admin",
       "routes/agent-control",
       "routes/rate-agreement"
-    ]
-  },
-  "Changes apply from the indexer's next round.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Changes apply from the next sweep.": {
@@ -53809,15 +53807,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Counts are for the model searches use now. An item is skipped on purpose when it is retired, superseded, has no text yet, or belongs to a record too sensitive to send to a provider; skipped items are still found by their words.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Counts as FMLA": {
@@ -81844,6 +81833,24 @@
       "routes/agent-control"
     ]
   },
+  "Everything is searchable by meaning under <m>{0}</m>, except <f>{1, plural, one {# item that failed} other {# items that failed}}</f>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Everything is searchable by meaning under <m>{0}</m>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Everything is tendered": {
     "sites": 1,
     "scope": [
@@ -92939,6 +92946,15 @@
       "apps/web/lib"
     ]
   },
+  "From the indexer's next round": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "From the inspection report, so it can be looked up.": {
     "sites": 1,
     "scope": [
@@ -95511,15 +95527,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Go to the settings": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Goal": {
@@ -103010,6 +103017,15 @@
       "service/formulatemplateservice"
     ]
   },
+  "Index {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Indexed": {
     "sites": 2,
     "scope": [
@@ -103028,7 +103044,16 @@
       "routes/agent-control"
     ]
   },
-  "Indexing embeds each source's text with the model routed to the Embedding task. The budget covers indexing for the calendar month (UTC); when it is spent, indexing pauses until the next month or a higher budget.": {
+  "Indexing is <w>paused</w>. Agents search by keyword until it resumes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Indexing is <w>paused</w>: this month's budget is spent. Agents search by keyword until it resumes.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -103047,6 +103072,42 @@
     ]
   },
   "Indexing is paused, so the re-index waits until it resumes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Indexing paused": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Indexing resumed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Indexing stops for the month when it's reached. Searches count against each agent's own budget, not this one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Indexing under <m>{0}</m>. <b>{1}</b> to go — searches use keywords for anything not done yet.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -111293,15 +111354,6 @@
     ],
     "areas": [
       "routes/fuel-card"
-    ]
-  },
-  "Last indexed {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Last inspection date": {
@@ -125099,8 +125151,8 @@
       "routes/agent-control"
     ]
   },
-  "Monthly indexing budget (USD)": {
-    "sites": 1,
+  "Monthly indexing budget": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -128298,15 +128350,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Never indexed": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Never list": {
@@ -138596,15 +138639,6 @@
       "routes/edi"
     ]
   },
-  "Nothing indexed yet": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Nothing is asking for you": {
     "sites": 1,
     "scope": [
@@ -138876,7 +138910,7 @@
       "routes/fuel-feed-run"
     ]
   },
-  "Nothing new is indexed and agents search by keyword only until indexing is resumed.": {
+  "Nothing new is indexed until the notice above is dealt with": {
     "sites": 1,
     "scope": [
       "ts"
@@ -138885,7 +138919,7 @@
       "routes/agent-control"
     ]
   },
-  "Nothing new is indexed until the notice above is dealt with": {
+  "Nothing new is indexed, and agents search by keyword until it's resumed.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -139999,7 +140033,7 @@
     ]
   },
   "Nova": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -152946,7 +152980,7 @@
     ]
   },
   "Pause indexing": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -154640,7 +154674,7 @@
     ]
   },
   "Pending": {
-    "sites": 37,
+    "sites": 36,
     "scope": [
       "go",
       "ts"
@@ -156730,6 +156764,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "Pick a provider on Providers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Pick a query type": {
@@ -180016,6 +180059,15 @@
       "routes/rate-agreement"
     ]
   },
+  "Resume indexing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Resume monitoring": {
     "sites": 1,
     "scope": [
@@ -180146,6 +180198,15 @@
       "routes/scheduling"
     ]
   },
+  "Retired, superseded, empty, or too sensitive to send. Still found by their words.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Retirement": {
     "sites": 1,
     "scope": [
@@ -180174,16 +180235,7 @@
     ]
   },
   "Retrieval": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "Retrieval figures": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -180198,24 +180250,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "Retrieval settings": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "Retrieval settings saved": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Retrieved from the web on {0}": {
@@ -183322,6 +183356,15 @@
       "go/other"
     ]
   },
+  "Route Embedding": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Route Miles": {
     "sites": 1,
     "scope": [
@@ -183441,6 +183484,15 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "Routed to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Routes the withheld amount into the driver's active escrow account and stops automatically at the account's funding target.": {
@@ -186583,7 +186635,7 @@
     ]
   },
   "Save settings": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -189665,15 +189717,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Search queries are not counted here; they count against each agent's budget.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Search records, jump to pages, run commands and ask the assistant": {
@@ -199784,15 +199827,6 @@
     ]
   },
   "Show every source": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "Show failures": {
     "sites": 1,
     "scope": [
       "ts"
@@ -220942,6 +220976,15 @@
       "apps/web/components"
     ]
   },
+  "The retrieval settings could not be saved. Reload the page and try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The retrieval tables are missing": {
     "sites": 1,
     "scope": [
@@ -226649,6 +226692,15 @@
     ]
   },
   "This month's indexing budget is spent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "This month's {0} is spent. Raise it to resume now.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -243619,7 +243671,7 @@
     ]
   },
   "Waiting": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -258173,6 +258225,24 @@
       "routes/agent-control"
     ]
   },
+  "indexer round": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "indexing now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "instructions": {
     "sites": 1,
     "scope": [
@@ -258431,15 +258501,6 @@
   },
   "level with production": {
     "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "listed below": {
-    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -258870,6 +258931,15 @@
       "routes/agent-control"
     ]
   },
+  "nothing indexed yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "nothing waived": {
     "sites": 1,
     "scope": [
@@ -258889,7 +258959,7 @@
     ]
   },
   "of {0}": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -258926,6 +258996,15 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "of {0} budget": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "of {0} cap": {
@@ -259343,6 +259422,15 @@
       "routes/worker"
     ]
   },
+  "per month": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "per pay period — a top-up line is added automatically when period gross falls below the floor.": {
     "sites": 1,
     "scope": [
@@ -259744,6 +259832,15 @@
     ]
   },
   "searchable by meaning": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "see below": {
     "sites": 1,
     "scope": [
       "ts"
@@ -260260,6 +260357,15 @@
       "apps/web/components"
     ]
   },
+  "to be indexed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "to confirm": {
     "sites": 1,
     "scope": [
@@ -260724,15 +260830,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "waiting to be indexed": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "weather alerts": {
@@ -266967,7 +267064,7 @@
     ]
   },
   "{0} failed": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -267176,6 +267273,15 @@
     ],
     "areas": [
       "routes/bank-receipt"
+    ]
+  },
+  "{0} found by their words only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} from {1} comes off the week. The reason is kept.": {
@@ -267667,7 +267773,7 @@
       "routes/agent-control"
     ]
   },
-  "{0} indexed · {1} waiting · {2} failed · {3} skipped, of {4}": {
+  "{0} indexed": {
     "sites": 1,
     "scope": [
       "ts"
@@ -269922,15 +270028,6 @@
       "routes/agent-control"
     ]
   },
-  "{0} of {1} indexing budget": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "{0} of {1} lose money on detention": {
     "sites": 1,
     "scope": [
@@ -271464,6 +271561,15 @@
       "routes/admin"
     ]
   },
+  "{0} skipped": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} source cannot be used with transaction set {1}; expected {2}": {
     "sites": 1,
     "scope": [
@@ -272021,7 +272127,7 @@
     ]
   },
   "{0} waiting": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -272192,6 +272298,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "{0} will be indexed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} will be notified": {

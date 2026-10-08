@@ -3,50 +3,60 @@ import type { AIRetrievalSourceType } from "@/lib/graphql/ai-retrieval";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
-import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { AlertCircleIcon } from "@trenova/shared/components/icons";
-import { lazy, useCallback, useRef, useState } from "react";
+import { lazy, useCallback, useState } from "react";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
+import { formatUsd } from "@/lib/ai-usage-format";
+import { Ic } from "../kit/ic";
+import { NovaSummary } from "../nova/nova-summary";
 import { ReindexDialog } from "./reindex-dialog";
 import { RetrievalFigures } from "./retrieval-figures";
-import { RETRIEVAL_STALE_MS, retrievalRefetchInterval } from "./retrieval-model";
+import { RetrievalHero } from "./retrieval-hero";
+import {
+  RETRIEVAL_STALE_MS,
+  SOURCE_LABEL,
+  SOURCE_SETTING,
+  retrievalRefetchInterval,
+} from "./retrieval-model";
 import { RetrievalNotice } from "./retrieval-notice";
 import { RetrievalSettingsPanel } from "./retrieval-settings";
 import { RetrievalSources } from "./retrieval-sources";
+import { useRetrievalPatch } from "./use-retrieval-patch";
 
 const FailedEntriesTable = lazy(() => import("./failed-entries-table"));
 
+const FAILED_SECTION_ID = "rfail";
+
 /**
- * Whether agents find memories, documents and inbound email by meaning, and
- * what that costs. The notice says what stops it and how to fix that, the
- * figures and the sources say how far the index has come, the settings say
- * what is indexed and what it may spend, and the table lists what failed.
+ * Whether agents find memories, documents and inbound email by meaning, and what that
+ * costs. Nova says where the index stands with the one control that changes it, the
+ * figures and the sources say how far it has come, the settings say what indexing may
+ * spend, and the table lists what failed.
  */
 export default function RetrievalTab({ onOpenProviders }: { onOpenProviders: () => void }) {
   const t = useT();
   const navigate = useAIControlNavigation();
   const { allowed: canUpdate } = usePermission(Resource.AIProvider, Operation.Update);
-  const settingsRef = useRef<HTMLDivElement>(null);
   const [reindexing, setReindexing] = useState<AIRetrievalSourceType | null>(null);
+  const patch = useRetrievalPatch();
 
   const status = useQuery({
     ...queries.aiRetrieval.status(),
     staleTime: RETRIEVAL_STALE_MS,
     refetchInterval: (query) => retrievalRefetchInterval(query.state.data),
   });
+  const providers = useQuery(queries.aiProvider.list());
+  const routedTo =
+    [...(providers.data ?? [])]
+      .sort((a, b) => a.priority - b.priority)
+      .find((provider) => provider.enabled && provider.tasks.includes("Embedding"))?.name ?? null;
 
-  const openSettings = useCallback(() => {
-    const target = settingsRef.current;
-    if (!target) {
-      return;
-    }
-    target.scrollIntoView({ block: "start" });
-    target.focus({ preventScroll: true });
+  const showFailed = useCallback(() => {
+    document
+      .getElementById(FAILED_SECTION_ID)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
-
   const showFailures = useCallback(
     (sourceType: AIRetrievalSourceType) =>
       navigate({ tab: "retrieval", retrievalSource: sourceType }),
@@ -56,55 +66,81 @@ export default function RetrievalTab({ onOpenProviders }: { onOpenProviders: () 
 
   if (status.isError) {
     return (
-      <Alert variant="destructive" size="sm">
-        <AlertCircleIcon />
-        <AlertDescription>
-          {t("Where search by meaning stands could not be loaded. Try again shortly.")}
-        </AlertDescription>
-      </Alert>
+      <div className="tabp">
+        <div className="bnr d" role="alert">
+          <Ic n="alert" s={14} />
+          <span>{t("Where search by meaning stands could not be loaded. Try again shortly.")}</span>
+        </div>
+      </div>
     );
   }
 
   if (!status.data) {
     return (
-      <div className="flex min-w-0 flex-col gap-4" aria-busy>
-        <Skeleton className="h-16" />
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Skeleton className="h-64" />
-          <Skeleton className="h-64" />
-        </div>
+      <div className="tabp">
+        <NovaSummary context={t("Retrieval")} segments={undefined} loading onTarget={() => {}} />
       </div>
     );
   }
 
   const data = status.data;
+  const pause = (paused: boolean) =>
+    patch.mutate({
+      patch: { paused },
+      done: paused ? t("Indexing paused") : t("Indexing resumed"),
+    });
 
   return (
-    <div className="flex min-w-0 flex-col gap-4">
-      <RetrievalNotice
-        availability={data.availability}
-        onOpenProviders={onOpenProviders}
-        onOpenSettings={openSettings}
+    <div className="tabp">
+      <RetrievalHero
+        status={data}
+        routedTo={routedTo}
+        canUpdate={canUpdate}
+        busy={patch.isPending}
+        onPause={pause}
+        onRoute={onOpenProviders}
+        onShowFailed={showFailed}
       />
+      <RetrievalNotice availability={data.availability} onOpenProviders={onOpenProviders} />
       <RetrievalFigures status={data} />
-      <div className="grid min-w-0 items-start gap-4 lg:grid-cols-2">
-        <RetrievalSources
-          status={data}
-          canUpdate={canUpdate}
-          onReindex={setReindexing}
-          onShowFailures={showFailures}
-        />
-        <div
-          ref={settingsRef}
-          tabIndex={-1}
-          className="ui-focus-ring min-w-0 rounded-lg outline-none"
-        >
-          <RetrievalSettingsPanel settings={data.settings} canUpdate={canUpdate} />
+      <div className="ov">
+        <div className="ov-m">
+          <RetrievalSources
+            status={data}
+            canUpdate={canUpdate}
+            busy={patch.isPending}
+            onReindex={setReindexing}
+            onShowFailures={showFailures}
+            onToggle={(sourceType, enabled) =>
+              patch.mutate({
+                patch: { [SOURCE_SETTING[sourceType]]: enabled },
+                done: enabled
+                  ? t("{0} will be indexed", t(SOURCE_LABEL[sourceType].label))
+                  : t("{0} found by their words only", t(SOURCE_LABEL[sourceType].label)),
+              })
+            }
+          />
+          <section className="sec" id={FAILED_SECTION_ID}>
+            <DataTableLazyComponent>
+              <FailedEntriesTable />
+            </DataTableLazyComponent>
+          </section>
         </div>
+        <aside className="ov-a">
+          <RetrievalSettingsPanel
+            settings={data.settings}
+            canUpdate={canUpdate}
+            busy={patch.isPending}
+            onPause={pause}
+            onBudget={(budgetUsd) =>
+              patch.mutate({
+                patch: { monthlyIndexingBudgetUsd: budgetUsd },
+                done: t("Budget set to {0}", formatUsd(budgetUsd) ?? budgetUsd),
+              })
+            }
+          />
+        </aside>
       </div>
-      <DataTableLazyComponent>
-        <FailedEntriesTable />
-      </DataTableLazyComponent>
       <ReindexDialog sourceType={reindexing} paused={data.settings.paused} onClose={closeReindex} />
     </div>
   );

@@ -103,19 +103,21 @@ Keywords: semantic search, search by meaning, retrieval, vector search, embeddin
 1. Set up an embedding provider first (see the task above). Until one is routed, agents search by
    keywords only.
 2. Open [AI control](/admin/agent-control) and select **Retrieval** in the rail.
-3. Read the notice at the top, if there is one. It says why agents are searching by keyword only
-   and what fixes it: install pgvector 0.8 or newer and run the command it shows on the server,
-   route the Embedding task (**Open Providers** goes there), or change the settings on this page
-   (**Go to the settings**). With none shown, search by meaning is working.
-4. Read the figures: **Indexed**, **Pending**, **Failed**, **Cost this month** against the
+3. Read Nova's sentence at the top. It says whether agents search by meaning or by keyword
+   only, how much is left to index, and what failed. Beside it, **Route Embedding** goes to
+   Providers when nothing handles the Embedding task, and **Pause indexing** or
+   **Resume indexing** stops or restarts the indexer. A notice under it says when the database
+   needs pgvector 0.8 or newer, with the command to run on the server, or when the embedding
+   provider is failing (**Open Providers** goes there).
+4. Read the figures: **Indexed**, **Waiting**, **Failed**, **Cost this month** against the
    indexing budget, and **Last run**.
-5. In **Settings**, turn **Memories**, **Documents** and **Inbound email** on or off, set the
-   **Monthly indexing budget (USD)**, and use **Pause indexing** to stop indexing for a while.
-   Then select **Save settings**. A source turned on is indexed within the hour.
-6. In **Sources**, each source shows how far it is indexed. To embed a source again after its
-   text or the model changed, select **Re-index** on its row; the dialog shows what it could cost
-   at most before you confirm with **Re-index**.
-7. Select **Show failures** on a source to list the items that could not be indexed, with the
+5. In **Sources**, turn **Memories**, **Documents** and **Inbound email** on or off with the
+   switch on each row; a source turned on is indexed within the hour. To embed a source again
+   after its text or the model changed, select **Re-index** on its row; the dialog shows what it
+   could cost at most before you confirm with **Re-index**.
+6. In **Settings**, type the **Monthly indexing budget**; it is saved when you leave the field.
+   **Pause indexing** stops indexing for a while.
+7. Select the failed count on a source to list the items that could not be indexed, with the
    error for each, in the table at the bottom. **Show every source** lists them all again. Select
    a row to read the whole error.
 

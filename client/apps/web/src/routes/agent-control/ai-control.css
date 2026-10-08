@@ -2013,6 +2013,9 @@
 .aic .ex-a>.tile{flex:none}
 .aic .cal-a{display:flex;flex:none;flex-wrap:wrap;gap:6px}
 .aic .cal+.bench{margin-top:12px}
+.aic .bnr.d>svg,.aic .bnr.d b{color:var(--danger-fg)}
+.aic .bnr code{padding:1px 5px;border-radius:4px;background:var(--sunken);font-size:11.5px}
+.aic .src-n button{font:inherit}
 .aic .rf-s,.aic .rf-l{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:4px}
 .aic .rf-l{flex-direction:column;gap:0}
 .aic .rf-c{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;margin-top:8px}
