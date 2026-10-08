@@ -2541,6 +2541,31 @@ models:
   AgentSafetySummary:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AgentSafetySummary
+    fields:
+      openSensitiveAgentIds:
+        resolver: true
+  AgentToolRule:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ToolRuleOverride
+    fields:
+      maxTier:
+        resolver: true
+      readsExternal:
+        resolver: true
+      updatedBy:
+        resolver: true
+  AgentToolRuleImpact:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentToolRuleImpact
+  AgentToolHolders:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentToolHolders
+    fields:
+      agentIds:
+        resolver: true
+  AgentEgressCount:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentEgressCount
   AgentSafety:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AgentSafetySubject

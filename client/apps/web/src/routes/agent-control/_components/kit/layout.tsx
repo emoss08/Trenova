@@ -133,27 +133,41 @@ type SegProps<T extends string | number> = {
   onChange: (value: T) => void;
   className?: string;
   label?: string;
+  /** Options shown but not open to choose, with why in their title. */
+  disabled?: (value: T) => string | null;
 };
 
 /** A segmented choice between a few options. */
-export function Seg<T extends string | number>({ v, opts, onChange, className, label }: SegProps<T>) {
+export function Seg<T extends string | number>({
+  v,
+  opts,
+  onChange,
+  className,
+  label,
+  disabled,
+}: SegProps<T>) {
   return (
     <div className={cn("seg", className)} role="radiogroup" aria-label={label}>
-      {opts.map(([key, text]) => (
-        <button
-          key={String(key)}
-          type="button"
-          role="radio"
-          aria-checked={v === key}
-          className={cn(v === key && "on")}
-          onClick={(event) => {
-            event.stopPropagation();
-            onChange(key);
-          }}
-        >
-          {text}
-        </button>
-      ))}
+      {opts.map(([key, text]) => {
+        const why = disabled?.(key) ?? null;
+        return (
+          <button
+            key={String(key)}
+            type="button"
+            role="radio"
+            aria-checked={v === key}
+            disabled={why !== null}
+            title={why ?? undefined}
+            className={cn(v === key && "on")}
+            onClick={(event) => {
+              event.stopPropagation();
+              onChange(key);
+            }}
+          >
+            {text}
+          </button>
+        );
+      })}
     </div>
   );
 }

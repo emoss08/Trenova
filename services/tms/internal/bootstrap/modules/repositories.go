@@ -31,14 +31,15 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentscorecardrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentshadowrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentsubjectrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agenttoolrulerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agenttooltrustrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aiauditrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aicontrolfactsrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aicorrectionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aifeedbackrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aiproviderrepository"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aituneuprepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/airetrievalrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aituneuprepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aiusagerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/apikeyrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/assignmentrepository"
@@ -384,6 +385,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	agentshadowrepository.New,
 	aicontrolfactsrepository.New,
 	aiproviderrepository.NewDismissalRepository,
+	agenttoolrulerepository.New,
 	aiproviderrepository.NewKeyRepository,
 	aituneuprepository.New,
 	agentdefinitionrepository.NewTestPromptRepository,

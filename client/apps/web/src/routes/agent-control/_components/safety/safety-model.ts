@@ -7,8 +7,6 @@ import type {
   AgentToolPolicy,
 } from "@/lib/graphql/agent-safety";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import type { StatusPhase } from "@trenova/shared/lib/status-phase";
-import type { BadgeAccent, BadgeAppearance } from "@trenova/shared/types/badge";
 import { resourceLabel } from "../agents/tool-catalog";
 
 /** Every class in the order the organization is left: nowhere first, money last. */
@@ -22,19 +20,23 @@ export const EGRESS_ORDER: readonly AgentEgressClass[] = [
   "Money",
 ];
 
-/**
- * Who sees a tool's work is a category, not a severity: a note inside the
- * organization is not "less wrong" than a message to a customer, it is a
- * different audience. Each class keeps its own accent.
- */
-export const EGRESS_ACCENT: Record<AgentEgressClass, BadgeAccent> = {
-  None: "accent-slate",
-  Personal: "accent-teal",
-  Internal: "accent-indigo",
-  CustomerVisible: "accent-sky",
-  DriverVisible: "accent-emerald",
-  ExternalRecipient: "accent-violet",
-  Money: "accent-amber",
+/** The widest audience among a tool's classes; a tool that names none reaches nobody. */
+export function widestEgress(egress: readonly AgentEgressClass[]): AgentEgressClass {
+  return egress.reduce<AgentEgressClass>(
+    (widest, next) => (EGRESS_ORDER.indexOf(next) > EGRESS_ORDER.indexOf(widest) ? next : widest),
+    "None",
+  );
+}
+
+/** The hue and chroma each audience's chip is drawn in, from the accent hue tokens. */
+export const EGRESS_HUE: Record<AgentEgressClass, { hue: string; chroma: number }> = {
+  None: { hue: "var(--hue-slate)", chroma: 0.02 },
+  Personal: { hue: "var(--hue-teal)", chroma: 0.09 },
+  Internal: { hue: "var(--hue-indigo)", chroma: 0.11 },
+  CustomerVisible: { hue: "var(--hue-sky)", chroma: 0.11 },
+  DriverVisible: { hue: "var(--hue-emerald)", chroma: 0.11 },
+  ExternalRecipient: { hue: "var(--hue-violet)", chroma: 0.13 },
+  Money: { hue: "var(--hue-amber)", chroma: 0.13 },
 };
 
 export function egressLabel(t: TranslateFn, egress: AgentEgressClass): string {
@@ -56,20 +58,13 @@ export function egressLabel(t: TranslateFn, egress: AgentEgressClass): string {
   }
 }
 
-/**
- * How much a person stands between the agent and the change. Running on its
- * own is under way without anyone, approval waits on a person, a proposal has
- * not started, and a simulated write never happens at all.
- */
-export const ANSWER_BADGE: Record<
-  AgentAutonomyAnswer,
-  { phase: StatusPhase; appearance: BadgeAppearance }
-> = {
-  RUNS_ON_ITS_OWN: { phase: "active", appearance: "solid" },
-  CONDITIONAL: { phase: "active", appearance: "subtle" },
-  NEEDS_APPROVAL: { phase: "awaiting", appearance: "subtle" },
-  PROPOSE_ONLY: { phase: "draft", appearance: "subtle" },
-  SIMULATED: { phase: "closed", appearance: "outline" },
+/** The chip each answer is drawn as. */
+export const ANSWER_CLASS: Record<AgentAutonomyAnswer, "r" | "c" | "w" | "p" | "s"> = {
+  RUNS_ON_ITS_OWN: "r",
+  CONDITIONAL: "c",
+  NEEDS_APPROVAL: "w",
+  PROPOSE_ONLY: "p",
+  SIMULATED: "s",
 };
 
 /** Every answer from most done without a person to least. */
@@ -283,4 +278,42 @@ export function reachLabel(t: TranslateFn, safety: AgentSafetyHeader): string {
     return t("Restricted to roles");
   }
   return t("Roles: {0}", safety.reach.roles.map((role) => role.name).join(", "));
+}
+
+/** What Nova says about safety, and who it would have someone review. */
+export type SafetyFacts = {
+  runs: number;
+  runningTools: readonly string[];
+  leave: number;
+  open: readonly string[];
+};
+
+export function safetyFacts(summary: {
+  runWithoutPerson: number;
+  unattendedTools: readonly string[];
+  leaveOrganization: number;
+  openSensitiveAgentIds: readonly string[];
+}): SafetyFacts {
+  return {
+    runs: summary.runWithoutPerson,
+    runningTools: summary.unattendedTools,
+    leave: summary.leaveOrganization,
+    open: summary.openSensitiveAgentIds,
+  };
+}
+
+/** How many open agents Nova's review compares at once. */
+export const REVIEWED_AT_ONCE = 3;
+
+/** The segments of the map of who sees the work: every audience but reads, widest last. */
+export function egressSegments(
+  counts: readonly { egress: AgentEgressClass; count: number }[],
+): { egress: AgentEgressClass; count: number; grow: number }[] {
+  const shown = counts.filter((entry) => entry.egress !== "None" && entry.count > 0);
+  const total = shown.reduce((sum, entry) => sum + entry.count, 0);
+
+  return EGRESS_ORDER.flatMap((egress) => {
+    const entry = shown.find((candidate) => candidate.egress === egress);
+    return entry ? [{ ...entry, grow: Math.max(entry.count, total * 0.09) }] : [];
+  });
 }

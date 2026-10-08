@@ -247,6 +247,11 @@ writes:
     exempt: agent-administration
     reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
 
+  # agentsafety
+  "mutation saveAgentToolRule":
+    exempt: agent-administration
+    reason: "Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work."
+
   # agentrun
   "POST /api/v1/agent-runs/":
     exempt: agent-administration

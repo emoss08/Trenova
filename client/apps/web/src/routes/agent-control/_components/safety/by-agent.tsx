@@ -1,8 +1,7 @@
 import { DataTable } from "@/components/data-table/data-table";
-import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
 import { describeToolCall } from "@/components/assistant/tool-presentation";
 import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
-import type { AgentChoice } from "@/lib/graphql/agent-definition";
+import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import {
   AGENT_TOOL_SAFETY_LIST_KEY,
   createAgentToolSafetyTableGraphQLConfig,
@@ -11,52 +10,63 @@ import {
 } from "@/lib/graphql/agent-safety";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
-import { Alert, AlertAction, AlertDescription } from "@trenova/shared/components/ui/alert";
-import { Badge } from "@trenova/shared/components/ui/badge";
-import { Button } from "@trenova/shared/components/ui/button";
-import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { cn } from "@trenova/shared/lib/utils";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
-import { AlertCircleIcon, AlertTriangleIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useQueryStates } from "nuqs";
-import { useCallback, useMemo } from "react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import {
   CLEARED_TABLE_STATE,
   SAFETY_AGENTS_PARAM,
   safetyAgentsParser,
 } from "../../ai-control-tabs";
-import { AgentPicker, MAX_COMPARED_AGENTS } from "./agent-picker";
-import { getAgentToolColumns } from "./safety-columns";
+import { useAIControlNavigation } from "../../use-ai-control-navigation";
+import { Menu } from "../kit/controls";
+import { Ic } from "../kit/ic";
+import { Tile } from "../kit/marks";
+import { getAgentToolColumns, holdersOf, type ToolHolding } from "./safety-columns";
 import { SAFETY_SUMMARY_STALE_MS } from "./safety-figures";
 import { reachLabel, tierLabel } from "./safety-model";
-import { AgentToolPanel } from "./safety-panels";
+import { useToolHolding } from "./tool-rules-table";
+import { ToolSheet } from "./tool-sheet";
 
 /** An agent's answers move with its settings and trust, so they are re-read after a minute. */
 const AGENT_SAFETY_STALE_MS = 60_000;
 
+/** The most agents laid side by side. */
+export const MAX_COMPARED_AGENTS = 4;
+
 const NO_RESOURCES: readonly string[] = [];
 const NO_HEADERS: readonly AgentSafetyHeader[] = [];
+const NO_AGENTS: readonly AgentDefinitionRow[] = [];
 
 const byAgentParsers = {
   ...searchParamsParser,
   [SAFETY_AGENTS_PARAM]: safetyAgentsParser,
 };
 
+const HoldingContext = createContext<ToolHolding>({ byTool: new Map(), agents: new Map() });
+
 /**
- * What the agents someone picks can do without a person, tool by tool: once
- * for a run that has read nothing from outside, once for a run that has.
- * Every picked agent's tools are one table, so they page, filter, sort and
- * scroll together; nothing is read until an agent is picked.
+ * What the agents someone picks can do without a person, tool by tool: once for a run
+ * that has read nothing from outside, once for a run that has. Every picked agent's tools
+ * are one table, so they page, filter, sort and scroll together; nothing is read until an
+ * agent is picked.
  */
 export default function ByAgentView() {
   const t = useT();
   const [params, setParams] = useQueryStates(byAgentParsers);
   const stored = params[SAFETY_AGENTS_PARAM];
   const picked = useMemo(() => [...new Set(stored)].slice(0, MAX_COMPARED_AGENTS), [stored]);
+  const agentsQuery = useQuery(queries.assistant.agents(false));
+  const agents = agentsQuery.data ?? NO_AGENTS;
+  const holding = useToolHolding();
+  const [menu, setMenu] = useState(false);
 
-  // Changing who is compared changes what the table's filters can name, so
-  // the table starts over rather than keep a filter on an agent now gone.
+  // Changing who is compared changes what the table's filters can name, so the table
+  // starts over rather than keep a filter on an agent now gone.
   const setPicked = useCallback(
     (next: string[]) => {
       void setParams({
@@ -66,39 +76,92 @@ export default function ByAgentView() {
     },
     [setParams],
   );
-  const add = useCallback(
-    (agent: AgentChoice) => {
-      if (!picked.includes(agent.id)) {
-        setPicked([...picked, agent.id]);
-      }
-    },
-    [picked, setPicked],
-  );
-  const remove = useCallback(
-    (agentId: string) => setPicked(picked.filter((id) => id !== agentId)),
-    [picked, setPicked],
-  );
+  const byId = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents]);
+  const chosen = picked.flatMap((id) => {
+    const agent = byId.get(id);
+    return agent ? [agent] : [];
+  });
 
   return (
-    <div className="flex min-w-0 flex-col gap-4">
-      <SectionPanel
-        title={t("By agent")}
-        count={picked.length > 0 ? picked.length : undefined}
-        help={t(
-          "Before outside text is a run that has read only the organization's own records. After outside text is a run that has read an email, a document or another message written outside the organization: anything it would send out waits for approval.",
-        )}
-        action={<AgentPicker picked={picked} onAdd={add} />}
-      >
-        {picked.length === 0 ? (
-          <SectionPanelQuiet>
-            {t("Add an agent to see what it can do without a person.")}
-          </SectionPanelQuiet>
-        ) : (
-          <AgentHeaders agentIds={picked} onRemove={remove} />
-        )}
-      </SectionPanel>
-      {picked.length > 0 ? <AgentToolsTable agentIds={picked} /> : null}
-    </div>
+    <HoldingContext.Provider value={holding}>
+      <div className="tb">
+        <div className="pk">
+          {chosen.map((agent) => (
+            <span key={agent.id} className="pk-c">
+              <Tile agent={agent} s={18} />
+              {agent.name}
+              <button
+                type="button"
+                aria-label={t("Remove {0} from the comparison", agent.name)}
+                onClick={() => setPicked(picked.filter((id) => id !== agent.id))}
+              >
+                <Ic n="x" s={10} />
+              </button>
+            </span>
+          ))}
+          {picked.length < MAX_COMPARED_AGENTS && (
+            <div className="rel">
+              <button type="button" className="btn sm" onClick={() => setMenu((open) => !open)}>
+                <Ic n="plus" s={12} />
+                {picked.length > 0 ? t("Compare another") : t("Pick an agent")}
+              </button>
+              {menu && (
+                <Menu
+                  label={t("Pick an agent")}
+                  onClose={() => setMenu(false)}
+                  items={[
+                    { kind: "heading", label: t("Up to {0} agents", MAX_COMPARED_AGENTS) },
+                    ...agents
+                      .filter((agent) => !picked.includes(agent.id))
+                      .map((agent) => ({
+                        kind: "item" as const,
+                        icon: <Tile agent={agent} s={18} />,
+                        label: agent.name,
+                        note: t(
+                          "{0, plural, one {# tool} other {# tools}} · ceiling {1}",
+                          agent.toolNames.length,
+                          tierLabel(t, agent.autonomyCeiling),
+                        ),
+                        onSelect: () => setPicked([...picked, agent.id]),
+                      })),
+                  ]}
+                />
+              )}
+            </div>
+          )}
+        </div>
+        <span className="sp" />
+      </div>
+      {picked.length === 0 ? (
+        <div className="pk-e">
+          <b>{t("Pick an agent to see what it can do without a person")}</b>
+          <span>
+            {t(
+              "Each tool is answered twice: for a run that has read only your own records, and for one that has read an email, a document or another message written outside the organization.",
+            )}
+          </span>
+          <div className="ms">
+            {agents.map((agent) => (
+              <button
+                key={agent.id}
+                type="button"
+                className={cn("ms-i", !agent.enabled && "off")}
+                title={agent.name}
+                aria-label={agent.name}
+                onClick={() => setPicked([agent.id])}
+              >
+                <Tile agent={agent} s={32} />
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <>
+          <AgentHeaders agentIds={picked} />
+          <AgentToolsTable agentIds={picked} />
+        </>
+      )}
+    </HoldingContext.Provider>
   );
 }
 
@@ -109,115 +172,126 @@ function useAgentHeaders(agentIds: readonly string[]) {
   });
 }
 
-function AgentHeaders({
-  agentIds,
-  onRemove,
-}: {
-  agentIds: readonly string[];
-  onRemove: (agentId: string) => void;
-}) {
+function AgentHeaders({ agentIds }: { agentIds: readonly string[] }) {
   const t = useT();
   const query = useAgentHeaders(agentIds);
-
-  if (query.isPending) {
-    return (
-      <div className="flex flex-col gap-2 p-3" aria-busy>
-        <Skeleton className="h-4 w-48" />
-        <Skeleton className="h-3.5 w-72" />
-      </div>
-    );
-  }
+  const holding = useContext(HoldingContext);
 
   if (query.isError) {
     return (
-      <div className="p-3">
-        <Alert variant="destructive" size="sm">
-          <AlertCircleIcon />
-          <AlertDescription>
-            {t("What these agents can do without a person could not be loaded.")}
-          </AlertDescription>
-          <AlertAction>
-            <Button variant="outline" size="xs" onClick={() => void query.refetch()}>
-              {t("Try again")}
-            </Button>
-          </AlertAction>
-        </Alert>
+      <div className="bnr d" role="alert">
+        <Ic n="alert" s={14} />
+        <span>{t("What these agents can do without a person could not be loaded.")}</span>
+        <button type="button" className="btn sm" onClick={() => void query.refetch()}>
+          {t("Try again")}
+        </button>
       </div>
     );
   }
 
-  const found = new Map(query.data.map((header) => [header.agentId, header]));
+  const found = new Map((query.data ?? []).map((header) => [header.agentId, header]));
 
   return (
-    <div className="divide-border flex flex-col divide-y">
+    <div className="ahs">
       {agentIds.map((agentId) => {
         const header = found.get(agentId);
         return header ? (
-          <AgentHeader key={agentId} header={header} onRemove={onRemove} />
-        ) : (
-          <div key={agentId} className="flex items-center justify-between gap-2 px-3 py-3">
-            <p className="text-muted-foreground text-xs">{t("This agent no longer exists.")}</p>
-            <Button variant="ghost" size="xs" onClick={() => onRemove(agentId)}>
-              {t("Remove")}
-            </Button>
-          </div>
-        );
+          <AgentHeaderRow
+            key={agentId}
+            header={header}
+            agent={holding.agents.get(agentId) ?? null}
+          />
+        ) : null;
       })}
     </div>
   );
 }
 
-function AgentHeader({
+function AgentHeaderRow({
   header,
-  onRemove,
+  agent,
 }: {
   header: AgentSafetyHeader;
-  onRemove: (agentId: string) => void;
+  agent: AgentDefinitionRow | null;
 }) {
   const t = useT();
+  const rt = useRichT();
+  const navigate = useAIControlNavigation();
+  const [listed, setListed] = useState(false);
 
   return (
-    <section aria-label={header.agent.name} className="flex flex-col gap-2 px-3 py-3">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <h4 className="truncate text-sm font-semibold">{header.agent.name}</h4>
-          {!header.agent.enabled ? (
-            <Badge variant="neutral" appearance="outline">
-              {t("Off")}
-            </Badge>
-          ) : null}
+    <div className="ah">
+      <div className="ah-h">
+        <Tile agent={agent ?? header.agent} s={28} />
+        <div className="sh-t">
+          <b>
+            {header.agent.name}
+            {!header.agent.enabled && <span className="tg">{t("Off")}</span>}
+            {agent?.shadowMode && (
+              <span className="tg">
+                <Ic n="eyeOff" s={10} />
+                {t("Shadow")}
+              </span>
+            )}
+          </b>
+          <span>
+            {t(
+              "{0} · ceiling {1}",
+              reachLabel(t, header),
+              tierLabel(t, header.agent.autonomyCeiling),
+            )}
+          </span>
         </div>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          aria-label={t("Remove {0} from the comparison", header.agent.name)}
-          onClick={() => onRemove(header.agentId)}
-        >
-          <XCloseIcon className="size-3.5" />
-        </Button>
       </div>
-      <DescriptionList layout="inline">
-        <DescriptionItem label={t("Who can use it")}>{reachLabel(t, header)}</DescriptionItem>
-        <DescriptionItem label={t("Ceiling")}>
-          {tierLabel(t, header.agent.autonomyCeiling)}
-        </DescriptionItem>
-      </DescriptionList>
-      {header.reach.warnings.map((warning) => (
-        <Alert key={warning.kind} variant="warning" size="sm">
-          <AlertTriangleIcon />
-          <AlertDescription>
-            {warning.kind === "OpenWithSensitiveTools"
-              ? t(
-                  "Everyone who can use the assistant can use this agent, and it holds tools that reach restricted data or leave the organization: {0}.",
-                  warning.tools.map((name) => describeToolCall(name, null).title).join(", "),
-                )
-              : t(
-                  "This agent is restricted to roles and no role is granted it, so nobody can use it.",
-                )}
-          </AlertDescription>
-        </Alert>
-      ))}
-    </section>
+      {header.reach.warnings.map((warning) =>
+        warning.kind === "OpenWithSensitiveTools" ? (
+          <div key={warning.kind} className="ah-w">
+            <Ic n="warn" s={13} />
+            <span>
+              {rt(
+                "Open to everyone, and holds <tools>{0, plural, one {# tool that leaves the organization} other {# tools that leave the organization}}</tools>.",
+                {
+                  tools: (children) => (
+                    <button
+                      type="button"
+                      className="lnk"
+                      onClick={() => setListed((open) => !open)}
+                    >
+                      {children}
+                    </button>
+                  ),
+                },
+                warning.tools.length,
+              )}
+              {listed && (
+                <em>
+                  {" "}
+                  {warning.tools.map((name) => describeToolCall(name, null).title).join(", ")}.
+                </em>
+              )}
+            </span>
+            <button
+              type="button"
+              className="btn sm"
+              onClick={() =>
+                navigate({ tab: "agents", panel: { mode: "edit", entityId: header.agentId } })
+              }
+            >
+              {t("Limit to roles")}
+            </button>
+          </div>
+        ) : (
+          <div key={warning.kind} className="ah-w">
+            <Ic n="warn" s={13} />
+            <span>
+              {t(
+                "This agent is restricted to roles and no role is granted it, so nobody can use it.",
+              )}
+            </span>
+          </div>
+        ),
+      )}
+    </div>
   );
 }
 
@@ -246,10 +320,23 @@ function AgentToolsTable({ agentIds }: { agentIds: readonly string[] }) {
       graphql={graphql}
       resource={Resource.AgentDefinition}
       columns={columns}
-      TablePanel={AgentToolPanel}
+      TablePanel={AgentToolSheet}
       enableCreateAction={false}
       enableReadOnlyPanel
       initialColumnVisibility={{ maxTier: false, needs: false }}
+    />
+  );
+}
+
+function AgentToolSheet({ open, onOpenChange, row }: DataTablePanelProps<AgentToolSafetyRow>) {
+  const holding = useContext(HoldingContext);
+
+  return (
+    <ToolSheet
+      policy={open && row ? row.policy : null}
+      holders={row ? holdersOf(holding, row.policyName) : []}
+      focus={row?.agentId ?? null}
+      onClose={() => onOpenChange(false)}
     />
   );
 }

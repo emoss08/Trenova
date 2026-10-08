@@ -3309,6 +3309,12 @@ enum AgentEgressClass {
   Personal
 }
 
+"""How many tools that change something reach one audience at most."""
+type AgentEgressCount {
+  count: Int!
+  egress: AgentEgressClass!
+}
+
 """
 A question an agent was asked, frozen with what it was given and what a good
 answer does. Active cases are replayed against the agent after every change
@@ -4906,8 +4912,14 @@ type AgentSafety {
 The figures that head the safety section, counted over every tool and agent.
 """
 type AgentSafetySummary {
+  """
+  Tools that change something, counted by the widest audience their work reaches.
+  """
+  egressCounts: [AgentEgressCount!]!
   """Tools some of whose work leaves the organization."""
   leaveOrganization: Int!
+  """The agents counted in openWithSensitive."""
+  openSensitiveAgentIds: [ID!]!
   """
   Agents open to everyone that hold a tool reaching restricted data or leaving the organization.
   """
@@ -4922,6 +4934,8 @@ type AgentSafetySummary {
   runWithoutPerson: Int!
   """Every tool an agent can be given."""
   toolCount: Int!
+  """The titles of the tools counted in runWithoutPerson, alphabetically."""
+  unattendedTools: [String!]!
 }
 
 """
@@ -5261,6 +5275,12 @@ enum AgentToolEffect {
   Present
 }
 
+"""The agents that hold one tool."""
+type AgentToolHolders {
+  agentIds: [ID!]!
+  policyName: String!
+}
+
 enum AgentToolKind {
   Action
   Query
@@ -5289,6 +5309,12 @@ type AgentToolPolicy {
   """Its result can carry outside text into a later run."""
   carriesTaint: Boolean!
   conditionDescription: String
+  """
+  The most freedom the rule declared beside the tool allows; maxTier is lower when the organization holds it lower.
+  """
+  declaredMaxTier: AgentAutonomyTier!
+  """How much of its result the declared rule treats as outside text."""
+  declaredReadsExternal: AgentExternalRead!
   defaultTier: AgentAutonomyTier!
   effect: AgentToolEffect!
   egress: [AgentEgressClass!]!
@@ -5323,6 +5349,14 @@ type AgentToolPolicy {
   rationale: String!
   readsExternal: AgentExternalRead!
   reversible: Boolean!
+  """
+  The organization's own rule for the tool; null when it keeps the declared one.
+  """
+  rule: AgentToolRule
+  """
+  The version of the organization's rule an edit is made against; 0 when there is none yet.
+  """
+  ruleVersion: Int!
   """
   Whether the tool changes something and, on at least one of the
   organization's agents, can do so without a person. Read only by
@@ -5386,6 +5420,43 @@ The permission a person needs of their own to use a tool through an agent.
 type AgentToolRequirement {
   operation: String!
   resource: String!
+}
+
+"""An organization holding one tool lower than its declared rule."""
+type AgentToolRule {
+  """Null when it keeps the declared most freedom."""
+  maxTier: AgentAutonomyTier
+  """Null when it keeps the declared outside text setting."""
+  readsExternal: AgentExternalRead
+  reason: String!
+  updatedAt: Timestamp!
+  updatedBy: User
+}
+
+"""What one agent holding the tool does before and after a rule change."""
+type AgentToolRuleImpact {
+  after: AgentAutonomyAnswer!
+  agentId: ID!
+  agentName: String!
+  before: AgentAutonomyAnswer!
+}
+
+"""
+An organization's rule for one tool. Absent fields keep what the tool declares.
+"""
+input AgentToolRuleInput {
+  maxTier: AgentAutonomyTier
+  readsExternal: AgentExternalRead
+  """
+  Why it changed; required when the most freedom changes, and kept in the audit trail.
+  """
+  reason: String
+}
+
+type AgentToolRuleSaved {
+  """The agents whose answer moved."""
+  affected: [AgentToolRuleImpact!]!
+  tool: AgentToolPolicy!
 }
 
 """
@@ -17524,6 +17595,10 @@ type Mutation {
   Saves the organization's own app keys after checking them with the accounting system. While a company is connected, only its app's secret and verifier token can change.
   """
   saveAccountingApp(input: SaveAccountingAppInput!): AccountingSyncStatus!
+  """
+  Holds a tool lower than its declared rule for this organization, or returns it to the declared rule.
+  """
+  saveAgentToolRule(input: AgentToolRuleInput!, name: String!, version: Int!): AgentToolRuleSaved!
   saveOshaSummary(input: SaveOSHASummaryInput!): OSHAAnnualSummary!
   saveTelematicsFormMapping(input: SaveTelematicsFormMappingInput!): TelematicsFormMapping!
   sendDetentionNotice(occurrenceId: ID!): DetentionOccurrence!
@@ -19655,6 +19730,8 @@ type Query {
   agentSuiteRuns(input: AgentSuiteRunsInput!): AgentSuiteRunConnection! @deprecated(reason: "Use agentSuiteRunConnection, which takes the data table's filters and sort.")
   """The prompts kept with an agent, oldest first. At most 20."""
   agentTestPrompts(agentId: ID!): [AgentTestPrompt!]!
+  """Every tool some agent holds, with the agents that hold it."""
+  agentToolHolders: [AgentToolHolders!]!
   """Every tool's safety policy, by name."""
   agentToolPolicies: [AgentToolPolicy!]! @deprecated(reason: "Use agentToolRuleConnection, which pages, filters and sorts on the server.")
   """The tool rules a page at a time, searched and filtered on the server."""
@@ -19665,6 +19742,10 @@ type Query {
   on the same fields.
   """
   agentToolRuleConnection(input: DataTableConnectionInput!): AgentToolPolicyConnection!
+  """
+  What every agent holding the tool would do under a rule, before saving it.
+  """
+  agentToolRuleImpact(input: AgentToolRuleInput!, name: String!): [AgentToolRuleImpact!]!
   """
   Every tool the named agents hold, what each does before and after the run
   has read outside text, a page at a time. Between one and ten agents. Filters

@@ -258,6 +258,7 @@ type Params struct {
 	ApprovalCommitter            services.ApprovalCommitter
 	AgentAccessService           services.AgentAccessService
 	AgentSafetyService           services.AgentSafetyService
+	AgentToolRuleService         services.AgentToolRuleService
 	WatchtowerService            services.WatchtowerService
 	InboundMessageService        *inboundmessageservice.Service
 	CaptureService               *captureservice.Service
@@ -456,6 +457,7 @@ type Services struct {
 	ApprovalCommitter            services.ApprovalCommitter
 	AgentAccessService           services.AgentAccessService
 	AgentSafetyService           services.AgentSafetyService
+	AgentToolRuleService         services.AgentToolRuleService
 	WatchtowerService            services.WatchtowerService
 	InboundMessageService        *inboundmessageservice.Service
 	CaptureService               *captureservice.Service
@@ -660,6 +662,7 @@ func newServices(p *Params) *Services {
 		ApprovalCommitter:            p.ApprovalCommitter,
 		AgentAccessService:           p.AgentAccessService,
 		AgentSafetyService:           p.AgentSafetyService,
+		AgentToolRuleService:         p.AgentToolRuleService,
 		WatchtowerService:            p.WatchtowerService,
 		InboundMessageService:        p.InboundMessageService,
 		CaptureService:               p.CaptureService,

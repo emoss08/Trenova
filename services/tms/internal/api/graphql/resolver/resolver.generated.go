@@ -175,7 +175,10 @@ type Resolver struct {
 	agentRun                           *agentRunResolver
 	agentRunEvent                      *agentruneventresolver.AgentRunEventResolver
 	agentSafety                        *agentsafetyresolver.AgentSafetyResolver
+	agentSafetySummary                 *agentsafetyresolver.AgentSafetySummaryResolver
 	agentSuiteRun                      *agentqualityresolver.AgentSuiteRunResolver
+	agentToolHolders                   *agentsafetyresolver.AgentToolHoldersResolver
+	agentToolRule                      *agentsafetyresolver.AgentToolRuleResolver
 	agentToolSafety                    *agentsafetyresolver.AgentToolSafetyResolver
 	agentWorstRatedAnswer              *agentqualityresolver.AgentWorstRatedAnswerResolver
 	apiKey                             *apikeyresolver.ApiKeyResolver
@@ -428,8 +431,9 @@ func FromServices(s *Services) *Resolver {
 		AgentRunEventRepo: s.AgentRunEventRepo,
 	}
 	agentsafetyDeps := &agentsafetyresolver.Deps{
-		Core:               s.Core,
-		AgentSafetyService: s.AgentSafetyService,
+		Core:                 s.Core,
+		AgentSafetyService:   s.AgentSafetyService,
+		AgentToolRuleService: s.AgentToolRuleService,
 	}
 	agentscorecardDeps := &agentscorecardresolver.Deps{
 		Core:                  s.Core,
@@ -1045,7 +1049,10 @@ func FromServices(s *Services) *Resolver {
 		},
 		agentRunEvent:                &agentruneventresolver.AgentRunEventResolver{Deps: agentruneventDeps},
 		agentSafety:                  &agentsafetyresolver.AgentSafetyResolver{Deps: agentsafetyDeps},
+		agentSafetySummary:           &agentsafetyresolver.AgentSafetySummaryResolver{Deps: agentsafetyDeps},
 		agentSuiteRun:                &agentqualityresolver.AgentSuiteRunResolver{Deps: agentqualityDeps},
+		agentToolHolders:             &agentsafetyresolver.AgentToolHoldersResolver{Deps: agentsafetyDeps},
+		agentToolRule:                &agentsafetyresolver.AgentToolRuleResolver{Deps: agentsafetyDeps},
 		agentToolSafety:              &agentsafetyresolver.AgentToolSafetyResolver{Deps: agentsafetyDeps},
 		agentWorstRatedAnswer:        &agentqualityresolver.AgentWorstRatedAnswerResolver{Deps: agentqualityDeps},
 		apiKey:                       &apikeyresolver.ApiKeyResolver{Deps: apikeyDeps},
@@ -1161,6 +1168,7 @@ func FromServices(s *Services) *Resolver {
 			agentMutation:                 &agentMutation{Deps: agentDeps},
 			agentdefinitionMutation:       &agentdefinitionMutation{Deps: agentdefinitionDeps},
 			agentqualityMutation:          &agentqualityMutation{Deps: agentqualityDeps},
+			agentsafetyMutation:           &agentsafetyMutation{Deps: agentsafetyDeps},
 			aiauditMutation:               &aiauditMutation{Deps: aiauditDeps},
 			aicontrolMutation:             &aicontrolMutation{Deps: aicontrolDeps},
 			aifeedbackMutation:            &aifeedbackMutation{Deps: aifeedbackDeps},
@@ -1629,8 +1637,20 @@ func (r *Resolver) AgentSafety() generated.AgentSafetyResolver {
 	return r.agentSafety
 }
 
+func (r *Resolver) AgentSafetySummary() generated.AgentSafetySummaryResolver {
+	return r.agentSafetySummary
+}
+
 func (r *Resolver) AgentSuiteRun() generated.AgentSuiteRunResolver {
 	return r.agentSuiteRun
+}
+
+func (r *Resolver) AgentToolHolders() generated.AgentToolHoldersResolver {
+	return r.agentToolHolders
+}
+
+func (r *Resolver) AgentToolRule() generated.AgentToolRuleResolver {
+	return r.agentToolRule
 }
 
 func (r *Resolver) AgentToolSafety() generated.AgentToolSafetyResolver {
@@ -2072,6 +2092,7 @@ type mutationResolver struct {
 	*agentMutation
 	*agentdefinitionMutation
 	*agentqualityMutation
+	*agentsafetyMutation
 	*aiauditMutation
 	*aicontrolMutation
 	*aifeedbackMutation
@@ -2576,6 +2597,7 @@ type (
 	agentMutation                 = agentresolver.MutationResolver
 	agentdefinitionMutation       = agentdefinitionresolver.MutationResolver
 	agentqualityMutation          = agentqualityresolver.MutationResolver
+	agentsafetyMutation           = agentsafetyresolver.MutationResolver
 	aiauditMutation               = aiauditresolver.MutationResolver
 	aicontrolMutation             = aicontrolresolver.MutationResolver
 	aifeedbackMutation            = aifeedbackresolver.MutationResolver

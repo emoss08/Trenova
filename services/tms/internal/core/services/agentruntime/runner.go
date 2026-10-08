@@ -50,6 +50,9 @@ type Params struct {
 	// what it would do kept as its baseline, in one read-only snapshot;
 	// without it the target is pinned alone.
 	Previews serviceports.ProposalPreviewService `optional:"true"`
+	// Rules is optional. With it a tool an organization holds lower than its
+	// declared rule is decided and tainted by the organization's rule.
+	Rules serviceports.ToolRuleOverrides `optional:"true"`
 }
 
 type Service struct {
@@ -67,6 +70,7 @@ type Service struct {
 	vectorizer  serviceports.QueryVectorizer
 	vectors     serviceports.CatalogVectorIndex
 	previews    serviceports.ProposalPreviewService
+	rules       serviceports.ToolRuleOverrides
 	// arguments holds each tool's compiled schema, against which every
 	// call's arguments are checked before the tool sees them.
 	arguments *toolschema.Validator
@@ -89,6 +93,7 @@ func New(p Params) *Service {
 		vectorizer:  p.Vectorizer,
 		vectors:     p.CatalogVectors,
 		previews:    p.Previews,
+		rules:       p.Rules,
 	}
 }
 

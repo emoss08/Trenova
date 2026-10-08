@@ -2021,4 +2021,6 @@
 .aic .rf-c{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;margin-top:8px}
 .aic .rf-c .sgm-c{font-size:13.5px}
 .aic .rf-c .sgm-e{flex-basis:100%;margin:0}
+.aic .seg button:disabled{opacity:.35;cursor:not-allowed}
+.aic .seg button:disabled:hover{color:var(--muted)}
 }

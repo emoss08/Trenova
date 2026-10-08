@@ -1286,6 +1286,14 @@ export type AgentToolKind =
   | 'Query'
   | 'Runtime';
 
+/** An organization's rule for one tool. Absent fields keep what the tool declares. */
+export type AgentToolRuleInput = {
+  maxTier?: AgentAutonomyTier | null | undefined;
+  readsExternal?: AgentExternalRead | null | undefined;
+  /** Why it changed; required when the most freedom changes, and kept in the audit trail. */
+  reason?: string | null | undefined;
+};
+
 /** Whose records a tool acts on. */
 export type AgentToolScope =
   /** Only the run it belongs to. */
@@ -9131,7 +9139,9 @@ export type AgentRunDetailQuery = { agentRun: (
     & { ' $fragmentRefs'?: { 'AgentRunTableRowFieldsFragment': AgentRunTableRowFieldsFragment } }
   ) | null };
 
-export type AgentToolPolicyFieldsFragment = { id: string, name: string, title: string, kind: AgentToolKind, scope: AgentToolScope, defaultTier: AgentAutonomyTier, maxTier: AgentAutonomyTier, promotableTier: AgentAutonomyTier, egress: Array<AgentEgressClass>, leavesOrganization: boolean, hasClassify: boolean, hasCondition: boolean, conditionDescription: string | null, personalExemption: boolean, effect: AgentToolEffect, artifact: string, reversible: boolean, idempotent: boolean, readsExternal: AgentExternalRead, source: AgentTaintSource | null, carriesTaint: boolean, rationale: string, explanation: string, needs: { resource: string, operation: string } | null } & { ' $fragmentName'?: 'AgentToolPolicyFieldsFragment' };
+export type AgentToolPolicyFieldsFragment = { id: string, name: string, title: string, kind: AgentToolKind, scope: AgentToolScope, defaultTier: AgentAutonomyTier, maxTier: AgentAutonomyTier, promotableTier: AgentAutonomyTier, egress: Array<AgentEgressClass>, leavesOrganization: boolean, hasClassify: boolean, hasCondition: boolean, conditionDescription: string | null, personalExemption: boolean, effect: AgentToolEffect, artifact: string, reversible: boolean, idempotent: boolean, readsExternal: AgentExternalRead, source: AgentTaintSource | null, carriesTaint: boolean, rationale: string, explanation: string, declaredMaxTier: AgentAutonomyTier, declaredReadsExternal: AgentExternalRead, ruleVersion: number, needs: { resource: string, operation: string } | null, rule: { maxTier: AgentAutonomyTier | null, readsExternal: AgentExternalRead | null, reason: string, updatedAt: number, updatedBy: { id: string, name: string } | null } | null } & { ' $fragmentName'?: 'AgentToolPolicyFieldsFragment' };
+
+export type AgentToolRuleImpactFieldsFragment = { agentId: string, agentName: string, before: AgentAutonomyAnswer, after: AgentAutonomyAnswer } & { ' $fragmentName'?: 'AgentToolRuleImpactFieldsFragment' };
 
 export type AgentToolAutonomyFieldsFragment = { answer: AgentAutonomyAnswer, tier: AgentAutonomyTier, heldBy: Array<string>, earned: boolean, approvalsToNext: number | null } & { ' $fragmentName'?: 'AgentToolAutonomyFieldsFragment' };
 
@@ -9162,7 +9172,7 @@ export type AgentToolSafetyTableQuery = { agentToolSafetyConnection: { totalCoun
 export type AgentSafetySummaryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type AgentSafetySummaryQuery = { agentSafetySummary: { toolCount: number, runWithoutPerson: number, leaveOrganization: number, openWithSensitive: number, resources: Array<string> } };
+export type AgentSafetySummaryQuery = { agentSafetySummary: { toolCount: number, runWithoutPerson: number, leaveOrganization: number, openWithSensitive: number, resources: Array<string>, unattendedTools: Array<string>, openSensitiveAgentIds: Array<string>, egressCounts: Array<{ egress: AgentEgressClass, count: number }> } };
 
 export type AgentSafetyQueryVariables = Exact<{
   agentIds?: Array<string | number> | string | number | null | undefined;
@@ -9170,6 +9180,28 @@ export type AgentSafetyQueryVariables = Exact<{
 
 
 export type AgentSafetyQuery = { agentSafety: Array<{ ' $fragmentRefs'?: { 'AgentSafetyHeaderFieldsFragment': AgentSafetyHeaderFieldsFragment } }> };
+
+export type AgentToolHoldersQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AgentToolHoldersQuery = { agentToolHolders: Array<{ policyName: string, agentIds: Array<string> }> };
+
+export type AgentToolRuleImpactQueryVariables = Exact<{
+  name: string;
+  input: AgentToolRuleInput;
+}>;
+
+
+export type AgentToolRuleImpactQuery = { agentToolRuleImpact: Array<{ ' $fragmentRefs'?: { 'AgentToolRuleImpactFieldsFragment': AgentToolRuleImpactFieldsFragment } }> };
+
+export type SaveAgentToolRuleMutationVariables = Exact<{
+  name: string;
+  version: number;
+  input: AgentToolRuleInput;
+}>;
+
+
+export type SaveAgentToolRuleMutation = { saveAgentToolRule: { tool: { ' $fragmentRefs'?: { 'AgentToolPolicyFieldsFragment': AgentToolPolicyFieldsFragment } }, affected: Array<{ ' $fragmentRefs'?: { 'AgentToolRuleImpactFieldsFragment': AgentToolRuleImpactFieldsFragment } }> } };
 
 export type MyAiFeedbackFieldsFragment = { id: string, targetType: AiFeedbackTargetType, targetId: string, targetPart: string, rating: number, reasons: Array<AiFeedbackReason>, comment: string, version: number, updatedAt: number } & { ' $fragmentName'?: 'MyAiFeedbackFieldsFragment' };
 
@@ -17661,6 +17693,14 @@ export const AgentRunTranscriptFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"AgentRunTranscriptFields"}) as unknown as TypedDocumentString<AgentRunTranscriptFieldsFragment, unknown>;
+export const AgentToolRuleImpactFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentToolRuleImpactFields on AgentToolRuleImpact {
+  agentId
+  agentName
+  before
+  after
+}
+    `, {"fragmentName":"AgentToolRuleImpactFields"}) as unknown as TypedDocumentString<AgentToolRuleImpactFieldsFragment, unknown>;
 export const AgentSafetyHeaderFieldsFragmentDoc = new TypedDocumentString(`
     fragment AgentSafetyHeaderFields on AgentSafety {
   agentId
@@ -17716,6 +17756,19 @@ export const AgentToolPolicyFieldsFragmentDoc = new TypedDocumentString(`
   carriesTaint
   rationale
   explanation
+  declaredMaxTier
+  declaredReadsExternal
+  ruleVersion
+  rule {
+    maxTier
+    readsExternal
+    reason
+    updatedAt
+    updatedBy {
+      id
+      name
+    }
+  }
 }
     `, {"fragmentName":"AgentToolPolicyFields"}) as unknown as TypedDocumentString<AgentToolPolicyFieldsFragment, unknown>;
 export const AgentToolAutonomyFieldsFragmentDoc = new TypedDocumentString(`
@@ -17771,6 +17824,19 @@ export const AgentToolSafetyRowFieldsFragmentDoc = new TypedDocumentString(`
   carriesTaint
   rationale
   explanation
+  declaredMaxTier
+  declaredReadsExternal
+  ruleVersion
+  rule {
+    maxTier
+    readsExternal
+    reason
+    updatedAt
+    updatedBy {
+      id
+      name
+    }
+  }
 }
 fragment AgentToolAutonomyFields on AgentToolAutonomy {
   answer
@@ -25378,10 +25444,13 @@ export const UpdateAiRetrievalSettingsDocument = {"__meta__":{"kind":"mutation",
 export const ReindexAiRetrievalSourceDocument = {"__meta__":{"kind":"mutation","name":"ReindexAIRetrievalSource","hash":"sha256:e12a16a86ab028021de08057a122aca1c4003046b2ebfd026f416b7232e9979c"}} as unknown as TypedDocumentString<ReindexAiRetrievalSourceMutation, ReindexAiRetrievalSourceMutationVariables>;
 export const AgentRunTableDocument = {"__meta__":{"kind":"query","name":"AgentRunTable","hash":"sha256:cb0c75efc8b293a1beed186c94dbd21763979412b273229f4abfdcaa6dab3224"}} as unknown as TypedDocumentString<AgentRunTableQuery, AgentRunTableQueryVariables>;
 export const AgentRunDetailDocument = {"__meta__":{"kind":"query","name":"AgentRunDetail","hash":"sha256:50f295b7b16d885dffc63d488bb379bab474422bcb3f3c62082a9048e47aa8d2"}} as unknown as TypedDocumentString<AgentRunDetailQuery, AgentRunDetailQueryVariables>;
-export const AgentToolRuleTableDocument = {"__meta__":{"kind":"query","name":"AgentToolRuleTable","hash":"sha256:408a5464ca8da78c9b4d995f96b6215368d54ed469ba804e9dac583ad637166b"}} as unknown as TypedDocumentString<AgentToolRuleTableQuery, AgentToolRuleTableQueryVariables>;
-export const AgentToolSafetyTableDocument = {"__meta__":{"kind":"query","name":"AgentToolSafetyTable","hash":"sha256:c321454ad00068bb8fa10e406c16cd524b650c40172887bba015721e6194334e"}} as unknown as TypedDocumentString<AgentToolSafetyTableQuery, AgentToolSafetyTableQueryVariables>;
-export const AgentSafetySummaryDocument = {"__meta__":{"kind":"query","name":"AgentSafetySummary","hash":"sha256:f4e64ef49ec0933e10409b183413a900d0c5d7de2c4f1f7239c6a998dbc341b2"}} as unknown as TypedDocumentString<AgentSafetySummaryQuery, AgentSafetySummaryQueryVariables>;
+export const AgentToolRuleTableDocument = {"__meta__":{"kind":"query","name":"AgentToolRuleTable","hash":"sha256:313df44fd49276f88ddfeb42716b73bc8d855c230a60ca92a02a01b05fc1638b"}} as unknown as TypedDocumentString<AgentToolRuleTableQuery, AgentToolRuleTableQueryVariables>;
+export const AgentToolSafetyTableDocument = {"__meta__":{"kind":"query","name":"AgentToolSafetyTable","hash":"sha256:902bbd68f7f1a38873689c7f0332b45c025e0e5bf98291873ae77f32a6208079"}} as unknown as TypedDocumentString<AgentToolSafetyTableQuery, AgentToolSafetyTableQueryVariables>;
+export const AgentSafetySummaryDocument = {"__meta__":{"kind":"query","name":"AgentSafetySummary","hash":"sha256:f52b3deec6899071becaff02b8ac354be7bacfccdc83027cb3c05099ecc02432"}} as unknown as TypedDocumentString<AgentSafetySummaryQuery, AgentSafetySummaryQueryVariables>;
 export const AgentSafetyDocument = {"__meta__":{"kind":"query","name":"AgentSafety","hash":"sha256:f089e6433f198e90913b7d60eb32ede844d86438f8b427651ccf36d087f21d53"}} as unknown as TypedDocumentString<AgentSafetyQuery, AgentSafetyQueryVariables>;
+export const AgentToolHoldersDocument = {"__meta__":{"kind":"query","name":"AgentToolHolders","hash":"sha256:3888e48bdccda4483db5b4cb78bcc422fe244176109b3cd7a4642cdb5794eafd"}} as unknown as TypedDocumentString<AgentToolHoldersQuery, AgentToolHoldersQueryVariables>;
+export const AgentToolRuleImpactDocument = {"__meta__":{"kind":"query","name":"AgentToolRuleImpact","hash":"sha256:25982d51bded8d1e6e551c89a9ccea8bd284b4c2950f40effd078142b9d7c592"}} as unknown as TypedDocumentString<AgentToolRuleImpactQuery, AgentToolRuleImpactQueryVariables>;
+export const SaveAgentToolRuleDocument = {"__meta__":{"kind":"mutation","name":"SaveAgentToolRule","hash":"sha256:f69373369efb41372f3c4722ec5085108f583508db58841fa043877305748be6"}} as unknown as TypedDocumentString<SaveAgentToolRuleMutation, SaveAgentToolRuleMutationVariables>;
 export const MyAiFeedbackDocument = {"__meta__":{"kind":"query","name":"MyAIFeedback","hash":"sha256:4ecd6a4f48bdf601fe636a9cf2dc691b4d999c948e5c8b19b34aa57b705ddd8f"}} as unknown as TypedDocumentString<MyAiFeedbackQuery, MyAiFeedbackQueryVariables>;
 export const SetMyAiFeedbackDocument = {"__meta__":{"kind":"mutation","name":"SetMyAIFeedback","hash":"sha256:dcf84160135d294e635b4b982adf957300ba21c8a9f703ddad23cfcbcc32dde3"}} as unknown as TypedDocumentString<SetMyAiFeedbackMutation, SetMyAiFeedbackMutationVariables>;
 export const ClearMyAiFeedbackDocument = {"__meta__":{"kind":"mutation","name":"ClearMyAIFeedback","hash":"sha256:fe3ab8a659e88516571a342f231d0e575d1a136d9c5a9655bcca2fd93613510a"}} as unknown as TypedDocumentString<ClearMyAiFeedbackMutation, ClearMyAiFeedbackMutationVariables>;

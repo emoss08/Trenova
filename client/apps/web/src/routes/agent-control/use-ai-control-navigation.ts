@@ -13,6 +13,7 @@ import {
   QUALITY_SUITE_RUN_PARAM,
   QUALITY_VIEW_PARAM,
   RETRIEVAL_SOURCE_PARAM,
+  SAFETY_AGENTS_PARAM,
   SAFETY_VIEW_PARAM,
   activityViewParser,
   activityViews,
@@ -25,6 +26,7 @@ import {
   qualityViewParser,
   qualityViews,
   retrievalSourceParser,
+  safetyAgentsParser,
   safetyViewParser,
   safetyViews,
   type ActivityView,
@@ -43,6 +45,7 @@ const navigationParsers = {
   [ACTIVITY_VIEW_PARAM]: activityViewParser,
   [AGENT_FILTER_PARAM]: agentFilterParser,
   [SAFETY_VIEW_PARAM]: safetyViewParser,
+  [SAFETY_AGENTS_PARAM]: safetyAgentsParser,
   [QUALITY_VIEW_PARAM]: qualityViewParser,
   [QUALITY_AGENT_PARAM]: qualityAgentParser,
   [QUALITY_SUITE_RUN_PARAM]: qualitySuiteRunParser,
@@ -60,6 +63,8 @@ export type AIControlDestination = {
   qualityAgent?: string | null;
   /** Opens one suite run's cases. */
   suiteRun?: string | null;
+  /** The agents Safety's by-agent view compares. */
+  safetyAgents?: string[];
   /** Narrows Retrieval's failed items to one source. */
   retrievalSource?: RetrievalSource | null;
   /** Filters the destination's table starts with, in its own field names. */
@@ -115,6 +120,7 @@ export function useAIControlNavigation() {
           [AUDIT_SCOPE_PARAM]: null,
           [AGENT_FILTER_PARAM]:
             destination.tab === "agents" ? (destination.agentFilter ?? null) : null,
+          ...(destination.safetyAgents ? { [SAFETY_AGENTS_PARAM]: destination.safetyAgents } : {}),
         },
         { history: "push" },
       );

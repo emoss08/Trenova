@@ -1991,6 +1991,15 @@
       "routes/shipment"
     ]
   },
+  "<b>{0, plural, one {# tool} other {# tools}}</b> can send outside the organization, and every one waits for approval.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "<b>{0}</b> accounts for {1}% of everything forgiven — {2} across {3, plural, one {# waiver} other {# waivers}}.": {
     "sites": 1,
     "scope": [
@@ -2196,6 +2205,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "<open>{0, plural, one {# agent} other {# agents}}</open> everyone can use hold some of them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "<run>{0, plural, one {# tool runs} other {# tools run}}</run> without a person, all inside the organization.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   ">24h": {
@@ -9431,15 +9458,6 @@
       "routes/agent-control"
     ]
   },
-  "AI safety figures": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "AI spend": {
     "sites": 1,
     "scope": [
@@ -13180,6 +13198,15 @@
       "routes/agent-control"
     ]
   },
+  "Add a reason for the audit trail": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Add a service failure reason code": {
     "sites": 1,
     "scope": [
@@ -13302,24 +13329,14 @@
     ]
   },
   "Add an agent": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "domain/permission",
-      "routes/admin",
-      "routes/agent-control"
-    ]
-  },
-  "Add an agent to see what it can do without a person.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
+      "routes/admin"
     ]
   },
   "Add an approval note": {
@@ -16138,7 +16155,7 @@
     ]
   },
   "After outside text": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -16656,7 +16673,7 @@
     ]
   },
   "Agents": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -19619,6 +19636,15 @@
     ]
   },
   "An agent that no longer exists": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "An agent's own ceiling can hold it lower, never higher.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -27699,7 +27725,7 @@
     ]
   },
   "Audit trail": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -31205,16 +31231,7 @@
     ]
   },
   "Before outside text": {
-    "sites": 3,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "Before outside text is a run that has read only the organization's own records. After outside text is a run that has read an email, a document or another message written outside the organization: anything it would send out waits for approval.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -39398,13 +39415,31 @@
     ]
   },
   "Ceiling": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "domain/agentdefinition",
+      "routes/agent-control"
+    ]
+  },
+  "Ceiling {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Ceiling {0} · off": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/agent-control"
     ]
   },
@@ -40039,6 +40074,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Change tool rule": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Change tractor status": {
@@ -44077,7 +44121,7 @@
     ]
   },
   "Clear": {
-    "sites": 25,
+    "sites": 26,
     "scope": [
       "go",
       "ts"
@@ -47104,6 +47148,15 @@
       "routes/reports"
     ]
   },
+  "Compare another": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Compare previous": {
     "sites": 1,
     "scope": [
@@ -47129,15 +47182,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Compare up to 10 agents at once": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Compare value": {
@@ -47174,6 +47218,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Compare what they can do": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Compare with any version": {
@@ -74053,6 +74106,15 @@
       "service/agenttoolservice"
     ]
   },
+  "Each tool is answered twice: for a run that has read only your own records, and for one that has read an email, a document or another message written outside the organization.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Each waiting change. Range over it: Tool is what the agent asked to do and Rationale is why.": {
     "sites": 1,
     "scope": [
@@ -80433,15 +80495,6 @@
       "routes/admin"
     ]
   },
-  "Every agent is already shown.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Every agent is paused": {
     "sites": 1,
     "scope": [
@@ -81737,15 +81790,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "Everyone who can use the assistant can use this agent, and it holds tools that reach restricted data or leave the organization: {0}.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Everyone whose approvals reach you: your own reports, people at a terminal you run, and anyone you are covering for under a delegation in force today.": {
@@ -97660,15 +97704,6 @@
       "routes/worker-credential-type"
     ]
   },
-  "Held by {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Held for review: notice not sent in time": {
     "sites": 1,
     "scope": [
@@ -97694,6 +97729,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Held lower than the tool declares": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Held out for validation": {
@@ -97748,15 +97792,6 @@
     ],
     "areas": [
       "routes/settlement-workspace"
-    ]
-  },
-  "Held tool": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Held tools": {
@@ -109702,6 +109737,15 @@
       "routes/agent-control"
     ]
   },
+  "Keep the reason to 500 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Keep the reason under 500 characters": {
     "sites": 3,
     "scope": [
@@ -110331,7 +110375,7 @@
     ]
   },
   "Kind": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
       "go",
       "ts"
@@ -112993,6 +113037,15 @@
       "domain/worker"
     ]
   },
+  "Leaves the organization — never past approval": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Leaving records empty": {
     "sites": 1,
     "scope": [
@@ -114034,7 +114087,7 @@
     ]
   },
   "Limit to roles": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -121231,12 +121284,13 @@
     ]
   },
   "Maximum": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/types",
+      "routes/agent-control",
       "routes/shipment"
     ]
   },
@@ -125432,6 +125486,24 @@
       "routes/agent-control"
     ]
   },
+  "Most freedom any agent gets": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Most it may do": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Most pages": {
     "sites": 1,
     "scope": [
@@ -127559,7 +127631,7 @@
     ]
   },
   "Needs": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -128276,7 +128348,7 @@
     ]
   },
   "Never": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -130419,6 +130491,15 @@
   },
   "No agent exceptions yet": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "No agent holds this tool.": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -135670,7 +135751,25 @@
       "routes/agent-control"
     ]
   },
-  "No tool rules yet": {
+  "No tool is named {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolruleservice"
+    ]
+  },
+  "No tool rules match": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "No tool runs without a person.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -136332,6 +136431,15 @@
     ]
   },
   "Nobody yet: no role is granted it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Nobody; it only reads": {
     "sites": 1,
     "scope": [
       "ts"
@@ -140033,7 +140141,7 @@
     ]
   },
   "Nova": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -146064,6 +146172,15 @@
       "routes/admin"
     ]
   },
+  "Open to everyone, and holds <tools>{0, plural, one {# tool that leaves the organization} other {# tools that leave the organization}}</tools>.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Open trace {0}": {
     "sites": 1,
     "scope": [
@@ -149308,6 +149425,24 @@
   },
   "Outside recipient": {
     "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Outside text": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Outside text can't trigger an automatic action in the same run.": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -156916,6 +157051,15 @@
     ]
   },
   "Pick an agent": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Pick an agent to see what it can do without a person": {
     "sites": 1,
     "scope": [
       "ts"
@@ -167959,6 +168103,15 @@
       "packages/shared/components"
     ]
   },
+  "Reaches": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Reaches every role tagged with that function, including ones added later.": {
     "sites": 1,
     "scope": [
@@ -168792,6 +168945,24 @@
       "routes/agent-control"
     ]
   },
+  "Reads never change records, so they always run": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "Reads never change records, so they always run.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Reads only": {
     "sites": 2,
     "scope": [
@@ -168802,7 +168973,7 @@
     ]
   },
   "Reads outside content": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -169122,7 +169293,7 @@
     ]
   },
   "Reason": {
-    "sites": 59,
+    "sites": 62,
     "scope": [
       "go",
       "ts"
@@ -174591,7 +174762,7 @@
     ]
   },
   "Remove": {
-    "sites": 27,
+    "sites": 26,
     "scope": [
       "ts"
     ],
@@ -181677,6 +181848,15 @@
       "routes/customer"
     ]
   },
+  "Review open agents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Review policy is required": {
     "sites": 1,
     "scope": [
@@ -183845,12 +184025,13 @@
     ]
   },
   "Rule": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
+      "routes/agent-control",
       "routes/carrier-monitoring",
       "routes/edi",
       "routes/reports"
@@ -185475,7 +185656,7 @@
     ]
   },
   "Safety": {
-    "sites": 14,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -187016,6 +187197,15 @@
       "apps/web/components"
     ]
   },
+  "Saved to the audit trail with the change.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Saved version": {
     "sites": 1,
     "scope": [
@@ -187588,6 +187778,15 @@
     "areas": [
       "packages/shared/types",
       "service/invoiceservice"
+    ]
+  },
+  "Say why the most freedom changes; the reason is kept in the audit trail": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolruleservice"
     ]
   },
   "Say why the shipment is being taken off the invoice": {
@@ -196860,7 +197059,7 @@
     ]
   },
   "Shadow": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -205661,6 +205860,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Stays inside the organization": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Stays quiet while the condition keeps holding, and alerts again once it clears and returns.": {
@@ -222705,6 +222913,42 @@
       "routes/worker"
     ]
   },
+  "The tool's own rule allows at most {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The tool's own rule allows at most {0}; a rule here can only hold it lower": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "The tool's own rule already treats more as outside text": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The tool's own rule already treats more of what it returns as outside text; a rule here can only treat more": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "The tool's rule": {
     "sites": 1,
     "scope": [
@@ -223216,6 +223460,15 @@
     ],
     "areas": [
       "service/formula"
+    ]
+  },
+  "The whole rule": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "The window cannot start before 1970": {
@@ -224408,15 +224661,6 @@
     ]
   },
   "This agent is restricted to roles and no role is granted it, so nobody can use it.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "This agent no longer exists.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -228892,7 +229136,7 @@
     ]
   },
   "Tier earned": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -230862,7 +231106,7 @@
     ]
   },
   "Tool policy not found": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -230907,7 +231151,7 @@
     ]
   },
   "Tool rules": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -233482,6 +233726,15 @@
       "routes/ifta-jurisdiction-mileage"
     ]
   },
+  "Treat what it returns as outside text": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Treatment": {
     "sites": 1,
     "scope": [
@@ -234927,6 +235180,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "Two wrong releases last week": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Two-factor authentication": {
@@ -236809,6 +237071,15 @@
       "domain/homelayout"
     ]
   },
+  "Unknown outside text setting": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Unknown parameter type \"{0}\"": {
     "sites": 1,
     "scope": [
@@ -237015,6 +237286,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Unknown tier": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Unknown timezone": {
@@ -237961,7 +238241,7 @@
       "domain/homelayout"
     ]
   },
-  "Up to {0}": {
+  "Up to {0} agents": {
     "sites": 1,
     "scope": [
       "ts"
@@ -241620,7 +241900,7 @@
     ]
   },
   "View": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -249424,7 +249704,7 @@
     ]
   },
   "Who can use it": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
@@ -249569,6 +249849,24 @@
       "routes/agent-control"
     ]
   },
+  "Who sees its work": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Who sees the work": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Who shared the invoice.": {
     "sites": 1,
     "scope": [
@@ -249676,6 +249974,24 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "Who's affected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Who's affected couldn't be worked out. Try again in a moment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Who's out": {
@@ -251505,6 +251821,15 @@
     ],
     "areas": [
       "routes/accounting-inbound"
+    ]
+  },
+  "Working out who's affected…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Working them out...": {
@@ -254104,6 +254429,15 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "Your organization's rule": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Your organization's subscription does not allow changes right now: you can open and export everything, but nothing can be created or changed.": {
@@ -259124,6 +259458,15 @@
       "routes/agent-control"
     ]
   },
+  "on at least one agent · {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "on hold": {
     "sites": 1,
     "scope": [
@@ -261552,7 +261895,7 @@
     ]
   },
   "{0, plural, one {# clean approval to the next tier} other {# clean approvals to the next tier}}": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -263637,7 +263980,25 @@
       "routes/agent-control"
     ]
   },
+  "{0, plural, one {# tool that changes things} other {# tools that change things}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0, plural, one {# tool} other {# tools}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {# tool} other {# tools}} · ceiling {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -264230,6 +264591,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0, plural, one {Held by # agent} other {Held by # agents}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0, plural, one {Import # purchase} other {Import # purchases}}": {
@@ -269938,6 +270308,15 @@
       "routes/worker"
     ]
   },
+  "{0} of {1} change": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} of {1} chosen": {
     "sites": 1,
     "scope": [
@@ -271201,6 +271580,24 @@
     ]
   },
   "{0} rows, {1}. {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0} rule saved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0} rule saved · {1, plural, one {# agent changed} other {# agents changed}}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -272676,6 +273073,15 @@
     ],
     "areas": [
       "routes/fleet-safety"
+    ]
+  },
+  "{0} · ceiling {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} · dispatch sheet sent": {

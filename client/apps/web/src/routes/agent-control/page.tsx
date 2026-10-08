@@ -231,7 +231,7 @@ export function AgentControlPage() {
       <div className="pg">
         <PageHead tabs={tabs} active={activeTab} counts={counts} onSelect={selectTab} />
         <div key={activeTab} className="tab-in">
-          {activeItem && activeItem.children.length > 1 && activeView && (
+          {activeItem && activeItem.children.length > 1 && activeView && activeTab !== "safety" && (
             <div className="vw">
               <Seg
                 v={activeView}

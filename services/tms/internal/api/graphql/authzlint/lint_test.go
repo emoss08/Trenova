@@ -171,6 +171,9 @@ func TestAgentSafetyResolversAreAuthorized(t *testing.T) {
 		"QueryResolver.AgentToolPolicyConnection",
 		"QueryResolver.AgentSafetySummary",
 		"QueryResolver.AgentSafety",
+		"QueryResolver.AgentToolHolders",
+		"QueryResolver.AgentToolRuleImpact",
+		"MutationResolver.SaveAgentToolRule",
 	} {
 		verdict, ok := verdicts[key]
 		require.True(t, ok, "%s is not a root resolver", key)

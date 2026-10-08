@@ -226,32 +226,36 @@ Keywords: tune-ups, suggestions, recommendations, improve AI setup, reorder prov
 
 ### See what agents can do without a person
 Keywords: AI safety, autonomy, what can the AI do on its own, auto execute, approval, tool policy, egress, prompt injection, outside text, sensitive tools, audit agents
-1. Open [AI control](/admin/agent-control) and select **Safety** in the rail. Safety has two
-   tables under it in the rail, **Tool rules** and **By agent**.
-2. Read the figures at the top: **Tools that run without a person** (tools that change records
-   and, on at least one agent, can run without anyone approving), **Tools that send outside the
-   organization**, and **Open agents with sensitive tools** (agents everyone can use that hold
-   tools reaching restricted data or leaving the organization).
-3. Select **Tool rules**. Every tool is listed with **Who sees it**, its **Max tier**, what it
-   **Needs** of the person using it, whether it **Reads outside content**, and whether it
-   **Runs without a person** on at least one agent. Use the search box to find a tool by name, or
-   select **Filter** to narrow by **Who sees it**, **Max tier**, **Needs**, **Kind**,
-   **Reads outside content** or **Runs without a person**, and **Sort** to order by any of them.
-   **Display** shows hidden columns such as **Name** and **Kind** and changes the row density.
-4. Select a row to open its rule: the **Rationale**, **How far it may go** and any
-   **Record condition**. A tool marked **Depends on the call** goes further for some calls than
-   others; its rule says why.
-5. Select **By agent**, then **Add an agent** and choose one; add up to ten to compare them in one
-   table. Nothing is read until you add an agent. Each agent shows **Who can use it** and its
-   **Ceiling**, and the table lists every tool the agents hold with what happens
-   **Before outside text** and **After outside text**: **Runs on its own**,
-   **Depends on the call**, **Needs approval**, **Proposes only** or **Simulated**. Select
-   **Filter** to narrow to one **Agent**, an answer, or a **Held by** reason. Select the cross
-   beside an agent's name to take it out of the comparison.
-6. The **Held by** chips say which limit stops a tool going further, such as the agent's
-   ceiling, where the work goes, or that the run has read outside text. A tool whose tier was
-   earned shows **Tier earned**, and one still earning shows how many clean approvals it needs
-   for the next tier. Select a row to read both answers beside the tool's rule.
+1. Open [AI control](/admin/agent-control) and select **Safety** in the rail. The sentence at the
+   top says how many tools run without a person, how many send outside the organization (every
+   one waits for approval), and how many agents everyone can use hold them. Select the count of
+   tools that run to narrow the rules to them. When open agents hold sensitive tools, select
+   **Review open agents** to compare the first three.
+2. Read the figures: **Tools that run without a person**, **Tools that send outside the
+   organization** and **Open agents with sensitive tools**. **Who sees the work** lays out every
+   tool that changes something by the widest audience its work reaches; select an audience to
+   narrow the rules to it, and **Clear** to show them all again.
+3. Under **View**, select **Tool rules**. Every tool is listed with **Who sees it**, its
+   **Max tier**, what it **Needs** of the person using it, whether it **Reads outside content**,
+   the **Agents** that hold it, and whether it **Runs without a person** on at least one agent.
+   Use the search box to find a tool by name, or **Filter** and **Sort** by any of them.
+4. Select a row to open the tool: **Most it may do**, **Needs**, **Reads outside content** and
+   **Who sees its work**, then every agent holding it with what that agent does before and after
+   reading outside text, and **The whole rule**. **Audit trail** opens the audit trail.
+5. To hold a tool lower for your organization, select **Change tool rule**. Choose the
+   **Most freedom any agent gets** (choices looser than the tool's own rule are closed) and
+   whether to **Treat what it returns as outside text**, and write a **Reason**; a change to the
+   most freedom cannot be saved without one. **Who's affected** lists every agent holding the tool
+   and how its answer moves before you save. Select **Save changes**: the change, its reason and
+   the agents it moved go to the audit trail, and the open tool shows
+   **Your organization's rule**. Choosing what the tool declares returns it to its own rule.
+6. Under **View**, select **By agent**, then **Pick an agent**; select **Compare another** to
+   compare up to four. Nothing is read until you pick one. Each agent shows who can use it and its
+   ceiling, warns when everyone can use it, and offers **Limit to roles**. The table lists every
+   tool the agents hold with what happens **Before outside text** and **After outside text**:
+   **Runs on its own**, **Depends on the call**, **Needs approval**, **Proposes only** or
+   **Simulated**. The **Held by** chips say which limit stops a tool going further; a tool whose
+   tier was earned shows **Tier earned**.
 
 ### Check how well an agent is doing
 Keywords: AI quality, agent score, regression, satisfaction, thumbs down, golden set, evaluation cases, nightly sweep, eval budget, agent got worse

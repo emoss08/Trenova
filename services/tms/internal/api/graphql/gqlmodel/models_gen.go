@@ -885,6 +885,14 @@ type AgentToolPolicy struct {
 	// organization's agents, can do so without a person. Read only by
 	// agentToolRuleConnection; null everywhere else.
 	RunsWithoutPerson *bool `json:"runsWithoutPerson,omitempty"`
+	// The most freedom the rule declared beside the tool allows; maxTier is lower when the organization holds it lower.
+	DeclaredMaxTier agent.AutonomyTier `json:"declaredMaxTier"`
+	// How much of its result the declared rule treats as outside text.
+	DeclaredReadsExternal agent.ExternalRead `json:"declaredReadsExternal"`
+	// The organization's own rule for the tool; null when it keeps the declared one.
+	Rule *agent.ToolRuleOverride `json:"rule,omitempty"`
+	// The version of the organization's rule an edit is made against; 0 when there is none yet.
+	RuleVersion int `json:"ruleVersion"`
 }
 
 type AgentToolPolicyConnection struct {
@@ -920,6 +928,20 @@ type AgentToolPolicyEdge struct {
 type AgentToolRequirement struct {
 	Resource  string `json:"resource"`
 	Operation string `json:"operation"`
+}
+
+// An organization's rule for one tool. Absent fields keep what the tool declares.
+type AgentToolRuleInput struct {
+	MaxTier       *agent.AutonomyTier `json:"maxTier,omitempty"`
+	ReadsExternal *agent.ExternalRead `json:"readsExternal,omitempty"`
+	// Why it changed; required when the most freedom changes, and kept in the audit trail.
+	Reason *string `json:"reason,omitempty"`
+}
+
+type AgentToolRuleSaved struct {
+	Tool *AgentToolPolicy `json:"tool"`
+	// The agents whose answer moved.
+	Affected []*services.AgentToolRuleImpact `json:"affected"`
 }
 
 type AgentToolSafetyConnection struct {

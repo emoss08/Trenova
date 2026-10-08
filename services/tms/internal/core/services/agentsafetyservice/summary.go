@@ -23,8 +23,8 @@ type toolTrustLister interface {
 }
 
 type safetySurvey struct {
-	unattended        map[string]struct{}
-	openWithSensitive int
+	unattended    map[string]struct{}
+	openSensitive []pulid.ID
 }
 
 func (s *Service) Summary(
@@ -44,12 +44,60 @@ func (s *Service) Summary(
 	}
 
 	return &services.AgentSafetySummary{
-		ToolCount:         len(s.entries),
-		RunWithoutPerson:  len(survey.unattended),
-		LeaveOrganization: leaving,
-		OpenWithSensitive: survey.openWithSensitive,
-		Resources:         slices.Clone(s.resources),
+		ToolCount:             len(s.entries),
+		RunWithoutPerson:      len(survey.unattended),
+		LeaveOrganization:     leaving,
+		OpenWithSensitive:     len(survey.openSensitive),
+		Resources:             slices.Clone(s.resources),
+		EgressCounts:          s.egressCounts(),
+		UnattendedTools:       s.titlesOf(survey.unattended),
+		OpenSensitiveAgentIDs: survey.openSensitive,
 	}, nil
+}
+
+func (s *Service) egressCounts() []services.AgentEgressCount {
+	counts := make(map[agent.EgressClass]int, len(agent.EgressClasses()))
+	for idx := range s.entries {
+		policy := s.entries[idx].view.Policy
+		if policy.EffectiveEffect() != agent.ToolEffectChange {
+			continue
+		}
+		counts[widestEgress(policy.Egress)]++
+	}
+
+	out := make([]services.AgentEgressCount, 0, len(counts))
+	for _, class := range agent.EgressClasses() {
+		if counts[class] > 0 {
+			out = append(out, services.AgentEgressCount{Egress: class, Count: counts[class]})
+		}
+	}
+
+	return out
+}
+
+func widestEgress(classes []agent.EgressClass) agent.EgressClass {
+	order := agent.EgressClasses()
+	widest := agent.EgressNone
+	for _, class := range classes {
+		if slices.Index(order, class) > slices.Index(order, widest) {
+			widest = class
+		}
+	}
+
+	return widest
+}
+
+func (s *Service) titlesOf(names map[string]struct{}) []string {
+	titles := make([]string, 0, len(names))
+	for idx := range s.entries {
+		view := s.entries[idx].view
+		if _, ok := names[view.Policy.Name]; ok {
+			titles = append(titles, view.Title)
+		}
+	}
+	slices.Sort(titles)
+
+	return titles
 }
 
 func (s *Service) survey(
@@ -63,7 +111,7 @@ func (s *Service) survey(
 		return nil, err
 	}
 
-	out := &safetySurvey{unattended: make(map[string]struct{})}
+	out := &safetySurvey{unattended: make(map[string]struct{}), openSensitive: []pulid.ID{}}
 	if len(definitions) == 0 {
 		return out, nil
 	}
@@ -71,6 +119,10 @@ func (s *Service) survey(
 	control, err := s.controls.GetOrCreate(ctx, tenantInfo)
 	if err != nil {
 		return nil, fmt.Errorf("read agent control for safety: %w", err)
+	}
+	rules, err := s.overridesFor(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
 	}
 
 	for chunk := range slices.Chunk(definitions, listPageSize) {
@@ -84,6 +136,7 @@ func (s *Service) survey(
 				definition: definition,
 				control:    control,
 				trust:      trust[definition.ID],
+				rules:      rules,
 				out:        out,
 			})
 		}
@@ -96,6 +149,7 @@ type surveyAgentInput struct {
 	definition *agentdefinition.Definition
 	control    *tenant.AgentControl
 	trust      []*agent.ToolTrust
+	rules      map[string]*agent.ToolRuleOverride
 	out        *safetySurvey
 }
 
@@ -108,11 +162,11 @@ func (s *Service) surveyAgent(ctx context.Context, in *surveyAgentInput) {
 		}
 	}
 	if in.definition.OpenToEveryone() && len(s.sensitiveTools(held)) > 0 {
-		in.out.openWithSensitive++
+		in.out.openSensitive = append(in.out.openSensitive, in.definition.ID)
 	}
 
 	for idx := range held {
-		policy := held[idx]
+		policy := agenttoolpolicy.ApplyOverrides(held[idx], in.rules)
 		if policy.EffectiveEffect() != agent.ToolEffectChange {
 			continue
 		}
@@ -159,4 +213,96 @@ func (s *Service) trustFor(
 	}
 
 	return trust, nil
+}
+
+func (s *Service) ToolHolders(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) ([]services.AgentToolHolders, error) {
+	definitions, err := s.listDefinitions(ctx, &services.ListAgentSafetyRequest{
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	byTool := make(map[string][]pulid.ID, len(s.entries))
+	for _, definition := range definitions {
+		for _, policy := range s.heldPolicies(definition) {
+			holders := byTool[policy.Name]
+			if len(holders) > 0 && holders[len(holders)-1] == definition.ID {
+				continue
+			}
+			byTool[policy.Name] = append(holders, definition.ID)
+		}
+	}
+
+	out := make([]services.AgentToolHolders, 0, len(byTool))
+	for idx := range s.entries {
+		name := s.entries[idx].view.Policy.Name
+		if holders, ok := byTool[name]; ok {
+			out = append(out, services.AgentToolHolders{PolicyName: name, AgentIDs: holders})
+		}
+	}
+
+	return out, nil
+}
+
+func (s *Service) RuleImpact(
+	ctx context.Context,
+	req *services.RuleImpactRequest,
+) ([]services.AgentToolRuleImpact, error) {
+	definitions, err := s.listDefinitions(ctx, &services.ListAgentSafetyRequest{
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	holders := make([]*agentdefinition.Definition, 0, len(definitions))
+	for _, definition := range definitions {
+		if slices.ContainsFunc(s.heldPolicies(definition), func(policy services.ToolPolicy) bool {
+			return policy.Name == req.ToolName
+		}) {
+			holders = append(holders, definition)
+		}
+	}
+	out := make([]services.AgentToolRuleImpact, 0, len(holders))
+	if len(holders) == 0 {
+		return out, nil
+	}
+
+	control, err := s.controls.GetOrCreate(ctx, req.TenantInfo)
+	if err != nil {
+		return nil, fmt.Errorf("read agent control for safety: %w", err)
+	}
+	trust, err := s.trustFor(ctx, req.TenantInfo, holders)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, definition := range holders {
+		var held *agent.ToolTrust
+		for _, row := range trust[definition.ID] {
+			if row != nil && row.ToolName == req.ToolName {
+				held = row
+			}
+		}
+		answer := func(policy services.ToolPolicy) agent.AutonomyAnswer {
+			return agenttoolpolicy.Assess(ctx, &agenttoolpolicy.AssessInput{
+				Policy:     policy,
+				Definition: definition,
+				Trust:      held,
+				Control:    control,
+			}).Answer
+		}
+		out = append(out, services.AgentToolRuleImpact{
+			AgentID:   definition.ID,
+			AgentName: definition.Name,
+			Before:    answer(req.Before),
+			After:     answer(req.After),
+		})
+	}
+
+	return out, nil
 }

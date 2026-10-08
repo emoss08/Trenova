@@ -292,7 +292,10 @@ type ResolverRoot interface {
 	AgentRun() AgentRunResolver
 	AgentRunEvent() AgentRunEventResolver
 	AgentSafety() AgentSafetyResolver
+	AgentSafetySummary() AgentSafetySummaryResolver
 	AgentSuiteRun() AgentSuiteRunResolver
+	AgentToolHolders() AgentToolHoldersResolver
+	AgentToolRule() AgentToolRuleResolver
 	AgentToolSafety() AgentToolSafetyResolver
 	AgentWorstRatedAnswer() AgentWorstRatedAnswerResolver
 	ApiKey() ApiKeyResolver
@@ -766,12 +769,26 @@ type AgentSafetyResolver interface {
 	Reach(ctx context.Context, obj *services.AgentSafetySubject) (*gqlmodel.AgentReach, error)
 }
 
+type AgentSafetySummaryResolver interface {
+	OpenSensitiveAgentIds(ctx context.Context, obj *services.AgentSafetySummary) ([]string, error)
+}
+
 type AgentSuiteRunResolver interface {
 	AgentName(ctx context.Context, obj *agentquality.SuiteRun) (string, error)
 	Fingerprint(ctx context.Context, obj *agentquality.SuiteRun) (map[string]any, error)
 	FingerprintChanges(ctx context.Context, obj *agentquality.SuiteRun) ([]*gqlmodel.AgentFingerprintChange, error)
 	ChangeSummary(ctx context.Context, obj *agentquality.SuiteRun) (string, error)
 	CostUsd(ctx context.Context, obj *agentquality.SuiteRun) (string, error)
+}
+
+type AgentToolHoldersResolver interface {
+	AgentIds(ctx context.Context, obj *services.AgentToolHolders) ([]string, error)
+}
+
+type AgentToolRuleResolver interface {
+	MaxTier(ctx context.Context, obj *agent.ToolRuleOverride) (*agent.AutonomyTier, error)
+	ReadsExternal(ctx context.Context, obj *agent.ToolRuleOverride) (*agent.ExternalRead, error)
+	UpdatedBy(ctx context.Context, obj *agent.ToolRuleOverride) (*tenant.User, error)
 }
 
 type AgentToolSafetyResolver interface {
@@ -1526,6 +1543,7 @@ type MutationResolver interface {
 	ReplayAgentEvalCase(ctx context.Context, id string) (*agent.Evaluation, error)
 	RunAgentSuite(ctx context.Context, agentDefinitionID string) (*agentquality.SuiteRun, error)
 	UpdateAgentQualityControl(ctx context.Context, input gqlmodel.UpdateAgentQualityControlInput) (*agentquality.Control, error)
+	SaveAgentToolRule(ctx context.Context, name string, version int, input gqlmodel.AgentToolRuleInput) (*gqlmodel.AgentToolRuleSaved, error)
 	RequestAIAuditExport(ctx context.Context, input gqlmodel.RequestAIAuditExportInput) (*aiaudit.AIAuditExport, error)
 	AiAuditExportDownload(ctx context.Context, id string) (*services.AIAuditExportDownload, error)
 	VerifyAIAuditChain(ctx context.Context) (*services.AIAuditChainStatus, error)
@@ -2209,6 +2227,8 @@ type QueryResolver interface {
 	AgentSuiteRunCaseConnection(ctx context.Context, suiteRunID string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentSuiteRunCaseConnection, error)
 	AgentQualityControl(ctx context.Context) (*agentquality.Control, error)
 	AgentRunEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentRunEventConnection, error)
+	AgentToolRuleImpact(ctx context.Context, name string, input gqlmodel.AgentToolRuleInput) ([]*services.AgentToolRuleImpact, error)
+	AgentToolHolders(ctx context.Context) ([]*services.AgentToolHolders, error)
 	AgentToolPolicies(ctx context.Context) ([]*gqlmodel.AgentToolPolicy, error)
 	AgentToolPolicyConnection(ctx context.Context, input gqlmodel.AgentToolPolicyConnectionInput) (*gqlmodel.AgentToolPolicyConnection, error)
 	AgentToolRuleConnection(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentToolPolicyConnection, error)
@@ -3253,7 +3273,10 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AgentRun":                           func() any { return r.AgentRun() },
 			"AgentRunEvent":                      func() any { return r.AgentRunEvent() },
 			"AgentSafety":                        func() any { return r.AgentSafety() },
+			"AgentSafetySummary":                 func() any { return r.AgentSafetySummary() },
 			"AgentSuiteRun":                      func() any { return r.AgentSuiteRun() },
+			"AgentToolHolders":                   func() any { return r.AgentToolHolders() },
+			"AgentToolRule":                      func() any { return r.AgentToolRule() },
 			"AgentToolSafety":                    func() any { return r.AgentToolSafety() },
 			"AgentWorstRatedAnswer":              func() any { return r.AgentWorstRatedAnswer() },
 			"ApiKey":                             func() any { return r.ApiKey() },
@@ -7554,6 +7577,47 @@ type AgentToolPolicy {
   agentToolRuleConnection; null everywhere else.
   """
   runsWithoutPerson: Boolean
+  "The most freedom the rule declared beside the tool allows; maxTier is lower when the organization holds it lower."
+  declaredMaxTier: AgentAutonomyTier!
+  "How much of its result the declared rule treats as outside text."
+  declaredReadsExternal: AgentExternalRead!
+  "The organization's own rule for the tool; null when it keeps the declared one."
+  rule: AgentToolRule
+  "The version of the organization's rule an edit is made against; 0 when there is none yet."
+  ruleVersion: Int!
+}
+
+"An organization holding one tool lower than its declared rule."
+type AgentToolRule {
+  "Null when it keeps the declared most freedom."
+  maxTier: AgentAutonomyTier
+  "Null when it keeps the declared outside text setting."
+  readsExternal: AgentExternalRead
+  reason: String!
+  updatedAt: Timestamp!
+  updatedBy: User
+}
+
+"An organization's rule for one tool. Absent fields keep what the tool declares."
+input AgentToolRuleInput {
+  maxTier: AgentAutonomyTier
+  readsExternal: AgentExternalRead
+  "Why it changed; required when the most freedom changes, and kept in the audit trail."
+  reason: String
+}
+
+"What one agent holding the tool does before and after a rule change."
+type AgentToolRuleImpact {
+  agentId: ID!
+  agentName: String!
+  before: AgentAutonomyAnswer!
+  after: AgentAutonomyAnswer!
+}
+
+type AgentToolRuleSaved {
+  tool: AgentToolPolicy!
+  "The agents whose answer moved."
+  affected: [AgentToolRuleImpact!]!
 }
 
 "What one tool does on one agent for a representative call."
@@ -7673,9 +7737,31 @@ type AgentSafetySummary {
   openWithSensitive: Int!
   "The resources the tools need, for filtering; general for a tool that needs no grant."
   resources: [String!]!
+  "Tools that change something, counted by the widest audience their work reaches."
+  egressCounts: [AgentEgressCount!]!
+  "The titles of the tools counted in runWithoutPerson, alphabetically."
+  unattendedTools: [String!]!
+  "The agents counted in openWithSensitive."
+  openSensitiveAgentIds: [ID!]!
+}
+
+"The agents that hold one tool."
+type AgentToolHolders {
+  policyName: String!
+  agentIds: [ID!]!
+}
+
+"How many tools that change something reach one audience at most."
+type AgentEgressCount {
+  egress: AgentEgressClass!
+  count: Int!
 }
 
 extend type Query {
+  "What every agent holding the tool would do under a rule, before saving it."
+  agentToolRuleImpact(name: String!, input: AgentToolRuleInput!): [AgentToolRuleImpact!]!
+  "Every tool some agent holds, with the agents that hold it."
+  agentToolHolders: [AgentToolHolders!]!
   "Every tool's safety policy, by name."
   agentToolPolicies: [AgentToolPolicy!]!
     @deprecated(reason: "Use agentToolRuleConnection, which pages, filters and sorts on the server.")
@@ -7705,6 +7791,11 @@ extend type Query {
   agent in the organization; at most 100 may be named.
   """
   agentSafety(agentIds: [ID!]): [AgentSafety!]!
+}
+
+extend type Mutation {
+  "Holds a tool lower than its declared rule for this organization, or returns it to the declared rule."
+  saveAgentToolRule(name: String!, version: Int!, input: AgentToolRuleInput!): AgentToolRuleSaved!
 }
 `, BuiltIn: false},
 	{Name: "../schema/agentscorecard.graphqls", Input: `"How far back a scorecard looks."

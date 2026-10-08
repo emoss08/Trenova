@@ -131,7 +131,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 			"Tool %q does not exist.", call.Name)
 	}
 
-	policy := tool.Policy()
+	policy := s.ruled(ctx, req, tool.Policy())
 	if !selfScoped {
 		if outcome, denied := s.authorize(
 			ctx, req.Actor, call.Name, policy.Resource, policy.Operation,
@@ -542,7 +542,7 @@ func (s *Service) runQueryTool(
 		content: FenceToolResult(call.Name, encoded),
 		data:    data,
 		summary: summarizeResult(call.Name, document),
-		taint:   callTaint(tool.Policy(), call, data, timeutils.NowUnix()),
+		taint:   callTaint(s.ruled(ctx, req, tool.Policy()), call, data, timeutils.NowUnix()),
 		verdict: aitrace.OutcomeRan,
 	}
 	if recall, ok := data.(serviceports.MemoryRecall); ok {
@@ -599,7 +599,7 @@ func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome
 	outcome := toolOutcome{
 		content: ranContent(call.Name, result),
 		action:  action,
-		taint:   callTaint(a.tool.Policy(), call, nil, timeutils.NowUnix()),
+		taint:   callTaint(s.ruled(ctx, a.req, a.tool.Policy()), call, nil, timeutils.NowUnix()),
 		verdict: aitrace.OutcomeRan,
 		saved:   saved,
 	}
@@ -740,4 +740,29 @@ func (s *Service) snapshotTarget(
 	}
 
 	return &serviceports.ProposalTarget{Resource: target.Resource, ID: target.ID, Version: version}
+}
+
+// ruled is a tool's policy as the organization holds it: never looser than the
+// rule declared beside the tool, and lower where the organization says so.
+func (s *Service) ruled(
+	ctx context.Context,
+	req *serviceports.RunRequest,
+	policy serviceports.ToolPolicy,
+) serviceports.ToolPolicy {
+	if s.rules == nil || req == nil || req.Actor == nil {
+		return policy
+	}
+
+	rules, err := s.rules.For(ctx, req.Actor.TenantInfo())
+	if err != nil {
+		s.logger.Error("the organization's tool rules could not be read; holding the tool to a proposal",
+			zap.String("tool", policy.Name),
+			zap.Error(err))
+		return agenttoolpolicy.ApplyOverride(policy, &agent.ToolRuleOverride{
+			ToolName: policy.Name,
+			MaxTier:  agent.TierPropose,
+		})
+	}
+
+	return agenttoolpolicy.ApplyOverrides(policy, rules)
 }

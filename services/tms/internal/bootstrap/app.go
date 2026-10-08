@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolruleservice"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
 	"github.com/emoss08/trenova/internal/core/services/aiauditservice"
 	"github.com/emoss08/trenova/internal/core/services/aidocumentservice"
@@ -202,6 +203,7 @@ func OptionsFor(e *edition.Edition) fx.Option {
 		conversationscheduleservice.Module,
 		conversationschedulejobs.Module,
 		aiproviderspendservice.Module,
+		agenttoolruleservice.LoaderModule,
 		completionrouter.Module,
 		recurringshipmentjobs.Module,
 		settlementjobs.Module,

@@ -70,6 +70,8 @@ var AgentSuiteRunSpec TypeSpec
 
 var AgentTestPromptSpec TypeSpec
 
+var AgentToolRuleSpec TypeSpec
+
 var AgentToolTrustSpec TypeSpec
 
 var ApiKeySpec TypeSpec
@@ -4207,6 +4209,37 @@ func init() {
 			{
 				Name:        "createdAt",
 				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
+	AgentToolRuleSpec = TypeSpec{
+		TypeName: "AgentToolRule",
+		FieldMap: buncolgen.ToolRuleOverrideFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "maxTier",
+				FieldMapKey: "maxTier",
+			},
+			{
+				Name:        "readsExternal",
+				FieldMapKey: "readsExternal",
+			},
+			{
+				Name:        "reason",
+				FieldMapKey: "reason",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "updatedBy",
+				FieldMapKey: "updatedById",
 			},
 		},
 	}

@@ -1,4 +1,6 @@
 aliases:
+  AgentToolRule:
+    updatedBy: updatedById
   Shipment:
     stage: status
   CaptureBatch:

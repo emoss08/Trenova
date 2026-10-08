@@ -3,10 +3,17 @@ import {
   AgentSafetyDocument,
   AgentSafetyHeaderFieldsFragmentDoc,
   AgentSafetySummaryDocument,
+  AgentToolHoldersDocument,
+  AgentToolSafetyRowFieldsFragmentDoc,
   AgentToolPolicyFieldsFragmentDoc,
   DataTablePageInfoFieldsFragmentDoc,
   AgentToolRuleTableDocument,
+  AgentToolRuleImpactDocument,
+  AgentToolRuleImpactFieldsFragmentDoc,
   AgentToolSafetyTableDocument,
+  SaveAgentToolRuleDocument,
+  type AgentToolRuleImpactFieldsFragment,
+  type AgentToolRuleInput,
   type AgentAutonomyAnswer,
   type AgentEgressClass,
   type AgentExternalRead,
@@ -26,6 +33,8 @@ export type AgentToolPolicy = AgentToolPolicyFieldsFragment;
 export type AgentToolAutonomy = AgentToolAutonomyFieldsFragment;
 export type AgentSafetySummary = AgentSafetySummaryQuery["agentSafetySummary"];
 export type AgentSafetyHeader = AgentSafetyHeaderFieldsFragment;
+export type AgentToolRuleImpact = AgentToolRuleImpactFieldsFragment;
+export type { AgentToolRuleInput };
 
 export type {
   AgentAutonomyAnswer,
@@ -139,4 +148,94 @@ export async function fetchToolRules(
     }
     after = next;
   }
+}
+
+/** Which agents hold each tool, keyed by the tool's name. */
+export async function fetchAgentToolHolders(options?: {
+  signal?: AbortSignal;
+}): Promise<Map<string, readonly string[]>> {
+  const data = await requestGraphQL({
+    document: AgentToolHoldersDocument,
+    operationName: "AgentToolHolders",
+    signal: options?.signal,
+  });
+
+  return new Map(data.agentToolHolders.map((entry) => [entry.policyName, entry.agentIds]));
+}
+
+/** The most agents the server assesses in one request. */
+export const MAX_ASSESSED_AGENTS = 10;
+
+/** What each of up to ten agents makes of one tool, before and after outside text. */
+export async function fetchToolHolderAnswers(
+  policyName: string,
+  agentIds: readonly string[],
+  options?: { signal?: AbortSignal },
+): Promise<AgentToolSafetyRow[]> {
+  if (agentIds.length === 0) {
+    return [];
+  }
+  const data = await requestGraphQL({
+    document: AgentToolSafetyTableDocument,
+    operationName: "AgentToolSafetyTable",
+    variables: {
+      agentIds: agentIds.slice(0, MAX_ASSESSED_AGENTS),
+      input: {
+        first: MAX_ASSESSED_AGENTS,
+        fieldFilters: [{ field: "policyName", operator: "eq", value: policyName }],
+      },
+      includeTotalCount: false,
+    },
+    signal: options?.signal,
+  });
+
+  return data.agentToolSafetyConnection.edges.map(
+    (edge) => getFragmentData(AgentToolSafetyRowFieldsFragmentDoc, edge.node) as AgentToolSafetyRow,
+  );
+}
+
+/** What every agent holding the tool would do under a rule, before it is saved. */
+export async function fetchToolRuleImpact(
+  name: string,
+  input: AgentToolRuleInput,
+  options?: RequestOptions,
+): Promise<AgentToolRuleImpact[]> {
+  const data = await requestGraphQL({
+    document: AgentToolRuleImpactDocument,
+    operationName: "AgentToolRuleImpact",
+    variables: { name, input },
+    signal: options?.signal,
+  });
+
+  return data.agentToolRuleImpact.map((row) =>
+    getFragmentData(AgentToolRuleImpactFieldsFragmentDoc, row),
+  );
+}
+
+export type SavedToolRule = {
+  tool: AgentToolPolicy;
+  affected: AgentToolRuleImpact[];
+};
+
+/**
+ * Holds a tool lower than its declared rule for the organization, or returns it to the
+ * declared rule. The version is the one the edit started from; a stale one is refused.
+ */
+export async function saveAgentToolRule(
+  name: string,
+  version: number,
+  input: AgentToolRuleInput,
+): Promise<SavedToolRule> {
+  const data = await requestGraphQL({
+    document: SaveAgentToolRuleDocument,
+    operationName: "SaveAgentToolRule",
+    variables: { name, version, input },
+  });
+
+  return {
+    tool: getFragmentData(AgentToolPolicyFieldsFragmentDoc, data.saveAgentToolRule.tool),
+    affected: data.saveAgentToolRule.affected.map((row) =>
+      getFragmentData(AgentToolRuleImpactFieldsFragmentDoc, row),
+    ),
+  };
 }
