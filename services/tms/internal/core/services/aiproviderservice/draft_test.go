@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/optional"
@@ -184,4 +185,54 @@ func TestPatch_AcceptsAProviderThatWasNeverEdited(t *testing.T) {
 		Enabled: optional.Some(&on),
 	}, nil)
 	require.ErrorIs(t, err, notFound, "version 0 is a provider's first version, not a missing one")
+}
+
+type recordingKeys struct {
+	repositories.AIProviderKeyRepository
+
+	fingerprints []repositories.RecordAIProviderKeyFingerprintRequest
+	cleared      int
+}
+
+func (f *recordingKeys) RecordFingerprint(
+	_ context.Context,
+	req repositories.RecordAIProviderKeyFingerprintRequest,
+) error {
+	f.fingerprints = append(f.fingerprints, req)
+	return nil
+}
+
+func (f *recordingKeys) ClearExpiredPrevious(
+	_ context.Context,
+	_ repositories.ClearExpiredAIProviderKeysRequest,
+) (int, error) {
+	f.cleared++
+	return 1, nil
+}
+
+func TestRunTest_RecordsTheEndsOfAnOlderKeyAndDropsAnExpiredOne(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeProviderRepo{}
+	prober := &fakeProber{result: &services.TestAIProviderResult{Success: true}}
+	svc := newTestService(repo, prober)
+	keys := &recordingKeys{}
+	svc.keys = keys
+	repo.provider = testProvider(t, svc)
+	stored, err := svc.encryption.EncryptString("gsk_AbCdEfGhIjKlMnOpQrStUvWxYz012345")
+	require.NoError(t, err)
+	repo.provider.APIKey = stored
+	expired := int64(1)
+	repo.provider.PreviousAPIKey = stored
+	repo.provider.RotationExpiresAt = &expired
+
+	_, err = svc.RunTest(t.Context(), repositories.GetAIProviderByIDRequest{
+		ID:         repo.provider.ID,
+		TenantInfo: draftTenant(repo.provider),
+	})
+	require.NoError(t, err)
+	require.Len(t, keys.fingerprints, 1)
+	assert.Equal(t, "gsk_", keys.fingerprints[0].Prefix)
+	assert.Equal(t, "2345", keys.fingerprints[0].LastFour)
+	assert.Equal(t, 1, keys.cleared)
 }

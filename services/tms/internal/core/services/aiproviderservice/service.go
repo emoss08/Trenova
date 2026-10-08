@@ -28,6 +28,7 @@ type Params struct {
 	Logger       *zap.Logger
 	DB           ports.DBConnection
 	Repo         repositories.AIProviderRepository
+	Keys         repositories.AIProviderKeyRepository `optional:"true"`
 	Versions     repositories.SettingVersionRepository
 	Encryption   *encryptionservice.Service
 	Prober       *Prober
@@ -55,6 +56,7 @@ type Service struct {
 	l          *zap.Logger
 	db         ports.DBConnection
 	repo       repositories.AIProviderRepository
+	keys       repositories.AIProviderKeyRepository
 	versions   repositories.SettingVersionRepository
 	encryption *encryptionservice.Service
 	prober     EndpointProber
@@ -78,6 +80,7 @@ func New(p Params) *Service {
 		l:          p.Logger.Named("service.aiprovider"),
 		db:         p.DB,
 		repo:       p.Repo,
+		keys:       p.Keys,
 		versions:   p.Versions,
 		encryption: p.Encryption,
 		prober:     p.Prober,
@@ -188,6 +191,7 @@ func (s *Service) Update(
 	if err = s.apply(&updated, req, actor); err != nil {
 		return nil, err
 	}
+	updated.ForgetExpiredPreviousKey(timeutils.NowUnix())
 
 	multiErr := errortypes.NewMultiError()
 	if keptKeyForNewEndpoint(existing, &updated, req) {
@@ -283,6 +287,7 @@ func (s *Service) RunTest(
 		return nil, err
 	}
 
+	s.tidyKey(ctx, provider, apiKey, req.TenantInfo)
 	result := s.prober.Probe(ctx, provider, apiKey)
 
 	if err = s.repo.MarkTested(ctx, repositories.MarkAIProviderTestedRequest{
@@ -304,6 +309,38 @@ func (s *Service) RunTest(
 	}
 
 	return result, nil
+}
+
+// tidyKey records the ends of a key stored before they were kept, and drops
+// a replaced key whose day as a fallback is over.
+func (s *Service) tidyKey(
+	ctx context.Context,
+	provider *aiprovider.Provider,
+	apiKey string,
+	tenantInfo pagination.TenantInfo,
+) {
+	if s.keys == nil {
+		return
+	}
+	if provider.NeedsKeyFingerprint() && apiKey != "" {
+		fingerprint := secretutils.FingerprintOf(apiKey)
+		if err := s.keys.RecordFingerprint(ctx, repositories.RecordAIProviderKeyFingerprintRequest{
+			ID:         provider.ID,
+			TenantInfo: tenantInfo,
+			Prefix:     fingerprint.Prefix,
+			LastFour:   fingerprint.LastFour,
+		}); err != nil {
+			s.l.Warn("failed to record ai provider key fingerprint", zap.Error(err))
+		}
+	}
+	if provider.PreviousKeyExpired(timeutils.NowUnix()) {
+		if _, err := s.keys.ClearExpiredPrevious(ctx, repositories.ClearExpiredAIProviderKeysRequest{
+			TenantInfo: tenantInfo,
+			Now:        timeutils.NowUnix(),
+		}); err != nil {
+			s.l.Warn("failed to clear expired ai provider keys", zap.Error(err))
+		}
+	}
 }
 
 // apply copies a save request onto an entity, encrypting the credential and

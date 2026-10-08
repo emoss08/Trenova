@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 )
 
@@ -144,6 +145,7 @@ func (s *Service) modify(
 		updated.Version = *req.version
 	}
 	req.edit(&updated)
+	updated.ForgetExpiredPreviousKey(timeutils.NowUnix())
 
 	multiErr := errortypes.NewMultiError()
 	updated.Validate(multiErr)
