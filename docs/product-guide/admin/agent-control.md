@@ -88,17 +88,15 @@ Keywords: embeddings, embedding model, semantic search, search by meaning, vecto
 
 ### Let agents search the web
 Keywords: web search, internet, Exa, look up regulations, ELD rules, hours of service, current information, extension marketplace
-1. Open [AI control](/admin/agent-control) and select **Extensions** in the rail.
-2. On the web search card, select **Set up**.
-3. Paste the organization's Exa API key and select **Save changes**. The key is stored encrypted
-   and never shown again; leave the field blank later to keep it.
+1. Open [AI control](/admin/agent-control) and select **Extensions**.
+2. Open **Web search**, under **Featured** or from **All extensions**.
+3. Paste the organization's Exa API key under **Connection** and select **Turn on**. The key is
+   stored encrypted and never shown again; select **Replace** to change it later.
 4. Select **Test connection** to check the key works.
-5. Turn the extension on, and under **Available to** choose **Every agent** to give all agents,
-   the assistant included, the web search tools, or **Agents you choose** to add them only to
-   the agents you give them with **Add tools** under an agent's **Tools and autonomy**. Then
-   select **Save changes**.
-6. Optionally change the search depth, the results per search, the daily request limit and the
-   sites agents never receive results from.
+5. Under **Available to**, choose **Every agent** to give all agents, the assistant included, the
+   web search tools, or **Agents you choose** and select the agents that get them.
+6. Optionally change **Search depth**, **Daily request limit**, the results per search and the
+   sites agents never receive results from. Each change is saved as you make it.
 
 ### Set up search by meaning
 Keywords: semantic search, search by meaning, retrieval, vector search, embeddings, index documents, index email, re-index, indexing budget, pgvector, keyword only, words only

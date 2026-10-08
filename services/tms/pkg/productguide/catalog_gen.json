@@ -1,5 +1,5 @@
 {
-  "version": "sha256:6faf4de6a9a66b2289a851daf58ea66bddb5c057cbdd72dfc68aa4d491dd9666",
+  "version": "sha256:61f20c62bd57096d790a3088d89a8c91651636569a1a9f53ade814cce84dee69",
   "modules": [
     {
       "id": "home",
@@ -2441,12 +2441,12 @@
             "extension marketplace"
           ],
           "steps": [
-            "Open [AI control](/admin/agent-control) and select **Extensions** in the rail.",
-            "On the web search card, select **Set up**.",
-            "Paste the organization's Exa API key and select **Save changes**. The key is stored encrypted and never shown again; leave the field blank later to keep it.",
+            "Open [AI control](/admin/agent-control) and select **Extensions**.",
+            "Open **Web search**, under **Featured** or from **All extensions**.",
+            "Paste the organization's Exa API key under **Connection** and select **Turn on**. The key is stored encrypted and never shown again; select **Replace** to change it later.",
             "Select **Test connection** to check the key works.",
-            "Turn the extension on, and under **Available to** choose **Every agent** to give all agents, the assistant included, the web search tools, or **Agents you choose** to add them only to the agents you give them with **Add tools** under an agent's **Tools and autonomy**. Then select **Save changes**.",
-            "Optionally change the search depth, the results per search, the daily request limit and the sites agents never receive results from."
+            "Under **Available to**, choose **Every agent** to give all agents, the assistant included, the web search tools, or **Agents you choose** and select the agents that get them.",
+            "Optionally change **Search depth**, **Daily request limit**, the results per search and the sites agents never receive results from. Each change is saved as you make it."
           ]
         },
         {

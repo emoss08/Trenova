@@ -792,7 +792,7 @@
     ]
   },
   "1 tool": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -1090,6 +1090,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "2 sources": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "2 weeks": {
@@ -9547,13 +9556,14 @@
     ]
   },
   "API key": {
-    "sites": 8,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "domain/agentextension",
+      "domain/aiprovider",
       "routes/admin",
       "routes/agent-control",
       "routes/shipment"
@@ -9981,6 +9991,24 @@
     ]
   },
   "About 1 approval a week": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "About a minute · needs a {0} key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "About a minute · no key needed": {
     "sites": 1,
     "scope": [
       "ts"
@@ -13840,15 +13868,6 @@
       "routes/formula-template"
     ]
   },
-  "Add its tools to an agent in Agents": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Add key": {
     "sites": 1,
     "scope": [
@@ -16174,7 +16193,7 @@
     ]
   },
   "Agent": {
-    "sites": 25,
+    "sites": 26,
     "scope": [
       "ts"
     ],
@@ -16655,15 +16674,6 @@
     ],
     "areas": [
       "service/agentextensionservice"
-    ]
-  },
-  "Agents can use its tools only while it is on and its API key is saved.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Agents can't answer until a provider is connected.": {
@@ -17178,7 +17188,7 @@
     ]
   },
   "All": {
-    "sites": 23,
+    "sites": 22,
     "scope": [
       "ts"
     ],
@@ -17301,13 +17311,12 @@
     ]
   },
   "All categories": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
-      "routes/agent-control",
       "routes/reports"
     ]
   },
@@ -17438,6 +17447,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "All extensions": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "All fields accepted. No issues to review.": {
@@ -35626,7 +35644,7 @@
     ]
   },
   "Cancel": {
-    "sites": 280,
+    "sites": 279,
     "scope": [
       "ts"
     ],
@@ -39217,8 +39235,17 @@
       "domain/report"
     ]
   },
+  "Categories": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Category": {
-    "sites": 31,
+    "sites": 30,
     "scope": [
       "go",
       "ts"
@@ -44620,7 +44647,7 @@
     ]
   },
   "Close": {
-    "sites": 49,
+    "sites": 48,
     "scope": [
       "ts"
     ],
@@ -49631,7 +49658,7 @@
     ]
   },
   "Connection": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -49704,15 +49731,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "Connection works": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Connects through the {0} this server is configured with ({1}). Use your own app instead if your organization registers one with {2}.": {
@@ -58719,12 +58737,14 @@
     ]
   },
   "Daily request limit": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "domain/agentextension"
+      "domain/agentextension",
+      "routes/agent-control"
     ]
   },
   "Daily round-up": {
@@ -67031,6 +67051,15 @@
       "domain/agentdefinition"
     ]
   },
+  "Dispatch desk": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Dispatch has an update for you. Open Dash for the details.": {
     "sites": 1,
     "scope": [
@@ -69271,13 +69300,12 @@
     ]
   },
   "Documentation": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib",
-      "routes/agent-control"
+      "apps/web/lib"
     ]
   },
   "Documentation requirements": {
@@ -73740,6 +73768,15 @@
     ]
   },
   "Each event starts a run about the record it concerns. Repeats inside five minutes are merged.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Each extension runs under your organization's own account with the vendor, and only inside AI features.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -80369,6 +80406,15 @@
       "routes/agent-control"
     ]
   },
+  "Every agent, including the assistant, gets {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Every approval this manager can make.": {
     "sites": 1,
     "scope": [
@@ -84638,7 +84684,7 @@
       "domain/documenttemplate"
     ]
   },
-  "Extensions": {
+  "Extension": {
     "sites": 2,
     "scope": [
       "ts"
@@ -84647,7 +84693,7 @@
       "routes/agent-control"
     ]
   },
-  "Extensions give agents abilities that work only inside AI features, using your organization's own account with the vendor.": {
+  "Extensions": {
     "sites": 1,
     "scope": [
       "ts"
@@ -87829,7 +87875,7 @@
     ]
   },
   "Featured": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -89882,7 +89928,7 @@
     ]
   },
   "Finish setup": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -89892,6 +89938,7 @@
       "routes/accounting-mapping",
       "routes/accounting-sync",
       "routes/admin",
+      "routes/agent-control",
       "routes/onboarding"
     ]
   },
@@ -95265,6 +95312,15 @@
       "routes/admin"
     ]
   },
+  "Give your agents new abilities": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Give {0} to {1}": {
     "sites": 1,
     "scope": [
@@ -99198,6 +99254,24 @@
       "routes/training-course"
     ]
   },
+  "How agents use it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "How agents use it · Desk": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "How and when this carrier is paid for completed loads.": {
     "sites": 1,
     "scope": [
@@ -102651,15 +102725,6 @@
     ],
     "areas": [
       "packages/shared/components"
-    ]
-  },
-  "Including the assistant": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Income Statement": {
@@ -106927,6 +106992,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Is Ridgeline Freight's insurance current?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Is Split Bill": {
@@ -113872,11 +113946,13 @@
     ]
   },
   "Limits": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "domain/aiprovider",
       "routes/desk"
     ]
   },
@@ -125059,6 +125135,15 @@
       "routes/agent-control"
     ]
   },
+  "More extensions are on the way — they arrive with Trenova updates.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "More follow-up tests have been recorded than the programme calls for": {
     "sites": 1,
     "scope": [
@@ -127362,7 +127447,7 @@
     ]
   },
   "Needs a key": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -127473,13 +127558,12 @@
     ]
   },
   "Needs setup": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
-      "routes/agent-control"
+      "routes/admin"
     ]
   },
   "Needs the hours worked from the 300A figures": {
@@ -128162,7 +128246,7 @@
     ]
   },
   "New": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "go",
       "ts"
@@ -128176,6 +128260,7 @@
       "go/other",
       "packages/shared/components",
       "routes/admin",
+      "routes/agent-control",
       "routes/desk",
       "routes/edi",
       "routes/fuel-purchase",
@@ -132130,16 +132215,7 @@
       "routes/agent-control"
     ]
   },
-  "No extensions available": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "No extensions match these filters.": {
+  "No extensions match": {
     "sites": 1,
     "scope": [
       "ts"
@@ -132742,6 +132818,24 @@
     ],
     "areas": [
       "routes/jurisdiction-rule"
+    ]
+  },
+  "No key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "No key needed — it's a public source": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "No lane activity": {
@@ -138419,6 +138513,15 @@
       "routes/agent-control"
     ]
   },
+  "Nothing is on yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Nothing is running for this employment.": {
     "sites": 1,
     "scope": [
@@ -140587,7 +140690,7 @@
     ]
   },
   "Off": {
-    "sites": 28,
+    "sites": 26,
     "scope": [
       "ts"
     ],
@@ -141376,6 +141479,15 @@
     ],
     "areas": [
       "routes/pto-policy"
+    ]
+  },
+  "On for your agents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "On hold": {
@@ -167801,6 +167913,15 @@
       "packages/shared/types"
     ]
   },
+  "Read 2 pages": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Read At": {
     "sites": 1,
     "scope": [
@@ -168345,6 +168466,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Reading 2 pages": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Reading at the pump, if recorded. Lets fuel be checked against miles run.": {
@@ -175728,12 +175858,13 @@
     ]
   },
   "Replace": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/agent-control",
       "routes/billing-queue",
       "routes/edi",
       "routes/policies"
@@ -179706,6 +179837,15 @@
       "domain/shipmentimportchat"
     ]
   },
+  "Results": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Results per search": {
     "sites": 1,
     "scope": [
@@ -182039,6 +182179,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Ridgeline Freight MC 884213 insurance": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Right away": {
@@ -185995,15 +186144,6 @@
       "routes/worker"
     ]
   },
-  "Save an API key first": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Save and close": {
     "sites": 1,
     "scope": [
@@ -186059,7 +186199,7 @@
     ]
   },
   "Save changes": {
-    "sites": 47,
+    "sites": 46,
     "scope": [
       "ts"
     ],
@@ -186186,6 +186326,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Save key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Save keys": {
@@ -186852,7 +187001,7 @@
     ]
   },
   "Saving...": {
-    "sites": 61,
+    "sites": 60,
     "scope": [
       "ts"
     ],
@@ -188993,12 +189142,14 @@
     ]
   },
   "Search depth": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "domain/agentextension"
+      "domain/agentextension",
+      "routes/agent-control"
     ]
   },
   "Search depth must be auto, fast or deep": {
@@ -189091,8 +189242,8 @@
       "routes/desk"
     ]
   },
-  "Search extensions": {
-    "sites": 2,
+  "Search extensions, vendors or tools": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -189815,12 +189966,13 @@
     ]
   },
   "Searched the web": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/agent-control"
     ]
   },
   "Searching needs to know who is asking": {
@@ -189842,12 +189994,13 @@
     ]
   },
   "Searching the web": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/agent-control"
     ]
   },
   "Searching the web…": {
@@ -195484,6 +195637,15 @@
       "routes/auth"
     ]
   },
+  "Set one up and it shows here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Set prices": {
     "sites": 1,
     "scope": [
@@ -195637,6 +195799,15 @@
     ],
     "areas": [
       "template/driverportal.invitation.email"
+    ]
+  },
+  "Set up {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Sets the log year the case is numbered in.": {
@@ -204748,7 +204919,7 @@
     ]
   },
   "Status": {
-    "sites": 325,
+    "sites": 324,
     "scope": [
       "go",
       "ts"
@@ -211259,17 +211430,16 @@
     ]
   },
   "Testing...": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
-      "routes/agent-control"
+      "routes/admin"
     ]
   },
   "Testing…": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -221232,7 +221402,7 @@
       "apps/web/components"
     ]
   },
-  "The settings could not be loaded. Close the dialog and try again.": {
+  "The settings have not loaded yet": {
     "sites": 1,
     "scope": [
       "ts"
@@ -222275,7 +222445,7 @@
     ]
   },
   "The test could not run": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -225768,15 +225938,6 @@
     ],
     "areas": [
       "domain/insight"
-    ]
-  },
-  "This installation does not offer any extensions yet.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "This interchange was already processed and was skipped.": {
@@ -234118,6 +234279,15 @@
       "routes/accounting-mapping"
     ]
   },
+  "Try another word or category.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Try another word, or clear the filter.": {
     "sites": 1,
     "scope": [
@@ -234346,7 +234516,7 @@
     ]
   },
   "Turn off": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -234383,7 +234553,7 @@
     ]
   },
   "Turn on": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -234444,15 +234614,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Turn on {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Turn the source on to index it": {
@@ -241233,7 +241394,7 @@
     ]
   },
   "View": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -244570,6 +244731,15 @@
       "domain/integration"
     ]
   },
+  "Web search": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Webhook Secret": {
     "sites": 2,
     "scope": [
@@ -245912,11 +246082,12 @@
     ]
   },
   "What it can do": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/desk"
     ]
   },
@@ -251092,6 +251263,15 @@
       "apps/web/components"
     ]
   },
+  "Works · {0} ms": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Worksheet can still change": {
     "sites": 1,
     "scope": [
@@ -252099,6 +252279,15 @@
       "routes/agent-control"
     ]
   },
+  "Yes. Their liability policy with Great West Casualty runs to Mar 31, 2027, and FMCSA shows the authority as active.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Yesterday": {
     "sites": 8,
     "scope": [
@@ -252123,12 +252312,13 @@
     ]
   },
   "You": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
+      "routes/agent-control",
       "routes/desk",
       "routes/shipment"
     ]
@@ -257526,6 +257716,15 @@
       "routes/reports"
     ]
   },
+  "fmcsa.dot.gov": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "for tractor {0}": {
     "sites": 2,
     "scope": [
@@ -259323,6 +259522,15 @@
     ],
     "areas": [
       "routes/escrow-account"
+    ]
+  },
+  "safer.fmcsa.dot.gov · ridgelinefreight.com": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "scheduled version": {
@@ -266219,6 +266427,15 @@
       "routes/detention-intelligence"
     ]
   },
+  "{0} docs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} does not advertise a profile lookup. The default depth is used.": {
     "sites": 1,
     "scope": [
@@ -267951,7 +268168,7 @@
     ]
   },
   "{0} is off": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -267968,7 +268185,25 @@
       "routes/agent-control"
     ]
   },
-  "{0} is on for your agents": {
+  "{0} is on for 1 agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0} is on for every agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0} is on for {1} agents": {
     "sites": 1,
     "scope": [
       "ts"
@@ -268276,6 +268511,24 @@
     ],
     "areas": [
       "routes/osha"
+    ]
+  },
+  "{0} key saved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0} key stored": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} keys": {
@@ -269056,6 +269309,15 @@
       "service/invoiceservice"
     ]
   },
+  "{0} no longer has {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} no longer reports closed books, so {1} keeps its date; retry it instead": {
     "sites": 1,
     "scope": [
@@ -269138,6 +269400,15 @@
     ]
   },
   "{0} now goes to {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0} now has {1}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -269459,7 +269730,7 @@
     ]
   },
   "{0} of {1} on": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -269591,6 +269862,15 @@
     ],
     "areas": [
       "service/formulatemplateservice"
+    ]
+  },
+  "{0} of {1} today": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} of {1} weeks": {
@@ -270828,15 +271108,6 @@
       "packages/shared/lib"
     ]
   },
-  "{0} settings saved": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "{0} settled {1, plural, one {stop} other {stops}} across {2, plural, one {# facility} other {# facilities}} · {3}% ran past free time": {
     "sites": 1,
     "scope": [
@@ -271285,7 +271556,7 @@
     ]
   },
   "{0} tools": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],

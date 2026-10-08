@@ -16,15 +16,17 @@ type SearchProps = {
   onChange: (value: string) => void;
   placeholder: string;
   inputRef?: Ref<HTMLInputElement>;
+  /** The large box a page leads with, such as the extension marketplace's. */
+  size?: "lg";
 };
 
 /** A search box; Escape clears it and lets go, and "/" is the key that reaches it. */
-export function Search({ value, onChange, placeholder, inputRef }: SearchProps) {
+export function Search({ value, onChange, placeholder, inputRef, size }: SearchProps) {
   const t = useT();
 
   return (
-    <label className="srch">
-      <Ic n="search" s={13} />
+    <label className={cn("srch", size)}>
+      <Ic n="search" s={size ? 14 : 13} />
       <input
         ref={inputRef}
         value={value}

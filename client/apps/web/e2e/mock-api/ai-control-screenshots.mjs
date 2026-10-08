@@ -289,6 +289,42 @@ const SHOTS = [
       await page.waitForTimeout(500);
     },
   },
+  { name: "extensions", scenario: {}, query: "?tab=extensions" },
+  { name: "extensions-light", scenario: {}, query: "?tab=extensions", colorScheme: "light" },
+  {
+    name: "extensions-sheet",
+    scenario: {},
+    query: "?tab=extensions",
+    act: async (page) => {
+      await page.getByRole("button", { name: /Set up Web search/ }).click();
+      await page.waitForTimeout(900);
+    },
+  },
+  {
+    name: "extensions-sheet-agents",
+    scenario: {},
+    query: "?tab=extensions",
+    act: async (page) => {
+      await page.getByRole("button", { name: /Set up Web search/ }).click();
+      await page.waitForTimeout(900);
+      await page.locator(".ex-ag").scrollIntoViewIfNeeded();
+      await page.waitForTimeout(300);
+    },
+  },
+  {
+    name: "extensions-on",
+    scenario: {},
+    query: "?tab=extensions",
+    act: async (page) => {
+      await page.getByRole("button", { name: /Set up Web search/ }).click();
+      await page.waitForTimeout(700);
+      await page.getByRole("textbox", { name: "API key" }).fill("exa-test-key-1234");
+      await page.getByRole("button", { name: "Turn on", exact: true }).click();
+      await page.waitForTimeout(1200);
+      await page.keyboard.press("Escape");
+      await page.waitForTimeout(700);
+    },
+  },
 ];
 
 async function setScenario(overrides) {

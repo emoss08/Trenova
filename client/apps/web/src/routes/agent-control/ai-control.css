@@ -2008,4 +2008,7 @@
 .aic .mn{max-height:min(70vh,560px);overflow-y:auto;overscroll-behavior:contain}
 .aic .ep-b>.pmk{flex:none}
 .aic .pv.dim .pmk,.aic .mx-ph.dim .pmk{opacity:.5;filter:grayscale(1)}
+@media (prefers-reduced-motion:reduce){.aic .mg-orb{display:none}}
+.aic .mkt-t.sk{min-height:180px;cursor:default}
+.aic .ex-a>.tile{flex:none}
 }
