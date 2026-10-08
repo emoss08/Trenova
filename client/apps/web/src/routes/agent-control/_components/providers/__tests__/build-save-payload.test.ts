@@ -27,6 +27,11 @@ function formValues(overrides: Partial<ProviderFormValues> = {}): ProviderFormVa
     embeddingInputStyle: "None",
     trusted: false,
     enabled: true,
+    timeoutSeconds: 60,
+    maxConcurrent: 8,
+    monthlyCapUsd: null,
+    onCap: "Next",
+    keepPreviousKey: false,
     version: 0,
     ...overrides,
   };

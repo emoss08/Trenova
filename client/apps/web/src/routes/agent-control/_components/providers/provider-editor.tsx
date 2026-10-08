@@ -24,7 +24,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium, formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { cn } from "@trenova/shared/lib/utils";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   FormProvider,
   useController,
@@ -54,7 +54,13 @@ import {
   type KeyRule,
   type ProviderEditorValues,
 } from "./provider-editor-model";
-import { baseUrlProblem, formatTokens, keyPlaceholder, type TaskMeta } from "./provider-model";
+import {
+  baseUrlProblem,
+  formatContext,
+  keyField,
+  keyPlaceholder,
+  type TaskMeta,
+} from "./provider-model";
 import { kindSupportsEmbedding } from "./provider-form-schema";
 import { TASK_FALLBACKS } from "./task-fallbacks";
 
@@ -108,7 +114,7 @@ export function ProviderEditor({
     mode: "onChange",
   });
   const values = useWatch({ control: form.control }) as ProviderEditorValues;
-  const [test, setTest] = useState<DraftTest | null>(null);
+  const [ran, setRan] = useState<{ connection: string; test: DraftTest } | null>(null);
   const [removing, setRemoving] = useState(false);
   const [removeBusy, setRemoveBusy] = useState(false);
 
@@ -116,23 +122,32 @@ export function ProviderEditor({
     (kind: string) => catalog.kinds.find((entry) => entry.kind === kind)?.label ?? kind,
     [catalog.kinds],
   );
-  const needsKeyField = keyRequired(values.kind);
+  const presetNeedsKey = target.kind === "create" && target.preset.requiresApiKey;
+  const keyMandatory = keyRequired(values.kind) || presetNeedsKey;
+  const needsKeyField = keyField({
+    mandatory: keyMandatory,
+    hasStoredKey: Boolean(saved?.hasApiKey),
+    baseUrl: values.baseUrl,
+  });
   const hasStoredKey = Boolean(saved?.hasApiKey);
   const requiresBaseUrl =
     catalog.kinds.find((entry) => entry.kind === values.kind)?.requiresBaseUrl ?? false;
+  const connection = [
+    values.kind,
+    values.baseUrl,
+    values.model,
+    values.apiKey,
+    values.allowPrivateNetwork,
+  ].join("|");
+  const test = ran?.connection === connection ? ran.test : null;
   const testOk = test?.state === "done" && test.result.success;
-
-  const connection = `${values.kind}|${values.baseUrl}|${values.model}|${values.apiKey}|${values.allowPrivateNetwork}`;
-  useEffect(() => {
-    setTest(null);
-  }, [connection]);
 
   const blocker =
     requiresBaseUrl && values.baseUrl.trim() === ""
       ? t("Add the base URL")
       : editorBlocker(values, {
           create,
-          keyRequired: needsKeyField,
+          keyRequired: keyMandatory,
           hasStoredKey,
         });
 
@@ -150,9 +165,7 @@ export function ProviderEditor({
       if (saved) {
         toast.success(t("Saved"));
       } else {
-        toast.success(
-          result.enabled ? t("{0} is on", result.name) : t("{0} added", result.name),
-        );
+        toast.success(result.enabled ? t("{0} is on", result.name) : t("{0} added", result.name));
       }
       return fresh ? editorValuesFromProvider(fresh) : next;
     },
@@ -176,27 +189,31 @@ export function ProviderEditor({
   });
 
   const runTest = async () => {
-    setTest({ state: "run" });
+    const tested = connection;
+    setRan({ connection: tested, test: { state: "run" } });
     try {
       const result = await testAIProviderDraft(draftTestInput(values, saved?.id ?? null));
-      setTest({ state: "done", result });
+      setRan({ connection: tested, test: { state: "done", result } });
     } catch (error: unknown) {
-      setTest({
-        state: "done",
-        result: {
-          success: false,
-          message: t("The test could not run"),
-          detail: error instanceof Error ? error.message : "",
-          hint: "",
-          modelIdentifier: "",
-          schemaHonoured: false,
-          latencyMs: 0,
+      setRan({
+        connection: tested,
+        test: {
+          state: "done",
+          result: {
+            success: false,
+            message: t("The test could not run"),
+            detail: error instanceof Error ? error.message : "",
+            hint: "",
+            modelIdentifier: "",
+            schemaHonoured: false,
+            latencyMs: 0,
+          },
         },
       });
     }
   };
 
-  const models = useEndpointModels(form.control, saved?.id ?? null, create && !needsKeyField);
+  const models = useEndpointModels(form.control, saved?.id ?? null, !create || !needsKeyField);
 
   const index = saved ? providers.findIndex((provider) => provider.id === saved.id) : -1;
   const taskLabel = useCallback(
@@ -254,7 +271,9 @@ export function ProviderEditor({
       keys: ["name", "kind", "baseUrl"],
       warning:
         urlProblem === "private"
-          ? t("This address is on your own network. Turn on Private network so Trenova can reach it.")
+          ? t(
+              "This address is on your own network. Turn on Private network so Trenova can reach it.",
+            )
           : undefined,
       content: (
         <>
@@ -320,12 +339,7 @@ export function ProviderEditor({
       label: t("Model"),
       keys: ["model"],
       actions: (
-        <button
-          type="button"
-          className="btn sm"
-          disabled={models.fetching}
-          onClick={models.fetch}
-        >
+        <button type="button" className="btn sm" disabled={models.fetching} onClick={models.fetch}>
           {models.fetching ? (
             <>
               <i className="spn" />
@@ -566,7 +580,11 @@ export function ProviderEditor({
       : []),
   ];
 
-  const mark = saved ?? { name: values.name || (target.kind === "create" ? target.preset.label : "") };
+  const mark = {
+    name: values.name || saved?.name || (target.kind === "create" ? target.preset.label : ""),
+    kind: values.kind,
+    baseUrl: values.baseUrl,
+  };
   const failed = test?.state === "done" && !test.result.success ? test.result : null;
 
   return (
@@ -577,8 +595,16 @@ export function ProviderEditor({
         flow={flow}
         fields={fields}
         sections={sections}
-        icon={<Mark provider={mark} s={36} />}
-        title={saved ? t("Edit {0}", saved.name) : t("Add {0}", values.name.trim() || t("provider"))}
+        icon={
+          <Mark
+            provider={mark}
+            preset={target.kind === "create" ? target.preset : null}
+            s={36}
+          />
+        }
+        title={
+          saved ? t("Edit {0}", saved.name) : t("Add {0}", values.name.trim() || t("provider"))
+        }
         subtitle={
           saved
             ? t("Priority {0} of {1}", index + 1, providers.length)
@@ -702,7 +728,15 @@ function FieldText({
   return <Txt value={value} onChange={onChange} label={label} {...rest} />;
 }
 
-function FieldSelect<K extends "kind" | "structuredOutputMode" | "reasoningEffort" | "thinkingStyle" | "embeddingInputStyle" | "embeddingDimensionsChoice">({
+function FieldSelect<
+  K extends
+    | "kind"
+    | "structuredOutputMode"
+    | "reasoningEffort"
+    | "thinkingStyle"
+    | "embeddingInputStyle"
+    | "embeddingDimensionsChoice",
+>({
   name,
   label,
   options,
@@ -767,7 +801,7 @@ function FieldChips({ metas }: { metas: readonly TaskMeta[] }) {
 /** The current key, described: its ends, who added it, when it was last used. */
 function StoredKey({ info }: { info: NonNullable<AIProviderRow["apiKey"]> }) {
   const t = useT();
-  const now = Math.floor(Date.now() / 1000);
+  const [now] = useState(() => Math.floor(Date.now() / 1000));
   const added = info.addedBy?.name
     ? t("Added {0} by {1}", formatUnixDateMedium(info.addedAt), info.addedBy.name)
     : t("Added {0}", formatUnixDateMedium(info.addedAt));
@@ -857,7 +891,7 @@ function ModelSection({ models, local }: { models: EndpointModels; local: boolea
     const parts: string[] = [];
     if (option.embedding) parts.push(t("Embedding"));
     if (option.contextWindow) {
-      parts.push(t("{0} context", formatTokens(option.contextWindow).toLowerCase()));
+      parts.push(t("{0} context", formatContext(option.contextWindow)));
     }
     if (option.sizeBytes) parts.push(formatBytes(option.sizeBytes));
     if (option.loaded) parts.push(t("loaded"));
@@ -872,8 +906,20 @@ function ModelSection({ models, local }: { models: EndpointModels; local: boolea
   };
 
   if (list && list.length > 0) {
+    const current = model.trim();
+    const unlisted = current !== "" && !list.some((option) => option.id === current);
     return (
       <div className="mdl" role="radiogroup" aria-label={t("Model")}>
+        {unlisted && (
+          <button type="button" role="radio" aria-checked className="mdl-r on">
+            <span className="mdl-o" />
+            <span className="mdl-t">
+              <b className="mono">{current}</b>
+              <em>{t("Not listed by the endpoint")}</em>
+            </span>
+            <span className="mdl-p mono">—</span>
+          </button>
+        )}
         {list.map((option) => (
           <button
             key={option.id}
@@ -957,9 +1003,12 @@ function RouteImpact({
     if (!route) return null;
     const provider = route.providerId ? byId.get(String(route.providerId)) : undefined;
     const name = route.draft ? values.name.trim() || route.name : (provider?.name ?? route.name);
+    const source = route.draft
+      ? { name, kind: values.kind, baseUrl: values.baseUrl }
+      : { name, kind: provider?.kind, baseUrl: provider?.baseUrl };
     return (
       <>
-        <Mark provider={{ name }} s={14} />
+        <Mark provider={source} s={14} />
         {strong ? <b>{name}</b> : name}
       </>
     );
@@ -1017,9 +1066,10 @@ function AdvancedFields({ catalog }: { catalog: AIProviderCatalog }) {
     ["Effort", t("By effort")],
     ["Budget", t("By token budget")],
   ];
-  const inputStyles: [EmbeddingInputStyle, string][] = catalog.embeddingInputStyles.map(
-    (entry) => [entry.style, entry.label],
-  );
+  const inputStyles: [EmbeddingInputStyle, string][] = catalog.embeddingInputStyles.map((entry) => [
+    entry.style,
+    entry.label,
+  ]);
   const dimensions: [string, string][] = catalog.embeddingDimensions.map((size) => [
     String(size),
     String(size),
@@ -1032,7 +1082,11 @@ function AdvancedFields({ catalog }: { catalog: AIProviderCatalog }) {
       </F>
       <div className="f-grid">
         <F label={t("Structured output")}>
-          <FieldSelect name="structuredOutputMode" label={t("Structured output")} options={outputModes} />
+          <FieldSelect
+            name="structuredOutputMode"
+            label={t("Structured output")}
+            options={outputModes}
+          />
         </F>
         <F label={t("Most tokens per reply")} error={formState.errors.maxTokens?.message}>
           <FieldText name="maxTokens" type="number" label={t("Most tokens per reply")} mono />
@@ -1050,10 +1104,7 @@ function AdvancedFields({ catalog }: { catalog: AIProviderCatalog }) {
       </div>
       {embeds && (
         <div className="f-grid">
-          <F
-            label={t("Vector size")}
-            error={formState.errors.embeddingDimensionsChoice?.message}
-          >
+          <F label={t("Vector size")} error={formState.errors.embeddingDimensionsChoice?.message}>
             <FieldSelect
               name="embeddingDimensionsChoice"
               label={t("Vector size")}
@@ -1061,7 +1112,11 @@ function AdvancedFields({ catalog }: { catalog: AIProviderCatalog }) {
             />
           </F>
           <F label={t("Embedding input")}>
-            <FieldSelect name="embeddingInputStyle" label={t("Embedding input")} options={inputStyles} />
+            <FieldSelect
+              name="embeddingInputStyle"
+              label={t("Embedding input")}
+              options={inputStyles}
+            />
           </F>
         </div>
       )}

@@ -34,8 +34,13 @@ export function ProvidersEmpty({ presets, canCreate, onPick }: ProvidersEmptyPro
             {presets.map((preset) => {
               const name = presetDisplayName(preset);
               return (
-                <button key={preset.key} type="button" className="ep-b" onClick={() => onPick(preset)}>
-                  <Mark provider={{ name }} s={30} />
+                <button
+                  key={preset.key}
+                  type="button"
+                  className="ep-b"
+                  onClick={() => onPick(preset)}
+                >
+                  <Mark provider={{ name }} preset={preset} s={30} />
                   <span>
                     <b>{name}</b>
                     <em>{hints[presetHint(preset)]}</em>

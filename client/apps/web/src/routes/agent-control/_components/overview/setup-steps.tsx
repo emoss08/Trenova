@@ -63,7 +63,7 @@ export function SetupSteps({ agentCount, onPickPreset }: SetupStepsProps) {
                       className="pre-b"
                       onClick={() => onPickPreset(preset.key)}
                     >
-                      <Mark provider={{ name: preset.label }} s={20} />
+                      <Mark provider={{ name: preset.label }} preset={preset} s={20} />
                       {preset.label.replace(/\s*\(self-hosted\)$/, "")}
                     </button>
                   ))}

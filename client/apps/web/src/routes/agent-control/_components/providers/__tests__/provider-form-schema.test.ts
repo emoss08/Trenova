@@ -1,19 +1,20 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { parseEmbeddingDimensions } from "@/routes/agent-control/_components/providers/build-save-payload";
 import {
-  buildSavePayload,
-  parseEmbeddingDimensions,
-  type ProviderFormValues,
-} from "@/routes/agent-control/_components/providers/build-save-payload";
+  editorValuesFromPreset,
+  providerEditorSchema,
+  toSaveRequest,
+  type ProviderEditorValues,
+} from "@/routes/agent-control/_components/providers/provider-editor-model";
 import {
   embeddingIssues,
   kindSupportsEmbedding,
-  providerFormDefaults,
-  providerFormSchema,
 } from "@/routes/agent-control/_components/providers/provider-form-schema";
 import { goEnumValues, repoRoot } from "@/test/go-source";
 import {
+  type AIProviderPreset,
   EMBEDDING_DIMENSIONS,
   embeddingInputStyleSchema,
   saveAIProviderRequestSchema,
@@ -21,23 +22,34 @@ import {
 
 const ENUMS_FILE = "services/tms/internal/core/domain/aiprovider/enums.go";
 
-function embeddingForm(overrides: Partial<ProviderFormValues> = {}): ProviderFormValues {
+const VOYAGE: AIProviderPreset = {
+  key: "voyage",
+  label: "Voyage AI",
+  kind: "OpenAIChat",
+  baseUrl: "https://api.voyageai.com/v1",
+  structuredOutputMode: "JSONSchema",
+  allowPrivateNetwork: false,
+  requiresApiKey: true,
+  selfHosted: false,
+  exampleModel: "voyage-3.5",
+  notes: "",
+  domain: "voyageai.com",
+  tasks: ["Embedding"],
+  embeddingDimensions: 1024,
+  embeddingInputStyle: "VoyageInputType",
+};
+
+function embeddingForm(overrides: Partial<ProviderEditorValues> = {}): ProviderEditorValues {
   return {
-    ...providerFormDefaults,
+    ...editorValuesFromPreset(VOYAGE, []),
     name: "Voyage",
-    kind: "OpenAIChat",
-    baseUrl: "https://api.voyageai.com/v1",
-    model: "voyage-3.5",
     apiKey: "pa-test",
-    tasks: ["Embedding"],
-    embeddingDimensionsChoice: "1024",
-    embeddingInputStyle: "VoyageInputType",
     ...overrides,
   };
 }
 
-function issuePaths(values: ProviderFormValues): string[] {
-  const parsed = providerFormSchema.safeParse(values);
+function issuePaths(values: ProviderEditorValues): string[] {
+  const parsed = providerEditorSchema.safeParse(values);
   if (parsed.success) {
     return [];
   }
@@ -126,7 +138,7 @@ describe("embeddingIssues", () => {
   });
 });
 
-describe("providerFormSchema with embeddings", () => {
+describe("providerEditorSchema with embeddings", () => {
   it("accepts a Voyage embedding provider", () => {
     expect(issuePaths(embeddingForm())).toEqual([]);
   });
@@ -160,9 +172,9 @@ describe("providerFormSchema with embeddings", () => {
   });
 });
 
-describe("buildSavePayload with embeddings", () => {
+describe("toSaveRequest with embeddings", () => {
   it("sends the size as a number with the input style", () => {
-    const payload = buildSavePayload(embeddingForm(), false);
+    const payload = toSaveRequest(embeddingForm(), { editing: false, enable: true });
 
     expect(payload.tasks).toEqual(["Embedding"]);
     expect(payload.embeddingDimensions).toBe(1024);
@@ -171,9 +183,9 @@ describe("buildSavePayload with embeddings", () => {
   });
 
   it("sends neither for a provider that does not embed", () => {
-    const payload = buildSavePayload(
+    const payload = toSaveRequest(
       embeddingForm({ tasks: ["General"], embeddingDimensionsChoice: "1024" }),
-      false,
+      { editing: false, enable: true },
     );
 
     expect(payload.embeddingDimensions).toBeNull();

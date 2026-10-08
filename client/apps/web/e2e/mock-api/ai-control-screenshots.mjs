@@ -158,6 +158,135 @@ const SHOTS = [
     scenario: { aiProviders: "none" },
     query: "?tab=agents&panelType=create&panelEntityId=blank",
   },
+  { name: "providers", scenario: {}, query: "?tab=providers" },
+  { name: "providers-lower", scenario: {}, query: "?tab=providers", act: (page) => scrollDown(page, 700) },
+  { name: "providers-light", scenario: {}, query: "?tab=providers", colorScheme: "light" },
+  { name: "providers-many", scenario: { aiProviders: "many" }, query: "?tab=providers" },
+  { name: "providers-empty", scenario: { aiProviders: "none" }, query: "?tab=providers" },
+  {
+    name: "providers-show-off",
+    scenario: { aiProviders: "many" },
+    query: "?tab=providers",
+    act: async (page) => {
+      await page.getByRole("button", { name: /Show \d+ off/ }).click();
+      await page.waitForTimeout(500);
+    },
+  },
+  {
+    name: "providers-new-menu",
+    scenario: {},
+    query: "?tab=providers",
+    act: async (page) => {
+      await page.getByRole("button", { name: /New provider/ }).click();
+      await page.waitForTimeout(400);
+    },
+  },
+  {
+    name: "providers-sheet",
+    scenario: {},
+    query: "?tab=providers",
+    act: async (page) => {
+      await page.locator(".pl-t", { hasText: "Local Ollama" }).click();
+      await page.waitForTimeout(800);
+    },
+  },
+  {
+    name: "providers-sheet-key",
+    scenario: {},
+    query: "?tab=providers",
+    act: async (page) => {
+      await page.getByRole("link", { name: "Anthropic", exact: true }).click();
+      await page.waitForTimeout(800);
+    },
+  },
+  {
+    name: "provider-editor",
+    scenario: {},
+    query: "?tab=providers",
+    act: async (page) => {
+      await page.locator(".pl-t", { hasText: "Workstation vLLM" }).click();
+      await page.waitForTimeout(600);
+      await page.getByRole("button", { name: "Edit connection" }).first().click();
+      await page.waitForTimeout(900);
+    },
+  },
+  {
+    name: "provider-editor-test-failed",
+    scenario: {},
+    query: "?tab=providers",
+    act: async (page) => {
+      await page.locator(".pl-t", { hasText: "Workstation vLLM" }).click();
+      await page.waitForTimeout(600);
+      await page.getByRole("button", { name: "Edit connection" }).first().click();
+      await page.waitForTimeout(700);
+      await page.getByRole("button", { name: "Test draft" }).click();
+      await page.waitForTimeout(1200);
+    },
+  },
+  {
+    name: "provider-editor-impact",
+    scenario: {},
+    query: "?tab=providers",
+    act: async (page) => {
+      await page.locator(".pl-t", { hasText: "Workstation vLLM" }).click();
+      await page.waitForTimeout(600);
+      await page.getByRole("button", { name: "Edit connection" }).first().click();
+      await page.waitForTimeout(700);
+      const handles = page.getByRole("group", { name: "What it handles" });
+      await handles.getByRole("button", { name: "Assistant chat" }).click();
+      await handles.getByRole("button", { name: "Document extraction" }).click();
+      await page.waitForTimeout(900);
+      await page.locator("#es-tasks").scrollIntoViewIfNeeded();
+      await page.waitForTimeout(400);
+    },
+  },
+  {
+    name: "provider-editor-key",
+    scenario: { aiProviders: "many" },
+    query: "?tab=providers",
+    act: async (page) => {
+      await page.locator(".pl-t", { hasText: /^OpenAI/ }).click();
+      await page.waitForTimeout(600);
+      await page.getByRole("button", { name: "Edit connection" }).first().click();
+      await page.waitForTimeout(700);
+      await page.getByRole("textbox", { name: "Replace key" }).fill("sk-proj-new-key-9c1d");
+      await page.locator("#es-key").scrollIntoViewIfNeeded();
+      await page.waitForTimeout(500);
+    },
+  },
+  {
+    name: "provider-editor-limits",
+    scenario: { aiProviders: "many" },
+    query: "?tab=providers",
+    act: async (page) => {
+      await page.locator(".pl-t", { hasText: /^OpenAI/ }).click();
+      await page.waitForTimeout(600);
+      await page.getByRole("button", { name: "Edit connection" }).first().click();
+      await page.waitForTimeout(700);
+      await page.locator("#es-limits").scrollIntoViewIfNeeded();
+      await page.waitForTimeout(500);
+    },
+  },
+  {
+    name: "provider-create-local",
+    scenario: {},
+    query: "?tab=providers&panelType=create&panelEntityId=ollama",
+    act: (page) => page.waitForTimeout(1500),
+  },
+  {
+    name: "provider-create-hosted",
+    scenario: {},
+    query: "?tab=providers&panelType=create&panelEntityId=anthropic",
+  },
+  {
+    name: "provider-create-private-url",
+    scenario: {},
+    query: "?tab=providers&panelType=create&panelEntityId=openrouter",
+    act: async (page) => {
+      await page.getByRole("textbox", { name: "Base URL" }).fill("http://192.168.1.40:8000/v1");
+      await page.waitForTimeout(500);
+    },
+  },
 ];
 
 async function setScenario(overrides) {

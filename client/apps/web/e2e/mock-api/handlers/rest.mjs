@@ -1,9 +1,11 @@
+import { PROVIDER_ROUTES } from "./aiproviders.mjs";
 import { AI_ROUTES } from "./aicontrol.mjs";
 import { ORG, permissionManifest, USER } from "../fixtures/session.mjs";
 
 const EMPTY_PAGE = { results: [], count: 0, next: null, prev: null };
 
 const ROUTES = [
+  ...PROVIDER_ROUTES,
   ...AI_ROUTES,
   ["GET", /^\/api\/v1\/users\/me\/?$/, () => USER],
   ["GET", /^\/api\/v1\/me\/permissions\/?$/, () => permissionManifest()],

@@ -36,7 +36,14 @@ function readBody(req) {
   });
 }
 
-const server = http.createServer(async (req, res) => {
+const server = http.createServer((req, res) => {
+  handle(req, res).catch((error) => {
+    console.error(`[mock-api] ${req.method} ${req.url} failed:`, error);
+    if (!res.headersSent) send(res, 500, { message: String(error?.message ?? error) });
+  });
+});
+
+async function handle(req, res) {
   const origin = req.headers.origin;
   if (origin && ALLOWED_ORIGINS.has(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
@@ -102,7 +109,7 @@ const server = http.createServer(async (req, res) => {
     return undefined;
   }
   return send(res, result.status ?? 200, result.payload, result.headers);
-});
+}
 
 server.listen(PORT, () => {
   console.log(`[mock-api] listening on http://localhost:${PORT}`);

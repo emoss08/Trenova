@@ -1,240 +1,729 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import { EmptyState } from "@/components/empty-state";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogMedia,
-  AlertDialogTitle,
-} from "@trenova/shared/components/ui/alert-dialog";
-import { Button } from "@trenova/shared/components/ui/button";
-import { Input } from "@trenova/shared/components/ui/input";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
-import { queries } from "@/lib/queries";
-import type { AIProviderRow } from "@/lib/graphql/ai-provider";
-import { apiService } from "@/services/api";
-import type { PanelMode } from "@trenova/shared/types/data-table";
-import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  AlertTriangleIcon,
-  Cloud01Icon,
-  CpuChip01Icon,
-  PlugIcon,
-  PlusIcon,
-  SearchLgIcon,
-} from "@trenova/shared/components/icons";
-import { useCallback, useMemo, useState } from "react";
+  patchAIProvider,
+  reorderAIProviders,
+  type AIProviderPatch,
+  type AIProviderRow,
+  type AIProviderUsageDay,
+} from "@/lib/graphql/ai-provider";
+import { queries } from "@/lib/queries";
+import { apiService } from "@/services/api";
+import type { AIProviderKind, AIProviderPreset, AITask } from "@/types/ai-provider";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { formatList } from "@trenova/shared/i18n/format";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { resolveUserTimezone } from "@trenova/shared/lib/date";
+import { cn } from "@trenova/shared/lib/utils";
+import { Operation, Resource } from "@trenova/shared/types/permission";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAddressedPanel, type AddressedPanel } from "../../use-addressed-panel";
-import { AIProviderPanel } from "./ai-provider-panel";
-import { filterProviders, sortProvidersByRouting } from "./provider-roster";
-import { ProviderRows } from "./provider-rows";
-import { toProviderPanelRow, type ProviderPanelRow } from "./provider-form-schema";
+import { Menu, Search, useSlashFocus, type MenuItem } from "../kit/controls";
+import { Ic } from "../kit/ic";
+import { SecH, Switch } from "../kit/layout";
+import { Mark } from "../kit/marks";
+import { ConfirmDialog } from "../kit/modal";
+import { ReadSheet } from "../kit/read-sheet";
+import { NovaSummary } from "../nova/nova-summary";
+import type { NovaTarget } from "../nova/use-nova-segments";
+import { useNovaTargets } from "../nova/use-nova-targets";
+import { presetDisplayName } from "./preset-options";
+import { Health, ProviderDetail, type ProviderTestState } from "./provider-detail";
+import { ProviderEditor, type ProviderEditorTarget } from "./provider-editor";
+import { ProviderLine, type ProviderWeek } from "./provider-line";
+import {
+  firstsOf,
+  keyPlaceholder,
+  liveState,
+  moveBy,
+  moveTo,
+  needsKey,
+  routeOf,
+  sameOrder,
+  taskMetas,
+  toggleTask,
+  uncovered,
+} from "./provider-model";
+import { ProviderRouting } from "./provider-routing";
+import { ProvidersEmpty } from "./providers-empty";
 
-type PanelState = {
-  open: boolean;
-  mode: PanelMode;
-  row: ProviderPanelRow | null;
-  /** The preset a new provider starts from. */
-  preset?: string | null;
-};
+const WEEK_DAYS = 7;
+const SUMMARY_STALE_MS = 30_000;
+const PENDING_REFRESH_MS = 3_000;
+const USAGE_STALE_MS = 60_000;
 
+/** The daily series alone, so the list of them keeps its identity while nothing changes. */
+function dailyData(
+  results: { data?: AIProviderUsageDay[] }[],
+): (AIProviderUsageDay[] | undefined)[] {
+  return results.map((result) => result.data);
+}
+
+/**
+ * The providers in the order work is offered to them, what each takes first and how its
+ * week went, and a grid of every task against every provider. A row opens the provider to
+ * read; its editor holds the connection, key, tasks, access and limits.
+ */
 export default function ProvidersTab() {
   const t = useT();
   const queryClient = useQueryClient();
-
-  const listQuery = useQuery(queries.aiProvider.list());
-  const catalogQuery = useQuery(queries.aiProvider.catalog());
+  const novaTargets = useNovaTargets();
+  const searchRef = useRef<HTMLInputElement>(null);
+  useSlashFocus(searchRef);
+  const timezone = useMemo(() => resolveUserTimezone(), []);
 
   const { allowed: canCreate } = usePermission(Resource.AIProvider, Operation.Create);
   const { allowed: canUpdate } = usePermission(Resource.AIProvider, Operation.Update);
   const { allowed: canDelete } = usePermission(Resource.AIProvider, Operation.Delete);
   const { allowed: canManage } = usePermission(Resource.AIProvider, Operation.Manage);
 
-  const [panel, setPanel] = useState<PanelState>({ open: false, mode: "create", row: null });
-  const [deleting, setDeleting] = useState<AIProviderRow | null>(null);
-  const [query, setQuery] = useState("");
+  const listQuery = useQuery(queries.aiProvider.list());
+  const catalogQuery = useQuery(queries.aiProvider.catalog());
+  const summaryQuery = useQuery({
+    ...queries.aiControl.summary("Providers"),
+    staleTime: SUMMARY_STALE_MS,
+    refetchInterval: (state) => (state.state.data?.pending ? PENDING_REFRESH_MS : false),
+  });
+  const usageQuery = useQuery({
+    ...queries.aiProvider.usage(WEEK_DAYS),
+    staleTime: USAGE_STALE_MS,
+  });
 
-  const providers = useMemo(() => listQuery.data ?? [], [listQuery.data]);
-  const visible = useMemo(
-    () => sortProvidersByRouting(filterProviders(providers, query)),
-    [providers, query],
+  const saved = useMemo(() => listQuery.data ?? [], [listQuery.data]);
+  const catalog = catalogQuery.data;
+  const metas = useMemo(() => taskMetas(catalog?.tasks ?? []), [catalog?.tasks]);
+  const keyRequired = useCallback(
+    (kind: AIProviderKind) =>
+      catalog?.kinds.find((entry) => entry.kind === kind)?.requiresApiKey ?? false,
+    [catalog?.kinds],
   );
 
-  const invalidate = useCallback(async () => {
-    await queryClient.invalidateQueries({ queryKey: queries.aiProvider._def });
+  const [order, setOrder] = useState<string[] | null>(null);
+  const [dragging, setDragging] = useState<string | null>(null);
+  const providers = useMemo(() => {
+    if (!order) return saved;
+    const byId = new Map(saved.map((provider) => [provider.id, provider]));
+    const ordered = order.flatMap((id) => byId.get(id) ?? []);
+    return ordered.length === saved.length ? ordered : saved;
+  }, [order, saved]);
+
+  const [query, setQuery] = useState("");
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [showOff, setShowOff] = useState(false);
+  const [editor, setEditor] = useState<ProviderEditorTarget | null>(null);
+  const [removing, setRemoving] = useState<AIProviderRow | null>(null);
+  const [tests, setTests] = useState<Record<string, ProviderTestState>>({});
+
+  const dailies = useQueries({
+    queries: saved.map((provider) => ({
+      ...queries.aiProvider.daily(provider.id, WEEK_DAYS, timezone),
+      staleTime: USAGE_STALE_MS,
+    })),
+    combine: dailyData,
+  });
+  const weeks = useMemo(() => {
+    const slices = new Map(
+      (usageQuery.data?.byProvider ?? []).map((slice) => [slice.providerId, slice]),
+    );
+    return new Map(
+      saved.map((provider, index): [string, ProviderWeek | null] => {
+        const slice = slices.get(provider.id);
+        const days = dailies[index] ?? [];
+        return [
+          provider.id,
+          slice
+            ? {
+                calls: slice.calls,
+                failed: slice.failed,
+                latencyP50Ms: slice.latencyP50Ms,
+                tokens: slice.inputTokens + slice.outputTokens,
+                days,
+              }
+            : null,
+        ];
+      }),
+    );
+  }, [dailies, saved, usageQuery.data?.byProvider]);
+
+  const failing = useMemo(
+    () =>
+      new Set((summaryQuery.data?.facts.failing ?? []).map((entry) => String(entry.providerId))),
+    [summaryQuery.data?.facts.failing],
+  );
+  const liveOf = useCallback(
+    (provider: AIProviderRow) => {
+      const test = tests[provider.id];
+      if (test && test.state !== "run") return test.state;
+      return liveState(provider.lastTest, test?.state === "run", failing.has(provider.id));
+    },
+    [failing, tests],
+  );
+  const needsKeyOf = useCallback(
+    (provider: AIProviderRow) => needsKey(provider, keyRequired),
+    [keyRequired],
+  );
+
+  const refresh = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queries.aiProvider._def }),
+      queryClient.invalidateQueries({ queryKey: queries.aiControl._def }),
+    ]);
   }, [queryClient]);
 
-  const testMutation = useApiMutation({
-    mutationFn: (id: string) => apiService.aiProviderService.test(id),
-    onSuccess: async (result) => {
-      if (result.success && result.schemaHonoured) {
-        toast.success(result.message);
-      } else if (result.success) {
-        toast.warning(result.message, { description: result.detail || undefined });
-      } else {
-        toast.error(result.message, { description: result.detail || undefined });
-      }
-      await invalidate();
+  const test = useApiMutation({
+    mutationFn: (provider: AIProviderRow) => apiService.aiProviderService.test(provider.id),
+    onMutate: (provider) =>
+      setTests((current) => ({ ...current, [provider.id]: { state: "run" } })),
+    onSuccess: async (result, provider) => {
+      setTests((current) => ({
+        ...current,
+        [provider.id]: {
+          state: result.success ? "ok" : "fail",
+          message: result.message,
+          at: Math.floor(Date.now() / 1000),
+        },
+      }));
+      await refresh();
     },
-    resourceName: "AI Provider",
+    onError: (_error, provider) =>
+      setTests((current) =>
+        Object.fromEntries(Object.entries(current).filter(([id]) => id !== provider.id)),
+      ),
+    resourceName: t("AI provider"),
   });
 
-  const deleteMutation = useApiMutation({
-    mutationFn: (id: string) => apiService.aiProviderService.remove(id),
+  const patch = useApiMutation({
+    mutationFn: ({
+      provider,
+      input,
+    }: {
+      provider: AIProviderRow;
+      input: AIProviderPatch;
+      message?: string;
+    }) => patchAIProvider(provider, input),
+    onSuccess: async (_saved, { message }) => {
+      if (message) toast.success(message);
+      await refresh();
+    },
+    onError: () => void refresh(),
+    resourceName: t("AI provider"),
+  });
+
+  const reorder = useApiMutation({
+    mutationFn: (ids: string[]) => reorderAIProviders(ids),
     onSuccess: async () => {
-      toast.success(t("AI provider removed"));
-      setDeleting(null);
-      await invalidate();
+      await refresh();
+      setOrder(null);
     },
-    resourceName: "AI Provider",
+    onError: () => {
+      setOrder(null);
+      void refresh();
+    },
+    resourceName: t("AI provider"),
   });
 
-  const openCreate = useCallback(() => setPanel({ open: true, mode: "create", row: null }), []);
+  const remove = useApiMutation({
+    mutationFn: (provider: AIProviderRow) => apiService.aiProviderService.remove(provider.id),
+    onSuccess: async (_result, provider) => {
+      toast.success(t("{0} removed", provider.name));
+      setRemoving(null);
+      setOpenId((current) => (current === provider.id ? null : current));
+      await refresh();
+    },
+    resourceName: t("AI provider"),
+  });
+
+  const saveKey = useApiMutation({
+    mutationFn: async ({ provider, key }: { provider: AIProviderRow; key: string }) => {
+      const keyed = await patchAIProvider(provider, { apiKey: key });
+      setTests((current) => ({ ...current, [provider.id]: { state: "run" } }));
+      const result = await apiService.aiProviderService.test(provider.id);
+      if (!result.success) {
+        return { provider: keyed, result, enabled: false };
+      }
+      const before = uncovered(metas, providers, keyRequired).map((meta) => meta.task);
+      const enabled = await patchAIProvider(keyed, { enabled: true });
+      return { provider: enabled, result, enabled: true, before };
+    },
+    onSuccess: async (outcome) => {
+      setTests((current) => ({
+        ...current,
+        [outcome.provider.id]: {
+          state: outcome.result.success ? "ok" : "fail",
+          message: outcome.result.message,
+          at: Math.floor(Date.now() / 1000),
+        },
+      }));
+      if (outcome.enabled) {
+        const gained = metas.filter(
+          (meta) =>
+            outcome.before?.includes(meta.task) && outcome.provider.tasks.includes(meta.task),
+        );
+        toast.success(
+          gained.length > 0
+            ? t(
+                "{0} is on · {1} now covered",
+                outcome.provider.name,
+                formatList(gained.map((meta) => meta.label)),
+              )
+            : t("{0} is on", outcome.provider.name),
+        );
+      } else {
+        toast.error(t("Key saved, but the test failed"), { description: outcome.result.message });
+      }
+      await refresh();
+    },
+    resourceName: t("AI provider"),
+  });
+
+  const toggleProviderTask = useCallback(
+    (provider: AIProviderRow, task: AITask) =>
+      patch.mutate({ provider, input: { tasks: toggleTask(provider.tasks, task) } }),
+    [patch],
+  );
+  const setEnabled = useCallback(
+    (provider: AIProviderRow, enabled: boolean) =>
+      patch.mutate({
+        provider,
+        input: { enabled },
+        message: enabled ? t("{0} is on", provider.name) : t("{0} is off", provider.name),
+      }),
+    [patch, t],
+  );
+  const commitOrder = useCallback(
+    (ids: string[]) => {
+      if (
+        sameOrder(
+          ids,
+          saved.map((provider) => provider.id),
+        )
+      ) {
+        setOrder(null);
+        return;
+      }
+      setOrder(ids);
+      reorder.mutate(ids);
+    },
+    [reorder, saved],
+  );
+
+  const addPreset = useCallback((preset: AIProviderPreset) => {
+    setMenuOpen(false);
+    setEditor({ kind: "create", preset });
+  }, []);
+  const editProvider = useCallback((provider: AIProviderRow) => {
+    setOpenId(null);
+    setEditor({ kind: "edit", provider });
+  }, []);
+  const scrollTo = useCallback((id: string) => {
+    window.setTimeout(
+      () => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      60,
+    );
+  }, []);
 
   useAddressedPanel(
     useCallback(
       (request: AddressedPanel) => {
         if (request.mode === "create") {
-          setPanel({ open: true, mode: "create", row: null, preset: request.preset });
+          if (!catalog) return false;
+          const preset = catalog.presets.find((entry) => entry.key === request.preset);
+          if (preset && canCreate) {
+            setEditor({ kind: "create", preset });
+          } else if (canCreate) {
+            setMenuOpen(true);
+          }
           return true;
         }
-        const provider = providers.find((candidate) => candidate.id === request.entityId);
-        if (!provider) {
-          return !listQuery.isLoading;
+        if (listQuery.isLoading) return false;
+        if (saved.some((provider) => provider.id === request.entityId)) {
+          setOpenId(request.entityId);
+          scrollTo(`pv-${request.entityId}`);
         }
-        setPanel({ open: true, mode: "edit", row: toProviderPanelRow(provider) });
         return true;
       },
-      [listQuery.isLoading, providers],
+      [canCreate, catalog, listQuery.isLoading, saved, scrollTo],
     ),
   );
-  const openEdit = useCallback(
-    (provider: AIProviderRow) =>
-      setPanel({ open: true, mode: "edit", row: toProviderPanelRow(provider) }),
-    [],
+
+  const onTarget = useCallback(
+    (target: NovaTarget) => {
+      if (target.kind === "routing") {
+        scrollTo("routing");
+        return;
+      }
+      if (target.kind === "provider") {
+        setOpenId(target.providerId);
+        scrollTo(`pv-${target.providerId}`);
+        return;
+      }
+      if (target.kind === "providers") return;
+      novaTargets(target);
+    },
+    [novaTargets, scrollTo],
   );
 
-  const enabledCount = providers.filter((provider) => provider.enabled).length;
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey ||
+        editor ||
+        openId ||
+        (target && (target.isContentEditable || /INPUT|TEXTAREA|SELECT/.test(target.tagName)))
+      ) {
+        return;
+      }
+      if (event.key.toLowerCase() === "n" && canCreate) {
+        event.preventDefault();
+        setMenuOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [canCreate, editor, openId]);
+
+  const presets = catalog?.presets ?? [];
+  const menuItems: MenuItem[] = [
+    { kind: "heading", label: t("Hosted") },
+    ...presets
+      .filter((preset) => !preset.selfHosted)
+      .map((preset): MenuItem => ({
+        kind: "item",
+        icon: <Mark provider={{ name: presetDisplayName(preset) }} preset={preset} s={18} />,
+        label: presetDisplayName(preset),
+        note: preset.exampleModel,
+        onSelect: () => addPreset(preset),
+      })),
+    { kind: "separator" },
+    { kind: "heading", label: t("On your network") },
+    ...presets
+      .filter((preset) => preset.selfHosted)
+      .map((preset): MenuItem => ({
+        kind: "item",
+        icon: <Mark provider={{ name: presetDisplayName(preset) }} preset={preset} s={18} />,
+        label: presetDisplayName(preset),
+        note: preset.baseUrl,
+        onSelect: () => addPreset(preset),
+      })),
+  ];
+
+  const editorSheet =
+    editor && catalog ? (
+      <ProviderEditor
+        key={editor.kind === "edit" ? editor.provider.id : editor.preset.key}
+        target={editor}
+        providers={saved}
+        catalog={catalog}
+        metas={metas}
+        keyRequired={keyRequired}
+        canDelete={canDelete}
+        onClose={() => setEditor(null)}
+        onRemove={(provider) => remove.mutateAsync(provider)}
+      />
+    ) : null;
+
+  if (listQuery.isLoading || catalogQuery.isLoading) {
+    return (
+      <div className="tabp" aria-busy>
+        <NovaSummary context={t("Providers")} segments={undefined} loading onTarget={onTarget} />
+      </div>
+    );
+  }
+
+  if (saved.length === 0) {
+    return (
+      <>
+        <ProvidersEmpty presets={presets} canCreate={canCreate} onPick={addPreset} />
+        {editorSheet}
+      </>
+    );
+  }
+
+  const needle = query.trim().toLowerCase();
+  const kindLabel = (kind: AIProviderKind) =>
+    catalog?.kinds.find((entry) => entry.kind === kind)?.label ?? kind;
+  const matches = providers.filter((provider) =>
+    `${provider.name} ${provider.model} ${kindLabel(provider.kind)}`.toLowerCase().includes(needle),
+  );
+  const off = providers.filter((provider) => !provider.enabled);
+  const visible = matches.filter((provider) => provider.enabled || showOff || needle !== "");
+  const onCount = providers.length - off.length;
+  const bad = providers.find((provider) => provider.enabled && liveOf(provider) === "fail");
+  const waitingKey = providers.find(needsKeyOf);
+  const labelOf = new Map(metas.map((meta) => [meta.task, meta.label]));
+  const open = providers.find((provider) => provider.id === openId) ?? null;
+  const openIndex = open ? providers.indexOf(open) : -1;
+  const ids = providers.map((provider) => provider.id);
 
   return (
-    <section className="flex flex-col gap-4">
-      {providers.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <Input
-            inputContainerClassName="w-full max-w-xs"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t("Search providers")}
-            className="h-8"
-            leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
-            aria-label={t("Search providers")}
-          />
-          <div className="flex items-center gap-3">
-            <span className="text-muted-foreground text-xs tabular-nums">
-              {t("{0} of {1} on", enabledCount, providers.length)}
-            </span>
-            {canCreate && (
-              <Button size="sm" onClick={openCreate}>
-                <PlusIcon className="size-3.5" />
-                {t("New provider")}
-              </Button>
+    <div className="tabp">
+      <NovaSummary
+        context={t("Providers")}
+        segments={summaryQuery.data?.segments}
+        loading={summaryQuery.isLoading}
+        onTarget={onTarget}
+        control={
+          bad && canManage ? (
+            <>
+              <button type="button" className="btn ink lg" onClick={() => test.mutate(bad)}>
+                <Ic n="plug" s={13} />
+                {t("Test {0}", bad.name)}
+              </button>
+              <span>{bad.baseUrl || kindLabel(bad.kind)}</span>
+            </>
+          ) : waitingKey && canUpdate ? (
+            <>
+              <button type="button" className="btn ink lg" onClick={() => setOpenId(waitingKey.id)}>
+                <Ic n="key" s={13} />
+                {t("Add {0} key", waitingKey.name)}
+              </button>
+              {waitingKey.tasks.length > 0 && (
+                <span>
+                  {t(
+                    "Takes {0}",
+                    formatList(waitingKey.tasks.map((task) => labelOf.get(task) ?? task)),
+                  )}
+                </span>
+              )}
+            </>
+          ) : undefined
+        }
+      />
+      <div className="tb">
+        <Search
+          value={query}
+          onChange={setQuery}
+          placeholder={t("Search providers")}
+          inputRef={searchRef}
+        />
+        <span className="sp" />
+        <span className="tb-ct mono">{t("{0} of {1} on", onCount, providers.length)}</span>
+        {canCreate && (
+          <div className="rel">
+            <button
+              type="button"
+              className="btn ink"
+              onClick={() => setMenuOpen((value) => !value)}
+            >
+              <Ic n="plus" s={13} />
+              {t("New provider")}
+              <span className="kbd">N</span>
+            </button>
+            {menuOpen && (
+              <Menu
+                right
+                label={t("New provider")}
+                items={menuItems}
+                onClose={() => setMenuOpen(false)}
+              />
             )}
           </div>
-        </div>
-      )}
-
-      {providers.length > 0 && (
-        <p className="text-muted-foreground px-1 text-xs">
-          {t(
-            "Work is offered in this order. A cheap model can take a task first and hand off when it cannot.",
-          )}
-        </p>
-      )}
-
-      {listQuery.isLoading ? (
-        <div className="flex flex-col gap-2">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <Skeleton key={index} className="h-16" />
-          ))}
-        </div>
-      ) : providers.length === 0 ? (
-        <div className="flex justify-center py-6">
-          <EmptyState
-            icons={[Cloud01Icon, PlugIcon, CpuChip01Icon]}
-            title={t("No AI providers yet")}
-            description={t(
-              "Connect a hosted API, a gateway such as OpenRouter, or a model server on your own hardware. AI features stay off until a provider is assigned to a task.",
-            )}
-            action={
-              canCreate
-                ? { icon: PlusIcon, label: t("New provider"), onClick: openCreate }
-                : undefined
-            }
-          />
-        </div>
-      ) : visible.length === 0 ? (
-        <p className="text-muted-foreground px-1 py-6 text-center text-sm">
-          {t("No providers match that search.")}
-        </p>
-      ) : (
-        <ProviderRows
-          providers={visible}
-          catalog={catalogQuery.data}
-          actions={{
-            canManage,
-            canUpdate,
-            canDelete,
-            isTesting: (provider) =>
-              testMutation.isPending && testMutation.variables === provider.id,
-            onTest: (provider) => testMutation.mutate(provider.id),
-            onEdit: openEdit,
-            onDelete: setDeleting,
-          }}
+        )}
+      </div>
+      <section className="sec chain-s">
+        <SecH
+          t={t("The chain")}
+          n={t("{0} providers · top to bottom", providers.length)}
+          r={canUpdate ? <span className="sh2-n">{t("Drag to reorder")}</span> : undefined}
         />
-      )}
-
-      <AIProviderPanel
-        open={panel.open}
-        onOpenChange={(open) => setPanel((current) => ({ ...current, open }))}
-        mode={panel.mode}
-        row={panel.row}
-        preset={panel.preset}
-      />
-
-      <AlertDialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogMedia>
-              <AlertTriangleIcon />
-            </AlertDialogMedia>
-            <AlertDialogTitle>{t("Remove AI provider")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t(
-                "Remove {0}. Any task routed only to this provider will stop working until another one is assigned.",
-                deleting?.name ?? t("this provider"),
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={() => deleting && deleteMutation.mutate(deleting.id)}
-              disabled={deleteMutation.isPending}
+        <ol className="pls">
+          {visible.map((provider) => (
+            <ProviderLine
+              key={provider.id}
+              provider={provider}
+              index={providers.indexOf(provider)}
+              open={openId === provider.id}
+              live={liveOf(provider)}
+              needsKey={needsKeyOf(provider)}
+              firsts={firstsOf(provider, metas, providers, keyRequired).length}
+              week={weeks.get(provider.id) ?? null}
+              dragging={dragging === provider.id}
+              canReorder={canUpdate && !reorder.isPending}
+              canTest={canManage}
+              canToggle={canUpdate}
+              onOpen={(focusKey) =>
+                setOpenId((current) => (focusKey || current !== provider.id ? provider.id : null))
+              }
+              onTest={() => test.mutate(provider)}
+              onToggle={(enabled) => setEnabled(provider, enabled)}
+              onDragStart={() => {
+                setOrder(ids);
+                setDragging(provider.id);
+              }}
+              onDragOver={() => {
+                if (dragging && dragging !== provider.id) {
+                  setOrder((current) => moveTo(current ?? ids, dragging, provider.id));
+                }
+              }}
+              onDragEnd={() => {
+                setDragging(null);
+                commitOrder(order ?? ids);
+              }}
+            />
+          ))}
+          {needle === "" && off.length > 0 && (
+            <li
+              className="pl-off"
+              role="button"
+              tabIndex={0}
+              aria-expanded={showOff}
+              onClick={() => setShowOff((value) => !value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  setShowOff((value) => !value);
+                }
+              }}
             >
-              {t("Remove provider")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </section>
+              <Ic n={showOff ? "chevD" : "chevR"} s={12} />
+              <span>{showOff ? t("Hide {0} off", off.length) : t("Show {0} off", off.length)}</span>
+              <span className="pl-om">
+                {off.map((provider) => (
+                  <Mark key={provider.id} provider={provider} s={18} />
+                ))}
+              </span>
+              <em>{t("They keep their place in line and are skipped until turned on.")}</em>
+            </li>
+          )}
+          {canCreate && (
+            <li
+              className="pl-add"
+              role="button"
+              tabIndex={0}
+              onClick={() => setMenuOpen(true)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  setMenuOpen(true);
+                }
+              }}
+            >
+              <Ic n="plus" s={13} />
+              {t("Add a provider")}
+            </li>
+          )}
+        </ol>
+      </section>
+      <ProviderRouting
+        providers={providers}
+        metas={metas}
+        keyRequired={keyRequired}
+        canAssign={canUpdate}
+        onToggle={toggleProviderTask}
+      />
+      <ReadSheet
+        open={open !== null}
+        onClose={() => setOpenId(null)}
+        label={open?.name ?? t("Provider")}
+        head={
+          open && (
+            <>
+              <Mark provider={open} s={36} />
+              <div className="sh-t">
+                <b>{open.name}</b>
+                <span className="mono">{open.model}</span>
+              </div>
+              <Switch
+                on={open.enabled}
+                disabled={needsKeyOf(open) || !canUpdate}
+                label={open.enabled ? t("Turn off") : t("Turn on")}
+                onChange={(enabled) => setEnabled(open, enabled)}
+              />
+            </>
+          )
+        }
+      >
+        {open && (
+          <>
+            {canUpdate && (
+              <div className="sh-act">
+                <button type="button" className="btn sm" onClick={() => editProvider(open)}>
+                  <Ic n="edit" s={12} />
+                  {t("Edit connection")}
+                </button>
+              </div>
+            )}
+            <div className="sh-m">
+              <span>{t("Priority {0}", openIndex + 1)}</span>
+              <span>{kindLabel(open.kind)}</span>
+              <span className="mono">{open.baseUrl || t("Provider default")}</span>
+            </div>
+            <div className="sh-hl">
+              <Health provider={open} test={tests[open.id]} week={weeks.get(open.id) ?? null} />
+              {!needsKeyOf(open) && canManage && (
+                <button
+                  type="button"
+                  className="btn sm"
+                  disabled={tests[open.id]?.state === "run"}
+                  onClick={() => test.mutate(open)}
+                >
+                  <Ic n="plug" s={12} />
+                  {t("Test")}
+                </button>
+              )}
+            </div>
+            <ProviderDetail
+              key={open.id}
+              provider={open}
+              index={openIndex}
+              count={providers.length}
+              metas={metas}
+              firsts={
+                new Set(
+                  metas
+                    .filter((meta) => routeOf(meta, providers, keyRequired).first?.id === open.id)
+                    .map((meta) => meta.task),
+                )
+              }
+              needsKey={needsKeyOf(open)}
+              keyPlaceholder={keyPlaceholder(open.kind, open.baseUrl) ?? t("API key")}
+              week={weeks.get(open.id) ?? null}
+              canUpdate={canUpdate}
+              canDelete={canDelete}
+              savingKey={saveKey.isPending}
+              onSaveKey={(key) => saveKey.mutate({ provider: open, key })}
+              onToggleTask={(task) => toggleProviderTask(open, task)}
+              onAccess={(input) => patch.mutate({ provider: open, input })}
+              onPrices={(prices) =>
+                patch.mutate({
+                  provider: open,
+                  input: {
+                    inputCostPerMillion: prices.input,
+                    outputCostPerMillion: prices.output,
+                  },
+                  message: t("Prices saved"),
+                })
+              }
+              onEdit={() => editProvider(open)}
+              onMove={(delta) => commitOrder(moveBy(ids, open.id, delta))}
+              onRemove={() => setRemoving(open)}
+            />
+          </>
+        )}
+      </ReadSheet>
+      <ConfirmDialog
+        open={removing !== null}
+        onClose={() => setRemoving(null)}
+        title={t("Remove {0}?", removing?.name ?? "")}
+        description={
+          removing && removing.tasks.length > 0
+            ? t("Its tasks fall to the next provider in line. The stored key is deleted.")
+            : t("The stored key is deleted.")
+        }
+        confirmLabel={t("Remove provider")}
+        danger
+        busy={remove.isPending}
+        onConfirm={() => removing && remove.mutate(removing)}
+      />
+      {editorSheet}
+      <span className={cn("sr-only")} aria-live="polite">
+        {reorder.isPending ? t("Saving the new order") : ""}
+      </span>
+    </div>
   );
 }

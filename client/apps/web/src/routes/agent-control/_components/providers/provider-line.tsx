@@ -125,7 +125,9 @@ export function ProviderLine({
                 </i>
               ))}
             </span>
-            <span className={cn("mono pl-ok", ok < 0.98 && "t-w")}>{`${(ok * 100).toFixed(1)}%`}</span>
+            <span
+              className={cn("mono pl-ok", ok < 0.98 && "t-w")}
+            >{`${(ok * 100).toFixed(1)}%`}</span>
             <span className="mono pl-ms">{formatLatency(week.latencyP50Ms)}</span>
           </>
         ) : (

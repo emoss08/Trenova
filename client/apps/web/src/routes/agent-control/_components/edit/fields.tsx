@@ -123,7 +123,13 @@ type SelProps<T extends string | number> = {
 };
 
 /** A native select drawn as a field. */
-export function Sel<T extends string | number>({ value, onChange, options, label, width }: SelProps<T>) {
+export function Sel<T extends string | number>({
+  value,
+  onChange,
+  options,
+  label,
+  width,
+}: SelProps<T>) {
   return (
     <label className="inx sel" style={width ? { width } : undefined}>
       <select

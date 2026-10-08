@@ -2005,4 +2005,7 @@
 .aic .tpk-x{position:fixed;inset:0;z-index:60}
 .aic .me{width:28px;height:28px;border-radius:50%;border:1px solid var(--b);display:grid;place-items:center;font-size:10px;font-weight:600;color:var(--muted)}
 .aic .me.sm{width:22px;height:22px;font-size:9px;flex:none}
+.aic .mn{max-height:min(70vh,560px);overflow-y:auto;overscroll-behavior:contain}
+.aic .ep-b>.pmk{flex:none}
+.aic .pv.dim .pmk,.aic .mx-ph.dim .pmk{opacity:.5;filter:grayscale(1)}
 }

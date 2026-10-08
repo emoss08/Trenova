@@ -51,9 +51,7 @@ export function taskMetas(descriptors: readonly AITaskDescriptor[]): TaskMeta[] 
   const byTask = new Map(descriptors.map((descriptor) => [descriptor.task, descriptor]));
   return TASK_ORDER.flatMap((task) => {
     const descriptor = byTask.get(task);
-    return descriptor
-      ? [{ task, label: descriptor.label, trust: descriptor.requiresTrust }]
-      : [];
+    return descriptor ? [{ task, label: descriptor.label, trust: descriptor.requiresTrust }] : [];
   });
 }
 
@@ -183,9 +181,9 @@ export function formatLatency(ms: number): string {
   return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${Math.round(ms)}ms`;
 }
 
-/** Tokens as the read sheet reads them: 820, 14.2k, 1.4M. */
+/** Tokens as the read sheet reads them: 820, 14.2k, 0.9M, 1.4M. */
 export function formatTokens(tokens: number): string {
-  if (tokens >= 1_000_000) {
+  if (tokens >= 100_000) {
     return `${(tokens / 1_000_000).toFixed(1)}M`;
   }
   if (tokens >= 10_000) {
@@ -195,6 +193,14 @@ export function formatTokens(tokens: number): string {
     return `${(tokens / 1000).toFixed(1)}k`;
   }
   return String(tokens);
+}
+
+/** A context window as a model card writes it: 32k, 128k, 200k, 1M. */
+export function formatContext(tokens: number): string {
+  if (tokens >= 1_000_000) {
+    return `${Number((tokens / 1_000_000).toFixed(1))}M`;
+  }
+  return `${Math.round(tokens % 1024 === 0 ? tokens / 1024 : tokens / 1000)}k`;
 }
 
 /** A loopback, link-local, RFC 1918 or single-label host: one only Private network reaches. */
@@ -238,6 +244,21 @@ export function baseUrlProblem(baseUrl: string, allowPrivateNetwork: boolean): B
     return "private";
   }
   return null;
+}
+
+/**
+ * Whether an editor offers a key: when the protocol or preset needs one, when one is
+ * stored, or when the endpoint is a hosted one — an OpenAI-compatible service like Groq
+ * takes a key though the protocol does not require it.
+ */
+export function keyField(context: {
+  mandatory: boolean;
+  hasStoredKey: boolean;
+  baseUrl: string;
+}): boolean {
+  if (context.mandatory || context.hasStoredKey) return true;
+  const trimmed = context.baseUrl.trim();
+  return trimmed !== "" && hostOf(trimmed) !== null && !isPrivateAddress(trimmed);
 }
 
 /** The key's start a vendor documents, used as the key field's placeholder. */

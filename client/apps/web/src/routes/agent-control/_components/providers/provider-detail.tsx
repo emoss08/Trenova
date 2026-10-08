@@ -37,7 +37,10 @@ export function Health({ provider, test, week }: HealthProps) {
     (provider.lastTest
       ? {
           state: provider.lastTest.success ? ("ok" as const) : ("fail" as const),
-          message: provider.lastTest.message,
+          message:
+            provider.lastTest.success && provider.lastTest.latencyMs > 0
+              ? t("{0} · {1} ms", provider.lastTest.message, provider.lastTest.latencyMs)
+              : provider.lastTest.message,
           at: provider.lastTest.testedAt,
         }
       : null);
