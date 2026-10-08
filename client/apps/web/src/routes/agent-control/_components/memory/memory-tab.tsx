@@ -1,37 +1,65 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
 import { usePermission } from "@/hooks/use-permission";
+import { agentControlQueryOptions } from "@/lib/graphql/agent-control";
 import {
   AGENT_MEMORY_LIST_KEY,
   agentMemoryTableGraphQLConfig,
+  agentMemoryTotalQueryKey,
+  fetchAgentMemoryTotal,
   setAgentMemoryStatus,
   type AgentMemoryRow,
 } from "@/lib/graphql/agent-memories";
-import { invalidateAIControlCounts } from "../overview/use-ai-control-stats";
+import { queries } from "@/lib/queries";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArchiveIcon, ArchiveRestoreIcon } from "@trenova/shared/components/icons";
+import { defineLabels } from "@trenova/shared/i18n/labels";
+import { useRichT } from "@trenova/shared/i18n/rich";
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { Row, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useQueryClient } from "@tanstack/react-query";
-import { ArchiveIcon, ArchiveRestoreIcon } from "@trenova/shared/components/icons";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { getMemoryColumns } from "./memory-columns";
+import { useAIControlNavigation } from "../../use-ai-control-navigation";
+import { invalidateAIControlCounts } from "../overview/use-ai-control-stats";
 import { AgentReflections } from "./agent-reflections";
+import { getMemoryColumns } from "./memory-columns";
+import type { MemoryFormValues } from "./memory-form-schema";
+import { MemoryKindMark } from "./memory-kind";
 import { MemoryPanel } from "./memory-panel";
 import { MemorySuggestions } from "./memory-suggestions";
 import { MemoryUsageNotice } from "./memory-usage-notice";
 
+const EXAMPLES: Record<"Instruction" | "Fact" | "Procedure", string> = defineLabels({
+  Instruction: "Always CC the customer's AP inbox on invoices for …",
+  Fact: "The receiving dock at … closes at …",
+  Procedure: "To clear a rate mismatch: …",
+});
+
 /**
- * What the organization has told its agents. Every row here is read into
- * the prompt of every agent that asks for memory, so the list is also the
- * place to see what an agent recorded on its own and to retire what no
- * longer holds. Retiring keeps the row: what an agent was told last month
- * is still worth being able to read.
+ * What the organization has told its agents. Every row here is read into the prompt of
+ * every agent that asks for memory, so the list is also the place to see what an agent
+ * recorded on its own, approve what one suggests, and retire what no longer holds.
+ * Retiring keeps the row: what an agent was told last month is still worth reading.
  */
 export default function MemoryTab() {
   const t = useT();
+  const rt = useRichT();
   const queryClient = useQueryClient();
+  const go = useAIControlNavigation();
   const columns = useMemo(() => getMemoryColumns(t), [t]);
   const { allowed: canUpdate } = usePermission(Resource.AgentMemory, Operation.Update);
+  const { allowed: canCreate } = usePermission(Resource.AgentMemory, Operation.Create);
+  const totalQuery = useQuery({
+    queryKey: agentMemoryTotalQueryKey,
+    queryFn: ({ signal }) => fetchAgentMemoryTotal({ signal }),
+  });
+  const retrievalQuery = useQuery(queries.aiRetrieval.status());
+  const controlQuery = useQuery(agentControlQueryOptions());
+  const [starting, setStarting] = useState<Partial<MemoryFormValues> | null>(null);
+
+  const byMeaning = Boolean(retrievalQuery.data?.settings.activeModelKey);
+  const learningOff = controlQuery.data?.learningOff ?? false;
+  const empty = totalQuery.data === 0;
 
   const setStatus = async (row: Row<AgentMemoryRow>, status: AgentMemoryRow["status"]) => {
     await setAgentMemoryStatus(row.original.id, status);
@@ -61,20 +89,80 @@ export default function MemoryTab() {
   ];
 
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <div className="tabp">
+      <p className="lead">
+        {t("Agents read these before they answer.")}
+        {retrievalQuery.data && !byMeaning && (
+          <>
+            {" "}
+            {rt("They're found by their words until <link>search by meaning</link> is on.", {
+              link: (children) => (
+                <button type="button" className="lnk" onClick={() => go({ tab: "retrieval" })}>
+                  {children}
+                </button>
+              ),
+            })}
+          </>
+        )}
+        {learningOff && <> {t("Learning is off, so agents won't suggest new ones.")}</>}
+      </p>
       <MemoryUsageNotice />
       <MemorySuggestions canDecide={canUpdate} />
       <AgentReflections />
-      <DataTable<AgentMemoryRow>
-        name="Memory"
-        emptyTitle={t("No memories yet")}
-        queryKey={AGENT_MEMORY_LIST_KEY}
-        graphql={agentMemoryTableGraphQLConfig}
-        resource={Resource.AgentMemory}
-        columns={columns}
-        contextMenuActions={contextMenuActions}
-        TablePanel={MemoryPanel}
-        initialColumnVisibility={{ toolName: false, expiresAt: false, lastUsedAt: false }}
+      <section className="sec">
+        {empty ? (
+          <div className="mem-e">
+            <b>{t("Nothing recorded yet")}</b>
+            <span>
+              {t(
+                "Tell agents something once and every one of them remembers it — a customer's rule, a dock's hours, how your team clears a hold.",
+              )}
+              {!learningOff &&
+                ` ${t("With Learn from their work on, they'll also suggest lessons for you to approve.")}`}
+            </span>
+            {canCreate && (
+              <div className="mem-x">
+                {(Object.keys(EXAMPLES) as (keyof typeof EXAMPLES)[]).map((kind) => (
+                  <button
+                    key={kind}
+                    type="button"
+                    onClick={() =>
+                      setStarting({ kind, content: t(EXAMPLES[kind]).replace(/ ?…$/, " ") })
+                    }
+                  >
+                    <MemoryKindMark kind={kind} />
+                    {t(EXAMPLES[kind])}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <DataTable<AgentMemoryRow>
+            name="Memory"
+            emptyTitle={t("No memories match")}
+            queryKey={AGENT_MEMORY_LIST_KEY}
+            graphql={agentMemoryTableGraphQLConfig}
+            resource={Resource.AgentMemory}
+            columns={columns}
+            contextMenuActions={contextMenuActions}
+            TablePanel={MemoryPanel}
+            initialColumnVisibility={{
+              source: false,
+              toolName: false,
+              createdAt: false,
+              expiresAt: false,
+              lastUsedAt: false,
+            }}
+          />
+        )}
+      </section>
+      <MemoryPanel
+        open={starting !== null}
+        mode="create"
+        row={null}
+        preset={starting}
+        onOpenChange={(open) => !open && setStarting(null)}
       />
     </div>
   );

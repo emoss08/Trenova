@@ -2,7 +2,6 @@
   "1 works every week; 2 alternates, which is how an A/B pair is built from one shift.": "1 表示每周皆工作；2 表示隔周轮替，A/B 双班即是以单一班次如此建立。",
   "2 weeks": "2 周",
   "4 weeks": "4 周",
-  "A driver": "一位驾驶员",
   "A pattern is a mask of working days plus a start and a length. An A/B pair is a single two-week shift and two assignments at different offsets — not two near-identical shifts.": "型态由工作日掩码加上起始时间与长度构成。A/B 双班是一个为期两周的班次搭配两个不同起始偏移的指派，而非两个几乎相同的班次。",
   "A retired shift cannot be assigned, and retiring is refused while anybody is still on it.": "已停用的班次无法指派，且只要仍有人在该班次上就无法停用。",
   "A ringed cell is a conflict. The small number is loads dispatch already assigned. The cover row counts who can work each day.": "有圈选标记的格子代表冲突。小数字为调度已指派的货载数。覆盖行统计每天可出勤的人数。",

@@ -2790,6 +2790,15 @@
       "service/fuelpurchaseservice"
     ]
   },
+  "A carrier": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "A carrier accepted but auto-assignment failed — assign the move manually or cancel.": {
     "sites": 1,
     "scope": [
@@ -3631,6 +3640,15 @@
       "domain/telematics"
     ]
   },
+  "A customer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "A customer agreement cannot name a carrier": {
     "sites": 1,
     "scope": [
@@ -3665,6 +3683,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "A customer's rule, a dock's hours, a driver's preference.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "A customized home screen needs a layout": {
@@ -4182,11 +4209,12 @@
     ]
   },
   "A driver": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/scheduling"
     ]
   },
@@ -5020,6 +5048,15 @@
     ],
     "areas": [
       "service/agenttoolservice"
+    ]
+  },
+  "A location": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "A long task": {
@@ -9972,7 +10009,7 @@
     ]
   },
   "About": {
-    "sites": 3,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -11889,15 +11926,6 @@
     ],
     "areas": [
       "service/ediservice"
-    ]
-  },
-  "Acme Freight needs the signed POD within one day of delivery.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Acme national DOE program": {
@@ -16721,6 +16749,33 @@
       "routes/admin"
     ]
   },
+  "Agents read it again from their next run.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Agents read none of these until you approve": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Agents read these before they answer.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Agents resumed · held proposals are back in Desk": {
     "sites": 1,
     "scope": [
@@ -16749,6 +16804,15 @@
     ]
   },
   "Agents start on their own": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Agents stop reading it. The memory is kept, so what they were told stays readable.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -18608,6 +18672,15 @@
       "routes/agent-control"
     ]
   },
+  "Always CC the customer's AP inbox on invoices for …": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Always down": {
     "sites": 1,
     "scope": [
@@ -20434,15 +20507,6 @@
     ],
     "areas": [
       "domain/insight"
-    ]
-  },
-  "An instruction or a procedure is followed; a fact is weighed; a correction fixes how a tool is used.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "An insurer has filed a cancellation that takes effect soon.": {
@@ -22907,7 +22971,7 @@
     ]
   },
   "Approve": {
-    "sites": 35,
+    "sites": 36,
     "scope": [
       "ts"
     ],
@@ -37431,7 +37495,7 @@
     ]
   },
   "Carrier": {
-    "sites": 42,
+    "sites": 40,
     "scope": [
       "go",
       "ts"
@@ -37442,7 +37506,6 @@
       "apps/web/hooks",
       "apps/web/lib",
       "go/other",
-      "routes/agent-control",
       "routes/benefits",
       "routes/carrier",
       "routes/carrier-cost-event",
@@ -41688,15 +41751,6 @@
     ],
     "areas": [
       "routes/holiday"
-    ]
-  },
-  "Choose a kind of record first": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Choose a latitude and a longitude column.": {
@@ -52232,7 +52286,7 @@
     ]
   },
   "Correction": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -57344,7 +57398,7 @@
     ]
   },
   "Customer": {
-    "sites": 66,
+    "sites": 64,
     "scope": [
       "go",
       "ts"
@@ -70338,15 +70392,6 @@
       "routes/agent-control"
     ]
   },
-  "Drawn from ratings people gave an agent's answers, or learned by an agent looking back over its work. Agents read none of these until an administrator approves them.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Drawn geofences require at least three points": {
     "sites": 1,
     "scope": [
@@ -70533,7 +70578,7 @@
     ]
   },
   "Driver": {
-    "sites": 46,
+    "sites": 44,
     "scope": [
       "go",
       "ts"
@@ -73848,6 +73893,15 @@
       "routes/review-template"
     ]
   },
+  "Each lesson kept is a memory in the list below": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Each line debits or credits a GL account. Total debits must equal total credits before the journal can be submitted.": {
     "sites": 1,
     "scope": [
@@ -74316,7 +74370,7 @@
     ]
   },
   "Edit": {
-    "sites": 32,
+    "sites": 33,
     "scope": [
       "ts"
     ],
@@ -74501,6 +74555,15 @@
       "routes/fuel-management"
     ]
   },
+  "Edit it so it reads as a rule an agent should follow. Once approved, every agent that asks for memory reads it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Edit leave case": {
     "sites": 1,
     "scope": [
@@ -74520,12 +74583,13 @@
     ]
   },
   "Edit memory": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/agent-control"
     ]
   },
   "Edit move {0}": {
@@ -74652,15 +74716,6 @@
     ],
     "areas": [
       "routes/edi"
-    ]
-  },
-  "Edit the memory so it reads as a rule an agent should follow. Once approved, every agent that asks for memory reads it.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Edit the plan": {
@@ -80363,7 +80418,7 @@
     ]
   },
   "Every agent": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -80416,7 +80471,7 @@
       "routes/agent-control"
     ]
   },
-  "Every agent that asks for memory reads this on its next run.": {
+  "Every agent that asks for memory reads it": {
     "sites": 1,
     "scope": [
       "ts"
@@ -85400,7 +85455,7 @@
     ]
   },
   "Fact": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -103806,7 +103861,7 @@
     ]
   },
   "Instruction": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -110215,7 +110270,7 @@
     ]
   },
   "Kind": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "go",
       "ts"
@@ -110264,15 +110319,6 @@
     ],
     "areas": [
       "domain/report"
-    ]
-  },
-  "Kind of record": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Known Host Key": {
@@ -112229,7 +112275,7 @@
       "routes/agent-control"
     ]
   },
-  "Learned by an agent looking back over its work, {0}": {
+  "Learned by an agent looking back over its work · {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -112284,6 +112330,15 @@
     ]
   },
   "Learning": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Learning is off, so agents won't suggest new ones.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -112511,15 +112566,6 @@
     ],
     "areas": [
       "routes/home"
-    ]
-  },
-  "Leave both empty for something every agent should know.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Leave cannot be recorded against a {0} case": {
@@ -112801,6 +112847,15 @@
     ],
     "areas": [
       "routes/leave-control"
+    ]
+  },
+  "Leave it on every agent for something every agent should know.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Leave on for retail purchases. Turn off for bulk or tax-exempt fuel.": {
@@ -116718,7 +116773,7 @@
     ]
   },
   "Location": {
-    "sites": 20,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -116729,7 +116784,6 @@
       "apps/web/lib",
       "go/other",
       "routes/admin",
-      "routes/agent-control",
       "routes/edi",
       "routes/location",
       "routes/rate-zone",
@@ -122208,7 +122262,7 @@
     ]
   },
   "Memory": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -122293,7 +122347,7 @@
     ]
   },
   "Memory restored": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -122302,6 +122356,24 @@
     ]
   },
   "Memory retired": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Memory saved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Memory saved; agents read it from their next run": {
     "sites": 1,
     "scope": [
       "ts"
@@ -128869,6 +128941,15 @@
       "routes/edi"
     ]
   },
+  "New memory": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "New owner": {
     "sites": 1,
     "scope": [
@@ -132088,7 +132169,7 @@
     ]
   },
   "No end": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -133231,6 +133312,15 @@
       "routes/formula-template"
     ]
   },
+  "No memories match": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No memories match.": {
     "sites": 1,
     "scope": [
@@ -133238,15 +133328,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "No memories yet": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "No memory with that id is visible here": {
@@ -139076,7 +139157,7 @@
     ]
   },
   "Nothing recorded yet": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -139964,6 +140045,15 @@
     ]
   },
   "Nova left {0} things out, such as: {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Nova suggests": {
     "sites": 1,
     "scope": [
       "ts"
@@ -141921,15 +142011,6 @@
       "routes/worker"
     ]
   },
-  "Once a conversation goes quiet or a background run settles, its agent looks back over it when something went wrong, took several tries or was corrected. Each lesson it keeps is a memory in the list below.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Once your carrier issues a settlement, your statement will show up here.": {
     "sites": 1,
     "scope": [
@@ -142207,15 +142288,6 @@
     ],
     "areas": [
       "api/graphql"
-    ]
-  },
-  "One or two plain sentences a reader with no other context understands.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "One outcome the worker can be measured against.": {
@@ -147205,7 +147277,7 @@
       "apps/web/components"
     ]
   },
-  "Optional. Only agents holding this tool read it, such as a correction to how it was proposed.": {
+  "Optional. Only agents holding this tool read it, such as a correction to how it is used.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -156485,15 +156557,6 @@
       "routes/invoice-adjustment-batch"
     ]
   },
-  "Pick a carrier": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Pick a carrier invoice from the list to link it to a carrier and create a match.": {
     "sites": 1,
     "scope": [
@@ -156522,12 +156585,11 @@
     ]
   },
   "Pick a customer": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control",
       "routes/customer-ledger"
     ]
   },
@@ -156557,15 +156619,6 @@
     ],
     "areas": [
       "routes/org-structure"
-    ]
-  },
-  "Pick a driver": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Pick a gender": {
@@ -156602,15 +156655,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Pick a location": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Pick a match from the list to compare the invoice against the negotiated buy rate.": {
@@ -162025,7 +162069,7 @@
     ]
   },
   "Procedure": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -170822,7 +170866,7 @@
     ]
   },
   "Record": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "ts"
     ],
@@ -179522,7 +179566,7 @@
     ]
   },
   "Restore": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "ts"
     ],
@@ -179601,6 +179645,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Restore memory": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Restore this finding": {
@@ -180038,7 +180091,7 @@
     ]
   },
   "Retire": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -180071,6 +180124,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Retire memory": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Retired": {
@@ -181353,15 +181415,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "Review and approve": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Review and approve shipments before invoicing": {
@@ -186255,7 +186308,7 @@
     ]
   },
   "Save changes": {
-    "sites": 46,
+    "sites": 47,
     "scope": [
       "ts"
     ],
@@ -186403,12 +186456,13 @@
     ]
   },
   "Save memory": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/agent-control"
     ]
   },
   "Save metadata": {
@@ -207378,15 +207432,6 @@
       "routes/carrier-invoice-matching"
     ]
   },
-  "Suggested memories": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Suggested next": {
     "sites": 1,
     "scope": [
@@ -209989,6 +210034,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Tell agents something once and every one of them remembers it — a customer's rule, a dock's hours, how your team clears a hold.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Tell dispatch why so they can replan — hours, home time, equipment, anything.": {
@@ -220249,6 +220303,15 @@
       "routes/worker"
     ]
   },
+  "The receiving dock at … closes at …": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The record": {
     "sites": 1,
     "scope": [
@@ -223112,15 +223175,6 @@
       "service/formula"
     ]
   },
-  "The whole organization": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "The window cannot start before 1970": {
     "sites": 1,
     "scope": [
@@ -224025,6 +224079,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "They're found by their words until <link>search by meaning</link> is on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Thinking": {
@@ -229843,6 +229906,15 @@
       "go/other"
     ]
   },
+  "To clear a rate mismatch: …": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "To configure SSO, create an OIDC application in the <a>Okta admin console</a>, copy the redirect URL below into the app's sign-in redirect URIs, then paste the credentials here.": {
     "sites": 1,
     "scope": [
@@ -230637,7 +230709,7 @@
     ]
   },
   "Tool": {
-    "sites": 13,
+    "sites": 15,
     "scope": [
       "ts"
     ],
@@ -237630,7 +237702,7 @@
     ]
   },
   "Until": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -241135,14 +241207,22 @@
       "routes/formula-template"
     ]
   },
-  "Version is required": {
-    "sites": 4,
+  "Version is not valid": {
+    "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "go/other",
       "service/aiproviderservice"
+    ]
+  },
+  "Version is required": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Version is required to update a memory": {
@@ -246241,15 +246321,6 @@
       "routes/policies"
     ]
   },
-  "What it is about": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "What it is for, so people pick the right one": {
     "sites": 1,
     "scope": [
@@ -246468,6 +246539,15 @@
   },
   "What should it do?": {
     "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "What should the agents know?": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -247067,15 +247147,6 @@
     ],
     "areas": [
       "routes/accounting-sync"
-    ]
-  },
-  "What to remember": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "What wakes it up, and who's allowed to.": {
@@ -248787,6 +248858,15 @@
       "apps/web/components"
     ]
   },
+  "Which carrier?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Which cases": {
     "sites": 1,
     "scope": [
@@ -248850,6 +248930,15 @@
       "apps/web/components"
     ]
   },
+  "Which customer?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Which delivered shipments are still missing a signed bill of lading?": {
     "sites": 1,
     "scope": [
@@ -248875,6 +248964,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Which driver?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Which drivers have a medical card expiring in the next 30 days?": {
@@ -248974,6 +249072,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Which location?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Which of our reports shows on-time delivery by customer, and what does it contain?": {
@@ -250288,6 +250395,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "With Learn from their work on, they'll also suggest lessons for you to approve.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "With no end date this runs until you call it back. Set one if you are covering a specific absence.": {
@@ -258250,15 +258366,6 @@
       "routes/accounting-inbound"
     ]
   },
-  "last rated {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "last score": {
     "sites": 1,
     "scope": [
@@ -259435,15 +259542,6 @@
     ],
     "areas": [
       "service/agenttoolservice"
-    ]
-  },
-  "replaces a memory already kept": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "replies@example.com": {
@@ -262629,7 +262727,7 @@
     ]
   },
   "{0, plural, one {# person} other {# people}}": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -263875,7 +263973,16 @@
       "routes/intake"
     ]
   },
-  "{0, plural, one {Drawn from # rating} other {Drawn from # ratings}}": {
+  "{0, plural, one {Drawn from # rating} other {Drawn from # ratings}} by {1, plural, one {# person} other {# people}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {Drawn from # rating} other {Drawn from # ratings}} by {1, plural, one {# person} other {# people}} · last rated {2}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -267342,6 +267449,15 @@
     ],
     "areas": [
       "service/authservice"
+    ]
+  },
+  "{0} has reached its monthly spending cap. Raise the cap or add another provider for this task": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} has reached today's {1}-request limit.": {
@@ -272863,6 +272979,15 @@
     ],
     "areas": [
       "routes/accounting-inbound"
+    ]
+  },
+  "{0} · {1} · {2, plural, one {read # time} other {read # times}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} · {1} · {2} employee, {3} employer per period": {

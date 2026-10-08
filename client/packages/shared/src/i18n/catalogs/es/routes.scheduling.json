@@ -2,7 +2,6 @@
   "1 works every week; 2 alternates, which is how an A/B pair is built from one shift.": "1 se trabaja todas las semanas; 2 alterna, que es como se construye un par A/B a partir de un solo turno.",
   "2 weeks": "2 semanas",
   "4 weeks": "4 semanas",
-  "A driver": "Un conductor",
   "A pattern is a mask of working days plus a start and a length. An A/B pair is a single two-week shift and two assignments at different offsets — not two near-identical shifts.": "Un patrón es una máscara de días laborables más una hora de inicio y una duración. Un par A/B es un único turno de dos semanas con dos asignaciones a distintos desfases, no dos turnos casi idénticos.",
   "A retired shift cannot be assigned, and retiring is refused while anybody is still on it.": "Un turno retirado no puede asignarse, y no se permite retirarlo mientras alguien siga en él.",
   "A ringed cell is a conflict. The small number is loads dispatch already assigned. The cover row counts who can work each day.": "Una celda con anillo indica un conflicto. El número pequeño son las cargas que despacho ya asignó. La fila de cobertura cuenta quién puede trabajar cada día.",

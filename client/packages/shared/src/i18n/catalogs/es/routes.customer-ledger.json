@@ -11,6 +11,7 @@
   "Nothing has posted to this customer's receivables. Their first invoice or payment starts the ledger.": "No se ha contabilizado nada en las cuentas por cobrar de este cliente. Su primera factura o pago inicia el libro mayor.",
   "Oldest open invoice": "Factura abierta más antigua",
   "Payments — trailing 12 months": "Pagos: últimos 12 meses",
+  "Pick a customer": "Elija un cliente",
   "Select a customer...": "Seleccione un cliente...",
   "Statement": "Estado de cuenta",
   "Statement-style transaction history with the customer's AR profile.": "Historial de transacciones en formato de estado de cuenta con el perfil de cuentas por cobrar del cliente.",

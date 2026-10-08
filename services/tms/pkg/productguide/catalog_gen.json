@@ -1,5 +1,5 @@
 {
-  "version": "sha256:61f20c62bd57096d790a3088d89a8c91651636569a1a9f53ade814cce84dee69",
+  "version": "sha256:cfcd3065fd078c0d0bc437dd0f2ec2bb2d4ee886444939ce6bcb6e945099ec13",
   "modules": [
     {
       "id": "home",
@@ -2817,8 +2817,8 @@
             "Open [AI control](/admin/agent-control) and select **Memory** in the rail.",
             "Select **New memory**.",
             "Choose the **Kind** (**Instruction**, **Fact**, **Correction** or **Procedure**), write the **Memory**, and optionally set **Until**.",
-            "To make it about one record, pick a **Kind of record** and the record; leave it empty for something every agent should know. Then select **Save**.",
-            "To stop agents reading an entry, right-click it and choose **Retire**; **Restore** brings it back."
+            "To make it about one record, set **About** to the kind of record and pick the record; leave it on **Every agent** for something every agent should know. Then select **Save memory**.",
+            "To stop agents reading an entry, open it and select **Retire memory**, or right-click it and choose **Retire**; **Restore** brings it back."
           ]
         },
         {
@@ -2836,7 +2836,7 @@
             "Open [AI control](/admin/agent-control) on **Overview**. In **Organization-wide**, select **Edit** and turn **Learn from their work** on or off for every agent, then save. It is on unless someone turned it off.",
             "To change it for one agent, open the agent in **Agents** and turn **Learns from its work** on or off, then select **Save**.",
             "Select **Memory** in the rail. **What agents learned** lists the latest times an agent looked back over its work: what made it look (a tool that worked after failing, a person correcting it, a proposal changed or refused, a reply rated unhelpful, a long task) and each lesson it kept, offered or turned down, with the reason.",
-            "A lesson shared beyond one person waits under **Suggested memories**, with the memory it would retire. Select **Review and approve** to edit and keep it, or **Dismiss**.",
+            "A lesson shared beyond one person waits under **Nova suggests**, with the memory it would retire. Select **Approve** to keep it as written, **Edit** to reword it first, or **Dismiss**.",
             "Open any memory in the list to see **Where it came from**: why it was kept, what made the agent look back, what was said, the conversation or run it was drawn from, and the memory it replaces or that has replaced it."
           ]
         }

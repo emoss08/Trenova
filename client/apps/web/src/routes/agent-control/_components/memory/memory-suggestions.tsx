@@ -1,4 +1,3 @@
-import { SectionPanel } from "@/components/section-panel";
 import {
   AGENT_MEMORY_LIST_KEY,
   AGENT_MEMORY_SUGGESTIONS_KEY,
@@ -7,33 +6,24 @@ import {
   fetchAgentMemorySuggestions,
   type AgentMemorySuggestion,
 } from "@/lib/graphql/agent-memories";
-import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
-import { Button } from "@trenova/shared/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@trenova/shared/components/ui/dialog";
-import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useId, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
+import { Ic } from "../kit/ic";
+import { Modal } from "../kit/modal";
 import { invalidateAIControlCounts } from "../overview/use-ai-control-stats";
 import { MEMORY_CONTENT_LIMIT } from "./memory-form-schema";
 
 export const agentMemorySuggestionsQueryKey = [AGENT_MEMORY_SUGGESTIONS_KEY] as const;
 
 /**
- * Memories drawn from what people said about an agent's answers, waiting for
- * an administrator. Nothing here is read by an agent until it is approved:
- * approving makes the edited text active, dismissing keeps the same pattern
- * from being suggested again for thirty days. What people wrote is shown as
- * quoted evidence, never as the memory itself.
+ * Memories drawn from what people said about an agent's answers, or learned by an
+ * agent looking back over its work, waiting for an administrator. Nothing here is read
+ * by an agent until it is approved: approving makes the text active as it stands or as
+ * edited, dismissing keeps the same pattern from being suggested again for thirty days.
+ * What people wrote is shown as quoted evidence, never as the memory itself.
  */
 export function MemorySuggestions({ canDecide }: { canDecide: boolean }) {
   const t = useT();
@@ -41,7 +31,7 @@ export function MemorySuggestions({ canDecide }: { canDecide: boolean }) {
     queryKey: agentMemorySuggestionsQueryKey,
     queryFn: ({ signal }) => fetchAgentMemorySuggestions({ signal }),
   });
-  const [approving, setApproving] = useState<AgentMemorySuggestion | null>(null);
+  const [editing, setEditing] = useState<AgentMemorySuggestion | null>(null);
   const settle = useSettleSuggestion();
 
   const suggestions = suggestionsQuery.data ?? [];
@@ -50,42 +40,42 @@ export function MemorySuggestions({ canDecide }: { canDecide: boolean }) {
   }
 
   return (
-    <SectionPanel
-      title={t("Suggested memories")}
-      icon={<AssistMark />}
-      count={suggestions.length}
-      help={t(
-        "Drawn from ratings people gave an agent's answers, or learned by an agent looking back over its work. Agents read none of these until an administrator approves them.",
-      )}
-    >
-      <ul className="divide-border-subtle flex flex-col divide-y">
-        {suggestions.map((suggestion) => (
-          <SuggestionRow
-            key={suggestion.id}
-            suggestion={suggestion}
-            canDecide={canDecide}
-            busy={settle.isPending}
-            onApprove={() => setApproving(suggestion)}
-            onDismiss={() => settle.mutate({ kind: "dismiss", suggestion })}
-          />
-        ))}
-      </ul>
-
-      <ApproveSuggestionDialog
-        suggestion={approving}
-        busy={settle.isPending}
-        onClose={() => setApproving(null)}
-        onApprove={(content) => {
-          if (approving === null) {
-            return;
+    <section className="sec sg-s">
+      <header className="sh2">
+        <span className="dm" />
+        <h3>{t("Nova suggests")}</h3>
+        <em className="mono">{suggestions.length}</em>
+        <span className="sp" />
+        <span className="sh2-n">{t("Agents read none of these until you approve")}</span>
+      </header>
+      {suggestions.map((suggestion) => (
+        <SuggestionCard
+          key={suggestion.id}
+          suggestion={suggestion}
+          canDecide={canDecide}
+          busy={settle.isPending}
+          onDismiss={() => settle.mutate({ kind: "dismiss", suggestion })}
+          onEdit={() => setEditing(suggestion)}
+          onApprove={() =>
+            settle.mutate({ kind: "approve", suggestion, content: suggestion.content })
           }
-          settle.mutate(
-            { kind: "approve", suggestion: approving, content },
-            { onSuccess: () => setApproving(null) },
-          );
-        }}
-      />
-    </SectionPanel>
+        />
+      ))}
+      {editing && (
+        <ApproveEdited
+          key={editing.id}
+          suggestion={editing}
+          busy={settle.isPending}
+          onClose={() => setEditing(null)}
+          onApprove={(content) =>
+            settle.mutate(
+              { kind: "approve", suggestion: editing, content },
+              { onSuccess: () => setEditing(null) },
+            )
+          }
+        />
+      )}
+    </section>
   );
 }
 
@@ -123,19 +113,23 @@ function useSettleSuggestion() {
   });
 }
 
-function SuggestionRow({
-  suggestion,
-  canDecide,
-  busy,
-  onApprove,
-  onDismiss,
-}: {
+type SuggestionCardProps = {
   suggestion: AgentMemorySuggestion;
   canDecide: boolean;
   busy: boolean;
-  onApprove: () => void;
   onDismiss: () => void;
-}) {
+  onEdit: () => void;
+  onApprove: () => void;
+};
+
+function SuggestionCard({
+  suggestion,
+  canDecide,
+  busy,
+  onDismiss,
+  onEdit,
+  onApprove,
+}: SuggestionCardProps) {
   const t = useT();
   const evidence = suggestion.evidence;
   const ratings = evidence?.ratingCount ?? evidence?.feedbackIds.length ?? 0;
@@ -144,167 +138,108 @@ function SuggestionRow({
   const learned = suggestion.source === "Reflection";
 
   return (
-    <li className="flex flex-col gap-2 px-3 py-3">
-      <p className="text-sm leading-relaxed">{suggestion.content}</p>
-
-      {learned ? (
-        <p className="text-foreground-muted text-xs">
-          {t(
-            "Learned by an agent looking back over its work, {0}",
-            formatUnixDateTimeMedium(suggestion.createdAt),
-          )}
-          {suggestion.supersedesId && !suggestion.supersedes ? (
-            <> · {t("replaces a memory already kept")}</>
-          ) : null}
-          {suggestion.tainted ? (
-            <> · {t("drawn from content written outside the organization")}</>
-          ) : null}
-        </p>
-      ) : (
-        <p className="text-foreground-muted text-xs">
-          {t("{0, plural, one {Drawn from # rating} other {Drawn from # ratings}}", ratings)} ·{" "}
-          {t("{0, plural, one {# person} other {# people}}", people)}
-          {evidence ? (
-            <> · {t("last rated {0}", formatUnixDateTimeMedium(evidence.lastRatedAt))}</>
-          ) : null}
-        </p>
+    <div className="sgm">
+      <p className="sgm-c">{suggestion.content}</p>
+      <p className="sgm-e">
+        {learned
+          ? t(
+              "Learned by an agent looking back over its work · {0}",
+              formatUnixDateTimeMedium(suggestion.createdAt),
+            )
+          : evidence
+            ? t(
+                "{0, plural, one {Drawn from # rating} other {Drawn from # ratings}} by {1, plural, one {# person} other {# people}} · last rated {2}",
+                ratings,
+                people,
+                formatUnixDateTimeMedium(evidence.lastRatedAt),
+              )
+            : t(
+                "{0, plural, one {Drawn from # rating} other {Drawn from # ratings}} by {1, plural, one {# person} other {# people}}",
+                ratings,
+                people,
+              )}
+        {suggestion.tainted && <> · {t("drawn from content written outside the organization")}</>}
+      </p>
+      {learned && evidence?.reason && <p className="sgm-e">{evidence.reason}</p>}
+      {suggestion.supersedes && (
+        <p className="sgm-e">{t("Approving it retires “{0}”", suggestion.supersedes.content)}</p>
       )}
-
-      {learned && evidence?.reason ? (
-        <p className="text-foreground-muted text-xs">{evidence.reason}</p>
-      ) : null}
-
-      {suggestion.supersedes ? (
-        <p className="text-foreground-muted text-xs">
-          {t("Approving it retires “{0}”", suggestion.supersedes.content)}
-        </p>
-      ) : null}
-
       {quotes.length > 0 && (
-        <ul
-          aria-label={learned ? t("What taught it") : t("What people wrote")}
-          className="flex flex-col gap-1"
-        >
+        <ul className="qts" aria-label={learned ? t("What taught it") : t("What people wrote")}>
           {quotes.map((quote) => (
-            <li
-              key={quote}
-              className="border-border-subtle text-foreground-muted border-l-2 pl-2 text-xs italic"
-            >
+            <li key={quote}>
               <q>{quote}</q>
             </li>
           ))}
         </ul>
       )}
-
       {canDecide && (
-        <div className="flex items-center justify-end gap-2">
-          <Button variant="ghost" size="sm" onClick={onDismiss} disabled={busy}>
+        <div className="sgm-a">
+          <button type="button" className="btn sm ghost" disabled={busy} onClick={onDismiss}>
             {t("Dismiss")}
-          </Button>
-          <Button size="sm" onClick={onApprove} disabled={busy}>
-            {t("Review and approve")}
-          </Button>
+          </button>
+          <button type="button" className="btn sm" disabled={busy} onClick={onEdit}>
+            <Ic n="edit" s={12} />
+            {t("Edit")}
+          </button>
+          <button type="button" className="btn sm ink" disabled={busy} onClick={onApprove}>
+            <Ic n="check" s={12} w={2.2} />
+            {t("Approve")}
+          </button>
         </div>
       )}
-    </li>
+    </div>
   );
 }
 
-function ApproveSuggestionDialog({
-  suggestion,
-  busy,
-  onClose,
-  onApprove,
-}: {
-  suggestion: AgentMemorySuggestion | null;
+type ApproveEditedProps = {
+  suggestion: AgentMemorySuggestion;
   busy: boolean;
   onClose: () => void;
   onApprove: (content: string) => void;
-}) {
-  return (
-    <Dialog
-      open={suggestion !== null}
-      onOpenChange={(open) => {
-        if (!open) {
-          onClose();
-        }
-      }}
-    >
-      <DialogContent size="md">
-        {suggestion !== null && (
-          <ApproveForm
-            key={suggestion.id}
-            suggestion={suggestion}
-            busy={busy}
-            onCancel={onClose}
-            onApprove={onApprove}
-          />
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}
+};
 
-function ApproveForm({
-  suggestion,
-  busy,
-  onCancel,
-  onApprove,
-}: {
-  suggestion: AgentMemorySuggestion;
-  busy: boolean;
-  onCancel: () => void;
-  onApprove: (content: string) => void;
-}) {
+function ApproveEdited({ suggestion, busy, onClose, onApprove }: ApproveEditedProps) {
   const t = useT();
-  const contentId = useId();
   const [content, setContent] = useState(suggestion.content);
   const trimmed = content.trim();
 
   return (
-    <form
-      className="flex flex-col gap-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        if (trimmed !== "") {
-          onApprove(trimmed);
-        }
-      }}
+    <Modal
+      open
+      onClose={onClose}
+      title={t("Approve memory")}
+      description={t(
+        "Edit it so it reads as a rule an agent should follow. Once approved, every agent that asks for memory reads it.",
+      )}
+      footer={
+        <>
+          <span className="cmp-n mono">
+            {content.length}/{MEMORY_CONTENT_LIMIT}
+          </span>
+          <span className="sp" />
+          <button type="button" className="btn sm ghost" onClick={onClose}>
+            {t("Cancel")}
+          </button>
+          <button
+            type="button"
+            className="btn sm ink"
+            disabled={busy || trimmed === ""}
+            onClick={() => onApprove(trimmed)}
+          >
+            {t("Approve")}
+          </button>
+        </>
+      }
     >
-      <DialogHeader>
-        <DialogTitle>{t("Approve memory")}</DialogTitle>
-        <DialogDescription>
-          {t(
-            "Edit the memory so it reads as a rule an agent should follow. Once approved, every agent that asks for memory reads it.",
-          )}
-        </DialogDescription>
-      </DialogHeader>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor={contentId} className="text-xs font-medium">
-          {t("Memory")}
-        </label>
-        <Textarea
-          id={contentId}
-          value={content}
-          onChange={(event) => setContent(event.target.value.slice(0, MEMORY_CONTENT_LIMIT))}
-          maxLength={MEMORY_CONTENT_LIMIT}
-          minRows={4}
-          maxRows={12}
-        />
-        <span className="text-foreground-subtle self-end text-2xs tabular-nums">
-          {content.length}/{MEMORY_CONTENT_LIMIT}
-        </span>
-      </div>
-
-      <DialogFooter>
-        <Button type="button" variant="outline" onClick={onCancel} disabled={busy}>
-          {t("Cancel")}
-        </Button>
-        <Button type="submit" disabled={busy || trimmed === ""} isLoading={busy}>
-          {t("Approve")}
-        </Button>
-      </DialogFooter>
-    </form>
+      <textarea
+        className="mta"
+        aria-label={t("Memory")}
+        value={content}
+        autoFocus
+        rows={4}
+        onChange={(event) => setContent(event.target.value.slice(0, MEMORY_CONTENT_LIMIT))}
+      />
+    </Modal>
   );
 }

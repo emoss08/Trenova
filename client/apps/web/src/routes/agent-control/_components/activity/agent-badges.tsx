@@ -167,9 +167,6 @@ export const EvaluationStatusBadge = ({
 export const VerdictBadge = ({ value, t }: { value: string; t: TranslateFn }) => (
   <Labelled entry={VERDICT[value]} t={t} />
 );
-export const MemoryKindBadge = ({ value, t }: { value: AgentMemoryKind; t: TranslateFn }) => (
-  <Labelled entry={MEMORY_KIND[value]} t={t} />
-);
 export const MemoryStatusBadge = ({ value, t }: { value: AgentMemoryStatus; t: TranslateFn }) => (
   <Labelled entry={MEMORY_STATUS[value]} t={t} />
 );

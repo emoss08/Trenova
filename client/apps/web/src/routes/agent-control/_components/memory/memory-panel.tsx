@@ -1,79 +1,197 @@
-import { FormCreatePanel } from "@/components/form-create-panel";
-import { FormEditPanel } from "@/components/form-edit-panel";
 import {
   AGENT_MEMORY_LIST_KEY,
   createAgentMemory,
+  setAgentMemoryStatus,
   updateAgentMemory,
   type AgentMemoryRow,
 } from "@/lib/graphql/agent-memories";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import { useForm, type Resolver } from "react-hook-form";
-import { MemoryForm } from "./memory-form";
-import { MemoryProvenance } from "./memory-provenance";
+import { useState } from "react";
+import { FormProvider, useForm, type Resolver } from "react-hook-form";
+import { toast } from "sonner";
+import { memorySourceLabel } from "../activity/agent-badges";
+import { EditSheet, type EditSection } from "../edit/edit-sheet";
+import type { EditFields } from "../edit/change-review";
+import { useEditFlow } from "../edit/use-edit-flow";
+import { Ic } from "../kit/ic";
+import { invalidateAIControlCounts } from "../overview/use-ai-control-stats";
+import { MemoryAbout, MemoryText, MemoryUntil } from "./memory-form";
 import {
   memoryFormDefaults,
   memoryFormSchema,
+  memoryValuesFromRow,
   toMemoryInput,
   type MemoryFormValues,
 } from "./memory-form-schema";
+import { MEMORY_KIND_LABELS } from "./memory-kind";
+import { MemoryProvenance } from "./memory-provenance";
 
-export function MemoryPanel({
-  open,
-  onOpenChange,
-  mode,
-  row,
-}: DataTablePanelProps<AgentMemoryRow>) {
+type MemoryPanelProps = DataTablePanelProps<AgentMemoryRow> & {
+  /** What a new memory starts from, such as an example picked from the empty list. */
+  preset?: Partial<MemoryFormValues> | null;
+};
+
+/** The table's editor for one memory: a new one, or one already kept. */
+export function MemoryPanel({ open, onOpenChange, mode, row, preset }: MemoryPanelProps) {
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <MemoryEditor
+      key={mode === "edit" && row ? row.id : "new"}
+      row={mode === "edit" ? row : null}
+      preset={preset ?? null}
+      onClose={() => onOpenChange(false)}
+    />
+  );
+}
+
+type MemoryEditorProps = {
+  row: AgentMemoryRow | null;
+  preset: Partial<MemoryFormValues> | null;
+  onClose: () => void;
+};
+
+function MemoryEditor({ row, preset, onClose }: MemoryEditorProps) {
   const t = useT();
+  const queryClient = useQueryClient();
+  const [retiring, setRetiring] = useState(false);
   const form = useForm<MemoryFormValues>({
     resolver: zodResolver(memoryFormSchema) as Resolver<MemoryFormValues>,
-    defaultValues: memoryFormDefaults,
+    defaultValues: row ? memoryValuesFromRow(row) : { ...memoryFormDefaults, ...preset },
     mode: "onChange",
   });
 
-  if (mode === "edit") {
-    return (
-      <FormEditPanel<
-        MemoryFormValues,
-        AgentMemoryRow,
-        MemoryFormValues,
-        Awaited<ReturnType<typeof updateAgentMemory>>
-      >
-        open={open}
-        onOpenChange={onOpenChange}
-        row={row}
-        useDock
-        form={form}
-        queryKey={AGENT_MEMORY_LIST_KEY}
-        title={t("Memory")}
-        fieldKey="content"
-        mutationFn={(values, current) => updateAgentMemory(current.id, toMemoryInput(values))}
-        formComponent={
-          <>
-            <MemoryForm />
-            <MemoryProvenance memory={row} />
-          </>
-        }
-      />
+  const refresh = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: [AGENT_MEMORY_LIST_KEY] }),
+      invalidateAIControlCounts(queryClient),
+    ]);
+
+  const flow = useEditFlow({
+    form,
+    create: row === null,
+    resourceName: t("Memory"),
+    onClose,
+    versionField: "version",
+    onSave: async (values) => {
+      const saved = row
+        ? await updateAgentMemory(row.id, toMemoryInput(values))
+        : await createAgentMemory(toMemoryInput(values));
+      await refresh();
+      toast.success(
+        row ? t("Memory saved") : t("Memory saved; agents read it from their next run"),
+      );
+      return memoryValuesFromRow(saved);
+    },
+  });
+
+  const retire = async () => {
+    if (!row) return;
+    setRetiring(true);
+    try {
+      await setAgentMemoryStatus(row.id, row.status === "Retired" ? "Active" : "Retired");
+      await refresh();
+      toast.success(row.status === "Retired" ? t("Memory restored") : t("Memory retired"));
+      onClose();
+    } finally {
+      setRetiring(false);
+    }
+  };
+
+  const fields: EditFields = {
+    content: { label: t("Memory") },
+    kind: { label: t("Kind"), format: (value) => t(MEMORY_KIND_LABELS[value as never] ?? "") },
+    subjectType: { label: t("About") },
+    subjectId: { label: t("Record") },
+    toolName: { label: t("Tool") },
+    expiresAt: {
+      label: t("Until"),
+      format: (value) =>
+        typeof value === "number" ? formatUnixDateTimeMedium(value) : t("No end"),
+    },
+  };
+
+  const sections: EditSection[] = [
+    { id: "memory", label: t("Memory"), keys: ["content", "kind"], content: <MemoryText /> },
+    {
+      id: "about",
+      label: t("About"),
+      keys: ["subjectType", "subjectId", "toolName"],
+      note: t("Leave it on every agent for something every agent should know."),
+      content: <MemoryAbout />,
+    },
+    {
+      id: "until",
+      label: t("Until"),
+      keys: ["expiresAt"],
+      note: t("After this day agents stop reading it."),
+      content: <MemoryUntil />,
+    },
+  ];
+  if (row) {
+    sections.push(
+      {
+        id: "provenance",
+        label: t("Where it came from"),
+        note: t("Recorded with the memory; editing it does not change this."),
+        content: <MemoryProvenance memory={row} />,
+      },
+      {
+        id: "retire",
+        label: row.status === "Retired" ? t("Restore") : t("Retire"),
+        note:
+          row.status === "Retired"
+            ? t("Agents read it again from their next run.")
+            : t(
+                "Agents stop reading it. The memory is kept, so what they were told stays readable.",
+              ),
+        content: (
+          <button
+            type="button"
+            className={row.status === "Retired" ? "xa" : "xa d"}
+            disabled={retiring}
+            onClick={() => void retire()}
+          >
+            <Ic n={row.status === "Retired" ? "undo" : "trash"} s={13} />
+            {row.status === "Retired" ? t("Restore memory") : t("Retire memory")}
+          </button>
+        ),
+      },
     );
   }
 
   return (
-    <FormCreatePanel<
-      MemoryFormValues,
-      AgentMemoryRow,
-      MemoryFormValues,
-      Awaited<ReturnType<typeof createAgentMemory>>
-    >
-      open={open}
-      onOpenChange={onOpenChange}
-      form={form}
-      queryKey={AGENT_MEMORY_LIST_KEY}
-      title={t("Memory")}
-      description={t("Every agent that asks for memory reads this on its next run.")}
-      mutationFn={(values) => createAgentMemory(toMemoryInput(values))}
-      formComponent={<MemoryForm />}
-    />
+    <FormProvider {...form}>
+      <EditSheet
+        open
+        form={form}
+        flow={flow}
+        fields={fields}
+        sections={sections}
+        icon={
+          <span className="src-i">
+            <Ic n="brain" s={18} />
+          </span>
+        }
+        title={row ? t("Edit memory") : t("New memory")}
+        subtitle={
+          row
+            ? t(
+                "{0} · {1} · {2, plural, one {read # time} other {read # times}}",
+                memorySourceLabel(row.source, t),
+                formatUnixDateTimeMedium(row.createdAt),
+                row.useCount,
+              )
+            : t("Every agent that asks for memory reads it")
+        }
+        saveLabel={row ? t("Save changes") : t("Save memory")}
+      />
+    </FormProvider>
   );
 }

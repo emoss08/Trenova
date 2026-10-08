@@ -11,6 +11,7 @@
   "Nothing has posted to this customer's receivables. Their first invoice or payment starts the ledger.": "此客户的应收账款尚无任何过账。其首张发票或首笔付款将开启分类账。",
   "Oldest open invoice": "最旧的未结发票",
   "Payments — trailing 12 months": "付款 — 过去 12 个月",
+  "Pick a customer": "选择客户",
   "Select a customer...": "选择客户…",
   "Statement": "对账单",
   "Statement-style transaction history with the customer's AR profile.": "以对账单形式呈现的交易历史，并附客户的应收账款概况。",

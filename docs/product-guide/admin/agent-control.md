@@ -414,10 +414,10 @@ Keywords: agent memory, standing instruction, fact, correction, retire memory
 2. Select **New memory**.
 3. Choose the **Kind** (**Instruction**, **Fact**, **Correction** or **Procedure**), write the
    **Memory**, and optionally set **Until**.
-4. To make it about one record, pick a **Kind of record** and the record; leave it empty for
-   something every agent should know. Then select **Save**.
-5. To stop agents reading an entry, right-click it and choose **Retire**; **Restore** brings it
-   back.
+4. To make it about one record, set **About** to the kind of record and pick the record; leave it
+   on **Every agent** for something every agent should know. Then select **Save memory**.
+5. To stop agents reading an entry, open it and select **Retire memory**, or right-click it and
+   choose **Retire**; **Restore** brings it back.
 
 ### Let agents learn from their work
 Keywords: self-improving agents, learning, reflection, look back, lessons, procedures, what the agent learned
@@ -429,8 +429,8 @@ Keywords: self-improving agents, learning, reflection, look back, lessons, proce
    back over its work: what made it look (a tool that worked after failing, a person correcting
    it, a proposal changed or refused, a reply rated unhelpful, a long task) and each lesson it
    kept, offered or turned down, with the reason.
-4. A lesson shared beyond one person waits under **Suggested memories**, with the memory it
-   would retire. Select **Review and approve** to edit and keep it, or **Dismiss**.
+4. A lesson shared beyond one person waits under **Nova suggests**, with the memory it would
+   retire. Select **Approve** to keep it as written, **Edit** to reword it first, or **Dismiss**.
 5. Open any memory in the list to see **Where it came from**: why it was kept, what made the
    agent look back, what was said, the conversation or run it was drawn from, and the memory it
    replaces or that has replaced it.

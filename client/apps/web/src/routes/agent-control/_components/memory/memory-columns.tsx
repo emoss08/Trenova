@@ -3,8 +3,8 @@ import { DataTableDescription } from "@/components/data-table/_components/data-t
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import type { AgentMemoryRow } from "@/lib/graphql/agent-memories";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
+import { MemoryKindMark } from "./memory-kind";
 import {
-  MemoryKindBadge,
   MemoryStatusBadge,
   memoryKindChoices,
   memorySourceChoices,
@@ -53,7 +53,7 @@ export function getMemoryColumns(t: TranslateFn): ColumnDef<AgentMemoryRow>[] {
     {
       accessorKey: "kind",
       header: t("Kind"),
-      cell: ({ row }) => <MemoryKindBadge value={row.original.kind} t={t} />,
+      cell: ({ row }) => <MemoryKindMark kind={row.original.kind} />,
       size: 130,
       meta: {
         label: t("Kind"),
