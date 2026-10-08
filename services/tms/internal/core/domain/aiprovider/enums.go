@@ -369,3 +369,20 @@ func (e ReasoningEffort) ThinkingBudget() int {
 		return 0
 	}
 }
+
+// CapAction is what happens to a task once a provider has spent its monthly
+// cap: Next moves it to the next provider in line, Stop fails it there.
+type CapAction string
+
+const (
+	CapActionNext = CapAction("Next")
+	CapActionStop = CapAction("Stop")
+)
+
+func AllCapActions() []CapAction {
+	return []CapAction{CapActionNext, CapActionStop}
+}
+
+func (a CapAction) IsValid() bool {
+	return slices.Contains(AllCapActions(), a)
+}

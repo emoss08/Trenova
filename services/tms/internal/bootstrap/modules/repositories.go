@@ -384,6 +384,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	agentshadowrepository.New,
 	aicontrolfactsrepository.New,
 	aiproviderrepository.NewDismissalRepository,
+	aiproviderrepository.NewKeyRepository,
 	aituneuprepository.New,
 	agentdefinitionrepository.NewTestPromptRepository,
 	agentscorecardrepository.New,

@@ -138,11 +138,65 @@ export type AiFeedbackTargetType =
   /** A watchtower item raised by AI work: an insight, a proposal, a plan, a failed run or an agent exception. */
   | 'WatchtowerItem';
 
+/** What a provider does with a task once its monthly cap is reached. */
+export type AiProviderCapAction =
+  /** The task goes to the next provider in line. */
+  | 'Next'
+  /** The task fails rather than moving on. */
+  | 'Stop';
+
+export type AiProviderDraftTestInput = {
+  embeddingDimensions?: number | null | undefined;
+  embeddingInputStyle?: AiEmbeddingInputStyle | null | undefined;
+  endpoint: AiProviderEndpointInput;
+  model: string;
+  structuredOutputMode?: AiStructuredOutputMode | null | undefined;
+  tasks: Array<AiTask>;
+  timeoutSeconds?: number | null | undefined;
+};
+
+/**
+ * An endpoint as an editor holds it, before it is saved. With providerId and no
+ * apiKey, the provider's stored key is used.
+ */
+export type AiProviderEndpointInput = {
+  allowPrivateNetwork: boolean;
+  apiKey?: string | null | undefined;
+  baseUrl: string;
+  kind: AiProviderKind;
+  providerId?: string | number | null | undefined;
+};
+
 export type AiProviderKind =
   | 'AnthropicMessages'
   | 'Ollama'
   | 'OpenAIChat'
   | 'OpenAIResponses';
+
+/** The fields of a provider that change on their own, from its row and read sheet. */
+export type AiProviderPatchInput = {
+  allowPrivateNetwork?: boolean | null | undefined;
+  /** A new credential. It replaces the stored one and is never returned. */
+  apiKey?: string | null | undefined;
+  enabled?: boolean | null | undefined;
+  inputCostPerMillion?: string | null | undefined;
+  outputCostPerMillion?: string | null | undefined;
+  tasks?: Array<AiTask> | null | undefined;
+  trusted?: boolean | null | undefined;
+};
+
+/** A provider as its editor holds it, reduced to what decides where tasks go. */
+export type AiProviderRoutingDraftInput = {
+  embeddingDimensions?: number | null | undefined;
+  enabled: boolean;
+  /** The provider being edited. Absent for a new one. */
+  id?: string | number | null | undefined;
+  kind: AiProviderKind;
+  name: string;
+  priority: number;
+  tasks: Array<AiTask>;
+  trusted: boolean;
+};
 
 /**
  * How hard a model is asked to think before it answers. Off sends no reasoning
@@ -9158,7 +9212,7 @@ export type AgentFeedbackSummaryQueryVariables = Exact<{
 
 export type AgentFeedbackSummaryQuery = { agentFeedbackSummary: { agentDefinitionId: string, windowDays: number, since: number, positive: number, negative: number, satisfaction: number | null, days: Array<{ day: string, positive: number, negative: number, satisfaction: number | null }>, worstRated: Array<{ targetType: AiFeedbackTargetType, targetId: string, targetPart: string, positive: number, negative: number, lastRatedAt: number, sample: { ' $fragmentRefs'?: { 'AiFeedbackTableRowFieldsFragment': AiFeedbackTableRowFieldsFragment } } | null }> } };
 
-export type AiProviderCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, kind: AiProviderKind, baseUrl: string, model: string, hasApiKey: boolean, allowPrivateNetwork: boolean, structuredOutputMode: AiStructuredOutputMode, reasoningEffort: AiReasoningEffort, thinkingStyle: AiThinkingStyle, extraBody: unknown, inputCostPerMillion: string | null, outputCostPerMillion: string | null, maxTokens: number, tasks: Array<AiTask>, priority: number, embeddingDimensions: number | null, embeddingInputStyle: AiEmbeddingInputStyle, trusted: boolean, enabled: boolean, version: number, createdAt: number, updatedAt: number, lastTest: { success: boolean, message: string, modelIdentifier: string, schemaHonoured: boolean, latencyMs: number, detail: string, testedAt: number } | null } & { ' $fragmentName'?: 'AiProviderCardFieldsFragment' };
+export type AiProviderCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, kind: AiProviderKind, baseUrl: string, model: string, hasApiKey: boolean, allowPrivateNetwork: boolean, structuredOutputMode: AiStructuredOutputMode, reasoningEffort: AiReasoningEffort, thinkingStyle: AiThinkingStyle, extraBody: unknown, inputCostPerMillion: string | null, outputCostPerMillion: string | null, maxTokens: number, tasks: Array<AiTask>, priority: number, embeddingDimensions: number | null, embeddingInputStyle: AiEmbeddingInputStyle, trusted: boolean, enabled: boolean, timeoutSeconds: number, maxConcurrent: number, monthlyCapUsd: string | null, onCap: AiProviderCapAction, monthSpendUsd: string, version: number, createdAt: number, updatedAt: number, lastTest: { success: boolean, message: string, modelIdentifier: string, schemaHonoured: boolean, latencyMs: number, detail: string, testedAt: number } | null, apiKey: { prefix: string, lastFour: string, addedAt: number, lastUsedAt: number | null, previousKeyExpiresAt: number | null, addedBy: { id: string, name: string } | null } | null } & { ' $fragmentName'?: 'AiProviderCardFieldsFragment' };
 
 export type AiProviderCardsQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -9173,6 +9227,52 @@ export type AiProviderDetailQueryVariables = Exact<{
 
 
 export type AiProviderDetailQuery = { aiProvider: { ' $fragmentRefs'?: { 'AiProviderCardFieldsFragment': AiProviderCardFieldsFragment } } | null };
+
+export type AiRoutePreviewQueryVariables = Exact<{
+  draft: AiProviderRoutingDraftInput;
+}>;
+
+
+export type AiRoutePreviewQuery = { aiRoutePreview: Array<{ task: AiTask, changed: boolean, before: { providerId: string | null, name: string, draft: boolean } | null, after: { providerId: string | null, name: string, draft: boolean } | null }> };
+
+export type AiProviderModelsQueryVariables = Exact<{
+  input: AiProviderEndpointInput;
+}>;
+
+
+export type AiProviderModelsQuery = { aiProviderModels: Array<{ id: string, displayName: string, contextWindow: number | null, sizeBytes: number | null, loaded: boolean, embedding: boolean, inputCostPerMillion: string | null, outputCostPerMillion: string | null }> };
+
+export type AiProviderUsageDailyQueryVariables = Exact<{
+  days?: number | null | undefined;
+  timezone?: string | null | undefined;
+  providerId?: string | number | null | undefined;
+}>;
+
+
+export type AiProviderUsageDailyQuery = { aiUsageDaily: Array<{ day: string, calls: number, failed: number }> };
+
+export type TestAiProviderDraftMutationVariables = Exact<{
+  input: AiProviderDraftTestInput;
+}>;
+
+
+export type TestAiProviderDraftMutation = { testAIProviderDraft: { success: boolean, message: string, detail: string, hint: string, modelIdentifier: string, schemaHonoured: boolean, latencyMs: number } };
+
+export type ReorderAiProvidersMutationVariables = Exact<{
+  ids: Array<string | number> | string | number;
+}>;
+
+
+export type ReorderAiProvidersMutation = { reorderAIProviders: Array<{ ' $fragmentRefs'?: { 'AiProviderCardFieldsFragment': AiProviderCardFieldsFragment } }> };
+
+export type PatchAiProviderMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+  input: AiProviderPatchInput;
+}>;
+
+
+export type PatchAiProviderMutation = { patchAIProvider: { ' $fragmentRefs'?: { 'AiProviderCardFieldsFragment': AiProviderCardFieldsFragment } } };
 
 export type AiUsageSummaryQueryVariables = Exact<{
   since?: number | null | undefined;
@@ -17753,6 +17853,22 @@ export const AiProviderCardFieldsFragmentDoc = new TypedDocumentString(`
     detail
     testedAt
   }
+  timeoutSeconds
+  maxConcurrent
+  monthlyCapUsd
+  onCap
+  monthSpendUsd
+  apiKey {
+    prefix
+    lastFour
+    addedAt
+    addedBy {
+      id
+      name
+    }
+    lastUsedAt
+    previousKeyExpiresAt
+  }
   version
   createdAt
   updatedAt
@@ -25257,8 +25373,14 @@ export const SetMyAiFeedbackDocument = {"__meta__":{"kind":"mutation","name":"Se
 export const ClearMyAiFeedbackDocument = {"__meta__":{"kind":"mutation","name":"ClearMyAIFeedback","hash":"sha256:fe3ab8a659e88516571a342f231d0e575d1a136d9c5a9655bcca2fd93613510a"}} as unknown as TypedDocumentString<ClearMyAiFeedbackMutation, ClearMyAiFeedbackMutationVariables>;
 export const AiFeedbackTableDocument = {"__meta__":{"kind":"query","name":"AIFeedbackTable","hash":"sha256:340427dceb61302fa430510e09fb15618155e62a07eda870abd25d331ae9ee8f"}} as unknown as TypedDocumentString<AiFeedbackTableQuery, AiFeedbackTableQueryVariables>;
 export const AgentFeedbackSummaryDocument = {"__meta__":{"kind":"query","name":"AgentFeedbackSummary","hash":"sha256:0a99eeca389833697ab85daf88747a577c77f96c073a0fdc51df38e67aad7e1b"}} as unknown as TypedDocumentString<AgentFeedbackSummaryQuery, AgentFeedbackSummaryQueryVariables>;
-export const AiProviderCardsDocument = {"__meta__":{"kind":"query","name":"AIProviderCards","hash":"sha256:34c633c35b3a5b33d99238f07fbee597b0a654bca74a4c8cf5d8a04c59e9118d"}} as unknown as TypedDocumentString<AiProviderCardsQuery, AiProviderCardsQueryVariables>;
-export const AiProviderDetailDocument = {"__meta__":{"kind":"query","name":"AIProviderDetail","hash":"sha256:a0c568ce3b9e29ef4c62b6a6f9c95c08b58f39862ecc50de6bf0f63c80db8103"}} as unknown as TypedDocumentString<AiProviderDetailQuery, AiProviderDetailQueryVariables>;
+export const AiProviderCardsDocument = {"__meta__":{"kind":"query","name":"AIProviderCards","hash":"sha256:033010abd2c84d6b64e3a0ba17e88c23b88e603bee54828259755cc73537ce37"}} as unknown as TypedDocumentString<AiProviderCardsQuery, AiProviderCardsQueryVariables>;
+export const AiProviderDetailDocument = {"__meta__":{"kind":"query","name":"AIProviderDetail","hash":"sha256:9fe4fbb1c836a83a650dfd7d8fcf9c6b7fb6709d1a12bd9c2f0eb5472d8b887e"}} as unknown as TypedDocumentString<AiProviderDetailQuery, AiProviderDetailQueryVariables>;
+export const AiRoutePreviewDocument = {"__meta__":{"kind":"query","name":"AIRoutePreview","hash":"sha256:0502a524401b35341763abf9b0ff03589358c9ea9f199ca7e9017b44eda92b65"}} as unknown as TypedDocumentString<AiRoutePreviewQuery, AiRoutePreviewQueryVariables>;
+export const AiProviderModelsDocument = {"__meta__":{"kind":"query","name":"AIProviderModels","hash":"sha256:58655c5ab84a79a23f42c4addbb7b7608c47b772917b86e238171cceac4c5f7d"}} as unknown as TypedDocumentString<AiProviderModelsQuery, AiProviderModelsQueryVariables>;
+export const AiProviderUsageDailyDocument = {"__meta__":{"kind":"query","name":"AIProviderUsageDaily","hash":"sha256:8c15d40d351e26f4e0e74838332e965bdfa69be1aa66452482fc3399dad511c7"}} as unknown as TypedDocumentString<AiProviderUsageDailyQuery, AiProviderUsageDailyQueryVariables>;
+export const TestAiProviderDraftDocument = {"__meta__":{"kind":"mutation","name":"TestAIProviderDraft","hash":"sha256:5cd1d34923e16b5189644e35108d85429a67b9f2554cd7b3aa90add20ba6f689"}} as unknown as TypedDocumentString<TestAiProviderDraftMutation, TestAiProviderDraftMutationVariables>;
+export const ReorderAiProvidersDocument = {"__meta__":{"kind":"mutation","name":"ReorderAIProviders","hash":"sha256:39b94b5e94d4599e94a49ba3728ab3d0e8915806c2d6d92cb897229a5319a938"}} as unknown as TypedDocumentString<ReorderAiProvidersMutation, ReorderAiProvidersMutationVariables>;
+export const PatchAiProviderDocument = {"__meta__":{"kind":"mutation","name":"PatchAIProvider","hash":"sha256:2913b14ab650bdfc256da48213bdd2af6d3a1ae578f689e97f800c764d7a9c70"}} as unknown as TypedDocumentString<PatchAiProviderMutation, PatchAiProviderMutationVariables>;
 export const AiUsageSummaryDocument = {"__meta__":{"kind":"query","name":"AIUsageSummary","hash":"sha256:22b752f36ea7369cb330c482bae62e65443c496110818dff32d26d4405302d17"}} as unknown as TypedDocumentString<AiUsageSummaryQuery, AiUsageSummaryQueryVariables>;
 export const ApiKeyTableDocument = {"__meta__":{"kind":"query","name":"ApiKeyTable","hash":"sha256:aeacf34d9ae14863db97c29a2ea928d83c46bba47f49ecd6a05ccdf7d4a33951"}} as unknown as TypedDocumentString<ApiKeyTableQuery, ApiKeyTableQueryVariables>;
 export const AttentionSummaryDocument = {"__meta__":{"kind":"query","name":"AttentionSummary","hash":"sha256:f5497f5bda3b38c5a3875db4677a9a034d1bcc1c4866b6c698351fc2198b1322"}} as unknown as TypedDocumentString<AttentionSummaryQuery, AttentionSummaryQueryVariables>;

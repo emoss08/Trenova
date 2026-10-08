@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -36,7 +37,20 @@ const (
 	// ceiling is a typo, not a model.
 	minContextWindow = 4096
 	maxContextWindow = 10_000_000
+
+	DefaultTimeoutSeconds = 60
+	MinTimeoutSeconds     = 5
+	MaxTimeoutSeconds     = 600
+	DefaultMaxConcurrent  = 8
+	MinMaxConcurrent      = 1
+	MaxMaxConcurrent      = 64
+	// RotationGrace is how long a replaced key is kept as a fallback when its
+	// replacement is saved with the old one kept.
+	RotationGrace = 24 * time.Hour
 )
+
+// maxMonthlyCap is the largest cap NUMERIC(12,2) holds.
+var maxMonthlyCap = decimal.RequireFromString("9999999999.99")
 
 // Provider is one configured model endpoint belonging to an organization. An
 // organization may hold several — a local model for classification, a hosted one
@@ -131,6 +145,30 @@ type Provider struct {
 	// probing it again on every page load.
 	LastTest *TestOutcome `json:"lastTest" bun:"last_test,type:JSONB,nullzero"`
 
+	// TimeoutSeconds bounds one call to this provider. A call that runs past
+	// it is this provider's failure, and the task moves to the next one.
+	TimeoutSeconds int `json:"timeoutSeconds" bun:"timeout_seconds,type:INTEGER,notnull,nullzero,default:60"`
+	// MaxConcurrent is how many calls this provider takes at once across
+	// every server. Past it, work moves to the next provider.
+	MaxConcurrent int `json:"maxConcurrent" bun:"max_concurrent,type:INTEGER,notnull,nullzero,default:8"`
+	// MonthlyCapUSD is the most this provider may spend in a UTC calendar
+	// month, over the calls that carried a price. Nil means no cap.
+	MonthlyCapUSD *decimal.Decimal `json:"monthlyCapUsd" bun:"monthly_cap_usd,type:NUMERIC(12,2),nullzero"`
+	OnCap         CapAction        `json:"onCap"         bun:"on_cap,type:VARCHAR(10),notnull,nullzero,default:'Next'"`
+
+	// APIKeyPrefix and APIKeyLastFour are the only parts of the key kept in
+	// the clear: enough to tell two keys apart, never enough to use one.
+	APIKeyPrefix     string   `json:"apiKeyPrefix"     bun:"api_key_prefix,type:VARCHAR(20),nullzero"`
+	APIKeyLastFour   string   `json:"apiKeyLastFour"   bun:"api_key_last_four,type:VARCHAR(4),nullzero"`
+	APIKeyAddedAt    *int64   `json:"apiKeyAddedAt"    bun:"api_key_added_at,type:BIGINT,nullzero"`
+	APIKeyAddedByID  pulid.ID `json:"apiKeyAddedById"  bun:"api_key_added_by_id,type:VARCHAR(100),nullzero"`
+	APIKeyLastUsedAt *int64   `json:"apiKeyLastUsedAt" bun:"api_key_last_used_at,type:BIGINT,nullzero"`
+	// PreviousAPIKey is the key a rotation replaced, encrypted like APIKey,
+	// kept until RotationExpiresAt so calls refused with the new key can
+	// still be served while the change reaches the vendor.
+	PreviousAPIKey    string `json:"-"                 bun:"previous_api_key,type:TEXT,nullzero"`
+	RotationExpiresAt *int64 `json:"rotationExpiresAt" bun:"rotation_expires_at,type:BIGINT,nullzero"`
+
 	// HasAPIKey is set on the redacted copy so a client can tell a credential is
 	// stored without the secret making the trip.
 	HasAPIKey bool `json:"hasApiKey" bun:"-"`
@@ -183,10 +221,158 @@ func (p *Provider) GetTableName() string { return "ai_providers" }
 // a configured state without the secret making the trip.
 func (p *Provider) Redacted() *Provider {
 	clone := *p
-	clone.HasAPIKey = p.HasStoredAPIKey()
+	clone.HasAPIKey = p.HasStoredAPIKey() || p.HasAPIKey
 	clone.APIKey = ""
+	clone.PreviousAPIKey = ""
+	if p.PreviousKeyExpired(timeutils.NowUnix()) {
+		clone.RotationExpiresAt = nil
+	}
 
 	return &clone
+}
+
+// KeyInfo describes the stored credential without the secret. It is nil
+// when no key is stored.
+type KeyInfo struct {
+	Prefix               string
+	LastFour             string
+	AddedAt              int64
+	AddedByID            pulid.ID
+	LastUsedAt           *int64
+	PreviousKeyExpiresAt *int64
+}
+
+// KeyInfo is what may be said about the stored key. A key stored before its
+// ends were recorded reads as added when the provider was created.
+func (p *Provider) KeyInfo(now int64) *KeyInfo {
+	if !p.HasStoredAPIKey() && !p.HasAPIKey {
+		return nil
+	}
+
+	info := &KeyInfo{
+		Prefix:     p.APIKeyPrefix,
+		LastFour:   p.APIKeyLastFour,
+		AddedAt:    p.CreatedAt,
+		AddedByID:  p.APIKeyAddedByID,
+		LastUsedAt: p.APIKeyLastUsedAt,
+	}
+	if p.APIKeyAddedAt != nil {
+		info.AddedAt = *p.APIKeyAddedAt
+	}
+	if p.RotationExpiresAt != nil && *p.RotationExpiresAt > now {
+		expires := *p.RotationExpiresAt
+		info.PreviousKeyExpiresAt = &expires
+	}
+
+	return info
+}
+
+// NeedsKeyFingerprint reports a stored key whose ends were never recorded.
+func (p *Provider) NeedsKeyFingerprint() bool {
+	return p.HasStoredAPIKey() && p.APIKeyLastFour == "" && p.APIKeyPrefix == ""
+}
+
+// PreviousKeyUsable reports a replaced key still inside its grace period.
+func (p *Provider) PreviousKeyUsable(now int64) bool {
+	return strings.TrimSpace(p.PreviousAPIKey) != "" &&
+		p.RotationExpiresAt != nil && *p.RotationExpiresAt > now
+}
+
+// PreviousKeyExpired reports a rotation whose grace period has run out.
+func (p *Provider) PreviousKeyExpired(now int64) bool {
+	return p.RotationExpiresAt != nil && *p.RotationExpiresAt <= now
+}
+
+// ForgetExpiredPreviousKey drops a replaced key whose grace period is over,
+// and reports whether there was one.
+func (p *Provider) ForgetExpiredPreviousKey(now int64) bool {
+	if !p.PreviousKeyExpired(now) {
+		return false
+	}
+	p.PreviousAPIKey = ""
+	p.RotationExpiresAt = nil
+
+	return true
+}
+
+// KeyReplacement is a new credential for a provider. Encrypted is empty to
+// clear the stored key.
+type KeyReplacement struct {
+	Encrypted    string
+	Prefix       string
+	LastFour     string
+	AddedByID    pulid.ID
+	Now          int64
+	KeepPrevious bool
+}
+
+// ReplaceAPIKey stores a new credential. With KeepPrevious, a key it
+// replaces is kept as a fallback for RotationGrace; otherwise any replaced
+// key is dropped.
+func (p *Provider) ReplaceAPIKey(r KeyReplacement) {
+	if r.KeepPrevious && r.Encrypted != "" && p.HasStoredAPIKey() {
+		expires := r.Now + int64(RotationGrace/time.Second)
+		p.PreviousAPIKey = p.APIKey
+		p.RotationExpiresAt = &expires
+	} else {
+		p.PreviousAPIKey = ""
+		p.RotationExpiresAt = nil
+	}
+
+	p.APIKey = r.Encrypted
+	p.APIKeyLastUsedAt = nil
+	if r.Encrypted == "" {
+		p.APIKeyPrefix = ""
+		p.APIKeyLastFour = ""
+		p.APIKeyAddedAt = nil
+		p.APIKeyAddedByID = pulid.Nil
+
+		return
+	}
+
+	addedAt := r.Now
+	p.APIKeyPrefix = r.Prefix
+	p.APIKeyLastFour = r.LastFour
+	p.APIKeyAddedAt = &addedAt
+	p.APIKeyAddedByID = r.AddedByID
+}
+
+// ResolvedTimeout is how long one call to this provider may take.
+func (p *Provider) ResolvedTimeout() time.Duration {
+	seconds := p.TimeoutSeconds
+	if seconds <= 0 {
+		seconds = DefaultTimeoutSeconds
+	}
+
+	return time.Duration(seconds) * time.Second
+}
+
+// ResolvedMaxConcurrent is how many calls this provider takes at once.
+func (p *Provider) ResolvedMaxConcurrent() int {
+	if p.MaxConcurrent <= 0 {
+		return DefaultMaxConcurrent
+	}
+
+	return p.MaxConcurrent
+}
+
+// ResolvedOnCap is what happens to a task once the monthly cap is reached.
+func (p *Provider) ResolvedOnCap() CapAction {
+	if p.OnCap == "" {
+		return CapActionNext
+	}
+
+	return p.OnCap
+}
+
+// Capped reports whether the provider has a monthly cap.
+func (p *Provider) Capped() bool {
+	return p.MonthlyCapUSD != nil
+}
+
+// CapReached reports whether spend has used up the monthly cap.
+func (p *Provider) CapReached(spend decimal.Decimal) bool {
+	return p.MonthlyCapUSD != nil && spend.GreaterThanOrEqual(*p.MonthlyCapUSD)
 }
 
 // HasStoredAPIKey reports whether a credential is stored.
@@ -443,6 +629,19 @@ func (p *Provider) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&p.Priority,
 			validation.Min(0).Error("Priority cannot be negative"),
 		),
+		validation.Field(&p.TimeoutSeconds,
+			validation.Min(MinTimeoutSeconds).Error("Timeout must be at least 5 seconds"),
+			validation.Max(MaxTimeoutSeconds).Error("Timeout cannot exceed 600 seconds"),
+		),
+		validation.Field(&p.MaxConcurrent,
+			validation.Min(MinMaxConcurrent).Error("Concurrent calls must be at least 1"),
+			validation.Max(MaxMaxConcurrent).Error("Concurrent calls cannot exceed 64"),
+		),
+		validation.Field(&p.MonthlyCapUSD, validation.By(validMonthlyCap)),
+		validation.Field(&p.OnCap,
+			validation.Required.Error("What happens at the cap is required"),
+			domainvalidation.ValidEnum[CapAction]("What happens at the cap must be Next or Stop"),
+		),
 	))
 
 	p.validateTasks(multiErr)
@@ -584,6 +783,31 @@ func (p *Provider) applyDefaults() {
 	}
 	if p.EmbeddingInputStyle == "" {
 		p.EmbeddingInputStyle = EmbeddingInputStyleNone
+	}
+	if p.TimeoutSeconds == 0 {
+		p.TimeoutSeconds = DefaultTimeoutSeconds
+	}
+	if p.MaxConcurrent == 0 {
+		p.MaxConcurrent = DefaultMaxConcurrent
+	}
+	if p.OnCap == "" {
+		p.OnCap = CapActionNext
+	}
+}
+
+func validMonthlyCap(value any) error {
+	limit, _ := value.(*decimal.Decimal)
+	switch {
+	case limit == nil:
+		return nil
+	case !limit.IsPositive():
+		return validation.NewError("validation_monthly_cap_positive", "Monthly cap must be more than zero")
+	case limit.GreaterThan(maxMonthlyCap):
+		return validation.NewError("validation_monthly_cap_max", "Monthly cap is larger than this system can hold")
+	case !limit.Equal(limit.Round(2)):
+		return validation.NewError("validation_monthly_cap_scale", "Monthly cap takes at most two decimal places")
+	default:
+		return nil
 	}
 }
 

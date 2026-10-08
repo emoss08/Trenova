@@ -71,7 +71,11 @@ type TxtProps = {
   width?: number;
   id?: string;
   label?: string;
-  type?: "text" | "date";
+  type?: "text" | "date" | "password" | "number";
+  autoFocus?: boolean;
+  /** Hands the browser's own validation the range a number may take. */
+  min?: number;
+  max?: number;
 };
 
 /** A one-line text box, with an optional unit before or after it. */
@@ -86,6 +90,9 @@ export function Txt({
   id,
   label,
   type = "text",
+  autoFocus = false,
+  min,
+  max,
 }: TxtProps) {
   return (
     <label className={cn("inx", mono && "mono")} style={width ? { width } : undefined}>
@@ -94,6 +101,10 @@ export function Txt({
         id={id}
         type={type}
         aria-label={label}
+        autoFocus={autoFocus}
+        autoComplete={type === "password" ? "new-password" : undefined}
+        min={min}
+        max={max}
         value={value}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
@@ -137,7 +148,8 @@ export function Sel<T extends string | number>({ value, onChange, options, label
 type ChipsProps<T extends string> = {
   value: readonly T[];
   onChange: (value: T[]) => void;
-  options: readonly (readonly [T, string])[];
+  /** Each choice: its key, its label, and an optional mark after the label. */
+  options: readonly (readonly [T, string, ReactNode?])[];
   label: string;
 };
 
@@ -145,7 +157,7 @@ type ChipsProps<T extends string> = {
 export function Chips<T extends string>({ value, onChange, options, label }: ChipsProps<T>) {
   return (
     <div className="tks" role="group" aria-label={label}>
-      {options.map(([key, text]) => {
+      {options.map(([key, text, mark]) => {
         const on = value.includes(key);
         return (
           <button
@@ -157,6 +169,7 @@ export function Chips<T extends string>({ value, onChange, options, label }: Chi
           >
             <Ic n={on ? "check" : "plus"} s={11} w={2.2} />
             {text}
+            {mark}
           </button>
         );
       })}

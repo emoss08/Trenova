@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
@@ -198,7 +199,7 @@ func (r *repository) ListEnabled(
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			ExcludeColumn(cols.APIKey.Bare()).
+			ExcludeColumn(cols.APIKey.Bare(), cols.PreviousAPIKey.Bare()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return buncolgen.ProviderScopeTenant(sq, tenantInfo).Where(cols.Enabled.IsTrue())
 			}).
@@ -344,6 +345,17 @@ func (r *repository) Update(
 			Set(cols.EmbeddingInputStyle.Set(), entity.EmbeddingInputStyle).
 			Set(cols.Trusted.Set(), entity.Trusted).
 			Set(cols.Enabled.Set(), entity.Enabled).
+			Set(cols.TimeoutSeconds.Set(), entity.TimeoutSeconds).
+			Set(cols.MaxConcurrent.Set(), entity.MaxConcurrent).
+			Set(cols.MonthlyCapUSD.Set(), entity.MonthlyCapUSD).
+			Set(cols.OnCap.Set(), entity.OnCap).
+			Set(cols.APIKeyPrefix.Set(), stringutils.Ptr(entity.APIKeyPrefix)).
+			Set(cols.APIKeyLastFour.Set(), stringutils.Ptr(entity.APIKeyLastFour)).
+			Set(cols.APIKeyAddedAt.Set(), entity.APIKeyAddedAt).
+			Set(cols.APIKeyAddedByID.Set(), entity.APIKeyAddedByID).
+			Set(cols.APIKeyLastUsedAt.Set(), entity.APIKeyLastUsedAt).
+			Set(cols.PreviousAPIKey.Set(), stringutils.Ptr(entity.PreviousAPIKey)).
+			Set(cols.RotationExpiresAt.Set(), entity.RotationExpiresAt).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 			Set(cols.Version.Set(), entity.Version).
 			Exec(ctx)

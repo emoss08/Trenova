@@ -1,4 +1,12 @@
-import { fetchAIProvider, fetchAIProviders } from "@/lib/graphql/ai-provider";
+import {
+  fetchAIProvider,
+  fetchAIProviderModels,
+  fetchAIProviders,
+  fetchAIProviderUsageDaily,
+  fetchAIRoutePreview,
+  type AIProviderEndpoint,
+  type AIProviderRoutingDraft,
+} from "@/lib/graphql/ai-provider";
 import { fetchAIUsageSummary } from "@/lib/graphql/ai-usage";
 import { apiService } from "@/services/api";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
@@ -15,6 +23,19 @@ export const aiProvider = createQueryKeys("aiProvider", {
   catalog: () => ({
     queryKey: ["ai-provider-catalog"],
     queryFn: () => apiService.aiProviderService.catalog(),
+  }),
+  models: (endpoint: AIProviderEndpoint) => ({
+    queryKey: [endpoint],
+    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchAIProviderModels(endpoint, { signal }),
+  }),
+  routePreview: (draft: AIProviderRoutingDraft) => ({
+    queryKey: [draft],
+    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchAIRoutePreview(draft, { signal }),
+  }),
+  daily: (providerId: string, days: number, timezone: string) => ({
+    queryKey: [providerId, days, timezone],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      fetchAIProviderUsageDaily(providerId, days, timezone, { signal }),
   }),
   usage: (days: number) => ({
     queryKey: ["ai-usage-summary", days],

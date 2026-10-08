@@ -589,6 +589,10 @@ whether one is stored is exposed.
 """
 type AIProvider {
   allowPrivateNetwork: Boolean!
+  """
+  The stored credential, described without the secret. Null when none is stored.
+  """
+  apiKey: AIProviderKeyInfo
   baseUrl: String!
   businessUnitId: ID!
   createdAt: Timestamp!
@@ -614,9 +618,23 @@ type AIProvider {
   inputCostPerMillion: Decimal
   kind: AIProviderKind!
   lastTest: AIProviderTestOutcome
+  """
+  Calls this provider takes at once across every server. Past it, work moves to the next provider.
+  """
+  maxConcurrent: Int!
   maxTokens: Int!
   model: String!
+  """
+  Spend so far this calendar month (UTC), over the calls that carried a price.
+  """
+  monthSpendUsd: Decimal!
+  """
+  Most this provider may spend in a calendar month, in USD. Null means no cap.
+  """
+  monthlyCapUsd: Decimal
   name: String!
+  """What happens to a task once the monthly cap is reached."""
+  onCap: AIProviderCapAction!
   organizationId: ID!
   """USD per million output tokens; null means unknown."""
   outputCostPerMillion: Decimal
@@ -626,9 +644,21 @@ type AIProvider {
   tasks: [AITask!]!
   """How a Claude model behind an id the system cannot read takes thinking."""
   thinkingStyle: AIThinkingStyle!
+  """
+  How long one call may take before it fails and the task moves to the next provider.
+  """
+  timeoutSeconds: Int!
   trusted: Boolean!
   updatedAt: Timestamp!
   version: Int!
+}
+
+"""What a provider does with a task once its monthly cap is reached."""
+enum AIProviderCapAction {
+  """The task goes to the next provider in line."""
+  Next
+  """The task fails rather than moving on."""
+  Stop
 }
 
 type AIProviderConnection {
@@ -637,9 +667,46 @@ type AIProviderConnection {
   totalCount: Int
 }
 
+input AIProviderDraftTestInput {
+  embeddingDimensions: Int
+  embeddingInputStyle: AIEmbeddingInputStyle
+  endpoint: AIProviderEndpointInput!
+  model: String!
+  structuredOutputMode: AIStructuredOutputMode
+  tasks: [AITask!]!
+  timeoutSeconds: Int
+}
+
+"""
+What a probe of an unsaved endpoint revealed, with a next step when it failed.
+"""
+type AIProviderDraftTestResult {
+  """The endpoint's own words, such as the transport error."""
+  detail: String!
+  """What to try next. Empty when it worked."""
+  hint: String!
+  latencyMs: Int!
+  message: String!
+  modelIdentifier: String!
+  schemaHonoured: Boolean!
+  success: Boolean!
+}
+
 type AIProviderEdge {
   cursor: String!
   node: AIProvider!
+}
+
+"""
+An endpoint as an editor holds it, before it is saved. With providerId and no
+apiKey, the provider's stored key is used.
+"""
+input AIProviderEndpointInput {
+  allowPrivateNetwork: Boolean!
+  apiKey: String
+  baseUrl: String!
+  kind: AIProviderKind!
+  providerId: ID
 }
 
 """
@@ -653,11 +720,59 @@ type AIProviderFailure {
   providerId: ID!
 }
 
+"""
+A stored credential, described without the secret: enough of its ends to tell
+two keys apart, who added it and when it was last used.
+"""
+type AIProviderKeyInfo {
+  addedAt: Timestamp!
+  addedBy: User
+  lastFour: String!
+  lastUsedAt: Timestamp
+  """
+  The vendor prefix the key starts with, such as sk-ant-; empty when it has none.
+  """
+  prefix: String!
+  """
+  While the key it replaced is still kept as a fallback, when that stops.
+  """
+  previousKeyExpiresAt: Timestamp
+}
+
 enum AIProviderKind {
   AnthropicMessages
   Ollama
   OpenAIChat
   OpenAIResponses
+}
+
+"""One model an endpoint says it serves."""
+type AIProviderModelOption {
+  """Tokens of context, when the endpoint or the model id says."""
+  contextWindow: Int
+  displayName: String!
+  embedding: Boolean!
+  id: String!
+  inputCostPerMillion: Decimal
+  """A local server has it in memory now."""
+  loaded: Boolean!
+  outputCostPerMillion: Decimal
+  """Bytes on disk, for a model a local server holds."""
+  sizeBytes: Float
+}
+
+"""
+The fields of a provider that change on their own, from its row and read sheet.
+"""
+input AIProviderPatchInput {
+  allowPrivateNetwork: Boolean @goField(omittable: true)
+  """A new credential. It replaces the stored one and is never returned."""
+  apiKey: String @goField(omittable: true)
+  enabled: Boolean @goField(omittable: true)
+  inputCostPerMillion: Decimal @goField(omittable: true)
+  outputCostPerMillion: Decimal @goField(omittable: true)
+  tasks: [AITask!] @goField(omittable: true)
+  trusted: Boolean @goField(omittable: true)
 }
 
 """
@@ -17189,6 +17304,7 @@ type Mutation {
   openInvoiceDispute(input: OpenInvoiceDisputeInput!): InvoiceDispute!
   openLeaveCase(input: OpenLeaveCaseInput!): WorkerLeaveCase!
   overrideCarrierEquipmentVerification(id: ID!, reason: String!): CarrierEquipmentVerification!
+  patchAIProvider(id: ID!, input: AIProviderPatchInput!, version: Int!): AIProvider!
   patchEquipmentManufacturer(id: ID!, input: EquipmentManufacturerPatchInput!): EquipmentManufacturer!
   patchEquipmentType(id: ID!, input: EquipmentTypePatchInput!): EquipmentType!
   patchTableConfiguration(id: ID!, input: TableConfigurationPatchInput!): TableConfiguration!
@@ -17301,6 +17417,10 @@ type Mutation {
   reopenPerformanceReview(input: PerformanceReviewStatusInput!): PerformanceReview!
   reopenWorkerChecklistItem(id: ID!, version: Int): WorkerChecklist!
   reopenWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
+  """
+  Sets the routing order: the first ID takes work first. Every provider must be listed once.
+  """
+  reorderAIProviders(ids: [ID!]!): [AIProvider!]!
   """
   Replays a case against its agent as it is now, writes simulated, and scores it.
   """
@@ -17487,6 +17607,8 @@ type Mutation {
   """
   syncFuelCardFeed(provider: FuelCardProvider!): FuelCardSyncResult!
   tenderShipments(input: TenderShipmentsInput!): TenderShipmentsResult!
+  """Probes an unsaved endpoint once and records nothing."""
+  testAIProviderDraft(input: AIProviderDraftTestInput!): AIProviderDraftTestResult!
   """
   Tightens an agent's instructions (at most 20000 characters) without changing
   what they ask for. Saves nothing. Needs permission to create or update agents.
@@ -19574,6 +19696,8 @@ type Query {
   """Everyone's ratings, for administrators."""
   aiFeedback(input: DataTableConnectionInput!): AIFeedbackConnection!
   aiProvider(id: ID!): AIProvider
+  """The models an endpoint serves, asked of the endpoint itself."""
+  aiProviderModels(input: AIProviderEndpointInput!): [AIProviderModelOption!]!
   aiProviders(input: DataTableConnectionInput!): AIProviderConnection!
   """
   The thousand most recent sources whose indexing failed or is waiting to retry,
@@ -19600,9 +19724,10 @@ type Query {
   """
   Model usage day by day for the last days (default 7, at most 90), ending
   today, oldest first. A day with no calls is listed with zeros. Days are read
-  in the IANA timezone given, UTC when absent.
+  in the IANA timezone given, UTC when absent. With providerId, only that
+  provider's calls.
   """
-  aiUsageDaily(days: Int, timezone: String): [AIUsageDay!]!
+  aiUsageDaily(days: Int, providerId: ID, timezone: String): [AIUsageDay!]!
   """
   Model usage by feature over the last days (default 7, at most 366), as a table.
   """

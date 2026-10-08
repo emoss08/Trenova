@@ -105,6 +105,16 @@ type AIUsageDailyRequest struct {
 	TenantInfo pagination.TenantInfo
 	Since      int64
 	Timezone   string
+	// ProviderID narrows the window to one provider's calls when set.
+	ProviderID pulid.ID
+}
+
+// AIUsageProviderSpendRequest asks what each of several providers has
+// spent since an instant.
+type AIUsageProviderSpendRequest struct {
+	TenantInfo  pagination.TenantInfo
+	ProviderIDs []pulid.ID
+	Since       int64
 }
 
 // AIUsageDayTotals is one calendar day's usage. Day is YYYY-MM-DD.
@@ -122,6 +132,12 @@ type AIUsageRepository interface {
 	Summary(ctx context.Context, req AIUsageSummaryRequest) (*AIUsageSummary, error)
 	RecentFailures(ctx context.Context, req AIUsageFailuresRequest) ([]AIUsageFailure, error)
 	CostByDefinition(ctx context.Context, req AIUsageCostRequest) (*AIUsageCost, error)
+	// SpendByProvider sums the priced calls of each provider since an
+	// instant. A provider with no priced call is absent from the map.
+	SpendByProvider(
+		ctx context.Context,
+		req AIUsageProviderSpendRequest,
+	) (map[pulid.ID]decimal.Decimal, error)
 	ProviderTaskTotals(
 		ctx context.Context,
 		req AIUsageProviderTaskRequest,

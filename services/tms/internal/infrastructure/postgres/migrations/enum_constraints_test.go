@@ -322,6 +322,10 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			values: stringsOf(aiprovider.AllThinkingStyles()),
 		},
 		{
+			name:   "ck_ai_providers_on_cap",
+			values: stringsOf(aiprovider.AllCapActions()),
+		},
+		{
 			name:   "ck_ai_index_entries_source_type",
 			values: stringsOf(airetrieval.AllSourceTypes()),
 		},

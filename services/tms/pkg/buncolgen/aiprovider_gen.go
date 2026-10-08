@@ -224,6 +224,17 @@ var ProviderColumns = struct {
 	Trusted              Column // "trusted" → qualified: "aiprv.trusted"
 	Enabled              Column // "enabled" → qualified: "aiprv.enabled"
 	LastTest             Column // "last_test" → qualified: "aiprv.last_test"
+	TimeoutSeconds       Column // "timeout_seconds" → qualified: "aiprv.timeout_seconds"
+	MaxConcurrent        Column // "max_concurrent" → qualified: "aiprv.max_concurrent"
+	MonthlyCapUSD        Column // "monthly_cap_usd" → qualified: "aiprv.monthly_cap_usd"
+	OnCap                Column // "on_cap" → qualified: "aiprv.on_cap"
+	APIKeyPrefix         Column // "api_key_prefix" → qualified: "aiprv.api_key_prefix"
+	APIKeyLastFour       Column // "api_key_last_four" → qualified: "aiprv.api_key_last_four"
+	APIKeyAddedAt        Column // "api_key_added_at" → qualified: "aiprv.api_key_added_at"
+	APIKeyAddedByID      Column // "api_key_added_by_id" → qualified: "aiprv.api_key_added_by_id"
+	APIKeyLastUsedAt     Column // "api_key_last_used_at" → qualified: "aiprv.api_key_last_used_at"
+	PreviousAPIKey       Column // "previous_api_key" → qualified: "aiprv.previous_api_key"
+	RotationExpiresAt    Column // "rotation_expires_at" → qualified: "aiprv.rotation_expires_at"
 	Version              Column // "version" → qualified: "aiprv.version"
 	CreatedAt            Column // "created_at" → qualified: "aiprv.created_at"
 	UpdatedAt            Column // "updated_at" → qualified: "aiprv.updated_at"
@@ -253,6 +264,17 @@ var ProviderColumns = struct {
 	Trusted:              NewColumn("trusted", "aiprv"),
 	Enabled:              NewColumn("enabled", "aiprv"),
 	LastTest:             NewColumn("last_test", "aiprv"),
+	TimeoutSeconds:       NewColumn("timeout_seconds", "aiprv"),
+	MaxConcurrent:        NewColumn("max_concurrent", "aiprv"),
+	MonthlyCapUSD:        NewColumn("monthly_cap_usd", "aiprv"),
+	OnCap:                NewColumn("on_cap", "aiprv"),
+	APIKeyPrefix:         NewColumn("api_key_prefix", "aiprv"),
+	APIKeyLastFour:       NewColumn("api_key_last_four", "aiprv"),
+	APIKeyAddedAt:        NewColumn("api_key_added_at", "aiprv"),
+	APIKeyAddedByID:      NewColumn("api_key_added_by_id", "aiprv"),
+	APIKeyLastUsedAt:     NewColumn("api_key_last_used_at", "aiprv"),
+	PreviousAPIKey:       NewColumn("previous_api_key", "aiprv"),
+	RotationExpiresAt:    NewColumn("rotation_expires_at", "aiprv"),
 	Version:              NewColumn("version", "aiprv"),
 	CreatedAt:            NewColumn("created_at", "aiprv"),
 	UpdatedAt:            NewColumn("updated_at", "aiprv"),
@@ -287,6 +309,16 @@ var ProviderFieldMap = map[string]string{
 	"trusted":              "trusted",
 	"enabled":              "enabled",
 	"lastTest":             "last_test",
+	"timeoutSeconds":       "timeout_seconds",
+	"maxConcurrent":        "max_concurrent",
+	"monthlyCapUsd":        "monthly_cap_usd",
+	"onCap":                "on_cap",
+	"apiKeyPrefix":         "api_key_prefix",
+	"apiKeyLastFour":       "api_key_last_four",
+	"apiKeyAddedAt":        "api_key_added_at",
+	"apiKeyAddedById":      "api_key_added_by_id",
+	"apiKeyLastUsedAt":     "api_key_last_used_at",
+	"rotationExpiresAt":    "rotation_expires_at",
 	"version":              "version",
 	"createdAt":            "created_at",
 	"updatedAt":            "updated_at",
@@ -320,6 +352,17 @@ var ProviderInsertableColumns = []string{
 	"trusted",
 	"enabled",
 	"last_test",
+	"timeout_seconds",
+	"max_concurrent",
+	"monthly_cap_usd",
+	"on_cap",
+	"api_key_prefix",
+	"api_key_last_four",
+	"api_key_added_at",
+	"api_key_added_by_id",
+	"api_key_last_used_at",
+	"previous_api_key",
+	"rotation_expires_at",
 	"version",
 	"created_at",
 	"updated_at",
@@ -412,6 +455,16 @@ var ProviderFilter = struct {
 	Trusted              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "trusted" → DB: "trusted"
 	Enabled              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enabled" → DB: "enabled"
 	LastTest             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastTest" → DB: "last_test"
+	TimeoutSeconds       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "timeoutSeconds" → DB: "timeout_seconds"
+	MaxConcurrent        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxConcurrent" → DB: "max_concurrent"
+	MonthlyCapUSD        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "monthlyCapUsd" → DB: "monthly_cap_usd"
+	OnCap                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "onCap" → DB: "on_cap"
+	APIKeyPrefix         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "apiKeyPrefix" → DB: "api_key_prefix"
+	APIKeyLastFour       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "apiKeyLastFour" → DB: "api_key_last_four"
+	APIKeyAddedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "apiKeyAddedAt" → DB: "api_key_added_at"
+	APIKeyAddedByID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "apiKeyAddedById" → DB: "api_key_added_by_id"
+	APIKeyLastUsedAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "apiKeyLastUsedAt" → DB: "api_key_last_used_at"
+	RotationExpiresAt    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rotationExpiresAt" → DB: "rotation_expires_at"
 	Version              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -487,6 +540,36 @@ var ProviderFilter = struct {
 	},
 	LastTest: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("lastTest", op, value)
+	},
+	TimeoutSeconds: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("timeoutSeconds", op, value)
+	},
+	MaxConcurrent: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("maxConcurrent", op, value)
+	},
+	MonthlyCapUSD: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("monthlyCapUsd", op, value)
+	},
+	OnCap: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("onCap", op, value)
+	},
+	APIKeyPrefix: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("apiKeyPrefix", op, value)
+	},
+	APIKeyLastFour: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("apiKeyLastFour", op, value)
+	},
+	APIKeyAddedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("apiKeyAddedAt", op, value)
+	},
+	APIKeyAddedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("apiKeyAddedById", op, value)
+	},
+	APIKeyLastUsedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("apiKeyLastUsedAt", op, value)
+	},
+	RotationExpiresAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rotationExpiresAt", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
