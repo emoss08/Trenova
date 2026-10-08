@@ -27,7 +27,7 @@ const (
 
 var (
 	embeddingFamilyID = regexp.MustCompile(`(^|[-_/.:])(bge|e5|gte)([-_/.:]|$)`)
-	perMillion       = decimal.NewFromInt(1_000_000)
+	perMillion        = decimal.NewFromInt(1_000_000)
 )
 
 type ModelsCall struct {
