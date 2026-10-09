@@ -86,7 +86,8 @@ const editorSchema = z.object({
   ),
 });
 
-type EditorValues = z.infer<typeof editorSchema>;
+type EditorInput = z.input<typeof editorSchema>;
+type EditorValues = z.output<typeof editorSchema>;
 
 export function ChecklistTemplateEditor({
   kind,
@@ -107,7 +108,7 @@ export function ChecklistTemplateEditor({
   const [confirming, setConfirming] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  const form = useForm<EditorValues>({
+  const form = useForm<EditorInput, unknown, EditorValues>({
     resolver: zodResolver(editorSchema),
     defaultValues: { items: template.items },
   });
@@ -194,8 +195,12 @@ export function ChecklistTemplateEditor({
               </h2>
               <p className="text-muted-foreground text-xs">
                 {isCustomer
-                  ? t("Used for cases about this customer's records, in place of your organization's.")
-                  : t("Used for every case unless the customer has its own. Drag steps to reorder them.")}
+                  ? t(
+                      "Used for cases about this customer's records, in place of your organization's.",
+                    )
+                  : t(
+                      "Used for every case unless the customer has its own. Drag steps to reorder them.",
+                    )}
               </p>
             </div>
             {template.id && (
