@@ -9,6 +9,7 @@ import type {
   DataTableGroupKey,
   DataTableGrouping,
 } from "@trenova/shared/types/data-table";
+import { seedDataTableQueries } from "@/test/data-table-queries";
 
 type TestRow = { id: string; name: string; stage: number };
 
@@ -54,19 +55,14 @@ vi.mock("@/hooks/use-permission", () => ({
   }),
 }));
 
-vi.mock("@/hooks/data-table/use-data-table-query", () => ({
+vi.mock("@/hooks/data-table/use-data-table-query", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/hooks/data-table/use-data-table-query")>()),
   useDataTableQuery: useDataTableQueryMock,
 }));
 
-vi.mock("@/lib/queries", () => ({
+vi.mock("@/lib/queries", async () => ({
   queries: {
-    tableConfiguration: {
-      default: () => ({ queryKey: ["tableConfig-default"], queryFn: () => null }),
-      all: () => ({
-        queryKey: ["tableConfig-all"],
-        queryFn: () => ({ results: [], count: 0 }),
-      }),
-    },
+    ...(await import("@/test/data-table-queries")).dataTableQueryMocks,
   },
 }));
 
@@ -100,9 +96,9 @@ beforeAll(async () => {
 }, 60_000);
 
 function createQueryClient() {
-  return new QueryClient({
+  return seedDataTableQueries(new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
-  });
+  }));
 }
 
 function renderDataTable(
@@ -270,7 +266,7 @@ describe("DataTable grouping", () => {
 
   it("keeps a just-opened group's header in place while its rows load", () => {
     const { rerender } = renderDataTable({ grouping: grouping({ collapsedKeys: [2] }) });
-    useDataTableQueryMock.mockImplementation(() => ({
+    const loading = {
       data: {
         results: [
           { id: "1", name: "Alice", stage: 1 },
@@ -282,7 +278,8 @@ describe("DataTable grouping", () => {
       isPlaceholderData: true,
       isError: false,
       error: null,
-    }));
+    };
+    useDataTableQueryMock.mockImplementation(() => loading);
 
     rerender(
       <QueryClientProvider client={createQueryClient()}>
@@ -309,10 +306,8 @@ describe("DataTable grouping", () => {
     const { rerender } = renderDataTable({ grouping: grouping() });
     expect(document.querySelectorAll("tr[data-group-key]")).toHaveLength(2);
 
-    useDataTableQueryMock.mockImplementation(() => ({
-      ...defaultQueryResult,
-      isPlaceholderData: true,
-    }));
+    const placeholder = { ...defaultQueryResult, isPlaceholderData: true };
+    useDataTableQueryMock.mockImplementation(() => placeholder);
     const byName = grouping({
       field: "name",
       groups: [

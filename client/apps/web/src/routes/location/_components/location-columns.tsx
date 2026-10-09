@@ -8,6 +8,7 @@ import type { Location } from "@trenova/shared/types/location";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
+import { MapPinCell } from "@/components/data-table/cells/map-pin-cell";
 
 function LocationStatusCell({ row }: { row: LocationRow }) {
   const queryClient = useQueryClient();
@@ -83,7 +84,18 @@ export function getColumns(t: TranslateFn): ColumnDef<LocationRow>[] {
     {
       accessorKey: "city",
       header: t("City"),
-      cell: ({ row }) => <span>{row.original.city || "—"}</span>,
+      cell: ({ row }) => (
+        <MapPinCell
+          latitude={row.original.latitude}
+          longitude={row.original.longitude}
+          label={
+            [row.original.city, row.original.state?.abbreviation].filter(Boolean).join(", ") || "—"
+          }
+          address={[row.original.addressLine1, row.original.addressLine2]
+            .filter(Boolean)
+            .join(", ")}
+        />
+      ),
       size: 150,
       minSize: 100,
       maxSize: 200,

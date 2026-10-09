@@ -244,6 +244,14 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerRow>[] {
         sortable: false,
         filterType: "text",
         defaultFilterOperator: "contains",
+        extraFilters: [
+          {
+            apiField: "fleetCodeId",
+            label: t("Fleet"),
+            filterType: "record",
+            filterRecord: "FLEET_CODE",
+          },
+        ],
       },
     },
     {

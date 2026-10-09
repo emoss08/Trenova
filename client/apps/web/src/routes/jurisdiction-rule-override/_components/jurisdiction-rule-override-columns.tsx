@@ -17,7 +17,14 @@ export function getColumns(t: TranslateFn): ColumnDef<JurisdictionRuleOverride>[
         </span>
       ),
       size: 200,
-      meta: { label: t("State"), apiField: "stateId", sortable: true },
+      meta: {
+        label: t("State"),
+        apiField: "stateId",
+        sortable: true,
+        filterable: true,
+        filterType: "record",
+        filterRecord: "US_STATE",
+      },
     },
     {
       id: "overrides",

@@ -65,7 +65,15 @@ function getColumns(t: TranslateFn): ColumnDef<SCIMGroupRoleMappingRow>[] {
         sortable: true,
         filterType: "text",
         defaultFilterOperator: "contains",
-        label: t("Role"),
+        label: t("Role name"),
+        extraFilters: [
+          {
+            apiField: "roleId",
+            label: t("Role"),
+            filterType: "record",
+            filterRecord: "ROLE",
+          },
+        ],
       },
     },
   ];

@@ -1,32 +1,47 @@
-"use no memo";
 import { cn } from "@trenova/shared/lib/utils";
 import type { Header } from "@trenova/shared/types/data-table";
 import type { RowData } from "@tanstack/react-table";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { useTableAtom } from "@trenova/shared/hooks/use-table-atom";
+import { useOptionalDataTable } from "@/contexts/data-table-context";
+import { isColumnResizable } from "@/lib/data-table";
 
 export function DataTableColumnResizeHandle<TData extends RowData>({
   header,
 }: {
   header: Header<TData, unknown>;
 }) {
-  const t = useT();
-  const { column } = header;
-  const { minSize, maxSize } = column.columnDef;
-  const hasFixedSize = minSize !== undefined && minSize === maxSize;
-  if (!column.getCanResize() || hasFixedSize) return null;
+  if (!isColumnResizable(header.column)) return null;
 
-  const isResizing = column.getIsResizing();
+  return <ResizeGrip header={header} />;
+}
+
+/**
+ * The handle follows only whether its own column is the one being dragged, so a
+ * drag redraws this one handle when it starts and when it ends, and nothing else.
+ */
+function ResizeGrip<TData extends RowData>({ header }: { header: Header<TData, unknown> }) {
+  const t = useT();
+  const fitColumns = useOptionalDataTable()?.fitColumns;
+  const { column } = header;
+  const isResizing = useTableAtom(
+    column.table.atoms.columnResizing,
+    (resizing) => resizing.isResizingColumn === column.id,
+  );
 
   return (
     <div
       role="separator"
       aria-orientation="vertical"
       aria-label={t("Resize {0} column", column.id)}
-      title={t("Drag to resize, double-click to reset")}
+      title={t("Drag to resize, double-click to fit, Alt + double-click to reset")}
       data-resizing={isResizing || undefined}
       onMouseDown={header.getResizeHandler()}
       onTouchStart={header.getResizeHandler()}
-      onDoubleClick={() => column.resetSize()}
+      onDoubleClick={(event) => {
+        if (event.altKey || !fitColumns) column.resetSize();
+        else fitColumns([column.id]);
+      }}
       onPointerDown={(e) => e.stopPropagation()}
       className="group/resize absolute inset-y-0 right-0 z-10 flex w-2 cursor-col-resize touch-none items-center justify-end select-none"
     >

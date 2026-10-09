@@ -2,11 +2,18 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { AnimatePresence, m } from "motion/react";
-import type { ShipmentViewer } from "@/hooks/shipment-comments/use-shipment-viewers";
+import type { PresenceViewer } from "@/hooks/use-presence-viewers";
 
 const MAX_VISIBLE_VIEWERS = 4;
 
-export function ViewersStack({ viewers }: { viewers: ShipmentViewer[] }) {
+export function ViewersStack({
+  viewers,
+  label,
+}: {
+  viewers: readonly PresenceViewer[];
+  /** What the people are doing, such as "Viewing now: {0}". */
+  label?: (names: string) => string;
+}) {
   const t = useT();
 
   if (viewers.length === 0) return null;
@@ -48,7 +55,9 @@ export function ViewersStack({ viewers }: { viewers: ShipmentViewer[] }) {
         }
       />
       <TooltipContent side="top">
-        {t("Viewing now: {0}", viewers.map((viewer) => viewer.name).join(", "))}
+        {label
+          ? label(viewers.map((viewer) => viewer.name).join(", "))
+          : t("Viewing now: {0}", viewers.map((viewer) => viewer.name).join(", "))}
       </TooltipContent>
     </Tooltip>
   );

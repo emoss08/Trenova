@@ -113,6 +113,14 @@ export function getColumns(t: TranslateFn): ColumnDef<WorkerPTORow>[] {
         sortable: true,
         filterType: "text",
         defaultFilterOperator: "contains",
+        extraFilters: [
+          {
+            apiField: "workerId",
+            label: t("Worker"),
+            filterType: "record",
+            filterRecord: "WORKER",
+          },
+        ],
       },
     },
     {

@@ -105,8 +105,10 @@ export function getTransferColumns(
       meta: {
         label: t("Target shipment"),
         apiField: "targetShipmentId",
-        filterable: false,
         sortable: false,
+        filterable: true,
+        filterType: "record",
+        filterRecord: "SHIPMENT",
       },
     },
     {

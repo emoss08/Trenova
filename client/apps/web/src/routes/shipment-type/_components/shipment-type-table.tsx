@@ -51,7 +51,7 @@ export default function ShipmentTypeTable() {
   );
 
   const handleCellEditCommit = useCallback<CellEditCommitFn<ShipmentTypeRow>>(
-    async ({ rowId, columnId, value }) => {
+    async ({ rowId, columnId, value, batch }) => {
       const field = columnId as keyof ShipmentTypeRow;
       if (!INLINE_EDITABLE_FIELDS.has(field)) return;
       if (field === "code" && (value === null || value === "")) {
@@ -59,6 +59,7 @@ export default function ShipmentTypeTable() {
       }
 
       await apiService.shipmentTypeService.patch(rowId, { [field]: value });
+      if (batch) return;
       await queryClient.invalidateQueries({
         queryKey: ["shipment-type-list"],
         refetchType: "all",

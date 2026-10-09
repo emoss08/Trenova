@@ -1,34 +1,34 @@
 import {
   buildFilterItemsFromUrlState,
   filterItemsToUrlFilterState,
+  type FilterableField,
   serializeUrlFilterState,
   type UrlFilterState,
 } from "@/lib/data-table";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
-import type { ColumnDef, FilterItem } from "@trenova/shared/types/data-table";
-import type { RowData } from "@tanstack/react-table";
+import type { FilterItem } from "@trenova/shared/types/data-table";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type FilterSearchParamsUpdate = UrlFilterState & { pageIndex: number };
 
-type UseDataTableFilterSyncParams<TData extends RowData> = {
-  columns: ColumnDef<TData>[];
+type UseDataTableFilterSyncParams = {
+  fields: readonly FilterableField[];
   fieldFilters: UrlFilterState["fieldFilters"];
   filterGroups: UrlFilterState["filterGroups"];
   setSearchParams: (values: FilterSearchParamsUpdate) => unknown;
 };
 
-export function useDataTableFilterSync<TData extends RowData>({
-  columns,
+export function useDataTableFilterSync({
+  fields,
   fieldFilters,
   filterGroups,
   setSearchParams,
-}: UseDataTableFilterSyncParams<TData>) {
+}: UseDataTableFilterSyncParams) {
   const urlState: UrlFilterState = { fieldFilters, filterGroups };
   const urlSerialized = serializeUrlFilterState(urlState);
 
   const [filterItems, setFilterItems] = useState<FilterItem[]>(() =>
-    buildFilterItemsFromUrlState(urlState, columns),
+    buildFilterItemsFromUrlState(urlState, fields),
   );
 
   const lastSyncedUrlRef = useRef(urlSerialized);
@@ -36,8 +36,8 @@ export function useDataTableFilterSync<TData extends RowData>({
   urlSerializedRef.current = urlSerialized;
   const filterItemsRef = useRef(filterItems);
   filterItemsRef.current = filterItems;
-  const columnsRef = useRef(columns);
-  columnsRef.current = columns;
+  const fieldsRef = useRef(fields);
+  fieldsRef.current = fields;
   const setSearchParamsRef = useRef(setSearchParams);
   setSearchParamsRef.current = setSearchParams;
 
@@ -66,13 +66,13 @@ export function useDataTableFilterSync<TData extends RowData>({
     );
     if (draftSerialized === urlSerialized) return;
     setFilterItems(
-      buildFilterItemsFromUrlState({ fieldFilters, filterGroups }, columnsRef.current),
+      buildFilterItemsFromUrlState({ fieldFilters, filterGroups }, fieldsRef.current),
     );
   }, [urlSerialized, fieldFilters, filterGroups]);
 
   const applyFilterState = useCallback((state: UrlFilterState) => {
     lastSyncedUrlRef.current = serializeUrlFilterState(state);
-    setFilterItems(buildFilterItemsFromUrlState(state, columnsRef.current));
+    setFilterItems(buildFilterItemsFromUrlState(state, fieldsRef.current));
   }, []);
 
   return { filterItems, setFilterItems, applyFilterState };

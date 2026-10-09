@@ -7,19 +7,22 @@ import {
   shipmentTenderStatusChoices,
 } from "@/lib/choices";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
-import { getDestinationStop, getOriginStop } from "@/lib/shipment-utils";
+import { getDestinationStop, getOrderedStops, getOriginStop } from "@/lib/shipment-utils";
+import { CountdownCell } from "@/components/data-table/cells/countdown-cell";
 import type { Customer } from "@trenova/shared/types/customer";
-import type { ColumnDef } from "@trenova/shared/types/data-table";
+import type { ColumnDef, DataTableFilterField } from "@trenova/shared/types/data-table";
 import type { Shipment, Stop } from "@trenova/shared/types/shipment";
 import { Link } from "react-router";
 import { ActionsCell } from "./cells/actions-cell";
 import { BillingCell } from "./cells/billing-cell";
 import { CoverageCell } from "./cells/coverage-cell";
+import { ArrivalCell } from "./cells/arrival-cell";
 import { EtaCell } from "./cells/eta-cell";
 import { LaneCell } from "./cells/lane-cell";
 import { MarginCell } from "./cells/margin-cell";
 import { RevenueCell } from "./cells/revenue-cell";
 import { StatusCell } from "./cells/status-cell";
+import { StopsCell } from "./cells/stops-cell";
 import { recordPath } from "@/config/record-links";
 import { resolveCoverage } from "@/lib/shipment-board/coverage";
 
@@ -51,10 +54,42 @@ export type ShipmentColumnsParams = {
   onToggleExpanded: (rowId: string) => void;
 };
 
+/**
+ * Records a shipment points at that have no column of their own, offered in the
+ * filter builder after the columns: each is picked by name and matched by ID.
+ */
+export function getShipmentFilterFields(t: TranslateFn): DataTableFilterField[] {
+  const record = (
+    apiField: string,
+    label: string,
+    filterRecord: string,
+  ): DataTableFilterField => ({
+    apiField,
+    label,
+    filterType: "record",
+    filterRecord,
+  });
+  return [
+    record("billToCustomerId", t("Bill-to customer"), "CUSTOMER"),
+    record("shipmentTypeId", t("Shipment type"), "SHIPMENT_TYPE"),
+    record("serviceTypeId", t("Service type"), "SERVICE_TYPE"),
+    record("tractorTypeId", t("Tractor type"), "EQUIPMENT_TYPE"),
+    record("trailerTypeId", t("Trailer type"), "EQUIPMENT_TYPE"),
+    record("ownerId", t("Owner"), "USER"),
+    record("enteredById", t("Entered by"), "USER"),
+    record("rateAgreementId", t("Rate agreement"), "RATE_AGREEMENT"),
+    record("formulaTemplateId", t("Formula template"), "FORMULA_TEMPLATE"),
+  ];
+}
+
 /** Hidden until a dispatcher asks for them from the Columns menu. */
 export const SHIPMENT_HIDDEN_COLUMNS: Record<string, boolean> = {
   pickupAppointment: false,
   deliveryAppointment: false,
+  pickupCountdown: false,
+  deliveryCountdown: false,
+  stops: false,
+  arrivalWindow: false,
 };
 
 export function getColumns({ t, onToggleExpanded }: ShipmentColumnsParams): ColumnDef<Shipment>[] {
@@ -190,8 +225,10 @@ export function getColumns({ t, onToggleExpanded }: ShipmentColumnsParams): Colu
       meta: {
         label: t("Order"),
         apiField: "orderId",
-        filterable: false,
         sortable: false,
+        filterable: true,
+        filterType: "record",
+        filterRecord: "ORDER",
       },
     },
     {
@@ -230,10 +267,17 @@ export function getColumns({ t, onToggleExpanded }: ShipmentColumnsParams): Colu
       meta: {
         apiField: "customer.name",
         label: t("Customer name"),
-        filterable: true,
+        filterable: false,
         sortable: true,
-        filterType: "text",
-        defaultFilterOperator: "contains",
+        facetField: "customerId",
+        extraFilters: [
+          {
+            apiField: "customerId",
+            label: t("Customer"),
+            filterType: "record",
+            filterRecord: "CUSTOMER",
+          },
+        ],
       },
     },
     {
@@ -267,6 +311,39 @@ export function getColumns({ t, onToggleExpanded }: ShipmentColumnsParams): Colu
         apiField: "deliveryAppointment.scheduledWindowStart",
         sortable: true,
         filterable: false,
+      },
+    },
+    {
+      id: "arrivalWindow",
+      header: t("Arrival vs window"),
+      accessorFn: () => null,
+      cell: ({ row }) => <ArrivalCell shipment={row.original} />,
+      size: 170,
+      minSize: 140,
+      maxSize: 220,
+      meta: {
+        label: t("Arrival vs window"),
+        sortable: false,
+        filterable: false,
+        exportable: false,
+      },
+    },
+    {
+      id: "stops",
+      header: t("Stops"),
+      accessorFn: (row) => getOrderedStops(row).length,
+      cell: ({ row }) => <StopsCell shipment={row.original} />,
+      size: 210,
+      minSize: 160,
+      maxSize: 320,
+      meta: {
+        label: t("Stop progress"),
+        sortable: false,
+        filterable: false,
+        exportValue: (row: Shipment) =>
+          getOrderedStops(row)
+            .map((stop) => `${stop.type}: ${stop.location?.city ?? ""} (${stop.status})`)
+            .join(" → "),
       },
     },
     {
@@ -313,13 +390,47 @@ export function getColumns({ t, onToggleExpanded }: ShipmentColumnsParams): Colu
       },
     },
     {
+      id: "pickupCountdown",
+      header: t("Pickup in"),
+      accessorFn: (row) => getOriginStop(row)?.scheduledWindowStart ?? null,
+      cell: ({ row }) => (
+        <CountdownCell target={getOriginStop(row.original)?.scheduledWindowStart} />
+      ),
+      size: 120,
+      minSize: 100,
+      maxSize: 180,
+      meta: {
+        apiField: "pickupAppointment.scheduledWindowStart",
+        label: t("Time to pickup"),
+        sortable: true,
+        filterable: false,
+      },
+    },
+    {
+      id: "deliveryCountdown",
+      header: t("Delivery in"),
+      accessorFn: (row) => getDestinationStop(row)?.scheduledWindowStart ?? null,
+      cell: ({ row }) => (
+        <CountdownCell target={getDestinationStop(row.original)?.scheduledWindowStart} />
+      ),
+      size: 120,
+      minSize: 100,
+      maxSize: 180,
+      meta: {
+        apiField: "deliveryAppointment.scheduledWindowStart",
+        label: t("Time to delivery"),
+        sortable: true,
+        filterable: false,
+      },
+    },
+    {
       id: "revenue",
       header: () => <div className="text-right">{t("Revenue")}</div>,
       accessorKey: "totalChargeAmount",
       cell: ({ row }) => <RevenueCell shipment={row.original} />,
-      size: 140,
-      minSize: 120,
-      maxSize: 180,
+      size: 180,
+      minSize: 140,
+      maxSize: 240,
       meta: {
         label: t("Revenue"),
         apiField: "totalChargeAmount",
@@ -327,6 +438,7 @@ export function getColumns({ t, onToggleExpanded }: ShipmentColumnsParams): Colu
         filterable: true,
         filterType: "number",
         defaultFilterOperator: "gte",
+        aggregate: { format: "money" },
       },
     },
     {

@@ -31,7 +31,7 @@ function setup({
     onCursorRowIdChange,
     expandedRowId: state.expanded,
     onExpandedRowIdChange,
-    hasSelection: state.selected.size > 0,
+    hasSelection: () => state.selected.size > 0,
     onToggleSelect,
     onClearSelection,
     ...overrides,
@@ -100,6 +100,19 @@ describe("useDataTableRowCursor", () => {
     const t = setup({ cursorRowId: "c" });
     t.press("x");
     expect(t.onToggleSelect).toHaveBeenCalledWith("c");
+  });
+
+  it("pins or unpins the cursor row with P", () => {
+    const onTogglePin = vi.fn();
+    const t = setup({ cursorRowId: "b", onTogglePin });
+    t.press("p");
+    expect(onTogglePin).toHaveBeenCalledWith("b");
+  });
+
+  it("does nothing on P when the table cannot pin rows or there is no cursor", () => {
+    const onTogglePin = vi.fn();
+    setup({ onTogglePin }).press("p");
+    expect(onTogglePin).not.toHaveBeenCalled();
   });
 
   it("backs out one step per Escape: collapse, then clear selection, then drop the cursor", () => {

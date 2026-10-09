@@ -173,6 +173,18 @@
   }
 }
 
+@keyframes row-changed-a {
+  from {
+    background-color: var(--brand-subtle);
+  }
+}
+
+@keyframes row-changed-b {
+  from {
+    background-color: var(--brand-subtle);
+  }
+}
+
 @keyframes live-ping {
   0% {
     opacity: 0.55;

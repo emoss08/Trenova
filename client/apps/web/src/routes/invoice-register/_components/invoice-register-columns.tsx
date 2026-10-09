@@ -128,9 +128,11 @@ export function getColumns(t: TranslateFn): ColumnDef<InvoiceRegisterRow>[] {
       },
       meta: {
         apiField: "shipperCustomerId",
-        filterable: false,
+        label: t("Shipper"),
+        filterable: true,
         sortable: false,
-        filterType: "text",
+        filterType: "record",
+        filterRecord: "CUSTOMER",
       },
     },
     {
@@ -172,6 +174,7 @@ export function getColumns(t: TranslateFn): ColumnDef<InvoiceRegisterRow>[] {
         sortable: true,
         filterType: "number",
         align: "right",
+        aggregate: { format: "money", label: t("Total") },
       },
     },
     {

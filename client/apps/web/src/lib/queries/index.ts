@@ -64,6 +64,9 @@ import { sidebarPreferences } from "./sidebar-preferences";
 import { notification } from "@trenova/shared/lib/queries/notification";
 import { tableChangeAlert } from "./table-change-alert";
 import { tableConfiguration } from "./table-configuration";
+import { tableLayout } from "./table-layout";
+import { dataTableInsight } from "./data-table-insight";
+import { bulkEdit } from "./bulk-edit";
 import { user, userOrganization } from "./user";
 import { weatherAlert } from "./weather-alert";
 import { weatherRadar } from "./weather-radar";
@@ -126,6 +129,9 @@ const workspaceQueries = mergeQueryKeys(
   userOrganization,
   pageFavoite,
   tableConfiguration,
+  tableLayout,
+  dataTableInsight,
+  bulkEdit,
   homeLayout,
   sidebarPreferences,
   user,

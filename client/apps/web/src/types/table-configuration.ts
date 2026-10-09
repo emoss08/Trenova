@@ -99,6 +99,43 @@ export const tableConfigSchema = z.object({
 
 export type TableConfig = z.infer<typeof tableConfigSchema>;
 
+/**
+ * How one person last arranged a table: its columns, density and colour rules, and
+ * the saved view it was based on. Filters and sort live in the address instead.
+ */
+export const tableLayoutSchema = tableConfigSchema
+  .pick({
+    columnVisibility: true,
+    columnOrder: true,
+    columnSizing: true,
+    columnPinning: true,
+    formatRules: true,
+  })
+  .extend({
+    density: tableDensitySchema.nullish().catch(null),
+    activeViewId: z
+      .string()
+      .nullish()
+      .catch(null)
+      .transform((v) => v || null),
+    pinnedRowIds: z
+      .array(z.string())
+      .nullish()
+      .catch(null)
+      .transform((v) => v ?? []),
+    pinnedRowsCollapsed: z.boolean().nullish().catch(null).transform((v) => v ?? false),
+    lastSeenAt: z.number().nullish().catch(null).transform((v) => v ?? 0),
+    hideChangesSinceLastVisit: z
+      .boolean()
+      .nullish()
+      .catch(null)
+      .transform((v) => v ?? false),
+    hideTotals: z.boolean().nullish().catch(null).transform((v) => v ?? false),
+    virtualized: z.boolean().nullish().catch(null).transform((v) => v ?? false),
+  });
+
+export type TableLayout = z.infer<typeof tableLayoutSchema>;
+
 export type TableViewSource = {
   id: string;
   name: string;

@@ -8,6 +8,31 @@ import type { Customer } from "@trenova/shared/types/customer";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useCallback } from "react";
+import { SeriesCell } from "@/components/data-table/cells/series-cell";
+import type { DataTableSeriesSpec } from "@/lib/data-table-series";
+
+const WEEKLY_SHIPMENTS: DataTableSeriesSpec = {
+  resource: "shipment",
+  groupField: "customerId",
+  dateField: "createdAt",
+  interval: "week",
+  periods: 12,
+};
+
+const MONTHLY_REVENUE: DataTableSeriesSpec = {
+  resource: "shipment",
+  groupField: "customerId",
+  dateField: "createdAt",
+  valueField: "totalChargeAmount",
+  interval: "month",
+  periods: 6,
+};
+
+/** Charted columns cost a request, so they wait until someone shows them. */
+export const CUSTOMER_HIDDEN_COLUMNS: Record<string, boolean> = {
+  shipmentTrend: false,
+  revenueTrend: false,
+};
 
 function CustomerStatusCell({ row }: { row: CustomerRow }) {
   const queryClient = useQueryClient();
@@ -126,6 +151,38 @@ export function getColumns(t: TranslateFn): ColumnDef<CustomerRow>[] {
       size: 200,
       minSize: 200,
       maxSize: 250,
+    },
+    {
+      id: "shipmentTrend",
+      header: t("Shipments, 12 weeks"),
+      accessorFn: () => null,
+      cell: ({ row }) => <SeriesCell spec={WEEKLY_SHIPMENTS} id={row.original.id} />,
+      size: 170,
+      minSize: 140,
+      maxSize: 220,
+      meta: {
+        label: t("Shipments, 12 weeks"),
+        sortable: false,
+        filterable: false,
+        exportable: false,
+      },
+    },
+    {
+      id: "revenueTrend",
+      header: t("Revenue, 6 months"),
+      accessorFn: () => null,
+      cell: ({ row }) => (
+        <SeriesCell spec={MONTHLY_REVENUE} id={row.original.id} format="money" />
+      ),
+      size: 190,
+      minSize: 150,
+      maxSize: 240,
+      meta: {
+        label: t("Revenue, 6 months"),
+        sortable: false,
+        filterable: false,
+        exportable: false,
+      },
     },
   ];
 }

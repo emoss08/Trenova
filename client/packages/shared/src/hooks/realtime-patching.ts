@@ -28,7 +28,79 @@ export function queryKeyRootId(root: QueryKeyRoot): string {
   return queryKeyPrefix(root).join("\u0000");
 }
 
+/**
+ * The audit trail announces every write it records as `audited:<permission resource>`,
+ * with no record attached. These are the lists that have no richer event of their
+ * own, so this is how they stay live; a list that does have one needs no entry here.
+ */
+const RECORD_CHANGE_KEYS: Record<string, QueryKeyRoot[]> = {
+  accessorial_charge: ["accessorial-charge-list"],
+  account_type: ["account-type-list"],
+  agent_exception: ["agent-exception-list"],
+  api_key: ["api-key-list"],
+  carrier: ["carrier-list"],
+  carrier_settlement: ["carrier-settlement-list", "carrier-settlement-batch-list"],
+  commodity: ["commodity-list"],
+  custom_field_definition: ["custom-field-definition-list"],
+  customer_payment: ["customer-payment-list"],
+  detention_policy: ["detention-policy-list"],
+  distance_override: ["distance-override-list"],
+  distance_profile: ["distance-profile-list"],
+  document_type: ["document-type-list"],
+  driver_pay_profile: ["pay-profile-list"],
+  driver_settlement: ["settlement-batch-list"],
+  edi: [
+    "edi-communication-profile-list",
+    "edi-inbound-file-list",
+    "edi-mapping-profile-list",
+    "edi-message-list",
+    "edi-partner-list",
+    "edi-test-case-list",
+  ],
+  equipment_manufacturer: ["equipment-manufacturer-list"],
+  equipment_type: ["equipment-type-list"],
+  escrow_account: ["escrow-account-list"],
+  fiscal_year: ["fiscal-year-list"],
+  fleet_code: ["fleet-code-list"],
+  formula_template: ["formula-template-list"],
+  hazardous_material: ["hazardous-material-list"],
+  hazmat_segregation_rule: ["hazmat-segregation-rule-list"],
+  hold_reason: ["hold-reason-list"],
+  invoice: ["invoice-register"],
+  journal_reversal: ["journal-reversal-list"],
+  jurisdiction_rule: ["jurisdiction-rule-list"],
+  jurisdiction_rule_override: ["jurisdiction-rule-override-list"],
+  location: ["location-list"],
+  location_category: ["location-category-list"],
+  manual_journal: ["manual-journal-list"],
+  pay_advance: ["pay-advance-list"],
+  pay_code: ["pay-code-list"],
+  rate_agreement: ["rate-agreement-list"],
+  rate_matrix: ["rate-matrix-list"],
+  rate_zone: ["rate-zone-list"],
+  recurring_deduction: ["recurring-deduction-list"],
+  recurring_earning: ["recurring-earning-list"],
+  recurring_shipment: ["recurring-shipment-list"],
+  role: ["role-list"],
+  service_failure: ["service-failure-list"],
+  service_failure_reason_code: ["service-failure-reason-code-list"],
+  service_type: ["service-type-list"],
+  shipment_type: ["shipment-type-list"],
+  stored_mileage: ["stored-mileage-list"],
+  table_change_alert: ["tca-subscription-list"],
+};
+
+export const RECORD_CHANGE_PREFIX = "audited:";
+
 export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
+  // A bulk edit's progress, sent only to the person who started it.
+  bulk_edit: ["bulkEdit"],
+  ...Object.fromEntries(
+    Object.entries(RECORD_CHANGE_KEYS).map(([resource, roots]) => [
+      RECORD_CHANGE_PREFIX + resource,
+      roots,
+    ]),
+  ),
   // A proposal or plan moving can change what another one would do (a step
   // after it on the same record, one decided elsewhere now reading as
   // recorded), so the previews go with them.

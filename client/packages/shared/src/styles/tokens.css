@@ -1142,6 +1142,10 @@
      streamed sentence resolves word by word. The live ping is the board's
      one loop and runs only on a marker that is live. */
   --animate-row-rise: rise 300ms var(--ease-swift) both;
+  /* A row whose values changed while it was on screen glows once and settles.
+     Two names with the same keyframes, so a second change replays it. */
+  --animate-row-changed-a: row-changed-a 1600ms var(--ease-swift);
+  --animate-row-changed-b: row-changed-b 1600ms var(--ease-swift);
   --animate-expand-in: expand-in 280ms var(--ease-settle) both;
   --animate-panel-in: panel-in 320ms var(--ease-settle) both;
   --animate-slide-in: slide-in 360ms var(--ease-settle) both;

@@ -10,6 +10,7 @@ import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { useTable } from "@tanstack/react-table";
 import { dataTableFeatures } from "@trenova/shared/lib/table-features";
 import { DataTablePagination } from "../_components/data-table-pagination";
+import { seedDataTableQueries } from "@/test/data-table-queries";
 
 type TestRow = { id: string; name: string };
 
@@ -54,19 +55,14 @@ vi.mock("@/hooks/use-permission", () => ({
   }),
 }));
 
-vi.mock("@/hooks/data-table/use-data-table-query", () => ({
+vi.mock("@/hooks/data-table/use-data-table-query", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/hooks/data-table/use-data-table-query")>()),
   useDataTableQuery: useDataTableQueryMock,
 }));
 
-vi.mock("@/lib/queries", () => ({
+vi.mock("@/lib/queries", async () => ({
   queries: {
-    tableConfiguration: {
-      default: () => ({ queryKey: ["tableConfig-default"], queryFn: () => null }),
-      all: () => ({
-        queryKey: ["tableConfig-all"],
-        queryFn: () => ({ results: [], count: 0 }),
-      }),
-    },
+    ...(await import("@/test/data-table-queries")).dataTableQueryMocks,
   },
 }));
 
@@ -100,9 +96,9 @@ beforeAll(async () => {
 }, 60_000);
 
 function createQueryClient() {
-  return new QueryClient({
+  return seedDataTableQueries(new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
-  });
+  }));
 }
 
 function renderDataTable(props?: Partial<React.ComponentProps<typeof DataTable<TestRow>>>) {
@@ -460,13 +456,13 @@ describe("DataTable scope filters", () => {
   it("offers the generic CSV export to someone who may export", () => {
     renderDataTable({ resource: "test_resource" });
 
-    expect(screen.getByLabelText("Export to CSV")).toBeInTheDocument();
+    expect(screen.getByLabelText("Export, print or schedule")).toBeInTheDocument();
   });
 
   it("hides the generic CSV export when the table exports another way", () => {
     renderDataTable({ resource: "test_resource", enableExport: false });
 
-    expect(screen.queryByLabelText("Export to CSV")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Export, print or schedule")).not.toBeInTheDocument();
   });
 });
 
