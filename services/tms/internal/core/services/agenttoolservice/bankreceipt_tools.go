@@ -111,15 +111,15 @@ func (t *matchBankReceiptTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"bankReceiptId": map[string]any{
-				"type":        "string",
-				"description": "The bank receipt, from list_bank_receipt_exceptions or the page.",
-			},
-			"customerPaymentId": map[string]any{
-				"type": "string",
-				"description": "The posted payment, from get_bank_receipt's suggestions or " +
+			"bankReceiptId": agenttoolschema.RecordIDText(
+				permission.ResourceBankReceipt,
+				"The bank receipt, from list_bank_receipt_exceptions or the page.",
+			),
+			"customerPaymentId": agenttoolschema.RecordIDText(
+				permission.ResourceCustomerPayment,
+				"The posted payment, from get_bank_receipt's suggestions or "+
 					"list_customer_payments.",
-			},
+			),
 		},
 		"required":             []string{"bankReceiptId", "customerPaymentId"},
 		"additionalProperties": false,
@@ -252,11 +252,11 @@ func (t *postCustomerPaymentTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"customerId": map[string]any{
-				"type": "string",
-				"description": "The paying customer, from list_customers or get_bank_receipt's " +
+			"customerId": agenttoolschema.RecordIDText(
+				permission.ResourceCustomer,
+				"The paying customer, from list_customers or get_bank_receipt's "+
 					"suggestions.",
-			},
+			),
 			"amount": map[string]any{
 				"type":        "string",
 				"description": "The payment amount as a decimal string, such as 1250.00.",
@@ -283,10 +283,10 @@ func (t *postCustomerPaymentTool) ParamSchema() map[string]any {
 				"items": map[string]any{
 					"type": "object",
 					"properties": map[string]any{
-						"invoiceId": map[string]any{
-							"type":        "string",
-							"description": "An open invoice of this customer, from list_invoices.",
-						},
+						"invoiceId": agenttoolschema.RecordIDText(
+							permission.ResourceInvoice,
+							"An open invoice of this customer, from list_invoices.",
+						),
 						"amount": map[string]any{
 							"type":        "string",
 							"description": "Applied to this invoice, as a decimal string.",
@@ -300,12 +300,12 @@ func (t *postCustomerPaymentTool) ParamSchema() map[string]any {
 					"additionalProperties": false,
 				},
 			},
-			"bankReceiptId": map[string]any{
-				"type": "string",
-				"description": "The unmatched bank receipt this payment records, from " +
-					"list_bank_receipt_exceptions or get_bank_receipt, to match it in the same " +
+			"bankReceiptId": agenttoolschema.RecordIDText(
+				permission.ResourceBankReceipt,
+				"The unmatched bank receipt this payment records, from "+
+					"list_bank_receipt_exceptions or get_bank_receipt, to match it in the same "+
 					"step.",
-			},
+			),
 		},
 		"required":             []string{"customerId", "amount", "paymentDate"},
 		"additionalProperties": false,
@@ -623,10 +623,10 @@ func (t *resolveBankReceiptWorkItemTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"workItemId": map[string]any{
-				"type":        "string",
-				"description": "The work item's id, from get_bank_receipt.",
-			},
+			"workItemId": agenttoolschema.RecordIDText(
+				permission.ResourceBankReceiptWorkItem,
+				"The work item's id, from get_bank_receipt.",
+			),
 			fieldResolution: agenttoolschema.Enum(
 				"MarkedFalsePositive when the receipt is not a customer payment; "+
 					"RequiresExternalFollowUp when a person must ask the payer.",

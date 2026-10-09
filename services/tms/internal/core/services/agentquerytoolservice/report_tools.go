@@ -396,10 +396,10 @@ func (t *runReportTool) ParamSchema() map[string]any {
 				"description": "Accepted as an alias of reportKey, from list_reports; " +
 					"prefer reportKey.",
 			},
-			"definitionId": map[string]any{
+			"definitionId": agenttoolschema.OfResource(map[string]any{
 				"type":        "string",
 				"description": "The definitionId of a saved report from list_reports.",
-			},
+			}, permission.ResourceReport),
 			"parameters": map[string]any{
 				"type": "object",
 				"description": "The report's parameters, keyed by the names list_reports " +
@@ -649,10 +649,10 @@ func (t *getReportRunTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"runId": map[string]any{
+			"runId": agenttoolschema.OfKinds(map[string]any{
 				"type":        "string",
 				"description": "The run id returned by run_report.",
-			},
+			}, permission.KindReportRun),
 		},
 		"required":             []string{"runId"},
 		"additionalProperties": false,

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/captureservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -257,11 +258,11 @@ func (t *listCaptureBatchesTool) ParamSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			paramCaptureBatchID: map[string]any{
+			paramCaptureBatchID: agenttoolschema.OfResource(map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
 				toolschema.KeyDescription: "One stack to read, by an id a listing without it returned or " +
 					"the stack on the page. Leave it out to list open stacks.",
-			},
+			}, permission.ResourceCaptureBatch),
 			paramLimit: map[string]any{
 				toolschema.KeyType: toolschema.TypeInteger,
 				toolschema.KeyDescription: fmt.Sprintf("How many stacks to return, at most %d.",

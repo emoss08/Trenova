@@ -83,3 +83,7 @@ var Module = fx.Module("temporaljobs",
 var WorkerModule = fx.Module("temporal-workers",
 	fx.Invoke(func(_ *registry.WorkerManager, _ *schedule.Scheduler) {}),
 )
+
+var UnscheduledWorkerModule = fx.Module("temporal-workers-unscheduled",
+	fx.Invoke(func(_ *registry.WorkerManager) {}),
+)

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -111,7 +112,10 @@ func (t *applyAccountingInboundChangeTool) Prerequisites() []string {
 
 func (t *applyAccountingInboundChangeTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramInboundChangeID: jsonschemautils.Text(inboundChangeParamHelp),
+		paramInboundChangeID: agenttoolschema.KindID(
+			inboundChangeParamHelp,
+			permission.KindAccountingInboundChange,
+		),
 	}, paramInboundChangeID)
 }
 
@@ -227,7 +231,10 @@ func (t *ignoreAccountingInboundChangeTool) Prerequisites() []string {
 
 func (t *ignoreAccountingInboundChangeTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramInboundChangeID: jsonschemautils.Text(inboundChangeParamHelp),
+		paramInboundChangeID: agenttoolschema.KindID(
+			inboundChangeParamHelp,
+			permission.KindAccountingInboundChange,
+		),
 		paramInboundNote: jsonschemautils.Text(
 			"Why it stays out of Trenova, in one sentence a bookkeeper would accept.",
 		),

@@ -737,7 +737,25 @@ where the tool ran from what it returned, or from a write's name or title. The
 thread's saved messages carry the same fields: `summary` is stored on the
 result, and `effect` is read from the registry when the messages are served, so
 a tool that no longer exists has none. The labels are data only; the loop
-decides nothing from them.
+decides nothing from them. A `find_tools` answer's `tool_finished` also carries
+`handOffAgents`, the person's other agents it named as holding what this agent
+could not load, the same ids its saved tool message keeps (`hand_off_agents`),
+so the Desk's hand-off menu leads with them while the turn is still running
+rather than only once it is saved.
+
+A reply that starts over and a reply that is corrected are told apart.
+`retrying` (kind `restart`) means a model is being asked again: a provider died
+partway, a cut-off call is asked again with more room, or a guard re-asks for a
+looping or ungrounded reply. The reader withdraws the attempt's streamed text
+and thinking, shows that it is retrying, and what follows is the whole reply.
+`reply_replaced` (`AssistantReplyReplacedEvent`: `text`, `reason`) means the
+runtime corrected the final reply after it streamed, without asking the model
+again: the reply passes and the output guard below. It carries the whole reply
+as recorded; the reader swaps its streamed reply text for it and shows no
+retry, and the thinking before it stays. Another agent's are
+`delegate_retrying` and `delegate_reply_replaced`, applied under the call that
+handed it the task. Both are recorded in the run's trajectory, `reply_replaced`
+after the `reply_regrounded` events saying what each pass changed.
 
 Each event's offset is its SSE event id, returned as `Last-Event-ID` to resume.
 The cursor is the last event the reader **applied**, not the last it received.
@@ -917,10 +935,18 @@ optional parameter sent as `""` or as a list of nothing is read as not sent,
 and blank entries in a list of text are set aside: several models fill every
 parameter a tool declares, and a transfer that named one shipment also sent an
 empty customer and search beside it, which the tool read as filters given. A
-parameter whose empty value is itself a request (an update that clears a
-field) is marked `toolschema.EmptyClears` and keeps it; the master data kit
-(`clearable`), order amounts, `update_invoice_draft` and
-`update_service_failure` mark theirs. What was left out is told back on one
+parameter whose empty value means something other than leaving it out is
+marked `toolschema.KeepEmpty` and keeps it: an update's field that an empty
+value clears (the master data kit's `clearable`, order amounts,
+`update_invoice_draft`, `update_service_failure`, a recurring series'
+blackout days), and a write's list whose absence means every record, where
+an empty list read as not sent would widen the call (the pay events
+`pay_worker_now` pays, the customers `assess_late_charges` charges, the sync
+records `retry_accounting_sync` retries, the suggestions
+`apply_carrier_intel_suggestions` applies).
+`TestEveryWriteWhoseOmissionWidensKeepsAnEmptyList` in the catalog contract
+holds every write whose description says leaving a parameter out means every
+record to marking it. What was left out is told back on one
 line ("Left out because they were empty: …"). The
 readings live in `toolschema.Coerce`, and the proposal executor makes the same
 ones (`proposalexecutor.CoerceParams`) on a proposal's parameters with the
@@ -937,10 +963,14 @@ Dates and times come in three shapes, each from one helper in
 every tool: `Date` (`date`, YYYY-MM-DD), `DateTime` (`date-time`, RFC 3339 with
 its offset) and `LocalDateTime` (`local-date-time`, YYYY-MM-DDTHH:MM with no
 zone, read in the timezone of where it happens). `pkg/toolschema` asserts all
-three (an empty string passes for a parameter marked `EmptyClears`; elsewhere
+three (an empty string passes for a parameter marked `KeepEmpty`; elsewhere
 it never reaches the format, being read as not sent) and
 refuses a value of another shape in one sentence naming the shape and an
-example. Midnight UTC sent for a day becomes the day, and a local time written
+example. "today", "yesterday" and "tomorrow" sent for a day become the day they
+name in the organization's timezone (`toolschema.WithToday`, which dispatch
+passes; the query tools' own "or today" parser and the master data kit's day
+field are retired onto `agenttoolschema.Date`). Midnight UTC sent for a day
+becomes the day, and a local time written
 with a space or with seconds becomes its minute; a number is never read as a
 date, and is refused as the Unix time it is. The shape is also said in the
 description. Anthropic and OpenAI's own endpoints are sent the full schema
@@ -955,11 +985,20 @@ value must carry that resource's prefix from the one table in the domain
 (`permission.Resource.IDPrefix`, held by a test to the prefix each entity's
 insert hook mints): a carrier's id sent for a customer is refused as "… is a
 carrier id; this parameter takes a customer id, from list_customers" rather
-than reaching the service and coming back "not found". A parameter without
-the mark, whose record kind shares a resource with others or has no prefix of
-its own (`agenttoolschema.ID`), still has to hold something shaped like a
-record id when its description names where the id comes from
-(`from list_customers`). The mark is stripped from what a model is shown
+than reaching the service and coming back "not found". An id whose resource
+covers several kinds of record (a qualification is an employment verification
+or a clearinghouse query), a record kept inside another's (an invoice line, a
+leave day), or a parameter that takes any of several kinds (a case's
+`subjectId`) is built with `agenttoolschema.KindID`/`KindIDs`, or marked in
+place with `OfKinds` (`OfResource` for a resource), and carries the kinds as
+`x-recordKinds`; each kind's prefix is declared in `permission.RecordKind`,
+held to the domain's mint by the same test, and a value of none of them is
+refused naming every kind it may be. A parameter with neither mark still has
+to hold something shaped like a record id when its description names where
+the id comes from (`from list_customers`); the catalog contract test
+(`TestEveryRecordIDParameterNamesItsKind`) fails on any id parameter left
+unmarked that is not listed, with its reason, among the few that hold no
+PULID. The marks are stripped from what a model is shown
 (`toolschema.ForModel`). What was renamed or re-read is told back with the result
 ("Arguments were read as the tool declares them: … Send them that way from
 now on"), on a query result, a proposal and a write that ran. A refusal names
@@ -995,6 +1034,26 @@ once or are recorded as a proposal depending on what the call reaches, with
 the result saying which and why. It used to call a tool whose static tier was
 AutoExecute a change that "runs as soon as you call it", and the turn's taint,
 a condition or the call's reach held it anyway.
+
+### An empty list says what would have matched
+
+A list or search result names what it applied (`searchedFor`). When the first page of a
+`newListTool` list comes back empty with a text or a filter applied, the tool probes before it
+answers (`listnearmiss.go`), each probe one row at most: is there anything at all, and does
+dropping the text, or any one of the first four filters, find something. The note then says
+which: "there are no hold reasons at all, so no other wording will find one", "dropping just
+one of these finds some: status equals Approved", or "together they rule everything out". A
+bare "nothing matched" sent models round a loop of near-identical calls, a status at a time,
+until the tool budget ran out. `search_shipments` does the same for its status: a search that
+finds nothing in the status asked for returns the rows its words match in any status, with a
+note saying none was in that status.
+
+Shipment rows from `list_shipments` and `search_shipments` carry the first pickup and the last
+delivery (place, window in the stop's zone) and who drives each move, or that it needs a
+driver (`ShipmentOptions.IncludeRoute`, loaded with the page as batched relations), and the
+search matches customers by name or code and stops by location name or city
+(`shipment_search_parties.go`) besides pro number and BOL. Without them, "which one picks up
+first" and "the sunbelt load to chicago" cost one `get_shipment` per row.
 
 ### Reads bunch into one table
 
@@ -1041,10 +1100,12 @@ least half its first column is the kept table's first column
 (`ShownArtifact.Labels`, read from the artifact's rows by the observer and
 carried to the loop on `ToolOutcome.Shown`), or when the line above it and its
 first header name at least half the table's title words. The reply has
-already streamed, so a changed one is withdrawn with a `retrying` restart and
-sent whole; each pass that changed something is a `reply_regrounded` event
-(`strip_ids`, `point_to_table`). The passes sit beneath the prompt's rules,
-not in place of them.
+already streamed, so a changed one is sent whole in a `reply_replaced` event,
+which the reader puts in place of what streamed; it is not a `retrying`
+restart, since the model was not asked again and the person would otherwise
+see the answer appear to fail and start over. Each pass that changed something
+is a `reply_regrounded` event (`strip_ids`, `point_to_table`) before it. The
+passes sit beneath the prompt's rules, not in place of them.
 
 The output guard (`agentguard.EvaluateOutput`) runs last, on every final
 reply. A reply with code in it is no longer refused whole: a fenced block with
@@ -1055,8 +1116,8 @@ rest of the answer is kept. The decision is still the signal that something
 upstream let a code request through: it is `Altered`, names the rule, and is
 logged; the reply's message keeps the guard's stage, category and reason, the
 run carries `OutputAltered` and `OutputRule`, and the turn's decision is the
-altered one. The streamed reply is withdrawn with a `retrying` restart and
-sent again as recorded.
+altered one. The reply as recorded is sent in a `reply_replaced` event, which
+replaces the streamed one without a retry.
 
 ### History replay
 
@@ -1100,7 +1161,7 @@ request is laid out stable first:
   decision. Precedence is the order on the page: Trenova's sections bind the
   organization's, which bind memories, which bind the message. The turn
   carries the shared part's length (`TurnState.SystemStable`) to the adapter.
-  `agentdefinition.PromptVersion` names this shape (v5) on runs, evaluation
+  `agentdefinition.PromptVersion` names this shape (v6) on runs, evaluation
   cases and fingerprints; the snapshots under
   `domain/agentdefinition/testdata/prompts` are regenerated with
   `go test -run TestPromptSnapshots ./internal/core/domain/agentdefinition/ -update`.
@@ -1222,6 +1283,13 @@ with simulation forced on, through the same loop, on the heavy queue. It runs th
 loop itself rather than as a child `AgentRunWorkflow`: a replay files nothing,
 waits on no decision and must never touch the live run's record, which is
 everything a run workflow exists to do.
+
+Every case's reply is also scored on its form (`agentscoring` check
+`replyForm`, weighted beside the others and needing no rubric): it fails a
+reply that shows an internal record id (`shared/recordids`) or writes out a
+markdown table longer than a dozen rows (`shared/mdtable`) instead of pointing
+to the table its tool kept. The runtime enforces both beneath the prompt, so a
+failure here means a model, a prompt change or the reply pass let one slip.
 
 The runtime's own contract with a model is held by scripted conversations,
 `agentevalgate/evals/conversation.yaml`, run through the kit's runtime
@@ -1566,7 +1634,10 @@ code only carries the two results between them.
 
 Hybrid tool ranking took no gate. The turn's query vector rides on `ToolSetState.Query`, and
 the tools a `find_tools` call found ride on `FindToolsResult.Found` into the saved message;
-both are optional data, and a history without them replays by keyword. See "Ranking" in
+both are optional data, and a history without them replays by keyword. The person's other
+agents that answer named as holding what the agent could not call ride the same way, on
+`FindToolsResult.HandOff` into the message's `hand_off_agents`; a history without them
+replays with none, which only leaves the Desk's hand-off menu in its usual order. See "Ranking" in
 [ai-retrieval.md](https://github.com/emoss08/trenova-documentation/blob/main/docs/engineering/ai-retrieval.md).
 
 Tracing and provenance took no gate. No span is started in workflow code; the

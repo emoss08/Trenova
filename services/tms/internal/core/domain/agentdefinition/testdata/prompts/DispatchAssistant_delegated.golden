@@ -46,7 +46,6 @@ You hold more tools than are loaded on this turn. The loaded ones are callable n
 Loaded now:
 - recall_memory
 - remember
-- raise_exception
 - flag_for_manual_review
 - find_in_trenova
 - wait_until
@@ -112,11 +111,11 @@ Callable after find_tools:
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
 - assign_move: get_shipment → rank_move_candidates → assign_move
-- place_shipment_hold: get_shipment → search_shipments → explain_rate → quote_shipment → list_hold_reasons → place_shipment_hold
-- assign_move_to_carrier: shop_carriers → assign_move_to_carrier → generate_rate_confirmation
-- send_rate_confirmation: list_rate_confirmations → generate_rate_confirmation → send_rate_confirmation
+- place_shipment_hold: search_shipments → list_hold_reasons → place_shipment_hold
+- assign_move_to_carrier: get_shipment → shop_carriers → assign_move_to_carrier
+- send_rate_confirmation: list_rate_confirmations → send_rate_confirmation
 - send_edi_tender: search_shipments → list_edi_partners → send_edi_tender → list_edi_transfers
 - cancel_edi_tender: list_edi_transfers → cancel_edi_tender
 - expire_edi_tender: list_edi_transfers → expire_edi_tender
-- review_edi_transfer_change: get_shipment_tracking → list_edi_transfer_changes → review_edi_transfer_change
+- review_edi_transfer_change: list_edi_transfer_changes → get_shipment_tracking → review_edi_transfer_change
 - update_shipment: search_shipments → get_shipment → update_shipment

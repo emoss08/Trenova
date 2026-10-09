@@ -54,7 +54,6 @@ You hold more tools than are loaded on this turn. The loaded ones are callable n
 Loaded now:
 - recall_memory
 - remember
-- raise_exception
 - flag_for_manual_review
 - find_in_trenova
 - wait_until
@@ -120,6 +119,6 @@ Callable after find_tools:
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
 - approve_worker_pto: list_time_off → get_worker_schedule → approve_worker_pto
 - close_leave_case: list_worker_leave_cases → close_leave_case
-- draft_performance_review: start_performance_review → draft_performance_review
-- finalize_dot_random_draw: run_dot_random_draw → get_dot_random_draw → finalize_dot_random_draw
+- draft_performance_review: list_performance_reviews → draft_performance_review
+- finalize_dot_random_draw: list_dot_random_draws → get_dot_random_draw → finalize_dot_random_draw
 - record_shipment_permit: list_shipment_permits → record_shipment_permit

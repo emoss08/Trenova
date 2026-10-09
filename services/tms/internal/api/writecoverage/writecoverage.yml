@@ -2559,7 +2559,7 @@ writes:
   "mutation unresolveShipmentComment":
     tools: [resolve_shipment_comment]
   "mutation updateShipment":
-    tools: [update_shipment]
+    tools: [update_shipment, reschedule_stop, add_shipment_charge]
   "mutation updateShipmentComment":
     tools: [edit_shipment_comment]
 

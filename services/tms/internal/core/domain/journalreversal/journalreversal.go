@@ -10,6 +10,11 @@ import (
 	"github.com/uptrace/bun"
 )
 
+// IDPrefix is the prefix every reversal's id carries. The service and the
+// repository mint the id rather than an insert hook, so the prefix is named
+// here for both of them and for the table that tells ids apart by prefix.
+const IDPrefix = "jrev_"
+
 var (
 	_ domaintypes.PostgresSearchable = (*Reversal)(nil)
 	_ pagination.CursorEntity        = (*Reversal)(nil)

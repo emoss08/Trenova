@@ -84,9 +84,9 @@ func customerPaymentIDProperty() map[string]any {
 
 func applicationsProperty(description string, withShortPay bool) map[string]any {
 	properties := map[string]any{
-		paramInvoiceID: stringProperty(
+		paramInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
 			"An open posted invoice or debit memo of the same customer, from list_invoices "+
-				"or list_ar_open_items.", 0),
+				"or list_ar_open_items."),
 		paramAmount: stringProperty("Applied to this invoice, as a decimal such as 250.00.", 0),
 	}
 	if withShortPay {
@@ -275,8 +275,8 @@ func newApplyCreditMemoTool(payments receivablesKeeper) serviceports.AgentTool {
 		rationale: "Uses a customer's credit to settle what they owe; only a person applies " +
 			"credit.",
 		properties: map[string]any{
-			paramCreditMemoID: stringProperty(
-				"The posted credit memo, from list_invoices or get_invoice.", 0),
+			paramCreditMemoID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
+				"The posted credit memo, from list_invoices or get_invoice."),
 			paramAccountingDate: accountingDateProperty(),
 			paramApplications: applicationsProperty(
 				"The invoices the credit settles and how much goes to each.", false),
@@ -359,8 +359,9 @@ func newUnapplyCreditMemoTool(payments receivablesKeeper) serviceports.AgentTool
 		rationale: "Reopens an invoice's balance and restores a customer's credit; only a " +
 			"person moves credit.",
 		properties: map[string]any{
-			paramCreditMemoApplicationID: stringProperty(
-				"The application, from list_credit_memo_applications. Never guess one.", 0),
+			paramCreditMemoApplicationID: agenttoolschema.KindID(
+				"The application, from list_credit_memo_applications. Never guess one.",
+				permission.KindCreditMemoApplication),
 			paramReason: stringProperty("Why it is taken back.", maxReceivableReasonChars),
 		},
 		required: []string{paramCreditMemoApplicationID, paramReason},

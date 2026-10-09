@@ -73,12 +73,12 @@ func (t *unassignMovesTool) Description() string {
 
 func (t *unassignMovesTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		fieldMoveIDs: jsonschemautils.DescribedArray(
+		fieldMoveIDs: agenttoolschema.OfResource(jsonschemautils.DescribedArray(
 			"The moves to take the driver off, by id from get_dispatch_board (moveId) or "+
 				"get_shipment (its moves). One move is the normal case.",
 			jsonschemautils.String(0),
 			maxMovesPerDispatchChange,
-		),
+		), permission.ResourceShipmentMove),
 	}, fieldMoveIDs)
 }
 
@@ -226,12 +226,12 @@ func (t *updateMoveStatusTool) Description() string {
 
 func (t *updateMoveStatusTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		fieldMoveIDs: jsonschemautils.DescribedArray(
+		fieldMoveIDs: agenttoolschema.OfResource(jsonschemautils.DescribedArray(
 			"The moves to change, by id from get_dispatch_board (moveId) or get_shipment "+
 				"(its moves). One move is the normal case.",
 			jsonschemautils.String(0),
 			maxMovesPerDispatchChange,
-		),
+		), permission.ResourceShipmentMove),
 		fieldStatus: agenttoolschema.Enum(
 			"The status to set. Completed releases the move's equipment for the next load; "+
 				"Canceled is final.",

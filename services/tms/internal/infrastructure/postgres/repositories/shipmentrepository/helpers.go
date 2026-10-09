@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 )
 
@@ -41,8 +42,38 @@ func standardShipmentFilter(
 		q = q.Relation(buncolgen.ShipmentRelations.Customer).
 			Relation(buncolgen.ShipmentRelations.BillToCustomer)
 	}
+	if opts.IncludeRoute && !opts.ExpandShipmentDetails {
+		q = withRoute(q)
+	}
 
 	return q
+}
+
+func withRoute(q *bun.SelectQuery) *bun.SelectQuery {
+	moves := buncolgen.ShipmentRelations.Moves
+	stops := buncolgen.Rel(moves, buncolgen.ShipmentMoveRelations.Stops)
+
+	return q.
+		RelationWithOpts(moves, bun.RelationOpts{
+			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Order(buncolgen.ShipmentMoveColumns.Sequence.OrderAsc())
+			},
+		}).
+		RelationWithOpts(stops, bun.RelationOpts{
+			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Order(buncolgen.StopColumns.Sequence.OrderAsc())
+			},
+		}).
+		Relation(buncolgen.Rel(stops, buncolgen.StopRelations.Location)).
+		Relation(buncolgen.Rel(stops, buncolgen.StopRelations.Location, buncolgen.LocationRelations.State)).
+		Relation(buncolgen.Rel(moves, buncolgen.ShipmentMoveRelations.Assignment)).
+		Relation(buncolgen.Rel(
+			moves, buncolgen.ShipmentMoveRelations.Assignment, buncolgen.AssignmentRelations.PrimaryWorker,
+		)).
+		Relation(buncolgen.Rel(
+			moves, buncolgen.ShipmentMoveRelations.Assignment, buncolgen.AssignmentRelations.Tractor,
+		)).
+		Relation(buncolgen.Rel(moves, buncolgen.ShipmentMoveRelations.CarrierAssignment))
 }
 
 func cursorFilterQuery(
@@ -77,6 +108,7 @@ func countShipmentListQuery(
 	countReq := *req
 	countReq.ShipmentOptions.ExpandShipmentDetails = false
 	countReq.ShipmentOptions.IncludeCustomer = false
+	countReq.ShipmentOptions.IncludeRoute = false
 
 	return baseShipmentListQuery(q, dba, &countReq)
 }
@@ -114,8 +146,54 @@ func applyShipmentOptionFilters(
 	if opts.BillingTransferEligible {
 		q = billingTransferCandidatePredicate(q)
 	}
+	if len(opts.CustomerIDs) > 0 {
+		q = q.Where(buncolgen.ShipmentColumns.CustomerID.In(), bun.In(opts.CustomerIDs))
+	}
+	if len(opts.StopLocationIDs) > 0 {
+		q = q.Where("EXISTS (?)", stopLocationPredicate(dba, opts.StopLocationIDs))
+	}
+	if len(opts.WorkerIDs) > 0 {
+		q = q.Where("EXISTS (?)", assignedWorkerPredicate(dba, opts.WorkerIDs))
+	}
 
 	return q
+}
+
+func assignedWorkerPredicate(dba bun.IDB, workerIDs []pulid.ID) *bun.SelectQuery {
+	return dba.NewSelect().
+		TableExpr(`"shipment_moves" AS "sm_wrk"`).
+		ColumnExpr("1").
+		Join(`JOIN "assignments" AS "a_wrk"`).
+		JoinOn("a_wrk.shipment_move_id = sm_wrk.id").
+		JoinOn("a_wrk.organization_id = sm_wrk.organization_id").
+		JoinOn("a_wrk.business_unit_id = sm_wrk.business_unit_id").
+		JoinOn("a_wrk.archived_at IS NULL").
+		JoinOn("a_wrk.status != ?", shipment.AssignmentStatusCanceled).
+		Where("sm_wrk.shipment_id = sp.id").
+		Where("sm_wrk.organization_id = sp.organization_id").
+		Where("sm_wrk.business_unit_id = sp.business_unit_id").
+		Where("sm_wrk.status != ?", shipment.MoveStatusCanceled).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("a_wrk.primary_worker_id IN (?)", bun.In(workerIDs)).
+				WhereOr("a_wrk.secondary_worker_id IN (?)", bun.In(workerIDs))
+		})
+}
+
+func stopLocationPredicate(dba bun.IDB, locationIDs []pulid.ID) *bun.SelectQuery {
+	return dba.NewSelect().
+		TableExpr(`"shipment_moves" AS "sm_loc"`).
+		ColumnExpr("1").
+		Join(`JOIN "stops" AS "stp_loc"`).
+		JoinOn("stp_loc.shipment_move_id = sm_loc.id").
+		JoinOn("stp_loc.organization_id = sm_loc.organization_id").
+		JoinOn("stp_loc.business_unit_id = sm_loc.business_unit_id").
+		Where("sm_loc.shipment_id = sp.id").
+		Where("sm_loc.organization_id = sp.organization_id").
+		Where("sm_loc.business_unit_id = sp.business_unit_id").
+		Where("sm_loc.status != ?", shipment.MoveStatusCanceled).
+		Where("stp_loc.status != ?", shipment.StopStatusCanceled).
+		Where("stp_loc.location_id IN (?)", bun.In(locationIDs))
 }
 
 func activityWindowPredicate(

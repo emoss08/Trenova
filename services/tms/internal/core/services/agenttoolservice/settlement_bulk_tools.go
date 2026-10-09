@@ -77,27 +77,25 @@ var postSettlements = settlementBulk{
 	},
 }
 
-// settlementBulkRecipes is the order a pay period's settlements move in, by
-// the bulk tool that takes them a step: read, submit, approve, post, record
-// the payment. The bulk tools are named from their single twins, so the
-// order is kept by name here rather than on each spec.
+// settlementBulkRecipes are the reads that hand each bulk tool its
+// settlements, ending at the tool. They once ran on through the period's other
+// writes, which told a model asked only to approve to submit, post and record
+// payments as well. The bulk tools are named from their single twins, so the
+// recipes are kept by name here rather than on each spec.
 var settlementBulkRecipes = map[string][]string{
 	"approve_driver_settlements": {
 		"list_driver_settlements",
 		"get_driver_settlement",
-		"submit_driver_settlement",
 		"approve_driver_settlements",
-		"post_driver_settlements",
 	},
 	"post_driver_settlements": {
-		"approve_driver_settlements",
+		"list_driver_settlements",
 		"post_driver_settlements",
-		"record_driver_settlement_payment",
 	},
 	"approve_carrier_settlements": {
-		"generate_carrier_settlement_batch",
+		"list_carrier_settlements",
+		"get_carrier_settlement",
 		"approve_carrier_settlements",
-		"post_carrier_settlements",
 	},
 }
 

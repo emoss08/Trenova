@@ -97,7 +97,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 	entity := change.After
-	entity.ID = pulid.MustNew("jrev_")
+	entity.ID = pulid.MustNew(journalreversal.IDPrefix)
 	created, err := s.journalReversalRepo.Create(ctx, entity)
 	if err != nil {
 		return nil, err

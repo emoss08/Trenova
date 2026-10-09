@@ -911,8 +911,9 @@ func newDeleteWorkerRecognitionTool(events safetyKeeper) serviceports.AgentTool 
 		permission.ResourceWorkerRecognition,
 		permission.OpDelete,
 	), map[string]any{
-		paramRecognitionID: agenttoolschema.IDText(
-			"The recognition, from list_worker_safety_events. " +
+		paramRecognitionID: agenttoolschema.RecordIDText(
+			permission.ResourceWorkerRecognition,
+			"The recognition, from list_worker_safety_events. "+
 				"Never guess one.",
 		),
 	}, paramRecognitionID), paramRecognitionID, permission.ResourceWorkerRecognition)
@@ -1136,7 +1137,10 @@ func (e *violationEdit) request(
 }
 
 func violationIDProperty() map[string]any {
-	return agenttoolschema.ID("The violation", "list_worker_safety_events")
+	return agenttoolschema.KindID(
+		agenttoolschema.IDDescription("The violation", "list_worker_safety_events"),
+		permission.KindSafetyViolation,
+	)
 }
 
 func newUpdateSafetyViolationTool(events safetyKeeper) serviceports.AgentTool {

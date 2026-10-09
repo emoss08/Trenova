@@ -122,9 +122,12 @@ func fuelIndexPriceFrom(
 	return entity, nil
 }
 
-func fuelPriceProperties(idKey, idDescription string) map[string]any {
+func fuelPriceProperties(
+	idKey, idDescription string,
+	kind permission.RecordKind,
+) map[string]any {
 	return map[string]any{
-		idKey: stringProperty(idDescription, 0),
+		idKey: agenttoolschema.KindID(idDescription, kind),
 		paramPriceDate: agenttoolschema.Date(
 			"The day the price applies to, as the index publishes " +
 				"it.",
@@ -140,8 +143,9 @@ func newRecordFuelIndexPriceTool(prices fuelIndexPriceKeeper) serviceports.Agent
 			"a customer's own index or a rack price the organization tracks. Every fuel " +
 			"surcharge that follows the index prices from it, so a person always decides. " +
 			"EIA indexes are fetched on their own and take no manual price.",
-		properties: fuelPriceProperties(paramFuelIndexID, fuelIndexSupplier),
-		required:   []string{paramFuelIndexID, paramPriceDate, paramPrice},
+		properties: fuelPriceProperties(paramFuelIndexID, fuelIndexSupplier,
+			permission.KindFuelIndex),
+		required: []string{paramFuelIndexID, paramPriceDate, paramPrice},
 		searchTerms: []string{
 			"fuel price", "diesel price", "index", "surcharge", "rack", "doe",
 		},
@@ -197,8 +201,9 @@ func newCorrectFuelIndexPriceTool(prices fuelIndexPriceKeeper) serviceports.Agen
 			"entered wrong: its day or its price. A price fetched from EIA cannot be " +
 			"corrected. Every surcharge that follows the index prices from it, so a person " +
 			"always decides.",
-		properties: fuelPriceProperties(paramFuelIndexPriceID, fuelPriceSupplier),
-		required:   []string{paramFuelIndexPriceID, paramPriceDate, paramPrice},
+		properties: fuelPriceProperties(paramFuelIndexPriceID, fuelPriceSupplier,
+			permission.KindFuelIndexPrice),
+		required: []string{paramFuelIndexPriceID, paramPriceDate, paramPrice},
 	}), receivablePlan[*fuelsurcharge.FuelIndexPrice, *fuelsurchargeservice.PriceChange]{
 		request: func(params *serviceports.ToolExecuteParams) (*fuelsurcharge.FuelIndexPrice, error) {
 			return fuelIndexPriceFrom(params, paramFuelIndexPriceID)

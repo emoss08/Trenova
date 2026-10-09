@@ -8317,7 +8317,7 @@ export type ArCustomerProfileQueryVariables = Exact<{
 
 export type ArCustomerProfileQuery = { arCustomerProfile: { dsoDays: number, creditUtilization: number, delinquencyScore: number, snapshot: { customerId: string, customerName: string, totalOpenMinor: number, overdueMinor: number, unappliedCashMinor: number, creditLimitMinor: number, hasCreditLimit: boolean, openInvoiceCount: number, oldestOpenInvoiceDate: number, oldestDaysPastDue: number, lastPaymentDate: number, lastPaymentMinor: number, avgDaysToPay: number, billedTrailing91Minor: number, buckets: { currentMinor: number, days1To30Minor: number, days31To60Minor: number, days61To90Minor: number, daysOver90Minor: number, totalOpenMinor: number }, monthlyCollections: Array<{ monthStart: number, amountMinor: number }> } } };
 
-export type AgentScorecardFieldsFragment = { agentDefinitionId: string, window: AgentScorecardWindow, since: number, runs: number, runsFailed: number, exceptions: number, proposals: number, approved: number, modified: number, rejected: number, pending: number, executed: number, executionFailures: number, autoExecuted: number, approvalRate: number | null, inputTokens: number, outputTokens: number, costUsd: string, estimatedMinutesSaved: number, byTool: Array<{ toolName: string, approved: number, modified: number, rejected: number, executed: number, failed: number, pending: number, automatic: number }>, toolTrust: Array<{ toolName: string, streak: number, approvals: number, modifications: number, rejections: number, executionFailures: number, earnedTier: AgentAutonomyTier | null, lastDecisionAt: number | null, promotedAt: number | null, demotedAt: number | null }> } & { ' $fragmentName'?: 'AgentScorecardFieldsFragment' };
+export type AgentScorecardFieldsFragment = { agentDefinitionId: string, window: AgentScorecardWindow, since: number, runs: number, runsFailed: number, exceptions: number, proposals: number, approved: number, modified: number, rejected: number, pending: number, executed: number, executionFailures: number, autoExecuted: number, approvalRate: number | null, inputTokens: number, outputTokens: number, costUsd: string, estimatedMinutesSaved: number, byTool: Array<{ toolName: string, approved: number, modified: number, rejected: number, executed: number, failed: number, pending: number, automatic: number }>, toolVerdicts: Array<{ toolName: string, verdict: string, calls: number, topReasons: Array<{ reason: string, calls: number }> }>, toolTrust: Array<{ toolName: string, streak: number, approvals: number, modifications: number, rejections: number, executionFailures: number, earnedTier: AgentAutonomyTier | null, lastDecisionAt: number | null, promotedAt: number | null, demotedAt: number | null }> } & { ' $fragmentName'?: 'AgentScorecardFieldsFragment' };
 
 export type AgentScorecardQueryVariables = Exact<{
   input: AgentScorecardInput;
@@ -16428,6 +16428,15 @@ export const AgentScorecardFieldsFragmentDoc = new TypedDocumentString(`
     failed
     pending
     automatic
+  }
+  toolVerdicts {
+    toolName
+    verdict
+    calls
+    topReasons {
+      reason
+      calls
+    }
   }
   toolTrust {
     toolName
@@ -25571,7 +25580,7 @@ export const ArTopOverdueCustomersDocument = {"__meta__":{"kind":"query","name":
 export const ArCollectionsWorklistDocument = {"__meta__":{"kind":"query","name":"ArCollectionsWorklist","hash":"sha256:73b418ffccc6ba72bbf8790bc8292b65324d7044cc72d811dd32877da5496f2a"}} as unknown as TypedDocumentString<ArCollectionsWorklistQuery, ArCollectionsWorklistQueryVariables>;
 export const ArPaymentStatsDocument = {"__meta__":{"kind":"query","name":"ArPaymentStats","hash":"sha256:a4fe33f6233932aadde3e5ec2e4dc656c78b2e73188bab35638f674c3045bbeb"}} as unknown as TypedDocumentString<ArPaymentStatsQuery, ArPaymentStatsQueryVariables>;
 export const ArCustomerProfileDocument = {"__meta__":{"kind":"query","name":"ArCustomerProfile","hash":"sha256:b82086fc8a84f2dcc1c322b26634a1465bf4d240b6a5ff5f9bfd36300fbe7b37"}} as unknown as TypedDocumentString<ArCustomerProfileQuery, ArCustomerProfileQueryVariables>;
-export const AgentScorecardDocument = {"__meta__":{"kind":"query","name":"AgentScorecard","hash":"sha256:4ad32e77a6c5d07bddbf798b32093cb772102fd0a3a232f14c6c0e1136dc699f"}} as unknown as TypedDocumentString<AgentScorecardQuery, AgentScorecardQueryVariables>;
+export const AgentScorecardDocument = {"__meta__":{"kind":"query","name":"AgentScorecard","hash":"sha256:4f202964f4a03cc466c48c000c89e457f877ef681d0fd1ec4c78cad96e553f95"}} as unknown as TypedDocumentString<AgentScorecardQuery, AgentScorecardQueryVariables>;
 export const MyAgentsDocument = {"__meta__":{"kind":"query","name":"MyAgents","hash":"sha256:fbba5deefba9da56ab81d72cd1815eed78a2855232af5826e2ec73f3f787cbc5"}} as unknown as TypedDocumentString<MyAgentsQuery, MyAgentsQueryVariables>;
 export const DecideMyPlanDocument = {"__meta__":{"kind":"mutation","name":"DecideMyPlan","hash":"sha256:88cd6064cb6e3e865a06ce2e86fb4c49f63454065cd0aac26005aaa53b92b42b"}} as unknown as TypedDocumentString<DecideMyPlanMutation, DecideMyPlanMutationVariables>;
 export const DecideMyProposalDocument = {"__meta__":{"kind":"mutation","name":"DecideMyProposal","hash":"sha256:e1a0719c2bd974fb380071b01d02fc55d6fab115f6a1efbc45781ba0bd0126f2"}} as unknown as TypedDocumentString<DecideMyProposalMutation, DecideMyProposalMutationVariables>;

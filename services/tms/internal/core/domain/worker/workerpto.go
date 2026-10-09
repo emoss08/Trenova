@@ -99,8 +99,8 @@ func (wpto *WorkerPTO) Validate(multiErr *errortypes.MultiError) {
 		),
 	))
 
-	if wpto.EndDate <= wpto.StartDate {
-		multiErr.Add("endDate", errortypes.ErrInvalid, "End date must be after start date")
+	if wpto.EndDate < wpto.StartDate {
+		multiErr.Add("endDate", errortypes.ErrInvalid, "End date cannot be before start date")
 	}
 }
 

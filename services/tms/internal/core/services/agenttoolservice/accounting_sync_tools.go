@@ -224,9 +224,9 @@ func (t *retryAccountingSyncTool) Name() string { return "retry_accounting_sync"
 
 func (t *retryAccountingSyncTool) Recipe() []string {
 	return []string{
-		"get_accounting_sync_record",
-		"get_accounting_sync_status",
-		"list_accounting_sync_records",
+		toolGetSyncStatus,
+		toolListSyncRecords,
+		toolGetSyncRecord,
 		"retry_accounting_sync",
 	}
 }
@@ -249,15 +249,15 @@ func (t *retryAccountingSyncTool) SearchTerms() []string {
 }
 
 func (t *retryAccountingSyncTool) Prerequisites() []string {
-	return []string{toolListSyncRecords, toolGetSyncRecord}
+	return []string{toolListSyncRecords, toolGetSyncRecord, "get_record_accounting_sync_state"}
 }
 
 func (t *retryAccountingSyncTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramAccountingSystem: accountingSystemSchema(),
-		paramSyncRecordIDs: toolschema.RecordSubset(
+		paramSyncRecordIDs: toolschema.KeepEmpty(toolschema.RecordSubset(
 			permission.ResourceAccountingSync.String(),
-			jsonschemautils.DescribedArray(
+			agenttoolschema.OfKinds(jsonschemautils.DescribedArray(
 				fmt.Sprintf(
 					"Up to %d sync record ids, from list_accounting_sync_records or "+
 						"get_record_accounting_sync_state.",
@@ -265,8 +265,8 @@ func (t *retryAccountingSyncTool) ParamSchema() map[string]any {
 				),
 				jsonschemautils.String(0),
 				maxSyncRetryIDs,
-			),
-		),
+			), permission.KindAccountingSyncRecord),
+		)),
 		paramSyncErrorCategories: jsonschemautils.DescribedArray(
 			"Retry every retryable record that last failed for one of these reasons.",
 			agenttoolschema.Enum("An error category.", agenttoolschema.SyncErrorCategories),
@@ -510,14 +510,15 @@ func (t *skipAccountingSyncTool) SearchTerms() []string {
 }
 
 func (t *skipAccountingSyncTool) Prerequisites() []string {
-	return []string{toolGetSyncRecord}
+	return []string{toolListSyncRecords, toolGetSyncRecord}
 }
 
 func (t *skipAccountingSyncTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramSyncRecordID: jsonschemautils.Text(
-			"The sync record's id, from list_accounting_sync_records or " +
+		paramSyncRecordID: agenttoolschema.KindID(
+			"The sync record's id, from list_accounting_sync_records or "+
 				"get_accounting_sync_record.",
+			permission.KindAccountingSyncRecord,
 		),
 		paramSyncReason: jsonschemautils.Text(
 			"Why the document stays out of the books, in one sentence a bookkeeper " +
@@ -629,14 +630,15 @@ func (t *redateAccountingSyncTool) SearchTerms() []string {
 }
 
 func (t *redateAccountingSyncTool) Prerequisites() []string {
-	return []string{toolGetSyncRecord}
+	return []string{toolListSyncRecords, toolGetSyncRecord}
 }
 
 func (t *redateAccountingSyncTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramSyncRecordID: jsonschemautils.Text(
-			"The sync record's id, from list_accounting_sync_records or " +
+		paramSyncRecordID: agenttoolschema.KindID(
+			"The sync record's id, from list_accounting_sync_records or "+
 				"get_accounting_sync_record. It must be held for a closed period.",
+			permission.KindAccountingSyncRecord,
 		),
 	}, paramSyncRecordID)
 }

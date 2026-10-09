@@ -712,3 +712,15 @@ func TestBuildSystemPrompt_TellsAConversationAgentToSaveStatedPreferences(t *tes
 	delegated := validDefinition().BuildSystemPrompt(agentdefinition.RuntimeContext{DelegatedBy: "Dispatch desk"})
 	assert.NotContains(t, delegated, "## Remembering", "a delegate answers an agent, not the person")
 }
+
+// The app is translated, and a dispatcher who writes in Spanish was answered
+// in English. The reply follows the person's language; what the tools take
+// and what Trenova labels stay as they are.
+func TestBuildSystemPrompt_AnswersInThePersonsLanguage(t *testing.T) {
+	t.Parallel()
+
+	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(agentdefinition.RuntimeContext{})
+
+	assert.Contains(t, prompt, "Answer in the language the person writes in")
+	assert.Contains(t, prompt, "the values you send to tools stay as each tool declares them")
+}

@@ -106,8 +106,8 @@ func locationFields() []masterField[location.Location] {
 			func(l *location.Location) *pulid.ID { return &l.StateID }),
 		masterText(mdPostalCode, "The ZIP code.", maxPostalCodeRunes, true,
 			func(l *location.Location) *string { return &l.PostalCode }),
-		masterID(paramLocationCategoryID, "What kind of place it is, from "+
-			"list_location_categories.",
+		masterID(paramLocationCategoryID, permission.ResourceLocationCategory,
+			"What kind of place it is, from list_location_categories.",
 			func(l *location.Location) *pulid.ID { return &l.LocationCategoryID }),
 	}
 }

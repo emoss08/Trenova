@@ -154,16 +154,11 @@ func (t *updateShipmentTool) Preview(
 		return nil, err
 	}
 
-	changes := []*agent.RecordChange{change}
-	if t.partners != nil {
-		notices, nErr := t.partners.PreviewTenderChanges(ctx, before, after, params.Actor)
-		if nErr != nil {
-			return nil, nErr
-		}
-		for _, notice := range notices {
-			changes = append(changes, partnerNoticeSend(notice, ""))
-		}
+	notices, err := tenderChangeNotices(ctx, t.partners, before, after, params.Actor)
+	if err != nil {
+		return nil, err
 	}
+	changes := append([]*agent.RecordChange{change}, notices...)
 
 	summary := fmt.Sprintf("Would change %s on shipment %s.",
 		countOf(len(change.Fields), "field"), before.ProNumber)

@@ -279,8 +279,8 @@ func (t *getBillingQueueItemTool) Description() string {
 func (t *getBillingQueueItemTool) ParamSchema() map[string]any {
 	return idSchema(
 		paramBillingQueueItemID,
-		agenttoolschema.IDText("The item's id, from list_billing_queue_items, "+
-			"this run's subject or "+onThePage),
+		agenttoolschema.KindID("The item's id, from list_billing_queue_items, "+
+			"this run's subject or "+onThePage, permission.KindBillingQueueItem),
 	)
 }
 

@@ -31,6 +31,7 @@ type getSpec struct {
 	summary     string
 	searchTerms []string
 	resource    permission.Resource
+	kinds       []permission.RecordKind
 	paramName   string
 	idSource    string
 	reads       agent.ExternalRead
@@ -67,12 +68,15 @@ func (t *getTool) Policy() serviceports.ToolPolicy {
 }
 
 // ParamSchema marks the id with the tool's resource when that resource is one
-// kind of record with one prefix, which every get tool's is: the record it
-// reads is the resource it is permitted under. A resource covering several
-// kinds is left unmarked, and its id is checked for shape alone.
+// kind of record with one prefix: the record it reads is the resource it is
+// permitted under. A tool reading one kind of a resource that covers several,
+// a detention occurrence under detention, names that kind instead, so its id
+// is still held to a prefix rather than checked for shape alone.
 func (t *getTool) ParamSchema() map[string]any {
 	property := agenttoolschema.IDText(t.spec.idDescription())
-	if _, typed := t.spec.resource.IDPrefix(); typed {
+	if len(t.spec.kinds) > 0 {
+		property = agenttoolschema.KindID(t.spec.idDescription(), t.spec.kinds...)
+	} else if _, typed := t.spec.resource.IDPrefix(); typed {
 		property = agenttoolschema.RecordIDText(t.spec.resource, t.spec.idDescription())
 	}
 

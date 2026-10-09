@@ -3,6 +3,7 @@ import {
   type DeskThreadArtifacts,
   type DeskThreadSchedules,
 } from "@/components/desk-chat/desk-thread";
+import type { TurnHandoff } from "@/components/assistant/turn-stream";
 import { turnTime } from "@/components/desk-chat/turn-time";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
@@ -52,6 +53,13 @@ export function DeskConversation({
   const timezone = useAuthStore((state) => state.user?.timezone) || "UTC";
   const chapters = useDeskStore((state) => state.chaptersByThread[thread.id]);
   const toggleChapter = useDeskStore((state) => state.toggleChapter);
+  // What the reply being written says about a hand-off, for the top bar's
+  // menu, which watches the store rather than the reply.
+  const setLiveHandoff = useDeskStore((state) => state.setLiveHandoff);
+  const noteLiveHandoff = useCallback(
+    (live: TurnHandoff | null) => setLiveHandoff(thread.id, live),
+    [setLiveHandoff, thread.id],
+  );
   const activeArtifactId = useDeskStore((state) => state.activeArtifactByThread[thread.id] ?? null);
 
   // A page the agent opens takes the person out of the Desk; the conversation
@@ -153,6 +161,7 @@ export function DeskConversation({
       onSwitchAgent={desk.start}
       onStartNew={onStartNew}
       onWorkingChange={desk.setWorking}
+      onLiveHandoff={noteLiveHandoff}
       onNavigate={carryConversation}
       followNavigation={false}
       artifacts={artifacts}

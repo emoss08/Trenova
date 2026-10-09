@@ -141,7 +141,10 @@ func leaveCaseIDProperty() map[string]any {
 }
 
 func leaveDayIDProperty() map[string]any {
-	return agenttoolschema.ID("The day of leave", "list_worker_leave_cases")
+	return agenttoolschema.KindID(
+		agenttoolschema.IDDescription("The day of leave", "list_worker_leave_cases"),
+		permission.KindLeaveDay,
+	)
 }
 
 func leaveCaseRecord(entity *worker.WorkerLeaveCase) toolpreview.Record {
@@ -569,8 +572,9 @@ func newRecordLeaveDayTool(cases leaveKeeper) serviceports.AgentTool {
 		paramLeaveCaseID: leaveCaseIDProperty(),
 		paramUsedOn:      agenttoolschema.Date("The day the leave was taken."),
 		paramLeaveHours:  amountProperty("Hours taken that day, such as 8 or 4.5."),
-		paramPTOLink: agenttoolschema.IDText("Paid time off booked for the same day, from " +
-			"list_time_off, when the leave runs concurrently."),
+		paramPTOLink: agenttoolschema.RecordIDText(permission.ResourceWorkerPTO,
+			"Paid time off booked for the same day, from list_time_off, when the leave "+
+				"runs concurrently."),
 		fieldNotes: wfNoteProperty("Anything the day should say."),
 	}, paramLeaveCaseID, paramUsedOn, paramLeaveHours)
 
@@ -668,7 +672,8 @@ func newUpdateLeaveDayTool(cases leaveKeeper) serviceports.AgentTool {
 		paramLeaveHours:   amountProperty("Hours taken that day, such as 8 or 4.5."),
 		paramCounts: booleanProperty("Whether this day counts against the FMLA " +
 			"entitlement."),
-		paramPTOLink: agenttoolschema.IDText(
+		paramPTOLink: agenttoolschema.RecordIDText(
+			permission.ResourceWorkerPTO,
 			"Paid time off booked for the same day, from list_time_off.",
 		),
 		fieldNotes: wfNoteProperty("The day's note."),

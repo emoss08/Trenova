@@ -10,6 +10,7 @@ import { requestGraphQL } from "@trenova/shared/lib/graphql";
 export type AgentScorecard = AgentScorecardFieldsFragment;
 export type AgentToolOutcome = AgentScorecard["byTool"][number];
 export type AgentToolTrustRow = AgentScorecard["toolTrust"][number];
+export type AgentToolVerdictRow = AgentScorecard["toolVerdicts"][number];
 export type { AgentScorecardWindow };
 
 export const SCORECARD_WINDOWS: AgentScorecardWindow[] = ["Last7Days", "Last30Days", "Last90Days"];

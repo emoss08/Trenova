@@ -1,0 +1,127 @@
+defaults:
+  tags: [backoffice]
+
+scenarios:
+  - name: weekly-driver-settlement
+    description: Paying a driver for last week.
+    agent: Settlements clerk
+    tags: [settlements, write]
+    steps:
+      - say: "run carlos rivera's settlement for last week"
+        expect:
+          calls: ["search_worker|list_driver_pay_events"]
+          proposals: [{ tool: "generate_driver_settlement|generate_driver_settlement_batch" }]
+          maxFailedCalls: 2
+          rubric: >
+            Resolves Carlos Rivera, last week's dates, and the pay events it would include, and
+            proposes generating his settlement for that period.
+
+  - name: settlement-with-a-deduction
+    description: A settlement adjusted before it is paid.
+    agent: Settlements clerk
+    tags: [settlements, write]
+    steps:
+      - say: "take 150 out of david park's settlement for the fuel advance he got"
+        expect:
+          calls: ["list_driver_settlements"]
+          proposals: [{ tool: add_driver_settlement_adjustment }]
+          maxFailedCalls: 1
+          maxCalls: 8
+          rubric: >
+            Finds David Park's draft settlement SEED-STL-1004 and proposes a $150 deduction on it
+            labelled as the fuel advance.
+
+  - name: deduction-on-a-closed-settlement
+    description: >
+      Emily Chen's only settlement is posted, so there is nothing open to change: the agent should
+      find that in a few calls and say so, not try every status.
+    agent: Settlements clerk
+    tags: [settlements]
+    steps:
+      - say: "take 150 out of emily chen's open settlement for the fuel advance she got"
+        expect:
+          calls: ["list_driver_settlements"]
+          noProposals: true
+          maxCalls: 6
+          rubric: >
+            Says Emily Chen has no open settlement (SEED-STL-1005 is already posted) and offers
+            what can be done instead, such as taking it from her next settlement.
+
+  - name: customer-short-paid
+    description: A payment that does not cover the invoice.
+    agent: Receivables
+    tags: [receivables]
+    steps:
+      - say: "peak sent a check for 3,200 but their invoice was 3,700. what do we do with it"
+        expect:
+          calls: ["list_ar_open_items|list_invoices|list_customer_payments"]
+          rubric: >
+            Looks for Peak's open invoice and a recorded payment, explains the choices (apply the
+            3,200 and leave 500 open, or open a dispute for the 500), and says what it found,
+            including that the invoice or payment does not exist yet if so.
+
+  - name: ifta-quarter
+    description: The quarterly fuel tax return.
+    agent: Fuel and IFTA clerk
+    tags: [fuel, write]
+    steps:
+      - say: "put together our IFTA return for last quarter"
+        expect:
+          proposals: [{ tool: generate_ifta_return }]
+          maxFailedCalls: 2
+          rubric: >
+            Proposes generating the return for the previous calendar quarter by its dates, and
+            names any missing mileage or fuel it can see that would make the return wrong.
+
+  - name: scheduled-report
+    description: A standing report that exists, put on a schedule.
+    agent: Report analyst
+    tags: [reports, write]
+    steps:
+      - say: "email me the delivered not billed report every monday at 7am"
+        expect:
+          calls: ["list_reports"]
+          proposals: [{ tool: schedule_report }]
+          maxFailedCalls: 1
+          maxCalls: 6
+          rubric: >
+            Finds the Delivered, Not Billed report and proposes a weekly Monday 07:00 schedule in
+            the organization's time zone, sent to the person.
+
+  - name: scheduled-report-that-does-not-exist
+    description: >
+      No on-time delivery report exists locally: the agent should say so in a few searches and
+      offer to build one, not schedule a different report as if it were the one asked for.
+    agent: Report analyst
+    tags: [reports]
+    steps:
+      - say: "email me the on-time delivery report every monday at 7am"
+        expect:
+          calls: ["list_reports"]
+          noProposals: true
+          maxCalls: 8
+          rubric: >
+            Says there is no on-time delivery report, offers to build one (or names the closest
+            existing report as a choice the person makes), and schedules nothing yet.
+
+  - name: random-drug-test-draw
+    description: The quarterly DOT random draw.
+    agent: Workforce coordinator
+    tags: [compliance, write]
+    steps:
+      - say: "run this quarter's DOT random drug and alcohol draw"
+        expect:
+          proposals: [{ tool: run_dot_random_draw }]
+          maxFailedCalls: 2
+
+  - name: credit-memo-for-damage
+    description: Credit for damaged freight, on a posted invoice.
+    agent: Billing exceptions
+    tags: [billing, write]
+    steps:
+      - say: "acme says 2 pallets came in damaged on their last invoice, credit them 480"
+        expect:
+          calls: ["list_invoices|get_invoice"]
+          rubric: >
+            Finds Acme's most recent invoice and proposes a $480 credit memo against it for the
+            damaged pallets, or says there is no posted Acme invoice to credit.

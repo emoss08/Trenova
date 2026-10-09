@@ -6,6 +6,7 @@ import (
 	"maps"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
@@ -14,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/core/services/toolsimulation"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.opentelemetry.io/otel/trace"
@@ -35,10 +37,16 @@ type toolOutcome struct {
 	// the call's result message.
 	delegateReport *conversation.DelegateReport
 	// taint is the outside content the call read.
-	taint   []agent.TaintMark
-	found   []string
+	taint []agent.TaintMark
+	found []string
+	// handOff names the person's other agents a find_tools answer named as
+	// holding what it matched, for the Desk's hand-off menu.
+	handOff []pulid.ID
 	verdict string
 	reason  string
+	// dispatched marks an outcome dispatch produced, which wrote its own
+	// step; any other refusal is the loop's own (RunResult.LoopRefusals).
+	dispatched bool
 	// memories are the memories a recall read back, and saved the one a
 	// remember kept or offered.
 	memories []pulid.ID
@@ -121,7 +129,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		}
 
 		contract, err := contractCall(
-			s.arguments, call.Name, tool.ParamSchema(), call.Arguments,
+			s.arguments, call.Name, tool.ParamSchema(), call.Arguments, organizationToday(req),
 		)
 		if err != nil {
 			return argumentOutcome(call.Name, tool.ParamSchema(), err)
@@ -152,7 +160,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 	}
 
 	contract, err := contractCall(
-		s.arguments, call.Name, tool.ParamSchema(), call.Arguments,
+		s.arguments, call.Name, tool.ParamSchema(), call.Arguments, organizationToday(req),
 	)
 	if err != nil {
 		return argumentOutcome(call.Name, tool.ParamSchema(), err)
@@ -533,6 +541,15 @@ func deniedAccess(
 	return fmt.Sprintf(
 		"the person you are working for does not have %s access to %s",
 		operation, resource.String(),
+	)
+}
+
+// organizationToday is the reading of "today" for a call's day parameters:
+// the calendar day it is now in the organization's timezone, which is the
+// day the runtime context told the model.
+func organizationToday(req *serviceports.RunRequest) toolschema.CoerceOption {
+	return toolschema.WithToday(
+		time.Unix(timeutils.NowUnix(), 0).In(timeutils.LoadLocation(req.Context.Timezone)),
 	)
 }
 

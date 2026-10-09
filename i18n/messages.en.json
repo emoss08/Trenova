@@ -3244,6 +3244,15 @@
       "routes/shipment"
     ]
   },
+  "A charge cannot be negative; a credit is made with a credit memo": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "A charge is over the rate con": {
     "sites": 1,
     "scope": [
@@ -67270,6 +67279,15 @@
       "routes/agent-control"
     ]
   },
+  "Didn't go through": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Diesel": {
     "sites": 6,
     "scope": [
@@ -78430,6 +78448,15 @@
       "routes/worker"
     ]
   },
+  "End date cannot be before start date": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/worker"
+    ]
+  },
   "End date is required": {
     "sites": 6,
     "scope": [
@@ -78453,13 +78480,12 @@
     ]
   },
   "End date must be after start date": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
-      "domain/worker",
       "packages/shared/types",
       "service/fiscalperiodservice",
       "service/fiscalyearservice"
@@ -82044,6 +82070,24 @@
       "domain/deskcase"
     ]
   },
+  "Every call went through": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Every call went through.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Every candidate was blocked or out of range for the moves in this window. The reasons are grouped below.": {
     "sites": 1,
     "scope": [
@@ -83055,6 +83099,15 @@
     ],
     "areas": [
       "routes/fuel-feed-run"
+    ]
+  },
+  "Every tool call it made in the last 30 days, including the ones turned away before a tool ran. A call the runtime turned away never became a proposal, so the figures above cannot show it. The tools with the most calls that didn't go through come first; open one to read the reasons its calls gave most often.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Every tool, any order": {
@@ -87058,7 +87111,7 @@
     ]
   },
   "Failed": {
-    "sites": 55,
+    "sites": 56,
     "scope": [
       "go",
       "ts"
@@ -100552,6 +100605,15 @@
     "areas": [
       "routes/fleet-safety",
       "routes/insights"
+    ]
+  },
+  "Holds what this conversation needs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Holiday": {
@@ -135335,6 +135397,15 @@
       "routes/distance-override"
     ]
   },
+  "No internal ids or reprinted long lists": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No invoice #": {
     "sites": 3,
     "scope": [
@@ -136904,6 +136975,15 @@
       "routes/desk"
     ]
   },
+  "No reason was recorded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No reason was reported.": {
     "sites": 1,
     "scope": [
@@ -138167,6 +138247,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "No tool calls in the last 30 days.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "No tool goes past this, whatever it's set to.": {
@@ -152119,7 +152208,7 @@
     ]
   },
   "Outcome unknown": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -166121,7 +166210,7 @@
     ]
   },
   "Proposed": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -168828,7 +168917,7 @@
     ]
   },
   "Ran": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -202913,6 +203002,15 @@
       "service/invoicerunservice"
     ]
   },
+  "Shipment {0} is {1}; its charges can no longer change here": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Shipment {0} owes nothing to this payer": {
     "sites": 1,
     "scope": [
@@ -203519,6 +203617,15 @@
       "routes/shipment"
     ]
   },
+  "Show all {0} tools": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Show an estimated payout on active loads before pay accrues, based on the driver's pay plan.": {
     "sites": 1,
     "scope": [
@@ -203637,12 +203744,13 @@
     ]
   },
   "Show fewer": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/agent-control",
       "routes/detention-intelligence",
       "routes/scheduling"
     ]
@@ -204720,7 +204828,7 @@
     ]
   },
   "Simulated": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -215911,6 +216019,15 @@
       "apps/dash/_components"
     ]
   },
+  "That accessorial charge is inactive; choose an active one from list_accessorial_charges": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "That accessorial charge is not on this shipment": {
     "sites": 1,
     "scope": [
@@ -216381,6 +216498,15 @@
     ],
     "areas": [
       "service/schedulingservice"
+    ]
+  },
+  "That stop is not on this shipment; take the stop id from get_shipment's moves": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "That template has no published version, so the customer would keep receiving the current one. Publish it first.": {
@@ -227337,6 +227463,15 @@
       "routes/worker"
     ]
   },
+  "The tool calls could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The tool's own rule allows at most {0}": {
     "sites": 1,
     "scope": [
@@ -227902,6 +228037,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "The window cannot close before it opens": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "The window cannot start before 1970": {
@@ -232828,6 +232972,15 @@
       "domain/deskcase"
     ]
   },
+  "This stop is {0} and can no longer be rescheduled": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "This stops at {0} rows. Export as a report to get every row.": {
     "sites": 1,
     "scope": [
@@ -235807,7 +235960,7 @@
     ]
   },
   "Tool": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "ts"
     ],
@@ -235816,6 +235969,15 @@
     ]
   },
   "Tool call": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Tool calls": {
     "sites": 1,
     "scope": [
       "ts"
@@ -267087,11 +267249,12 @@
     ]
   },
   "{0, plural, one {# call} other {# calls}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/desk"
     ]
   },
@@ -274071,15 +274234,6 @@
       "service/agenttoolservice"
     ]
   },
-  "{0} is not a date as YYYY-MM-DD": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/agenttoolservice"
-    ]
-  },
   "{0} is not a decimal such as 1250.00": {
     "sites": 1,
     "scope": [
@@ -275824,6 +275978,24 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "{0} of {1, plural, one {# call} other {# calls}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0} of {1, plural, one {# call} other {# calls}} didn't go through": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} of {1, plural, one {# event} other {# events}} shown.": {
@@ -279751,6 +279923,15 @@
     ],
     "areas": [
       "routes/pto-policy"
+    ]
+  },
+  "{0}: {1, plural, one {# call} other {# calls}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0}: {1} calls, {2} failed": {

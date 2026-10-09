@@ -113,9 +113,11 @@ func newCancelReportRunTool(reports reportAdministrator) serviceports.AgentTool 
 		maxTier:     agent.TierAutoExecute,
 		rationale: "Stops a report the person asked for from running; nothing is changed or " +
 			"sent, and running the report again gives the same rows.",
-		properties: map[string]any{paramReportRunID: agenttoolschema.IDText(reportRunSupplier)},
-		required:   []string{paramReportRunID},
-		target:     reportTarget(paramReportRunID),
+		properties: map[string]any{
+			paramReportRunID: agenttoolschema.KindID(reportRunSupplier, permission.KindReportRun),
+		},
+		required: []string{paramReportRunID},
+		target:   reportTarget(paramReportRunID),
 	}), receivablePlan[*reporting.GetRunRequest, *reporting.RunChange]{
 		request: request,
 		plan: func(
@@ -523,7 +525,8 @@ func newUpdateReportScheduleTool(reports reportAdministrator) serviceports.Agent
 		rationale: "Changes where and when a report is emailed, which may be to addresses " +
 			"outside the organization.",
 		properties: map[string]any{
-			paramReportScheduleID: agenttoolschema.IDText(reportScheduleSupplier),
+			paramReportScheduleID: agenttoolschema.KindID(reportScheduleSupplier,
+				permission.KindReportSchedule),
 			paramDefinitionID: agenttoolschema.RecordIDText(
 				permission.ResourceReport,
 				"The saved report it runs, from list_reports. "+
@@ -617,7 +620,8 @@ func newDeleteReportScheduleTool(reports reportAdministrator) serviceports.Agent
 		rationale: "Stops a report reaching the people it was scheduled for; nothing brings " +
 			"the schedule back but setting it up again, so a person always decides.",
 		properties: map[string]any{
-			paramReportScheduleID: agenttoolschema.IDText(reportScheduleSupplier),
+			paramReportScheduleID: agenttoolschema.KindID(reportScheduleSupplier,
+				permission.KindReportSchedule),
 		},
 		required:    []string{paramReportScheduleID},
 		target:      reportTarget(paramReportScheduleID),

@@ -56,3 +56,53 @@ func TestNoted_AddsASentence(t *testing.T) {
 		"The saved report, from list_reports. Never guess one. Leave it out to keep it.",
 		property[toolschema.KeyDescription])
 }
+
+func TestKindID_MarksEveryKindAndIsStrippedForTheModel(t *testing.T) {
+	t.Parallel()
+
+	property := agenttoolschema.KindID(
+		"The qualification record, from list_worker_qualifications. Never guess one.",
+		permission.KindEmploymentVerification, permission.KindClearinghouseQuery,
+	)
+
+	assert.Equal(t, toolschema.TypeString, property[toolschema.KeyType])
+	assert.Equal(t, []string{"employment_verification", "clearinghouse_query"},
+		toolschema.RecordKinds(property))
+	assert.Empty(t, toolschema.RecordOf(property))
+	assert.NotContains(t, toolschema.ForModel(property), toolschema.KeyRecordKinds)
+	assert.NotContains(t, toolschema.ForPortableModel(property), toolschema.KeyRecordKinds)
+}
+
+func TestKindIDs_MarksEachItem(t *testing.T) {
+	t.Parallel()
+
+	property := agenttoolschema.KindIDs("The rounds, from list_dot_random_draws.", 5,
+		permission.KindDOTRandomDraw)
+
+	items := property[toolschema.KeyItems].(map[string]any)
+	assert.Equal(t, []string{"dot_random_draw"}, toolschema.RecordKinds(items))
+	assert.Equal(t, 5, property[toolschema.KeyMaxItems])
+	stripped := toolschema.ForModel(property)[toolschema.KeyItems].(map[string]any)
+	assert.NotContains(t, stripped, toolschema.KeyRecordKinds)
+}
+
+func TestOfResource_MarksAPropertyBuiltElsewhereWithoutChangingIt(t *testing.T) {
+	t.Parallel()
+
+	single := agenttoolschema.OfResource(map[string]any{
+		toolschema.KeyType:        toolschema.TypeString,
+		toolschema.KeyDescription: "The hold, from get_shipment.",
+	}, permission.ResourceShipmentHold)
+	assert.Equal(t, "shipment_hold", toolschema.RecordOf(single))
+	assert.Equal(t, "The hold, from get_shipment.", single[toolschema.KeyDescription])
+
+	list := agenttoolschema.OfKinds(map[string]any{
+		toolschema.KeyType:        toolschema.TypeArray,
+		toolschema.KeyDescription: "The rounds, from list_dot_random_draws.",
+		toolschema.KeyItems:       map[string]any{toolschema.KeyType: toolschema.TypeString},
+	}, permission.KindDOTRandomDraw)
+	items := list[toolschema.KeyItems].(map[string]any)
+	assert.Equal(t, []string{"dot_random_draw"}, toolschema.RecordKinds(items))
+	assert.NotContains(t, list, toolschema.KeyMinItems)
+	assert.Empty(t, toolschema.RecordKinds(list))
+}

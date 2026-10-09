@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 )
 
 // ptoDecider is the slice of the PTO service these tools need. The service
@@ -60,7 +61,7 @@ func (t *approveWorkerPTOTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"ptoId": map[string]any{"type": "string", "description": ptoIDNote},
+			"ptoId": agenttoolschema.RecordIDText(permission.ResourceWorkerPTO, ptoIDNote),
 			"reason": map[string]any{
 				"type": "string",
 				"description": "An optional note recorded with the decision. " +
@@ -132,7 +133,7 @@ func (t *rejectWorkerPTOTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"ptoId": map[string]any{"type": "string", "description": ptoIDNote},
+			"ptoId": agenttoolschema.RecordIDText(permission.ResourceWorkerPTO, ptoIDNote),
 			"reason": map[string]any{
 				"type": "string",
 				"description": "Why it is being declined. Required, and shown to the " +
@@ -204,7 +205,7 @@ func (t *cancelWorkerPTOTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"ptoId": map[string]any{"type": "string", "description": ptoIDNote},
+			"ptoId": agenttoolschema.RecordIDText(permission.ResourceWorkerPTO, ptoIDNote),
 			"reason": map[string]any{
 				"type":        "string",
 				"description": "Why it is being cancelled. Recorded with the change.",

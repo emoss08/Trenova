@@ -414,10 +414,10 @@ func (t *updateReportTool) Description() string {
 
 func (t *updateReportTool) ParamSchema() map[string]any {
 	properties := reportMetadataProperties()
-	properties["definitionId"] = map[string]any{
-		"type":        "string",
-		"description": "The definitionId of the saved report, from list_reports or describe_report.",
-	}
+	properties["definitionId"] = agenttoolschema.RecordIDText(
+		permission.ResourceReport,
+		"The definitionId of the saved report, from list_reports or describe_report.",
+	)
 	properties["name"] = map[string]any{"type": "string", "description": reportNameNote}
 	properties["definition"] = report.DefinitionJSONSchema()
 	properties["status"] = agenttoolschema.Enum(

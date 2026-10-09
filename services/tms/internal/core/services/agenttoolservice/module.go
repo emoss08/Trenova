@@ -111,6 +111,8 @@ func ToolProviders() []any {
 		provideWaiveDetentionTool,
 		provideCreateShipmentTool,
 		provideUpdateShipmentTool,
+		provideRescheduleStopTool,
+		provideAddShipmentChargeTool,
 		provideCreateLocationTool,
 		provideTenderToRoutingGuideTool,
 		provideTenderToCarriersTool,
@@ -279,6 +281,20 @@ func provideUpdateShipmentTool(
 	partners *ediservice.Service,
 ) services.AgentTool {
 	return newUpdateShipmentTool(shipments, partners)
+}
+
+func provideRescheduleStopTool(
+	shipments services.ShipmentService,
+	partners *ediservice.Service,
+) services.AgentTool {
+	return newRescheduleStopTool(shipments, partners)
+}
+
+func provideAddShipmentChargeTool(
+	shipments services.ShipmentService,
+	accessorials repositories.AccessorialChargeRepository,
+) services.AgentTool {
+	return newAddShipmentChargeTool(shipments, accessorials)
 }
 
 func provideCancelShipmentTool(

@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { leadingStreak } from "../roster-model";
 import { Blk } from "./block";
+import { ToolCallsPanel } from "./tool-calls-panel";
 
 /** The streak strip shows this many dots. */
 const STREAK_DOTS = 10;
@@ -64,6 +65,11 @@ export function RecordBlock({ agentId, toolNames, earnedAutonomy }: RecordBlockP
           </span>
         </div>
       )}
+      <ToolCallsPanel
+        verdicts={card?.toolVerdicts}
+        loading={scorecardQuery.isPending}
+        failed={scorecardQuery.isError}
+      />
     </Blk>
   );
 }

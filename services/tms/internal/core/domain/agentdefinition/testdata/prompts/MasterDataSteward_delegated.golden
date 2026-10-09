@@ -52,7 +52,6 @@ You hold more tools than are loaded on this turn. The loaded ones are callable n
 Loaded now:
 - recall_memory
 - remember
-- raise_exception
 - flag_for_manual_review
 - find_in_trenova
 - wait_until

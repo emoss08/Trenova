@@ -96,6 +96,7 @@ type changeReviewKind struct {
 	description string
 	rationale   string
 	idGuidance  string
+	changeKind  permission.RecordKind
 	plan        func(context.Context, *changeReviewCall) (*changeReviewPlan, error)
 	run         func(context.Context, *changeReviewCall) error
 	recipe      []string
@@ -119,7 +120,7 @@ func (t *ediChangeReviewTool) Description() string { return t.kind.description }
 
 func (t *ediChangeReviewTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramEDIChangeID: jsonschemautils.Text(t.kind.idGuidance),
+		paramEDIChangeID: agenttoolschema.KindID(t.kind.idGuidance, t.kind.changeKind),
 		paramEDIReviewDecision: agenttoolschema.Enum(
 			"Apply takes the change onto this organization's load; Reject leaves the load "+
 				"as it is.",
@@ -263,6 +264,7 @@ func newReviewEDITenderChangeTool(reviewer tenderChangeReviewer) serviceports.Ag
 		rationale: "Changes a load this organization committed to on another " +
 			"organization's word, and that organization sees the outcome.",
 		idGuidance: "The tender change, from list_edi_tender_changes. Never guess one.",
+		changeKind: permission.KindEDITenderChange,
 		plan: func(ctx context.Context, call *changeReviewCall) (*changeReviewPlan, error) {
 			change, err := reviewer.GetTenderChange(ctx, repositories.GetEDITenderChangeByIDRequest{
 				ID:         call.changeID,
@@ -296,8 +298,8 @@ func newReviewEDITransferChangeTool(reviewer transferChangeReviewer) serviceport
 	return &ediChangeReviewTool{kind: changeReviewKind{
 		name: "review_edi_transfer_change",
 		recipe: []string{
-			"get_shipment_tracking",
 			"list_edi_transfer_changes",
+			"get_shipment_tracking",
 			"review_edi_transfer_change",
 		},
 		description: "Propose applying or rejecting a status or cancellation the other " +
@@ -308,6 +310,7 @@ func newReviewEDITransferChangeTool(reviewer transferChangeReviewer) serviceport
 		rationale: "Changes a shipment on another organization's report, and that " +
 			"organization sees the outcome on its own shipment.",
 		idGuidance: "The transfer change, from list_edi_transfer_changes. Never guess one.",
+		changeKind: permission.KindEDITransferChange,
 		plan: func(ctx context.Context, call *changeReviewCall) (*changeReviewPlan, error) {
 			change, err := reviewer.GetTransferChange(
 				ctx,

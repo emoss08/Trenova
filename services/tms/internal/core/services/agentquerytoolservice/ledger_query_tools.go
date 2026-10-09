@@ -187,8 +187,10 @@ func (t *getManualJournalTool) Description() string {
 }
 
 func (t *getManualJournalTool) ParamSchema() map[string]any {
-	return idSchema(paramManualJournalID, agenttoolschema.IDText("The manual journal's id, from "+
-		"list_manual_journals or "+onThePage))
+	return idSchema(paramManualJournalID, agenttoolschema.RecordIDText(
+		permission.ResourceManualJournal,
+		"The manual journal's id, from list_manual_journals or "+onThePage,
+	))
 }
 
 func (t *getManualJournalTool) Policy() serviceports.ToolPolicy {

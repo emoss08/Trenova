@@ -46,7 +46,7 @@ Keywords: approve in chat, review agent change, preview before approving, what w
 ### Keep or undo what an agent learned
 Keywords: agent learned, learned from this conversation, self-improving, memory, procedure, lesson
 1. Once a conversation has been quiet for a while, the agent looks back over it when something went wrong, took several tries or was corrected. What it kept appears under the reply it learned from, marked as learned; a procedure is the steps that worked.
-2. If you asked to be asked first, or the lesson would reach your team or everyone, the card asks instead. Edit the words, choose who it is for, then select **Save memory**, or **Don't save**.
+2. If you asked to be asked first, or the lesson would reach your team or everyone, the card asks instead. Edit the words, choose who it is for, then select **Keep**, or **Not now** to leave it unsaved.
 3. To take back a lesson it kept, select **Undo** on the card, or pause or forget it on the Memory page like any other memory.
 
 
@@ -244,7 +244,7 @@ Keywords: customer checklist, per customer steps, customer bills differently
 ### Hand a conversation to another agent
 Keywords: hand off, handoff, transfer, pass to another agent, switch agent keep context
 1. Open the conversation from [Desk](/desk) and select the hand-off button in the bar at the top (its tip reads **Hand off to another agent**).
-2. Under **Hand off to**, pick the agent. The agents your current agent already works with are listed first.
+2. Under **Hand off to**, pick the agent. When your current agent has just said it cannot do what you asked because the tool belongs to another of your agents, those agents are listed first and marked **Holds what this conversation needs**. The agents your current agent already works with come next.
 3. This starts a new conversation with that agent. It carries over a summary of this conversation, its pinned facts and its pinned artifacts.
 4. A card in this conversation says who it was handed to and what went with it (**Carried over**). Select **Open their conversation** to go there. The new conversation has a matching card with **Open the earlier conversation**. Both conversations stay open.
 

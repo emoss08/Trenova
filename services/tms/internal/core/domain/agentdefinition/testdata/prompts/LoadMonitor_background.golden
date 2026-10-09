@@ -74,8 +74,8 @@ Callable after find_tools:
 - record_stop_actual — Record that a driver arrived at or departed from a stop.
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
-- evaluate_service_failures: get_dispatch_board → get_shipment_tracking → evaluate_service_failures
+- evaluate_service_failures: get_shipment_tracking → list_service_failures → evaluate_service_failures
 - resolve_service_failure: list_service_failures → get_service_failure → get_shipment_tracking → list_service_failure_reason_codes → resolve_service_failure
 - email_customer: get_shipment_tracking → get_customer_update_preferences → email_customer
 - send_detention_notice: get_detention_occurrence → send_detention_notice
-- record_stop_actual: get_dispatch_board → get_shipment_tracking → record_stop_actual
+- record_stop_actual: search_shipments → get_shipment → record_stop_actual

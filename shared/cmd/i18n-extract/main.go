@@ -143,7 +143,7 @@ func (e *extractor) walkDir(root string) error {
 		}
 		if d.IsDir() {
 			switch d.Name() {
-			case "node_modules", "testdata", ".git", "vendor", "mocks", "seeds":
+			case "node_modules", "testdata", ".git", "vendor", "mocks", "seeds", "deskbench":
 				return filepath.SkipDir
 			}
 			return nil

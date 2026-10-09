@@ -185,8 +185,10 @@ func credentialCreateFrom(
 func newRecordWorkerCredentialTool(credentials credentialKeeper) serviceports.AgentTool {
 	properties := credentialFactProperties()
 	properties[paramWorkerID] = workerProperty()
-	properties[paramCredentialTypeID] = agenttoolschema.IDText("The kind of credential, from " +
-		"list_worker_credentials. Never guess one.")
+	properties[paramCredentialTypeID] = agenttoolschema.RecordIDText(
+		permission.ResourceWorkerCredentialType,
+		"The kind of credential, from list_worker_credentials. Never guess one.",
+	)
 	properties[paramRenew] = booleanProperty("Whether this renews the worker's current " +
 		"credential of the same kind, which is archived as superseded. A second active " +
 		"one is refused without it.")

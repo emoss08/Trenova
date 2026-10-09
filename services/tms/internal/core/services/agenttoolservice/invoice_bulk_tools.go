@@ -134,7 +134,7 @@ func newPostInvoicesTool(
 func (t *postInvoicesTool) Name() string { return "post_invoices" }
 
 func (t *postInvoicesTool) Recipe() []string {
-	return []string{"approve_billing_queue_items", "post_invoices", "send_invoices"}
+	return []string{"list_invoices", "get_invoices", "post_invoices"}
 }
 
 func (t *postInvoicesTool) BatchOf() string { return t.single.Name() }
@@ -293,6 +293,7 @@ func newApproveBillingQueueItemsTool(
 			param:       paramBillingQueueItemIDs,
 			singleParam: paramBillingQueueItemID,
 			resource:    permission.ResourceBillingQueue,
+			kinds:       []permission.RecordKind{permission.KindBillingQueueItem},
 			noun:        nounBillingQueueItem,
 			nouns:       nounBillingQueueItems,
 			verb:        verbApprove,
@@ -311,9 +312,7 @@ func (t *approveBillingQueueItemsTool) Recipe() []string {
 	return []string{
 		"list_billing_queue_items",
 		"get_billing_queue_items",
-		"assign_billing_queue_billers",
 		"approve_billing_queue_items",
-		"post_invoices",
 	}
 }
 

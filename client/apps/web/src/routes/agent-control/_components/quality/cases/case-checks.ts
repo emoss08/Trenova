@@ -29,6 +29,7 @@ export const CHECK_LABEL: Record<string, string> = defineLabels({
   proposals: "Proposals",
   factGuard: "Figures it can back up",
   mentions: "What the reply mentions",
+  replyForm: "No internal ids or reprinted long lists",
 });
 
 function isRecord(value: unknown): value is Record<string, unknown> {

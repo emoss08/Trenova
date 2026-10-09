@@ -80,10 +80,10 @@ func (t *scheduleReportTool) ParamSchema() map[string]any {
 		"type":     "object",
 		"required": []string{"definitionId", "cronExpression", "emailRecipients"},
 		"properties": map[string]any{
-			"definitionId": map[string]any{
-				"type":        "string",
-				"description": "The saved report to run, from list_reports.",
-			},
+			"definitionId": agenttoolschema.RecordIDText(
+				permission.ResourceReport,
+				"The saved report to run, from list_reports.",
+			),
 			"cronExpression": map[string]any{
 				"type": "string",
 				"description": "When to run it, as five cron fields. " +

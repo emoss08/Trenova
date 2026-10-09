@@ -84,21 +84,24 @@ func (t *rememberTool) ParamSchema() map[string]any {
 				"The kind of record the memory is about, with subjectId. Omit for organization-wide.",
 				memorySubjectTypes,
 			),
-			"subjectId": map[string]any{
-				toolschema.KeyType: toolschema.TypeString,
-				toolschema.KeyDescription: "The record the memory is about: this run's subject, the page, or " +
-					"an id from list_customers, list_locations, list_workers or list_carriers. " +
+			"subjectId": agenttoolschema.KindID(
+				"The record the memory is about: this run's subject, the page, or "+
+					"an id from list_customers, list_locations, list_workers or list_carriers. "+
 					"Never guessed.",
-			},
+				permission.RecordKind(permission.ResourceCustomer),
+				permission.RecordKind(permission.ResourceLocation),
+				permission.RecordKind(permission.ResourceWorker),
+				permission.RecordKind(permission.ResourceCarrier),
+			),
 			"expiresOn": map[string]any{
 				toolschema.KeyType:        toolschema.TypeString,
 				toolschema.KeyDescription: "Optional YYYY-MM-DD after which the memory no longer applies, such as a temporary arrangement.",
 			},
-			fieldReplacesMemoryID: map[string]any{
-				toolschema.KeyType: toolschema.TypeString,
-				toolschema.KeyDescription: "The id of a kept memory this one changes, from " +
+			fieldReplacesMemoryID: agenttoolschema.RecordIDText(
+				permission.ResourceAgentMemory,
+				"The id of a kept memory this one changes, from "+
 					"recall_memory. Omit for a new memory.",
-			},
+			),
 			fieldVisibleTo: agenttoolschema.Enum(
 				"Who the memory reaches: me for the person in the conversation alone, team "+
 					"for everyone in their role, organization for everyone. Defaults to me when "+
@@ -326,10 +329,10 @@ func (t *forgetMemoryTool) ParamSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			"memoryId": map[string]any{
-				toolschema.KeyType:        toolschema.TypeString,
-				toolschema.KeyDescription: "The memory to retire, by the id recall_memory returned.",
-			},
+			"memoryId": agenttoolschema.RecordIDText(
+				permission.ResourceAgentMemory,
+				"The memory to retire, by the id recall_memory returned.",
+			),
 		},
 		toolschema.KeyRequired:             []string{"memoryId"},
 		toolschema.KeyAdditionalProperties: false,

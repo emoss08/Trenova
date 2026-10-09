@@ -116,3 +116,17 @@ func TestOverlay(t *testing.T) {
 	assert.Equal(t, 10, base["rate"])
 	assert.Equal(t, base, Overlay(base, nil))
 }
+
+func TestWithoutKeys(t *testing.T) {
+	t.Parallel()
+
+	input := map[string]any{"ids": []any{"a"}, "query": "x", "status": "Done"}
+	output := WithoutKeys(input, "query", "status", "customerId")
+
+	assert.Equal(t, map[string]any{"ids": []any{"a"}}, output)
+	assert.Len(t, input, 3, "the input is left as it was")
+
+	untouched := map[string]any{"ids": []any{"a"}}
+	assert.Equal(t, untouched, WithoutKeys(untouched, "query"))
+	assert.Nil(t, WithoutKeys(nil, "query"))
+}

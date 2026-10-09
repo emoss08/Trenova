@@ -219,7 +219,11 @@ func (fx *workflowEffects) Find(
 
 	t.LoadTools(result.Loaded)
 
-	return agentruntime.FindAnswer{Content: result.Content, Found: result.Found}
+	return agentruntime.FindAnswer{
+		Content: result.Content,
+		Found:   result.Found,
+		HandOff: result.HandOff,
+	}
 }
 
 func (fx *workflowEffects) Emit(event serviceports.StreamEvent) {

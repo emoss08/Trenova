@@ -5167,6 +5167,7 @@
   "{0, plural, one {# advisory} other {# advisories}}": "{0, plural, one {# aviso} other {# avisos}}",
   "{0, plural, one {# attachment} other {# attachments}}": "{0, plural, one {# adjunto} other {# adjuntos}}",
   "{0, plural, one {# blocker} other {# blockers}}": "{0, plural, one {# bloqueo} other {# bloqueos}}",
+  "{0, plural, one {# call} other {# calls}}": "{0, plural, one {# llamada} other {# llamadas}}",
   "{0, plural, one {# case still accruing days} other {# cases still accruing days}}": "{0, plural, one {# caso sigue acumulando días} other {# casos siguen acumulando días}}",
   "{0, plural, one {# cell can't be edited} other {# cells can't be edited}}": "{0, plural, one {# celda no se puede editar} other {# celdas no se pueden editar}}",
   "{0, plural, one {# cell put back} other {# cells put back}}": "{0, plural, one {# celda restaurada} other {# celdas restauradas}}",

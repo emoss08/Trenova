@@ -117,8 +117,9 @@ func newStartPerformanceReviewTool(reviews reviewKeeper) serviceports.AgentTool 
 		permission.OpCreate,
 	), map[string]any{
 		paramWorkerID: workerProperty(),
-		paramReviewTemplate: agenttoolschema.IDText(
-			"The review template, from list_performance_reviews. " +
+		paramReviewTemplate: agenttoolschema.RecordIDText(
+			permission.ResourcePerformanceReviewTemplate,
+			"The review template, from list_performance_reviews. "+
 				"Never guess one.",
 		),
 		paramTitle:       stringProperty("A title; defaults to the template and period.", 120),
@@ -402,7 +403,7 @@ func newDraftPerformanceReviewTool(reviews reviewKeeper) serviceports.AgentTool 
 	), reviewDraftProperties(), paramReviewID), paramReviewID, permission.ResourcePerformanceReview)
 
 	spec.searchTerms = []string{"review scores", "score the review", "fill in review"}
-	spec.recipe = []string{"start_performance_review", "draft_performance_review"}
+	spec.recipe = []string{"list_performance_reviews", "draft_performance_review"}
 
 	return newReportingReceivableTool(spec, receivablePlan[
 		*reviewDraft, *performancereviewservice.ReviewChange,

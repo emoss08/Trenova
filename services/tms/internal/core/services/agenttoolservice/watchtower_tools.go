@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -63,8 +64,8 @@ func newDismissWatchtowerItemTool(items watchtowerDismisser) serviceports.AgentT
 		rationale: "Takes an item off the shared attention feed inside Trenova; nothing is " +
 			"sent and the record behind it is unchanged.",
 		properties: map[string]any{
-			paramWatchtowerItemID: stringProperty("The item, from list_watchtower_items. "+
-				"Never guess one.", 0),
+			paramWatchtowerItemID: agenttoolschema.OfKinds(stringProperty("The item, from "+
+				"list_watchtower_items. Never guess one.", 0), permission.KindWatchtowerItem),
 		},
 		required:    []string{paramWatchtowerItemID},
 		searchTerms: []string{"dismiss watchtower", "clear feed item", "mark handled"},

@@ -114,7 +114,10 @@ func (t *resolveAccountingDriftTool) Prerequisites() []string {
 
 func (t *resolveAccountingDriftTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramDriftFindingID: jsonschemautils.Text(driftFindingHelp),
+		paramDriftFindingID: agenttoolschema.KindID(
+			driftFindingHelp,
+			permission.KindAccountingDriftFinding,
+		),
 		paramDriftDirection: agenttoolschema.Enum(
 			"Which side to change: PushTrenovaValue changes the accounting system, AdjustTrenova changes Trenova.",
 			agenttoolschema.DriftDirections,
@@ -245,7 +248,10 @@ func (t *dismissAccountingDriftTool) Prerequisites() []string {
 
 func (t *dismissAccountingDriftTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramDriftFindingID: jsonschemautils.Text(driftFindingHelp),
+		paramDriftFindingID: agenttoolschema.KindID(
+			driftFindingHelp,
+			permission.KindAccountingDriftFinding,
+		),
 		paramDriftNote: jsonschemautils.Text(
 			"Why both sides stay as they are, in one sentence a bookkeeper would accept.",
 		),

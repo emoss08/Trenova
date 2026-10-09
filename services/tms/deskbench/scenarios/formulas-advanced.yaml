@@ -1,0 +1,125 @@
+defaults:
+  tags: [formulas, rating, advanced]
+
+scenarios:
+  - name: formula-ltl-weight-breaks
+    description: >
+      Classic LTL pricing: a rate per hundredweight that drops as the weight climbs, with a minimum
+      charge. Every break and the minimum must be variables so the template serves every customer.
+    formula: {}
+    steps:
+      - say: >
+          ltl rating: under 500 lbs is 45 a hundredweight, 500 to 1999 is 38, 2000 to 4999 is 32,
+          5000 and up is 28. minimum charge 125
+        expect:
+          calls: ["propose_formula"]
+          maxFailedCalls: 2
+          formula:
+            - totalWeight
+            - '/max\s*\(/'
+            - '/^(?:[A-Za-z_][A-Za-z0-9_]*|[^A-Za-z0-9_]|100(?:\.0+)?)*$/'
+          rubric: >
+            Chooses the rate from the weight bracket, prices hundredweight as weight / 100 (rounded
+            up if the person's practice says so), applies the 125 minimum, keeps every rate and
+            break as a variable, and prices a 300 lb, a 1,200 lb and a 6,000 lb load.
+
+  - name: formula-mileage-bands
+    description: Different per-mile rates by length of haul, the whole load at one band's rate.
+    formula: {}
+    steps:
+      - say: >
+          per mile but it depends on length of haul: up to 250 miles is 3.40 a mile, 251 to 600 is
+          2.75, over 600 is 2.30. whole trip at the one rate, not stacked
+        expect:
+          calls: ["propose_formula"]
+          formula: ["totalDistance"]
+          rubric: >
+            Picks one rate for the whole trip by its distance band (not a tiered sum), with the
+            three rates and two thresholds as variables, and prices a 200, a 400 and an 800 mile load.
+
+  - name: formula-equipment-and-hazmat-adders
+    description: A base rate with conditional adders the person states together.
+    formula: {}
+    steps:
+      - say: >
+          base it on 2.60 a mile. reefer loads get 15% on top, hazmat adds a flat 175, team service
+          adds 25 cents a mile. any combination can apply
+        expect:
+          calls: ["propose_formula", "describe_formula_schema"]
+          formula: ["totalDistance", "/hazmat|hasHazmat/i"]
+          rubric: >
+            Uses the schema's own names for reefer, hazmat and team (asking or saying when one does
+            not exist rather than inventing a variable the shipment does not carry), applies the 15%
+            to the right base, and prices loads with none, one and all three adders.
+
+  - name: formula-doe-fuel-surcharge
+    description: >
+      A fuel surcharge indexed to the diesel price, the way contracts write it: a cent per mile for
+      every few cents the index is above a peg.
+    formula: { type: AccessorialCharge }
+    steps:
+      - say: >
+          fuel surcharge per our contracts: peg is 1.25 a gallon, for every 6 cents the DOE average
+          is above the peg add a penny a mile. nothing if diesel is under the peg
+        expect:
+          calls: ["propose_formula"]
+          formula: ["totalDistance"]
+          rubric: >
+            Builds max(0, floor((index - peg) / 0.06)) * 0.01 * miles (or its equivalent), reads
+            the diesel price from the schema or a rate table if there is one and otherwise as a
+            variable, and prices at a diesel price below the peg, at 3.85 and at 4.50.
+
+  - name: formula-detention-free-time
+    description: Detention billed by the half hour after free time.
+    formula: { type: AccessorialCharge }
+    steps:
+      - say: >
+          detention: 2 hours free, then 75 an hour billed in half hour increments, rounded up.
+          cap it at 600 a stop
+        expect:
+          calls: ["propose_formula"]
+          formula: ["/ceil|round/"]
+          rubric: >
+            Charges nothing within the free time, rounds the time beyond it up to the half hour at
+            75 an hour, caps the result at 600, keeps the figures as variables, and says which
+            schema value it reads the time from.
+
+  - name: formula-build-then-rework
+    description: >
+      A long working session on one draft: build, then change the minimum, then add a stop charge,
+      then take one thing out, each turn starting from what the last one left.
+    formula: {}
+    steps:
+      - say: "3.10 a mile with a 450 minimum"
+        expect:
+          calls: ["propose_formula"]
+          formula: ["totalDistance"]
+      - say: "make the minimum 500"
+        expect:
+          calls: ["propose_formula"]
+          formula: ["totalDistance"]
+      - say: "and charge 85 for each stop past the first two"
+        expect:
+          calls: ["propose_formula"]
+          formula: ["totalDistance", "totalStops"]
+      - say: "actually drop the minimum entirely"
+        expect:
+          calls: ["propose_formula"]
+          formula: ["totalDistance", "totalStops"]
+          rubric: >
+            Removes the minimum and keeps the per-mile and stop charge exactly as they were built,
+            rather than rebuilding the formula from the first message.
+
+  - name: formula-explain-then-fix-a-bad-template
+    description: >
+      An existing template opened to find out why it priced a load wrong, then fixed.
+    formula: { template: Per Mile with Fuel Surcharge }
+    steps:
+      - say: "a 0 mile load came out to 0, shouldn't there be some minimum? what does this do"
+        expect:
+          noProposals: true
+          rubric: Explains the formula term by term and confirms it has no minimum.
+      - say: "add a 300 minimum"
+        expect:
+          calls: ["propose_formula"]
+          formula: ["/max\\s*\\(/", "fuelSurchargePercent"]

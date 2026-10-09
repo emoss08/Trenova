@@ -69,7 +69,7 @@ func newAssignMoveToCarrierTool(carriers carrierCoverage) serviceports.AgentTool
 func (t *assignMoveToCarrierTool) Name() string { return "assign_move_to_carrier" }
 
 func (t *assignMoveToCarrierTool) Recipe() []string {
-	return []string{"shop_carriers", "assign_move_to_carrier", "generate_rate_confirmation"}
+	return []string{"get_shipment", "shop_carriers", "assign_move_to_carrier"}
 }
 
 func (t *assignMoveToCarrierTool) Description() string {
@@ -85,10 +85,14 @@ func (t *assignMoveToCarrierTool) Description() string {
 
 func (t *assignMoveToCarrierTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		previewFieldShipmentMoveID: jsonschemautils.Text(
+		previewFieldShipmentMoveID: agenttoolschema.RecordIDText(
+			permission.ResourceShipmentMove,
 			"The move to cover, from get_dispatch_board (moveId) or get_shipment (its moves).",
 		),
-		fieldCarrierID: jsonschemautils.Text("The carrier, from shop_carriers or list_carriers."),
+		fieldCarrierID: agenttoolschema.RecordIDText(
+			permission.ResourceCarrier,
+			"The carrier, from shop_carriers or list_carriers.",
+		),
 		fieldRateMethod: agenttoolschema.Enum(
 			"Flat pays baseRate for the move; PerMile pays baseRate for each mile of the "+
 				"move's computed distance.",
@@ -107,7 +111,8 @@ func (t *assignMoveToCarrierTool) ParamSchema() map[string]any {
 					"What the charge is for, as the carrier will read it.",
 				),
 				fieldAmount: jsonschemautils.Text("The amount as a decimal string."),
-				fieldAccessorialChargeID: jsonschemautils.Text(
+				fieldAccessorialChargeID: agenttoolschema.RecordIDText(
+					permission.ResourceAccessorialCharge,
 					"The accessorial charge it is, from list_accessorial_charges.",
 				),
 			}, fieldDescription, fieldAmount),
@@ -309,8 +314,9 @@ func (t *cancelCarrierAssignmentTool) Description() string {
 
 func (t *cancelCarrierAssignmentTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		previewFieldShipmentMoveID: jsonschemautils.Text(
-			"The move whose carrier comes off, from get_dispatch_board (moveId) or " +
+		previewFieldShipmentMoveID: agenttoolschema.RecordIDText(
+			permission.ResourceShipmentMove,
+			"The move whose carrier comes off, from get_dispatch_board (moveId) or "+
 				"get_shipment (its moves).",
 		),
 		fieldReason: jsonschemautils.Text(

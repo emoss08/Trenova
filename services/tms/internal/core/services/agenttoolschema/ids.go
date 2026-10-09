@@ -35,6 +35,71 @@ func RecordIDText(resource permission.Resource, description string) map[string]a
 	return property
 }
 
+// KindID is a parameter that takes the id of a record of one of the kinds
+// named: a qualification record that is either an employment verification or
+// a clearinghouse query, or a record kept inside another resource's, such as
+// a line of an invoice. The runtime refuses an id whose prefix is none of the
+// kinds' before the tool reads it, as RecordID does for a resource's. The
+// description names where the id comes from, as RecordIDText's does.
+func KindID(description string, kinds ...permission.RecordKind) map[string]any {
+	property := IDText(description)
+	property[toolschema.KeyRecordKinds] = kindNames(kinds)
+
+	return property
+}
+
+// KindIDs is a list of ids each of which is of one of the kinds named, as
+// KindID marks one.
+func KindIDs(description string, maxItems int, kinds ...permission.RecordKind) map[string]any {
+	property := IDList(description, maxItems)
+	items, _ := property[toolschema.KeyItems].(map[string]any)
+	items[toolschema.KeyRecordKinds] = kindNames(kinds)
+
+	return property
+}
+
+// OfResource marks a property built some other way, an id or a list of ids,
+// with the resource its ids belong to, as RecordID and RecordIDs mark theirs.
+// Nothing else about the property changes, so a parameter with bounds or
+// wording of its own is typed without being rebuilt.
+func OfResource(property map[string]any, resource permission.Resource) map[string]any {
+	markedTarget(property)[toolschema.KeyRecordOf] = resource.String()
+
+	return property
+}
+
+// OfKinds is OfResource for a property whose ids are of the kinds named, as
+// KindID and KindIDs mark theirs.
+func OfKinds(property map[string]any, kinds ...permission.RecordKind) map[string]any {
+	markedTarget(property)[toolschema.KeyRecordKinds] = kindNames(kinds)
+
+	return property
+}
+
+// markedTarget is where an id property's mark goes: on the property for one
+// id, on its items for a list of them.
+func markedTarget(property map[string]any) map[string]any {
+	if property[toolschema.KeyType] != toolschema.TypeArray {
+		return property
+	}
+	items, ok := property[toolschema.KeyItems].(map[string]any)
+	if !ok {
+		items = map[string]any{toolschema.KeyType: toolschema.TypeString}
+		property[toolschema.KeyItems] = items
+	}
+
+	return items
+}
+
+func kindNames(kinds []permission.RecordKind) []string {
+	names := make([]string, 0, len(kinds))
+	for _, kind := range kinds {
+		names = append(names, string(kind))
+	}
+
+	return names
+}
+
 // ID is a parameter that takes a record id whose kind has no prefix of its
 // own in permission's table: a line of an invoice, a day of a leave case.
 // The runtime still refuses a value that is not shaped like an id at all.

@@ -8,3 +8,4 @@ config/*
 *.db-shm
 *.db-wal
 *.db-journal
+.deskbench/

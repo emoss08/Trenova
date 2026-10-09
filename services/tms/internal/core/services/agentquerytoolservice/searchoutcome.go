@@ -19,6 +19,7 @@ import (
 // on — it can widen the search, or say plainly that nothing matched these terms.
 type searchOutcome struct {
 	Count       int      `json:"count"`
+	Total       *int     `json:"total,omitempty"`
 	SearchedFor []string `json:"searchedFor"`
 	Items       any      `json:"items"`
 	// Columns is the row projection's fields in the order it declares them.

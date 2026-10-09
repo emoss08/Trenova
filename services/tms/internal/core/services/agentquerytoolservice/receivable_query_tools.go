@@ -202,8 +202,9 @@ func (t *listInvoiceAdjustmentsTool) Description() string {
 
 func (t *listInvoiceAdjustmentsTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
-		paramReceivableInvoice: stringParam("Optional: the invoice, from list_invoices or " +
-			"get_invoice. Leave it out for the approval queue."),
+		paramReceivableInvoice: agenttoolschema.RecordIDText(permission.ResourceInvoice,
+			"Optional: the invoice, from list_invoices or "+
+				"get_invoice. Leave it out for the approval queue."),
 		paramLimit: limitProperty(),
 	})
 }
@@ -381,7 +382,8 @@ func (t *getInvoiceAdjustmentTool) Description() string {
 func (t *getInvoiceAdjustmentTool) ParamSchema() map[string]any {
 	return idSchema(
 		paramAdjustmentID,
-		agenttoolschema.IDText("The adjustment's id, from list_invoice_adjustments."),
+		agenttoolschema.KindID("The adjustment's id, from list_invoice_adjustments.",
+			permission.KindInvoiceAdjustment),
 	)
 }
 
@@ -585,7 +587,8 @@ func (t *listCreditMemoApplicationsTool) Description() string {
 
 func (t *listCreditMemoApplicationsTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
-		paramReceivableInvoices: agenttoolschema.IDList(
+		paramReceivableInvoices: agenttoolschema.RecordIDs(
+			permission.ResourceInvoice,
 			"Invoices or credit memos, from list_invoices "+
 				"or get_invoice.",
 			maxReceivableInvoices,
@@ -927,8 +930,9 @@ func (t *listOpenStatementsTool) Description() string {
 
 func (t *listOpenStatementsTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
-		paramCustomerID: stringParam("Optional: one customer, from list_customers, with the " +
-			"shipments on their statement."),
+		paramCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
+			"Optional: one customer, from list_customers, with the "+
+				"shipments on their statement."),
 	})
 }
 
@@ -1039,9 +1043,10 @@ func (t *listInvoiceShareCandidatesTool) Description() string {
 
 func (t *listInvoiceShareCandidatesTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
-		paramReceivableInvoice: stringParam("The invoice, from list_invoices or get_invoice."),
-		paramQuery:             stringParam("Optional: part of a name or username."),
-		paramLimit:             limitProperty(),
+		paramReceivableInvoice: agenttoolschema.RecordIDText(permission.ResourceInvoice,
+			"The invoice, from list_invoices or get_invoice."),
+		paramQuery: stringParam("Optional: part of a name or username."),
+		paramLimit: limitProperty(),
 	}, paramReceivableInvoice)
 }
 

@@ -197,7 +197,7 @@ func (r *repository) Create(
 ) (*journalreversal.Reversal, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*journalreversal.Reversal, error) {
 		if entity.ID.IsNil() {
-			entity.ID = pulid.MustNew("jrev_")
+			entity.ID = pulid.MustNew(journalreversal.IDPrefix)
 		}
 		if _, err := r.db.DBForContext(ctx).NewInsert().Model(toRecord(entity)).Exec(ctx); err != nil {
 			return nil, err

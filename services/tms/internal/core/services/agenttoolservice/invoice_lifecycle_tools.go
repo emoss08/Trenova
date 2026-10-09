@@ -189,25 +189,30 @@ func newUpdateInvoiceDraftTool(invoices invoiceDraftEditor) serviceports.AgentTo
 			"person sends it, but the recipients decide where it goes then.",
 		properties: map[string]any{
 			paramInvoiceID: invoiceIDProperty(),
-			paramInvoiceMemo: toolschema.EmptyClears(stringProperty(
+			paramInvoiceMemo: toolschema.KeepEmpty(stringProperty(
 				"The note printed on the invoice.", maxInvoiceTextChars)),
-			paramRemittance: toolschema.EmptyClears(stringProperty("How the customer should "+
+			paramRemittance: toolschema.KeepEmpty(stringProperty("How the customer should "+
 				"pay, printed on the invoice.", maxInvoiceTextChars)),
-			paramEmailSubject: toolschema.EmptyClears(stringProperty("The subject of the email "+
+			paramEmailSubject: toolschema.KeepEmpty(stringProperty("The subject of the email "+
 				"the invoice goes in.", invoice.MaxEmailSubjectLength)),
-			paramEmailBody: toolschema.EmptyClears(stringProperty("The body of the email the "+
+			paramEmailBody: toolschema.KeepEmpty(stringProperty("The body of the email the "+
 				"invoice goes in.", maxInvoiceEmailBodyChars)),
-			paramEmailTo: toolschema.EmptyClears(
+			paramEmailTo: toolschema.KeepEmpty(
 				recipientsProperty("Who the invoice is emailed to; replaces the list.")),
-			paramEmailCc:  toolschema.EmptyClears(recipientsProperty("Who is copied; replaces the list.")),
-			paramEmailBcc: toolschema.EmptyClears(recipientsProperty("Who is blind-copied; replaces the list.")),
-			paramAttachmentDocumentIDs: toolschema.EmptyClears(map[string]any{
-				toolschema.KeyType: toolschema.TypeArray,
-				toolschema.KeyDescription: "The documents attached to the email, from " +
-					"search_documents; replaces the list.",
-				toolschema.KeyItems:    map[string]any{toolschema.KeyType: toolschema.TypeString},
-				toolschema.KeyMaxItems: maxInvoiceAttachments,
-			}),
+			paramEmailCc:  toolschema.KeepEmpty(recipientsProperty("Who is copied; replaces the list.")),
+			paramEmailBcc: toolschema.KeepEmpty(recipientsProperty("Who is blind-copied; replaces the list.")),
+			paramAttachmentDocumentIDs: toolschema.KeepEmpty(agenttoolschema.OfResource(
+				map[string]any{
+					toolschema.KeyType: toolschema.TypeArray,
+					toolschema.KeyDescription: "The documents attached to the email, from " +
+						"search_documents; replaces the list.",
+					toolschema.KeyItems: map[string]any{
+						toolschema.KeyType: toolschema.TypeString,
+					},
+					toolschema.KeyMaxItems: maxInvoiceAttachments,
+				},
+				permission.ResourceDocument,
+			)),
 		},
 		required: []string{paramInvoiceID},
 		target:   targetInvoice,
@@ -473,8 +478,8 @@ func newCreateInvoiceTool(invoices invoiceCreator) serviceports.AgentTool {
 		rationale: "Turns freight into receivables and takes it off the billing queue and any " +
 			"statement; only a person decides what is billed and when.",
 		properties: map[string]any{
-			paramOrderID: stringProperty("The order to bill as one grouped invoice, from "+
-				"get_order or get_shipment.", 0),
+			paramOrderID: agenttoolschema.RecordIDText(permission.ResourceOrder,
+				"The order to bill as one grouped invoice, from get_order or get_shipment."),
 			paramShipmentIDs: agenttoolschema.RecordIDs(
 				permission.ResourceShipment,
 				"The shipments to bill, from search_shipments or "+
@@ -597,8 +602,8 @@ func newCreateInvoiceMemoTool(invoices invoiceMemoRaiser) serviceports.AgentTool
 		rationale: "Raises what a customer owes or is owed outside any shipment; only a " +
 			"person decides it, and it is never posted as it is made.",
 		properties: map[string]any{
-			paramCustomerID: stringProperty("The customer, from list_customers or "+
-				"get_invoice.", 0),
+			paramCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
+				"The customer, from list_customers or get_invoice."),
 			paramBillType: agenttoolschema.Enum("CreditMemo lowers what the customer owes; "+
 				"DebitMemo raises it.", memoBillTypes),
 			paramReason: stringProperty("Why the memo is raised; the customer sees it.",
@@ -616,15 +621,17 @@ func newCreateInvoiceMemoTool(invoices invoiceMemoRaiser) serviceports.AgentTool
 						paramAmount: stringProperty("The line's unit amount in major units, "+
 							"such as 125.00.", 0),
 						paramMemoQuantity: stringProperty("How many; defaults to 1.", 0),
-						paramAccessorialChargeID: stringProperty("The accessorial the line "+
-							"corrects, from get_invoice's lines.", 0),
+						paramAccessorialChargeID: agenttoolschema.RecordIDText(
+							permission.ResourceAccessorialCharge,
+							"The accessorial the line corrects, from get_invoice's lines.",
+						),
 					},
 					toolschema.KeyRequired:             []string{paramLineDescription, paramAmount},
 					toolschema.KeyAdditionalProperties: false,
 				},
 			},
-			paramReferenceInvoiceID: stringProperty("The posted invoice this memo relates to, "+
-				"from list_invoices or get_invoice.", 0),
+			paramReferenceInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
+				"The posted invoice this memo relates to, from list_invoices or get_invoice."),
 			paramInvoiceDate: agenttoolschema.Date("The memo's date; defaults to today."),
 			paramInvoiceMemo: stringProperty("A note printed on the memo.", maxInvoiceTextChars),
 		},

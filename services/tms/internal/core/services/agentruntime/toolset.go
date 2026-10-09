@@ -321,7 +321,9 @@ func (s *Service) resolveFind(
 	// A turn that was sent everything has nothing left to load; the answer
 	// can still say what exists beyond the agent.
 	if !set.disclosed {
-		return FindAnswer{Content: s.nothingLoaded(ctx, set, actor, need)}
+		content, handOff := s.nothingLoaded(ctx, set, actor, need)
+
+		return FindAnswer{Content: content, HandOff: handOff}
 	}
 
 	found := s.catalog.FindHybrid(agenttoolcatalog.Query{
@@ -353,7 +355,9 @@ func (s *Service) resolveFind(
 	}
 
 	if len(added) == 0 && len(callable) == 0 {
-		return FindAnswer{Content: s.nothingLoaded(ctx, set, actor, need), Found: names}
+		content, handOff := s.nothingLoaded(ctx, set, actor, need)
+
+		return FindAnswer{Content: content, Found: names, HandOff: handOff}
 	}
 
 	var b strings.Builder
@@ -523,13 +527,14 @@ func (s *Service) holds(definition *agentdefinition.Definition, name string) boo
 // — the person ended up supplying it from their side of the conversation.
 //
 // Naming them widens nothing. The specs are not loaded and the guard still
-// refuses a call to anything outside the allowlist.
+// refuses a call to anything outside the allowlist. The person's other agents
+// that hold them are returned beside the answer, for the hand-off menu.
 func (s *Service) nothingLoaded(
 	ctx context.Context,
 	set *toolSet,
 	actor *serviceports.RequestActor,
 	need string,
-) string {
+) (string, []pulid.ID) {
 	unheld := s.unheldStrongMatches(set, need)
 	elsewhere := make([]serviceports.AgentToolDescriptor, 0, len(unheld))
 	for _, name := range unheld {
@@ -542,7 +547,7 @@ func (s *Service) nothingLoaded(
 	}
 
 	if note := delegatedSearchNote(set.delegates, unheld); note != "" {
-		return note
+		return note, nil
 	}
 
 	if len(elsewhere) == 0 {
@@ -551,7 +556,7 @@ func (s *Service) nothingLoaded(
 				"Use what you have. If this system genuinely does not track it, say so "+
 				"— but only about the data, not about tools you cannot see.",
 			need,
-		)
+		), nil
 	}
 
 	var b strings.Builder
@@ -562,17 +567,17 @@ func (s *Service) nothingLoaded(
 	for idx := range elsewhere {
 		names = append(names, elsewhere[idx].Name)
 	}
-	if note := s.handOffNote(ctx, actor, set.self, names); note != "" {
+	if note, holders := s.handOffNote(ctx, actor, set.self, names); note != "" {
 		b.WriteString("\nYou cannot call them. " + note +
 			" Do not say the system has no such capability.")
 
-		return b.String()
+		return b.String(), holders
 	}
 	b.WriteString("\nYou cannot call them. Tell the person these exist and that an " +
 		"administrator can add them to this agent in AI Control, naming them exactly " +
 		"as above. Do not say the system has no such capability.")
 
-	return b.String()
+	return b.String(), nil
 }
 
 // permittedTools keeps the names whose tool the actor may use: read for a

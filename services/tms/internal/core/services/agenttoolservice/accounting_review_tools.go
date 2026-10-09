@@ -101,8 +101,9 @@ func mappingProposalsProperty() map[string]any {
 		toolschema.KeyItems: map[string]any{
 			toolschema.KeyType: toolschema.TypeObject,
 			toolschema.KeyProperties: map[string]any{
-				paramMappingID: stringProperty("The mapping's id, from "+
-					"list_accounting_mapping_gaps or get_accounting_mapping.", 0),
+				paramMappingID: agenttoolschema.KindID("The mapping's id, from "+
+					"list_accounting_mapping_gaps or get_accounting_mapping.",
+					permission.KindAccountingMapping),
 				paramExternalID: stringProperty("The proposed record's externalId, as "+
 					"list_accounting_mapping_gaps shows it under mappedTo.", 0),
 			},
@@ -224,8 +225,9 @@ func newRejectAccountingMappingProposalTool(
 		rationale: "Unmatches a proposal so it is not used; choosing a record for the mapping " +
 			"undoes it.",
 		properties: map[string]any{
-			paramMappingID: stringProperty("The mapping's id, from "+
-				"list_accounting_mapping_gaps or get_accounting_mapping. Never guess one.", 0),
+			paramMappingID: agenttoolschema.KindID("The mapping's id, from "+
+				"list_accounting_mapping_gaps or get_accounting_mapping. Never guess one.",
+				permission.KindAccountingMapping),
 		},
 		required: []string{paramMappingID},
 	}), receivablePlan[*serviceports.AccountingMappingActionRequest, *serviceports.AccountingMappingChange]{
@@ -318,8 +320,12 @@ func planRelease(
 
 func newReleaseAccountingSyncTool(sync accountingSyncReleaser) serviceports.AgentTool {
 	return newReceivableTool(&receivableSpec{
-		name:   "release_accounting_sync",
-		recipe: []string{"get_accounting_sync_record", "release_accounting_sync"},
+		name: "release_accounting_sync",
+		recipe: []string{
+			"list_accounting_sync_records",
+			"get_accounting_sync_record",
+			"release_accounting_sync",
+		},
 		description: "Propose releasing documents the organization holds for approval before " +
 			"they go to the accounting system, so they are sent. Name each by its sync record; " +
 			"the person approving may untick some. What is sent cannot be called back, so a " +
@@ -336,11 +342,11 @@ func newReleaseAccountingSyncTool(sync accountingSyncReleaser) serviceports.Agen
 			paramAccountingSystem: accountingSystemSchema(),
 			paramSyncRecordIDs: toolschema.RecordSubset(
 				permission.ResourceAccountingSync.String(),
-				agenttoolschema.IDList(fmt.Sprintf(
+				agenttoolschema.KindIDs(fmt.Sprintf(
 					"Up to %d sync records awaiting approval, from "+
 						"list_accounting_sync_records or get_accounting_sync_record.",
 					maxSyncReleaseIDs,
-				), maxSyncReleaseIDs),
+				), maxSyncReleaseIDs, permission.KindAccountingSyncRecord),
 			),
 		},
 		required: []string{paramAccountingSystem, paramSyncRecordIDs},

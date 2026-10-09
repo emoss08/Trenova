@@ -19,7 +19,11 @@ type ShipmentOptions struct {
 	ActivityWindowEnd       int64  `form:"activityWindowEnd"       json:"activityWindowEnd"       query:"activityWindowEnd"`
 	BillingTransferEligible bool   `form:"billingTransferEligible" json:"billingTransferEligible" query:"billingTransferEligible"`
 	IncludeCustomer         bool   `form:"includeCustomer"         json:"includeCustomer"         query:"includeCustomer"`
+	IncludeRoute            bool   `form:"-"                       json:"-"                       query:"-"`
 
+	CustomerIDs      []pulid.ID                 `form:"-" json:"-" query:"-"`
+	StopLocationIDs  []pulid.ID                 `form:"-" json:"-" query:"-"`
+	WorkerIDs        []pulid.ID                 `form:"-" json:"-" query:"-"`
 	QuickFilters     []shipment.QuickFilterSpec `form:"-" json:"-" query:"-"`
 	Timezone         string                     `form:"-" json:"-" query:"-"`
 	QuickFilterBasis *ShipmentQuickFilterBasis  `form:"-" json:"-" query:"-"`

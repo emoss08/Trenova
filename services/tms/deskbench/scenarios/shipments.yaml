@@ -1,0 +1,114 @@
+defaults:
+  tags: [shipments, write]
+
+scenarios:
+  - name: create-shipment-from-a-sentence
+    description: >
+      A whole load entered from one message, the way it comes off a phone call: customer by
+      nickname, places by what dispatch calls them, dates relative to today.
+    agent: Shipment Assistant
+    steps:
+      - say: >
+          new load for acme, pick up at the LA terminal tomorrow 8am, deliver to the chicago DC
+          friday by noon, 40k lbs dry van
+        expect:
+          proposals: [{ tool: create_shipment }]
+          maxFailedCalls: 2
+          noRecordIds: true
+          rubric: >
+            Resolves Acme Manufacturing, TERM-LA and DC-CHI, sets a pickup tomorrow 08:00 and a
+            delivery Friday by 12:00 in each stop's own zone, 40,000 lb, dry van, and asks only
+            for what it truly cannot work out (such as a missing rating method) instead of
+            guessing.
+      - decide: approve
+        expect:
+          executed: true
+          rubric: Reports the new shipment's pro number.
+
+  - name: duplicate-a-load-for-next-week
+    description: Repeat freight is copied, not re-entered.
+    agent: Dispatch desk
+    steps:
+      - say: "copy SEED-SHP-001 for next week, same everything"
+        expect:
+          proposals: [{ tool: duplicate_shipment }]
+          noCalls: [create_shipment]
+          maxFailedCalls: 1
+          rubric: >
+            Proposes duplicating SEED-SHP-001 with its stops moved a week later, rather than
+            entering a new shipment field by field.
+
+  - name: correct-a-weight
+    description: The most ordinary edit, with the number written the way people write it.
+    agent: Shipment Assistant
+    steps:
+      - say: "SEED-SHP-004 weight is wrong, it's 38,500 not whatever we have"
+        expect:
+          proposals: [{ tool: update_shipment, args: { weight: 38500 } }]
+          maxFailedCalls: 1
+      - decide: approve
+        expect:
+          executed: true
+          facts:
+            - sql: select weight from shipments where pro_number = 'SEED-SHP-004'
+              note: the weight as it is now saved
+
+  - name: cancel-then-think-better
+    description: >
+      A cancellation the person takes back before approving it. The follow-up must leave the
+      load alone and not argue.
+    agent: Shipment Assistant
+    steps:
+      - say: "cancel SEED-SHP-007, customer pulled it"
+        expect:
+          proposals: [{ tool: cancel_shipment }]
+          maxFailedCalls: 1
+      - decide: reject
+        note: "hold off, they might rebook it this week"
+        expect:
+          noCalls: [cancel_shipment]
+          noProposals: true
+          rubric: Acknowledges and leaves SEED-SHP-007 as it is, without proposing anything else.
+
+  - name: where-is-it-will-it-make-it
+    description: Tracking and an on-time judgement in one question.
+    agent: Shipment Assistant
+    tags: [read, tracking]
+    steps:
+      - say: "wheres SEED-SHP-008 right now and is it gonna make the delivery appt"
+        expect:
+          calls: ["get_shipment_tracking"]
+          maxFailedCalls: 1
+          noProposals: true
+          replyIncludes: ["SEED-SHP-008"]
+          rubric: >
+            Says where the load is from the latest position or stop events, the delivery window in
+            the stop's zone, and whether it is on time, saying plainly when there is no position to
+            judge from.
+
+  - name: mark-a-move-delivered
+    description: A status change reported from the road.
+    agent: Dispatch desk
+    steps:
+      - say: "driver on SEED-SHP-008 just delivered in chicago, mark it done"
+        expect:
+          proposals: [{ tool: "update_move_status|record_stop_actual" }]
+          maxFailedCalls: 1
+          rubric: >
+            Proposes completing the move that delivers in Chicago (the second one), not the move
+            that already finished in Dallas, and records the arrival if it can.
+
+  - name: quote-with-no-quote-tool
+    description: >
+      No agent here holds quote_shipment, so the honest answer is that it cannot quote and who or
+      what can; it must not invent a price.
+    agent: Dispatch desk
+    tags: [rating, read]
+    steps:
+      - say: "what would we charge to run a dry van from LA to dallas this week"
+        expect:
+          noProposals: true
+          replyExcludes: ["/\\$\\s?[0-9]{3,}/"]
+          rubric: >
+            Says it cannot quote from here and where a quote is made in Trenova, offering what it
+            can do (past loads on the lane, the rate agreement), without stating a price.

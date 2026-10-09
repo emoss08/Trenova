@@ -64,7 +64,7 @@ func coreToolProviders() []any {
 		provideListAccountingMappingGapsTool,
 		provideGetAccountingMappingTool,
 		newGetShipmentTool,
-		newSearchShipmentsTool,
+		provideSearchShipmentsTool,
 		provideGetWorkerTool,
 		newSearchWorkerTool,
 		newListExpiringCredentialsTool,

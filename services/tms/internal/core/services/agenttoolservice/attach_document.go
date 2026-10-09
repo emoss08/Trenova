@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -43,7 +44,7 @@ func newAttachDocumentTool(documents documentAttacher) serviceports.AgentTool {
 func (t *attachDocumentTool) Name() string { return "attach_document_to_shipment" }
 
 func (t *attachDocumentTool) Recipe() []string {
-	return []string{"get_inbound_message", "attach_document_to_shipment", "mark_inbound_message"}
+	return []string{"get_inbound_message", "search_shipments", "attach_document_to_shipment"}
 }
 
 func (t *attachDocumentTool) Description() string {
@@ -59,15 +60,15 @@ func (t *attachDocumentTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"documentId": map[string]any{
-				"type":        "string",
-				"description": "The document to attach, from get_document_summary or a search.",
-			},
-			"shipmentId": map[string]any{
-				"type": "string",
-				"description": "The shipment it belongs to, from the page, list_shipments or " +
+			"documentId": agenttoolschema.RecordIDText(
+				permission.ResourceDocument,
+				"The document to attach, from get_document_summary or a search.",
+			),
+			"shipmentId": agenttoolschema.RecordIDText(
+				permission.ResourceShipment,
+				"The shipment it belongs to, from the page, list_shipments or "+
 					"search_shipments.",
-			},
+			),
 		},
 		"required":             []string{"documentId", "shipmentId"},
 		"additionalProperties": false,

@@ -70,9 +70,9 @@ func (t *getBillingQueueItemsTool) ParamSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			paramBillingQueueItemIDs: agenttoolschema.IDList("The items' ids, from "+
+			paramBillingQueueItemIDs: agenttoolschema.KindIDs("The items' ids, from "+
 				"list_billing_queue_items, the page you are on or the proposals that named "+
-				"them.", maxBatchBillingQueueItems),
+				"them.", maxBatchBillingQueueItems, permission.KindBillingQueueItem),
 		},
 		toolschema.KeyRequired:             []string{paramBillingQueueItemIDs},
 		toolschema.KeyAdditionalProperties: false,

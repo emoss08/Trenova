@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/timesheetservice"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -115,11 +116,11 @@ func newListShipmentPermitsTool(
 			"yields the stateId and permitId the permit tools take.",
 		resource: permission.ResourcePermit,
 		properties: map[string]any{
-			paramShipmentID: map[string]any{
+			paramShipmentID: agenttoolschema.OfResource(map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
 				toolschema.KeyDescription: "The shipment, from get_shipment, search_shipments or the " +
 					"page you are on. Never guess one.",
-			},
+			}, permission.ResourceShipment),
 		},
 		required: []string{paramShipmentID},
 		access:   newFieldAccess(permissions),

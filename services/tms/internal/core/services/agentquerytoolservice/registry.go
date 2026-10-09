@@ -290,13 +290,6 @@ func endOfDay(clk clock, day int64) int64 {
 	return clk.DayEnd(day)
 }
 
-func dateParam(description string) map[string]any {
-	return map[string]any{
-		"type":        "string",
-		"description": description + " A date as YYYY-MM-DD, or today.",
-	}
-}
-
 func intParam(description string) map[string]any {
 	return map[string]any{"type": "integer", "description": description}
 }

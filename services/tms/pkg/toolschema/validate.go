@@ -33,6 +33,18 @@ func Validate(schema, args map[string]any) error {
 	return check(compiled, args)
 }
 
+// Compile reports whether a tool's parameter schema is a schema at all. A
+// schema the validator cannot compile refuses every call to its tool, so the
+// catalog is checked with this before any model sees it.
+func Compile(schema map[string]any) error {
+	if len(schema) == 0 {
+		return nil
+	}
+	_, err := compile(schema)
+
+	return err
+}
+
 // Validator is Validate with the compiled schema kept per tool name, so a
 // tool called on every turn is compiled once rather than on every call. A
 // tool's schema is fixed for the life of the process, which is what makes

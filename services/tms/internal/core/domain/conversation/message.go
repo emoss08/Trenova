@@ -84,6 +84,10 @@ type Message struct {
 	ToolEffect  agent.ToolEffect `json:"effect,omitempty"      bun:"-"`
 	ToolSummary string           `json:"summary,omitempty"     bun:"tool_summary,type:TEXT,nullzero"`
 	FoundTools  []string         `json:"foundTools,omitempty"  bun:"found_tools,type:JSONB,nullzero"`
+	// HandOffAgents are the person's other agents a find_tools answer named
+	// as holding what this agent could not call, set only on that call's
+	// result, so the Desk's hand-off menu offers them first.
+	HandOffAgents []pulid.ID `json:"handOffAgents,omitempty" bun:"hand_off_agents,type:JSONB,nullzero"`
 
 	// ScopeStage, ScopeCategory and ScopeReason record the guard's verdict on a
 	// user turn, or on an assistant turn the output guard refused.

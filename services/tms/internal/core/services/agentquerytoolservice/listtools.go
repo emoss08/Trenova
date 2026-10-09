@@ -61,6 +61,7 @@ type listSpec struct {
 	// is checked here and refused loudly instead.
 	config *domaintypes.FieldConfiguration
 	fetch  func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error)
+	count  func(ctx context.Context, opts *pagination.QueryOptions) (int, error)
 	// fetchIn is fetch with the caller's clock, for a row that renders a
 	// time of day and needs the organization's zone to do it. One of the
 	// two is set.
@@ -301,6 +302,22 @@ func (t *listTool) Query(
 
 	rows, more := trim(window, rows)
 	outcome := searchResult(criteria, rows, len(rows)).paged(window, more)
+	if more && t.spec.count != nil {
+		if total, countErr := t.spec.count(ctx, opts); countErr == nil {
+			outcome.Total = &total
+		}
+	}
+	if len(rows) == 0 && window.offset == 0 {
+		if note := t.nearMiss(ctx, &nearMissRequest{
+			params:   params,
+			opts:     opts,
+			gate:     gate,
+			criteria: criteria,
+			filters:  filters,
+		}); note != "" {
+			outcome.Note = note
+		}
+	}
 	if gate != nil {
 		return gatedResult(&outcome, gate), nil
 	}

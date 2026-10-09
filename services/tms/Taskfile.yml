@@ -99,6 +99,18 @@ tasks:
     cmds:
       - "{{.CLI_PATH}} worker run"
 
+  desk-ask:
+    desc: "Send the Desk a message on this checkout's code and print everything it did (task desk-ask -- \"msg\")"
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} desk ask {{.CLI_ARGS}}"
+
+  desk-bench:
+    desc: Run the Desk scenarios under deskbench/scenarios and compare with the previous run
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} desk run {{.CLI_ARGS}}"
+
   clean:
     desc: Remove build artifacts
     cmds:

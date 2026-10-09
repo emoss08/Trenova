@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 560.
+Tools listed: 562.
 
 ## The model
 
@@ -64,8 +64,8 @@ and Confidential fields never reach a model at all.
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 226 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 3 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 24 |
-| Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 33 |
-| Money | Moves or commits money. | Automatic | Yes | 97 |
+| Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 34 |
+| Money | Moves or commits money. | Automatic | Yes | 98 |
 
 ## Reads only
 
@@ -552,6 +552,7 @@ Sends to someone outside the organization.
 | Reply to inbound message (`reply_to_inbound_message`) | Sent outside the organization | Ask first | A call on an inbound message runs only as far as its mailbox allows: a classified message the mailbox handles without review may run on its own, and anything held, quarantined, settled or unreadable waits for a person. | — | Replies to whoever wrote in with text the model composed. |
 | Reprocess EDI inbound files (`reprocess_edi_inbound_files`) | Sent outside the organization | Propose | — | — | Turns what trading partners sent into tenders, status updates and invoices again, and sends each partner acknowledgments they act on. A person always decides. |
 | Request missing docs (`request_missing_docs`) | Sent outside the organization | Ask first | — | — | Emails an outside party a request for paperwork in words the model wrote. |
+| Reschedule stop (`reschedule_stop`) | Sent outside the organization | Ask first | — | — | A changed appointment is sent as an EDI tender change to the trading partners the load was tendered to. |
 | Resolve service failure (`resolve_service_failure`) | Sent outside the organization | Ask first | — | — | Resolving a failure generates an EDI 214 to the customer's trading partner carrying the reason chosen. |
 | Retry EDI message delivery (`retry_edi_message_delivery`) | Sent outside the organization | Propose | — | — | Sends documents to trading partners outside the organization, who act on what they receive; a document sent cannot be recalled. A person always decides. |
 | Review EDI tender change (`review_edi_tender_change`) | Sent outside the organization | Propose | — | — | Changes a load this organization committed to on another organization's word, and that organization sees the outcome. A person always decides. |
@@ -583,6 +584,7 @@ Moves or commits money.
 | Add carrier settlement adjustment (`add_carrier_settlement_adjustment`) | Money | Automatic | Its text is what payroll or the payee reads next, so a run that has read outside text proposes it rather than writing it. | — | Changes what the carrier will be paid on a settlement a person still approves, so it moves money; the line is removed the same way. |
 | Add driver settlement adjustment (`add_driver_settlement_adjustment`) | Money | Automatic | Its text is what payroll or the payee reads next, so a run that has read outside text proposes it rather than writing it. | — | Changes what the driver will be paid on a settlement a person still approves, so it moves money; the line is removed the same way. |
 | Add order charge (`add_order_charge`) | Money | Ask first | — | — | Adds to what the customer is billed; nothing is invoiced or sent, and remove_order_charge takes it off until it is invoiced. |
+| Add shipment charge (`add_shipment_charge`) | Money | Ask first | — | — | Adds to what the customer is billed for the shipment. |
 | Adjust escrow account (`adjust_escrow_account`) | Money | Propose | — | — | Moves money held in escrow for an owner-operator; only a person moves it. |
 | Adjust worker PTO balance (`adjust_worker_pto_balance`) | Money | Propose | — | — | Changes how many paid days a worker holds, which the organization owes and may pay out, so a person approves it and it runs as them. |
 | Amend rate agreement rules (`amend_rate_agreement_rules`) | Money | Propose | — | — | Changes the rates an agreement prices shipments at; only a person amends a live contract. |

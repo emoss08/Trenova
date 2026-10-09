@@ -386,12 +386,45 @@ func (a *Activities) FinishRunActivity(
 		return nil, err
 	}
 
+	a.recordLoopRefusals(ctx, input, outcome)
+
 	// Last, so an attempt that fails before this is the one that writes it:
 	// written earlier, a retry would write the run's account twice.
 	a.recordTrajectory(ctx, input.Payload, input.Events)
 	emitRunRoot(ctx, input, run, settled)
 
 	return settled, nil
+}
+
+// recordLoopRefusals files the calls the run's loop refused without
+// dispatching them, so the agent's scorecard counts them
+// (agentruntime.RecordLoopRefusals). The run is already settled, so a failure
+// here is logged, not returned.
+func (a *Activities) recordLoopRefusals(
+	ctx context.Context,
+	input *FinishRunInput,
+	outcome *serviceports.RunResult,
+) {
+	if len(outcome.LoopRefusals) == 0 || input.Definition == nil {
+		return
+	}
+	failed := agentruntime.RecordLoopRefusals(ctx, &agentruntime.RecordLoopRefusalsRequest{
+		Ledger: a.steps,
+		Tenant: input.Payload.tenantInfo(),
+		Owner: serviceports.RunStepOwner{
+			Kind: serviceports.RunStepOwnerAgentRun,
+			ID:   input.Payload.RunID,
+		},
+		DefinitionID: input.Definition.ID,
+		Attempt:      int(activity.GetInfo(ctx).Attempt),
+		Refusals:     outcome.LoopRefusals,
+	})
+	if failed > 0 {
+		a.logger.Warn("could not record some of a run's refused tool calls",
+			zap.String("run", input.Payload.RunID.String()),
+			zap.Int("unrecorded", failed),
+		)
+	}
 }
 
 func emitRunRoot(

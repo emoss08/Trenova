@@ -130,8 +130,9 @@ func newStartWorkerChecklistTool(checklists checklistKeeper) serviceports.AgentT
 		permission.OpCreate,
 	), map[string]any{
 		paramWorkerID: workerProperty(),
-		paramChecklistTemplate: agenttoolschema.IDText(
-			"The template, from list_worker_checklists. Never " +
+		paramChecklistTemplate: agenttoolschema.RecordIDText(
+			permission.ResourceWorkerChecklistTemplate,
+			"The template, from list_worker_checklists. Never "+
 				"guess one.",
 		),
 		paramStartedAt: agenttoolschema.Date("The day it starts, which its items fall due from. " +
@@ -300,16 +301,18 @@ func newUpdateWorkerChecklistItemTool(checklists checklistKeeper) serviceports.A
 		permission.ResourceWorkerChecklist,
 		permission.OpUpdate,
 	), map[string]any{
-		paramChecklistItemID: agenttoolschema.IDText(
-			"The item, from list_worker_checklists. Never guess " +
+		paramChecklistItemID: agenttoolschema.KindID(
+			"The item, from list_worker_checklists. Never guess "+
 				"one.",
+			permission.KindChecklistItem,
 		),
 		paramItemMove: agenttoolschema.Enum("Complete, Skip, NotApplicable or Reopen.",
 			checklistItemMoves),
 		fieldNote: stringProperty("What was done, or why it was skipped or does not apply. "+
 			"Required to skip or mark not applicable.", wfNoteChars),
-		paramEvidenceDocument: agenttoolschema.IDText(
-			"For Complete: a document filed on the worker " +
+		paramEvidenceDocument: agenttoolschema.RecordIDText(
+			permission.ResourceDocument,
+			"For Complete: a document filed on the worker "+
 				"that shows it done, from search_documents.",
 		),
 	}, paramChecklistItemID, paramItemMove), paramChecklistItemID,
@@ -404,8 +407,9 @@ func newCancelWorkerChecklistTool(checklists checklistKeeper) serviceports.Agent
 		permission.ResourceWorkerChecklist,
 		permission.OpCancel,
 	), map[string]any{
-		paramChecklistID: agenttoolschema.IDText(
-			"The checklist, from list_worker_checklists. Never " +
+		paramChecklistID: agenttoolschema.RecordIDText(
+			permission.ResourceWorkerChecklist,
+			"The checklist, from list_worker_checklists. Never "+
 				"guess one.",
 		),
 		fieldReason: stringProperty("Why it no longer applies.", wfShortChars),

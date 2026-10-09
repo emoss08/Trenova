@@ -184,6 +184,19 @@ Keywords: disable agent, enable agent, start run, delete agent, shadow mode, sim
 5. To delete one, select **Remove**, type its name and confirm with **Remove agent**. Its runs and
    audit trail are kept and its open proposals are withdrawn. System agents cannot be removed.
 
+### See which tools an agent's calls fail on
+Keywords: tool failures, tool errors, refused tool calls, not accepted, not permitted, agent keeps failing, bad arguments, tool call breakdown, why did the tool fail
+1. Open [AI control](/admin/agent-control) and select **Agents**.
+2. Select the agent, then **Edit**, and go to **How it's doing**.
+3. **Tool calls** counts every call the agent made to each of its tools in the last 30 days, the
+   calls the runtime turned away included, which never became proposals. The tool with the most
+   calls that did not go through comes first, with its share under **Didn't go through** and how
+   each call ended: ran, proposed, **Not permitted**, **Not accepted**, **Out of budget**,
+   **Skipped (repeat)** or **Failed**.
+4. Select a tool to read the reasons its calls gave most often for each way they did not go
+   through, and how many calls gave each. A reason that keeps coming back is usually fixed in the
+   agent's **Instructions** or by giving it the tool it reached for.
+
 ### Approve or reject what an agent proposed
 Keywords: agent decisions, pending proposals, review agent changes, approve plan, preview agent change
 1. Open [AI control](/admin/agent-control) and select **Activity** in the rail. The sentence at

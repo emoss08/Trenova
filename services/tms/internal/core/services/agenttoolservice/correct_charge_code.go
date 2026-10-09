@@ -34,12 +34,12 @@ func (t *correctChargeCodeTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"billingQueueItemId": map[string]any{
-				"type": "string",
-				"description": "The billing queue item whose charges are corrected: this run's " +
-					"subject or the record on the page. No tool lists queue items, so never " +
+			"billingQueueItemId": agenttoolschema.KindID(
+				"The billing queue item whose charges are corrected: this run's "+
+					"subject or the record on the page. No tool lists queue items, so never "+
 					"guess one.",
-			},
+				permission.KindBillingQueueItem,
+			),
 			"additionalCharges": map[string]any{
 				toolschema.KeyType:        toolschema.TypeArray,
 				toolschema.KeyDescription: "The corrected additional charge set to apply to the item.",
@@ -65,10 +65,12 @@ func chargeLineSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			chargeLineID: stringProperty("The existing charge this line keeps or corrects, "+
-				"from the item's charges; leave it out for a charge that is new.", 0),
-			chargeLineAccessorial: stringProperty(
-				"The accessorial, from list_accessorial_charges.", 0,
+			chargeLineID: agenttoolschema.KindID("The existing charge this line keeps or "+
+				"corrects, from the item's charges; leave it out for a charge that is new.",
+				permission.KindAdditionalCharge),
+			chargeLineAccessorial: agenttoolschema.RecordIDText(
+				permission.ResourceAccessorialCharge,
+				"The accessorial, from list_accessorial_charges.",
 			),
 			chargeLineMethod: agenttoolschema.Enum(
 				"How the amount is applied: Flat once, PerUnit times the unit, "+

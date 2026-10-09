@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -77,12 +78,10 @@ func (t *getDocumentSummaryTool) ParamSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			"documentId": map[string]any{
-				toolschema.KeyType: toolschema.TypeString,
-				toolschema.KeyDescription: "The document's id, from the attachments on the " +
-					"message, a documentId in get_inbound_message or get_worker_credential, " +
-					"or this run's subject.",
-			},
+			"documentId": agenttoolschema.RecordIDText(permission.ResourceDocument,
+				"The document's id, from the attachments on the "+
+					"message, a documentId in get_inbound_message or get_worker_credential, "+
+					"or this run's subject."),
 			paramPage: map[string]any{
 				toolschema.KeyType: toolschema.TypeInteger,
 				toolschema.KeyDescription: "Optional: read only this page, for example the page " +

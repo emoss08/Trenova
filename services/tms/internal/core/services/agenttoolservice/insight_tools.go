@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -36,7 +37,7 @@ func newDismissInsightTool(insights insightDismisser) serviceports.AgentTool {
 func (t *dismissInsightTool) Name() string { return "dismiss_insight" }
 
 func (t *dismissInsightTool) Recipe() []string {
-	return []string{"get_insight", "list_insights", "dismiss_insight"}
+	return []string{"list_insights", "get_insight", "dismiss_insight"}
 }
 
 func (t *dismissInsightTool) Description() string {
@@ -52,10 +53,8 @@ func (t *dismissInsightTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"insightId": map[string]any{
-				"type":        "string",
-				"description": "The insight's id, from list_insights or the run's subject.",
-			},
+			"insightId": agenttoolschema.RecordIDText(permission.ResourceInsight,
+				"The insight's id, from list_insights or the run's subject."),
 			"reason": map[string]any{
 				"type": "string",
 				"description": fmt.Sprintf(

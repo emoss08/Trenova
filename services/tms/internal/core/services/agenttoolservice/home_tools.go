@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/homelayoutservice"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -285,10 +286,8 @@ func (t *addHomeWidgetTool) ParamSchema() map[string]any {
 						"items":       map[string]any{"type": "string"},
 						"description": "Metric keys from list_home_widgets, for a kpi row.",
 					},
-					"definitionId": map[string]any{
-						"type":        "string",
-						"description": "A saved report's id, from list_reports.",
-					},
+					"definitionId": agenttoolschema.RecordIDText(permission.ResourceReport,
+						"A saved report's id, from list_reports."),
 					"cannedKey": map[string]any{
 						"type":        "string",
 						"description": "A built-in report's key, from list_reports.",
@@ -301,10 +300,8 @@ func (t *addHomeWidgetTool) ParamSchema() map[string]any {
 						"type":        "string",
 						"description": "Which of the report's columns; describe_report lists them.",
 					},
-					"dashboardId": map[string]any{
-						"type":        "string",
-						"description": "A report dashboard's id, from list_dashboards.",
-					},
+					"dashboardId": agenttoolschema.RecordIDText(permission.ResourceDashboard,
+						"A report dashboard's id, from list_dashboards."),
 					"text": map[string]any{
 						"type":        "string",
 						"description": "What an announcement widget says.",

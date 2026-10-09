@@ -3,6 +3,7 @@ package agenttoolservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -10,13 +11,16 @@ import (
 )
 
 func masterOptionalIDPointer[T any](
-	key, description string,
+	key string,
+	resource permission.Resource,
+	description string,
 	at func(*T) **pulid.ID,
 ) masterField[T] {
 	return masterField[T]{
 		key: key,
 		property: func(update bool) map[string]any {
-			return clearable(update, true, stringProperty(description+keepSuffix(update, true), 0))
+			return clearable(update, true,
+				agenttoolschema.RecordIDText(resource, description+keepSuffix(update, true)))
 		},
 		apply: func(_ context.Context, in *masterInput, entity *T) error {
 			id, err := optionalMasterID(in, key)

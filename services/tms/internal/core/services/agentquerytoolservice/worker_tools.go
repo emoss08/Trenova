@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -35,11 +36,11 @@ func (t *getWorkerTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"workerId": map[string]any{
+			"workerId": agenttoolschema.OfResource(map[string]any{
 				"type": "string",
 				"description": "The worker's id, from search_worker or list_workers, " +
 					"the page you are on, or this run's subject.",
-			},
+			}, permission.ResourceWorker),
 		},
 		"required":             []string{"workerId"},
 		"additionalProperties": false,

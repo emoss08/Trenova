@@ -71,8 +71,10 @@ func (t *assignPayProfileTool) Description() string {
 func (t *assignPayProfileTool) ParamSchema() map[string]any {
 	return objectParams(map[string]any{
 		paramWorkerID: workerProperty(),
-		paramPayProfileID: agenttoolschema.IDText("The pay profile, from " + payProfileSourcesTool +
-			". Never guess one."),
+		paramPayProfileID: agenttoolschema.KindID(
+			"The pay profile, from "+payProfileSourcesTool+". Never guess one.",
+			permission.KindPayProfile,
+		),
 		paramEffectiveFrom: agenttoolschema.Date("The first day pay is computed under it."),
 		paramEffectiveTo: agenttoolschema.Date("The day it stops, when it is temporary; leave it " +
 			"out for open-ended."),
@@ -317,8 +319,10 @@ func (t *endPayAssignmentTool) Description() string {
 
 func (t *endPayAssignmentTool) ParamSchema() map[string]any {
 	return objectParams(map[string]any{
-		paramAssignmentID: agenttoolschema.IDText("The assignment, from " + assignmentSourcesTool +
-			". Never guess one."),
+		paramAssignmentID: agenttoolschema.KindID(
+			"The assignment, from "+assignmentSourcesTool+". Never guess one.",
+			permission.KindPayAssignment,
+		),
 		paramEndDate: agenttoolschema.Date("The day it stops applying."),
 	}, paramAssignmentID, paramEndDate)
 }

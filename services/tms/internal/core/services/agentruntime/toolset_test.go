@@ -417,6 +417,110 @@ func TestResolveFind_NamesThePersonsOtherAgentThatHoldsTheTool(t *testing.T) {
 		"an agent that holds the tool is named instead of sending the person to an administrator")
 }
 
+// The agents the answer names are recorded beside it, so the Desk's hand-off
+// menu can offer them first instead of leaving the person to find the name in
+// the reply. An agent that holds nothing that matched is not among them.
+func TestResolveFind_RecordsTheAgentsItNamesForTheHandOffMenu(t *testing.T) {
+	t.Parallel()
+
+	service, _ := wideRuntime(t)
+	definition := testDefinition("list_customers", "list_locations")
+	compliance := chatAgent("Compliance assistant")
+	compliance.ToolNames = []string{"list_expiring_credentials"}
+	unrelated := chatAgent("Report builder")
+	unrelated.ToolNames = []string{"list_reports"}
+	service.permissions = &agentruntimetest.StubPermissions{}
+	service.definitions = &listedDefinitions{byID: map[pulid.ID]*agentdefinition.Definition{
+		compliance.ID: compliance,
+		unrelated.ID:  unrelated,
+		definition.ID: definition,
+	}}
+
+	set := service.newToolSet(t.Context(), toolSetRequest{
+		definition: definition,
+		actor:      testActor(),
+		input:      "anything",
+	})
+	set.disclosed = true
+
+	answer := service.resolveFind(
+		t.Context(),
+		set,
+		testActor(),
+		map[string]any{"need": "driver medical card expiry"},
+	)
+
+	assert.Equal(t, []pulid.ID{compliance.ID}, answer.HandOff)
+}
+
+// The ids ride on the find_tools result into the saved tool message, which is
+// what the Desk reads when it orders the hand-off menu, and on the streamed
+// tool_finished, so the menu can offer the hand-off before the turn is saved.
+func TestRun_SavesTheAgentsFindToolsNamedOnItsResult(t *testing.T) {
+	t.Parallel()
+
+	service, _, _ := wideRun(t,
+		toolTurn(findToolsName, map[string]any{"need": "driver medical card expiry"}),
+		textTurn("The compliance assistant can check that."),
+	)
+	definition := testDefinition("list_customers", "list_locations")
+	compliance := chatAgent("Compliance assistant")
+	compliance.ToolNames = []string{"list_expiring_credentials"}
+	service.permissions = &agentruntimetest.StubPermissions{}
+	service.definitions = &listedDefinitions{byID: map[pulid.ID]*agentdefinition.Definition{
+		compliance.ID: compliance,
+		definition.ID: definition,
+	}}
+
+	req := &serviceports.RunRequest{
+		Definition: definition,
+		Actor:      testActor(),
+		Input:      "when does the driver's medical card expire?",
+	}
+	events := recordEvents(req)
+
+	result, err := service.Run(t.Context(), req)
+	require.NoError(t, err)
+
+	require.Len(t, result.Messages, 4)
+	assert.Equal(t, findToolsName, result.Messages[2].ToolName)
+	assert.Equal(t, []pulid.ID{compliance.ID}, result.Messages[2].HandOffAgents)
+
+	var finished []serviceports.AssistantToolFinishedEvent
+	for _, event := range *events {
+		if data, ok := event.Data.(serviceports.AssistantToolFinishedEvent); ok {
+			finished = append(finished, data)
+		}
+	}
+	require.Len(t, finished, 1)
+	assert.Equal(t, findToolsName, finished[0].Name)
+	assert.Equal(t, []pulid.ID{compliance.ID}, finished[0].HandOffAgents)
+}
+
+// With no other agent holding what matched, the answer sends the person to an
+// administrator and suggests nobody for the hand-off menu.
+func TestResolveFind_SuggestsNobodyWhenNoOtherAgentHoldsTheTool(t *testing.T) {
+	t.Parallel()
+
+	service, _ := wideRuntime(t)
+	set := service.newToolSet(t.Context(), toolSetRequest{
+		definition: testDefinition("list_customers", "list_locations"),
+		actor:      testActor(),
+		input:      "anything",
+	})
+	set.disclosed = true
+
+	answer := service.resolveFind(
+		t.Context(),
+		set,
+		testActor(),
+		map[string]any{"need": "driver medical card expiry"},
+	)
+
+	assert.Contains(t, answer.Content, "AI Control")
+	assert.Empty(t, answer.HandOff)
+}
+
 // Nothing matched anywhere is a different answer, and it still must not let the
 // model generalise from a tool search to what the business tracks.
 func TestResolveFind_DoesNotClaimTheSystemLacksSomethingItDidNotSearchFor(t *testing.T) {

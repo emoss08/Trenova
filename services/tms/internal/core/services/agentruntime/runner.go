@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -334,7 +335,11 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 					)
 				} else {
 					answer := fx.Find(t, call.Arguments)
-					outcome = toolOutcome{content: answer.Content, found: answer.Found}
+					outcome = toolOutcome{
+						content: answer.Content,
+						found:   answer.Found,
+						handOff: answer.HandOff,
+					}
 				}
 				s.recordToolResult(t, fx, call, outcome)
 				continue
@@ -452,6 +457,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 				Taint:                result.Taint,
 				Earlier:              earlier,
 			}).internal()
+			outcome.dispatched = true
 			if !outcome.failed {
 				outcome.content += fanOutNote(call.Name, len(earlier)+1)
 			}
@@ -507,6 +513,10 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 	return result, nil
 }
 
+// maxLoopRefusalChars bounds what a loop refusal keeps of what the model
+// was told: the reason is the figure, the text only what explains it.
+const maxLoopRefusalChars = 1000
+
 // changeFinalAnswer is the loop asking for an answer once its tool budget is
 // spent, rather than ending on a canned line.
 const changeFinalAnswer = "agent-loop-final-answer"
@@ -561,6 +571,15 @@ func (s *Service) recordToolResult(
 	outcome toolOutcome,
 ) {
 	result := t.result
+	if outcome.failed && !outcome.dispatched && outcome.verdict != "" {
+		result.LoopRefusals = append(result.LoopRefusals, serviceports.LoopRefusal{
+			CallID:   call.ID,
+			ToolName: call.Name,
+			Verdict:  outcome.verdict,
+			Reason:   outcome.reason,
+			Content:  stringutils.Ellipsize(outcome.content, maxLoopRefusalChars),
+		})
+	}
 	if outcome.action != nil {
 		result.Actions = append(result.Actions, *outcome.action)
 	}
@@ -573,14 +592,15 @@ func (s *Service) recordToolResult(
 	fx.Emit(serviceports.StreamEvent{
 		Event: serviceports.AssistantEventToolFinished,
 		Data: serviceports.AssistantToolFinishedEvent{
-			CallID:   call.ID,
-			Name:     call.Name,
-			Failed:   outcome.failed,
-			Proposed: outcome.action != nil && !outcome.action.Executed,
-			Content:  outcome.content,
-			Effect:   effect,
-			Summary:  summary,
-			Verdict:  outcome.verdict,
+			CallID:        call.ID,
+			Name:          call.Name,
+			Failed:        outcome.failed,
+			Proposed:      outcome.action != nil && !outcome.action.Executed,
+			Content:       outcome.content,
+			Effect:        effect,
+			Summary:       summary,
+			Verdict:       outcome.verdict,
+			HandOffAgents: outcome.handOff,
 		},
 	})
 
@@ -594,6 +614,7 @@ func (s *Service) recordToolResult(
 		ToolEffect:     effect,
 		ToolSummary:    summary,
 		FoundTools:     outcome.found,
+		HandOffAgents:  outcome.handOff,
 		DelegateReport: outcome.delegateReport,
 		CreatedAt:      fx.Now(),
 	})
@@ -673,15 +694,7 @@ func (s *Service) finish(
 		)
 		result.OutputAltered = true
 		result.OutputRule = outputDecision.MatchedRule
-		fx.Emit(serviceports.StreamEvent{
-			Event: serviceports.AssistantEventRetrying,
-			Data: serviceports.AssistantRetryingEvent{
-				Attempt: 1,
-				Reason:  outputAlteredReason,
-				Kind:    serviceports.RetryKindRestart,
-			},
-		})
-		fx.Emit(deltaEvent(guarded))
+		fx.Emit(replyReplacedEvent(guarded, outputAlteredReason))
 		completion.Text = guarded
 	}
 
@@ -720,7 +733,7 @@ func (s *Service) finish(
 	return result
 }
 
-// outputAlteredReason is why a streamed reply is withdrawn and sent again
+// outputAlteredReason is why a streamed reply is replaced by the recorded one
 // when the output guard took code out of it.
 const outputAlteredReason = "The reply held a code block, which was left out."
 

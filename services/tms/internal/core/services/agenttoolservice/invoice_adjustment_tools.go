@@ -56,7 +56,21 @@ var (
 		},
 	)
 	errDraftOrAdjustments = errors.New(
-		"give either draftAdjustmentId, to submit a saved draft, or adjustments, not both",
+		"name what to submit: draftAdjustmentId for a saved draft, or adjustments for new ones",
+	)
+	// errDraftAndAdjustments answers a submission that names a saved draft and
+	// also lists adjustments. A draft is submitted as it stands, so the list
+	// beside it is either a copy or a second credit, and the tool cannot tell
+	// which; the refusal spells out both calls so the next one is the one meant.
+	errDraftAndAdjustments = errors.New(
+		"give draftAdjustmentId or adjustments, not both. To submit the saved draft as it " +
+			"stands, send draftAdjustmentId without adjustments, for example " +
+			`{"draftAdjustmentId": "iadj_…"}. To submit new adjustments, send adjustments ` +
+			"without draftAdjustmentId, for example " +
+			`{"adjustments": [{"invoiceId": "inv_…", "kind": "CreditOnly", "reason": "…"}]}`,
+	)
+	errNoDraftTarget = errors.New(
+		"give invoiceId to start a new draft, or adjustmentId to rewrite a saved one",
 	)
 )
 
@@ -142,8 +156,8 @@ func adjustmentLinesProperty() map[string]any {
 		toolschema.KeyItems: map[string]any{
 			toolschema.KeyType: toolschema.TypeObject,
 			toolschema.KeyProperties: map[string]any{
-				paramInvoiceLineID: stringProperty(
-					"The line's id, from get_invoice's lines.", 0),
+				paramInvoiceLineID: agenttoolschema.KindID(
+					"The line's id, from get_invoice's lines.", permission.KindInvoiceLine),
 				paramCreditAmount: stringProperty(
 					"How much of the line to credit, as a decimal.", 0),
 				paramCreditQuantity: stringProperty("The quantity credited, as a decimal.", 0),
@@ -162,13 +176,14 @@ func adjustmentLinesProperty() map[string]any {
 }
 
 func supportingDocumentsProperty() map[string]any {
-	return agenttoolschema.IDList("Documents on the invoice's shipments that support it, from "+
-		"search_documents or get_shipment.", maxAdjustmentDocuments)
+	return agenttoolschema.RecordIDs(permission.ResourceDocument,
+		"Documents on the invoice's shipments that support it, from search_documents or "+
+			"get_shipment.", maxAdjustmentDocuments)
 }
 
 func adjustmentIDProperty(status string) map[string]any {
-	return agenttoolschema.ID("The "+status+" adjustment",
-		"list_invoice_adjustments or get_invoice_adjustment")
+	return agenttoolschema.KindID(agenttoolschema.IDDescription("The "+status+" adjustment",
+		"list_invoice_adjustments or get_invoice_adjustment"), permission.KindInvoiceAdjustment)
 }
 
 func optionalPositiveDecimal(fields map[string]any, key string) (decimal.Decimal, error) {
@@ -319,12 +334,8 @@ type submissionPlan struct {
 
 func newSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) serviceports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
-		name: "submit_invoice_adjustment",
-		recipe: []string{
-			"get_invoice",
-			"save_invoice_adjustment_draft",
-			"submit_invoice_adjustment",
-		},
+		name:        "submit_invoice_adjustment",
+		recipe:      []string{"get_invoice", "submit_invoice_adjustment"},
 		searchTerms: []string{"credit and rebill", "rebill"},
 		description: "Propose crediting, rebilling, reversing or writing off posted invoices. " +
 			"Give adjustments, one per invoice and up to 25 at once, or draftAdjustmentId to " +
@@ -353,8 +364,8 @@ func newSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) serviceports.Ag
 				toolschema.KeyItems: map[string]any{
 					toolschema.KeyType: toolschema.TypeObject,
 					toolschema.KeyProperties: map[string]any{
-						paramInvoiceID: stringProperty(
-							"The posted invoice, from list_invoices or get_invoice.", 0),
+						paramInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
+							"The posted invoice, from list_invoices or get_invoice."),
 						paramAdjustmentKind: adjustmentKindProperty(),
 						paramRebillStrategy: rebillStrategyProperty(),
 						paramReason: stringProperty(
@@ -426,7 +437,10 @@ func submissionRequest(params *serviceports.ToolExecuteParams) (*adjustmentSubmi
 		return nil, fmt.Errorf("parameter %q is not a valid id: %w", paramDraftAdjustmentID, err)
 	}
 	raw, hasItems := params.Params[paramAdjustments]
-	if hasDraft == hasItems {
+	switch {
+	case hasDraft && hasItems:
+		return nil, errDraftAndAdjustments
+	case !hasDraft && !hasItems:
 		return nil, errDraftOrAdjustments
 	}
 
@@ -658,8 +672,9 @@ func newSaveInvoiceAdjustmentDraftTool(adjustments invoiceAdjuster) serviceports
 			"person submits it, and a later save rewrites it.",
 		properties: map[string]any{
 			paramAdjustmentID: adjustmentIDProperty("draft"),
-			paramInvoiceID: stringProperty(
-				"The posted invoice a new draft adjusts, from list_invoices or get_invoice.", 0),
+			paramInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
+				"The posted invoice a new draft adjusts, from list_invoices or get_invoice. "+
+					"Beside adjustmentId it must be that draft's invoice."),
 			paramAdjustmentKind: adjustmentKindProperty(),
 			paramRebillStrategy: rebillStrategyProperty(),
 			paramReason: stringProperty("Why, as the customer or the biller would say it.",
@@ -671,6 +686,13 @@ func newSaveInvoiceAdjustmentDraftTool(adjustments invoiceAdjuster) serviceports
 		target:   targetInvoice,
 	}, receivablePlan[*serviceports.SaveInvoiceAdjustmentDraftRequest, *serviceports.InvoiceAdjustmentDraftPreview]{
 		request: draftRequest,
+		settle: func(
+			ctx context.Context,
+			req *serviceports.SaveInvoiceAdjustmentDraftRequest,
+			_ *serviceports.ToolExecuteParams,
+		) error {
+			return draftOnInvoice(ctx, adjustments, req)
+		},
 		plan: func(
 			ctx context.Context,
 			req *serviceports.SaveInvoiceAdjustmentDraftRequest,
@@ -715,10 +737,8 @@ func draftRequest(
 	if err != nil {
 		return nil, fmt.Errorf("parameter %q is not a valid id: %w", paramInvoiceID, err)
 	}
-	if adjustmentID.IsNil() == invoiceID.IsNil() {
-		return nil, errors.New(
-			"give invoiceId for a new draft or adjustmentId for a saved one, not both",
-		)
+	if adjustmentID.IsNil() && invoiceID.IsNil() {
+		return nil, errNoDraftTarget
 	}
 	kind, err := requireEnum(params.Params, paramAdjustmentKind, adjustmentKinds.Values)
 	if err != nil {
@@ -751,6 +771,42 @@ func draftRequest(
 		Lines:                 lines,
 		TenantInfo:            tenantFrom(*params),
 	}, nil
+}
+
+// draftOnInvoice takes a rewrite that names the draft and also the invoice it
+// adjusts. A model that read the draft off the invoice sent both, and was
+// refused for naming both though they named the same thing; the draft's own
+// invoice is what a rewrite adjusts, so an invoiceId that is that invoice is
+// taken. One naming another invoice is refused, since a rewrite cannot move a
+// draft to it and a new draft there is a different request.
+func draftOnInvoice(
+	ctx context.Context,
+	adjustments invoiceAdjuster,
+	req *serviceports.SaveInvoiceAdjustmentDraftRequest,
+) error {
+	if req.AdjustmentID.IsNil() || req.InvoiceID.IsNil() {
+		return nil
+	}
+	draft, err := adjustments.GetDetail(ctx, &serviceports.GetInvoiceAdjustmentDetailRequest{
+		AdjustmentID: req.AdjustmentID,
+		TenantInfo:   req.TenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+	if draft.OriginalInvoiceID == req.InvoiceID {
+		return nil
+	}
+
+	return fmt.Errorf(
+		"adjustmentId %s is a draft on invoice %s, not on invoiceId %s. To rewrite that "+
+			"draft, send adjustmentId without invoiceId, for example "+
+			`{"adjustmentId": "%s", "kind": "CreditOnly", "reason": "…"}. To start a new `+
+			"draft on invoice %s, send invoiceId without adjustmentId, for example "+
+			`{"invoiceId": "%s", "kind": "CreditOnly", "reason": "…"}`,
+		req.AdjustmentID, draft.OriginalInvoiceID, req.InvoiceID,
+		req.AdjustmentID, req.InvoiceID, req.InvoiceID,
+	)
 }
 
 type adjustmentDecision struct {

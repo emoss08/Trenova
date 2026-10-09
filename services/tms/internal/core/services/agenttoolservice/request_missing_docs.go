@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/customerupdateservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
@@ -58,11 +59,11 @@ func (t *requestMissingDocsTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"profileId": map[string]any{
-				"type": "string",
-				"description": "The email profile to send from, from list_email_profiles; pick " +
+			"profileId": agenttoolschema.RecordIDText(
+				permission.ResourceEmailProfile,
+				"The email profile to send from, from list_email_profiles; pick "+
 					"billing for a document request when there is one.",
-			},
+			),
 			"to": map[string]any{
 				"type":        "array",
 				"description": "The recipient email addresses.",

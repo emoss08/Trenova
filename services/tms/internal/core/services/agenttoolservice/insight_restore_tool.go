@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 )
 
@@ -51,8 +52,8 @@ func newRestoreInsightTool(insights insightRestorer) serviceports.AgentTool {
 		rationale: "Returns a finding to the active list inside Trenova; nothing is sent and " +
 			"dismiss_insight takes it off again.",
 		properties: map[string]any{
-			paramInsightID: stringProperty("The dismissed insight, from list_insights. Never "+
-				"guess one.", 0),
+			paramInsightID: agenttoolschema.RecordIDText(permission.ResourceInsight,
+				"The dismissed insight, from list_insights. Never guess one."),
 		},
 		required:    []string{paramInsightID},
 		searchTerms: []string{"restore insight", "undismiss", "reopen finding"},

@@ -172,9 +172,10 @@ func newVoidPayrollExportTool(exporter payrollExporter) serviceports.AgentTool {
 		"Takes back a payroll run that payroll may already have paid from, so a person "+
 			"approves it and it runs as them; a voided run stays voided.",
 	), map[string]any{
-		paramPayrollExportID: agenttoolschema.IDText(
-			"The payroll run, from list_payroll_exports. " +
+		paramPayrollExportID: agenttoolschema.KindID(
+			"The payroll run, from list_payroll_exports. "+
 				"Never guess one.",
+			permission.KindPayrollExport,
 		),
 		fieldReason: stringProperty("Why the run is voided, kept on it.", maxPayrollNoteChars),
 	}, paramPayrollExportID, fieldReason), paramPayrollExportID, permission.ResourceTimesheet)

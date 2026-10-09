@@ -9,7 +9,8 @@ import (
 // the resources whose records are one kind with one prefix. A resource that
 // covers several kinds of record (a qualification is a verification, a
 // clearinghouse query or a medical card, each with its own prefix) is left
-// out, since its prefix would be wrong for all but one of them.
+// out, since its prefix would be wrong for all but one of them; its kinds are
+// declared one by one in recordKinds.
 //
 // Tool schemas name the resource an id parameter takes, and the runtime reads
 // the prefix here to tell a model it sent a carrier's id where a customer's
@@ -48,6 +49,63 @@ var recordIDPrefixes = map[Resource]string{
 	ResourceDriverSettlement:  "dstl_",
 	ResourceSettlementDispute: "dsd_",
 	ResourceCaptureBatch:      "cbat_",
+
+	ResourceOrganization:              "org_",
+	ResourceUser:                      "usr_",
+	ResourceAgentRun:                  "ar_",
+	ResourceAgentMemory:               "amem_",
+	ResourceInsight:                   "inst_",
+	ResourceTableChangeAlert:          "tcas_",
+	ResourceEmailProfile:              "emlprof_",
+	ResourceInboundMessage:            "imsg_",
+	ResourceInboundMailbox:            "imbx_",
+	ResourceShipmentStop:              "stp_",
+	ResourceShipmentHold:              "shh_",
+	ResourceHoldReason:                "hr_",
+	ResourceServiceFailureReasonCode:  "sfrc_",
+	ResourcePermit:                    "pmt_",
+	ResourceServiceType:               "st_",
+	ResourceShipmentType:              "sht_",
+	ResourceDocumentType:              "dt_",
+	ResourceEquipmentType:             "et_",
+	ResourceEquipmentManufacturer:     "em_",
+	ResourceFleetCode:                 "fc_",
+	ResourceLocationCategory:          "lc_",
+	ResourceCarrierCapacityPosting:    "ccp_",
+	ResourceRateConfirmation:          "ratecon_",
+	ResourceCarrierSettlement:         "carstl_",
+	ResourceCarrierInvoiceMatch:       "cim_",
+	ResourceRoutingGuide:              "rg_",
+	ResourceTender:                    "tnd_",
+	ResourceAccessorialCharge:         "acc_",
+	ResourceFormulaTemplate:           "ft_",
+	ResourceRateMatrix:                "rmx_",
+	ResourceGeneralLedgerAccount:      "gla_",
+	ResourceFiscalPeriod:              "fp_",
+	ResourceManualJournal:             "mjr_",
+	ResourceJournalEntry:              "je_",
+	ResourceJournalReversal:           "jrev_",
+	ResourceBankReceipt:               "brcpt_",
+	ResourceBankReceiptWorkItem:       "brwi_",
+	ResourcePayCode:                   "payc_",
+	ResourcePayAdvance:                "padv_",
+	ResourceEscrowAccount:             "escr_",
+	ResourceRecurringDeduction:        "rded_",
+	ResourceRecurringEarning:          "rern_",
+	ResourceDriverExpense:             "dexp_",
+	ResourceFuelCard:                  "fcard_",
+	ResourceFuelPurchase:              "fpur_",
+	ResourceFuelPurchaseImport:        "fpib_",
+	ResourceWorkerPTO:                 "wrkpto_",
+	ResourceWorkerChecklist:           "wcl_",
+	ResourceWorkerChecklistTemplate:   "wclt_",
+	ResourceWorkerCredentialType:      "wct_",
+	ResourceWorkerRecognition:         "wrec_",
+	ResourceWorkerDOTTest:             "wdot_",
+	ResourceTrainingCourse:            "trnc_",
+	ResourcePerformanceReviewTemplate: "prt_",
+	ResourceShiftTemplate:             "shft_",
+	ResourceShiftSwap:                 "sswp_",
 }
 
 var resourcesByIDPrefix = func() map[string]Resource {

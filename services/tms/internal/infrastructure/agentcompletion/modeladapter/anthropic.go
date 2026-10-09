@@ -177,9 +177,9 @@ type anthropicBlock struct {
 	CacheControl *anthropicCacheControl `json:"cache_control,omitempty"`
 
 	// tool_use
-	ID    string         `json:"id,omitempty"`
-	Name  string         `json:"name,omitempty"`
-	Input map[string]any `json:"input,omitempty"`
+	ID    string          `json:"id,omitempty"`
+	Name  string          `json:"name,omitempty"`
+	Input *map[string]any `json:"input,omitempty"`
 	// InputError is why streamed input JSON did not parse; never on the wire.
 	InputError string `json:"-"`
 
@@ -480,12 +480,11 @@ func (a anthropicAdapter) Stream(
 			thinking := streamed.thinking.String()
 			block.Thinking = &thinking
 		case "tool_use":
+			var arguments map[string]any
 			if raw := streamed.input.String(); strings.TrimSpace(raw) != "" {
-				block.Input, block.InputError = decodeArguments(raw)
+				arguments, block.InputError = decodeArguments(raw)
 			}
-			if block.Input == nil {
-				block.Input = map[string]any{}
-			}
+			block.Input = toolUseInput(arguments)
 		}
 		content = append(content, block)
 	}
@@ -602,7 +601,7 @@ func toAnthropicMessages(messages []Message) []anthropicMessage {
 					Type:  "tool_use",
 					ID:    tc.ID,
 					Name:  tc.Name,
-					Input: tc.Arguments,
+					Input: toolUseInput(tc.Arguments),
 				})
 			}
 			if len(blocks) == 0 {
@@ -637,6 +636,22 @@ func toAnthropicTools(tools []ToolSpec) []anthropicTool {
 	return out
 }
 
+func toolUseInput(arguments map[string]any) *map[string]any {
+	if arguments == nil {
+		arguments = map[string]any{}
+	}
+
+	return &arguments
+}
+
+func toolUseArguments(input *map[string]any) map[string]any {
+	if input == nil || *input == nil {
+		return map[string]any{}
+	}
+
+	return *input
+}
+
 func splitAnthropicContent(blocks []anthropicBlock) (string, []ToolCall) {
 	var text string
 	toolCalls := make([]ToolCall, 0, len(blocks))
@@ -651,7 +666,7 @@ func splitAnthropicContent(blocks []anthropicBlock) (string, []ToolCall) {
 			toolCalls = append(toolCalls, ToolCall{
 				ID:             block.ID,
 				Name:           block.Name,
-				Arguments:      block.Input,
+				Arguments:      toolUseArguments(block.Input),
 				ArgumentsError: block.InputError,
 			})
 		}

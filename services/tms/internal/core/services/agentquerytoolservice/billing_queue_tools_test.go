@@ -31,7 +31,9 @@ func (f *fakeBillingQueue) List(
 	_ context.Context,
 	req *repositories.ListBillingQueueItemsRequest,
 ) (*pagination.ListResult[*billingqueue.BillingQueueItem], error) {
-	f.captured = req
+	if f.captured == nil {
+		f.captured = req
+	}
 
 	return &pagination.ListResult[*billingqueue.BillingQueueItem]{
 		Items: f.items,

@@ -12,6 +12,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -85,12 +86,12 @@ func newAssessLateChargesTool(charges lateChargeAssessor) serviceports.AgentTool
 			paramAsOfDate: agenttoolschema.Date(
 				"The day overdue periods are counted to, usually today.",
 			),
-			paramCustomerIDs: agenttoolschema.RecordIDs(
+			paramCustomerIDs: toolschema.KeepEmpty(agenttoolschema.RecordIDs(
 				permission.ResourceCustomer,
 				"Only these customers, from list_customers or "+
 					"list_ar_open_items.",
 				maxLateCustomers,
-			),
+			)),
 		},
 		required: []string{paramAsOfDate},
 	}, receivablePlan[*serviceports.LateChargeAssessmentRequest, *serviceports.LateChargeAssessmentResult]{
@@ -230,8 +231,10 @@ func newShareInvoiceTool(shares invoiceSharer) serviceports.AgentTool {
 		rationale: "Notifies and emails colleagues in the name of the person who shares it, " +
 			"with a note they read as theirs; only that person sends it.",
 		properties: map[string]any{
-			paramInvoiceID: stringProperty("The invoice, from list_invoices or get_invoice.", 0),
-			paramUserIDs: agenttoolschema.IDList(
+			paramInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
+				"The invoice, from list_invoices or get_invoice."),
+			paramUserIDs: agenttoolschema.RecordIDs(
+				permission.ResourceUser,
 				"The teammates, from list_invoice_share_candidates.",
 				invoice.MaxShareRecipients,
 			),

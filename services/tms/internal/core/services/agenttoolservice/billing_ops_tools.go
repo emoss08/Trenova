@@ -63,16 +63,18 @@ func newReassignBillingChargeTool(billing chargeReassigner) serviceports.AgentTo
 		rationale: "Moves what each customer is billed for a shipment and opens or cancels " +
 			"their queue items; only a person reassigns a charge.",
 		properties: map[string]any{
-			paramItemID: agenttoolschema.IDText(
-				"The billing queue item, from list_billing_queue_items " +
+			paramItemID: agenttoolschema.KindID(
+				"The billing queue item, from list_billing_queue_items "+
 					"or get_billing_queue_item. Never guess one.",
+				permission.KindBillingQueueItem,
 			),
 			paramChargeKind: agenttoolschema.Enum(
 				"Which charge: the freight, or one accessorial.",
 				reassignableKinds,
 			),
-			paramAdditionalChargeID: agenttoolschema.IDText("The accessorial charge, from the " +
-				"shipment's charges get_billing_queue_item lists. Needed for Accessorial."),
+			paramAdditionalChargeID: agenttoolschema.KindID("The accessorial charge, from the "+
+				"shipment's charges get_billing_queue_item lists. Needed for Accessorial.",
+				permission.KindAdditionalCharge),
 			paramAllocations: allocationsProperty("The payers and their shares."),
 		},
 		required: []string{paramItemID, paramChargeKind, paramAllocations},
@@ -284,9 +286,10 @@ func newManageBillingTransferRunTool(runs transferRunKeeper) serviceports.AgentT
 		rationale: "Stops or reruns a transfer inside Trenova; nothing is invoiced or sent, " +
 			"and a stopped run is retried the same way.",
 		properties: map[string]any{
-			resultRunID: agenttoolschema.IDText(
-				"The billing transfer run, from transfer_to_billing's " +
+			resultRunID: agenttoolschema.KindID(
+				"The billing transfer run, from transfer_to_billing's "+
 					"result. Never guess one.",
+				permission.KindBillingTransferRun,
 			),
 			paramRunAction: agenttoolschema.Enum(
 				"Stop a running transfer, or Retry a finished one.",

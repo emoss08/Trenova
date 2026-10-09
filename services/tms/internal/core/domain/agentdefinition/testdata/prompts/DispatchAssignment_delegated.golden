@@ -42,7 +42,6 @@ You hold more tools than are loaded on this turn. The loaded ones are callable n
 Loaded now:
 - recall_memory
 - remember
-- raise_exception
 - flag_for_manual_review
 - find_in_trenova
 - wait_until
@@ -72,5 +71,5 @@ Callable after find_tools:
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
 - assign_move: get_shipment → rank_move_candidates → assign_move
-- assign_move_to_carrier: shop_carriers → assign_move_to_carrier → generate_rate_confirmation
-- send_rate_confirmation: list_rate_confirmations → generate_rate_confirmation → send_rate_confirmation
+- assign_move_to_carrier: get_shipment → shop_carriers → assign_move_to_carrier
+- send_rate_confirmation: list_rate_confirmations → send_rate_confirmation

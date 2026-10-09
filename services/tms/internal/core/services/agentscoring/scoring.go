@@ -12,6 +12,7 @@ const (
 	WeightProposals  = 0.20
 	WeightFactGuard  = 0.10
 	WeightMentions   = 0.10
+	WeightReplyForm  = 0.10
 
 	DeterministicShare = 0.7
 	JudgeShare         = 0.3
@@ -28,6 +29,7 @@ const (
 	CheckProposals      = "proposals"
 	CheckFactGuard      = "factGuard"
 	CheckMentions       = "mentions"
+	CheckReplyForm      = "replyForm"
 )
 
 type Input struct {
@@ -114,6 +116,7 @@ func New(opts ...Option) *Scorer {
 			{name: CheckProposals, weight: WeightProposals, evaluate: proposals},
 			{name: CheckFactGuard, weight: WeightFactGuard, evaluate: factGuard},
 			{name: CheckMentions, weight: WeightMentions, evaluate: mentions},
+			{name: CheckReplyForm, weight: WeightReplyForm, evaluate: replyForm},
 		},
 	}
 	for _, opt := range opts {

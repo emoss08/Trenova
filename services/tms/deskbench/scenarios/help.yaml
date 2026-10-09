@@ -1,0 +1,56 @@
+defaults:
+  agent: Dispatch desk
+  tags: [help, navigation]
+
+scenarios:
+  - name: where-do-i-set-fuel-surcharge
+    description: A how-do-I question that belongs to the product guide, not the data.
+    agent: Fuel and IFTA clerk
+    steps:
+      - say: "where do i change the fuel surcharge we charge customers"
+        expect:
+          calls: ["find_in_trenova|open_page|get_fuel_surcharge_rates"]
+          maxCalls: 4
+          noProposals: true
+          rubric: Names the page and how to get there, and offers to open it.
+
+  - name: how-to-add-customer
+    description: A new user's first week.
+    steps:
+      - say: "new here, how do i add a customer"
+        expect:
+          calls: ["find_in_trenova|open_page"]
+          maxCalls: 4
+          noProposals: true
+          rubric: >
+            Gives the steps in the product's own words (the page, the New customer button, the
+            fields that matter) and offers to open the page, without creating a customer.
+
+  - name: billing-agent-asked-a-dispatch-question
+    description: >
+      The billing agent gets an operational question. It should answer from the data it can read
+      or hand it to the agent that owns it, and say which it did.
+    agent: Billing exceptions
+    tags: [delegation, dispatch]
+    steps:
+      - say: "how many loads are delayed right now"
+        expect:
+          calls: ["list_shipments|search_shipments|delegate_task|get_dispatch_board"]
+          maxFailedCalls: 0
+          noProposals: true
+          facts:
+            - sql: select count(*) from shipments where status = 'Delayed'
+              note: the number of delayed shipments
+
+  - name: briefing-in-plain-words
+    description: The morning summary, asked for loosely.
+    tags: [briefing]
+    steps:
+      - say: "gimme the rundown for today"
+        expect:
+          calls: ["get_daily_briefing|list_watchtower_items|list_shipments"]
+          maxFailedCalls: 0
+          noProposals: true
+          rubric: >
+            Summarizes what needs attention today in a few lines, leading with what is urgent,
+            and points to the briefing rather than reprinting it.

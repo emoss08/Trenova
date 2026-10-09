@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
@@ -63,10 +64,7 @@ func invoiceSchema(description string) map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			paramInvoiceID: map[string]any{
-				toolschema.KeyType:        toolschema.TypeString,
-				toolschema.KeyDescription: description,
-			},
+			paramInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice, description),
 		},
 		toolschema.KeyRequired:             []string{paramInvoiceID},
 		toolschema.KeyAdditionalProperties: false,

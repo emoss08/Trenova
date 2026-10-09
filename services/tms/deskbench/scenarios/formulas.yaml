@@ -1,0 +1,92 @@
+defaults:
+  tags: [formulas, rating]
+
+scenarios:
+  - name: formula-new-per-mile-with-minimum
+    description: >
+      The commonest pricing rule there is, asked the way a pricing manager says it, in the
+      Formula Studio's own assistant on a new formula.
+    formula: {}
+    steps:
+      - say: "need a rate thats 2.85 a mile but never less than 400 on a load"
+        expect:
+          calls: ["propose_formula"]
+          maxFailedCalls: 1
+          noProposals: true
+          formula: ["totalDistance", "/max\\s*\\(/", "/^[^0-9]*$/"]
+          rubric: >
+            Proposes one expression with a rate-per-mile variable and a minimum variable (2.85 and
+            400 as their defaults), priced on a couple of sample loads, and explains it in a line.
+
+  - name: formula-build-then-change
+    description: >
+      Two turns on one draft: the second edit must start from the formula the first one wrote,
+      the way the studio applies each proposal before the next message.
+    formula: {}
+    steps:
+      - say: "flat 1250 for the load"
+        expect:
+          calls: ["propose_formula"]
+          formula: ["1250|flatRate|baseRate|flat"]
+      - say: "actually add 18% fuel on top of that"
+        expect:
+          calls: ["propose_formula"]
+          formula: ["/1\\.18|0\\.18|18|fuel/"]
+          rubric: >
+            Keeps the flat 1250 and adds an 18% fuel surcharge to it, rather than starting a new
+            formula from nothing.
+
+  - name: formula-edit-existing-per-mile
+    description: An existing template opened in the studio and changed by a sentence.
+    formula: { template: Per Mile }
+    steps:
+      - say: "change this so every stop after the second one adds 75"
+        expect:
+          calls: ["propose_formula"]
+          maxFailedCalls: 1
+          formula: ["totalDistance", "totalStops"]
+          rubric: >
+            Keeps baseRate * totalDistance and adds 75 for each stop beyond two, with the 75 and
+            the 2 as named variables, and shows a load with three stops priced.
+
+  - name: formula-explain-existing
+    description: A question about a template, not a change to it.
+    formula: { template: Hazmat Surcharge, type: AccessorialCharge }
+    steps:
+      - say: "what does this one actually do, when does it kick in"
+        expect:
+          noCalls: [propose_formula]
+          noProposals: true
+          replyIncludes: ["hazmat|hazardous"]
+          rubric: >
+            Explains that it charges the hazmat fee only when the load carries hazardous
+            material, and nothing otherwise, without proposing a change.
+
+  - name: formula-price-a-sample
+    description: Asking what a template comes to on a load described in words.
+    formula: { template: Per Mile with Minimum }
+    steps:
+      - say: "what would this come out to on a 90 mile run at 3 bucks a mile"
+        expect:
+          calls: ["test_formula_expression"]
+          noProposals: true
+          replyIncludes: ["270|250"]
+          rubric: >
+            Prices it with the engine, and says whether the 250 minimum or the 270 per-mile figure
+            wins (270), rather than doing the arithmetic in its head.
+
+  - name: formula-asked-for-in-the-desk
+    description: >
+      The same request made in the Desk rather than the studio. Formulas are authored in the
+      studio and approved by an administrator, so the agent should draft or explain and send the
+      person there, not claim to have saved a template.
+    agent: Formula Desk
+    tags: [desk]
+    steps:
+      - say: "make me a new pricing formula for flatbed: 3.10 a mile plus a 150 tarp fee"
+        expect:
+          noProposals: true
+          replyExcludes: ["/(created|saved) (the|a|your) (new )?(formula|template)/"]
+          rubric: >
+            Gives the expression (3.10 x miles + 150) and says the formula is saved and approved in
+            the formula studio, offering to open it, rather than saying it created a template.

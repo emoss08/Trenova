@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
+	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -212,11 +213,12 @@ func laneProperty(forRevision bool) map[string]any {
 			"destination.", maxLaneCity),
 		paramDirection: agenttoolschema.Enum("Whether the lane also prices the reverse "+
 			"haul. Defaults to Directional.", laneDirections),
-		paramFormulaTemplateID: stringProperty("The formula template that prices the lane, "+
-			"from list_formula_templates, with the lane's rate as its base rate. Give this or "+
-			"rateMatrixId.", 0),
-		paramRateMatrixID: stringProperty("The rate matrix that prices the lane, as a lane "+
-			"of get_rate_agreement names it. Give this or formulaTemplateId.", 0),
+		paramFormulaTemplateID: agenttoolschema.RecordIDText(permission.ResourceFormulaTemplate,
+			"The formula template that prices the lane, from list_formula_templates, with the "+
+				"lane's rate as its base rate. Give this or rateMatrixId."),
+		paramRateMatrixID: agenttoolschema.RecordIDText(permission.ResourceRateMatrix,
+			"The rate matrix that prices the lane, as a lane of get_rate_agreement names it. "+
+				"Give this or formulaTemplateId."),
 		paramLaneRate: stringProperty("The lane's rate as a decimal such as 2.35, in what "+
 			"its formula template charges by.", 0),
 		paramLaneMinCharge: stringProperty("The least the lane charges, as a decimal.", 0),
@@ -230,8 +232,9 @@ func laneProperty(forRevision bool) map[string]any {
 	}
 	description := "The lanes, each priced through a formula template or a rate matrix."
 	if forRevision {
-		properties[paramRuleID] = stringProperty("A lane already on the agreement, from "+
-			"get_rate_agreement, to keep and change; leave it out for a new lane.", 0)
+		properties[paramRuleID] = agenttoolschema.KindID("A lane already on the agreement, from "+
+			"get_rate_agreement, to keep and change; leave it out for a new lane.",
+			permission.KindRateAgreementLane)
 		description = "Every lane of the revised agreement, replacing its lanes: a lane " +
 			"with ruleId keeps that lane and changes only what it gives, a lane without one " +
 			"is new, and a lane left out is dropped. Leave it out to keep the lanes."
@@ -855,10 +858,10 @@ func newDraftRateAgreementTool(
 	properties := agreementHeaderProperties()
 	properties[paramPartyType] = agenttoolschema.Enum("Whether it prices what a customer is "+
 		"charged or what a carrier is paid.", partyTypes)
-	properties[paramCustomerID] = stringProperty("The customer, from list_customers, for a "+
-		"Customer agreement.", 0)
-	properties[paramCarrierID] = stringProperty("The carrier, from list_carriers, for a "+
-		"Carrier agreement.", 0)
+	properties[paramCustomerID] = agenttoolschema.RecordIDText(permission.ResourceCustomer,
+		"The customer, from list_customers, for a Customer agreement.")
+	properties[paramCarrierID] = agenttoolschema.RecordIDText(permission.ResourceCarrier,
+		"The carrier, from list_carriers, for a Carrier agreement.")
 	properties[paramLanes] = laneProperty(false)
 	lanes := laneReader{states: states}
 
@@ -983,7 +986,7 @@ func newReviseRateAgreementDraftTool(
 	return newReportingReceivableTool(rateDraftSpec(&receivableSpec{
 		name: "revise_rate_agreement_draft",
 		recipe: []string{
-			"duplicate_rate_agreement",
+			"list_rate_agreements",
 			"get_rate_agreement",
 			"revise_rate_agreement_draft",
 		},
@@ -1284,8 +1287,8 @@ func agreementReviewSteps() []*agreementReviewStep {
 		{
 			name: "submit_rate_agreement",
 			recipe: []string{
-				"draft_rate_agreement",
-				"run_rate_simulation",
+				"list_rate_agreements",
+				"get_rate_agreement",
 				"submit_rate_agreement",
 			},
 			searchTerms: []string{"submit for approval", "send for approval"},
@@ -1417,8 +1420,8 @@ func newAmendRateAgreementRulesTool(
 			paramEffectiveFrom: agenttoolschema.Date(
 				"The first day the new lanes price shipments.",
 			),
-			paramSupersededRuleIDs: agenttoolschema.IDList("The lanes this closes out, by ruleId "+
-				"from get_rate_agreement.", maxAgreementLanes),
+			paramSupersededRuleIDs: agenttoolschema.KindIDs("The lanes this closes out, by ruleId "+
+				"from get_rate_agreement.", maxAgreementLanes, permission.KindRateAgreementLane),
 			paramLanes: laneProperty(false),
 		},
 		required: []string{paramRateAgreementID, paramEffectiveFrom},
@@ -1529,18 +1532,10 @@ func rateIncreaseRequestFrom(
 			return nil, err
 		}
 	}
-	if req.CustomerID, err = optionalPulidParam(params.Params, paramCustomerID); err != nil {
-		return nil, err
-	}
-	if req.CarrierID, err = optionalPulidParam(params.Params, paramCarrierID); err != nil {
-		return nil, err
-	}
-	if party, given, partyErr := optionalEnum(
-		params.Params, paramPartyType, partyTypes.Values,
-	); partyErr != nil {
-		return nil, partyErr
-	} else if given {
-		req.PartyType = party
+	if len(req.AgreementIDs) == 0 {
+		if err = readRateIncreaseScope(params.Params, req); err != nil {
+			return nil, err
+		}
 	}
 	for key, target := range map[string]*decimal.NullDecimal{
 		paramPercentChange: &req.Adjustment.PercentChange,
@@ -1554,6 +1549,58 @@ func rateIncreaseRequestFrom(
 	}
 
 	return req, nil
+}
+
+// rateIncreaseScopes choose the agreements a rate increase moves when none
+// are named by id.
+var rateIncreaseScopes = []string{paramCustomerID, paramCarrierID, paramPartyType}
+
+// readRateIncreaseScope reads the customer, carrier and party type that choose
+// the agreements when no agreementIds are named. With agreementIds they are
+// never read: a model that listed one customer's agreements sent the
+// customerId back beside their ids, and a carrierId as well, and was refused
+// for targeting a customer and a carrier at once, though the ids it named
+// were all the call could move.
+func readRateIncreaseScope(
+	params map[string]any,
+	req *rateagreementservice.RateIncreaseRequest,
+) error {
+	var err error
+	if req.CustomerID, err = optionalPulidParam(params, paramCustomerID); err != nil {
+		return err
+	}
+	if req.CarrierID, err = optionalPulidParam(params, paramCarrierID); err != nil {
+		return err
+	}
+	party, given, err := optionalEnum(params, paramPartyType, partyTypes.Values)
+	if err != nil {
+		return err
+	}
+	if given {
+		req.PartyType = party
+	}
+
+	return nil
+}
+
+// rateIncreaseTool is apply_rate_increase, which files a call naming its
+// agreements without the scopes it set aside, so the person approving reads
+// only the agreements that move.
+type rateIncreaseTool struct {
+	*receivableTool[*rateagreementservice.RateIncreaseRequest, *rateagreementservice.RateIncreasePlan]
+}
+
+var _ serviceports.ToolSelectionResolver = rateIncreaseTool{}
+
+func (t rateIncreaseTool) ResolveSelection(
+	_ context.Context,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolSelectionResolver interface passes params by value
+) (map[string]any, error) {
+	if _, named := params.Params[paramAgreementIDs]; !named {
+		return params.Params, nil
+	}
+
+	return maputils.WithoutKeys(params.Params, rateIncreaseScopes...), nil
 }
 
 func rateAdjustmentLabel(adjustment rateagreementservice.RateAdjustment) string {
@@ -1599,7 +1646,7 @@ func renderRateIncrease(
 }
 
 func newApplyRateIncreaseTool(agreements rateAgreementKeeper) serviceports.AgentTool {
-	return newReceivableTool(rateMoneySpec(&receivableSpec{
+	return rateIncreaseTool{newReceivableTool(rateMoneySpec(&receivableSpec{
 		name: "apply_rate_increase",
 		description: "Propose a general rate increase or decrease on agreements' lane rates, " +
 			"by a percent or a flat amount, from a day. It moves every lane rate on the named " +
@@ -1615,13 +1662,16 @@ func newApplyRateIncreaseTool(agreements rateAgreementKeeper) serviceports.Agent
 			paramAgreementIDs: agenttoolschema.RecordIDs(
 				permission.ResourceRateAgreement,
 				"The agreements to move, from "+
-					"list_rate_agreements; wins over the other scopes.",
+					"list_rate_agreements. When given, customerId, carrierId and partyType "+
+					"are ignored.",
 				maxIncreaseScope,
 			),
-			paramCustomerID: stringProperty("Every active agreement with this customer, from "+
-				"list_customers.", 0),
-			paramCarrierID: stringProperty("Every active agreement with this carrier, from "+
-				"list_carriers.", 0),
+			paramCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
+				"Every active agreement with this customer, from list_customers. Ignored "+
+					"when agreementIds are named."),
+			paramCarrierID: agenttoolschema.RecordIDText(permission.ResourceCarrier,
+				"Every active agreement with this carrier, from list_carriers. Ignored "+
+					"when agreementIds are named."),
 			paramPartyType: agenttoolschema.Enum("Every active agreement of this party type, "+
 				"when no agreements, customer or carrier is named.", partyTypes),
 			paramPercentChange: stringProperty("The change in percent, such as 3.5 or -2. "+
@@ -1653,5 +1703,5 @@ func newApplyRateIncreaseTool(agreements rateAgreementKeeper) serviceports.Agent
 
 			return nil, err
 		},
-	})
+	})}
 }

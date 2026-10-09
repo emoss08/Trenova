@@ -490,8 +490,8 @@ func TestRun_ForwardsThePreferredProvider(t *testing.T) {
 }
 
 // A reply with a code block keeps its answer: the block is taken out, the
-// streamed reply is withdrawn and sent again as recorded, and the message and
-// the result keep the guard's signal.
+// streamed reply is replaced by the recorded one without a restart, and the
+// message and the result keep the guard's signal.
 func TestRun_TakesTheCodeOutOfAReply(t *testing.T) {
 	t.Parallel()
 
@@ -517,18 +517,7 @@ func TestRun_TakesTheCodeOutOfAReply(t *testing.T) {
 	assert.Equal(t, string(agentguard.StageOutput), reply.ScopeStage)
 	assert.Equal(t, string(agentguard.ReasonCodeGeneration), reply.ScopeReason)
 
-	var resent string
-	for _, event := range *events {
-		if retry, ok := event.Data.(serviceports.AssistantRetryingEvent); ok &&
-			retry.Kind == serviceports.RetryKindRestart {
-			resent = ""
-			continue
-		}
-		if delta, ok := event.Data.(serviceports.AssistantDeltaEvent); ok {
-			resent += delta.Text
-		}
-	}
-	assert.Equal(t, result.Reply, resent, "the reader is left with what was recorded")
+	assertReplacedWithoutRestart(t, *events, result.Reply, outputAlteredReason)
 }
 
 func TestRun_DoesNotReplayRefusedHistory(t *testing.T) {

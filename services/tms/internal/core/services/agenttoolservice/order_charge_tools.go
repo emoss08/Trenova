@@ -199,7 +199,10 @@ func allocationRow(
 }
 
 func chargeIDProperty() map[string]any {
-	return agenttoolschema.ID("The order charge", "the charges get_order lists")
+	return agenttoolschema.KindID(
+		agenttoolschema.IDDescription("The order charge", "the charges get_order lists"),
+		permission.KindOrderCharge,
+	)
 }
 
 type chargeView struct {

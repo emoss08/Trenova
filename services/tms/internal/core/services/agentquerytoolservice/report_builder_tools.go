@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
@@ -755,10 +756,10 @@ func (t *describeReportTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "The reportKey of a built-in report from list_reports.",
 			},
-			"definitionId": map[string]any{
+			"definitionId": agenttoolschema.OfResource(map[string]any{
 				"type":        "string",
 				"description": "The definitionId of a saved report from list_reports.",
-			},
+			}, permission.ResourceReport),
 		},
 		"additionalProperties": false,
 	}
@@ -955,10 +956,10 @@ func (t *previewReportTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"definition": report.DefinitionJSONSchema(),
-			"definitionId": map[string]any{
+			"definitionId": agenttoolschema.OfResource(map[string]any{
 				"type":        "string",
 				"description": "Preview a saved report from list_reports instead of a definition.",
-			},
+			}, permission.ResourceReport),
 			"reportKey": map[string]any{
 				"type":        "string",
 				"description": "Preview a built-in report from list_reports instead of a definition.",

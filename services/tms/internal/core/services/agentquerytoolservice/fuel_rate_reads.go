@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -358,8 +359,8 @@ func (t *listFuelIndexPricesTool) Description() string {
 
 func (t *listFuelIndexPricesTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
-		paramFuelIndexID: stringParam("The fuel index, from get_fuel_surcharge_rates. Never " +
-			"guess one."),
+		paramFuelIndexID: agenttoolschema.KindID("The fuel index, from "+
+			"get_fuel_surcharge_rates. Never guess one.", permission.KindFuelIndex),
 		"from": stringParam("The earliest price day to include, YYYY-MM-DD."),
 		"to":   stringParam("The latest price day to include, YYYY-MM-DD."),
 		paramLimit: intParam(
@@ -686,8 +687,8 @@ func (t *listRateImportsTool) Description() string {
 
 func (t *listRateImportsTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
-		"rateAgreementId": stringParam("Only the imports against this agreement, from " +
-			"list_rate_agreements."),
+		"rateAgreementId": agenttoolschema.RecordIDText(permission.ResourceRateAgreement,
+			"Only the imports against this agreement, from list_rate_agreements."),
 		paramLimit: intParam(fmt.Sprintf("How many imports to return, at most %d.", maxListLimit)),
 	})
 }
@@ -795,8 +796,8 @@ func (t *listReportSchedulesTool) Description() string {
 
 func (t *listReportSchedulesTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
-		paramReportScheduleDef: stringParam("Only the schedules of this saved report, from " +
-			"list_reports."),
+		paramReportScheduleDef: agenttoolschema.RecordIDText(permission.ResourceReport,
+			"Only the schedules of this saved report, from list_reports."),
 		"enabledOnly": boolParam("Only schedules that are switched on."),
 		paramLimit: intParam(fmt.Sprintf("How many schedules to return, at most %d.",
 			maxReportSchedules)),

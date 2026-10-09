@@ -1,18 +1,31 @@
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import type { AssistantMessagePage } from "@/types/assistant";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { infiniteQueryOptions, useInfiniteQuery } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
-import {
-  flattenHistory,
-  hasOlderPages,
-  oldestSequence,
-  threadLength,
-  type ThreadHistory,
-} from "./thread-history";
+import { flattenHistory, hasOlderPages, oldestSequence, threadLength } from "./thread-history";
 
 /** How much of a thread is read at a time. */
 export const HISTORY_PAGE_SIZE = 50;
+
+/**
+ * How a thread's history is read and kept. Every reader of the cache spends
+ * these exact options, so a second observer — the hand-off menu reading the
+ * newest suggestion — neither refetches nor reads pages of another size.
+ */
+export function threadHistoryQueryOptions(threadId: string) {
+  return infiniteQueryOptions({
+    queryKey: queries.assistant.messages(threadId).queryKey,
+    queryFn: ({ pageParam, signal }) =>
+      apiService.assistantService.listMessages(threadId, {
+        limit: HISTORY_PAGE_SIZE,
+        before: pageParam,
+        signal,
+      }),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (lastPage, pages) => (lastPage.hasMore ? oldestSequence(pages) : undefined),
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+}
 
 /**
  * A thread's messages, read a page at a time from the newest end.
@@ -23,24 +36,7 @@ export const HISTORY_PAGE_SIZE = 50;
  * the turn hook appends the saved rows to the newest page instead.
  */
 export function useThreadHistory(threadId: string) {
-  const query = useInfiniteQuery<
-    AssistantMessagePage,
-    Error,
-    ThreadHistory,
-    ReturnType<typeof queries.assistant.messages>["queryKey"],
-    number | undefined
-  >({
-    queryKey: queries.assistant.messages(threadId).queryKey,
-    queryFn: ({ pageParam, signal }) =>
-      apiService.assistantService.listMessages(threadId, {
-        limit: HISTORY_PAGE_SIZE,
-        before: pageParam,
-        signal,
-      }),
-    initialPageParam: undefined,
-    getNextPageParam: (lastPage, pages) => (lastPage.hasMore ? oldestSequence(pages) : undefined),
-    staleTime: Number.POSITIVE_INFINITY,
-  });
+  const query = useInfiniteQuery(threadHistoryQueryOptions(threadId));
 
   const pages = query.data?.pages;
   const messages = useMemo(() => flattenHistory(pages ?? []), [pages]);

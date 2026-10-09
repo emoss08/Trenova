@@ -332,17 +332,19 @@ func (t *getAccountingMappingTool) SearchTerms() []string {
 func (t *getAccountingMappingTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramAccountingSystem: accountingSystemParam(),
-		paramMappingID: jsonschemautils.Text(
+		paramMappingID: agenttoolschema.OfKinds(jsonschemautils.Text(
 			"The mapping's id from list_accounting_mapping_gaps.",
-		),
+		), permission.KindAccountingMapping),
 		paramTargetType: agenttoolschema.Enum(
 			"The kind of Trenova record or setting, when naming it by recordId or key.",
 			agenttoolschema.MappingTargetTypes,
 		),
-		paramRecordID: jsonschemautils.Text(
-			"The Trenova customer, carrier or accessorial charge id, from " +
+		paramRecordID: agenttoolschema.OfKinds(jsonschemautils.Text(
+			"The Trenova customer, carrier or accessorial charge id, from "+
 				"list_customers, list_carriers or list_accessorial_charges.",
-		),
+		), permission.RecordKind(permission.ResourceCustomer),
+			permission.RecordKind(permission.ResourceCarrier),
+			permission.RecordKind(permission.ResourceAccessorialCharge)),
 		paramMappingKey: jsonschemautils.Text(
 			"The setting's key from list_accounting_mapping_gaps, for the " +
 				"other target types. Examples: " +

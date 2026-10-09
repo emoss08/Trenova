@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
@@ -191,11 +192,12 @@ func unitFields[T any](at unitAccess[T]) []masterField[T] {
 			at.code),
 		masterEnum(mdStatus, "Whether it can be dispatched. "+equipmentStatusNote+
 			" Defaults to Available.", equipmentStatuses, at.status),
-		masterID(mdEquipmentTypeID, "Its equipment type, "+equipmentSupplierNote+".",
-			at.equipmentType),
-		masterID(mdManufacturerID, "Who made it, "+manufacturerSupplier+".", at.manufacturer),
-		masterOptionalID(mdFleetCodeID, "The fleet it belongs to, "+fleetCodeSupplier+".",
-			at.fleetCode),
+		masterID(mdEquipmentTypeID, permission.ResourceEquipmentType,
+			"Its equipment type, "+equipmentSupplierNote+".", at.equipmentType),
+		masterID(mdManufacturerID, permission.ResourceEquipmentManufacturer,
+			"Who made it, "+manufacturerSupplier+".", at.manufacturer),
+		masterOptionalID(mdFleetCodeID, permission.ResourceFleetCode,
+			"The fleet it belongs to, "+fleetCodeSupplier+".", at.fleetCode),
 		masterText(mdMake, "The make.", mdMaxUnitText, false, at.make),
 		masterText(mdModel, "The model.", mdMaxUnitText, false, at.model),
 		masterOptionalInt(mdYear, "The model year.", mdMinYear, mdMaxYear, at.year),
@@ -243,10 +245,12 @@ func tractorFields() []masterField[tractor.Tractor] {
 	})
 
 	return append(fields,
-		masterID(paramPrimaryWorkerID, "The driver who runs it, from search_worker or "+
-			"list_workers.", func(t *tractor.Tractor) *pulid.ID { return &t.PrimaryWorkerID }),
-		masterOptionalID(paramSecondaryWorkerID, "A team driver, from search_worker or "+
-			"list_workers.", func(t *tractor.Tractor) *pulid.ID { return &t.SecondaryWorkerID }),
+		masterID(paramPrimaryWorkerID, permission.ResourceWorker,
+			"The driver who runs it, from search_worker or list_workers.",
+			func(t *tractor.Tractor) *pulid.ID { return &t.PrimaryWorkerID }),
+		masterOptionalID(paramSecondaryWorkerID, permission.ResourceWorker,
+			"A team driver, from search_worker or list_workers.",
+			func(t *tractor.Tractor) *pulid.ID { return &t.SecondaryWorkerID }),
 		masterState(mdState, "The state it is registered in.", false,
 			func(t *tractor.Tractor) *pulid.ID { return &t.StateID }),
 		masterEnum(paramFuelType, "The fuel it burns; its miles land on this fuel's lines of "+
@@ -505,11 +509,15 @@ func locateRequestFrom(
 	}
 }
 
-func locateProperties(unitKey, unit, supplier string) map[string]any {
+func locateProperties(
+	unitKey, unit, supplier string,
+	resource permission.Resource,
+) map[string]any {
 	return map[string]any{
-		unitKey: stringProperty(fmt.Sprintf("The %s, %s. Never guess one.", unit, supplier), 0),
-		paramNewLocationID: stringProperty("Where it is now, from list_locations. Never guess "+
-			"one.", 0),
+		unitKey: agenttoolschema.RecordIDText(resource,
+			fmt.Sprintf("The %s, %s. Never guess one.", unit, supplier)),
+		paramNewLocationID: agenttoolschema.RecordIDText(permission.ResourceLocation,
+			"Where it is now, from list_locations. Never guess one."),
 	}
 }
 
@@ -536,7 +544,8 @@ func newLocateTractorTool(tractors tractorKeeper) serviceports.AgentTool {
 		artifact:    tractorRecordEntity,
 		rationale: "Moves where Trenova thinks a tractor is; nothing is sent and locating it " +
 			"again moves it back.",
-		properties:  locateProperties(paramTractorID, tractorRecordEntity, "from list_tractors"),
+		properties: locateProperties(paramTractorID, tractorRecordEntity, "from list_tractors",
+			permission.ResourceTractor),
 		required:    []string{paramTractorID, paramNewLocationID},
 		searchTerms: []string{"locate tractor", "relocate truck", "move tractor", "yard"},
 		target: func(params map[string]any) (serviceports.ToolTarget, bool) {
@@ -607,7 +616,8 @@ func newLocateTrailerTool(trailers trailerKeeper) serviceports.AgentTool {
 		artifact:    trailerRecordEntity,
 		rationale: "Adds an empty move to the trailer's last shipment and re-rates it, which " +
 			"can change what that customer is charged, so it runs only on a person's approval.",
-		properties:  locateProperties(paramTrailerID, trailerRecordEntity, "from list_trailers"),
+		properties: locateProperties(paramTrailerID, trailerRecordEntity, "from list_trailers",
+			permission.ResourceTrailer),
 		required:    []string{paramTrailerID, paramNewLocationID},
 		searchTerms: []string{"locate trailer", "trailer location", "move trailer", "drop yard"},
 		target: func(params map[string]any) (serviceports.ToolTarget, bool) {

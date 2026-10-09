@@ -66,7 +66,10 @@ func (t *cancelTenderTool) Description() string {
 
 func (t *cancelTenderTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		fieldTenderID: jsonschemautils.Text("The tender to withdraw, from list_shipment_tenders."),
+		fieldTenderID: agenttoolschema.RecordIDText(
+			permission.ResourceTender,
+			"The tender to withdraw, from list_shipment_tenders.",
+		),
 		fieldReason: jsonschemautils.Text(
 			"Why the tender is withdrawn, in a sentence a person can check.",
 		),
@@ -208,8 +211,9 @@ func (t *recordTenderResponseTool) Description() string {
 
 func (t *recordTenderResponseTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		fieldOfferID: jsonschemautils.Text(
+		fieldOfferID: agenttoolschema.KindID(
 			"The offer the carrier answered, from list_shipment_tenders.",
+			permission.KindTenderOffer,
 		),
 		fieldAction: agenttoolschema.Enum("The carrier's answer.", agenttoolschema.TenderResponses),
 		fieldDeclineReason: jsonschemautils.Text(fmt.Sprintf(

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -93,11 +94,9 @@ func (t *createLocationTool) ParamSchema() map[string]any {
 				"description": "The two-letter US state abbreviation, such as TX.",
 			},
 			"postalCode": map[string]any{"type": "string", "description": "The ZIP code."},
-			"locationCategoryId": map[string]any{
-				"type": "string",
-				"description": "What kind of place it is, from list_location_categories: a " +
-					"warehouse, a customer site, a terminal.",
-			},
+			"locationCategoryId": agenttoolschema.RecordIDText(permission.ResourceLocationCategory,
+				"What kind of place it is, from list_location_categories: a warehouse, a "+
+					"customer site, a terminal."),
 		},
 		"required": []string{
 			"name", "addressLine1", "city", "state", "postalCode", "locationCategoryId",

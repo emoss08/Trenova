@@ -16,12 +16,17 @@ import (
 )
 
 type capturedList struct {
-	opts *pagination.QueryOptions
-	rows []any
+	opts   *pagination.QueryOptions
+	probes []*pagination.QueryOptions
+	rows   []any
 }
 
 func (c *capturedList) fetch(_ context.Context, opts *pagination.QueryOptions) ([]any, error) {
-	c.opts = opts
+	if c.opts == nil {
+		c.opts = opts
+	} else {
+		c.probes = append(c.probes, opts)
+	}
 
 	return c.rows, nil
 }

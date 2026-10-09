@@ -1,5 +1,5 @@
 {
-  "version": "sha256:f33303c936b4e53989fe1c0fb0dd25b44d9da10f674d83694893faf97753d4e2",
+  "version": "sha256:811953bc64d21be42a0ed9dc5573b7d3669d351b37075895d770d23e6c10f9be",
   "modules": [
     {
       "id": "home",
@@ -2554,6 +2554,26 @@
             "To start a run without waiting for its trigger, select the play button on the row, or **Run now** on the agent. It is offered for agents that are not chat agents, while they are on.",
             "Select an agent to read it. Its **Mode** is **Live**, **Shadow** or **Simulation**; **Edit** opens the builder.",
             "To delete one, select **Remove**, type its name and confirm with **Remove agent**. Its runs and audit trail are kept and its open proposals are withdrawn. System agents cannot be removed."
+          ]
+        },
+        {
+          "title": "See which tools an agent's calls fail on",
+          "keywords": [
+            "tool failures",
+            "tool errors",
+            "refused tool calls",
+            "not accepted",
+            "not permitted",
+            "agent keeps failing",
+            "bad arguments",
+            "tool call breakdown",
+            "why did the tool fail"
+          ],
+          "steps": [
+            "Open [AI control](/admin/agent-control) and select **Agents**.",
+            "Select the agent, then **Edit**, and go to **How it's doing**.",
+            "**Tool calls** counts every call the agent made to each of its tools in the last 30 days, the calls the runtime turned away included, which never became proposals. The tool with the most calls that did not go through comes first, with its share under **Didn't go through** and how each call ended: ran, proposed, **Not permitted**, **Not accepted**, **Out of budget**, **Skipped (repeat)** or **Failed**.",
+            "Select a tool to read the reasons its calls gave most often for each way they did not go through, and how many calls gave each. A reason that keeps coming back is usually fixed in the agent's **Instructions** or by giving it the tool it reached for."
           ]
         },
         {
@@ -6260,99 +6280,6 @@
       "inNavigation": true
     },
     {
-      "path": "/billing/configuration-files/case-checklists",
-      "name": "Case checklists",
-      "module": "billing",
-      "breadcrumb": [
-        "Billing management",
-        "Configuration files",
-        "Case checklists"
-      ],
-      "description": "The steps a Desk case shows between a record and what comes next, for your organization and for each customer that bills differently.",
-      "summary": "Case checklists decide what a Desk case shows between a record and what comes next. **Ready to bill** is the checklist for a case about a shipment; **Ready to close** is the one for a case about an invoice. Each step is **Required** (it keeps the record from being ready and can be the next step), **Optional** (shown and ticked, but never blocks) or **Off** (not shown).\n\nYour organization's checklist applies to every case unless the customer billed for the record has its own, which replaces it for that customer. Billing leads use it to drop steps a customer does not need (such as notifying a customer that does not want delivery notices), put steps in the order their team works them, and add steps of their own.",
-      "requires": [
-        {
-          "resource": "billing_control",
-          "operation": "read"
-        }
-      ],
-      "capabilities": [],
-      "aliases": [
-        "ready to bill checklist",
-        "ready to close checklist",
-        "desk case checklist",
-        "case steps",
-        "billing checklist",
-        "customer checklist"
-      ],
-      "tasks": [
-        {
-          "title": "Change your organization's checklist",
-          "keywords": [
-            "required steps",
-            "optional step",
-            "turn off step",
-            "reorder steps"
-          ],
-          "steps": [
-            "Open [Case checklists](/billing/configuration-files/case-checklists) and choose **Ready to bill** or **Ready to close**.",
-            "With **Your organization** selected, drag a step by its handle to move it, and set each step to **Required**, **Optional** or **Off**.",
-            "Select **Save changes**."
-          ]
-        },
-        {
-          "title": "Give a customer its own checklist",
-          "keywords": [
-            "customer checklist",
-            "customer does not want notification",
-            "per customer steps"
-          ],
-          "steps": [
-            "Open [Case checklists](/billing/configuration-files/case-checklists) and choose the checklist.",
-            "Select **Add a customer** and pick the customer. Its checklist starts as a copy of your organization's.",
-            "Change the steps, then select **Save checklist**."
-          ]
-        },
-        {
-          "title": "Add a step of your own",
-          "keywords": [
-            "custom step",
-            "add step",
-            "manual tick",
-            "document step"
-          ],
-          "steps": [
-            "On the checklist you are changing, select **Add a step**.",
-            "Give it a **Name** and choose what it is **Ticked by**: **A person on the case**, who ticks it on the Desk, or **A document on file**, which ticks it once an accepted copy of the chosen **Document type** is attached to the shipment.",
-            "Optionally set the **Button** text and **What the button asks the agent**, which is sent to the case's agent when the step is the next one.",
-            "Select **Save changes**."
-          ]
-        },
-        {
-          "title": "Remove a customer's checklist or go back to the default",
-          "keywords": [
-            "reset checklist",
-            "delete customer checklist",
-            "default checklist"
-          ],
-          "steps": [
-            "Open [Case checklists](/billing/configuration-files/case-checklists) and select the customer or **Your organization**.",
-            "Select **Remove this customer's checklist** (the customer goes back to your organization's) or **Go back to the default**, and select it again to confirm."
-          ]
-        }
-      ],
-      "notes": "Viewing the page needs read access to billing control, and changing it needs update access.\n\nSome steps follow rules kept elsewhere and always stay required, though they can be moved: **Proof of delivery received** and **Paperwork in** follow the customer's **Required document types** on [Customers](/billing/configuration-files/customers), **Rate confirmation matched** follows rate validation on [Billing control](/admin/billing-controls), and **Delivered**, **Nothing holding the bill**, **Posted**, **Clear of dispute** and **Paid** are steps nothing can be billed or closed without.\n\nA step a person ticks belongs to the record, so everyone working a case about the same shipment or invoice sees the same tick and who made it.",
-      "related": [
-        "/admin/billing-controls",
-        "/billing/configuration-files/customers",
-        "/billing/configuration-files/document-types",
-        "/desk"
-      ],
-      "covers": [],
-      "createAction": null,
-      "inNavigation": true
-    },
-    {
       "path": "/billing/configuration-files/charge-types",
       "name": "Charge types",
       "module": "billing",
@@ -8152,7 +8079,7 @@
           ],
           "steps": [
             "Once a conversation has been quiet for a while, the agent looks back over it when something went wrong, took several tries or was corrected. What it kept appears under the reply it learned from, marked as learned; a procedure is the steps that worked.",
-            "If you asked to be asked first, or the lesson would reach your team or everyone, the card asks instead. Edit the words, choose who it is for, then select **Save memory**, or **Don't save**.",
+            "If you asked to be asked first, or the lesson would reach your team or everyone, the card asks instead. Edit the words, choose who it is for, then select **Keep**, or **Not now** to leave it unsaved.",
             "To take back a lesson it kept, select **Undo** on the card, or pause or forget it on the Memory page like any other memory."
           ]
         },
@@ -8509,7 +8436,7 @@
           "steps": [
             "Open the case's conversation from [Desk](/desk). The card above the message box shows the checklist: **Ready to bill** for a shipment, **Ready to close** for an invoice, with how many steps are done out of how many.",
             "Select the checklist name to open it. Each step shows whether it is done, holding the record up, or waiting on something outside your control, with a line saying why (for example, which carrier has not confirmed the rate confirmation).",
-            "Select the button for the next step, for example **Request POD**, **Chase the rate confirmation**, **Mark ready to invoice** or **Send invoice**. It asks the case's agent to take that step, worded as your own message. A step that is holding the record up has its own button in the open checklist too.",
+            "Select the button for the next step, for example **Request POD**, **Chase the rate confirmation**, **Mark ready to invoice** or **Send invoice**. It asks the case's agent to take that step, worded as your own message. If that agent can't take it but another agent you may use can, the same button hands the step to that agent right here in the conversation; point at the button to see which agent takes it. If no agent you may use can take it, the button opens the page where you do it yourself. A step that is holding the record up has its own button in the open checklist too.",
             "For a step your team added that a person ticks off, select its box in the checklist to tick it or untick it."
           ]
         },
@@ -8567,6 +8494,69 @@
           ]
         },
         {
+          "title": "Choose which steps a case checklist shows",
+          "keywords": [
+            "case checklist",
+            "ready to bill checklist",
+            "ready to close checklist",
+            "required steps",
+            "optional step",
+            "turn off step",
+            "customer does not want notification",
+            "billing checklist settings"
+          ],
+          "steps": [
+            "On [Desk](/desk), open **Settings** from the bottom of the sidebar and select **Case checklists** under **Organization**. You need read access to billing control to see it, and update access to change it.",
+            "Choose **Ready to bill** (shipments) or **Ready to close** (invoices), then **Every customer** for your organization's checklist.",
+            "Under **Steps you set**, choose **Required**, **Optional** or **Off** for each step. A required step keeps the record from being ready; an optional one is shown and ticked but never blocks; one that is off is not shown.",
+            "Steps under **Always required** follow rules kept elsewhere, such as the customer's billing profile or billing control, and stay required.",
+            "Select **Save changes** in the bar at the bottom, or **Discard** to drop your changes."
+          ]
+        },
+        {
+          "title": "Put a case checklist's steps in order",
+          "keywords": [
+            "reorder checklist",
+            "step order",
+            "move step",
+            "drag step"
+          ],
+          "steps": [
+            "In **Settings** › **Case checklists**, open the checklist and select **Reorder**.",
+            "Drag a step by its handle, or focus the handle and press the up or down arrow to move it one place. Steps that are always required can be moved too.",
+            "Select **Done**, then **Save changes**."
+          ]
+        },
+        {
+          "title": "Add a step of your own to a case checklist",
+          "keywords": [
+            "custom checklist step",
+            "add step",
+            "manual tick",
+            "document step",
+            "lumper receipt"
+          ],
+          "steps": [
+            "In **Settings** › **Case checklists**, open the checklist and select **Add a step**.",
+            "Give it a **Name** and choose **What ticks it**: **A person on the case**, who ticks it on the case, or **A document on file**, which ticks it once an accepted copy of the chosen **Document type** is attached to the shipment.",
+            "Under **When it's the next step**, optionally set the **Button** and **What it asks the agent**. The preview shows the button as the case will draw it.",
+            "Select **Done**, then **Save changes**. A checklist can have up to 12 steps of your own."
+          ]
+        },
+        {
+          "title": "Give a customer its own case checklist",
+          "keywords": [
+            "customer checklist",
+            "per customer steps",
+            "customer bills differently"
+          ],
+          "steps": [
+            "In **Settings** › **Case checklists**, select **Add a customer** and find the customer. Its checklist starts as a copy of your organization's.",
+            "Change its steps, then select **Save checklist**.",
+            "To send the customer back to your organization's checklist, open it and select **Remove this checklist**, then select it again to confirm. **Go back to the default** does the same for your organization's own checklist."
+          ]
+        },
+        {
           "title": "Hand a conversation to another agent",
           "keywords": [
             "hand off",
@@ -8577,7 +8567,7 @@
           ],
           "steps": [
             "Open the conversation from [Desk](/desk) and select the hand-off button in the bar at the top (its tip reads **Hand off to another agent**).",
-            "Under **Hand off to**, pick the agent. The agents your current agent already works with are listed first.",
+            "Under **Hand off to**, pick the agent. When your current agent has just said it cannot do what you asked because the tool belongs to another of your agents, those agents are listed first and marked **Holds what this conversation needs**. The agents your current agent already works with come next.",
             "This starts a new conversation with that agent. It carries over a summary of this conversation, its pinned facts and its pinned artifacts.",
             "A card in this conversation says who it was handed to and what went with it (**Carried over**). Select **Open their conversation** to go there. The new conversation has a matching card with **Open the earlier conversation**. Both conversations stay open."
           ]
@@ -8879,7 +8869,7 @@
           ]
         }
       ],
-      "notes": "Needs read access to the assistant. If no agents are available, an administrator has to connect an AI provider and enable an agent in [AI control](/admin/agent-control); people who can manage agents see **Open AI Control** on the Desk.\n\nWhen an agent in your own conversation proposes a change, the card above the message box shows it the same way on the Desk and in the floating assistant: what it would set and whether it can be undone, checked against your records as they are now. **Approve** waits until that check has loaded. If the change was drafted against records that have changed since, the card says it is out of date and offers to redraft it instead. A plan of several steps, or several changes of one kind, is approved with one answer. You need only access to the assistant and to that agent, and each change still runs only if your own permissions allow it.\n\nThe conversation marks each decided change with a line (\"Approved\"), and deciding on the card or on [Decisions](/desk/decisions) updates both.\n\nA long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation also becomes read-only when its agent is turned off, removed, set to run on its own, or no longer available to you, and the note in place of the message box says which, and whether an administrator can change it.\n\n- Enter sends and Shift+Enter starts a new line. In **Desk settings**, **Send with** can be set to **⌘ Enter** instead. **@ mentions**, **Slash commands** and **Dictation** can each be turned off there. - Only words can steer a reply under way. A message carrying files always waits until the reply finishes. Once a steering message has been handed to the agent, it can't be edited or taken back; stopping the reply is the only way to undo it. Waiting messages are kept with the conversation, so they survive a reload or another tab. - You can't change the agent or the model while an agent is replying. - A message can carry up to 5 files, each up to 25 MB: PDF, PNG, JPG, HEIC, TIFF, CSV, Excel, Word, text and email (.eml) files. Password-protected PDFs and other file types are refused before they upload. Scanning works only inside an open conversation, not from the box on Today. - @ search lists only records you are allowed to read. Dictation isn't available in every browser; where it isn't, the microphone says so. - A conversation keeps up to 12 pinned facts of up to 200 characters each. Compacting keeps pinned facts, pending approvals and, where it can, the latest turns in full. A conversation set to compact itself does so at 85% full. - An agent can wait on up to ten things in one conversation. A wait gives up after a day unless the agent sets a longer limit (at most a week); either way the agent picks the task back up and is told it ran out. If the thing has already happened, the agent acts on it right away. - A case is in one of four states, shown on its card, in its menu and beside the conversation in the rail. **Working**: nothing is put off. Waiting: on something such as **Waiting on the customer**, **Waiting on the carrier** or **Waiting on a reply**. **Snoozed**: put away until a time, the next appointment or the ETA. **Settled**: the record is closed. A shipment settles once it is invoiced or canceled, not when it delivers, because the ready-to-bill work comes after delivery; an invoice once it is paid or voided; a dispute once it is resolved or withdrawn. - A case's state is worked out each time you look, so a payment recorded elsewhere settles its invoice's case on its own. Snoozed and settled cases sit on their own **Snoozed** and **Settled** shelves in the rail; a snoozed case comes back on time, or sooner when something the agent was waiting on arrives. A conversation started from a shipment, invoice or dispute is a case from the start. - Which steps a case checklist shows, and whether each is required or optional, is set on [Case checklists](/billing/configuration-files/case-checklists); a customer can have its own. A ticked step belongs to the record, so everyone working a case about the same shipment or invoice sees it. - If a record the agent was working with changes elsewhere during its turn, a note headed **Changed while the agent was working** lists what changed, and the agent reads those records again before relying on them. - An agent can hand a task only to the agents chosen for it in [AI control](/admin/agent-control), and only ones you may use. That agent works as you, its changes still wait for your approval, and it cannot pass the work on again. Hand-off goes to another agent, not to another person. - Anything an agent produces lands in the workspace: tables, reports, record cards, documents, email drafts, plans, read documents, decisions and billing items. With **Open new artifacts** set to **Right away**, a new item opens as it arrives; otherwise a dot on **Workspace** marks something new. - Billing actions on a billing item are your own and need billing queue permissions. The agent never approves or posts an invoice on its own. - Desk settings and chapters are kept in this browser; they do not follow you to another browser or computer. - Changing what an agent can do needs permission to manage agents.",
+      "notes": "Needs read access to the assistant. If no agents are available, an administrator has to connect an AI provider and enable an agent in [AI control](/admin/agent-control); people who can manage agents see **Open AI Control** on the Desk.\n\nWhen an agent in your own conversation proposes a change, the card above the message box shows it the same way on the Desk and in the floating assistant: what it would set and whether it can be undone, checked against your records as they are now. **Approve** waits until that check has loaded. If the change was drafted against records that have changed since, the card says it is out of date and offers to redraft it instead. A plan of several steps, or several changes of one kind, is approved with one answer. You need only access to the assistant and to that agent, and each change still runs only if your own permissions allow it.\n\nThe conversation marks each decided change with a line (\"Approved\"), and deciding on the card or on [Decisions](/desk/decisions) updates both.\n\nA long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation also becomes read-only when its agent is turned off, removed, set to run on its own, or no longer available to you, and the note in place of the message box says which, and whether an administrator can change it.\n\n- Enter sends and Shift+Enter starts a new line. In **Desk settings**, **Send with** can be set to **⌘ Enter** instead. **@ mentions**, **Slash commands** and **Dictation** can each be turned off there. - Only words can steer a reply under way. A message carrying files always waits until the reply finishes. Once a steering message has been handed to the agent, it can't be edited or taken back; stopping the reply is the only way to undo it. Waiting messages are kept with the conversation, so they survive a reload or another tab. - You can't change the agent or the model while an agent is replying. - A message can carry up to 5 files, each up to 25 MB: PDF, PNG, JPG, HEIC, TIFF, CSV, Excel, Word, text and email (.eml) files. Password-protected PDFs and other file types are refused before they upload. Scanning works only inside an open conversation, not from the box on Today. - @ search lists only records you are allowed to read. Dictation isn't available in every browser; where it isn't, the microphone says so. - A conversation keeps up to 12 pinned facts of up to 200 characters each. Compacting keeps pinned facts, pending approvals and, where it can, the latest turns in full. A conversation set to compact itself does so at 85% full. - An agent can wait on up to ten things in one conversation. A wait gives up after a day unless the agent sets a longer limit (at most a week); either way the agent picks the task back up and is told it ran out. If the thing has already happened, the agent acts on it right away. - A case is in one of four states, shown on its card, in its menu and beside the conversation in the rail. **Working**: nothing is put off. Waiting: on something such as **Waiting on the customer**, **Waiting on the carrier** or **Waiting on a reply**. **Snoozed**: put away until a time, the next appointment or the ETA. **Settled**: the record is closed. A shipment settles once it is invoiced or canceled, not when it delivers, because the ready-to-bill work comes after delivery; an invoice once it is paid or voided; a dispute once it is resolved or withdrawn. - A case's state is worked out each time you look, so a payment recorded elsewhere settles its invoice's case on its own. Snoozed and settled cases sit on their own **Snoozed** and **Settled** shelves in the rail; a snoozed case comes back on time, or sooner when something the agent was waiting on arrives. A conversation started from a shipment, invoice or dispute is a case from the start. - Which steps a case checklist shows, their order, and whether each is required or optional, are set in **Settings** › **Case checklists** on the Desk; a customer can have its own. A ticked step belongs to the record, so everyone working a case about the same shipment or invoice sees it. - If a record the agent was working with changes elsewhere during its turn, a note headed **Changed while the agent was working** lists what changed, and the agent reads those records again before relying on them. - An agent can hand a task only to the agents chosen for it in [AI control](/admin/agent-control), and only ones you may use. A case step you hand to another agent with its button needs only that you may use that agent. That agent works as you, its changes still wait for your approval, and it cannot pass the work on again. Hand-off goes to another agent, not to another person. - Anything an agent produces lands in the workspace: tables, reports, record cards, documents, email drafts, plans, read documents, decisions and billing items. With **Open new artifacts** set to **Right away**, a new item opens as it arrives; otherwise a dot on **Workspace** marks something new. - Billing actions on a billing item are your own and need billing queue permissions. The agent never approves or posts an invoice on its own. - Desk settings and chapters are kept in this browser; they do not follow you to another browser or computer. - Changing what an agent can do needs permission to manage agents.",
       "related": [
         "/desk/decisions",
         "/desk/watchtower",

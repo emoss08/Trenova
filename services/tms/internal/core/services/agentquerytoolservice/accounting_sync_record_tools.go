@@ -35,6 +35,23 @@ const (
 		"list_carrier_settlements or list_driver_settlements"
 )
 
+// syncDocumentKinds are the records a sync record can stand for: the invoices,
+// payments, applications and settlements sent as documents, the customers,
+// carriers and workers sent as the accounts they post to, and the journal
+// entries posted one by one. A journal summary is keyed by its day, not by a
+// record id, so it is not among them.
+var syncDocumentKinds = []permission.RecordKind{
+	permission.RecordKind(permission.ResourceInvoice),
+	permission.RecordKind(permission.ResourceCustomerPayment),
+	permission.KindCreditMemoApplication,
+	permission.RecordKind(permission.ResourceCarrierSettlement),
+	permission.RecordKind(permission.ResourceDriverSettlement),
+	permission.RecordKind(permission.ResourceCustomer),
+	permission.RecordKind(permission.ResourceCarrier),
+	permission.RecordKind(permission.ResourceWorker),
+	permission.RecordKind(permission.ResourceJournalEntry),
+}
+
 type accountingSyncLedgerReader interface {
 	ListRecords(
 		ctx context.Context,
@@ -224,10 +241,10 @@ func (t *listAccountingSyncRecordsTool) ParamSchema() map[string]any {
 			agenttoolschema.Enum("An error category.", agenttoolschema.SyncErrorCategories),
 			len(accountingsync.AllSyncErrorCategories()),
 		),
-		paramSyncDocumentID: jsonschemautils.Text(
-			"Only the records of one Trenova document, by its id from " +
-				syncDocumentIDSources + ".",
-		),
+		paramSyncDocumentID: agenttoolschema.OfKinds(jsonschemautils.Text(
+			"Only the records of one Trenova document, by its id from "+
+				syncDocumentIDSources+".",
+		), syncDocumentKinds...),
 		paramSyncSearch: jsonschemautils.Text(
 			"Words to find in Trenova or accounting system document numbers.",
 		),
@@ -371,10 +388,10 @@ func (t *getAccountingSyncRecordTool) SearchTerms() []string {
 
 func (t *getAccountingSyncRecordTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramSyncRecordID: jsonschemautils.Text(
-			"The sync record's id, from list_accounting_sync_records, " +
+		paramSyncRecordID: agenttoolschema.OfKinds(jsonschemautils.Text(
+			"The sync record's id, from list_accounting_sync_records, "+
 				"get_record_accounting_sync_state, or the run's subject.",
-		),
+		), permission.KindAccountingSyncRecord),
 	}, paramSyncRecordID)
 }
 
@@ -465,7 +482,7 @@ func (t *getRecordAccountingSyncStateTool) SearchTerms() []string {
 
 func (t *getRecordAccountingSyncStateTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramSyncDocumentIDs: jsonschemautils.DescribedArray(
+		paramSyncDocumentIDs: agenttoolschema.OfKinds(jsonschemautils.DescribedArray(
 			fmt.Sprintf(
 				"Up to %d Trenova document ids, from %s, or the record on screen.",
 				syncStateMaxDocuments,
@@ -473,7 +490,7 @@ func (t *getRecordAccountingSyncStateTool) ParamSchema() map[string]any {
 			),
 			jsonschemautils.String(0),
 			syncStateMaxDocuments,
-		),
+		), syncDocumentKinds...),
 	}, paramSyncDocumentIDs)
 }
 

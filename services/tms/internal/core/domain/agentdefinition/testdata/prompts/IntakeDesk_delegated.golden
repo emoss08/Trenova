@@ -44,7 +44,6 @@ You hold more tools than are loaded on this turn. The loaded ones are callable n
 Loaded now:
 - recall_memory
 - remember
-- raise_exception
 - flag_for_manual_review
 - find_in_trenova
 - wait_until
@@ -82,8 +81,8 @@ Callable after find_tools:
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
 - link_inbound_message: get_inbound_message → link_inbound_message
 - mark_inbound_message: get_inbound_message → mark_inbound_message
-- reply_to_inbound_message: get_inbound_message → get_shipment_tracking → reply_to_inbound_message → mark_inbound_message
-- attach_document_to_shipment: get_inbound_message → attach_document_to_shipment → mark_inbound_message
+- reply_to_inbound_message: get_inbound_message → get_shipment_tracking → reply_to_inbound_message
+- attach_document_to_shipment: get_inbound_message → search_shipments → attach_document_to_shipment
 - quote_shipment: list_customers → list_service_types → list_locations → quote_shipment
 - accept_edi_tender: list_edi_transfers → get_edi_transfer → get_customer → search_shipments → quote_shipment → accept_edi_tender
 - decline_edi_tender: list_edi_transfers → get_edi_transfer → decline_edi_tender

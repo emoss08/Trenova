@@ -223,8 +223,9 @@ func (t *getEDITransferTool) Description() string {
 func (t *getEDITransferTool) ParamSchema() map[string]any {
 	return idSchema(
 		paramEDITransferID,
-		agenttoolschema.IDText("The load tender transfer's id, from "+
-			"list_edi_transfers, a transferId in get_edi_inbound_file, or this run's subject."),
+		agenttoolschema.KindID("The load tender transfer's id, from "+
+			"list_edi_transfers, a transferId in get_edi_inbound_file, or this run's subject.",
+			permission.KindEDITransfer),
 	)
 }
 
@@ -465,8 +466,8 @@ func (t *listEDIMessagesTool) ParamSchema() map[string]any {
 		paramTransactionSet: enumParam("Only this transaction set: 204 tender, 210 invoice, "+
 			"214 status, 990 tender response, 997 or 999 acknowledgment.",
 			messageTransactionSets),
-		paramPartnerID: stringParam("Only this partner's messages, by id from " +
-			"list_edi_partners."),
+		paramPartnerID: agenttoolschema.KindID("Only this partner's messages, by id from "+
+			"list_edi_partners.", permission.KindEDIPartner),
 	}))
 }
 
@@ -602,8 +603,9 @@ func (t *listEDITenderChangesTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
 		paramStatus: enumParam("Only changes in this status; PendingReview for those "+
 			"waiting on a decision.", tenderChangeStatuses),
-		paramShipmentID: stringParam("Only changes to the load tendered from this shipment, " +
-			"by id from a sourceShipmentId in list_edi_transfers."),
+		paramShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
+			"Only changes to the load tendered from this shipment, "+
+				"by id from a sourceShipmentId in list_edi_transfers."),
 	}, defaultListLimit, maxListLimit))
 }
 
@@ -767,8 +769,9 @@ func (t *listEDITransferChangesTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
 		paramStatus: enumParam("Only changes in this status; PendingReview for those "+
 			"waiting on a decision.", transferChangeStatuses),
-		paramShipmentLinkID: stringParam("Only changes on one linked load, by the " +
-			"shipmentLinkId from list_edi_tender_changes or a row of this tool."),
+		paramShipmentLinkID: agenttoolschema.KindID("Only changes on one linked load, by the "+
+			"shipmentLinkId from list_edi_tender_changes or a row of this tool.",
+			permission.KindEDIShipmentLink),
 	}, defaultListLimit, maxListLimit))
 }
 
@@ -894,8 +897,9 @@ func (t *listEDIPartnersTool) Description() string {
 func (t *listEDIPartnersTool) ParamSchema() map[string]any {
 	return objectSchema(cursorSchema(map[string]any{
 		paramQuery: stringParam("Words to look for in the partner's code or name."),
-		paramCustomerID: stringParam("Only the partner that stands for this customer, by id " +
-			"from list_customers or get_shipment."),
+		paramCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
+			"Only the partner that stands for this customer, by id "+
+				"from list_customers or get_shipment."),
 		paramStatus: enumParam("Only partners in this status.", partnerStatuses),
 	}))
 }

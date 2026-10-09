@@ -82,8 +82,9 @@ func escrowRecord(account *driverpay.EscrowAccount) toolpreview.Record {
 }
 
 func escrowAccountProperty() map[string]any {
-	return agenttoolschema.IDText(
-		"The escrow account, from " + escrowSourcesTool + ". Never guess one.",
+	return agenttoolschema.RecordIDText(
+		permission.ResourceEscrowAccount,
+		"The escrow account, from "+escrowSourcesTool+". Never guess one.",
 	)
 }
 

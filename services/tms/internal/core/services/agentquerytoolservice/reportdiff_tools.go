@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/reportdiff"
@@ -44,11 +45,11 @@ func (t *listReportRunsTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"definitionId": map[string]any{
+			"definitionId": agenttoolschema.OfResource(map[string]any{
 				"type": "string",
 				"description": "The saved report to list runs of, from list_reports. " +
 					"Omit to list this organization's recent runs across every report.",
-			},
+			}, permission.ResourceReport),
 			"mineOnly": map[string]any{
 				"type": "boolean",
 				"description": "Only runs the person you are acting for started. " +

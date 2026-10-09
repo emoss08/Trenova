@@ -231,9 +231,10 @@ func newScheduleDOTTestTool(tests drugAlcoholKeeper) serviceports.AgentTool {
 			"For a post-accident test: the accident, from "+
 				"list_worker_safety_events.",
 		),
-		paramDrawEntryID: agenttoolschema.IDText(
-			"For a random test: the selection it answers, from " +
+		paramDrawEntryID: agenttoolschema.KindID(
+			"For a random test: the selection it answers, from "+
 				"get_dot_random_draw.",
+			permission.KindDOTRandomSelection,
 		),
 		paramIsDOT: booleanProperty("Whether it is a DOT-regulated test. Defaults to true; " +
 			"a company-policy test is false."),
@@ -323,8 +324,9 @@ func newCancelDOTTestTool(tests drugAlcoholKeeper) serviceports.AgentTool {
 		permission.ResourceWorkerDOTTest,
 		permission.OpCancel,
 	), map[string]any{
-		paramDOTTestID: agenttoolschema.IDText("The test, from list_dot_tests. Never guess one."),
-		fieldReason:    wfNoteProperty("Why the collection did not happen."),
+		paramDOTTestID: agenttoolschema.RecordIDText(permission.ResourceWorkerDOTTest,
+			"The test, from list_dot_tests. Never guess one."),
+		fieldReason: wfNoteProperty("Why the collection did not happen."),
 	}, paramDOTTestID, fieldReason), paramDOTTestID, permission.ResourceWorkerDOTTest)
 	spec.maxTier = agent.TierPropose
 	spec.reversible = false
@@ -407,9 +409,10 @@ func newRunDOTRandomDrawTool(draws drugAlcoholKeeper) serviceports.AgentTool {
 		permission.ResourceDOTRandomPool,
 		permission.OpManage,
 	), map[string]any{
-		paramPoolID: agenttoolschema.IDText(
-			"The pool, from list_dot_random_draws. Leave it out to draw " +
+		paramPoolID: agenttoolschema.KindID(
+			"The pool, from list_dot_random_draws. Leave it out to draw "+
 				"from the organization's default pool.",
+			permission.KindDOTRandomPool,
 		),
 		paramDrawDay: agenttoolschema.Date(
 			"A day inside the period to draw for, for a period that was " +
@@ -473,7 +476,10 @@ type drawDecision struct {
 }
 
 func drawIDProperty() map[string]any {
-	return agenttoolschema.ID("The round", "list_dot_random_draws")
+	return agenttoolschema.KindID(
+		agenttoolschema.IDDescription("The round", "list_dot_random_draws"),
+		permission.KindDOTRandomDraw,
+	)
 }
 
 func renderDrawChange(summary string) func(
@@ -505,7 +511,7 @@ func newFinalizeDOTRandomDrawTool(draws drugAlcoholKeeper) serviceports.AgentToo
 	spec.reversible = false
 	spec.artifact = ""
 	spec.recipe = []string{
-		"run_dot_random_draw",
+		"list_dot_random_draws",
 		"get_dot_random_draw",
 		"finalize_dot_random_draw",
 	}
@@ -608,8 +614,9 @@ func newUpdateDOTRandomSelectionTool(draws drugAlcoholKeeper) serviceports.Agent
 		permission.ResourceDOTRandomPool,
 		permission.OpManage,
 	), map[string]any{
-		paramDrawEntryID: agenttoolschema.IDText(
+		paramDrawEntryID: agenttoolschema.KindID(
 			"The selection, from get_dot_random_draw. Never guess one.",
+			permission.KindDOTRandomSelection,
 		),
 		paramSelectionMove: agenttoolschema.Enum("Notified, Excused or Missed.",
 			randomSelectionMoves),

@@ -104,6 +104,15 @@ export function reduceDryRun(state: DryRunState, event: string, raw: string): Dr
       }
       return { ...state, reply: state.reply + data.text };
     }
+    case "reply_replaced": {
+      // The runtime corrected the reply after it streamed; the text is the
+      // whole reply as recorded, which the closing account repeats.
+      const data = parse(delta, raw);
+      if (!data || data.agentId) {
+        return state;
+      }
+      return { ...state, reply: data.text };
+    }
     case "dry_run_steps": {
       const data = parse(steps, raw);
       if (!data) {

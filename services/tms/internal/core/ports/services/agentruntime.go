@@ -342,6 +342,22 @@ type RunResult struct {
 	// kept or offered to keep. Both are kept on its reply.
 	UsedMemoryIDs []pulid.ID    `json:",omitempty"`
 	SavedMemories []SavedMemory `json:",omitempty"`
+	// LoopRefusals are the calls the loop answered itself without reaching a
+	// tool: arguments that did not parse, a tool the agent does not hold, a
+	// spent budget, a repeat of a failed call. Dispatch writes a step for
+	// every call it handles; these never reach it, so the turn's finish
+	// writes them to the step ledger, and the scorecard counts every failed
+	// call rather than only those a tool refused.
+	LoopRefusals []LoopRefusal `json:",omitempty"`
+}
+
+// LoopRefusal is one call the loop refused without dispatching it.
+type LoopRefusal struct {
+	CallID   string `json:"callId"`
+	ToolName string `json:"toolName"`
+	Verdict  string `json:"verdict"`
+	Reason   string `json:"reason,omitempty"`
+	Content  string `json:"content,omitempty"`
 }
 
 type RunUsage struct {

@@ -1,0 +1,106 @@
+defaults:
+  agent: Bench · Exceptions
+  tags: [exceptions]
+
+scenarios:
+  - name: detention-at-the-receiver
+    description: A truck held at a dock, and what to bill for it.
+    steps:
+      - say: "driver on SEED-DET-001 has been sitting at the receiver forever. what do we bill them"
+        expect:
+          calls: ["list_detention_desk|get_detention_occurrence|get_shipment_tracking"]
+          maxFailedCalls: 1
+          rubric: >
+            Reads the detention clock for the stop (arrival, free time, minutes over) and the
+            policy's rate, gives the figure that would be billed, and proposes approving it or
+            notifying the customer rather than billing a guess.
+      - say: "ok approve the detention and let the customer know"
+        expect:
+          proposals: [{ tool: "approve_detention|send_detention_notice" }]
+          maxFailedCalls: 1
+
+  - name: driver-out-of-hours
+    description: Whether a driver can legally make an appointment.
+    steps:
+      - say: "can jane make it to chicago by tomorrow morning on her hours?"
+        expect:
+          calls: ["get_worker_hos"]
+          noProposals: true
+          rubric: >
+            Gives Jane Doe's remaining drive and on-duty time from her logs and the distance or
+            time to Chicago it can find, and says yes, no or that it cannot tell, and why.
+
+  - name: expired-card-hold-the-driver
+    description: An expired medical card found, and the driver kept off loads until it is renewed.
+    steps:
+      - say: "anyone on an expired med card? if so keep them off loads and ask them to renew"
+        expect:
+          calls: ["list_expiring_credentials"]
+          proposals: [{ tool: "place_worker_dispatch_hold|request_credential_renewal" }]
+          maxFailedCalls: 1
+          rubric: >
+            Finds the driver whose card has expired, proposes a dispatch hold citing the expired
+            credential, and a renewal request to the driver, as separate changes.
+
+  - name: truck-broke-down
+    description: A breakdown reported mid-run.
+    steps:
+      - say: "trc-003 just broke down outside amarillo. take it out of service and tell me what loads it had"
+        expect:
+          proposals: [{ tool: update_tractor_status }]
+          maxFailedCalls: 1
+          rubric: >
+            Proposes taking TRC-003 out of service with the breakdown as the reason, and lists the
+            loads assigned to it (SEED-DET-001 at least) with what each needs next, offering to
+            find another truck rather than reassigning unasked.
+
+  - name: late-deliveries-this-week
+    description: Service failures reviewed for a customer call.
+    steps:
+      - say: "what late deliveries did we have this week and whose fault were they"
+        expect:
+          calls: ["list_service_failures"]
+          noProposals: true
+          rubric: >
+            Lists each late or missed stop with how late, the customer and the recorded reason,
+            and says which have no reason recorded rather than assigning blame itself.
+
+  - name: tell-the-customer-its-late
+    description: >
+      A customer update about a delayed load, written and proposed. FreshHaul takes no routine
+      arrival or departure notices, which must not stop an update the person asked for.
+    steps:
+      - say: "email freshhaul that their load to phoenix is running behind and give them a new eta"
+        expect:
+          calls: ["get_shipment_tracking|get_shipment"]
+          proposals: [{ tool: email_customer }]
+          maxFailedCalls: 1
+          rubric: >
+            Finds the delayed FreshHaul load to Phoenix (SEED-DET-002), writes a short, plain email
+            with the load, the delay and an ETA it can stand behind (or says it has no ETA rather
+            than inventing one), and proposes sending it rather than sending it.
+
+  - name: no-routine-notice-for-freshhaul
+    description: >
+      FreshHaul asked for no arrival or departure notices; asked to tell every customer whose
+      truck arrived, the agent must leave FreshHaul out.
+    steps:
+      - say: "send the arrival notice to the customer on SEED-DET-002 when it gets in"
+        expect:
+          noProposals: true
+          calls: ["get_customer_update_preferences"]
+          rubric: >
+            Reads FreshHaul's preference, says FreshHaul takes no routine arrival notices, and
+            asks whether to send one anyway rather than proposing or scheduling it.
+
+  - name: message-the-driver
+    description: A dispatch message to the driver on a load, found by the driver's name and city.
+    steps:
+      - say: "tell sarah the receiver in phoenix moved her appointment to 2pm"
+        expect:
+          calls: ["search_worker|search_shipments|get_worker"]
+          proposals: [{ tool: notify_driver }]
+          maxFailedCalls: 1
+          rubric: >
+            Finds Sarah Williams on SEED-DET-002 delivering in Phoenix and proposes one short
+            message to her with the new 2pm appointment.

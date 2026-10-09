@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Coercion is one value read the way the schema declares it rather than the
@@ -19,17 +20,20 @@ type Coercion struct {
 	Omitted bool
 }
 
-// EmptyClears marks a parameter whose empty value is a request in itself:
-// clear the field. Every other optional parameter sent as "" or an empty
+// KeepEmpty marks a parameter whose empty value means something other than
+// leaving it out, so it reaches the tool as sent: an update's field that an
+// empty value clears, or a list whose absence means "every one" and whose
+// empty value means "none" (the carrier intelligence fields to apply, the pay
+// events to pay now). Every other optional parameter sent as "" or an empty
 // list is read as not sent (see Coerce). It returns the property it marks.
-func EmptyClears(property map[string]any) map[string]any {
-	property[KeyEmptyClears] = true
+func KeepEmpty(property map[string]any) map[string]any {
+	property[KeyKeepEmpty] = true
 
 	return property
 }
 
-func clearsWhenEmpty(property map[string]any) bool {
-	clears, _ := property[KeyEmptyClears].(bool)
+func keepsEmpty(property map[string]any) bool {
+	clears, _ := property[KeyKeepEmpty].(bool)
 
 	return clears
 }
@@ -53,6 +57,35 @@ func placeholder(value any) bool {
 	}
 }
 
+var idPlaceholders = map[string]struct{}{
+	"x": {}, "n/a": {}, "na": {}, "none": {}, "null": {}, "nil": {}, "-": {}, "unknown": {},
+	"tbd": {}, "?": {},
+}
+
+func isRecordID(property map[string]any) bool {
+	return RecordOf(property) != "" || len(RecordKinds(property)) > 0
+}
+
+func idPlaceholder(value any) bool {
+	text, ok := value.(string)
+	if !ok {
+		return false
+	}
+	_, found := idPlaceholders[strings.ToLower(strings.TrimSpace(text))]
+
+	return found
+}
+
+func trimmedID(value any) (string, bool) {
+	text, ok := value.(string)
+	if !ok {
+		return "", false
+	}
+	trimmed := strings.TrimRight(strings.TrimSpace(text), ",.;")
+
+	return trimmed, trimmed != text
+}
+
 // Coerce returns a copy of the arguments with each value read as
 // the schema declares it, wherever that reading is certain: a numeral sent
 // as text becomes the number, a number sent for a text amount becomes its
@@ -63,7 +96,7 @@ func placeholder(value any) bool {
 // declared parameter is renamed to it, midnight UTC sent for a day becomes
 // the day, and a local time written with a space or with seconds becomes its
 // minute. An optional parameter sent as "" or as a list of nothing is read
-// as not sent, unless it is marked EmptyClears; blank entries in a list of
+// as not sent, unless it is marked KeepEmpty; blank entries in a list of
 // text are set aside.
 //
 // Several models fill every parameter a tool declares, sending "" or [""]
@@ -80,7 +113,7 @@ func placeholder(value any) bool {
 // for the schema to refuse by name. What was sent is never changed: the
 // result is a copy. The runtime reads a model's call with it, and the
 // proposal executor what an approver typed into a proposal.
-func Coerce(schema, args map[string]any) (map[string]any, []Coercion) {
+func Coerce(schema, args map[string]any, opts ...CoerceOption) (map[string]any, []Coercion) {
 	if len(args) == 0 {
 		return args, nil
 	}
@@ -90,6 +123,9 @@ func Coerce(schema, args map[string]any) (map[string]any, []Coercion) {
 	}
 
 	c := &coercer{}
+	for _, opt := range opts {
+		opt(c)
+	}
 	coerced, changed := c.object(schema, properties, args, "")
 	if !changed {
 		return args, nil
@@ -101,7 +137,29 @@ func Coerce(schema, args map[string]any) (map[string]any, []Coercion) {
 
 type coercer struct {
 	notes []Coercion
+	// today is the calendar day "today" names where the call is read, when
+	// the caller knows it (WithToday).
+	today *time.Time
 }
+
+// CoerceOption adds a reading Coerce can only make with something the
+// caller knows.
+type CoerceOption func(*coercer)
+
+// WithToday lets a day parameter take "today", "yesterday" and "tomorrow",
+// read as the calendar day they name in the timezone now is given in. A
+// person asks for "what delivered today", a model passes the word on, and
+// several reads used to parse it themselves while the rest refused it; the
+// runtime reads it once, for every tool, as the organization's own day.
+func WithToday(now time.Time) CoerceOption {
+	day := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+
+	return func(c *coercer) { c.today = &day }
+}
+
+// relativeDays are the words a day parameter takes when the caller says
+// which day today is, and how far each is from it.
+var relativeDays = map[string]int{"today": 0, "yesterday": -1, "tomorrow": 1}
 
 func (c *coercer) note(path, format string, args ...any) {
 	c.notes = append(c.notes, Coercion{Path: path, Note: fmt.Sprintf(format, args...)})
@@ -142,7 +200,7 @@ func (c *coercer) object(
 			continue
 		}
 		read, did := c.value(property, value, at)
-		if !required[key] && !clearsWhenEmpty(property) && placeholder(read) {
+		if !required[key] && !keepsEmpty(property) && placeholder(read) {
 			delete(out, key)
 			changed = true
 			c.notes = append(c.notes, Coercion{
@@ -150,6 +208,22 @@ func (c *coercer) object(
 			})
 
 			continue
+		}
+		if isRecordID(property) {
+			if !required[key] && idPlaceholder(read) {
+				delete(out, key)
+				changed = true
+				c.notes = append(c.notes, Coercion{
+					Path: at, Note: fmt.Sprintf("%s held %q, which names no record, and was left out", at, read),
+					Omitted: true,
+				})
+
+				continue
+			}
+			if trimmed, cut := trimmedID(read); cut {
+				read, did = trimmed, true
+				c.note(at, "%s was read as %q", at, trimmed)
+			}
 		}
 		if did {
 			out[key] = read
@@ -384,6 +458,12 @@ func (c *coercer) date(format DateFormat, value any, path string) (any, bool) {
 
 	switch format.Name {
 	case FormatDate:
+		if offset, relative := relativeDays[strings.ToLower(trimmed)]; relative && c.today != nil {
+			day := c.today.AddDate(0, 0, offset).Format(time.DateOnly)
+			c.note(path, "%s %q was read as the day %s", path, text, day)
+
+			return day, true
+		}
 		if match := midnightDay.FindStringSubmatch(trimmed); match != nil {
 			c.note(path, "%s %q was read as the day %s; send a day as %s",
 				path, text, match[1], format.Shape)

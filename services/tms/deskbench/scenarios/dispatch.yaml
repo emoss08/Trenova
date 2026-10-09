@@ -1,0 +1,130 @@
+defaults:
+  agent: Dispatch desk
+  tags: [dispatch, read]
+
+scenarios:
+  - name: in-transit-count
+    description: The plainest status question a dispatcher asks, typed the way they type it.
+    steps:
+      - say: "how many loads we got rolling rn"
+        expect:
+          calls: ["list_shipments|search_shipments|get_dispatch_board|run_report"]
+          maxCalls: 5
+          maxFailedCalls: 0
+          noProposals: true
+          facts:
+            - sql: select count(*) from shipments where status = 'InTransit'
+              note: the number of shipments in transit
+          rubric: Gives the number and offers the list; does not make up loads.
+
+  - name: late-loads-this-morning
+    description: >
+      An opening question with a deadline in it. "Late" should be read as delayed, or past
+      its appointment, and the answer should say which it used.
+    steps:
+      - say: "anything running late? need to know before my 9am call"
+        page: { path: /shipments, title: Shipments }
+        expect:
+          calls: ["list_shipments|search_shipments|get_dispatch_board|list_service_failures"]
+          maxFailedCalls: 0
+          noProposals: true
+          noRecordIds: true
+          facts:
+            - sql: select pro_number from shipments where status = 'Delayed' order by pro_number
+              note: each delayed shipment's pro number
+          rubric: >
+            Lists each late load by pro number with its customer and how it is late, and says
+            what it counted as late.
+
+  - name: load-by-description
+    description: >
+      Nobody types a pro number from memory. The load is named by customer and destination,
+      the way it is talked about on the phone.
+    steps:
+      - say: "wheres the sunbelt load thats going up to chicago"
+        expect:
+          calls: ["search_shipments|list_shipments|get_shipment|get_shipment_tracking"]
+          maxFailedCalls: 1
+          noProposals: true
+          replyIncludes: ["SEED-SHP-008"]
+          rubric: >
+            Finds SEED-SHP-008 (Sunbelt, Miami to Dallas done, Dallas to Chicago rolling) and says
+            where it is in the trip.
+
+  - name: unassigned-then-narrow
+    description: >
+      Two questions in a row where the second leans on the first ("those"), so the agent has
+      to carry the earlier result instead of starting over.
+    steps:
+      - say: "which loads still need a driver"
+        expect:
+          calls: ["list_shipments|search_shipments|get_dispatch_board"]
+          maxFailedCalls: 0
+          noProposals: true
+          facts:
+            - sql: >
+                select count(*) from shipments where status in ('New', 'PartiallyAssigned')
+              note: the number of shipments not fully assigned
+      - say: "ok of those which one picks up first"
+        expect:
+          maxCalls: 4
+          maxFailedCalls: 0
+          noProposals: true
+          rubric: >
+            Orders the same loads by first pickup and names the earliest, without asking what
+            "those" means.
+
+  - name: delayed-reefer-detail
+    description: A follow-up about one load, asked with a nickname and a guess.
+    steps:
+      - say: "the freshhaul reefer thats late, is it the one going to LA? whats the holdup"
+        expect:
+          calls: ["search_shipments|list_shipments|get_shipment"]
+          maxFailedCalls: 1
+          noProposals: true
+          replyIncludes: ["SEED-SHP-010"]
+          rubric: >
+            Confirms SEED-SHP-010 (Phoenix to LA, Delayed), and gives what the record says about
+            why rather than inventing a reason.
+
+  - name: tractor-in-the-shop
+    description: Equipment status asked by its code, lower case.
+    tags: [equipment]
+    steps:
+      - say: "is trc-004 back from the shop yet"
+        expect:
+          calls: ["get_tractor|list_tractors|locate_tractor"]
+          maxFailedCalls: 1
+          noProposals: true
+          replyIncludes: ["maintenance|shop|not yet|still"]
+          facts:
+            - sql: select status from tractors where code = 'TRC-004'
+              note: the tractor's status
+          rubric: Says it is still at maintenance and what that means for dispatching it.
+
+  - name: drivers-available-tomorrow
+    description: Planning tomorrow's board from the driver side.
+    tags: [workforce]
+    steps:
+      - say: "who's free to run tomorrow? anyone on pto?"
+        expect:
+          calls: ["list_workers|search_worker|get_worker_schedule|list_time_off|get_dispatch_board"]
+          maxFailedCalls: 0
+          noProposals: true
+          rubric: >
+            Separates drivers off tomorrow (approved time off) from drivers already on a load,
+            and does not claim availability it did not read.
+
+  - name: delivered-and-billed
+    description: Two questions in one message, the second depending on the first.
+    tags: [billing]
+    steps:
+      - say: "did the acme steel load deliver yet? and if so did we bill it"
+        expect:
+          calls: ["search_shipments|list_shipments|get_shipment"]
+          maxFailedCalls: 1
+          noProposals: true
+          replyIncludes: ["SEED-SHP-005", "deliver"]
+          rubric: >
+            Says SEED-SHP-005 delivered (Completed) and that no invoice exists for it yet, and
+            offers to move it toward billing rather than doing so unasked.

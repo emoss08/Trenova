@@ -58,10 +58,13 @@ func (r *settlementRepository) List(
 			Offset(req.Filter.Pagination.SafeOffset())
 
 		if req.Filter.Query != "" {
+			pattern := "%" + req.Filter.Query + "%"
 			query = query.Where(
-				"(dstl.settlement_number ILIKE ? OR dstl.pay_profile_name ILIKE ?)",
-				"%"+req.Filter.Query+"%",
-				"%"+req.Filter.Query+"%",
+				"(dstl.settlement_number ILIKE ? OR dstl.pay_profile_name ILIKE ? OR "+
+					"concat_ws(' ', worker.first_name, worker.last_name) ILIKE ?)",
+				pattern,
+				pattern,
+				pattern,
 			)
 		}
 		if !req.WorkerID.IsNil() {

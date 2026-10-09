@@ -258,16 +258,33 @@ func namesAnotherTool(text, self string, registered map[string]struct{}) bool {
 	return false
 }
 
+// stagingSteps are writes that only stage work for a person to review before
+// a later tool commits it, so a recipe may run one ahead of that tool.
+var stagingSteps = map[string]struct{}{
+	"build_invoice_run": {},
+}
+
 // A recipe and a prerequisite list name tools that exist. The order of a
 // piece of work lives on the tools now, not in a template's instructions,
 // and a misspelt step is told to every agent holding the tool and loads
 // nothing.
+//
+// A recipe is followed as literally as it is written, so everything before
+// the tool must only read: approve_billing_queue_items once listed
+// assign_billing_queue_billers ahead of itself and post_invoices after, which
+// told a model asked only to approve to reassign billers and post as well. A
+// prerequisite is granted to every agent holding the tool, which is only safe
+// for a read.
 func TestEveryRecipeNamesRegisteredTools(t *testing.T) {
 	t.Parallel()
 
 	known := make(map[string]struct{})
+	queries := make(map[string]struct{})
 	for _, tool := range buildTools(t) {
 		known[tool.Name()] = struct{}{}
+		if _, ok := tool.(serviceports.AgentQueryTool); ok {
+			queries[tool.Name()] = struct{}{}
+		}
 	}
 	for _, policy := range agentruntime.RuntimePolicies() {
 		known[policy.Name] = struct{}{}
@@ -278,13 +295,17 @@ func TestEveryRecipeNamesRegisteredTools(t *testing.T) {
 		steps := make([]string, 0, 8)
 		if recipe, ok := tool.(serviceports.RecipeTool); ok {
 			steps = append(steps, recipe.Recipe()...)
-			if len(recipe.Recipe()) > 0 && !slices.Contains(recipe.Recipe(), tool.Name()) {
-				problems = append(problems, fmt.Sprintf(
-					"%s: its recipe does not name the tool itself", tool.Name()))
-			}
+			problems = append(problems, recipeOrderProblems(
+				tool.Name(), recipe.Recipe(), queries)...)
 		}
 		if needs, ok := tool.(serviceports.PrerequisiteTool); ok {
 			steps = append(steps, needs.Prerequisites()...)
+			for _, need := range needs.Prerequisites() {
+				if _, ok := queries[need]; !ok {
+					problems = append(problems, fmt.Sprintf(
+						"%s: prerequisite %q is not a read", tool.Name(), need))
+				}
+			}
 		}
 		for _, step := range steps {
 			if _, ok := known[step]; !ok {
@@ -295,7 +316,97 @@ func TestEveryRecipeNamesRegisteredTools(t *testing.T) {
 	}
 
 	sort.Strings(problems)
-	require.Emptyf(t, problems, "%d recipes name tools that do not exist:\n%s",
+	require.Emptyf(t, problems, "%d recipes or prerequisites are wrong:\n%s",
+		len(problems), strings.Join(problems, "\n"))
+}
+
+func recipeOrderProblems(
+	name string,
+	recipe []string,
+	queries map[string]struct{},
+) []string {
+	if len(recipe) == 0 {
+		return nil
+	}
+	at := slices.Index(recipe, name)
+	if at < 0 {
+		return []string{fmt.Sprintf("%s: its recipe does not name the tool itself", name)}
+	}
+
+	var problems []string
+	for _, step := range recipe[:at] {
+		if _, ok := queries[step]; ok {
+			continue
+		}
+		if _, ok := stagingSteps[step]; ok {
+			continue
+		}
+		problems = append(problems, fmt.Sprintf(
+			"%s: its recipe runs %q, which writes, before the tool itself", name, step))
+	}
+
+	return problems
+}
+
+// leftOutMeansEvery is a description saying that leaving a parameter out
+// widens the call to every record: "Leave it out to pay everything", "Leave
+// out customerIds to assess every customer".
+var (
+	leftOutMeansEvery = regexp.MustCompile(
+		`(?i)\b(leave (it|them) out|omit it|omit them|when left out)\b[^.]*\b(every|all|everything)\b`,
+	)
+	namedLeftOutMeansEvery = regexp.MustCompile(
+		`(?i)\bleave out (\w+)(?: and (\w+))? to [^.]*\b(every|all|everything)\b`,
+	)
+)
+
+/*
+The runtime reads an optional parameter sent as "" or an empty list as not
+sent, because several models fill every parameter a tool declares. For a
+write whose parameter, left out, means every record, that turned "pay these
+none" into "pay everything" and "assess these customers" into "assess every
+customer". Such a parameter keeps its empty value (toolschema.KeepEmpty), and
+a write that says leaving it out means every record must mark it.
+*/
+func TestEveryWriteWhoseOmissionWidensKeepsAnEmptyList(t *testing.T) {
+	t.Parallel()
+
+	var problems []string
+	for _, tool := range buildTools(t) {
+		if _, read := tool.(serviceports.AgentQueryTool); read {
+			continue
+		}
+		properties, _ := tool.ParamSchema()[toolschema.KeyProperties].(map[string]any)
+		widening := make(map[string]struct{}, 2)
+		for _, match := range namedLeftOutMeansEvery.FindAllStringSubmatch(tool.Description(), -1) {
+			for _, name := range match[1:3] {
+				if name != "" {
+					widening[name] = struct{}{}
+				}
+			}
+		}
+		for name, raw := range properties {
+			property, _ := raw.(map[string]any)
+			description, _ := property[toolschema.KeyDescription].(string)
+			if leftOutMeansEvery.MatchString(description) {
+				widening[name] = struct{}{}
+			}
+		}
+		for name := range widening {
+			property, declared := properties[name].(map[string]any)
+			if !declared {
+				continue
+			}
+			if keep, _ := property[toolschema.KeyKeepEmpty].(bool); !keep {
+				problems = append(problems, fmt.Sprintf(
+					"%s: %s widens to every record when left out but does not keep an "+
+						"empty value (toolschema.KeepEmpty)", tool.Name(), name))
+			}
+		}
+	}
+
+	sort.Strings(problems)
+	require.Emptyf(t, problems, "%d parameters would widen when sent empty:\n%s",
 		len(problems), strings.Join(problems, "\n"))
 }
 

@@ -234,8 +234,8 @@ func newAssignWorkerTrainingTool(training trainingKeeper) serviceports.AgentTool
 				"list_workers.",
 			maxTrainingWorkers,
 		),
-		paramCourseIDs: agenttoolschema.IDList("The courses, from list_training_courses.",
-			maxTrainingCourses),
+		paramCourseIDs: agenttoolschema.RecordIDs(permission.ResourceTrainingCourse,
+			"The courses, from list_training_courses.", maxTrainingCourses),
 		wfParamDueDate: agenttoolschema.Date("When it is due, when not the course's own schedule."),
 		fieldNotes:     wfNoteProperty("Anything the assignment should say."),
 	}, paramTrainingWorkers, paramCourseIDs)
@@ -379,7 +379,7 @@ func completionFrom(
 	if req.CourseID, err = optionalID(params.Params, paramCourseID); err != nil {
 		return nil, err
 	}
-	if req.ID.IsNil() == (req.WorkerID.IsNil() || req.CourseID.IsNil()) {
+	if req.ID.IsNil() && (req.WorkerID.IsNil() || req.CourseID.IsNil()) {
 		return nil, fmt.Errorf("name either %q, or %q with %q", paramTrainingID,
 			paramWorkerID, paramCourseID)
 	}
@@ -406,6 +406,40 @@ func completionFrom(
 	return req, nil
 }
 
+// completionMatchesRecord takes a completion that names the open assignment
+// and also its worker and course. A model that found the assignment with
+// list_worker_training, filtered to the worker and the course, sent all three
+// and was refused for naming the assignment both ways, though they agreed. A
+// worker or course that is not the assignment's is refused, since the
+// completion would land on a record other than the one the call describes.
+func completionMatchesRecord(
+	ctx context.Context,
+	training trainingKeeper,
+	req *workertrainingservice.CompleteRequest,
+) error {
+	if req.ID.IsNil() || (req.WorkerID.IsNil() && req.CourseID.IsNil()) {
+		return nil
+	}
+	change, err := training.PlanComplete(ctx, req)
+	if err != nil {
+		return err
+	}
+	record := change.After
+	if (req.WorkerID.IsNil() || req.WorkerID == record.WorkerID) &&
+		(req.CourseID.IsNil() || req.CourseID == record.CourseID) {
+		return nil
+	}
+
+	return fmt.Errorf(
+		"trainingId %s is worker %s's assignment of course %s, not the workerId or courseId "+
+			"sent. To record that assignment, send trainingId without workerId and courseId, "+
+			`for example {"trainingId": "%s"}. To record a course a worker finished with no `+
+			"open assignment, send workerId with courseId and no trainingId, for example "+
+			`{"workerId": "wrk_…", "courseId": "trnc_…"}`,
+		req.ID, record.WorkerID, record.CourseID, req.ID,
+	)
+}
+
 func newRecordTrainingCompletionTool(training trainingKeeper) serviceports.AgentTool {
 	spec := withSchema(wfSpec(
 		"record_training_completion",
@@ -420,7 +454,9 @@ func newRecordTrainingCompletionTool(training trainingKeeper) serviceports.Agent
 	), map[string]any{
 		paramTrainingID: trainingIDProperty(),
 		paramWorkerID:   workerProperty(),
-		paramCourseID:   agenttoolschema.IDText("The course, from list_training_courses."),
+		paramCourseID: agenttoolschema.RecordIDText(permission.ResourceTrainingCourse,
+			"The course, from list_training_courses, with workerId when there is no "+
+				"trainingId. Beside trainingId it must be that assignment's course."),
 		paramCompletedAt: agenttoolschema.Date(
 			"The day it was finished. Defaults to today; never a " +
 				"day to come.",
@@ -442,6 +478,13 @@ func newRecordTrainingCompletionTool(training trainingKeeper) serviceports.Agent
 		*workertrainingservice.CompleteRequest, *workertrainingservice.RecordChange,
 	]{
 		request: completionFrom,
+		settle: func(
+			ctx context.Context,
+			req *workertrainingservice.CompleteRequest,
+			_ *serviceports.ToolExecuteParams,
+		) error {
+			return completionMatchesRecord(ctx, training, req)
+		},
 		plan: func(
 			ctx context.Context,
 			req *workertrainingservice.CompleteRequest,

@@ -1,0 +1,180 @@
+defaults:
+  tags: [lifecycle, write]
+
+scenarios:
+  - name: lifecycle-one-agent-book-to-posted-invoice
+    description: >
+      A load from the phone call to the posted invoice in one conversation with an agent that holds
+      every step: book it from the customer's contract, cover it with a company driver, record the
+      pickup and the delivery, hand it to billing, approve it in the billing queue and post the
+      invoice. Every change is approved, and the database is checked after each one.
+    agent: Bench · Operations
+    exclusive: acme-shipments
+    steps:
+      - say: >
+          book a load for acme: pick up at the LA terminal today at 2pm, deliver to the chicago DC
+          friday by noon, 41,500 lbs dry van, price it off their contract
+        expect:
+          proposals: [{ tool: create_shipment }]
+          maxFailedCalls: 2
+          noRecordIds: true
+      - decide: approve
+        expect:
+          executed: true
+          db:
+            - sql: >
+                select status from shipments where customer_id =
+                (select id from customers where code = 'ACME') order by created_at desc limit 1
+              equals: New
+              note: the new Acme load saved as New
+      - say: "put john smith on it with trc-001 and a dry van"
+        expect:
+          proposals: [{ tool: assign_move }]
+          maxFailedCalls: 2
+          rubric: >
+            Assigns the new load's move to John Smith, TRC-001 and a dry van trailer (TRL-001 or
+            TRL-002), and says anything that stands against it (hours, credentials, the window).
+      - decide: approve
+        expect:
+          executed: true
+      - say: "john's loaded and rolling, picked up at 2:10"
+        expect:
+          proposals: [{ tool: "record_stop_actual|update_move_status" }]
+          maxFailedCalls: 2
+      - decide: approve
+        expect:
+          executed: true
+      - say: "he just delivered in chicago, empty now"
+        expect:
+          proposals: [{ tool: "record_stop_actual|update_move_status" }]
+          maxFailedCalls: 2
+      - decide: approve
+        expect:
+          executed: true
+          db:
+            - sql: >
+                select status from shipments where customer_id =
+                (select id from customers where code = 'ACME') order by created_at desc limit 1
+              equals: Completed
+              note: the load completed once its delivery was recorded
+      - say: "ok send it to billing"
+        expect:
+          proposals: [{ tool: transfer_to_billing }]
+      - decide: approve
+        expect:
+          executed: true
+      - say: "approve it in the billing queue"
+        expect:
+          calls: ["get_billing_queue_item|list_billing_queue_items"]
+          proposals: [{ tool: approve_billing_queue_item }]
+          rubric: >
+            Opens the queue item and checks it before proposing the approval, and says what
+            approving it creates (the draft invoice).
+      - decide: approve
+        expect:
+          executed: true
+      - say: "post the invoice"
+        expect:
+          proposals: [{ tool: post_invoice }]
+      - decide: approve
+        expect:
+          executed: true
+          db:
+            - sql: >
+                select status from shipments where customer_id =
+                (select id from customers where code = 'ACME') order by created_at desc limit 1
+              equals: Invoiced
+              note: the load invoiced once its invoice was posted
+          rubric: Reports the invoice number and total, once.
+
+  - name: lifecycle-handed-between-agents
+    description: >
+      The same life of a load the way a team works it: the shipment desk books it, dispatch covers
+      and runs it, billing invoices it. Each step is handed to the agent that owns it from one
+      conversation, as a person does with the agent picker.
+    agent: Shipment Assistant
+    exclusive: peak-shipments
+    steps:
+      - say: >
+          new load for peak distributing, dallas warehouse to the denver drop point, pick up
+          tomorrow 7am, deliver the day after by 3pm, 28k lbs dry van
+        expect:
+          proposals: [{ tool: create_shipment }]
+          maxFailedCalls: 2
+      - decide: approve
+        expect:
+          executed: true
+      - say: "who can run this one? put the best driver on it"
+        agent: Dispatch desk
+        expect:
+          calls: ["rank_move_candidates"]
+          proposals: [{ tool: assign_move }]
+          rubric: >
+            Finds the load the conversation just booked without being told its pro number, ranks
+            candidates and proposes the top one, saying why.
+      - decide: approve
+        expect:
+          executed: true
+      - say: "it delivered, mark it done"
+        agent: Dispatch desk
+        expect:
+          proposals: [{ tool: "update_move_status|record_stop_actual" }]
+      - decide: approve
+        expect:
+          executed: true
+      - say: "bill it"
+        agent: Billing exceptions
+        expect:
+          proposals: [{ tool: "transfer_to_billing|create_invoice|approve_billing_queue_item" }]
+          rubric: >
+            Takes the next billing step for the load this conversation booked, without asking
+            which load, and says what is left after it.
+      - decide: approve
+        expect:
+          executed: true
+
+  - name: lifecycle-carrier-covered
+    description: >
+      A brokered load: no company driver, so it goes to an outside carrier at a rate, with the
+      rate confirmation, and later the carrier's delivery.
+    agent: Bench · Operations
+    exclusive: peak-shipments
+    steps:
+      - say: "the peak ltl to chicago, nobody in house can take it. shop it to carriers"
+        expect:
+          calls: ["shop_carriers"]
+          noProposals: true
+      - say: "give it to whoever is cheapest that's active and compliant"
+        expect:
+          proposals: [{ tool: assign_move_to_carrier }]
+          rubric: >
+            Picks the cheapest carrier from the shop that is Active and compliant (not Lone Star,
+            which is inactive, nor Harbor Point while its compliance is pending) and proposes the
+            assignment at that rate.
+      - decide: approve
+        expect:
+          executed: true
+      - say: "send them the rate con"
+        expect:
+          proposals: [{ tool: "generate_rate_confirmation|send_rate_confirmation" }]
+
+  - name: lifecycle-rate-check-before-billing
+    description: >
+      Billing questions the price before approving: the agent explains the rate from the agreement,
+      finds it disagrees with what the shipment carries, and rerates it.
+    agent: Bench · Operations
+    exclusive: acme-shipments
+    steps:
+      - say: "before we bill SEED-SHP-001, is it priced right per the acme contract?"
+        expect:
+          calls: ["explain_rate|get_rate_agreement|get_shipment"]
+          noProposals: true
+          rubric: >
+            Explains how SEED-SHP-001 was priced (its rating method and charges) against the Acme
+            Truckload Agreement, and says plainly whether they agree.
+      - say: "rerate it off the contract then"
+        expect:
+          proposals: [{ tool: rerate_shipment }]
+      - decide: approve
+        expect:
+          executed: true

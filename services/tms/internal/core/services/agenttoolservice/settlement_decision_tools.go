@@ -60,6 +60,7 @@ type settlementFacts struct {
 
 type settlementLedger[E any] struct {
 	resource  permission.Resource
+	kind      permission.RecordKind
 	artifact  string
 	noun      string
 	sources   string
@@ -103,11 +104,11 @@ func (t *settlementDecisionTool[E]) SearchTerms() []string { return t.decision.s
 
 func (t *settlementDecisionTool[E]) ParamSchema() map[string]any {
 	properties := map[string]any{
-		paramSettlementID: map[string]any{
-			toolschema.KeyType: toolschema.TypeString,
-			toolschema.KeyDescription: "The " + t.ledger.noun + ", from " + t.ledger.sources +
-				" or this run's subject. Never guess one.",
-		},
+		paramSettlementID: agenttoolschema.KindID(
+			"The "+t.ledger.noun+", from "+t.ledger.sources+" or this run's subject. "+
+				"Never guess one.",
+			t.ledger.kind,
+		),
 	}
 	for name, property := range t.decision.properties {
 		properties[name] = property

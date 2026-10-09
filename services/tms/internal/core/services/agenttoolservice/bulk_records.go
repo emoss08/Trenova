@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -41,6 +42,7 @@ type recordBatch struct {
 	param       string
 	singleParam string
 	resource    permission.Resource
+	kinds       []permission.RecordKind
 	noun        string
 	nouns       string
 	verb        string
@@ -60,8 +62,12 @@ type batchItem struct {
 	refusal error
 }
 
+// property is the list of ids the batch takes, marked with the kinds of record
+// they are, for a resource whose name does not stand for its records alone (a
+// billing queue's items), or else with the resource when it has a prefix, so
+// the runtime refuses an id of another kind before any of the batch is read.
 func (b *recordBatch) property(description string) map[string]any {
-	return toolschema.RecordSubset(b.resource.String(), map[string]any{
+	property := map[string]any{
 		toolschema.KeyType:        toolschema.TypeArray,
 		toolschema.KeyDescription: description,
 		toolschema.KeyMinItems:    1,
@@ -69,7 +75,14 @@ func (b *recordBatch) property(description string) map[string]any {
 		toolschema.KeyItems: map[string]any{
 			toolschema.KeyType: toolschema.TypeString,
 		},
-	})
+	}
+	if len(b.kinds) > 0 {
+		agenttoolschema.OfKinds(property, b.kinds...)
+	} else if _, typed := b.resource.IDPrefix(); typed {
+		agenttoolschema.OfResource(property, b.resource)
+	}
+
+	return toolschema.RecordSubset(b.resource.String(), property)
 }
 
 func (b *recordBatch) ids(

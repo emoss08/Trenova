@@ -277,8 +277,9 @@ func newResolveSettlementDisputeTool(reviewer driverPayReviewer) serviceports.Ag
 			"decimal such as 42.50; negative to take money back. Leave it out for none."),
 		paramAdjustmentLabel: stringProperty("What the adjustment is for, as the driver "+
 			"and payroll read it. Required with an adjustment.", maxAdjustmentDescription),
-		paramPayCodeID: agenttoolschema.IDText("The pay code the adjustment posts under, from " +
-			"list_pay_codes. Leave it out for the default account."),
+		paramPayCodeID: agenttoolschema.RecordIDText(permission.ResourcePayCode,
+			"The pay code the adjustment posts under, from list_pay_codes. Leave it out for "+
+				"the default account."),
 	}, paramDisputeID, paramDecision, paramResolutionNote)), paramDisputeID,
 		permission.ResourceSettlementDispute)
 	spec.egress = agent.EgressDriverVisible
@@ -289,7 +290,6 @@ func newResolveSettlementDisputeTool(reviewer driverPayReviewer) serviceports.Ag
 	spec.recipe = []string{
 		"get_driver_settlement",
 		"get_settlement_dispute",
-		"start_settlement_dispute_review",
 		"resolve_settlement_dispute",
 	}
 
@@ -397,8 +397,9 @@ func newReviewDriverExpenseTool(reviewer driverPayReviewer) serviceports.AgentTo
 		permission.ResourceDriverExpense,
 		permission.OpApprove,
 	), map[string]any{
-		paramExpenseID: agenttoolschema.IDText(
-			"The expense, from list_driver_expenses or the page you " +
+		paramExpenseID: agenttoolschema.RecordIDText(
+			permission.ResourceDriverExpense,
+			"The expense, from list_driver_expenses or the page you "+
 				"are on. Never guess one.",
 		),
 		paramDecision: agenttoolschema.Enum("Approve to reimburse it, Reject to turn it down.",

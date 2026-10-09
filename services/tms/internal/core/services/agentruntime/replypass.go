@@ -26,8 +26,8 @@ const (
 
 	tablePointerLead = "The full table is in "
 
-	replyPassRetryReason = "The reply wrote out what is kept beside the conversation, so it " +
-		"is shown as recorded."
+	replyPassReplacedReason = "The reply wrote out what is kept beside the conversation, so " +
+		"it is shown as recorded."
 	stripIDsReason = "The reply named internal record ids, which a person never reads; " +
 		"they were taken out."
 	pointToTableReason = "The reply reprinted a table kept beside the conversation; the " +
@@ -40,10 +40,11 @@ const (
 // break both, small ones most, and the prompt alone left a reply full of
 // shp_01J… and a twenty-five row markdown copy of the table next to it.
 //
-// The reply has already streamed. When the pass changes it, the streamed
-// attempt is withdrawn, as a restart withdraws it, and the corrected reply is
-// sent whole, so the person reads what is recorded. Each pass that changed
-// something is a reply_regrounded event in the trajectory.
+// The reply has already streamed. When the pass changes it, a reply_replaced
+// event puts the corrected reply in place of the streamed one, so the person
+// reads what is recorded without the turn appearing to fail and start over.
+// Each pass that changed something is a reply_regrounded event in the
+// trajectory.
 func (s *Service) passReply(
 	t *Turn,
 	fx TurnEffects,
@@ -65,16 +66,17 @@ func (s *Service) passReply(
 	if table != nil {
 		fx.Emit(passEvent(serviceports.RegroundPointToTable, pointToTableReason, table))
 	}
-	fx.Emit(serviceports.StreamEvent{
-		Event: serviceports.AssistantEventRetrying,
-		Data: serviceports.AssistantRetryingEvent{
-			Attempt: 1,
-			Reason:  replyPassRetryReason,
-			Kind:    serviceports.RetryKindRestart,
-		},
-	})
-	fx.Emit(deltaEvent(pointed))
+	fx.Emit(replyReplacedEvent(pointed, replyPassReplacedReason))
 	completion.Text = pointed
+}
+
+// replyReplacedEvent puts the reply the turn recorded in place of the one
+// that streamed, for a correction the model was not asked to make.
+func replyReplacedEvent(text, reason string) serviceports.StreamEvent {
+	return serviceports.StreamEvent{
+		Event: serviceports.AssistantEventReplyReplaced,
+		Data:  serviceports.AssistantReplyReplacedEvent{Text: text, Reason: reason},
+	}
 }
 
 func passEvent(
@@ -106,11 +108,12 @@ func (t *Turn) keepTable(outcome *toolOutcome) {
 	t.tables = append(t.tables, *outcome.shown)
 }
 
-// pointToTables replaces the first markdown table in the reply that reprints
-// a kept table the reply does not already point to with one sentence that
-// points to it, and reports the table it pointed to. One reprint is
-// replaced: a reply that writes out two kept tables names both once the
-// first is gone, and the model is told so by the next turn's history.
+// pointToTables replaces each markdown table in the reply that reprints a
+// kept table the reply does not already point to with one sentence that
+// points to it, and reports the first table it pointed to. A reply that
+// wrote out a list of late loads and then the same loads by customer used to
+// keep the second copy, because only the first reprint was replaced; each
+// kept table is now pointed to once, wherever its reprint stands.
 func pointToTables(
 	reply string,
 	kept []serviceports.ShownArtifact,
@@ -127,6 +130,11 @@ func pointToTables(
 		pointed[id] = true
 	}
 
+	type replacement struct {
+		table *mdtable.Table
+		match *serviceports.ShownArtifact
+	}
+	replacements := make([]replacement, 0, len(tables))
 	for idx := range tables {
 		table := &tables[idx]
 		if len(table.Rows) < minReprintRows {
@@ -136,15 +144,24 @@ func pointToTables(
 		if match == nil {
 			continue
 		}
-		sentence := tablePointerLead + ArtifactRef(match) + "."
-		if table.End < len(reply) {
-			sentence += "\n"
-		}
-
-		return reply[:table.Start] + sentence + reply[table.End:], match
+		pointed[match.ID.String()] = true
+		replacements = append(replacements, replacement{table: table, match: match})
+	}
+	if len(replacements) == 0 {
+		return reply, nil
 	}
 
-	return reply, nil
+	out := reply
+	for idx := len(replacements) - 1; idx >= 0; idx-- {
+		table, match := replacements[idx].table, replacements[idx].match
+		sentence := tablePointerLead + ArtifactRef(match) + "."
+		if table.End < len(out) {
+			sentence += "\n"
+		}
+		out = out[:table.Start] + sentence + out[table.End:]
+	}
+
+	return out, replacements[0].match
 }
 
 // reprinted is the kept table, not yet pointed to, that the markdown table

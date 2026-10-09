@@ -293,6 +293,24 @@ func WorkerOptions() fx.Option {
 
 func WorkerOptionsFor(e *edition.Edition) fx.Option {
 	return fx.Options(
+		workerServices(),
+		temporaljobs.WorkerModule,
+		agentjobs.WorkerModule,
+		conversationschedulejobs.WorkerModule,
+		agentqualityjobs.WorkerModule,
+		e.WorkerOption(),
+	)
+}
+
+func UnscheduledWorkerOptions() fx.Option {
+	return fx.Options(
+		workerServices(),
+		temporaljobs.UnscheduledWorkerModule,
+	)
+}
+
+func workerServices() fx.Option {
+	return fx.Options(
 		modulesinfra.StorageModule,
 		modulesinfra.RealtimePublisherModule,
 		modulesinfra.MeilisearchClientModule,
@@ -300,10 +318,5 @@ func WorkerOptionsFor(e *edition.Edition) fx.Option {
 		modulesinfra.PDFRenderModule,
 		modulesinfra.TemplatingModule,
 		api.ServiceModule,
-		temporaljobs.WorkerModule,
-		agentjobs.WorkerModule,
-		conversationschedulejobs.WorkerModule,
-		agentqualityjobs.WorkerModule,
-		e.WorkerOption(),
 	)
 }

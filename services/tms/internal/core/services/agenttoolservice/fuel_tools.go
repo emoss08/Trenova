@@ -184,13 +184,14 @@ func fuelPurchaseProperties(forCorrection bool) map[string]any {
 	}
 
 	properties := map[string]any{
-		paramTractorID: stringProperty("The tractor the fuel went into, from list_tractors."+
-			keep, 0),
-		paramWorkerID: stringProperty("The driver who bought it, from search_worker or "+
-			"list_workers. Leave it out to take the card's driver."+keep, 0),
-		paramJurisdictionID: stringProperty("The state or province the fuel was bought in, "+
-			"from list_ifta_jurisdictions; it decides which line of the return the tax-paid "+
-			"gallons credit."+keep, 0),
+		paramTractorID: agenttoolschema.RecordIDText(permission.ResourceTractor,
+			"The tractor the fuel went into, from list_tractors."+keep),
+		paramWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
+			"The driver who bought it, from search_worker or list_workers. Leave it out to "+
+				"take the card's driver."+keep),
+		paramJurisdictionID: agenttoolschema.KindID("The state or province the fuel was "+
+			"bought in, from list_ifta_jurisdictions; it decides which line of the return the "+
+			"tax-paid gallons credit."+keep, permission.KindIFTAJurisdiction),
 		paramPurchasedAt: agenttoolschema.DateTime(
 			"When it was bought, as the receipt says." + keep,
 		),
@@ -210,8 +211,8 @@ func fuelPurchaseProperties(forCorrection bool) map[string]any {
 			currencyCodeLength),
 		paramOdometer: integerProperty("The odometer reading at the pump."+keep, 0,
 			maxOdometer),
-		paramFuelCardID: stringProperty("The fuel card it was paid with, from "+
-			"list_fuel_cards."+keep, 0),
+		paramFuelCardID: agenttoolschema.RecordIDText(permission.ResourceFuelCard,
+			"The fuel card it was paid with, from list_fuel_cards."+keep),
 		paramCardLastFour: stringProperty("The card's last four digits when the card is "+
 			"not on file."+keep, fuelCardLastFourDigits),
 		paramTransactionReference: stringProperty("The receipt or transaction number; a "+
@@ -223,7 +224,9 @@ func fuelPurchaseProperties(forCorrection bool) map[string]any {
 			maxFuelNotes),
 	}
 	if forCorrection {
-		properties[paramFuelPurchaseID] = stringProperty(fuelPurchaseSupplier, 0)
+		properties[paramFuelPurchaseID] = agenttoolschema.RecordIDText(
+			permission.ResourceFuelPurchase, fuelPurchaseSupplier,
+		)
 	}
 
 	return properties
@@ -777,7 +780,8 @@ func newDeleteFuelPurchaseTool(
 		rationale: "Removes a tax record the IFTA return is computed from, and nothing " +
 			"brings it back but entering it again, so a person always decides.",
 		properties: map[string]any{
-			paramFuelPurchaseID: stringProperty(fuelPurchaseSupplier, 0),
+			paramFuelPurchaseID: agenttoolschema.RecordIDText(permission.ResourceFuelPurchase,
+				fuelPurchaseSupplier),
 		},
 		required: []string{paramFuelPurchaseID},
 		target:   targetFuelPurchase,
@@ -919,11 +923,12 @@ func newAssignFuelCardTool(cards fuelCardKeeper) serviceports.AgentTool {
 		rationale: "Changes which tractor a card's purchases count against inside Trenova; " +
 			"nothing is sent, and assigning it again changes it back.",
 		properties: map[string]any{
-			paramFuelCardID: stringProperty(fuelCardSupplier, 0),
-			paramAssignedTractorID: stringProperty("The tractor that carries the card, from "+
-				"list_tractors.", 0),
-			paramAssignedWorkerID: stringProperty("The driver who carries the card, from "+
-				"search_worker or list_workers.", 0),
+			paramFuelCardID: agenttoolschema.RecordIDText(permission.ResourceFuelCard,
+				fuelCardSupplier),
+			paramAssignedTractorID: agenttoolschema.RecordIDText(permission.ResourceTractor,
+				"The tractor that carries the card, from list_tractors."),
+			paramAssignedWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
+				"The driver who carries the card, from search_worker or list_workers."),
 		},
 		required: []string{paramFuelCardID},
 		target: func(params map[string]any) (serviceports.ToolTarget, bool) {
@@ -1057,13 +1062,8 @@ func fuelImportIDFrom(params *serviceports.ToolExecuteParams) (pulid.ID, error) 
 
 func newCommitFuelPurchaseImportTool(imports fuelImportKeeper) serviceports.AgentTool {
 	return newReceivableTool(fuelInternalSpec(&receivableSpec{
-		name: "commit_fuel_purchase_import",
-		recipe: []string{
-			"list_fuel_purchase_imports",
-			"assign_fuel_card",
-			"resolve_fuel_purchase_import_rows",
-			"commit_fuel_purchase_import",
-		},
+		name:   "commit_fuel_purchase_import",
+		recipe: []string{"list_fuel_purchase_imports", "commit_fuel_purchase_import"},
 		description: "Commit a staged fuel card statement: every row ready to commit becomes " +
 			"a fuel purchase in one step, and rows whose reference is already on file are " +
 			"skipped. Read it with list_fuel_purchase_imports first; rows in error stay " +
@@ -1073,7 +1073,8 @@ func newCommitFuelPurchaseImportTool(imports fuelImportKeeper) serviceports.Agen
 		rationale: "Adds a statement's purchases inside Trenova, which the IFTA return counts; " +
 			"nothing is sent, but undoing it means deleting each purchase.",
 		properties: map[string]any{
-			paramFuelImportID: stringProperty(fuelImportSupplier, 0),
+			paramFuelImportID: agenttoolschema.RecordIDText(permission.ResourceFuelPurchaseImport,
+				fuelImportSupplier),
 		},
 		required: []string{paramFuelImportID},
 		target:   targetFuelImport(permission.ResourceFuelPurchase),
@@ -1161,7 +1162,8 @@ func newResolveFuelPurchaseImportRowsTool(imports fuelImportKeeper) serviceports
 		rationale: "Re-matches held statement rows inside Trenova and, for a feed, posts the " +
 			"purchases that now resolve; nothing is sent.",
 		properties: map[string]any{
-			paramFuelImportID: stringProperty(fuelImportSupplier, 0),
+			paramFuelImportID: agenttoolschema.RecordIDText(permission.ResourceFuelPurchaseImport,
+				fuelImportSupplier),
 		},
 		required: []string{paramFuelImportID},
 		target:   targetFuelImport(permission.ResourceFuelPurchaseImport),
@@ -1262,7 +1264,8 @@ func newDiscardFuelPurchaseImportTool(imports fuelImportKeeper) serviceports.Age
 		rationale: "Closes a staged statement inside Trenova without adding any purchase; it " +
 			"can be staged again.",
 		properties: map[string]any{
-			paramFuelImportID: stringProperty(fuelImportSupplier, 0),
+			paramFuelImportID: agenttoolschema.RecordIDText(permission.ResourceFuelPurchaseImport,
+				fuelImportSupplier),
 			paramReason: stringProperty("Why it is being discarded, for whoever finds it "+
 				"later.", fuelDiscardReason),
 		},

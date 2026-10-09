@@ -23,7 +23,6 @@ import (
 const (
 	maxMasterRecordsPerStatusChange = 25
 	masterClearsWhenEmpty           = " Send an empty value to clear it."
-	masterDayLayout                 = "2006-01-02"
 )
 
 type masterRecord[T any] struct {
@@ -195,11 +194,11 @@ type masterField[T any] struct {
 
 // clearable marks a field an update clears when it is sent empty, so the
 // runtime reads its empty value as the request it is rather than as a
-// parameter left unfilled (toolschema.EmptyClears). A create has nothing to
+// parameter left unfilled (toolschema.KeepEmpty). A create has nothing to
 // clear, and its empty values are read as not sent.
 func clearable(update, clears bool, property map[string]any) map[string]any {
 	if update && clears {
-		return toolschema.EmptyClears(property)
+		return toolschema.KeepEmpty(property)
 	}
 
 	return property
@@ -421,11 +420,16 @@ func masterDecimal[T any](key, description string, at func(*T) **float64) master
 	}
 }
 
-func masterID[T any](key, description string, at func(*T) *pulid.ID) masterField[T] {
+func masterID[T any](
+	key string,
+	resource permission.Resource,
+	description string,
+	at func(*T) *pulid.ID,
+) masterField[T] {
 	return masterField[T]{
 		key: key,
 		property: func(update bool) map[string]any {
-			return stringProperty(description+keepSuffix(update, false), 0)
+			return agenttoolschema.RecordIDText(resource, description+keepSuffix(update, false))
 		},
 		apply: func(_ context.Context, in *masterInput, entity *T) error {
 			id, err := requirePulid(in.values, key)
@@ -454,11 +458,17 @@ func optionalMasterID(in *masterInput, key string) (pulid.ID, error) {
 	return id, nil
 }
 
-func masterOptionalID[T any](key, description string, at func(*T) *pulid.ID) masterField[T] {
+func masterOptionalID[T any](
+	key string,
+	resource permission.Resource,
+	description string,
+	at func(*T) *pulid.ID,
+) masterField[T] {
 	return masterField[T]{
 		key: key,
 		property: func(update bool) map[string]any {
-			return clearable(update, true, stringProperty(description+keepSuffix(update, true), 0))
+			return clearable(update, true,
+				agenttoolschema.RecordIDText(resource, description+keepSuffix(update, true)))
 		},
 		apply: func(_ context.Context, in *masterInput, entity *T) error {
 			id, err := optionalMasterID(in, key)
@@ -547,8 +557,8 @@ func masterDay[T any](key, description string, at func(*T) **int64) masterField[
 	return masterField[T]{
 		key: key,
 		property: func(update bool) map[string]any {
-			return clearable(update, true, stringProperty(description+" A date as YYYY-MM-DD."+
-				keepSuffix(update, true), len(masterDayLayout)))
+			return clearable(update, true,
+				agenttoolschema.Date(description+keepSuffix(update, true)))
 		},
 		apply: func(_ context.Context, in *masterInput, entity *T) error {
 			text, err := in.text(key)
@@ -559,10 +569,9 @@ func masterDay[T any](key, description string, at func(*T) **int64) masterField[
 				*at(entity) = nil
 				return nil
 			}
-			day, err := time.Parse(masterDayLayout, text)
+			day, err := time.Parse(time.DateOnly, text)
 			if err != nil {
-				return errortypes.NewValidationError(key, errortypes.ErrInvalid,
-					"{0} is not a date as YYYY-MM-DD", text)
+				return dateRefusal(key, text, toolschema.FormatDate)
 			}
 			seconds := day.Unix()
 			*at(entity) = &seconds
@@ -833,8 +842,8 @@ func (s *masterUpdateSpec[T]) build(
 func newMasterUpdateTool[T any](spec *masterUpdateSpec[T]) serviceports.AgentTool {
 	record := spec.record
 	properties := masterProperties(spec.fields, true)
-	properties[record.idParam] = stringProperty(
-		fmt.Sprintf("The %s to change, %s. Never guess one.", record.kind, record.supplier), 0)
+	properties[record.idParam] = agenttoolschema.RecordIDText(record.resource,
+		fmt.Sprintf("The %s to change, %s. Never guess one.", record.kind, record.supplier))
 
 	return newReportingReceivableTool(spec.policy.apply(&receivableSpec{
 		name:        spec.name,
@@ -962,7 +971,7 @@ func newMasterStatusTool[T any, S ~string](spec *masterStatusSpec[T, S]) service
 		reversible:  true,
 		rationale:   spec.rationale,
 		properties: map[string]any{
-			record.idsParam: agenttoolschema.IDList(fmt.Sprintf(
+			record.idsParam: agenttoolschema.RecordIDs(record.resource, fmt.Sprintf(
 				"The %s records to change, by id %s. One id is the normal case.",
 				record.kind, record.supplier), maxMasterRecordsPerStatusChange),
 			fieldStatus: agenttoolschema.Enum("The status to set. "+spec.statusNote,

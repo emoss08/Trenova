@@ -52,7 +52,6 @@ You hold more tools than are loaded on this turn. The loaded ones are callable n
 Loaded now:
 - recall_memory
 - remember
-- raise_exception
 - flag_for_manual_review
 - find_in_trenova
 - wait_until
@@ -77,6 +76,4 @@ Callable after find_tools:
 - create_location — Create a location record for a pickup or delivery address that has none, such as a facility read from a document.
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
-- set_required_field: list_customers → list_service_types → list_shipment_types → list_formula_templates → ask_user → set_required_field → get_customer
 - set_stop_location: list_locations → set_stop_location
-- set_stop_schedule: ask_user → set_stop_schedule

@@ -153,7 +153,7 @@ func orderResult(action string, entity *order.Order) *agent.ToolExecutionResult 
 }
 
 func orderMoneyProperty(what string) map[string]any {
-	return toolschema.EmptyClears(
+	return toolschema.KeepEmpty(
 		amountProperty(what + ", as a decimal such as 1250.00. An empty string clears it."),
 	)
 }
@@ -169,8 +169,9 @@ func orderProperties(customerRequired bool) map[string]any {
 			permission.ResourceCustomer,
 			customer+" Never guess one.",
 		),
-		paramOwnerID: agenttoolschema.IDText("The user who owns the order: the person who asked, " +
-			"or an ownerId get_order shows. Never guess one."),
+		paramOwnerID: agenttoolschema.RecordIDText(permission.ResourceUser,
+			"The user who owns the order: the person who asked, "+
+				"or an ownerId get_order shows. Never guess one."),
 		paramPONumber: stringProperty("The customer's purchase order number.",
 			maxOrderReference),
 		fieldBol: stringProperty("The bill of lading number.", maxOrderReference),

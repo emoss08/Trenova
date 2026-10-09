@@ -79,13 +79,6 @@ func (t *waitUntilTool) Description() string {
 }
 
 func (t *waitUntilTool) ParamSchema() map[string]any {
-	id := func(description string) map[string]any {
-		return map[string]any{
-			toolschema.KeyType:        toolschema.TypeString,
-			toolschema.KeyDescription: description,
-		}
-	}
-
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
@@ -101,16 +94,24 @@ func (t *waitUntilTool) ParamSchema() map[string]any {
 					"meant to.",
 			},
 			"at": agenttoolschema.LocalDateTime("For Time: when to pick the work up."),
-			paramShipmentMoveID: id("For StopArrival, StopDeparture and AppointmentNear: the " +
-				"move the stop is on."),
-			paramStopID: id("The stop: required for AppointmentNear; for StopArrival and " +
-				"StopDeparture, leave it out to wait for the move's next one."),
-			fieldShipmentID: id("For Reply: a reply about this shipment."),
-			paramCarrierID:  id("For Reply: a reply from this carrier."),
-			paramCustomerID: id("For Reply: a reply from this customer."),
-			paramWorkerID:   id("For HOSDriveBelow: the driver."),
-			"detentionOccurrenceId": id("For FreeTimeEnding: the detention record " +
-				"(detention.occurrence_opened names it)."),
+			paramShipmentMoveID: agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
+				"For StopArrival, StopDeparture and AppointmentNear: the move the stop is on."),
+			paramStopID: agenttoolschema.RecordIDText(permission.ResourceShipmentStop,
+				"The stop: required for AppointmentNear; for StopArrival and "+
+					"StopDeparture, leave it out to wait for the move's next one."),
+			fieldShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
+				"For Reply: a reply about this shipment."),
+			paramCarrierID: agenttoolschema.RecordIDText(permission.ResourceCarrier,
+				"For Reply: a reply from this carrier."),
+			paramCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
+				"For Reply: a reply from this customer."),
+			paramWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
+				"For HOSDriveBelow: the driver."),
+			"detentionOccurrenceId": agenttoolschema.KindID(
+				"For FreeTimeEnding: the detention record "+
+					"(detention.occurrence_opened names it).",
+				permission.KindDetentionOccurrence,
+			),
 			"minutesBefore": map[string]any{
 				toolschema.KeyType: toolschema.TypeInteger,
 				toolschema.KeyDescription: "For AppointmentNear and FreeTimeEnding: how many minutes " +
@@ -320,10 +321,10 @@ func (t *cancelWaitTool) ParamSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			paramWaitID: map[string]any{
-				toolschema.KeyType:        toolschema.TypeString,
-				toolschema.KeyDescription: "The wait to cancel, as wait_until returned it (awt_…).",
-			},
+			paramWaitID: agenttoolschema.KindID(
+				"The wait to cancel, as wait_until returned it (awt_…).",
+				permission.KindWait,
+			),
 		},
 		toolschema.KeyRequired:             []string{paramWaitID},
 		toolschema.KeyAdditionalProperties: false,

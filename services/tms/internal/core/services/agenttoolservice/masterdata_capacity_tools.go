@@ -173,10 +173,11 @@ var capacityRecord = &masterRecord[carriercapacity.Posting]{
 
 func capacityFields() []masterField[carriercapacity.Posting] {
 	return []masterField[carriercapacity.Posting]{
-		masterID(paramCarrierID, "The carrier offering the trucks, from list_carriers.",
+		masterID(paramCarrierID, permission.ResourceCarrier,
+			"The carrier offering the trucks, from list_carriers.",
 			func(p *carriercapacity.Posting) *pulid.ID { return &p.CarrierID }),
-		masterOptionalIDPointer("originLocationId", "Where the trucks are, from "+
-			"list_locations. Give this, originState, or both.",
+		masterOptionalIDPointer("originLocationId", permission.ResourceLocation,
+			"Where the trucks are, from list_locations. Give this, originState, or both.",
 			func(p *carriercapacity.Posting) **pulid.ID { return &p.OriginLocationID }),
 		masterStatePointer("originState", "The state the trucks are in, when no location "+
 			"is named.",
@@ -187,8 +188,8 @@ func capacityFields() []masterField[carriercapacity.Posting] {
 			func(p *carriercapacity.Posting) **int { return &p.OriginRadiusMiles }),
 		masterStatePointer("destinationState", "Where the carrier wants to go, when it said.",
 			func(p *carriercapacity.Posting) **pulid.ID { return &p.DestinationStateID }),
-		masterOptionalIDPointer("equipmentTypeId", "The trailer type offered, from "+
-			"list_equipment_types.",
+		masterOptionalIDPointer("equipmentTypeId", permission.ResourceEquipmentType,
+			"The trailer type offered, from list_equipment_types.",
 			func(p *carriercapacity.Posting) **pulid.ID { return &p.EquipmentTypeID }),
 		masterDateTime("availableFrom", "When the trucks are free.",
 			func(p *carriercapacity.Posting) *int64 { return &p.AvailableFrom }),
@@ -299,8 +300,10 @@ func newDeleteCarrierCapacityPostingTool(keeper capacityKeeper) serviceports.Age
 		rationale: "Removes trucks a carrier offered from Trenova; nothing is sent, and " +
 			"create_carrier_capacity_posting records them again.",
 		properties: map[string]any{
-			paramPostingID: stringProperty("The posting to remove, "+capacityRecord.supplier+
-				". Never guess one.", 0),
+			paramPostingID: agenttoolschema.RecordIDText(
+				permission.ResourceCarrierCapacityPosting,
+				"The posting to remove, "+capacityRecord.supplier+". Never guess one.",
+			),
 		},
 		required:    []string{paramPostingID},
 		searchTerms: []string{"remove carrier capacity", "withdraw truck posting"},

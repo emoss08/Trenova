@@ -149,10 +149,8 @@ func (t *getInboundMessageTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"messageId": map[string]any{
-				"type":        "string",
-				"description": "The message's id, from the run's subject or list_inbound_messages.",
-			},
+			"messageId": agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
+				"The message's id, from the run's subject or list_inbound_messages."),
 		},
 		"required":             []string{"messageId"},
 		"additionalProperties": false,
@@ -238,11 +236,9 @@ func (t *listInboundMessagesTool) ParamSchema() map[string]any {
 			"classification": agenttoolschema.Enum(
 				"Optional: only messages read as this kind.", inboundClassifications,
 			),
-			"mailboxId": map[string]any{
-				"type": "string",
-				"description": "Optional: only messages to this mailbox, by id from the page " +
-					"you are on. No tool lists mailboxes, so leave it out otherwise.",
-			},
+			"mailboxId": agenttoolschema.RecordIDText(permission.ResourceInboundMailbox,
+				"Optional: only messages to this mailbox, by id from the page "+
+					"you are on. No tool lists mailboxes, so leave it out otherwise."),
 			"query": map[string]any{
 				"type":        "string",
 				"description": "Optional: words from the sender's name or address, or the subject.",

@@ -107,8 +107,8 @@ func newOpenInvoiceDisputeTool(disputes invoiceDisputer) serviceports.AgentTool 
 		rationale: "Marks an invoice Disputed inside Trenova with the customer's reason; it moves " +
 			"no money and is withdrawn by withdraw_invoice_dispute.",
 		properties: map[string]any{
-			paramInvoiceID: stringProperty(
-				"The posted invoice, from list_invoices or get_invoice.", 0),
+			paramInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
+				"The posted invoice, from list_invoices or get_invoice."),
 			paramDisputeReasonCode: agenttoolschema.Enum(
 				"Why the customer is withholding payment.", disputeReasonCodes),
 			paramDisputedAmount: stringProperty(
@@ -201,9 +201,10 @@ func newResolveInvoiceDisputeTool(disputes invoiceDisputer) serviceports.AgentTo
 			paramDisputeID: disputeIDProperty(),
 			paramDisputeResolution: agenttoolschema.Enum(
 				"How the dispute ended.", disputeResolutions),
-			paramResolutionAdjustmentID: stringProperty(
+			paramResolutionAdjustmentID: agenttoolschema.KindID(
 				"The executed adjustment that credited or wrote off the amount, from "+
-					"list_invoice_adjustments. Required for CreditIssued and WrittenOff.", 0),
+					"list_invoice_adjustments. Required for CreditIssued and WrittenOff.",
+				permission.KindInvoiceAdjustment),
 			paramResolutionNotes: stringProperty(
 				"What was agreed with the customer.", maxDisputeNoteChars),
 		},

@@ -46,7 +46,6 @@ You hold more tools than are loaded on this turn. The loaded ones are callable n
 Loaded now:
 - recall_memory
 - remember
-- raise_exception
 - flag_for_manual_review
 - find_in_trenova
 - wait_until
@@ -115,9 +114,9 @@ Several records in one call: get_billing_queue_items does get_billing_queue_item
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
 - transfer_to_billing: list_billing_transfer_candidates → transfer_to_billing
 - assign_billing_queue_billers: list_billing_queue_items → get_billing_queue_items → assign_billing_queue_billers
-- approve_billing_queue_items: list_billing_queue_items → get_billing_queue_items → assign_billing_queue_billers → approve_billing_queue_items → post_invoices
-- post_invoices: approve_billing_queue_items → post_invoices → send_invoices
+- approve_billing_queue_items: list_billing_queue_items → get_billing_queue_items → approve_billing_queue_items
+- post_invoices: list_invoices → get_invoices → post_invoices
 - run_report: list_reports → describe_report → run_report
-- submit_invoice_adjustment: get_invoice → save_invoice_adjustment_draft → submit_invoice_adjustment
+- submit_invoice_adjustment: get_invoice → submit_invoice_adjustment
 - build_invoice_run: list_open_statements → build_invoice_run → get_invoice_run → commit_invoice_run
 - share_invoice: list_invoice_share_candidates → share_invoice

@@ -935,6 +935,11 @@ export const assistantMessageSchema = z.object({
   toolFailed: z.boolean().default(false),
   /** On a tool result: how the runtime judged the call; absent from a result saved before it was kept. */
   toolVerdict: optionalToolVerdict,
+  /**
+   * On a find_tools result: the person's other agents it named as holding what
+   * this agent could not call, which the hand-off menu offers first.
+   */
+  handOffAgents: z.array(z.string()).nullish().catch(null),
   /** On a tool result: what the call did. */
   effect: optionalToolEffect,
   /**
@@ -1748,6 +1753,8 @@ export const assistantToolFinishedEventSchema = z.object({
   effect: optionalToolEffect,
   summary: z.string().optional(),
   verdict: optionalToolVerdict,
+  /** The person's other agents a find_tools answer named as holding what this agent lacks. */
+  handOffAgents: z.array(z.string()).nullish().catch(null),
   ...delegateScopeShape,
 });
 
@@ -1810,6 +1817,22 @@ export const assistantRetryingEventSchema = z.object({
 
 /** The other agent's reply died partway and is starting over; the reply being shown is untouched. */
 export const assistantDelegateRetryingEventSchema = assistantRetryingEventSchema.extend({
+  agentId: z.string().optional().default(""),
+  delegateCallId: z.string(),
+});
+
+/**
+ * The reply the turn recorded, sent in place of the one that streamed when the
+ * runtime corrected it afterwards (ids taken out, a reprinted table pointed to,
+ * a code block left out). The model was not asked again, so it is no retry.
+ */
+export const assistantReplyReplacedEventSchema = z.object({
+  text: z.string(),
+  reason: z.string().optional().default(""),
+});
+
+/** The other agent's corrected reply; the reply being shown is untouched. */
+export const assistantDelegateReplyReplacedEventSchema = assistantReplyReplacedEventSchema.extend({
   agentId: z.string().optional().default(""),
   delegateCallId: z.string(),
 });
@@ -1887,10 +1910,15 @@ export type AssistantStreamEvent =
   | { event: "tool_started"; data: z.infer<typeof assistantToolStartedEventSchema> }
   | { event: "tool_finished"; data: z.infer<typeof assistantToolFinishedEventSchema> }
   | { event: "retrying"; data: z.infer<typeof assistantRetryingEventSchema> }
+  | { event: "reply_replaced"; data: z.infer<typeof assistantReplyReplacedEventSchema> }
   | { event: "delegate_started"; data: z.infer<typeof assistantDelegateStartedEventSchema> }
   | { event: "delegate_delta"; data: z.infer<typeof assistantDelegateTextEventSchema> }
   | { event: "delegate_reasoning"; data: z.infer<typeof assistantDelegateTextEventSchema> }
   | { event: "delegate_retrying"; data: z.infer<typeof assistantDelegateRetryingEventSchema> }
+  | {
+      event: "delegate_reply_replaced";
+      data: z.infer<typeof assistantDelegateReplyReplacedEventSchema>;
+    }
   | { event: "delegate_finished"; data: z.infer<typeof assistantDelegateFinishedEventSchema> }
   | { event: "artifact"; data: z.infer<typeof assistantArtifactEventSchema> }
   | { event: "artifact_removed"; data: z.infer<typeof assistantArtifactRemovedEventSchema> }
@@ -1948,6 +1976,8 @@ export function parseAssistantStreamEvent(event: string, raw: string): Assistant
       return { event, data: assistantToolFinishedEventSchema.parse(data) };
     case "retrying":
       return { event, data: assistantRetryingEventSchema.parse(data) };
+    case "reply_replaced":
+      return { event, data: assistantReplyReplacedEventSchema.parse(data) };
     case "delegate_started":
       return { event, data: assistantDelegateStartedEventSchema.parse(data) };
     case "delegate_delta":
@@ -1955,6 +1985,8 @@ export function parseAssistantStreamEvent(event: string, raw: string): Assistant
       return { event, data: assistantDelegateTextEventSchema.parse(data) };
     case "delegate_retrying":
       return { event, data: assistantDelegateRetryingEventSchema.parse(data) };
+    case "delegate_reply_replaced":
+      return { event, data: assistantDelegateReplyReplacedEventSchema.parse(data) };
     case "delegate_finished":
       return { event, data: assistantDelegateFinishedEventSchema.parse(data) };
     case "artifact":

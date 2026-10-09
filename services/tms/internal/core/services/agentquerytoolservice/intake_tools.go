@@ -58,12 +58,10 @@ func (t *getShipmentDraftTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"documentId": map[string]any{
-				"type": "string",
-				"description": "The id of the uploaded document the draft was read from: " +
-					"an attachment on the message, a documentId in get_inbound_message, or " +
-					"this run's subject.",
-			},
+			"documentId": agenttoolschema.RecordIDText(permission.ResourceDocument,
+				"The id of the uploaded document the draft was read from: "+
+					"an attachment on the message, a documentId in get_inbound_message, or "+
+					"this run's subject."),
 		},
 		"required":             []string{"documentId"},
 		"additionalProperties": false,
@@ -287,28 +285,21 @@ func (t *quoteShipmentTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"customerId": map[string]any{
-				"type":        "string",
-				"description": "The customer being billed, from list_customers.",
-			},
-			"serviceTypeId": map[string]any{
-				"type":        "string",
-				"description": "The service type, from list_service_types.",
-			},
-			"shipmentTypeId": map[string]any{
-				"type":        "string",
-				"description": "The shipment type, from list_shipment_types.",
-			},
+			"customerId": agenttoolschema.RecordIDText(permission.ResourceCustomer,
+				"The customer being billed, from list_customers."),
+			"serviceTypeId": agenttoolschema.RecordIDText(permission.ResourceServiceType,
+				"The service type, from list_service_types."),
+			"shipmentTypeId": agenttoolschema.RecordIDText(permission.ResourceShipmentType,
+				"The shipment type, from list_shipment_types."),
 			"stops": map[string]any{
 				"type":        "array",
 				"description": "The stops in travel order: at least a pickup and a delivery.",
 				"items": map[string]any{
 					"type": "object",
 					"properties": map[string]any{
-						"locationId": map[string]any{
-							"type":        "string",
-							"description": "A location id from list_locations.",
-						},
+						"locationId": agenttoolschema.RecordIDText(
+							permission.ResourceLocation, "A location id from list_locations.",
+						),
 						"type": agenttoolschema.Enum("", agenttoolschema.StopTypes),
 						"date": map[string]any{
 							"type":        "string",
@@ -600,21 +591,19 @@ func (t *shopCarriersTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentId": map[string]any{
-				"type": "string",
-				"description": "The saved shipment to price, from search_shipments or " +
-					"list_shipments, or the page you are on.",
-			},
+			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
+				"The saved shipment to price, from search_shipments or "+
+					"list_shipments, or the page you are on."),
 			"strategy": agenttoolschema.Enum(
 				"How to rank the options. Defaults to the organization's own choice.",
 				shopStrategies,
 			),
-			"carrierIds": map[string]any{
+			"carrierIds": agenttoolschema.OfResource(map[string]any{
 				"type":  "array",
 				"items": map[string]any{"type": "string"},
 				"description": "An explicit shortlist of carrier ids from list_carriers. " +
 					"Empty means the routing guide's candidates.",
-			},
+			}, permission.ResourceCarrier),
 			"limit": map[string]any{
 				"type":        "integer",
 				"description": "How many options to return; defaults to 5, at most 20.",

@@ -172,6 +172,7 @@ type ToolOutcome struct {
 	// Taint is the outside content the call read.
 	Taint   []agent.TaintMark `json:"taint,omitempty"`
 	Found   []string          `json:"found,omitempty"`
+	HandOff []pulid.ID        `json:"handOff,omitempty"`
 	Verdict string            `json:"verdict,omitempty"`
 	// Memories are what a recall read back; SavedMemory is what a remember
 	// kept or offered to keep.
@@ -196,6 +197,7 @@ func (o toolOutcome) exported() ToolOutcome {
 		DelegateReport: o.delegateReport,
 		Taint:          o.taint,
 		Found:          o.found,
+		HandOff:        o.handOff,
 		Verdict:        o.verdict,
 		Memories:       o.memories,
 		SavedMemory:    o.saved,
@@ -214,6 +216,7 @@ func (o ToolOutcome) internal() toolOutcome {
 		delegateReport: o.DelegateReport,
 		taint:          o.Taint,
 		found:          o.Found,
+		handOff:        o.HandOff,
 		verdict:        o.Verdict,
 		memories:       o.Memories,
 		saved:          o.SavedMemory,
@@ -460,6 +463,12 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 		held = slices.DeleteFunc(
 			held,
 			func(name string) bool { return name == agentdefinition.CoreToolOpenPage },
+		)
+	}
+	if req.RunID.IsNil() {
+		held = slices.DeleteFunc(
+			held,
+			func(name string) bool { return name == agentdefinition.CoreToolRaiseException },
 		)
 	}
 	// Only the agent a person is talking to delegates, and only to agents
@@ -911,7 +920,12 @@ func (s *Service) FindFor(
 		loaded = append(loaded, spec.Name)
 	}
 
-	return FoundTools{Content: answer.Content, Loaded: loaded, Found: answer.Found}
+	return FoundTools{
+		Content: answer.Content,
+		Loaded:  loaded,
+		Found:   answer.Found,
+		HandOff: answer.HandOff,
+	}
 }
 
 const getToolPrefix = "get_"

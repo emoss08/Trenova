@@ -37,6 +37,16 @@ func TestDelegateScope_TagsWhatAReaderMustNotApplyToTheReply(t *testing.T) {
 	assert.Equal(t, AssistantEventDelegateRetrying, restart.Event)
 	assert.Equal(t, "call_1", restart.Data.(AssistantRetryingEvent).DelegateCallID)
 
+	replaced, shown := scope.Tag(StreamEvent{Event: AssistantEventReplyReplaced,
+		Data: AssistantReplyReplacedEvent{Text: "Saved.", Reason: "ids"}})
+	require.True(t, shown)
+	assert.Equal(t, AssistantEventDelegateReplyReplaced, replaced.Event,
+		"another agent's corrected reply must not replace the one being shown")
+	encoded, err = sonic.MarshalString(replaced.Data)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"agentId":"`+scope.AgentID.String()+
+		`","delegateCallId":"call_1","text":"Saved.","reason":"ids"}`, encoded)
+
 	started, _ := scope.Tag(StreamEvent{Event: AssistantEventToolStarted,
 		Data: AssistantToolStartedEvent{CallID: "call_d1", Name: "create_report"}})
 	assert.Equal(t, AssistantEventToolStarted, started.Event, "tool events keep their names")

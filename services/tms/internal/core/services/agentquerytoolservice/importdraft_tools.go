@@ -359,18 +359,6 @@ func provideSetRequiredFieldTool(
 
 func (t *setRequiredFieldTool) Name() string { return string(pagedraft.ActionSetRequiredField) }
 
-func (t *setRequiredFieldTool) Recipe() []string {
-	return []string{
-		"list_customers",
-		"list_service_types",
-		"list_shipment_types",
-		"list_formula_templates",
-		"ask_user",
-		string(pagedraft.ActionSetRequiredField),
-		"get_customer",
-	}
-}
-
 func (t *setRequiredFieldTool) Description() string {
 	return "Set the customer, service type, shipment type or rating method on the import " +
 		"page, by record id. Find the record first with list_customers, list_service_types, " +
@@ -385,11 +373,14 @@ func (t *setRequiredFieldTool) ParamSchema() map[string]any {
 			paramField: agenttoolschema.Enum(
 				"Which of the four the record is for.", importRequiredFields,
 			),
-			"recordId": map[string]any{
-				"type": "string",
-				"description": "The record's id, from list_customers, list_service_types, " +
+			"recordId": agenttoolschema.KindID(
+				"The record's id, from list_customers, list_service_types, "+
 					"list_shipment_types or list_formula_templates to match the field.",
-			},
+				permission.RecordKind(permission.ResourceCustomer),
+				permission.RecordKind(permission.ResourceServiceType),
+				permission.RecordKind(permission.ResourceShipmentType),
+				permission.RecordKind(permission.ResourceFormulaTemplate),
+			),
 		},
 		"required":             []string{"field", "recordId"},
 		"additionalProperties": false,
@@ -487,10 +478,8 @@ func (t *setStopLocationTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"stopIndex": map[string]any{"type": "integer", "description": stopIndexDescription},
-			"locationId": map[string]any{
-				"type":        "string",
-				"description": "The location's id, from list_locations or create_location.",
-			},
+			"locationId": agenttoolschema.RecordIDText(permission.ResourceLocation,
+				"The location's id, from list_locations or create_location."),
 		},
 		"required":             []string{"stopIndex", "locationId"},
 		"additionalProperties": false,
@@ -562,10 +551,6 @@ type setStopScheduleTool struct{}
 func newSetStopScheduleTool() serviceports.AgentQueryTool { return &setStopScheduleTool{} }
 
 func (t *setStopScheduleTool) Name() string { return string(pagedraft.ActionSetStopSchedule) }
-
-func (t *setStopScheduleTool) Recipe() []string {
-	return []string{"ask_user", string(pagedraft.ActionSetStopSchedule)}
-}
 
 func (t *setStopScheduleTool) Description() string {
 	return "Set when a stop on the import page is scheduled: the start of its window and, " +

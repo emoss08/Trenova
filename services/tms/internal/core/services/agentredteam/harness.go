@@ -445,7 +445,11 @@ func (fx *effects) Find(t *agentruntime.Turn, arguments map[string]any) agentrun
 	found := fx.rt.FindFor(fx.ctx, t.Request(), t.ToolsState(), arguments)
 	t.LoadTools(found.Loaded)
 
-	return agentruntime.FindAnswer{Content: found.Content, Found: found.Found}
+	return agentruntime.FindAnswer{
+		Content: found.Content,
+		Found:   found.Found,
+		HandOff: found.HandOff,
+	}
 }
 
 func (fx *effects) Emit(event serviceports.StreamEvent) {

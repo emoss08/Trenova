@@ -2,6 +2,7 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
@@ -172,6 +173,9 @@ type shipmentRow struct {
 	BOL                string       `json:"bol,omitempty"`
 	Status             string       `json:"status"`
 	Customer           string       `json:"customer,omitempty"`
+	Pickup             string       `json:"pickup,omitempty"`
+	Delivery           string       `json:"delivery,omitempty"`
+	Drivers            string       `json:"drivers,omitempty"`
 	TotalCharge        string       `json:"totalCharge,omitempty"`
 	ActualShipDate     optionalDate `json:"actualShipDate"`
 	ActualDeliveryDate optionalDate `json:"actualDeliveryDate"`
@@ -184,7 +188,10 @@ func newListShipmentsTool(repo repositories.ShipmentRepository) serviceports.Age
 		entityPlural: "shipments",
 		summary: "List shipments by status, billing state, dates or charges: anything with " +
 			"a date or threshold, such as picking up today or delivered yesterday. " +
-			"search_shipments matches text like a pro number.",
+			"Each row carries its first pickup and last delivery (place and window) and " +
+			"who is driving each move (or that it needs a driver), so ordering by pickup or " +
+			"finding loads that need a driver needs no get_shipment. search_shipments matches words like a " +
+			"pro number, customer or city.",
 		resource: permission.ResourceShipment,
 		config:   querybuilder.GetFieldConfiguration((*shipment.Shipment)(nil)),
 		fields: []listField{
@@ -220,7 +227,7 @@ func newListShipmentsTool(repo repositories.ShipmentRepository) serviceports.Age
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
 			result, err := repo.List(ctx, &repositories.ListShipmentsRequest{
 				Filter:          opts,
-				ShipmentOptions: repositories.ShipmentOptions{IncludeCustomer: true},
+				ShipmentOptions: repositories.ShipmentOptions{IncludeCustomer: true, IncludeRoute: true},
 			})
 			if err != nil {
 				return nil, err
@@ -230,7 +237,37 @@ func newListShipmentsTool(repo repositories.ShipmentRepository) serviceports.Age
 				return toShipmentRow(item)
 			}), nil
 		},
+		count: func(ctx context.Context, opts *pagination.QueryOptions) (int, error) {
+			return countShipments(ctx, repo, opts, repositories.ShipmentOptions{})
+		},
 	})
+}
+
+var errNoTotal = errors.New("the shipment count was not returned")
+
+func countShipments(
+	ctx context.Context,
+	repo repositories.ShipmentRepository,
+	opts *pagination.QueryOptions,
+	options repositories.ShipmentOptions,
+) (int, error) {
+	probe := *opts
+	probe.Pagination = pagination.Info{Limit: 1}
+	probe.Sort = nil
+
+	result, err := repo.List(ctx, &repositories.ListShipmentsRequest{
+		Filter:          &probe,
+		Cursor:          pagination.CursorInfo{Limit: 1, IncludeTotalCount: true},
+		ShipmentOptions: options,
+	})
+	if err != nil {
+		return 0, err
+	}
+	if result.TotalCount == nil {
+		return 0, errNoTotal
+	}
+
+	return *result.TotalCount, nil
 }
 
 // toShipmentRow is the one shipment projection, for the same reasons.
@@ -251,6 +288,10 @@ func toShipmentRow(item *shipment.Shipment) shipmentRow {
 	if item.Customer != nil {
 		row.Customer = item.Customer.Name
 	}
+	route := routeOf(item)
+	row.Pickup = route.pickup
+	row.Delivery = route.delivery
+	row.Drivers = route.coverage
 
 	return row
 }

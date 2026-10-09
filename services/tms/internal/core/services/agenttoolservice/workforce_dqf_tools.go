@@ -138,8 +138,11 @@ func dqfToolProviders() []any {
 }
 
 func verificationIDProperty() map[string]any {
-	return agenttoolschema.ID("The previous employer's verification",
-		"list_employment_verifications")
+	return agenttoolschema.KindID(
+		agenttoolschema.IDDescription("The previous employer's verification",
+			"list_employment_verifications"),
+		permission.KindEmploymentVerification,
+	)
 }
 
 func verificationRecord(entity *worker.WorkerEmploymentVerification) toolpreview.Record {

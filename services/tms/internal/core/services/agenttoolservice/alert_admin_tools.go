@@ -173,7 +173,9 @@ func (e *alertEdit) build(
 
 func newUpdateTableChangeAlertTool(alerts alertKeeper) serviceports.AgentTool {
 	properties := alertProperties(keepWhenLeftOut)
-	properties[paramAlertID] = stringProperty(alertSupplier, 0)
+	properties[paramAlertID] = agenttoolschema.RecordIDText(
+		permission.ResourceTableChangeAlert, alertSupplier,
+	)
 
 	return newReceivableTool(&receivableSpec{
 		name: "update_table_change_alert",
@@ -259,7 +261,9 @@ func newSetTableChangeAlertStatusTool(alerts alertKeeper) serviceports.AgentTool
 		rationale: "Pauses or resumes an alert whose notices go to the person who owns it; " +
 			"the opposite call undoes it.",
 		properties: map[string]any{
-			paramAlertID: stringProperty(alertSupplier, 0),
+			paramAlertID: agenttoolschema.RecordIDText(
+				permission.ResourceTableChangeAlert, alertSupplier,
+			),
 			fieldStatus: agenttoolschema.Enum("Paused stops its notices; Active resumes them.",
 				alertStatuses),
 		},
@@ -335,7 +339,9 @@ func newDeleteTableChangeAlertTool(alerts alertKeeper) serviceports.AgentTool {
 		maxTier:     agent.TierActWithApproval,
 		rationale: "Removes an alert whose notices went to the person who owns it; " +
 			"create_table_change_alert sets it up again.",
-		properties:  map[string]any{paramAlertID: stringProperty(alertSupplier, 0)},
+		properties: map[string]any{paramAlertID: agenttoolschema.RecordIDText(
+			permission.ResourceTableChangeAlert, alertSupplier,
+		)},
 		required:    []string{paramAlertID},
 		searchTerms: []string{"delete alert", "remove notification", "stop alerting"},
 		target:      targetAlert,

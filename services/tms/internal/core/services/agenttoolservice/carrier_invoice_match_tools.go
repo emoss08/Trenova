@@ -85,8 +85,8 @@ func (t *carrierInvoiceMatchTool) ParamSchema() map[string]any {
 	}
 
 	return objectParams(map[string]any{
-		paramMatchID: agenttoolschema.IDText("The carrier invoice match, from " + matchSourcesTool +
-			". Never guess one."),
+		paramMatchID: agenttoolschema.RecordIDText(permission.ResourceCarrierInvoiceMatch,
+			"The carrier invoice match, from "+matchSourcesTool+". Never guess one."),
 		paramMatchNote: stringProperty(t.decision.noteText, maxMatchNoteChars),
 	}, required...)
 }
@@ -373,11 +373,7 @@ func provideCreateCarrierInvoiceMatchTool(
 func (t *createCarrierInvoiceMatchTool) Name() string { return "create_carrier_invoice_match" }
 
 func (t *createCarrierInvoiceMatchTool) Recipe() []string {
-	return []string{
-		"list_edi_carrier_invoices",
-		"link_edi_carrier_invoice_to_carrier",
-		"create_carrier_invoice_match",
-	}
+	return []string{"list_edi_carrier_invoices", "create_carrier_invoice_match"}
 }
 
 func (t *createCarrierInvoiceMatchTool) Description() string {
@@ -389,8 +385,8 @@ func (t *createCarrierInvoiceMatchTool) Description() string {
 
 func (t *createCarrierInvoiceMatchTool) ParamSchema() map[string]any {
 	return objectParams(map[string]any{
-		paramEDIInvoiceID: agenttoolschema.IDText("The EDI carrier invoice, from " +
-			ediInvoiceSourcesTool + ". Never guess one."),
+		paramEDIInvoiceID: agenttoolschema.KindID("The EDI carrier invoice, from "+
+			ediInvoiceSourcesTool+". Never guess one.", permission.KindEDICarrierInvoice),
 		fieldShipmentID: agenttoolschema.RecordIDText(
 			permission.ResourceShipment,
 			"The shipment it bills, from search_shipments, when the "+
@@ -577,8 +573,8 @@ func (t *linkEDICarrierInvoiceTool) Description() string {
 
 func (t *linkEDICarrierInvoiceTool) ParamSchema() map[string]any {
 	return objectParams(map[string]any{
-		paramEDIInvoiceID: agenttoolschema.IDText("The EDI carrier invoice, from " +
-			ediInvoiceSourcesTool + ". Never guess one."),
+		paramEDIInvoiceID: agenttoolschema.KindID("The EDI carrier invoice, from "+
+			ediInvoiceSourcesTool+". Never guess one.", permission.KindEDICarrierInvoice),
 		paramCarrierID: agenttoolschema.RecordIDText(
 			permission.ResourceCarrier,
 			"The carrier it came from, from list_carriers or "+

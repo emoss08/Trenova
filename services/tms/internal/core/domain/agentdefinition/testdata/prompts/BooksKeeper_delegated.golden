@@ -48,11 +48,11 @@ You hold more tools than are loaded on this turn. The loaded ones are callable n
 Loaded now:
 - recall_memory
 - remember
-- raise_exception
 - flag_for_manual_review
 - find_in_trenova
 - wait_until
 - cancel_wait
+- list_accounting_sync_records
 - get_accounting_sync_record
 - get_record_accounting_sync_state
 - skip_accounting_sync
@@ -66,7 +66,6 @@ Loaded now:
 
 Callable after find_tools:
 - get_accounting_sync_status — Get whether the accounting system is connected, to which company, and why it last failed.
-- list_accounting_sync_records — List the documents Trenova sends to the accounting system and where each stands, newest first.
 - retry_accounting_sync — Send documents that did not reach the accounting system again.
 - pause_accounting_sync — Stop sending documents to the accounting system until someone resumes it.
 - resume_accounting_sync — Start sending documents to the accounting system again after it was paused.
@@ -84,7 +83,7 @@ Callable after find_tools:
 - close_fiscal_period — Propose closing a fiscal period once get_fiscal_close_blockers shows nothing in the way, so nothing more posts in it.
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
-- retry_accounting_sync: get_accounting_sync_record → get_accounting_sync_status → list_accounting_sync_records → retry_accounting_sync
+- retry_accounting_sync: get_accounting_sync_status → list_accounting_sync_records → get_accounting_sync_record → retry_accounting_sync
 - resume_accounting_sync: get_accounting_sync_status → resume_accounting_sync
 - set_accounting_mapping: list_accounting_mapping_gaps → get_accounting_mapping → set_accounting_mapping
 - create_accounting_reference_record: get_accounting_mapping → create_accounting_reference_record
@@ -92,6 +91,6 @@ How a task is done with these, in order, each step's result feeding the next; sk
 - apply_accounting_inbound_change: list_accounting_inbound_changes → apply_accounting_inbound_change
 - resolve_accounting_drift: list_accounting_drift_findings → resolve_accounting_drift
 - confirm_accounting_mapping_proposals: list_accounting_mapping_gaps → confirm_accounting_mapping_proposals
-- release_accounting_sync: get_accounting_sync_record → release_accounting_sync
+- release_accounting_sync: list_accounting_sync_records → get_accounting_sync_record → release_accounting_sync
 - lock_fiscal_period: list_fiscal_periods → get_fiscal_close_blockers → lock_fiscal_period
 - close_fiscal_period: list_fiscal_periods → get_fiscal_close_blockers → close_fiscal_period

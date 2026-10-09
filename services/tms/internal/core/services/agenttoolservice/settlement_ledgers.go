@@ -37,6 +37,7 @@ var (
 func driverSettlementLedger() settlementLedger[driversettlement.Settlement] {
 	return settlementLedger[driversettlement.Settlement]{
 		resource: permission.ResourceDriverSettlement,
+		kind:     permission.RecordKind(permission.ResourceDriverSettlement),
 		artifact: driverSettlementEntity,
 		noun:     nounDriverSettlement,
 		sources:  driverSettlementReads,
@@ -152,6 +153,7 @@ func voidEffects(entity *driversettlement.Settlement) string {
 func carrierSettlementLedger() settlementLedger[carriersettlement.CarrierSettlement] {
 	return settlementLedger[carriersettlement.CarrierSettlement]{
 		resource:  permission.ResourceCarrierSettlement,
+		kind:      permission.RecordKind(permission.ResourceCarrierSettlement),
 		artifact:  carrierSettlementEntity,
 		noun:      nounCarrierSettlement,
 		sources:   carrierSettlementRead,

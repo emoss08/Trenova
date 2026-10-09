@@ -1,0 +1,91 @@
+defaults:
+  tags: [conversation]
+
+scenarios:
+  - name: correction-mid-flow
+    description: >
+      The person proposes something on the wrong load and corrects it: the agent must drop the
+      first proposal's target and work on the one meant.
+    agent: Dispatch desk
+    steps:
+      - say: "add a note on the acme load that the shipper wants a call before arrival"
+        expect:
+          maxFailedCalls: 2
+      - say: "no wait, not the steel one, the one going LA to chicago"
+        expect:
+          proposals: [{ tool: add_shipment_comment }]
+          rubric: >
+            Puts the note on SEED-SHP-001 (Acme, LA to Chicago), not SEED-SHP-005, and does not
+            also add it to the first load.
+
+  - name: ambiguous-load-asks
+    description: >
+      Eleven FreshHaul reefers to LA exist locally; "the freshhaul load" is not one of them, so the
+      agent should ask, not pick one.
+    agent: Shipment Assistant
+    steps:
+      - say: "cancel the freshhaul load to LA"
+        expect:
+          noProposals: true
+          calls: ["search_shipments|list_shipments"]
+          rubric: >
+            Says several FreshHaul loads to Los Angeles match and asks which one (by pro number,
+            pickup date or status) instead of cancelling any of them.
+
+  - name: remember-a-customer-rule
+    description: A standing instruction about a customer, kept for later conversations.
+    agent: Dispatch desk
+    tags: [memory]
+    steps:
+      - say: "remember acme always needs 24 hours notice before we deliver"
+        expect:
+          calls: ["remember"]
+          rubric: >
+            Records the rule against Acme Manufacturing (not as a general instruction), and says
+            whether it is kept now or waits for approval.
+
+  - name: wait-for-delivery
+    description: Parking work until something happens on the road.
+    agent: Dispatch desk
+    tags: [waits]
+    steps:
+      - say: "let me know when SEED-SHP-008 delivers in chicago"
+        expect:
+          calls: ["wait_until"]
+          rubric: >
+            Sets a wait for the Chicago delivery stop's arrival or departure on SEED-SHP-008,
+            says what it will do when it fires, and does not poll.
+
+  - name: two-asks-one-message
+    description: Two unrelated requests in one breath, both done.
+    agent: Bench · Operations
+    steps:
+      - say: "whats on SEED-SHP-004 for weight, and is trc-002 free tomorrow"
+        expect:
+          calls: ["get_shipment|search_shipments", "list_tractors|get_dispatch_board|list_shipments"]
+          noProposals: true
+          rubric: Answers both, each from a lookup, in two short parts.
+
+  - name: long-session-context
+    description: >
+      Six turns on one shipment where later turns lean on earlier ones by pronoun only.
+    agent: Bench · Operations
+    steps:
+      - say: "pull up SEED-SHP-006"
+      - say: "how many moves is it"
+        expect:
+          maxCalls: 2
+          replyIncludes: ["3|three"]
+      - say: "who's on the second one"
+        expect:
+          maxCalls: 2
+      - say: "and where does the last one end up"
+        expect:
+          maxCalls: 2
+          replyIncludes: ["miami"]
+      - say: "whats the total on it"
+        expect:
+          maxCalls: 2
+          facts:
+            - sql: select total_charge_amount from shipments where pro_number = 'SEED-SHP-006'
+              note: the shipment's total

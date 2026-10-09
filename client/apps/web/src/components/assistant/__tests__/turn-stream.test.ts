@@ -1,10 +1,12 @@
 import { parseAssistantStreamEvent, type AssistantStreamEvent } from "@/types/assistant";
 import { describe, expect, it } from "vitest";
 import {
+  NO_HAND_OFF_AGENTS,
   advanceTurn,
   describeTurnFailure,
   initialTurnState,
   reduceTurn,
+  turnHandOffAgents,
   type TurnState,
 } from "../turn-stream";
 
@@ -757,5 +759,202 @@ describe("reduceTurn memory", () => {
 
     expect(state.usedMemoryIds).toEqual(["amem_1", "amem_2"]);
     expect(state.savedMemories).toEqual([{ id: "amem_3", callId: "call_1", pending: true }]);
+  });
+});
+
+/** An event as the server writes it, parsed from the wire like the client reads it. */
+function wire(event: string, data: unknown): AssistantStreamEvent {
+  const parsed = parseAssistantStreamEvent(event, JSON.stringify(data));
+  if (parsed === null) {
+    throw new Error(`the client does not know ${event}`);
+  }
+  return parsed;
+}
+
+/**
+ * A reply the runtime corrected after it streamed (ids taken out, a reprinted
+ * table pointed to, a code block left out) arrives as reply_replaced with the
+ * whole reply as recorded (AssistantReplyReplacedEvent). The model was not
+ * asked again, so the reader must not see a retry.
+ */
+describe("reduceTurn reply_replaced", () => {
+  it("parses the event from the wire, with and without a reason", () => {
+    expect(
+      parseAssistantStreamEvent(
+        "reply_replaced",
+        '{"text":"PRO-1 is late.","reason":"The reply named internal record ids."}',
+      ),
+    ).toEqual({
+      event: "reply_replaced",
+      data: { text: "PRO-1 is late.", reason: "The reply named internal record ids." },
+    });
+    expect(parseAssistantStreamEvent("reply_replaced", '{"text":""}')).toEqual({
+      event: "reply_replaced",
+      data: { text: "", reason: "" },
+    });
+    expect(() => parseAssistantStreamEvent("reply_replaced", '{"reason":"x"}')).toThrow();
+  });
+
+  it("swaps the streamed reply for the recorded one without showing a retry", () => {
+    const state = run([
+      accepted,
+      wire("message", {
+        content: "Let me check.",
+        toolCalls: [{ id: "c1", name: "list_shipments" }],
+        model: "m",
+      }),
+      wire("tool_started", { callId: "c1", name: "list_shipments", arguments: {} }),
+      wire("tool_finished", { callId: "c1", name: "list_shipments", content: "{}" }),
+      wire("reasoning", { text: "Two are late." }),
+      wire("delta", { text: "PRO-1 (ID shp_01M3Q2Y4SRFE0YW60JY6F5NRW7) " }),
+      wire("delta", { text: "is late." }),
+      wire("reply_replaced", { text: "PRO-1 is late.", reason: "ids" }),
+    ]);
+
+    expect(state.retrying).toBeNull();
+    expect(state.status).toBe("streaming");
+    expect(state.segments).toEqual([
+      { kind: "text", text: "Let me check.", closed: true },
+      {
+        kind: "tool",
+        callId: "c1",
+        name: "list_shipments",
+        arguments: {},
+        status: "done",
+        content: "{}",
+      },
+      { kind: "reasoning", text: "Two are late.", closed: true },
+      { kind: "text", text: "PRO-1 is late.", closed: false },
+    ]);
+  });
+
+  it("leaves one copy of the reply, the last one recorded", () => {
+    const state = run([
+      accepted,
+      wire("delta", { text: "Load 12345 is in transit.\n```python\nprint('hi')\n```" }),
+      wire("reply_replaced", {
+        text: "Load 12345 is in transit.\n[A code block was left out.]",
+        reason: "The reply held a code block, which was left out.",
+      }),
+      wire("reply_replaced", { text: "Load 12345 is in transit.", reason: "again" }),
+    ]);
+
+    expect(state.segments).toEqual([
+      { kind: "text", text: "Load 12345 is in transit.", closed: false },
+    ]);
+    expect(state.retrying).toBeNull();
+  });
+
+  it("places the recorded reply even when nothing of it had streamed", () => {
+    const state = run([accepted, wire("reply_replaced", { text: "S1 is in Dallas." })]);
+
+    expect(state.segments).toEqual([{ kind: "text", text: "S1 is in Dallas.", closed: false }]);
+    expect(state.status).toBe("streaming");
+  });
+});
+
+/**
+ * find_tools names the person's other agents that hold what this agent could
+ * not load on tool_finished (handOffAgents), so the Desk can offer the
+ * hand-off before the turn is saved.
+ */
+describe("hand-off agents on a live turn", () => {
+  function foundTools(callId: string, handOffAgents?: unknown): AssistantStreamEvent {
+    return wire("tool_finished", { callId, name: "find_tools", content: "{}", handOffAgents });
+  }
+
+  function handOffOf(event: AssistantStreamEvent): unknown {
+    return event.event === "tool_finished" ? event.data.handOffAgents : "not tool_finished";
+  }
+
+  it("parses the ids, and reads an older server's missing or null list as none", () => {
+    expect(handOffOf(foundTools("c1", ["agdef_billing"]))).toEqual(["agdef_billing"]);
+    expect(handOffOf(foundTools("c1"))).toBeUndefined();
+    expect(handOffOf(foundTools("c1", null))).toBeNull();
+  });
+
+  it("keeps the ids on the call's step and reads the newest step that named any", () => {
+    const state = run([
+      accepted,
+      wire("tool_started", { callId: "c1", name: "find_tools", arguments: {} }),
+      foundTools("c1", ["agdef_compliance"]),
+      wire("tool_started", { callId: "c2", name: "find_tools", arguments: {} }),
+      foundTools("c2", ["agdef_billing", "agdef_cash"]),
+      wire("tool_started", { callId: "c3", name: "find_tools", arguments: {} }),
+      foundTools("c3", []),
+      wire("delta", { text: "The billing assistant can do that." }),
+    ]);
+
+    expect(state.segments[0]).toMatchObject({ handOffAgents: ["agdef_compliance"] });
+    expect(state.segments[2]).not.toHaveProperty("handOffAgents", expect.anything());
+    expect(turnHandOffAgents(state.segments)).toEqual(["agdef_billing", "agdef_cash"]);
+  });
+
+  it("is the same value while the reply streams on, so a reader keyed on it does not run again", () => {
+    const named = run([
+      accepted,
+      wire("tool_started", { callId: "c1", name: "find_tools", arguments: {} }),
+      foundTools("c1", ["agdef_billing"]),
+    ]);
+    const streamed = run(
+      [wire("delta", { text: "The billing " }), wire("delta", { text: "assistant can." })],
+      named,
+    );
+
+    expect(turnHandOffAgents(streamed.segments)).toBe(turnHandOffAgents(named.segments));
+  });
+
+  it("names nobody once the person has written past the answer that named them", () => {
+    const named = run([
+      accepted,
+      wire("tool_started", { callId: "c1", name: "find_tools", arguments: {} }),
+      foundTools("c1", ["agdef_billing"]),
+    ]);
+    const steered = run(
+      [wire("steered", { id: "aqm_9", content: "Never mind, just list them.", mentions: [] })],
+      named,
+    );
+    const answeredAgain = run(
+      [
+        wire("tool_started", { callId: "c2", name: "find_tools", arguments: {} }),
+        foundTools("c2", ["agdef_cash"]),
+      ],
+      steered,
+    );
+
+    expect(turnHandOffAgents(named.segments, named.interjections)).toEqual(["agdef_billing"]);
+    expect(turnHandOffAgents(steered.segments, steered.interjections)).toBe(NO_HAND_OFF_AGENTS);
+    expect(turnHandOffAgents(answeredAgain.segments, answeredAgain.interjections)).toEqual([
+      "agdef_cash",
+    ]);
+  });
+
+  it("names nobody before a find_tools answer has, nor for a delegate's own search", () => {
+    expect(turnHandOffAgents(run([accepted]).segments)).toBe(NO_HAND_OFF_AGENTS);
+
+    const delegated = run([
+      accepted,
+      wire("tool_started", {
+        callId: "call_d",
+        name: "delegate_task",
+        arguments: { agentId: "agdef_other" },
+      }),
+      wire("tool_started", {
+        callId: "c9",
+        name: "find_tools",
+        arguments: {},
+        agentId: "agdef_other",
+        delegateCallId: "call_d",
+      }),
+      wire("tool_finished", {
+        callId: "c9",
+        name: "find_tools",
+        content: "{}",
+        handOffAgents: ["agdef_billing"],
+        agentId: "agdef_other",
+        delegateCallId: "call_d",
+      }),
+    ]);
+    expect(turnHandOffAgents(delegated.segments)).toBe(NO_HAND_OFF_AGENTS);
   });
 });

@@ -90,6 +90,7 @@ func wfWorkerProperty(what string) map[string]any {
 		toolschema.KeyType: toolschema.TypeString,
 		toolschema.KeyDescription: what + ", by id from search_worker or list_workers. A " +
 			"name is not an id.",
+		toolschema.KeyRecordOf: permission.ResourceWorker.String(),
 	}
 }
 

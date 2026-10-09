@@ -260,11 +260,9 @@ func (t *testFormulaExpressionTool) ParamSchema() map[string]any {
 					"every load unless a load sets its own.",
 			},
 			"scenarios": scenarioSchema(),
-			"shipmentId": map[string]any{
-				"type": "string",
-				"description": "Optional: price a saved shipment instead of sample loads, " +
-					"from list_shipments or search_shipments.",
-			},
+			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
+				"Optional: price a saved shipment instead of sample loads, "+
+					"from list_shipments or search_shipments."),
 		},
 		"required":             []string{"expression"},
 		"additionalProperties": false,
@@ -382,14 +380,19 @@ func (t *proposeFormulaTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"expression": map[string]any{
-				"type":        "string",
-				"description": "The expression, built only from describe_formula_schema's names.",
+				"type": "string",
+				"description": "The expression, built only from describe_formula_schema's names " +
+					"and this formula's variables. Write every rate, fee, minimum or percentage " +
+					"as a variable, never as a number in the expression: one template prices " +
+					"every customer, and a figure written into it can only be changed by editing " +
+					"the formula. baseRate * totalDistance, not 2.85 * totalDistance.",
 			},
 			"schemaId": map[string]any{"type": "string", "description": schemaIDDescription},
 			"variables": map[string]any{
 				"type": "array",
-				"description": "The formula's own variables: any input that is not a " +
-					"shipment variable, with a sensible default.",
+				"description": "The formula's own variables: every rate, fee, minimum and " +
+					"percentage the expression uses, and any other input that is not a shipment " +
+					"variable. Give the figure the person named as its default.",
 				"maxItems": pagedraft.MaxFormulaVariables,
 				"items": map[string]any{
 					"type": "object",

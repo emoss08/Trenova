@@ -1,0 +1,68 @@
+defaults:
+  agent: Billing exceptions
+  tags: [billing, read]
+
+scenarios:
+  - name: ready-to-invoice
+    description: End of day, what can go out the door.
+    steps:
+      - say: "whats ready to bill"
+        expect:
+          calls: ["list_shipments|search_shipments|list_billing_queue_items|list_billing_transfer_candidates"]
+          maxFailedCalls: 0
+          noProposals: true
+          facts:
+            - sql: >
+                select count(*) from shipments where status = 'ReadyToInvoice'
+                union all
+                select count(*) from shipments where status = 'Completed'
+              note: how many are ready to invoice and how many completed can still be transferred
+          rubric: >
+            Gives both groups: the shipments already ready to invoice and the completed ones that
+            can be transferred to billing, each with its customer and amount or a table it kept,
+            and offers the next step.
+
+  - name: why-this-charge
+    description: A customer called about the total and billing wants the breakdown.
+    steps:
+      - say: "peak is asking why the denver to phoenix load is 3700. whats in that"
+        expect:
+          calls: ["search_shipments|list_shipments|get_shipment|explain_rate"]
+          maxFailedCalls: 1
+          noProposals: true
+          replyIncludes: ["SEED-SHP-009"]
+          facts:
+            - sql: select total_charge_amount from shipments where pro_number = 'SEED-SHP-009'
+              note: the shipment's total
+          rubric: >
+            Breaks the total into its linehaul and other charges from the record, with nothing
+            made up, and says where the rate came from if it can.
+
+  - name: nothing-open-for-acme
+    description: >
+      No invoices are seeded, so the honest answer is that nothing is owed. The agent should
+      say so rather than read a shipment total as a balance.
+    tags: [receivables]
+    agent: Receivables
+    steps:
+      - say: "how much does acme owe us right now, anything past 30?"
+        expect:
+          calls: ["get_ar_aging|list_ar_open_items|list_invoices|get_customer_statement"]
+          maxFailedCalls: 1
+          noProposals: true
+          replyExcludes: ["$2,950", "$3,200"]
+          rubric: >
+            Says Acme has no open invoices, so nothing is owed or past due, without reading
+            shipment totals as receivables.
+
+  - name: completed-not-invoiced
+    description: Work that was delivered but never moved to billing.
+    steps:
+      - say: "any loads that delivered but never got sent over to billing?"
+        expect:
+          calls: ["list_shipments|search_shipments|list_billing_transfer_candidates"]
+          maxFailedCalls: 0
+          noProposals: true
+          rubric: >
+            Finds Completed shipments with no invoice and not ReadyToInvoice, by pro number,
+            and explains what moving them to billing would do.

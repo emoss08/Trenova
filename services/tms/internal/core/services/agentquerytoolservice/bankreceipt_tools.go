@@ -303,11 +303,9 @@ func (t *getBankReceiptTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"bankReceiptId": map[string]any{
-				"type": "string",
-				"description": "The bank receipt's id, from list_bank_receipt_exceptions or " +
-					"this run's subject.",
-			},
+			"bankReceiptId": agenttoolschema.RecordIDText(permission.ResourceBankReceipt,
+				"The bank receipt's id, from list_bank_receipt_exceptions or "+
+					"this run's subject."),
 		},
 		"required":             []string{"bankReceiptId"},
 		"additionalProperties": false,
@@ -480,11 +478,9 @@ func (t *listCustomerPaymentsTool) ParamSchema() map[string]any {
 				"type":        "string",
 				"description": "Words to look for in the reference number or the memo.",
 			},
-			"customerId": map[string]any{
-				"type": "string",
-				"description": "Optional: only this customer's payments, by id from " +
-					"list_customers or a candidate's customerId in get_bank_receipt.",
-			},
+			"customerId": agenttoolschema.RecordIDText(permission.ResourceCustomer,
+				"Optional: only this customer's payments, by id from "+
+					"list_customers or a candidate's customerId in get_bank_receipt."),
 			paramStatus: agenttoolschema.Enum(
 				"Which payments to list. Defaults to Posted.", customerPaymentListStatuses,
 			),

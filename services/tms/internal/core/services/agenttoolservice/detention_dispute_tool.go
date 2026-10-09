@@ -46,9 +46,10 @@ func newDisputeDetentionTool(detentions detentionDisputer) serviceports.AgentToo
 		rationale: "Marks a detention charge disputed inside Trenova and holds it from " +
 			"billing; nothing is sent, but the hold is not undone by a tool.",
 		properties: map[string]any{
-			paramOccurrenceID: agenttoolschema.IDText(
-				"The occurrence, from list_detention_desk or " +
+			paramOccurrenceID: agenttoolschema.KindID(
+				"The occurrence, from list_detention_desk or "+
 					"get_shipment. Never guess one.",
+				permission.KindDetentionOccurrence,
 			),
 			paramNote: stringProperty("What the customer disputes, in their words where "+
 				"you have them.", maxOperationNoteChars),

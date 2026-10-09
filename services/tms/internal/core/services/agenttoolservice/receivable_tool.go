@@ -101,12 +101,16 @@ func (t *receivableTool[R, P]) Prerequisites() []string { return t.spec.prerequi
 func (t *receivableTool[R, P]) Recipe() []string { return t.spec.recipe }
 
 func (t *receivableTool[R, P]) ParamSchema() map[string]any {
-	return map[string]any{
+	schema := map[string]any{
 		toolschema.KeyType:                 toolschema.TypeObject,
 		toolschema.KeyProperties:           t.spec.properties,
-		toolschema.KeyRequired:             t.spec.required,
 		toolschema.KeyAdditionalProperties: false,
 	}
+	if len(t.spec.required) > 0 {
+		schema[toolschema.KeyRequired] = t.spec.required
+	}
+
+	return schema
 }
 
 func (t *receivableTool[R, P]) Policy() serviceports.ToolPolicy {

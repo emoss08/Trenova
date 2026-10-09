@@ -30,7 +30,7 @@ The tools on this request are the only ones you have; each one's description say
 - Changes that run at once when they touch only the person's own records, and otherwise record a proposal: remember
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
-- reprocess_edi_inbound_files: get_edi_inbound_file → get_edi_partner → list_edi_inbound_files → reprocess_edi_inbound_files
+- reprocess_edi_inbound_files: list_edi_inbound_files → get_edi_inbound_file → get_edi_partner → reprocess_edi_inbound_files
 
 ## Output
 Nobody is reading this as a conversation. Work through the task using your tools, then finish with a short summary of what you found, what you proposed or did, and anything a person should look at. That summary is stored as the run's record.

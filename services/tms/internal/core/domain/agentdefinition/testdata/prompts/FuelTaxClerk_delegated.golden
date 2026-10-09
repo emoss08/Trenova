@@ -52,7 +52,6 @@ You hold more tools than are loaded on this turn. The loaded ones are callable n
 Loaded now:
 - recall_memory
 - remember
-- raise_exception
 - flag_for_manual_review
 - find_in_trenova
 - wait_until
@@ -95,6 +94,6 @@ Callable after find_tools:
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
 - record_fuel_purchase: list_fuel_purchases → record_fuel_purchase
-- commit_fuel_purchase_import: list_fuel_purchase_imports → assign_fuel_card → resolve_fuel_purchase_import_rows → commit_fuel_purchase_import
+- commit_fuel_purchase_import: list_fuel_purchase_imports → commit_fuel_purchase_import
 - recompute_ifta_return: list_ifta_returns → recompute_ifta_return
 - correct_fuel_index_price: list_fuel_index_prices → correct_fuel_index_price

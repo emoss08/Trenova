@@ -91,11 +91,11 @@ func (t *escalateDetentionTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"occurrenceId": map[string]any{
-				"type": "string",
-				"description": "The occurrence id, from list_detention_desk or " +
+			"occurrenceId": agenttoolschema.KindID(
+				"The occurrence id, from list_detention_desk or "+
 					"get_detention_occurrence.",
-			},
+				permission.KindDetentionOccurrence,
+			),
 			"reason": map[string]any{
 				"type": "string",
 				"description": "Why this needs a person, in a sentence they can act on: " +
@@ -254,11 +254,11 @@ func (t *approveDetentionTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"occurrenceId": map[string]any{
-				"type": "string",
-				"description": "The occurrence id, from list_detention_desk or " +
+			"occurrenceId": agenttoolschema.KindID(
+				"The occurrence id, from list_detention_desk or "+
 					"get_detention_occurrence.",
-			},
+				permission.KindDetentionOccurrence,
+			),
 			"evidence": map[string]any{
 				"type": "string",
 				"description": "What on the occurrence justifies billing it, in a sentence " +
@@ -418,7 +418,7 @@ func newRequestCredentialRenewalTool(credentials credentialActor) serviceports.A
 func (t *requestCredentialRenewalTool) Name() string { return "request_credential_renewal" }
 
 func (t *requestCredentialRenewalTool) Recipe() []string {
-	return []string{"get_worker", "get_worker_credential", "request_credential_renewal"}
+	return []string{"list_expiring_credentials", "get_worker", "request_credential_renewal"}
 }
 
 func (t *requestCredentialRenewalTool) Description() string {
@@ -435,18 +435,18 @@ func (t *requestCredentialRenewalTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"workerId": map[string]any{
-				"type":        "string",
-				"description": "The driver whose papers are due, from get_worker.",
-			},
-			"credentialIds": map[string]any{
+			"workerId": agenttoolschema.RecordIDText(
+				permission.ResourceWorker,
+				"The driver whose papers are due, from get_worker.",
+			),
+			"credentialIds": agenttoolschema.OfResource(map[string]any{
 				"type": "array",
 				"description": "Every credential this ask covers, by the id " +
 					"list_expiring_credentials or get_worker_credential returns, or the one " +
 					"the event that started this run names. Never invent one.",
 				"items":    map[string]any{"type": "string"},
 				"minItems": 1,
-			},
+			}, permission.ResourceWorkerCredential),
 			"note": map[string]any{
 				"type": "string",
 				"description": "What the driver is being asked for, in their words: " +
@@ -571,7 +571,7 @@ func newPlaceWorkerDispatchHoldTool(workers workerHolder) serviceports.AgentTool
 func (t *placeWorkerDispatchHoldTool) Name() string { return "place_worker_dispatch_hold" }
 
 func (t *placeWorkerDispatchHoldTool) Recipe() []string {
-	return []string{"get_worker", "request_credential_renewal", "place_worker_dispatch_hold"}
+	return []string{"list_expiring_credentials", "get_worker", "place_worker_dispatch_hold"}
 }
 
 func (t *placeWorkerDispatchHoldTool) SearchTerms() []string {
@@ -589,10 +589,10 @@ func (t *placeWorkerDispatchHoldTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"workerId": map[string]any{
-				"type":        "string",
-				"description": "The driver to hold, from get_worker.",
-			},
+			"workerId": agenttoolschema.RecordIDText(
+				permission.ResourceWorker,
+				"The driver to hold, from get_worker.",
+			),
 			"reason": map[string]any{
 				"type": "string",
 				"description": "Which paper lapsed and when, in a sentence a dispatcher " +
@@ -805,10 +805,10 @@ func (t *carrierIntelEventTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"eventId": map[string]any{
-				"type":        "string",
-				"description": "The finding id from get_carrier_intel_event.",
-			},
+			"eventId": agenttoolschema.KindID(
+				"The finding id from get_carrier_intel_event.",
+				permission.KindCarrierIntelligenceEvent,
+			),
 			"note": map[string]any{
 				"type":        "string",
 				"description": "Why you are " + verb + " it, for the carrier's record.",

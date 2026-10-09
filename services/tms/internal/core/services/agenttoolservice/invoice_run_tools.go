@@ -210,8 +210,8 @@ func buildRunRequest(
 }
 
 func newAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) serviceports.AgentTool {
-	itemProperty := stringProperty("A shipment on the run, by the item id get_invoice_run "+
-		"lists under each group.", 0)
+	itemProperty := agenttoolschema.KindID("A shipment on the run, by the item id "+
+		"get_invoice_run lists under each group.", permission.KindInvoiceRunItem)
 
 	return newReceivableTool(&receivableSpec{
 		name: "adjust_invoice_run_membership",
@@ -250,8 +250,8 @@ func newAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) serviceports.Agent
 					toolschema.KeyAdditionalProperties: false,
 				},
 			},
-			paramInclude: agenttoolschema.IDList("Excluded shipments to put back, by the item id "+
-				"get_invoice_run lists.", maxRunEdits),
+			paramInclude: agenttoolschema.KindIDs("Excluded shipments to put back, by the item "+
+				"id get_invoice_run lists.", maxRunEdits, permission.KindInvoiceRunItem),
 			paramMoves: map[string]any{
 				toolschema.KeyType:        toolschema.TypeArray,
 				toolschema.KeyDescription: "Shipments to move to another invoice of the same customer.",
@@ -260,8 +260,9 @@ func newAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) serviceports.Agent
 					toolschema.KeyType: toolschema.TypeObject,
 					toolschema.KeyProperties: map[string]any{
 						paramItemID: itemProperty,
-						paramTargetGroupID: stringProperty(
-							"The invoice it moves to, by the group id get_invoice_run lists.", 0),
+						paramTargetGroupID: agenttoolschema.KindID(
+							"The invoice it moves to, by the group id get_invoice_run lists.",
+							permission.KindInvoiceRunGroup),
 					},
 					toolschema.KeyRequired:             []string{paramItemID, paramTargetGroupID},
 					toolschema.KeyAdditionalProperties: false,
@@ -523,9 +524,9 @@ func newBillStatementNowTool(runs invoiceRunKeeper) serviceports.AgentTool {
 		rationale: "Invoices a customer off their agreed cycle; only a person decides to bill " +
 			"early, and the reason stays on the run.",
 		properties: map[string]any{
-			paramCustomerID: stringProperty(
+			paramCustomerID: agenttoolschema.RecordIDText(
+				permission.ResourceCustomer,
 				"The statement customer, from list_open_statements.",
-				0,
 			),
 			paramReason: stringProperty("Why it is billed before the cycle closes.",
 				maxRunReasonChars),
@@ -536,8 +537,9 @@ func newBillStatementNowTool(runs invoiceRunKeeper) serviceports.AgentTool {
 				toolschema.KeyItems: map[string]any{
 					toolschema.KeyType: toolschema.TypeObject,
 					toolschema.KeyProperties: map[string]any{
-						paramBillingQueueItems: stringProperty(
-							"The shipment's billing queue item, from list_open_statements.", 0),
+						paramBillingQueueItems: agenttoolschema.KindID(
+							"The shipment's billing queue item, from list_open_statements.",
+							permission.KindBillingQueueItem),
 						paramReason: stringProperty("Why it is held back.", maxRunReasonChars),
 					},
 					toolschema.KeyRequired: []string{

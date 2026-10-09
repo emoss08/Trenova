@@ -85,11 +85,11 @@ func (t *listTimeOffTool) ParamSchema() map[string]any {
 				"The kind of leave. Omit for every kind.",
 				agenttoolschema.PTOTypes,
 			),
-			"workerId": map[string]any{
+			"workerId": agenttoolschema.OfResource(map[string]any{
 				"type": "string",
 				"description": "Narrow to one worker, by id from list_workers or " +
 					"search_worker. A name is not an id.",
-			},
+			}, permission.ResourceWorker),
 			"withinDays": map[string]any{
 				"type": "integer",
 				"description": fmt.Sprintf(

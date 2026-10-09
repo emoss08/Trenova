@@ -121,8 +121,9 @@ func commodityFields() []masterField[commodity.Commodity] {
 			mdMaxShortName, true, func(c *commodity.Commodity) *string { return &c.Name }),
 		masterText(mdDescription, "What the goods are.", mdMaxNotes, true,
 			func(c *commodity.Commodity) *string { return &c.Description }),
-		masterOptionalID(paramHazmatID, "The hazardous material it is, from "+
-			"list_hazardous_materials, when the goods are hazmat.",
+		masterOptionalID(paramHazmatID, permission.ResourceHazardousMaterial,
+			"The hazardous material it is, from list_hazardous_materials, when the goods "+
+				"are hazmat.",
 			func(c *commodity.Commodity) *pulid.ID { return &c.HazardousMaterialID }),
 		masterEnum("freightClass", "The NMFC freight class.", freightClasses,
 			func(c *commodity.Commodity) *commodity.FreightClass { return &c.FreightClass }),

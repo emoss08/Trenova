@@ -1,0 +1,146 @@
+defaults:
+  tags: [operations, write]
+
+scenarios:
+  - name: new-customer-location
+    description: An address read off an email, turned into a location.
+    agent: Master data steward
+    tags: [masterdata]
+    steps:
+      - say: "add a new location: Walmart DC 6094, 2100 W Lewis Ave, Phoenix AZ 85009, its a receiver"
+        expect:
+          proposals: [{ tool: create_location }]
+          maxFailedCalls: 2
+          rubric: >
+            Proposes a location with that name, address, city, state and ZIP, picks a fitting
+            category, and does not geocode or invent details it was not given.
+
+  - name: new-customer-that-already-exists
+    description: Asked to create a customer that is already there.
+    agent: Master data steward
+    tags: [masterdata]
+    steps:
+      - say: "set up acme manufacturing as a customer"
+        expect:
+          calls: ["list_customers|get_customer"]
+          noCalls: [create_customer]
+          noProposals: true
+          rubric: Notices Acme Manufacturing (ACME) already exists and says so instead of creating a duplicate.
+
+  - name: brand-new-customer
+    description: A customer that does not exist yet.
+    agent: Master data steward
+    tags: [masterdata]
+    steps:
+      - say: "new customer Blue Mesa Produce out of Tucson AZ, code BMPR"
+        expect:
+          calls: ["list_customers"]
+          proposals: [{ tool: create_customer, args: { code: BMPR } }]
+          maxFailedCalls: 2
+
+  - name: find-a-carrier-for-it
+    description: Nobody in house can take a load, so dispatch looks outside.
+    agent: Dispatch desk
+    tags: [carriers, read]
+    steps:
+      - say: "no drivers for the peak ltl going to chicago, can you shop it to carriers"
+        expect:
+          calls: ["shop_carriers"]
+          maxFailedCalls: 1
+          rubric: >
+            Shops SEED-SHP-002 and lists the carriers it found with what each would cost or why
+            it was ruled out, leaving out Lone Star (inactive) and saying Harbor Point is pending
+            compliance if it appears.
+
+  - name: send-a-delivered-load-to-billing
+    description: The hand-off from operations to billing, approved.
+    agent: Billing exceptions
+    tags: [billing]
+    steps:
+      - say: "the acme steel load delivered, send it over to billing"
+        expect:
+          proposals: [{ tool: transfer_to_billing }]
+          maxFailedCalls: 1
+      - decide: approve
+        expect:
+          executed: true
+
+  - name: invoice-a-ready-load
+    description: Turning a ready load into an invoice.
+    agent: Billing exceptions
+    tags: [billing]
+    steps:
+      - say: "invoice the peak denver to phoenix load"
+        expect:
+          proposals: [{ tool: "create_invoice|transfer_to_billing|approve_billing_queue_item" }]
+          maxFailedCalls: 1
+          rubric: >
+            Finds SEED-SHP-009 and proposes the step that gets it invoiced from where it stands
+            (Ready to invoice), saying what comes after.
+
+  - name: request-time-off
+    description: Time off asked for on a driver's behalf.
+    agent: Workforce coordinator
+    tags: [workforce]
+    steps:
+      - say: "mike needs next friday off, put it in as vacation"
+        expect:
+          calls: ["search_worker|list_workers"]
+          proposals: [{ tool: request_worker_pto }]
+          maxFailedCalls: 1
+          rubric: Resolves Mike Johnson and next Friday's date, and proposes one day of vacation.
+
+  - name: approve-pending-time-off
+    description: Clearing what is waiting.
+    agent: Workforce coordinator
+    tags: [workforce]
+    steps:
+      - say: "approve whatever pto jane has pending"
+        expect:
+          calls: ["list_time_off"]
+          proposals: [{ tool: approve_worker_pto }]
+          maxFailedCalls: 1
+          rubric: >
+            Lists Jane Doe's requested time off and proposes approving those requests, naming the
+            dates, rather than approving anything not requested.
+
+  - name: log-a-fuel-purchase
+    description: A fuel receipt read out over the phone.
+    agent: Fuel and IFTA clerk
+    tags: [fuel]
+    steps:
+      - say: "log fuel for trc-001: 112 gallons diesel at 3.89 in amarillo tx yesterday"
+        expect:
+          proposals: [{ tool: record_fuel_purchase }]
+          maxFailedCalls: 1
+          rubric: >
+            Proposes 112 gallons of diesel at $3.89 ($435.68) for TRC-001 in Texas dated yesterday,
+            asking for a driver only if the tool requires one.
+
+  - name: revenue-by-customer
+    description: A management question that belongs to reports.
+    agent: Report analyst
+    tags: [reports, read]
+    steps:
+      - say: "how much did we bill by customer last month"
+        expect:
+          calls: ["list_reports|run_report|preview_report|describe_report"]
+          maxFailedCalls: 1
+          noProposals: true
+          rubric: >
+            Runs or previews a report of billed revenue by customer for last month and gives the
+            figures it returned (none, if nothing was invoiced), not figures it estimated.
+
+  - name: record-a-new-med-card
+    description: A credential renewal reported in passing.
+    agent: Compliance desk
+    tags: [compliance]
+    steps:
+      - say: "jane got her new med card today, good till oct 2028"
+        expect:
+          calls: ["search_worker|list_workers|list_worker_credentials"]
+          proposals: [{ tool: "record_worker_credential|update_worker_credential" }]
+          maxFailedCalls: 1
+          rubric: >
+            Records a medical card for Jane Doe issued today and expiring in October 2028, and asks
+            for the exact expiry day only if the tool needs one.

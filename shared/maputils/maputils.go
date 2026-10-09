@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"maps"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -140,4 +141,30 @@ func Overlay(base, overlay map[string]any) map[string]any {
 	maps.Copy(merged, overlay)
 
 	return merged
+}
+
+// WithoutKeys returns input without the given keys. Like Overlay it returns
+// input itself when there is nothing to change, here when input holds none of
+// the keys, so a caller that writes to the result must not rely on a copy
+// unless one of the keys was present.
+func WithoutKeys(input map[string]any, keys ...string) map[string]any {
+	present := false
+	for _, key := range keys {
+		if _, ok := input[key]; ok {
+			present = true
+			break
+		}
+	}
+	if !present {
+		return input
+	}
+
+	output := make(map[string]any, len(input))
+	for key, value := range input {
+		if !slices.Contains(keys, key) {
+			output[key] = value
+		}
+	}
+
+	return output
 }

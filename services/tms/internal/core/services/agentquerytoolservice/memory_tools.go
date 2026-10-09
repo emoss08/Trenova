@@ -77,12 +77,15 @@ func (t *recallMemoryTool) ParamSchema() map[string]any {
 				"Optional: the kind of record subjectId names. Give both or neither.",
 				memoryFilterSubjectTypes,
 			),
-			"subjectId": map[string]any{
-				toolschema.KeyType: toolschema.TypeString,
-				toolschema.KeyDescription: "Optional: the record's id, from list_customers, " +
-					"list_locations, search_worker or list_carriers to match subjectType, " +
+			"subjectId": agenttoolschema.KindID(
+				"Optional: the record's id, from list_customers, "+
+					"list_locations, search_worker or list_carriers to match subjectType, "+
 					"or the page you are on. Give it with subjectType.",
-			},
+				permission.RecordKind(permission.ResourceCustomer),
+				permission.RecordKind(permission.ResourceLocation),
+				permission.RecordKind(permission.ResourceWorker),
+				permission.RecordKind(permission.ResourceCarrier),
+			),
 			"toolName": map[string]any{
 				toolschema.KeyType:        toolschema.TypeString,
 				toolschema.KeyDescription: "Only memories about one tool, such as corrections to assign_move.",

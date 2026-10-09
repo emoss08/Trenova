@@ -42,7 +42,7 @@ func provideRecordStopActualTool(
 func (t *recordStopActualTool) Name() string { return "record_stop_actual" }
 
 func (t *recordStopActualTool) Recipe() []string {
-	return []string{"get_dispatch_board", "get_shipment_tracking", "record_stop_actual"}
+	return []string{"search_shipments", "get_shipment", "record_stop_actual"}
 }
 
 func (t *recordStopActualTool) Description() string {
@@ -57,16 +57,16 @@ func (t *recordStopActualTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"moveId": map[string]any{
-				"type": "string",
-				"description": "The move the stop belongs to, from get_shipment (its moves) or " +
+			"moveId": agenttoolschema.RecordIDText(
+				permission.ResourceShipmentMove,
+				"The move the stop belongs to, from get_shipment (its moves) or "+
 					"get_dispatch_board.",
-			},
-			"stopId": map[string]any{
-				"type": "string",
-				"description": "The stop that was arrived at or departed from, from the move's " +
+			),
+			"stopId": agenttoolschema.RecordIDText(
+				permission.ResourceShipmentStop,
+				"The stop that was arrived at or departed from, from the move's "+
 					"stops in get_shipment.",
-			},
+			),
 			"action": agenttoolschema.Enum(
 				"Which event happened.",
 				agenttoolschema.StopActualActions,

@@ -153,25 +153,15 @@ func (t *linkInboundMessageTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"messageId": map[string]any{
-				"type":        "string",
-				"description": "The message, from the run's subject or list_inbound_messages.",
-			},
-			"shipmentId": map[string]any{
-				"type": "string",
-				"description": "Optional: the shipment the message is about, from " +
-					"search_shipments or list_shipments.",
-			},
-			"customerId": map[string]any{
-				"type": "string",
-				"description": "Optional: the customer who sent it or who it concerns, from " +
-					"list_customers.",
-			},
-			"carrierId": map[string]any{
-				"type": "string",
-				"description": "Optional: the carrier who sent it or who it concerns, from " +
-					"list_carriers.",
-			},
+			"messageId": agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
+				"The message, from the run's subject or list_inbound_messages."),
+			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
+				"Optional: the shipment the message is about, from search_shipments or "+
+					"list_shipments."),
+			"customerId": agenttoolschema.RecordIDText(permission.ResourceCustomer,
+				"Optional: the customer who sent it or who it concerns, from list_customers."),
+			"carrierId": agenttoolschema.RecordIDText(permission.ResourceCarrier,
+				"Optional: the carrier who sent it or who it concerns, from list_carriers."),
 			"reason": map[string]any{
 				"type":        "string",
 				"maxLength":   inboundmessage.MaxMatchReasonLength,
@@ -300,10 +290,8 @@ func (t *markInboundMessageTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"messageId": map[string]any{
-				"type":        "string",
-				"description": "The message, from the run's subject or list_inbound_messages.",
-			},
+			"messageId": agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
+				"The message, from the run's subject or list_inbound_messages."),
 			fieldStatus: agenttoolschema.Enum(
 				"Actioned when it was dealt with, Ignored when there was nothing to do.",
 				inboundReviewStatuses,
@@ -478,7 +466,6 @@ func (t *replyToInboundMessageTool) Recipe() []string {
 		"get_inbound_message",
 		"get_shipment_tracking",
 		"reply_to_inbound_message",
-		"mark_inbound_message",
 	}
 }
 
@@ -500,16 +487,12 @@ func (t *replyToInboundMessageTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"messageId": map[string]any{
-				"type": "string",
-				"description": "The message being answered, from this run's subject or " +
-					"list_inbound_messages.",
-			},
-			"profileId": map[string]any{
-				"type": "string",
-				"description": "The email profile to send from; list_email_profiles names them. " +
-					"With one profile there is nothing to choose.",
-			},
+			"messageId": agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
+				"The message being answered, from this run's subject or "+
+					"list_inbound_messages."),
+			"profileId": agenttoolschema.RecordIDText(permission.ResourceEmailProfile,
+				"The email profile to send from; list_email_profiles names them. With one "+
+					"profile there is nothing to choose."),
 			"body": map[string]any{
 				"type":      "string",
 				"maxLength": maxInboundReplyBody,

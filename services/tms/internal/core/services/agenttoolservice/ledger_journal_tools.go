@@ -198,7 +198,9 @@ func manualJournalDraftProperties(forRevision bool) map[string]any {
 		paramJournalLines: lines,
 	}
 	if forRevision {
-		properties[paramManualJournalID] = stringProperty(manualJournalSupplier, 0)
+		properties[paramManualJournalID] = agenttoolschema.RecordIDText(
+			permission.ResourceManualJournal, manualJournalSupplier,
+		)
 	}
 
 	return properties
@@ -214,18 +216,24 @@ func journalLinesProperty() map[string]any {
 		toolschema.KeyItems: map[string]any{
 			toolschema.KeyType: toolschema.TypeObject,
 			toolschema.KeyProperties: map[string]any{
-				paramGLAccountID: stringProperty("The account the line posts to, from "+
-					"list_gl_accounts; it must be active and allow manual journals.", 0),
+				paramGLAccountID: agenttoolschema.RecordIDText(
+					permission.ResourceGeneralLedgerAccount,
+					"The account the line posts to, from list_gl_accounts; it must be active "+
+						"and allow manual journals.",
+				),
 				paramJournalDescription: stringProperty("What the line is for.",
 					maxManualJournalLineText),
 				paramJournalLineDebit: stringProperty("The debit as a decimal such as "+
 					"125.00. Give a debit or a credit, never both.", 0),
 				paramJournalLineCredit: stringProperty("The credit as a decimal such as "+
 					"125.00. Give a debit or a credit, never both.", 0),
-				paramCustomerID: stringProperty("The customer the line is for, from "+
-					"list_customers or get_customer, when it concerns one.", 0),
-				paramJournalLineLocationID: stringProperty("The location the line is for, "+
-					"from list_locations, when it concerns one.", 0),
+				paramCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
+					"The customer the line is for, from list_customers or get_customer, when "+
+						"it concerns one."),
+				paramJournalLineLocationID: agenttoolschema.RecordIDText(
+					permission.ResourceLocation,
+					"The location the line is for, from list_locations, when it concerns one.",
+				),
 			},
 			toolschema.KeyRequired: []string{
 				paramGLAccountID,
@@ -689,7 +697,8 @@ func newSubmitManualJournalTool(
 		rationale: "Moves a draft journal into the approval queue inside Trenova; an approver " +
 			"decides and it books nothing until a person posts it.",
 		properties: map[string]any{
-			paramManualJournalID: stringProperty(manualJournalSupplier, 0),
+			paramManualJournalID: agenttoolschema.RecordIDText(permission.ResourceManualJournal,
+				manualJournalSupplier),
 		},
 		required: []string{paramManualJournalID},
 		target:   targetManualJournal,
@@ -757,7 +766,8 @@ func newCancelManualJournalTool(
 		rationale: "Withdraws a journal before it reaches the ledger; nothing is booked, and " +
 			"the entry is drafted again if it was needed after all.",
 		properties: map[string]any{
-			paramManualJournalID: stringProperty(manualJournalSupplier, 0),
+			paramManualJournalID: agenttoolschema.RecordIDText(permission.ResourceManualJournal,
+				manualJournalSupplier),
 			paramReason: stringProperty("Why it must not be posted, in a sentence its author "+
 				"can act on.", maxJournalCancelReason),
 		},
@@ -806,7 +816,8 @@ func newPostManualJournalTool(
 		rationale: "Books the journal's lines to the general ledger; only a person posts a " +
 			"manual journal.",
 		properties: map[string]any{
-			paramManualJournalID: stringProperty(manualJournalSupplier, 0),
+			paramManualJournalID: agenttoolschema.RecordIDText(permission.ResourceManualJournal,
+				manualJournalSupplier),
 		},
 		required: []string{paramManualJournalID},
 		target:   targetManualJournal,
@@ -882,8 +893,9 @@ func newRequestJournalReversalTool(
 		rationale: "Commits the organization to taking a posted entry back out of the " +
 			"ledger, approved at once where approval is off; only a person requests a reversal.",
 		properties: map[string]any{
-			paramJournalEntryID: stringProperty("The posted journal entry to reverse, from "+
-				"list_journal_entries or get_journal_entry. Never guess one.", 0),
+			paramJournalEntryID: agenttoolschema.RecordIDText(permission.ResourceJournalEntry,
+				"The posted journal entry to reverse, from list_journal_entries or "+
+					"get_journal_entry. Never guess one."),
 			paramAccountingDate: agenttoolschema.Date(
 				"The day the reversal is booked; a day in a " +
 					"closed period moves to the next open one where policy allows.",
@@ -975,7 +987,9 @@ func newCancelJournalReversalTool(
 		rationale: "Withdraws a reversal before it reaches the ledger; nothing is booked, and " +
 			"it is requested again if it was needed after all.",
 		properties: map[string]any{
-			paramJournalReversalID: stringProperty(journalReversalSupplier, 0),
+			paramJournalReversalID: agenttoolschema.RecordIDText(
+				permission.ResourceJournalReversal, journalReversalSupplier,
+			),
 			paramReason: stringProperty("Why the entry should stand, in a sentence the "+
 				"requester can act on.", maxJournalCancelReason),
 		},
@@ -1023,7 +1037,9 @@ func newPostJournalReversalTool(
 		rationale: "Books the reversing entry to the general ledger; only a person posts a " +
 			"reversal.",
 		properties: map[string]any{
-			paramJournalReversalID: stringProperty(journalReversalSupplier, 0),
+			paramJournalReversalID: agenttoolschema.RecordIDText(
+				permission.ResourceJournalReversal, journalReversalSupplier,
+			),
 		},
 		required: []string{paramJournalReversalID},
 		target:   targetJournalReversal,

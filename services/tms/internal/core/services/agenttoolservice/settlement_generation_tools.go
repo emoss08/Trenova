@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
@@ -136,16 +137,15 @@ func (t *generateDriverSettlementTool) Description() string {
 		"accrued, with their recurring earnings, deductions, escrow and advance recovery. " +
 		"Use it for a driver the batch missed or an off-cycle statement; " +
 		"generate_driver_settlement_batch settles everyone. A period already settled for " +
-		"the driver is refused."
+		"the driver is refused. The draft is shown to the person before anything is kept, " +
+		"so when they name a period (\"last week\", \"the first half of the month\") work " +
+		"out its days from today's date and propose it rather than asking which dates."
 }
 
 func (t *generateDriverSettlementTool) ParamSchema() map[string]any {
 	properties := periodProperties("the settlement")
-	properties[paramWorkerID] = map[string]any{
-		toolschema.KeyType: toolschema.TypeString,
-		toolschema.KeyDescription: "The driver, from search_worker, list_workers or " +
-			"list_driver_pay_events.",
-	}
+	properties[paramWorkerID] = agenttoolschema.RecordIDText(permission.ResourceWorker,
+		"The driver, from search_worker, list_workers or list_driver_pay_events.")
 	properties[paramPayDate] = map[string]any{
 		toolschema.KeyType: toolschema.TypeString,
 		toolschema.KeyDescription: "The day it is paid, YYYY-MM-DD. Leave it out for the " +
@@ -470,9 +470,8 @@ func driverBatchText() batchText {
 		name: "generate_driver_settlement_batch",
 		recipe: []string{
 			"list_driver_pay_events",
-			"get_worker_earnings_summary",
 			"generate_driver_settlement_batch",
-			"submit_driver_settlement",
+			"list_driver_settlements",
 		},
 		resource: permission.ResourceDriverSettlement,
 		rationale: "Drafts the period's settlements from pay already accrued inside Trenova; " +

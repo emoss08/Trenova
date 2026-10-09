@@ -282,14 +282,25 @@ func captureFilingProperties() map[string]any {
 			toolschema.KeyItems: map[string]any{
 				toolschema.KeyType: toolschema.TypeObject,
 				toolschema.KeyProperties: map[string]any{
-					paramCaptureItemID: agenttoolschema.ID("The "+scannedDocument,
-						captureSources),
+					paramCaptureItemID: agenttoolschema.KindID(
+						agenttoolschema.IDDescription("The "+scannedDocument, captureSources),
+						permission.KindScannedDocument,
+					),
 					paramCaptureTarget: agenttoolschema.Enum("The kind of record it "+
 						"goes on.", captureTargetTypes),
-					paramCaptureTargetID: stringProperty("The record it goes on, by id "+
-						"from that record's read tool.", 0),
-					paramCaptureDocType: stringProperty("What kind of document it is, "+
-						"from list_document_types.", 0),
+					paramCaptureTargetID: agenttoolschema.KindID("The record it goes on, by id "+
+						"from that record's read tool.",
+						permission.RecordKind(permission.ResourceShipment),
+						permission.RecordKind(permission.ResourceWorker),
+						permission.RecordKind(permission.ResourceTractor),
+						permission.RecordKind(permission.ResourceTrailer),
+						permission.RecordKind(permission.ResourceCustomer),
+						permission.RecordKind(permission.ResourceCarrier),
+					),
+					paramCaptureDocType: agenttoolschema.RecordIDText(
+						permission.ResourceDocumentType,
+						"What kind of document it is, from list_document_types.",
+					),
 				},
 				toolschema.KeyRequired: []string{
 					paramCaptureItemID, paramCaptureTarget, paramCaptureTargetID,
@@ -370,7 +381,10 @@ func newDiscardCaptureItemTool(captures captureKeeper) serviceports.AgentTool {
 		rationale: "Marks one scanned document not worth filing inside Trenova; nothing is " +
 			"sent, and its pages are removed with the stack's other unfiled pages.",
 		properties: map[string]any{
-			paramCaptureItemIDOne: agenttoolschema.ID("The "+scannedDocument, captureSources),
+			paramCaptureItemIDOne: agenttoolschema.KindID(
+				agenttoolschema.IDDescription("The "+scannedDocument, captureSources),
+				permission.KindScannedDocument,
+			),
 		},
 		required:    []string{paramCaptureItemIDOne},
 		searchTerms: []string{"discard scan", "blank page", "throw away scan"},

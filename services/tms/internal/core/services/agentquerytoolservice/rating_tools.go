@@ -225,10 +225,11 @@ func (t *listRateAgreementsTool) ParamSchema() map[string]any {
 		paramQuery: stringParam("Words to look for in the agreement's code or name."),
 		"partyType": enumParam("Customer agreements price what a customer is billed; "+
 			"Carrier agreements price what a carrier is paid.", rateAgreementParties),
-		paramCustomerID: stringParam("Only this customer's agreements, by id from " +
-			"list_customers."),
-		paramCarrierID: stringParam("Only this carrier's agreements, by id from list_carriers."),
-		paramStatus:    enumParam("Only agreements in this status.", rateAgreementStatuses),
+		paramCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
+			"Only this customer's agreements, by id from list_customers."),
+		paramCarrierID: agenttoolschema.RecordIDText(permission.ResourceCarrier,
+			"Only this carrier's agreements, by id from list_carriers."),
+		paramStatus: enumParam("Only agreements in this status.", rateAgreementStatuses),
 	}, defaultListLimit, maxListLimit))
 }
 
@@ -642,8 +643,9 @@ func (t *getRateMatrixTool) Description() string {
 
 func (t *getRateMatrixTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
-		paramRateMatrixID: stringParam("The rate matrix's id, from a rule's rateMatrixId in " +
-			"get_rate_agreement or the page you are on."),
+		paramRateMatrixID: agenttoolschema.RecordIDText(permission.ResourceRateMatrix,
+			"The rate matrix's id, from a rule's rateMatrixId in "+
+				"get_rate_agreement or the page you are on."),
 		"cellOffset": intParam("How many cells to skip. When a result says cellsHasMore, " +
 			"call again with its nextCellOffset."),
 	}, paramRateMatrixID)

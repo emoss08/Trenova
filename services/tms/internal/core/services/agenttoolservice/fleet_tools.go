@@ -81,6 +81,7 @@ func (t *updateTractorStatusTool) ParamSchema() map[string]any {
 	return equipmentStatusSchema(
 		"tractorIds",
 		"The tractors to move, by id from list_tractors. One id is the normal case.",
+		permission.ResourceTractor,
 	)
 }
 
@@ -147,6 +148,7 @@ func (t *updateTrailerStatusTool) ParamSchema() map[string]any {
 	return equipmentStatusSchema(
 		"trailerIds",
 		"The trailers to move, by id from list_trailers. One id is the normal case.",
+		permission.ResourceTrailer,
 	)
 }
 
@@ -189,17 +191,20 @@ func (t *updateTrailerStatusTool) Execute(
 	return err
 }
 
-func equipmentStatusSchema(idsKey, idsDescription string) map[string]any {
+func equipmentStatusSchema(
+	idsKey, idsDescription string,
+	resource permission.Resource,
+) map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			idsKey: map[string]any{
+			idsKey: agenttoolschema.OfResource(map[string]any{
 				"type":        "array",
 				"items":       map[string]any{"type": "string"},
 				"minItems":    1,
 				"maxItems":    maxEquipmentPerStatusChange,
 				"description": idsDescription,
-			},
+			}, resource),
 			fieldStatus: agenttoolschema.Enum(
 				"The status to set. "+equipmentStatusNote, equipmentStatuses,
 			),

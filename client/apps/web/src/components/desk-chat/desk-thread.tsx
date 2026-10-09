@@ -10,6 +10,11 @@ import { useAskableAgent } from "@/components/assistant/use-askable-agent";
 import { useComposerContext } from "@/components/assistant/use-composer-context";
 import { useOpeningQuestion } from "@/components/assistant/use-opening-question";
 import {
+  NO_HAND_OFF_AGENTS,
+  turnHandOffAgents,
+  type TurnHandoff,
+} from "@/components/assistant/turn-stream";
+import {
   useThreadModel,
   type PageBinding,
   type PageRequest,
@@ -153,6 +158,11 @@ export type DeskThreadProps = {
   onStartNew?: () => void;
   /** Told while a turn is running, for surfaces that show it outside the thread. */
   onWorkingChange?: (working: boolean) => void;
+  /**
+   * Told what the reply being written says about handing the conversation to
+   * another agent, each time that changes, and null once no reply is shown.
+   */
+  onLiveHandoff?: (live: TurnHandoff | null) => void;
   /** Told just before the app follows a page the assistant opened. */
   onNavigate?: () => void;
   /** Whether the app follows a page the assistant opens. */
@@ -244,6 +254,7 @@ export function DeskThread({
   onSwitchAgent,
   onStartNew,
   onWorkingChange,
+  onLiveHandoff,
   onNavigate,
   followNavigation,
   pageSource = "recent",
@@ -385,6 +396,19 @@ export function DeskThread({
     onPageRequestSent,
   });
   const { entries, placements, turn, isActive, compaction } = model;
+
+  // The agents the reply's own find_tools answer named, told to the surface
+  // only when they change: the list is the step's own, so a streamed word
+  // leaves it the same value.
+  const liveHandOffAgents = turn
+    ? turnHandOffAgents(turn.segments, turn.interjections)
+    : NO_HAND_OFF_AGENTS;
+  const liveAsked = turn !== null && !turn.followUp;
+  const hasLiveTurn = turn !== null;
+  useEffect(() => {
+    onLiveHandoff?.(hasLiveTurn ? { asked: liveAsked, agentIds: liveHandOffAgents } : null);
+  }, [hasLiveTurn, liveAsked, liveHandOffAgents, onLiveHandoff]);
+  useEffect(() => () => onLiveHandoff?.(null), [onLiveHandoff]);
 
   // Each reply spends from the caps, so the warning above the composer is
   // read again once one ends rather than waiting out its staleness.

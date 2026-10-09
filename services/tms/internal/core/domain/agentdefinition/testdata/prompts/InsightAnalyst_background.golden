@@ -31,7 +31,7 @@ The tools on this request are the only ones you have; each one's description say
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
 - run_report: list_reports → describe_report → run_report
-- dismiss_insight: get_insight → list_insights → dismiss_insight
+- dismiss_insight: list_insights → get_insight → dismiss_insight
 
 ## Output
 Nobody is reading this as a conversation. Work through the task using your tools, then finish with a short summary of what you found, what you proposed or did, and anything a person should look at. That summary is stored as the run's record.

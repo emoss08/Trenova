@@ -132,10 +132,10 @@ func tileSchema() map[string]any {
 				"type":        "string",
 				"description": "Heading shown on the tile. Defaults to the report's name.",
 			},
-			"definitionId": map[string]any{
-				"type":        "string",
-				"description": "A saved report's id, from list_reports. Give this or cannedKey, not both.",
-			},
+			"definitionId": agenttoolschema.RecordIDText(
+				permission.ResourceReport,
+				"A saved report's id, from list_reports. Give this or cannedKey, not both.",
+			),
 			"cannedKey": map[string]any{
 				"type":        "string",
 				"description": "A built-in report's key, from list_reports. Give this or definitionId, not both.",
@@ -321,7 +321,7 @@ func newAddDashboardTileTool(dashboards *reporting.Service) serviceports.AgentTo
 func (t *addDashboardTileTool) Name() string { return "add_dashboard_tile" }
 
 func (t *addDashboardTileTool) Recipe() []string {
-	return []string{"list_dashboards", "list_reports", "add_dashboard_tile"}
+	return []string{"list_dashboards", "list_reports", "describe_report", "add_dashboard_tile"}
 }
 
 func (t *addDashboardTileTool) Description() string {
@@ -347,10 +347,10 @@ func (t *addDashboardTileTool) ParamSchema() map[string]any {
 		"type":     "object",
 		"required": []string{"dashboardId", "tile"},
 		"properties": map[string]any{
-			"dashboardId": map[string]any{
-				"type":        "string",
-				"description": "The dashboard to add to, from list_dashboards.",
-			},
+			"dashboardId": agenttoolschema.RecordIDText(
+				permission.ResourceDashboard,
+				"The dashboard to add to, from list_dashboards.",
+			),
 			"tile": tile,
 		},
 		"additionalProperties": false,

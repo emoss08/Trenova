@@ -5,6 +5,7 @@ import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useCallback, useMemo, useReducer, useRef } from "react";
@@ -13,12 +14,15 @@ import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { DeskTip } from "@/components/desk-chat/desk-tip";
 import { useOutsideDismiss } from "@/components/desk-chat/use-outside-dismiss";
 import { HANDOFF_MENU_CLOSED, handoffMenuReducer, handoffTargets } from "./handoff-state";
+import { useHandoffSuggestion } from "./use-handoff-suggestion";
 
 /**
  * The top bar's Hand off button and its menu. Picking an agent starts a
  * conversation with it, opened with a summary of this one, its pinned facts
  * and its pinned artifacts; the card the server leaves here says so and
- * offers the way across.
+ * offers the way across. When the conversation's agent last said another of
+ * the person's agents holds what it could not do, those agents lead the menu
+ * and are marked, so the person does not have to match a name in the reply.
  */
 export function DeskHandoffMenu({
   threadId,
@@ -39,7 +43,16 @@ export function DeskHandoffMenu({
   const close = useCallback(() => dispatch({ type: "close" }), []);
   useOutsideDismiss(root, state.open, close);
 
-  const targets = useMemo(() => handoffTargets(agents, agent), [agent, agents]);
+  // The reply being written and the thread's saved history, narrowed to the
+  // suggestion: the menu re-renders only when the suggestion changes, not on
+  // every message or streamed word. The conversation reads the history and
+  // follows the reply; the menu only watches them, never fetches.
+  const suggested = useHandoffSuggestion(threadId);
+  const targets = useMemo(
+    () => handoffTargets(agents, agent, suggested),
+    [agent, agents, suggested],
+  );
+  const suggestedIds = useMemo(() => new Set(suggested), [suggested]);
 
   const handoff = useApiMutation({
     mutationFn: (agentId: string) =>
@@ -101,6 +114,12 @@ export function DeskHandoffMenu({
                 <DeskAgentTile agent={target} size="xs" />
                 <span className="flex min-w-0 flex-col">
                   <b className="text-sm font-medium">{target.name}</b>
+                  {suggestedIds.has(target.id) && (
+                    <span className="flex items-center gap-1 text-xs text-dsk-fg2">
+                      <AssistMark className="size-3 shrink-0" aria-hidden />
+                      {t("Holds what this conversation needs")}
+                    </span>
+                  )}
                   <em className="truncate text-xs text-dsk-subtle not-italic">
                     {target.description}
                   </em>

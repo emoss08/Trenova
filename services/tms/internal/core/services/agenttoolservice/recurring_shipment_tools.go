@@ -170,12 +170,12 @@ func seriesProperties() map[string]any {
 		paramExceptionPolicy: agenttoolschema.Enum("What a shipment that falls on a blackout "+
 			"day or weekend does: Skip it, or move it to the business day before or after.",
 			seriesExceptionPolicies),
-		paramBlackoutDates: map[string]any{
+		paramBlackoutDates: toolschema.KeepEmpty(map[string]any{
 			toolschema.KeyType:        toolschema.TypeArray,
 			toolschema.KeyDescription: "Days no shipment is generated, such as holidays.",
 			toolschema.KeyMaxItems:    recurringshipment.MaxBlackoutDates,
 			toolschema.KeyItems:       agenttoolschema.Date("A blackout day."),
-		},
+		}),
 		paramAutoGenerate: booleanProperty("Create each shipment on schedule without anyone " +
 			"asking. Off, a person generates each one."),
 	}

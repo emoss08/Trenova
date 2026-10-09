@@ -50,6 +50,16 @@ describe("reduceDryRun", () => {
     expect(state.reply).toBe("Streamed.");
   });
 
+  it("swaps the streamed reply for the corrected one, without a second copy", () => {
+    const state = fold([
+      ["delta", { text: "PRO-1 (ID shp_01) is late." }],
+      ["reply_regrounded", { action: "strip_ids", reason: "ids" }],
+      ["reply_replaced", { text: "PRO-1 is late.", reason: "ids" }],
+    ]);
+    expect(state.reply).toBe("PRO-1 is late.");
+    expect(state.status).toBe("running");
+  });
+
   it("leaves out what a delegate did, and a call it already has", () => {
     const state = fold([
       ["tool_started", { callId: "c1", name: "search_shipments" }],

@@ -321,11 +321,9 @@ func driverAdjustmentSchema() (properties map[string]any, required []string) {
 		toolschema.KeyType:        toolschema.TypeString,
 		toolschema.KeyDescription: "The rate per unit, when it is a rate times a quantity.",
 	}
-	properties[paramPayCodeID] = map[string]any{
-		toolschema.KeyType: toolschema.TypeString,
-		toolschema.KeyDescription: "The pay code it posts under, from list_pay_codes, so " +
-			"it reaches that code's GL account. Leave it out for the default account.",
-	}
+	properties[paramPayCodeID] = agenttoolschema.RecordIDText(permission.ResourcePayCode,
+		"The pay code it posts under, from list_pay_codes, so it reaches that code's GL "+
+			"account. Leave it out for the default account.")
 
 	return properties, []string{paramAdjustmentDescription, paramAdjustmentAmount}
 }
@@ -352,11 +350,11 @@ func fillDriverAdjustment(params map[string]any, req *settlementshared.ActionReq
 
 func carrierAdjustmentSchema() (properties map[string]any, required []string) {
 	properties = adjustmentBase("carrier")
-	properties[paramGLAccountID] = map[string]any{
-		toolschema.KeyType: toolschema.TypeString,
-		toolschema.KeyDescription: "The expense account it posts to, from list_gl_accounts, " +
-			"when it is not the default purchased transportation account.",
-	}
+	properties[paramGLAccountID] = agenttoolschema.RecordIDText(
+		permission.ResourceGeneralLedgerAccount,
+		"The expense account it posts to, from list_gl_accounts, when it is not the "+
+			"default purchased transportation account.",
+	)
 
 	return properties, []string{paramAdjustmentDescription, paramAdjustmentAmount}
 }

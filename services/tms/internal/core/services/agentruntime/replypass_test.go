@@ -131,9 +131,9 @@ func regroundedActions(events *[]serviceports.StreamEvent) []serviceports.Regrou
 	return actions
 }
 
-// The recorded reply holds no internal id and no reprint; the streamed one
-// is withdrawn and the corrected reply sent whole, and each pass is in the
-// trajectory.
+// The recorded reply holds no internal id and no reprint; the corrected reply
+// is sent whole in place of the streamed one, with no restart, since the
+// model was not asked again, and each pass is in the trajectory.
 func TestDrive_PassesOverTheFinalReply(t *testing.T) {
 	t.Parallel()
 
@@ -151,21 +151,38 @@ func TestDrive_PassesOverTheFinalReply(t *testing.T) {
 		serviceports.RegroundPointToTable,
 	}, regroundedActions(events))
 
-	var withdrawn bool
-	var resent string
-	for _, event := range *events {
-		if retry, ok := event.Data.(serviceports.AssistantRetryingEvent); ok &&
-			retry.Kind == serviceports.RetryKindRestart {
-			withdrawn = true
-			resent = ""
+	assertReplacedWithoutRestart(t, *events, result.Reply, replyPassReplacedReason)
+}
+
+// assertReplacedWithoutRestart checks a corrected reply reached the reader as
+// one reply_replaced carrying the recorded text, after the last streamed
+// piece of the reply, and that nothing in the turn announced a retry.
+func assertReplacedWithoutRestart(
+	t *testing.T,
+	events []serviceports.StreamEvent,
+	reply, reason string,
+) {
+	t.Helper()
+
+	var replaced []serviceports.AssistantReplyReplacedEvent
+	afterReplaced := 0
+	for _, event := range events {
+		assert.NotEqual(t, serviceports.AssistantEventRetrying, event.Event,
+			"a correction the model was not asked for is not a retry")
+		if data, ok := event.Data.(serviceports.AssistantReplyReplacedEvent); ok {
+			assert.Equal(t, serviceports.AssistantEventReplyReplaced, event.Event)
+			replaced = append(replaced, data)
+			afterReplaced = 0
 			continue
 		}
-		if delta, ok := event.Data.(serviceports.AssistantDeltaEvent); ok && withdrawn {
-			resent += delta.Text
+		if _, ok := event.Data.(serviceports.AssistantDeltaEvent); ok && len(replaced) > 0 {
+			afterReplaced++
 		}
 	}
-	assert.True(t, withdrawn, "what streamed is withdrawn")
-	assert.Equal(t, result.Reply, resent, "the corrected reply is sent whole")
+	require.Len(t, replaced, 1, "the corrected reply is sent once")
+	assert.Equal(t, reply, replaced[0].Text, "the reader is left with what was recorded")
+	assert.Equal(t, reason, replaced[0].Reason)
+	assert.Zero(t, afterReplaced, "no streamed piece follows the replacement")
 }
 
 // A reply the passes leave alone is not withdrawn or sent again.
@@ -179,4 +196,40 @@ func TestDrive_LeavesACleanReplyAlone(t *testing.T) {
 
 	assert.Equal(t, reply, result.Reply)
 	assert.Empty(t, regroundedActions(events))
+	for _, event := range *events {
+		assert.NotEqual(t, serviceports.AssistantEventReplyReplaced, event.Event)
+		assert.NotEqual(t, serviceports.AssistantEventRetrying, event.Event)
+	}
+}
+
+// A reply that reprinted two kept tables keeps neither copy: each is pointed
+// to once, in its own place, and the prose between them stays.
+func TestPointToTables_PointsEveryReprintToItsOwnTable(t *testing.T) {
+	t.Parallel()
+
+	late := keptShipments(25)
+	carriers := serviceports.ShownArtifact{
+		ID:     pulid.MustNew("art_"),
+		Kind:   "table_view",
+		Title:  "Carriers to call",
+		Rows:   10,
+		Labels: []string{"Acme", "Bolt", "Cargo", "Delta", "Eagle", "Falcon", "Giant", "Hawk"},
+	}
+	var carrierRows strings.Builder
+	carrierRows.WriteString("| Carrier | Loads |\n| --- | --- |\n")
+	for _, name := range carriers.Labels {
+		fmt.Fprintf(&carrierRows, "| %s | 2 |\n", name)
+	}
+	reply := markdownReprint(8) + "\n\n" + carrierRows.String() + "\nThat is all."
+
+	got, first := pointToTables(reply, []serviceports.ShownArtifact{late, carriers})
+
+	require.NotNil(t, first)
+	assert.Equal(t, late.ID, first.ID, "the first table pointed to is reported")
+	assert.Contains(t, got, tablePointerLead+ArtifactRef(&late)+".")
+	assert.Contains(t, got, tablePointerLead+ArtifactRef(&carriers)+".")
+	assert.NotContains(t, got, "| PRO-1")
+	assert.NotContains(t, got, "| Acme |")
+	assert.Contains(t, got, "Call the carriers first.")
+	assert.Contains(t, got, "That is all.")
 }

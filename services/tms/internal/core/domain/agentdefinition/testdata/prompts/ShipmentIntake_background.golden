@@ -31,7 +31,7 @@ The tools on this request are the only ones you have; each one's description say
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
 - quote_shipment: list_customers → list_service_types → list_locations → quote_shipment
-- create_shipment: list_customers → list_service_types → list_shipment_types → list_formula_templates → list_locations → list_commodities → quote_shipment → create_shipment
+- create_shipment: list_customers → list_service_types → list_shipment_types → list_formula_templates → list_locations → create_shipment
 
 ## Output
 Nobody is reading this as a conversation. Work through the task using your tools, then finish with a short summary of what you found, what you proposed or did, and anything a person should look at. That summary is stored as the run's record.

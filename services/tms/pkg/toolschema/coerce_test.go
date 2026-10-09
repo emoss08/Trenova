@@ -2,6 +2,7 @@ package toolschema
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -76,4 +77,39 @@ func TestNameShape(t *testing.T) {
 	assert.Equal(t, NameShape("shipmentId"), NameShape("shipment_id"))
 	assert.Equal(t, "ab.c", JoinPath("ab", "c"))
 	assert.Equal(t, "c", JoinPath("", "c"))
+}
+
+/*
+A person asks what delivered today and a model passes the word on. A few
+reads parsed "today" themselves and the rest refused it; the runtime now
+reads today, yesterday and tomorrow once, as days in the organization's
+timezone, for every day parameter. Without a day to read them by, the word
+is left for the format to refuse.
+*/
+func TestCoerce_ReadsRelativeDaysInTheOrganizationsTimezone(t *testing.T) {
+	t.Parallel()
+
+	schema := map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"asOf":  map[string]any{"type": "string", "format": FormatDate},
+			"from":  map[string]any{"type": "string", "format": FormatDate},
+			"until": map[string]any{"type": "string", "format": FormatDate},
+		},
+	}
+	chicago, err := time.LoadLocation("America/Chicago")
+	require.NoError(t, err)
+	lateEvening := time.Date(2026, 10, 9, 23, 30, 0, 0, chicago)
+
+	got, notes := Coerce(schema, map[string]any{
+		"asOf": "Today", "from": "yesterday", "until": "tomorrow",
+	}, WithToday(lateEvening))
+
+	assert.Equal(t, map[string]any{
+		"asOf": "2026-10-09", "from": "2026-10-08", "until": "2026-10-10",
+	}, got, "the organization's day, not UTC's, which is already the 10th")
+	assert.Len(t, notes, 3)
+
+	unread, _ := Coerce(schema, map[string]any{"asOf": "today"})
+	assert.Equal(t, "today", unread["asOf"])
 }

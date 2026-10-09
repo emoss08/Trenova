@@ -62,6 +62,7 @@ Loaded now:
 - get_accounting_sync_status
 - list_accounting_sync_records
 - get_accounting_sync_record
+- get_record_accounting_sync_state
 - retry_accounting_sync
 - pause_accounting_sync
 - refresh_accounting_reference_data
@@ -72,7 +73,6 @@ Loaded now:
 - close_fiscal_period
 
 Callable after find_tools:
-- get_record_accounting_sync_state — Get whether Trenova documents or parties reached the accounting system, by their Trenova ids.
 - skip_accounting_sync — Mark one document as intentionally not sent to the accounting system, with the reason.
 - resume_accounting_sync — Start sending documents to the accounting system again after it was paused.
 - list_accounting_mapping_gaps — List what still has to be matched to the accounting system before anything can sync.
@@ -90,7 +90,7 @@ Callable after find_tools:
 - lock_fiscal_period — Propose locking an open fiscal period while its books are reviewed for close, the step before close_fiscal_period.
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
-- retry_accounting_sync: get_accounting_sync_record → get_accounting_sync_status → list_accounting_sync_records → retry_accounting_sync
+- retry_accounting_sync: get_accounting_sync_status → list_accounting_sync_records → get_accounting_sync_record → retry_accounting_sync
 - resume_accounting_sync: get_accounting_sync_status → resume_accounting_sync
 - set_accounting_mapping: list_accounting_mapping_gaps → get_accounting_mapping → set_accounting_mapping
 - create_accounting_reference_record: get_accounting_mapping → create_accounting_reference_record
@@ -98,6 +98,6 @@ How a task is done with these, in order, each step's result feeding the next; sk
 - apply_accounting_inbound_change: list_accounting_inbound_changes → apply_accounting_inbound_change
 - resolve_accounting_drift: list_accounting_drift_findings → resolve_accounting_drift
 - confirm_accounting_mapping_proposals: list_accounting_mapping_gaps → confirm_accounting_mapping_proposals
-- release_accounting_sync: get_accounting_sync_record → release_accounting_sync
+- release_accounting_sync: list_accounting_sync_records → get_accounting_sync_record → release_accounting_sync
 - lock_fiscal_period: list_fiscal_periods → get_fiscal_close_blockers → lock_fiscal_period
 - close_fiscal_period: list_fiscal_periods → get_fiscal_close_blockers → close_fiscal_period

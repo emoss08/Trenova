@@ -42,7 +42,6 @@ You hold more tools than are loaded on this turn. The loaded ones are callable n
 Loaded now:
 - recall_memory
 - remember
-- raise_exception
 - flag_for_manual_review
 - find_in_trenova
 - wait_until
@@ -65,5 +64,5 @@ Callable after find_tools:
 - check_accounting_connection — Check the accounting system connection now and record whether it answers.
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
-- attach_document_to_shipment: get_inbound_message → attach_document_to_shipment → mark_inbound_message
-- check_accounting_connection: check_accounting_connection → get_accounting_sync_status → raise_exception
+- attach_document_to_shipment: get_inbound_message → search_shipments → attach_document_to_shipment
+- check_accounting_connection: check_accounting_connection → get_accounting_sync_status

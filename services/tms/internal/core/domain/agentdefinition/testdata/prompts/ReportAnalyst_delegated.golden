@@ -50,7 +50,6 @@ You hold more tools than are loaded on this turn. The loaded ones are callable n
 Loaded now:
 - recall_memory
 - remember
-- raise_exception
 - flag_for_manual_review
 - find_in_trenova
 - wait_until
@@ -89,4 +88,4 @@ How a task is done with these, in order, each step's result feeding the next; sk
 - create_report: list_report_datasets → describe_report_dataset → preview_report → create_report → run_report
 - schedule_report: list_reports → schedule_report
 - create_dashboard: list_reports → describe_report → create_dashboard
-- add_dashboard_tile: list_dashboards → list_reports → add_dashboard_tile
+- add_dashboard_tile: list_dashboards → list_reports → describe_report → add_dashboard_tile

@@ -111,8 +111,6 @@ func (t *createShipmentTool) Recipe() []string {
 		"list_shipment_types",
 		"list_formula_templates",
 		"list_locations",
-		"list_commodities",
-		"quote_shipment",
 		"create_shipment",
 	}
 }
@@ -164,11 +162,14 @@ func shipmentDraftSchema() map[string]any {
 				"Who is billed, when not the customer, from "+
 					"list_customers.",
 			),
-			fieldServiceTypeID:  agenttoolschema.IDText("From list_service_types."),
-			fieldShipmentTypeID: agenttoolschema.IDText("From list_shipment_types."),
-			"formulaTemplateId": agenttoolschema.IDText(
-				"The rating method that prices the freight, from " +
-					"list_formula_templates. Required: a rate agreement covering the lane may " +
+			fieldServiceTypeID: agenttoolschema.RecordIDText(permission.ResourceServiceType,
+				"From list_service_types."),
+			fieldShipmentTypeID: agenttoolschema.RecordIDText(permission.ResourceShipmentType,
+				"From list_shipment_types."),
+			"formulaTemplateId": agenttoolschema.RecordIDText(
+				permission.ResourceFormulaTemplate,
+				"The rating method that prices the freight, from "+
+					"list_formula_templates. Required: a rate agreement covering the lane may "+
 					"replace it with its own when the shipment is saved.",
 			),
 			"baseRate": amountProperty("The rate the rating method multiplies, as a decimal " +
@@ -177,10 +178,12 @@ func shipmentDraftSchema() map[string]any {
 				"Who pays the freight. Defaults to Prepaid.",
 				agenttoolschema.FreightTerms,
 			),
-			previewFieldTractorTypeID: agenttoolschema.IDText(
+			previewFieldTractorTypeID: agenttoolschema.RecordIDText(
+				permission.ResourceEquipmentType,
 				"A tractor equipment type, from list_equipment_types.",
 			),
-			previewFieldTrailerTypeID: agenttoolschema.IDText(
+			previewFieldTrailerTypeID: agenttoolschema.RecordIDText(
+				permission.ResourceEquipmentType,
 				"A trailer equipment type, from list_equipment_types.",
 			),
 			"bol": stringProperty("The customer's BOL or reference. It must be unique among "+
@@ -303,7 +306,8 @@ func chargeLineDraftSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			"accessorialChargeId": agenttoolschema.IDText(
+			"accessorialChargeId": agenttoolschema.RecordIDText(
+				permission.ResourceAccessorialCharge,
 				"The accessorial, from list_accessorial_charges.",
 			),
 			"method": agenttoolschema.Enum(
@@ -469,39 +473,27 @@ func (t *updateShipmentTool) Recipe() []string {
 func (t *updateShipmentTool) Description() string {
 	return "Change the details of a saved shipment: the customer, service type, shipment " +
 		"type, equipment types, BOL, pieces, weight or temperature range. Send only " +
-		"the fields to change. Stops, moves, rates and status are not changed here; " +
-		"use the move, hold and cancel tools for those."
+		"the fields to change. Stops, moves, rates and status are not changed here: " +
+		"reschedule_stop moves an appointment, add_shipment_charge adds an accessorial, " +
+		"and the move, hold and cancel tools do the rest."
 }
 
 func (t *updateShipmentTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentId": map[string]any{
-				"type": "string",
-				"description": "The shipment to change, from the page, list_shipments or " +
-					"search_shipments.",
-			},
-			"customerId": map[string]any{
-				"type":        "string",
-				"description": "The new customer, from list_customers.",
-			},
-			"serviceTypeId": map[string]any{
-				"type":        "string",
-				"description": "The new service type, from list_service_types.",
-			},
-			"shipmentTypeId": map[string]any{
-				"type":        "string",
-				"description": "The new shipment type, from list_shipment_types.",
-			},
-			"tractorTypeId": map[string]any{
-				"type":        "string",
-				"description": "The new tractor equipment type, from list_equipment_types.",
-			},
-			"trailerTypeId": map[string]any{
-				"type":        "string",
-				"description": "The new trailer equipment type, from list_equipment_types.",
-			},
+			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
+				"The shipment to change, from the page, list_shipments or search_shipments."),
+			"customerId": agenttoolschema.RecordIDText(permission.ResourceCustomer,
+				"The new customer, from list_customers."),
+			"serviceTypeId": agenttoolschema.RecordIDText(permission.ResourceServiceType,
+				"The new service type, from list_service_types."),
+			"shipmentTypeId": agenttoolschema.RecordIDText(permission.ResourceShipmentType,
+				"The new shipment type, from list_shipment_types."),
+			"tractorTypeId": agenttoolschema.RecordIDText(permission.ResourceEquipmentType,
+				"The new tractor equipment type, from list_equipment_types."),
+			"trailerTypeId": agenttoolschema.RecordIDText(permission.ResourceEquipmentType,
+				"The new trailer equipment type, from list_equipment_types."),
 			"bol": map[string]any{
 				"type":        "string",
 				"description": "The customer's BOL or reference number.",

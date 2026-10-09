@@ -57,6 +57,7 @@ func contractCall(
 	validator *toolschema.Validator,
 	name string,
 	schema, args map[string]any,
+	opts ...toolschema.CoerceOption,
 ) (argumentContract, error) {
 	aliased, aliases := aliasArguments(schema, args)
 	if _, owned := aliased[serviceports.SelfScopeOwnerParam]; owned {
@@ -68,7 +69,7 @@ func contractCall(
 		}
 		aliased = stripped
 	}
-	coerced, coercions := coerceArguments(schema, aliased)
+	coerced, coercions := coerceArguments(schema, aliased, opts...)
 
 	if err := validator.ValidateFor(name, schema, coerced); err != nil {
 		return argumentContract{}, err

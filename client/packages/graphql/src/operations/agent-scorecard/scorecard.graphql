@@ -28,6 +28,15 @@ fragment AgentScorecardFields on AgentScorecard {
     pending
     automatic
   }
+  toolVerdicts {
+    toolName
+    verdict
+    calls
+    topReasons {
+      reason
+      calls
+    }
+  }
   toolTrust {
     toolName
     streak

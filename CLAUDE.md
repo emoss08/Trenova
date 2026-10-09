@@ -369,6 +369,19 @@ rows to their spans, and the known limits are in
 [docs/engineering/ai-tracing.md](docs/engineering/ai-tracing.md). Read it before adding a span,
 a trace attribute or a link column.
 
+## Desk Bench
+
+`trenova desk ask "…"` and `trenova desk run` (`task desk-ask`, `task desk-bench`) drive the
+Desk's agents through real turns on this checkout's code, on an in-process worker in its own
+Temporal namespace, and write every model request, tool call, verdict, refusal, proposal and
+follow-up to `.deskbench/runs/<time>/` (`summary.md`, `transcript.md`, `calls/`, `prompts/`,
+`tools/`). Use it to find and confirm fixes to tool descriptions, schemas and prompts;
+scenarios live in `services/tms/deskbench/scenarios/`, and every problem a run finds is recorded
+in `services/tms/deskbench/findings.yaml` (`trenova desk findings` lists and exports them). **Read
+[docs/engineering/desk-bench.md](docs/engineering/desk-bench.md) before changing
+`internal/deskbench` or writing scenarios.** It approves real writes, so run it against a
+seeded development database only.
+
 ## Row-Level Security
 
 PostgreSQL enforces tenant isolation itself: every tenant table is under a FORCE

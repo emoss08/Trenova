@@ -54,7 +54,6 @@ You hold more tools than are loaded on this turn. The loaded ones are callable n
 Loaded now:
 - recall_memory
 - remember
-- raise_exception
 - flag_for_manual_review
 - find_in_trenova
 - wait_until
@@ -121,10 +120,10 @@ Callable after find_tools:
 Several records in one call: approve_driver_settlements does approve_driver_settlement for a list, post_driver_settlements does post_driver_settlement for a list, approve_carrier_settlements does approve_carrier_settlement for a list, post_carrier_settlements does post_carrier_settlement for a list. When the person asks about several records, or for one change across several, call the list tool once with all of them, so a change is decided once on one card; never call the single tool once per record, and load the list tool with find_tools when it is not loaded.
 
 How a task is done with these, in order, each step's result feeding the next; skip a step whose answer you already have:
-- resolve_settlement_dispute: get_driver_settlement → get_settlement_dispute → start_settlement_dispute_review → resolve_settlement_dispute
-- generate_driver_settlement_batch: list_driver_pay_events → get_worker_earnings_summary → generate_driver_settlement_batch → submit_driver_settlement
-- approve_driver_settlements: list_driver_settlements → get_driver_settlement → submit_driver_settlement → approve_driver_settlements → post_driver_settlements
-- post_driver_settlements: approve_driver_settlements → post_driver_settlements → record_driver_settlement_payment
-- approve_carrier_settlements: generate_carrier_settlement_batch → approve_carrier_settlements → post_carrier_settlements
-- create_carrier_invoice_match: list_edi_carrier_invoices → link_edi_carrier_invoice_to_carrier → create_carrier_invoice_match
+- resolve_settlement_dispute: get_driver_settlement → get_settlement_dispute → resolve_settlement_dispute
+- generate_driver_settlement_batch: list_driver_pay_events → generate_driver_settlement_batch → list_driver_settlements
+- approve_driver_settlements: list_driver_settlements → get_driver_settlement → approve_driver_settlements
+- post_driver_settlements: list_driver_settlements → post_driver_settlements
+- approve_carrier_settlements: list_carrier_settlements → get_carrier_settlement → approve_carrier_settlements
+- create_carrier_invoice_match: list_edi_carrier_invoices → create_carrier_invoice_match
 - accept_carrier_invoice_match: list_carrier_invoice_matches → accept_carrier_invoice_match

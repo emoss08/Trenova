@@ -314,7 +314,7 @@ func newRecomputeIFTAReturnTool(returns iftaReturnKeeper) serviceports.AgentTool
 		rationale: "Re-derives a draft return's figures inside Trenova from what is on file; " +
 			"nothing is filed, and running it again gives the same figures.",
 		properties: map[string]any{
-			paramIFTAReturnID: stringProperty(iftaReturnSupplier, 0),
+			paramIFTAReturnID: agenttoolschema.KindID(iftaReturnSupplier, permission.KindIFTAReturn),
 		},
 		required: []string{paramIFTAReturnID},
 		target:   targetIFTAReturn,
@@ -378,7 +378,8 @@ func newAmendIFTAReturnTool(returns iftaReturnKeeper) serviceports.AgentTool {
 		rationale: "Starts a correction of a return already filed with the jurisdictions; " +
 			"it files nothing, but a person decides to reopen a filing.",
 		properties: map[string]any{
-			paramIFTAReturnID: stringProperty(iftaReturnSupplier+" It must be Filed.", 0),
+			paramIFTAReturnID: agenttoolschema.KindID(iftaReturnSupplier+" It must be Filed.",
+				permission.KindIFTAReturn),
 			paramReason: stringProperty("What was wrong with the filed return, at least ten "+
 				"characters, as the auditor will read it.", maxAmendReason),
 		},
@@ -454,7 +455,8 @@ func newDeleteIFTAReturnTool(returns iftaReturnKeeper) serviceports.AgentTool {
 		rationale: "Removes a draft return inside Trenova that nothing was filed from; " +
 			"generating it again recomputes the same figures.",
 		properties: map[string]any{
-			paramIFTAReturnID: stringProperty(iftaReturnSupplier+" It must be a Draft.", 0),
+			paramIFTAReturnID: agenttoolschema.KindID(iftaReturnSupplier+" It must be a Draft.",
+				permission.KindIFTAReturn),
 		},
 		required: []string{paramIFTAReturnID},
 		target:   targetIFTAReturn,
@@ -507,23 +509,24 @@ func iftaMileageProperties(forCorrection bool) map[string]any {
 	}
 
 	properties := map[string]any{
-		paramTractorID: stringProperty("The tractor that drove the miles, from "+
-			"list_tractors."+keep, 0),
-		paramJurisdictionID: stringProperty("The state or province the miles were driven in, "+
-			"from list_ifta_jurisdictions."+keep, 0),
+		paramTractorID: agenttoolschema.RecordIDText(permission.ResourceTractor,
+			"The tractor that drove the miles, from list_tractors."+keep),
+		paramJurisdictionID: agenttoolschema.KindID("The state or province the miles were "+
+			"driven in, from list_ifta_jurisdictions."+keep, permission.KindIFTAJurisdiction),
 		paramTraveledAt: agenttoolschema.DateTime("When the miles were driven; it decides the " +
 			"quarter they count in." + keep),
 		paramMiles: stringProperty("The miles as a decimal such as 212.5."+keep, 0),
 		paramLoaded: booleanProperty("Whether the tractor was loaded. Defaults to true." +
 			keep),
-		paramShipmentMoveID: stringProperty("The move these miles correct, from "+
-			"get_shipment; the entry then replaces the move's routed miles on the return."+
-			keep, 0),
+		paramShipmentMoveID: agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
+			"The move these miles correct, from get_shipment; the entry then replaces the "+
+				"move's routed miles on the return."+keep),
 		paramNotes: stringProperty("Where the miles came from, such as a trip sheet."+keep,
 			maxMileageNotes),
 	}
 	if forCorrection {
-		properties[paramIFTAMileageEntryID] = stringProperty(iftaMileageSupplier, 0)
+		properties[paramIFTAMileageEntryID] = agenttoolschema.KindID(iftaMileageSupplier,
+			permission.KindIFTAMileageEntry)
 	}
 
 	return properties
@@ -875,7 +878,8 @@ func newDeleteIFTAMileageEntryTool(entries iftaMileageKeeper) serviceports.Agent
 		rationale: "Removes miles the IFTA return is computed from, and nothing brings them " +
 			"back but entering them again, so a person always decides.",
 		properties: map[string]any{
-			paramIFTAMileageEntryID: stringProperty(iftaMileageSupplier, 0),
+			paramIFTAMileageEntryID: agenttoolschema.KindID(iftaMileageSupplier,
+				permission.KindIFTAMileageEntry),
 		},
 		required: []string{paramIFTAMileageEntryID},
 		target:   targetIFTAMileage,
@@ -964,8 +968,8 @@ func newRecalculateMoveJurisdictionMilesTool(router jurisdictionMileRouter) serv
 			"nothing is sent to a customer or carrier, and running it again gives the same " +
 			"miles.",
 		properties: map[string]any{
-			paramShipmentMoveID: stringProperty("The move, from get_shipment. Never guess "+
-				"one.", 0),
+			paramShipmentMoveID: agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
+				"The move, from get_shipment. Never guess one."),
 		},
 		required: []string{paramShipmentMoveID},
 		target: func(params map[string]any) (serviceports.ToolTarget, bool) {

@@ -98,7 +98,7 @@ func newCommitRateImportTool(imports rateImportKeeper) serviceports.AgentTool {
 		rationale: "Changes the rates an agreement prices shipments at; only a person applies " +
 			"a rate sheet.",
 		properties: map[string]any{
-			paramRateImportID: stringProperty(rateImportSupplier, 0),
+			paramRateImportID: agenttoolschema.KindID(rateImportSupplier, permission.KindRateImport),
 		},
 		required:    []string{paramRateImportID},
 		target:      targetRateImport,
@@ -165,7 +165,7 @@ func newDiscardRateImportTool(imports rateImportKeeper) serviceports.AgentTool {
 			"sheet can be uploaded again.",
 		reversible: true,
 		properties: map[string]any{
-			paramRateImportID: stringProperty(rateImportSupplier, 0),
+			paramRateImportID: agenttoolschema.KindID(rateImportSupplier, permission.KindRateImport),
 		},
 		required: []string{paramRateImportID},
 		target:   targetRateImport,

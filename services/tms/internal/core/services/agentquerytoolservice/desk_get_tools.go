@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,6 +31,7 @@ func newGetDetentionOccurrenceTool(
 		name:     "get_detention_occurrence",
 		entity:   "detention occurrence",
 		resource: permission.ResourceDetentionPolicy,
+		kinds:    []permission.RecordKind{permission.KindDetentionOccurrence},
 		summary: "Retrieve one detention occurrence by id: the stop, the clock, free time, " +
 			"billable minutes, amounts, notice status, and the evidence and notices on file. " +
 			"Use list_detention_desk first when you do not have an id.",
@@ -57,6 +59,7 @@ func newGetCarrierIntelEventTool(
 			"carrier risk alert", "authority change", "insurance lapse", "safety rating change",
 		},
 		resource: permission.ResourceCarrierIntelligence,
+		kinds:    []permission.RecordKind{permission.KindCarrierIntelligenceEvent},
 		summary: "Retrieve one carrier intelligence event by id: what changed on the " +
 			"carrier's authority, insurance or safety record, and its severity. It also " +
 			"gives the prior and current values and whether anyone has acknowledged or " +
@@ -129,11 +132,11 @@ func (t *getWorkerCredentialTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"credentialId": map[string]any{
-				"type": "string",
-				"description": "The worker credential's id, from list_expiring_credentials " +
+			"credentialId": agenttoolschema.RecordIDText(
+				permission.ResourceWorkerCredential,
+				"The worker credential's id, from list_expiring_credentials "+
 					"or the page you are on.",
-			},
+			),
 		},
 		"required":             []string{"credentialId"},
 		"additionalProperties": false,
@@ -261,10 +264,12 @@ func newGetCustomerUpdatePreferencesTool(
 		entity:   "customer",
 		resource: permission.ResourceCustomer,
 		summary: "Retrieve what a customer asked to be told as their freight moves: " +
-			"whether they want arrivals, departures, both or nothing, and who receives " +
-			"them. A customer set to None is not to be emailed about a stop at all. " +
-			"When the recipient list is empty the notice profile's own recipients are " +
-			"the fallback. Call this before writing any status update.",
+			"whether they want arrival notices, departure notices, both or neither, and " +
+			"who receives them. A customer set to None gets no routine arrival or " +
+			"departure notice; that does not stop an update the person asks you to send, " +
+			"such as a delay or a new ETA, which goes out on their approval. When the " +
+			"recipient list is empty the notice profile's own recipients are the fallback. " +
+			"Call this before writing any status update.",
 		paramName: "customerId",
 		idSource:  "from list_customers or the customerId on get_shipment",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
@@ -288,7 +293,9 @@ func newGetCustomerUpdatePreferencesTool(
 				"statusUpdateRecipients": entity.StatusUpdateRecipients,
 			}
 			if entity.StatusUpdatePreference == customer.StatusUpdateNone {
-				out["warning"] = "This customer has not asked for status updates; do not email them about a stop."
+				out["warning"] = "This customer gets no routine arrival or departure notices, " +
+					"so never send one on your own. An update the person asked for, such as a " +
+					"delay or a new ETA, still goes out with their approval."
 			}
 			if entity.StatusUpdateRecipients == "" && entity.EmailProfile != nil {
 				out["fallbackRecipients"] = entity.EmailProfile.ToRecipients

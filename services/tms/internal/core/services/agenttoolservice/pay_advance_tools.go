@@ -244,8 +244,8 @@ func (t *writeOffPayAdvanceTool) Description() string {
 
 func (t *writeOffPayAdvanceTool) ParamSchema() map[string]any {
 	return objectParams(map[string]any{
-		paramAdvanceID: agenttoolschema.IDText("The advance, from " + advanceSourcesTool +
-			". Never guess one."),
+		paramAdvanceID: agenttoolschema.RecordIDText(permission.ResourcePayAdvance,
+			"The advance, from "+advanceSourcesTool+". Never guess one."),
 		paramWriteOffReason: stringProperty("Why it cannot be recovered.", maxWriteOffReason),
 	}, paramAdvanceID, paramWriteOffReason)
 }

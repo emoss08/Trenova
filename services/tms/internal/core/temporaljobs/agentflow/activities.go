@@ -203,7 +203,12 @@ func (a *Activities) FindToolsActivity(
 ) (*FindToolsResult, error) {
 	found := a.runtime.FindFor(ctx, in.Run.request(), in.Tools, in.Arguments)
 
-	return &FindToolsResult{Content: found.Content, Loaded: found.Loaded, Found: found.Found}, nil
+	return &FindToolsResult{
+		Content: found.Content,
+		Loaded:  found.Loaded,
+		Found:   found.Found,
+		HandOff: found.HandOff,
+	}, nil
 }
 
 // OpenDelegateActivity opens another agent's turn on a task the run's agent

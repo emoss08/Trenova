@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
@@ -265,6 +266,7 @@ func (a *Activities) FinishTurnActivity(
 		return nil, err
 	}
 	a.settle(ctx, payload, serviceports.RunStepCompleted, ending.Result.Status)
+	a.recordLoopRefusals(ctx, in)
 	a.turns.Complete(ctx, turn, conversation.AssistantTurnStatus(ending.Result.Status), cause)
 	a.recordTrajectory(ctx, tenant, payload, in.Events, ending.Event)
 	ending.Next = a.continueTurn(ctx, in, conversation.AssistantTurnStatus(ending.Result.Status))
@@ -716,6 +718,34 @@ func (a *Activities) CloseTurnActivity(
 	}, turn, string(conversation.AssistantTurnStatusFailed))
 
 	return nil
+}
+
+// recordLoopRefusals files the calls the loop refused without dispatching
+// them, so the agent's scorecard counts them (agentruntime.RecordLoopRefusals).
+// The turn is already saved, so a failure here is logged, not returned.
+func (a *Activities) recordLoopRefusals(ctx context.Context, in *FinishTurnInput) {
+	if in.Run == nil || len(in.Run.LoopRefusals) == 0 || in.Plan == nil ||
+		in.Plan.Definition == nil {
+		return
+	}
+	payload := in.Payload
+	failed := agentruntime.RecordLoopRefusals(ctx, &agentruntime.RecordLoopRefusalsRequest{
+		Ledger: a.steps,
+		Tenant: payload.tenantInfo(),
+		Owner: serviceports.RunStepOwner{
+			Kind: serviceports.RunStepOwnerAssistantTurn,
+			ID:   payload.TurnID,
+		},
+		DefinitionID: in.Plan.Definition.ID,
+		Attempt:      int(activity.GetInfo(ctx).Attempt),
+		Refusals:     in.Run.LoopRefusals,
+	})
+	if failed > 0 {
+		a.logger.Warn("could not record some of a turn's refused tool calls",
+			zap.String("turn", payload.TurnID.String()),
+			zap.Int("unrecorded", failed),
+		)
+	}
 }
 
 // claimSave reserves saving the turn for this attempt, and reports whether

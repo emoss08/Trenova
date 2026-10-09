@@ -55,15 +55,13 @@ func (t *flagManualReviewTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"runId": map[string]any{
-				"type": "string",
-				"description": "The id of the run you are in, the one working this run's " +
-					"subject; never invent one.",
-			},
-			"subjectId": map[string]any{
-				"type":        "string",
-				"description": "The billing queue item being flagged: this run's subject.",
-			},
+			"runId": agenttoolschema.RecordIDText(permission.ResourceAgentRun,
+				"The id of the run you are in, the one working this run's subject; never "+
+					"invent one."),
+			"subjectId": agenttoolschema.KindID(
+				"The billing queue item being flagged: this run's subject.",
+				permission.KindBillingQueueItem,
+			),
 			fieldCategory: agenttoolschema.Enum(
 				"What kind of problem it is, such as MissingDocumentation, IncorrectRates, "+
 					"WeightDiscrepancy, AccessorialDispute, DuplicateCharge or RateNotOnFile.",

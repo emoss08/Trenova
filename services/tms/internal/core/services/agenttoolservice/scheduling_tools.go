@@ -246,8 +246,9 @@ func newAssignWorkerShiftTool(schedules scheduleKeeper, scope teamScope) service
 		permission.OpAssign,
 		map[string]any{
 			paramWorkerID: workerProperty(),
-			paramShiftTemplateID: agenttoolschema.IDText(
-				"The shift pattern, from list_shift_templates. " +
+			paramShiftTemplateID: agenttoolschema.RecordIDText(
+				permission.ResourceShiftTemplate,
+				"The shift pattern, from list_shift_templates. "+
 					"Never guess one.",
 			),
 			fieldEffectiveFrom: agenttoolschema.Date("The first day the worker works it."),
@@ -371,9 +372,10 @@ func newEndWorkerShiftAssignmentTool(
 			"assign_worker_shift puts them back on it.",
 		permission.OpAssign,
 		map[string]any{
-			paramShiftAssignmentID: agenttoolschema.IDText(
-				"The assignment, from get_worker_schedule. " +
+			paramShiftAssignmentID: agenttoolschema.KindID(
+				"The assignment, from get_worker_schedule. "+
 					"Never guess one.",
+				permission.KindShiftAssignment,
 			),
 			fieldEffectiveTo: agenttoolschema.Date("The last day the worker works the pattern."),
 		},
@@ -753,7 +755,8 @@ func newSwapDecisionTool(schedules scheduleKeeper, spec *swapDecisionSpec) servi
 		personOnly:  spec.personOnly,
 		rationale:   spec.rationale,
 		properties: map[string]any{
-			paramSwapID: agenttoolschema.IDText(
+			paramSwapID: agenttoolschema.RecordIDText(
+				permission.ResourceShiftSwap,
 				"The swap, from get_worker_schedule. Never guess one.",
 			),
 			paramNote: stringProperty("What the workers are told about it.",

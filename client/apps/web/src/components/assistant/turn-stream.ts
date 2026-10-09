@@ -53,6 +53,8 @@ export type ToolSegment = {
   delegate?: DelegateProgress;
   /** Why the agent took the step, when it said. */
   why?: StepRationale | null;
+  /** The person's other agents a find_tools answer named as holding what this agent lacks. */
+  handOffAgents?: readonly string[];
 };
 
 export type TurnRetry = {
@@ -120,6 +122,24 @@ function withdrawAttempt(segments: TurnSegment[]): TurnSegment[] {
     end -= 1;
   }
   return end === segments.length ? segments : segments.slice(0, end);
+}
+
+/**
+ * Puts the reply the turn recorded in place of the one that streamed, when the
+ * runtime corrected it afterwards. Only the attempt's open reply goes: the
+ * thinking that led into it happened and stays, as does everything the turn
+ * finished before it.
+ */
+function replaceReply(segments: TurnSegment[], text: string): TurnSegment[] {
+  const attempt = withdrawAttempt(segments).length;
+  const kept =
+    attempt === segments.length
+      ? segments
+      : [
+          ...segments.slice(0, attempt),
+          ...segments.slice(attempt).filter((segment) => segment.kind !== "text"),
+        ];
+  return appendDelta(kept, text);
 }
 
 /** Thinking arrives: it grows the open thought or opens a new one. */
@@ -213,10 +233,51 @@ function finishTool(segments: TurnSegment[], data: ToolFinishedData): TurnSegmen
           effect: data.effect ?? segment.effect,
           summary: data.summary || undefined,
           verdict: data.verdict,
+          handOffAgents:
+            data.handOffAgents && data.handOffAgents.length > 0 ? data.handOffAgents : undefined,
         }
       : segment,
   );
 }
+
+/** No agent is named. One shared value, so a reader keyed on it does not run again. */
+export const NO_HAND_OFF_AGENTS: readonly string[] = Object.freeze([]);
+
+/**
+ * The agents the turn's own newest find_tools answer named as holding what its
+ * agent could not load. It is the step's own list, so the same answer is the
+ * same value from one event to the next. Another agent's steps on a task it
+ * was handed are nested under the call that handed it over, so they are not
+ * read.
+ */
+export function turnHandOffAgents(
+  segments: readonly TurnSegment[],
+  interjections: readonly TurnInterjection[] = [],
+): readonly string[] {
+  let tools = segments.reduce((count, segment) => count + (segment.kind === "tool" ? 1 : 0), 0);
+  for (let index = segments.length - 1; index >= 0; index -= 1) {
+    const segment = segments[index];
+    if (segment.kind !== "tool") {
+      continue;
+    }
+    tools -= 1;
+    if (segment.handOffAgents && segment.handOffAgents.length > 0) {
+      const steeredAfter = interjections.some(
+        (item) => item.kind === "steer" && item.toolsBefore > tools,
+      );
+      return steeredAfter ? NO_HAND_OFF_AGENTS : segment.handOffAgents;
+    }
+  }
+  return NO_HAND_OFF_AGENTS;
+}
+
+/** What a running turn says about handing its conversation to another agent. */
+export type TurnHandoff = {
+  /** The turn answers words of the person's own; false for one following up a decision. */
+  asked: boolean;
+  /** What its own newest find_tools answer named; empty while none has. */
+  agentIds: readonly string[];
+};
 
 /** The tool an agent hands a task to another agent with. */
 export const DELEGATE_TOOL = "delegate_task";
@@ -299,7 +360,19 @@ export type TurnLimit = {
  * step, and records that changed elsewhere, which the agent was told about.
  */
 export type TurnInterjection =
-  | { kind: "steer"; id: string; text: string; mentions: AssistantEntityRef[] }
+  | {
+      kind: "steer";
+      id: string;
+      text: string;
+      mentions: AssistantEntityRef[];
+      /**
+       * How many tool steps the turn had run when the person wrote this. Tool
+       * steps are never withdrawn, so it orders the steer against them: a
+       * hand-off suggestion from a step before it is one the person has
+       * already written past.
+       */
+      toolsBefore: number;
+    }
   | { kind: "world"; key: string; changes: WatchedRecordChange[] };
 
 /** The turn the conversation's queue started once this one was saved. */
@@ -532,6 +605,16 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
       }));
     }
 
+    case "delegate_reply_replaced": {
+      // The other agent's corrected reply replaces only what it had streamed.
+      const data = event.data;
+      return updateDelegate(state, data.delegateCallId, data.agentId, (delegate) => ({
+        ...delegate,
+        retrying: null,
+        segments: replaceReply(delegate.segments, data.text),
+      }));
+    }
+
     case "delegate_finished": {
       const data = event.data;
       return updateDelegate(state, data.delegateCallId, data.agentId, (delegate) => ({
@@ -561,6 +644,18 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
           maxAttempts: event.data.maxAttempts ?? 0,
         },
         segments: event.data.kind === "busy" ? state.segments : withdrawAttempt(state.segments),
+      };
+
+    case "reply_replaced":
+      // The runtime corrected the reply after it streamed: ids taken out, a
+      // reprinted table pointed to, a code block left out. The model was not
+      // asked again, so this is no retry: the streamed reply is swapped for
+      // the one recorded, the way the reader would have seen it arrive.
+      return {
+        ...state,
+        status: "streaming",
+        retrying: null,
+        segments: replaceReply(state.segments, event.data.text),
       };
 
     case "artifact": {
@@ -607,7 +702,13 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
         ...state,
         interjections: [
           ...state.interjections,
-          { kind: "steer", id: steer.id, text: steer.content, mentions: steer.mentions },
+          {
+            kind: "steer",
+            id: steer.id,
+            text: steer.content,
+            mentions: steer.mentions,
+            toolsBefore: state.segments.filter((segment) => segment.kind === "tool").length,
+          },
         ],
       };
     }

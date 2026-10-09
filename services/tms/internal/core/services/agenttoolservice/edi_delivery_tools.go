@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -147,8 +148,9 @@ func (t *retryEDIMessageDeliveryTool) Description() string {
 
 func (t *retryEDIMessageDeliveryTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramEDIMessageIDs: ediRecordSubset("The outbound messages to send again, by id " +
-			"from list_edi_messages filtered to Failed or DeadLettered. Never guess one."),
+		paramEDIMessageIDs: agenttoolschema.OfKinds(ediRecordSubset("The outbound messages "+
+			"to send again, by id from list_edi_messages filtered to Failed or DeadLettered. "+
+			"Never guess one."), permission.KindEDIMessage),
 	}, paramEDIMessageIDs)
 }
 
@@ -238,8 +240,8 @@ func (t *replayEDIMessageTool) Description() string {
 
 func (t *replayEDIMessageTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramEDIMessageID: jsonschemautils.Text("The delivered outbound message, from " +
-			"list_edi_messages filtered to Sent. Never guess one."),
+		paramEDIMessageID: agenttoolschema.KindID("The delivered outbound message, from "+
+			"list_edi_messages filtered to Sent. Never guess one.", permission.KindEDIMessage),
 	}, paramEDIMessageID)
 }
 
@@ -324,9 +326,9 @@ func (t *reprocessEDIInboundFilesTool) Name() string { return "reprocess_edi_inb
 
 func (t *reprocessEDIInboundFilesTool) Recipe() []string {
 	return []string{
+		"list_edi_inbound_files",
 		"get_edi_inbound_file",
 		"get_edi_partner",
-		"list_edi_inbound_files",
 		"reprocess_edi_inbound_files",
 	}
 }
@@ -341,8 +343,9 @@ func (t *reprocessEDIInboundFilesTool) Description() string {
 
 func (t *reprocessEDIInboundFilesTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramEDIInboundFileIDs: ediRecordSubset("The inbound files to process again, by id " +
-			"from list_edi_inbound_files or get_edi_inbound_file. Never guess one."),
+		paramEDIInboundFileIDs: agenttoolschema.OfKinds(ediRecordSubset("The inbound files "+
+			"to process again, by id from list_edi_inbound_files or get_edi_inbound_file. "+
+			"Never guess one."), permission.KindEDIInboundFile),
 	}, paramEDIInboundFileIDs)
 }
 

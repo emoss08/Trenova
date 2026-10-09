@@ -5167,6 +5167,7 @@
   "{0, plural, one {# advisory} other {# advisories}}": "{0, plural, other {# 項提醒}}",
   "{0, plural, one {# attachment} other {# attachments}}": "{0, plural, other {# 個附件}}",
   "{0, plural, one {# blocker} other {# blockers}}": "{0, plural, other {# 項阻擋}}",
+  "{0, plural, one {# call} other {# calls}}": "{0, plural, other {# 次呼叫}}",
   "{0, plural, one {# case still accruing days} other {# cases still accruing days}}": "{0, plural, other {# 件仍在累計天數的案件}}",
   "{0, plural, one {# cell can't be edited} other {# cells can't be edited}}": "{0, plural, one {# 個儲存格無法編輯} other {# 個儲存格無法編輯}}",
   "{0, plural, one {# cell put back} other {# cells put back}}": "{0, plural, one {已還原 # 個儲存格} other {已還原 # 個儲存格}}",

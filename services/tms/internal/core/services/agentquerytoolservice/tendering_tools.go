@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -69,10 +70,12 @@ func (t *listShipmentTendersTool) Description() string {
 
 func (t *listShipmentTendersTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
-		paramShipmentID: stringParam("The shipment, from search_shipments, get_shipment or " +
-			"the page you are on."),
-		paramShipmentMoveID: stringParam("Only this move's tenders, by id from get_shipment " +
-			"(its moves) or get_dispatch_board."),
+		paramShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
+			"The shipment, from search_shipments, get_shipment or "+
+				"the page you are on."),
+		paramShipmentMoveID: agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
+			"Only this move's tenders, by id from get_shipment "+
+				"(its moves) or get_dispatch_board."),
 	}, paramShipmentID)
 }
 
@@ -224,8 +227,9 @@ func (t *listRateConfirmationsTool) Description() string {
 
 func (t *listRateConfirmationsTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
-		paramShipmentMoveID: stringParam("The move, from get_shipment (its moves) or " +
-			"get_dispatch_board."),
+		paramShipmentMoveID: agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
+			"The move, from get_shipment (its moves) or "+
+				"get_dispatch_board."),
 	}, paramShipmentMoveID)
 }
 

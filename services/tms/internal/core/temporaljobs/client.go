@@ -12,6 +12,7 @@ import (
 	"go.temporal.io/sdk/contrib/opentelemetry"
 	"go.temporal.io/sdk/converter"
 	"go.temporal.io/sdk/interceptor"
+	temporallog "go.temporal.io/sdk/log"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -30,7 +31,8 @@ type TemporalClientParams struct {
 	Logger   *zap.Logger
 	LC       fx.Lifecycle
 	Payloads converter.StorageDriver
-	Metrics  *metrics.Registry `optional:"true"`
+	Metrics  *metrics.Registry  `optional:"true"`
+	SDKLog   temporallog.Logger `optional:"true"`
 }
 
 type TemporalClientResult struct {
@@ -72,6 +74,10 @@ func NewTemporalClient(p TemporalClientParams) (TemporalClientResult, error) {
 				zap.String("keyID", cfg.Security.EncryptionKeyID),
 			)
 		}
+	}
+
+	if p.SDKLog != nil {
+		clientOptions.Logger = p.SDKLog
 	}
 
 	// Offloading runs after the data converter, so with encryption on a

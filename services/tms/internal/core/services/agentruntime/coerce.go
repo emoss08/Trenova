@@ -24,8 +24,11 @@ const maxCoercionsNoted = 5
 // wherever the reading is certain (toolschema.Coerce). The proposal executor
 // applies the same readings to what an approver changed, so a value the
 // runtime would have read is read the same way when it runs.
-func coerceArguments(schema, args map[string]any) (map[string]any, []argumentCoercion) {
-	return toolschema.Coerce(schema, args)
+func coerceArguments(
+	schema, args map[string]any,
+	opts ...toolschema.CoerceOption,
+) (map[string]any, []argumentCoercion) {
+	return toolschema.Coerce(schema, args, opts...)
 }
 
 // coercionNote tells the model what was read differently from how it was
@@ -91,7 +94,9 @@ func argumentNote(aliases []argumentAlias, coercions []argumentCoercion) string 
 // reads as the record not existing.
 //
 // A parameter marked with the resource it takes (toolschema.KeyRecordOf) is
-// held to that resource's prefix exactly. An unmarked one is checked only for
+// held to that resource's prefix exactly, and one marked with the kinds of
+// record it takes (toolschema.KeyRecordKinds) to one of those kinds' prefixes.
+// An unmarked one is checked only for
 // the shape of an id, and only when its description names where the id comes
 // from, so a key that is not a PULID (a report's chart id, an external
 // reference) is left alone.
@@ -112,12 +117,30 @@ type argumentProblem struct {
 	Message string
 }
 
-// idCheck is what one id parameter is held to: the resource whose prefix it
-// must carry, when it is marked with one, and the description naming where
-// its ids come from.
+// idCheck is what one id parameter is held to: the kinds of record whose
+// prefix it must carry, when it is marked with a resource or with kinds, and
+// the description naming where its ids come from.
 type idCheck struct {
-	resource    permission.Resource
+	kinds       []permission.RecordKind
 	description string
+}
+
+// markedKinds is the kinds of record a property's mark names: the one kind of
+// the resource it is marked with, or the kinds it lists.
+func markedKinds(property map[string]any) []permission.RecordKind {
+	if resource := toolschema.RecordOf(property); resource != "" {
+		return []permission.RecordKind{permission.RecordKind(resource)}
+	}
+	names := toolschema.RecordKinds(property)
+	if len(names) == 0 {
+		return nil
+	}
+	kinds := make([]permission.RecordKind, 0, len(names))
+	for _, name := range names {
+		kinds = append(kinds, permission.RecordKind(name))
+	}
+
+	return kinds
 }
 
 func walkIDs(properties, args map[string]any, path string, problems *[]argumentProblem) {
@@ -174,8 +197,8 @@ func walkIDs(properties, args map[string]any, path string, problems *[]argumentP
 
 func singleIDCheck(name string, property map[string]any) (idCheck, bool) {
 	description, _ := property["description"].(string)
-	if resource := toolschema.RecordOf(property); resource != "" {
-		return idCheck{resource: permission.Resource(resource), description: description}, true
+	if kinds := markedKinds(property); len(kinds) > 0 {
+		return idCheck{kinds: kinds, description: description}, true
 	}
 	if !namesRecordID(name, property) {
 		return idCheck{}, false
@@ -186,8 +209,8 @@ func singleIDCheck(name string, property map[string]any) (idCheck, bool) {
 
 func listIDCheck(name string, property, items map[string]any) (idCheck, bool) {
 	description, _ := property["description"].(string)
-	if resource := toolschema.RecordOf(items); resource != "" {
-		return idCheck{resource: permission.Resource(resource), description: description}, true
+	if kinds := markedKinds(items); len(kinds) > 0 {
+		return idCheck{kinds: kinds, description: description}, true
 	}
 	if !namesRecordIDs(name, property) {
 		return idCheck{}, false
@@ -248,39 +271,60 @@ func idProblem(path, value string, check idCheck) (argumentProblem, bool) {
 
 		return argumentProblem{Path: path, Message: strings.TrimSpace(message)}, true
 	}
-	if check.resource == "" {
+	if len(check.kinds) == 0 {
 		return argumentProblem{}, false
 	}
 
 	return wrongKindProblem(path, pulid.ID(trimmed), check)
 }
 
-// wrongKindProblem refuses an id of another resource's record, named by what
-// its prefix says it is, when the parameter is marked with the resource it
-// takes and that resource has a prefix of its own.
+// wrongKindProblem refuses an id of a kind of record the parameter does not
+// take, named by what its prefix says it is, when the parameter is marked with
+// the resource or the kinds it takes and those have prefixes of their own. A
+// kind with no prefix in permission's table cannot be told apart, so a mark
+// naming only such kinds checks nothing beyond the shape of an id.
 func wrongKindProblem(path string, id pulid.ID, check idCheck) (argumentProblem, bool) {
-	want, known := check.resource.IDPrefix()
 	got := id.Prefix()
-	if !known || got == want {
+	nouns := make([]string, 0, len(check.kinds))
+	prefixes := make([]string, 0, len(check.kinds))
+	checked := make([]permission.RecordKind, 0, len(check.kinds))
+	for _, kind := range check.kinds {
+		prefix, known := kind.IDPrefix()
+		if !known {
+			continue
+		}
+		if prefix == got {
+			return argumentProblem{}, false
+		}
+		nouns = append(nouns, stringutils.WithArticle(kind.Noun()))
+		prefixes = append(prefixes, strconv.Quote(prefix))
+		checked = append(checked, kind)
+	}
+	if len(nouns) == 0 {
 		return argumentProblem{}, false
 	}
 
+	takes := stringutils.JoinAlternatives(nouns)
 	from := ""
 	if source := idSource(check.description); source != "" {
 		from = ", from " + source
 	}
-	if actual, found := permission.ResourceOfIDPrefix(got); found {
+	if actual, found := permission.RecordKindOfIDPrefix(got); found {
 		return argumentProblem{Path: path, Message: fmt.Sprintf(
 			"%q is %s id; this parameter takes %s id%s.",
-			id, stringutils.WithArticle(actual.Noun()),
-			stringutils.WithArticle(check.resource.Noun()), from,
+			id, stringutils.WithArticle(actual.Noun()), takes, from,
+		)}, true
+	}
+	if len(nouns) == 1 {
+		return argumentProblem{Path: path, Message: fmt.Sprintf(
+			"%q is not %s id: %s ids start with %s. This parameter takes %s id%s.",
+			id, takes, checked[0].Noun(), prefixes[0], takes, from,
 		)}, true
 	}
 
 	return argumentProblem{Path: path, Message: fmt.Sprintf(
-		"%q is not %s id: %s ids start with %q. This parameter takes %s id%s.",
-		id, stringutils.WithArticle(check.resource.Noun()), check.resource.Noun(), want,
-		stringutils.WithArticle(check.resource.Noun()), from,
+		"%q is not %s id: their ids start with %s. This parameter takes %s id%s.",
+		id, takes, stringutils.JoinAlternatives(prefixes), takes, from,
 	)}, true
 }
 

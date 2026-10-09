@@ -192,8 +192,8 @@ func (t *listEDIInboundFilesTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
 		paramQuery:  stringParam("Words to look for in the file name."),
 		paramStatus: enumParam("Only files in this status.", inboundFileStatuses),
-		paramPartnerID: stringParam("Only this partner's files, by id from get_edi_partner " +
-			"or a row of this tool."),
+		paramPartnerID: agenttoolschema.KindID("Only this partner's files, by id from "+
+			"get_edi_partner or a row of this tool.", permission.KindEDIPartner),
 	}, defaultListLimit, maxListLimit))
 }
 
@@ -292,8 +292,8 @@ func (t *getEDIInboundFileTool) Description() string {
 
 func (t *getEDIInboundFileTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
-		paramInboundFileID: stringParam("The inbound file's id, from list_edi_inbound_files " +
-			"or this run's subject."),
+		paramInboundFileID: agenttoolschema.KindID("The inbound file's id, from "+
+			"list_edi_inbound_files or this run's subject.", permission.KindEDIInboundFile),
 		"includeRaw": boolParam("Also return the raw X12, capped at 16 KB. Leave it off " +
 			"unless the parsed transactions do not explain the failure."),
 	}, paramInboundFileID)
@@ -457,8 +457,9 @@ func (t *listEDITransfersTool) ParamSchema() map[string]any {
 		paramDirection: enumParam("Inbound for tenders partners sent in, Outbound for ones "+
 			"this organization sent. Defaults to Inbound.", transferDirections),
 		paramStatus: enumParam("Only transfers in this status.", transferStatuses),
-		paramInboundFileID: stringParam("Only the tenders one inbound file carried, by id " +
-			"from list_edi_inbound_files or this run's subject."),
+		paramInboundFileID: agenttoolschema.KindID("Only the tenders one inbound file "+
+			"carried, by id from list_edi_inbound_files or this run's subject.",
+			permission.KindEDIInboundFile),
 		paramLimit: intParam(fmt.Sprintf("How many rows to return: %d unless you ask, at most %d.",
 			defaultListLimit, maxListLimit)),
 		paramAfter: stringParam("The nextCursor from a previous call, for the next page."),
@@ -625,8 +626,8 @@ func (t *getEDIPartnerTool) Description() string {
 func (t *getEDIPartnerTool) ParamSchema() map[string]any {
 	return idSchema(
 		paramPartnerID,
-		agenttoolschema.IDText("The trading partner's id, from a partnerId in "+
-			"list_edi_inbound_files or the page you are on."),
+		agenttoolschema.KindID("The trading partner's id, from a partnerId in "+
+			"list_edi_inbound_files or the page you are on.", permission.KindEDIPartner),
 	)
 }
 

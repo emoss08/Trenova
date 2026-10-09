@@ -1,3 +1,4 @@
+import type { TurnHandoff } from "@/components/assistant/turn-stream";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -28,6 +29,12 @@ interface DeskState {
    * send it. Not kept.
    */
   asks: Record<string, string>;
+  /**
+   * What the reply being written in each conversation says about handing it
+   * to another agent, so the hand-off menu can offer one before the reply is
+   * saved. Only a conversation with a reply under way has an entry. Not kept.
+   */
+  liveHandoff: Record<string, TurnHandoff>;
 
   setRail: (rail: DeskRailState) => void;
   toggleRail: () => void;
@@ -40,6 +47,30 @@ interface DeskState {
   setBrowsing: (browsing: boolean) => void;
   askAgent: (threadId: string, question: string) => void;
   takeAsk: (threadId: string) => string | null;
+  setLiveHandoff: (threadId: string, live: TurnHandoff | null) => void;
+}
+
+/**
+ * The live hand-offs with one conversation's changed, or the same record when
+ * nothing did, so a reader keyed on it is not woken for nothing.
+ */
+export function withLiveHandoff(
+  current: Record<string, TurnHandoff>,
+  threadId: string,
+  live: TurnHandoff | null,
+): Record<string, TurnHandoff> {
+  const known = current[threadId];
+  if (live === null) {
+    if (known === undefined) {
+      return current;
+    }
+    const { [threadId]: _ended, ...rest } = current;
+    return rest;
+  }
+  if (known !== undefined && known.asked === live.asked && known.agentIds === live.agentIds) {
+    return current;
+  }
+  return { ...current, [threadId]: live };
 }
 
 /** Remembered artifacts for the most recently visited conversations. */
@@ -74,6 +105,7 @@ export const useDeskStore = create<DeskState>()(
       sharePage: true,
       browsing: false,
       asks: {},
+      liveHandoff: {},
 
       setRail: (rail) => set({ rail }),
       toggleRail: () => set((state) => ({ rail: state.rail === "open" ? "closed" : "open" })),
@@ -101,6 +133,13 @@ export const useDeskStore = create<DeskState>()(
           });
         }
         return question;
+      },
+      setLiveHandoff: (threadId, live) => {
+        const current = get().liveHandoff;
+        const next = withLiveHandoff(current, threadId, live);
+        if (next !== current) {
+          set({ liveHandoff: next });
+        }
       },
       toggleChapter: (threadId, messageId) =>
         set((state) => {

@@ -126,7 +126,7 @@ func (r *repository) ListByThread(
 					Where(runs.SubjectType.Qualified()+" = ?", agent.SubjectAssistantThread).
 					Where(runs.SubjectID.Qualified()+" = ?", req.ThreadID)
 			}).
-			OrderExpr(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
+			Order(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list agent plans for thread", zap.Error(err))

@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -60,8 +61,8 @@ func Properties() map[string]any {
 				"markCompletedReadyToInvoice is true.",
 			Statuses,
 		),
-		ParamCustomerID: stringProperty("Only this customer's shipments, by id from " +
-			"list_customers."),
+		ParamCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
+			"Only this customer's shipments, by id from list_customers."),
 		ParamDeliveredFrom: stringProperty("Only shipments delivered on or after this day. " +
 			"A date as YYYY-MM-DD, or today."),
 		ParamDeliveredTo: stringProperty("Only shipments delivered on or before this day. " +

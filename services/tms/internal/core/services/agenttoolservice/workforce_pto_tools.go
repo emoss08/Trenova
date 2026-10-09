@@ -219,7 +219,7 @@ func (e *ptoEdit) entity(ctx context.Context, pto ptoRequester) (*worker.WorkerP
 
 func newUpdateWorkerPTOTool(pto ptoRequester) serviceports.AgentTool {
 	properties := ptoDatesProperties()
-	properties["ptoId"] = agenttoolschema.IDText(ptoIDNote)
+	properties["ptoId"] = agenttoolschema.RecordIDText(permission.ResourceWorkerPTO, ptoIDNote)
 	spec := targeting(withSchema(wfSpec(
 		"update_worker_pto",
 		"Change the kind, days or reason of a time-off request still waiting for a "+

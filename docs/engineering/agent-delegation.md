@@ -97,7 +97,13 @@ do.
   reads to say who can take a step) and tells the model to point the person
   to Hand off to another agent; only when none holds it does it fall back to
   "an administrator can add it in AI Control". The list is read only on that
-  answer, never on an ordinary turn.
+  answer, never on an ordinary turn. The agents it names are returned beside
+  the note and ride on `FindAnswer.HandOff` (`FindToolsResult.HandOff` through
+  the activity) into the saved tool message's `handOffAgents`. The Desk's
+  hand-off menu reads the newest tool message carrying them, when it is newer
+  than the person's last message, and lists those agents first, marked
+  "Holds what this conversation needs", then the agent's delegates, then the
+  rest (`handoffTargets`, `handoffSuggestion`).
 
 The same context is what `PreviewPrompt` shows in AI Control.
 
@@ -438,9 +444,10 @@ the agent they chose takes the task inside it.
 ## The stream
 
 Events of the delegate's turn go to the turn's stream. Tool and message events
-keep their names and gain `agentId` and `delegateCallId`. Streamed text and
-restarts are renamed, because a reader applies a plain `delta` to the reply it
-is showing and a plain `retrying` discards it. A refusal of the delegate's
+keep their names and gain `agentId` and `delegateCallId`. Streamed text,
+restarts and corrected replies are renamed, because a reader applies a plain
+`delta` to the reply it is showing, a plain `retrying` discards it and a plain
+`reply_replaced` puts its text in the reply's place. A refusal of the delegate's
 answer is not sent on its own (it would read as a refusal of the primary's
 reply); it arrives as `delegate_finished` with `status: "refused"`.
 
@@ -450,6 +457,7 @@ reply); it arrives as `delegate_finished` with `status: "refused"`.
 | `message`, `tool_started`, `tool_finished` | as always, plus `agentId`, `delegateCallId` |
 | `delegate_delta`, `delegate_reasoning` | `agentId`, `delegateCallId`, `text` |
 | `delegate_retrying` | the `retrying` fields, plus `agentId`, `delegateCallId` |
+| `delegate_reply_replaced` | `text`, `reason`, plus `agentId`, `delegateCallId` |
 | `delegate_finished` | the account above |
 
 `artifact` events are unchanged: what a delegate shows belongs to the

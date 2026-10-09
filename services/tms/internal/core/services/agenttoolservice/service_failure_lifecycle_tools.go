@@ -225,19 +225,21 @@ func newUpdateServiceFailureTool(failures serviceFailureLifecycle) serviceports.
 			"overrides shape a later EDI 214, so a person approves each edit.",
 		properties: map[string]any{
 			paramServiceFailureID: serviceFailureIDProperty(),
-			fieldReasonCodeID: agenttoolschema.IDText("The reason code to set, from " +
-				"list_service_failure_reason_codes."),
+			fieldReasonCodeID: agenttoolschema.RecordIDText(
+				permission.ResourceServiceFailureReasonCode,
+				"The reason code to set, from list_service_failure_reason_codes.",
+			),
 			paramClearReasonCode: booleanProperty("True to remove the reason code. A " +
 				"reviewed failure keeps its reason."),
-			fieldNotes: toolschema.EmptyClears(stringProperty("What the customer may read "+
+			fieldNotes: toolschema.KeepEmpty(stringProperty("What the customer may read "+
 				"about the failure.", maxOperationNoteChars)),
-			paramInternalNotes: toolschema.EmptyClears(stringProperty("What staff should know.",
+			paramInternalNotes: toolschema.KeepEmpty(stringProperty("What staff should know.",
 				maxOperationNoteChars)),
-			paramX12Status: toolschema.EmptyClears(stringProperty("EDI 214 status code "+
+			paramX12Status: toolschema.KeepEmpty(stringProperty("EDI 214 status code "+
 				"override, three characters.", maxX12CodeChars)),
-			paramX12Reason: toolschema.EmptyClears(stringProperty("EDI 214 reason code "+
+			paramX12Reason: toolschema.KeepEmpty(stringProperty("EDI 214 reason code "+
 				"override, three characters.", maxX12CodeChars)),
-			paramX12Exception: toolschema.EmptyClears(stringProperty("EDI 214 exception code, "+
+			paramX12Exception: toolschema.KeepEmpty(stringProperty("EDI 214 exception code, "+
 				"three characters.", maxX12CodeChars)),
 		},
 		required: []string{paramServiceFailureID},
@@ -388,9 +390,11 @@ func newServiceFailureTransitionTool(
 	if spec.notesRequired {
 		required = append(required, fieldNotes)
 	} else {
-		properties[fieldReasonCodeID] = agenttoolschema.IDText("The reason code, from " +
-			"list_service_failure_reason_codes. Required when the failure has none; " +
-			"otherwise replaces it.")
+		properties[fieldReasonCodeID] = agenttoolschema.RecordIDText(
+			permission.ResourceServiceFailureReasonCode,
+			"The reason code, from list_service_failure_reason_codes. Required when the "+
+				"failure has none; otherwise replaces it.",
+		)
 	}
 
 	return newReportingReceivableTool(&receivableSpec{

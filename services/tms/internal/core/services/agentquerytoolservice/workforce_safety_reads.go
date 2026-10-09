@@ -7,10 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/workerdrugalcoholservice"
 	"github.com/emoss08/trenova/internal/core/services/workersafetyservice"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
@@ -434,10 +434,10 @@ func newGetDOTRandomDrawTool(
 			"schedule_dot_test and update_dot_random_selection take.",
 		resource: permission.ResourceDOTRandomPool,
 		properties: map[string]any{
-			paramDrawID: map[string]any{
-				toolschema.KeyType:        toolschema.TypeString,
-				toolschema.KeyDescription: "The round, from list_dot_random_draws. Never guess one.",
-			},
+			paramDrawID: agenttoolschema.KindID(
+				"The round, from list_dot_random_draws. Never guess one.",
+				permission.KindDOTRandomDraw,
+			),
 		},
 		required: []string{paramDrawID},
 		access:   newFieldAccess(permissions),

@@ -1,0 +1,78 @@
+defaults:
+  agent: Dispatch desk
+  tags: [dispatch, write]
+
+scenarios:
+  - name: note-on-a-load-approved
+    description: >
+      The smallest write there is, asked casually, approved, and reported back. Checks that the
+      proposal names the right load, that it runs once approved, and that the follow-up says so.
+    steps:
+      - say: "put a note on the late freshhaul reefer to LA that the receiver pushed us to tomorrow am"
+        expect:
+          calls: ["search_shipments|list_shipments|get_shipment"]
+          proposals: [{ tool: add_shipment_comment }]
+          maxFailedCalls: 1
+          rubric: >
+            Proposes one comment on SEED-SHP-010 whose text carries the receiver's change, and
+            says it is waiting for approval rather than claiming it was added.
+      - decide: approve
+        expect:
+          executed: true
+          replyIncludes: ["added|saved|posted|on the load|note"]
+          rubric: Reports the note as added, once, without repeating the whole proposal.
+
+  - name: hold-rejected-with-a-better-idea
+    description: >
+      The person turns the proposal down and says what they want instead. The follow-up must
+      act on the note, not argue for the hold or file the same thing again.
+    steps:
+      - say: "hold SEED-SHP-007, the hazmat paperwork isnt in yet"
+        expect:
+          calls: ["search_shipments|get_shipment|list_hold_reasons"]
+          proposals: [{ tool: place_shipment_hold }]
+          maxFailedCalls: 1
+      - decide: reject
+        note: "dont hold it, just leave a note for whoever dispatches it"
+        expect:
+          noCalls: [place_shipment_hold]
+          proposals: [{ tool: add_shipment_comment }]
+          rubric: >
+            Accepts the rejection without pushing back, and proposes a comment on SEED-SHP-007
+            about the missing hazmat paperwork instead.
+
+  - name: reschedule-delivery
+    description: >
+      A schedule change on a stop, named by its place in the trip rather than by id, which the
+      agent has to resolve to the right stop before proposing anything. When this was written
+      no agent tool changed a saved stop's window: update_shipment leaves stops alone, while a
+      person does it through the same updateShipment mutation. Expect this to fail until a stop
+      schedule tool exists, and the agent to say it cannot rather than misuse another tool.
+    steps:
+      - say: "acme load going to chicago, push the delivery appt back a day"
+        expect:
+          calls: ["search_shipments|list_shipments|get_shipment"]
+          proposals: [{ tool: "reschedule_stop|update_stop_schedule|update_shipment" }]
+          noCalls: [set_stop_schedule, split_move_at_relay]
+          maxFailedCalls: 1
+          rubric: >
+            Finds SEED-SHP-001 (Acme, LA to Chicago, New), moves only the delivery stop's window
+            by one day, keeps the pickup as it is, and shows the old and new times in the
+            location's own time zone.
+      - decide: approve
+        expect:
+          executed: true
+          rubric: Reports the new delivery window as it now stands.
+
+  - name: assign-a-driver
+    description: Dispatch's core write, with a driver named by first name only.
+    steps:
+      - say: "put mike on the peak ltl load to chicago, trc-002 and a dry van"
+        expect:
+          calls: ["search_shipments|list_shipments|get_shipment|search_worker|list_workers"]
+          proposals: [{ tool: assign_move }]
+          maxFailedCalls: 1
+          rubric: >
+            Resolves Mike Johnson, TRC-002 and a dry van (TRL-001 or TRL-002) and proposes the
+            assignment on SEED-SHP-002's move, flagging anything that would stop it (hours,
+            credentials, the trailer's status).

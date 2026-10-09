@@ -321,7 +321,7 @@ func TestCoerceArguments_LeavesOutOptionalParametersSentEmpty(t *testing.T) {
 			"query":         map[string]any{"type": "string"},
 			"status":        map[string]any{"type": "string", "enum": []string{"Completed", "ReadyToInvoice"}},
 			"deliveredFrom": map[string]any{"type": "string"},
-			"memo":          toolschema.EmptyClears(map[string]any{"type": "string"}),
+			"memo":          toolschema.KeepEmpty(map[string]any{"type": "string"}),
 			"reference":     map[string]any{"type": "string"},
 		},
 		"required": []string{"reference"},

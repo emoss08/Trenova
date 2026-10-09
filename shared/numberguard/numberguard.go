@@ -231,6 +231,16 @@ func FormatForPrompt(value decimal.Decimal) string {
 	return rounded.String()
 }
 
+func Cites(prose string, value decimal.Decimal) bool {
+	for _, citation := range extractNumbers(prose) {
+		if withinTolerance(citation.value, value) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // OnlyCounts reports whether every number in prose is exactly one of the
 // counts. It is the strict form of CheckNumbers for prose made of counts,
 // where no number is conversational: "9 proposals" for four is a lie however

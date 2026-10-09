@@ -91,6 +91,7 @@ describe("reduceTurn with what reaches a turn while it works", () => {
       id: "aqm_1",
       text: "Use Werner instead.",
       mentions: [],
+      toolsBefore: 0,
     });
     expect(steeredIds(state.interjections)).toEqual(new Set(["aqm_1"]));
   });

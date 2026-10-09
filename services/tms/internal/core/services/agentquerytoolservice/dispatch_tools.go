@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatcheligibility"
@@ -56,11 +57,11 @@ func (t *rankMoveCandidatesTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentMoveId": map[string]any{
-				"type": "string",
-				"description": "The move to cover: a moveId from get_dispatch_board, a " +
-					"move's id from get_shipment_tracking, or this run's subject.",
-			},
+			"shipmentMoveId": agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
+				"The move to cover: a move's id from get_shipment (each move in its "+
+					"summary carries one), a moveId from get_dispatch_board, a move's id "+
+					"from get_shipment_tracking, or this run's subject. Look it up first; "+
+					"never send a placeholder."),
 			"limit": map[string]any{
 				"type":        "integer",
 				"description": "How many candidates to return; defaults to 5, at most 20.",
@@ -69,11 +70,11 @@ func (t *rankMoveCandidatesTool) ParamSchema() map[string]any {
 				"type":        "boolean",
 				"description": "Include drivers a blocking finding rules out, with the finding. Off by default.",
 			},
-			"fleetCodeIds": map[string]any{
+			"fleetCodeIds": agenttoolschema.OfResource(map[string]any{
 				"type":        "array",
 				"items":       map[string]any{"type": "string"},
 				"description": "Limit candidates to these fleets, by id from list_fleet_codes.",
-			},
+			}, permission.ResourceFleetCode),
 		},
 		"required":             []string{"shipmentMoveId"},
 		"additionalProperties": false,
@@ -266,17 +267,17 @@ func (t *planDispatchTool) ParamSchema() map[string]any {
 				"type":        "integer",
 				"description": "How far ahead to plan, from now; defaults to 24, at most 168.",
 			},
-			"shipmentMoveIds": map[string]any{
+			"shipmentMoveIds": agenttoolschema.OfResource(map[string]any{
 				"type":  "array",
 				"items": map[string]any{"type": "string"},
 				"description": "Plan only these moves, by moveId from get_dispatch_board. " +
 					"Empty means every uncovered move in the window.",
-			},
-			"fleetCodeIds": map[string]any{
+			}, permission.ResourceShipmentMove),
+			"fleetCodeIds": agenttoolschema.OfResource(map[string]any{
 				"type":        "array",
 				"items":       map[string]any{"type": "string"},
 				"description": "Limit drivers to these fleets, by id from list_fleet_codes.",
-			},
+			}, permission.ResourceFleetCode),
 		},
 		"additionalProperties": false,
 	}

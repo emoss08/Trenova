@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -448,11 +449,9 @@ func (t *getAgentRunTool) ParamSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			paramRunID: map[string]any{
-				toolschema.KeyType: toolschema.TypeString,
-				toolschema.KeyDescription: "The agent run's id, from list_agent_runs, a " +
-					"proposal, the page you are on, or a mentioned record.",
-			},
+			paramRunID: agenttoolschema.RecordIDText(permission.ResourceAgentRun,
+				"The agent run's id, from list_agent_runs, a proposal, the page you are on, "+
+					"or a mentioned record."),
 			paramIncludeProposals: map[string]any{
 				toolschema.KeyType: toolschema.TypeBoolean,
 				toolschema.KeyDescription: fmt.Sprintf(

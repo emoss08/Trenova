@@ -10,7 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttracking"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -87,11 +89,11 @@ func (t *getShipmentTrackingTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentId": map[string]any{
+			"shipmentId": agenttoolschema.OfResource(map[string]any{
 				"type": "string",
 				"description": "The shipment's id, from search_shipments or list_shipments, " +
 					"the page you are on, or this run's subject. Give this or proNumber.",
-			},
+			}, permission.ResourceShipment),
 			"proNumber": map[string]any{
 				"type":        "string",
 				"description": "The PRO number, when that is what the person gave you.",
@@ -365,11 +367,11 @@ func (t *listVehiclePositionsTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"tractorIds": map[string]any{
+			"tractorIds": agenttoolschema.OfResource(map[string]any{
 				"type":        "array",
 				"items":       map[string]any{"type": "string"},
 				"description": "Optional: only these tractors, by id from list_tractors.",
-			},
+			}, permission.ResourceTractor),
 			"maxAgeMinutes": map[string]any{
 				"type": "integer",
 				"description": fmt.Sprintf(
@@ -511,10 +513,10 @@ func (t *getWorkerHOSTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"workerId": map[string]any{
+			"workerId": agenttoolschema.OfResource(map[string]any{
 				"type":        "string",
 				"description": "The driver's id, from search_worker or list_workers.",
-			},
+			}, permission.ResourceWorker),
 		},
 		"required":             []string{"workerId"},
 		"additionalProperties": false,
@@ -541,15 +543,20 @@ func (t *getWorkerHOSTool) Query(
 	}
 
 	state, err := t.telematics.GetWorkerHOSState(ctx, tenantOf(params), workerID)
-	if err != nil {
+	if err != nil && !errortypes.IsNotFoundError(err) {
 		return nil, err
 	}
 	if state == nil {
-		return nil, fmt.Errorf(
-			"no hours of service are on file for worker %s; the driver may not be "+
-				"mapped to the telematics provider",
-			workerID.String(),
-		)
+		return workerHOSRow{
+			WorkerID:   workerID.String(),
+			DutyStatus: "Unknown",
+			RecordedAt: "never",
+			Stale:      true,
+			Note: "No ELD has reported hours of service for this driver, so their drive, " +
+				"shift and cycle time are unknown: the driver may not be mapped to the " +
+				"telematics provider. Say so plainly and plan on nothing; do not estimate " +
+				"hours or call this tool again.",
+		}, nil
 	}
 
 	now := clockFor(params).Now

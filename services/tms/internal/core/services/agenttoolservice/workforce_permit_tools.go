@@ -47,8 +47,9 @@ func permitOptions() []toolpreview.Option {
 
 func permitFactProperties() map[string]any {
 	return map[string]any{
-		paramStateID: agenttoolschema.IDText("The state that issued it, as the stateId of the " +
-			"requirement it satisfies in list_shipment_permits. Never guess one."),
+		paramStateID: agenttoolschema.KindID("The state that issued it, as the stateId of the "+
+			"requirement it satisfies in list_shipment_permits. Never guess one.",
+			permission.KindUSState),
 		paramPermitNumber: stringProperty("The permit number exactly as the state printed it.",
 			maxPermitNumber),
 		fieldStatus: agenttoolschema.Enum("Where the permit stands. An active permit "+
@@ -226,8 +227,8 @@ func (e *permitEdit) entity(
 func newUpdateShipmentPermitTool(permits serviceports.PermitService) serviceports.AgentTool {
 	properties := permitFactProperties()
 	properties[paramShipmentID] = shipmentIDProperty("The shipment the permit covers")
-	properties[paramPermitID] = agenttoolschema.IDText("The permit, from list_shipment_permits. " +
-		"Never guess one.")
+	properties[paramPermitID] = agenttoolschema.RecordIDText(permission.ResourcePermit,
+		"The permit, from list_shipment_permits. Never guess one.")
 	spec := targeting(withSchema(permitSpec(
 		"update_shipment_permit",
 		"Correct or move on a permit recorded on a shipment: activate it when the state "+

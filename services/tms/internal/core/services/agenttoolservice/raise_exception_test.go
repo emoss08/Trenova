@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -153,4 +154,17 @@ func TestRaiseException_DescriptionTurnsAwayFeatureRequests(t *testing.T) {
 	description := newRaiseExceptionTool(nil, nil).Description()
 	assert.Contains(t, description, "not for requesting a product feature")
 	assert.Contains(t, description, "tell the person plainly what cannot be done")
+}
+
+// Every kind of record a case can be about has a kind in permission's table,
+// so subjectId is held to those prefixes rather than left unmarked.
+func TestRaiseException_SubjectIDTakesEverySubjectKind(t *testing.T) {
+	t.Parallel()
+
+	require.Len(t, subjectKinds, len(agent.AllSubjectTypes()))
+	for _, subject := range agent.AllSubjectTypes() {
+		kind, ok := permission.RecordKindOfIDPrefix(subject.IDPrefix())
+		require.Truef(t, ok, "%s ids (%s) have no kind", subject, subject.IDPrefix())
+		assert.Contains(t, subjectKinds, kind)
+	}
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -91,11 +92,11 @@ func (t *payEventHoldTool) Description() string {
 
 func (t *payEventHoldTool) ParamSchema() map[string]any {
 	properties := map[string]any{
-		paramPayEventID: map[string]any{
-			toolschema.KeyType: toolschema.TypeString,
-			toolschema.KeyDescription: "The pay event, from " + payEventSources +
+		paramPayEventID: agenttoolschema.KindID(
+			"The pay event, from "+payEventSources+
 				" or the lines get_driver_settlement lists. Never guess one.",
-		},
+			permission.KindPayEvent,
+		),
 	}
 	required := []string{paramPayEventID}
 	if t.hold {
@@ -355,29 +356,27 @@ func (t *payEventTransferTool) Description() string {
 
 func (t *payEventTransferTool) ParamSchema() map[string]any {
 	properties := map[string]any{
-		paramSettlementID: map[string]any{
-			toolschema.KeyType: toolschema.TypeString,
-			toolschema.KeyDescription: "The draft driver settlement, from " +
-				driverSettlementReads + ". Never guess one.",
-		},
+		paramSettlementID: agenttoolschema.RecordIDText(
+			permission.ResourceDriverSettlement,
+			"The draft driver settlement, from "+driverSettlementReads+". Never guess one.",
+		),
 	}
 	var required []string
 	if t.detach {
-		properties[paramPayEventID] = map[string]any{
-			toolschema.KeyType: toolschema.TypeString,
-			toolschema.KeyDescription: "The pay event on it, from the lines " +
-				"get_driver_settlement lists.",
-		}
+		properties[paramPayEventID] = agenttoolschema.KindID(
+			"The pay event on it, from the lines get_driver_settlement lists.",
+			permission.KindPayEvent,
+		)
 		required = []string{paramSettlementID, paramPayEventID}
 	} else {
-		properties[paramPayEventIDs] = map[string]any{
+		properties[paramPayEventIDs] = agenttoolschema.OfKinds(map[string]any{
 			toolschema.KeyType:     toolschema.TypeArray,
 			toolschema.KeyMinItems: 1,
 			toolschema.KeyMaxItems: maxPayEventsPerAttach,
 			toolschema.KeyItems:    map[string]any{toolschema.KeyType: toolschema.TypeString},
 			toolschema.KeyDescription: "The driver's accrued pay events to add, from " +
 				payEventSources + " with status Accrued.",
-		}
+		}, permission.KindPayEvent)
 		required = []string{paramSettlementID, paramPayEventIDs}
 	}
 

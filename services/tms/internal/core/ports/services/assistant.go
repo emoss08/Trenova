@@ -345,7 +345,11 @@ const (
 	AssistantEventToolStarted  = "tool_started"
 	AssistantEventToolFinished = "tool_finished"
 	AssistantEventRetrying     = "retrying"
-	AssistantEventArtifact     = "artifact"
+	// AssistantEventReplyReplaced replaces the reply that streamed with the
+	// one the runtime corrected and recorded. Unlike a restart the model was
+	// not asked again, so a reader swaps the text without showing a retry.
+	AssistantEventReplyReplaced = "reply_replaced"
+	AssistantEventArtifact      = "artifact"
 	// AssistantEventArtifactRemoved withdraws an artifact the turn announced:
 	// a record card a later read of the same tool folded into one table. The
 	// server has deleted it, so a reader drops it rather than keeping it
@@ -370,14 +374,16 @@ const (
 	// other agent does in between carries the same delegateCallId.
 	AssistantEventDelegateStarted  = "delegate_started"
 	AssistantEventDelegateFinished = "delegate_finished"
-	// AssistantEventDelegateDelta, AssistantEventDelegateReasoning and
-	// AssistantEventDelegateRetrying are delta, reasoning and retrying from
-	// the other agent. They are named apart because a reader applies the
-	// plain ones to the reply it is showing: another agent's words appended
-	// to it, or its restart discarding it.
-	AssistantEventDelegateDelta     = "delegate_delta"
-	AssistantEventDelegateReasoning = "delegate_reasoning"
-	AssistantEventDelegateRetrying  = "delegate_retrying"
+	// AssistantEventDelegateDelta, AssistantEventDelegateReasoning,
+	// AssistantEventDelegateRetrying and AssistantEventDelegateReplyReplaced
+	// are delta, reasoning, retrying and reply_replaced from the other agent.
+	// They are named apart because a reader applies the plain ones to the
+	// reply it is showing: another agent's words appended to it, its restart
+	// discarding it, or its corrected reply put in its place.
+	AssistantEventDelegateDelta         = "delegate_delta"
+	AssistantEventDelegateReasoning     = "delegate_reasoning"
+	AssistantEventDelegateRetrying      = "delegate_retrying"
+	AssistantEventDelegateReplyReplaced = "delegate_reply_replaced"
 	// AssistantEventRunTainted says the turn read content written outside
 	// the organization, once for each new place it came from.
 	AssistantEventRunTainted      = "run_tainted"
@@ -519,6 +525,9 @@ func (s DelegateScope) Tag(event StreamEvent) (StreamEvent, bool) {
 	case AssistantRetryingEvent:
 		data.AgentID, data.DelegateCallID = s.AgentID, s.DelegateCallID
 		return StreamEvent{Event: AssistantEventDelegateRetrying, Data: data}, true
+	case AssistantReplyReplacedEvent:
+		data.AgentID, data.DelegateCallID = s.AgentID, s.DelegateCallID
+		return StreamEvent{Event: AssistantEventDelegateReplyReplaced, Data: data}, true
 	case AssistantMessageEvent:
 		data.AgentID, data.DelegateCallID = s.AgentID, s.DelegateCallID
 		return StreamEvent{Event: event.Event, Data: data}, true
@@ -625,6 +634,22 @@ type AssistantRetryingEvent struct {
 	DelegateCallID string   `json:"delegateCallId,omitempty"`
 }
 
+// AssistantReplyReplacedEvent is the whole reply a turn recorded, sent in
+// place of the one that streamed when the runtime corrected it afterwards:
+// internal ids taken out, a reprinted table pointed to, a code block left
+// out. The model was not asked again, so it is not a retry; the reader
+// withdraws the streamed reply and shows Text instead. Reason says what was
+// corrected, for the trajectory; the reply_regrounded events before it say
+// what each pass changed.
+type AssistantReplyReplacedEvent struct {
+	Text   string `json:"text"`
+	Reason string `json:"reason"`
+	// AgentID and DelegateCallID are set when it is another agent's reply,
+	// on a task this turn's agent handed it.
+	AgentID        pulid.ID `json:"agentId,omitempty"`
+	DelegateCallID string   `json:"delegateCallId,omitempty"`
+}
+
 // AssistantRunTaintedEvent is one new place outside content reached the turn
 // from. From here on a write that leaves the organization waits for a person.
 type AssistantRunTaintedEvent struct {
@@ -708,6 +733,11 @@ type AssistantToolFinishedEvent struct {
 	Effect   agent.ToolEffect `json:"effect,omitempty"`
 	Summary  string           `json:"summary,omitempty"`
 	Verdict  string           `json:"verdict,omitempty"`
+	// HandOffAgents are the person's other agents a find_tools answer named
+	// as holding what this agent could not load, the same ids the saved
+	// tool message keeps, so a reader can offer the hand-off while the turn
+	// is still running.
+	HandOffAgents []pulid.ID `json:"handOffAgents,omitempty"`
 	// AgentID and DelegateCallID are set on another agent's call, on a task
 	// this turn's agent handed it.
 	AgentID        pulid.ID `json:"agentId,omitempty"`

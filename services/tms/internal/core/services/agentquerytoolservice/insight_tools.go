@@ -272,10 +272,8 @@ func (t *getInsightTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"insightId": map[string]any{
-				"type":        "string",
-				"description": "The insight's id, from list_insights or this run's subject.",
-			},
+			"insightId": agenttoolschema.RecordIDText(permission.ResourceInsight,
+				"The insight's id, from list_insights or this run's subject."),
 		},
 		"required":             []string{"insightId"},
 		"additionalProperties": false,

@@ -3,7 +3,10 @@ package agentquerytoolservice
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
@@ -19,12 +22,15 @@ import (
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 const (
 	maxSettlementLines      = 100
 	maxSettlementDisputes   = 20
+	maxOtherSettlements     = 3
+	paramOpenSettlements    = "open"
 	settlementDisputeEntity = "settlement_dispute"
 	carrierInvoiceEntity    = "edi_carrier_invoice"
 )
@@ -58,6 +64,11 @@ var (
 		string(carriersettlement.InvoiceMatchStatusResolved),
 		string(carriersettlement.InvoiceMatchStatusRejected),
 	})
+	openSettlementStatuses = []driversettlement.Status{
+		driversettlement.StatusDraft,
+		driversettlement.StatusPendingApproval,
+		driversettlement.StatusApproved,
+	}
 	openDisputeStatuses = []driversettlement.DisputeStatus{
 		driversettlement.DisputeStatusOpen,
 		driversettlement.DisputeStatusInReview,
@@ -262,16 +273,23 @@ func (t *listDriverSettlementsTool) Name() string { return "list_driver_settleme
 func (t *listDriverSettlementsTool) Description() string {
 	return "List driver pay settlements, the drivers' pay statements, newest period " +
 		"first. Each has the driver, period, pay date, status and exceptions, with gross, " +
-		"deductions and net pay when your data access reaches them. Narrow to one driver, " +
-		"a status or those with exceptions; get_driver_settlement opens one."
+		"deductions and net pay when your data access reaches them. Narrow to one driver " +
+		"(workerId, or their name as query), a status, open: true for every settlement " +
+		"still open to change (Draft, PendingApproval, Approved) in one call, or those " +
+		"with exceptions; get_driver_settlement opens one."
 }
 
 func (t *listDriverSettlementsTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
-		paramQuery: stringParam("Words to look for in the settlement number or pay profile."),
-		paramWorkerID: stringParam("Only this driver's settlements, by id from list_workers " +
-			"or search_worker."),
-		paramStatus:     enumParam("Only settlements in this status.", settlementStatuses),
+		paramQuery: stringParam("Words to look for in the settlement number, pay profile " +
+			"or the driver's name."),
+		paramWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
+			"Only this driver's settlements, by id from list_workers "+
+				"or search_worker."),
+		paramStatus: enumParam("Only settlements in this status. Leave it out with "+
+			"open: true.", settlementStatuses),
+		paramOpenSettlements: boolParam("true for only settlements still open to change: " +
+			"Draft, PendingApproval and Approved."),
 		"hasExceptions": boolParam("true for only those with exceptions, false for none."),
 	}, defaultListLimit, maxListLimit))
 }
@@ -296,6 +314,15 @@ func (t *listDriverSettlementsTool) Query(
 	if err != nil {
 		return nil, err
 	}
+	openOnly := optionalBool(params.Params, paramOpenSettlements)
+	if openOnly && status != "" &&
+		!slices.Contains(openSettlementStatuses, driversettlement.Status(status)) {
+		return nil, fmt.Errorf(
+			"status %s is not open to change, so it cannot be combined with open: true; "+
+				"send one or the other",
+			status,
+		)
+	}
 	window := readPage(params.Params, defaultListLimit, maxListLimit)
 
 	req := &repositories.ListDriverSettlementsRequest{
@@ -308,6 +335,9 @@ func (t *listDriverSettlementsTool) Query(
 		Status:        driversettlement.Status(status),
 		HasExceptions: optionalBoolPointer(params.Params, "hasExceptions"),
 	}
+	if openOnly && status == "" {
+		req.Statuses = openSettlementStatuses
+	}
 
 	criteria := filtercatalog.NewCriteria("driver settlements").At(clockFor(params))
 	criteria.Text(req.Filter.Query)
@@ -316,6 +346,9 @@ func (t *listDriverSettlementsTool) Query(
 	}
 	if status != "" {
 		criteria.Field(paramStatus, status)
+	}
+	if len(req.Statuses) > 0 {
+		criteria.Field("open to change", "Draft, PendingApproval or Approved")
 	}
 	if req.HasExceptions != nil {
 		criteria.Field("has exceptions", strconv.FormatBool(*req.HasExceptions))
@@ -336,8 +369,57 @@ func (t *listDriverSettlementsTool) Query(
 	rows, more := trim(window, rows)
 
 	found := searchResult(criteria, rows, len(rows)).paged(window, more)
+	if len(rows) == 0 && window.offset == 0 {
+		if note := t.otherSettlements(ctx, req, clockFor(params).Location()); note != "" {
+			found.Note = note
+		}
+	}
 
 	return gatedResult(&found, gate), nil
+}
+
+func (t *listDriverSettlementsTool) otherSettlements(
+	ctx context.Context,
+	req *repositories.ListDriverSettlementsRequest,
+	zone *time.Location,
+) string {
+	narrowed := req.Filter.Query != "" || req.Status != "" || len(req.Statuses) > 0 ||
+		req.HasExceptions != nil
+	if req.WorkerID.IsNil() || !narrowed {
+		return ""
+	}
+
+	result, err := t.settlements.List(ctx, &repositories.ListDriverSettlementsRequest{
+		Filter: &pagination.QueryOptions{
+			TenantInfo: req.Filter.TenantInfo,
+			Pagination: pagination.Info{Limit: maxOtherSettlements},
+		},
+		WorkerID: req.WorkerID,
+	})
+	if err != nil {
+		return ""
+	}
+	if len(result.Items) == 0 {
+		return "This driver has no settlements in any status. Say so rather than " +
+			"searching again; generate_driver_settlement drafts one."
+	}
+
+	described := make([]string, 0, len(result.Items))
+	for _, entity := range result.Items {
+		if entity == nil {
+			continue
+		}
+		described = append(described, fmt.Sprintf("%s (%s, %s to %s)",
+			entity.SettlementNumber, entity.Status,
+			timeutils.FormatCalendarDate(entity.PeriodStart, zone),
+			timeutils.FormatCalendarDate(entity.PeriodEnd, zone)))
+	}
+
+	return fmt.Sprintf(
+		"None of this driver's settlements matched those filters. Their %d most recent, "+
+			"in any status, are: %s. Answer from these rather than trying each status in turn.",
+		len(described), strings.Join(described, "; "),
+	)
 }
 
 type getDriverSettlementTool struct {
@@ -596,10 +678,12 @@ func (t *listDriverPayEventsTool) Description() string {
 
 func (t *listDriverPayEventsTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
-		paramWorkerID: stringParam("Only this driver's pay, by id from list_workers or " +
-			"search_worker."),
-		"shipmentId": stringParam("Only pay for this shipment, by id from search_shipments " +
-			"or get_shipment."),
+		paramWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
+			"Only this driver's pay, by id from list_workers or "+
+				"search_worker."),
+		"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
+			"Only pay for this shipment, by id from search_shipments "+
+				"or get_shipment."),
 		paramStatus: enumParam("Only pay events in this status.", payEventStatuses),
 	}, defaultListLimit, maxListLimit))
 }
@@ -996,8 +1080,9 @@ func (t *listCarrierSettlementsTool) Description() string {
 func (t *listCarrierSettlementsTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
 		paramQuery: stringParam("Words to look for in the settlement number."),
-		paramCarrierID: stringParam("Only this carrier's settlements, by id from " +
-			"list_carriers."),
+		paramCarrierID: agenttoolschema.RecordIDText(permission.ResourceCarrier,
+			"Only this carrier's settlements, by id from "+
+				"list_carriers."),
 		paramStatus: enumParam("Only settlements in this status.", carrierSettlementStatuses),
 	}, defaultListLimit, maxListLimit))
 }
@@ -1084,8 +1169,11 @@ func (t *getCarrierSettlementTool) Description() string {
 }
 
 func (t *getCarrierSettlementTool) ParamSchema() map[string]any {
-	return idSchema(paramSettlementID, agenttoolschema.IDText("The carrier settlement's id, from "+
-		"list_carrier_settlements or the page you are on."))
+	return idSchema(paramSettlementID, agenttoolschema.RecordIDText(
+		permission.ResourceCarrierSettlement,
+		"The carrier settlement's id, from "+
+			"list_carrier_settlements or the page you are on.",
+	))
 }
 
 func (t *getCarrierSettlementTool) Policy() serviceports.ToolPolicy {
@@ -1214,8 +1302,9 @@ func (t *listCarrierInvoiceMatchesTool) Description() string {
 
 func (t *listCarrierInvoiceMatchesTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
-		paramCarrierID: stringParam("Only this carrier's invoices, by id from list_carriers."),
-		paramStatus:    enumParam("Only matches in this status.", invoiceMatchStatuses),
+		paramCarrierID: agenttoolschema.RecordIDText(permission.ResourceCarrier,
+			"Only this carrier's invoices, by id from list_carriers."),
+		paramStatus: enumParam("Only matches in this status.", invoiceMatchStatuses),
 	}, defaultListLimit, maxListLimit))
 }
 

@@ -150,13 +150,19 @@ func newTriageBankReceiptWorkItemTool(items workItemRouter) serviceports.AgentTo
 		rationale: "Changes who works a reconciliation item and says it is being looked " +
 			"into; it moves no money and the item is reassigned the same way.",
 		properties: map[string]any{
-			paramWorkItemID: stringProperty("The work item's id, from get_bank_receipt or "+
-				"this run's subject. Never guess one.", 0),
+			paramWorkItemID: agenttoolschema.RecordIDText(
+				permission.ResourceBankReceiptWorkItem,
+				"The work item's id, from get_bank_receipt or "+
+					"this run's subject. Never guess one.",
+			),
 			paramWorkItemMove: agenttoolschema.Enum("Assign hands it to a person; "+
 				"StartReview marks it under review.", workItemMoves),
-			paramAssigneeID: stringProperty("For Assign: the person's user id, the "+
-				"assignedToUserId get_bank_receipt shows on a work item, or the person who "+
-				"asked. Never guess one.", 0),
+			paramAssigneeID: agenttoolschema.RecordIDText(
+				permission.ResourceUser,
+				"For Assign: the person's user id, the "+
+					"assignedToUserId get_bank_receipt shows on a work item, or the person who "+
+					"asked. Never guess one.",
+			),
 		},
 		required: []string{paramWorkItemID, paramWorkItemMove},
 		target: func(params map[string]any) (serviceports.ToolTarget, bool) {

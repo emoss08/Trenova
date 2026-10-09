@@ -19,7 +19,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"go.uber.org/fx"
 )
 
@@ -80,6 +82,20 @@ type serviceFailureDecider interface {
 	) (*serviceports.ServiceFailureDetectionPlan, error)
 }
 
+// errBothEvaluationScopes answers a call whose shipmentId and shipmentIds name
+// different shipments. One shipment checks its stops, or one of them; a list
+// checks each shipment in it. Which the person meant cannot be read from the
+// call, so the refusal spells out both calls.
+var errBothEvaluationScopes = errors.New(
+	"shipmentId and shipmentIds name different shipments, so it is not clear which to " +
+		"check. To check one shipment, send shipmentId without shipmentIds, for example " +
+		`{"shipmentId": "shp_…"}, adding stopId to check one of its stops. To check several ` +
+		`shipments in one pass, send shipmentIds without shipmentId, for example ` +
+		`{"shipmentIds": ["shp_…", "shp_…"]}`,
+)
+
+var _ serviceports.ToolSelectionResolver = (*evaluateServiceFailuresTool)(nil)
+
 type evaluateServiceFailuresTool struct {
 	failures serviceFailureDecider
 }
@@ -91,7 +107,7 @@ func newEvaluateServiceFailuresTool(failures serviceFailureDecider) serviceports
 func (t *evaluateServiceFailuresTool) Name() string { return "evaluate_service_failures" }
 
 func (t *evaluateServiceFailuresTool) Recipe() []string {
-	return []string{"get_dispatch_board", "get_shipment_tracking", "evaluate_service_failures"}
+	return []string{"get_shipment_tracking", "list_service_failures", "evaluate_service_failures"}
 }
 
 func (t *evaluateServiceFailuresTool) Description() string {
@@ -108,20 +124,22 @@ func (t *evaluateServiceFailuresTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentId": map[string]any{
-				"type": "string",
-				"description": "The shipment to check, from get_shipment_tracking, " +
-					"list_shipments or this run's subject. Send this or shipmentIds.",
-			},
-			paramStopID: map[string]any{
-				"type": "string",
-				"description": "One stop of that shipment to check on its own, from " +
+			"shipmentId": agenttoolschema.RecordIDText(
+				permission.ResourceShipment,
+				"The shipment to check, from get_shipment_tracking, "+
+					"list_shipments or this run's subject. For several shipments send "+
+					"shipmentIds instead.",
+			),
+			paramStopID: agenttoolschema.RecordIDText(
+				permission.ResourceShipmentStop,
+				"One stop of that shipment to check on its own, from "+
 					"get_shipment_tracking or get_shipment. Needs shipmentId.",
-			},
+			),
 			"shipmentIds": agenttoolschema.RecordIDs(
 				permission.ResourceShipment,
 				"Several shipments to check in one pass, from "+
-					"list_shipments or search_shipments. Send this or shipmentId.",
+					"list_shipments or search_shipments. Leave it out when checking one "+
+					"shipment by shipmentId.",
 				maxBulkEvaluationShipments,
 			),
 			"force": map[string]any{
@@ -229,16 +247,18 @@ func (t *evaluateServiceFailuresTool) request(
 		return nil, fmt.Errorf("parameter %q is not a valid id: %w", paramStopID, err)
 	}
 	if _, given := params.Params["shipmentIds"]; given {
-		scope.shipmentIDs, err = requirePulidSlice(
+		ids, idsErr := requirePulidSlice(
 			params.Params, "shipmentIds", maxBulkEvaluationShipments)
-		if err != nil {
-			return nil, err
+		if idsErr != nil {
+			return nil, idsErr
 		}
+		scope.shipmentIDs = sliceutils.Dedupe(ids)
 	}
+	scope.oneListed()
 
 	switch {
 	case len(scope.shipmentIDs) > 0 && scope.shipmentID.IsNotNil():
-		return nil, errors.New("send shipmentId or shipmentIds, not both")
+		return nil, errBothEvaluationScopes
 	case len(scope.shipmentIDs) > 0 && scope.stopID.IsNotNil():
 		return nil, errors.New("stopId checks one stop of one shipment; send it with shipmentId")
 	case len(scope.shipmentIDs) == 0 && scope.shipmentID.IsNil():
@@ -246,6 +266,48 @@ func (t *evaluateServiceFailuresTool) request(
 	}
 
 	return scope, nil
+}
+
+// oneListed reads a list of one shipment as that shipment when the call also
+// names it, or names a stop of it. Models fill every parameter they are
+// offered, so a check of one shipment arrived as shipmentId and as shipmentIds
+// of that same shipment, and was refused for naming both, though both said
+// the same thing.
+func (s *evaluationScope) oneListed() {
+	if len(s.shipmentIDs) != 1 {
+		return
+	}
+	only := s.shipmentIDs[0]
+	switch {
+	case s.shipmentID == only:
+	case s.shipmentID.IsNil() && s.stopID.IsNotNil():
+		s.shipmentID = only
+	default:
+		return
+	}
+	s.shipmentIDs = nil
+}
+
+// ResolveSelection files a call that named its one shipment twice as the
+// single shipmentId it means, so the approval card shows one shipment rather
+// than a list beside it. A call the scope cannot read is left as sent for
+// Validate to refuse by name.
+func (t *evaluateServiceFailuresTool) ResolveSelection(
+	_ context.Context,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolSelectionResolver interface passes params by value
+) (map[string]any, error) {
+	if _, listed := params.Params["shipmentIds"]; !listed {
+		return params.Params, nil
+	}
+	scope, err := t.request(&params)
+	if err != nil || len(scope.shipmentIDs) > 0 {
+		return params.Params, nil //nolint:nilerr // Validate refuses the call with its own reason
+	}
+
+	resolved := maputils.WithoutKeys(params.Params, "shipmentIds")
+	resolved["shipmentId"] = scope.shipmentID.String()
+
+	return resolved, nil
 }
 
 type resolveServiceFailureTool struct {
@@ -284,15 +346,15 @@ func (t *resolveServiceFailureTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"serviceFailureId": map[string]any{
-				"type":        "string",
-				"description": "The failure's id, from list_service_failures.",
-			},
-			"reasonCodeId": map[string]any{
-				"type": "string",
-				"description": "The reason code, from list_service_failure_reason_codes. " +
+			"serviceFailureId": agenttoolschema.RecordIDText(
+				permission.ResourceServiceFailure,
+				"The failure's id, from list_service_failures.",
+			),
+			"reasonCodeId": agenttoolschema.RecordIDText(
+				permission.ResourceServiceFailureReasonCode,
+				"The reason code, from list_service_failure_reason_codes. "+
 					"Required when the failure has none; otherwise replaces it.",
-			},
+			),
 			"notes": map[string]any{
 				"type":        "string",
 				"description": "What was found and done. Required.",
@@ -442,10 +504,10 @@ func (t *notifyDriverTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"workerId": map[string]any{
-				"type":        "string",
-				"description": "The driver's id, from the board, tracking or search_worker.",
-			},
+			"workerId": agenttoolschema.RecordIDText(
+				permission.ResourceWorker,
+				"The driver's id, from the board, tracking or search_worker.",
+			),
 			"title": map[string]any{
 				"type":        "string",
 				"description": "A short subject line, such as \"Delivery moved to 3 PM\".",
@@ -460,11 +522,11 @@ func (t *notifyDriverTool) ParamSchema() map[string]any {
 				"How urgently the phone should show it. Default medium.",
 				driverMessagePriorities,
 			),
-			"shipmentId": map[string]any{
-				"type": "string",
-				"description": "Optional: the shipment the message is about, so Dash can open " +
+			"shipmentId": agenttoolschema.RecordIDText(
+				permission.ResourceShipment,
+				"Optional: the shipment the message is about, so Dash can open "+
 					"it; from get_dispatch_board, get_shipment_tracking or search_shipments.",
-			},
+			),
 		},
 		"required":             []string{"workerId", "title", "message"},
 		"additionalProperties": false,
@@ -631,16 +693,16 @@ func (t *emailCustomerTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentId": map[string]any{
-				"type": "string",
-				"description": "The shipment the update is about, from search_shipments, " +
+			"shipmentId": agenttoolschema.RecordIDText(
+				permission.ResourceShipment,
+				"The shipment the update is about, from search_shipments, "+
 					"list_shipments or this run's subject. Its customer is who receives it.",
-			},
-			"profileId": map[string]any{
-				"type": "string",
-				"description": "The email profile to send from; list_email_profiles names them. " +
+			),
+			"profileId": agenttoolschema.RecordIDText(
+				permission.ResourceEmailProfile,
+				"The email profile to send from; list_email_profiles names them. "+
 					"With one profile there is nothing to choose.",
-			},
+			),
 			"subject": map[string]any{"type": "string", "description": "The subject line."},
 			"body": map[string]any{
 				"type": "string",
@@ -757,10 +819,10 @@ func (t *sendDetentionNoticeTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"occurrenceId": map[string]any{
-				"type":        "string",
-				"description": "The occurrence id from list_detention_desk.",
-			},
+			"occurrenceId": agenttoolschema.KindID(
+				"The occurrence id from list_detention_desk.",
+				permission.KindDetentionOccurrence,
+			),
 		},
 		"required":             []string{"occurrenceId"},
 		"additionalProperties": false,
@@ -841,10 +903,10 @@ func (t *waiveDetentionTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"occurrenceId": map[string]any{
-				"type":        "string",
-				"description": "The occurrence id from list_detention_desk.",
-			},
+			"occurrenceId": agenttoolschema.KindID(
+				"The occurrence id from list_detention_desk.",
+				permission.KindDetentionOccurrence,
+			),
 			fieldReason: agenttoolschema.Enum("The coded reason for the waiver.", waiverReasons),
 			"note": map[string]any{
 				"type":        "string",

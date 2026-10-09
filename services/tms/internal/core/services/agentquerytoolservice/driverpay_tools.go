@@ -217,7 +217,7 @@ func workerFilterSchema(
 	what string,
 ) map[string]any {
 	return objectSchema(withPaging(map[string]any{
-		paramWorkerID: stringParam(workerIDFromList),
+		paramWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker, workerIDFromList),
 		paramStatus:   enumParam("Only "+what+" in this status.", statuses),
 	}, defaultListLimit, maxListLimit))
 }

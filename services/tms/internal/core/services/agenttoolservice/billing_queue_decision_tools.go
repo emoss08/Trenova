@@ -103,11 +103,11 @@ func (t *billingQueueDecisionTool) SearchTerms() []string { return t.decision.se
 
 func (t *billingQueueDecisionTool) ParamSchema() map[string]any {
 	properties := map[string]any{
-		paramBillingQueueItemID: map[string]any{
+		paramBillingQueueItemID: agenttoolschema.OfKinds(map[string]any{
 			toolschema.KeyType: toolschema.TypeString,
 			toolschema.KeyDescription: "The billing queue item, from list_billing_queue_items, " +
 				"get_billing_queue_item or this run's subject. Never guess one.",
-		},
+		}, permission.KindBillingQueueItem),
 	}
 	for name, property := range t.decision.properties {
 		properties[name] = property
@@ -509,11 +509,11 @@ func (t *assignBillerTool) ParamSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			paramBillingQueueItemID: map[string]any{
+			paramBillingQueueItemID: agenttoolschema.OfKinds(map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
 				toolschema.KeyDescription: "The billing queue item, from " +
 					"list_billing_queue_items or get_billing_queue_item.",
-			},
+			}, permission.KindBillingQueueItem),
 			paramBillerID: billerProperty(),
 		},
 		toolschema.KeyRequired:             []string{paramBillingQueueItemID},
@@ -522,13 +522,13 @@ func (t *assignBillerTool) ParamSchema() map[string]any {
 }
 
 func billerProperty() map[string]any {
-	return map[string]any{
+	return agenttoolschema.OfResource(map[string]any{
 		toolschema.KeyType: toolschema.TypeString,
 		toolschema.KeyDescription: "The biller's user id, when the person named one or " +
 			"the customer's default biller is the assignedBillerId get_billing_queue_item " +
 			"shows on another of its items. Leave it out to assign the person who asked. " +
 			"Never guess one.",
-	}
+	}, permission.ResourceUser)
 }
 
 // billerOf reads the biller a call names, or the person asking when it names

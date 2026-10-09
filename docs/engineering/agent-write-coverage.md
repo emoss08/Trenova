@@ -1838,7 +1838,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation uncancelShipment`<br>twin `POST /api/v1/shipments/:shipmentID/uncancel/` | Tool: `uncancel_shipment` |
 | `mutation unpinShipmentComment` | Tool: `unpin_shipment_comment` |
 | `mutation unresolveShipmentComment` | Tool: `resolve_shipment_comment` |
-| `mutation updateShipment`<br>twin `PUT /api/v1/shipments/:shipmentID/` | Tool: `update_shipment` |
+| `mutation updateShipment`<br>twin `PUT /api/v1/shipments/:shipmentID/` | Tool: `update_shipment`, `reschedule_stop`, `add_shipment_charge` |
 | `mutation updateShipmentComment`<br>twin `PUT /api/v1/shipments/:shipmentID/comments/:commentID/` | Tool: `edit_shipment_comment` |
 | `POST /api/v1/shipments/:shipmentID/holds/`<br>shipmenthandler.createHold | Tool: `place_shipment_hold` |
 | `POST /api/v1/shipments/:shipmentID/holds/:holdID/release/`<br>shipmenthandler.releaseHold | Tool: `release_shipment_hold` |

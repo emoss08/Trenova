@@ -78,11 +78,11 @@ func (t *explainRateTool) ParamSchema() map[string]any {
 		"type":     "object",
 		"required": []string{"shipmentId"},
 		"properties": map[string]any{
-			"shipmentId": map[string]any{
+			"shipmentId": agenttoolschema.OfResource(map[string]any{
 				"type": "string",
 				"description": "The shipment whose rate to explain, from search_shipments " +
 					"or list_shipments, or the page you are on.",
-			},
+			}, permission.ResourceShipment),
 			"side": agenttoolschema.Enum(
 				"Which side of the shipment to price: what the customer is "+
 					"charged, or what the carrier is paid. Defaults to Customer.",

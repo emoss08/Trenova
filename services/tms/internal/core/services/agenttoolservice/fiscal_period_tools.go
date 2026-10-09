@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -143,7 +144,8 @@ func openFiscalPeriodMove() *fiscalPeriodMove {
 
 func (m *fiscalPeriodMove) properties() map[string]any {
 	properties := map[string]any{
-		paramFiscalPeriodID: stringProperty(fiscalPeriodSupplier, 0),
+		paramFiscalPeriodID: agenttoolschema.RecordIDText(permission.ResourceFiscalPeriod,
+			fiscalPeriodSupplier),
 	}
 	if m.needsReason {
 		properties[paramReason] = stringProperty("Why the period must take postings again: "+

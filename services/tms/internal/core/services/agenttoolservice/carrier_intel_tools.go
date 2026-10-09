@@ -645,7 +645,7 @@ func newApplyCarrierIntelSuggestionsTool(
 			"reports; nothing is sent, and the old values are set back by hand.",
 		properties: map[string]any{
 			paramCarrierID: carrierIDProperty("The carrier"),
-			paramSuggestionFields: map[string]any{
+			paramSuggestionFields: toolschema.KeepEmpty(map[string]any{
 				toolschema.KeyType:        toolschema.TypeArray,
 				toolschema.KeyDescription: "The profile fields to correct.",
 				toolschema.KeyMaxItems:    len(syncFieldValues.Values),
@@ -653,12 +653,13 @@ func newApplyCarrierIntelSuggestionsTool(
 					"A profile field.",
 					syncFieldValues,
 				),
-			},
-			paramPolicyIDs: agenttoolschema.IDList(
+			}),
+			paramPolicyIDs: toolschema.KeepEmpty(agenttoolschema.KindIDs(
 				"The insurance policies to correct, by the policy "+
 					"id on the page you are on.",
 				maxSuggestionPolicies,
-			),
+				permission.KindInsurancePolicy,
+			)),
 		},
 		required: []string{paramCarrierID},
 		target:   targetCarrier,
@@ -911,8 +912,9 @@ func newVerifyCarrierEquipmentTool(intel carrierIntelOperator) serviceports.Agen
 		rationale: "Records an equipment check inside Trenova after a provider lookup; " +
 			"nothing is sent to the carrier.",
 		properties: map[string]any{
-			paramCarrierAssignmentID: agenttoolschema.IDText("The carrier assignment, from " +
-				"list_rate_confirmations or get_shipment. Never guess one."),
+			paramCarrierAssignmentID: agenttoolschema.KindID("The carrier assignment, from "+
+				"list_rate_confirmations or get_shipment. Never guess one.",
+				permission.KindCarrierAssignment),
 			paramUnitType: agenttoolschema.Enum("What was checked.", unitTypes),
 			paramVIN:      stringProperty("The vehicle identification number.", maxVINChars),
 			paramPlateNumber: stringProperty("The license plate number.",

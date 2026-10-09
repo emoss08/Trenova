@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -43,31 +44,31 @@ func (t *assignMoveTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentMoveId": map[string]any{
-				"type": "string",
-				"description": "The move to cover, from get_dispatch_board (moveId), " +
+			"shipmentMoveId": agenttoolschema.RecordIDText(
+				permission.ResourceShipmentMove,
+				"The move to cover, from get_dispatch_board (moveId), "+
 					"get_shipment (its moves) or plan_dispatch.",
-			},
-			"primaryWorkerId": map[string]any{
-				"type": "string",
-				"description": "The driver to put on the move, from rank_move_candidates, " +
+			),
+			"primaryWorkerId": agenttoolschema.RecordIDText(
+				permission.ResourceWorker,
+				"The driver to put on the move, from rank_move_candidates, "+
 					"plan_dispatch or list_workers.",
-			},
-			"tractorId": map[string]any{
-				"type": "string",
-				"description": "The tractor the driver will use, from rank_move_candidates or " +
+			),
+			"tractorId": agenttoolschema.RecordIDText(
+				permission.ResourceTractor,
+				"The tractor the driver will use, from rank_move_candidates or "+
 					"list_tractors.",
-			},
-			"trailerId": map[string]any{
-				"type": "string",
-				"description": "The trailer, when the move needs one, from rank_move_candidates " +
+			),
+			"trailerId": agenttoolschema.RecordIDText(
+				permission.ResourceTrailer,
+				"The trailer, when the move needs one, from rank_move_candidates "+
 					"or list_trailers.",
-			},
-			"secondaryWorkerId": map[string]any{
-				"type": "string",
-				"description": "A second driver for a team move, from list_workers or " +
+			),
+			"secondaryWorkerId": agenttoolschema.RecordIDText(
+				permission.ResourceWorker,
+				"A second driver for a team move, from list_workers or "+
 					"search_worker.",
-			},
+			),
 		},
 		"required":             []string{"shipmentMoveId", "primaryWorkerId", "tractorId"},
 		"additionalProperties": false,

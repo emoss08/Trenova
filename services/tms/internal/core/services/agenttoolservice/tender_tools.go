@@ -67,17 +67,13 @@ func (t *tenderToRoutingGuideTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentMoveId": map[string]any{
-				"type": "string",
-				"description": "The move to tender, from get_dispatch_board (moveId) or " +
-					"get_shipment (its moves).",
-			},
-			"routingGuideId": map[string]any{
-				"type": "string",
-				"description": "A specific routing guide to use instead of the one matched from " +
-					"the lane: the routingGuideId shop_carriers returns. Omit to match from the " +
-					"lane.",
-			},
+			"shipmentMoveId": agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
+				"The move to tender, from get_dispatch_board (moveId) or "+
+					"get_shipment (its moves)."),
+			"routingGuideId": agenttoolschema.RecordIDText(permission.ResourceRoutingGuide,
+				"A specific routing guide to use instead of the one matched from "+
+					"the lane: the routingGuideId shop_carriers returns. Omit to match from the "+
+					"lane."),
 		},
 		"required":             []string{"shipmentMoveId"},
 		"additionalProperties": false,
@@ -171,11 +167,9 @@ func (t *tenderToCarriersTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"shipmentMoveId": map[string]any{
-				"type": "string",
-				"description": "The move to tender, from get_dispatch_board (moveId) or " +
-					"get_shipment (its moves).",
-			},
+			"shipmentMoveId": agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
+				"The move to tender, from get_dispatch_board (moveId) or "+
+					"get_shipment (its moves)."),
 			"mode": agenttoolschema.Enum(
 				"Broadcast asks every carrier at once; Sequential asks them in order.",
 				agenttoolschema.SpotTenderModes,
@@ -186,10 +180,10 @@ func (t *tenderToCarriersTool) ParamSchema() map[string]any {
 				"items": map[string]any{
 					"type": "object",
 					"properties": map[string]any{
-						"carrierId": map[string]any{
-							"type":        "string",
-							"description": "The carrier, from shop_carriers or list_carriers.",
-						},
+						"carrierId": agenttoolschema.RecordIDText(
+							permission.ResourceCarrier,
+							"The carrier, from shop_carriers or list_carriers.",
+						),
 						"rate": map[string]any{
 							"type":        "string",
 							"description": "The offered rate as a decimal string.",

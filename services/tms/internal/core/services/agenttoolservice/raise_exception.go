@@ -15,6 +15,34 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+// subjectKinds are the kinds of record a case can be about, read from the
+// prefix each agent.SubjectType declares, so the id beside a subjectType is
+// held to exactly those kinds and the list cannot drift from the enum. When a
+// subject's prefix has no kind in permission's table the list is empty and
+// the parameter is left unmarked, for the catalog contract test to name,
+// rather than refusing every real id of that subject.
+var subjectKinds = func() []permission.RecordKind {
+	subjects := agent.AllSubjectTypes()
+	kinds := make([]permission.RecordKind, 0, len(subjects))
+	for _, subject := range subjects {
+		kind, ok := permission.RecordKindOfIDPrefix(subject.IDPrefix())
+		if !ok {
+			return nil
+		}
+		kinds = append(kinds, kind)
+	}
+
+	return kinds
+}()
+
+func subjectIDProperty(description string) map[string]any {
+	if len(subjectKinds) == 0 {
+		return agenttoolschema.IDText(description)
+	}
+
+	return agenttoolschema.KindID(description, subjectKinds...)
+}
+
 var ErrMissingRun = errors.New("an exception can only be raised from within an agent run")
 
 var ErrSubjectUncheckable = errors.New(
@@ -51,13 +79,12 @@ func (t *raiseExceptionTool) ParamSchema() map[string]any {
 				"The kind of record the case is about.",
 				agenttoolschema.SubjectTypes,
 			),
-			"subjectId": map[string]any{
-				"type": "string",
-				"description": "The id of that record: usually this run's subject, or an id a " +
+			"subjectId": subjectIDProperty(
+				"The id of that record: usually this run's subject, or an id a " +
 					"tool such as get_shipment or list_shipments returned. Its prefix must " +
 					"match subjectType: a report's id starts rd_, a dashboard's rdb_, an " +
 					"insight's inst_.",
-			},
+			),
 			fieldCategory: agenttoolschema.Enum(
 				"What kind of problem it is.",
 				agenttoolschema.ExceptionCategories,

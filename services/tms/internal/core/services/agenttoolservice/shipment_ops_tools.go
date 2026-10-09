@@ -179,8 +179,9 @@ func newTransferShipmentOwnershipTool(shipments shipmentOperator) serviceports.A
 			"transferred back the same way.",
 		properties: map[string]any{
 			paramShipmentID: shipmentIDProperty("The shipment"),
-			paramOwnerID: agenttoolschema.IDText(
-				"The user who takes it over: the person who asked, or " +
+			paramOwnerID: agenttoolschema.RecordIDText(
+				permission.ResourceUser,
+				"The user who takes it over: the person who asked, or "+
 					"an ownerId get_shipment shows. Never guess one.",
 			),
 		},

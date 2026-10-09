@@ -74,17 +74,23 @@ func accountingSystemSchema() map[string]any {
 func mappingTargetProperties() map[string]any {
 	return map[string]any{
 		paramAccountingSystem: accountingSystemSchema(),
-		paramMappingID: jsonschemautils.Text(
-			"The mapping's id from list_accounting_mapping_gaps or " +
+		paramMappingID: agenttoolschema.KindID(
+			"The mapping's id from list_accounting_mapping_gaps or "+
 				"get_accounting_mapping. Never guess one.",
+			permission.KindAccountingMapping,
 		),
 		paramTargetType: agenttoolschema.Enum(
 			"The kind of Trenova record or setting, when naming it by recordId or key.",
 			agenttoolschema.MappingTargetTypes,
 		),
-		paramRecordID: jsonschemautils.Text(
-			"The Trenova customer, carrier or accessorial charge id, from " +
+		paramRecordID: agenttoolschema.KindID(
+			"The Trenova customer, carrier or accessorial charge id, from "+
 				"list_customers, list_carriers or list_accessorial_charges.",
+			permission.RecordKind(permission.ResourceCustomer),
+			permission.RecordKind(permission.ResourceCarrier),
+			permission.RecordKind(permission.ResourceAccessorialCharge),
+			permission.RecordKind(permission.ResourceWorker),
+			permission.RecordKind(permission.ResourceGeneralLedgerAccount),
 		),
 		paramMappingKey: jsonschemautils.Text(
 			"The setting's key from list_accounting_mapping_gaps, for the " +

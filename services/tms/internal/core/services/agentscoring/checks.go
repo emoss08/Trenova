@@ -1,13 +1,16 @@
 package agentscoring
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
+	"github.com/emoss08/trenova/shared/mdtable"
 	"github.com/emoss08/trenova/shared/numberguard"
+	"github.com/emoss08/trenova/shared/recordids"
 )
 
 type heldToolsCheck struct{}
@@ -269,6 +272,47 @@ func factGuard(in *Input) softResult {
 	}
 
 	return softResult{applies: true, score: 1, detail: "Every figure in the reply is supported"}
+}
+
+// maxReplyTableRows is the most rows a reply writes out as a markdown
+// table; past it the prompt has the reply point to the table its tool kept
+// (agentruntime.InlineRows).
+const maxReplyTableRows = 12
+
+// replyForm holds every reply to the two rules on its form that the runtime
+// also enforces beneath the prompt: no internal record id reaches the
+// person, and no list longer than a dozen rows is written out in place of
+// the table kept beside the conversation. Scoring it on every case, with no
+// rubric to write, is what shows a model, a prompt change or the runtime's
+// own reply pass letting either slip.
+func replyForm(in *Input) softResult {
+	if strings.TrimSpace(in.Reply) == "" {
+		return softResult{}
+	}
+
+	findings := make([]string, 0, 2)
+	if recordids.Contains(in.Reply) {
+		findings = append(findings, "shows an internal record id")
+	}
+	for _, table := range mdtable.Find(in.Reply) {
+		if len(table.Rows) > maxReplyTableRows {
+			findings = append(findings, fmt.Sprintf(
+				"writes out a %d-row table instead of pointing to the kept one", len(table.Rows)))
+		}
+	}
+	if len(findings) > 0 {
+		return softResult{
+			applies:  true,
+			detail:   "The reply breaks a rule on what a person is shown",
+			findings: findings,
+		}
+	}
+
+	return softResult{
+		applies: true,
+		score:   1,
+		detail:  "The reply shows no internal ids and no reprinted long list",
+	}
 }
 
 func mentions(in *Input) softResult {

@@ -43,7 +43,9 @@ func (f *fakeShipmentRepo) List(
 	_ context.Context,
 	req *repositories.ListShipmentsRequest,
 ) (*pagination.CursorListResult[*shipment.Shipment], error) {
-	f.captured = req
+	if f.captured == nil {
+		f.captured = req
+	}
 
 	return &pagination.CursorListResult[*shipment.Shipment]{Items: f.items}, nil
 }
@@ -56,7 +58,7 @@ func TestSearchShipments_ListsWithoutAQuery(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{items: []*shipment.Shipment{{ID: pulid.MustNew("shp_")}}}
-	tool := newSearchShipmentsTool(repo)
+	tool := newSearchShipmentsTool(repo, shipmentPartySources{})
 
 	_, err := tool.Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
@@ -69,7 +71,7 @@ func TestSearchShipments_KeepsTheStatusFilter(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{}
-	tool := newSearchShipmentsTool(repo)
+	tool := newSearchShipmentsTool(repo, shipmentPartySources{})
 
 	// Completed, not "Delivered". These fixtures used to say Delivered, copied
 	// from the tool's own description, which named a status the system does not
@@ -84,7 +86,7 @@ func TestSearchShipments_EmptyResultNamesEveryFilterItApplied(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{items: nil}
-	tool := newSearchShipmentsTool(repo)
+	tool := newSearchShipmentsTool(repo, shipmentPartySources{})
 
 	result, err := tool.Query(
 		t.Context(),
@@ -106,7 +108,7 @@ func TestSearchShipments_UnfilteredEmptyResultSaysSo(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{items: nil}
-	tool := newSearchShipmentsTool(repo)
+	tool := newSearchShipmentsTool(repo, shipmentPartySources{})
 
 	result, err := tool.Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
@@ -128,7 +130,7 @@ func TestSearchShipments_ReturnsTheCuratedRowNotTheStoredEntity(t *testing.T) {
 		Status:    shipment.StatusNew,
 	}}}
 
-	result, err := newSearchShipmentsTool(repo).Query(t.Context(), testParams(map[string]any{}))
+	result, err := newSearchShipmentsTool(repo, shipmentPartySources{}).Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
 
 	outcome, ok := result.(searchOutcome)
@@ -149,7 +151,7 @@ func TestSearchShipments_DistinguishesInTransitFromUnrecorded(t *testing.T) {
 		ID: pulid.MustNew("shp_"), ProNumber: "S-1001", Status: shipment.StatusNew,
 	}}}
 
-	result, err := newSearchShipmentsTool(repo).Query(t.Context(), testParams(map[string]any{}))
+	result, err := newSearchShipmentsTool(repo, shipmentPartySources{}).Query(t.Context(), testParams(map[string]any{}))
 	require.NoError(t, err)
 
 	outcome, _ := result.(searchOutcome)
@@ -175,7 +177,7 @@ func TestSearchShipments_RefusesAStatusThatDoesNotExist(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{}
-	_, err := newSearchShipmentsTool(repo).Query(t.Context(), testParams(map[string]any{
+	_, err := newSearchShipmentsTool(repo, shipmentPartySources{}).Query(t.Context(), testParams(map[string]any{
 		"status": "Delivered",
 	}))
 
@@ -188,7 +190,7 @@ func TestSearchShipments_AcceptsAStatusThatExists(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeShipmentRepo{}
-	_, err := newSearchShipmentsTool(repo).Query(t.Context(), testParams(map[string]any{
+	_, err := newSearchShipmentsTool(repo, shipmentPartySources{}).Query(t.Context(), testParams(map[string]any{
 		"status": "InTransit",
 	}))
 
@@ -201,7 +203,7 @@ func TestSearchShipments_AcceptsAStatusThatExists(t *testing.T) {
 func TestSearchShipmentsSchema_OffersOnlyStatusesTheToolAccepts(t *testing.T) {
 	t.Parallel()
 
-	properties, ok := newSearchShipmentsTool(&fakeShipmentRepo{}).
+	properties, ok := newSearchShipmentsTool(&fakeShipmentRepo{}, shipmentPartySources{}).
 		ParamSchema()["properties"].(map[string]any)
 	require.True(t, ok)
 	offered, ok := properties["status"].(map[string]any)["enum"].([]string)

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -88,11 +89,11 @@ func (t *sendEDILoadTenderTool) Description() string {
 
 func (t *sendEDILoadTenderTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		fieldShipmentID: jsonschemautils.Text("The shipment to tender, from search_shipments " +
-			"or get_shipment. Never guess one."),
-		paramEDIPartnerID: jsonschemautils.Text("The internal EDI partner that stands for the " +
-			"receiving organization, " + ediPartnerIDGuidance + " Leave it out to use the " +
-			"customer's."),
+		fieldShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
+			"The shipment to tender, from search_shipments or get_shipment. Never guess one."),
+		paramEDIPartnerID: agenttoolschema.KindID("The internal EDI partner that stands for "+
+			"the receiving organization, "+ediPartnerIDGuidance+" Leave it out to use the "+
+			"customer's.", permission.KindEDIPartner),
 	}, fieldShipmentID)
 }
 
@@ -189,12 +190,14 @@ func (t *sendEDIStatusUpdateTool) Description() string {
 
 func (t *sendEDIStatusUpdateTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramEDIPartnerID: jsonschemautils.Text("The trading partner to send it to, " +
-			ediPartnerIDGuidance),
-		fieldShipmentID: jsonschemautils.Text("Report this shipment's current status. The " +
-			"shipment, from search_shipments or get_shipment."),
-		paramServiceFailureID: jsonschemautils.Text("Report a late or missed stop with its " +
-			"reason, from list_service_failures or get_service_failure."),
+		paramEDIPartnerID: agenttoolschema.KindID("The trading partner to send it to, "+
+			ediPartnerIDGuidance, permission.KindEDIPartner),
+		fieldShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
+			"Report this shipment's current status. The shipment, from search_shipments or "+
+				"get_shipment."),
+		paramServiceFailureID: agenttoolschema.RecordIDText(permission.ResourceServiceFailure,
+			"Report a late or missed stop with its reason, from list_service_failures or "+
+				"get_service_failure."),
 	}, paramEDIPartnerID)
 }
 

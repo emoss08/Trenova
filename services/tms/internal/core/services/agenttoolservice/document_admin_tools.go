@@ -243,8 +243,8 @@ func newRestoreDocumentVersionTool(documents documentKeeper) serviceports.AgentT
 		rationale: "Changes which stored version of a document Trenova shows; nothing is sent " +
 			"or removed.",
 		properties: map[string]any{
-			paramDocumentID: stringProperty("Any version of the document, "+documentSupplier+
-				". Never guess one.", 0),
+			paramDocumentID: agenttoolschema.RecordIDText(permission.ResourceDocument,
+				"Any version of the document, "+documentSupplier+". Never guess one."),
 			paramVersionNumber: integerProperty("The version number to make current.", 1,
 				maxDocumentVersion),
 		},

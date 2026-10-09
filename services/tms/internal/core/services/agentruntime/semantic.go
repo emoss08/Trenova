@@ -9,19 +9,22 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/vectorutils"
 	"go.uber.org/zap"
 )
 
 type FindAnswer struct {
-	Content string   `json:"content"`
-	Found   []string `json:"found,omitempty"`
+	Content string     `json:"content"`
+	Found   []string   `json:"found,omitempty"`
+	HandOff []pulid.ID `json:"handOff,omitempty"`
 }
 
 type FoundTools struct {
 	Content string
 	Loaded  []string
 	Found   []string
+	HandOff []pulid.ID
 }
 
 type QueryVectorState struct {

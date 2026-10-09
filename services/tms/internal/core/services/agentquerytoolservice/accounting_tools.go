@@ -186,9 +186,9 @@ func (t *getARAgingTool) Description() string {
 
 func (t *getARAgingTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
-		paramAsOf: dateParam("The day to age as of. Defaults to today."),
-		paramCustomerID: stringParam("Only this customer, by id from list_customers or a " +
-			"row of this tool."),
+		paramAsOf: agenttoolschema.Date("The day to age as of. Defaults to today."),
+		paramCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
+			"Only this customer, by id from list_customers or a row of this tool."),
 		"overdueOnly": boolParam("Only customers with a balance past due."),
 	}, defaultAccountingRows, maxAccountingRows))
 }
@@ -360,11 +360,11 @@ func (t *listAROpenItemsTool) Description() string {
 
 func (t *listAROpenItemsTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
-		paramCustomerID: stringParam("Only this customer's invoices, by id from list_customers " +
-			"or get_ar_aging."),
+		paramCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
+			"Only this customer's invoices, by id from list_customers or get_ar_aging."),
 		"minDaysPastDue": intParam("Only invoices at least this many days past due."),
 		"disputedOnly":   boolParam("Only invoices the customer disputes."),
-		paramAsOf:        dateParam("The day to age as of. Defaults to today."),
+		paramAsOf:        agenttoolschema.Date("The day to age as of. Defaults to today."),
 	}, defaultAccountingRows, maxAccountingRows))
 }
 
@@ -508,11 +508,11 @@ func (t *getCustomerStatementTool) Description() string {
 
 func (t *getCustomerStatementTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
-		paramCustomerID: stringParam("The customer's id, from list_customers, get_ar_aging or " +
-			onThePage),
-		paramStartDate: dateParam("The first day of the statement period. Omit for the " +
+		paramCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
+			"The customer's id, from list_customers, get_ar_aging or "+onThePage),
+		paramStartDate: agenttoolschema.Date("The first day of the statement period. Omit for the " +
 			"customer's whole history."),
-		paramAsOf: dateParam("The statement date. Defaults to today."),
+		paramAsOf: agenttoolschema.Date("The statement date. Defaults to today."),
 	}, paramCustomerID)
 }
 
@@ -691,7 +691,7 @@ func (t *listCollectionsWorklistTool) Description() string {
 
 func (t *listCollectionsWorklistTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
-		paramAsOf:     dateParam("The day to rank as of. Defaults to today."),
+		paramAsOf:     agenttoolschema.Date("The day to rank as of. Defaults to today."),
 		paramSeverity: enumParam("Only rows of this severity.", accountingDriftSeverities),
 		paramLimit: intParam(fmt.Sprintf("How many rows to return: %d unless you ask, at most %d.",
 			defaultAccountingRows, maxAccountingRows)),
@@ -843,10 +843,10 @@ func (t *listJournalEntriesTool) ParamSchema() map[string]any {
 		paramStatus: enumParam("Only entries in this status.", journalStatuses),
 		"referenceType": stringParam("Only entries from this source, such as Invoice, " +
 			"CustomerPayment or DriverSettlement."),
-		paramFiscalPeriodID: stringParam("Only entries in this fiscal period, by id from " +
-			"list_fiscal_periods."),
-		paramFromDate: dateParam("The earliest accounting date."),
-		paramToDate:   dateParam("The latest accounting date."),
+		paramFiscalPeriodID: agenttoolschema.RecordIDText(permission.ResourceFiscalPeriod,
+			"Only entries in this fiscal period, by id from list_fiscal_periods."),
+		paramFromDate: agenttoolschema.Date("The earliest accounting date."),
+		paramToDate:   agenttoolschema.Date("The latest accounting date."),
 	}, defaultListLimit, maxListLimit))
 }
 
@@ -1012,8 +1012,8 @@ func (t *getJournalEntryTool) SearchTerms() []string {
 func (t *getJournalEntryTool) ParamSchema() map[string]any {
 	return idSchema(
 		"journalEntryId",
-		agenttoolschema.IDText("The journal entry's id, from list_journal_entries or "+
-			onThePage),
+		agenttoolschema.RecordIDText(permission.ResourceJournalEntry,
+			"The journal entry's id, from list_journal_entries or "+onThePage),
 	)
 }
 
@@ -1398,8 +1398,8 @@ func (t *getFiscalCloseBlockersTool) Description() string {
 func (t *getFiscalCloseBlockersTool) ParamSchema() map[string]any {
 	return idSchema(
 		paramFiscalPeriodID,
-		agenttoolschema.IDText("The fiscal period's id, from list_fiscal_periods or "+
-			onThePage),
+		agenttoolschema.RecordIDText(permission.ResourceFiscalPeriod,
+			"The fiscal period's id, from list_fiscal_periods or "+onThePage),
 	)
 }
 

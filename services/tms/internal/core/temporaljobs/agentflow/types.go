@@ -220,9 +220,10 @@ type FindToolsInput struct {
 }
 
 type FindToolsResult struct {
-	Content string   `json:"content"`
-	Loaded  []string `json:"loaded,omitempty"`
-	Found   []string `json:"found,omitempty"`
+	Content string     `json:"content"`
+	Loaded  []string   `json:"loaded,omitempty"`
+	Found   []string   `json:"found,omitempty"`
+	HandOff []pulid.ID `json:"handOff,omitempty"`
 }
 
 // ToolInput is one tool call. The activity running it is named for the tool,

@@ -1,6 +1,8 @@
 package agentscoring
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -215,7 +217,9 @@ func TestScore_WeightsRenormaliseOverTheChecksThatApply(t *testing.T) {
 	assert.False(t, check(t, checks, CheckProposals).Applies)
 	assert.True(t, check(t, checks, CheckFactGuard).Applies)
 	assert.True(t, check(t, checks, CheckMentions).Applies)
-	expected := (WeightFactGuard*1 + WeightMentions*0.5) / (WeightFactGuard + WeightMentions)
+	assert.True(t, check(t, checks, CheckReplyForm).Applies)
+	expected := (WeightFactGuard*1 + WeightMentions*0.5 + WeightReplyForm*1) /
+		(WeightFactGuard + WeightMentions + WeightReplyForm)
 	assert.InDelta(t, expected, checks.Deterministic, 1e-9)
 	assert.False(t, checks.Passed)
 }
@@ -385,4 +389,37 @@ func TestScore_PluggableHardCheck(t *testing.T) {
 
 	assert.True(t, checks.HardFailure)
 	assert.Equal(t, "custom", checks.FailedHard()[0].Name)
+}
+
+/*
+Two rules on what a person is shown hold on every case without a rubric: no
+internal record id, and no list longer than a dozen rows written out where
+the reply should point to the table its tool kept. A reply breaking either
+scores zero on the check, whichever model, prompt or reply pass let it slip.
+*/
+func TestScore_HoldsEveryReplyToTheRulesOnWhatAPersonIsShown(t *testing.T) {
+	t.Parallel()
+
+	clean := New().Score(&Input{
+		Case:  &agentquality.EvalCase{Input: "Is PRO-1001 late?"},
+		Reply: "**PRO-1001** is late; its delivery window closed at 14:00.",
+	})
+	assert.InDelta(t, 1.0, check(t, clean, CheckReplyForm).Score, 1e-9)
+
+	rows := make([]string, 0, 14)
+	for idx := range 14 {
+		rows = append(rows, fmt.Sprintf("| PRO-%d | Late |", 1000+idx))
+	}
+	broken := New().Score(&Input{
+		Case: &agentquality.EvalCase{Input: "Which loads are late?"},
+		Reply: "PRO-1000 (ID shp_01M3Q2Y4SRFE0YW60JY6F5NRW7) leads the list.\n\n" +
+			"| Load | Status |\n|---|---|\n" + strings.Join(rows, "\n"),
+	})
+	form := check(t, broken, CheckReplyForm)
+	assert.True(t, form.Applies)
+	assert.Zero(t, form.Score)
+	assert.ElementsMatch(t, []string{
+		"shows an internal record id",
+		"writes out a 14-row table instead of pointing to the kept one",
+	}, form.Findings)
 }

@@ -310,12 +310,17 @@ func TestGetWorkerHOS_ReadsTheClocksAndMarksAStaleReading(t *testing.T) {
 	assert.True(t, row.Stale)
 	assert.NotEmpty(t, row.Note)
 
-	_, err = tool.Query(
+	unmapped, err := tool.Query(
 		t.Context(),
 		testParams(map[string]any{"workerId": pulid.MustNew("wrk_").String()}),
 	)
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "no hours of service")
+	require.NoError(t, err)
+
+	none, ok := unmapped.(workerHOSRow)
+	require.True(t, ok)
+	assert.Equal(t, "Unknown", none.DutyStatus)
+	assert.True(t, none.Stale)
+	assert.Contains(t, none.Note, "No ELD has reported hours of service")
 }
 
 type fakeBoard struct {

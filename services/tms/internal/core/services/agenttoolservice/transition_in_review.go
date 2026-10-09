@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -47,12 +48,12 @@ func (t *transitionToInReviewTool) ParamSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			paramBillingQueueItemID: map[string]any{
-				toolschema.KeyType: toolschema.TypeString,
-				toolschema.KeyDescription: "The billing queue item to move into review: this " +
-					"run's subject, the record on the page, or one list_billing_queue_items " +
+			paramBillingQueueItemID: agenttoolschema.KindID(
+				"The billing queue item to move into review: this "+
+					"run's subject, the record on the page, or one list_billing_queue_items "+
 					"found. Never guess one.",
-			},
+				permission.KindBillingQueueItem,
+			),
 			paramBillerID: billerProperty(),
 		},
 		toolschema.KeyRequired:             []string{paramBillingQueueItemID},

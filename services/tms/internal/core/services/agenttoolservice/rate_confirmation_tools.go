@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/rateconfirmationservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
@@ -98,8 +99,9 @@ func (t *generateRateConfirmationTool) Description() string {
 
 func (t *generateRateConfirmationTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		previewFieldShipmentMoveID: jsonschemautils.Text(
-			"The carrier-covered move, from get_dispatch_board (moveId) or get_shipment " +
+		previewFieldShipmentMoveID: agenttoolschema.RecordIDText(
+			permission.ResourceShipmentMove,
+			"The carrier-covered move, from get_dispatch_board (moveId) or get_shipment "+
 				"(its moves).",
 		),
 	}, previewFieldShipmentMoveID)
@@ -204,11 +206,7 @@ func newSendRateConfirmationTool(rateCons rateConfirmations) serviceports.AgentT
 func (t *sendRateConfirmationTool) Name() string { return "send_rate_confirmation" }
 
 func (t *sendRateConfirmationTool) Recipe() []string {
-	return []string{
-		"list_rate_confirmations",
-		"generate_rate_confirmation",
-		"send_rate_confirmation",
-	}
+	return []string{"list_rate_confirmations", "send_rate_confirmation"}
 }
 
 func (t *sendRateConfirmationTool) Description() string {
@@ -222,7 +220,8 @@ func (t *sendRateConfirmationTool) Description() string {
 
 func (t *sendRateConfirmationTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		fieldRateConfirmationID: jsonschemautils.Text(
+		fieldRateConfirmationID: agenttoolschema.RecordIDText(
+			permission.ResourceRateConfirmation,
 			"The revision to send, from list_rate_confirmations.",
 		),
 	}, fieldRateConfirmationID)
@@ -298,7 +297,8 @@ func (t *voidRateConfirmationTool) Description() string {
 
 func (t *voidRateConfirmationTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		fieldRateConfirmationID: jsonschemautils.Text(
+		fieldRateConfirmationID: agenttoolschema.RecordIDText(
+			permission.ResourceRateConfirmation,
 			"The revision to void, from list_rate_confirmations.",
 		),
 		fieldReason: jsonschemautils.Text(
@@ -423,7 +423,8 @@ func (t *recordRateConfirmationConfirmedTool) Description() string {
 
 func (t *recordRateConfirmationConfirmedTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		fieldRateConfirmationID: jsonschemautils.Text(
+		fieldRateConfirmationID: agenttoolschema.RecordIDText(
+			permission.ResourceRateConfirmation,
 			"The revision the carrier confirmed, from list_rate_confirmations.",
 		),
 		fieldConfirmedByName: jsonschemautils.Text(
