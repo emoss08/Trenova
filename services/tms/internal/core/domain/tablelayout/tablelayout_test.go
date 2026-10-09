@@ -45,8 +45,26 @@ func TestTableLayout_Validate(t *testing.T) {
 		{name: "accepts an empty layout", mutate: func(tl *TableLayout) { tl.Layout = &Layout{} }},
 		{name: "requires a resource", mutate: func(tl *TableLayout) { tl.Resource = "" }, field: "resource"},
 		{
-			name:   "rejects a resource with spaces",
-			mutate: func(tl *TableLayout) { tl.Resource = "ship ment" },
+			name:   "accepts a table named in words, as every multi-word table is",
+			mutate: func(tl *TableLayout) { tl.Resource = "Service Type" },
+		},
+		{
+			name:   "accepts a name with digits and punctuation",
+			mutate: func(tl *TableLayout) { tl.Resource = "AI Audit Event: v2.1_beta-3" },
+		},
+		{
+			name:   "rejects a leading space, which would split one table's layout in two",
+			mutate: func(tl *TableLayout) { tl.Resource = " Service Type" },
+			field:  "resource",
+		},
+		{
+			name:   "rejects a trailing space",
+			mutate: func(tl *TableLayout) { tl.Resource = "Service Type " },
+			field:  "resource",
+		},
+		{
+			name:   "rejects characters outside a table name",
+			mutate: func(tl *TableLayout) { tl.Resource = "Service/Type" },
 			field:  "resource",
 		},
 		{

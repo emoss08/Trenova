@@ -32,7 +32,7 @@ const (
 	DensityCompact     = "compact"
 )
 
-var resourcePattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.:-]*$`)
+var resourcePattern = regexp.MustCompile(`^[A-Za-z0-9](?:[A-Za-z0-9 _.:-]*[A-Za-z0-9_.:-])?$`)
 
 var (
 	_ bun.BeforeAppendModelHook          = (*TableLayout)(nil)
@@ -244,7 +244,7 @@ func (tl *TableLayout) ValidateKey(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Resource is required"),
 			validation.Length(1, MaxResourceLength),
 			validation.Match(resourcePattern).Error(
-				"Resource may hold letters, digits, dots, colons, dashes and underscores only",
+				"Resource may hold letters, digits, spaces, dots, colons, dashes and underscores only",
 			),
 		),
 	))
