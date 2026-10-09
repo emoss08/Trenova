@@ -6,9 +6,8 @@ import type { ChangeMyPassword } from "@trenova/shared/types/user";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { AuthCardBody } from "./auth-card";
-import { AuthErrorText, AuthSubmit, AuthTextField } from "./auth-field";
-import { StepCrumbs, StepHeading } from "./auth-primitives";
+import { AuthErrorText, AuthPasswordField, AuthSubmit } from "./auth-field";
+import { AuthHeading, StepCrumbs } from "./auth-primitives";
 import { MIN_PASSWORD_LENGTH } from "./reset-password-form";
 import { translate } from "@trenova/shared/i18n/runtime";
 
@@ -65,14 +64,14 @@ export function ChangePasswordForm({ onChanged }: { onChanged?: () => void }) {
   });
 
   return (
-    <AuthCardBody>
+    <>
       <StepCrumbs left="Password required" right="Secure sign-in" />
-      <StepHeading title={t("Choose a new password")}>
+      <AuthHeading title={t("Choose a new password")}>
         {t("Your account is set to require a password change before you can continue.")}
-      </StepHeading>
+      </AuthHeading>
 
       <form
-        className="mt-4 flex flex-col gap-3.5"
+        className="flex flex-col gap-4"
         noValidate
         onSubmit={handleSubmit(
           (data) =>
@@ -83,44 +82,35 @@ export function ChangePasswordForm({ onChanged }: { onChanged?: () => void }) {
             }),
         )}
       >
-        <AuthTextField
+        <AuthPasswordField
           name="currentPassword"
           control={control}
           label={t("Current password")}
-          type="password"
-          required
-          revealable
           placeholder="••••••••"
           autoComplete="current-password"
           disabled={isPending}
         />
-        <AuthTextField
+        <AuthPasswordField
           name="newPassword"
           control={control}
           label={t("New password")}
-          type="password"
-          required
-          revealable
           placeholder={t("At least 8 characters")}
           autoComplete="new-password"
           disabled={isPending}
         />
-        <AuthTextField
+        <AuthPasswordField
           name="confirmPassword"
           control={control}
           label={t("Confirm new password")}
-          type="password"
-          required
-          revealable
           placeholder="••••••••"
           autoComplete="new-password"
           disabled={isPending}
         />
         {rootError && <AuthErrorText>{rootError}</AuthErrorText>}
-        <AuthSubmit type="submit" isLoading={isPending} loadingText={t("Updating password")}>
+        <AuthSubmit type="submit" busy={isPending} busyLabel={t("Updating password")}>
           {t("Update password")}
         </AuthSubmit>
       </form>
-    </AuthCardBody>
+    </>
   );
 }

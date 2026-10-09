@@ -1,16 +1,20 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { authService } from "@trenova/shared/services/auth";
+import { emailSchema } from "@/lib/auth-validation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeftIcon } from "@trenova/shared/components/icons";
+import { useRichT } from "@trenova/shared/i18n/rich";
+import { translate } from "@trenova/shared/i18n/runtime";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { authService } from "@trenova/shared/services/auth";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { AuthCardBody } from "./auth-card";
 import { AuthErrorText, AuthSubmit, AuthTextField } from "./auth-field";
-import { AuthTray, StepCrumbs, StepHeading } from "./auth-primitives";
-import { translate } from "@trenova/shared/i18n/runtime";
+import { AuthBackButton, AuthHeading, AuthQuietButton } from "./auth-primitives";
+import { AuthHint, AuthMailMark, AuthSuccess } from "./auth-success";
+import { useAuthStage } from "./stage/auth-stage-context";
 
 export const forgotPasswordSchema = z.object({
-  emailAddress: z.email({ error: () => translate("Please enter a valid email address") }),
+  emailAddress: emailSchema(() => translate("Please enter a valid email address.")),
 });
 
 export type ForgotPasswordRequest = z.infer<typeof forgotPasswordSchema>;
@@ -31,6 +35,7 @@ export function ForgotPasswordForm({
   onBack: () => void;
 }) {
   const t = useT();
+  const stage = useAuthStage();
 
   const form = useForm<ForgotPasswordRequest>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -39,72 +44,93 @@ export function ForgotPasswordForm({
   const { control, handleSubmit, formState } = form;
   const rootError = formState.errors.root?.message;
 
-  const { mutateAsync, isPending, isSuccess } = useApiMutation({
+  const { mutate, isPending, isSuccess, variables, reset } = useApiMutation({
     mutationFn: (data: ForgotPasswordRequest) => authService.forgotPassword(data.emailAddress),
     form,
     resourceName: "Password reset",
   });
 
-  if (isSuccess) {
-    return <ForgotPasswordSent onBack={onBack} />;
+  if (isSuccess && variables) {
+    return (
+      <ForgotPasswordSent emailAddress={variables.emailAddress} onBack={onBack} onRetry={reset} />
+    );
   }
 
   return (
-    <AuthCardBody>
-      <StepCrumbs left="Account recovery" right="Secure sign-in" />
-      <StepHeading title={t("Reset your password")}>
+    <>
+      <AuthBackButton onClick={onBack}>{t("Back to sign in")}</AuthBackButton>
+      <AuthHeading title={t("Reset your password")}>
         {t(
           "Enter the address you sign in with and we'll send you a link to choose a new password.",
         )}
-      </StepHeading>
+      </AuthHeading>
 
       <form
-        className="mt-4 flex flex-col gap-3.5"
+        className="flex flex-col gap-4"
         noValidate
-        onSubmit={handleSubmit((data) => void mutateAsync(data))}
+        onSubmit={handleSubmit((data) => {
+          stage.burst();
+          mutate(data);
+        })}
       >
         <AuthTextField
           name="emailAddress"
           control={control}
-          label={t("Email address")}
+          label={t("Email")}
           type="email"
-          required
-          placeholder="name@work-email.com"
+          placeholder="you@carrier.com"
           autoComplete="username"
+          autoFocus
           disabled={isPending}
         />
         {rootError && <AuthErrorText>{rootError}</AuthErrorText>}
-        <AuthSubmit type="submit" isLoading={isPending} loadingText={t("Sending link")}>
+        <AuthSubmit type="submit" busy={isPending} busyLabel={t("Sending link")}>
           {t("Send reset link")}
         </AuthSubmit>
       </form>
-
-      <AuthTray onBack={onBack} hints={<span>{t("Remembered it? Go back.")}</span>} />
-    </AuthCardBody>
+    </>
   );
 }
 
-function ForgotPasswordSent({ onBack }: { onBack: () => void }) {
+function ForgotPasswordSent({
+  emailAddress,
+  onBack,
+  onRetry,
+}: {
+  emailAddress: string;
+  onBack: () => void;
+  onRetry: () => void;
+}) {
   const t = useT();
+  const rt = useRichT();
 
   return (
-    <AuthCardBody>
-      <StepCrumbs left="Account recovery" right="Link sent" />
-      <StepHeading title={t("Check your inbox")}>
+    <AuthSuccess
+      mark={<AuthMailMark />}
+      title={t("Check your inbox")}
+      lead={rt(
+        "If <b>{0}</b> has an account, a reset link is on its way. It works once and expires shortly, so use it soon.",
+        {
+          b: (content) => (
+            <b className="text-foreground font-medium [overflow-wrap:anywhere]">{content}</b>
+          ),
+        },
+        emailAddress,
+      )}
+      actions={
+        <>
+          <AuthSubmit onClick={onBack} leadingIcon={ArrowLeftIcon} trailingIcon={null}>
+            {t("Back to sign in")}
+          </AuthSubmit>
+          <AuthQuietButton onClick={onRetry}>{t("Use a different address")}</AuthQuietButton>
+        </>
+      }
+    >
+      <AuthHint>
         {t(
-          "If that address has an account, a reset link is on its way. The link works once and expires shortly, so use it soon.",
+          "Nothing arrived? Check spam, then try again. Make sure it's the address your administrator set the account up with.",
         )}
-      </StepHeading>
-
-      <p className="text-subtle-foreground mt-4 mb-0 text-xs">
-        {t(
-          "Nothing arrived? Check spam, then try again — and confirm you used the address your administrator set the account up with.",
-        )}
-      </p>
-
-      <div className="mt-4">
-        <AuthSubmit onClick={onBack}>{t("Back to sign in")}</AuthSubmit>
-      </div>
-    </AuthCardBody>
+      </AuthHint>
+    </AuthSuccess>
   );
 }

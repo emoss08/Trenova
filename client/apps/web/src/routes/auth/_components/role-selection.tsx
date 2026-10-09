@@ -7,14 +7,13 @@ import type { PermissionManifest } from "@trenova/shared/types/permission";
 import type { RoleSummary } from "@trenova/shared/types/role";
 import { Shield01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { AuthCardBody } from "./auth-card";
 import { AuthSubmit } from "./auth-field";
 import {
+  AuthHeading,
   AuthOption,
   AuthTray,
   KeyHint,
   StepCrumbs,
-  StepHeading,
   Tally,
   useOptionListKeyboard,
 } from "./auth-primitives";
@@ -107,7 +106,7 @@ export function RoleSelection({
   });
 
   return (
-    <AuthCardBody>
+    <>
       <StepCrumbs
         left={stepLabel}
         right={
@@ -121,20 +120,20 @@ export function RoleSelection({
           )
         }
       />
-      <StepHeading title={t("Select active roles")}>
+      <AuthHeading title={t("Select active roles")}>
         {organizationName
           ? t(
               "Scope this session at {0}. You can switch later without signing out.",
               organizationName,
             )
           : t("Scope this session. You can switch later without signing out.")}
-      </StepHeading>
+      </AuthHeading>
 
       <div
         ref={listRef}
         role="group"
         aria-label={t("Authorized roles")}
-        className="mt-4 mb-3.5 flex flex-col gap-2"
+        className="mb-3.5 flex flex-col gap-2"
       >
         {roles.map((role, index) => (
           <AuthOption
@@ -154,8 +153,8 @@ export function RoleSelection({
 
       <AuthSubmit
         disabled={selectedCount === 0}
-        isLoading={isActivating}
-        loadingText={t("Issuing credential")}
+        busy={isActivating}
+        busyLabel={t("Issuing credential")}
         onClick={() => void activateRoles()}
       >
         {selectedCount === 0
@@ -179,6 +178,6 @@ export function RoleSelection({
           activate
         </div>
       )}
-    </AuthCardBody>
+    </>
   );
 }

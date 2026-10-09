@@ -4,9 +4,9 @@ import { authService } from "@trenova/shared/services/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { AuthCardBody } from "./auth-card";
-import { AuthErrorText, AuthSubmit, AuthTextField } from "./auth-field";
-import { StepCrumbs, StepHeading } from "./auth-primitives";
+import { AuthErrorText, AuthPasswordField, AuthSubmit } from "./auth-field";
+import { AuthHeading, AuthQuietButton, StepCrumbs } from "./auth-primitives";
+import { AuthCheckMark, AuthSuccess } from "./auth-success";
 import { translate } from "@trenova/shared/i18n/runtime";
 
 export const MIN_PASSWORD_LENGTH = 8;
@@ -57,35 +57,29 @@ export function ResetPasswordForm({
   }
 
   return (
-    <AuthCardBody>
+    <>
       <StepCrumbs left="Account recovery" right="Choose a password" />
-      <StepHeading title={t("Choose a new password")}>
+      <AuthHeading title={t("Choose a new password")}>
         {t("This link works once. Pick a password you have not used here before.")}
-      </StepHeading>
+      </AuthHeading>
 
       <form
-        className="mt-4 flex flex-col gap-3.5"
+        className="flex flex-col gap-4"
         noValidate
         onSubmit={handleSubmit((data) => void mutateAsync(data))}
       >
-        <AuthTextField
+        <AuthPasswordField
           name="newPassword"
           control={control}
           label={t("New password")}
-          type="password"
-          required
-          revealable
           placeholder={t("At least 8 characters")}
           autoComplete="new-password"
           disabled={isPending}
         />
-        <AuthTextField
+        <AuthPasswordField
           name="confirmPassword"
           control={control}
           label={t("Confirm new password")}
-          type="password"
-          required
-          revealable
           placeholder="••••••••"
           autoComplete="new-password"
           disabled={isPending}
@@ -93,20 +87,16 @@ export function ResetPasswordForm({
         {rootError && (
           <>
             <AuthErrorText>{rootError}</AuthErrorText>
-            <button
-              type="button"
-              onClick={onRequestNewLink}
-              className="text-muted-foreground hover:text-foreground cursor-pointer text-left text-xs underline underline-offset-[3px] transition-colors duration-150"
-            >
-              {t("Request a new link")}
-            </button>
+            <div>
+              <AuthQuietButton onClick={onRequestNewLink}>{t("Request a new link")}</AuthQuietButton>
+            </div>
           </>
         )}
-        <AuthSubmit type="submit" isLoading={isPending} loadingText={t("Setting password")}>
+        <AuthSubmit type="submit" busy={isPending} busyLabel={t("Setting password")}>
           {t("Set new password")}
         </AuthSubmit>
       </form>
-    </AuthCardBody>
+    </>
   );
 }
 
@@ -114,18 +104,18 @@ function InvalidLink({ onRequestNewLink }: { onRequestNewLink: () => void }) {
   const t = useT();
 
   return (
-    <AuthCardBody>
+    <>
       <StepCrumbs left="Account recovery" right="Link problem" />
-      <StepHeading title={t("This link is incomplete")}>
+      <AuthHeading title={t("This link is incomplete")}>
         {t(
           "The reset link is missing its token. Some mail clients wrap long links across lines — copy the whole thing, or request a new one.",
         )}
-      </StepHeading>
+      </AuthHeading>
 
       <div className="mt-4">
         <AuthSubmit onClick={onRequestNewLink}>{t("Request a new link")}</AuthSubmit>
       </div>
-    </AuthCardBody>
+    </>
   );
 }
 
@@ -133,15 +123,13 @@ export function ResetPasswordDone({ onSignIn }: { onSignIn: () => void }) {
   const t = useT();
 
   return (
-    <AuthCardBody>
-      <StepCrumbs left="Account recovery" right="Done" />
-      <StepHeading title={t("Password changed")}>
-        {t("Your new password is active. Any other sessions on this account have been signed out.")}
-      </StepHeading>
-
-      <div className="mt-4">
-        <AuthSubmit onClick={onSignIn}>{t("Sign in")}</AuthSubmit>
-      </div>
-    </AuthCardBody>
+    <AuthSuccess
+      mark={<AuthCheckMark />}
+      title={t("Password changed")}
+      lead={t(
+        "Your new password is active. Any other sessions on this account have been signed out.",
+      )}
+      actions={<AuthSubmit onClick={onSignIn}>{t("Sign in")}</AuthSubmit>}
+    />
   );
 }

@@ -7,14 +7,13 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { UserOrganization } from "@trenova/shared/types/organization";
 import { useCallback, useRef, useState } from "react";
-import { AuthCardBody } from "./auth-card";
 import { AuthSubmit } from "./auth-field";
 import {
+  AuthHeading,
   AuthOption,
   AuthTray,
   KeyHint,
   StepCrumbs,
-  StepHeading,
   useOptionListKeyboard,
 } from "./auth-primitives";
 
@@ -83,17 +82,17 @@ export function OrganizationSelection({
   });
 
   return (
-    <AuthCardBody>
+    <>
       <StepCrumbs left={stepLabel} right={t("{0} available", organizations.length)} />
-      <StepHeading title={t("Select organization")}>
+      <AuthHeading title={t("Select organization")}>
         {t("Choose the workspace for this session.")}
-      </StepHeading>
+      </AuthHeading>
 
       <div
         ref={listRef}
         role="radiogroup"
         aria-label={t("Organizations")}
-        className="mt-4 mb-3.5 flex flex-col gap-2"
+        className="mb-3.5 flex flex-col gap-2"
       >
         {organizations.map((organization, index) => (
           <AuthOption
@@ -113,8 +112,8 @@ export function OrganizationSelection({
 
       <AuthSubmit
         disabled={!selectedOrganization}
-        isLoading={isContinuing}
-        loadingText={t("Opening workspace")}
+        busy={isContinuing}
+        busyLabel={t("Opening workspace")}
         onClick={() => void continueWithOrganization()}
       >
         {t("Continue")}
@@ -128,6 +127,6 @@ export function OrganizationSelection({
           </>
         }
       />
-    </AuthCardBody>
+    </>
   );
 }
