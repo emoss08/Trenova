@@ -138,7 +138,7 @@ func newBuildInvoiceRunTool(runs invoiceRunKeeper) serviceports.AgentTool {
 			),
 		},
 		required:      []string{paramCustomerIDs, paramPeriodStart, paramPeriodEnd},
-		searchTerms:   []string{"statement billing", "consolidated invoices", "bill the period"},
+		searchTerms:   []string{"statement billing", "consolidated billing", "bill the period"},
 		prerequisites: []string{"list_open_statements", "list_customers"},
 		recipe: []string{
 			"list_open_statements",
