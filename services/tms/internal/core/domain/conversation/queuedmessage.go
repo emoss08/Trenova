@@ -36,6 +36,15 @@ type QueuedRequest struct {
 	AttachmentDocumentIDs []pulid.ID         `json:"attachmentDocumentIds,omitempty"`
 	ProviderID            pulid.ID           `json:"providerId,omitempty"`
 	ProviderChosen        bool               `json:"providerChosen,omitempty"`
+	// DirectedAgentID hands the message to another agent the person chose,
+	// once the conversation is free. It is a task for that agent, never a
+	// word to the reply under way, so it cannot steer.
+	DirectedAgentID pulid.ID `json:"directedAgentId,omitempty"`
+}
+
+// Directed reports a message handed to another agent.
+func (r *QueuedRequest) Directed() bool {
+	return r != nil && r.DirectedAgentID.IsNotNil()
 }
 
 type QueuedMessage struct {

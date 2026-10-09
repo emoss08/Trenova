@@ -175,7 +175,7 @@ func (s *Service) Enqueue(ctx context.Context, req *EnqueueRequest) (*Outcome, e
 	if err != nil {
 		return nil, err
 	}
-	item.Steer = req.Steer && steerable(active)
+	item.Steer = req.Steer && steerable(active) && !item.Request.Directed()
 
 	created, err := s.queue.Insert(ctx, item)
 	if err != nil {
@@ -328,6 +328,11 @@ func (s *Service) steerNow(
 			"A message with files is sent once the reply under way ends; it cannot steer it.",
 		)
 	}
+	if waiting.Request.Directed() {
+		return nil, errortypes.NewBusinessError(
+			"A step for another agent is sent once the reply under way ends; it cannot steer it.",
+		)
+	}
 	item, err := s.queue.MarkSteer(ctx, key)
 	if err != nil {
 		return nil, err
@@ -475,6 +480,7 @@ func (s *Service) start(
 					AttachmentDocumentIDs: request.AttachmentDocumentIDs,
 					PreferredProviderID:   request.ProviderID,
 					ProviderChosen:        request.ProviderChosen,
+					DirectedAgentID:       request.DirectedAgentID,
 				},
 			})
 		if err != nil {

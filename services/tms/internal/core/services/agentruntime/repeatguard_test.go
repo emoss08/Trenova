@@ -48,6 +48,45 @@ func TestRun_WillNotRepeatACallThatAlreadyFailedUnchanged(t *testing.T) {
 	assert.Equal(t, 1, refusals)
 }
 
+/*
+A billing turn sent the same refused transfer five more times after the first
+refusal, alternating between two variants, and spent its whole tool budget
+before answering. Once a turn has sent failed calls again unchanged twice, it
+stops calling tools and answers from what it has, told why: the person hears
+what was refused in seconds instead of a minute later.
+*/
+func TestRun_StopsCallingToolsAfterRepeatedFailedCalls(t *testing.T) {
+	t.Parallel()
+
+	args := map[string]any{"statuses": map[string]any{"item": []any{"Completed"}}}
+	tool := queryTool("run_report", nil, errors.New("expected a list, got map"))
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		toolTurn("run_report", args),
+		toolTurn("run_report", args),
+		toolTurn("run_report", args),
+		textTurn("The report refused the status filter, so it did not run."),
+		toolTurn("run_report", args),
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{
+		Tools: []serviceports.AgentQueryTool{tool},
+	}, &stubActionRegistry{}, nil)
+
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: testDefinition("run_report"),
+		Actor:      testActor(),
+		Input:      "run the unbilled report",
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, tool.Calls)
+	assert.Equal(t, 3, result.ToolCallsUsed, "the turn stopped well short of its budget")
+	assert.Equal(t, "The report refused the status filter, so it did not run.", result.Reply)
+	require.Len(t, completion.Requests, 4)
+	final := completion.Requests[3]
+	assert.Empty(t, final.Tools, "the answer is asked for with no tools")
+	assert.Equal(t, stuckNote, final.Messages[len(final.Messages)-1].Content)
+}
+
 // The retry that was wanted: same tool, different arguments. Blocking that
 // would stop a model correcting itself, which is the whole point of telling it
 // what went wrong.

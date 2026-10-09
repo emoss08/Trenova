@@ -13,16 +13,42 @@ import {
   useId,
   useRef,
   useState,
-  type CSSProperties,
   type ReactNode,
 } from "react";
 import { DeskIcon, type DeskIconName } from "@/components/desk-chat/desk-icons";
 import { deskIconClass } from "@/components/desk-chat/desk-button-styles";
+import { usePermissions } from "@/hooks/use-permission";
+import { Resource } from "@trenova/shared/types/permission";
+import { CaseChecklistsSection } from "./settings/case-checklists/case-checklists-section";
+import { Seg } from "./settings/desk-seg";
 import { onRadioArrows, useModalFocus } from "./use-modal-focus";
 
-type Section = "appearance" | "conversation" | "composer" | "files" | "artifacts" | "agent";
+type PersonalSection = "appearance" | "conversation" | "composer" | "files" | "artifacts" | "agent";
 
-const SECTIONS: Array<[Section, DeskIconName]> = [
+/**
+ * A section of the Desk's settings: the six that are the person's own, then
+ * the organization's, which only someone who may read billing control sees.
+ */
+export type DeskSettingsSection = PersonalSection | "checklists";
+
+type Section = DeskSettingsSection;
+
+const SECTION_KEYS: readonly DeskSettingsSection[] = [
+  "appearance",
+  "conversation",
+  "composer",
+  "files",
+  "artifacts",
+  "agent",
+  "checklists",
+];
+
+/** Whether a value names a settings section, as a link to the Desk may. */
+export function isDeskSettingsSection(value: string): value is DeskSettingsSection {
+  return (SECTION_KEYS as readonly string[]).includes(value);
+}
+
+const SECTIONS: Array<[PersonalSection, DeskIconName]> = [
   ["appearance", "eye"],
   ["conversation", "chat"],
   ["composer", "plus"],
@@ -45,62 +71,9 @@ function sectionLabel(section: Section, t: TranslateFn): string {
       return t("Artifacts");
     case "agent":
       return t("Agent & approvals");
+    case "checklists":
+      return t("Case checklists");
   }
-}
-
-/** A row of mutually exclusive choices, the chosen one raised. */
-function Seg<V extends string>({
-  value,
-  options,
-  onChange,
-  label,
-}: {
-  value: V;
-  options: Array<[V, string]>;
-  onChange: (value: V) => void;
-  label: string;
-}) {
-  const chosen = options.some(([option]) => option === value);
-  return (
-    <div
-      className="dk-sx-seg"
-      role="radiogroup"
-      aria-label={label}
-      style={
-        {
-          "--n": options.length,
-          "--i": Math.max(
-            0,
-            options.findIndex(([option]) => option === value),
-          ),
-        } as CSSProperties
-      }
-    >
-      <span className="dk-sx-kn" />
-      {options.map(([option, text], index) => (
-        <Button
-          key={option}
-          variant="bare"
-          size="bare"
-          role="radio"
-          aria-checked={value === option}
-          tabIndex={value === option || (!chosen && index === 0) ? 0 : -1}
-          className="h-7 rounded-md px-3 text-sm whitespace-nowrap text-dsk-subtle transition-colors duration-150 hover:text-dsk-fg aria-checked:bg-dsk-card aria-checked:font-medium aria-checked:text-dsk-fg aria-checked:ring-1 aria-checked:ring-dsk-b"
-          onClick={() => onChange(option)}
-          onKeyDown={(event) =>
-            onRadioArrows(
-              event,
-              options.map(([choice]) => choice),
-              value,
-              onChange,
-            )
-          }
-        >
-          {text}
-        </Button>
-      ))}
-    </div>
-  );
 }
 
 function Row({
@@ -153,9 +126,12 @@ function WidthPreview({ width }: { width: DeskSettings["width"] }) {
  */
 export function DeskSettingsDialog({
   agents,
+  initialSection = "appearance",
   onClose,
 }: {
   agents: readonly AgentChoice[];
+  /** The section it opens on, such as Case checklists from a link. */
+  initialSection?: DeskSettingsSection;
   onClose: () => void;
 }) {
   const t = useT();
@@ -164,7 +140,13 @@ export function DeskSettingsDialog({
   const set = useDeskSettingsStore((state) => state.set);
   const reset = useDeskSettingsStore((state) => state.reset);
   const setSharePage = useDeskStore((state) => state.setSharePage);
-  const [section, setSection] = useState<Section>("appearance");
+  const checklistAccess = usePermissions(Resource.BillingControl);
+  const [chosen, setSection] = useState<Section>(initialSection);
+  // The organization's section is only there for someone who may read
+  // billing control; asked for without it, the dialog opens on the first.
+  const section: Section =
+    chosen === "checklists" && !checklistAccess.canRead ? "appearance" : chosen;
+  const organizational = section === "checklists";
   const [closing, setClosing] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
@@ -202,7 +184,7 @@ export function DeskSettingsDialog({
       onMouseDown={(event) => event.target === event.currentTarget && close()}
     >
       <div
-        className="dk-sx"
+        className={cn("dk-sx", organizational && "dk-xl")}
         role="dialog"
         aria-modal
         aria-labelledby={titleId}
@@ -239,7 +221,26 @@ export function DeskSettingsDialog({
               {sectionLabel(key, t)}
             </Button>
           ))}
+          {checklistAccess.canRead && (
+            <>
+              <div className="dk-sx-ng">{t("Organization")}</div>
+              <Button
+                variant="bare"
+                size="bare"
+                className={cn(
+                  "flex h-8 gap-2.5 rounded-lg px-2.5 text-left text-sm whitespace-nowrap text-dsk-muted transition-colors duration-150 hover:bg-dsk-hover hover:text-dsk-fg [&_svg]:text-dsk-subtle",
+                  organizational && "bg-dsk-hover font-medium text-dsk-fg [&_svg]:text-dsk-fg",
+                )}
+                aria-current={organizational ? "page" : undefined}
+                onClick={() => setSection("checklists")}
+              >
+                <DeskIcon name="check" size={14} />
+                {sectionLabel("checklists", t)}
+              </Button>
+            </>
+          )}
           <span className="flex-1" />
+          {!organizational && (
           <Button
             variant="bare"
             size="bare"
@@ -252,7 +253,13 @@ export function DeskSettingsDialog({
           >
             {t("Reset to defaults")}
           </Button>
+          )}
         </nav>
+        {organizational ? (
+          <div className="dk-sx-body dk-ck-body" key={section}>
+            <CaseChecklistsSection readOnly={!checklistAccess.canUpdate} />
+          </div>
+        ) : (
         <div className="dk-sx-body" key={section}>
           <div className="dk-sx-head">{sectionLabel(section, t)}</div>
           {section === "appearance" && (
@@ -603,6 +610,7 @@ export function DeskSettingsDialog({
             </>
           )}
         </div>
+        )}
       </div>
     </div>
   );

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -228,16 +229,16 @@ func newUpdateServiceFailureTool(failures serviceFailureLifecycle) serviceports.
 				"list_service_failure_reason_codes."),
 			paramClearReasonCode: booleanProperty("True to remove the reason code. A " +
 				"reviewed failure keeps its reason."),
-			fieldNotes: stringProperty("What the customer may read about the failure.",
-				maxOperationNoteChars),
-			paramInternalNotes: stringProperty("What staff should know.",
-				maxOperationNoteChars),
-			paramX12Status: stringProperty("EDI 214 status code override, three characters.",
-				maxX12CodeChars),
-			paramX12Reason: stringProperty("EDI 214 reason code override, three characters.",
-				maxX12CodeChars),
-			paramX12Exception: stringProperty("EDI 214 exception code, three characters.",
-				maxX12CodeChars),
+			fieldNotes: toolschema.EmptyClears(stringProperty("What the customer may read "+
+				"about the failure.", maxOperationNoteChars)),
+			paramInternalNotes: toolschema.EmptyClears(stringProperty("What staff should know.",
+				maxOperationNoteChars)),
+			paramX12Status: toolschema.EmptyClears(stringProperty("EDI 214 status code "+
+				"override, three characters.", maxX12CodeChars)),
+			paramX12Reason: toolschema.EmptyClears(stringProperty("EDI 214 reason code "+
+				"override, three characters.", maxX12CodeChars)),
+			paramX12Exception: toolschema.EmptyClears(stringProperty("EDI 214 exception code, "+
+				"three characters.", maxX12CodeChars)),
 		},
 		required: []string{paramServiceFailureID},
 		target:   targetServiceFailure,

@@ -6,6 +6,7 @@ import "@/components/desk-chat/desk-chat.css";
 import "./_styles/desk-v2.css";
 import "./_styles/desk-agent.css";
 import "./_styles/desk-case.css";
+import "./_styles/desk-case-checklists.css";
 
 export const prefetch: RoutePrefetch = () => [
   queries.assistant.threads(),

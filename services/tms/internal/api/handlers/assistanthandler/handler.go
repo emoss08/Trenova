@@ -674,6 +674,9 @@ type sendMessageRequest struct {
 	// FollowUpProposalID asks for the turn that follows a decision on one of
 	// the thread's proposals, in place of content.
 	FollowUpProposalID pulid.ID `json:"followUpProposalId"`
+	// DirectedAgentID hands the message to another agent the person may use,
+	// run from this conversation in place of its own agent's reply.
+	DirectedAgentID pulid.ID `json:"directedAgentId"`
 	// awaited is set by the route that waits for the saved turn rather than
 	// following its stream. It is never read from the request body.
 	awaited bool

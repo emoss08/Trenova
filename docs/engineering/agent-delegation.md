@@ -91,6 +91,13 @@ do.
   names one as well when the best new match is weak (no name or description
   hit, a parameter only) and a delegate holds a tool matching by name. Both
   searches past the turn's own tools are `StrongOnly`.
+- When no delegate holds what matched, the answer names the person's other
+  agents that do (`agentruntime.handOffNote`, from `OtherUsableAgents`: the
+  enabled chat agents they may use, the same list the Desk's case checklist
+  reads to say who can take a step) and tells the model to point the person
+  to Hand off to another agent; only when none holds it does it fall back to
+  "an administrator can add it in AI Control". The list is read only on that
+  answer, never on an ordinary turn.
 
 The same context is what `PreviewPrompt` shows in AI Control.
 
@@ -379,6 +386,55 @@ delegate's root back to it. Its usage rows carry the call id and the delegate's
 definition version, its steps the delegate's definition and version, and its
 proposals the delegate's trace. See [ai-tracing.md](ai-tracing.md).
 
+## Person-directed tasks
+
+A person can hand a task to another agent themselves, from the conversation
+they are in. The Desk does this when a case step names an agent other than
+the conversation's (see "Who can take a step" in
+[desk-cases.md](desk-cases.md)). The person stays in the conversation, and
+the agent they chose takes the task inside it.
+
+- **Request.** `POST /assistant/threads/:threadID/turns/` (and `…/messages/`,
+  and `…/queue/`) take `directedAgentId`. The content is the task, at most
+  `agentruntime.MaxDelegateTaskRunes`. It travels as
+  `SendMessageRequest.DirectedAgentID` → `AssistantTurnRequest.DirectedAgentID`
+  → `QueuedRequest.DirectedAgentID`. A directed message never steers a reply
+  under way. If one is running it waits in the queue, and sending it now is
+  refused.
+- **Checks** (`assistantservice.directedTask`, run in `checkTurn` beside the
+  others). The agent must not be the conversation's own. It must be enabled
+  and talked to, the person must be allowed to use it (`usableAgent`, the
+  same check the conversation's agent passes), and its budget must not be
+  spent. The conversation's agent does **not** have to list it: the person
+  chose it, not the agent. The conversation's agent must still pass its own
+  checks, because the turn belongs to its conversation.
+- **Turn.** `RunRequest.Directed` → `Turn.directed` → `TurnState.Directed`.
+  `Drive` sees it once the turn has opened and calls `driveDirected` instead
+  of the conversation's model:
+  - it writes a `delegate_task` call with a fresh id (`fx.NewCallID`),
+    holding `agentId` and `task`, into the assistant message;
+  - it runs that call through `handTask`, the body `delegate` uses, with
+    `DelegateCall.Directed` set;
+  - it records the result as any delegate result is recorded;
+  - it closes with the delegate's answer, or with the reason when it was
+    declined, failed or stopped.
+
+  Nothing calls the conversation's model.
+- **Opening.** `OpenDelegate` uses `Definition.TaskRefusal` instead of
+  `DelegateRefusal` when `Directed` is set. That is the same check with the
+  allowlist left out. Every other check is made again as for any delegate:
+  the agent is in the tenant, enabled, talked to and not the parent; the
+  person may use it; its budget is not spent. Only runtime code builds a
+  `DelegateCall`, from a task the person's own request named. A model's
+  call never sets `Directed`.
+- **Afterwards.** The saved turn has the same shape as one where the agent
+  delegated: the person's message, the made-up call, the delegate's steps
+  tagged `Delegated`, the account, and a closing reply. The thread and the
+  stream show it the same way, its proposals are recorded as the delegate's,
+  and taint crosses both ways. A later turn's model replays the call and the
+  account, so the conversation's agent knows what was asked and what came of
+  it.
+
 ## The stream
 
 Events of the delegate's turn go to the turn's stream. Tool and message events
@@ -445,6 +501,14 @@ neither, so its context is nil and its input is what it was. The delegate's
 question is built inside `OpenDelegateActivity`. Recording the turn's and its
 delegates' writes in one call, the ordered plan and the run of a read-only hand-off
 all happen in `FinishTurnActivity`; no command is added, removed or reordered.
+
+Person-directed tasks took no gate. Whether a turn is directed is decided in
+`PrepareTurnActivity` and carried in `TurnState.Directed`. A turn opened before
+the release has none and runs the loop it always ran. The made-up call id comes
+from `fx.NewCallID`, a recorded side effect, so replay gets the same id.
+`DelegateCall.Directed` is optional data on the `OpenDelegateActivity` input.
+An old worker would ignore `Directed` and ask the conversation's model, so finish
+rolling the chat-queue workers before the Desk sends `directedAgentId`.
 
 A rolling deploy is the one exposure: a turn opened by a new worker and replayed
 by an old one would dispatch `delegate_task` as a tool. Finish rolling the

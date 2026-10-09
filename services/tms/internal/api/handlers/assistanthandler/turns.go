@@ -370,6 +370,7 @@ func (h *Handler) startWorkflow(
 				PreferredProviderID:   providerID,
 				ProviderChosen:        providerChosen,
 				FollowUpProposalID:    body.FollowUpProposalID,
+				DirectedAgentID:       body.DirectedAgentID,
 				Awaited:               body.awaited,
 			},
 		})

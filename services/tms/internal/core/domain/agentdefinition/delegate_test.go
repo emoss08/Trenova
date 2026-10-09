@@ -93,6 +93,49 @@ func TestDelegateRefusal_SaysWhyAnAgentCannotBeAsked(t *testing.T) {
 	assert.Contains(t, parent.DelegateRefusal(nil), "no longer exists")
 }
 
+// A task the person hands another agent from a conversation needs no place
+// on the conversation's agent's list; every other refusal still holds.
+func TestTaskRefusal_LeavesOutOnlyTheAllowlist(t *testing.T) {
+	t.Parallel()
+
+	parent := validDefinition()
+	parent.ID = pulid.MustNew("agdef_")
+	delegate := validDefinition()
+	delegate.ID = pulid.MustNew("agdef_")
+	delegate.Name = "Billing Assistant"
+
+	assert.Contains(t, parent.DelegateRefusal(delegate), "is not one of the agents")
+	assert.Empty(t, parent.TaskRefusal(delegate))
+
+	assert.Contains(t, parent.TaskRefusal(parent), "yourself")
+
+	delegate.Enabled = false
+	assert.Contains(t, parent.TaskRefusal(delegate), "Billing Assistant is disabled")
+
+	delegate.Enabled = true
+	delegate.TriggerMode = agentdefinition.TriggerEvent
+	assert.Contains(t, parent.TaskRefusal(delegate), "runs on its own")
+
+	assert.Contains(t, parent.TaskRefusal(nil), "no longer exists")
+}
+
+func TestAsDelegate_NamesTheAgentWithItsMark(t *testing.T) {
+	t.Parallel()
+
+	d := validDefinition()
+	d.ID = pulid.MustNew("agdef_")
+	d.Name = "Billing Assistant"
+	d.Description = "Bills delivered loads."
+
+	named := d.AsDelegate()
+	assert.Equal(t, d.ID, named.ID)
+	assert.Equal(t, "Billing Assistant", named.Name)
+	assert.Equal(t, "Bills delivered loads.", named.Description)
+	assert.Equal(t, d.ChosenIcon(), named.Icon)
+	assert.Equal(t, d.ResolvedAccent(), named.Accent)
+	assert.Empty(t, named.Tools, "what it holds depends on the person")
+}
+
 func TestBuildSystemPrompt_NamesTheAgentsItCanAskFenced(t *testing.T) {
 	t.Parallel()
 

@@ -68,6 +68,8 @@ type Params struct {
 	Shipments     serviceports.ShipmentService
 	Waits         serviceports.AgentWaitService
 	Checklists    repositories.CaseChecklistRepository
+	Definitions   repositories.AgentDefinitionRepository
+	Runtime       serviceports.AgentRuntime
 	Permissions   serviceports.PermissionEngine
 	Realtime      serviceports.RealtimeService `optional:"true"`
 }
@@ -84,6 +86,8 @@ type Service struct {
 	shipments     serviceports.ShipmentService
 	agentWaits    serviceports.AgentWaitService
 	checklists    repositories.CaseChecklistRepository
+	definitions   repositories.AgentDefinitionRepository
+	runtime       serviceports.AgentRuntime
 	permissions   serviceports.PermissionEngine
 	realtime      serviceports.RealtimeService
 }
@@ -97,6 +101,8 @@ func New(p Params) serviceports.AssistantCaseService {
 		shipments:     p.Shipments,
 		agentWaits:    p.Waits,
 		checklists:    p.Checklists,
+		definitions:   p.Definitions,
+		runtime:       p.Runtime,
 		permissions:   p.Permissions,
 		realtime:      p.Realtime,
 	}
@@ -144,6 +150,7 @@ func (s *Service) Get(
 	if err != nil {
 		return nil, err
 	}
+	view.Abilities = s.abilities(ctx, req, thread, view.Checklist)
 
 	return view, nil
 }

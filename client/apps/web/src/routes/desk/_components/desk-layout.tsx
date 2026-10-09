@@ -21,13 +21,18 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router";
+import { Outlet, useLocation, useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import type { DeskStartExtras } from "@/components/desk-chat/desk-home-ask";
 import { useStartConversation } from "@/components/assistant/use-start-conversation";
 import { DeskRail, type DeskPlace } from "./desk-rail";
 import { DeskSearchPalette } from "./desk-search";
-import { DeskSettingsDialog, deskSettingsClasses } from "./desk-settings";
+import {
+  DeskSettingsDialog,
+  deskSettingsClasses,
+  isDeskSettingsSection,
+  type DeskSettingsSection,
+} from "./desk-settings";
 import { DeskTopBar } from "./desk-topbar";
 
 export type DeskContextValue = {
@@ -169,7 +174,31 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     setRailPath(pathname);
     setRailOpen(false);
   }
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  // Settings open on the section a link asks for (`/desk?settings=checklists`
+  // is where the retired case checklist page now sends people), else on the
+  // first. The request is taken off the address once it has opened them.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedSettings = searchParams.get("settings");
+  const [settingsSection, setSettingsSection] = useState<DeskSettingsSection | null>(null);
+  if (requestedSettings !== null && settingsSection === null) {
+    setSettingsSection(isDeskSettingsSection(requestedSettings) ? requestedSettings : "appearance");
+  }
+  useEffect(() => {
+    if (requestedSettings === null) return;
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.delete("settings");
+        return next;
+      },
+      { replace: true },
+    );
+  }, [requestedSettings, setSearchParams]);
+  const settingsOpen = settingsSection !== null;
+  const setSettingsOpen = useCallback(
+    (open: boolean) => setSettingsSection(open ? "appearance" : null),
+    [setSettingsSection],
+  );
   const settings = useDeskSettingsStore((state) => state.settings);
 
   const threadsQuery = useQuery(queries.assistant.threads());
@@ -430,6 +459,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       openArtifact,
       pendingLookups,
       pinMutation,
+      setSettingsOpen,
       setWorkspaceOpen,
       startConversation.isStarting,
       startConversation.start,
@@ -510,7 +540,11 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
             <DeskSearchPalette agentsById={agentsById} onClose={() => setSearching(false)} />
           )}
           {settingsOpen && (
-            <DeskSettingsDialog agents={agents} onClose={() => setSettingsOpen(false)} />
+            <DeskSettingsDialog
+              agents={agents}
+              initialSection={settingsSection ?? "appearance"}
+              onClose={() => setSettingsOpen(false)}
+            />
           )}
         </div>
       </div>

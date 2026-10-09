@@ -343,3 +343,38 @@ export function stepPrompt(
       return stepLabel(step, t, checklist);
   }
 }
+
+/**
+ * Where a person takes a step themselves when no agent they may use can:
+ * the record's own page, or the desk where that kind of work is done.
+ */
+export function stepPage(step: string, record: CaseRecord): string | null {
+  const invoiceId = record.type === "InvoiceDispute" ? record.invoiceId : record.id;
+  switch (step) {
+    case "review_rate":
+    case "mark_ready":
+      return "/billing/queue";
+    case "approve_accessorials":
+      return "/detention/desk";
+    case "work_dispute":
+      return invoiceId ? invoicePanelPath(invoiceId, "disputes") : null;
+    case "send_invoice":
+    case "post_invoice":
+    case "follow_up_payment":
+      return record.type === "Shipment" ? "/billing/queue" : invoiceId ? invoicePanelPath(invoiceId) : null;
+    default:
+      return caseRecordPath(record);
+  }
+}
+
+/** What the link to that page says. */
+export function stepPageLabel(step: string, record: CaseRecord, t: TranslateFn): string {
+  switch (stepPage(step, record)) {
+    case "/billing/queue":
+      return t("Open the billing queue");
+    case "/detention/desk":
+      return t("Open the detention desk");
+    default:
+      return record.type === "Shipment" ? t("Open the shipment") : t("Open the invoice");
+  }
+}

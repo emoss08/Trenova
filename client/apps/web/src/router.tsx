@@ -749,15 +749,10 @@ export const routes: RouteObject[] = [
             },
           },
           {
+            // Case checklists moved into the Desk's settings; an old link
+            // opens them there.
             path: "/billing/configuration-files/case-checklists",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.BillingControl),
-            ),
-            async lazy() {
-              const { CaseChecklistsPage } = await import("@/routes/case-checklist/page");
-              return { Component: CaseChecklistsPage };
-            },
+            loader: () => redirect("/desk?settings=checklists"),
           },
 
           {

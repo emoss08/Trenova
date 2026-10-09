@@ -453,11 +453,21 @@ func (d *Definition) MayDelegateTo(id pulid.ID) bool {
 // check: a delegate is read within the tenant, and a permission needs the
 // person.
 func (d *Definition) DelegateRefusal(delegate *Definition) string {
+	if delegate != nil && !d.MayDelegateTo(delegate.ID) {
+		return delegate.Name + " is not one of the agents you may hand work to."
+	}
+
+	return d.TaskRefusal(delegate)
+}
+
+// TaskRefusal is DelegateRefusal without the allowlist: why delegate may not
+// take a task from inside this agent's conversation when the person, not the
+// agent, chose it. The person's own access to the delegate is still the
+// caller's to check.
+func (d *Definition) TaskRefusal(delegate *Definition) string {
 	switch {
 	case delegate == nil:
 		return "That agent no longer exists."
-	case !d.MayDelegateTo(delegate.ID):
-		return delegate.Name + " is not one of the agents you may hand work to."
 	case delegate.ID == d.ID:
 		return "You cannot hand a task to yourself."
 	case !delegate.Enabled:

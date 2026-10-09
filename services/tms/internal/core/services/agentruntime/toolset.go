@@ -12,6 +12,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -121,6 +122,9 @@ type toolSet struct {
 	// what a search could not load.
 	delegates []agentdefinition.RuntimeDelegate
 	query     serviceports.QueryVector
+	// self is the agent the turn runs as, left out when naming another of
+	// the person's agents that holds a tool.
+	self pulid.ID
 }
 
 func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
@@ -147,6 +151,7 @@ func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
 			return len(s.permittedTools(ctx, req.actor, []string{name})) == 1
 		},
 		delegates: req.delegates,
+		self:      req.definition.ID,
 	}
 
 	// The core tools ride on every turn and do not count toward narrowing: a
@@ -316,7 +321,7 @@ func (s *Service) resolveFind(
 	// A turn that was sent everything has nothing left to load; the answer
 	// can still say what exists beyond the agent.
 	if !set.disclosed {
-		return FindAnswer{Content: s.nothingLoaded(set, need)}
+		return FindAnswer{Content: s.nothingLoaded(ctx, set, actor, need)}
 	}
 
 	found := s.catalog.FindHybrid(agenttoolcatalog.Query{
@@ -348,7 +353,7 @@ func (s *Service) resolveFind(
 	}
 
 	if len(added) == 0 && len(callable) == 0 {
-		return FindAnswer{Content: s.nothingLoaded(set, need), Found: names}
+		return FindAnswer{Content: s.nothingLoaded(ctx, set, actor, need), Found: names}
 	}
 
 	var b strings.Builder
@@ -519,7 +524,12 @@ func (s *Service) holds(definition *agentdefinition.Definition, name string) boo
 //
 // Naming them widens nothing. The specs are not loaded and the guard still
 // refuses a call to anything outside the allowlist.
-func (s *Service) nothingLoaded(set *toolSet, need string) string {
+func (s *Service) nothingLoaded(
+	ctx context.Context,
+	set *toolSet,
+	actor *serviceports.RequestActor,
+	need string,
+) string {
 	unheld := s.unheldStrongMatches(set, need)
 	elsewhere := make([]serviceports.AgentToolDescriptor, 0, len(unheld))
 	for _, name := range unheld {
@@ -548,8 +558,18 @@ func (s *Service) nothingLoaded(set *toolSet, need string) string {
 	fmt.Fprintf(&b, "Nothing you can call matched %q. These exist in this system but "+
 		"are not enabled for this agent:\n", need)
 	writeToolLines(&b, elsewhere)
+	names := make([]string, 0, len(elsewhere))
+	for idx := range elsewhere {
+		names = append(names, elsewhere[idx].Name)
+	}
+	if note := s.handOffNote(ctx, actor, set.self, names); note != "" {
+		b.WriteString("\nYou cannot call them. " + note +
+			" Do not say the system has no such capability.")
+
+		return b.String()
+	}
 	b.WriteString("\nYou cannot call them. Tell the person these exist and that an " +
-		"administrator can add them to this agent in Agent Control, naming them exactly " +
+		"administrator can add them to this agent in AI Control, naming them exactly " +
 		"as above. Do not say the system has no such capability.")
 
 	return b.String()

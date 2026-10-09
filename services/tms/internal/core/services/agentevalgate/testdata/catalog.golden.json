@@ -6416,7 +6416,8 @@
         "properties": {
           "baseAmount": {
             "description": "The base amount before accessorials, as a decimal such as 1250.00. An empty string clears it.",
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "bol": {
             "description": "The bill of lading number.",
@@ -6444,7 +6445,8 @@
           },
           "quotedAmount": {
             "description": "What the customer was quoted, as a decimal such as 1250.00. An empty string clears it.",
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           }
         },
         "required": [
@@ -32307,7 +32309,7 @@
         "additionalProperties": false,
         "properties": {
           "allTransferable": {
-            "description": "True to transfer every shipment list_billing_transfer_candidates says would transfer, narrowed by query, status, customerId, deliveredFrom and deliveredTo. Use it instead of shipmentIds, never with them.",
+            "description": "True to transfer every shipment list_billing_transfer_candidates says would transfer, narrowed by query, status, customerId, deliveredFrom and deliveredTo. Use it instead of shipmentIds, never with them; leave it out when naming shipmentIds, whose filters are then ignored.",
             "type": "boolean"
           },
           "billType": {
@@ -32758,12 +32760,14 @@
           "addressLine1": {
             "description": "The street address. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 150,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "addressLine2": {
             "description": "Suite, building or unit. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 150,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "carrierId": {
             "description": "The carrier to change, from list_carriers. Never guess one.",
@@ -32783,7 +32787,8 @@
           "city": {
             "description": "The city. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 100,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "code": {
             "description": "The carrier's short code, unique in this organization. Leave it out to keep it.",
@@ -32793,17 +32798,20 @@
           "dbaName": {
             "description": "The name it does business as, when that differs. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 255,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "dotNumber": {
             "description": "The USDOT number, digits only. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 12,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "email": {
             "description": "The dispatch email address. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 255,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "is1099Eligible": {
             "description": "Whether payments are reported on a 1099. Leave it out to keep it.",
@@ -32812,7 +32820,8 @@
           "mcNumber": {
             "description": "The MC docket number, digits only. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 12,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "name": {
             "description": "The carrier's legal name. Leave it out to keep it.",
@@ -32822,7 +32831,8 @@
           "notes": {
             "description": "Anything colleagues booking this carrier should know. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 5000,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "paymentMethod": {
             "description": "How the carrier is paid. Defaults to Check. Payment details are only ever proposed and change on a person's approval. Leave it out to keep it.",
@@ -32842,57 +32852,68 @@
           "phone": {
             "description": "The dispatch phone number. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 20,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "postalCode": {
             "description": "The ZIP code. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 10,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "remitAddressLine1": {
             "description": "The remit-to street address. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 150,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "remitAddressLine2": {
             "description": "The remit-to suite or unit. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 150,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "remitCity": {
             "description": "The remit-to city. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 100,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "remitPostalCode": {
             "description": "The remit-to ZIP code. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 10,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "remitState": {
             "description": "The remit-to state. The two-letter US state abbreviation, such as TX. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 2,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "remitToName": {
             "description": "Who payment is made out to. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 255,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "scac": {
             "description": "The two to four letter SCAC. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 4,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "state": {
             "description": "The state of the street address. The two-letter US state abbreviation, such as TX. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 2,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "taxId": {
             "description": "The tax id payments are reported under. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 20,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "taxIdType": {
             "description": "Whether the tax id is an EIN or an SSN; required with a tax id. Leave it out to keep it.",
@@ -32977,20 +32998,24 @@
           "destinationState": {
             "description": "Where the carrier wants to go, when it said. The two-letter US state abbreviation, such as TX. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 2,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "equipmentTypeId": {
             "description": "The trailer type offered, from list_equipment_types. Leave it out to keep it. Send an empty value to clear it.",
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "notes": {
             "description": "Anything else the carrier said. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 2000,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "originLocationId": {
             "description": "Where the trucks are, from list_locations. Give this, originState, or both. Leave it out to keep it. Send an empty value to clear it.",
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "originRadiusMiles": {
             "description": "How many miles from the origin location the carrier will pick up; only with an origin location. Leave it out to keep it.",
@@ -33001,11 +33026,13 @@
           "originState": {
             "description": "The state the trucks are in, when no location is named. The two-letter US state abbreviation, such as TX. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 2,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "rate": {
             "description": "The rate the carrier asked. A decimal such as 2.35. Leave it out to keep it. Send an empty value to clear it.",
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "rateMethod": {
             "description": "Whether the rate is per loaded mile or for the whole move. Leave it out to keep it.",
@@ -33173,28 +33200,34 @@
           },
           "hazardousMaterialId": {
             "description": "The hazardous material it is, from list_hazardous_materials, when the goods are hazmat. Leave it out to keep it. Send an empty value to clear it.",
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "heightPerUnit": {
             "description": "Inches high per unit. A decimal such as 42.5. Leave it out to keep it. Send an empty value to clear it.",
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "lengthPerUnit": {
             "description": "Inches long per unit. A decimal such as 42.5. Leave it out to keep it. Send an empty value to clear it.",
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "linearFeetPerUnit": {
             "description": "Linear feet of trailer per unit. A decimal such as 42.5. Leave it out to keep it. Send an empty value to clear it.",
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "loadingInstructions": {
             "description": "How it is loaded and secured. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 5000,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "maxQuantityPerShipment": {
             "description": "The most units one shipment may carry. A decimal such as 42.5. Leave it out to keep it. Send an empty value to clear it.",
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "maxTemperature": {
             "description": "The highest temperature it may be carried at, in degrees Fahrenheit. Leave it out to keep it.",
@@ -33219,11 +33252,13 @@
           },
           "weightPerUnit": {
             "description": "Pounds per unit. A decimal such as 42.5. Leave it out to keep it. Send an empty value to clear it.",
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "widthPerUnit": {
             "description": "Inches wide per unit. A decimal such as 42.5. Leave it out to keep it. Send an empty value to clear it.",
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           }
         },
         "required": [
@@ -33332,7 +33367,8 @@
           "addressLine2": {
             "description": "Suite, building or unit. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 150,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "allowConsolidation": {
             "description": "Whether its shipments may be consolidated. Leave it out to keep it.",
@@ -33361,7 +33397,8 @@
           "dotNumber": {
             "description": "The USDOT number, digits only, for a broker customer. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 12,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "exclusiveConsolidation": {
             "description": "Whether its shipments are consolidated only with each other; needs allowConsolidation. Leave it out to keep it.",
@@ -33370,7 +33407,8 @@
           "mcNumber": {
             "description": "The MC docket number, digits only. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 12,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "name": {
             "description": "The customer's name. Leave it out to keep it.",
@@ -33401,7 +33439,8 @@
           "statusUpdateRecipients": {
             "description": "The addresses status updates go to, separated by commas. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 2000,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           }
         },
         "required": [
@@ -33810,22 +33849,26 @@
           "emergencyContact": {
             "description": "Who to call in an emergency. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 255,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "emergencyContactPhoneNumber": {
             "description": "The emergency response phone number. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 20,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "ergGuideNumber": {
             "description": "The Emergency Response Guidebook guide number. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 10,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "handlingInstructions": {
             "description": "How it is handled. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 5000,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "hazardousMaterialId": {
             "description": "The hazardous material to change, from list_hazardous_materials. Never guess one.",
@@ -33842,7 +33885,8 @@
           "labelCodes": {
             "description": "The label codes packages carry. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 50,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "marinePollutant": {
             "description": "Whether it is a marine pollutant. Leave it out to keep it.",
@@ -33870,27 +33914,32 @@
           "properShippingName": {
             "description": "The proper shipping name from the hazardous materials table. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 5000,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "quantityThreshold": {
             "description": "The reportable quantity; required when isReportableQuantity. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 20,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "specialProvisions": {
             "description": "The special provision codes, separated by commas. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 5000,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "subsidiaryHazardClass": {
             "description": "Any subsidiary hazard class. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 20,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "unNumber": {
             "description": "The four-digit UN or NA number, without the prefix. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 4,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           }
         },
         "required": [
@@ -33998,7 +34047,8 @@
               "type": "string"
             },
             "maxItems": 50,
-            "type": "array"
+            "type": "array",
+            "x-emptyClears": true
           },
           "emailBcc": {
             "description": "Who is blind-copied; replaces the list.",
@@ -34006,12 +34056,14 @@
               "type": "string"
             },
             "maxItems": 25,
-            "type": "array"
+            "type": "array",
+            "x-emptyClears": true
           },
           "emailBody": {
             "description": "The body of the email the invoice goes in.",
             "maxLength": 20000,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "emailCc": {
             "description": "Who is copied; replaces the list.",
@@ -34019,12 +34071,14 @@
               "type": "string"
             },
             "maxItems": 25,
-            "type": "array"
+            "type": "array",
+            "x-emptyClears": true
           },
           "emailSubject": {
             "description": "The subject of the email the invoice goes in.",
             "maxLength": 998,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "emailTo": {
             "description": "Who the invoice is emailed to; replaces the list.",
@@ -34032,7 +34086,8 @@
               "type": "string"
             },
             "maxItems": 25,
-            "type": "array"
+            "type": "array",
+            "x-emptyClears": true
           },
           "invoiceId": {
             "description": "The invoice, from list_invoices or get_invoice. Never guess one.",
@@ -34042,12 +34097,14 @@
           "memo": {
             "description": "The note printed on the invoice.",
             "maxLength": 4000,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "remittanceInstructions": {
             "description": "How the customer should pay, printed on the invoice.",
             "maxLength": 4000,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           }
         },
         "required": [
@@ -34257,7 +34314,8 @@
           "addressLine2": {
             "description": "Suite, building or dock. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 150,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "city": {
             "description": "The city. Leave it out to keep it.",
@@ -34267,7 +34325,8 @@
           "description": {
             "description": "Anything drivers and dispatchers should know about it. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 5000,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "locationCategoryId": {
             "description": "What kind of place it is, from list_location_categories. Leave it out to keep it.",
@@ -34454,7 +34513,8 @@
         "properties": {
           "baseAmount": {
             "description": "The base amount before accessorials, as a decimal such as 1250.00. An empty string clears it.",
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "bol": {
             "description": "The bill of lading number.",
@@ -34487,7 +34547,8 @@
           },
           "quotedAmount": {
             "description": "What the customer was quoted, as a decimal such as 1250.00. An empty string clears it.",
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           }
         },
         "required": [
@@ -35481,12 +35542,14 @@
           "internalNotes": {
             "description": "What staff should know.",
             "maxLength": 2000,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "notes": {
             "description": "What the customer may read about the failure.",
             "maxLength": 2000,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "reasonCodeId": {
             "description": "The reason code to set, from list_service_failure_reason_codes.",
@@ -35500,17 +35563,20 @@
           "x12ExceptionCode": {
             "description": "EDI 214 exception code, three characters.",
             "maxLength": 3,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "x12ReasonCodeOverride": {
             "description": "EDI 214 reason code override, three characters.",
             "maxLength": 3,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "x12StatusCodeOverride": {
             "description": "EDI 214 status code override, three characters.",
             "maxLength": 3,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           }
         },
         "required": [
@@ -35952,11 +36018,13 @@
           "externalId": {
             "description": "Its id in another system, such as a telematics provider. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 100,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "fleetCodeId": {
             "description": "The fleet it belongs to, from list_fleet_codes. Leave it out to keep it. Send an empty value to clear it.",
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "fuelType": {
             "description": "The fuel it burns; its miles land on this fuel's lines of an IFTA return. Defaults to Diesel. Leave it out to keep it.",
@@ -35989,17 +36057,20 @@
           "licensePlateNumber": {
             "description": "The license plate. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 50,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "make": {
             "description": "The make. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 50,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "model": {
             "description": "The model. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 50,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "primaryWorkerId": {
             "description": "The driver who runs it, from search_worker or list_workers. Leave it out to keep it.",
@@ -36008,21 +36079,25 @@
           "registrationExpiry": {
             "description": "When the registration expires. A date as YYYY-MM-DD. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 10,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "registrationNumber": {
             "description": "The registration number. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 50,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "secondaryWorkerId": {
             "description": "A team driver, from search_worker or list_workers. Leave it out to keep it. Send an empty value to clear it.",
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "state": {
             "description": "The state it is registered in. The two-letter US state abbreviation, such as TX. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 2,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "status": {
             "description": "Whether it can be dispatched. Available means it can be dispatched. OutOfService means it cannot, for any reason other than scheduled work. AtMaintenance means it is in the shop. Sold means it has left the fleet and is not coming back. Defaults to Available. Leave it out to keep it.",
@@ -36042,7 +36117,8 @@
           "vin": {
             "description": "The 17-character VIN. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 50,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "year": {
             "description": "The model year. Leave it out to keep it.",
@@ -36167,26 +36243,31 @@
           "externalId": {
             "description": "Its id in another system, such as a telematics provider. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 100,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "fleetCodeId": {
             "description": "The fleet it belongs to, from list_fleet_codes. Leave it out to keep it. Send an empty value to clear it.",
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "lastInspectionDate": {
             "description": "When it was last inspected. A date as YYYY-MM-DD. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 10,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "licensePlateNumber": {
             "description": "The license plate. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 50,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "make": {
             "description": "The make. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 50,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "maxLoadWeight": {
             "description": "The most it may carry, in pounds. Leave it out to keep it.",
@@ -36197,22 +36278,26 @@
           "model": {
             "description": "The model. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 50,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "registrationExpiry": {
             "description": "When the registration expires. A date as YYYY-MM-DD. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 10,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "registrationNumber": {
             "description": "The registration number. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 50,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "registrationState": {
             "description": "The state it is registered in. The two-letter US state abbreviation, such as TX. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 2,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "status": {
             "description": "Whether it can be dispatched. Available means it can be dispatched. OutOfService means it cannot, for any reason other than scheduled work. AtMaintenance means it is in the shop. Sold means it has left the fleet and is not coming back. Defaults to Available. Leave it out to keep it.",
@@ -36232,7 +36317,8 @@
           "vin": {
             "description": "The 17-character VIN. Leave it out to keep it. Send an empty value to clear it.",
             "maxLength": 50,
-            "type": "string"
+            "type": "string",
+            "x-emptyClears": true
           },
           "year": {
             "description": "The model year. Leave it out to keep it.",

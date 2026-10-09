@@ -34,6 +34,25 @@ import (
 type repeatGuard struct {
 	failures map[string]string
 	reads    map[string]bool
+	// refusals counts the repeats refused this turn. A model that sends a
+	// refused call a second time has stopped reading its results, and the
+	// loop stops offering it tools (maxRepeatedFailures).
+	refusals int
+}
+
+// maxRepeatedFailures is how many repeats of failed calls a turn refuses
+// before it stops calling tools and answers. One billing turn sent the same
+// refused transfer five more times after the first refusal, alternating
+// between two variants, and spent its whole budget; the person waited for
+// a minute to be told what the second refusal already showed.
+const maxRepeatedFailures = 2
+
+// refused counts one refused repeat and reports whether the turn has now
+// repeated failed calls often enough to stop.
+func (g *repeatGuard) refused() bool {
+	g.refusals++
+
+	return g.refusals >= maxRepeatedFailures
 }
 
 func newRepeatGuard() *repeatGuard {
@@ -115,10 +134,39 @@ func repeatRefusal(name, previous string) string {
 			"It was not run again, because the same arguments produce the same result. "+
 			"Either change the arguments — read the message above for what the tool "+
 			"actually accepts — or stop and tell the person plainly what is blocking, "+
-			"including anything you did manage to get.",
+			"including anything you did manage to get. Sending a failed call again "+
+			"unchanged once more ends this turn's tool use.",
 		name, previous,
 	)
 }
+
+// changeStopOnRepeats is the loop ending its tool use once a turn has sent
+// failed calls again unchanged maxRepeatedFailures times.
+const changeStopOnRepeats = "agent-loop-stop-on-repeats"
+
+// stoppedCallText answers a call in the same batch as the repeat that ended
+// the turn's tool use: every call a model makes needs a result, and this one
+// did not run.
+func stoppedCallText(name string) string {
+	return fmt.Sprintf(
+		"Tool %q was not run: this turn stopped calling tools after a call that had "+
+			"already failed was sent again unchanged.",
+		name,
+	)
+}
+
+// stuckNote is what the model is told when the loop stops for repeats.
+const stuckNote = "You sent calls that had already failed, unchanged, more than once, so " +
+	"this turn's tools are closed. Answer the person now from what the tools returned: " +
+	"say what you were trying to do, what the tool refused, in plain words, and what " +
+	"they can do instead, such as where in Trenova they can do it themselves. Do not " +
+	"say the change was made, and do not ask for another tool."
+
+// stuckReply ends a turn stopped for repeats when even the answer without
+// tools could not be had.
+const stuckReply = "I could not finish this: the tool kept refusing the request as I sent " +
+	"it, so nothing was changed. Try asking again in different words, or make the " +
+	"change in Trenova directly."
 
 // callKey identifies a call by its name and its arguments.
 //

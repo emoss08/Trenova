@@ -1061,8 +1061,24 @@ export const casePartySchema = z.object({
   name: z.string(),
 });
 
+/**
+ * Who can take a step: the conversation's agent, another agent the person
+ * may use (handed the step from this conversation, its work shown in the
+ * thread), or the person, on the page where it is done.
+ */
+export const stepAbilitySchema = z.object({
+  via: z.enum(["Agent", "Ask", "Person"]).catch("Agent"),
+  agentId: z.string().optional().default(""),
+  agentName: z.string().optional().default(""),
+});
+
 export const caseViewSchema = z.object({
   summary: caseSummarySchema,
+  /** By step; a step it leaves out is the conversation's agent's to try. */
+  abilities: z
+    .record(z.string(), stepAbilitySchema)
+    .nullish()
+    .transform((abilities) => abilities ?? {}),
   checklist: caseChecklistSchema.nullish(),
   parties: z
     .array(casePartySchema)
@@ -1091,6 +1107,7 @@ export type ChecklistItemState = z.infer<typeof checklistItemStateSchema>;
 export type CaseChecklist = z.infer<typeof caseChecklistSchema>;
 export type CaseParty = z.infer<typeof casePartySchema>;
 export type CaseView = z.infer<typeof caseViewSchema>;
+export type StepAbility = z.infer<typeof stepAbilitySchema>;
 export type CaseBinding = z.infer<typeof caseBindingSchema>;
 
 export const assistantThreadSchema = z.object({

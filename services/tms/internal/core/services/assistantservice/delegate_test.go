@@ -275,6 +275,159 @@ func TestOpenDelegate_DeclinesWhatThePersonOrTheAllowlistNoLongerAllows(t *testi
 	}
 }
 
+// A task the person handed the delegate from the conversation opens though
+// the conversation's agent does not list it, and is refused for everything
+// else exactly as a hand-off is.
+func TestOpenDelegate_ADirectedTaskNeedsNoPlaceOnTheAllowlist(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		change func(*delegateFixture)
+		reason string
+	}{
+		"not on the allowlist": {
+			change: func(f *delegateFixture) { f.parent.DelegateIDs = nil },
+		},
+		"disabled": {
+			change: func(f *delegateFixture) {
+				f.parent.DelegateIDs = nil
+				f.delegate.Enabled = false
+			},
+			reason: "Report Builder is disabled",
+		},
+		"runs on its own": {
+			change: func(f *delegateFixture) {
+				f.delegate.TriggerMode = agentdefinition.TriggerScheduled
+			},
+			reason: "runs on its own",
+		},
+		"the person may not use the assistant": {
+			change: func(f *delegateFixture) {
+				f.parent.DelegateIDs = nil
+				f.perms.allowed = map[string]bool{}
+			},
+			reason: "not allowed to use other agents",
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			f := newDelegateFixture()
+			f.request.Call.Directed = true
+			tt.change(f)
+
+			opened, err := f.svc.OpenDelegate(t.Context(), f.request)
+			if tt.reason == "" {
+				require.NoError(t, err)
+				assert.Equal(t, f.delegate.ID, opened.Request.Definition.ID)
+				require.NotNil(t, opened.Request.Delegation)
+				assert.Equal(t, f.parent.ID, opened.Request.Delegation.ParentAgentID)
+				assert.NotContains(t, opened.Turn.Held, "delegate_task")
+				return
+			}
+			assert.Nil(t, opened)
+			refusal, ok := IsDelegateDeclined(err)
+			require.True(t, ok, "a refusal is declined, not an error to retry: %v", err)
+			assert.Contains(t, refusal.Reason, tt.reason)
+		})
+	}
+}
+
+// The agent a person hands a message to is checked as one they may talk to
+// before the turn opens, so a refusal is the request's, not a reply's. The
+// conversation's agent need not list it.
+func TestDirectedTask_ChecksTheChosenAgentAsThePersonsOwn(t *testing.T) {
+	t.Parallel()
+
+	send := func(f *delegateFixture, agentID pulid.ID) (*serviceports.DirectedTask, error) {
+		thread := &conversation.Thread{
+			ID:                f.request.ThreadID,
+			AgentDefinitionID: f.parent.ID,
+		}
+		return f.svc.directedTask(t.Context(), thread, f.request.Actor,
+			&serviceports.SendMessageRequest{
+				ThreadID:        thread.ID,
+				Content:         "  Mark shipment SEED-PAY-001 ready to invoice.  ",
+				TenantInfo:      f.request.Actor.TenantInfo(),
+				DirectedAgentID: agentID,
+			})
+	}
+
+	t.Run("a message for the conversation's own agent names none", func(t *testing.T) {
+		t.Parallel()
+
+		f := newDelegateFixture()
+		task, err := send(f, pulid.Nil)
+		require.NoError(t, err)
+		assert.Nil(t, task)
+	})
+
+	t.Run("an agent off the allowlist the person may use", func(t *testing.T) {
+		t.Parallel()
+
+		f := newDelegateFixture()
+		f.parent.DelegateIDs = nil
+		task, err := send(f, f.delegate.ID)
+		require.NoError(t, err)
+		require.NotNil(t, task)
+		assert.Equal(t, f.delegate.ID, task.Delegate.ID)
+		assert.Equal(t, "Report Builder", task.Delegate.Name)
+		assert.Equal(t, "Mark shipment SEED-PAY-001 ready to invoice.", task.Task)
+		assert.Contains(t, f.perms.agentChecks, f.delegate.ID)
+	})
+
+	t.Run("the conversation's own agent", func(t *testing.T) {
+		t.Parallel()
+
+		f := newDelegateFixture()
+		_, err := send(f, f.parent.ID)
+		require.Error(t, err)
+		assert.True(t, errortypes.IsError(err), "a field error on directedAgentId: %v", err)
+	})
+
+	t.Run("a disabled agent", func(t *testing.T) {
+		t.Parallel()
+
+		f := newDelegateFixture()
+		f.delegate.Enabled = false
+		_, err := send(f, f.delegate.ID)
+		require.Error(t, err)
+		assert.True(t, errortypes.IsBusinessError(err))
+		assert.Contains(t, err.Error(), "disabled")
+	})
+
+	t.Run("an agent that runs on its own", func(t *testing.T) {
+		t.Parallel()
+
+		f := newDelegateFixture()
+		f.delegate.TriggerMode = agentdefinition.TriggerScheduled
+		_, err := send(f, f.delegate.ID)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "runs on its own")
+	})
+
+	t.Run("an agent the person may not use", func(t *testing.T) {
+		t.Parallel()
+
+		f := newDelegateFixture()
+		f.perms.allowed = map[string]bool{}
+		_, err := send(f, f.delegate.ID)
+		require.Error(t, err)
+		assert.True(t, errortypes.IsAuthorizationError(err), "refused for access: %v", err)
+	})
+
+	t.Run("an agent that is gone", func(t *testing.T) {
+		t.Parallel()
+
+		f := newDelegateFixture()
+		_, err := send(f, pulid.MustNew("agdef_"))
+		require.Error(t, err)
+		assert.True(t, errortypes.IsNotFoundError(err))
+	})
+}
+
 // A delegate's steps and the account of its task are served with the agent's
 // name and mark, read for the whole page in one query. An agent with no icon
 // of its own is served none, so the reader draws its initials; one deleted

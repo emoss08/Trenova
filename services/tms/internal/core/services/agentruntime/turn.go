@@ -61,6 +61,9 @@ type Turn struct {
 	// opened, and delegations how many tasks it has handed out.
 	delegates   []agentdefinition.RuntimeDelegate
 	delegations int
+	// directed is a task the person handed straight to another agent, which
+	// the turn runs instead of asking its own model.
+	directed *serviceports.DirectedTask
 	// opened are the marks the turn's own subject, attachments and memories
 	// added when it opened, announced once the loop starts.
 	opened []agent.TaintMark
@@ -256,6 +259,9 @@ type TurnState struct {
 	// how many it has handed out.
 	Delegates   []agentdefinition.RuntimeDelegate `json:"delegates,omitempty"`
 	Delegations int                               `json:"delegations,omitempty"`
+	// Directed is a task the person handed straight to another agent. A
+	// state from before it was kept has none.
+	Directed *serviceports.DirectedTask `json:"directed,omitempty"`
 	// TaintOpened are the marks the turn's opening added, still to be
 	// announced. The turn's whole taint is Result.Taint.
 	TaintOpened []agent.TaintMark `json:"taintOpened,omitempty"`
@@ -306,6 +312,7 @@ func (t *Turn) State() TurnState {
 		Result:          *t.result,
 		Delegates:       slices.Clone(t.delegates),
 		Delegations:     t.delegations,
+		Directed:        t.directed,
 		ExternalContent: t.external,
 		TaintOpened:     slices.Clone(t.opened),
 		World:           t.world.clone(),
@@ -372,6 +379,7 @@ func (s *Service) RestoreTurn(req *serviceports.RunRequest, state TurnState) *Tu
 		result:       &result,
 		delegates:    state.Delegates,
 		delegations:  state.Delegations,
+		directed:     state.Directed,
 		opened:       state.TaintOpened,
 		external:     state.ExternalContent,
 		world:        state.World.clone(),
@@ -550,6 +558,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 			UsedMemoryIDs: usedMemories,
 		},
 		delegates:    delegates,
+		directed:     directedTask(req),
 		opened:       opened,
 		world:        s.watchWorld(ctx, req, now),
 		toolMemories: toolMemories,
@@ -889,6 +898,7 @@ func (s *Service) FindFor(
 	arguments map[string]any,
 ) FoundTools {
 	set := restoreToolSet(state)
+	set.self = req.Definition.ID
 	set.usable = func(name string) bool {
 		return len(s.permittedTools(ctx, req.Actor, []string{name})) == 1
 	}

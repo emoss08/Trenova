@@ -1,7 +1,7 @@
 import { caseStateOf } from "@/lib/case-state";
 import { DeskIcon, type DeskIconName } from "@/components/desk-chat/desk-icons";
 import type { DeskDock } from "@/components/desk-chat/desk-thread";
-import type { AssistantThread, ChecklistItemState } from "@/types/assistant";
+import type { AssistantThread, ChecklistItemState, StepAbility } from "@/types/assistant";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
@@ -14,10 +14,11 @@ import {
   checklistItemDetail,
   checklistItemLabel,
   checklistTitle,
-  stepLabel,
-  stepPrompt,
 } from "./case-labels";
+import { CaseStepAction, onlyPeopleCanTake } from "./case-step-action";
 import type { DeskCase } from "./use-desk-case";
+
+const NO_ABILITIES: Record<string, StepAbility> = {};
 
 const ITEM_ICONS: Record<ChecklistItemState, DeskIconName> = {
   Done: "check",
@@ -60,6 +61,8 @@ export function DeskCaseCard({
     checklist?.items.filter((item) => item.state !== "NotNeeded" && !item.optional) ?? [];
   const done = counted.filter((item) => item.state === "Done").length;
   const next = !settled && checklist?.next ? checklist.next : "";
+  const abilities = deskCase.view?.abilities ?? NO_ABILITIES;
+  const peopleOnly = onlyPeopleCanTake(checklist, abilities);
 
   return (
     <section className={cn("dk-cs", `dk-cs-${state.toLowerCase()}`)} aria-label={t("Case")}>
@@ -90,17 +93,22 @@ export function DeskCaseCard({
           </Button>
         )}
         {next !== "" && (
-          <Button
-            size="sm"
-            className="px-2.75 text-sm disabled:opacity-45"
-            disabled={dock.busy || !thread.canContinue}
-            title={dock.busy ? t("Waits for the reply under way") : undefined}
-            onClick={() => dock.ask(stepPrompt(next, summary.record, checklist, t))}
-          >
-            {stepLabel(next, t, checklist)}
-          </Button>
+          <CaseStepAction
+            primary
+            step={next}
+            ability={abilities[next]}
+            record={summary.record}
+            checklist={checklist}
+            thread={thread}
+            dock={dock}
+          />
         )}
       </div>
+      {!settled && peopleOnly && (
+        <p className="dk-cs-note">
+          {t("No agent you can use can take this checklist's steps; each opens where you do it.")}
+        </p>
+      )}
       {deskCase.failed && (
         <p className="dk-cs-note">{t("The checklist could not be read. It will try again.")}</p>
       )}
@@ -136,15 +144,15 @@ export function DeskCaseCard({
                     </span>
                     {detail && <span className="dk-cs-dt">{detail}</span>}
                     {item.step && item.state === "Blocked" && !settled && item.step !== next && (
-                      <Button
-                        variant="quiet"
-                        size="xs"
-                        className="px-2 text-xs text-dsk-fg2 hover:bg-dsk-hover hover:text-dsk-fg disabled:opacity-45"
-                        disabled={dock.busy || !thread.canContinue}
-                        onClick={() => dock.ask(stepPrompt(item.step, summary.record, checklist, t))}
-                      >
-                        {stepLabel(item.step, t, checklist)}
-                      </Button>
+                      <CaseStepAction
+                        primary={false}
+                        step={item.step}
+                        ability={abilities[item.step]}
+                        record={summary.record}
+                        checklist={checklist}
+                        thread={thread}
+                        dock={dock}
+                      />
                     )}
                   </li>
                 );

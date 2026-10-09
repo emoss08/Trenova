@@ -655,3 +655,52 @@ func TestBaseline_KeepsNothingForAWriteThatWouldBeRefused(t *testing.T) {
 	require.Len(t, f.baselines.kept, 1)
 	assert.Equal(t, filed.ProposalID, f.baselines.kept[0].ProposalID)
 }
+
+// An enum spelled in another case, stored on a proposal filed before the
+// runtime read values as the tool declares them, or typed by an approver,
+// is previewed as it will run: the executor reads it the same way.
+type enumStatusTool struct{ *baseTool }
+
+func (t *enumStatusTool) ParamSchema() map[string]any {
+	return map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"shipmentId": map[string]any{"type": "string"},
+			"status": map[string]any{
+				"type": "string",
+				"enum": []string{"New", "Hold", "Cancelled"},
+			},
+			"limit": map[string]any{"type": "integer"},
+		},
+	}
+}
+
+func TestSettleParams_ReadsValuesAsTheExecutorWill(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	tool := &enumStatusTool{baseTool: &baseTool{name: "set_status", resource: permission.ResourceShipment}}
+	proposal := f.proposal(map[string]any{
+		"shipmentId": f.tool.state.ID.String(),
+		"status":     "cancelled",
+		"limit":      "3",
+	})
+
+	stored, warnings, err := f.svc.settleParams(t.Context(), tool, &draftInput{
+		proposal: proposal,
+		actor:    f.viewer().Actor,
+	})
+	require.NoError(t, err)
+	assert.Empty(t, warnings)
+	assert.Equal(t, "Cancelled", stored["status"])
+	assert.Equal(t, float64(3), stored["limit"])
+	assert.Equal(t, "cancelled", proposal.ToolParams["status"], "the proposal itself is not rewritten")
+
+	typed, _, err := f.svc.settleParams(t.Context(), tool, &draftInput{
+		proposal: proposal,
+		actor:    f.viewer().Actor,
+		params:   map[string]any{"shipmentId": f.tool.state.ID.String(), "status": "hold"},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "Hold", typed["status"])
+}

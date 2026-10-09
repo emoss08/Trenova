@@ -87,6 +87,35 @@ ready. `next` is the first blocked item's step or, when nothing blocks, what the
 record is ready for (`mark_ready`, `send_invoice`). The Desk words each step and
 sends it to the case's agent as the person's own message.
 
+## Who can take a step
+
+A conversation can be a case whatever its agent holds, so a step is checked
+against the agent before it is offered (`deskcase/ability.go`). Each step
+names the tools that can take it, any one being enough (`stepTools`:
+`mark_ready` needs `transfer_to_billing`, `notify_customer` needs
+`email_customer`, and so on); a step the organization added names none and
+is always the agent's to try. When the case is read, `abilities`:
+
+1. asks once which of every tool the steps name the person may use
+   (`AgentRuntime.PermittedTools`), since an agent acts as its person;
+2. reads the conversation's agent's tools (`ToolSummaries`);
+3. only if it cannot take a step, reads the other enabled chat agents the
+   person may use (`AgentsUsable` + the definition list), by name.
+
+Each step comes back as `Agent` (ask it), `Ask` (the first other agent that
+can) or `Person` (no agent the person may use can; the Desk opens the page
+where it is done). An `Ask` step keeps its own button, whose tooltip names the
+agent; the same press sends the step's words with `directedAgentId`, and that
+agent takes it inside this conversation (see "Person-directed tasks" in
+[agent-delegation.md](agent-delegation.md)). Nobody is moved to another
+conversation and nothing needs a second press. When no agent the person may
+use can take any open step, the card says each opens where the person does it.
+Tools are
+never granted to an agent for a case: an agent's tools and autonomy are what
+AI Control gave it. `TestEveryToolACaseStepNamesIsRegistered` fails when a
+step names a tool that is no longer registered. Working this out is advice:
+a failure is logged and the Desk falls back to asking the agent.
+
 ## Customizing the checklist
 
 `case_checklist_templates` holds how an organization lays out a kind of
@@ -110,8 +139,13 @@ customer), read in one query (`TemplateFor`).
   since joins at its default position, a retired one leaves.
 - Settings: `GET/PUT /case-checklists/`, `DELETE /case-checklists/:id/`
   (billing control read / update), audited under billing control, saved at
-  the version read (`ErrChecklistTemplateStale` is a 409). The page is
-  Billing → Configuration files → Case checklists.
+  the version read (`ErrCaseChecklistTemplateStale` is a 409). The editor is
+  the **Organization › Case checklists** section of the Desk's settings
+  dialog (`routes/desk/_components/settings/case-checklists/`), shown only to
+  someone with billing control read and read-only without update. The old
+  `/billing/configuration-files/case-checklists` path redirects to
+  `/desk?settings=checklists`, which the Desk layout reads to open settings on
+  that section.
 - Ticks: `POST /assistant/threads/:threadID/case/ticks/`, only for a
   `Manual` added step of the template that applies.
 

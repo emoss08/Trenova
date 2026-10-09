@@ -298,3 +298,58 @@ func TestContractCall_RefusesDatesItCannotReadForCertain(t *testing.T) {
 	assert.Contains(t, problems[2], `startDate: "2026-10-01T14:00:00Z" is not a date; send `+
 		`YYYY-MM-DD, such as 2026-10-01`)
 }
+
+/*
+The transfer that would not go.
+
+Asked to mark one shipment ready to invoice, a model filled every parameter
+transfer_to_billing declares: the one shipment's id, and beside it an empty
+customer, an empty search, empty delivery dates and once a list holding only
+"". The tool read the empty values as filters given and refused the call;
+the model sent it again unchanged until the turn's budget was gone. An empty
+optional value says nothing, so it is read as not sent, and the model is told
+once to stop sending them.
+*/
+func TestCoerceArguments_LeavesOutOptionalParametersSentEmpty(t *testing.T) {
+	t.Parallel()
+
+	schema := map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"shipmentIds":   map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+			"customerId":    map[string]any{"type": "string"},
+			"query":         map[string]any{"type": "string"},
+			"status":        map[string]any{"type": "string", "enum": []string{"Completed", "ReadyToInvoice"}},
+			"deliveredFrom": map[string]any{"type": "string"},
+			"memo":          toolschema.EmptyClears(map[string]any{"type": "string"}),
+			"reference":     map[string]any{"type": "string"},
+		},
+		"required": []string{"reference"},
+	}
+
+	got, coercions := coerceArguments(schema, map[string]any{
+		"shipmentIds":   []any{"shp_01M49Z0D7489EWCNNFWFG0VNTJ", ""},
+		"customerId":    "",
+		"query":         "  ",
+		"status":        "",
+		"deliveredFrom": "",
+		"memo":          "",
+		"reference":     "",
+	})
+
+	assert.Equal(t, map[string]any{
+		"shipmentIds": []any{"shp_01M49Z0D7489EWCNNFWFG0VNTJ"},
+		"memo":        "",
+		"reference":   "",
+	}, got, "a parameter marked to clear when empty, and a required one, keep their empty value")
+
+	note := coercionNote(coercions)
+	assert.Contains(t, note,
+		"Left out because they were empty: customerId, deliveredFrom, query, status.")
+	assert.Contains(t, note, "shipmentIds held 1 empty entries, which were left out")
+
+	onlyBlank, _ := coerceArguments(schema, map[string]any{
+		"reference": "r", "shipmentIds": []any{""},
+	})
+	assert.NotContains(t, onlyBlank, "shipmentIds", "a list of nothing is a list not sent")
+}

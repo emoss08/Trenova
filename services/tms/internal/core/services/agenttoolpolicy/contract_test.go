@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/deskcase"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
@@ -592,4 +593,28 @@ func TestRuntimeToolsStayInside(t *testing.T) {
 		"delegate_task":    agent.EgressNone,
 		"request_decision": agent.EgressPersonal,
 	}, effects)
+}
+
+/*
+Every tool a Desk case step names is a registered tool. A name that drifts
+from a renamed tool would make every agent look unable to take the step, and
+the Desk would hand off or send the person to a page for work their agent
+can do.
+*/
+func TestEveryToolACaseStepNamesIsRegistered(t *testing.T) {
+	t.Parallel()
+
+	tools := buildRegistered(t)
+	names := make(map[string]struct{}, len(tools.Actions)+len(tools.Queries))
+	for _, tool := range tools.Actions {
+		names[tool.Name()] = struct{}{}
+	}
+	for _, tool := range tools.Queries {
+		names[tool.Name()] = struct{}{}
+	}
+
+	for _, tool := range deskcase.AllStepTools() {
+		_, ok := names[tool]
+		assert.Truef(t, ok, "case steps name %q, which is not a registered tool", tool)
+	}
 }

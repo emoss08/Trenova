@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -192,6 +193,18 @@ type masterField[T any] struct {
 	apply    func(ctx context.Context, in *masterInput, entity *T) error
 }
 
+// clearable marks a field an update clears when it is sent empty, so the
+// runtime reads its empty value as the request it is rather than as a
+// parameter left unfilled (toolschema.EmptyClears). A create has nothing to
+// clear, and its empty values are read as not sent.
+func clearable(update, clears bool, property map[string]any) map[string]any {
+	if update && clears {
+		return toolschema.EmptyClears(property)
+	}
+
+	return property
+}
+
 func keepSuffix(update, clears bool) string {
 	switch {
 	case update && clears:
@@ -212,7 +225,7 @@ func masterText[T any](
 	return masterField[T]{
 		key: key,
 		property: func(update bool) map[string]any {
-			return stringProperty(description+keepSuffix(update, !required), limit)
+			return clearable(update, !required, stringProperty(description+keepSuffix(update, !required), limit))
 		},
 		apply: func(_ context.Context, in *masterInput, entity *T) error {
 			text, err := in.text(key)
@@ -387,8 +400,8 @@ func masterDecimal[T any](key, description string, at func(*T) **float64) master
 	return masterField[T]{
 		key: key,
 		property: func(update bool) map[string]any {
-			return stringProperty(description+" A decimal such as 42.5."+
-				keepSuffix(update, true), 0)
+			return clearable(update, true, stringProperty(description+" A decimal such as 42.5."+
+				keepSuffix(update, true), 0))
 		},
 		apply: func(_ context.Context, in *masterInput, entity *T) error {
 			value, present, err := optionalDecimal(in.values, key)
@@ -445,7 +458,7 @@ func masterOptionalID[T any](key, description string, at func(*T) *pulid.ID) mas
 	return masterField[T]{
 		key: key,
 		property: func(update bool) map[string]any {
-			return stringProperty(description+keepSuffix(update, true), 0)
+			return clearable(update, true, stringProperty(description+keepSuffix(update, true), 0))
 		},
 		apply: func(_ context.Context, in *masterInput, entity *T) error {
 			id, err := optionalMasterID(in, key)
@@ -488,7 +501,8 @@ func masterState[T any](
 	return masterField[T]{
 		key: key,
 		property: func(update bool) map[string]any {
-			return stringProperty(description+" "+stateCodeNote+keepSuffix(update, !required), 2)
+			return clearable(update, !required,
+				stringProperty(description+" "+stateCodeNote+keepSuffix(update, !required), 2))
 		},
 		apply: func(ctx context.Context, in *masterInput, entity *T) error {
 			id, err := resolveState(ctx, in, key)
@@ -510,7 +524,8 @@ func masterStatePointer[T any](key, description string, at func(*T) **pulid.ID) 
 	return masterField[T]{
 		key: key,
 		property: func(update bool) map[string]any {
-			return stringProperty(description+" "+stateCodeNote+keepSuffix(update, true), 2)
+			return clearable(update, true,
+				stringProperty(description+" "+stateCodeNote+keepSuffix(update, true), 2))
 		},
 		apply: func(ctx context.Context, in *masterInput, entity *T) error {
 			id, err := resolveState(ctx, in, key)
@@ -532,8 +547,8 @@ func masterDay[T any](key, description string, at func(*T) **int64) masterField[
 	return masterField[T]{
 		key: key,
 		property: func(update bool) map[string]any {
-			return stringProperty(description+" A date as YYYY-MM-DD."+
-				keepSuffix(update, true), len(masterDayLayout))
+			return clearable(update, true, stringProperty(description+" A date as YYYY-MM-DD."+
+				keepSuffix(update, true), len(masterDayLayout)))
 		},
 		apply: func(_ context.Context, in *masterInput, entity *T) error {
 			text, err := in.text(key)

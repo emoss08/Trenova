@@ -122,7 +122,8 @@ export type DeskThreadArtifacts = {
  */
 /** What the dock above the composer may do: ask the agent, unless a reply is under way. */
 export type DeskDock = {
-  ask: (text: string) => void;
+  /** Asks the conversation's agent, or with `directedAgentId` hands the words to that agent. */
+  ask: (text: string, options?: { directedAgentId?: string }) => void;
   busy: boolean;
 };
 
@@ -540,7 +541,8 @@ export function DeskThread({
     return { arrivedBefore: arrived, questionBefore: asked };
   }, [entries]);
   const ask = useCallback(
-    (text: string) => void model.send(text, undefined, model.providerId),
+    (text: string, options?: { directedAgentId?: string }) =>
+      void model.send(text, undefined, model.providerId, options),
     [model],
   );
   const retryFor = (id: string) => {

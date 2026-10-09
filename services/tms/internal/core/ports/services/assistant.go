@@ -92,6 +92,10 @@ type SendMessageRequest struct {
 	// wait. Like a follow-up, the request carries no content: the wait's note
 	// is the input.
 	ResumeWaitID pulid.ID
+	// DirectedAgentID hands Content to another agent the person may use, as
+	// a task run from this conversation in place of its own agent's reply.
+	// The conversation's agent need not list it: the person chose it.
+	DirectedAgentID pulid.ID
 }
 
 // AskRequest is a quick question from anywhere in the application. It runs

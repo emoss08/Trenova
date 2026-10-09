@@ -32,6 +32,7 @@ const (
 	KeySubsetOf     = "x-subsetOf"
 	KeyEnumOf       = "x-enumOf"
 	KeyRecordOf     = "x-recordOf"
+	KeyEmptyClears  = "x-emptyClears"
 	extensionPrefix = "x-"
 )
 

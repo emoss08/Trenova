@@ -51,7 +51,8 @@ type DelegateOpening struct {
 // opens that agent's turn on it.
 //
 // Every check is made again here, against the records as they are now rather
-// than as the turn began: the parent must still list the delegate, the
+// than as the turn began: the parent must still list the delegate (unless the
+// person chose it from the conversation, which stands in for the list), the
 // delegate must still exist in the tenant, be enabled and be an agent people
 // talk to, the person must still be allowed to use the assistant and the
 // delegate itself, and the delegate's own budget must not be spent. A refusal is a
@@ -95,7 +96,7 @@ func (s *Service) OpenDelegate(
 		return nil, fmt.Errorf("read %s: %w", name, err)
 	}
 
-	if refusal := parent.DelegateRefusal(delegate); refusal != "" {
+	if refusal := delegateRefusal(parent, delegate, req.Call.Directed); refusal != "" {
 		return nil, declined(refusal)
 	}
 	usable := agentruntime.UsableAgentsFor(ctx, s.permissions, req.Actor, s.logger)
@@ -185,6 +186,17 @@ func (s *Service) delegateContext(
 	}
 
 	return built
+}
+
+// delegateRefusal is why the parent's conversation may not hand delegate the
+// task. A task the person chose the agent for needs no place on the parent's
+// list; every other refusal holds.
+func delegateRefusal(parent, delegate *agentdefinition.Definition, directed bool) string {
+	if directed {
+		return parent.TaskRefusal(delegate)
+	}
+
+	return parent.DelegateRefusal(delegate)
 }
 
 // IsDelegateDeclined reports a task an agent may not be handed.

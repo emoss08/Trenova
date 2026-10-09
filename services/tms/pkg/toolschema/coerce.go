@@ -11,10 +11,46 @@ import (
 )
 
 // Coercion is one value read the way the schema declares it rather than the
-// way it was sent.
+// way it was sent. Omitted marks an optional parameter sent empty and left
+// out, which a note names together rather than one by one.
 type Coercion struct {
-	Path string
-	Note string
+	Path    string
+	Note    string
+	Omitted bool
+}
+
+// EmptyClears marks a parameter whose empty value is a request in itself:
+// clear the field. Every other optional parameter sent as "" or an empty
+// list is read as not sent (see Coerce). It returns the property it marks.
+func EmptyClears(property map[string]any) map[string]any {
+	property[KeyEmptyClears] = true
+
+	return property
+}
+
+func clearsWhenEmpty(property map[string]any) bool {
+	clears, _ := property[KeyEmptyClears].(bool)
+
+	return clears
+}
+
+// placeholder is a value that says nothing: empty or blank text, or a list
+// with nothing in it once its blank entries are set aside.
+func placeholder(value any) bool {
+	switch typed := value.(type) {
+	case string:
+		return strings.TrimSpace(typed) == ""
+	case []any:
+		for _, element := range typed {
+			if !placeholder(element) {
+				return false
+			}
+		}
+
+		return true
+	default:
+		return false
+	}
 }
 
 // Coerce returns a copy of the arguments with each value read as
@@ -26,7 +62,16 @@ type Coercion struct {
 // optional parameter is dropped, an undeclared key whose spelling matches a
 // declared parameter is renamed to it, midnight UTC sent for a day becomes
 // the day, and a local time written with a space or with seconds becomes its
-// minute.
+// minute. An optional parameter sent as "" or as a list of nothing is read
+// as not sent, unless it is marked EmptyClears; blank entries in a list of
+// text are set aside.
+//
+// Several models fill every parameter a tool declares, sending "" or [""]
+// for the ones they have no value for. A transfer that named one shipment
+// also sent an empty customer, an empty search and the list's status
+// filter, and the tool read the filters as given and refused the call five
+// times. A required parameter sent empty is left for the schema and the
+// tool to refuse by name.
 //
 // Before this, each of those refused the call ("limit: got string, want
 // integer") and cost the model a round trip to send what it plainly meant,
@@ -97,6 +142,15 @@ func (c *coercer) object(
 			continue
 		}
 		read, did := c.value(property, value, at)
+		if !required[key] && !clearsWhenEmpty(property) && placeholder(read) {
+			delete(out, key)
+			changed = true
+			c.notes = append(c.notes, Coercion{
+				Path: at, Note: at + " was empty and was left out", Omitted: true,
+			})
+
+			continue
+		}
 		if did {
 			out[key] = read
 			changed = true
@@ -175,8 +229,22 @@ func (c *coercer) array(property map[string]any, value any, path string) (any, b
 		return value, false
 	}
 
-	out := make([]any, len(list))
-	copy(out, list)
+	out := make([]any, 0, len(list))
+	blank := 0
+	for _, element := range list {
+		if text, isText := element.(string); isText && strings.TrimSpace(text) == "" {
+			blank++
+
+			continue
+		}
+		out = append(out, element)
+	}
+	if blank > 0 {
+		changed = true
+		if len(out) > 0 {
+			c.note(path, "%s held %d empty entries, which were left out", path, blank)
+		}
+	}
 	if len(items) > 0 {
 		for idx, element := range out {
 			read, did := c.value(items, element, path+"["+strconv.Itoa(idx)+"]")

@@ -49,6 +49,18 @@ type billingTransferPlanner interface {
 	) (*serviceports.BillingTransferCandidateIDsResponse, error)
 }
 
+// errBothSelections answers a call that names shipments and also asks for
+// every transferable one. The two say different things when the filters match
+// more than the named shipments, so the tool cannot pick; the refusal spells
+// out both calls so the next one is the one the person meant.
+var errBothSelections = errors.New(
+	"give shipmentIds or allTransferable, not both. To transfer exactly the shipments " +
+		"you named, send shipmentIds without allTransferable, for example " +
+		`{"shipmentIds": ["shp_…"], "markCompletedReadyToInvoice": true}. To transfer ` +
+		"every shipment the filters match, send allTransferable true with the filters " +
+		"and no shipmentIds",
+)
+
 var errUnapprovedTransferSelection = errors.New(
 	"transfer_to_billing runs only on the shipments a person approved, and this call names " +
 		"none; propose it again so the shipments it resolves to are listed",
@@ -112,7 +124,7 @@ func (t *transferToBillingTool) ParamSchema() map[string]any {
 		toolschema.KeyDescription: "True to transfer every shipment " +
 			"list_billing_transfer_candidates says would transfer, narrowed by query, status, " +
 			"customerId, deliveredFrom and deliveredTo. Use it instead of shipmentIds, never " +
-			"with them.",
+			"with them; leave it out when naming shipmentIds, whose filters are then ignored.",
 	}
 	properties[paramShipmentIDs] = toolschema.RecordSubset(permission.ResourceShipment.String(),
 		map[string]any{
@@ -202,21 +214,13 @@ func (t *transferToBillingTool) request(
 	}
 
 	named := params.Params[paramShipmentIDs] != nil
-	filters := billingtransfercriteria.Given(params.Params)
 	switch {
 	case named && request.all:
-		return transferRequest{}, errors.New(
-			"give shipmentIds or allTransferable, not both",
-		)
+		return transferRequest{}, errBothSelections
 	case !named && !request.all:
 		return transferRequest{}, errors.New(
 			"name the shipments in shipmentIds, or set allTransferable to true to transfer " +
 				"every shipment list_billing_transfer_candidates says would transfer",
-		)
-	case named && len(filters) > 0:
-		return transferRequest{}, fmt.Errorf(
-			"%s only narrow allTransferable; leave them out when naming shipmentIds",
-			strings.Join(filters, ", "),
 		)
 	}
 
@@ -254,7 +258,7 @@ func (t *transferToBillingTool) ResolveSelection(
 		return nil, err
 	}
 	if !request.all {
-		return params.Params, nil
+		return withoutCriteria(params.Params), nil
 	}
 
 	ids, _, err := t.transferable(ctx, &params, &request)
@@ -276,6 +280,26 @@ func (t *transferToBillingTool) ResolveSelection(
 	resolved[paramShipmentIDs] = named
 
 	return resolved, nil
+}
+
+// withoutCriteria is a call that names its shipments, with the filters that
+// only narrow allTransferable taken off. A model that looked the shipment up
+// with list_billing_transfer_candidates sends the same query and status back
+// beside the id; they cannot widen what the ids name, so they are set aside
+// rather than refused, and the proposal a person reads holds only the ids.
+func withoutCriteria(params map[string]any) map[string]any {
+	if len(billingtransfercriteria.Given(params)) == 0 {
+		return params
+	}
+	kept := make(map[string]any, len(params))
+	for key, value := range params {
+		if billingtransfercriteria.IsParam(key) {
+			continue
+		}
+		kept[key] = value
+	}
+
+	return kept
 }
 
 func (t *transferToBillingTool) transferable(

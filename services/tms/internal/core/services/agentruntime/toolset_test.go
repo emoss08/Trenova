@@ -372,10 +372,49 @@ func TestResolveFind_SaysAToolExistsButIsNotEnabled(t *testing.T) {
 	require.Contains(t, names, "list_expiring_credentials")
 	assert.Contains(t, answer, "not enabled for this agent")
 	assert.Contains(t, answer, "list_expiring_credentials")
-	assert.Contains(t, answer, "Agent Control")
+	assert.Contains(t, answer, "AI Control")
 	assert.Contains(t, answer, "Do not say the system has no such capability")
 	assert.NotContains(t, specNames(set.specs), "list_expiring_credentials",
 		"naming a tool must not load it")
+}
+
+/*
+Asked to mark a shipment ready to invoice, a shipment agent learned the
+transfer tool existed but was not its own and told the person to ask an
+administrator. The person picked an agent from the hand-off menu by guess,
+and picked the wrong one. Another of their agents held the tool all along;
+the answer now names it and says how to hand the conversation over.
+*/
+func TestResolveFind_NamesThePersonsOtherAgentThatHoldsTheTool(t *testing.T) {
+	t.Parallel()
+
+	service, _ := wideRuntime(t)
+	definition := testDefinition("list_customers", "list_locations")
+	compliance := chatAgent("Compliance assistant")
+	compliance.ToolNames = []string{"list_expiring_credentials"}
+	unrelated := chatAgent("Report builder")
+	unrelated.ToolNames = []string{"list_reports"}
+	service.permissions = &agentruntimetest.StubPermissions{}
+	service.definitions = &listedDefinitions{byID: map[pulid.ID]*agentdefinition.Definition{
+		compliance.ID: compliance,
+		unrelated.ID:  unrelated,
+		definition.ID: definition,
+	}}
+
+	set := service.newToolSet(t.Context(), toolSetRequest{
+		definition: definition,
+		actor:      testActor(),
+		input:      "anything",
+	})
+	set.disclosed = true
+
+	answer := findContent(t, service, set, map[string]any{"need": "driver medical card expiry"})
+
+	assert.Contains(t, answer, "- Compliance assistant: list_expiring_credentials")
+	assert.NotContains(t, answer, "Report builder")
+	assert.Contains(t, answer, "Hand off to another agent")
+	assert.NotContains(t, answer, "AI Control",
+		"an agent that holds the tool is named instead of sending the person to an administrator")
 }
 
 // Nothing matched anywhere is a different answer, and it still must not let the

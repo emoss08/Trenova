@@ -38,6 +38,9 @@ type enqueueRequest struct {
 	ProviderID            *pulid.ID           `json:"providerId"`
 	AttachmentDocumentIDs []pulid.ID          `json:"attachmentDocumentIds"`
 	Mentions              []agent.EntityRef   `json:"mentions"`
+	// DirectedAgentID hands the message to another agent the person may use,
+	// once the conversation is free.
+	DirectedAgentID pulid.ID `json:"directedAgentId"`
 	// Steer asks for the message to be read into the reply under way at its
 	// next step, rather than sent once the reply ends.
 	Steer bool `json:"steer"`
@@ -131,6 +134,7 @@ func (h *Handler) enqueue(c *gin.Context) {
 		Surface:               body.Surface,
 		Mentions:              body.Mentions,
 		AttachmentDocumentIDs: body.AttachmentDocumentIDs,
+		DirectedAgentID:       body.DirectedAgentID,
 	}
 	if body.ProviderID != nil {
 		request.ProviderID = *body.ProviderID

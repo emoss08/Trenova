@@ -3,6 +3,7 @@ package assistantservice
 import (
 	"context"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -141,6 +142,14 @@ func (s *Service) prepareTurn(
 	case req.FollowUpProposalID.IsNotNil() && req.FollowUpPlanID.IsNotNil():
 		multiErr.Add("followUpPlanId", errortypes.ErrInvalid,
 			"A follow-up answers one decision: a proposal or a plan, not both")
+	case req.DirectedAgentID.IsNotNil() && (followUp || resumesWait):
+		multiErr.Add("directedAgentId", errortypes.ErrInvalid,
+			"Only a message the person writes can be handed to another agent")
+	case req.DirectedAgentID.IsNotNil() &&
+		utf8.RuneCountInString(content) > agentruntime.MaxDelegateTaskRunes:
+		multiErr.Add("content", errortypes.ErrInvalid,
+			"A task for another agent can be at most {0} characters",
+			agentruntime.MaxDelegateTaskRunes)
 	}
 	page := req.Page.Normalized()
 	if page != nil {
@@ -224,6 +233,7 @@ func (s *Service) prepareTurn(
 		// A conversation keeps what the turn publishes beside it, in the
 		// activity that runs the publish rather than on this request.
 		runReq.Publishes = s.artifacts != nil
+		runReq.Directed = checks.directed
 		plan.Timezone = runReq.Context.Timezone
 		plan.Records = runReq.Records
 		plan.Turn = s.runtime.OpenTurn(ctx, runReq).State()

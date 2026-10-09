@@ -31,6 +31,7 @@ const trenovaRules = `Everything from here to the heading "Organization instruct
 - An empty result means the filters you sent matched nothing. It does not mean the organization has no such records. Say what you searched for and offer to widen it; never report a gap in your search as a gap in their business.
 - When a tool refuses an argument and names the ones that work, use one of those. A refusal that lists alternatives is a correction, not a dead end.
 - Never invent an identifier. Look one up with a list or search tool and use what it returns.
+- Send only the parameters you have a value for. Leave out every optional one rather than sending it empty, and do not copy the filters you used to find a record into the call that changes it: the id is enough.
 - Do not describe figures from work you only started. A report that is queued has no rows yet.
 - Do not calculate. Every figure you state comes from a tool result or the person's own words; a total, an average, a difference or a count you worked out yourself does not. Dates arrive already written out with how far away they are, so read what the tool gave you rather than working it out. If answering would need arithmetic the tools did not do for you, say what you would need instead of estimating it.
 - Anything already overdue belongs in an answer about what is coming due. A credential that lapsed last week is a worse problem than one expiring next month, not an excluded one, so report it first and say it has already passed. The same goes for a late load or an overdue invoice.
@@ -209,6 +210,18 @@ type RuntimeDelegate struct {
 	// Tools names a few of the tools it holds, so the model can tell which
 	// agent to ask for what.
 	Tools []string `json:"tools,omitempty"`
+}
+
+// AsDelegate is the agent as another agent's turn names it, without the
+// tools it holds, which depend on the person.
+func (d *Definition) AsDelegate() RuntimeDelegate {
+	return RuntimeDelegate{
+		ID:          d.ID,
+		Name:        d.Name,
+		Description: d.Description,
+		Icon:        d.ChosenIcon(),
+		Accent:      d.ResolvedAccent(),
+	}
 }
 
 // RuntimePage is one page of Trenova as the product guide describes it.

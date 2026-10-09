@@ -189,24 +189,25 @@ func newUpdateInvoiceDraftTool(invoices invoiceDraftEditor) serviceports.AgentTo
 			"person sends it, but the recipients decide where it goes then.",
 		properties: map[string]any{
 			paramInvoiceID: invoiceIDProperty(),
-			paramInvoiceMemo: stringProperty("The note printed on the invoice.",
-				maxInvoiceTextChars),
-			paramRemittance: stringProperty("How the customer should pay, printed on the "+
-				"invoice.", maxInvoiceTextChars),
-			paramEmailSubject: stringProperty("The subject of the email the invoice goes in.",
-				invoice.MaxEmailSubjectLength),
-			paramEmailBody: stringProperty("The body of the email the invoice goes in.",
-				maxInvoiceEmailBodyChars),
-			paramEmailTo:  recipientsProperty("Who the invoice is emailed to; replaces the list."),
-			paramEmailCc:  recipientsProperty("Who is copied; replaces the list."),
-			paramEmailBcc: recipientsProperty("Who is blind-copied; replaces the list."),
-			paramAttachmentDocumentIDs: map[string]any{
+			paramInvoiceMemo: toolschema.EmptyClears(stringProperty(
+				"The note printed on the invoice.", maxInvoiceTextChars)),
+			paramRemittance: toolschema.EmptyClears(stringProperty("How the customer should "+
+				"pay, printed on the invoice.", maxInvoiceTextChars)),
+			paramEmailSubject: toolschema.EmptyClears(stringProperty("The subject of the email "+
+				"the invoice goes in.", invoice.MaxEmailSubjectLength)),
+			paramEmailBody: toolschema.EmptyClears(stringProperty("The body of the email the "+
+				"invoice goes in.", maxInvoiceEmailBodyChars)),
+			paramEmailTo: toolschema.EmptyClears(
+				recipientsProperty("Who the invoice is emailed to; replaces the list.")),
+			paramEmailCc:  toolschema.EmptyClears(recipientsProperty("Who is copied; replaces the list.")),
+			paramEmailBcc: toolschema.EmptyClears(recipientsProperty("Who is blind-copied; replaces the list.")),
+			paramAttachmentDocumentIDs: toolschema.EmptyClears(map[string]any{
 				toolschema.KeyType: toolschema.TypeArray,
 				toolschema.KeyDescription: "The documents attached to the email, from " +
 					"search_documents; replaces the list.",
 				toolschema.KeyItems:    map[string]any{toolschema.KeyType: toolschema.TypeString},
 				toolschema.KeyMaxItems: maxInvoiceAttachments,
-			},
+			}),
 		},
 		required: []string{paramInvoiceID},
 		target:   targetInvoice,

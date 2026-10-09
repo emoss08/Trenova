@@ -75,6 +75,22 @@ a.dk-cs-rec:hover {
   min-height: 0;
   overflow: hidden;
 }
+/* a step no agent the person may use can take, opened on its page */
+a.dk-cs-go,
+a.dk-cs-step {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+.dk-cs-go.dk-cs-self {
+  background: transparent;
+  color: var(--dsk-fg);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-strong);
+}
+.dk-cs-go.dk-cs-self:hover {
+  background: var(--dsk-hover);
+  opacity: 1;
+}
 .dk-cs-list {
   margin: 0;
   padding: 2px 0 4px;

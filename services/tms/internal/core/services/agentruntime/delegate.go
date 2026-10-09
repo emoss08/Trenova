@@ -30,10 +30,10 @@ const (
 	// reader's patience; a turn that needs more is doing too much at once.
 	maxDelegationsPerTurn = 3
 
-	// maxDelegateTaskRunes bounds a task. It is the other agent's whole
+	// MaxDelegateTaskRunes bounds a task. It is the other agent's whole
 	// question, and a model pasting a conversation into it has not decided
 	// what it is asking for.
-	maxDelegateTaskRunes = 4000
+	MaxDelegateTaskRunes = 4000
 
 	maxDelegateRecords    = 8
 	maxDelegateRecordID   = 100
@@ -41,6 +41,8 @@ const (
 	maxSharedResultBytes  = 8 << 10
 	maxSharedResultsBytes = 24 << 10
 
+	delegateAgentParam   = "agentId"
+	delegateTaskParam    = "task"
 	delegateRecordsParam = "records"
 	delegateSharedParam  = "shareResults"
 )
@@ -93,13 +95,13 @@ func delegateTaskSpec(delegates []agentdefinition.RuntimeDelegate) serviceports.
 		Parameters: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"agentId": map[string]any{
+				delegateAgentParam: map[string]any{
 					"type": "string",
 					"enum": ids,
 					"description": "The agentId of the agent to ask, from the agents you " +
 						"can ask.",
 				},
-				"task": map[string]any{
+				delegateTaskParam: map[string]any{
 					"type": "string",
 					"description": "What the agent should do and what it should hand back, " +
 						"with every name, id, date and figure it needs. \"Create a report of " +
@@ -137,7 +139,7 @@ func delegateTaskSpec(delegates []agentdefinition.RuntimeDelegate) serviceports.
 					toolschema.KeyItems: map[string]any{toolschema.KeyType: toolschema.TypeString},
 				},
 			},
-			"required":             []string{"agentId", "task"},
+			toolschema.KeyRequired: []string{delegateAgentParam, delegateTaskParam},
 			"additionalProperties": false,
 		},
 	}
@@ -163,6 +165,11 @@ type DelegateCall struct {
 	// a task written under that content cannot make a write on its own.
 	AfterExternalContent bool             `json:"afterExternalContent,omitempty"`
 	Context              *DelegateContext `json:"context,omitempty"`
+	// Directed says the person chose the agent from the conversation rather
+	// than its agent asking for it, so the agent need not be on the
+	// conversation's agent's list. Only the runtime sets it, from a task the
+	// person's own request named; a model's call never does.
+	Directed bool `json:"directed,omitempty"`
 }
 
 type DelegateContext struct {
@@ -261,6 +268,36 @@ func (s *Service) delegate(t *Turn, fx TurnEffects, call serviceports.ToolCall) 
 	}
 	t.delegations++
 
+	outcome, _ := s.handTask(t, fx, &handedTask{
+		call:     call,
+		delegate: delegate,
+		task:     task,
+		handed:   handed,
+	})
+
+	return outcome
+}
+
+// handedTask is one task on its way to another agent, already checked as one
+// the turn may hand out.
+type handedTask struct {
+	call     serviceports.ToolCall
+	delegate agentdefinition.RuntimeDelegate
+	task     string
+	handed   *DelegateContext
+	// directed says the person chose the agent, so its opening skips the
+	// check that the conversation's agent lists it.
+	directed bool
+}
+
+// handTask runs another agent on a task and answers the call with what it
+// did, also handing back the account the call was answered with.
+func (s *Service) handTask(
+	t *Turn,
+	fx TurnEffects,
+	h *handedTask,
+) (outcome toolOutcome, report serviceports.AssistantDelegateFinishedEvent) {
+	call, delegate, task := h.call, h.delegate, h.task
 	scope := StepKey(StepKeyParams{
 		OwnerID:  t.req.StepOwner.ID,
 		ToolName: delegateTaskName,
@@ -293,9 +330,10 @@ func (s *Service) delegate(t *Turn, fx TurnEffects, call serviceports.ToolCall) 
 		CallIDs:              slices.Sorted(maps.Keys(t.callIDs)),
 		AfterExternalContent: t.external,
 		Taint:                t.result.Taint.Clone(),
-		Context:              handed,
+		Context:              h.handed,
+		Directed:             h.directed,
 	})
-	report := delegateReport(delegate, call.ID, run)
+	report = delegateReport(delegate, call.ID, run)
 	if run.ExternalContent {
 		t.external = true
 	}
@@ -326,7 +364,7 @@ func (s *Service) delegate(t *Turn, fx TurnEffects, call serviceports.ToolCall) 
 		Data:  report,
 	})
 
-	return delegateOutcome(report)
+	return delegateOutcome(report), report
 }
 
 // ReserveCallIDs marks tool call ids as taken, so a provider that reuses one
@@ -368,8 +406,8 @@ func usedCallIDsOf(messages []conversation.Message) []string {
 func (t *Turn) delegateFor(
 	arguments map[string]any,
 ) (agentdefinition.RuntimeDelegate, string, string) {
-	raw := strings.TrimSpace(stringArg(arguments, "agentId"))
-	task := strings.TrimSpace(stringArg(arguments, "task"))
+	raw := strings.TrimSpace(stringArg(arguments, delegateAgentParam))
+	task := strings.TrimSpace(stringArg(arguments, delegateTaskParam))
 
 	switch {
 	case raw == "":
@@ -377,10 +415,10 @@ func (t *Turn) delegateFor(
 	case task == "":
 		return agentdefinition.RuntimeDelegate{}, "", "task is required: say what the agent " +
 			"should do and what to hand back."
-	case utf8.RuneCountInString(task) > maxDelegateTaskRunes:
+	case utf8.RuneCountInString(task) > MaxDelegateTaskRunes:
 		return agentdefinition.RuntimeDelegate{}, "", fmt.Sprintf(
 			"task is longer than %d characters. Say what to do and what to hand back, "+
-				"with only the names, ids and figures it needs.", maxDelegateTaskRunes,
+				"with only the names, ids and figures it needs.", MaxDelegateTaskRunes,
 		)
 	}
 

@@ -276,4 +276,8 @@ type View struct {
 	Summary   *Summary   `json:"summary"`
 	Checklist *Checklist `json:"checklist,omitempty"`
 	Parties   []Party    `json:"parties"`
+	// Abilities says, for each step the checklist offers, whether the
+	// conversation's agent can take it, another agent the person may use
+	// can, or only the person on the page where it is done.
+	Abilities map[StepKey]StepAbility `json:"abilities,omitempty"`
 }

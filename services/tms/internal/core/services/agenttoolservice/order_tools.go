@@ -153,7 +153,9 @@ func orderResult(action string, entity *order.Order) *agent.ToolExecutionResult 
 }
 
 func orderMoneyProperty(what string) map[string]any {
-	return amountProperty(what + ", as a decimal such as 1250.00. An empty string clears it.")
+	return toolschema.EmptyClears(
+		amountProperty(what + ", as a decimal such as 1250.00. An empty string clears it."),
+	)
 }
 
 func orderProperties(customerRequired bool) map[string]any {

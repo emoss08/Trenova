@@ -113,7 +113,9 @@ func (s *Service) draft(ctx context.Context, in *draftInput) (*draft, error) {
 // that could not run, or that points the write at another record, is
 // refused. Without changes, a tool that checks its own arguments is asked,
 // and a call that would fail is a warning rather than a refusal: the person
-// is shown what was proposed and why it would not run.
+// is shown what was proposed and why it would not run. Every path reads the
+// values as the executor will (proposalexecutor.CoerceParams), so a preview
+// of a stored or typed value never differs from what runs on approval.
 func (s *Service) settleParams(
 	ctx context.Context,
 	tool services.AgentTool,
@@ -121,7 +123,7 @@ func (s *Service) settleParams(
 ) (map[string]any, []agent.PreviewWarning, error) {
 	proposal := in.proposal
 	if in.params != nil {
-		return in.params, nil, nil
+		return proposalexecutor.CoerceParams(tool, in.params), nil, nil
 	}
 
 	changed := toolschema.Changed(proposal.ToolParams, in.modifications)
@@ -139,7 +141,7 @@ func (s *Service) settleParams(
 		return params, nil, nil
 	}
 
-	params := maps.Clone(proposal.ToolParams)
+	params := proposalexecutor.CoerceParams(tool, maps.Clone(proposal.ToolParams))
 	validator, validates := tool.(services.ToolValidator)
 	if !validates {
 		return params, nil, nil

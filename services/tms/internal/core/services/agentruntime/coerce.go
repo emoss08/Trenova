@@ -30,20 +30,43 @@ func coerceArguments(schema, args map[string]any) (map[string]any, []argumentCoe
 
 // coercionNote tells the model what was read differently from how it was
 // sent, so the next call is sent right and the note stops appearing.
+//
+// Parameters left out for being empty are named together on a line of their
+// own: a model that fills every parameter sends five of them at once, and a
+// note per parameter would push the readings that matter past the cap.
 func coercionNote(coercions []argumentCoercion) string {
 	if len(coercions) == 0 {
 		return ""
 	}
-	notes := make([]string, 0, min(len(coercions), maxCoercionsNoted))
-	for _, coercion := range coercions[:min(len(coercions), maxCoercionsNoted)] {
-		notes = append(notes, coercion.Note)
-	}
-	text := "Arguments were read as the tool declares them: " + strings.Join(notes, "; ")
-	if len(coercions) > maxCoercionsNoted {
-		text += fmt.Sprintf("; and %d more", len(coercions)-maxCoercionsNoted)
+	omitted := make([]string, 0, len(coercions))
+	read := make([]argumentCoercion, 0, len(coercions))
+	for _, coercion := range coercions {
+		if coercion.Omitted {
+			omitted = append(omitted, coercion.Path)
+
+			continue
+		}
+		read = append(read, coercion)
 	}
 
-	return text + ". Send them that way from now on."
+	parts := make([]string, 0, 2)
+	if len(read) > 0 {
+		notes := make([]string, 0, min(len(read), maxCoercionsNoted))
+		for _, coercion := range read[:min(len(read), maxCoercionsNoted)] {
+			notes = append(notes, coercion.Note)
+		}
+		text := "Arguments were read as the tool declares them: " + strings.Join(notes, "; ")
+		if len(read) > maxCoercionsNoted {
+			text += fmt.Sprintf("; and %d more", len(read)-maxCoercionsNoted)
+		}
+		parts = append(parts, text+". Send them that way from now on.")
+	}
+	if len(omitted) > 0 {
+		parts = append(parts, "Left out because they were empty: "+strings.Join(omitted, ", ")+
+			". Leave out a parameter you have no value for instead of sending it empty.")
+	}
+
+	return strings.Join(parts, " ")
 }
 
 // argumentNote is everything the runtime changed about a call's arguments

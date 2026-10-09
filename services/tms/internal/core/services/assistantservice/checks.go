@@ -2,6 +2,7 @@ package assistantservice
 
 import (
 	"context"
+	"strings"
 	"sync"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -10,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 // turnChecks is everything a question is checked against and read with
@@ -27,6 +30,9 @@ type turnChecks struct {
 	allowanceErr  error
 	roomErr       error
 
+	directed    *services.DirectedTask
+	directedErr error
+
 	history    []conversation.Message
 	historyErr error
 
@@ -43,6 +49,7 @@ func (c *turnChecks) err() error {
 		c.definitionErr,
 		c.pageErr,
 		c.budgetErr,
+		c.directedErr,
 		c.planErr,
 		c.allowanceErr,
 		c.roomErr,
@@ -84,6 +91,9 @@ func (s *Service) checkTurn(
 		}
 	})
 	wg.Go(func() {
+		checks.directed, checks.directedErr = s.directedTask(ctx, thread, actor, req)
+	})
+	wg.Go(func() {
 		checks.pageErr = s.assertPageTurn(ctx, thread, page, actor)
 	})
 	wg.Go(func() {
@@ -120,9 +130,20 @@ func (s *Service) usableDefinition(
 	actor *services.RequestActor,
 	req *services.SendMessageRequest,
 ) (*agentdefinition.Definition, error) {
+	return s.usableAgent(ctx, thread.AgentDefinitionID, actor, req.TenantInfo)
+}
+
+// usableAgent is an agent the person may talk to: enabled, a chat agent,
+// and one their roles give them.
+func (s *Service) usableAgent(
+	ctx context.Context,
+	id pulid.ID,
+	actor *services.RequestActor,
+	tenant pagination.TenantInfo,
+) (*agentdefinition.Definition, error) {
 	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
-		ID:         thread.AgentDefinitionID,
-		TenantInfo: req.TenantInfo,
+		ID:         id,
+		TenantInfo: tenant,
 	})
 	if err != nil {
 		return nil, err
@@ -140,4 +161,36 @@ func (s *Service) usableDefinition(
 	}
 
 	return definition, nil
+}
+
+// directedTask is the agent the person handed the message to, checked as
+// one they may talk to and whose budget is not spent. The conversation's
+// agent need not list it: the person chose it, not the agent. Nil when the
+// message is the conversation's own.
+func (s *Service) directedTask(
+	ctx context.Context,
+	thread *conversation.Thread,
+	actor *services.RequestActor,
+	req *services.SendMessageRequest,
+) (*services.DirectedTask, error) {
+	if req.DirectedAgentID.IsNil() {
+		return nil, nil //nolint:nilnil // no other agent was chosen
+	}
+	if req.DirectedAgentID == thread.AgentDefinitionID {
+		return nil, errortypes.NewValidationError("directedAgentId", errortypes.ErrInvalid,
+			"This conversation's agent takes the message itself; send it without naming one")
+	}
+
+	definition, err := s.usableAgent(ctx, req.DirectedAgentID, actor, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	if err = s.assertWithinBudget(ctx, definition); err != nil {
+		return nil, err
+	}
+
+	return &services.DirectedTask{
+		Delegate: definition.AsDelegate(),
+		Task:     strings.TrimSpace(req.Content),
+	}, nil
 }

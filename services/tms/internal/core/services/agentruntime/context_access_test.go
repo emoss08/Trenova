@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -34,6 +35,18 @@ func (s *listedDefinitions) ListByIDs(
 	}
 
 	return found, nil
+}
+
+func (s *listedDefinitions) List(
+	_ context.Context,
+	_ *repositories.ListAgentDefinitionRequest,
+) (*pagination.ListResult[*agentdefinition.Definition], error) {
+	items := make([]*agentdefinition.Definition, 0, len(s.byID))
+	for _, definition := range s.byID {
+		items = append(items, definition)
+	}
+
+	return &pagination.ListResult[*agentdefinition.Definition]{Items: items, Total: len(items)}, nil
 }
 
 type toollessRuntime struct {

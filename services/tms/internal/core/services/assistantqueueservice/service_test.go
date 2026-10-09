@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -533,4 +534,69 @@ func TestSendNow_RefusesToSteerWithFiles(t *testing.T) {
 	_, err = h.svc.SendNow(t.Context(), &ItemRequest{Scope: h.scope, ID: queued.Item.ID})
 	assert.True(t, errortypes.IsBusinessError(err))
 	assert.Empty(t, h.workflows.signals)
+}
+
+// A step the person handed another agent is a task for that agent, never a
+// word to the reply under way: asked to steer, it waits in the queue instead.
+func TestEnqueue_AStepForAnotherAgentWaitsRatherThanSteers(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness()
+	h.running()
+	agentID := pulid.MustNew("agdef_")
+
+	outcome, err := h.svc.Enqueue(t.Context(), &EnqueueRequest{
+		Scope:   h.scope,
+		Content: "Mark shipment SEED-PAY-001 ready to invoice.",
+		Request: conversation.QueuedRequest{DirectedAgentID: agentID},
+		Steer:   true,
+	})
+
+	require.NoError(t, err)
+	assert.False(t, outcome.Steering)
+	require.NotNil(t, outcome.Item)
+	assert.False(t, outcome.Item.Steer)
+	assert.Equal(t, agentID, outcome.Item.Request.DirectedAgentID)
+	assert.Empty(t, h.workflows.signals)
+	assert.Empty(t, h.turns.started, "the reply under way still holds the conversation")
+}
+
+func TestSendNow_RefusesToSteerAStepForAnotherAgent(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness()
+	h.running()
+	queued, err := h.svc.Enqueue(t.Context(), &EnqueueRequest{
+		Scope:   h.scope,
+		Content: "Mark shipment SEED-PAY-001 ready to invoice.",
+		Request: conversation.QueuedRequest{DirectedAgentID: pulid.MustNew("agdef_")},
+	})
+	require.NoError(t, err)
+
+	_, err = h.svc.SendNow(t.Context(), &ItemRequest{Scope: h.scope, ID: queued.Item.ID})
+	assert.True(t, errortypes.IsBusinessError(err))
+	assert.Empty(t, h.workflows.signals)
+}
+
+// Sent once the conversation is free, the step still goes to the agent the
+// person handed it to.
+func TestEnqueue_AStepForAnotherAgentStartsItsTurnDirected(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness()
+	agentID := pulid.MustNew("agdef_")
+
+	outcome, err := h.svc.Enqueue(t.Context(), &EnqueueRequest{
+		Scope:   h.scope,
+		Content: "Mark shipment SEED-PAY-001 ready to invoice.",
+		Request: conversation.QueuedRequest{DirectedAgentID: agentID},
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, outcome.Turn)
+	require.Len(t, h.workflows.starts, 1)
+	payload, ok := h.workflows.starts[0].(*assistantjobs.AssistantTurnPayload)
+	require.True(t, ok, "the turn's workflow is started with its payload")
+	assert.Equal(t, agentID, payload.Request.DirectedAgentID)
+	assert.Equal(t, "Mark shipment SEED-PAY-001 ready to invoice.", payload.Content)
 }

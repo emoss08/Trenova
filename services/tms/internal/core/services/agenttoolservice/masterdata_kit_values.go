@@ -16,7 +16,7 @@ func masterOptionalIDPointer[T any](
 	return masterField[T]{
 		key: key,
 		property: func(update bool) map[string]any {
-			return stringProperty(description+keepSuffix(update, true), 0)
+			return clearable(update, true, stringProperty(description+keepSuffix(update, true), 0))
 		},
 		apply: func(_ context.Context, in *masterInput, entity *T) error {
 			id, err := optionalMasterID(in, key)
@@ -67,8 +67,8 @@ func masterNullDecimal[T any](
 	return masterField[T]{
 		key: key,
 		property: func(update bool) map[string]any {
-			return stringProperty(description+" A decimal such as 2.35."+
-				keepSuffix(update, true), 0)
+			return clearable(update, true, stringProperty(description+" A decimal such as 2.35."+
+				keepSuffix(update, true), 0))
 		},
 		apply: func(_ context.Context, in *masterInput, entity *T) error {
 			value, present, err := optionalDecimal(in.values, key)

@@ -191,7 +191,7 @@ Keywords: case, cases, link conversation to shipment, attach invoice, open a cas
 Keywords: case, ready to bill, ready to close, checklist, next step, POD, rate confirmation, paperwork, billing checklist, what's left
 1. Open the case's conversation from [Desk](/desk). The card above the message box shows the checklist: **Ready to bill** for a shipment, **Ready to close** for an invoice, with how many steps are done out of how many.
 2. Select the checklist name to open it. Each step shows whether it is done, holding the record up, or waiting on something outside your control, with a line saying why (for example, which carrier has not confirmed the rate confirmation).
-3. Select the button for the next step, for example **Request POD**, **Chase the rate confirmation**, **Mark ready to invoice** or **Send invoice**. It asks the case's agent to take that step, worded as your own message. A step that is holding the record up has its own button in the open checklist too.
+3. Select the button for the next step, for example **Request POD**, **Chase the rate confirmation**, **Mark ready to invoice** or **Send invoice**. It asks the case's agent to take that step, worded as your own message. If that agent can't take it but another agent you may use can, the same button hands the step to that agent right here in the conversation; point at the button to see which agent takes it. If no agent you may use can take it, the button opens the page where you do it yourself. A step that is holding the record up has its own button in the open checklist too.
 4. For a step your team added that a person ticks off, select its box in the checklist to tick it or untick it.
 
 ### Snooze a case
@@ -213,6 +213,33 @@ Keywords: case, wrong shipment, change record, unlink, remove case, move case
 1. Open the case's conversation and select **Case** in the bar at the top.
 2. To point it at a different record, select **Move to another record** and pick the record.
 3. To make it an ordinary conversation again, select **Stop treating this as a case**. The conversation stays; it is just no longer about the record.
+
+### Choose which steps a case checklist shows
+Keywords: case checklist, ready to bill checklist, ready to close checklist, required steps, optional step, turn off step, customer does not want notification, billing checklist settings
+1. On [Desk](/desk), open **Settings** from the bottom of the sidebar and select **Case checklists** under **Organization**. You need read access to billing control to see it, and update access to change it.
+2. Choose **Ready to bill** (shipments) or **Ready to close** (invoices), then **Every customer** for your organization's checklist.
+3. Under **Steps you set**, choose **Required**, **Optional** or **Off** for each step. A required step keeps the record from being ready; an optional one is shown and ticked but never blocks; one that is off is not shown.
+4. Steps under **Always required** follow rules kept elsewhere, such as the customer's billing profile or billing control, and stay required.
+5. Select **Save changes** in the bar at the bottom, or **Discard** to drop your changes.
+
+### Put a case checklist's steps in order
+Keywords: reorder checklist, step order, move step, drag step
+1. In **Settings** › **Case checklists**, open the checklist and select **Reorder**.
+2. Drag a step by its handle, or focus the handle and press the up or down arrow to move it one place. Steps that are always required can be moved too.
+3. Select **Done**, then **Save changes**.
+
+### Add a step of your own to a case checklist
+Keywords: custom checklist step, add step, manual tick, document step, lumper receipt
+1. In **Settings** › **Case checklists**, open the checklist and select **Add a step**.
+2. Give it a **Name** and choose **What ticks it**: **A person on the case**, who ticks it on the case, or **A document on file**, which ticks it once an accepted copy of the chosen **Document type** is attached to the shipment.
+3. Under **When it's the next step**, optionally set the **Button** and **What it asks the agent**. The preview shows the button as the case will draw it.
+4. Select **Done**, then **Save changes**. A checklist can have up to 12 steps of your own.
+
+### Give a customer its own case checklist
+Keywords: customer checklist, per customer steps, customer bills differently
+1. In **Settings** › **Case checklists**, select **Add a customer** and find the customer. Its checklist starts as a copy of your organization's.
+2. Change its steps, then select **Save checklist**.
+3. To send the customer back to your organization's checklist, open it and select **Remove this checklist**, then select it again to confirm. **Go back to the default** does the same for your organization's own checklist.
 
 ### Hand a conversation to another agent
 Keywords: hand off, handoff, transfer, pass to another agent, switch agent keep context
@@ -364,9 +391,9 @@ A long conversation eventually becomes read-only; select **Start a new conversat
 - An agent can wait on up to ten things in one conversation. A wait gives up after a day unless the agent sets a longer limit (at most a week); either way the agent picks the task back up and is told it ran out. If the thing has already happened, the agent acts on it right away.
 - A case is in one of four states, shown on its card, in its menu and beside the conversation in the rail. **Working**: nothing is put off. Waiting: on something such as **Waiting on the customer**, **Waiting on the carrier** or **Waiting on a reply**. **Snoozed**: put away until a time, the next appointment or the ETA. **Settled**: the record is closed. A shipment settles once it is invoiced or canceled, not when it delivers, because the ready-to-bill work comes after delivery; an invoice once it is paid or voided; a dispute once it is resolved or withdrawn.
 - A case's state is worked out each time you look, so a payment recorded elsewhere settles its invoice's case on its own. Snoozed and settled cases sit on their own **Snoozed** and **Settled** shelves in the rail; a snoozed case comes back on time, or sooner when something the agent was waiting on arrives. A conversation started from a shipment, invoice or dispute is a case from the start.
-- Which steps a case checklist shows, and whether each is required or optional, is set on [Case checklists](/billing/configuration-files/case-checklists); a customer can have its own. A ticked step belongs to the record, so everyone working a case about the same shipment or invoice sees it.
+- Which steps a case checklist shows, their order, and whether each is required or optional, are set in **Settings** › **Case checklists** on the Desk; a customer can have its own. A ticked step belongs to the record, so everyone working a case about the same shipment or invoice sees it.
 - If a record the agent was working with changes elsewhere during its turn, a note headed **Changed while the agent was working** lists what changed, and the agent reads those records again before relying on them.
-- An agent can hand a task only to the agents chosen for it in [AI control](/admin/agent-control), and only ones you may use. That agent works as you, its changes still wait for your approval, and it cannot pass the work on again. Hand-off goes to another agent, not to another person.
+- An agent can hand a task only to the agents chosen for it in [AI control](/admin/agent-control), and only ones you may use. A case step you hand to another agent with its button needs only that you may use that agent. That agent works as you, its changes still wait for your approval, and it cannot pass the work on again. Hand-off goes to another agent, not to another person.
 - Anything an agent produces lands in the workspace: tables, reports, record cards, documents, email drafts, plans, read documents, decisions and billing items. With **Open new artifacts** set to **Right away**, a new item opens as it arrives; otherwise a dot on **Workspace** marks something new.
 - Billing actions on a billing item are your own and need billing queue permissions. The agent never approves or posts an invoice on its own.
 - Desk settings and chapters are kept in this browser; they do not follow you to another browser or computer.

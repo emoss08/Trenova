@@ -353,6 +353,8 @@ export type TurnContext = {
   followUp?: boolean;
   /** When the turn began, in epoch milliseconds; now when not given. */
   startedAt?: number;
+  /** The agent the person handed the message to, in place of the conversation's own. */
+  directedAgentId?: string;
 };
 
 export function initialTurnState(

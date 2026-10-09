@@ -291,14 +291,9 @@ func (b *ContextBuilder) delegates(
 		if !ok || definition.DelegateRefusal(delegate) != "" || !usable.Allows(delegate) {
 			continue
 		}
-		delegates = append(delegates, agentdefinition.RuntimeDelegate{
-			ID:          delegate.ID,
-			Name:        delegate.Name,
-			Description: delegate.Description,
-			Icon:        delegate.ChosenIcon(),
-			Accent:      delegate.ResolvedAccent(),
-			Tools:       b.delegateTools(ctx, req.Actor, delegate),
-		})
+		named := delegate.AsDelegate()
+		named.Tools = b.delegateTools(ctx, req.Actor, delegate)
+		delegates = append(delegates, named)
 	}
 
 	return delegates

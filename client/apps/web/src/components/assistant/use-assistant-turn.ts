@@ -535,6 +535,7 @@ export function useAssistantTurn(
                   providerId,
                   attachmentDocumentIds: attachments,
                   mentions: extras.mentions ?? [],
+                  directedAgentId: extras.directedAgentId,
                 },
                 { signal: startSignal },
               ),

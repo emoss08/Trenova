@@ -78,6 +78,7 @@ func (p *AssistantTurnPayload) sendRequest() *serviceports.SendMessageRequest {
 		FollowUpProposalID:    p.Request.FollowUpProposalID,
 		FollowUpPlanID:        p.Request.FollowUpPlanID,
 		ResumeWaitID:          p.Request.ResumeWaitID,
+		DirectedAgentID:       p.Request.DirectedAgentID,
 	}
 }
 
@@ -94,6 +95,9 @@ type AssistantTurnRequest struct {
 	// ResumeWaitID asks for the turn that picks up work the agent parked on
 	// a wait, in place of content.
 	ResumeWaitID pulid.ID `json:"resumeWaitId,omitempty"`
+	// DirectedAgentID hands the message to another agent the person chose,
+	// run from this conversation in place of its own agent's reply.
+	DirectedAgentID pulid.ID `json:"directedAgentId,omitempty"`
 	// Awaited says the request that asked is waiting for the turn's result
 	// rather than reading its stream. That caller has the reply as soon as
 	// the turn ends, so nobody is told later that it is ready.

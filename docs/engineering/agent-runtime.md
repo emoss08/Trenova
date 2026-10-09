@@ -76,7 +76,13 @@ over a `Turn`) from workflow code, through the `TurnEffects` seam:
   outside an enum, a wrong type, a missing nested value) is refused with one
   `path: message` line per problem and "Fix the call and send it again". The
   refusal is a failed call: it spends the tool budget and arms the repeat
-  guard. Schemas are compiled once per tool (`toolschema.Validator`); every
+  guard. The guard answers an identical failed call with the first failure
+  instead of running it; once a turn has sent failed calls again unchanged
+  twice (`maxRepeatedFailures`), it stops calling tools, answers any other
+  call in that batch as not run, and asks for an answer without tools under
+  `stuckNote`, which says to tell the person what was refused and what they
+  can do instead (`agent-loop-stop-on-repeats`; `stuckReply` when that answer
+  cannot be had). Schemas are compiled once per tool (`toolschema.Validator`); every
   object in a tool's schema is closed and every enum names its source
   (`agenttoolschema.Enum`, `x-enumOf`, stripped by `toolschema.ForModel`),
   which `agenttoolpolicy/schema_contract_test.go` holds. A tool that
@@ -906,13 +912,24 @@ reading is certain: a numeral sent as text becomes the number, a number sent
 for a text amount becomes its text, a lone value for a list becomes a list of
 one, comma-separated text becomes its parts, `{"item": [...]}` becomes the
 list, `"true"` becomes true, an enum value in another case becomes the
-declared spelling, and a null for an optional parameter is dropped. The
+declared spelling, and a null for an optional parameter is dropped. An
+optional parameter sent as `""` or as a list of nothing is read as not sent,
+and blank entries in a list of text are set aside: several models fill every
+parameter a tool declares, and a transfer that named one shipment also sent an
+empty customer and search beside it, which the tool read as filters given. A
+parameter whose empty value is itself a request (an update that clears a
+field) is marked `toolschema.EmptyClears` and keeps it; the master data kit
+(`clearable`), order amounts, `update_invoice_draft` and
+`update_service_failure` mark theirs. What was left out is told back on one
+line ("Left out because they were empty: …"). The
 readings live in `toolschema.Coerce`, and the proposal executor makes the same
 ones (`proposalexecutor.CoerceParams`) on a proposal's parameters with the
 approver's changes laid over them, before they are checked and run: the
 approval editor sends what a person typed (`30`, `2026-10-01 08:00`), and a
 proposal filed before a parameter's shape was asserted carries what the model
-sent. Nothing is told back there; what runs is what was read. The id checks
+sent. The preview a person approves from reads them the same way
+(`proposalpreviewservice.settleParams`), so what is shown is what runs.
+Nothing is told back there; what runs is what was read. The id checks
 below stay in the runtime.
 
 Dates and times come in three shapes, each from one helper in
@@ -920,7 +937,8 @@ Dates and times come in three shapes, each from one helper in
 every tool: `Date` (`date`, YYYY-MM-DD), `DateTime` (`date-time`, RFC 3339 with
 its offset) and `LocalDateTime` (`local-date-time`, YYYY-MM-DDTHH:MM with no
 zone, read in the timezone of where it happens). `pkg/toolschema` asserts all
-three (an empty string passes, since several tools read it as "clear it") and
+three (an empty string passes for a parameter marked `EmptyClears`; elsewhere
+it never reaches the format, being read as not sent) and
 refuses a value of another shape in one sentence naming the shape and an
 example. Midnight UTC sent for a day becomes the day, and a local time written
 with a space or with seconds becomes its minute; a number is never read as a

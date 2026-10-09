@@ -132,6 +132,10 @@ type RunRequest struct {
 	// records the person named. A turn it hands a task to reads their
 	// memories too.
 	Records []agent.EntityRef
+	// Directed is a task the person handed straight to another agent from
+	// this conversation. The turn runs that agent on it instead of asking
+	// its own model.
+	Directed *DirectedTask
 
 	UsagePurpose AIUsagePurpose
 }
@@ -157,6 +161,13 @@ type Delegation struct {
 	// delegated, in the ledger both share. It is derived from what the
 	// delegating model asked for, never from a provider's call id.
 	StepScope string `json:"stepScope"`
+}
+
+// DirectedTask is a task the person gave another agent from inside a
+// conversation, checked as theirs to give before the turn opens.
+type DirectedTask struct {
+	Delegate agentdefinition.RuntimeDelegate `json:"delegate"`
+	Task     string                          `json:"task"`
 }
 
 // Scope is how the turn's events and saved steps are tagged.

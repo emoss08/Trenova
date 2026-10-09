@@ -60,6 +60,9 @@ type Params struct {
 	// Metrics is optional. With it every tool call is counted by tool and by
 	// what became of it; without it nothing is counted.
 	Metrics *metrics.Registry `optional:"true"`
+	// Definitions is optional. With it a search for a tool the agent does not
+	// hold names the person's other agents that hold it.
+	Definitions repositories.AgentDefinitionRepository `optional:"true"`
 }
 
 type Service struct {
@@ -68,6 +71,7 @@ type Service struct {
 	queryTools  serviceports.AgentQueryToolRegistry
 	actionTools serviceports.AgentToolRegistry
 	permissions serviceports.PermissionEngine
+	definitions repositories.AgentDefinitionRepository
 	catalog     *agenttoolcatalog.Catalog
 	versions    serviceports.RecordVersionReader
 	budgets     serviceports.AgentBudgetService
@@ -93,6 +97,7 @@ func New(p Params) *Service {
 		queryTools:  p.QueryTools,
 		actionTools: p.ActionTools,
 		permissions: p.Permissions,
+		definitions: p.Definitions,
 		catalog:     p.Catalog,
 		versions:    p.Versions,
 		budgets:     p.Budgets,
@@ -138,11 +143,15 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 
 	t.announceOpened(fx)
 	t.announceMemories(fx)
+	if t.directed != nil {
+		return s.driveDirected(t, fx), nil
+	}
 
 	retries := 0
 	asked := false
+	stuck := false
 	grounding := groundingState{}
-	for result.ToolCallsUsed < budget {
+	for result.ToolCallsUsed < budget && !stuck {
 		s.interject(t, fx)
 		reply, err := fx.Complete(t, t.completionRequest())
 		result.Usage = result.Usage.Add(reply.usage())
@@ -396,6 +405,16 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 				s.recordToolResult(t, fx, call, outcome)
 				continue
 			}
+			if stuck {
+				s.recordToolResult(t, fx, call, refusedOutcome(
+					aitrace.OutcomeDuplicate,
+					"the turn stopped calling tools after repeated failed calls",
+					"%s",
+					stoppedCallText(call.Name),
+				))
+				continue
+			}
+
 			// A tool the agent holds but was not sent runs anyway — the
 			// configuration is the grant, disclosure only decides what was
 			// shown — and is loaded, so the next request carries its schema.
@@ -410,6 +429,9 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 				)
 				result.ToolCallsUsed++
 				s.recordToolResult(t, fx, call, outcome)
+				if t.repeats.refused() && fx.Supports(changeStopOnRepeats) {
+					stuck = true
+				}
 				continue
 			}
 
@@ -459,8 +481,12 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 		)
 	}
 
+	note, ending := budgetSpentNote, exhaustedReply
+	if stuck {
+		note, ending = stuckNote, stuckReply
+	}
 	if fx.Supports(changeFinalAnswer) {
-		if final := s.finalAnswer(t, fx, result); final != nil {
+		if final := s.finalAnswer(t, fx, result, note); final != nil {
 			grounding.rewritten = true
 			s.reground(t, fx, final, &grounding)
 			s.passReply(t, fx, final)
@@ -470,13 +496,13 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 	}
 
 	result.Exhausted = true
-	result.Reply = exhaustedReply
+	result.Reply = ending
 	result.Messages = append(result.Messages, conversation.Message{
 		Role:      conversation.RoleAssistant,
-		Content:   exhaustedReply,
+		Content:   ending,
 		CreatedAt: fx.Now(),
 	})
-	fx.Emit(deltaEvent(exhaustedReply))
+	fx.Emit(deltaEvent(ending))
 
 	return result, nil
 }
@@ -499,12 +525,13 @@ func (s *Service) finalAnswer(
 	t *Turn,
 	fx TurnEffects,
 	result *serviceports.RunResult,
+	note string,
 ) *serviceports.ChatCompletionResult {
 	req := t.completionRequest()
 	req.Tools = nil
 	req.Messages = append(slices.Clone(req.Messages), serviceports.Message{
 		Role:    serviceports.RoleUser,
-		Content: budgetSpentNote,
+		Content: note,
 	})
 
 	reply, err := fx.Complete(t, req)

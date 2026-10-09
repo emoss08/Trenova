@@ -193,13 +193,12 @@ func TestTransferToBilling_RefusesNeitherOrBothSelections(t *testing.T) {
 	tool := newTransferToBillingTool(&fakeTransferPlanner{}, &fakeRunStarter{}).(*transferToBillingTool)
 
 	for name, params := range map[string]map[string]any{
-		"neither":             {paramBillType: "Invoice"},
-		"all turned off":      {paramAllTransferable: false},
-		"both":                {paramShipmentIDs: shipmentIDs(1), paramAllTransferable: true},
-		"filters without all": {paramShipmentIDs: shipmentIDs(1), billingtransfercriteria.ParamQuery: "x"},
-		"bad status":          {paramAllTransferable: true, billingtransfercriteria.ParamStatus: "InTransit"},
-		"bad day":             {paramAllTransferable: true, billingtransfercriteria.ParamDeliveredFrom: "soon"},
-		"bad customer":        {paramAllTransferable: true, billingtransfercriteria.ParamCustomerID: "acme"},
+		"neither":        {paramBillType: "Invoice"},
+		"all turned off": {paramAllTransferable: false},
+		"both":           {paramShipmentIDs: shipmentIDs(1), paramAllTransferable: true},
+		"bad status":     {paramAllTransferable: true, billingtransfercriteria.ParamStatus: "InTransit"},
+		"bad day":        {paramAllTransferable: true, billingtransfercriteria.ParamDeliveredFrom: "soon"},
+		"bad customer":   {paramAllTransferable: true, billingtransfercriteria.ParamCustomerID: "acme"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
@@ -212,6 +211,11 @@ func TestTransferToBilling_RefusesNeitherOrBothSelections(t *testing.T) {
 		"all":              {paramAllTransferable: true},
 		"all with filters": {paramAllTransferable: true, billingtransfercriteria.ParamStatus: "Completed"},
 		"ids":              {paramShipmentIDs: shipmentIDs(2)},
+		"ids with the filters they were found by": {
+			paramShipmentIDs:                    shipmentIDs(1),
+			billingtransfercriteria.ParamQuery:  "SEED-PAY-001",
+			billingtransfercriteria.ParamStatus: "Completed",
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
@@ -235,4 +239,47 @@ func TestTransferToBilling_OffersTheCandidateFiltersToSelectEverythingThatCanGo(
 	assert.NotContains(t, schema, toolschema.KeyRequired,
 		"either selection is enough, and Validate refuses neither")
 	assert.Contains(t, tool.Description(), "allTransferable")
+}
+
+/*
+A model that found its shipment with list_billing_transfer_candidates sent
+the search and the status back beside the id, and the transfer refused it
+for naming filters that only narrow allTransferable, every time, until the
+turn's budget was spent. The filters cannot widen what the ids name, so they
+are set aside and the proposal holds only the shipments named.
+*/
+func TestTransferToBilling_SetsAsideTheFiltersANamedSelectionWasFoundBy(t *testing.T) {
+	t.Parallel()
+
+	sel := newTransferSelection()
+	named := sel.ready.String()
+
+	resolved, err := sel.tool.ResolveSelection(t.Context(), executeParams(map[string]any{
+		paramShipmentIDs:                    []any{named},
+		paramMarkCompletedReady:             true,
+		billingtransfercriteria.ParamQuery:  "SEED-PAY-001",
+		billingtransfercriteria.ParamStatus: "Completed",
+	}))
+	require.NoError(t, err)
+
+	assert.Equal(t, map[string]any{
+		paramShipmentIDs:        []any{named},
+		paramMarkCompletedReady: true,
+	}, resolved)
+	assert.Nil(t, sel.planner.listed, "a named selection is never widened by its filters")
+}
+
+func TestTransferToBilling_ARefusalForBothSelectionsShowsBothCalls(t *testing.T) {
+	t.Parallel()
+
+	sel := newTransferSelection()
+
+	_, err := sel.tool.ResolveSelection(t.Context(), executeParams(map[string]any{
+		paramShipmentIDs:     []any{sel.ready.String()},
+		paramAllTransferable: true,
+	}))
+
+	require.ErrorIs(t, err, errBothSelections)
+	assert.Contains(t, err.Error(), "send shipmentIds without allTransferable")
+	assert.Contains(t, err.Error(), "send allTransferable true with the filters")
 }
