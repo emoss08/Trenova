@@ -44,8 +44,8 @@ Keywords: add LLM, model endpoint, OpenAI, API key, gateway, self-hosted model, 
 5. Paste the **Key** under **API key** when the provider needs one.
 6. Under **What it handles**, choose the tasks. **When you save** lists every task whose provider
    changes.
-7. Select **Test draft**. When it connects, the save button reads **Add and turn on**; otherwise
-   **Add provider** saves it off until it passes.
+7. Select **Test draft**, then **Save & close**. A provider whose test connected is saved turned
+   on; one that has not passed a test is saved off until it does.
 
 ### Order providers and route tasks
 Keywords: provider priority, fallback, routing, which provider, reorder providers, assign task
@@ -83,8 +83,8 @@ Keywords: embeddings, embedding model, semantic search, search by meaning, vecto
    separate provider. Anthropic has no embedding endpoint.
 4. Under **Advanced**, check **Vector size** matches what the model returns and set **Embedding
    input** to how the endpoint tells a stored document from a search query.
-5. Paste the key, select **Test draft**, then **Add and turn on**. The test asks for one embedding
-   and fails when the model returns a different size.
+5. Paste the key, select **Test draft**, then **Save & close**. The test asks for one embedding
+   and fails when the model returns a different size; a provider that fails is saved off.
 
 ### Let agents search the web
 Keywords: web search, internet, Exa, look up regulations, ELD rules, hours of service, current information, extension marketplace

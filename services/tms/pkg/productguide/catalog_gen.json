@@ -1,5 +1,5 @@
 {
-  "version": "sha256:8c345cd253d8f266fe900fcde3f4e0f0bc478e2df0a5fbd8288da9a07fcf6586",
+  "version": "sha256:88cbf231bebe4d1589aca344df7941f5dfb729559b184fad22203272be3c159b",
   "modules": [
     {
       "id": "home",
@@ -2354,7 +2354,7 @@
             "Under **Model**, select **Fetch models** to pick from what the endpoint actually serves, or type the **Model ID**.",
             "Paste the **Key** under **API key** when the provider needs one.",
             "Under **What it handles**, choose the tasks. **When you save** lists every task whose provider changes.",
-            "Select **Test draft**. When it connects, the save button reads **Add and turn on**; otherwise **Add provider** saves it off until it passes."
+            "Select **Test draft**, then **Save & close**. A provider whose test connected is saved turned on; one that has not passed a test is saved off until it does."
           ]
         },
         {
@@ -2425,7 +2425,7 @@
             "Select **New provider** and pick one of the embedding vendors: Voyage AI, Gemini, OpenAI, or Ollama for a model on your own hardware. It fills in the endpoint, the model and the **Embedding** task.",
             "An embedding model serves nothing else, so leave the other tasks under **What it handles** for a separate provider. Anthropic has no embedding endpoint.",
             "Under **Advanced**, check **Vector size** matches what the model returns and set **Embedding input** to how the endpoint tells a stored document from a search query.",
-            "Paste the key, select **Test draft**, then **Add and turn on**. The test asks for one embedding and fails when the model returns a different size."
+            "Paste the key, select **Test draft**, then **Save & close**. The test asks for one embedding and fails when the model returns a different size; a provider that fails is saved off."
           ]
         },
         {
@@ -3024,7 +3024,8 @@
           ],
           "steps": [
             "Open [Audit entries](/admin/audit-logs) and filter to the entries you need.",
-            "Select **Export to CSV** in the toolbar."
+            "Select **Export, print or schedule** in the toolbar.",
+            "Under **Destination**, choose **CSV** to download now, **Print** to print or save a PDF, **Report** to build it on the server with every matching row, or **Schedule** to send it regularly."
           ]
         }
       ],
