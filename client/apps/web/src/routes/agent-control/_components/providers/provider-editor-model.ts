@@ -48,6 +48,8 @@ const wholeIn = (range: { min: number; max: number }, message: () => string) =>
 
 export const providerEditorSchema = z
   .object({
+    /** The preset a new provider starts from; editing a saved one leaves it empty. */
+    preset: z.string(),
     name: z
       .string()
       .trim()
@@ -145,6 +147,7 @@ function extraBodyToText(value: unknown): string {
 /** A saved provider as its editor opens it. The key field starts empty: the secret never comes back. */
 export function editorValuesFromProvider(provider: AIProviderWithLimits): ProviderEditorValues {
   return {
+    preset: "",
     name: provider.name,
     description: provider.description,
     kind: provider.kind,
@@ -190,6 +193,7 @@ export function editorValuesFromPreset(
 ): ProviderEditorValues {
   const last = providers.reduce((most, provider) => Math.max(most, provider.priority), 0);
   return {
+    preset: preset.key,
     name: presetName(preset),
     description: "",
     kind: preset.kind,

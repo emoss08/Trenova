@@ -43,6 +43,10 @@ function values(overrides: Partial<ProviderEditorValues> = {}): ProviderEditorVa
 }
 
 describe("editorValuesFromPreset", () => {
+  it("remembers the preset it started from, so the panel shows it chosen", () => {
+    expect(editorValuesFromPreset(ANTHROPIC, []).preset).toBe("anthropic");
+  });
+
   it("joins the end of the chain, one step after the last provider", () => {
     expect(editorValuesFromPreset(ANTHROPIC, []).priority).toBe(10);
     expect(editorValuesFromPreset(ANTHROPIC, [{ priority: 30 }, { priority: 10 }]).priority).toBe(

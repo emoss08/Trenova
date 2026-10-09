@@ -1583,6 +1583,7 @@
   "When marked, from {0}": "标记时，来源：{0}",
   "When you save": "保存后",
   "Where it came from": "来源",
+  "Where it runs. Choosing one fills in its usual settings.": "运行的位置。选择一个即可填入其常用设置。",
   "Where it stops, however well it's going, and how it answers.": "无论进展多顺利它都会在哪里停下，以及它如何回答。",
   "Where requests go and which API answers them.": "请求的发送地址以及响应请求的 API。",
   "Where requests to this provider are sent.": "发往此提供商的请求的目标地址。",

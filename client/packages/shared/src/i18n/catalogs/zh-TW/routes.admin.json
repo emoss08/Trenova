@@ -457,6 +457,7 @@
   "Each extractor pulls a specific piece of data (name, address, date) from this stop.": "每個擷取器都會從此停靠點取得特定資料 (名稱、地址、日期)。",
   "Each payment waits on the payments from the books page until someone applies or ignores it.": "每筆付款都會在「帳簿中的付款」頁面等待，直到有人沖抵或忽略。",
   "Edit directory": "編輯目錄",
+  "Email address": "電子郵件地址",
   "Emails this user a single-use link to choose their own password. Their current password keeps working until they use it, and you never see the new one.": "以電子郵件寄送一次性連結給此使用者，讓其自行設定密碼。在使用該連結前，其目前的密碼仍可繼續使用，且您永遠不會看到新密碼。",
   "Embed a 2- or 4-digit year token.": "嵌入 2 位或 4 位數的年份權杖。",
   "Embed operational identity fields resolved at generation time.": "嵌入於產生時解析的營運識別欄位。",

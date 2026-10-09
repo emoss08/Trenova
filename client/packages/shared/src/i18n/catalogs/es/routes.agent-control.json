@@ -1583,6 +1583,7 @@
   "When marked, from {0}": "Cuando está marcado, de {0}",
   "When you save": "Al guardar",
   "Where it came from": "De dónde provino",
+  "Where it runs. Choosing one fills in its usual settings.": "Dónde se ejecuta. Al elegir uno se completan sus ajustes habituales.",
   "Where it stops, however well it's going, and how it answers.": "Dónde se detiene, por bien que vaya, y cómo responde.",
   "Where requests go and which API answers them.": "Adónde van las solicitudes y qué API las responde.",
   "Where requests to this provider are sent.": "Adónde se envían las solicitudes a este proveedor.",

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:88cbf231bebe4d1589aca344df7941f5dfb729559b184fad22203272be3c159b",
+  "version": "sha256:e134355a2e0c39c9bc45249ac562c69f86e8b31e60ef6f83ce7d5038d3c004ba",
   "modules": [
     {
       "id": "home",
@@ -2349,7 +2349,7 @@
           ],
           "steps": [
             "Open [AI control](/admin/agent-control) and select **Providers**.",
-            "Select **New provider** and pick the vendor, under **Hosted** or **On your network**. With no provider yet, pick it from **Connect a model to wake your agents**.",
+            "Select **New provider** (or press N), then choose the vendor under **Provider**, from **Hosted** or **On your network**; it fills in that vendor's usual settings. With no provider yet, pick it from **Connect a model to wake your agents**.",
             "Under **Connection**, check **Name**, **Kind** and **Base URL**. A base URL on your own network needs **Private network**; select **Turn on Private network** when the editor asks.",
             "Under **Model**, select **Fetch models** to pick from what the endpoint actually serves, or type the **Model ID**.",
             "Paste the **Key** under **API key** when the provider needs one.",
@@ -2422,7 +2422,7 @@
           ],
           "steps": [
             "Open [AI control](/admin/agent-control) and select **Providers**.",
-            "Select **New provider** and pick one of the embedding vendors: Voyage AI, Gemini, OpenAI, or Ollama for a model on your own hardware. It fills in the endpoint, the model and the **Embedding** task.",
+            "Select **New provider** and, under **Provider**, choose one of the embedding vendors: Voyage AI, Gemini, OpenAI, or Ollama for a model on your own hardware. It fills in the endpoint, the model and the **Embedding** task.",
             "An embedding model serves nothing else, so leave the other tasks under **What it handles** for a separate provider. Anthropic has no embedding endpoint.",
             "Under **Advanced**, check **Vector size** matches what the model returns and set **Embedding input** to how the endpoint tells a stored document from a search query.",
             "Paste the key, select **Test draft**, then **Save & close**. The test asks for one embedding and fails when the model returns a different size; a provider that fails is saved off."

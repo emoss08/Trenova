@@ -25670,15 +25670,6 @@
       "routes/worker"
     ]
   },
-  "Assembling": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/auth"
-    ]
-  },
   "Assertions": {
     "sites": 1,
     "scope": [
@@ -28362,15 +28353,6 @@
       "routes/edi"
     ]
   },
-  "Authorized": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/auth"
-    ]
-  },
   "Authorized roles": {
     "sites": 1,
     "scope": [
@@ -30141,7 +30123,7 @@
     ]
   },
   "Back to sign in": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -37499,6 +37481,15 @@
       "routes/shipment"
     ]
   },
+  "Caps lock": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Caps the contract places on a single stop, day, or shipment": {
     "sites": 1,
     "scope": [
@@ -42415,7 +42406,7 @@
     ]
   },
   "Choose a provider": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -50839,15 +50830,6 @@
       "routes/carrier"
     ]
   },
-  "Contacting network": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/auth"
-    ]
-  },
   "Contacts": {
     "sites": 4,
     "scope": [
@@ -51230,15 +51212,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Continue to Dash": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/auth"
     ]
   },
   "Continue verifying the AI audit trail's hash chain for the tenants left": {
@@ -56190,13 +56163,12 @@
     ]
   },
   "Credential": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "packages/shared/types",
-      "routes/auth",
       "routes/worker"
     ]
   },
@@ -59591,15 +59563,6 @@
     ],
     "areas": [
       "routes/dash-control"
-    ]
-  },
-  "Dash is where drivers see loads and pay.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/auth"
     ]
   },
   "Dashboard": {
@@ -71299,7 +71262,7 @@
     ]
   },
   "Driver": {
-    "sites": 45,
+    "sites": 44,
     "scope": [
       "go",
       "ts"
@@ -71310,7 +71273,6 @@
       "go/other",
       "packages/shared/lib",
       "routes/agent-control",
-      "routes/auth",
       "routes/desk",
       "routes/driver-expense",
       "routes/driver-pay-event",
@@ -76012,7 +75974,7 @@
     ]
   },
   "Email": {
-    "sites": 14,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -76024,6 +75986,7 @@
       "go/other",
       "packages/shared/lib",
       "packages/shared/types",
+      "routes/auth",
       "routes/carrier",
       "routes/worker"
     ]
@@ -76110,13 +76073,12 @@
     ]
   },
   "Email address": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
-      "routes/auth"
+      "routes/admin"
     ]
   },
   "Email address cannot be longer than 320 characters": {
@@ -79051,6 +79013,15 @@
       "apps/web/lib"
     ]
   },
+  "Enter the work email you were invited with.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Enter threshold in days": {
     "sites": 1,
     "scope": [
@@ -79177,15 +79148,6 @@
       "routes/desk"
     ]
   },
-  "Entering Trenova": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/auth"
-    ]
-  },
   "Entering a date marks the specimen as collected; leave it blank if it has not been taken yet.": {
     "sites": 1,
     "scope": [
@@ -79193,24 +79155,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Entering {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/auth"
-    ]
-  },
-  "Enterprise": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/auth"
     ]
   },
   "Entitlement": {
@@ -88570,6 +88514,15 @@
       "routes/carrier-monitoring"
     ]
   },
+  "Fair": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Fall back to formula template": {
     "sites": 1,
     "scope": [
@@ -91196,15 +91149,6 @@
     ],
     "areas": [
       "service/shipmentservice"
-    ]
-  },
-  "First time here? Use the invitation link your carrier sent you.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/auth"
     ]
   },
   "First value": {
@@ -96514,7 +96458,7 @@
     ]
   },
   "Good": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
@@ -96523,7 +96467,8 @@
       "apps/web/lib",
       "apps/web/types",
       "go/other",
-      "packages/shared/lib"
+      "packages/shared/lib",
+      "routes/auth"
     ]
   },
   "Good afternoon": {
@@ -98962,6 +98907,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Hide password": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
     ]
   },
   "Hide pinned rows": {
@@ -102147,6 +102101,15 @@
       "routes/admin"
     ]
   },
+  "If <b>{0}</b> has an account, a reset link is on its way. It works once and expires shortly, so use it soon.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "If something on a settlement looks wrong, flag it from the statement and it will show up here.": {
     "sites": 1,
     "scope": [
@@ -102154,15 +102117,6 @@
     ],
     "areas": [
       "apps/dash/routes"
-    ]
-  },
-  "If that address has an account, a reset link is on its way. The link works once and expires shortly, so use it soon.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/auth"
     ]
   },
   "If the driver arrives late": {
@@ -108350,14 +108304,13 @@
     ]
   },
   "Issued": {
-    "sites": 9,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "go/other",
-      "routes/auth",
       "routes/pay-advance",
       "routes/shipment",
       "routes/worker",
@@ -117779,15 +117732,6 @@
     ],
     "areas": [
       "routes/settlement-workspace"
-    ]
-  },
-  "Loads, settlement statements and pay — built for the phone.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/auth"
     ]
   },
   "Loan interest": {
@@ -129391,15 +129335,6 @@
       "apps/web/components"
     ]
   },
-  "Network operational": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/auth"
-    ]
-  },
   "Network signals": {
     "sites": 2,
     "scope": [
@@ -129416,15 +129351,6 @@
     ],
     "areas": [
       "routes/carrier-sourcing"
-    ]
-  },
-  "Network unreachable": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/auth"
     ]
   },
   "Nevada (NV)": {
@@ -139565,7 +139491,7 @@
       "routes/time-attendance"
     ]
   },
-  "Nothing arrived? Check spam, then try again — and confirm you used the address your administrator set the account up with.": {
+  "Nothing arrived? Check spam, then try again. Make sure it's the address your administrator set the account up with.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -142555,15 +142481,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Office": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/auth"
     ]
   },
   "Office furniture and equipment": {
@@ -147828,6 +147745,15 @@
       "go/other"
     ]
   },
+  "Opening Trenova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Opening a dispute requires an authenticated user": {
     "sites": 1,
     "scope": [
@@ -147913,6 +147839,15 @@
     ]
   },
   "Opening workspace": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
+  "Opening {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -159900,12 +159835,20 @@
     ]
   },
   "Please enter a valid email address": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/types",
+      "packages/shared/types"
+    ]
+  },
+  "Please enter a valid email address.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/auth"
     ]
   },
@@ -164818,7 +164761,7 @@
     ]
   },
   "Provider": {
-    "sites": 34,
+    "sites": 35,
     "scope": [
       "go",
       "ts"
@@ -176020,15 +175963,6 @@
       "apps/web/components"
     ]
   },
-  "Remembered it? Go back.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/auth"
-    ]
-  },
   "Remind drivers and compliance about expiring FMCSA credentials": {
     "sites": 1,
     "scope": [
@@ -181116,7 +181050,7 @@
       "service/apikeyservice"
     ]
   },
-  "Resource may hold letters, digits, dots, colons, dashes and underscores only": {
+  "Resource may hold letters, digits, spaces, dots, colons, dashes and underscores only": {
     "sites": 1,
     "scope": [
       "go"
@@ -201897,6 +201831,15 @@
       "routes/billing-queue"
     ]
   },
+  "Show password": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Show pinned rows": {
     "sites": 1,
     "scope": [
@@ -202464,7 +202407,7 @@
     ]
   },
   "Sign in": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -208761,12 +208704,13 @@
     ]
   },
   "Strong": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "packages/shared/types"
+      "packages/shared/types",
+      "routes/auth"
     ]
   },
   "Structured output": {
@@ -233218,6 +233162,15 @@
       "domain/shipmentbrief"
     ]
   },
+  "Too short": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Took": {
     "sites": 1,
     "scope": [
@@ -236004,7 +235957,7 @@
     ]
   },
   "Trenova": {
-    "sites": 12,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -241648,6 +241601,15 @@
       "routes/admin"
     ]
   },
+  "Use a different address": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Use a fallback when the current value is empty.": {
     "sites": 1,
     "scope": [
@@ -243703,7 +243665,7 @@
       "routes/worker"
     ]
   },
-  "Verifying code": {
+  "Verifying": {
     "sites": 1,
     "scope": [
       "ts"
@@ -243712,7 +243674,7 @@
       "routes/auth"
     ]
   },
-  "Verifying credentials": {
+  "Verifying code": {
     "sites": 1,
     "scope": [
       "ts"
@@ -247471,6 +247433,15 @@
       "packages/shared/components"
     ]
   },
+  "Weak": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Weather": {
     "sites": 4,
     "scope": [
@@ -248244,6 +248215,24 @@
     ],
     "areas": [
       "routes/onboarding"
+    ]
+  },
+  "Welcome back, {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
+  "Welcome back.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
     ]
   },
   "Welcome to Dash": {
@@ -250887,6 +250876,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Where it runs. Choosing one fills in its usual settings.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Where it stops, however well it's going, and how it answers.": {
@@ -263494,7 +263492,7 @@
     ]
   },
   "v{0}": {
-    "sites": 29,
+    "sites": 28,
     "scope": [
       "ts"
     ],
@@ -263502,7 +263500,6 @@
       "apps/web/components",
       "routes/admin",
       "routes/agent-control",
-      "routes/auth",
       "routes/desk",
       "routes/edi",
       "routes/formula-template",
@@ -263792,6 +263789,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "you@carrier.com": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
     ]
   },
   "you@example.com": {

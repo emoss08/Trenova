@@ -6596,7 +6596,7 @@
   "Resource cannot be longer than 100 characters": "El recurso no puede superar los 100 caracteres",
   "Resource is invalid": "El recurso no es válido",
   "Resource is required": "El recurso es obligatorio",
-  "Resource may hold letters, digits, dots, colons, dashes and underscores only": "El recurso solo puede contener letras, dígitos, puntos, dos puntos, guiones y guiones bajos",
+  "Resource may hold letters, digits, spaces, dots, colons, dashes and underscores only": "El recurso solo puede contener letras, dígitos, espacios, puntos, dos puntos, guiones y guiones bajos",
   "Resource type cannot be longer than 100 characters": "El tipo de recurso no puede superar los 100 caracteres",
   "Resource type cannot be longer than 80 characters": "El tipo de recurso no puede superar los 80 caracteres",
   "Resource type is required": "El tipo de recurso es obligatorio",

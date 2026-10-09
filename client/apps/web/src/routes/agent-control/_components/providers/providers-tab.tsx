@@ -13,22 +13,13 @@ import type { AIProviderKind, AIProviderPreset, AITask } from "@/types/ai-provid
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PlusIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@trenova/shared/components/ui/dropdown-menu";
 import { formatList } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { resolveUserTimezone } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryStates } from "nuqs";
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { PROVIDER_EDITOR_PARAM, providerEditorParser } from "../../ai-control-tabs";
@@ -36,12 +27,12 @@ import { Search, useSlashFocus } from "../kit/controls";
 import { Ic } from "../kit/ic";
 import { SecH, Switch } from "../kit/layout";
 import { Mark } from "../kit/marks";
+import { startingPreset } from "./preset-options";
 import { ConfirmDialog } from "../kit/modal";
 import { ReadSheet } from "../kit/read-sheet";
 import { NovaSummary } from "../nova/nova-summary";
 import type { NovaTarget } from "../nova/use-nova-segments";
 import { useNovaTargets } from "../nova/use-nova-targets";
-import { presetDisplayName } from "./preset-options";
 import { Health, ProviderDetail, type ProviderTestState } from "./provider-detail";
 import { ProviderEditor, type ProviderEditorTarget } from "./provider-editor";
 import { ProviderLine, type ProviderWeek } from "./provider-line";
@@ -374,16 +365,21 @@ export default function ProvidersTab() {
   const editingId = canUpdate ? address[PROVIDER_EDITOR_PARAM] : null;
   const createRequested = address.panelType === "create" && canCreate;
   const presetKey = createRequested ? address.panelEntityId : null;
-  const editorKey = editingId ? `edit:${editingId}` : presetKey ? `create:${presetKey}` : null;
+  // A new provider is one editor whatever preset it starts from: the preset is
+  // chosen inside it, so changing it must not remount the panel.
+  const editorKey = editingId ? `edit:${editingId}` : createRequested ? "create" : null;
   const resolvedEditor = useMemo((): ProviderEditorTarget | null => {
     if (editingId) {
       const provider = saved.find((entry) => entry.id === editingId);
       const limits = limitsQuery.data?.get(editingId);
       return provider && limits ? { kind: "edit", provider: { ...provider, ...limits } } : null;
     }
-    const preset = presetKey ? catalog?.presets.find((entry) => entry.key === presetKey) : null;
+    if (!createRequested) return null;
+    // A link that names no preset, or one the catalog no longer offers, starts
+    // from the first preset; the panel lets the person pick another.
+    const preset = startingPreset(catalog?.presets ?? [], presetKey);
     return preset ? { kind: "create", preset } : null;
-  }, [catalog?.presets, editingId, limitsQuery.data, presetKey, saved]);
+  }, [catalog?.presets, createRequested, editingId, limitsQuery.data, presetKey, saved]);
   // The editor works on the provider as it was when it opened; a refetch while
   // it is open must not swap the version a save is checked against.
   const [heldEditor, setHeldEditor] = useState<{
@@ -402,12 +398,13 @@ export default function ProvidersTab() {
     );
   }, []);
 
-  // A new provider with no preset, or one the catalog does not offer, is the
-  // list of presets to choose from, so a link to it opens that list.
-  const menuOpen = createRequested && catalog !== undefined && !resolvedEditor && !editingId;
-  const setMenuOpen = useCallback(
-    (open: boolean) =>
-      void setAddress(open ? { ...NOTHING_OPEN, panelType: "create" } : NOTHING_OPEN),
+  const openCreate = useCallback(
+    () => void setAddress({ ...NOTHING_OPEN, panelType: "create" }),
+    [setAddress],
+  );
+  const followPreset = useCallback(
+    (key: string) =>
+      void setAddress({ ...NOTHING_OPEN, panelType: "create", panelEntityId: key }),
     [setAddress],
   );
 
@@ -457,23 +454,19 @@ export default function ProvidersTab() {
       }
       if (event.key.toLowerCase() === "n" && canCreate) {
         event.preventDefault();
-        setMenuOpen(true);
+        openCreate();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [canCreate, editor, openId, setMenuOpen]);
+  }, [canCreate, editor, openId, openCreate]);
 
   const presets = catalog?.presets ?? [];
-  const presetGroups = [
-    { label: t("Hosted"), presets: presets.filter((preset) => !preset.selfHosted) },
-    { label: t("On your network"), presets: presets.filter((preset) => preset.selfHosted) },
-  ].filter((group) => group.presets.length > 0);
 
   const editorSheet =
     editor && catalog ? (
       <ProviderEditor
-        key={editor.kind === "edit" ? editor.provider.id : editor.preset.key}
+        key={editor.kind === "edit" ? editor.provider.id : "create"}
         target={editor}
         providers={saved}
         catalog={catalog}
@@ -482,6 +475,7 @@ export default function ProvidersTab() {
         canDelete={canDelete}
         onClose={closeEditor}
         onRemove={(provider) => remove.mutateAsync(provider)}
+        onPresetChange={followPreset}
       />
     ) : null;
 
@@ -562,37 +556,10 @@ export default function ProvidersTab() {
         <span className="sp" />
         <span className="tb-ct mono">{t("{0} of {1} on", onCount, providers.length)}</span>
         {canCreate && (
-          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-            <DropdownMenuTrigger render={<Button type="button" shortcut="N" />}>
-              <PlusIcon className="size-3.5" />
-              {t("New provider")}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-72" listClassName="max-h-80">
-              {presetGroups.map((group, index) => (
-                <Fragment key={group.label}>
-                  {index > 0 && <DropdownMenuSeparator />}
-                  <DropdownMenuGroup>
-                    <DropdownMenuLabel>{group.label}</DropdownMenuLabel>
-                    {group.presets.map((preset) => (
-                      <DropdownMenuItem
-                        key={preset.key}
-                        title={presetDisplayName(preset)}
-                        description={preset.selfHosted ? preset.baseUrl : preset.exampleModel}
-                        startContent={
-                          <Mark
-                            provider={{ name: presetDisplayName(preset) }}
-                            preset={preset}
-                            s={18}
-                          />
-                        }
-                        onClick={() => addPreset(preset)}
-                      />
-                    ))}
-                  </DropdownMenuGroup>
-                </Fragment>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button type="button" shortcut="N" onClick={openCreate}>
+            <PlusIcon className="size-3.5" />
+            {t("New provider")}
+          </Button>
         )}
       </div>
       <section className="sec chain-s">
@@ -665,11 +632,11 @@ export default function ProvidersTab() {
               className="pl-add"
               role="button"
               tabIndex={0}
-              onClick={() => setMenuOpen(true)}
+              onClick={openCreate}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
-                  setMenuOpen(true);
+                  openCreate();
                 }
               }}
             >

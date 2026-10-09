@@ -76,6 +76,7 @@ import { aicFieldTrigger } from "../edit/field-trigger";
 import { SwitchRow } from "../edit/setting-row";
 import { Ic } from "../kit/ic";
 import { Mark } from "../kit/marks";
+import { groupPresets, presetDisplayName } from "./preset-options";
 import { ConfirmDialog } from "../kit/modal";
 import {
   draftTestInput,
@@ -135,6 +136,8 @@ type ProviderEditorProps = {
   canDelete: boolean;
   onClose: () => void;
   onRemove: (provider: AIProviderRow) => Promise<void>;
+  /** A new provider's preset changed in the panel, so the address can follow it. */
+  onPresetChange?: (key: string) => void;
 };
 
 type DraftTest = { state: "run" } | { state: "done"; result: AIProviderDraftTestResult };
@@ -153,11 +156,16 @@ export function ProviderEditor({
   canDelete,
   onClose,
   onRemove,
+  onPresetChange,
 }: ProviderEditorProps) {
   const t = useT();
   const queryClient = useQueryClient();
   const saved = target.kind === "edit" ? target.provider : null;
   const create = saved === null;
+  // A new provider's preset is chosen in the panel, so it is the editor's to change.
+  const [preset, setPreset] = useState<AIProviderPreset | null>(
+    target.kind === "create" ? target.preset : null,
+  );
   const [loaded] = useState(() =>
     target.kind === "edit"
       ? editorValuesFromProvider(target.provider)
@@ -170,7 +178,7 @@ export function ProviderEditor({
       const problem = editorProblem(draft, {
         create: target.kind === "create",
         keyRequired:
-          keyRequired(draft.kind) || (target.kind === "create" && target.preset.requiresApiKey),
+          keyRequired(draft.kind) || Boolean(preset?.requiresApiKey),
         hasStoredKey: target.kind === "edit" && Boolean(target.provider.hasApiKey),
         requiresBaseUrl:
           catalog.kinds.find((entry) => entry.kind === draft.kind)?.requiresBaseUrl ?? false,
@@ -186,7 +194,7 @@ export function ProviderEditor({
         },
       };
     };
-  }, [catalog.kinds, keyRequired, target]);
+  }, [catalog.kinds, keyRequired, preset, target]);
   const form = useForm<ProviderEditorValues>({
     resolver,
     defaultValues: loaded,
@@ -201,7 +209,33 @@ export function ProviderEditor({
     (kind: string) => catalog.kinds.find((entry) => entry.kind === kind)?.label ?? kind,
     [catalog.kinds],
   );
-  const presetNeedsKey = target.kind === "create" && target.preset.requiresApiKey;
+  const presetGroups = useMemo(
+    () =>
+      groupPresets(catalog.presets).map((group) => ({
+        label: group.key === "hosted" ? t("Hosted") : t("On your network"),
+        options: group.presets.map((entry) => ({
+          value: entry.key,
+          label: presetDisplayName(entry),
+          description: entry.selfHosted ? entry.baseUrl : entry.exampleModel,
+          icon: <Mark provider={{ name: presetDisplayName(entry) }} preset={entry} s={16} />,
+        })),
+      })),
+    [catalog.presets, t],
+  );
+  // Choosing another preset starts the draft over from that preset's settings, as
+  // picking it from the list used to.
+  const choosePreset = useCallback(
+    (key: string) => {
+      const next = catalog.presets.find((entry) => entry.key === key);
+      if (!next || next.key === preset?.key) return;
+      setPreset(next);
+      setRan(null);
+      form.reset(editorValuesFromPreset(next, providers));
+      onPresetChange?.(next.key);
+    },
+    [catalog.presets, form, onPresetChange, preset?.key, providers],
+  );
+  const presetNeedsKey = Boolean(preset?.requiresApiKey);
   const keyMandatory = keyRequired(values.kind) || presetNeedsKey;
   const needsKeyField = keyField({
     mandatory: keyMandatory,
@@ -352,6 +386,20 @@ export function ProviderEditor({
           : undefined,
       content: (
         <div className={FIELD_STACK}>
+          {create ? (
+            <SelectField<ProviderEditorValues>
+              control={form.control}
+              name="preset"
+              rules={{ required: true }}
+              description={t("Where it runs. Choosing one fills in its usual settings.")}
+              label={t("Provider")}
+              placeholder={t("Choose a provider")}
+              groups={presetGroups}
+              onValueChange={choosePreset}
+              triggerClassName={aicFieldTrigger}
+              layout="inline"
+            />
+          ) : null}
           <InputField<ProviderEditorValues>
             control={form.control}
             name="name"
@@ -707,7 +755,7 @@ export function ProviderEditor({
   ];
 
   const mark = {
-    name: values.name || saved?.name || (target.kind === "create" ? target.preset.label : ""),
+    name: values.name || saved?.name || preset?.label || "",
     kind: values.kind,
     baseUrl: values.baseUrl,
   };
@@ -791,7 +839,7 @@ export function ProviderEditor({
   );
 
   const markIcon = (
-    <Mark provider={mark} preset={target.kind === "create" ? target.preset : null} s={28} />
+    <Mark provider={mark} preset={preset} s={28} />
   );
   const closeOnDismiss = (next: boolean) => {
     if (!next) onClose();

@@ -6596,7 +6596,7 @@
   "Resource cannot be longer than 100 characters": "資源不得超過 100 個字元",
   "Resource is invalid": "資源無效",
   "Resource is required": "資源為必填",
-  "Resource may hold letters, digits, dots, colons, dashes and underscores only": "資源只能包含字母、數字、句點、冒號、連字號與底線",
+  "Resource may hold letters, digits, spaces, dots, colons, dashes and underscores only": "資源只能包含字母、數字、空格、句點、冒號、連字號和底線",
   "Resource type cannot be longer than 100 characters": "資源類型不得超過 100 個字元",
   "Resource type cannot be longer than 80 characters": "資源類型不得超過 80 個字元",
   "Resource type is required": "資源類型為必填",

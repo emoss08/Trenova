@@ -457,6 +457,7 @@
   "Each extractor pulls a specific piece of data (name, address, date) from this stop.": "Cada extractor obtiene un dato concreto (nombre, dirección, fecha) de esta parada.",
   "Each payment waits on the payments from the books page until someone applies or ignores it.": "Cada pago espera en la página de pagos de la contabilidad hasta que alguien lo aplique o lo ignore.",
   "Edit directory": "Editar directorio",
+  "Email address": "Dirección de correo electrónico",
   "Emails this user a single-use link to choose their own password. Their current password keeps working until they use it, and you never see the new one.": "Envía a este usuario por correo electrónico un enlace de un solo uso para que elija su propia contraseña. Su contraseña actual sigue funcionando hasta que lo utilice, y usted nunca ve la nueva.",
   "Embed a 2- or 4-digit year token.": "Incorpore un token de año de 2 o 4 dígitos.",
   "Embed operational identity fields resolved at generation time.": "Incorpore campos de identidad operativa que se resuelven en el momento de la generación.",

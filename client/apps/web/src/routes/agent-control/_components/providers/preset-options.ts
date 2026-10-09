@@ -54,3 +54,15 @@ export function findPreset(
 
   return presets.find((preset) => preset.key === key) ?? null;
 }
+
+/**
+ * The preset a new provider's panel opens on: the one a link names, or the first
+ * the catalog offers when the link names none or one it no longer has. The panel
+ * lets the person pick another, so a create link always opens the panel.
+ */
+export function startingPreset(
+  presets: readonly AIProviderPreset[],
+  key: string | null | undefined,
+): AIProviderPreset | null {
+  return (key ? presets.find((preset) => preset.key === key) : undefined) ?? presets[0] ?? null;
+}

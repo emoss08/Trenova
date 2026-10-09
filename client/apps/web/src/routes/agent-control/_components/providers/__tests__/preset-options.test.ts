@@ -6,6 +6,7 @@ import {
   groupPresets,
   presetDisplayName,
   presetHint,
+  startingPreset,
 } from "../preset-options";
 
 /**
@@ -83,5 +84,27 @@ describe("preset options", () => {
     expect(findPreset(all, CUSTOM_PRESET_VALUE)).toBeNull();
     expect(findPreset(all, "ollama")).toBe(local);
     expect(findPreset(all, "nothing-like-this")).toBeNull();
+  });
+});
+
+describe("startingPreset", () => {
+  const openai = preset({ key: "openai" });
+  const ollama = preset({ key: "ollama", label: "Ollama", selfHosted: true, requiresApiKey: false });
+
+  it("opens on the preset a link names", () => {
+    expect(startingPreset([openai, ollama], "ollama")).toBe(ollama);
+  });
+
+  it("opens on the first preset when the link names none, so New provider opens the panel", () => {
+    expect(startingPreset([openai, ollama], null)).toBe(openai);
+    expect(startingPreset([openai, ollama], "")).toBe(openai);
+  });
+
+  it("opens on the first preset when the link names one the catalog no longer offers", () => {
+    expect(startingPreset([openai, ollama], "retired")).toBe(openai);
+  });
+
+  it("has nothing to open on while the catalog is empty", () => {
+    expect(startingPreset([], null)).toBeNull();
   });
 });
