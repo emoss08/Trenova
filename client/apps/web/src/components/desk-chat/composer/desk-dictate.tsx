@@ -1,7 +1,9 @@
 import type { ComposerDictation } from "@/components/assistant/use-composer-dictation";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useEffect, useState } from "react";
 import { DeskIcon } from "../desk-icons";
+import { deskIconClass } from "../desk-button-styles";
 
 function elapsedLabel(seconds: number): string {
   const whole = Math.floor(seconds);
@@ -48,23 +50,25 @@ export function DeskDictate({
   if (!listening) {
     const unavailable = !dictation.supported;
     return (
-      <button
-        type="button"
-        className="dk-ib"
+      <Button
+        variant="quiet"
+        size="bare"
+        className={deskIconClass}
         title={unavailable ? t("Dictation isn't available in this browser") : t("Dictate")}
         aria-label={t("Dictate")}
         disabled={disabled || unavailable}
         onClick={dictation.toggleFromDraft}
       >
         <DeskIcon name="mic" size={15} />
-      </button>
+      </Button>
     );
   }
 
   return (
-    <button
-      type="button"
-      className="dk-dict"
+    <Button
+      variant="bare"
+      size="bare"
+      className="dk-dict h-7.5 gap-2 rounded-full pr-1.5 pl-2.5 text-xs"
       title={t("Stop dictating")}
       aria-label={t("Stop dictating")}
       onClick={dictation.toggleFromDraft}
@@ -76,6 +80,6 @@ export function DeskDictate({
       </span>
       <span className="dk-mono">{elapsedLabel(seconds)}</span>
       <span className="dk-dict-x" />
-    </button>
+    </Button>
   );
 }

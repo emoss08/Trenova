@@ -109,6 +109,9 @@ type MemoryContextRequest struct {
 	ToolNames    []string
 	Records      []agent.EntityRef
 	Query        QueryVector
+	// Text is what the turn asked, read for the words a memory shares with
+	// it when its meaning cannot be compared.
+	Text string
 }
 
 // MemoryContext is what a prompt may carry, best first, and the records whose
@@ -116,9 +119,13 @@ type MemoryContextRequest struct {
 type MemoryContext struct {
 	Memories []*agent.Memory
 	Subjects []agent.MemorySubject
+	// Relevance is which of Memories bear on what the turn asked, by meaning
+	// or by shared words.
+	Relevance agent.MemoryRelevance
 }
 
-// RecordMemoryUseRequest counts the memories a prompt carried as used.
+// RecordMemoryUseRequest counts the memories a turn used: those that bore
+// on what it asked, not every one its prompt carried.
 type RecordMemoryUseRequest struct {
 	TenantInfo pagination.TenantInfo
 	IDs        []pulid.ID
@@ -136,7 +143,15 @@ type RankMemoriesRequest struct {
 // MemoryRanker orders the memories a prompt may carry. Order decides which
 // Facts and Corrections for tools not loaded this turn fit in the budget.
 type MemoryRanker interface {
-	RankMemories(ctx context.Context, req *RankMemoriesRequest) ([]*agent.Memory, error)
+	RankMemories(ctx context.Context, req *RankMemoriesRequest) (RankedMemories, error)
+}
+
+// RankedMemories is the ranker's order and, when it could compare meanings,
+// the memories at or above the similarity floor for the turn's query.
+type RankedMemories struct {
+	Memories []*agent.Memory
+	Similar  []pulid.ID
+	Semantic bool
 }
 
 // AgentMemoryUsage is how much an organization keeps for its agents against

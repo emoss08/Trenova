@@ -45,6 +45,10 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/apikeyrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/assignmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/assistantartifactrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/assistantqueuerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentwaitrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/assistantcaserepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/casechecklistrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/assistantturnrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/auditdlqrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/auditrepository"
@@ -58,6 +62,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingqueuereviewrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingtransferrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/briefingrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/bulkeditrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/capturerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carrierassignmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/carriercapacityrepository"
@@ -220,13 +225,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmenttrackingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmenttyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/sidebarpreferencerepository"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tablelayoutrepository"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/bulkeditrepository"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/tableinsight"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ssoconfigrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ssoidentitylinkrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/storedmileagerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tableconfigurationrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tablelayoutrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tcaallowlistrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tcasubscriptionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/telematicsrepository"
@@ -251,6 +254,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workersafetyrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workertrainingrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tableinsight"
 	"github.com/emoss08/trenova/pkg/seqgen"
 )
 
@@ -280,6 +284,10 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	reportrepository.NewViewRepository,
 	sidebarpreferencerepository.New,
 	tablelayoutrepository.New,
+	assistantqueuerepository.New,
+	agentwaitrepository.New,
+	assistantcaserepository.New,
+	casechecklistrepository.New,
 	bulkeditrepository.New,
 	shipmentrepository.NewInsightSource,
 	tableinsight.NewCustomerSource,

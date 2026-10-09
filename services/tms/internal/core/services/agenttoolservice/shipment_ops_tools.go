@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -82,8 +83,8 @@ func targetShipment(params map[string]any) (serviceports.ToolTarget, bool) {
 }
 
 func shipmentIDProperty(what string) map[string]any {
-	return idProperty(what + ", from get_shipment, search_shipments or the page you are on. " +
-		"Never guess one.")
+	return agenttoolschema.RecordID(permission.ResourceShipment, what,
+		"get_shipment, search_shipments or the page you are on")
 }
 
 func shipmentResult(action string, entity *shipment.Shipment) *agent.ToolExecutionResult {
@@ -178,8 +179,10 @@ func newTransferShipmentOwnershipTool(shipments shipmentOperator) serviceports.A
 			"transferred back the same way.",
 		properties: map[string]any{
 			paramShipmentID: shipmentIDProperty("The shipment"),
-			paramOwnerID: idProperty("The user who takes it over: the person who asked, or " +
-				"an ownerId get_shipment shows. Never guess one."),
+			paramOwnerID: agenttoolschema.IDText(
+				"The user who takes it over: the person who asked, or " +
+					"an ownerId get_shipment shows. Never guess one.",
+			),
 		},
 		required: []string{paramShipmentID, paramOwnerID},
 		target:   targetShipment,
@@ -402,9 +405,11 @@ func newDuplicateShipmentTool(deps duplicateShipmentDeps) serviceports.AgentTool
 			paramCopyCount: integerProperty(
 				"How many copies to make, 1 to 20. Defaults to 1.", 1, maxDuplicateCopies,
 			),
-			paramFirstPickupAt: localTimeProperty("When the copies' first pickup window " +
-				"starts; every other stop keeps its distance from it. Only from what the " +
-				"person asked for, never invented."),
+			paramFirstPickupAt: agenttoolschema.LocalDateTime(
+				"When the copies' first pickup window " +
+					"starts; every other stop keeps its distance from it. Only from what the " +
+					"person asked for, never invented.",
+			),
 		},
 		required: []string{paramShipmentID},
 		target:   targetShipment,

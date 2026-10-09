@@ -136,6 +136,7 @@ export function ArtIcon({
 }) {
   return (
     <svg
+      className="size-auto"
       width={size}
       height={size}
       viewBox="0 0 24 24"

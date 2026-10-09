@@ -3,6 +3,7 @@ package agentflow
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
@@ -31,10 +32,21 @@ func Run(
 	rc RunContext,
 	state agentruntime.TurnState,
 ) (*Outcome, error) {
-	fx := &workflowEffects{ctx: ctx, runtime: runtime, run: rc, events: events}
+	fx := &workflowEffects{
+		ctx:     ctx,
+		runtime: runtime,
+		run:     rc,
+		events:  events,
+		steers:  workflow.GetSignalChannel(ctx, SteerSignal),
+	}
 	result, err := runtime.Drive(runtime.RestoreTurn(rc.request(), state), fx)
 
-	return &Outcome{Result: result, Artifacts: fx.outcome.Artifacts, Events: fx.outcome.Events}, err
+	return &Outcome{
+		Result:    result,
+		Artifacts: fx.outcome.Artifacts,
+		Events:    fx.outcome.Events,
+		Steered:   fx.outcome.Steered,
+	}, err
 }
 
 // Publish sends one event to the run's reader from workflow code.
@@ -47,6 +59,9 @@ type workflowEffects struct {
 	runtime *agentruntime.Service
 	run     RunContext
 	events  *workflowstreams.WorkflowTopicHandle
+	// steers is where the person's words reach the turn while it works. Nil
+	// for another agent's turn on a task, which nobody steers.
+	steers  workflow.ReceiveChannel
 	outcome Outcome
 }
 
@@ -55,6 +70,73 @@ func (fx *workflowEffects) Supports(change string) bool {
 }
 
 func (fx *workflowEffects) Now() int64 { return workflow.Now(fx.ctx).Unix() }
+
+// Replaying reports the loop re-running over recorded history, during which
+// whatever it counts was already counted the first time.
+func (fx *workflowEffects) Replaying() bool { return workflow.IsReplaying(fx.ctx) }
+
+// Interject reads, between steps, what the person said while the turn worked
+// and what changed under it. Reading a signal records nothing, so the change
+// is asked about only when there is something to read or to check.
+func (fx *workflowEffects) Interject(
+	_ *agentruntime.Turn,
+	check *agentruntime.WorldCheck,
+) agentruntime.Interjections {
+	pending := fx.steers != nil && fx.steers.Len() > 0
+	if !pending && check == nil {
+		return agentruntime.Interjections{}
+	}
+	if !fx.Supports(agentruntime.ChangeInterjections) {
+		return agentruntime.Interjections{}
+	}
+
+	var got agentruntime.Interjections
+	for pending {
+		var steer agentruntime.Steer
+		if !fx.steers.ReceiveAsync(&steer) {
+			break
+		}
+		if steer.ID.IsNotNil() && !slices.Contains(fx.outcome.Steered, steer.ID) {
+			fx.outcome.Steered = append(fx.outcome.Steered, steer.ID)
+			got.Steers = append(got.Steers, steer)
+		}
+	}
+	if check != nil {
+		got.World = fx.checkWorld(check)
+	}
+
+	return got
+}
+
+// checkWorld reads the changes as a local activity: a read of the realtime
+// stream on the worker running the turn, with no queue between steps. A read
+// that fails leaves the cursor where it was, so the next step looks again.
+func (fx *workflowEffects) checkWorld(check *agentruntime.WorldCheck) *serviceports.RecordChanges {
+	if fx.run.Actor == nil {
+		return nil
+	}
+	var a *Activities
+	ctx := workflow.WithLocalActivityOptions(fx.ctx, workflow.LocalActivityOptions{
+		ScheduleToCloseTimeout: worldCheckScheduleWait,
+		StartToCloseTimeout:    worldCheckTimeout,
+		Summary:                "Check the records in use for changes",
+		RetryPolicy:            &temporal.RetryPolicy{MaximumAttempts: 2},
+	})
+
+	var found serviceports.RecordChanges
+	err := workflow.ExecuteLocalActivity(ctx, a.CheckWorldActivity, &WorldCheckInput{
+		OrganizationID: fx.run.Actor.OrganizationID,
+		BusinessUnitID: fx.run.Actor.BusinessUnitID,
+		Check:          *check,
+	}).Get(ctx, &found)
+	if err != nil {
+		workflow.GetLogger(fx.ctx).Warn("could not check the turn's records for changes",
+			"error", err.Error())
+		return nil
+	}
+
+	return &found
+}
 
 func (fx *workflowEffects) Complete(
 	_ *agentruntime.Turn,

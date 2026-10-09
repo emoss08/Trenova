@@ -363,6 +363,14 @@ func newProposeFormulaTool(
 
 func (t *proposeFormulaTool) Name() string { return string(pagedraft.ActionProposeFormula) }
 
+func (t *proposeFormulaTool) Recipe() []string {
+	return []string{
+		"describe_formula_schema",
+		"test_formula_expression",
+		string(pagedraft.ActionProposeFormula),
+	}
+}
+
 func (t *proposeFormulaTool) Description() string {
 	return "Put a formula in front of the person for their editor, with its variables, a " +
 		"plain explanation and two or three sample loads priced by the engine. Nothing is " +

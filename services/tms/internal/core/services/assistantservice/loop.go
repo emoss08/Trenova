@@ -144,7 +144,7 @@ func turnResultOf(
 		result.Messages[0].CreatedAt = asked
 	}
 
-	if run.OutputRefused {
+	if run.OutputAltered {
 		result.Decision = outputDecision(run, result.Messages)
 	}
 
@@ -415,19 +415,24 @@ func scopedMessage(
 	}
 }
 
+// outputDecision is the turn's decision when the output guard took code out
+// of the answer: still allowed, since the rest of the reply went through, and
+// marked as altered with the rule and reason the reply's message carries, so
+// the signal that something upstream let a code request through is kept.
 func outputDecision(
 	run *serviceports.RunResult,
 	messages []conversation.Message,
 ) agentguard.Decision {
 	decision := agentguard.Decision{
-		Allowed:     false,
+		Allowed:     true,
+		Altered:     true,
 		Stage:       agentguard.StageOutput,
-		Message:     run.Reply,
 		MatchedRule: run.OutputRule,
 	}
 	for i := len(messages) - 1; i >= 0; i-- {
 		message := messages[i]
-		if message.Role == conversation.RoleAssistant && message.Refused {
+		if message.Role == conversation.RoleAssistant &&
+			message.ScopeStage == string(agentguard.StageOutput) {
 			decision.Category = agentguard.Category(message.ScopeCategory)
 			decision.Reason = agentguard.Reason(message.ScopeReason)
 
@@ -465,6 +470,9 @@ func recentTurns(history []conversation.Message) []agentguard.Turn {
 			// conversation, not anything the person said.
 			if message.Compacted() {
 				turns = append(turns, agentguard.Turn{Role: "assistant", Content: message.Content})
+				continue
+			}
+			if message.Kind == conversation.MessageKindWorldChange {
 				continue
 			}
 			turns = append(turns, agentguard.Turn{Role: "user", Content: message.Content})

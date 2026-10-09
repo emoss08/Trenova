@@ -22,7 +22,6 @@ describe("resolveEdition", () => {
 
     expect(call(slots.AppBanner, {})).toBeNull();
     expect(call(slots.RootHost, {})).toBeNull();
-    expect(call(slots.AuthAmbient, {})).toBeNull();
     expect(call(slots.LoginPrompt, { fallback: "Sign in" })).toBe("Sign in");
   });
 

@@ -1,5 +1,6 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import type { AssistantMessageAttachment } from "@/types/assistant";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import {
@@ -19,6 +20,18 @@ import {
   type DeskAttachment,
   type DeskAttachments,
 } from "./desk-attachments";
+
+/** A chip's own 18px command: finish a scan, retry, remove. */
+const chipButtonClass =
+  "size-4.5 flex-none justify-center rounded-md text-dsk-subtle transition-colors duration-100 hover:bg-dsk-hover hover:text-dsk-fg active:bg-dsk-hover";
+
+/** A ready chip's remove button folds away until the chip is hovered. */
+const chipFoldClass =
+  "-ml-1.5 w-0 opacity-0 transition-[opacity,width,margin] duration-150 group-hover/fp:ml-0 group-hover/fp:w-4.5 group-hover/fp:opacity-100";
+
+/** A row in the attach menu: an icon over a name and a line of help. */
+const menuItemClass =
+  "flex w-full items-start gap-2.75 rounded-lg px-2.5 py-2.25 text-left text-dsk-muted transition-colors duration-100 hover:bg-dsk-hover hover:text-dsk-fg [&>span]:flex [&>span]:flex-col [&>span]:gap-px [&>svg]:mt-0.5";
 
 const FILE_KINDS: Record<string, [string, "pdf" | "img" | "sheet" | "doc"]> = {
   pdf: ["PDF", "pdf"],
@@ -132,25 +145,27 @@ function FileChip({
           <span className="dk-fp-pc">{t("{0, plural, one {# page} other {# pages}}", pages)}</span>
         )}
         {pages > 0 && onFinishScan && (
-          <button
-            type="button"
-            className="dk-fp-b dk-done"
+          <Button
+            variant="quiet"
+            size="bare"
+            className={cn(chipButtonClass, "text-dsk-success-fg hover:text-dsk-success-fg")}
             title={t("Done scanning")}
             aria-label={t("Done scanning")}
             onClick={() => onFinishScan(item.id)}
           >
             <DeskIcon name="check" size={11} stroke={2.4} />
-          </button>
+          </Button>
         )}
-        <button
-          type="button"
-          className="dk-fp-b"
+        <Button
+          variant="quiet"
+          size="bare"
+          className={chipButtonClass}
           title={t("Cancel scan")}
           aria-label={t("Cancel scan")}
           onClick={() => onRemove(item.id)}
         >
           <DeskIcon name="x" size={10} stroke={2.4} />
-        </button>
+        </Button>
       </div>
     );
   }
@@ -164,7 +179,7 @@ function FileChip({
         : `${item.name} · ${formatFileSize(item.size)}`;
   return (
     <div
-      className={cn("dk-fp", `dk-s-${status}`)}
+      className={cn("dk-fp group/fp", `dk-s-${status}`)}
       data-tip={tip}
       style={{ "--dk-p": Math.min(1, percent / 100) } as CSSProperties}
     >
@@ -173,25 +188,27 @@ function FileChip({
       {status === "uploading" && <span className="dk-fp-pc">{percent}%</span>}
       {status === "error" && <span className="dk-fp-e">{error.split(" · ")[0]}</span>}
       {status === "error" && !item.refused && onRetry && (
-        <button
-          type="button"
-          className="dk-fp-b"
+        <Button
+          variant="quiet"
+          size="bare"
+          className={chipButtonClass}
           title={t("Try again")}
           aria-label={t("Try again")}
           onClick={() => onRetry(item.id)}
         >
           <DeskIcon name="replay" size={11} />
-        </button>
+        </Button>
       )}
-      <button
-        type="button"
-        className="dk-fp-b"
+      <Button
+        variant="quiet"
+        size="bare"
+        className={cn(chipButtonClass, status === "ready" && chipFoldClass)}
         title={t("Remove")}
         aria-label={t("Remove {0}", item.name)}
         onClick={() => onRemove(item.id)}
       >
         <DeskIcon name="x" size={10} stroke={2.4} />
-      </button>
+      </Button>
     </div>
   );
 }
@@ -233,16 +250,17 @@ export function DeskAttachRow({
         {items.slice(0, SHOWN).map(chip)}
         {rest.length > 0 && (
           <span className="dk-fp-more-w">
-            <button
-              type="button"
+            <Button
+              variant="bare"
+              size="bare"
               className={cn(
-                "dk-fp dk-more",
-                rest.some((item) => item.status === "error") && "dk-has-err",
+                "relative h-7 flex-none animate-[dk-fcin_300ms_var(--dk-spring)_both] gap-1.5 rounded-lg bg-dsk-sunken px-2.25 text-sm text-dsk-muted ring-1 ring-dsk-b-sub ring-inset",
+                rest.some((item) => item.status === "error") && "text-dsk-error",
               )}
               onClick={() => setMore((value) => !value)}
             >
               {t("+{0} more", rest.length)}
-            </button>
+            </Button>
             {more && (
               <div className="dk-fp-pop" onMouseLeave={() => setMore(false)}>
                 {rest.map(chip)}
@@ -385,7 +403,13 @@ export function DeskAttachMenu({
           onClose();
         }}
       />
-      <button type="button" role="menuitem" onClick={() => inputRef.current?.click()}>
+      <Button
+        variant="bare"
+        size="bare"
+        role="menuitem"
+        className={menuItemClass}
+        onClick={() => inputRef.current?.click()}
+      >
         <DeskIcon name="plus" size={14} />
         <span>
           <b>{t("Upload from computer")}</b>
@@ -397,9 +421,15 @@ export function DeskAttachMenu({
             )}
           </em>
         </span>
-      </button>
+      </Button>
       {onScan && (
-        <button type="button" role="menuitem" onClick={onScan}>
+        <Button
+          variant="bare"
+          size="bare"
+          role="menuitem"
+          className={menuItemClass}
+          onClick={onScan}
+        >
           <DeskIcon name="scanner" size={14} stroke={2} />
           <span>
             <b>{t("Scan from Capture")}</b>
@@ -409,7 +439,7 @@ export function DeskAttachMenu({
                 : t("Scan paper straight into this message")}
             </em>
           </span>
-        </button>
+        </Button>
       )}
       <div className="dk-am-f">
         <span className="dk-kbd">⌘U</span> {t("or drop files anywhere")}

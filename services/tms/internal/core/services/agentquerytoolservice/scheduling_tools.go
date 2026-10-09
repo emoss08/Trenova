@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/orgstructureservice"
 	"github.com/emoss08/trenova/internal/core/services/schedulingservice"
 	"github.com/emoss08/trenova/internal/core/services/teamscope"
@@ -173,7 +174,13 @@ func (t *getWorkerScheduleTool) Description() string {
 }
 
 func (t *getWorkerScheduleTool) ParamSchema() map[string]any {
-	return idSchema("workerId", "The worker, from search_worker or list_workers.")
+	return idSchema(
+		"workerId",
+		agenttoolschema.RecordIDText(
+			permission.ResourceWorker,
+			"The worker, from search_worker or list_workers.",
+		),
+	)
 }
 
 func (t *getWorkerScheduleTool) Policy() serviceports.ToolPolicy {

@@ -154,7 +154,7 @@ func TestArgumentOutcome_ReportsAnUncheckableSchemaAsAFailure(t *testing.T) {
 	_, _, err := contractArguments(nil, "broken", map[string]any{"type": 12}, map[string]any{})
 	require.Error(t, err)
 
-	outcome := argumentOutcome("broken", err)
+	outcome := argumentOutcome("broken", map[string]any{"type": 12}, err)
 	assert.True(t, outcome.failed)
 	assert.Contains(t, outcome.content, "could not be checked")
 	assert.NotContains(t, outcome.content, "Fix the call")

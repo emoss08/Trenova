@@ -807,10 +807,14 @@ func (s *Service) ForContext(
 			zap.String("organization", req.TenantInfo.OrgID.String()),
 			zap.Error(err),
 		)
-		ranked = RankByRecencyAndUse(memories, now)
+		ranked = services.RankedMemories{Memories: RankByRecencyAndUse(memories, now)}
 	}
 
-	return &services.MemoryContext{Memories: ranked, Subjects: subjects}, nil
+	return &services.MemoryContext{
+		Memories:  ranked.Memories,
+		Subjects:  subjects,
+		Relevance: Relevance(req.Text, ranked),
+	}, nil
 }
 
 func (s *Service) RecordUse(ctx context.Context, req services.RecordMemoryUseRequest) error {

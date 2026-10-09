@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
@@ -41,8 +43,9 @@ func New(p Params) repositories.AgentScorecardRepository {
 var runJoin = "JOIN " + buncolgen.AgentRunTable.Name + " AS " + buncolgen.AgentRunTable.Alias +
 	" ON " + buncolgen.AgentRunColumns.ID.EqColumn(buncolgen.AgentProposalColumns.RunID)
 
-// Aggregate answers the whole scorecard in four counted queries: the runs,
-// the proposals grouped by tool, the exceptions, and what the model cost.
+// Aggregate answers the whole scorecard in five counted queries: the runs,
+// the proposals grouped by tool, how each tool's calls ended, the exceptions,
+// and what the model cost.
 // None of them returns a row per record, so the cost of the page does not
 // grow with how busy the agent has been.
 func (r *repository) Aggregate(
@@ -50,14 +53,16 @@ func (r *repository) Aggregate(
 	req repositories.ScorecardRequest,
 ) (*agent.ScorecardTotals, error) {
 	totals := &agent.ScorecardTotals{
-		CostUSD: decimal.Zero,
-		ByTool:  []agent.ToolOutcomeCount{},
-		Trend:   []agent.ScorecardPoint{},
+		CostUSD:      decimal.Zero,
+		ByTool:       []agent.ToolOutcomeCount{},
+		ToolVerdicts: []agent.ToolVerdictCount{},
+		Trend:        []agent.ScorecardPoint{},
 	}
 
 	for _, step := range []func(context.Context, repositories.ScorecardRequest, *agent.ScorecardTotals) error{
 		r.runs,
 		r.proposals,
+		r.toolVerdicts,
 		r.exceptions,
 		r.usage,
 	} {
@@ -181,6 +186,139 @@ func (r *repository) proposals(
 
 		return nil
 	})
+}
+
+const (
+	verdictLabelled = "labelled"
+	verdictRanked   = "ranked"
+	verdictToolName = "tool_name"
+	verdictVerdict  = "verdict"
+	verdictReason   = "reason"
+	verdictCalls    = "calls"
+	verdictTotal    = "total"
+	verdictRank     = "reason_rank"
+)
+
+// verdictRow is one reason a tool's calls ended one way, ranked among the
+// reasons for that tool and verdict, with the verdict's own total beside it.
+type verdictRow struct {
+	ToolName string `bun:"tool_name"`
+	Verdict  string `bun:"verdict"`
+	Reason   string `bun:"reason"`
+	Calls    int    `bun:"calls"`
+	Total    int    `bun:"total"`
+}
+
+// toolVerdicts counts the agent's tool calls by tool and by how they ended,
+// with the reasons given most often, from the step ledger: every call that
+// reached dispatch is a step, its verdict and its refusal reason included,
+// whether a run or a conversation turn made it. The step names the agent
+// that made the call, so a delegate's calls count toward the delegate.
+//
+// A step from before verdicts were kept reads as its status implies, and a
+// step still Started, whose outcome nobody recorded, as unknown. The ranking
+// is done in SQL, so only the few reasons kept per verdict leave the database.
+func (r *repository) toolVerdicts(
+	ctx context.Context,
+	req repositories.ScorecardRequest,
+	totals *agent.ScorecardTotals,
+) error {
+	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
+		db := r.db.DBForContext(ctx)
+
+		step := buncolgen.AgentRunStepColumns
+
+		labelled := db.NewSelect().
+			Model((*agent.AgentRunStep)(nil)).
+			ColumnExpr(step.ToolName.As(verdictToolName)).
+			ColumnExpr(
+				buncolgen.Expr(
+					"COALESCE(NULLIF({0}->>'verdict', ''), "+
+						"CASE {1} WHEN ? THEN ? WHEN ? THEN ? ELSE ? END) AS ?",
+					step.Outcome,
+					step.Status,
+				),
+				services.RunStepStarted, aitrace.OutcomeUnknown,
+				services.RunStepFailed, aitrace.OutcomeFailed,
+				aitrace.OutcomeRan,
+				bun.Ident(verdictVerdict),
+			).
+			ColumnExpr(
+				step.Outcome.Expr("COALESCE({}->>'reason', '') AS ?"),
+				bun.Ident(verdictReason),
+			).
+			Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.AgentRunStepScopeTenant(q, req.TenantInfo)
+			}).
+			Where(step.Kind.Eq(), services.RunStepTool).
+			Where(step.AgentDefinitionID.Eq(), req.AgentDefinitionID).
+			Where(step.CreatedAt.Gte(), req.Since)
+
+		ranked := db.NewSelect().
+			TableExpr("(?) AS ?", labelled, bun.Ident(verdictLabelled)).
+			ColumnExpr("?, ?, ?", bun.Ident(verdictToolName), bun.Ident(verdictVerdict),
+				bun.Ident(verdictReason)).
+			ColumnExpr("count(*) AS ?", bun.Ident(verdictCalls)).
+			ColumnExpr("(sum(count(*)) OVER (PARTITION BY ?, ?))::bigint AS ?",
+				bun.Ident(verdictToolName), bun.Ident(verdictVerdict), bun.Ident(verdictTotal)).
+			ColumnExpr(
+				"row_number() OVER (PARTITION BY ?, ? "+
+					"ORDER BY (? = '') ASC, count(*) DESC, ? ASC) AS ?",
+				bun.Ident(verdictToolName), bun.Ident(verdictVerdict),
+				bun.Ident(verdictReason), bun.Ident(verdictReason), bun.Ident(verdictRank),
+			).
+			GroupExpr("?, ?, ?", bun.Ident(verdictToolName), bun.Ident(verdictVerdict),
+				bun.Ident(verdictReason))
+
+		var rows []verdictRow
+		err := db.NewSelect().
+			TableExpr("(?) AS ?", ranked, bun.Ident(verdictRanked)).
+			ColumnExpr("?, ?, ?, ?, ?",
+				bun.Ident(verdictToolName), bun.Ident(verdictVerdict), bun.Ident(verdictReason),
+				bun.Ident(verdictCalls), bun.Ident(verdictTotal)).
+			Where("? <= ?", bun.Ident(verdictRank), agent.MaxVerdictReasons).
+			OrderExpr("? ASC, ? ASC, ? ASC",
+				bun.Ident(verdictToolName), bun.Ident(verdictVerdict), bun.Ident(verdictRank)).
+			Scan(ctx, &rows)
+		if err != nil {
+			r.l.Error("failed to count agent tool verdicts", zap.Error(err))
+
+			return fmt.Errorf("count agent tool verdicts: %w", err)
+		}
+
+		totals.ToolVerdicts = foldVerdicts(rows)
+
+		return nil
+	})
+}
+
+// foldVerdicts turns the ranked reason rows, ordered by tool, verdict and
+// rank, into one count per tool and verdict. A verdict's total is on every
+// one of its rows; an empty reason is a call that gave none.
+func foldVerdicts(rows []verdictRow) []agent.ToolVerdictCount {
+	out := make([]agent.ToolVerdictCount, 0, len(rows))
+	for idx := range rows {
+		row := &rows[idx]
+		last := len(out) - 1
+		if last < 0 || out[last].ToolName != row.ToolName || out[last].Verdict != row.Verdict {
+			out = append(out, agent.ToolVerdictCount{
+				ToolName:   row.ToolName,
+				Verdict:    row.Verdict,
+				Calls:      row.Total,
+				TopReasons: make([]agent.ToolVerdictReason, 0, agent.MaxVerdictReasons),
+			})
+			last++
+		}
+		if row.Reason == "" {
+			continue
+		}
+		out[last].TopReasons = append(out[last].TopReasons, agent.ToolVerdictReason{
+			Reason: row.Reason,
+			Calls:  row.Calls,
+		})
+	}
+
+	return out
 }
 
 func (r *repository) exceptions(

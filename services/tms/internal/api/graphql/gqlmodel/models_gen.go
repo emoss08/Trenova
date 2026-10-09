@@ -829,8 +829,10 @@ type AgentScorecard struct {
 	// typing the change, never deciding whether the change was right.
 	EstimatedMinutesSaved int                       `json:"estimatedMinutesSaved"`
 	ByTool                []*agent.ToolOutcomeCount `json:"byTool"`
-	Trend                 []*agent.ScorecardPoint   `json:"trend"`
-	ToolTrust             []*AgentToolTrust         `json:"toolTrust"`
+	// How each tool's calls ended, by tool and verdict, with the commonest reasons.
+	ToolVerdicts []*agent.ToolVerdictCount `json:"toolVerdicts"`
+	Trend        []*agent.ScorecardPoint   `json:"trend"`
+	ToolTrust    []*AgentToolTrust         `json:"toolTrust"`
 }
 
 type AgentScorecardInput struct {

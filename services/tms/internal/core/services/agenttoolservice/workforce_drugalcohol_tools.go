@@ -222,14 +222,19 @@ func newScheduleDOTTestTool(tests drugAlcoholKeeper) serviceports.AgentTool {
 		paramWorkerID:    workerProperty(),
 		paramDOTTestType: agenttoolschema.Enum("Why the driver is tested.", dotTestTypes),
 		paramSubstance:   agenttoolschema.Enum("What is tested.", dotTestSubstances),
-		paramScheduledAt: dateTimeProperty("When the collection is booked."),
+		paramScheduledAt: agenttoolschema.DateTime("When the collection is booked."),
 		fieldReason: wfNoteProperty("What prompted it. Required for a post-accident or " +
 			"reasonable-suspicion test; write what was observed or what happened."),
 		paramCollection: stringProperty("The collection site.", wfShortChars),
-		paramSafetyEventID: idProperty("For a post-accident test: the accident, from " +
-			"list_worker_safety_events."),
-		paramDrawEntryID: idProperty("For a random test: the selection it answers, from " +
-			"get_dot_random_draw."),
+		paramSafetyEventID: agenttoolschema.RecordIDText(
+			permission.ResourceWorkerSafetyEvent,
+			"For a post-accident test: the accident, from "+
+				"list_worker_safety_events.",
+		),
+		paramDrawEntryID: agenttoolschema.IDText(
+			"For a random test: the selection it answers, from " +
+				"get_dot_random_draw.",
+		),
 		paramIsDOT: booleanProperty("Whether it is a DOT-regulated test. Defaults to true; " +
 			"a company-policy test is false."),
 		fieldNotes: wfNoteProperty("Anything the collector should know."),
@@ -318,7 +323,7 @@ func newCancelDOTTestTool(tests drugAlcoholKeeper) serviceports.AgentTool {
 		permission.ResourceWorkerDOTTest,
 		permission.OpCancel,
 	), map[string]any{
-		paramDOTTestID: idProperty("The test, from list_dot_tests. Never guess one."),
+		paramDOTTestID: agenttoolschema.IDText("The test, from list_dot_tests. Never guess one."),
 		fieldReason:    wfNoteProperty("Why the collection did not happen."),
 	}, paramDOTTestID, fieldReason), paramDOTTestID, permission.ResourceWorkerDOTTest)
 	spec.maxTier = agent.TierPropose
@@ -402,10 +407,14 @@ func newRunDOTRandomDrawTool(draws drugAlcoholKeeper) serviceports.AgentTool {
 		permission.ResourceDOTRandomPool,
 		permission.OpManage,
 	), map[string]any{
-		paramPoolID: idProperty("The pool, from list_dot_random_draws. Leave it out to draw " +
-			"from the organization's default pool."),
-		paramDrawDay: dayProperty("A day inside the period to draw for, for a period that was " +
-			"missed. Defaults to today."),
+		paramPoolID: agenttoolschema.IDText(
+			"The pool, from list_dot_random_draws. Leave it out to draw " +
+				"from the organization's default pool.",
+		),
+		paramDrawDay: agenttoolschema.Date(
+			"A day inside the period to draw for, for a period that was " +
+				"missed. Defaults to today.",
+		),
 		fieldNotes: wfNoteProperty("Anything the round's record should say."),
 	})
 	spec.artifact = ""
@@ -464,7 +473,7 @@ type drawDecision struct {
 }
 
 func drawIDProperty() map[string]any {
-	return idProperty("The round, from list_dot_random_draws. Never guess one.")
+	return agenttoolschema.ID("The round", "list_dot_random_draws")
 }
 
 func renderDrawChange(summary string) func(
@@ -495,6 +504,11 @@ func newFinalizeDOTRandomDrawTool(draws drugAlcoholKeeper) serviceports.AgentToo
 		permission.ResourceDOTRandomPool))
 	spec.reversible = false
 	spec.artifact = ""
+	spec.recipe = []string{
+		"run_dot_random_draw",
+		"get_dot_random_draw",
+		"finalize_dot_random_draw",
+	}
 	render := renderDrawChange("Would finalize round %s; its selections become the record.")
 
 	return newReceivableTool(
@@ -594,7 +608,9 @@ func newUpdateDOTRandomSelectionTool(draws drugAlcoholKeeper) serviceports.Agent
 		permission.ResourceDOTRandomPool,
 		permission.OpManage,
 	), map[string]any{
-		paramDrawEntryID: idProperty("The selection, from get_dot_random_draw. Never guess one."),
+		paramDrawEntryID: agenttoolschema.IDText(
+			"The selection, from get_dot_random_draw. Never guess one.",
+		),
 		paramSelectionMove: agenttoolschema.Enum("Notified, Excused or Missed.",
 			randomSelectionMoves),
 		paramExcuseReason: stringProperty("For Excused: why, such as extended leave.",

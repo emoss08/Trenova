@@ -265,3 +265,50 @@ func TestApplyStopEvent_DoesNothingWhenAutoStopActualsAreOff(t *testing.T) {
 	assert.Empty(t, h.repo.recorded)
 	assert.Empty(t, h.tower.upserts)
 }
+
+type recordedWaitNotices struct {
+	services.AgentWaitNotifier
+	events []*services.AgentEvent
+}
+
+func (r *recordedWaitNotices) NotifyEvent(_ context.Context, event *services.AgentEvent) {
+	r.events = append(r.events, event)
+}
+
+func TestApplyStopEvent_ReachesTheWaitsWhenAutoStopActualsAreOff(t *testing.T) {
+	t.Parallel()
+
+	location := pulid.MustNew("loc_")
+	stop := openStop(1, location)
+	h := newStopHarness(t, stop)
+	dispatch := mocks.NewMockDispatchControlRepository(t)
+	dispatch.EXPECT().GetOrCreate(mock.Anything, h.tenant.OrgID, h.tenant.BuID).
+		Return(&dispatchcontrol.DispatchControl{}, nil).Once()
+	h.service.dispatchControlRepo = dispatch
+	waits := &recordedWaitNotices{}
+	h.service.waits = waits
+
+	h.service.applyStopEvent(t.Context(), h.event(location, shipment.VisitArrival, false))
+
+	require.Len(t, waits.events, 1)
+	assert.Equal(t, h.move.ID, waits.events[0].SubjectID)
+	assert.Equal(t, []pulid.ID{stop.ID}, waits.events[0].Related)
+	assert.Contains(t, waits.events[0].Detail, "entered the geofence")
+	assert.Empty(t, h.repo.recorded, "no stop actual is recorded when the setting is off")
+}
+
+func TestApplyStopEvent_AVisitAtNoStopOfTheMoveReachesNoWait(t *testing.T) {
+	t.Parallel()
+
+	h := newStopHarness(t, openStop(1, pulid.MustNew("loc_")))
+	dispatch := mocks.NewMockDispatchControlRepository(t)
+	dispatch.EXPECT().GetOrCreate(mock.Anything, h.tenant.OrgID, h.tenant.BuID).
+		Return(&dispatchcontrol.DispatchControl{}, nil).Once()
+	h.service.dispatchControlRepo = dispatch
+	waits := &recordedWaitNotices{}
+	h.service.waits = waits
+
+	h.service.applyStopEvent(t.Context(), h.event(pulid.MustNew("loc_"), shipment.VisitArrival, false))
+
+	assert.Empty(t, waits.events)
+}

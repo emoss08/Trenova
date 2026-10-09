@@ -327,7 +327,7 @@ func (s *Service) admit(
 		return nil, nil, err
 	}
 
-	params := MergeParams(proposal.ToolParams, modifications)
+	params := CoerceParams(tool, MergeParams(proposal.ToolParams, modifications))
 	if len(modifications) > 0 {
 		// What the approver changed is checked once more here, where it
 		// runs: the decision that carried it was checked when it was made,
@@ -520,7 +520,7 @@ func (s *Service) CheckModifications(
 		return nil, err
 	}
 
-	params := MergeParams(proposal.ToolParams, modifications)
+	params := CoerceParams(tool, MergeParams(proposal.ToolParams, modifications))
 	if err := refuseRetarget(tool, proposal.ToolParams, params); err != nil {
 		return nil, err
 	}
@@ -818,6 +818,40 @@ func (s *Service) validateParams(tool services.AgentTool, params map[string]any)
 	}
 
 	return s.schemas.ValidateFor(tool.Name(), tool.ParamSchema(), declared)
+}
+
+// CoerceParams reads the parameters that are about to be checked and run the
+// way the tool declares them, wherever the reading is certain
+// (toolschema.Coerce): the same readings the runtime makes of a model's call.
+// The approval editor sends what a person typed, "30" for a number or
+// "2026-10-01 08:00" for a local time, and a proposal filed before a
+// parameter's shape was asserted carries what the model sent; either used to
+// fail the schema with nothing reading it first. The owner of a self-scoped
+// call is set aside, so no reading can rename it, and put back as it was.
+func CoerceParams(tool services.AgentTool, params map[string]any) map[string]any {
+	owner, owned := params[services.SelfScopeOwnerParam]
+	declared := params
+	if owned {
+		declared = make(map[string]any, len(params)-1)
+		for key, value := range params {
+			if key != services.SelfScopeOwnerParam {
+				declared[key] = value
+			}
+		}
+	}
+
+	coerced, _ := toolschema.Coerce(tool.ParamSchema(), declared)
+	if !owned {
+		return coerced
+	}
+
+	out := make(map[string]any, len(coerced)+1)
+	for key, value := range coerced {
+		out[key] = value
+	}
+	out[services.SelfScopeOwnerParam] = owner
+
+	return out
 }
 
 // MergeParams overlays an approver's modifications onto the proposed parameters.

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/invoicerunservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -123,16 +124,6 @@ func (a amounts) of(value decimal.Decimal) string {
 
 func (a amounts) minor(value int64) string {
 	return a.of(money.DecimalFromMinor(value))
-}
-
-func idListProperty(description string, limit int) map[string]any {
-	return map[string]any{
-		toolschema.KeyType:        toolschema.TypeArray,
-		toolschema.KeyItems:       map[string]any{toolschema.KeyType: toolschema.TypeString},
-		toolschema.KeyMinItems:    1,
-		toolschema.KeyMaxItems:    limit,
-		toolschema.KeyDescription: description,
-	}
 }
 
 func limitProperty() map[string]any {
@@ -388,7 +379,10 @@ func (t *getInvoiceAdjustmentTool) Description() string {
 }
 
 func (t *getInvoiceAdjustmentTool) ParamSchema() map[string]any {
-	return idSchema(paramAdjustmentID, "The adjustment's id, from list_invoice_adjustments.")
+	return idSchema(
+		paramAdjustmentID,
+		agenttoolschema.IDText("The adjustment's id, from list_invoice_adjustments."),
+	)
 }
 
 func (t *getInvoiceAdjustmentTool) Policy() serviceports.ToolPolicy {
@@ -494,8 +488,11 @@ func (t *listInvoiceDisputesTool) Description() string {
 
 func (t *listInvoiceDisputesTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
-		paramReceivableInvoices: idListProperty("The invoices, from list_invoices or get_invoice.",
-			maxReceivableInvoices),
+		paramReceivableInvoices: agenttoolschema.RecordIDs(
+			permission.ResourceInvoice,
+			"The invoices, from list_invoices or get_invoice.",
+			maxReceivableInvoices,
+		),
 	}, paramReceivableInvoices)
 }
 
@@ -588,8 +585,11 @@ func (t *listCreditMemoApplicationsTool) Description() string {
 
 func (t *listCreditMemoApplicationsTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
-		paramReceivableInvoices: idListProperty("Invoices or credit memos, from list_invoices "+
-			"or get_invoice.", maxReceivableInvoices),
+		paramReceivableInvoices: agenttoolschema.IDList(
+			"Invoices or credit memos, from list_invoices "+
+				"or get_invoice.",
+			maxReceivableInvoices,
+		),
 	}, paramReceivableInvoices)
 }
 
@@ -787,7 +787,13 @@ func (t *getInvoiceRunTool) Description() string {
 }
 
 func (t *getInvoiceRunTool) ParamSchema() map[string]any {
-	return idSchema(paramInvoiceRunID, "The run's id, from list_invoice_runs.")
+	return idSchema(
+		paramInvoiceRunID,
+		agenttoolschema.RecordIDText(
+			permission.ResourceInvoiceRun,
+			"The run's id, from list_invoice_runs.",
+		),
+	)
 }
 
 func (t *getInvoiceRunTool) Policy() serviceports.ToolPolicy {

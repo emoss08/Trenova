@@ -6,8 +6,9 @@
 // decisions queue said what people did with its proposals, and nothing said
 // what any of it cost or how much work it took off anybody.
 //
-// Every figure is counted at read time from the runs, the proposals and the
-// usage records. There is no stored copy, so there is nothing to drift out of
+// Every figure is counted at read time from the runs, the proposals, the step
+// ledger (how each tool's calls ended, and why) and the usage records. There
+// is no stored copy, so there is nothing to drift out of
 // step with the ledger a person can audit.
 package agentscorecardservice
 

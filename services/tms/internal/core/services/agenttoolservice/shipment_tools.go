@@ -221,6 +221,17 @@ func newPlaceShipmentHoldTool(holds serviceports.ShipmentHoldService) servicepor
 
 func (t *placeShipmentHoldTool) Name() string { return "place_shipment_hold" }
 
+func (t *placeShipmentHoldTool) Recipe() []string {
+	return []string{
+		"get_shipment",
+		"search_shipments",
+		"explain_rate",
+		"quote_shipment",
+		"list_hold_reasons",
+		"place_shipment_hold",
+	}
+}
+
 func (t *placeShipmentHoldTool) Description() string {
 	return "Put a shipment on hold so it stops moving, billing or delivering until " +
 		"someone clears it. The reason decides what the hold blocks, so call " +

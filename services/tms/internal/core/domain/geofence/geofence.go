@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/postgis"
+	"github.com/emoss08/trenova/shared/geoutils"
 )
 
 const DefaultRadiusMeters = 250.0
@@ -208,4 +209,38 @@ func geocodedSubject(subject string) string {
 	}
 
 	return subject
+}
+
+// Contains reports whether a point lies inside the geofence: within the
+// radius of the center for an automatic or circular one, inside the drawn
+// shape for a rectangle or a polygon. A geofence that cannot be placed (a
+// circle with no center, a shape with too few corners) contains nothing.
+func Contains(fields Fields, center Coordinates, latitude, longitude float64) bool {
+	point := geoutils.Point{Latitude: latitude, Longitude: longitude}
+
+	switch fields.GeofenceType {
+	case TypeRectangle, TypeDraw:
+		polygon := make([]geoutils.Point, 0, len(fields.GeofenceVertices))
+		for _, vertex := range fields.GeofenceVertices {
+			polygon = append(polygon, geoutils.Point{
+				Latitude:  vertex.Latitude,
+				Longitude: vertex.Longitude,
+			})
+		}
+		return geoutils.PolygonContains(polygon, point)
+	case TypeAuto, TypeCircle:
+		if center.Latitude == nil || center.Longitude == nil {
+			return false
+		}
+		radius := DefaultRadiusMeters
+		if fields.GeofenceRadiusMeters != nil && *fields.GeofenceRadiusMeters > 0 {
+			radius = *fields.GeofenceRadiusMeters
+		}
+		return geoutils.HaversineMeters(
+			geoutils.Point{Latitude: *center.Latitude, Longitude: *center.Longitude},
+			point,
+		) <= radius
+	default:
+		return false
+	}
 }

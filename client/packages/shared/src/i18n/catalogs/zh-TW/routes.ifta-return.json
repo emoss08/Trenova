@@ -22,7 +22,6 @@
   "Delete draft…": "刪除草稿…",
   "Delete the {0} draft?": "要刪除 {0} 的草稿嗎？",
   "Draft figures move with the data. Finalized locks them. Filed is immutable; corrections open an amendment.": "草稿數字會隨資料變動。定案後即鎖定。已申報的內容不可變更；若要更正須開立修正案。",
-  "Due {0}": "到期日 {0}",
   "Every completed move in the quarter already has a jurisdiction breakdown. There is nothing to backfill.": "本季所有已完成的運程皆已有管轄區明細。無須回填任何內容。",
   "Every completed move in {0} that has distance but no jurisdiction breakdown is re-routed for its state-by-state report. Each move is a billable distance request, so the quarter is counted first.": "{0} 中所有已完成、有距離但無管轄區明細的運程，都會重新路由以取得其逐州報表。每筆運程都是一次計費的距離要求，因此會先統計整季數量。",
   "Every line was rebuilt from the miles, fuel and rates on file now.": "每一行都已依目前建檔的英里數、燃油與稅率重新產生。",

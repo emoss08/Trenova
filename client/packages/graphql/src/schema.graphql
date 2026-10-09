@@ -4954,6 +4954,7 @@ enum AgentRunTrigger {
   Event
   Manual
   Scheduled
+  Wait
 }
 
 """What one agent can do without a person."""
@@ -5034,6 +5035,10 @@ type AgentScorecard {
   """The start of the window."""
   since: Timestamp!
   toolTrust: [AgentToolTrust!]!
+  """
+  How each tool's calls ended, by tool and verdict, with the commonest reasons.
+  """
+  toolVerdicts: [AgentToolVerdict!]!
   trend: [AgentScorecardPoint!]!
   window: AgentScorecardWindow!
 }
@@ -5118,6 +5123,8 @@ enum AgentSubjectType {
   FormulaTemplate
   InboundMessage
   Insight
+  Invoice
+  InvoiceDispute
   Organization
   Report
   Shipment
@@ -5580,6 +5587,32 @@ type AgentToolTrust {
   """
   streak: Int!
   toolName: String!
+}
+
+"""
+How often one tool's calls ended one way over the window, counted from every
+call that reached the tool, refusals included. A call the runtime refused
+never became a proposal, so the proposal counts cannot show it.
+"""
+type AgentToolVerdict {
+  calls: Int!
+  toolName: String!
+  """
+  The reasons given most often, most frequent first. A call that ran gives none.
+  """
+  topReasons: [AgentToolVerdictReason!]!
+  """
+  ran, proposed, simulated, denied, invalid, duplicate, over_budget, failed or unknown.
+  """
+  verdict: String!
+}
+
+"""
+One reason a tool's calls were refused or failed, and how many calls gave it.
+"""
+type AgentToolVerdictReason {
+  calls: Int!
+  reason: String!
 }
 
 enum AgentTriggerMode {

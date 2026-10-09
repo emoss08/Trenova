@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
@@ -42,6 +43,8 @@ type toolOutcome struct {
 	// remember kept or offered.
 	memories []pulid.ID
 	saved    *serviceports.SavedMemory
+	// shown is what the observer put in front of the person for the call.
+	shown *serviceports.ShownArtifact
 }
 
 func failedOutcome(format string, args ...any) toolOutcome {
@@ -61,7 +64,10 @@ type dispatchParams struct {
 	req            *serviceports.RunRequest
 	call           serviceports.ToolCall
 	completionText string
-	proposedSoFar  []serviceports.PendingAction
+	// argumentNote is what the runtime changed about the call's arguments
+	// before the tool read them, told back to the model with the result.
+	argumentNote  string
+	proposedSoFar []serviceports.PendingAction
 	// idempotencyKey names this operation to the tool. It is the run's step
 	// key where there is a ledger, and the provider's call id otherwise.
 	idempotencyKey string
@@ -114,15 +120,20 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 			}
 		}
 
-		arguments, _, err := contractArguments(
+		contract, err := contractCall(
 			s.arguments, call.Name, tool.ParamSchema(), call.Arguments,
 		)
 		if err != nil {
-			return argumentOutcome(call.Name, err)
+			return argumentOutcome(call.Name, tool.ParamSchema(), err)
 		}
-		call.Arguments = arguments
+		call.Arguments = contract.args
 
-		return s.runQueryTool(ctx, req, tool, call)
+		outcome := s.runQueryTool(ctx, req, tool, call)
+		if note := contract.note(); note != "" && !outcome.failed {
+			outcome.content += "\n\n[" + note + "]"
+		}
+
+		return outcome
 	}
 
 	tool, ok := s.actionTools.Get(call.Name)
@@ -140,13 +151,14 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		}
 	}
 
-	arguments, aliases, err := contractArguments(
+	contract, err := contractCall(
 		s.arguments, call.Name, tool.ParamSchema(), call.Arguments,
 	)
 	if err != nil {
-		return argumentOutcome(call.Name, err)
+		return argumentOutcome(call.Name, tool.ParamSchema(), err)
 	}
-	call.Arguments = arguments
+	call.Arguments = contract.args
+	p.argumentNote = contract.note()
 	if selfScoped {
 		// Whose records these are is the runtime's to say, not the model's:
 		// anything the model sent under this key is overwritten. A copy, so
@@ -279,8 +291,8 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 			"Recorded a proposal to run %q. It is awaiting a person's review at the %s tier and has not run.",
 			call.Name,
 			tier,
-		) + filingEcho(baseline, call.Arguments)
-		if note := aliasNote(aliases); note != "" {
+		) + heldReason(action.HeldBy, decision.Egress) + filingEcho(baseline, call.Arguments)
+		if note := p.argumentNote; note != "" {
 			content += "\n" + note
 		}
 		if heldForExternal {
@@ -333,7 +345,18 @@ func runToolParams(
 		RunID:          req.RunID,
 		Params:         arguments,
 		Timezone:       req.Context.Timezone,
+		DefinitionID:   definitionIDOf(req),
+		ThreadID:       req.ThreadID,
+		Delegated:      req.Delegation != nil,
 	}
+}
+
+func definitionIDOf(req *serviceports.RunRequest) pulid.ID {
+	if req.Definition == nil {
+		return pulid.Nil
+	}
+
+	return req.Definition.ID
 }
 
 // withinBudget refuses an automatic write past its tool's daily cap. The
@@ -485,9 +508,10 @@ func (s *Service) authorize(
 		return refusedOutcome(
 			aitrace.OutcomeDenied,
 			fmt.Sprintf("lacks %s access to %s", operation, resource.String()),
-			"Tool %q is not permitted: %s.",
+			"Tool %q is not permitted: %s. %s",
 			toolName,
 			deniedAccess(actor, operation, resource),
+			deniedAdvice(actor, operation, resource),
 		), true
 	}
 
@@ -510,6 +534,34 @@ func deniedAccess(
 		"the person you are working for does not have %s access to %s",
 		operation, resource.String(),
 	)
+}
+
+// deniedAdvice tells the model what to do with a denial. Before it, a model
+// refused for a permission tried the same call another way, or told the
+// person the system could not do it; the person needed to hear whose
+// permission it was and who grants it.
+func deniedAdvice(
+	actor *serviceports.RequestActor,
+	operation permission.Operation,
+	resource permission.Resource,
+) string {
+	if actor.IsAgent() {
+		return "Do not try it another way. Finish what the run can do without it and say in " +
+			"your report that this step needs a person, or someone to widen what this " +
+			"agent may do unattended in AI Control."
+	}
+
+	return fmt.Sprintf(
+		"Do not try it another way or propose it instead. Tell the person plainly that "+
+			"their account does not have %s access to %s, that an administrator grants it "+
+			"under their role, and what you would do once it is granted. Do everything else "+
+			"they asked that does not need it.",
+		operation, humanResource(resource),
+	)
+}
+
+func humanResource(resource permission.Resource) string {
+	return strings.ReplaceAll(resource.String(), "_", " ")
 }
 
 func (s *Service) runQueryTool(
@@ -603,12 +655,91 @@ func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome
 		verdict: aitrace.OutcomeRan,
 		saved:   saved,
 	}
-	if refreshed != nil {
+	switch {
+	case refreshed != nil:
 		outcome.content = refreshedContent(call.Name, refreshed)
 		outcome.memories = []pulid.ID{refreshed.ID}
+	case saved != nil:
+		outcome.content = savedMemoryContent(call.Name, saved)
+	}
+	if note := a.argumentNote; note != "" {
+		outcome.content += " " + note
 	}
 
 	return outcome
+}
+
+// savedMemoryContent tells the model whether what it asked to remember is
+// kept or only offered. Both used to read "ran successfully", and a model
+// told the person "I'll remember that" about a memory they had asked to be
+// asked about first, which then sat on a card they had not decided.
+func savedMemoryContent(name string, saved *serviceports.SavedMemory) string {
+	if saved.Pending {
+		return fmt.Sprintf(
+			"Tool %q ran: the memory is offered to the person on a card under your reply, "+
+				"because they asked to be asked before anything is kept for them. Nothing is "+
+				"kept until they choose Keep there. Tell them in a few words that it is there "+
+				"to keep or not; do not say it is remembered.",
+			name,
+		)
+	}
+
+	return fmt.Sprintf(
+		"Tool %q ran: the memory is kept and will be read in later conversations. Tell the "+
+			"person in a few words that you will keep it in mind; they can undo it on the card "+
+			"under your reply.",
+		name,
+	)
+}
+
+// heldReason says in one clause why a call became a proposal rather than
+// running, so the model can tell the person plainly instead of guessing at
+// the tier. The keys are the policy decision's HeldBy.
+func heldReason(heldBy []string, egress agent.EgressClass) string {
+	var reasons []string
+	seen := make(map[string]struct{}, len(heldBy))
+	for _, key := range heldBy {
+		if _, dup := seen[key]; dup {
+			continue
+		}
+		seen[key] = struct{}{}
+		switch key {
+		case agenttoolpolicy.HeldByToolTier:
+			reasons = append(reasons, "this tool is set to propose rather than run")
+		case agenttoolpolicy.HeldByAgentCeiling:
+			reasons = append(reasons, "this agent's autonomy ceiling does not let it run writes on its own")
+		case agenttoolpolicy.HeldByToolMax:
+			reasons = append(reasons, "this change is always a person's decision")
+		case agenttoolpolicy.HeldByEgressClass:
+			reasons = append(reasons, egressReason(egress))
+		case agenttoolpolicy.HeldByCondition:
+			reasons = append(reasons, "the change is past the size or value this tool runs unasked")
+		case agenttoolpolicy.HeldByTainted:
+			reasons = append(reasons, "this turn read text written outside the organization")
+		case agenttoolpolicy.HeldByBusinessHours:
+			reasons = append(reasons, "it is outside this agent's business hours")
+		}
+	}
+	if len(reasons) == 0 {
+		return ""
+	}
+
+	return " It waits because " + strings.Join(reasons, ", and because ") + "."
+}
+
+func egressReason(egress agent.EgressClass) string {
+	switch egress {
+	case agent.EgressCustomerVisible:
+		return "the customer would see this change"
+	case agent.EgressDriverVisible:
+		return "a driver would see this change"
+	case agent.EgressExternalRecipient:
+		return "it would reach someone outside the organization"
+	case agent.EgressMoney:
+		return "it moves money"
+	default:
+		return "of what the change would reach"
+	}
 }
 
 // savedOrRefreshed sorts what a remember returned. A memory it kept or

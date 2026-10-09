@@ -75,8 +75,11 @@ func allocationsProperty(description string) map[string]any {
 		toolschema.KeyItems: map[string]any{
 			toolschema.KeyType: toolschema.TypeObject,
 			toolschema.KeyProperties: map[string]any{
-				paramBillToCustomer: idProperty("The customer who pays this share, from " +
-					"list_customers. Never guess one."),
+				paramBillToCustomer: agenttoolschema.RecordIDText(
+					permission.ResourceCustomer,
+					"The customer who pays this share, from "+
+						"list_customers. Never guess one.",
+				),
 				paramAllocMethod: agenttoolschema.Enum("Whether the share is a percent of "+
 					"the charge or a fixed amount.", allocationMethods),
 				paramAllocPercent: amountProperty("The share as a percent such as 60, " +
@@ -196,7 +199,7 @@ func allocationRow(
 }
 
 func chargeIDProperty() map[string]any {
-	return idProperty("The order charge, from the charges get_order lists. Never guess one.")
+	return agenttoolschema.ID("The order charge", "the charges get_order lists")
 }
 
 type chargeView struct {

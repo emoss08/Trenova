@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/typeutils"
@@ -186,8 +187,8 @@ func (t *getManualJournalTool) Description() string {
 }
 
 func (t *getManualJournalTool) ParamSchema() map[string]any {
-	return idSchema(paramManualJournalID, "The manual journal's id, from "+
-		"list_manual_journals or "+onThePage)
+	return idSchema(paramManualJournalID, agenttoolschema.IDText("The manual journal's id, from "+
+		"list_manual_journals or "+onThePage))
 }
 
 func (t *getManualJournalTool) Policy() serviceports.ToolPolicy {

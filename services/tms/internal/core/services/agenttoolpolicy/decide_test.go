@@ -664,3 +664,27 @@ func TestSeeksPersonalExemption(t *testing.T) {
 		assert.Equal(t, tc.want, agenttoolpolicy.SeeksPersonalExemption(tc.in), tc.name)
 	}
 }
+
+// Only what no call can get past is told to the model as always waiting: the
+// tool's own ceiling, the ceiling its egress sets, or the agent's ceiling. A
+// tool whose static tier is Propose may still earn its way to running, and is
+// not promised either way.
+func TestAlwaysProposes_OnlyWhenNothingLetsACallRun(t *testing.T) {
+	t.Parallel()
+
+	open := actionPolicy("update_tractor_status", agent.EgressInternal)
+	capped := open
+	capped.MaxTier = agent.TierActWithApproval
+	earning := open
+	earning.DefaultTier = agent.TierPropose
+
+	full := definition(agent.TierAutoExecute, nil)
+	held := definition(agent.TierActWithApproval, nil)
+
+	assert.False(t, agenttoolpolicy.AlwaysProposes(full, open))
+	assert.True(t, agenttoolpolicy.AlwaysProposes(full, capped), "the tool's own ceiling")
+	assert.True(t, agenttoolpolicy.AlwaysProposes(held, open), "the agent's ceiling")
+	assert.False(t, agenttoolpolicy.AlwaysProposes(full, earning),
+		"a tool that starts at Propose can still earn its way up")
+	assert.False(t, agenttoolpolicy.AlwaysProposes(nil, open))
+}

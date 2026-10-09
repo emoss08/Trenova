@@ -10,8 +10,8 @@ import {
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
+import { AssistantIconButton } from "./assistant-icon-button";
 import { AssistantPlacementMenu } from "./assistant-placement-menu";
 
 /** What the panel is showing under its header. */
@@ -37,16 +37,9 @@ function HeaderButton({
   children: ReactNode;
 }) {
   return (
-    <button
-      type="button"
-      className={cn("dk-ib", pressed && "as-on")}
-      title={label}
-      aria-label={label}
-      aria-pressed={pressed}
-      onClick={onClick}
-    >
+    <AssistantIconButton title={label} aria-label={label} aria-pressed={pressed} onClick={onClick}>
       {children}
-    </button>
+    </AssistantIconButton>
   );
 }
 
@@ -68,9 +61,7 @@ function ThreadMenu({
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <button
-            type="button"
-            className="dk-ib"
+          <AssistantIconButton
             title={t("Conversation actions")}
             aria-label={t("Conversation actions")}
           />

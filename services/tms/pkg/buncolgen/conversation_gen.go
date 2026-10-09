@@ -313,6 +313,7 @@ var MessageColumns = struct {
 	ScheduleID        Column // "schedule_id" → qualified: "amsg.schedule_id"
 	Handoff           Column // "handoff" → qualified: "amsg.handoff"
 	Content           Column // "content" → qualified: "amsg.content"
+	WorldChanges      Column // "world_changes" → qualified: "amsg.world_changes"
 	Compaction        Column // "compaction" → qualified: "amsg.compaction"
 	ToolCalls         Column // "tool_calls" → qualified: "amsg.tool_calls"
 	ToolCallID        Column // "tool_call_id" → qualified: "amsg.tool_call_id"
@@ -355,6 +356,7 @@ var MessageColumns = struct {
 	ScheduleID:        NewColumn("schedule_id", "amsg"),
 	Handoff:           NewColumn("handoff", "amsg"),
 	Content:           NewColumn("content", "amsg"),
+	WorldChanges:      NewColumn("world_changes", "amsg"),
 	Compaction:        NewColumn("compaction", "amsg"),
 	ToolCalls:         NewColumn("tool_calls", "amsg"),
 	ToolCallID:        NewColumn("tool_call_id", "amsg"),
@@ -403,6 +405,7 @@ var MessageFieldMap = map[string]string{
 	"scheduleId":     "schedule_id",
 	"handoff":        "handoff",
 	"content":        "content",
+	"worldChanges":   "world_changes",
 	"compaction":     "compaction",
 	"toolCalls":      "tool_calls",
 	"toolCallId":     "tool_call_id",
@@ -449,6 +452,7 @@ var MessageInsertableColumns = []string{
 	"schedule_id",
 	"handoff",
 	"content",
+	"world_changes",
 	"compaction",
 	"tool_calls",
 	"tool_call_id",
@@ -553,6 +557,7 @@ var MessageFilter = struct {
 	ScheduleID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scheduleId" → DB: "schedule_id"
 	Handoff           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "handoff" → DB: "handoff"
 	Content           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "content" → DB: "content"
+	WorldChanges      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "worldChanges" → DB: "world_changes"
 	Compaction        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "compaction" → DB: "compaction"
 	ToolCalls         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolCalls" → DB: "tool_calls"
 	ToolCallID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolCallId" → DB: "tool_call_id"
@@ -620,6 +625,9 @@ var MessageFilter = struct {
 	},
 	Content: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("content", op, value)
+	},
+	WorldChanges: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("worldChanges", op, value)
 	},
 	Compaction: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("compaction", op, value)
@@ -708,6 +716,213 @@ var MessageFilter = struct {
 }
 
 // ---------------------------------------------------------------------------
+// QueuedMessage — table "assistant_queued_messages", alias "aqm"
+// ---------------------------------------------------------------------------
+
+// QueuedMessageTable holds the table name, alias, and primary key columns
+// for the "assistant_queued_messages" table. The alias "aqm" is used in all generated
+// SQL fragments (e.g. "aqm.id = ?").
+var QueuedMessageTable = TableInfo{
+	Name:       "assistant_queued_messages",
+	Alias:      "aqm",
+	PrimaryKey: []string{"id", "organization_id", "business_unit_id"},
+}
+
+// QueuedMessageColumns provides type-safe column references for the "assistant_queued_messages" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(QueuedMessageColumns.ID.String())
+//	// SELECT aqm.id FROM assistant_queued_messages AS aqm
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(QueuedMessageColumns.ID.Eq(), id)           // WHERE aqm.id = ?
+//	q.Order(QueuedMessageColumns.CreatedAt.OrderDesc())  // ORDER BY aqm.created_at DESC
+var QueuedMessageColumns = struct {
+	ID             Column // "id" → qualified: "aqm.id"
+	OrganizationID Column // "organization_id" → qualified: "aqm.organization_id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "aqm.business_unit_id"
+	ThreadID       Column // "thread_id" → qualified: "aqm.thread_id"
+	UserID         Column // "user_id" → qualified: "aqm.user_id"
+	Content        Column // "content" → qualified: "aqm.content"
+	Request        Column // "request" → qualified: "aqm.request"
+	Position       Column // "position" → qualified: "aqm.position"
+	Steer          Column // "steer" → qualified: "aqm.steer"
+	Version        Column // "version" → qualified: "aqm.version"
+	CreatedAt      Column // "created_at" → qualified: "aqm.created_at"
+	UpdatedAt      Column // "updated_at" → qualified: "aqm.updated_at"
+}{
+	ID:             NewColumn("id", "aqm"),
+	OrganizationID: NewColumn("organization_id", "aqm"),
+	BusinessUnitID: NewColumn("business_unit_id", "aqm"),
+	ThreadID:       NewColumn("thread_id", "aqm"),
+	UserID:         NewColumn("user_id", "aqm"),
+	Content:        NewColumn("content", "aqm"),
+	Request:        NewColumn("request", "aqm"),
+	Position:       NewColumn("position", "aqm"),
+	Steer:          NewColumn("steer", "aqm"),
+	Version:        NewColumn("version", "aqm"),
+	CreatedAt:      NewColumn("created_at", "aqm"),
+	UpdatedAt:      NewColumn("updated_at", "aqm"),
+}
+
+// QueuedMessageFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by QueuedMessage.GetStaticFieldMap().
+var QueuedMessageFieldMap = map[string]string{
+	"id":             "id",
+	"organizationId": "organization_id",
+	"businessUnitId": "business_unit_id",
+	"threadId":       "thread_id",
+	"userId":         "user_id",
+	"content":        "content",
+	"request":        "request",
+	"position":       "position",
+	"steer":          "steer",
+	"version":        "version",
+	"createdAt":      "created_at",
+	"updatedAt":      "updated_at",
+}
+
+// QueuedMessageInsertableColumns lists column names suitable for INSERT statements on the "assistant_queued_messages" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var QueuedMessageInsertableColumns = []string{
+	"id",
+	"organization_id",
+	"business_unit_id",
+	"thread_id",
+	"user_id",
+	"content",
+	"request",
+	"position",
+	"steer",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// QueuedMessageRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(QueuedMessageRelations.Organization)
+//	// Bun eager-loads the Organization association via a separate query
+var QueuedMessageRelations = struct {
+	Organization string
+	BusinessUnit string
+	User         string
+	Thread       string
+}{
+	Organization: "Organization",
+	BusinessUnit: "BusinessUnit",
+	User:         "User",
+	Thread:       "Thread",
+}
+
+// QueuedMessageScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE aqm.organization_id = ? AND aqm.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.QueuedMessageScopeTenant(sq, ti).
+//		Where(buncolgen.QueuedMessageColumns.ID.Eq(), id)
+func QueuedMessageScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, QueuedMessageColumns.OrganizationID, QueuedMessageColumns.BusinessUnitID, ti)
+}
+
+// QueuedMessageScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.QueuedMessageScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.QueuedMessageColumns.ID.In(), bun.List(ids))
+//	})
+func QueuedMessageScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, QueuedMessageColumns.OrganizationID, QueuedMessageColumns.BusinessUnitID, ti)
+}
+
+// QueuedMessageScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.QueuedMessageScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.QueuedMessageColumns.ID.Eq(), id)
+//	})
+func QueuedMessageScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, QueuedMessageColumns.OrganizationID, QueuedMessageColumns.BusinessUnitID, ti)
+}
+
+// QueuedMessageApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.QueuedMessageApplyTenant(tenantInfo))
+func QueuedMessageApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(QueuedMessageColumns.OrganizationID, QueuedMessageColumns.BusinessUnitID, ti)
+}
+
+// QueuedMessageFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "assistant_queued_messages" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	QueuedMessageFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var QueuedMessageFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	ThreadID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "threadId" → DB: "thread_id"
+	UserID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
+	Content        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "content" → DB: "content"
+	Request        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "request" → DB: "request"
+	Position       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "position" → DB: "position"
+	Steer          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "steer" → DB: "steer"
+	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	ThreadID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("threadId", op, value)
+	},
+	UserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("userId", op, value)
+	},
+	Content: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("content", op, value)
+	},
+	Request: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("request", op, value)
+	},
+	Position: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("position", op, value)
+	},
+	Steer: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("steer", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // Thread — table "assistant_threads", alias "athr"
 // ---------------------------------------------------------------------------
 
@@ -747,6 +962,9 @@ var ThreadColumns = struct {
 	Pinned              Column // "pinned" → qualified: "athr.pinned"
 	SubjectType         Column // "subject_type" → qualified: "athr.subject_type"
 	SubjectID           Column // "subject_id" → qualified: "athr.subject_id"
+	SnoozedUntil        Column // "snoozed_until" → qualified: "athr.snoozed_until"
+	SnoozeAnchor        Column // "snooze_anchor" → qualified: "athr.snooze_anchor"
+	SnoozeStopID        Column // "snooze_stop_id" → qualified: "athr.snooze_stop_id"
 	PinnedFacts         Column // "pinned_facts" → qualified: "athr.pinned_facts"
 	ContextUsage        Column // "context_usage" → qualified: "athr.context_usage"
 	AutoCompactOff      Column // "auto_compact_off" → qualified: "athr.auto_compact_off"
@@ -771,6 +989,9 @@ var ThreadColumns = struct {
 	Pinned:              NewColumn("pinned", "athr"),
 	SubjectType:         NewColumn("subject_type", "athr"),
 	SubjectID:           NewColumn("subject_id", "athr"),
+	SnoozedUntil:        NewColumn("snoozed_until", "athr"),
+	SnoozeAnchor:        NewColumn("snooze_anchor", "athr"),
+	SnoozeStopID:        NewColumn("snooze_stop_id", "athr"),
 	PinnedFacts:         NewColumn("pinned_facts", "athr"),
 	ContextUsage:        NewColumn("context_usage", "athr"),
 	AutoCompactOff:      NewColumn("auto_compact_off", "athr"),
@@ -801,6 +1022,8 @@ var ThreadFieldMap = map[string]string{
 	"pinned":              "pinned",
 	"subjectType":         "subject_type",
 	"subjectId":           "subject_id",
+	"snoozedUntil":        "snoozed_until",
+	"snoozeAnchor":        "snooze_anchor",
 	"pinnedFacts":         "pinned_facts",
 	"contextUsage":        "context_usage",
 	"autoCompactOff":      "auto_compact_off",
@@ -829,6 +1052,9 @@ var ThreadInsertableColumns = []string{
 	"pinned",
 	"subject_type",
 	"subject_id",
+	"snoozed_until",
+	"snooze_anchor",
+	"snooze_stop_id",
 	"pinned_facts",
 	"context_usage",
 	"auto_compact_off",
@@ -919,6 +1145,8 @@ var ThreadFilter = struct {
 	Pinned              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pinned" → DB: "pinned"
 	SubjectType         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectType" → DB: "subject_type"
 	SubjectID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectId" → DB: "subject_id"
+	SnoozedUntil        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "snoozedUntil" → DB: "snoozed_until"
+	SnoozeAnchor        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "snoozeAnchor" → DB: "snooze_anchor"
 	PinnedFacts         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pinnedFacts" → DB: "pinned_facts"
 	ContextUsage        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contextUsage" → DB: "context_usage"
 	AutoCompactOff      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoCompactOff" → DB: "auto_compact_off"
@@ -970,6 +1198,12 @@ var ThreadFilter = struct {
 	},
 	SubjectID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("subjectId", op, value)
+	},
+	SnoozedUntil: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("snoozedUntil", op, value)
+	},
+	SnoozeAnchor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("snoozeAnchor", op, value)
 	},
 	PinnedFacts: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("pinnedFacts", op, value)

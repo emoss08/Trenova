@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/orderservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -165,8 +166,14 @@ func (t *getOrderTool) Description() string {
 }
 
 func (t *getOrderTool) ParamSchema() map[string]any {
-	return idSchema("orderId", "The order's id, from list_orders, the orderId on "+
-		"get_shipment or get_invoice, or the page you are on.")
+	return idSchema(
+		"orderId",
+		agenttoolschema.RecordIDText(
+			permission.ResourceOrder,
+			"The order's id, from list_orders, the orderId on "+
+				"get_shipment or get_invoice, or the page you are on.",
+		),
+	)
 }
 
 func (t *getOrderTool) Policy() serviceports.ToolPolicy {

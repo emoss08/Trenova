@@ -38,6 +38,13 @@ const RECORD_CHANGE_KEYS: Record<string, QueryKeyRoot[]> = {
   account_type: ["account-type-list"],
   agent_exception: ["agent-exception-list"],
   api_key: ["api-key-list"],
+  // Billing control and the case checklists it governs: a checklist saved or
+  // removed changes what every open case about a record shows.
+  billing_control: [
+    ["billingControl", "get"],
+    ["caseChecklist", "list"],
+    ["assistant", "case"],
+  ],
   carrier: ["carrier-list"],
   carrier_settlement: ["carrier-settlement-list", "carrier-settlement-batch-list"],
   commodity: ["commodity-list"],
@@ -136,6 +143,23 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   // A schedule made, paused, resumed, deleted or run: its card's state and
   // next run move.
   conversation_schedules: [["assistant", "schedules"]],
+  // A message queued, edited, reordered, removed, read by the reply under way
+  // or sent as the next one: the conversation's waiting list moves.
+  assistant_queue: [["assistant", "queue"]],
+  // A wait set, met, run out or cancelled: the conversation's waiting strip
+  // moves, a wait that ended starts a turn of its own, and a case waiting
+  // on it changes state.
+  agent_waits: [
+    ["assistant", "waits"],
+    ["assistant", "case"],
+    ["assistant", "threads"],
+  ],
+  // A conversation made a case, moved to another record, snoozed or woken:
+  // its header and its place on the rail move.
+  assistant_case: [
+    ["assistant", "case"],
+    ["assistant", "threads"],
+  ],
   // An agent looked back over a conversation and kept or offered what it
   // learned: the card appears under the reply it learned from, and the
   // person's memory list moves with it.

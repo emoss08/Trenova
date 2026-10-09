@@ -123,3 +123,38 @@ describe("classifyMessage with a decision note", () => {
     ).toBe("decision");
   });
 });
+
+/**
+ * Two kinds the runtime saves in the User role (conversation.MessageKindSteer
+ * and MessageKindWorldChange). Drawn by role, the notice would read as the
+ * person speaking; a steer would read as a fresh question opening a turn.
+ */
+describe("classifyMessage with what reached a turn while it worked", () => {
+  it("draws a steer as the person's, marked as read by the reply under way", () => {
+    expect(classifyMessage(message({ role: "User", kind: "Steer", content: "Use Werner" }))).toBe(
+      "steer",
+    );
+  });
+
+  it("draws a change notice as neither side's words", () => {
+    expect(
+      classifyMessage(message({ role: "User", kind: "WorldChange", content: "[Notice…]" })),
+    ).toBe("world");
+  });
+
+  it("draws a change notice as a notice even if the guard marked it refused", () => {
+    expect(classifyMessage(message({ role: "User", kind: "WorldChange", refused: true }))).toBe(
+      "world",
+    );
+  });
+});
+
+describe("classifyMessage with a wait's note", () => {
+  it("draws the note that picked a wait up as the wait, never as the person's words", () => {
+    expect(
+      classifyMessage(
+        message({ role: "User", kind: "WaitNote", content: "[Notice…] Wait id: awt_1" }),
+      ),
+    ).toBe("wait");
+  });
+});

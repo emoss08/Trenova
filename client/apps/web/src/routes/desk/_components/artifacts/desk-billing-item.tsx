@@ -1,3 +1,4 @@
+import { Button } from "@trenova/shared/components/ui/button";
 import { recordPath } from "@/config/record-links";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
@@ -86,6 +87,7 @@ export function BiIcon({
 }) {
   return (
     <svg
+      className="size-auto"
       width={size}
       height={size}
       viewBox="0 0 24 24"
@@ -202,11 +204,18 @@ function BillerPicker({
   return (
     <div className="dk-bi-opts">
       {billers.map((biller) => (
-        <button key={biller.id} type="button" disabled={busy} onClick={() => onPick(biller)}>
+        <Button
+          key={biller.id}
+          variant="outline"
+          size="sm"
+          className="disabled:opacity-55"
+          disabled={busy}
+          onClick={() => onPick(biller)}
+        >
           <span className="dk-bi-av">{initials(biller.name)}</span>
           {biller.name}
           {biller.id === me?.id && <em>{t("you")}</em>}
-        </button>
+        </Button>
       ))}
     </div>
   );
@@ -261,18 +270,24 @@ function CheckRow({
           ) : (
             <div className="dk-bi-opts">
               {me && (
-                <button
-                  type="button"
-                  className="dk-pri"
+                <Button
+                  size="sm"
+                  className="disabled:opacity-55"
                   disabled={busy}
                   onClick={() => onAssign(me)}
                 >
                   {t("Assign to me")}
-                </button>
+                </Button>
               )}
-              <button type="button" disabled={busy} onClick={() => setPicking(true)}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="disabled:opacity-55"
+                disabled={busy}
+                onClick={() => setPicking(true)}
+              >
                 {t("Someone else…")}
-              </button>
+              </Button>
             </div>
           ))}
         {!ok && issue && (
@@ -283,15 +298,16 @@ function CheckRow({
                 {issue.options.map((option, index) => {
                   const asked = option.effect.kind === "request" && issue.requestedAt;
                   return (
-                    <button
+                    <Button
                       key={option.key}
-                      type="button"
-                      className={cn(index === 0 && !asked && "dk-pri")}
+                      variant={index === 0 && !asked ? "default" : "outline"}
+                      size="sm"
+                      className="disabled:opacity-55"
                       disabled={busy || Boolean(asked)}
                       onClick={() => onResolve(issue, option.key)}
                     >
                       {asked ? t("Asked {0}", moment(issue.requestedAt)) : option.label}
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -331,16 +347,17 @@ function LedgerRow({
       </span>
       <span className="dk-bi-n">{money(line.billed)}</span>
       {(line.removed || line.adjusted) && canUndo && line.issueId && (
-        <button
-          type="button"
-          className="dk-bi-undo"
+        <Button
+          variant="quiet"
+          size="icon-xs"
+          className="absolute top-1/2 -right-6 -translate-y-1/2 text-dsk-subtle"
           title={t("Undo")}
           aria-label={t("Undo")}
           disabled={busy}
           onClick={() => line.issueId && onUndo(line.issueId)}
         >
           <BiIcon name="undo" size={12} />
-        </button>
+        </Button>
       )}
     </div>
   );
@@ -372,14 +389,15 @@ function ActivityLog({ itemId, meId }: { itemId: string; meId: string | undefine
   return (
     <Section title={t("Activity")}>
       {query.hasNextPage && (
-        <button
-          type="button"
-          className="dk-bi-more"
+        <Button
+          variant="bare"
+          size="bare"
+          className="-mt-0.5 mb-2.5 ml-6 text-xs text-dsk-subtle hover:text-dsk-fg"
           disabled={query.isFetchingNextPage}
           onClick={() => void query.fetchNextPage()}
         >
           {t("Show earlier")}
-        </button>
+        </Button>
       )}
       <ol className="dk-bi-log">
         {entries.map((entry) => (
@@ -415,9 +433,9 @@ function HoldMenu({
 
   return (
     <div className="dk-bi-m" ref={rootRef}>
-      <button
-        type="button"
-        className={cn("dk-ax-btn dk-ghost", open && "dk-on")}
+      <Button
+        variant="quiet"
+        className={cn("disabled:opacity-35", open && "bg-dsk-hover text-dsk-fg")}
         disabled={busy}
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
@@ -425,13 +443,15 @@ function HoldMenu({
         <BiIcon name="pause" size={12} stroke={2.4} />
         {t("Hold")}
         <BiIcon name="down" size={10} stroke={2.4} />
-      </button>
+      </Button>
       {open && (
         <div className="dk-bi-mp" role="menu">
           {HOLD_REASONS.map((reason) => (
-            <button
+            <Button
               key={reason}
-              type="button"
+              variant="bare"
+              size="bare"
+              className="block w-full rounded-lg px-2.25 py-1.75 text-left text-sm text-dsk-fg2 hover:bg-dsk-hover hover:text-dsk-fg"
               role="menuitem"
               onClick={() => {
                 close();
@@ -439,7 +459,7 @@ function HoldMenu({
               }}
             >
               {holdReasonLabel(reason, t)}
-            </button>
+            </Button>
           ))}
         </div>
       )}
@@ -578,14 +598,15 @@ export function DeskBillingItem({
       <div className="dk-bi-head">
         <div className="dk-bi-kick">
           {onBack && (
-            <button
-              type="button"
-              className="dk-bi-back"
+            <Button
+              variant="quiet"
+              size="icon-xs"
+              className="-ml-1"
               onClick={onBack}
               title={t("Back to the queue")}
             >
               <BiIcon name="back" size={12} stroke={2.2} />
-            </button>
+            </Button>
           )}
           <span>{item.number}</span>
           {invoiceNumber !== "" && invoiceNumber !== item.number && (
@@ -602,27 +623,31 @@ export function DeskBillingItem({
           )}
           {onSelect && neighbors && (
             <span className="dk-bi-nav">
-              <button
-                type="button"
+              <Button
+                variant="quiet"
+                size="icon-xs"
+                className="disabled:opacity-30"
                 title={t("Previous item")}
                 aria-label={t("Previous item")}
                 disabled={!neighbors.prevId}
                 onClick={() => step(neighbors.prevId)}
               >
                 <BiIcon name="up" size={12} stroke={2.2} />
-              </button>
+              </Button>
               {neighbors.position > 0 && (
                 <em>{t("{0} of {1}", neighbors.position, neighbors.total)}</em>
               )}
-              <button
-                type="button"
+              <Button
+                variant="quiet"
+                size="icon-xs"
+                className="disabled:opacity-30"
                 title={t("Next item")}
                 aria-label={t("Next item")}
                 disabled={!neighbors.nextId}
                 onClick={() => step(neighbors.nextId)}
               >
                 <BiIcon name="down" size={12} stroke={2.2} />
-              </button>
+              </Button>
             </span>
           )}
         </div>
@@ -676,14 +701,15 @@ export function DeskBillingItem({
             </span>
           </span>
           {stage === "held" && canUpdate && (
-            <button
-              type="button"
-              className="dk-bi-rel"
+            <Button
+              variant="outline"
+              size="xs"
+              className="ml-auto"
               disabled={busy}
               onClick={() => release.mutate(undefined)}
             >
               {t("Release")}
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -834,23 +860,21 @@ export function DeskBillingItem({
                 )}
                 <span className="dk-bi-bh">{reason}</span>
                 {stage === "review" ? (
-                  <button
-                    type="button"
-                    className="dk-ax-btn dk-ink"
+                  <Button
+                    className="disabled:opacity-35"
                     disabled={busy || !review?.ready}
                     onClick={() => status.mutate({ status: "Approved" })}
                   >
                     {t("Approve")}
-                  </button>
+                  </Button>
                 ) : (
-                  <button
-                    type="button"
-                    className="dk-ax-btn dk-ink"
+                  <Button
+                    className="disabled:opacity-35"
                     disabled={busy}
                     onClick={() => post.mutate(undefined)}
                   >
                     {t("Post {0}", money(total))}
-                  </button>
+                  </Button>
                 )}
               </>
             )}

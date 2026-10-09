@@ -392,7 +392,13 @@ func (t *listWorkerPayAssignmentsTool) Description() string {
 }
 
 func (t *listWorkerPayAssignmentsTool) ParamSchema() map[string]any {
-	return idSchema(paramWorkerID, "The driver, by id from search_worker or list_workers.")
+	return idSchema(
+		paramWorkerID,
+		agenttoolschema.RecordIDText(
+			permission.ResourceWorker,
+			"The driver, by id from search_worker or list_workers.",
+		),
+	)
 }
 
 func (t *listWorkerPayAssignmentsTool) Policy() serviceports.ToolPolicy {

@@ -388,9 +388,21 @@ func writeTranscriptMessage(
 		return
 	}
 
+	if m.Kind == conversation.MessageKindWorldChange {
+		fmt.Fprintf(b, "_Records changed while the agent worked · %s_\n\n",
+			transcriptTime(m.CreatedAt))
+		writeText(b, m.Content)
+
+		return
+	}
+
 	switch m.Role {
 	case conversation.RoleUser:
-		fmt.Fprintf(b, "## You · %s\n\n", transcriptTime(m.CreatedAt))
+		heading := "You"
+		if m.Kind == conversation.MessageKindSteer {
+			heading = "You, while it worked"
+		}
+		fmt.Fprintf(b, "## %s · %s\n\n", heading, transcriptTime(m.CreatedAt))
 		if m.PageContext != nil && (m.PageContext.Title != "" || m.PageContext.Path != "") {
 			fmt.Fprintf(b, "_On %s_\n\n", describePage(m.PageContext.Title, m.PageContext.Path))
 		}

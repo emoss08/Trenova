@@ -5,6 +5,7 @@ import { useAssistantStore } from "@/stores/assistant-store";
 import type {
   AssistantArtifact,
   AssistantArtifactEvent,
+  AssistantEntityRef,
   AssistantPageContext,
   AssistantPlan,
   AssistantProposal,
@@ -35,9 +36,12 @@ import { agentSuggestions } from "./suggestions";
 import { composerBlock, shouldSendOpeningQuestion } from "./thread-guard";
 import { delegatedOwners, groupThread, turnPlacements } from "./thread-view";
 import { useLiveThreadIds } from "./use-active-turns";
+import { steeredIds } from "./turn-stream";
 import { useAssistantTurn } from "./use-assistant-turn";
 import { useCompaction } from "./use-compaction";
 import { useComposerContext } from "./use-composer-context";
+import { useConversationQueue } from "./use-conversation-queue";
+import { useConversationWaits } from "./use-conversation-waits";
 import { usePageContext } from "./use-page-context";
 import { useThreadHistory } from "./use-thread-history";
 import { replyWebSources } from "./web-sources";
@@ -308,11 +312,30 @@ export function useThreadModel({
     (event: AssistantStreamEvent) => conversationEvents.current?.(event),
     [],
   );
-  const { turn, isActive, send, rejoin, stop, dismiss, retry } = useAssistantTurn(
+  const { turn, isActive, send, rejoin, followStarted, stop, dismiss, retry } = useAssistantTurn(
     thread.id,
     getTurnContext,
     onConversationEvent,
   );
+
+  // What the person types while the agent works: read into the reply under
+  // way, or left to be sent after it. A message the reply has read leaves
+  // the list as soon as the reply says so.
+  const interjections = turn?.interjections;
+  const steered = useMemo(() => steeredIds(interjections), [interjections]);
+  const onQueueStarted = useCallback(
+    (turnId: string, content: string, mentions: AssistantEntityRef[]) =>
+      void followStarted(turnId, content, mentions),
+    [followStarted],
+  );
+  const waits = useConversationWaits(thread.id, true);
+  const waiting = useConversationQueue(thread.id, {
+    enabled: thread.canContinue,
+    steered,
+    context: getTurnContext,
+    providerId,
+    onStarted: onQueueStarted,
+  });
   const compaction = useCompaction(thread, isActive);
   useEffect(() => {
     conversationEvents.current = compaction.onConversationEvent;
@@ -603,6 +626,10 @@ export function useThreadModel({
     canTell,
     /** The conversation's context meter and any compaction under way. */
     compaction,
+    /** What the person left for the conversation while its agent worked. */
+    waiting,
+    /** What the conversation's agent parked until something happens. */
+    waits,
   };
 }
 

@@ -1,3 +1,4 @@
+import { Button } from "@trenova/shared/components/ui/button";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
@@ -83,8 +84,9 @@ export function BillingCheckbox({
   if (!onClick) return box;
 
   return (
-    <button
-      type="button"
+    <Button
+      variant="bare"
+      size="bare"
       className={cn("dk-ax-cb", on && "dk-on", mid && "dk-mid")}
       aria-label={label}
       aria-pressed={mid ? "mixed" : on}
@@ -92,7 +94,7 @@ export function BillingCheckbox({
       onClick={onClick}
     >
       <BiIcon name="check" size={10} stroke={3} />
-    </button>
+    </Button>
   );
 }
 
@@ -238,14 +240,14 @@ export function BillingBulkBar({
               {t("{0, plural, one {Approved # invoice} other {Approved # invoices}}", undo.count)}
             </b>
           </span>
-          <button
-            type="button"
-            className="dk-ax-btn"
+          <Button
+            variant="outline"
+            className="disabled:opacity-35"
             disabled={cancel.isPending}
             onClick={() => cancel.mutate(undo.runId)}
           >
             {t("Undo")} <em className="dk-ax-bk-n">{left}</em>
-          </button>
+          </Button>
         </>
       ) : asking && split.unassigned.length > 0 ? (
         <>
@@ -258,29 +260,28 @@ export function BillingBulkBar({
             </b>
             <span>{t("Approving makes you their biller.")}</span>
           </span>
-          <button type="button" className="dk-ax-btn dk-ghost" onClick={() => setAsking(false)}>
+          <Button variant="quiet" onClick={() => setAsking(false)}>
             {t("Back")}
-          </button>
+          </Button>
           {split.ready.length > 0 && (
-            <button
-              type="button"
-              className="dk-ax-btn"
+            <Button
+              variant="outline"
+              className="disabled:opacity-35"
               disabled={start.isPending}
               onClick={() => start.mutate({ itemIds: split.ready, assignMe: false })}
             >
               {t("Only the {0} with a biller", split.ready.length)}
-            </button>
+            </Button>
           )}
-          <button
-            type="button"
-            className="dk-ax-btn dk-ink"
+          <Button
+            className="disabled:opacity-35"
             disabled={start.isPending}
             onClick={() =>
               start.mutate({ itemIds: [...split.ready, ...split.unassigned], assignMe: true })
             }
           >
             {t("Assign me and approve {0}", approvable)}
-          </button>
+          </Button>
         </>
       ) : (
         <>
@@ -299,22 +300,21 @@ export function BillingBulkBar({
                 .join(" · ")}
             </span>
           </span>
-          <button type="button" className="dk-ax-btn dk-ghost" onClick={onClear}>
+          <Button variant="quiet" onClick={onClear}>
             {t("Clear")}
-          </button>
+          </Button>
           {split.needs.length > 0 && (
-            <button type="button" className="dk-ax-btn" onClick={() => onReview(split.needs[0])}>
+            <Button variant="outline" onClick={() => onReview(split.needs[0])}>
               {t("Review {0}", split.needs.length)}
-            </button>
+            </Button>
           )}
-          <button
-            type="button"
-            className="dk-ax-btn dk-ink"
+          <Button
+            className="disabled:opacity-35"
             disabled={approvable === 0 || start.isPending}
             onClick={approve}
           >
             {approvable > 0 ? t("Approve {0}", approvable) : t("Approve")}
-          </button>
+          </Button>
         </>
       )}
     </div>

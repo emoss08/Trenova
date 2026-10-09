@@ -4,6 +4,7 @@ import { useDeskStore } from "@/stores/desk-store";
 import { useRecentPages } from "@/stores/recent-pages-store";
 import type { AssistantPageContext } from "@/types/assistant";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -104,9 +105,14 @@ export function DeskPageChip({
 
   return (
     <span className="dk-pc" ref={rootRef}>
-      <button
-        type="button"
-        className={cn("dk-pc-b", !shown && "dk-off", open && "dk-open")}
+      <Button
+        variant="bare"
+        size="bare"
+        className={cn(
+          "dk-pc-b relative size-7 justify-center rounded-full text-sm text-dsk-muted transition-colors duration-150 hover:bg-dsk-hover hover:text-dsk-fg",
+          !shown && "dk-off pr-1.5",
+          open && "dk-open bg-dsk-hover text-dsk-fg",
+        )}
         title={
           shown
             ? onScreen
@@ -122,7 +128,7 @@ export function DeskPageChip({
           <DeskIcon name={shown ? pageIcon(shown.path) : "eye"} size={12} stroke={2} />
         </span>
         <span className="dk-pc-t">{shown ? shown.title : t("No page")}</span>
-      </button>
+      </Button>
       {open && (
         <div className="dk-pc-pop dk-p1">
           <div className="dk-pc-h1">
@@ -162,8 +168,9 @@ export function DeskPageChip({
                     : t("The agent won't see what you're looking at")}
                 </em>
               </span>
-              <button
-                type="button"
+              <Button
+                variant="bare"
+                size="bare"
                 role="switch"
                 aria-checked={share}
                 aria-label={
@@ -171,17 +178,26 @@ export function DeskPageChip({
                     ? t("Share this page with the assistant")
                     : t("Share this page with Desk")
                 }
-                className={cn("dk-pc-sw", share && "dk-on")}
+                className={cn(
+                  "dk-pc-sw relative h-4.5 w-8 flex-none rounded-full bg-dsk-b-strong transition-colors duration-200",
+                  share && "bg-dsk-success",
+                )}
                 onClick={() => onShareChange(!share)}
               >
-                <i />
-              </button>
+                <i
+                  className={cn(
+                    "absolute top-0.5 left-0.5 size-3.5 rounded-full bg-dsk-on-solid transition-transform duration-250 ease-(--dk-spring)",
+                    share && "translate-x-3.5",
+                  )}
+                />
+              </Button>
             </div>
           )}
           {share && page && onExplain && (
-            <button
-              type="button"
-              className="dk-pc-ex"
+            <Button
+              variant="bare"
+              size="bare"
+              className="flex w-full gap-2.25 rounded-lg px-2 py-2.25 text-left text-sm text-dsk-fg2 hover:bg-dsk-hover hover:text-dsk-fg"
               onClick={() => {
                 onExplain();
                 setOpen(false);
@@ -189,8 +205,8 @@ export function DeskPageChip({
             >
               <DeskIcon name="info" size={13} stroke={2} />
               {t("Explain what's on this page")}
-              <span className="dk-kbd">/explain</span>
-            </button>
+              <span className="dk-kbd ml-auto">/explain</span>
+            </Button>
           )}
         </div>
       )}

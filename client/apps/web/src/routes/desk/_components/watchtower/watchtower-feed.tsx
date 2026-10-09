@@ -237,12 +237,13 @@ function FilterChip({
   onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
+    <Button
+      variant="bare"
+      size="bare"
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "ui-focus-ring flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs transition-colors",
+        "flex gap-1.5 rounded-full px-2.5 py-1 text-xs transition-colors",
         active
           ? "bg-foreground text-background"
           : "text-muted-foreground hover:text-foreground ring-foreground/10 ring-1",
@@ -257,7 +258,7 @@ function FilterChip({
           {count}
         </Badge>
       )}
-    </button>
+    </Button>
   );
 }
 

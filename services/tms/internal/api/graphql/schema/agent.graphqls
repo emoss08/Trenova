@@ -26,6 +26,8 @@ enum AgentSubjectType {
   AccountingInboundChange
   AccountingDriftFinding
   FormulaTemplate
+  Invoice
+  InvoiceDispute
 }
 
 enum AgentRunTrigger {
@@ -34,6 +36,7 @@ enum AgentRunTrigger {
   Scheduled
   Event
   Continuous
+  Wait
 }
 
 enum AgentRunStatus {

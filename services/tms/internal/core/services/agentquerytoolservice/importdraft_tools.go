@@ -359,6 +359,18 @@ func provideSetRequiredFieldTool(
 
 func (t *setRequiredFieldTool) Name() string { return string(pagedraft.ActionSetRequiredField) }
 
+func (t *setRequiredFieldTool) Recipe() []string {
+	return []string{
+		"list_customers",
+		"list_service_types",
+		"list_shipment_types",
+		"list_formula_templates",
+		"ask_user",
+		string(pagedraft.ActionSetRequiredField),
+		"get_customer",
+	}
+}
+
 func (t *setRequiredFieldTool) Description() string {
 	return "Set the customer, service type, shipment type or rating method on the import " +
 		"page, by record id. Find the record first with list_customers, list_service_types, " +
@@ -460,6 +472,10 @@ func provideSetStopLocationTool(
 
 func (t *setStopLocationTool) Name() string { return string(pagedraft.ActionSetStopLocation) }
 
+func (t *setStopLocationTool) Recipe() []string {
+	return []string{"list_locations", string(pagedraft.ActionSetStopLocation)}
+}
+
 func (t *setStopLocationTool) Description() string {
 	return "Match a stop on the import page to a location record. Find the location with " +
 		"list_locations by name, city or address; when none matches, create_location " +
@@ -546,6 +562,10 @@ type setStopScheduleTool struct{}
 func newSetStopScheduleTool() serviceports.AgentQueryTool { return &setStopScheduleTool{} }
 
 func (t *setStopScheduleTool) Name() string { return string(pagedraft.ActionSetStopSchedule) }
+
+func (t *setStopScheduleTool) Recipe() []string {
+	return []string{"ask_user", string(pagedraft.ActionSetStopSchedule)}
+}
 
 func (t *setStopScheduleTool) Description() string {
 	return "Set when a stop on the import page is scheduled: the start of its window and, " +

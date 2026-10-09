@@ -85,6 +85,7 @@ type transferDecision struct {
 	plan        func(context.Context, ediTransferDecider, *tenderCall) (*tenderOutcome, error)
 	run         func(context.Context, ediTransferDecider, *tenderCall) error
 	searchTerms []string
+	recipe      []string
 }
 
 type ediTransferDecisionTool struct {
@@ -99,6 +100,8 @@ var (
 )
 
 func (t *ediTransferDecisionTool) Name() string { return t.decision.name }
+
+func (t *ediTransferDecisionTool) Recipe() []string { return t.decision.recipe }
 
 func (t *ediTransferDecisionTool) Description() string { return t.decision.description }
 
@@ -336,6 +339,14 @@ func planExpireTender(
 func newAcceptEDILoadTenderTool(decider ediTransferDecider) serviceports.AgentTool {
 	return &ediTransferDecisionTool{edi: decider, decision: transferDecision{
 		name: "accept_edi_tender",
+		recipe: []string{
+			"list_edi_transfers",
+			"get_edi_transfer",
+			"get_customer",
+			"search_shipments",
+			"quote_shipment",
+			"accept_edi_tender",
+		},
 		description: "Propose accepting a load tender a trading partner sent over EDI, which " +
 			"creates the shipment from it and tells the partner. Read the tender with " +
 			"get_edi_transfer first and check its customer, stops, dates, equipment and rate " +
@@ -360,7 +371,8 @@ func newAcceptEDILoadTenderTool(decider ediTransferDecider) serviceports.AgentTo
 
 func newDeclineEDILoadTenderTool(decider ediTransferDecider) serviceports.AgentTool {
 	return &ediTransferDecisionTool{edi: decider, decision: transferDecision{
-		name: "decline_edi_tender",
+		name:   "decline_edi_tender",
+		recipe: []string{"list_edi_transfers", "get_edi_transfer", "decline_edi_tender"},
 		description: "Propose declining a load tender a trading partner sent over EDI, with the " +
 			"reason they are given. Use it when the tender cannot be hauled as sent: a lane or " +
 			"equipment this organization does not run, dates it cannot make, a rate below the " +
@@ -386,6 +398,7 @@ func newDeclineEDILoadTenderTool(decider ediTransferDecider) serviceports.AgentT
 func newCancelEDILoadTenderTool(decider ediTransferDecider) serviceports.AgentTool {
 	return &ediTransferDecisionTool{edi: decider, decision: transferDecision{
 		name:        "cancel_edi_tender",
+		recipe:      []string{"list_edi_transfers", "cancel_edi_tender"},
 		searchTerms: []string{"recall tender", "withdraw edi tender"},
 		description: "Propose withdrawing a load tender this organization sent to another " +
 			"organization over EDI and that it has not yet answered. The shipment's tender is " +
@@ -408,7 +421,8 @@ func newCancelEDILoadTenderTool(decider ediTransferDecider) serviceports.AgentTo
 
 func newExpireEDILoadTenderTool(decider ediTransferDecider) serviceports.AgentTool {
 	return &ediTransferDecisionTool{edi: decider, decision: transferDecision{
-		name: "expire_edi_tender",
+		name:   "expire_edi_tender",
+		recipe: []string{"list_edi_transfers", "expire_edi_tender"},
 		description: "Propose closing an EDI load tender that went unanswered past the time " +
 			"it had to be answered in, sent or received. Nobody can accept it afterwards, and " +
 			"the shipment it was tendered from is marked expired. Check the dates with " +

@@ -91,6 +91,10 @@ func (t *resolveAccountingDriftTool) Name() string {
 	return "resolve_accounting_drift"
 }
 
+func (t *resolveAccountingDriftTool) Recipe() []string {
+	return []string{"list_accounting_drift_findings", "resolve_accounting_drift"}
+}
+
 func (t *resolveAccountingDriftTool) Description() string {
 	return "Fix an open drift finding in one direction. PushTrenovaValue sends Trenova's " +
 		"document to the accounting system again: an update, a void, or a new copy of a " +

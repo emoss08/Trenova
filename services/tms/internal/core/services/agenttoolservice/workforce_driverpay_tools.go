@@ -112,8 +112,8 @@ func disputeMovesMoney(params map[string]any) bool {
 }
 
 func payDisputeIDProperty() map[string]any {
-	return idProperty("The pay dispute, from get_driver_settlement's openDisputes, " +
-		"get_settlement_dispute or the page you are on. Never guess one.")
+	return agenttoolschema.RecordID(permission.ResourceSettlementDispute, "The pay dispute",
+		"get_driver_settlement's openDisputes, get_settlement_dispute or the page you are on")
 }
 
 func disputeRecord(dispute *driversettlement.Dispute) toolpreview.Record {
@@ -277,7 +277,7 @@ func newResolveSettlementDisputeTool(reviewer driverPayReviewer) serviceports.Ag
 			"decimal such as 42.50; negative to take money back. Leave it out for none."),
 		paramAdjustmentLabel: stringProperty("What the adjustment is for, as the driver "+
 			"and payroll read it. Required with an adjustment.", maxAdjustmentDescription),
-		paramPayCodeID: idProperty("The pay code the adjustment posts under, from " +
+		paramPayCodeID: agenttoolschema.IDText("The pay code the adjustment posts under, from " +
 			"list_pay_codes. Leave it out for the default account."),
 	}, paramDisputeID, paramDecision, paramResolutionNote)), paramDisputeID,
 		permission.ResourceSettlementDispute)
@@ -286,6 +286,12 @@ func newResolveSettlementDisputeTool(reviewer driverPayReviewer) serviceports.Ag
 	spec.classify = classifyDriverPayDecision(disputeMovesMoney)
 	spec.reversible = false
 	spec.searchTerms = []string{"pay dispute", "settlement dispute", "short pay", "resolve"}
+	spec.recipe = []string{
+		"get_driver_settlement",
+		"get_settlement_dispute",
+		"start_settlement_dispute_review",
+		"resolve_settlement_dispute",
+	}
 
 	return newReportingReceivableTool(spec, receivablePlan[
 		*driversettlementservice.ResolveDisputeRequest, *driversettlementservice.ResolveDisputePlan,
@@ -391,8 +397,10 @@ func newReviewDriverExpenseTool(reviewer driverPayReviewer) serviceports.AgentTo
 		permission.ResourceDriverExpense,
 		permission.OpApprove,
 	), map[string]any{
-		paramExpenseID: idProperty("The expense, from list_driver_expenses or the page you " +
-			"are on. Never guess one."),
+		paramExpenseID: agenttoolschema.IDText(
+			"The expense, from list_driver_expenses or the page you " +
+				"are on. Never guess one.",
+		),
 		paramDecision: agenttoolschema.Enum("Approve to reimburse it, Reject to turn it down.",
 			expenseDecisions),
 		fieldNote: stringProperty("What the driver reads with the decision. Required "+

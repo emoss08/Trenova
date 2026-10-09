@@ -17,11 +17,11 @@ import (
 )
 
 const (
-	SourceAgentEmail   = "email_customer"
-	SourceDelayNotice  = "notify_shipment_delay"
+	SourceAgentEmail   = shipment.CommentToolEmailCustomer
+	SourceDelayNotice  = shipment.CommentToolDelayNotice
 	RecentWindowSecs   = int64(3600)
 	recentPageSize     = 25
-	metadataSource     = "tool"
+	metadataSource     = shipment.CommentMetadataTool
 	metadataRecipients = "recipients"
 	metadataSubject    = "subject"
 )
@@ -29,8 +29,6 @@ const (
 var ErrAlreadyTold = errors.New(
 	"this customer was already emailed about this shipment within the hour",
 )
-
-var emailSources = []string{SourceAgentEmail, SourceDelayNotice}
 
 func AlreadyTold(
 	ctx context.Context,
@@ -76,7 +74,7 @@ func WasEmailed(comment *shipment.ShipmentComment) bool {
 	}
 	source, _ := comment.Metadata[metadataSource].(string)
 
-	return slices.Contains(emailSources, source)
+	return slices.Contains(shipment.CustomerEmailTools(), source)
 }
 
 func Recipients(

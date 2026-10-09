@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -53,6 +54,12 @@ type Params struct {
 	// Rules is optional. With it a tool an organization holds lower than its
 	// declared rule is decided and tainted by the organization's rule.
 	Rules serviceports.ToolRuleOverrides `optional:"true"`
+	// Changes is optional. With it a turn is told when a record it is
+	// working with changes elsewhere while it works.
+	Changes serviceports.RecordChangeFeed `optional:"true"`
+	// Metrics is optional. With it every tool call is counted by tool and by
+	// what became of it; without it nothing is counted.
+	Metrics *metrics.Registry `optional:"true"`
 }
 
 type Service struct {
@@ -71,6 +78,8 @@ type Service struct {
 	vectors     serviceports.CatalogVectorIndex
 	previews    serviceports.ProposalPreviewService
 	rules       serviceports.ToolRuleOverrides
+	changes     serviceports.RecordChangeFeed
+	metrics     *metrics.Assistant
 	// arguments holds each tool's compiled schema, against which every
 	// call's arguments are checked before the tool sees them.
 	arguments *toolschema.Validator
@@ -94,6 +103,8 @@ func New(p Params) *Service {
 		vectors:     p.CatalogVectors,
 		previews:    p.Previews,
 		rules:       p.Rules,
+		changes:     p.Changes,
+		metrics:     metrics.AssistantFrom(p.Metrics),
 	}
 }
 
@@ -132,6 +143,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 	asked := false
 	grounding := groundingState{}
 	for result.ToolCallsUsed < budget {
+		s.interject(t, fx)
 		reply, err := fx.Complete(t, t.completionRequest())
 		result.Usage = result.Usage.Add(reply.usage())
 		completion := reply.Completion
@@ -208,6 +220,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 			if s.reground(t, fx, completion, &grounding) {
 				continue
 			}
+			s.passReply(t, fx, completion)
 
 			return s.finish(result, completion, fx), nil
 		}
@@ -433,7 +446,9 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 			result.ToolCallsUsed++
 			s.recordToolResult(t, fx, call, outcome)
 			if !outcome.failed {
+				t.noteToolMemories(fx, call.Name)
 				t.noteShown(&call)
+				t.noteWorld(fx, &call, &outcome)
 			}
 		}
 
@@ -448,6 +463,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 		if final := s.finalAnswer(t, fx, result); final != nil {
 			grounding.rewritten = true
 			s.reground(t, fx, final, &grounding)
+			s.passReply(t, fx, final)
 
 			return s.finish(result, final, fx), nil
 		}
@@ -522,6 +538,8 @@ func (s *Service) recordToolResult(
 		result.Actions = append(result.Actions, *outcome.action)
 	}
 	outcome = fx.Observe(t, &call, outcome.exported()).internal()
+	s.countToolOutcome(fx, call.Name, &outcome)
+	t.keepTable(&outcome)
 	effect := s.ToolEffect(call.Name)
 	summary := summarizeOutcome(call, outcome)
 
@@ -591,6 +609,10 @@ func (s *Service) observe(
 		Earlier: earlier,
 	})
 
+	if shown != nil {
+		outcome.shown = shown
+	}
+
 	switch {
 	case outcome.publishes && err != nil:
 		return failedOutcome("Tool %q could not keep the document: %s. Put the text in your "+
@@ -616,40 +638,24 @@ func (s *Service) finish(
 	completion *serviceports.ChatCompletionResult,
 	fx TurnEffects,
 ) *serviceports.RunResult {
-	outputDecision := agentguard.EvaluateOutput(completion.Text)
-	if !outputDecision.Allowed {
-		s.logger.Warn("agent reply refused by output guard",
+	guarded, outputDecision := agentguard.EvaluateOutput(completion.Text)
+	if outputDecision.Altered {
+		s.logger.Warn("agent reply altered by output guard",
 			zap.String("rule", outputDecision.MatchedRule),
 			zap.String("model", completion.ModelIdentifier),
 		)
-
-		result.OutputRefused = true
+		result.OutputAltered = true
 		result.OutputRule = outputDecision.MatchedRule
-		result.Reply = outputDecision.Message
-		result.Messages = append(result.Messages, conversation.Message{
-			Role:          conversation.RoleAssistant,
-			Content:       outputDecision.Message,
-			Refused:       true,
-			ScopeStage:    string(outputDecision.Stage),
-			ScopeCategory: string(outputDecision.Category),
-			ScopeReason:   string(outputDecision.Reason),
-			Model:         completion.ModelIdentifier,
-			ProviderID:    completion.ProviderID,
-			InputTokens:   completion.InputTokens,
-			OutputTokens:  completion.OutputTokens,
-			CreatedAt:     fx.Now(),
-		})
 		fx.Emit(serviceports.StreamEvent{
-			Event: serviceports.AssistantEventRefused,
-			Data: serviceports.AssistantRefusedEvent{
-				Message:  outputDecision.Message,
-				Stage:    string(outputDecision.Stage),
-				Category: string(outputDecision.Category),
-				Reason:   string(outputDecision.Reason),
+			Event: serviceports.AssistantEventRetrying,
+			Data: serviceports.AssistantRetryingEvent{
+				Attempt: 1,
+				Reason:  outputAlteredReason,
+				Kind:    serviceports.RetryKindRestart,
 			},
 		})
-
-		return result
+		fx.Emit(deltaEvent(guarded))
+		completion.Text = guarded
 	}
 
 	reply := completion.Text
@@ -663,7 +669,7 @@ func (s *Service) finish(
 	}
 
 	result.Reply = reply
-	result.Messages = append(result.Messages, conversation.Message{
+	message := conversation.Message{
 		Role:         conversation.RoleAssistant,
 		Content:      reply,
 		Reasoning:    completion.Reasoning,
@@ -676,10 +682,20 @@ func (s *Service) finish(
 		LatencyMs:    completion.LatencyMs,
 		CostUSD:      completion.CostUSD,
 		CreatedAt:    fx.Now(),
-	})
+	}
+	if outputDecision.Altered {
+		message.ScopeStage = string(outputDecision.Stage)
+		message.ScopeCategory = string(outputDecision.Category)
+		message.ScopeReason = string(outputDecision.Reason)
+	}
+	result.Messages = append(result.Messages, message)
 
 	return result
 }
+
+// outputAlteredReason is why a streamed reply is withdrawn and sent again
+// when the output guard took code out of it.
+const outputAlteredReason = "The reply held a code block, which was left out."
 
 // fallbackOf is the provider asked first, when another one gave the reply.
 func fallbackOf(completion *serviceports.ChatCompletionResult) *conversation.ProviderFallback {
@@ -745,6 +761,8 @@ func (s *Service) summarize(
 				Name:        tool.Name(),
 				Description: tool.Description(),
 				Query:       true,
+				BatchOf:     batchOf(tool),
+				Recipe:      recipeOf(tool),
 			})
 			continue
 		}
@@ -754,14 +772,43 @@ func (s *Service) summarize(
 			continue
 		}
 
+		policy := tool.Policy()
 		summaries = append(summaries, agentdefinition.ToolSummary{
-			Name:        tool.Name(),
-			Description: tool.Description(),
-			Tier:        agenttoolpolicy.StaticTier(definition, tool.Policy()),
+			Name:                tool.Name(),
+			Description:         tool.Description(),
+			Tier:                agenttoolpolicy.StaticTier(definition, policy),
+			PersonalRunsUnasked: policy.PersonalRunsUnasked && !tierSetFor(definition, name),
+			AlwaysProposes:      agenttoolpolicy.AlwaysProposes(definition, policy),
+			BatchOf:             batchOf(tool),
+			Recipe:              recipeOf(tool),
 		})
 	}
 
 	return summaries
+}
+
+func batchOf(tool any) string {
+	if batch, ok := tool.(serviceports.BatchTool); ok {
+		return batch.BatchOf()
+	}
+
+	return ""
+}
+
+// tierSetFor reports a tool whose tier a person set on the agent, which
+// takes away the personal exemption a tool like remember otherwise has.
+func tierSetFor(definition *agentdefinition.Definition, name string) bool {
+	_, set := definition.ToolTiers[name]
+
+	return set
+}
+
+func recipeOf(tool any) []string {
+	if recipe, ok := tool.(serviceports.RecipeTool); ok {
+		return recipe.Recipe()
+	}
+
+	return nil
 }
 
 // preferredProvider resolves whose choice of model wins.

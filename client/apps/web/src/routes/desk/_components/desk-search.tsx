@@ -5,6 +5,7 @@ import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import type { DeskSearchKind, DeskSearchResult } from "@/types/assistant";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
@@ -277,37 +278,39 @@ export function DeskSearchPalette({
             aria-activedescendant={flat[selected] ? `dk-srch-${selected}` : undefined}
           />
           {text ? (
-            <button
-              type="button"
-              className="dk-srch-clr"
+            <Button
+              variant="quiet"
+              size="bare"
+              className="rounded-md px-2 py-0.75 text-xs text-dsk-subtle hover:bg-dsk-hover hover:text-dsk-fg"
               onClick={() => {
                 setText("");
                 inputRef.current?.focus();
               }}
             >
               {t("Clear")}
-            </button>
+            </Button>
           ) : (
             <span className="dk-kbd">Esc</span>
           )}
         </div>
         <div className="dk-srch-f" role="tablist" aria-label={t("Search in")}>
           {FILTERS.map((kind) => (
-            <button
+            <Button
               key={kind}
-              type="button"
+              variant="bare"
+              size="bare"
               role="tab"
               aria-selected={filter === kind}
               aria-controls="dk-srch-list"
               tabIndex={filter === kind ? 0 : -1}
-              className={filter === kind ? "dk-on" : undefined}
+              className="h-6.5 rounded-md px-2.5 text-sm text-dsk-muted transition-colors duration-150 hover:bg-dsk-hover hover:text-dsk-fg aria-selected:bg-dsk-ink aria-selected:text-dsk-ink-fg"
               onClick={() => {
                 setFilter(kind);
                 inputRef.current?.focus();
               }}
             >
               {filterLabel(kind, t)}
-            </button>
+            </Button>
           ))}
         </div>
         <div className="dk-srch-l" ref={listRef} id="dk-srch-list" role="listbox">
@@ -316,10 +319,16 @@ export function DeskSearchPalette({
               <div className="dk-srch-gh">{t("Recent searches")}</div>
               <div className="dk-srch-chips">
                 {recentSearches.map((recent) => (
-                  <button key={recent} type="button" onClick={() => setText(recent)}>
+                  <Button
+                    key={recent}
+                    variant="bare"
+                    size="bare"
+                    className="h-6.5 gap-1.5 rounded-full pr-2.5 pl-2 text-sm text-dsk-muted ring-1 ring-dsk-b-sub transition-all duration-150 ring-inset hover:text-dsk-fg hover:ring-dsk-b"
+                    onClick={() => setText(recent)}
+                  >
                     <DeskIcon name="replay" size={11} />
                     {recent}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -337,15 +346,20 @@ export function DeskSearchPalette({
               {group.items.map((result, offset) => {
                 const at = group.start + offset;
                 return (
-                  <button
+                  <Button
                     key={`${result.kind}:${result.id}`}
                     id={`dk-srch-${at}`}
-                    type="button"
+                    variant="bare"
+                    size="bare"
                     role="option"
                     aria-selected={selected === at}
                     tabIndex={-1}
                     data-i={at}
-                    className={cn("dk-srch-r", `dk-k-${result.kind}`, selected === at && "dk-on")}
+                    className={cn(
+                      "dk-srch-r flex w-full gap-3 rounded-lg px-2.5 py-2 text-left",
+                      `dk-k-${result.kind}`,
+                      selected === at && "dk-on bg-dsk-hover",
+                    )}
                     onMouseMove={() => selected !== at && setSelected(at)}
                     onClick={() => pick(result)}
                   >
@@ -378,7 +392,7 @@ export function DeskSearchPalette({
                     <span className="dk-srch-go" aria-hidden>
                       <DeskIcon name="enter" size={12} />
                     </span>
-                  </button>
+                  </Button>
                 );
               })}
             </div>

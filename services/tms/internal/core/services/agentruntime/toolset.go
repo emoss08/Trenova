@@ -329,14 +329,21 @@ func (s *Service) resolveFind(
 	names := make([]string, 0, len(found))
 	callable := make([]serviceports.AgentToolDescriptor, 0, len(found))
 	added := make([]serviceports.AgentToolDescriptor, 0, len(found))
+	alongside := make([]string, 0, 4)
 	for _, descriptor := range found {
 		names = append(names, descriptor.Name)
 		if set.offers(descriptor.Name) {
 			callable = append(callable, descriptor)
 			continue
 		}
+		before := len(set.specs)
 		if s.load(set, descriptor.Name) {
 			added = append(added, descriptor)
+			for _, spec := range set.specs[before:] {
+				if spec.Name != descriptor.Name {
+					alongside = append(alongside, spec.Name)
+				}
+			}
 		}
 	}
 
@@ -356,6 +363,10 @@ func (s *Service) resolveFind(
 		}
 		b.WriteString("These tools are now callable:\n")
 		writeToolLines(&b, added)
+		if len(alongside) > 0 {
+			fmt.Fprintf(&b, "Loaded with them, because their ids come from these: %s.\n",
+				strings.Join(alongside, ", "))
+		}
 	} else {
 		fmt.Fprintf(&b, "\nNothing new matched %q beyond those.", need)
 	}
@@ -380,9 +391,15 @@ func bestMatch(callable, added []serviceports.AgentToolDescriptor) string {
 	return ""
 }
 
+// writeToolLines names each tool by its first sentence, and for one done
+// as a sequence, the order of the tools around it, so the model does not
+// search again for the lookup it needs next.
 func writeToolLines(b *strings.Builder, descriptors []serviceports.AgentToolDescriptor) {
 	for _, descriptor := range descriptors {
 		fmt.Fprintf(b, "- %s: %s\n", descriptor.Name, stringutils.FirstSentence(descriptor.Description))
+		if len(descriptor.Recipe) > 0 {
+			fmt.Fprintf(b, "  In order: %s\n", strings.Join(descriptor.Recipe, " → "))
+		}
 	}
 }
 

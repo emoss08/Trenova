@@ -22,6 +22,7 @@ import { manualJournal } from "./manual-journal";
 import { audit } from "./audit";
 import { briefing } from "./briefing";
 import { billingControl } from "./billing-control";
+import { caseChecklist } from "./case-checklist";
 import { billingQueue } from "./billing-queue";
 import { customer } from "./customer";
 import { customerPayment } from "./customer-payment";
@@ -88,6 +89,7 @@ const financialQueries = mergeQueryKeys(
   journalReversal,
   manualJournal,
   billingControl,
+  caseChecklist,
   billingQueue,
   invoice,
   invoiceAdjustment,

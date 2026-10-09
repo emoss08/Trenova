@@ -30,6 +30,7 @@ import type {
   AssistantThread,
 } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -50,6 +51,10 @@ import { useNavigate } from "react-router";
 import { useDeskAttachments } from "./composer/desk-attachments";
 import { useDeskScans } from "./composer/desk-capture";
 import { DeskComposer } from "./composer/desk-composer";
+import { DeskQueue } from "./composer/desk-queue";
+import { DeskWaits } from "./composer/desk-waits";
+import { DeskWaitNote } from "./conversation/desk-wait-note";
+import { DeskWorldChange } from "./conversation/desk-world-change";
 import { DeskContextMeter } from "./composer/desk-context-meter";
 import { DeskModelPicker } from "./composer/desk-model-picker";
 import { DeskPageChip, useDeskPage } from "./composer/desk-page-chip";
@@ -114,6 +119,12 @@ export type DeskThreadArtifacts = {
  * Turning "every weekday at 7:30, …" into a schedule rather than a question.
  * The Desk keeps schedules; a surface without them sends the words as asked.
  */
+/** What the dock above the composer may do: ask the agent, unless a reply is under way. */
+export type DeskDock = {
+  ask: (text: string) => void;
+  busy: boolean;
+};
+
 export type DeskThreadSchedules = {
   isRequest: (text: string) => boolean;
   /** Keeps the schedule. Refused, `restore` puts the words back in the box. */
@@ -162,8 +173,12 @@ export type DeskThreadProps = {
   chapters?: { of: (messageId: string) => number; toggle: (messageId: string) => void };
   /** Draws a conversation handed to this agent by another. */
   renderHandoff?: (message: AssistantMessage) => ReactNode;
-  /** Above the composer, before anything waiting on the person: the Desk's pinned facts. */
-  dockTop?: ReactNode;
+  /**
+   * Above the composer, before anything waiting on the person: the Desk's
+   * case and pinned facts. Given as a function it can ask the agent, as the
+   * person, while no reply is under way.
+   */
+  dockTop?: ReactNode | ((dock: DeskDock) => ReactNode);
   /** The quiet line under the composer when nothing waits on the person. */
   disclaimer?: string;
   /**
@@ -910,6 +925,47 @@ export function DeskThread({
                           </DeskRow>
                         );
                       }
+                      if (entry.kind === "steer") {
+                        return (
+                          <DeskRow
+                            key={entry.message.id}
+                            kind="question"
+                            first={isFirst(entry.message.id)}
+                          >
+                            <DeskQuestion
+                              text={entry.message.content}
+                              mentions={entry.message.mentions}
+                              tag={t("Sent while it was working")}
+                            />
+                          </DeskRow>
+                        );
+                      }
+                      if (entry.kind === "wait") {
+                        return (
+                          <DeskRow
+                            key={entry.message.id}
+                            kind="event"
+                            first={isFirst(entry.message.id)}
+                          >
+                            <DeskWaitNote
+                              content={entry.message.content}
+                              waits={model.waits.byId}
+                              timezone={timezone}
+                            />
+                          </DeskRow>
+                        );
+                      }
+                      if (entry.kind === "world") {
+                        return (
+                          <DeskRow
+                            key={entry.message.id}
+                            kind="event"
+                            first={isFirst(entry.message.id)}
+                          >
+                            <DeskWorldChange changes={entry.message.worldChanges ?? []} />
+                          </DeskRow>
+                        );
+                      }
                       if (entry.kind === "schedule") {
                         const scheduleId = entry.message.scheduleId ?? "";
                         return (
@@ -1130,6 +1186,21 @@ export function DeskThread({
                           />
                         </DeskRow>
                       )}
+                    {turn?.interjections.map((interjection) =>
+                      interjection.kind === "steer" ? (
+                        <DeskRow key={interjection.id} kind="question" first={!layout.any}>
+                          <DeskQuestion
+                            text={interjection.text}
+                            mentions={interjection.mentions}
+                            tag={t("Read at its next step")}
+                          />
+                        </DeskRow>
+                      ) : (
+                        <DeskRow key={interjection.key} kind="event" first={!layout.any}>
+                          <DeskWorldChange changes={interjection.changes} />
+                        </DeskRow>
+                      ),
+                    )}
                     {turn && (live !== "" || webSearch !== null) && (
                       <DeskRow
                         kind="reply"
@@ -1247,9 +1318,10 @@ export function DeskThread({
                 <div
                   className={cn("dk-jump", jumping && "dk-show", isActive && jumping && "dk-live")}
                 >
-                  <button
-                    type="button"
-                    className="dk-jump-b"
+                  <Button
+                    variant="bare"
+                    size="bare"
+                    className="dk-jump-b h-8 gap-2 rounded-full bg-dsk-raised pr-3 pl-3.25 text-sm font-medium text-dsk-fg transition-[translate,scale,box-shadow] duration-160 ease-(--dk-spring) in-[.dk-dense]:h-7 hover:-translate-y-px active:translate-y-0 active:scale-96 [&_svg]:text-dsk-subtle"
                     onClick={jumpToLatest}
                     tabIndex={jumping ? 0 : -1}
                   >
@@ -1279,25 +1351,29 @@ export function DeskThread({
                     >
                       <path d="M12 5v14M6 13l6 6 6-6" />
                     </svg>
-                  </button>
+                  </Button>
                 </div>
                 <div className="dk-dock" ref={dockRef}>
                   <div className="dk-grid">
                     <div className="dk-g" />
                     <div className={cn("dk-c", attached && "dk-has-dec")}>
-                      {dockTop}
+                      {typeof dockTop === "function" ? dockTop({ ask, busy: isActive }) : dockTop}
                       {!pending && !holding && <DeskTermsNote />}
                       {pending && model.current === null && !holding && (
-                        <button
-                          type="button"
-                          className="dk-bt dk-sm dk-dock-pill"
+                        <Button
+                          variant="quiet"
+                          size="sm"
+                          className={cn(
+                            "self-center rounded-lg text-dsk-muted hover:bg-dsk-hover hover:text-dsk-fg",
+                            attached && "mb-2",
+                          )}
                           onClick={model.resumeAll}
                         >
                           {t(
                             "{0, plural, one {# change waits on you} other {# changes wait on you}}",
                             model.queue.length,
                           )}
-                        </button>
+                        </Button>
                       )}
                       {model.block === "full" && !composerLock && (
                         <div className="dk-ec-dockcard">
@@ -1356,9 +1432,20 @@ export function DeskThread({
                           onAsk={ask}
                         />
                       )}
+                      <DeskWaits waits={model.waits} timezone={timezone} />
+                      <DeskQueue queue={model.waiting} busy={isActive} />
                       <DeskComposer
                         value={model.draft}
                         onChange={model.onDraftChange}
+                        onSteer={(content, payload, mode) => {
+                          composerContext.clear();
+                          attachments.clear();
+                          void model.waiting.add(content, payload, mode).then((taken) => {
+                            if (!taken && model.draft.trim() === "") {
+                              model.onDraftChange(content);
+                            }
+                          });
+                        }}
                         onSend={(content, payload) => {
                           if (createSchedule && schedules?.isRequest(content)) {
                             // Kept as a schedule, not asked: its card says when

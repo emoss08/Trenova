@@ -1,4 +1,4 @@
-import type { AssistantMessage, AssistantMessagePage } from "@/types/assistant";
+import type { AssistantMessage, AssistantMessagePage, MemoryNote } from "@/types/assistant";
 
 /**
  * The shape the thread's history query keeps: page 0 is the newest window of
@@ -105,6 +105,46 @@ export function appendToHistory(
       ...older,
     ],
   };
+}
+
+/**
+ * Folds a memory's current state into every message of a cached thread that
+ * carries it. History is cached without going stale, so a memory saved,
+ * turned down, edited or forgotten from its card would otherwise read as it
+ * was served the next time the thread is opened. Returns the same references
+ * wherever nothing changed, so nothing that did not carry the memory renders.
+ */
+export function replaceMemoryNote(
+  history: ThreadHistory | undefined,
+  id: string,
+  patch: Partial<MemoryNote>,
+): ThreadHistory | undefined {
+  if (!history) {
+    return history;
+  }
+
+  let changed = false;
+  const pages = history.pages.map((page) => {
+    let pageChanged = false;
+    const results = page.results.map((message) => {
+      const notes = message.memories;
+      if (!notes || !notes.some((note) => note.id === id)) {
+        return message;
+      }
+      pageChanged = true;
+      return {
+        ...message,
+        memories: notes.map((note) => (note.id === id ? { ...note, ...patch, id } : note)),
+      };
+    });
+    if (!pageChanged) {
+      return page;
+    }
+    changed = true;
+    return { ...page, results };
+  });
+
+  return changed ? { ...history, pages } : history;
 }
 
 /**

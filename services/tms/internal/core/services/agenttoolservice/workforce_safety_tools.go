@@ -229,7 +229,8 @@ func safetyToolProviders() []any {
 }
 
 func safetyEventIDProperty() map[string]any {
-	return idProperty("The safety event, from list_worker_safety_events. Never guess one.")
+	return agenttoolschema.RecordID(permission.ResourceWorkerSafetyEvent, "The safety event",
+		"list_worker_safety_events")
 }
 
 func safetyEventRecord(event *worker.WorkerSafetyEvent) toolpreview.Record {
@@ -241,7 +242,7 @@ func safetyEventProperties() map[string]any {
 	return map[string]any{
 		paramEventKind:     agenttoolschema.Enum("What happened.", safetyEventKinds),
 		paramEventSeverity: agenttoolschema.Enum("How serious it was.", safetySeverities),
-		wfParamOccurred:    dateTimeProperty("When it happened."),
+		wfParamOccurred:    agenttoolschema.DateTime("When it happened."),
 		fieldDescription: stringProperty("What happened, in the words of the report or "+
 			"the person who told you.", wfNoteChars),
 		paramEventLocation: stringProperty("Where it happened.", wfShortChars),
@@ -252,8 +253,11 @@ func safetyEventProperties() map[string]any {
 			maxSafetyPoints),
 		paramReferenceNumber: stringProperty("A citation, report or inspection number.",
 			wfShortChars),
-		fieldShipmentID: idProperty("The load it happened on, from search_shipments or " +
-			"get_shipment. Never guess one."),
+		fieldShipmentID: agenttoolschema.RecordIDText(
+			permission.ResourceShipment,
+			"The load it happened on, from search_shipments or "+
+				"get_shipment. Never guess one.",
+		),
 		paramInspectionLevel: integerProperty("For an inspection: its CVSA level.", 1,
 			maxInspectionLevel),
 		paramInspectionRes: agenttoolschema.Enum("For an inspection: how it ended.",
@@ -846,7 +850,7 @@ func newGiveWorkerRecognitionTool(events safetyKeeper) serviceports.AgentTool {
 		paramRecognitionKind: agenttoolschema.Enum("What it is for.", recognitionKinds),
 		paramTitle:           stringProperty("A short title the driver sees.", wfShortChars),
 		fieldMessage:         wfNoteProperty("What you would say to them."),
-		wfParamOccurred:      dateTimeProperty("When it was earned. Defaults to now."),
+		wfParamOccurred:      agenttoolschema.DateTime("When it was earned. Defaults to now."),
 		paramVisibleToWorker: booleanProperty("Whether the driver sees it and is told. " +
 			"Defaults to true."),
 	}, paramWorkerID, paramRecognitionKind, paramTitle)
@@ -907,8 +911,10 @@ func newDeleteWorkerRecognitionTool(events safetyKeeper) serviceports.AgentTool 
 		permission.ResourceWorkerRecognition,
 		permission.OpDelete,
 	), map[string]any{
-		paramRecognitionID: idProperty("The recognition, from list_worker_safety_events. " +
-			"Never guess one."),
+		paramRecognitionID: agenttoolschema.IDText(
+			"The recognition, from list_worker_safety_events. " +
+				"Never guess one.",
+		),
 	}, paramRecognitionID), paramRecognitionID, permission.ResourceWorkerRecognition)
 	spec.searchTerms = []string{"kudos", "remove recognition"}
 	spec.maxTier = agent.TierPropose
@@ -1130,7 +1136,7 @@ func (e *violationEdit) request(
 }
 
 func violationIDProperty() map[string]any {
-	return idProperty("The violation, from list_worker_safety_events. Never guess one.")
+	return agenttoolschema.ID("The violation", "list_worker_safety_events")
 }
 
 func newUpdateSafetyViolationTool(events safetyKeeper) serviceports.AgentTool {

@@ -748,6 +748,17 @@ export const routes: RouteObject[] = [
               return { Component: DocumentPacketRulesPage };
             },
           },
+          {
+            path: "/billing/configuration-files/case-checklists",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.BillingControl),
+            ),
+            async lazy() {
+              const { CaseChecklistsPage } = await import("@/routes/case-checklist/page");
+              return { Component: CaseChecklistsPage };
+            },
+          },
 
           {
             path: "/accounting",

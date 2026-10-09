@@ -190,6 +190,8 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"send_invoice_edi":               {agent.EgressExternalRecipient},
 		"flag_for_manual_review":         {agent.EgressInternal},
 		"raise_exception":                {agent.EgressInternal},
+		"wait_until":                     {agent.EgressInternal},
+		"cancel_wait":                    {agent.EgressInternal},
 		"create_dashboard":               {agent.EgressInternal},
 		"add_dashboard_tile":             {agent.EgressInternal},
 		"create_table_change_alert":      {agent.EgressInternal},

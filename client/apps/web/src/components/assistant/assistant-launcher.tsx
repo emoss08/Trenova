@@ -4,6 +4,7 @@ import {
   dockPositionClass,
   type AssistantDock,
 } from "@/lib/assistant-dock";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { EyeOffIcon } from "@trenova/shared/components/icons";
@@ -92,7 +93,7 @@ export function AssistantLauncher({
       onDrag={handleDrag}
       onDragEnd={handleDragEnd}
       transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 34 }}
-      className={cn("as-beacon", dockPositionClass(dock, "launcher"))}
+      className={cn("as-beacon group/beacon", dockPositionClass(dock, "launcher"))}
       data-mode={beacon.mode}
       data-side={side}
       data-dragging={dragTarget !== null || undefined}
@@ -129,16 +130,20 @@ export function AssistantLauncher({
         </span>
       </m.button>
       {onHide && (
-        <button
-          type="button"
+        <Button
+          variant="bare"
+          size="bare"
           aria-label={t("Hide the assistant button")}
           title={t("Hide the button. Open the assistant from the edge tab or with ⌘J.")}
           onPointerDown={(event) => event.stopPropagation()}
           onClick={onHide}
-          className="as-beacon-hide ui-focus-ring"
+          className={cn(
+            "as-beacon-hide absolute -top-2 size-5 justify-center rounded-full bg-popover text-foreground-muted opacity-0 transition-opacity duration-150 group-hover/beacon:opacity-100 focus-visible:opacity-100",
+            side === "right" ? "-left-2" : "-right-2",
+          )}
         >
           <EyeOffIcon className="size-3" />
-        </button>
+        </Button>
       )}
     </m.div>
   );

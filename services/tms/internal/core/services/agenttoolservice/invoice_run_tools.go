@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -91,12 +92,8 @@ func targetInvoiceRun(params map[string]any) (serviceports.ToolTarget, bool) {
 }
 
 func invoiceRunIDProperty() map[string]any {
-	return stringProperty("The invoice run, from list_invoice_runs or get_invoice_run. Never "+
-		"guess one.", 0)
-}
-
-func dayProperty(description string) map[string]any {
-	return stringProperty(description+" YYYY-MM-DD, a UTC day.", 0)
+	return agenttoolschema.RecordID(permission.ResourceInvoiceRun, "The invoice run",
+		"list_invoice_runs or get_invoice_run")
 }
 
 func requireUTCDay(params map[string]any, key string) (time.Time, error) {
@@ -106,7 +103,7 @@ func requireUTCDay(params map[string]any, key string) (time.Time, error) {
 	}
 	day, err := time.Parse(dayLayout, raw)
 	if err != nil {
-		return time.Time{}, fmt.Errorf("parameter %q must be YYYY-MM-DD, got %q", key, raw)
+		return time.Time{}, dateRefusal(key, raw, toolschema.FormatDate)
 	}
 
 	return day, nil
@@ -128,13 +125,27 @@ func newBuildInvoiceRunTool(runs invoiceRunKeeper) serviceports.AgentTool {
 		rationale: "Builds a proposal of invoices inside Trenova for a biller to review; it " +
 			"invoices nothing and is discarded with cancel_invoice_run.",
 		properties: map[string]any{
-			paramCustomerIDs: idListProperty("The customers to bill, from list_customers or "+
-				"list_open_statements.", maxRunCustomers),
-			paramPeriodStart: dayProperty("The first day of the period,"),
-			paramPeriodEnd:   dayProperty("The last day of the period, included,"),
-			paramInvoiceDate: dayProperty("The date the invoices carry, defaulting to today;"),
+			paramCustomerIDs: agenttoolschema.RecordIDs(
+				permission.ResourceCustomer,
+				"The customers to bill, from list_customers or "+
+					"list_open_statements.",
+				maxRunCustomers,
+			),
+			paramPeriodStart: agenttoolschema.Date("The first day of the period."),
+			paramPeriodEnd:   agenttoolschema.Date("The last day of the period, included."),
+			paramInvoiceDate: agenttoolschema.Date(
+				"The date the invoices carry, defaulting to today.",
+			),
 		},
-		required: []string{paramCustomerIDs, paramPeriodStart, paramPeriodEnd},
+		required:      []string{paramCustomerIDs, paramPeriodStart, paramPeriodEnd},
+		searchTerms:   []string{"statement billing", "consolidated invoices", "bill the period"},
+		prerequisites: []string{"list_open_statements", "list_customers"},
+		recipe: []string{
+			"list_open_statements",
+			"build_invoice_run",
+			"get_invoice_run",
+			"commit_invoice_run",
+		},
 	}, receivablePlan[*serviceports.PreviewInvoiceRunRequest, *invoicerun.InvoiceRun]{
 		request: buildRunRequest,
 		plan: func(
@@ -239,7 +250,7 @@ func newAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) serviceports.Agent
 					toolschema.KeyAdditionalProperties: false,
 				},
 			},
-			paramInclude: idListProperty("Excluded shipments to put back, by the item id "+
+			paramInclude: agenttoolschema.IDList("Excluded shipments to put back, by the item id "+
 				"get_invoice_run lists.", maxRunEdits),
 			paramMoves: map[string]any{
 				toolschema.KeyType:        toolschema.TypeArray,

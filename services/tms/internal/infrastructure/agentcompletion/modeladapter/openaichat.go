@@ -489,7 +489,7 @@ func toChatTools(tools []ToolSpec) []chatTool {
 			Function: chatToolFunction{
 				Name:        tool.Name,
 				Description: tool.Description,
-				Parameters:  toolschema.ForModel(tool.Parameters),
+				Parameters:  toolschema.ForPortableModel(tool.Parameters),
 			},
 		})
 	}

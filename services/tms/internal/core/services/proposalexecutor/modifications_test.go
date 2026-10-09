@@ -30,6 +30,8 @@ func (t *schemaTool) ParamSchema() map[string]any {
 			"workerId": map[string]any{"type": "string"},
 			"message":  map[string]any{"type": "string", "maxLength": 20},
 			"priority": map[string]any{"type": "string", "enum": []string{"low", "high"}},
+			"repeat":   map[string]any{"type": "integer"},
+			"sendAt":   map[string]any{"type": "string", "format": "local-date-time"},
 		},
 		"required":             []string{"workerId", "message"},
 		"additionalProperties": false,
@@ -162,4 +164,70 @@ func TestExecute_RefusesModificationsTheSchemaRejects(t *testing.T) {
 	assert.Nil(t, tool.ran, "the tool did not run")
 	require.Len(t, repo.recorded, 1)
 	assert.Equal(t, agent.ProposalStatusExecutionFailed, repo.recorded[0].status)
+}
+
+// The approval editor sends what a person typed. What the runtime reads for
+// a model it reads for the approver too, so "3" for a number, a local time
+// written with a space and an enum in another case are what is checked and
+// what runs, not a refusal.
+func TestCheckModifications_ReadsWhatTheApproverTypedAsTheToolDeclares(t *testing.T) {
+	t.Parallel()
+
+	tool := &schemaTool{}
+	executor := newExecutor(tool, &fakeProposalRepo{}, &fakePermissions{allowed: true})
+	proposal := testProposal(tool.Name(), map[string]any{"workerId": "wrk_1", "message": "Call in"})
+	actor := testActor(proposal.OrganizationID, proposal.BusinessUnitID)
+
+	params, err := executor.CheckModifications(t.Context(), proposal, map[string]any{
+		"repeat":   "3",
+		"sendAt":   "2026-10-01 08:00",
+		"priority": "HIGH",
+	}, actor)
+
+	require.NoError(t, err)
+	assert.Equal(t, map[string]any{
+		"workerId": "wrk_1",
+		"message":  "Call in",
+		"repeat":   float64(3),
+		"sendAt":   "2026-10-01T08:00",
+		"priority": "high",
+	}, params)
+}
+
+// What runs is what was read, whether the value came from the approver or
+// from a proposal filed before its parameter's shape was asserted.
+func TestExecute_RunsTheParametersAsTheToolDeclaresThem(t *testing.T) {
+	t.Parallel()
+
+	tool := &schemaTool{}
+	executor := newExecutor(tool, &fakeProposalRepo{}, &fakePermissions{allowed: true})
+	proposal := testProposal(tool.Name(), map[string]any{
+		"workerId": "wrk_1",
+		"message":  "Call in",
+		"sendAt":   "2026-10-01 08:00:30",
+	})
+	actor := testActor(proposal.OrganizationID, proposal.BusinessUnitID)
+
+	err := executor.Execute(t.Context(), proposal, map[string]any{"repeat": "2"}, actor)
+
+	require.NoError(t, err)
+	require.NotNil(t, tool.ran)
+	assert.InDelta(t, 2, tool.ran["repeat"], 0)
+	assert.Equal(t, "2026-10-01T08:00", tool.ran["sendAt"])
+}
+
+// A self-scoped call's owner is never read or renamed, and comes back as
+// it was stored.
+func TestCoerceParams_LeavesTheOwnerAsStored(t *testing.T) {
+	t.Parallel()
+
+	owner := pulid.MustNew("usr_").String()
+	params := CoerceParams(&schemaTool{}, map[string]any{
+		"workerId":                   "wrk_1",
+		"repeat":                     "4",
+		services.SelfScopeOwnerParam: owner,
+	})
+
+	assert.Equal(t, owner, params[services.SelfScopeOwnerParam])
+	assert.InDelta(t, 4, params["repeat"], 0)
 }

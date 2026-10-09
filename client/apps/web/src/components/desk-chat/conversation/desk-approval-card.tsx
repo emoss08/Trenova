@@ -17,7 +17,9 @@ import {
   markProposalsStatus,
 } from "@/lib/proposal-cache";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import { cn } from "@trenova/shared/lib/utils";
 import { useEffect, type MutableRefObject } from "react";
 import { toast } from "sonner";
 import { DeskIcon } from "../desk-icons";
@@ -325,6 +327,15 @@ function approvedWhat(title: string, facts: ApprovalFacts, t: TranslateFn): stri
     : shown;
 }
 
+const cardButton = "rounded-lg in-[.dk-dense]:order-2";
+const leadButton = "in-[.dk-dense]:ml-auto";
+const warnButton = cn(cardButton, "text-dsk-warn-fg hover:bg-dsk-warn/18 hover:text-dsk-fg");
+const plainButton = cn(cardButton, "text-dsk-fg2 hover:bg-dsk-warn/18 hover:text-dsk-fg2");
+const approveButton = cn(
+  cardButton,
+  "gap-2 bg-dsk-ink pr-1.5 pl-3 text-dsk-ink-fg hover:bg-dsk-ink hover:opacity-90 active:bg-dsk-ink",
+);
+
 function CardRow({
   title,
   facts,
@@ -378,19 +389,24 @@ function CardRow({
               : t("What it was drafted against has changed since")}
           </span>
         </span>
-        <button type="button" className="dk-bt dk-sm" onClick={onDefer}>
+        <Button
+          variant="quiet"
+          size="sm"
+          className={cn(plainButton, leadButton)}
+          onClick={onDefer}
+        >
           {t("Not now")}
-        </button>
+        </Button>
         {onRedraft ? (
-          <button type="button" className="dk-apv-b" onClick={onRedraft}>
+          <Button size="sm" className={approveButton} onClick={onRedraft}>
             {facts.changedSince > 0 && going > 0
               ? t("Redraft with {0}", recordCount(facts.resource, going, t))
               : t("Redraft")}
-          </button>
+          </Button>
         ) : (
-          <button type="button" className="dk-apv-b" onClick={onReview}>
+          <Button size="sm" className={approveButton} onClick={onReview}>
             {t("Review")}
-          </button>
+          </Button>
         )}
       </div>
     );
@@ -419,22 +435,22 @@ function CardRow({
               : (facts.wouldFail ?? "")}
           </span>
         </span>
-        <button type="button" className="dk-bt dk-sm" onClick={onReview}>
+        <Button
+          variant="quiet"
+          size="sm"
+          className={cn(plainButton, leadButton)}
+          onClick={onReview}
+        >
           {refusedCount > 0 ? t("Review {0}", refusedCount) : t("Review")}
-        </button>
+        </Button>
         {all ? (
-          <button type="button" className="dk-bt dk-sm" onClick={onDefer}>
+          <Button variant="quiet" size="sm" className={plainButton} onClick={onDefer}>
             {t("Not now")}
-          </button>
+          </Button>
         ) : (
-          <button
-            type="button"
-            className="dk-apv-b dk-ec-fix"
-            disabled={!approvable}
-            onClick={onApprove}
-          >
+          <Button size="sm" className={approveButton} disabled={!approvable} onClick={onApprove}>
             {t("Approve {0}, skip {1}", facts.count - refusedCount, refusedCount)}
-          </button>
+          </Button>
         )}
       </div>
     );
@@ -462,15 +478,20 @@ function CardRow({
           <span className="dk-dcx-m">· {reversible ? t("reversible") : t("can't be undone")}</span>
         </span>
       </span>
-      <button type="button" className="dk-bt dk-sm" onClick={onReview}>
+      <Button
+        variant="quiet"
+        size="sm"
+        className={cn(warnButton, leadButton)}
+        onClick={onReview}
+      >
         {t("Review")}
-      </button>
-      <button type="button" className="dk-bt dk-sm" onClick={onDefer}>
+      </Button>
+      <Button variant="quiet" size="sm" className={warnButton} onClick={onDefer}>
         {t("Not now")}
-      </button>
-      <button
-        type="button"
-        className="dk-apv-b"
+      </Button>
+      <Button
+        size="sm"
+        className={cn("dk-apv-b", approveButton)}
         disabled={!approvable}
         aria-keyshortcuts="Meta+Enter"
         onClick={onApprove}
@@ -479,7 +500,7 @@ function CardRow({
         <span className="dk-kbd" aria-hidden>
           ⌘↵
         </span>
-      </button>
+      </Button>
     </div>
   );
 }

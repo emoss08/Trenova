@@ -61,6 +61,10 @@ const (
 	// reply, so nothing is asked while the history is being rewritten, and
 	// it is stopped the way a reply is.
 	AssistantTurnOriginCompaction = AssistantTurnOrigin("Compaction")
+	// AssistantTurnOriginWaitResolved is the turn in which the agent picks up
+	// work it parked on a wait, once what it waited for happened or the wait
+	// ran out.
+	AssistantTurnOriginWaitResolved = AssistantTurnOrigin("WaitResolved")
 )
 
 // AllAssistantTurnOrigins is every origin a turn may have, in the order they
@@ -71,13 +75,15 @@ func AllAssistantTurnOrigins() []AssistantTurnOrigin {
 		AssistantTurnOriginDecisionFollowUp,
 		AssistantTurnOriginScheduled,
 		AssistantTurnOriginCompaction,
+		AssistantTurnOriginWaitResolved,
 	}
 }
 
 func (o AssistantTurnOrigin) IsValid() bool {
 	switch o {
 	case AssistantTurnOriginPerson, AssistantTurnOriginDecisionFollowUp,
-		AssistantTurnOriginScheduled, AssistantTurnOriginCompaction:
+		AssistantTurnOriginScheduled, AssistantTurnOriginCompaction,
+		AssistantTurnOriginWaitResolved:
 		return true
 	default:
 		return false

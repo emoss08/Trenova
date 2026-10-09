@@ -537,208 +537,22 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Auth flow (routes/auth + the role-activation gate).
+   Auth flow (routes/auth, the password-change gate and the edition's signup).
 
    Everything Tailwind utilities can express lives in the components; what is here
-   is the ambient layer of the sign-in screen — masked grids, drifting lane chips,
-   the credential receipt, the border beam — plus the keyframes those need. The
-   easing curve, cubic-bezier(.2,.8,.2,1), is the design's and is applied uniformly.
+   needs a pseudo-element, a keyframe or an autofill override: the field's invalid
+   state, the primary action's sheen, the success marks and the screen entrance.
+   Every curve is --ease-swift, the design's cubic-bezier(.2,.8,.2,1).
    --------------------------------------------------------------------------- */
 
-/* Panel ambience ---------------------------------------------------------- */
+/* Screens ----------------------------------------------------------------- */
 
-.auth-weave {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.5;
-  background-image:
-    linear-gradient(
-      to right,
-      color-mix(in oklch, var(--foreground) 5%, transparent) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      to bottom,
-      color-mix(in oklch, var(--foreground) 5%, transparent) 1px,
-      transparent 1px
-    );
-  background-size: 64px 64px;
-  mask-image: radial-gradient(85% 65% at 18% 28%, #000, transparent 76%);
+.auth-enter {
+  animation: auth-enter 360ms var(--ease-swift) both;
 }
 
-.auth-aura {
-  position: absolute;
-  width: 120%;
-  aspect-ratio: 1;
-  left: -30%;
-  top: -30%;
-  pointer-events: none;
-  background: radial-gradient(
-    circle,
-    color-mix(in oklch, var(--foreground) 7%, transparent),
-    transparent 62%
-  );
-  transition:
-    transform 900ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    opacity 900ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-[data-auth-step="org"] .auth-aura {
-  transform: translate(18%, 26%);
-}
-
-[data-auth-step="role"] .auth-aura {
-  transform: translate(30%, 48%);
-}
-
-[data-auth-step="done"] .auth-aura {
-  transform: translate(24%, 40%) scale(1.15);
-  opacity: 1.4;
-}
-
-.auth-scan {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 140px;
-  pointer-events: none;
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    color-mix(in oklch, var(--foreground) 5%, transparent),
-    transparent
-  );
-  animation: auth-scan 13s linear infinite;
-}
-
-@keyframes auth-scan {
-  0% {
-    transform: translateY(-160px);
-  }
-  100% {
-    transform: translateY(110vh);
-  }
-}
-
-.auth-lanes {
-  mask-image: linear-gradient(to right, transparent, #000 8%, #000 82%, transparent);
-}
-
-.auth-lane-track {
-  width: max-content;
-  animation: auth-drift 34s linear infinite;
-}
-
-.auth-lane-track[data-reverse="true"] {
-  animation-direction: reverse;
-  animation-duration: 44s;
-}
-
-@keyframes auth-drift {
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-.auth-pulse {
-  animation: auth-pulse 2.6s ease-in-out infinite;
-}
-
-@keyframes auth-pulse {
-  0%,
-  100% {
-    opacity: 0.35;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-/* Credential receipt ------------------------------------------------------ */
-
-.auth-receipt {
-  background: color-mix(in oklch, var(--card) 60%, transparent);
-  backdrop-filter: blur(6px);
-}
-
-.auth-receipt-pending {
-  position: relative;
-  display: block;
-  height: 15px;
-}
-
-.auth-receipt-pending::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 52px;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in oklch, var(--foreground) 45%, transparent),
-    transparent
-  );
-  animation: auth-sweep 2.6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
-}
-
-@keyframes auth-sweep {
-  0% {
-    transform: translateX(-10px);
-    opacity: 0;
-  }
-  30% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(70px);
-    opacity: 0;
-  }
-}
-
-.auth-receipt-fill {
-  animation: auth-fill 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-
-@keyframes auth-fill {
-  from {
-    opacity: 0;
-    transform: translateY(5px);
-    filter: blur(2px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-    filter: none;
-  }
-}
-
-.auth-stamp {
-  transform: rotate(-4deg);
-  animation: auth-stamp 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-
-@keyframes auth-stamp {
-  from {
-    opacity: 0;
-    transform: rotate(-4deg) scale(1.5);
-  }
-  to {
-    opacity: 1;
-    transform: rotate(-4deg) scale(1);
-  }
-}
-
-/* Card -------------------------------------------------------------------- */
-
-.auth-card-height {
-  transition: height 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.auth-step-enter {
-  animation: auth-enter 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+.auth-enter-quick {
+  animation: auth-enter 220ms var(--ease-swift) both;
 }
 
 @keyframes auth-enter {
@@ -752,80 +566,93 @@
   }
 }
 
-/* Reuses the app-wide --border-beam-angle property and border-beam-spin keyframes. */
-.auth-beam {
-  position: absolute;
-  inset: -1px;
-  border-radius: 15px;
-  padding: 1px;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 240ms;
-  background: conic-gradient(
-    from var(--border-beam-angle),
-    transparent 0deg,
-    var(--foreground) 26deg,
-    transparent 64deg
+/* The stage without WebGL2: a soft accent wash where the ribbon would be. */
+.auth-stage-fallback {
+  background: radial-gradient(
+    60% 80% at 70% 40%,
+    color-mix(in oklch, var(--brand) 22%, transparent),
+    transparent 70%
   );
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-}
-
-/* Driven off the pending button inside the card rather than a lifted busy flag: the
-   step that is waiting is the one that knows, and react-query keeps the mutation
-   pending until the step transition that follows it has resolved. */
-.auth-card:has([aria-busy="true"]) > .auth-beam {
-  opacity: 0.85;
-  animation: border-beam-spin 1.3s linear infinite;
 }
 
 /* Fields ------------------------------------------------------------------ */
 
+/* The focus ring itself is ui-container-focus-ring, widened and softened by the
+   --ring-width / --ring-opacity the component sets; this adds the invalid state,
+   which points the same ring at --danger. */
 .auth-control {
   transition:
-    border-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    box-shadow 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    border-color 160ms var(--ease-swift),
+    box-shadow 160ms var(--ease-swift);
 }
 
-.auth-control:focus-within {
-  border-color: color-mix(in oklch, var(--foreground) 50%, transparent);
-  box-shadow: 0 0 0 3px var(--auth-ring);
+.auth-control:hover:not(:focus-within) {
+  border-color: color-mix(in oklch, var(--ink) 30%, var(--border-strong));
 }
 
 .auth-control[data-invalid="true"] {
-  border-color: color-mix(in oklch, var(--auth-danger) 65%, transparent);
-  animation: auth-shake 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ring: var(--danger);
+  --ring-opacity: 0.12;
+  border-color: var(--danger);
+  box-shadow: 0 0 0 var(--ring-width) color-mix(in oklch, var(--danger) 12%, transparent);
+  animation: auth-shake 280ms var(--ease-swift);
 }
 
-/* Chrome paints autofilled inputs with an opaque square fill of its own, which shows
-   through the rounded control at the corners and ignores the theme. Repainting it with
-   an inset shadow keeps the field on --field in both themes. */
+/* Chrome paints autofilled inputs with an opaque fill of its own that ignores the
+   theme. Repainting it with an inset shadow keeps the field on --auth-field. */
 .auth-control input:-webkit-autofill,
 .auth-control input:-webkit-autofill:hover,
 .auth-control input:-webkit-autofill:focus,
 .auth-control input:-webkit-autofill:active {
   -webkit-text-fill-color: var(--foreground);
   caret-color: var(--foreground);
-  box-shadow: inset 0 0 0 1000px var(--field);
+  box-shadow: inset 0 0 0 1000px var(--auth-field);
   transition: background-color 100000s ease-in-out 0s;
 }
 
 @keyframes auth-shake {
   25% {
-    transform: translateX(-3px);
+    transform: translateX(-4px);
   }
   75% {
-    transform: translateX(3px);
+    transform: translateX(4px);
   }
 }
 
-/* Option rows ------------------------------------------------------------- */
+/* Primary action ---------------------------------------------------------- */
+
+.auth-submit::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    color-mix(in oklch, var(--ink-foreground) 22%, transparent) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+}
+
+.auth-submit:hover:not(:disabled)::before {
+  transform: translateX(100%);
+  transition: transform 700ms var(--ease-swift);
+}
+
+.auth-submit [data-auth-icon] {
+  transition: transform 200ms var(--ease-swift);
+}
+
+.auth-submit:hover:not(:disabled) [data-auth-icon="trailing"] {
+  transform: translateX(3px);
+}
+
+.auth-submit:hover:not(:disabled) [data-auth-icon="leading"] {
+  transform: translateX(-3px);
+}
+
+/* Option rows (organization and role steps) -------------------------------- */
 
 .auth-option:hover {
   border-color: var(--border);
@@ -847,48 +674,39 @@
   background: color-mix(in oklch, var(--foreground) 10%, var(--field));
 }
 
-/* Handoff ----------------------------------------------------------------- */
+/* Success marks ------------------------------------------------------------ */
 
-.auth-ring-pop {
-  animation: auth-pop 460ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+.auth-pop {
+  animation: auth-pop 420ms var(--ease-swift) both;
 }
 
-.auth-ring-pop::after {
-  content: "";
-  position: absolute;
-  inset: -6px;
-  border-radius: 50%;
-  border: 1px solid var(--foreground);
-  opacity: 0;
-  animation: auth-halo 900ms cubic-bezier(0.2, 0.8, 0.2, 1) 120ms;
+/* The envelope settles, then drifts: the one screen that waits on the person
+   rather than on the network. */
+.auth-float {
+  animation:
+    auth-pop 420ms var(--ease-swift) both,
+    auth-float 3.2s ease-in-out 600ms infinite;
 }
 
 @keyframes auth-pop {
   from {
     opacity: 0;
-    transform: scale(0.82);
-  }
-  to {
-    opacity: 1;
-    transform: none;
+    transform: scale(0.6);
   }
 }
 
-@keyframes auth-halo {
-  0% {
-    opacity: 0.5;
-    transform: scale(0.8);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.25);
+@keyframes auth-float {
+  50% {
+    transform: translateY(-3px);
   }
 }
 
-.auth-check-draw {
-  stroke-dasharray: 22;
-  stroke-dashoffset: 22;
-  animation: auth-draw 460ms cubic-bezier(0.2, 0.8, 0.2, 1) 140ms forwards;
+/* Strokes the mark's paths in. --auth-draw is at least the longest path's
+   length in the 24-unit icon grid, so the dash covers it before it draws. */
+.auth-draw path {
+  stroke-dasharray: var(--auth-draw, 24);
+  stroke-dashoffset: var(--auth-draw, 24);
+  animation: auth-draw 480ms var(--ease-swift) 180ms forwards;
 }
 
 @keyframes auth-draw {
@@ -899,7 +717,7 @@
 
 .auth-progress {
   width: 0;
-  animation: auth-load 1600ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation: auth-load var(--auth-progress-duration, 1600ms) var(--ease-swift) forwards;
 }
 
 @keyframes auth-load {
@@ -909,34 +727,22 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .auth-weave,
-  .auth-aura,
-  .auth-lanes,
-  .auth-lane-track,
-  .auth-pulse,
-  .auth-receipt-pending::after,
-  .auth-receipt-fill,
-  .auth-stamp,
-  .auth-card-height,
-  .auth-step-enter,
-  .auth-beam,
-  .auth-control,
-  .auth-ring-pop,
-  .auth-ring-pop::after,
-  .auth-check-draw,
-  .auth-progress {
+  [data-auth-shell] *,
+  [data-auth-shell] *::before,
+  [data-auth-shell] *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 
-  /* The bar is the only progress signal on the handoff step, so under reduced motion
+  /* The bar is the only progress signal on the hand-off, so under reduced motion
      it is drawn full rather than left at zero width. */
   .auth-progress {
     width: 100%;
   }
 
-  .auth-check-draw {
+  .auth-draw path {
     stroke-dashoffset: 0;
   }
 }

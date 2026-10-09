@@ -95,6 +95,9 @@ func (s *Service) pollVehiclePositions(
 
 	if len(positions) > 0 {
 		s.publishInvalidation(ctx, tenantInfo, "vehiclePosition")
+		if s.waits != nil {
+			s.waits.NotifyPositions(ctx, tenantInfo, positions)
+		}
 	}
 	return nil
 }
@@ -168,6 +171,9 @@ func (s *Service) pollHOSClocks(
 
 	if len(states) > 0 {
 		s.publishInvalidation(ctx, tenantInfo, "workerHosState")
+		if s.waits != nil {
+			s.waits.NotifyHOS(ctx, tenantInfo, states)
+		}
 	}
 	return nil
 }

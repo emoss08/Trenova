@@ -3,6 +3,7 @@ package shipmentmoveservice
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
@@ -14,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
@@ -316,13 +318,22 @@ func (s *service) publishStopActualEvent(
 	req *repositories.RecordStopActualRequest,
 ) {
 	kind := agent.EventShipmentMoveArrived
+	verb := "Arrived at"
 	if req.Action == repositories.StopActualActionDepart {
 		kind = agent.EventShipmentMoveDeparted
+		verb = "Left"
+	}
+	at := timeutils.NowUnix()
+	if req.OccurredAt != nil {
+		at = *req.OccurredAt
 	}
 
 	portservices.PublishAgentEvent(ctx, s.publisher, portservices.AgentEvent{
 		Kind:       kind,
 		SubjectID:  req.MoveID,
 		TenantInfo: req.TenantInfo,
+		Related:    []pulid.ID{req.StopID},
+		Detail: fmt.Sprintf("%s stop %s at %s.", verb, req.StopID,
+			time.Unix(at, 0).UTC().Format("Mon Jan 2 15:04 MST")),
 	})
 }

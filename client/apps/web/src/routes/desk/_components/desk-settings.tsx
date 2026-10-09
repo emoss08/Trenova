@@ -4,6 +4,7 @@ import { useDeskSettingsStore, type DeskSettings } from "@/stores/desk-settings-
 import { useDeskStore } from "@/stores/desk-store";
 import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "@trenova/shared/components/theme-provider";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import {
@@ -16,6 +17,7 @@ import {
   type ReactNode,
 } from "react";
 import { DeskIcon, type DeskIconName } from "@/components/desk-chat/desk-icons";
+import { deskIconClass } from "@/components/desk-chat/desk-button-styles";
 import { onRadioArrows, useModalFocus } from "./use-modal-focus";
 
 type Section = "appearance" | "conversation" | "composer" | "files" | "artifacts" | "agent";
@@ -76,13 +78,14 @@ function Seg<V extends string>({
     >
       <span className="dk-sx-kn" />
       {options.map(([option, text], index) => (
-        <button
+        <Button
           key={option}
-          type="button"
+          variant="bare"
+          size="bare"
           role="radio"
           aria-checked={value === option}
           tabIndex={value === option || (!chosen && index === 0) ? 0 : -1}
-          className={value === option ? "dk-on" : undefined}
+          className="h-7 rounded-md px-3 text-sm whitespace-nowrap text-dsk-subtle transition-colors duration-150 hover:text-dsk-fg aria-checked:bg-dsk-card aria-checked:font-medium aria-checked:text-dsk-fg aria-checked:ring-1 aria-checked:ring-dsk-b"
           onClick={() => onChange(option)}
           onKeyDown={(event) =>
             onRadioArrows(
@@ -94,7 +97,7 @@ function Seg<V extends string>({
           }
         >
           {text}
-        </button>
+        </Button>
       ))}
     </div>
   );
@@ -208,33 +211,39 @@ export function DeskSettingsDialog({
       >
         <div className="dk-sx-top">
           <h2 id={titleId}>{t("Settings")}</h2>
-          <button
-            type="button"
-            className="dk-ib"
+          <Button
+            variant="quiet"
+            size="icon-sm"
+            className={deskIconClass}
             onClick={close}
             title={t("Close")}
             aria-label={t("Close")}
           >
             <DeskIcon name="x" size={14} />
-          </button>
+          </Button>
         </div>
         <nav className="dk-sx-nav">
           {SECTIONS.map(([key, icon]) => (
-            <button
+            <Button
               key={key}
-              type="button"
-              className={section === key ? "dk-on" : undefined}
+              variant="bare"
+              size="bare"
+              className={cn(
+                "flex h-8 gap-2.5 rounded-lg px-2.5 text-left text-sm text-dsk-muted transition-colors duration-150 hover:bg-dsk-hover hover:text-dsk-fg [&_svg]:text-dsk-subtle",
+                section === key && "bg-dsk-hover font-medium text-dsk-fg [&_svg]:text-dsk-fg",
+              )}
               aria-current={section === key ? "page" : undefined}
               onClick={() => setSection(key)}
             >
               <DeskIcon name={icon} size={14} />
               {sectionLabel(key, t)}
-            </button>
+            </Button>
           ))}
           <span className="flex-1" />
-          <button
-            type="button"
-            className="dk-sx-reset"
+          <Button
+            variant="bare"
+            size="bare"
+            className="flex h-7 rounded-lg px-2.5 text-left text-xs font-normal text-dsk-subtle transition-colors duration-150 hover:text-dsk-fg"
             onClick={() => {
               reset();
               setSharePage(true);
@@ -242,7 +251,7 @@ export function DeskSettingsDialog({
             }}
           >
             {t("Reset to defaults")}
-          </button>
+          </Button>
         </nav>
         <div className="dk-sx-body" key={section}>
           <div className="dk-sx-head">{sectionLabel(section, t)}</div>
@@ -269,13 +278,17 @@ export function DeskSettingsDialog({
               >
                 <div className="dk-sx-wopts" role="radiogroup" aria-label={t("Conversation width")}>
                   {WIDTHS.map((width) => (
-                    <button
+                    <Button
                       key={width}
-                      type="button"
+                      variant="bare"
+                      size="bare"
                       role="radio"
                       aria-checked={settings.width === width}
                       tabIndex={settings.width === width ? 0 : -1}
-                      className={cn("dk-sx-wo", settings.width === width && "dk-on")}
+                      className={cn(
+                        "dk-sx-wo flex flex-col items-stretch gap-2 text-left text-sm text-dsk-muted transition-colors duration-150 hover:text-dsk-fg aria-checked:font-medium aria-checked:text-dsk-fg",
+                        settings.width === width && "dk-on",
+                      )}
                       onClick={() => set("width", width)}
                       onKeyDown={(event) =>
                         onRadioArrows(event, WIDTHS, settings.width, (next) => set("width", next))
@@ -289,7 +302,7 @@ export function DeskSettingsDialog({
                             ? t("Wide")
                             : t("Default")}
                       </span>
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </Row>

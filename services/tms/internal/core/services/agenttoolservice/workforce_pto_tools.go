@@ -83,8 +83,8 @@ func ptoRecord(pto *worker.WorkerPTO) toolpreview.Record {
 func ptoDatesProperties() map[string]any {
 	return map[string]any{
 		paramPTOType:  agenttoolschema.Enum("The kind of time off.", agenttoolschema.PTOTypes),
-		paramPTOStart: dayProperty("The first day off."),
-		paramPTOEnd:   dayProperty("The last day off."),
+		paramPTOStart: agenttoolschema.Date("The first day off."),
+		paramPTOEnd:   agenttoolschema.Date("The last day off."),
 		fieldReason: stringProperty("The reason the worker gave. The driver sees it with "+
 			"the request.", maxPTOReasonChars),
 	}
@@ -219,7 +219,7 @@ func (e *ptoEdit) entity(ctx context.Context, pto ptoRequester) (*worker.WorkerP
 
 func newUpdateWorkerPTOTool(pto ptoRequester) serviceports.AgentTool {
 	properties := ptoDatesProperties()
-	properties["ptoId"] = idProperty(ptoIDNote)
+	properties["ptoId"] = agenttoolschema.IDText(ptoIDNote)
 	spec := targeting(withSchema(wfSpec(
 		"update_worker_pto",
 		"Change the kind, days or reason of a time-off request still waiting for a "+
@@ -343,7 +343,7 @@ func newAdjustWorkerPTOBalanceTool(ledger ptoBalanceAdjuster) serviceports.Agent
 		paramPTOType:  agenttoolschema.Enum("The balance to adjust.", agenttoolschema.PTOTypes),
 		paramAmountDays: amountProperty("Days to add, or a negative number of days to take " +
 			"away, such as 1.5 or -2."),
-		paramEffectiveOn: dayProperty("The day it takes effect. Defaults to today."),
+		paramEffectiveOn: agenttoolschema.Date("The day it takes effect. Defaults to today."),
 		fieldNote:        stringProperty("Why, kept on the ledger. Required.", wfShortChars),
 	}, paramWorkerID, paramPTOType, paramAmountDays, fieldNote))
 	spec.searchTerms = []string{"balance adjustment", "pto balance"}

@@ -32,8 +32,10 @@ type TurnPlan struct {
 	Definition *agentdefinition.Definition `json:"definition"`
 	// Input is what the model answers: the question, or on a decision
 	// follow-up the note describing the decision.
-	Input    string              `json:"input"`
-	FollowUp bool                `json:"followUp"`
+	Input    string `json:"input"`
+	FollowUp bool   `json:"followUp"`
+	// WaitNote says the input is the note of a wait the turn picks up.
+	WaitNote bool                `json:"waitNote,omitempty"`
 	Decision agentguard.Decision `json:"decision"`
 	// Page, Attachments and Mentions are what the person handed over with
 	// the question. They are kept on the question when it is saved.
@@ -125,13 +127,17 @@ func (s *Service) prepareTurn(
 ) (*TurnPlan, *services.RunRequest, error) {
 	content := strings.TrimSpace(req.Content)
 	followUp := req.FollowUpProposalID.IsNotNil() || req.FollowUpPlanID.IsNotNil()
+	resumesWait := req.ResumeWaitID.IsNotNil()
 	multiErr := errortypes.NewMultiError()
 	switch {
-	case content == "" && !followUp:
+	case content == "" && !followUp && !resumesWait:
 		multiErr.Add("content", errortypes.ErrRequired, "Message cannot be empty")
-	case content != "" && followUp:
+	case content != "" && (followUp || resumesWait):
 		multiErr.Add("content", errortypes.ErrInvalid,
-			"A decision follow-up carries no message; the decision is its input")
+			"A turn that follows a decision or a wait carries no message; that is its input")
+	case followUp && resumesWait:
+		multiErr.Add("resumeWaitId", errortypes.ErrInvalid,
+			"A turn follows a decision or picks up a wait, not both")
 	case req.FollowUpProposalID.IsNotNil() && req.FollowUpPlanID.IsNotNil():
 		multiErr.Add("followUpPlanId", errortypes.ErrInvalid,
 			"A follow-up answers one decision: a proposal or a plan, not both")
@@ -161,6 +167,12 @@ func (s *Service) prepareTurn(
 	definition, history := checks.definition, checks.history
 	attachments, runtimeAttachments := checks.attachments, checks.runtimeAttachments
 
+	if resumesWait {
+		content, err = s.waitNote(ctx, thread.ID, req.ResumeWaitID, req.TenantInfo)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
 	if followUp {
 		content, err = s.decisionNote(ctx, decisionNoteParams{
 			thread:     thread,
@@ -198,6 +210,7 @@ func (s *Service) prepareTurn(
 		Definition:          definition,
 		Input:               content,
 		FollowUp:            followUp,
+		WaitNote:            resumesWait,
 		Decision:            decision,
 		Page:                page,
 		Attachments:         attachments,
@@ -294,8 +307,11 @@ func (s *Service) FinishTurn(
 	turn := turnResultOf(plan.Input, plan.Decision, req.Run, req.Failure)
 	attachTurnContext(turn.Messages, plan.turnContext())
 	keepTurnMemories(turn.Messages, req.Run)
-	if plan.FollowUp {
+	switch {
+	case plan.FollowUp:
 		markDecisionNote(turn.Messages)
+	case plan.WaitNote:
+		markInput(turn.Messages, conversation.MessageKindWaitNote)
 	}
 
 	saved, err := s.conversations.AppendTurn(ctx, repositories.AppendTurnRequest{
@@ -315,7 +331,7 @@ func (s *Service) FinishTurn(
 	s.measureAfterTurn(ctx, thread, plan, saved, runWindow(req.Run), req.TenantInfo, emit)
 	s.describeMemories(ctx, req.TenantInfo, req.Actor.UserID, saved)
 
-	if req.Failure == nil && !plan.FollowUp {
+	if req.Failure == nil && !plan.FollowUp && !plan.WaitNote {
 		s.titleIfUnnamed(ctx, thread, plan.Input)
 	}
 

@@ -154,6 +154,9 @@ func (s *Service) ListThreads(
 	if err = s.markAttention(ctx, req.UserID, req.TenantInfo, result.Items); err != nil {
 		return nil, err
 	}
+	if err = s.markCases(ctx, req.UserID, req.TenantInfo, result.Items...); err != nil {
+		return nil, err
+	}
 
 	return result, nil
 }
@@ -228,8 +231,25 @@ func (s *Service) GetThread(
 	if err = s.markContinuable(ctx, threadReader(req.UserID, req.TenantInfo), thread); err != nil {
 		return nil, err
 	}
+	if err = s.markCases(ctx, req.UserID, req.TenantInfo, thread); err != nil {
+		return nil, err
+	}
 
 	return thread, nil
+}
+
+// markCases says where each conversation that is a case stands.
+func (s *Service) markCases(
+	ctx context.Context,
+	userID pulid.ID,
+	tenant pagination.TenantInfo,
+	threads ...*conversation.Thread,
+) error {
+	if s.cases == nil {
+		return nil
+	}
+
+	return s.cases.Attach(ctx, tenant, userID, threads)
 }
 
 func (s *Service) ListMessages(

@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.opentelemetry.io/otel/trace"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/contrib/workflowstreams"
@@ -80,6 +81,7 @@ type ActivitiesParams struct {
 	// sets off.
 	Workflows   serviceports.WorkflowStarter          `optional:"true"`
 	Reflections serviceports.AgentReflectionScheduler `optional:"true"`
+	Queue       serviceports.AssistantQueueSettler    `optional:"true"`
 }
 
 // Activities are a turn's first and last steps. Everything between them is
@@ -97,6 +99,7 @@ type Activities struct {
 	metrics       *metrics.Assistant
 	workflows     serviceports.WorkflowStarter
 	reflections   serviceports.AgentReflectionScheduler
+	queue         serviceports.AssistantQueueSettler
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -111,6 +114,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		metrics:     metrics.AssistantFrom(p.Metrics),
 		workflows:   p.Workflows,
 		reflections: p.Reflections,
+		queue:       p.Queue,
 	}
 	// Assigned only when present: a nil pointer held by an interface is not
 	// a nil interface, and the notice would dereference it.
@@ -241,7 +245,11 @@ func (a *Activities) FinishTurnActivity(
 		)
 
 		ending := a.alreadySaved(ctx, turn)
-		a.resumeFollowUps(ctx, in)
+		ending.Next = a.continueTurn(
+			ctx,
+			in,
+			conversation.AssistantTurnStatus(ending.Result.Status),
+		)
 		a.cueReflection(ctx, in)
 		emitTurnRoots(ctx, in, turn, ending.Result.Status)
 
@@ -259,7 +267,7 @@ func (a *Activities) FinishTurnActivity(
 	a.settle(ctx, payload, serviceports.RunStepCompleted, ending.Result.Status)
 	a.turns.Complete(ctx, turn, conversation.AssistantTurnStatus(ending.Result.Status), cause)
 	a.recordTrajectory(ctx, tenant, payload, in.Events, ending.Event)
-	a.resumeFollowUps(ctx, in)
+	ending.Next = a.continueTurn(ctx, in, conversation.AssistantTurnStatus(ending.Result.Status))
 	a.cueReflection(ctx, in)
 	emitTurnRoots(ctx, in, turn, ending.Result.Status)
 
@@ -359,15 +367,68 @@ func emitTurnRoots(
 // conversation either way. A follow-up that could not be prepared does not:
 // it saved no note, so resuming from it would start the same failing
 // follow-up again, and the conversation's next turn resumes instead.
-func (a *Activities) resumeFollowUps(ctx context.Context, in *FinishTurnInput) {
-	if a.followUps == nil || (in.Plan == nil && in.Payload.Request.reportsDecision()) {
-		return
+func (a *Activities) continueTurn(
+	ctx context.Context,
+	in *FinishTurnInput,
+	status conversation.AssistantTurnStatus,
+) *serviceports.QueuedTurn {
+	return a.continueConversation(ctx, &conversationContinuation{
+		tenant:   in.Payload.tenantInfo(),
+		threadID: in.Payload.ThreadID,
+		userID:   in.Payload.Actor.UserID,
+		read:     in.Steered,
+		status:   status,
+		resume:   in.Plan != nil || !in.Payload.Request.reportsDecision(),
+	})
+}
+
+// conversationContinuation is a conversation whose live turn just closed:
+// what that turn read from the queue, how it ended, and whether a decision
+// follow-up may be resumed from it.
+type conversationContinuation struct {
+	tenant   pagination.TenantInfo
+	threadID pulid.ID
+	userID   pulid.ID
+	read     []pulid.ID
+	status   conversation.AssistantTurnStatus
+	resume   bool
+}
+
+// continueConversation starts whatever the conversation has waiting, now that
+// its one live slot is free. What the person queued goes first: they asked
+// for it, and the turn that answers it reads every decision made meanwhile.
+// A queue is sent on only after a turn that ended as it should; one stopped
+// or failed holds it until the person sends it on. With nothing queued, a
+// decision made while the conversation was busy is reported.
+func (a *Activities) continueConversation(
+	ctx context.Context,
+	c *conversationContinuation,
+) *serviceports.QueuedTurn {
+	var next *serviceports.QueuedTurn
+	if a.queue != nil {
+		next = a.queue.SettleQueue(ctx, &serviceports.SettleQueueRequest{
+			TenantInfo: c.tenant,
+			ThreadID:   c.threadID,
+			UserID:     c.userID,
+			Read:       c.read,
+			Dispatch:   sendsQueueOn(c.status),
+		})
+	}
+	if next != nil || !c.resume || a.followUps == nil {
+		return next
 	}
 
 	a.followUps.ResumeFollowUps(ctx, serviceports.ResumeFollowUpsRequest{
-		TenantInfo: in.Payload.tenantInfo(),
-		ThreadID:   in.Payload.ThreadID,
+		TenantInfo: c.tenant,
+		ThreadID:   c.threadID,
 	})
+
+	return nil
+}
+
+func sendsQueueOn(status conversation.AssistantTurnStatus) bool {
+	return status == conversation.AssistantTurnStatusCompleted ||
+		status == conversation.AssistantTurnStatusRefused
 }
 
 func (a *Activities) cueReflection(ctx context.Context, in *FinishTurnInput) {

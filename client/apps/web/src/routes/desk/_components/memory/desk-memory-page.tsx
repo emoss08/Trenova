@@ -15,6 +15,7 @@ import {
 } from "@/lib/graphql/desk-memories";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { resolveUserTimezone } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
@@ -30,6 +31,7 @@ import {
   type FormEvent,
 } from "react";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
+import { deskIconClass } from "@/components/desk-chat/desk-button-styles";
 import { savedLine, scopeLabel, usageLine } from "@/components/desk-chat/memory/memory-format";
 import { DeskMemoryWhy } from "@/components/desk-chat/memory/desk-memory-why";
 import {
@@ -300,17 +302,23 @@ export function DeskMemoryPage() {
                 ["AskFirst", t("Ask me first")],
               ] as const
             ).map(([value, label]) => (
-              <button
+              <Button
                 key={value}
-                type="button"
+                variant="bare"
+                size="bare"
                 role="radio"
                 aria-checked={mode === value}
-                className={cn(mode === value && "dk-on")}
+                className={cn(
+                  "h-7 rounded-md px-2.75 text-sm font-medium transition-colors duration-150 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-100",
+                  mode === value
+                    ? "bg-dsk-ink text-dsk-ink-fg"
+                    : "text-dsk-muted hover:not-disabled:text-dsk-fg",
+                )}
                 disabled={!settings}
                 onClick={() => mode !== value && modeMutation.mutate(value)}
               >
                 {label}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -331,29 +339,35 @@ export function DeskMemoryPage() {
           >
             <AudienceOptions settings={settings} />
           </select>
-          <button
+          <Button
             type="submit"
-            className="dk-ax-btn dk-ink"
+            className="rounded-lg px-3.25 disabled:opacity-35"
             disabled={add.trim() === "" || createMutation.isPending}
           >
             {t("Save")}
-          </button>
+          </Button>
         </form>
 
         <div className="dk-mm-tools">
           <div className="dk-mm-f" role="tablist" aria-label={t("Show")}>
             {chips.map((chip) => (
-              <button
+              <Button
                 key={chip.key}
-                type="button"
+                variant="bare"
+                size="bare"
                 role="tab"
                 aria-selected={sameFilter(filter, chip.filter)}
-                className={cn(sameFilter(filter, chip.filter) && "dk-on")}
+                className={cn(
+                  "h-7 gap-1.5 rounded-full px-2.5 text-sm",
+                  sameFilter(filter, chip.filter)
+                    ? "bg-dsk-ink text-dsk-ink-fg"
+                    : "text-dsk-muted hover:text-dsk-fg",
+                )}
                 onClick={() => setFilter(chip.filter)}
               >
                 {chip.label}
                 <em>{chip.count}</em>
-              </button>
+              </Button>
             ))}
           </div>
           <label className="dk-ax-q">
@@ -455,9 +469,14 @@ function MemoryRowView({
         className={cn("dk-mm-r dk-gone", index === 0 && "dk-first")}
       >
         <span>{t("Forgotten. Agents won't use this again.")}</span>
-        <button type="button" onClick={() => onStatus("Active")}>
+        <Button
+          variant="bare"
+          size="bare"
+          className="text-sm font-medium text-dsk-fg"
+          onClick={() => onStatus("Active")}
+        >
           {t("Undo")}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -491,17 +510,20 @@ function MemoryRowView({
             }}
           />
           <div>
-            <button type="button" className="dk-ax-btn dk-ghost" onClick={onCancel}>
+            <Button
+              variant="quiet"
+              className="rounded-lg px-3.25 text-dsk-muted hover:bg-dsk-hover hover:text-dsk-fg"
+              onClick={onCancel}
+            >
               {t("Cancel")}
-            </button>
-            <button
-              type="button"
-              className="dk-ax-btn dk-ink"
+            </Button>
+            <Button
+              className="rounded-lg px-3.25"
               disabled={editing.trim() === "" || saving}
               onClick={() => onSave(editing.trim())}
             >
               {t("Save")}
-            </button>
+            </Button>
           </div>
         </div>
       ) : (
@@ -525,33 +547,36 @@ function MemoryRowView({
         <span>{usageLine(memory, timezone, t)}</span>
         {memory.editable && (
           <span className="dk-mm-acts">
-            <button
-              type="button"
-              className="dk-ib"
+            <Button
+              variant="quiet"
+              size="icon-sm"
+              className={cn(deskIconClass, "size-6.5")}
               title={t("Edit")}
               aria-label={t("Edit")}
               onClick={onEdit}
             >
               <DeskIcon name="edit" size={13} />
-            </button>
-            <button
-              type="button"
-              className="dk-ib"
+            </Button>
+            <Button
+              variant="quiet"
+              size="icon-sm"
+              className={cn(deskIconClass, "size-6.5")}
               title={paused ? t("Resume") : t("Pause")}
               aria-label={paused ? t("Resume") : t("Pause")}
               onClick={() => onStatus(paused ? "Active" : "Paused")}
             >
               <DeskIcon name={paused ? "play" : "pause"} size={13} />
-            </button>
-            <button
-              type="button"
-              className="dk-ib"
+            </Button>
+            <Button
+              variant="quiet"
+              size="icon-sm"
+              className={cn(deskIconClass, "size-6.5")}
               title={t("Forget")}
               aria-label={t("Forget")}
               onClick={() => onStatus("Retired")}
             >
               <DeskIcon name="trash" size={13} />
-            </button>
+            </Button>
           </span>
         )}
       </div>

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/driverpayservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -81,7 +82,9 @@ func escrowRecord(account *driverpay.EscrowAccount) toolpreview.Record {
 }
 
 func escrowAccountProperty() map[string]any {
-	return idProperty("The escrow account, from " + escrowSourcesTool + ". Never guess one.")
+	return agenttoolschema.IDText(
+		"The escrow account, from " + escrowSourcesTool + ". Never guess one.",
+	)
 }
 
 func interestRateProperty() map[string]any {
@@ -153,7 +156,7 @@ func (t *openEscrowAccountTool) ParamSchema() map[string]any {
 		paramEscrowTarget: amountProperty("The balance the lease requires, as a decimal " +
 			"such as 2500.00."),
 		paramEscrowInterestRate: interestRateProperty(),
-		paramEscrowOpenedDate:   dateProperty("The day it opens; leave it out for today."),
+		paramEscrowOpenedDate:   agenttoolschema.Date("The day it opens; leave it out for today."),
 	}, paramWorkerID, paramEscrowTarget)
 }
 
@@ -487,7 +490,9 @@ func (t *adjustEscrowAccountTool) ParamSchema() map[string]any {
 			"from the balance. Never zero."),
 		paramEscrowDescription: stringProperty("What the adjustment is for, as it will read "+
 			"on the escrow ledger.", maxEscrowDescription),
-		paramEscrowOccurredDate: dateProperty("The day it happened; leave it out for today."),
+		paramEscrowOccurredDate: agenttoolschema.Date(
+			"The day it happened; leave it out for today.",
+		),
 	}, paramEscrowAccountID, paramDriverPayAmount, paramEscrowDescription)
 }
 

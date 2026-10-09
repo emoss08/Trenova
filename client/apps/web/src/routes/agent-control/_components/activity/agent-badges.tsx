@@ -108,6 +108,7 @@ const TRIGGER: Record<AgentRunTrigger, { label: string; variant: Variant }> = {
   Scheduled: { label: "Scheduled", variant: "accent-teal" },
   Event: { label: "Event", variant: "accent-amber" },
   Continuous: { label: "Continuous", variant: "accent-violet" },
+  Wait: { label: "Picked up from a wait", variant: "accent-indigo" },
 };
 
 const AGENT_TYPE: Record<AgentType, string> = defineLabels({

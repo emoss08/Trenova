@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -276,8 +277,11 @@ func (t *getBillingQueueItemTool) Description() string {
 }
 
 func (t *getBillingQueueItemTool) ParamSchema() map[string]any {
-	return idSchema(paramBillingQueueItemID, "The item's id, from list_billing_queue_items, "+
-		"this run's subject or "+onThePage)
+	return idSchema(
+		paramBillingQueueItemID,
+		agenttoolschema.IDText("The item's id, from list_billing_queue_items, "+
+			"this run's subject or "+onThePage),
+	)
 }
 
 func (t *getBillingQueueItemTool) Policy() serviceports.ToolPolicy {

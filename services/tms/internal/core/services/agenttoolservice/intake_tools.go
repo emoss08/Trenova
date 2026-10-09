@@ -91,6 +91,32 @@ func (t *createShipmentTool) SearchTerms() []string {
 	return []string{"new shipment", "enter shipment"}
 }
 
+func (t *createShipmentTool) Prerequisites() []string {
+	return []string{
+		"list_customers",
+		"list_service_types",
+		"list_shipment_types",
+		"list_formula_templates",
+		"list_locations",
+		"list_commodities",
+		"list_accessorial_charges",
+		"list_equipment_types",
+	}
+}
+
+func (t *createShipmentTool) Recipe() []string {
+	return []string{
+		"list_customers",
+		"list_service_types",
+		"list_shipment_types",
+		"list_formula_templates",
+		"list_locations",
+		"list_commodities",
+		"quote_shipment",
+		"create_shipment",
+	}
+}
+
 func (t *createShipmentTool) Description() string {
 	return "Enter a new shipment. To copy an existing shipment use duplicate_shipment instead, " +
 		"which carries its stops, commodities, charges and rating exactly. Give the customer, " +
@@ -110,9 +136,12 @@ func (t *createShipmentTool) ParamSchema() map[string]any {
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
 			"shipment": shipmentDraftSchema(),
-			"sourceDocumentId": idProperty("The uploaded document this shipment was read from, " +
-				"when there is one: the documentId you read with get_shipment_draft, usually " +
-				"this run's subject or the page."),
+			"sourceDocumentId": agenttoolschema.RecordIDText(
+				permission.ResourceDocument,
+				"The uploaded document this shipment was read from, "+
+					"when there is one: the documentId you read with get_shipment_draft, usually "+
+					"this run's subject or the page.",
+			),
 		},
 		toolschema.KeyRequired:             []string{"shipment"},
 		toolschema.KeyAdditionalProperties: false,
@@ -126,24 +155,32 @@ func shipmentDraftSchema() map[string]any {
 		toolschema.KeyType:        toolschema.TypeObject,
 		toolschema.KeyDescription: "The shipment to enter.",
 		toolschema.KeyProperties: map[string]any{
-			paramCustomerID: idProperty("The customer, from list_customers."),
-			"billToCustomerId": idProperty("Who is billed, when not the customer, from " +
-				"list_customers."),
-			fieldServiceTypeID:  idProperty("From list_service_types."),
-			fieldShipmentTypeID: idProperty("From list_shipment_types."),
-			"formulaTemplateId": idProperty("The rating method that prices the freight, from " +
-				"list_formula_templates. Required: a rate agreement covering the lane may " +
-				"replace it with its own when the shipment is saved."),
+			paramCustomerID: agenttoolschema.RecordIDText(
+				permission.ResourceCustomer,
+				"The customer, from list_customers.",
+			),
+			"billToCustomerId": agenttoolschema.RecordIDText(
+				permission.ResourceCustomer,
+				"Who is billed, when not the customer, from "+
+					"list_customers.",
+			),
+			fieldServiceTypeID:  agenttoolschema.IDText("From list_service_types."),
+			fieldShipmentTypeID: agenttoolschema.IDText("From list_shipment_types."),
+			"formulaTemplateId": agenttoolschema.IDText(
+				"The rating method that prices the freight, from " +
+					"list_formula_templates. Required: a rate agreement covering the lane may " +
+					"replace it with its own when the shipment is saved.",
+			),
 			"baseRate": amountProperty("The rate the rating method multiplies, as a decimal " +
 				"such as 2.45, only when the customer agreed one."),
 			"freightTerms": agenttoolschema.Enum(
 				"Who pays the freight. Defaults to Prepaid.",
 				agenttoolschema.FreightTerms,
 			),
-			previewFieldTractorTypeID: idProperty(
+			previewFieldTractorTypeID: agenttoolschema.IDText(
 				"A tractor equipment type, from list_equipment_types.",
 			),
-			previewFieldTrailerTypeID: idProperty(
+			previewFieldTrailerTypeID: agenttoolschema.IDText(
 				"A trailer equipment type, from list_equipment_types.",
 			),
 			"bol": stringProperty("The customer's BOL or reference. It must be unique among "+
@@ -215,7 +252,10 @@ func stopDraftSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			fieldLocationID: idProperty("The stop's location, from list_locations."),
+			fieldLocationID: agenttoolschema.RecordIDText(
+				permission.ResourceLocation,
+				"The stop's location, from list_locations.",
+			),
 			fieldType: agenttoolschema.Enum(
 				"What happens at the stop.",
 				agenttoolschema.StopTypes,
@@ -226,8 +266,8 @@ func stopDraftSchema() map[string]any {
 			),
 			"sequence": integerProperty("The stop's place in the move, counting from 0. "+
 				"Leave it out to take the order given.", 0, 100),
-			"scheduledWindowStart": localTimeProperty("When the stop's window opens."),
-			"scheduledWindowEnd": localTimeProperty(
+			"scheduledWindowStart": agenttoolschema.LocalDateTime("When the stop's window opens."),
+			"scheduledWindowEnd": agenttoolschema.LocalDateTime(
 				"When the stop's window closes, if it has one.",
 			),
 			fieldPieces:   integerProperty("Pieces handled at the stop.", 0, 1_000_000),
@@ -247,9 +287,12 @@ func commodityDraftSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			"commodityId": idProperty("The commodity, from list_commodities."),
-			fieldPieces:   integerProperty("Pieces of it. Defaults to 1.", 0, 1_000_000),
-			fieldWeight:   integerProperty("Pounds of it.", 0, 10_000_000),
+			"commodityId": agenttoolschema.RecordIDText(
+				permission.ResourceCommodity,
+				"The commodity, from list_commodities.",
+			),
+			fieldPieces: integerProperty("Pieces of it. Defaults to 1.", 0, 1_000_000),
+			fieldWeight: integerProperty("Pounds of it.", 0, 10_000_000),
 		},
 		toolschema.KeyRequired:             []string{"commodityId"},
 		toolschema.KeyAdditionalProperties: false,
@@ -260,7 +303,9 @@ func chargeLineDraftSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			"accessorialChargeId": idProperty("The accessorial, from list_accessorial_charges."),
+			"accessorialChargeId": agenttoolschema.IDText(
+				"The accessorial, from list_accessorial_charges.",
+			),
 			"method": agenttoolschema.Enum(
 				"How the amount is applied: Flat once, PerUnit times the unit, Percentage of "+
 					"the linehaul.",
@@ -411,6 +456,14 @@ func (t *updateShipmentTool) Name() string { return "update_shipment" }
 
 func (t *updateShipmentTool) SearchTerms() []string {
 	return []string{"edit shipment", "pieces", "correct weight"}
+}
+
+func (t *updateShipmentTool) Prerequisites() []string {
+	return []string{"search_shipments", "get_shipment"}
+}
+
+func (t *updateShipmentTool) Recipe() []string {
+	return []string{"search_shipments", "get_shipment", "update_shipment"}
 }
 
 func (t *updateShipmentTool) Description() string {

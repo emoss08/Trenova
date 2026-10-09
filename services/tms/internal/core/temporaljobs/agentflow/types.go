@@ -254,4 +254,21 @@ type Outcome struct {
 	// Events are what the turn said, for its durable account. The reply's
 	// streamed text is not among them; the transcript already keeps it whole.
 	Events []StreamItem `json:"events,omitempty"`
+	// Steered are the queued messages the turn read while it worked.
+	Steered []pulid.ID `json:"steered,omitempty"`
+}
+
+// SteerSignal carries something the person said to a turn while it works.
+// The turn reads it at its next step.
+const SteerSignal = "assistant-turn-steer"
+
+const (
+	worldCheckTimeout      = 5 * time.Second
+	worldCheckScheduleWait = 10 * time.Second
+)
+
+type WorldCheckInput struct {
+	OrganizationID pulid.ID                `json:"organizationId"`
+	BusinessUnitID pulid.ID                `json:"businessUnitId"`
+	Check          agentruntime.WorldCheck `json:"check"`
 }

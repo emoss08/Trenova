@@ -117,3 +117,87 @@ func TestSearchMentions_NothingReadableSearchesNothing(t *testing.T) {
 	assert.Empty(t, results)
 	assert.Nil(t, repo.captured.Kinds)
 }
+
+func TestSearchMentions_AllLeavesOutTheKindsOnlyAPickerAsksFor(t *testing.T) {
+	t.Parallel()
+
+	repo := &mentionConversations{}
+	service := &Service{
+		conversations: repo,
+		permissions: &mentionPermissions{readable: map[string]bool{
+			permission.ResourceInvoice.String():        true,
+			permission.ResourceInvoiceDispute.String(): true,
+		}},
+	}
+
+	_, err := service.SearchMentions(t.Context(), providerActor(), serviceports.MentionSearchRequest{})
+	require.NoError(t, err)
+
+	assert.Equal(t, []string{"invoice"}, repo.captured.Kinds)
+}
+
+func TestSearchMentionPage_PagesOneKindAndSaysWhetherMoreFollow(t *testing.T) {
+	t.Parallel()
+
+	rows := make([]repositories.MentionRow, 0, 4)
+	for _, id := range []string{"idsp_1", "idsp_2", "idsp_3", "idsp_4"} {
+		rows = append(rows, repositories.MentionRow{Type: "invoice_dispute", ID: id})
+	}
+	repo := &mentionConversations{rows: rows}
+	service := &Service{
+		conversations: repo,
+		permissions: &mentionPermissions{readable: map[string]bool{
+			permission.ResourceInvoiceDispute.String(): true,
+		}},
+	}
+
+	page, err := service.SearchMentionPage(t.Context(), providerActor(), serviceports.MentionPageRequest{
+		Query:  "INV",
+		Kind:   "invoice_dispute",
+		Offset: 30,
+		Limit:  3,
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, []string{"invoice_dispute"}, repo.captured.Kinds)
+	assert.Equal(t, 4, repo.captured.LimitPerKind, "one row past the page says whether more follow")
+	assert.Equal(t, 30, repo.captured.Offset)
+	assert.True(t, page.HasMore)
+	require.Len(t, page.Results, 3)
+	assert.Equal(t, "idsp_3", page.Results[2].ID)
+
+	repo.rows = rows[:2]
+	page, err = service.SearchMentionPage(t.Context(), providerActor(), serviceports.MentionPageRequest{
+		Kind:  "invoice_dispute",
+		Limit: 3,
+	})
+	require.NoError(t, err)
+	assert.False(t, page.HasMore)
+	assert.Len(t, page.Results, 2)
+}
+
+func TestSearchMentionPage_CapsThePageAndRefusesAnUnknownKind(t *testing.T) {
+	t.Parallel()
+
+	repo := &mentionConversations{}
+	service := &Service{
+		conversations: repo,
+		permissions: &mentionPermissions{readable: map[string]bool{
+			permission.ResourceShipment.String(): true,
+		}},
+	}
+
+	_, err := service.SearchMentionPage(t.Context(), providerActor(), serviceports.MentionPageRequest{
+		Kind:   "shipment",
+		Limit:  5000,
+		Offset: -4,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, mentionPageMax+1, repo.captured.LimitPerKind)
+	assert.Zero(t, repo.captured.Offset)
+
+	_, err = service.SearchMentionPage(t.Context(), providerActor(), serviceports.MentionPageRequest{
+		Kind: "all",
+	})
+	require.Error(t, err)
+}

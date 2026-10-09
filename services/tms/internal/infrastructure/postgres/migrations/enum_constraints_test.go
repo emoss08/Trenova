@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/agentextension"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
+	"github.com/emoss08/trenova/internal/core/domain/agentwait"
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
@@ -18,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
+	"github.com/emoss08/trenova/internal/core/domain/deskcase"
 	"github.com/emoss08/trenova/internal/core/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/core/domain/onboarding"
@@ -242,12 +244,28 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			values: stringsOf(conversation.AllThreadOrigins()),
 		},
 		{
+			name:   "ck_case_checklist_templates_kind",
+			values: stringsOf(deskcase.AllChecklistKinds()),
+		},
+		{
+			name:   "ck_assistant_threads_snooze",
+			values: stringsOf(deskcase.AllSnoozeAnchors()),
+		},
+		{
 			name:   "ck_assistant_messages_kind",
 			values: stringsOf(conversation.AllMessageKinds()),
 		},
 		{
 			name:   "ck_assistant_turns_origin",
 			values: stringsOf(conversation.AllAssistantTurnOrigins()),
+		},
+		{
+			name:   "ck_agent_waits_kind",
+			values: stringsOf(agentwait.AllKinds()),
+		},
+		{
+			name:   "ck_agent_waits_status",
+			values: stringsOf(agentwait.AllStatuses()),
 		},
 		{
 			name:   "ck_agent_eval_cases_source",

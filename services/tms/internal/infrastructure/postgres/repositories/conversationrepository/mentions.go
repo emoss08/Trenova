@@ -66,6 +66,16 @@ WHERE i.organization_id = ? AND i.business_unit_id = ?
 	AND (i.number ILIKE ? OR i.bill_to_name ILIKE ?)
 ORDER BY (i.number ILIKE ?) DESC, i.updated_at DESC
 LIMIT ?`,
+	"invoice_dispute": `
+SELECT 'invoice_dispute' AS type, d.id::text AS id, i.number AS label,
+	concat_ws(' · ', NULLIF(i.bill_to_name, ''), ` + humanize("d.reason_code") + `, ` + humanize("d.status") + `) AS subtitle
+FROM invoice_disputes AS d
+JOIN invoices AS i ON i.id = d.invoice_id
+	AND i.organization_id = d.organization_id AND i.business_unit_id = d.business_unit_id
+WHERE d.organization_id = ? AND d.business_unit_id = ?
+	AND (i.number ILIKE ? OR i.bill_to_name ILIKE ?)
+ORDER BY (i.number ILIKE ?) DESC, d.updated_at DESC
+LIMIT ?`,
 	"billing_queue_item": `
 SELECT 'billing_queue_item' AS type, q.id::text AS id, q.number AS label,
 	concat_ws(' · ', NULLIF(s.pro_number, ''), ` + humanize("q.status") + `) AS subtitle
@@ -117,9 +127,9 @@ func (r *repository) SearchMentions(
 			if kind == "carrier" {
 				args = append(args, contains)
 			}
-			args = append(args, prefix, req.LimitPerKind)
+			args = append(args, prefix, req.LimitPerKind, max(req.Offset, 0))
 			rows := make([]repositories.MentionRow, 0, req.LimitPerKind)
-			if err := db.NewRaw(query, args...).Scan(ctx, &rows); err != nil {
+			if err := db.NewRaw(query+"\nOFFSET ?", args...).Scan(ctx, &rows); err != nil {
 				return nil, fmt.Errorf("search %s mentions: %w", kind, err)
 			}
 			out = append(out, rows...)

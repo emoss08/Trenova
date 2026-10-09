@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -47,8 +48,14 @@ func (t *getInvoiceTool) Description() string {
 }
 
 func (t *getInvoiceTool) ParamSchema() map[string]any {
-	return idSchema("invoiceId", "The invoice's id, from list_invoices, list_ar_open_items "+
-		"or the page you are on.")
+	return idSchema(
+		"invoiceId",
+		agenttoolschema.RecordIDText(
+			permission.ResourceInvoice,
+			"The invoice's id, from list_invoices, list_ar_open_items "+
+				"or the page you are on.",
+		),
+	)
 }
 
 func (t *getInvoiceTool) Policy() serviceports.ToolPolicy {
@@ -288,6 +295,8 @@ func newGetInvoicesTool(
 
 func (t *getInvoicesTool) Name() string { return "get_invoices" }
 
+func (t *getInvoicesTool) BatchOf() string { return "get_invoice" }
+
 func (t *getInvoicesTool) Description() string {
 	return "Retrieve several invoices by id in one call, each with its status, totals, " +
 		"payment state and line items. Use it instead of calling get_invoice once per " +
@@ -300,8 +309,12 @@ func (t *getInvoicesTool) ParamSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			paramInvoiceIDs: idListProperty("The invoices' ids, from list_invoices, "+
-				"list_ar_open_items or the page you are on.", maxBatchInvoices),
+			paramInvoiceIDs: agenttoolschema.RecordIDs(
+				permission.ResourceInvoice,
+				"The invoices' ids, from list_invoices, "+
+					"list_ar_open_items or the page you are on.",
+				maxBatchInvoices,
+			),
 		},
 		toolschema.KeyRequired:             []string{paramInvoiceIDs},
 		toolschema.KeyAdditionalProperties: false,

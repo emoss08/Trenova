@@ -243,9 +243,9 @@ func (s *Service) delegate(t *Turn, fx TurnEffects, call serviceports.ToolCall) 
 	if refusal != "" {
 		return failedOutcome("Tool %q was not run: %s", delegateTaskName, refusal)
 	}
-	if err := toolschema.Validate(delegateTaskSpec(t.delegates).Parameters,
-		call.Arguments); err != nil {
-		return argumentOutcome(delegateTaskName, err)
+	spec := delegateTaskSpec(t.delegates)
+	if err := toolschema.Validate(spec.Parameters, call.Arguments); err != nil {
+		return argumentOutcome(delegateTaskName, spec.Parameters, err)
 	}
 	handed, refusal := t.handedOver(call.Arguments)
 	if refusal != "" {
@@ -600,9 +600,6 @@ func delegateReport(
 	case result == nil:
 		report.Status = serviceports.DelegateStatusFailed
 		report.Reason = delegate.Name + " did not report back."
-	case result.OutputRefused:
-		report.Status = serviceports.DelegateStatusRefused
-		report.Reason = result.Reply
 	case result.Exhausted:
 		report.Status = serviceports.DelegateStatusExhausted
 		report.Reply = result.Reply

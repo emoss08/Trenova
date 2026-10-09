@@ -85,6 +85,8 @@ func ToolProviders() []any {
 		newFlagManualReviewTool,
 		newAssignMoveTool,
 		newRaiseExceptionTool,
+		newWaitUntilTool,
+		newCancelWaitTool,
 		newAddShipmentCommentTool,
 		newPlaceShipmentHoldTool,
 		newReleaseShipmentHoldTool,

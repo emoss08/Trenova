@@ -378,3 +378,115 @@ func TestOrderMemoriesForPrompt_AnOrganizationProcedureIsFollowedLikeAnInstructi
 
 	assert.Equal(t, []*agent.Memory{instruction, procedure, fact}, fitted)
 }
+
+func judged(ids ...pulid.ID) agent.MemoryRelevance {
+	set := make(map[pulid.ID]struct{}, len(ids))
+	for _, id := range ids {
+		set[id] = struct{}{}
+	}
+
+	return agent.MemoryRelevance{Judged: true, IDs: set}
+}
+
+func TestPlanMemories_CarriesARestMemoryOnlyWhenItBears(t *testing.T) {
+	t.Parallel()
+
+	f := newMemoryFixture()
+	rc := f.context(f.orgFact, f.unloadedFix, f.orgInstruction)
+	rc.MemoryRelevance = judged(f.unloadedFix.ID)
+
+	fit := definitionWithInstructions("Help.").PlanMemories(rc)
+
+	assert.Equal(t, []*agent.Memory{f.orgInstruction, f.unloadedFix}, fit.Carried,
+		"a standing rule is always carried; a fact that does not bear is left to recall")
+	assert.Equal(t, []pulid.ID{f.unloadedFix.ID}, fit.Used,
+		"a standing rule that does not bear is followed but not shown as used")
+	assert.Equal(t, 1, fit.HeldBack)
+}
+
+func TestPlanMemories_WithNothingToJudgeByEveryCarriedMemoryIsUsed(t *testing.T) {
+	t.Parallel()
+
+	f := newMemoryFixture()
+	rc := f.context(f.orgFact, f.orgInstruction, f.direct)
+
+	fit := definitionWithInstructions("Help.").PlanMemories(rc)
+
+	assert.Equal(t, []*agent.Memory{f.direct, f.orgInstruction, f.orgFact}, fit.Carried)
+	assert.Equal(t, []pulid.ID{f.direct.ID, f.orgInstruction.ID, f.orgFact.ID}, fit.Used)
+	assert.Zero(t, fit.HeldBack)
+}
+
+func TestPlanMemories_TheRecordsTheTurnIsAboutAreAlwaysUsed(t *testing.T) {
+	t.Parallel()
+
+	f := newMemoryFixture()
+	rc := f.context(f.direct, f.related, f.orgInstruction)
+	rc.MemoryRelevance = judged()
+
+	fit := definitionWithInstructions("Help.").PlanMemories(rc)
+
+	assert.Equal(t, []pulid.ID{f.direct.ID, f.related.ID}, fit.Used)
+	assert.Len(t, fit.Carried, 3)
+}
+
+func TestPlanMemories_ABearingRuleLeadsItsTier(t *testing.T) {
+	t.Parallel()
+
+	f := newMemoryFixture()
+	other := &agent.Memory{
+		ID: pulid.MustNew("amem_"), Kind: agent.MemoryKindInstruction,
+		Content: "Sign every email with the team name.",
+	}
+	rc := f.context(f.orgInstruction, other)
+	rc.MemoryRelevance = judged(other.ID)
+
+	fit := definitionWithInstructions("Help.").PlanMemories(rc)
+
+	assert.Equal(t, []*agent.Memory{other, f.orgInstruction}, fit.Carried,
+		"a rule that bears on the message is kept first when the budget is short")
+}
+
+func TestPlanMemories_AToolOnlyOnHandWaitsForItsCall(t *testing.T) {
+	t.Parallel()
+
+	f := newMemoryFixture()
+	rc := f.context(f.loadedFix)
+	rc.ToolsDisclosed = false
+	rc.MemoryRelevance = judged()
+
+	fit := definitionWithInstructions("Help.").PlanMemories(rc)
+
+	assert.Equal(t, []*agent.Memory{f.loadedFix}, fit.Carried)
+	assert.Empty(t, fit.Used)
+	assert.Equal(t, map[string][]pulid.ID{"assign_move": {f.loadedFix.ID}}, fit.ByTool)
+}
+
+func TestPlanMemories_AToolPickedForTheTurnIsUsed(t *testing.T) {
+	t.Parallel()
+
+	f := newMemoryFixture()
+	rc := f.context(f.loadedFix)
+	rc.MemoryRelevance = judged()
+
+	fit := definitionWithInstructions("Help.").PlanMemories(rc)
+
+	assert.Equal(t, []pulid.ID{f.loadedFix.ID}, fit.Used)
+	assert.Empty(t, fit.ByTool)
+}
+
+func TestBuildSystemPrompt_SaysWhenEveryMemoryWasHeldBack(t *testing.T) {
+	t.Parallel()
+
+	f := newMemoryFixture()
+	d := definitionWithInstructions("Help.")
+	d.ContextProviders = []agentdefinition.ContextProvider{agentdefinition.ContextMemory}
+	rc := f.context(f.orgFact)
+	rc.MemoryRelevance = judged()
+
+	prompt := d.BuildSystemPrompt(*rc)
+
+	assert.NotContains(t, prompt, f.orgFact.Content)
+	assert.Contains(t, prompt, "None of the memories kept for agents here bear on this message")
+	assert.Contains(t, prompt, "recall_memory")
+}

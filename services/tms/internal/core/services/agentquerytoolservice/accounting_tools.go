@@ -1010,8 +1010,11 @@ func (t *getJournalEntryTool) SearchTerms() []string {
 }
 
 func (t *getJournalEntryTool) ParamSchema() map[string]any {
-	return idSchema("journalEntryId", "The journal entry's id, from list_journal_entries or "+
-		onThePage)
+	return idSchema(
+		"journalEntryId",
+		agenttoolschema.IDText("The journal entry's id, from list_journal_entries or "+
+			onThePage),
+	)
 }
 
 func (t *getJournalEntryTool) Policy() serviceports.ToolPolicy {
@@ -1393,8 +1396,11 @@ func (t *getFiscalCloseBlockersTool) Description() string {
 }
 
 func (t *getFiscalCloseBlockersTool) ParamSchema() map[string]any {
-	return idSchema(paramFiscalPeriodID, "The fiscal period's id, from list_fiscal_periods or "+
-		onThePage)
+	return idSchema(
+		paramFiscalPeriodID,
+		agenttoolschema.IDText("The fiscal period's id, from list_fiscal_periods or "+
+			onThePage),
+	)
 }
 
 func (t *getFiscalCloseBlockersTool) Policy() serviceports.ToolPolicy {

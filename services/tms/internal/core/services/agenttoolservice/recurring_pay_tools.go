@@ -133,8 +133,10 @@ func (t *recurringPayTool[E]) Description() string {
 
 func (t *recurringPayTool[E]) ParamSchema() map[string]any {
 	properties := map[string]any{
-		paramPayCodeID: idProperty("The " + t.kind.payee + " pay code it posts under, from " +
-			"list_pay_codes."),
+		paramPayCodeID: agenttoolschema.IDText(
+			"The " + t.kind.payee + " pay code it posts under, from " +
+				"list_pay_codes.",
+		),
 		paramRecurringDescription: stringProperty("What it is for, as it will read on the "+
 			"driver's statement.", maxRecurringDescription),
 		paramDriverPayAmount: amountProperty("The amount each time, as a decimal such as " +
@@ -142,11 +144,11 @@ func (t *recurringPayTool[E]) ParamSchema() map[string]any {
 		paramRecurringFrequency: agenttoolschema.Enum("How often it applies.", t.kind.frequencies),
 		paramRecurringCap: amountProperty("The total after which it stops, when there is " +
 			"one."),
-		paramRecurringStart: dateProperty("The first day it applies."),
-		paramRecurringEnd:   dateProperty("The last day it applies, when it ends."),
+		paramRecurringStart: agenttoolschema.Date("The first day it applies."),
+		paramRecurringEnd:   agenttoolschema.Date("The last day it applies, when it ends."),
 	}
 	if t.update {
-		properties[t.kind.idParam] = idProperty("The " + t.kind.noun + ", from " +
+		properties[t.kind.idParam] = agenttoolschema.IDText("The " + t.kind.noun + ", from " +
 			t.kind.listTool + ". Never guess one.")
 		properties[paramRecurringStatus] = agenttoolschema.Enum(
 			"Paused stops it for now; Completed ends it for good.", t.kind.statuses,

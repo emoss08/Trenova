@@ -5121,6 +5121,8 @@ enum AgentSubjectType {
   AccountingInboundChange
   AccountingDriftFinding
   FormulaTemplate
+  Invoice
+  InvoiceDispute
 }
 
 enum AgentRunTrigger {
@@ -5129,6 +5131,7 @@ enum AgentRunTrigger {
   Scheduled
   Event
   Continuous
+  Wait
 }
 
 enum AgentRunStatus {
@@ -7877,6 +7880,26 @@ type AgentToolOutcome {
   automatic: Int!
 }
 
+"""
+How often one tool's calls ended one way over the window, counted from every
+call that reached the tool, refusals included. A call the runtime refused
+never became a proposal, so the proposal counts cannot show it.
+"""
+type AgentToolVerdict {
+  toolName: String!
+  "ran, proposed, simulated, denied, invalid, duplicate, over_budget, failed or unknown."
+  verdict: String!
+  calls: Int!
+  "The reasons given most often, most frequent first. A call that ran gives none."
+  topReasons: [AgentToolVerdictReason!]!
+}
+
+"One reason a tool's calls were refused or failed, and how many calls gave it."
+type AgentToolVerdictReason {
+  reason: String!
+  calls: Int!
+}
+
 "One day of the trend line."
 type AgentScorecardPoint {
   day: Timestamp!
@@ -7950,6 +7973,8 @@ type AgentScorecard {
   estimatedMinutesSaved: Int!
 
   byTool: [AgentToolOutcome!]!
+  "How each tool's calls ended, by tool and verdict, with the commonest reasons."
+  toolVerdicts: [AgentToolVerdict!]!
   trend: [AgentScorecardPoint!]!
   toolTrust: [AgentToolTrust!]!
 }

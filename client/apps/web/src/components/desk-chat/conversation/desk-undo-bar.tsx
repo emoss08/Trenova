@@ -3,6 +3,7 @@ import { handleMutationError } from "@/hooks/use-api-mutation";
 import { commitMyDecisionNow, undoMyDecision } from "@/lib/graphql/agent-decisions";
 import { invalidateProposalViews, markPlanStatus, markProposalsStatus } from "@/lib/proposal-cache";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -189,13 +190,25 @@ export function DeskUndoBar({
         <span aria-hidden>{t("{0} in {1}s", held.what, left)}</span>
         <em className="sr-only">{held.what}</em>
       </span>
-      <button type="button" className="dk-bt dk-sm" disabled={busy} onClick={onUndo}>
+      <Button
+        variant="quiet"
+        size="sm"
+        className="gap-1.25 rounded-lg text-dsk-muted hover:bg-dsk-hover hover:text-dsk-fg"
+        disabled={busy}
+        onClick={onUndo}
+      >
         <DeskIcon name="undo" size={12} stroke={2} />
         {t("Undo")}
-      </button>
-      <button type="button" className="dk-bt dk-sm dk-ghost" disabled={busy} onClick={onNow}>
+      </Button>
+      <Button
+        variant="bare"
+        size="sm"
+        className="gap-1.25 rounded-lg text-dsk-success-fg"
+        disabled={busy}
+        onClick={onNow}
+      >
         {t("Do it now")}
-      </button>
+      </Button>
     </div>
   );
 }

@@ -100,6 +100,10 @@ export function shelfHeading(t: TranslateFn, key: DeskShelfKey): string {
       return t("Previous 7 days");
     case "month":
       return t("Previous 30 days");
+    case "snoozed":
+      return t("Snoozed");
+    case "settled":
+      return t("Settled");
     default:
       return t("Older");
   }

@@ -96,7 +96,8 @@ func reviewToolProviders() []any {
 }
 
 func reviewIDProperty() map[string]any {
-	return idProperty("The review, from list_performance_reviews. Never guess one.")
+	return agenttoolschema.RecordID(permission.ResourcePerformanceReview, "The review",
+		"list_performance_reviews")
 }
 
 func reviewRecord(review *worker.PerformanceReview) toolpreview.Record {
@@ -116,11 +117,13 @@ func newStartPerformanceReviewTool(reviews reviewKeeper) serviceports.AgentTool 
 		permission.OpCreate,
 	), map[string]any{
 		paramWorkerID: workerProperty(),
-		paramReviewTemplate: idProperty("The review template, from list_performance_reviews. " +
-			"Never guess one."),
+		paramReviewTemplate: agenttoolschema.IDText(
+			"The review template, from list_performance_reviews. " +
+				"Never guess one.",
+		),
 		paramTitle:       stringProperty("A title; defaults to the template and period.", 120),
-		fieldPeriodStart: dayProperty("The first day the review covers."),
-		fieldPeriodEnd:   dayProperty("The last day the review covers."),
+		fieldPeriodStart: agenttoolschema.Date("The first day the review covers."),
+		fieldPeriodEnd:   agenttoolschema.Date("The last day the review covers."),
 	}, paramWorkerID, paramReviewTemplate, fieldPeriodStart, fieldPeriodEnd)
 
 	return newReportingReceivableTool(spec, receivablePlan[
@@ -373,7 +376,7 @@ func reviewDraftProperties() map[string]any {
 				toolschema.KeyType: toolschema.TypeObject,
 				toolschema.KeyProperties: map[string]any{
 					paramGoalTitle: stringProperty("The goal.", wfShortChars),
-					paramGoalDueAt: dayProperty("When it is due."),
+					paramGoalDueAt: agenttoolschema.Date("When it is due."),
 					paramGoalStatus: agenttoolschema.Enum("Open, Done or Dropped. Defaults "+
 						"to Open.", reviewGoalStatuses),
 				},
@@ -399,6 +402,7 @@ func newDraftPerformanceReviewTool(reviews reviewKeeper) serviceports.AgentTool 
 	), reviewDraftProperties(), paramReviewID), paramReviewID, permission.ResourcePerformanceReview)
 
 	spec.searchTerms = []string{"review scores", "score the review", "fill in review"}
+	spec.recipe = []string{"start_performance_review", "draft_performance_review"}
 
 	return newReportingReceivableTool(spec, receivablePlan[
 		*reviewDraft, *performancereviewservice.ReviewChange,

@@ -1,7 +1,12 @@
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useEffect, useState } from "react";
 import { DeskIcon } from "../desk-icons";
+
+const actClass =
+  "dk-act relative min-w-7 gap-1.5 px-1.75 text-dsk-subtle has-[>svg]:px-1.75 hover:bg-dsk-hover hover:text-dsk-fg";
+const actOnClass = "text-dsk-blue hover:text-dsk-blue [&_svg_path]:fill-current";
 
 /** How long Copy holds its tick. */
 const COPIED_MS = 1400;
@@ -73,21 +78,23 @@ export function DeskMessageActions({
   return (
     <div className={cn("dk-acts", (pinned || reading || copied) && "dk-stay")}>
       {onTogglePin && (
-        <button
-          type="button"
-          className={cn("dk-act", pinned && "dk-on")}
+        <Button
+          variant="quiet"
+          size="sm"
+          className={cn(actClass, pinned && actOnClass)}
           data-tip={pinned ? t("Unpin chapter") : t("Pin as chapter")}
           aria-label={pinned ? t("Unpin chapter") : t("Pin as chapter")}
           aria-pressed={pinned}
           onClick={onTogglePin}
         >
           <DeskIcon name="bookmark" size={14} />
-          {pinned && <span className="dk-act-l">{t("Chapter {0}", chapter)}</span>}
-        </button>
+          {pinned && <span className="text-xs font-medium">{t("Chapter {0}", chapter)}</span>}
+        </Button>
       )}
-      <button
-        type="button"
-        className={cn("dk-act", copied && "dk-ok")}
+      <Button
+        variant="quiet"
+        size="sm"
+        className={cn(actClass, copied && "text-dsk-success-fg hover:text-dsk-success-fg")}
         data-tip={copied ? t("Copied") : t("Copy")}
         aria-label={t("Copy reply")}
         onClick={() => void copy()}
@@ -97,11 +104,12 @@ export function DeskMessageActions({
         ) : (
           <DeskIcon name="copy" size={14} />
         )}
-      </button>
+      </Button>
       {speechAvailable() && (
-        <button
-          type="button"
-          className={cn("dk-act", reading && "dk-on")}
+        <Button
+          variant="quiet"
+          size="sm"
+          className={cn(actClass, reading && actOnClass)}
           data-tip={reading ? t("Stop reading") : t("Read aloud")}
           aria-label={reading ? t("Stop reading") : t("Read aloud")}
           aria-pressed={reading}
@@ -116,7 +124,7 @@ export function DeskMessageActions({
           ) : (
             <DeskIcon name="speaker" size={14} />
           )}
-        </button>
+        </Button>
       )}
     </div>
   );

@@ -434,9 +434,15 @@ func decisionHeadline(content string) string {
 // markDecisionNote marks the turn's input as the application's note rather
 // than words the person typed.
 func markDecisionNote(messages []conversation.Message) {
+	markInput(messages, conversation.MessageKindDecisionNote)
+}
+
+// markInput marks the turn's input as the application's note, of the kind
+// given, rather than words the person typed.
+func markInput(messages []conversation.Message, kind conversation.MessageKind) {
 	for idx := range messages {
 		if messages[idx].Role == conversation.RoleUser {
-			messages[idx].Kind = conversation.MessageKindDecisionNote
+			messages[idx].Kind = kind
 			return
 		}
 	}

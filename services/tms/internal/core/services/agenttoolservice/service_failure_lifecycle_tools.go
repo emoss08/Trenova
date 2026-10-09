@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -68,8 +69,8 @@ type serviceFailureLifecycle interface {
 }
 
 func serviceFailureIDProperty() map[string]any {
-	return idProperty("The failure, from list_service_failures or the page you are on. " +
-		"Never guess one.")
+	return agenttoolschema.RecordID(permission.ResourceServiceFailure, "The failure",
+		"list_service_failures or the page you are on")
 }
 
 func serviceFailureRecord(failure *servicefailure.ServiceFailure) toolpreview.Record {
@@ -223,7 +224,7 @@ func newUpdateServiceFailureTool(failures serviceFailureLifecycle) serviceports.
 			"overrides shape a later EDI 214, so a person approves each edit.",
 		properties: map[string]any{
 			paramServiceFailureID: serviceFailureIDProperty(),
-			fieldReasonCodeID: idProperty("The reason code to set, from " +
+			fieldReasonCodeID: agenttoolschema.IDText("The reason code to set, from " +
 				"list_service_failure_reason_codes."),
 			paramClearReasonCode: booleanProperty("True to remove the reason code. A " +
 				"reviewed failure keeps its reason."),
@@ -386,7 +387,7 @@ func newServiceFailureTransitionTool(
 	if spec.notesRequired {
 		required = append(required, fieldNotes)
 	} else {
-		properties[fieldReasonCodeID] = idProperty("The reason code, from " +
+		properties[fieldReasonCodeID] = agenttoolschema.IDText("The reason code, from " +
 			"list_service_failure_reason_codes. Required when the failure has none; " +
 			"otherwise replaces it.")
 	}

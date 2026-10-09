@@ -1180,7 +1180,8 @@ export type AgentRunTrigger =
   | 'Continuous'
   | 'Event'
   | 'Manual'
-  | 'Scheduled';
+  | 'Scheduled'
+  | 'Wait';
 
 export type AgentScorecardInput = {
   agentDefinitionId: string | number;
@@ -1215,6 +1216,8 @@ export type AgentSubjectType =
   | 'FormulaTemplate'
   | 'InboundMessage'
   | 'Insight'
+  | 'Invoice'
+  | 'InvoiceDispute'
   | 'Organization'
   | 'Report'
   | 'Shipment'

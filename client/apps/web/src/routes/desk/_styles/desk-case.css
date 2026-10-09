@@ -1,0 +1,172 @@
+/* ---- cases: the card above the composer and the rail's case label ---- */
+.dk-cs {
+  margin: 0 0 8px;
+  border: 1px solid var(--dsk-b-sub);
+  border-radius: var(--radius-surface);
+  background: var(--dsk-card);
+  font: 400 13px/1.45 var(--font-sans);
+  animation: dk-cs-in 260ms var(--dk-settle) both;
+}
+@keyframes dk-cs-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.dk-cs-hd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 5px 6px 5px 12px;
+  color: var(--dsk-subtle);
+}
+.dk-cs-rec {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+a.dk-cs-rec:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.dk-cs-st {
+  flex: none;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: var(--dsk-hover);
+  color: var(--dsk-fg2);
+}
+.dk-cs-waiting .dk-cs-st {
+  background: var(--dsk-blue-sub);
+  color: var(--dsk-blue-fg);
+}
+.dk-cs-snoozed .dk-cs-st {
+  background: var(--dsk-warn-sub);
+  color: var(--dsk-warn-fg);
+}
+.dk-cs-settled .dk-cs-st {
+  background: var(--dsk-success-sub);
+  color: var(--dsk-success-fg);
+}
+.dk-cs-sp {
+  flex: 1;
+}
+.dk-cs-note {
+  margin: 0;
+  padding: 0 12px 8px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+/* the checklist eases open to its own height and the rows settle in after it */
+.dk-cs-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 260ms var(--dk-settle);
+}
+.dk-cs-body.dk-open {
+  grid-template-rows: 1fr;
+}
+.dk-cs-clip {
+  min-height: 0;
+  overflow: hidden;
+}
+.dk-cs-list {
+  margin: 0;
+  padding: 2px 0 4px;
+  list-style: none;
+  border-top: 1px solid var(--dsk-b-sub);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 160ms var(--dk-ease),
+    transform 260ms var(--dk-settle);
+}
+.dk-cs-body.dk-open .dk-cs-list {
+  opacity: 1;
+  transform: none;
+  transition-delay: 40ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-cs,
+  .dk-cs-body,
+  .dk-cs-list {
+    animation: none;
+    transition: none;
+  }
+}
+.dk-cs-it {
+  display: grid;
+  grid-template-columns: 18px minmax(0, max-content) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px 8px;
+  min-height: 30px;
+  padding: 3px 8px 3px 12px;
+}
+.dk-cs-ic {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  color: var(--dsk-faint);
+}
+.dk-cs-it.dk-cs-done .dk-cs-ic {
+  background: var(--dsk-success-sub);
+  color: var(--dsk-success-fg);
+}
+.dk-cs-it.dk-cs-blocked .dk-cs-ic {
+  background: var(--dsk-warn-sub);
+  color: var(--dsk-warn-fg);
+}
+.dk-cs-lb {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--dsk-fg);
+}
+.dk-cs-opt {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--dsk-faint);
+}
+.dk-cs-it:has(.dk-cs-opt) .dk-cs-lb {
+  color: var(--dsk-fg2);
+}
+.dk-cs-it.dk-cs-notneeded .dk-cs-lb {
+  color: var(--dsk-subtle);
+}
+.dk-cs-dt {
+  min-width: 0;
+  font-size: 12px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--dsk-subtle);
+}
+@media (max-width: 640px) {
+  .dk-cs-hd {
+    flex-wrap: wrap;
+  }
+  .dk-cs-it {
+    grid-template-columns: 18px minmax(0, 1fr) auto;
+  }
+  .dk-cs-dt {
+    grid-column: 2 / -1;
+    white-space: normal;
+  }
+}
+
+.dk-sb-cs {
+  flex: none;
+  max-width: 76px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font: 10.5px var(--font-mono);
+  color: var(--dsk-faint);
+}

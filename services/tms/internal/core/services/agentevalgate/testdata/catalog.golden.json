@@ -631,7 +631,8 @@
                 },
                 "billToCustomerId": {
                   "description": "The customer who pays this share, from list_customers. Never guess one.",
-                  "type": "string"
+                  "type": "string",
+                  "x-recordOf": "customer"
                 },
                 "method": {
                   "description": "Whether the share is a percent of the charge or a fixed amount.",
@@ -667,7 +668,8 @@
           },
           "orderId": {
             "description": "The order, from list_orders, get_order or the orderId get_shipment shows. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "order"
           }
         },
         "required": [
@@ -788,7 +790,11 @@
             "type": "string"
           },
           "occurredDate": {
-            "description": "The day it happened; leave it out for today. YYYY-MM-DD.",
+            "description": "The day it happened; leave it out for today. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           }
         },
@@ -866,7 +872,8 @@
           },
           "invoiceRunId": {
             "description": "The invoice run, from list_invoice_runs or get_invoice_run. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "invoice_run"
           },
           "moves": {
             "description": "Shipments to move to another invoice of the same customer.",
@@ -936,7 +943,11 @@
             "type": "string"
           },
           "effectiveDate": {
-            "description": "The day it takes effect. Defaults to today. YYYY-MM-DD, a UTC day.",
+            "description": "The day it takes effect. Defaults to today. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "note": {
@@ -960,7 +971,8 @@
           },
           "workerId": {
             "description": "The driver, from search_worker or list_workers. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           }
         },
         "required": [
@@ -1049,7 +1061,11 @@
         "additionalProperties": false,
         "properties": {
           "effectiveFrom": {
-            "description": "The first day the new lanes price shipments. YYYY-MM-DD.",
+            "description": "The first day the new lanes price shipments. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "lanes": {
@@ -1163,7 +1179,8 @@
           },
           "rateAgreementId": {
             "description": "The rate agreement, from list_rate_agreements or get_rate_agreement. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "rate_agreement"
           },
           "supersededRuleIds": {
             "description": "The lanes this closes out, by ruleId from get_rate_agreement.",
@@ -1256,7 +1273,8 @@
         "properties": {
           "carrierId": {
             "description": "The carrier, from list_carriers or get_carrier. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "carrier"
           },
           "fields": {
             "description": "The profile fields to correct.",
@@ -1328,7 +1346,11 @@
         "additionalProperties": false,
         "properties": {
           "accountingDate": {
-            "description": "The day it is booked to the ledger, YYYY-MM-DD, usually today; it must fall in an open fiscal period.",
+            "description": "The day it is booked to the ledger, usually today; it must fall in an open fiscal period. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "applications": {
@@ -1396,7 +1418,11 @@
         "additionalProperties": false,
         "properties": {
           "accountingDate": {
-            "description": "The day it is booked to the ledger, YYYY-MM-DD, usually today; it must fall in an open fiscal period.",
+            "description": "The day it is booked to the ledger, usually today; it must fall in an open fiscal period. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "applications": {
@@ -1429,7 +1455,8 @@
           },
           "customerPaymentId": {
             "description": "The posted payment, from list_customer_payments. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "customer_payment"
           }
         },
         "required": [
@@ -1474,7 +1501,8 @@
           "agreementIds": {
             "description": "The agreements to move, from list_rate_agreements; wins over the other scopes.",
             "items": {
-              "type": "string"
+              "type": "string",
+              "x-recordOf": "rate_agreement"
             },
             "maxItems": 50,
             "minItems": 1,
@@ -1489,7 +1517,11 @@
             "type": "string"
           },
           "effectiveFrom": {
-            "description": "The first day the new rates price shipments. YYYY-MM-DD.",
+            "description": "The first day the new rates price shipments. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "flatChange": {
@@ -1923,7 +1955,8 @@
           },
           "rateAgreementId": {
             "description": "The rate agreement, from list_rate_agreements or get_rate_agreement. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "rate_agreement"
           }
         },
         "required": [
@@ -2057,7 +2090,8 @@
           },
           "rateAgreementId": {
             "description": "The rate agreement, from list_rate_agreements or get_rate_agreement. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "rate_agreement"
           }
         },
         "required": [
@@ -2095,7 +2129,8 @@
         "properties": {
           "credentialId": {
             "description": "The credential, from list_worker_credentials or list_expiring_credentials. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker_credential"
           },
           "reason": {
             "description": "Why it is archived.",
@@ -2222,13 +2257,18 @@
         "additionalProperties": false,
         "properties": {
           "asOfDate": {
-            "description": "The day overdue periods are counted to, usually today; YYYY-MM-DD, a UTC day.",
+            "description": "The day overdue periods are counted to, usually today. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "customerIds": {
             "description": "Only these customers, from list_customers or list_ar_open_items.",
             "items": {
-              "type": "string"
+              "type": "string",
+              "x-recordOf": "customer"
             },
             "maxItems": 200,
             "minItems": 1,
@@ -2453,6 +2493,10 @@
         ],
         "type": "object"
       },
+      "prerequisites": [
+        "get_shipment",
+        "rank_move_candidates"
+      ],
       "policy": {
         "kind": "action",
         "resource": "shipment_move",
@@ -2600,11 +2644,19 @@
         "additionalProperties": false,
         "properties": {
           "effectiveFrom": {
-            "description": "The first day pay is computed under it. YYYY-MM-DD.",
+            "description": "The first day pay is computed under it. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "effectiveTo": {
-            "description": "The day it stops, when it is temporary; leave it out for open-ended. YYYY-MM-DD.",
+            "description": "The day it stops, when it is temporary; leave it out for open-ended. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "notes": {
@@ -2622,7 +2674,8 @@
           },
           "workerId": {
             "description": "The driver, from search_worker or list_workers. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           }
         },
         "required": [
@@ -2662,7 +2715,8 @@
         "properties": {
           "workerId": {
             "description": "The driver, from search_worker or list_workers. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           }
         },
         "required": [
@@ -2706,7 +2760,11 @@
             "type": "integer"
           },
           "effectiveFrom": {
-            "description": "The first day the worker works it. YYYY-MM-DD, a UTC day.",
+            "description": "The first day the worker works it. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "notes": {
@@ -2720,7 +2778,8 @@
           },
           "workerId": {
             "description": "The driver, from search_worker or list_workers. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           }
         },
         "required": [
@@ -2769,7 +2828,11 @@
             "type": "array"
           },
           "dueDate": {
-            "description": "When it is due, when not the course's own schedule. YYYY-MM-DD, a UTC day.",
+            "description": "When it is due, when not the course's own schedule. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "notes": {
@@ -2780,7 +2843,8 @@
           "workerIds": {
             "description": "The workers, from search_worker or list_workers.",
             "items": {
-              "type": "string"
+              "type": "string",
+              "x-recordOf": "worker"
             },
             "maxItems": 50,
             "minItems": 1,
@@ -2871,12 +2935,14 @@
         "properties": {
           "orderId": {
             "description": "The order to add them to, from list_orders, get_order or the orderId get_shipment shows. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "order"
           },
           "shipmentIds": {
             "description": "The shipments to attach, from search_shipments or get_shipment.",
             "items": {
-              "type": "string"
+              "type": "string",
+              "x-recordOf": "shipment"
             },
             "maxItems": 50,
             "minItems": 1,
@@ -2969,11 +3035,13 @@
         "properties": {
           "credentialId": {
             "description": "The credential, from list_worker_credentials or list_expiring_credentials. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker_credential"
           },
           "documentId": {
             "description": "A document already filed on the worker, from search_documents. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "document"
           }
         },
         "required": [
@@ -3017,11 +3085,13 @@
         "properties": {
           "documentId": {
             "description": "A document already filed on the worker, from search_documents. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "document"
           },
           "trainingRecordId": {
             "description": "The training assignment, from list_worker_training. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker_training"
           }
         },
         "required": [
@@ -3183,22 +3253,35 @@
           "customerIds": {
             "description": "The customers to bill, from list_customers or list_open_statements.",
             "items": {
-              "type": "string"
+              "type": "string",
+              "x-recordOf": "customer"
             },
             "maxItems": 200,
             "minItems": 1,
             "type": "array"
           },
           "invoiceDate": {
-            "description": "The date the invoices carry, defaulting to today; YYYY-MM-DD, a UTC day.",
+            "description": "The date the invoices carry, defaulting to today. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "periodEnd": {
-            "description": "The last day of the period, included, YYYY-MM-DD, a UTC day.",
+            "description": "The last day of the period, included. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "periodStart": {
-            "description": "The first day of the period, YYYY-MM-DD, a UTC day.",
+            "description": "The first day of the period. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           }
         },
@@ -3209,6 +3292,15 @@
         ],
         "type": "object"
       },
+      "searchTerms": [
+        "statement billing",
+        "consolidated invoices",
+        "bill the period"
+      ],
+      "prerequisites": [
+        "list_open_statements",
+        "list_customers"
+      ],
       "policy": {
         "kind": "action",
         "resource": "invoice_run",
@@ -3468,7 +3560,8 @@
         "properties": {
           "invoiceRunId": {
             "description": "The invoice run, from list_invoice_runs or get_invoice_run. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "invoice_run"
           },
           "reason": {
             "description": "Why it is canceled.",
@@ -3609,7 +3702,8 @@
           },
           "orderId": {
             "description": "The order to cancel, from list_orders, get_order or the orderId get_shipment shows. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "order"
           }
         },
         "required": [
@@ -3768,6 +3862,45 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Withdraws the offers carriers outside the organization hold, whose answer links stop working; a withdrawn tender cannot be reopened, only tendered afresh."
+      }
+    },
+    {
+      "name": "cancel_wait",
+      "description": "Cancel a wait you set with wait_until, when what you were waiting for no longer matters. The work is not picked up again. waitId is the id wait_until returned.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "waitId": {
+            "description": "The wait to cancel, as wait_until returned it (awt_…).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "waitId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "agent_run",
+        "operation": "read",
+        "scope": "run",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "agent_run",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": true,
+        "rationale": "Cancels a wait the agent set on its own work; it changes no record and reaches nobody."
       }
     },
     {
@@ -3944,7 +4077,8 @@
           },
           "safetyEventId": {
             "description": "The safety event, from list_worker_safety_events. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker_safety_event"
           }
         },
         "required": [
@@ -4231,7 +4365,8 @@
         "properties": {
           "leaveCaseId": {
             "description": "The leave case, from list_worker_leave_cases. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker_leave"
           }
         },
         "required": [
@@ -4275,7 +4410,8 @@
         "properties": {
           "orderId": {
             "description": "The Billed order, from list_orders, get_order or the orderId get_shipment shows. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "order"
           }
         },
         "required": [
@@ -4328,7 +4464,8 @@
           },
           "trainingRecordId": {
             "description": "The training assignment, from list_worker_training. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker_training"
           }
         },
         "required": [
@@ -4410,7 +4547,8 @@
         "properties": {
           "invoiceRunId": {
             "description": "The invoice run, from list_invoice_runs or get_invoice_run. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "invoice_run"
           }
         },
         "required": [
@@ -4776,7 +4914,11 @@
             "type": "string"
           },
           "priceDate": {
-            "description": "The day the price applies to, as the index publishes it. YYYY-MM-DD.",
+            "description": "The day the price applies to, as the index publishes it. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           }
         },
@@ -4873,7 +5015,11 @@
             "type": "integer"
           },
           "purchasedAt": {
-            "description": "When it was bought, as the receipt says. Leave it out to keep it. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "When it was bought, as the receipt says. Leave it out to keep it. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
             "type": "string"
           },
           "quantity": {
@@ -4995,7 +5141,11 @@
             "type": "string"
           },
           "traveledAt": {
-            "description": "When the miles were driven; it decides the quarter they count in. Leave it out to keep it. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "When the miles were driven; it decides the quarter they count in. Leave it out to keep it. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
             "type": "string"
           }
         },
@@ -5316,11 +5466,19 @@
         "additionalProperties": false,
         "properties": {
           "availableFrom": {
-            "description": "When the trucks are free. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "When the trucks are free. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
             "type": "string"
           },
           "availableTo": {
-            "description": "When the offer ends, at most 60 days after it starts. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "When the offer ends, at most 60 days after it starts. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
             "type": "string"
           },
           "carrierId": {
@@ -5440,7 +5598,8 @@
           },
           "shipmentId": {
             "description": "The shipment it bills, from search_shipments, when the invoice's own references do not find it.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment"
           }
         },
         "required": [
@@ -6024,7 +6183,8 @@
           "shipmentIds": {
             "description": "The shipments to bill, from search_shipments or get_shipment. With orderId, only these of the order's shipments.",
             "items": {
-              "type": "string"
+              "type": "string",
+              "x-recordOf": "shipment"
             },
             "maxItems": 100,
             "minItems": 1,
@@ -6081,7 +6241,11 @@
             "type": "string"
           },
           "invoiceDate": {
-            "description": "The memo's date; defaults to today. YYYY-MM-DD, a UTC day.",
+            "description": "The memo's date; defaults to today. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "lines": {
@@ -6266,7 +6430,8 @@
           },
           "customerId": {
             "description": "The customer the order is for, from list_customers. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "customer"
           },
           "ownerId": {
             "description": "The user who owns the order: the person who asked, or an ownerId get_order shows. Never guess one.",
@@ -6326,7 +6491,11 @@
             "type": "string"
           },
           "endDate": {
-            "description": "The last day it applies, when it ends. YYYY-MM-DD.",
+            "description": "The last day it applies, when it ends. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "escrowContribution": {
@@ -6347,7 +6516,11 @@
             "type": "string"
           },
           "startDate": {
-            "description": "The first day it applies. YYYY-MM-DD.",
+            "description": "The first day it applies. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "totalCap": {
@@ -6356,7 +6529,8 @@
           },
           "workerId": {
             "description": "The driver, from search_worker or list_workers. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           }
         },
         "required": [
@@ -6406,7 +6580,11 @@
             "type": "string"
           },
           "endDate": {
-            "description": "The last day it applies, when it ends. YYYY-MM-DD.",
+            "description": "The last day it applies, when it ends. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "frequency": {
@@ -6423,7 +6601,11 @@
             "type": "string"
           },
           "startDate": {
-            "description": "The first day it applies. YYYY-MM-DD.",
+            "description": "The first day it applies. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "totalCap": {
@@ -6432,7 +6614,8 @@
           },
           "workerId": {
             "description": "The driver, from search_worker or list_workers. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           }
         },
         "required": [
@@ -6483,7 +6666,11 @@
           "blackoutDates": {
             "description": "Days no shipment is generated, such as holidays.",
             "items": {
-              "description": "A blackout day. YYYY-MM-DD.",
+              "description": "A blackout day. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+              "examples": [
+                "2026-10-01"
+              ],
+              "format": "date",
               "type": "string"
             },
             "maxItems": 100,
@@ -6500,7 +6687,11 @@
             "type": "string"
           },
           "endDate": {
-            "description": "The last day shipments may be generated, in the series' timezone. Leave out for no end. YYYY-MM-DD.",
+            "description": "The last day shipments may be generated, in the series' timezone. Leave out for no end. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "exceptionPolicy": {
@@ -6536,10 +6727,15 @@
           },
           "sourceShipmentId": {
             "description": "The shipment every one copies (customer, stops, commodities and charges), from get_shipment, search_shipments or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment"
           },
           "startDate": {
-            "description": "The first day shipments may be generated, in the series' timezone. YYYY-MM-DD.",
+            "description": "The first day shipments may be generated, in the series' timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "timezone": {
@@ -7003,7 +7199,8 @@
               },
               "billToCustomerId": {
                 "description": "Who is billed, when not the customer, from list_customers.",
-                "type": "string"
+                "type": "string",
+                "x-recordOf": "customer"
               },
               "bol": {
                 "description": "The customer's BOL or reference. It must be unique among open shipments, so never reuse one from another shipment. Optional unless the customer's billing requires a BOL; leave it out when none is known.",
@@ -7017,7 +7214,8 @@
                   "properties": {
                     "commodityId": {
                       "description": "The commodity, from list_commodities.",
-                      "type": "string"
+                      "type": "string",
+                      "x-recordOf": "commodity"
                     },
                     "pieces": {
                       "description": "Pieces of it. Defaults to 1.",
@@ -7041,7 +7239,8 @@
               },
               "customerId": {
                 "description": "The customer, from list_customers.",
-                "type": "string"
+                "type": "string",
+                "x-recordOf": "customer"
               },
               "externalReference": {
                 "description": "The customer's own order or load number, as it appears on their tender, email or rate confirmation. One live shipment per customer may carry it, so a second booking of the same order is refused; leave it out when the customer gave none.",
@@ -7089,7 +7288,8 @@
                           },
                           "locationId": {
                             "description": "The stop's location, from list_locations.",
-                            "type": "string"
+                            "type": "string",
+                            "x-recordOf": "location"
                           },
                           "pieces": {
                             "description": "Pieces handled at the stop.",
@@ -7107,11 +7307,19 @@
                             "x-enumOf": "shipment.stopScheduleType"
                           },
                           "scheduledWindowEnd": {
-                            "description": "When the stop's window closes, if it has one. A local date and time where it happens, without a UTC offset, such as 2026-10-01T08:00. It is read in the timezone of the stop's location, or the organization's when the location names none; never send Unix seconds.",
+                            "description": "When the stop's window closes, if it has one. A local date and time as YYYY-MM-DDTHH:MM with no UTC offset, such as 2026-10-01T08:00, read in the timezone of where it happens; never Unix seconds.",
+                            "examples": [
+                              "2026-10-01T08:00"
+                            ],
+                            "format": "local-date-time",
                             "type": "string"
                           },
                           "scheduledWindowStart": {
-                            "description": "When the stop's window opens. A local date and time where it happens, without a UTC offset, such as 2026-10-01T08:00. It is read in the timezone of the stop's location, or the organization's when the location names none; never send Unix seconds.",
+                            "description": "When the stop's window opens. A local date and time as YYYY-MM-DDTHH:MM with no UTC offset, such as 2026-10-01T08:00, read in the timezone of where it happens; never Unix seconds.",
+                            "examples": [
+                              "2026-10-01T08:00"
+                            ],
+                            "format": "local-date-time",
                             "type": "string"
                           },
                           "sequence": {
@@ -7215,7 +7423,8 @@
           },
           "sourceDocumentId": {
             "description": "The uploaded document this shipment was read from, when there is one: the documentId you read with get_shipment_draft, usually this run's subject or the page.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "document"
           }
         },
         "required": [
@@ -7226,6 +7435,16 @@
       "searchTerms": [
         "new shipment",
         "enter shipment"
+      ],
+      "prerequisites": [
+        "list_customers",
+        "list_service_types",
+        "list_shipment_types",
+        "list_formula_templates",
+        "list_locations",
+        "list_commodities",
+        "list_accessorial_charges",
+        "list_equipment_types"
       ],
       "policy": {
         "kind": "action",
@@ -7770,7 +7989,8 @@
         "properties": {
           "dashboardId": {
             "description": "The dashboard, from list_dashboards. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "dashboard"
           }
         },
         "required": [
@@ -7813,7 +8033,8 @@
           "documentIds": {
             "description": "The documents to delete, from search_documents or get_document_summary. One id is the normal case.",
             "items": {
-              "type": "string"
+              "type": "string",
+              "x-recordOf": "document"
             },
             "maxItems": 25,
             "minItems": 1,
@@ -8064,7 +8285,8 @@
         "properties": {
           "reviewId": {
             "description": "The review, from list_performance_reviews. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "performance_review"
           }
         },
         "required": [
@@ -8103,7 +8325,8 @@
         "properties": {
           "definitionId": {
             "description": "The saved report, from list_reports. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "report"
           }
         },
         "required": [
@@ -8227,11 +8450,13 @@
         "properties": {
           "commentId": {
             "description": "The comment, from the recentComments get_shipment lists or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment_comment"
           },
           "shipmentId": {
             "description": "The shipment the comment is on, from get_shipment, search_shipments or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment"
           }
         },
         "required": [
@@ -8314,7 +8539,8 @@
         "properties": {
           "injuryId": {
             "description": "The injury case, from list_worker_injuries. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker_injury"
           }
         },
         "required": [
@@ -8400,7 +8626,8 @@
         "properties": {
           "safetyEventId": {
             "description": "The safety event, from list_worker_safety_events. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker_safety_event"
           }
         },
         "required": [
@@ -8572,11 +8799,13 @@
         "properties": {
           "orderId": {
             "description": "The order the shipment is on, from list_orders, get_order or the orderId get_shipment shows. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "order"
           },
           "shipmentId": {
             "description": "The shipment to take off it, from get_shipment, search_shipments or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment"
           }
         },
         "required": [
@@ -8659,7 +8888,8 @@
         "properties": {
           "captureBatchId": {
             "description": "The scanned stack, from list_capture_batches. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "capture_batch"
           }
         },
         "required": [
@@ -9006,7 +9236,11 @@
         "additionalProperties": false,
         "properties": {
           "accountingDate": {
-            "description": "The day it is booked to the ledger; it must fall in a fiscal period that takes manual journals. YYYY-MM-DD.",
+            "description": "The day it is booked to the ledger; it must fall in a fiscal period that takes manual journals. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "currencyCode": {
@@ -9109,7 +9343,11 @@
               "additionalProperties": false,
               "properties": {
                 "dueAt": {
-                  "description": "When it is due. YYYY-MM-DD, a UTC day.",
+                  "description": "When it is due. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+                  "examples": [
+                    "2026-10-01"
+                  ],
+                  "format": "date",
                   "type": "string"
                 },
                 "status": {
@@ -9173,7 +9411,8 @@
           },
           "reviewId": {
             "description": "The review, from list_performance_reviews. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "performance_review"
           },
           "strengths": {
             "description": "What went well.",
@@ -9283,11 +9522,19 @@
             "type": "string"
           },
           "effectiveFrom": {
-            "description": "The first day the agreement prices shipments. YYYY-MM-DD.",
+            "description": "The first day the agreement prices shipments. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "effectiveTo": {
-            "description": "The last day it prices shipments. Leave it out for an open-ended agreement. YYYY-MM-DD.",
+            "description": "The last day it prices shipments. Leave it out for an open-ended agreement. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "lanes": {
@@ -9482,7 +9729,8 @@
           },
           "rateAgreementId": {
             "description": "The rate agreement, from list_rate_agreements or get_rate_agreement. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "rate_agreement"
           }
         },
         "required": [
@@ -9527,12 +9775,17 @@
             "type": "integer"
           },
           "firstPickupAt": {
-            "description": "When the copies' first pickup window starts; every other stop keeps its distance from it. Only from what the person asked for, never invented. A local date and time where it happens, without a UTC offset, such as 2026-10-01T08:00. It is read in the timezone of the stop's location, or the organization's when the location names none; never send Unix seconds.",
+            "description": "When the copies' first pickup window starts; every other stop keeps its distance from it. Only from what the person asked for, never invented. A local date and time as YYYY-MM-DDTHH:MM with no UTC offset, such as 2026-10-01T08:00, read in the timezone of where it happens; never Unix seconds.",
+            "examples": [
+              "2026-10-01T08:00"
+            ],
+            "format": "local-date-time",
             "type": "string"
           },
           "shipmentId": {
             "description": "The shipment to copy, from get_shipment, search_shipments or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment"
           }
         },
         "required": [
@@ -9576,7 +9829,8 @@
           },
           "commentId": {
             "description": "The comment, from the recentComments get_shipment lists or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment_comment"
           },
           "priority": {
             "description": "How urgently dispatch should read it.",
@@ -9595,7 +9849,8 @@
           },
           "shipmentId": {
             "description": "The shipment the comment is on, from get_shipment, search_shipments or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment"
           },
           "visibility": {
             "description": "Who sees it. Only widen it to a customer or a driver when the person asked.",
@@ -9710,7 +9965,11 @@
             "type": "string"
           },
           "endDate": {
-            "description": "The day it stops applying. YYYY-MM-DD.",
+            "description": "The day it stops applying. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           }
         },
@@ -9749,7 +10008,11 @@
         "additionalProperties": false,
         "properties": {
           "effectiveTo": {
-            "description": "The last day the worker works the pattern. YYYY-MM-DD, a UTC day.",
+            "description": "The last day the worker works the pattern. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "shiftAssignmentId": {
@@ -9851,7 +10114,8 @@
           "shipmentIds": {
             "description": "Several shipments to check in one pass, from list_shipments or search_shipments. Send this or shipmentId.",
             "items": {
-              "type": "string"
+              "type": "string",
+              "x-recordOf": "shipment"
             },
             "maxItems": 50,
             "minItems": 1,
@@ -10577,7 +10841,8 @@
         "properties": {
           "invoiceId": {
             "description": "The invoice, from list_invoices or get_invoice. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "invoice"
           }
         },
         "required": [
@@ -10614,11 +10879,19 @@
         "additionalProperties": false,
         "properties": {
           "firstDay": {
-            "description": "The first day of the pay period. YYYY-MM-DD, a UTC day.",
+            "description": "The first day of the pay period. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "lastDay": {
-            "description": "The last day of the pay period, included. YYYY-MM-DD, a UTC day.",
+            "description": "The last day of the pay period, included. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "note": {
@@ -10712,12 +10985,17 @@
         "additionalProperties": false,
         "properties": {
           "occurrenceAt": {
-            "description": "The slot to generate, one the schedule produces. Leave out for the next one. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "The slot to generate, one the schedule produces. Leave out for the next one. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
             "type": "string"
           },
           "recurringShipmentId": {
             "description": "The series, from list_recurring_shipments. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "recurring_shipment"
           }
         },
         "required": [
@@ -11165,7 +11443,8 @@
         "properties": {
           "carrierId": {
             "description": "The carrier's id, from list_carriers.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "carrier"
           }
         },
         "required": [
@@ -11285,7 +11564,8 @@
         "properties": {
           "customerId": {
             "description": "The customer's id, from list_customers.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "customer"
           }
         },
         "required": [
@@ -11373,7 +11653,8 @@
         "properties": {
           "customerId": {
             "description": "The customer's id, from list_customers or the customerId on get_shipment.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "customer"
           }
         },
         "required": [
@@ -11640,7 +11921,8 @@
         "properties": {
           "settlementId": {
             "description": "The driver settlement's id, from list_driver_settlements or the page you are on.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "driver_settlement"
           }
         },
         "required": [
@@ -11985,7 +12267,8 @@
         "properties": {
           "invoiceId": {
             "description": "The invoice's id, from list_invoices, list_ar_open_items or the page you are on.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "invoice"
           }
         },
         "required": [
@@ -12061,7 +12344,8 @@
         "properties": {
           "invoiceRunId": {
             "description": "The run's id, from list_invoice_runs.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "invoice_run"
           }
         },
         "required": [
@@ -12100,7 +12384,8 @@
           "invoiceIds": {
             "description": "The invoices' ids, from list_invoices, list_ar_open_items or the page you are on.",
             "items": {
-              "type": "string"
+              "type": "string",
+              "x-recordOf": "invoice"
             },
             "maxItems": 50,
             "minItems": 1,
@@ -12262,7 +12547,8 @@
         "properties": {
           "orderId": {
             "description": "The order's id, from list_orders, the orderId on get_shipment or get_invoice, or the page you are on.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "order"
           }
         },
         "required": [
@@ -12305,7 +12591,8 @@
         "properties": {
           "rateAgreementId": {
             "description": "The rate agreement's id, from list_rate_agreements, explain_rate or the page you are on.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "rate_agreement"
           }
         },
         "required": [
@@ -12475,7 +12762,8 @@
         "properties": {
           "serviceFailureId": {
             "description": "The service failure's id, from list_service_failures or the page you are on.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "service_failure"
           }
         },
         "required": [
@@ -12513,7 +12801,8 @@
         "properties": {
           "disputeId": {
             "description": "The dispute's id, from get_driver_settlement's openDisputes, the page you are on, or this run's subject.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "settlement_dispute"
           }
         },
         "required": [
@@ -12689,7 +12978,8 @@
         "properties": {
           "tractorId": {
             "description": "The tractor's id, from list_tractors.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "tractor"
           }
         },
         "required": [
@@ -12727,7 +13017,8 @@
         "properties": {
           "trailerId": {
             "description": "The trailer's id, from list_trailers.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "trailer"
           }
         },
         "required": [
@@ -12841,7 +13132,8 @@
         "properties": {
           "workerId": {
             "description": "The driver's id, from list_workers, search_worker or the page you are on.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           }
         },
         "required": [
@@ -12924,7 +13216,8 @@
         "properties": {
           "workerId": {
             "description": "The worker, from search_worker or list_workers.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           }
         },
         "required": [
@@ -12979,7 +13272,11 @@
             "type": "string"
           },
           "occurredAt": {
-            "description": "When it was earned. Defaults to now. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "When it was earned. Defaults to now. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
             "type": "string"
           },
           "title": {
@@ -12993,7 +13290,8 @@
           },
           "workerId": {
             "description": "The driver, from search_worker or list_workers. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           }
         },
         "required": [
@@ -13235,7 +13533,11 @@
             "type": "string"
           },
           "issuedDate": {
-            "description": "The day it was given; leave it out for today. YYYY-MM-DD.",
+            "description": "The day it was given; leave it out for today. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "notes": {
@@ -13262,7 +13564,8 @@
           },
           "workerId": {
             "description": "The driver, from search_worker or list_workers. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           }
         },
         "required": [
@@ -13302,7 +13605,8 @@
         "properties": {
           "carrierId": {
             "description": "The carrier it came from, from list_carriers or list_edi_carrier_invoices's suggested carrier.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "carrier"
           },
           "ediCarrierInvoiceId": {
             "description": "The EDI carrier invoice, from list_edi_carrier_invoices. Never guess one.",
@@ -13962,7 +14266,7 @@
     },
     {
       "name": "list_agent_runs",
-      "description": "List agent runs: what each agent did, what started it, the record it worked on, and whether it failed, waits on a decision or is running. get_agent_run reads one. Filters: status (Pending|GatheringContext|Diagnosing|AwaitingDecision|Completed|ShadowCompleted|Failed); trigger (Manual|Chat|Scheduled|Event|Continuous); subjectType (enum): the kind of record the run worked on, named as get_agent_run reports it (Shipment, BillingQueueItem, AccountingDriftFinding); any other name is refused with the full list; subjectId (text): the id of that record; agentDefinitionId (text): the agent's id, from a run or the page you are on; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time. Pass mine to keep to this agent's own runs.",
+      "description": "List agent runs: what each agent did, what started it, the record it worked on, and whether it failed, waits on a decision or is running. get_agent_run reads one. Filters: status (Pending|GatheringContext|Diagnosing|AwaitingDecision|Completed|ShadowCompleted|Failed); trigger (Manual|Chat|Scheduled|Event|Continuous|Wait); subjectType (enum): the kind of record the run worked on, named as get_agent_run reports it (Shipment, BillingQueueItem, AccountingDriftFinding); any other name is refused with the full list; subjectId (text): the id of that record; agentDefinitionId (text): the agent's id, from a run or the page you are on; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time. Pass mine to keep to this agent's own runs.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -18214,7 +18518,8 @@
           "invoiceIds": {
             "description": "The invoices, from list_invoices or get_invoice.",
             "items": {
-              "type": "string"
+              "type": "string",
+              "x-recordOf": "invoice"
             },
             "maxItems": 50,
             "minItems": 1,
@@ -19347,7 +19652,8 @@
         "properties": {
           "workerId": {
             "description": "The driver, by id from search_worker or list_workers.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           }
         },
         "required": [
@@ -22103,7 +22409,8 @@
         "properties": {
           "carrierId": {
             "description": "The carrier, from list_carriers or get_carrier. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "carrier"
           },
           "note": {
             "description": "What was reviewed and concluded.",
@@ -22387,7 +22694,11 @@
             "type": "string"
           },
           "openedDate": {
-            "description": "The day it opens; leave it out for today. YYYY-MM-DD.",
+            "description": "The day it opens; leave it out for today. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "targetAmount": {
@@ -22396,7 +22707,8 @@
           },
           "workerId": {
             "description": "The driver, from search_worker or list_workers. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           }
         },
         "required": [
@@ -22537,7 +22849,8 @@
         "properties": {
           "documentId": {
             "description": "A document already filed on the worker, from search_documents. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "document"
           },
           "eligibilityHoursWorked": {
             "description": "Hours worked in the twelve months before, for eligibility.",
@@ -22546,7 +22859,11 @@
             "type": "integer"
           },
           "endsAt": {
-            "description": "The last day of leave, when it is known. YYYY-MM-DD, a UTC day.",
+            "description": "The last day of leave, when it is known. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "frequency": {
@@ -22587,16 +22904,25 @@
             "type": "string"
           },
           "requestedAt": {
-            "description": "The day the worker asked. Defaults to today. YYYY-MM-DD, a UTC day.",
+            "description": "The day the worker asked. Defaults to today. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "startsAt": {
-            "description": "The first day of leave. YYYY-MM-DD, a UTC day.",
+            "description": "The first day of leave. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "workerId": {
             "description": "The driver, from search_worker or list_workers. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           }
         },
         "required": [
@@ -22746,7 +23072,8 @@
           },
           "documentId": {
             "description": "A document already filed on the worker, from search_documents. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "document"
           },
           "fineAmount": {
             "description": "A fine, as a decimal such as 250.00.",
@@ -22786,7 +23113,11 @@
             "type": "string"
           },
           "occurredAt": {
-            "description": "When it happened. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "When it happened. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
             "type": "string"
           },
           "outOfService": {
@@ -22821,11 +23152,13 @@
           },
           "shipmentId": {
             "description": "The load it happened on, from search_shipments or get_shipment. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment"
           },
           "workerId": {
             "description": "The driver, from search_worker or list_workers. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           }
         },
         "required": [
@@ -23000,11 +23333,13 @@
         "properties": {
           "commentId": {
             "description": "The comment, from the recentComments get_shipment lists or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment_comment"
           },
           "shipmentId": {
             "description": "The shipment the comment is on, from get_shipment, search_shipments or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment"
           }
         },
         "required": [
@@ -24083,12 +24418,17 @@
         "additionalProperties": false,
         "properties": {
           "counterpartyShiftDate": {
-            "description": "The day offered back, when it is a trade rather than a hand-off. YYYY-MM-DD, a UTC day.",
+            "description": "The day offered back, when it is a trade rather than a hand-off. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "counterpartyWorkerId": {
             "description": "The worker asked to take it, from search_worker. Leave out to offer it to anyone.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           },
           "reason": {
             "description": "Why, in the worker's words where you have them.",
@@ -24097,10 +24437,15 @@
           },
           "requestingWorkerId": {
             "description": "The worker giving the day up, from search_worker. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           },
           "shiftDate": {
-            "description": "The day given up. YYYY-MM-DD, a UTC day.",
+            "description": "The day given up. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           }
         },
@@ -24241,6 +24586,11 @@
         "price a lane",
         "quote a lane"
       ],
+      "prerequisites": [
+        "list_customers",
+        "list_service_types",
+        "list_locations"
+      ],
       "policy": {
         "kind": "query",
         "resource": "rate_quote",
@@ -24338,7 +24688,9 @@
               "FormulaTemplate",
               "AccountingSyncRecord",
               "AccountingInboundChange",
-              "AccountingDriftFinding"
+              "AccountingDriftFinding",
+              "Invoice",
+              "InvoiceDispute"
             ],
             "type": "string",
             "x-enumOf": "agent.subjectType"
@@ -24449,7 +24801,8 @@
                 },
                 "billToCustomerId": {
                   "description": "The customer who pays this share, from list_customers. Never guess one.",
-                  "type": "string"
+                  "type": "string",
+                  "x-recordOf": "customer"
                 },
                 "method": {
                   "description": "Whether the share is a percent of the charge or a fixed amount.",
@@ -24650,7 +25003,8 @@
         "properties": {
           "shipmentId": {
             "description": "The shipment, from get_shipment, search_shipments or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment"
           }
         },
         "required": [
@@ -24940,11 +25294,19 @@
             "type": "string"
           },
           "employedFrom": {
-            "description": "When the worker started there. YYYY-MM-DD, a UTC day.",
+            "description": "When the worker started there. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "employedTo": {
-            "description": "When the worker left. YYYY-MM-DD, a UTC day.",
+            "description": "When the worker left. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "employerDotNumber": {
@@ -24986,7 +25348,8 @@
           },
           "workerId": {
             "description": "The driver, from search_worker or list_workers. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           }
         },
         "required": [
@@ -25039,7 +25402,11 @@
             "type": "string"
           },
           "priceDate": {
-            "description": "The day the price applies to, as the index publishes it. YYYY-MM-DD.",
+            "description": "The day the price applies to, as the index publishes it. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           }
         },
@@ -25140,7 +25507,11 @@
             "type": "integer"
           },
           "purchasedAt": {
-            "description": "When it was bought, as the receipt says. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "When it was bought, as the receipt says. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
             "type": "string"
           },
           "quantity": {
@@ -25266,7 +25637,11 @@
             "type": "string"
           },
           "traveledAt": {
-            "description": "When the miles were driven; it decides the quarter they count in. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "When the miles were driven; it decides the quarter they count in. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
             "type": "string"
           }
         },
@@ -25320,7 +25695,8 @@
           },
           "leaveCaseId": {
             "description": "The leave case, from list_worker_leave_cases. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker_leave"
           },
           "notes": {
             "description": "Anything the day should say.",
@@ -25332,7 +25708,11 @@
             "type": "string"
           },
           "usedOn": {
-            "description": "The day the leave was taken. YYYY-MM-DD, a UTC day.",
+            "description": "The day the leave was taken. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           }
         },
@@ -25450,7 +25830,8 @@
           },
           "safetyEventId": {
             "description": "The safety event, from list_worker_safety_events. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker_safety_event"
           },
           "severityWeight": {
             "description": "The FMCSA severity weight, 1 to 10.",
@@ -25504,11 +25885,19 @@
             "type": "string"
           },
           "expiresAt": {
-            "description": "When the permit stops covering the move. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "When the permit stops covering the move. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
             "type": "string"
           },
           "issuedAt": {
-            "description": "When the permit takes effect. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "When the permit takes effect. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
             "type": "string"
           },
           "notes": {
@@ -25523,7 +25912,8 @@
           },
           "shipmentId": {
             "description": "The shipment the permit covers, from get_shipment, search_shipments or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment"
           },
           "stateId": {
             "description": "The state that issued it, as the stateId of the requirement it satisfies in list_shipment_permits. Never guess one.",
@@ -25597,7 +25987,11 @@
             "type": "string"
           },
           "occurredAt": {
-            "description": "When it happened. Leave it out unless you were given a time: omitted means now, which is right when someone is reporting an event as it happens. A local date and time where it happens, without a UTC offset, such as 2026-10-01T08:00. It is read in the timezone of the stop's location, or the organization's when the location names none; never send Unix seconds.",
+            "description": "When it happened. Leave it out unless you were given a time: omitted means now, which is right when someone is reporting an event as it happens. A local date and time as YYYY-MM-DDTHH:MM with no UTC offset, such as 2026-10-01T08:00, read in the timezone of where it happens; never Unix seconds.",
+            "examples": [
+              "2026-10-01T08:00"
+            ],
+            "format": "local-date-time",
             "type": "string"
           },
           "stopId": {
@@ -25700,7 +26094,11 @@
         "additionalProperties": false,
         "properties": {
           "completedAt": {
-            "description": "The day it was finished. Defaults to today; never a day to come. YYYY-MM-DD, a UTC day.",
+            "description": "The day it was finished. Defaults to today; never a day to come. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "courseId": {
@@ -25709,7 +26107,8 @@
           },
           "documentId": {
             "description": "A document already filed on the worker, from search_documents. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "document"
           },
           "notes": {
             "description": "Anything the record should say.",
@@ -25722,11 +26121,13 @@
           },
           "trainingRecordId": {
             "description": "The training assignment, from list_worker_training. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker_training"
           },
           "workerId": {
             "description": "The driver, from search_worker or list_workers. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           }
         },
         "required": null,
@@ -25772,14 +26173,23 @@
           },
           "documentId": {
             "description": "A document already filed on the worker, from search_documents. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "document"
           },
           "expiresAt": {
-            "description": "When it expires. YYYY-MM-DD, a UTC day.",
+            "description": "When it expires. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "issuedAt": {
-            "description": "When it was issued. YYYY-MM-DD, a UTC day.",
+            "description": "When it was issued. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "issuingAuthority": {
@@ -25803,7 +26213,8 @@
           },
           "workerId": {
             "description": "The driver, from search_worker or list_workers. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           }
         },
         "required": [
@@ -25859,7 +26270,11 @@
             "type": "string"
           },
           "claimFiledAt": {
-            "description": "When the claim was filed. YYYY-MM-DD, a UTC day.",
+            "description": "When the claim was filed. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "claimNumber": {
@@ -25911,7 +26326,8 @@
           },
           "documentId": {
             "description": "A document already filed on the worker, from search_documents. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "document"
           },
           "harmfulAgent": {
             "description": "What harmed the worker, such as a load strap.",
@@ -25942,7 +26358,11 @@
             "type": "string"
           },
           "occurredAt": {
-            "description": "When it happened. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "When it happened. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
             "type": "string"
           },
           "privacyCase": {
@@ -25950,16 +26370,25 @@
             "type": "boolean"
           },
           "reportedAt": {
-            "description": "When the worker reported it. YYYY-MM-DD, a UTC day.",
+            "description": "When the worker reported it. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "returnedToWorkAt": {
-            "description": "When the worker came back to work. YYYY-MM-DD, a UTC day.",
+            "description": "When the worker came back to work. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "safetyEventId": {
             "description": "The accident it came from, from list_worker_safety_events.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker_safety_event"
           },
           "treatment": {
             "description": "The most care it took.",
@@ -25975,7 +26404,8 @@
           },
           "workerId": {
             "description": "The driver, from search_worker or list_workers. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           }
         },
         "required": [
@@ -26351,7 +26781,8 @@
           },
           "rateAgreementId": {
             "description": "The rate agreement, from list_rate_agreements or get_rate_agreement. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "rate_agreement"
           }
         },
         "required": [
@@ -26864,7 +27295,8 @@
           },
           "orderId": {
             "description": "The order, from list_orders, get_order or the orderId get_shipment shows. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "order"
           }
         },
         "required": [
@@ -27255,7 +27687,11 @@
         "additionalProperties": false,
         "properties": {
           "accountingDate": {
-            "description": "The day the reversal is booked; a day in a closed period moves to the next open one where policy allows. YYYY-MM-DD.",
+            "description": "The day the reversal is booked; a day in a closed period moves to the next open one where policy allows. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "journalEntryId": {
@@ -27318,12 +27754,17 @@
         "additionalProperties": false,
         "properties": {
           "dueDate": {
-            "description": "When it is due, when not the usual window. YYYY-MM-DD, a UTC day.",
+            "description": "When it is due, when not the usual window. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "leaveCaseId": {
             "description": "The leave case, from list_worker_leave_cases. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker_leave"
           }
         },
         "required": [
@@ -27442,7 +27883,11 @@
         "additionalProperties": false,
         "properties": {
           "endDate": {
-            "description": "The last day off. YYYY-MM-DD, a UTC day.",
+            "description": "The last day off. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "reason": {
@@ -27451,7 +27896,11 @@
             "type": "string"
           },
           "startDate": {
-            "description": "The first day off. YYYY-MM-DD, a UTC day.",
+            "description": "The first day off. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "type": {
@@ -27470,7 +27919,8 @@
           },
           "workerId": {
             "description": "The driver, from search_worker or list_workers. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           }
         },
         "required": [
@@ -27519,7 +27969,8 @@
         "properties": {
           "shipmentId": {
             "description": "The shipment to re-rate, from get_shipment, search_shipments or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment"
           }
         },
         "required": [
@@ -27558,7 +28009,8 @@
         "properties": {
           "definitionId": {
             "description": "The saved report, from list_reports. Never guess one. It must be a copy of a built-in report.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "report"
           }
         },
         "required": [
@@ -27803,7 +28255,8 @@
         "properties": {
           "disputeId": {
             "description": "The open dispute, from list_invoice_disputes. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "invoice_dispute"
           },
           "resolution": {
             "description": "How the dispute ended.",
@@ -27932,7 +28385,8 @@
           },
           "disputeId": {
             "description": "The pay dispute, from get_driver_settlement's openDisputes, get_settlement_dispute or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "settlement_dispute"
           },
           "payCodeId": {
             "description": "The pay code the adjustment posts under, from list_pay_codes. Leave it out for the default account.",
@@ -27989,7 +28443,8 @@
         "properties": {
           "commentId": {
             "description": "The comment, from the recentComments get_shipment lists or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment_comment"
           },
           "resolved": {
             "description": "True to mark the comment resolved, false to reopen it. Defaults to true.",
@@ -27997,7 +28452,8 @@
           },
           "shipmentId": {
             "description": "The shipment the comment is on, from get_shipment, search_shipments or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment"
           }
         },
         "required": [
@@ -28186,7 +28642,8 @@
           },
           "rateAgreementId": {
             "description": "The rate agreement, from list_rate_agreements or get_rate_agreement. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "rate_agreement"
           }
         },
         "required": [
@@ -28352,12 +28809,17 @@
         "additionalProperties": false,
         "properties": {
           "accountingDate": {
-            "description": "The day it is booked to the ledger, YYYY-MM-DD, usually today; it must fall in an open fiscal period.",
+            "description": "The day it is booked to the ledger, usually today; it must fall in an open fiscal period. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "customerPaymentId": {
             "description": "The posted payment, from list_customer_payments. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "customer_payment"
           },
           "reason": {
             "description": "Why it is reversed, such as the bank's return reason.",
@@ -28578,7 +29040,8 @@
           },
           "serviceFailureId": {
             "description": "The failure, from list_service_failures or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "service_failure"
           }
         },
         "required": [
@@ -28619,7 +29082,11 @@
         "additionalProperties": false,
         "properties": {
           "accountingDate": {
-            "description": "The day it is booked to the ledger; it must fall in a fiscal period that takes manual journals. Leave it out to keep it. YYYY-MM-DD.",
+            "description": "The day it is booked to the ledger; it must fall in a fiscal period that takes manual journals. Leave it out to keep it. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "currencyCode": {
@@ -28768,11 +29235,19 @@
             "type": "string"
           },
           "effectiveFrom": {
-            "description": "The first day the agreement prices shipments. YYYY-MM-DD.",
+            "description": "The first day the agreement prices shipments. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "effectiveTo": {
-            "description": "The last day it prices shipments. Leave it out for an open-ended agreement. YYYY-MM-DD.",
+            "description": "The last day it prices shipments. Leave it out for an open-ended agreement. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "lanes": {
@@ -28901,7 +29376,8 @@
           },
           "rateAgreementId": {
             "description": "The rate agreement, from list_rate_agreements or get_rate_agreement. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "rate_agreement"
           },
           "renewalNoticeDays": {
             "description": "How many days before its end to warn about renewal.",
@@ -28946,7 +29422,11 @@
         "additionalProperties": false,
         "properties": {
           "drawDate": {
-            "description": "A day inside the period to draw for, for a period that was missed. Defaults to today. YYYY-MM-DD, a UTC day.",
+            "description": "A day inside the period to draw for, for a period that was missed. Defaults to today. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "notes": {
@@ -29016,10 +29496,15 @@
           },
           "rateAgreementId": {
             "description": "The rate agreement, from list_rate_agreements or get_rate_agreement. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "rate_agreement"
           },
           "sampleFrom": {
-            "description": "The first ship day to replay. YYYY-MM-DD.",
+            "description": "The first ship day to replay. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "sampleLimit": {
@@ -29029,7 +29514,11 @@
             "type": "integer"
           },
           "sampleTo": {
-            "description": "The last ship day to replay. YYYY-MM-DD.",
+            "description": "The last ship day to replay. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           }
         },
@@ -29073,7 +29562,7 @@
     },
     {
       "name": "run_report",
-      "description": "Start one of the reports from list_reports: a built-in one by reportKey or a saved one by definitionId, whichever dataset it reads. Take every parameter you can from what the person already said — a request naming a window, a date range or a customer has supplied it — and ask_user for the rest, offering the allowed values list_reports gave rather than choices you made up. Reports run in the background: a run that finishes within a few seconds comes back with its outcome and a sample of its first rows; otherwise this returns a run id, and you say that it has started and stop there. The conversation tracks the run and shows the person its progress, its row count and a download button as soon as it finishes, so there is nothing to poll and nowhere to send them. Never describe figures you have not seen.",
+      "description": "Start one of the reports from list_reports: a built-in one by reportKey or a saved one by definitionId, whichever dataset it reads. Take every parameter you can from what the person already said — a request naming a window, a date range or a customer has supplied it — and ask_user for the rest, offering the allowed values describe_report gave rather than choices you made up. Reports run in the background: a run that finishes within a few seconds comes back with its outcome and a sample of its first rows; otherwise this returns a run id, and you say that it has started and stop there. The conversation tracks the run and shows the person its progress, its row count and a download button as soon as it finishes, so there is nothing to poll and nowhere to send them. Never describe figures you have not seen.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -29107,6 +29596,10 @@
         },
         "type": "object"
       },
+      "prerequisites": [
+        "list_reports",
+        "describe_report"
+      ],
       "policy": {
         "kind": "query",
         "resource": "report",
@@ -29366,10 +29859,15 @@
           },
           "safetyEventId": {
             "description": "For a post-accident test: the accident, from list_worker_safety_events.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker_safety_event"
           },
           "scheduledAt": {
-            "description": "When the collection is booked. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "When the collection is booked. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
             "type": "string"
           },
           "substance": {
@@ -29397,7 +29895,8 @@
           },
           "workerId": {
             "description": "The driver, from search_worker or list_workers. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           }
         },
         "required": [
@@ -29910,6 +30409,10 @@
         ],
         "type": "object"
       },
+      "prerequisites": [
+        "search_shipments",
+        "list_edi_partners"
+      ],
       "policy": {
         "kind": "action",
         "resource": "edi",
@@ -29982,7 +30485,8 @@
           },
           "invoiceId": {
             "description": "The invoice, from list_invoices or get_invoice. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "invoice"
           }
         },
         "required": [
@@ -30198,7 +30702,8 @@
           "carrierIds": {
             "description": "The carriers, from list_carriers.",
             "items": {
-              "type": "string"
+              "type": "string",
+              "x-recordOf": "carrier"
             },
             "maxItems": 50,
             "minItems": 1,
@@ -30309,7 +30814,8 @@
                 },
                 "billToCustomerId": {
                   "description": "The customer who pays this share, from list_customers. Never guess one.",
-                  "type": "string"
+                  "type": "string",
+                  "x-recordOf": "customer"
                 },
                 "method": {
                   "description": "Whether the share is a percent of the charge or a fixed amount.",
@@ -30340,7 +30846,8 @@
           },
           "orderId": {
             "description": "The order, from list_orders, get_order or the orderId get_shipment shows. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "order"
           }
         },
         "required": [
@@ -30386,7 +30893,8 @@
         "properties": {
           "recurringShipmentId": {
             "description": "The series, from list_recurring_shipments. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "recurring_shipment"
           },
           "status": {
             "description": "The status to set.",
@@ -30683,7 +31191,8 @@
           },
           "workerId": {
             "description": "The driver, from search_worker or list_workers. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           }
         },
         "required": [
@@ -30911,18 +31420,28 @@
         "properties": {
           "moveId": {
             "description": "The two-stop move to split, from get_shipment (its moves) or get_dispatch_board. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment_move"
           },
           "newDeliveryEnd": {
-            "description": "When the final delivery window closes. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "When the final delivery window closes. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
             "type": "string"
           },
           "newDeliveryLocationId": {
             "description": "Where the freight finally goes, from list_locations. It must differ from the current delivery location.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "location"
           },
           "newDeliveryStart": {
-            "description": "When the final delivery window opens; after the relay pickup window. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "When the final delivery window opens; after the relay pickup window. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
             "type": "string"
           },
           "pieces": {
@@ -30932,11 +31451,19 @@
             "type": "integer"
           },
           "relayPickupEnd": {
-            "description": "When that relay pickup window closes. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "When that relay pickup window closes. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
             "type": "string"
           },
           "relayPickupStart": {
-            "description": "When the new move's pickup at the relay opens; after the current delivery window ends. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "When the new move's pickup at the relay opens; after the current delivery window ends. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
             "type": "string"
           },
           "weight": {
@@ -30984,11 +31511,19 @@
         "additionalProperties": false,
         "properties": {
           "periodEnd": {
-            "description": "The last day the review covers. YYYY-MM-DD, a UTC day.",
+            "description": "The last day the review covers. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "periodStart": {
-            "description": "The first day the review covers. YYYY-MM-DD, a UTC day.",
+            "description": "The first day the review covers. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "templateId": {
@@ -31002,7 +31537,8 @@
           },
           "workerId": {
             "description": "The driver, from search_worker or list_workers. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           }
         },
         "required": [
@@ -31044,7 +31580,8 @@
         "properties": {
           "disputeId": {
             "description": "The pay dispute, from get_driver_settlement's openDisputes, get_settlement_dispute or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "settlement_dispute"
           }
         },
         "required": [
@@ -31090,7 +31627,11 @@
         "additionalProperties": false,
         "properties": {
           "startedAt": {
-            "description": "The day it starts, which its items fall due from. Defaults to today. YYYY-MM-DD, a UTC day.",
+            "description": "The day it starts, which its items fall due from. Defaults to today. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "templateId": {
@@ -31099,7 +31640,8 @@
           },
           "workerId": {
             "description": "The driver, from search_worker or list_workers. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker"
           }
         },
         "required": [
@@ -31403,7 +31945,8 @@
           },
           "rateAgreementId": {
             "description": "The rate agreement, from list_rate_agreements or get_rate_agreement. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "rate_agreement"
           }
         },
         "required": [
@@ -31450,7 +31993,8 @@
           },
           "rateAgreementId": {
             "description": "The rate agreement, from list_rate_agreements or get_rate_agreement. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "rate_agreement"
           }
         },
         "required": [
@@ -31723,7 +32267,8 @@
           },
           "shipmentId": {
             "description": "The shipment, from get_shipment, search_shipments or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment"
           }
         },
         "required": [
@@ -32088,7 +32633,8 @@
         "properties": {
           "shipmentId": {
             "description": "The canceled shipment, from get_shipment, search_shipments or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment"
           }
         },
         "required": [
@@ -32165,11 +32711,13 @@
         "properties": {
           "commentId": {
             "description": "The comment, from the recentComments get_shipment lists or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment_comment"
           },
           "shipmentId": {
             "description": "The shipment the comment is on, from get_shipment, search_shipments or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment"
           }
         },
         "required": [
@@ -32403,11 +32951,19 @@
         "additionalProperties": false,
         "properties": {
           "availableFrom": {
-            "description": "When the trucks are free. Leave it out to keep it. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "When the trucks are free. Leave it out to keep it. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
             "type": "string"
           },
           "availableTo": {
-            "description": "When the offer ends, at most 60 days after it starts. Leave it out to keep it. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "When the offer ends, at most 60 days after it starts. Leave it out to keep it. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
             "type": "string"
           },
           "carrierCapacityPostingId": {
@@ -33026,18 +33582,31 @@
           },
           "documentId": {
             "description": "A document already filed on the worker, from search_documents. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "document"
           },
           "drugAlcoholResponseReceivedAt": {
-            "description": "When their drug and alcohol answer came back. YYYY-MM-DD, a UTC day.",
+            "description": "When their drug and alcohol answer came back. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "employedFrom": {
-            "description": "When the worker started there. YYYY-MM-DD, a UTC day.",
+            "description": "When the worker started there. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "employedTo": {
-            "description": "When the worker left. YYYY-MM-DD, a UTC day.",
+            "description": "When the worker left. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "employerDotNumber": {
@@ -33087,7 +33656,11 @@
             "type": "string"
           },
           "responseReceivedAt": {
-            "description": "When the employer's answer came back. YYYY-MM-DD, a UTC day.",
+            "description": "When the employer's answer came back. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "status": {
@@ -33463,7 +34036,8 @@
           },
           "invoiceId": {
             "description": "The invoice, from list_invoices or get_invoice. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "invoice"
           },
           "memo": {
             "description": "The note printed on the invoice.",
@@ -33513,7 +34087,8 @@
         "properties": {
           "documentId": {
             "description": "A document already filed on the worker, from search_documents. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "document"
           },
           "eligibilityHoursWorked": {
             "description": "Hours worked in the twelve months before, for eligibility.",
@@ -33522,7 +34097,11 @@
             "type": "integer"
           },
           "endsAt": {
-            "description": "The last day of leave, when it is known. YYYY-MM-DD, a UTC day.",
+            "description": "The last day of leave, when it is known. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "frequency": {
@@ -33537,7 +34116,8 @@
           },
           "leaveCaseId": {
             "description": "The leave case, from list_worker_leave_cases. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker_leave"
           },
           "leaveType": {
             "description": "The kind of leave.",
@@ -33567,7 +34147,11 @@
             "type": "string"
           },
           "startsAt": {
-            "description": "The first day of leave. YYYY-MM-DD, a UTC day.",
+            "description": "The first day of leave. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           }
         },
@@ -33884,11 +34468,13 @@
           },
           "customerId": {
             "description": "The customer the order is for, from list_customers. Only an order with no shipments can change customer. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "customer"
           },
           "orderId": {
             "description": "The order to change, from list_orders, get_order or the orderId get_shipment shows. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "order"
           },
           "ownerId": {
             "description": "The user who owns the order: the person who asked, or an ownerId get_order shows. Never guess one.",
@@ -33956,7 +34542,8 @@
                 },
                 "billToCustomerId": {
                   "description": "The customer who pays this share, from list_customers. Never guess one.",
-                  "type": "string"
+                  "type": "string",
+                  "x-recordOf": "customer"
                 },
                 "method": {
                   "description": "Whether the share is a percent of the charge or a fixed amount.",
@@ -33996,7 +34583,8 @@
           },
           "orderId": {
             "description": "The order, from list_orders, get_order or the orderId get_shipment shows. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "order"
           }
         },
         "required": [
@@ -34053,7 +34641,11 @@
             "type": "string"
           },
           "endDate": {
-            "description": "The last day it applies, when it ends. YYYY-MM-DD.",
+            "description": "The last day it applies, when it ends. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "frequency": {
@@ -34070,7 +34662,11 @@
             "type": "string"
           },
           "startDate": {
-            "description": "The first day it applies. YYYY-MM-DD.",
+            "description": "The first day it applies. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "status": {
@@ -34140,7 +34736,11 @@
             "type": "string"
           },
           "endDate": {
-            "description": "The last day it applies, when it ends. YYYY-MM-DD.",
+            "description": "The last day it applies, when it ends. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "frequency": {
@@ -34157,7 +34757,11 @@
             "type": "string"
           },
           "startDate": {
-            "description": "The first day it applies. YYYY-MM-DD.",
+            "description": "The first day it applies. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "status": {
@@ -34220,7 +34824,11 @@
           "blackoutDates": {
             "description": "Days no shipment is generated, such as holidays.",
             "items": {
-              "description": "A blackout day. YYYY-MM-DD.",
+              "description": "A blackout day. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+              "examples": [
+                "2026-10-01"
+              ],
+              "format": "date",
               "type": "string"
             },
             "maxItems": 100,
@@ -34237,7 +34845,11 @@
             "type": "string"
           },
           "endDate": {
-            "description": "The last day shipments may be generated, in the series' timezone. Leave out for no end. YYYY-MM-DD.",
+            "description": "The last day shipments may be generated, in the series' timezone. Leave out for no end. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "exceptionPolicy": {
@@ -34269,14 +34881,19 @@
           },
           "recurringShipmentId": {
             "description": "The series to change, from list_recurring_shipments. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "recurring_shipment"
           },
           "skipWeekends": {
             "description": "Treat Saturday and Sunday like blackout days.",
             "type": "boolean"
           },
           "startDate": {
-            "description": "The first day shipments may be generated, in the series' timezone. YYYY-MM-DD.",
+            "description": "The first day shipments may be generated, in the series' timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "timezone": {
@@ -34694,7 +35311,8 @@
           },
           "definitionId": {
             "description": "The saved report it runs, from list_reports. Leave it out to keep it.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "report"
           },
           "emailAttach": {
             "description": "Attach the file rather than only linking to it.",
@@ -34876,7 +35494,8 @@
           },
           "serviceFailureId": {
             "description": "The failure, from list_service_failures or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "service_failure"
           },
           "x12ExceptionCode": {
             "description": "EDI 214 exception code, three characters.",
@@ -34987,6 +35606,10 @@
         "pieces",
         "correct weight"
       ],
+      "prerequisites": [
+        "search_shipments",
+        "get_shipment"
+      ],
       "policy": {
         "kind": "action",
         "resource": "shipment",
@@ -35048,7 +35671,8 @@
           },
           "shipmentId": {
             "description": "The shipment the hold is on, from get_shipment, search_shipments or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment"
           },
           "visibleToCustomer": {
             "description": "Whether the customer sees the hold.",
@@ -35096,11 +35720,19 @@
             "type": "string"
           },
           "expiresAt": {
-            "description": "When the permit stops covering the move. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "When the permit stops covering the move. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
             "type": "string"
           },
           "issuedAt": {
-            "description": "When the permit takes effect. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "When the permit takes effect. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
             "type": "string"
           },
           "notes": {
@@ -35119,7 +35751,8 @@
           },
           "shipmentId": {
             "description": "The shipment the permit covers, from get_shipment, search_shipments or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment"
           },
           "stateId": {
             "description": "The state that issued it, as the stateId of the requirement it satisfies in list_shipment_permits. Never guess one.",
@@ -35770,18 +36403,28 @@
         "properties": {
           "credentialId": {
             "description": "The credential, from list_worker_credentials or list_expiring_credentials. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker_credential"
           },
           "documentId": {
             "description": "A document already filed on the worker, from search_documents. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "document"
           },
           "expiresAt": {
-            "description": "When it expires. YYYY-MM-DD, a UTC day.",
+            "description": "When it expires. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "issuedAt": {
-            "description": "When it was issued. YYYY-MM-DD, a UTC day.",
+            "description": "When it was issued. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "issuingAuthority": {
@@ -35850,11 +36493,19 @@
             "type": "string"
           },
           "claimClosedAt": {
-            "description": "When the claim closed. YYYY-MM-DD, a UTC day.",
+            "description": "When the claim closed. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "claimFiledAt": {
-            "description": "When the claim was filed. YYYY-MM-DD, a UTC day.",
+            "description": "When the claim was filed. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "claimNumber": {
@@ -35906,7 +36557,8 @@
           },
           "documentId": {
             "description": "A document already filed on the worker, from search_documents. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "document"
           },
           "harmfulAgent": {
             "description": "What harmed the worker, such as a load strap.",
@@ -35928,7 +36580,8 @@
           },
           "injuryId": {
             "description": "The injury case, from list_worker_injuries. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker_injury"
           },
           "location": {
             "description": "Where it happened.",
@@ -35941,7 +36594,11 @@
             "type": "string"
           },
           "occurredAt": {
-            "description": "When it happened. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "When it happened. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
             "type": "string"
           },
           "privacyCase": {
@@ -35949,16 +36606,25 @@
             "type": "boolean"
           },
           "reportedAt": {
-            "description": "When the worker reported it. YYYY-MM-DD, a UTC day.",
+            "description": "When the worker reported it. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "returnedToWorkAt": {
-            "description": "When the worker came back to work. YYYY-MM-DD, a UTC day.",
+            "description": "When the worker came back to work. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "safetyEventId": {
             "description": "The accident it came from, from list_worker_safety_events.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker_safety_event"
           },
           "status": {
             "description": "Open or Closed.",
@@ -36017,7 +36683,11 @@
         "additionalProperties": false,
         "properties": {
           "endDate": {
-            "description": "The last day off. YYYY-MM-DD, a UTC day.",
+            "description": "The last day off. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "ptoId": {
@@ -36030,7 +36700,11 @@
             "type": "string"
           },
           "startDate": {
-            "description": "The first day off. YYYY-MM-DD, a UTC day.",
+            "description": "The first day off. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
             "type": "string"
           },
           "type": {
@@ -36098,7 +36772,8 @@
           },
           "documentId": {
             "description": "A document already filed on the worker, from search_documents. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "document"
           },
           "fineAmount": {
             "description": "A fine, as a decimal such as 250.00.",
@@ -36138,7 +36813,11 @@
             "type": "string"
           },
           "occurredAt": {
-            "description": "When it happened. An ISO 8601 date and time with its UTC offset, such as 2026-10-01T08:00:00-05:00.",
+            "description": "When it happened. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
+            "examples": [
+              "2026-10-01T08:00:00-05:00"
+            ],
+            "format": "date-time",
             "type": "string"
           },
           "outOfService": {
@@ -36167,7 +36846,8 @@
           },
           "safetyEventId": {
             "description": "The safety event, from list_worker_safety_events. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "worker_safety_event"
           },
           "severity": {
             "description": "How serious it was.",
@@ -36182,7 +36862,8 @@
           },
           "shipmentId": {
             "description": "The load it happened on, from search_shipments or get_shipment. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "shipment"
           }
         },
         "required": [
@@ -36291,7 +36972,8 @@
         "properties": {
           "carrierId": {
             "description": "The carrier, from list_carriers or get_carrier. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "carrier"
           },
           "depth": {
             "description": "How deep a lookup: FMCSA is the public record, Lite and Full add the provider's profile. Defaults to Full.",
@@ -36344,7 +37026,8 @@
         "properties": {
           "customerId": {
             "description": "The broker customer, from list_customers. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "customer"
           },
           "force": {
             "description": "Look up again even when the last result is still current. It is charged; only when the person asks.",
@@ -36484,7 +37167,8 @@
           },
           "invoiceId": {
             "description": "The invoice, from list_invoices or get_invoice. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "invoice"
           },
           "reason": {
             "description": "Why it is voided; kept on the invoice.",
@@ -36636,7 +37320,8 @@
           },
           "serviceFailureId": {
             "description": "The failure, from list_service_failures or the page you are on. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "service_failure"
           }
         },
         "required": [
@@ -36666,6 +37351,112 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Voiding a failure is final and may send an EDI 214 to the customer's trading partner; only a person approves it."
+      }
+    },
+    {
+      "name": "wait_until",
+      "description": "Park this work until something happens, instead of checking back. Use it when the next step depends on the world: a truck reaching or leaving a stop (StopArrival, StopDeparture), a reply about a shipment or from a carrier or customer (Reply), an appointment coming round (AppointmentNear), detention free time running out (FreeTimeEnding), a driver's drive time falling low (HOSDriveBelow), or a time (Time). Nothing runs while it waits. When it ends, or gives up after giveUpAfterHours, you are started again in this same conversation or on this same record, told what happened and what you said you would do. A wait on something already true is refused with what is true now. After setting one, end your turn: tell the person in one line what you are waiting for and what you will do then.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "at": {
+            "description": "For Time: when to pick the work up. A local date and time as YYYY-MM-DDTHH:MM with no UTC offset, such as 2026-10-01T08:00, read in the timezone of where it happens; never Unix seconds.",
+            "examples": [
+              "2026-10-01T08:00"
+            ],
+            "format": "local-date-time",
+            "type": "string"
+          },
+          "carrierId": {
+            "description": "For Reply: a reply from this carrier.",
+            "type": "string"
+          },
+          "customerId": {
+            "description": "For Reply: a reply from this customer.",
+            "type": "string"
+          },
+          "description": {
+            "description": "What you are waiting for, in a few words a person reads beside the conversation: \"Truck 2214 to reach Kroger DC\".",
+            "type": "string"
+          },
+          "detentionOccurrenceId": {
+            "description": "For FreeTimeEnding: the detention record (detention.occurrence_opened names it).",
+            "type": "string"
+          },
+          "driveHoursBelow": {
+            "description": "For HOSDriveBelow: pick the work up once the driver has less than this many hours of drive time left.",
+            "type": "number"
+          },
+          "giveUpAfterHours": {
+            "description": "How long to wait before giving up and picking the work up anyway. Defaults to 24; at most 168.",
+            "type": "integer"
+          },
+          "minutesBefore": {
+            "description": "For AppointmentNear and FreeTimeEnding: how many minutes before the appointment or the end of free time to pick the work up.",
+            "type": "integer"
+          },
+          "shipmentId": {
+            "description": "For Reply: a reply about this shipment.",
+            "type": "string"
+          },
+          "shipmentMoveId": {
+            "description": "For StopArrival, StopDeparture and AppointmentNear: the move the stop is on.",
+            "type": "string"
+          },
+          "stopId": {
+            "description": "The stop: required for AppointmentNear; for StopArrival and StopDeparture, leave it out to wait for the move's next one.",
+            "type": "string"
+          },
+          "then": {
+            "description": "What you will do when it happens, so you pick up where you meant to.",
+            "type": "string"
+          },
+          "until": {
+            "description": "What to wait for.",
+            "enum": [
+              "Time",
+              "StopArrival",
+              "StopDeparture",
+              "Reply",
+              "AppointmentNear",
+              "FreeTimeEnding",
+              "HOSDriveBelow"
+            ],
+            "type": "string",
+            "x-enumOf": "agent_wait_kinds"
+          },
+          "workerId": {
+            "description": "For HOSDriveBelow: the driver.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "until",
+          "description"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "agent_run",
+        "operation": "read",
+        "scope": "run",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "agent_run",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": true,
+        "rationale": "Parks the agent's own work until something happens and starts it again then; it changes no record and reaches nobody."
       }
     },
     {
@@ -36869,7 +37660,8 @@
         "properties": {
           "disputeId": {
             "description": "The open dispute, from list_invoice_disputes. Never guess one.",
-            "type": "string"
+            "type": "string",
+            "x-recordOf": "invoice_dispute"
           },
           "notes": {
             "description": "Why the customer dropped it.",

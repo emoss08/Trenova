@@ -125,6 +125,10 @@ func compile(schema map[string]any) (*jsonschema.Schema, error) {
 
 	compiler := jsonschema.NewCompiler()
 	compiler.DefaultDraft(jsonschema.Draft2020)
+	compiler.AssertFormat()
+	for _, format := range dateFormatValidators {
+		compiler.RegisterFormat(format)
+	}
 	if err = compiler.AddResource(schemaURL, document); err != nil {
 		return nil, fmt.Errorf("load tool schema: %w", err)
 	}
@@ -183,6 +187,15 @@ func collect(
 		}
 	case *kind.Schema:
 		// The root saying "does not validate" restates its causes.
+	case *kind.Format:
+		if path == "" {
+			path = "params"
+		}
+		message, ours := FormatMessage(failure.Got, failure.Want)
+		if !ours {
+			message = failure.LocalizedString(printer)
+		}
+		multiErr.Add(path, errortypes.ErrInvalid, message)
 	default:
 		if path == "" {
 			path = "params"
@@ -211,9 +224,5 @@ func fieldPath(location []string) string {
 }
 
 func join(path, name string) string {
-	if path == "" {
-		return name
-	}
-
-	return path + "." + name
+	return JoinPath(path, name)
 }

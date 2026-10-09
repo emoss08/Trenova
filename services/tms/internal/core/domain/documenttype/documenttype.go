@@ -15,6 +15,9 @@ import (
 	"github.com/uptrace/bun"
 )
 
+// CodePOD is the code a proof of delivery is filed under.
+const CodePOD = "POD"
+
 var (
 	_ bun.BeforeAppendModelHook          = (*DocumentType)(nil)
 	_ validationframework.TenantedEntity = (*DocumentType)(nil)

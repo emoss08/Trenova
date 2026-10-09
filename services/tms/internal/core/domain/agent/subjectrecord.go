@@ -33,6 +33,8 @@ var subjectRecords = map[SubjectType]subjectRecord{
 	SubjectAccountingInbound:    {"acctic_", "accounting inbound change", "an"},
 	SubjectAccountingDrift:      {"acctdf_", "accounting drift finding", "an"},
 	SubjectFormulaTemplate:      {"ft_", "formula template", "a"},
+	SubjectInvoice:              {"inv_", "invoice", "an"},
+	SubjectInvoiceDispute:       {"idsp_", "invoice dispute", "an"},
 }
 
 var subjectsByPrefix = func() map[string]SubjectType {

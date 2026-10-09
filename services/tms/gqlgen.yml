@@ -2220,6 +2220,12 @@ models:
   AgentToolOutcome:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.ToolOutcomeCount
+  AgentToolVerdict:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ToolVerdictCount
+  AgentToolVerdictReason:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ToolVerdictReason
   AgentScorecardPoint:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.ScorecardPoint

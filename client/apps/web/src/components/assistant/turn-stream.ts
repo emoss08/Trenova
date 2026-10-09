@@ -13,6 +13,7 @@ import type {
   StepRationale,
   ToolEffect,
   ToolVerdict,
+  WatchedRecordChange,
 } from "@/types/assistant";
 
 /**
@@ -293,6 +294,17 @@ export type TurnLimit = {
   resetsAt: number;
 };
 
+/**
+ * What reached the turn while it worked: the person's words, read at the next
+ * step, and records that changed elsewhere, which the agent was told about.
+ */
+export type TurnInterjection =
+  | { kind: "steer"; id: string; text: string; mentions: AssistantEntityRef[] }
+  | { kind: "world"; key: string; changes: WatchedRecordChange[] };
+
+/** The turn the conversation's queue started once this one was saved. */
+export type NextTurn = { turnId: string; queuedId: string; input: string };
+
 export type TurnState = {
   status: TurnStatus;
   userContent: string;
@@ -327,6 +339,10 @@ export type TurnState = {
   thread: AssistantThread | null;
   /** When this reader began following the turn, in epoch milliseconds. */
   startedAt: number;
+  /** What reached the turn while it worked, in the order it arrived. */
+  interjections: TurnInterjection[];
+  /** The reply the queue started after this one, once it is named. */
+  next: NextTurn | null;
 };
 
 /** What a person hands over with a message besides the words. */
@@ -365,7 +381,22 @@ export function initialTurnState(
     followUp: context.followUp ?? false,
     thread: null,
     startedAt: context.startedAt ?? Date.now(),
+    interjections: [],
+    next: null,
   };
+}
+
+/** The queued messages the turn has read so far, by id. */
+export function steeredIds(
+  interjections: readonly TurnInterjection[] | undefined,
+): ReadonlySet<string> {
+  const ids = new Set<string>();
+  for (const interjection of interjections ?? []) {
+    if (interjection.kind === "steer") {
+      ids.add(interjection.id);
+    }
+  }
+  return ids;
 }
 
 /**
@@ -562,6 +593,47 @@ export function reduceTurn(state: TurnState, event: AssistantStreamEvent): TurnS
 
     case "thread":
       return { ...state, thread: event.data };
+
+    case "steered": {
+      // A reader that rejoins is sent the turn from its start, so a steer it
+      // already holds is not added twice.
+      const steer = event.data;
+      if (state.interjections.some((item) => item.kind === "steer" && item.id === steer.id)) {
+        return state;
+      }
+      return {
+        ...state,
+        interjections: [
+          ...state.interjections,
+          { kind: "steer", id: steer.id, text: steer.content, mentions: steer.mentions },
+        ],
+      };
+    }
+
+    case "world_changed": {
+      const changes = event.data.changes;
+      if (changes.length === 0) {
+        return state;
+      }
+      const key = changes.map((change) => `${change.recordId}:${change.at}`).join("|");
+      if (state.interjections.some((item) => item.kind === "world" && item.key === key)) {
+        return state;
+      }
+      return {
+        ...state,
+        interjections: [...state.interjections, { kind: "world", key, changes }],
+      };
+    }
+
+    case "next_turn":
+      return {
+        ...state,
+        next: {
+          turnId: event.data.turnId,
+          queuedId: event.data.queuedId,
+          input: event.data.input,
+        },
+      };
 
     case "done":
       // A refusal is complete in itself; done after it only says the turn

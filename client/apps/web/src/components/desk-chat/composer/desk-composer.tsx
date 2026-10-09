@@ -5,18 +5,24 @@ import {
 } from "@/components/assistant/composer-types";
 import { COMPACT_COMMAND, COMPACT_TEXT } from "@/components/assistant/composer-commands";
 import type { Suggestion } from "@/components/assistant/suggestions";
+import type { QueueMode } from "@/components/assistant/use-conversation-queue";
 import { useComposerDictation } from "@/components/assistant/use-composer-dictation";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { useDeskStore } from "@/stores/desk-store";
 import type { AssistantEntityRef } from "@/types/assistant";
 import { useDebounce } from "@trenova/shared/hooks/use-debounce";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
+import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { formatAltShortcut, isMacPlatform } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { DeskIcon } from "../desk-icons";
 import { DeskAgentPicker } from "./desk-agent-picker";
 import { MAX_ATTACHMENTS, type DeskAttachments } from "./desk-attachments";
+import { deskIconClass, deskIconOnClass, deskLinkClass } from "../desk-button-styles";
 import { DeskCapturePanel, type DeskScans } from "./desk-capture";
 import { DeskDictate } from "./desk-dictate";
 import { DeskMentionMirror, DeskMentionPicker, useDeskMentions } from "./desk-mentions";
@@ -52,6 +58,12 @@ export type DeskComposerProps = {
   onChange: (value: string) => void;
   onSend: (content: string, payload: ComposerPayload) => void;
   onStop?: () => void;
+  /**
+   * Takes what is typed while the agent works: steered into the reply under
+   * way at its next step, or queued to be sent once it ends. Without it the
+   * box only stops the reply while one is being written.
+   */
+  onSteer?: (content: string, payload: ComposerPayload, mode: QueueMode) => void;
   agent: AgentChoice | null;
   onAgentChange?: (agent: AgentChoice) => void;
   recentAgentIds?: readonly string[];
@@ -111,13 +123,15 @@ export type DeskComposerProps = {
  * starter questions: Tab drops the one on screen into the box and ⌘1–⌘3 asks
  * it outright. A slash lists commands, an @ names a record, the plus attaches
  * files or scans paper, and the microphone writes what is said into the box.
- * Enter sends, Shift+Enter breaks a line.
+ * Enter sends, Shift+Enter breaks a line. While the agent works, Enter steers
+ * the reply under way and Option+Enter queues the message for after it.
  */
 export function DeskComposer({
   value,
   onChange,
   onSend,
   onStop,
+  onSteer,
   agent,
   onAgentChange,
   recentAgentIds = [],
@@ -160,16 +174,23 @@ export function DeskComposer({
   const uploading = attachments?.uploading ?? false;
   const ready = attachments?.ready ?? [];
   const blocked = (attachments?.failed ?? 0) > 0;
+  // While the agent works, what is typed steers the reply or waits for it.
+  // Files only ever wait: a reply under way reads words, not documents.
+  const steering = busy && onSteer !== undefined;
+  const rt = useRichT();
+  const [mac] = useState(isMacPlatform);
+  const queueKeysLabel = formatAltShortcut(mac ? "↵" : "Enter", mac);
+  const filesOnly = ready.length > 0;
   const canSend =
     (value.trim() !== "" || ready.length > 0) &&
     !uploading &&
     !blocked &&
-    !busy &&
+    (!busy || steering) &&
     !disabled &&
     !compacting &&
     !lock;
 
-  const send = (content: string) => {
+  const send = (content: string, mode: QueueMode = filesOnly ? "queue" : "steer") => {
     if (onCompact && content.trim() === COMPACT_TEXT) {
       if (!busy && !compacting && !lock) {
         onChange("");
@@ -181,15 +202,29 @@ export function DeskComposer({
     if (text === "" && ready.length > 0) {
       text = ready.length > 1 ? t("What's in these?") : t("What's in this?");
     }
-    if (text === "" || busy || disabled || compacting || lock || uploading || blocked || wait > 0) {
+    if (
+      text === "" ||
+      (busy && !steering) ||
+      disabled ||
+      compacting ||
+      lock ||
+      uploading ||
+      blocked ||
+      wait > 0
+    ) {
       return;
     }
     dictation.release();
     markTermsSeen();
-    onSend(text, {
+    const payload = {
       attachments: readyAttachments(ready),
       mentions: activeMentions(text, mentions),
-    });
+    };
+    if (steering && onSteer) {
+      onSteer(text, payload, filesOnly ? "queue" : mode);
+    } else {
+      onSend(text, payload);
+    }
     onChange("");
     onMentionsChange?.([]);
   };
@@ -255,7 +290,7 @@ export function DeskComposer({
       const withModifier = event.metaKey || event.ctrlKey;
       if ((settings.send === "mod") === withModifier) {
         event.preventDefault();
-        send(value);
+        send(value, event.altKey ? "queue" : undefined);
       }
     }
   };
@@ -316,9 +351,14 @@ export function DeskComposer({
           {(status.extra || status.action) && <span className="dk-ec-sp" />}
           {status.extra && <span className="dk-ec-att">{status.extra}</span>}
           {status.action && (
-            <button type="button" className="dk-ec-link" onClick={status.action.onClick}>
+            <Button
+              variant="bare"
+              size="bare"
+              className={deskLinkClass}
+              onClick={status.action.onClick}
+            >
               {status.action.label}
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -336,9 +376,9 @@ export function DeskComposer({
           </span>
           <span className="dk-ec-sp" />
           {onCancelCompact && (
-            <button type="button" className="dk-ec-link" onClick={onCancelCompact}>
+            <Button variant="bare" size="bare" className={deskLinkClass} onClick={onCancelCompact}>
               {t("Cancel")}
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -368,8 +408,10 @@ export function DeskComposer({
                 ? ""
                 : compacting
                   ? t("You can reply once compacting finishes")
-                  : (placeholder ??
-                    (agent ? t("Reply to {0}…", agent.name) : t("Ask the Desk anything…")))
+                  : steering
+                    ? ""
+                    : (placeholder ??
+                      (agent ? t("Reply to {0}…", agent.name) : t("Ask the Desk anything…")))
             }
             aria-label={agent ? t("Message {0}", agent.name) : t("Message the Desk")}
             onChange={(event) => {
@@ -384,6 +426,15 @@ export function DeskComposer({
             }
             onKeyDown={onKeyDown}
           />
+          {steering && !typing && !compacting && value === "" && (
+            <div className="dk-tw dk-steer-ph" aria-hidden>
+              {rt(
+                "Steer {0}, or <keys/> to queue a follow-up…",
+                { keys: () => <QueueKeys mac={mac} /> },
+                agent?.name ?? t("the agent"),
+              )}
+            </div>
+          )}
           {typing && (
             <div className="dk-tw" aria-hidden>
               <span>{typed.text}</span>
@@ -403,9 +454,10 @@ export function DeskComposer({
       <div className="dk-cmp-b">
         {attachments && (
           <span className="relative">
-            <button
-              type="button"
-              className={cn("dk-ib", menu && "dk-on")}
+            <Button
+              variant="quiet"
+              size="bare"
+              className={cn(deskIconClass, menu && deskIconOnClass)}
               title={full ? t("Up to {0} files per message", MAX_ATTACHMENTS) : t("Attach files")}
               aria-label={t("Attach files")}
               aria-haspopup="menu"
@@ -415,7 +467,7 @@ export function DeskComposer({
               onClick={() => setMenu((current) => (current ? null : "menu"))}
             >
               <DeskIcon name="plus" size={16} />
-            </button>
+            </Button>
             <input
               ref={fileInputRef}
               type="file"
@@ -460,22 +512,54 @@ export function DeskComposer({
         {model}
         {meter}
         {!lock && settings.mic === "on" && (
-          <DeskDictate dictation={dictation} disabled={busy || disabled || Boolean(compacting)} />
+          <DeskDictate
+            dictation={dictation}
+            disabled={(busy && !steering) || disabled || Boolean(compacting)}
+          />
         )}
-        {busy ? (
-          <button
-            type="button"
-            className="dk-send dk-stop"
+        {steering && canSend && !filesOnly && (
+          <Button
+            variant="quiet"
+            size="bare"
+            className={deskIconClass}
+            title={t("Queue it to send after this reply ({0})", queueKeysLabel)}
+            aria-label={t("Queue a follow-up")}
+            onClick={() => send(value, "queue")}
+          >
+            <DeskIcon name="enter" size={15} />
+          </Button>
+        )}
+        {busy && steering && canSend ? (
+          <Button
+            variant="bare"
+            size="bare"
+            className={sendClass}
+            title={
+              filesOnly
+                ? t("Queue it to send after this reply ({0})", queueKeysLabel)
+                : t("Steer the reply under way (↵)")
+            }
+            aria-label={filesOnly ? t("Queue a follow-up") : t("Steer the reply")}
+            onClick={() => send(value)}
+          >
+            <DeskIcon name="up" size={15} stroke={2.2} />
+          </Button>
+        ) : busy ? (
+          <Button
+            variant="bare"
+            size="bare"
+            className={cn(sendClass, "bg-transparent ring-[1.5px] ring-dsk-b-strong ring-inset")}
             title={t("Stop")}
             aria-label={t("Stop the reply")}
             onClick={onStop}
           >
-            <span className="dk-sq" />
-          </button>
+            <span className="size-2.5 rounded-[2.5px] bg-dsk-fg" />
+          </Button>
         ) : (
-          <button
-            type="button"
-            className="dk-send"
+          <Button
+            variant="bare"
+            size="bare"
+            className={cn(sendClass, lock && wait > 0 && "disabled:opacity-55")}
             disabled={!canSend || wait > 0}
             title={
               wait > 0
@@ -494,10 +578,24 @@ export function DeskComposer({
             ) : (
               <DeskIcon name="up" size={15} stroke={2.2} />
             )}
-          </button>
+          </Button>
         )}
       </div>
       {note && <div className="dk-ec-cnote">{note}</div>}
     </div>
+  );
+}
+
+/** The round send, steer and stop button at the end of the bar. */
+const sendClass =
+  "ml-1 size-7.5 justify-center rounded-full bg-dsk-ink text-dsk-ink-fg transition-[opacity,scale] duration-150 ease-(--dk-spring) not-disabled:hover:scale-106 not-disabled:active:scale-92 disabled:cursor-default disabled:opacity-18";
+
+/** The keys that queue a message for after the reply, as this platform spells them. */
+function QueueKeys({ mac }: { mac: boolean }) {
+  return (
+    <KbdGroup className="dk-steer-keys">
+      <Kbd>{mac ? "⌥" : "Alt"}</Kbd>
+      <Kbd>{mac ? "↵" : "Enter"}</Kbd>
+    </KbdGroup>
   );
 }

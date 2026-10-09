@@ -18,7 +18,7 @@ platform:
   referenceDataStewards: []
   instanceId: "" # Identifies this installation; set from TRENOVA_INSTANCE_ID
   # The Trenova Cloud edition adds the cloud platform mode and its own sections
-  # (platform.cloud, platform.controlPlane, system.networkPulse and aiRetraining). They
+  # (platform.cloud, platform.controlPlane and aiRetraining). They
   # are not part of the self-hosted build, and the loader refuses them here because
   # configuration is decoded strictly.
 

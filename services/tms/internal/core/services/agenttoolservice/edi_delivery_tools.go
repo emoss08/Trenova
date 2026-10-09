@@ -322,6 +322,15 @@ func newReprocessEDIInboundFilesTool(files inboundFileReprocessor) serviceports.
 
 func (t *reprocessEDIInboundFilesTool) Name() string { return "reprocess_edi_inbound_files" }
 
+func (t *reprocessEDIInboundFilesTool) Recipe() []string {
+	return []string{
+		"get_edi_inbound_file",
+		"get_edi_partner",
+		"list_edi_inbound_files",
+		"reprocess_edi_inbound_files",
+	}
+}
+
 func (t *reprocessEDIInboundFilesTool) Description() string {
 	return "Propose running quarantined or partly processed inbound EDI files through " +
 		"processing again. Use it once what held them back is fixed, such as a partner " +

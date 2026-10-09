@@ -412,7 +412,11 @@ func (a *Activities) EndCompactionActivity(
 	payload := in.Payload
 	autoOff := false
 	if in.Status == conversation.AssistantTurnStatusStopped && payload.Auto {
-		if err := a.assistant.StopCompactingItself(ctx, payload.ThreadID, payload.tenantInfo()); err != nil {
+		if err := a.assistant.StopCompactingItself(
+			ctx,
+			payload.ThreadID,
+			payload.tenantInfo(),
+		); err != nil {
 			a.logger.Warn("could not stop a conversation compacting itself",
 				zap.String("thread", payload.ThreadID.String()),
 				zap.Error(err),
@@ -456,12 +460,13 @@ func (a *Activities) closeCompaction(
 		a.turns.Complete(ctx, turn, status, cause)
 	}
 
-	if a.followUps != nil {
-		a.followUps.ResumeFollowUps(ctx, serviceports.ResumeFollowUpsRequest{
-			TenantInfo: payload.tenantInfo(),
-			ThreadID:   payload.ThreadID,
-		})
-	}
+	a.continueConversation(ctx, &conversationContinuation{
+		tenant:   payload.tenantInfo(),
+		threadID: payload.ThreadID,
+		userID:   payload.Actor.UserID,
+		status:   status,
+		resume:   true,
+	})
 }
 
 // StartAutoCompactionActivity starts a conversation compacting itself, once

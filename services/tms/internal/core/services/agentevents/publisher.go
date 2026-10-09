@@ -21,7 +21,8 @@ type Params struct {
 	Logger      *zap.Logger
 	Definitions repositories.AgentDefinitionRepository
 	RunService  services.AgentRunService
-	Plans       services.PlanService `optional:"true"`
+	Plans       services.PlanService       `optional:"true"`
+	Waits       services.AgentWaitNotifier `optional:"true"`
 }
 
 type Publisher struct {
@@ -29,6 +30,7 @@ type Publisher struct {
 	definitions repositories.AgentDefinitionRepository
 	runService  services.AgentRunService
 	plans       services.PlanService
+	waits       services.AgentWaitNotifier
 }
 
 func New(p Params) services.AgentEventPublisher {
@@ -37,6 +39,7 @@ func New(p Params) services.AgentEventPublisher {
 		definitions: p.Definitions,
 		runService:  p.RunService,
 		plans:       p.Plans,
+		waits:       p.Waits,
 	}
 }
 
@@ -56,6 +59,13 @@ func (p *Publisher) Publish(ctx context.Context, event services.AgentEvent) {
 		return
 	}
 	ctx = dbscope.WithTenant(ctx, event.TenantInfo.DBTenant())
+
+	// A wait is the agent's own work parked on what this event says
+	// happened. It is told before the plan is consulted: an organization
+	// without automated agents still has conversations that wait.
+	if p.waits != nil {
+		p.waits.NotifyEvent(ctx, &event)
+	}
 
 	allowed, err := planservice.Allows(
 		ctx,

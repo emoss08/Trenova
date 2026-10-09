@@ -61,9 +61,10 @@ type ActivitiesParams struct {
 	Logger    *zap.Logger
 	Runtime   *agentruntime.Service
 	Steps     serviceports.RunStepLedger
-	Observer  ToolObserver      `optional:"true"`
-	Delegates DelegateOpener    `optional:"true"`
-	Metrics   *metrics.Registry `optional:"true"`
+	Observer  ToolObserver                  `optional:"true"`
+	Delegates DelegateOpener                `optional:"true"`
+	Metrics   *metrics.Registry             `optional:"true"`
+	Changes   serviceports.RecordChangeFeed `optional:"true"`
 }
 
 // Activities are a turn's effects, one activity each.
@@ -74,6 +75,7 @@ type Activities struct {
 	observer  ToolObserver
 	delegates DelegateOpener
 	metrics   *metrics.Assistant
+	changes   serviceports.RecordChangeFeed
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -84,7 +86,27 @@ func NewActivities(p ActivitiesParams) *Activities {
 		observer:  p.Observer,
 		delegates: p.Delegates,
 		metrics:   metrics.AssistantFrom(p.Metrics),
+		changes:   p.Changes,
 	}
+}
+
+// CheckWorldActivity reads what changed elsewhere, since the turn last
+// looked, to the records the turn is working with. It reads the realtime
+// stream, never the database, so it runs as a local activity between steps.
+func (a *Activities) CheckWorldActivity(
+	ctx context.Context,
+	in *WorldCheckInput,
+) (*serviceports.RecordChanges, error) {
+	if a.changes == nil {
+		return &serviceports.RecordChanges{Cursor: in.Check.Cursor}, nil
+	}
+
+	return a.changes.Since(ctx, &serviceports.RecordChangesRequest{
+		OrganizationID: in.OrganizationID,
+		BusinessUnitID: in.BusinessUnitID,
+		Cursor:         in.Check.Cursor,
+		Records:        in.Check.Records,
+	})
 }
 
 // ModelCallActivity asks the model for one reply and streams it to the run's

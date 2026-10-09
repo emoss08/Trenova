@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 558.
+Tools listed: 560.
 
 ## The model
 
@@ -61,7 +61,7 @@ and Confidential fields never reach a model at all.
 | --- | --- | --- | --- | --- |
 | Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 191 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 8 |
-| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 224 |
+| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 226 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 3 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 24 |
 | Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 33 |
@@ -308,6 +308,7 @@ Changes records only people inside the organization see.
 | Cancel journal reversal (`cancel_journal_reversal`) | Inside the organization | Ask first | The reason is what the reversal's requester reads next, so a run that has read outside text proposes it. | — | Withdraws a reversal before it reaches the ledger; nothing is booked, and it is requested again if it was needed after all. |
 | Cancel manual journal (`cancel_manual_journal`) | Inside the organization | Ask first | The reason is what the journal's author reads next, so a run that has read outside text proposes it. | — | Withdraws a journal before it reaches the ledger; nothing is booked, and the entry is drafted again if it was needed after all. |
 | Cancel report run (`cancel_report_run`) | Inside the organization | Automatic | — | — | Stops a report the person asked for from running; nothing is changed or sent, and running the report again gives the same rows. |
+| Cancel wait (`cancel_wait`) | Inside the organization | Automatic | — | Carries outside text into later runs | Cancels a wait the agent set on its own work; it changes no record and reaches nobody. |
 | Cancel worker checklist (`cancel_worker_checklist`) | Inside the organization | Propose | — | — | Cancels a checklist inside Trenova; nothing is sent, and a cancelled checklist is started again from its template. |
 | Change accounting backfill (`change_accounting_backfill`) | Inside the organization | Ask first | — | — | Changes how much history reaches the organization's books; a person who manages the integration approves it, and pausing or cancelling sends nothing. |
 | Change worker safety event status (`change_worker_safety_event_status`) | Inside the organization | Ask first | — | — | Moves a safety event's status inside Trenova; nothing is sent, and the event is reopened or closed again the same way. |
@@ -498,6 +499,7 @@ Changes records only people inside the organization see.
 | Update worker injury (`update_worker_injury`) | Inside the organization | Ask first | — | — | Corrects a case on the OSHA log inside Trenova; nothing is sent, and it is corrected again the same way. |
 | Update worker safety event (`update_worker_safety_event`) | Inside the organization | Ask first | — | — | Corrects an event on a driver's safety record inside Trenova; nothing is sent, and the event is corrected again the same way. |
 | Verify carrier equipment (`verify_carrier_equipment`) | Inside the organization | Ask first | — | — | Records an equipment check inside Trenova after a provider lookup; nothing is sent to the carrier. |
+| Wait until (`wait_until`) | Inside the organization | Automatic | — | Carries outside text into later runs | Parks the agent's own work until something happens and starts it again then; it changes no record and reaches nobody. |
 | Withdraw invoice dispute (`withdraw_invoice_dispute`) | Inside the organization | Ask first | A withdrawal read from what a customer wrote is proposed, since it sends the invoice back to collections. | — | Closes a dispute case inside Trenova with no outcome; it moves no money and a new case can be opened with open_invoice_dispute. |
 
 ## Seen by a customer

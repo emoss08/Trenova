@@ -155,9 +155,11 @@ func (s *Service) PrepareCompaction(
 		Kept:         kept,
 		Instructions: before.Instructions,
 		Request: &services.ChatCompletionRequest{
-			TenantInfo:          actor.TenantInfo(),
-			System:              compactionPrompt(definition.Name),
-			Messages:            []services.Message{{Role: services.RoleUser, Content: compactionTranscript(older)}},
+			TenantInfo: actor.TenantInfo(),
+			System:     compactionPrompt(definition.Name),
+			Messages: []services.Message{
+				{Role: services.RoleUser, Content: compactionTranscript(older)},
+			},
 			MaxTokens:           conversation.SummaryTokenBudget,
 			PreferredProviderID: compactionProvider(thread, definition),
 			Attribution:         compactionAttribution(definition, thread, actor, req.TurnID),
@@ -529,7 +531,10 @@ func compactionTranscript(older []conversation.Message) string {
 		dropped++
 	}
 	if dropped > 0 {
-		note := fmt.Sprintf("[%d older messages were too long to include and are left out.]", dropped)
+		note := fmt.Sprintf(
+			"[%d older messages were too long to include and are left out.]",
+			dropped,
+		)
 		lines = append(lines[:keepFrom], append([]string{note}, lines[keepFrom:]...)...)
 	}
 
@@ -544,6 +549,8 @@ func transcriptLines(older []conversation.Message, toolChars int) []string {
 		case message.Compacted():
 			lines = append(lines, "Summary of the conversation before this:\n"+message.Content)
 		case message.Refused:
+		case message.Kind == conversation.MessageKindWorldChange:
+			lines = append(lines, "Notice: "+message.Content)
 		case message.Role == conversation.RoleUser:
 			if strings.TrimSpace(message.Content) != "" {
 				lines = append(lines, "Person: "+message.Content)

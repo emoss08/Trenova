@@ -9,11 +9,14 @@ import { queries } from "@/lib/queries";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskStore } from "@/stores/desk-store";
 import type { AssistantMessage, AssistantThread } from "@/types/assistant";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DeskWorkspace } from "./artifacts/desk-workspace";
+import { DeskCaseCard } from "./case/desk-case-card";
+import { useDeskCase } from "./case/use-desk-case";
+import { useSnoozeClock } from "./case/use-snooze-clock";
 import { withoutPendingLookups } from "./artifacts/pending-lookups";
 import { DeskFactsBar } from "./composer/desk-facts";
 import { DeskScheduleCard } from "./conversation/desk-schedule-card";
@@ -110,6 +113,16 @@ export function DeskConversation({
   );
 
   const schedules = useDeskSchedules(thread.id, timezone);
+  const deskCase = useDeskCase(thread);
+  const queryClient = useQueryClient();
+  const refreshCase = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: queries.assistant.threads().queryKey });
+    void queryClient.invalidateQueries({ queryKey: queries.assistant.case(thread.id).queryKey });
+  }, [queryClient, thread.id]);
+  const now = useSnoozeClock(
+    thread.case?.state === "Snoozed" ? thread.case.snoozedUntil : null,
+    refreshCase,
+  );
   const chapterApi = useMemo(
     () => ({
       of: (messageId: string) => (chapters ? chapters.indexOf(messageId) + 1 : 0),
@@ -146,7 +159,20 @@ export function DeskConversation({
       schedules={schedules}
       chapters={chapterApi}
       renderHandoff={renderHandoff}
-      dockTop={thread.canContinue ? <DeskFactsBar thread={thread} /> : null}
+      dockTop={(dock) => (
+        <>
+          {thread.case && (
+            <DeskCaseCard
+              thread={thread}
+              deskCase={deskCase}
+              dock={dock}
+              now={now}
+              timezone={timezone}
+            />
+          )}
+          {thread.canContinue && <DeskFactsBar thread={thread} />}
+        </>
+      )}
     />
   );
 }

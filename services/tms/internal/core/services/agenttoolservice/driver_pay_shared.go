@@ -86,24 +86,10 @@ func objectParams(properties map[string]any, required ...string) map[string]any 
 	return schema
 }
 
-func idProperty(description string) map[string]any {
-	return map[string]any{
-		toolschema.KeyType:        toolschema.TypeString,
-		toolschema.KeyDescription: description,
-	}
-}
-
 func amountProperty(description string) map[string]any {
 	return map[string]any{
 		toolschema.KeyType:        toolschema.TypeString,
 		toolschema.KeyDescription: description,
-	}
-}
-
-func dateProperty(description string) map[string]any {
-	return map[string]any{
-		toolschema.KeyType:        toolschema.TypeString,
-		toolschema.KeyDescription: description + " YYYY-MM-DD.",
 	}
 }
 
@@ -112,7 +98,10 @@ func errUnknownValue(key, raw string, names []string) error {
 }
 
 func workerProperty() map[string]any {
-	return idProperty("The driver, from search_worker or list_workers. Never guess one.")
+	return agenttoolschema.RecordIDText(
+		permission.ResourceWorker,
+		"The driver, from search_worker or list_workers. Never guess one.",
+	)
 }
 
 var driverPayDateTypes = map[string]assistantartifact.DisplayType{

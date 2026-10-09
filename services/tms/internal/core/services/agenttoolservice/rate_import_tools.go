@@ -88,7 +88,8 @@ func targetRateImport(params map[string]any) (serviceports.ToolTarget, bool) {
 
 func newCommitRateImportTool(imports rateImportKeeper) serviceports.AgentTool {
 	return newReceivableTool(rateMoneySpec(&receivableSpec{
-		name: "commit_rate_import",
+		name:   "commit_rate_import",
+		recipe: []string{"list_rate_imports", "commit_rate_import"},
 		description: "Propose applying a reviewed rate sheet to its agreement from the " +
 			"import's day. The lanes it changes and drops are closed out, its new rates take " +
 			"effect, and the old rates stay in history. Read it with list_rate_imports first. It " +
@@ -287,8 +288,8 @@ func newRunRateSimulationTool(simulations rateSimulationKeeper) serviceports.Age
 			paramDescription: stringProperty("What it is meant to answer.", maxSimulationText),
 			paramPartyType: agenttoolschema.Enum("Which side to replay: what customers are "+
 				"charged or what carriers are paid. Defaults to Customer.", simulationParties),
-			paramSampleFrom: dateProperty("The first ship day to replay."),
-			paramSampleTo:   dateProperty("The last ship day to replay."),
+			paramSampleFrom: agenttoolschema.Date("The first ship day to replay."),
+			paramSampleTo:   agenttoolschema.Date("The last ship day to replay."),
 			paramSampleLimit: integerProperty("The most shipments to replay. Leave it out "+
 				"for every shipment in the window.", 1, maxSampleShipments),
 		},

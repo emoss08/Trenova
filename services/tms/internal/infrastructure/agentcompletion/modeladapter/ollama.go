@@ -284,7 +284,7 @@ func toOllamaTools(tools []ToolSpec) []ollamaTool {
 			Function: ollamaToolFunction{
 				Name:        tool.Name,
 				Description: tool.Description,
-				Parameters:  toolschema.ForModel(tool.Parameters),
+				Parameters:  toolschema.ForPortableModel(tool.Parameters),
 			},
 		})
 	}

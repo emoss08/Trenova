@@ -251,41 +251,63 @@ func TestEvaluate_SendsRequestAsUntrustedContext(t *testing.T) {
 func TestEvaluateOutput(t *testing.T) {
 	t.Parallel()
 
-	t.Run("refuses a fenced code block", func(t *testing.T) {
+	t.Run("takes out a fenced code block and keeps the answer", func(t *testing.T) {
 		t.Parallel()
-		decision := agentguard.EvaluateOutput("Sure:\n```python\nprint(1)\n```")
-		require.False(t, decision.Allowed)
+		reply, decision := agentguard.EvaluateOutput(
+			"Load 12345 is in transit.\n```python\nprint(1)\n```\nIt delivers Friday.")
+		require.True(t, decision.Allowed)
+		assert.True(t, decision.Altered)
+		assert.Equal(t, agentguard.StageOutput, decision.Stage)
 		assert.Equal(t, agentguard.ReasonCodeGeneration, decision.Reason)
+		assert.Equal(t, "output_code_fence_with_language", decision.MatchedRule)
+		assert.Equal(t, "Load 12345 is in transit.\n"+agentguard.CodeBlockOmitted+
+			"\nIt delivers Friday.", reply)
 	})
 
-	t.Run("refuses function syntax", func(t *testing.T) {
+	t.Run("takes out a function and its body", func(t *testing.T) {
 		t.Parallel()
-		decision := agentguard.EvaluateOutput("def rate(miles):\n    return miles")
-		require.False(t, decision.Allowed)
+		reply, decision := agentguard.EvaluateOutput("The rate is per mile.\n" +
+			"def rate(miles):\n    return miles\n\nAsk billing to change it.")
+		assert.True(t, decision.Altered)
+		assert.Equal(t, "output_function_syntax", decision.MatchedRule)
+		assert.Equal(t, "The rate is per mile.\n"+agentguard.CodeBlockOmitted+
+			"\n\nAsk billing to change it.", reply)
+	})
+
+	t.Run("takes out an unlabelled block that holds source", func(t *testing.T) {
+		t.Parallel()
+		reply, decision := agentguard.EvaluateOutput(
+			"Try:\n```\nfunc rate(m int) int {\n\treturn m\n}\n```")
+		assert.True(t, decision.Altered)
+		assert.Equal(t, "Try:\n"+agentguard.CodeBlockOmitted, reply)
 	})
 
 	t.Run("allows an ordinary operational answer", func(t *testing.T) {
 		t.Parallel()
-		decision := agentguard.EvaluateOutput(
-			"Load 12345 is assigned to driver Maria Ortiz and is routed through the Memphis terminal.",
-		)
+		answer := "Load 12345 is assigned to driver Maria Ortiz and is routed through the " +
+			"Memphis terminal."
+		reply, decision := agentguard.EvaluateOutput(answer)
 		assert.True(t, decision.Allowed)
+		assert.False(t, decision.Altered)
+		assert.Equal(t, answer, reply)
 	})
 
 	t.Run("allows a markdown table of freight data", func(t *testing.T) {
 		t.Parallel()
-		decision := agentguard.EvaluateOutput(
-			"| Load | Class | Status |\n|---|---|---|\n| 12345 | 70 | In Transit |",
-		)
-		assert.True(t, decision.Allowed)
+		table := "| Load | Class | Status |\n|---|---|---|\n| 12345 | 70 | In Transit |"
+		reply, decision := agentguard.EvaluateOutput(table)
+		assert.False(t, decision.Altered)
+		assert.Equal(t, table, reply)
 	})
 
 	t.Run("allows an unlabelled block holding freight data", func(t *testing.T) {
 		t.Parallel()
 		// A fence with no language tag is usually a manifest or an address, not a
-		// program, so it must not be refused.
-		decision := agentguard.EvaluateOutput("Manifest:\n```\nBOL 998812\nPallets 14\n```")
-		assert.True(t, decision.Allowed)
+		// program, so it is left as it is.
+		manifest := "Manifest:\n```\nBOL 998812\nPallets 14\n```"
+		reply, decision := agentguard.EvaluateOutput(manifest)
+		assert.False(t, decision.Altered)
+		assert.Equal(t, manifest, reply)
 	})
 }
 

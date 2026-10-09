@@ -38,6 +38,75 @@ const shelved = (groups: ReturnType<typeof groupDeskThreadsByRecency>) =>
  * above the calendar. Empty shelves are left out: a single "Older" heading
  * over everything says nothing.
  */
+function caseOf(
+  state: "Working" | "Waiting" | "Snoozed" | "Settled",
+  snoozedUntil?: number,
+): NonNullable<AssistantThread["case"]> {
+  return {
+    state,
+    openWaits: 0,
+    snoozedUntil,
+    record: {
+      type: "Shipment",
+      id: "shp_1",
+      label: "10293",
+      status: "InTransit",
+      closed: state === "Settled",
+      closedAs: state === "Settled" ? "Invoiced" : "",
+      invoiceId: "",
+      customerId: "",
+      carrierIds: [],
+    },
+  };
+}
+
+/**
+ * A case put away until later, or whose record has closed, is not what the
+ * person is working on today: it sits below the calendar on a shelf of its
+ * own. A snooze that has run out reads against now, not the state the
+ * server sent, so the case comes back to the calendar on time.
+ */
+describe("groupDeskThreadsByRecency with cases", () => {
+  it("shelves snoozed and settled cases below the calendar", () => {
+    const groups = groupDeskThreadsByRecency(
+      [
+        thread({ id: "settled", case: caseOf("Settled") }),
+        thread({ id: "snoozed", case: caseOf("Snoozed", NOW + 3600) }),
+        thread({ id: "working", case: caseOf("Working") }),
+        thread({ id: "plain" }),
+      ],
+      NOW,
+      { pinnedFirst: true, timezone: "UTC" },
+    );
+
+    expect(shelved(groups)).toEqual([
+      ["today", ["working", "plain"]],
+      ["snoozed", ["snoozed"]],
+      ["settled", ["settled"]],
+    ]);
+  });
+
+  it("brings a snooze that has run out back to the calendar", () => {
+    const groups = groupDeskThreadsByRecency(
+      [thread({ id: "woke", case: caseOf("Snoozed", NOW - 1) })],
+      NOW,
+      { pinnedFirst: true, timezone: "UTC" },
+    );
+
+    expect(shelved(groups)).toEqual([["today", ["woke"]]]);
+  });
+
+  it("keeps a pinned case on the pinned shelf", () => {
+    const groups = groupDeskThreadsByRecency(
+      [thread({ id: "pinned", pinned: true, case: caseOf("Settled") })],
+      NOW,
+      { pinnedFirst: true, timezone: "UTC" },
+    );
+
+    expect(shelved(groups)).toEqual([["pinned", ["pinned"]]]);
+  });
+});
+
 describe("groupDeskThreadsByRecency", () => {
   it("shelves by today, yesterday, this week, this month and older, newest first on each", () => {
     const groups = groupDeskThreadsByRecency(

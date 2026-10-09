@@ -3,6 +3,7 @@ package agenttoolservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -37,7 +38,7 @@ func masterDateTime[T any](key, description string, at func(*T) *int64) masterFi
 	return masterField[T]{
 		key: key,
 		property: func(update bool) map[string]any {
-			return dateTimeProperty(description + keepSuffix(update, false))
+			return agenttoolschema.DateTime(description + keepSuffix(update, false))
 		},
 		apply: func(_ context.Context, in *masterInput, entity *T) error {
 			text, err := in.text(key)

@@ -160,6 +160,7 @@ func agentRunListSpec() listSpec {
 					string(agent.RunTriggerScheduled),
 					string(agent.RunTriggerEvent),
 					string(agent.RunTriggerContinuous),
+					string(agent.RunTriggerWait),
 				},
 			},
 			{

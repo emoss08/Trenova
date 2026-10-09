@@ -86,6 +86,9 @@ type Decision struct {
 	// MatchedRule names the deterministic rule that fired, for debugging a false
 	// positive without re-running the request.
 	MatchedRule string `json:"matchedRule,omitempty"`
+	// Altered says the output guard let the reply through with something taken
+	// out of it, which Reason and MatchedRule name.
+	Altered bool `json:"altered,omitempty"`
 }
 
 func allowed(stage Stage, category Category) Decision {

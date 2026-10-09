@@ -41,6 +41,10 @@ func newApproveWorkerPTOTool(pto ptoApprover) serviceports.AgentTool {
 
 func (t *approveWorkerPTOTool) Name() string { return "approve_worker_pto" }
 
+func (t *approveWorkerPTOTool) Recipe() []string {
+	return []string{"list_time_off", "get_worker_schedule", "approve_worker_pto"}
+}
+
 func (t *approveWorkerPTOTool) Description() string {
 	return "Approve a worker's time-off request. Approving books the days against " +
 		"their balance and takes them off the board for those dates, so check what " +

@@ -1,8 +1,21 @@
 import { calendarDaysAgo } from "@/lib/calendar-days";
+import { caseStateOf } from "@/lib/case-state";
 import type { AssistantThread } from "@/types/assistant";
 
-/** A shelf of the rail: what the person pinned, or how long ago the rest was touched. */
-export type DeskShelfKey = "pinned" | "today" | "yesterday" | "week" | "month" | "older";
+/**
+ * A shelf of the rail: what the person pinned, how long ago the rest was
+ * touched, and below them the cases put away until later and the cases
+ * whose record has closed.
+ */
+export type DeskShelfKey =
+  | "pinned"
+  | "today"
+  | "yesterday"
+  | "week"
+  | "month"
+  | "older"
+  | "snoozed"
+  | "settled";
 
 export type DeskThreadShelf = {
   key: DeskShelfKey;
@@ -23,6 +36,8 @@ const SHELF_ORDER: readonly DeskShelfKey[] = [
   "week",
   "month",
   "older",
+  "snoozed",
+  "settled",
 ];
 
 function touchedAt(thread: AssistantThread): number {
@@ -41,10 +56,31 @@ function shelfFor(daysAgo: number): DeskShelfKey {
   return "older";
 }
 
+function shelfOf(
+  thread: AssistantThread,
+  now: number,
+  pinnedFirst: boolean,
+  timezone: string,
+): DeskShelfKey {
+  if (pinnedFirst && thread.pinned) {
+    return "pinned";
+  }
+  const state = thread.case ? caseStateOf(thread.case, now) : null;
+  if (state === "Snoozed") {
+    return "snoozed";
+  }
+  if (state === "Settled") {
+    return "settled";
+  }
+
+  return shelfFor(calendarDaysAgo(touchedAt(thread), now, timezone));
+}
+
 /**
  * The rail's order: what the person pinned on top, then the rest shelved by
  * how recently it was touched on the reader's own calendar, newest first on
- * each shelf. Shelves with nothing on them are left out.
+ * each shelf, then the snoozed cases and the settled ones. Shelves with
+ * nothing on them are left out.
  */
 export function groupDeskThreadsByRecency(
   threads: readonly AssistantThread[],
@@ -57,10 +93,7 @@ export function groupDeskThreadsByRecency(
 
   const byShelf = new Map<DeskShelfKey, AssistantThread[]>();
   for (const thread of [...threads].sort(newestFirst)) {
-    const key =
-      pinnedFirst && thread.pinned
-        ? "pinned"
-        : shelfFor(calendarDaysAgo(touchedAt(thread), now, timezone ?? ""));
+    const key = shelfOf(thread, now, pinnedFirst, timezone ?? "");
     const shelf = byShelf.get(key);
     if (shelf) {
       shelf.push(thread);

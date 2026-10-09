@@ -37,6 +37,20 @@ const (
 	CommentOriginBoard     = "board"
 )
 
+// CommentMetadataTool names the agent tool that wrote a comment. A customer
+// update written by one of CustomerEmailTools was emailed to the customer.
+const (
+	CommentMetadataTool      = "tool"
+	CommentToolEmailCustomer = "email_customer"
+	CommentToolDelayNotice   = "notify_shipment_delay"
+)
+
+var customerEmailTools = []string{CommentToolEmailCustomer, CommentToolDelayNotice}
+
+func CustomerEmailTools() []string {
+	return customerEmailTools
+}
+
 type ShipmentComment struct {
 	bun.BaseModel             `bun:"table:shipment_comments,alias:sc" json:"-"`
 	pagination.CursorValueSet `bun:",embed"                           json:"-"`

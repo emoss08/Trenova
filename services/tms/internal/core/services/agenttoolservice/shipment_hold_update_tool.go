@@ -200,8 +200,10 @@ func newUpdateShipmentHoldTool(holds holdUpdater) serviceports.AgentTool {
 			"to them, so that call is held to the customer-visible ceiling.",
 		properties: map[string]any{
 			paramShipmentID: shipmentIDProperty("The shipment the hold is on"),
-			paramHoldID: idProperty("The hold to change, from the holds get_shipment lists or " +
-				"the page you are on. Never guess one."),
+			paramHoldID: agenttoolschema.IDText(
+				"The hold to change, from the holds get_shipment lists or " +
+					"the page you are on. Never guess one.",
+			),
 			paramHoldSeverity: agenttoolschema.Enum("How strongly it applies.", holdSeverities),
 			fieldNotes: stringProperty("What the hold waits on, replacing the notes on it.",
 				maxHoldNoteChars),

@@ -4,6 +4,7 @@ import type {
   MentionCandidateRecord,
   MentionSearchType,
 } from "@/types/assistant";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import {
@@ -52,6 +53,7 @@ const TYPE_ICONS: Record<string, DeskIconName> = {
   customer: "headset",
   invoice: "receipt",
   billing_queue_item: "receipt",
+  invoice_dispute: "receipt",
   worker: "route",
   carrier: "shield",
 };
@@ -230,6 +232,10 @@ export function useDeskMentions({
   };
 }
 
+/** The round arrow at either end of the kinds, over the faded edge. */
+const arrowClass =
+  "absolute top-1/2 z-2 size-5.5 -translate-y-1/2 justify-center rounded-full bg-dsk-raised text-dsk-fg2 ring-1 ring-dsk-b hover:text-dsk-fg";
+
 /** The kinds along the top of the picker, scrolled with arrows when they do not fit. */
 function MentionTabs({
   tab,
@@ -258,7 +264,7 @@ function MentionTabs({
       return;
     }
     const frame = requestAnimationFrame(measure);
-    const current = element.querySelector<HTMLElement>(".dk-on");
+    const current = element.querySelector<HTMLElement>("[data-on]");
     if (current) {
       const left = current.offsetLeft - 8;
       const right = current.offsetLeft + current.offsetWidth + 8;
@@ -277,15 +283,16 @@ function MentionTabs({
   return (
     <div className={cn("dk-mn-fw", edges.left && "dk-l", edges.right && "dk-r")}>
       {edges.left && (
-        <button
-          type="button"
-          className="dk-mn-ar dk-l"
+        <Button
+          variant="bare"
+          size="bare"
+          className={cn(arrowClass, "left-1")}
           tabIndex={-1}
           aria-label={t("Earlier kinds")}
           onClick={() => nudge(-1)}
         >
           <DeskIcon name="chevL" size={11} stroke={2.4} />
-        </button>
+        </Button>
       )}
       <div
         className="dk-mn-f"
@@ -298,26 +305,32 @@ function MentionTabs({
         }}
       >
         {TABS.map((kind) => (
-          <button
+          <Button
             key={kind}
-            type="button"
-            className={tab === kind ? "dk-on" : undefined}
+            variant="bare"
+            size="bare"
+            data-on={tab === kind || undefined}
+            className={cn(
+              "h-6 flex-none rounded-full px-2.25 text-xs text-dsk-muted transition-colors duration-100 hover:bg-dsk-hover hover:text-dsk-fg",
+              tab === kind && "bg-dsk-ink text-dsk-ink-fg hover:bg-dsk-ink hover:text-dsk-ink-fg",
+            )}
             onClick={() => onChange(kind)}
           >
             {TAB_LABELS[kind]}
-          </button>
+          </Button>
         ))}
       </div>
       {edges.right && (
-        <button
-          type="button"
-          className="dk-mn-ar dk-r"
+        <Button
+          variant="bare"
+          size="bare"
+          className={cn(arrowClass, "right-1")}
           tabIndex={-1}
           aria-label={t("More kinds")}
           onClick={() => nudge(1)}
         >
           <DeskIcon name="chevR" size={11} stroke={2.4} />
-        </button>
+        </Button>
       )}
     </div>
   );
@@ -361,11 +374,15 @@ export function DeskMentionPicker({ mentions }: { mentions: DeskMentions }) {
             return (
               <Fragment key={record.type + record.id}>
                 {heading && <div className="dk-mn-h">{TAB_LABELS[tabOf(record.type)]}</div>}
-                <button
-                  type="button"
+                <Button
+                  variant="bare"
+                  size="bare"
                   role="option"
                   aria-selected={mentions.highlighted === index}
-                  className={cn("dk-mn-r", mentions.highlighted === index && "dk-hi")}
+                  className={cn(
+                    "flex h-10 w-full gap-2.5 rounded-lg px-2 text-left",
+                    mentions.highlighted === index && "bg-dsk-hover",
+                  )}
                   onMouseMove={() =>
                     mentions.highlighted !== index && mentions.setHighlighted(index)
                   }
@@ -379,7 +396,7 @@ export function DeskMentionPicker({ mentions }: { mentions: DeskMentions }) {
                     <em>{record.subtitle}</em>
                   </span>
                   {mentions.highlighted === index && <span className="dk-kbd">↵</span>}
-                </button>
+                </Button>
               </Fragment>
             );
           })}

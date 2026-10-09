@@ -596,6 +596,12 @@ const billingModule: NavModule = {
           path: "/billing/configuration-files/document-packet-rules",
           resource: Resource.DocumentType,
         },
+        {
+          id: "case-checklists",
+          label: "Case checklists",
+          path: "/billing/configuration-files/case-checklists",
+          resource: Resource.BillingControl,
+        },
       ],
     },
   ],

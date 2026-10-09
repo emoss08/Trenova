@@ -53,6 +53,33 @@ func (c ToolOutcomeCount) Decided() int {
 	return c.Approved + c.Modified + c.Rejected
 }
 
+// ToolVerdictCount is how often one tool's calls ended one way over the
+// window: ran, proposed, or the refusal that stopped them.
+//
+// The proposal counts say what people did with what an agent filed; they
+// cannot say how often the agent called a tool wrongly, because a call the
+// runtime refused never became a proposal. A tool the models keep sending a
+// bad argument to looked healthy until somebody read the threads.
+type ToolVerdictCount struct {
+	ToolName string `json:"toolName"`
+	Verdict  string `json:"verdict"`
+	Calls    int    `json:"calls"`
+	// TopReasons are the reasons given most often, most frequent first, at
+	// most MaxVerdictReasons of them. A call that ran gives none.
+	TopReasons []ToolVerdictReason `json:"topReasons"`
+}
+
+// ToolVerdictReason is one reason a tool's calls were refused or failed, and
+// how many calls gave it.
+type ToolVerdictReason struct {
+	Reason string `json:"reason"`
+	Calls  int    `json:"calls"`
+}
+
+// MaxVerdictReasons is how many reasons a verdict carries. The first few say
+// what to fix; the tail is one-off failures nobody acts on.
+const MaxVerdictReasons = 3
+
 // ScorecardPoint is one day of the trend line.
 type ScorecardPoint struct {
 	Day       int64 `json:"day"`
@@ -70,6 +97,7 @@ type ScorecardTotals struct {
 	OutputTokens int
 	CostUSD      decimal.Decimal
 	ByTool       []ToolOutcomeCount
+	ToolVerdicts []ToolVerdictCount
 	Trend        []ScorecardPoint
 }
 
@@ -97,6 +125,7 @@ type Scorecard struct {
 	OutputTokens      int                `json:"outputTokens"`
 	CostUSD           decimal.Decimal    `json:"costUsd"`
 	ByTool            []ToolOutcomeCount `json:"byTool"`
+	ToolVerdicts      []ToolVerdictCount `json:"toolVerdicts"`
 	Trend             []ScorecardPoint   `json:"trend"`
 	// EstimatedMinutesSaved is an estimate and is labelled as one wherever
 	// it is shown. See timesaved.go for what it is counting.
@@ -134,10 +163,14 @@ func NewScorecard(
 		OutputTokens:      totals.OutputTokens,
 		CostUSD:           totals.CostUSD,
 		ByTool:            totals.ByTool,
+		ToolVerdicts:      totals.ToolVerdicts,
 		Trend:             totals.Trend,
 	}
 	if card.ByTool == nil {
 		card.ByTool = []ToolOutcomeCount{}
+	}
+	if card.ToolVerdicts == nil {
+		card.ToolVerdicts = []ToolVerdictCount{}
 	}
 	if card.Trend == nil {
 		card.Trend = []ScorecardPoint{}

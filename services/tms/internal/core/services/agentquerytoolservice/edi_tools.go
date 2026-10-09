@@ -623,8 +623,11 @@ func (t *getEDIPartnerTool) Description() string {
 }
 
 func (t *getEDIPartnerTool) ParamSchema() map[string]any {
-	return idSchema(paramPartnerID, "The trading partner's id, from a partnerId in "+
-		"list_edi_inbound_files or the page you are on.")
+	return idSchema(
+		paramPartnerID,
+		agenttoolschema.IDText("The trading partner's id, from a partnerId in "+
+			"list_edi_inbound_files or the page you are on."),
+	)
 }
 
 func (t *getEDIPartnerTool) Policy() serviceports.ToolPolicy {

@@ -35,12 +35,16 @@ func toGQLAgentScorecard(result *services.AgentScorecardResult) *gqlmodel.AgentS
 		CostUsd:               card.CostUSD.String(),
 		EstimatedMinutesSaved: card.EstimatedMinutesSaved,
 		ByTool:                make([]*agent.ToolOutcomeCount, 0, len(card.ByTool)),
+		ToolVerdicts:          make([]*agent.ToolVerdictCount, 0, len(card.ToolVerdicts)),
 		Trend:                 make([]*agent.ScorecardPoint, 0, len(card.Trend)),
 		ToolTrust:             make([]*gqlmodel.AgentToolTrust, 0, len(result.ToolTrust)),
 	}
 
 	for index := range card.ByTool {
 		out.ByTool = append(out.ByTool, &card.ByTool[index])
+	}
+	for index := range card.ToolVerdicts {
+		out.ToolVerdicts = append(out.ToolVerdicts, &card.ToolVerdicts[index])
 	}
 	for index := range card.Trend {
 		out.Trend = append(out.Trend, &card.Trend[index])

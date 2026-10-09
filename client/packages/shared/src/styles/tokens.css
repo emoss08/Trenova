@@ -722,10 +722,22 @@
   --subtle-fg: var(--foreground-subtle);
   --auth-ring: color-mix(in oklch, var(--ring) calc(var(--ring-opacity) * 100%), transparent);
   --auth-danger: var(--danger);
-  --auth-card-shadow: var(--elevation-modal);
 
   --invert: var(--foreground);
   --invert-foreground: var(--canvas);
+}
+
+/* The sign-in screen's two grounds. The form column sits on the canvas and its
+   fields one step up; in dark the canvas is pure black, so the column moves up to
+   the card and the fields to the raised fill, keeping a field visibly a slot. */
+:root {
+  --auth-canvas: var(--canvas);
+  --auth-field: var(--card);
+}
+
+.dark {
+  --auth-canvas: var(--card);
+  --auth-field: var(--raised);
 }
 
 /* The Desk in dark: the room inverts but keeps its order. The column is a
@@ -865,6 +877,14 @@
   --text-5xl: 2.25rem; /* 36px */
   --text-5xl--line-height: 2.5rem;
   --text-5xl--letter-spacing: -0.021em;
+
+  /* The sign-in screen reads at a larger size than the dense app: a 14px body
+     and a 28px title, so the form scans as a page rather than a panel. */
+  --text-auth-body: 0.875rem; /* 14px */
+  --text-auth-body--line-height: 1.3125rem;
+  --text-auth-title: 1.75rem; /* 28px */
+  --text-auth-title--line-height: 1.925rem;
+  --text-auth-title--letter-spacing: -0.035em;
 
   /* Fonts -----------------------------------------------------------------
      --font-mono was "Inter Variable", sans-serif: a proportional sans. The
@@ -1018,6 +1038,43 @@
   --color-accent-sky-border: var(--accent-sky-border);
   --color-accent-violet: var(--accent-violet);
   --color-accent-violet-subtle: var(--accent-violet-subtle);
+  /* Desk ---------------------------------------------------------------
+     The Desk's palette as Tailwind colours, so its controls are written as
+     classes (text-dsk-muted, bg-dsk-hover) rather than one-off rules. */
+  --color-dsk-canvas: var(--dsk-canvas);
+  --color-dsk-card: var(--dsk-card);
+  --color-dsk-raised: var(--dsk-raised);
+  --color-dsk-sunken: var(--dsk-sunken);
+  --color-dsk-field: var(--dsk-field);
+  --color-dsk-hover: var(--dsk-hover);
+  --color-dsk-rail: var(--dsk-rail);
+  --color-dsk-fg: var(--dsk-fg);
+  --color-dsk-fg2: var(--dsk-fg2);
+  --color-dsk-muted: var(--dsk-muted);
+  --color-dsk-subtle: var(--dsk-subtle);
+  --color-dsk-faint: var(--dsk-faint);
+  --color-dsk-b-sub: var(--dsk-b-sub);
+  --color-dsk-b: var(--dsk-b);
+  --color-dsk-b-strong: var(--dsk-b-strong);
+  --color-dsk-ink: var(--dsk-ink);
+  --color-dsk-ink-fg: var(--dsk-ink-fg);
+  --color-dsk-ring: var(--dsk-ring);
+  --color-dsk-success: var(--dsk-success);
+  --color-dsk-success-sub: var(--dsk-success-sub);
+  --color-dsk-success-fg: var(--dsk-success-fg);
+  --color-dsk-warn: var(--dsk-warn);
+  --color-dsk-warn-sub: var(--dsk-warn-sub);
+  --color-dsk-warn-fg: var(--dsk-warn-fg);
+  --color-dsk-blue: var(--dsk-blue);
+  --color-dsk-blue-sub: var(--dsk-blue-sub);
+  --color-dsk-blue-fg: var(--dsk-blue-fg);
+  --color-dsk-agent: var(--dsk-agent);
+  --color-dsk-agent-sub: var(--dsk-agent-sub);
+  --color-dsk-agent-on: var(--dsk-agent-on);
+  --color-dsk-on-solid: var(--dsk-on-solid);
+  --color-dsk-approve: var(--dsk-approve);
+  --color-dsk-mention: var(--dsk-mention);
+  --color-dsk-error: var(--dsk-error);
   --color-accent-violet-on-subtle: var(--accent-violet-on-subtle);
   --color-accent-violet-border: var(--accent-violet-border);
   --color-accent-slate: var(--accent-slate);
@@ -1061,6 +1118,8 @@
   --color-field: var(--field);
   --color-subtle-foreground: var(--subtle-fg);
   --color-auth-danger: var(--auth-danger);
+  --color-auth-canvas: var(--auth-canvas);
+  --color-auth-field: var(--auth-field);
   --color-invert: var(--invert);
   --color-invert-foreground: var(--invert-foreground);
 

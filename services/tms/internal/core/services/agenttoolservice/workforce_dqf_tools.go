@@ -138,8 +138,8 @@ func dqfToolProviders() []any {
 }
 
 func verificationIDProperty() map[string]any {
-	return idProperty("The previous employer's verification, from " +
-		"list_employment_verifications. Never guess one.")
+	return agenttoolschema.ID("The previous employer's verification",
+		"list_employment_verifications")
 }
 
 func verificationRecord(entity *worker.WorkerEmploymentVerification) toolpreview.Record {
@@ -158,8 +158,8 @@ func verificationEmployerProperties() map[string]any {
 			"it.", maxPhoneChars),
 		paramContactEmail: stringProperty("Their email address, as the application gives "+
 			"it.", maxVerificationField),
-		paramEmployedFrom: dayProperty("When the worker started there."),
-		paramEmployedTo:   dayProperty("When the worker left."),
+		paramEmployedFrom: agenttoolschema.Date("When the worker started there."),
+		paramEmployedTo:   agenttoolschema.Date("When the worker left."),
 		paramWasDOTRegulated: booleanProperty("Whether the job was DOT-regulated, which " +
 			"brings the drug and alcohol questions in."),
 		paramVerifyMethod: agenttoolschema.Enum("How the request goes out.",
@@ -369,9 +369,11 @@ func newUpdateEmploymentVerificationTool(dqf verificationKeeper) serviceports.Ag
 	properties[paramVerificationID] = verificationIDProperty()
 	properties[paramVerifyStatus] = agenttoolschema.Enum("Where the request stands.",
 		verificationStatuses)
-	properties[paramResponseAt] = dayProperty("When the employer's answer came back.")
-	properties[paramDAResponseAt] = dayProperty("When their drug and alcohol answer came " +
-		"back.")
+	properties[paramResponseAt] = agenttoolschema.Date("When the employer's answer came back.")
+	properties[paramDAResponseAt] = agenttoolschema.Date(
+		"When their drug and alcohol answer came " +
+			"back.",
+	)
 	properties[paramHadAccidents] = booleanProperty("Whether they reported accidents.")
 	properties[paramAccidentCount] = integerProperty("How many accidents they reported.", 0,
 		maxAccidents)

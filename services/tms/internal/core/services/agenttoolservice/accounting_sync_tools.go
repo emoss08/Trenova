@@ -222,6 +222,15 @@ func provideRetryAccountingSyncTool(
 
 func (t *retryAccountingSyncTool) Name() string { return "retry_accounting_sync" }
 
+func (t *retryAccountingSyncTool) Recipe() []string {
+	return []string{
+		"get_accounting_sync_record",
+		"get_accounting_sync_status",
+		"list_accounting_sync_records",
+		"retry_accounting_sync",
+	}
+}
+
 func (t *retryAccountingSyncTool) Description() string {
 	return "Send documents that did not reach the accounting system again. Name the records " +
 		"by syncRecordIds, or retry every record that last failed for the given " +
@@ -816,6 +825,10 @@ func provideResumeAccountingSyncTool(
 }
 
 func (t *resumeAccountingSyncTool) Name() string { return "resume_accounting_sync" }
+
+func (t *resumeAccountingSyncTool) Recipe() []string {
+	return []string{"get_accounting_sync_status", "resume_accounting_sync"}
+}
 
 func (t *resumeAccountingSyncTool) Description() string {
 	return "Start sending documents to the accounting system again after it was paused. " +

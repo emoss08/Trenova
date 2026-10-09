@@ -85,6 +85,10 @@ func newTransferToBillingTool(
 
 func (t *transferToBillingTool) Name() string { return "transfer_to_billing" }
 
+func (t *transferToBillingTool) Recipe() []string {
+	return []string{"list_billing_transfer_candidates", "transfer_to_billing"}
+}
+
 func (t *transferToBillingTool) SearchTerms() []string {
 	return []string{"send to billing"}
 }

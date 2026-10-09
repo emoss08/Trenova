@@ -119,8 +119,8 @@ type orderKeeper interface {
 }
 
 func orderIDProperty(what string) map[string]any {
-	return idProperty(what + ", from list_orders, get_order or the orderId get_shipment " +
-		"shows. Never guess one.")
+	return agenttoolschema.RecordID(permission.ResourceOrder, what,
+		"list_orders, get_order or the orderId get_shipment shows")
 }
 
 func targetOrder(params map[string]any) (serviceports.ToolTarget, bool) {
@@ -163,8 +163,11 @@ func orderProperties(customerRequired bool) map[string]any {
 	}
 
 	return map[string]any{
-		fieldCustomerID: idProperty(customer + " Never guess one."),
-		paramOwnerID: idProperty("The user who owns the order: the person who asked, " +
+		fieldCustomerID: agenttoolschema.RecordIDText(
+			permission.ResourceCustomer,
+			customer+" Never guess one.",
+		),
+		paramOwnerID: agenttoolschema.IDText("The user who owns the order: the person who asked, " +
 			"or an ownerId get_order shows. Never guess one."),
 		paramPONumber: stringProperty("The customer's purchase order number.",
 			maxOrderReference),
@@ -497,8 +500,12 @@ func newAttachOrderShipmentsTool(orders orderKeeper) serviceports.AgentTool {
 		properties: map[string]any{
 			paramOrderID: orderIDProperty("The order to add them to"),
 			paramShipmentIDs: toolschema.RecordSubset(permission.ResourceShipment.String(),
-				idListProperty("The shipments to attach, from search_shipments or "+
-					"get_shipment.", maxOrderAttachments)),
+				agenttoolschema.RecordIDs(
+					permission.ResourceShipment,
+					"The shipments to attach, from search_shipments or "+
+						"get_shipment.",
+					maxOrderAttachments,
+				)),
 		},
 		required: []string{paramOrderID, paramShipmentIDs},
 		target:   targetOrder,

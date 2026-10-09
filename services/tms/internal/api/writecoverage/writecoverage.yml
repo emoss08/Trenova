@@ -333,12 +333,21 @@ writes:
   "DELETE /api/v1/assistant/threads/:threadID/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "DELETE /api/v1/assistant/threads/:threadID/case/":
+    exempt: agent-administration
+    reason: "A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on."
+  "DELETE /api/v1/assistant/threads/:threadID/queue/:itemID/":
+    exempt: agent-administration
+    reason: "Arranging the messages a person queued for their own conversation; an agent never writes to a person's queue, and the messages reach it as the person's own words."
   "PATCH /api/v1/assistant/schedules/:scheduleID/":
     exempt: agent-administration
     reason: "Scheduling a conversation to run again is a person directing an agent's work; an agent that could schedule itself would set its own workload."
   "PATCH /api/v1/assistant/threads/:threadID/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "PATCH /api/v1/assistant/threads/:threadID/queue/:itemID/":
+    exempt: agent-administration
+    reason: "Arranging the messages a person queued for their own conversation; an agent never writes to a person's queue, and the messages reach it as the person's own words."
   "POST /api/v1/assistant/ask/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
@@ -360,6 +369,17 @@ writes:
   "POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/versions/":
     exempt: agent-administration
     reason: "A person keeping or restoring their own version of a document an agent drafted in their conversation; the agent drafts through the conversation itself."
+  "POST /api/v1/assistant/threads/:threadID/case/await-reply/":
+    tools: [wait_until]
+  "POST /api/v1/assistant/threads/:threadID/case/snooze/":
+    exempt: agent-administration
+    reason: "A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on."
+  "POST /api/v1/assistant/threads/:threadID/case/ticks/":
+    exempt: agent-administration
+    reason: "A tick on a step the organization added for a person to tick is that person's word that it was done; an agent ticking it would vouch for itself."
+  "POST /api/v1/assistant/threads/:threadID/case/wake/":
+    exempt: agent-administration
+    reason: "A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on."
   "POST /api/v1/assistant/threads/:threadID/compact/":
     exempt: agent-administration
     reason: "Compacting a conversation manages the agent's own context window; the runtime compacts on its own limits and no record changes."
@@ -367,6 +387,12 @@ writes:
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
   "POST /api/v1/assistant/threads/:threadID/messages/":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "POST /api/v1/assistant/threads/:threadID/queue/":
+    exempt: agent-administration
+    reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "POST /api/v1/assistant/threads/:threadID/queue/:itemID/send/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
   "POST /api/v1/assistant/threads/:threadID/read/":
@@ -381,12 +407,20 @@ writes:
   "POST /api/v1/assistant/threads/:threadID/turns/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "POST /api/v1/assistant/threads/:threadID/waits/:waitID/cancel/":
+    tools: [cancel_wait]
   "POST /api/v1/assistant/turns/:turnID/stop/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "PUT /api/v1/assistant/threads/:threadID/case/":
+    exempt: agent-administration
+    reason: "A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on."
   "PUT /api/v1/assistant/threads/:threadID/proposals/:proposalID/edits/":
     exempt: agent-administration
     reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
+  "PUT /api/v1/assistant/threads/:threadID/queue/order/":
+    exempt: agent-administration
+    reason: "Arranging the messages a person queued for their own conversation; an agent never writes to a person's queue, and the messages reach it as the person's own words."
 
   # auth
   "POST /api/v1/auth/forgot-password":
@@ -665,6 +699,14 @@ writes:
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
   "mutation voidCarrierSettlement":
     tools: [void_carrier_settlement]
+
+  # casechecklist
+  "DELETE /api/v1/case-checklists/:templateID/":
+    exempt: configuration
+    reason: "How case checklists are laid out for the organization and its customers is billing configuration an administrator sets; agents work the checklist, they do not decide what is on it."
+  "PUT /api/v1/case-checklists/":
+    exempt: configuration
+    reason: "How case checklists are laid out for the organization and its customers is billing configuration an administrator sets; agents work the checklist, they do not decide what is on it."
 
   # commodity
   "PATCH /api/v1/commodities/:commodityID/":

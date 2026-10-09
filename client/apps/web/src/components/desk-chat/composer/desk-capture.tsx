@@ -9,12 +9,14 @@ import {
 import { queries } from "@/lib/queries";
 import { api } from "@trenova/shared/lib/api";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useCallback, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { DeskIcon } from "../desk-icons";
 import type { DeskAttachment } from "./desk-attachments";
+import { deskIconClass } from "../desk-button-styles";
 
 /** What a scan into a conversation is filed against. */
 const THREAD_TARGET = "assistant_thread";
@@ -284,15 +286,16 @@ export function DeskCapturePanel({
   return (
     <div className="dk-cap">
       <div className="dk-cap-h">
-        <button
-          type="button"
-          className="dk-ib"
+        <Button
+          variant="quiet"
+          size="bare"
+          className={deskIconClass}
           title={t("Back")}
           aria-label={t("Back")}
           onClick={onBack}
         >
           <DeskIcon name="chevL" size={13} />
-        </button>
+        </Button>
         <span>
           <b>{t("Scan from Capture")}</b>
           <em>{t("Pages scan on your computer and attach to this message")}</em>
@@ -328,10 +331,14 @@ export function DeskCapturePanel({
             <div className="dk-cap-l">{t("Computer")}</div>
             <div className="dk-cap-devs">
               {devices.map((candidate) => (
-                <button
+                <Button
                   key={candidate.id}
-                  type="button"
-                  className={cn("dk-cap-dev", device?.id === candidate.id && "dk-on")}
+                  variant="bare"
+                  size="bare"
+                  className={cn(
+                    "dk-cap-dev flex h-9 gap-2.25 border-b border-dsk-b-sub px-2.75 text-left text-sm transition-colors duration-100 last:border-b-0 hover:bg-dsk-hover",
+                    device?.id === candidate.id && "bg-dsk-hover",
+                  )}
                   onClick={() => {
                     setDeviceId(candidate.id);
                     setSource("");
@@ -341,7 +348,7 @@ export function DeskCapturePanel({
                   <b>{candidate.name}</b>
                   <em>{candidate.isOnline ? t("Connected") : t("Not connected")}</em>
                   {device?.id === candidate.id && <DeskIcon name="check" size={12} stroke={2.4} />}
-                </button>
+                </Button>
               ))}
             </div>
             {device && !device.isOnline && (
@@ -404,14 +411,14 @@ export function DeskCapturePanel({
                     : t("Starts when {0} connects.", device.name)
                   : "")}
             </span>
-            <button
-              type="button"
-              className="dk-ec-btn dk-ink"
+            <Button
+              size="sm"
+              className="rounded-lg bg-dsk-ink px-2.75 text-sm text-dsk-ink-fg hover:bg-dsk-ink"
               disabled={!device || starting}
               onClick={() => void start()}
             >
               {starting ? t("Starting…") : t("Start scan")}
-            </button>
+            </Button>
           </div>
         </>
       )}

@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -45,6 +46,7 @@ type Params struct {
 	Validator          *Validator
 	AuditService       serviceports.AuditService
 	AccountingSync     serviceports.AccountingSyncEnqueuer `optional:"true"`
+	Realtime           serviceports.RealtimeService        `optional:"true"`
 }
 
 type Service struct {
@@ -60,6 +62,7 @@ type Service struct {
 	validator          *Validator
 	auditService       serviceports.AuditService
 	accountingSync     serviceports.AccountingSyncEnqueuer
+	realtime           serviceports.RealtimeService
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -76,6 +79,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		validator:          p.Validator,
 		auditService:       p.AuditService,
 		accountingSync:     p.AccountingSync,
+		realtime:           p.Realtime,
 	}
 }
 
@@ -320,6 +324,7 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 	s.logAudit(created, nil, actor.UserID, permission.OpCreate, "Customer payment posted")
 	for idx, inv := range invoices {
 		s.logInvoiceAudit(originalInvoices[idx], inv, actor.UserID)
+		s.announceInvoice(ctx, inv, actor)
 	}
 	return created, nil
 }
@@ -469,6 +474,7 @@ func (s *Service) ApplyUnapplied( //nolint:funlen // legacy workflow
 	)
 	for idx, inv := range invoices {
 		s.logInvoiceAudit(originalInvoices[idx], inv, actor.UserID)
+		s.announceInvoice(ctx, inv, actor)
 	}
 	return payment, nil
 }
@@ -632,6 +638,7 @@ func (s *Service) Reverse( //nolint:funlen // legacy workflow
 	)
 	for idx, inv := range invoices {
 		s.logInvoiceAudit(originalInvoices[idx], inv, actor.UserID)
+		s.announceInvoice(ctx, inv, actor)
 	}
 	return payment, nil
 }
@@ -710,6 +717,33 @@ func (s *Service) logAudit(
 			zap.Error(err),
 			zap.String("paymentId", current.ID.String()),
 		)
+	}
+}
+
+// announceInvoice tells every screen showing the invoice that a payment
+// moved its balance: the register, the invoice, and a Desk case about it,
+// which settles once it is paid.
+func (s *Service) announceInvoice(
+	ctx context.Context,
+	inv *invoice.Invoice,
+	actor *serviceports.RequestActor,
+) {
+	if inv == nil || s.realtime == nil {
+		return
+	}
+	if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
+		OrganizationID: inv.OrganizationID,
+		BusinessUnitID: inv.BusinessUnitID,
+		ActorUserID:    actor.UserID,
+		ActorType:      actor.PrincipalType,
+		ActorID:        actor.PrincipalID,
+		ActorAPIKeyID:  actor.APIKeyID,
+		Resource:       permission.ResourceInvoice.String(),
+		Action:         "updated",
+		RecordID:       inv.ID,
+		Fields:         []string{"appliedAmount", "settlementStatus"},
+	}); err != nil {
+		s.l.Warn("failed to publish invoice invalidation", zap.Error(err))
 	}
 }
 

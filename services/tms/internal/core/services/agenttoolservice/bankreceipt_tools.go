@@ -94,6 +94,10 @@ func newMatchBankReceiptTool(receipts bankReceiptMatcher) serviceports.AgentTool
 
 func (t *matchBankReceiptTool) Name() string { return "match_bank_receipt" }
 
+func (t *matchBankReceiptTool) Recipe() []string {
+	return []string{"get_bank_receipt", "list_customer_payments", "match_bank_receipt"}
+}
+
 func (t *matchBankReceiptTool) Description() string {
 	return "Match a bank receipt to the posted customer payment it represents. The " +
 		"payment's amount must equal the receipt's exactly; the reference and date " +
@@ -219,6 +223,15 @@ func newPostCustomerPaymentTool(
 }
 
 func (t *postCustomerPaymentTool) Name() string { return "post_customer_payment" }
+
+func (t *postCustomerPaymentTool) Recipe() []string {
+	return []string{
+		"get_bank_receipt",
+		"list_customer_payments",
+		"list_invoices",
+		"post_customer_payment",
+	}
+}
 
 func (t *postCustomerPaymentTool) SearchTerms() []string {
 	return []string{"received payment", "customer paid", "payment against invoices"}

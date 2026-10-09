@@ -33,6 +33,8 @@ type StartAgentRunForDefinitionRequest struct {
 	// slot starts one run however often its start is retried.
 	Slot       int64
 	TenantInfo pagination.TenantInfo
+	// WaitID is the wait whose ending starts a run that picks the work up.
+	WaitID pulid.ID
 }
 
 // StartInlineAgentRunRequest opens a run for an agent whose reasoning happens in-process

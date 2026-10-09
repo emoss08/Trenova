@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/bankreceipthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/bankreceiptworkitemhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingcontrolhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/casechecklisthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingqueuehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/capturehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierassignmenthandler"
@@ -265,6 +266,7 @@ type RouterParams struct {
 	JournalReversalHandler          *journalreversalhandler.Handler
 	ManualJournalHandler            *manualjournalhandler.Handler
 	BillingControlHandler           *billingcontrolhandler.Handler
+	CaseChecklistHandler            *casechecklisthandler.Handler
 	InvoiceAdjustmentControlHandler *invoiceadjustmentcontrolhandler.Handler
 	BillingQueueHandler             *billingqueuehandler.Handler
 	DataEntryControlHandler         *dataentrycontrolhandler.Handler
@@ -403,6 +405,7 @@ type Router struct {
 	journalReversalHandler          *journalreversalhandler.Handler
 	manualJournalHandler            *manualjournalhandler.Handler
 	billingControlHandler           *billingcontrolhandler.Handler
+	caseChecklistHandler            *casechecklisthandler.Handler
 	invoiceAdjustmentControlHandler *invoiceadjustmentcontrolhandler.Handler
 	billingQueueHandler             *billingqueuehandler.Handler
 	dataEntryControlHandler         *dataentrycontrolhandler.Handler
@@ -543,6 +546,7 @@ func NewRouter(p RouterParams) *Router {
 		journalReversalHandler:          p.JournalReversalHandler,
 		manualJournalHandler:            p.ManualJournalHandler,
 		billingControlHandler:           p.BillingControlHandler,
+		caseChecklistHandler:            p.CaseChecklistHandler,
 		invoiceAdjustmentControlHandler: p.InvoiceAdjustmentControlHandler,
 		billingQueueHandler:             p.BillingQueueHandler,
 		dataEntryControlHandler:         p.DataEntryControlHandler,
@@ -742,6 +746,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.journalReversalHandler.RegisterRoutes(protected)
 	r.manualJournalHandler.RegisterRoutes(protected)
 	r.billingControlHandler.RegisterRoutes(protected)
+	r.caseChecklistHandler.RegisterRoutes(protected)
 	r.invoiceAdjustmentControlHandler.RegisterRoutes(protected)
 	r.billingQueueHandler.RegisterRoutes(protected)
 	r.dataEntryControlHandler.RegisterRoutes(protected)

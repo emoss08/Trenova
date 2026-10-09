@@ -24,8 +24,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// podCode is the document type code a proof of delivery is filed under.
-const podCode = "POD"
+const podCode = documenttype.CodePOD
 
 // driverNotifier is the driver portal's notification path, which is how the
 // item asks a driver for paperwork.

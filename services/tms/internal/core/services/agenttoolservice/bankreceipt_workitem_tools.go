@@ -136,7 +136,8 @@ func (r *workItemRoute) run(ctx context.Context, items workItemRouter) error {
 
 func newTriageBankReceiptWorkItemTool(items workItemRouter) serviceports.AgentTool {
 	return newReceivableTool(&receivableSpec{
-		name: "triage_bank_receipt_work_item",
+		name:   "triage_bank_receipt_work_item",
+		recipe: []string{"get_bank_receipt", "triage_bank_receipt_work_item"},
 		description: "Assign a bank receipt's reconciliation work item to a person who will " +
 			"work it, or mark it under review while it is being looked into. Nothing is " +
 			"matched or closed; match_bank_receipt and resolve_bank_receipt_work_item do that.",

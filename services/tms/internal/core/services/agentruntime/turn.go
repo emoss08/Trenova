@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/zap"
 )
 
 const clockLineLayout = "2006-01-02 15:04"
@@ -67,6 +68,15 @@ type Turn struct {
 	// organization. From then on every write it asks for waits for a person.
 	external bool
 	cutOff   cutOffState
+	// world is what the turn watches for changes made elsewhere while it
+	// works. Nil when nothing is watched.
+	world *WorldState
+	// toolMemories are the carried memories about a tool that was only on
+	// hand, by tool, counted as used when the turn calls it.
+	toolMemories map[string][]pulid.ID
+	// tables are the tables the turn put beside the conversation, in the
+	// order it did, which the pass over the final reply points a reprint to.
+	tables []serviceports.ShownArtifact
 }
 
 // TurnEffects is everything a turn does outside itself.
@@ -90,6 +100,10 @@ type TurnEffects interface {
 	// Delegate hands a task to another agent and runs that agent's turn to
 	// its end, reporting what it did. The loop has already checked the call.
 	Delegate(t *Turn, call DelegateCall) DelegateRun
+	// Interject hands the loop, between steps, what the person said while
+	// it worked and, when check is set, the changes made since the turn last
+	// looked to the records it watches.
+	Interject(t *Turn, check *WorldCheck) Interjections
 	// Supports reports whether a change to the loop's shape applies to this
 	// turn. In process every change does; in workflow code an execution
 	// started before the change keeps the shape it started with, so its
@@ -160,6 +174,9 @@ type ToolOutcome struct {
 	// kept or offered to keep.
 	Memories    []pulid.ID                `json:"memories,omitempty"`
 	SavedMemory *serviceports.SavedMemory `json:"savedMemory,omitempty"`
+	// Shown is what the call put in front of the person, which the loop
+	// keeps when it is a table, for the pass over the final reply.
+	Shown *serviceports.ShownArtifact `json:"shown,omitempty"`
 	// Data is what a query tool returned before it was encoded for the model.
 	// It never crosses a durable boundary: whatever needs it runs where the
 	// tool ran.
@@ -179,6 +196,7 @@ func (o toolOutcome) exported() ToolOutcome {
 		Verdict:        o.verdict,
 		Memories:       o.memories,
 		SavedMemory:    o.saved,
+		Shown:          o.shown,
 		Data:           o.data,
 	}
 }
@@ -196,6 +214,7 @@ func (o ToolOutcome) internal() toolOutcome {
 		verdict:        o.Verdict,
 		memories:       o.Memories,
 		saved:          o.SavedMemory,
+		shown:          o.Shown,
 		data:           o.Data,
 	}
 }
@@ -243,6 +262,12 @@ type TurnState struct {
 	// ExternalContent says the turn has read content from outside the
 	// organization.
 	ExternalContent bool `json:"externalContent,omitempty"`
+	// World is what the turn watches for changes made elsewhere. A state
+	// from before it was kept watches nothing.
+	World *WorldState `json:"world,omitempty"`
+	// ToolMemories are the carried memories about a tool the turn has not
+	// called yet. A state from before they were kept promotes none.
+	ToolMemories map[string][]pulid.ID `json:"toolMemories,omitempty"`
 }
 
 // ToolSetState is a turn's tool set as data. Which tools are loaded follows
@@ -283,6 +308,8 @@ func (t *Turn) State() TurnState {
 		Delegations:     t.delegations,
 		ExternalContent: t.external,
 		TaintOpened:     slices.Clone(t.opened),
+		World:           t.world.clone(),
+		ToolMemories:    cloneToolMemories(t.toolMemories),
 	}
 }
 
@@ -347,7 +374,22 @@ func (s *Service) RestoreTurn(req *serviceports.RunRequest, state TurnState) *Tu
 		delegations:  state.Delegations,
 		opened:       state.TaintOpened,
 		external:     state.ExternalContent,
+		world:        state.World.clone(),
+		toolMemories: cloneToolMemories(state.ToolMemories),
 	}
+}
+
+func cloneToolMemories(byTool map[string][]pulid.ID) map[string][]pulid.ID {
+	if len(byTool) == 0 {
+		return nil
+	}
+
+	cloned := make(map[string][]pulid.ID, len(byTool))
+	for tool, ids := range byTool {
+		cloned[tool] = slices.Clone(ids)
+	}
+
+	return cloned
 }
 
 func (t *toolSet) state() ToolSetState {
@@ -443,12 +485,18 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 	// configuration: a tool named there and refused when called reads as
 	// the system refusing rather than the person lacking the right.
 	runtimeContext.Tools = usableSummaries(runtimeContext.Tools, tools)
-	runtimeContext.Memories = s.memoriesForPrompt(ctx, req, &runtimeContext)
+	memoryFit := s.memoriesForPrompt(ctx, req, &runtimeContext)
+	runtimeContext.Memories = memoryFit.Carried
+	runtimeContext.MemoriesHeldBack = memoryFit.HeldBack
 	// A task handed to another agent reads memories for that agent; the card
 	// under the reply says what the conversation's own agent used.
-	var usedMemories []pulid.ID
+	var (
+		usedMemories []pulid.ID
+		toolMemories map[string][]pulid.ID
+	)
 	if req.Delegation == nil {
-		usedMemories = memoryIDs(runtimeContext.Memories)
+		usedMemories = memoryFit.Used
+		toolMemories = memoryFit.ByTool
 	}
 	repeats := newRepeatGuard()
 	counts := newOrdinals()
@@ -501,8 +549,10 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 			Fingerprint:   s.Fingerprint(definition, preferredProvider(req, definition), ""),
 			UsedMemoryIDs: usedMemories,
 		},
-		delegates: delegates,
-		opened:    opened,
+		delegates:    delegates,
+		opened:       opened,
+		world:        s.watchWorld(ctx, req, now),
+		toolMemories: toolMemories,
 	}
 }
 
@@ -714,6 +764,24 @@ func (fx *localEffects) Observe(
 }
 
 func (*localEffects) NewCallID() string { return NewCallID() }
+
+func (fx *localEffects) Interject(t *Turn, check *WorldCheck) Interjections {
+	if check == nil || fx.s.changes == nil || t.req.Actor == nil {
+		return Interjections{}
+	}
+	found, err := fx.s.changes.Since(fx.ctx, &serviceports.RecordChangesRequest{
+		OrganizationID: t.req.Actor.OrganizationID,
+		BusinessUnitID: t.req.Actor.BusinessUnitID,
+		Cursor:         check.Cursor,
+		Records:        check.Records,
+	})
+	if err != nil {
+		fx.s.logger.Debug("could not read changes to the turn's records", zap.Error(err))
+		return Interjections{}
+	}
+
+	return Interjections{World: found}
+}
 
 // Delegate declines in process. A turn is offered delegate_task only when it
 // is driven as a workflow, where the delegate's turn runs as activities of its

@@ -4,14 +4,19 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/permission"
+	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
+	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/stretchr/testify/require"
 )
@@ -134,30 +139,110 @@ func TestEveryToolDescribesItselfWellEnoughToBeChosen(t *testing.T) {
 		}
 
 		properties, _ := tool.ParamSchema()["properties"].(map[string]any)
-		for param, raw := range properties {
-			property, _ := raw.(map[string]any)
-			text, _ := property["description"].(string)
-			if strings.TrimSpace(text) == "" {
-				problems = append(problems, fmt.Sprintf("%s.%s: no description", name, param))
-				continue
-			}
-			if !idParameter.MatchString(param) {
-				continue
-			}
-			if _, ok := selfEvident[param]; ok {
-				continue
-			}
-			if !namesAnotherTool(text, name, registered) && !fromContext.MatchString(text) {
-				problems = append(problems, fmt.Sprintf(
-					"%s.%s: does not name the tool (or the page or run subject) that supplies it",
-					name, param))
-			}
-		}
+		problems = append(problems, parameterProblems(parameterCheck{
+			tool:       name,
+			registered: registered,
+		}, properties, "", "")...)
 	}
 
 	sort.Strings(problems)
 	require.Emptyf(t, problems, "%d tools a model cannot choose or call well:\n%s",
 		len(problems), strings.Join(problems, "\n"))
+}
+
+// parameterCheck is what every parameter of one tool is held to.
+type parameterCheck struct {
+	tool       string
+	registered map[string]struct{}
+}
+
+// parameterProblems checks every parameter at every depth: inside an object,
+// and inside the objects a list holds. An id nested in a list of stops is
+// sent by the same model as one at the top, and was left unchecked. A nested
+// parameter may lean on the sentence of the list or object holding it for
+// where its ids come from; a top-level one has only its own.
+func parameterProblems(
+	check parameterCheck,
+	properties map[string]any,
+	path, enclosing string,
+) []string {
+	var problems []string
+	for param, raw := range properties {
+		property, _ := raw.(map[string]any)
+		at := param
+		if path != "" {
+			at = path + "." + param
+		}
+		text, _ := property["description"].(string)
+		if strings.TrimSpace(text) == "" && path == "" {
+			problems = append(problems, fmt.Sprintf("%s.%s: no description", check.tool, at))
+			continue
+		}
+		problems = append(problems, recordMarkProblems(check.tool, at, property)...)
+		if idParameter.MatchString(param) {
+			if _, ok := selfEvident[param]; !ok && !namesSource(check, text) &&
+				!namesSource(check, enclosing) {
+				problems = append(problems, fmt.Sprintf(
+					"%s.%s: does not name the tool (or the page or run subject) that supplies it",
+					check.tool, at))
+			}
+		}
+		for nestedPath, nested := range nestedProperties(property, at) {
+			problems = append(problems, parameterProblems(check, nested, nestedPath, text)...)
+		}
+	}
+
+	return problems
+}
+
+func namesSource(check parameterCheck, text string) bool {
+	if strings.TrimSpace(text) == "" {
+		return false
+	}
+
+	return namesAnotherTool(text, check.tool, check.registered) || fromContext.MatchString(text)
+}
+
+// nestedProperties are the parameters an object holds, and those of the
+// objects a list holds, keyed by the path a refusal would name them at.
+func nestedProperties(property map[string]any, at string) map[string]map[string]any {
+	out := make(map[string]map[string]any, 1)
+	if nested, ok := property["properties"].(map[string]any); ok && len(nested) > 0 {
+		out[at] = nested
+	}
+	if items, ok := property["items"].(map[string]any); ok {
+		if nested, has := items["properties"].(map[string]any); has && len(nested) > 0 {
+			out[at+"[]"] = nested
+		}
+	}
+
+	return out
+}
+
+// recordMarkProblems holds a parameter marked with the resource its ids
+// belong to, on itself or on its list's items, to a resource the runtime can
+// check a prefix against. A mark naming anything else would refuse every id.
+func recordMarkProblems(tool, at string, property map[string]any) []string {
+	marks := make([]string, 0, 2)
+	if resource := toolschema.RecordOf(property); resource != "" {
+		marks = append(marks, resource)
+	}
+	if items, ok := property["items"].(map[string]any); ok {
+		if resource := toolschema.RecordOf(items); resource != "" {
+			marks = append(marks, resource)
+		}
+	}
+
+	problems := make([]string, 0, len(marks))
+	for _, resource := range marks {
+		if _, known := permission.Resource(resource).IDPrefix(); !known {
+			problems = append(problems, fmt.Sprintf(
+				"%s.%s: marked as a %s id, which has no prefix in permission's table",
+				tool, at, resource))
+		}
+	}
+
+	return problems
 }
 
 func namesAnotherTool(text, self string, registered map[string]struct{}) bool {
@@ -171,6 +256,47 @@ func namesAnotherTool(text, self string, registered map[string]struct{}) bool {
 	}
 
 	return false
+}
+
+// A recipe and a prerequisite list name tools that exist. The order of a
+// piece of work lives on the tools now, not in a template's instructions,
+// and a misspelt step is told to every agent holding the tool and loads
+// nothing.
+func TestEveryRecipeNamesRegisteredTools(t *testing.T) {
+	t.Parallel()
+
+	known := make(map[string]struct{})
+	for _, tool := range buildTools(t) {
+		known[tool.Name()] = struct{}{}
+	}
+	for _, policy := range agentruntime.RuntimePolicies() {
+		known[policy.Name] = struct{}{}
+	}
+
+	var problems []string
+	for _, tool := range buildTools(t) {
+		steps := make([]string, 0, 8)
+		if recipe, ok := tool.(serviceports.RecipeTool); ok {
+			steps = append(steps, recipe.Recipe()...)
+			if len(recipe.Recipe()) > 0 && !slices.Contains(recipe.Recipe(), tool.Name()) {
+				problems = append(problems, fmt.Sprintf(
+					"%s: its recipe does not name the tool itself", tool.Name()))
+			}
+		}
+		if needs, ok := tool.(serviceports.PrerequisiteTool); ok {
+			steps = append(steps, needs.Prerequisites()...)
+		}
+		for _, step := range steps {
+			if _, ok := known[step]; !ok {
+				problems = append(problems, fmt.Sprintf(
+					"%s: names %q, which is not a registered tool", tool.Name(), step))
+			}
+		}
+	}
+
+	sort.Strings(problems)
+	require.Emptyf(t, problems, "%d recipes name tools that do not exist:\n%s",
+		len(problems), strings.Join(problems, "\n"))
 }
 
 // A family names tools that exist, each in one family, and stays small. A

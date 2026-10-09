@@ -128,12 +128,6 @@
   margin: 8px -8px 6px -12px;
   background: var(--dsk-b-sub);
 }
-.dk-dense .dk-dcx > :is(.dk-bt, .dk-apv-b) {
-  order: 2;
-}
-.dk-dense .dk-dcx > .dk-bt:first-of-type {
-  margin-left: auto;
-}
 
 /* The line under the composer wraps rather than clipping in a narrow column. */
 .dk-dense .dk-hint {
@@ -143,8 +137,3 @@
   text-align: center;
 }
 
-/* The jump to the newest reply sits just above the dock, in the one column. */
-.dk-dense .dk-jump-b {
-  height: 28px;
-  font-size: 12px;
-}

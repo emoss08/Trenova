@@ -264,6 +264,16 @@ func (t *createReportTool) Prerequisites() []string {
 	}
 }
 
+func (t *createReportTool) Recipe() []string {
+	return []string{
+		"list_report_datasets",
+		"describe_report_dataset",
+		"preview_report",
+		"create_report",
+		"run_report",
+	}
+}
+
 var (
 	reportVisibilities = agenttoolschema.Source("report.visibility", []report.Visibility{
 		report.VisibilityPrivate,

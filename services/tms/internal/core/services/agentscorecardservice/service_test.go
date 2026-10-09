@@ -203,3 +203,28 @@ func TestGet_TheLadderIgnoresTheWindow(t *testing.T) {
 	require.Len(t, short.ToolTrust, 1)
 	assert.Equal(t, 9, short.ToolTrust[0].Streak)
 }
+
+// How each tool's calls ended reaches the reader as the repository counted
+// it, beside the proposals, so a tool the models keep calling wrongly shows.
+func TestGet_CarriesHowEachToolsCallsEnded(t *testing.T) {
+	t.Parallel()
+
+	verdicts := []agent.ToolVerdictCount{{
+		ToolName: "list_shipments",
+		Verdict:  "invalid",
+		Calls:    4,
+		TopReasons: []agent.ToolVerdictReason{
+			{Reason: "limit: got string, want integer", Calls: 4},
+		},
+	}}
+	cards := &stubScorecards{totals: &agent.ScorecardTotals{
+		CostUSD:      decimal.Zero,
+		ToolVerdicts: verdicts,
+	}}
+	svc := newService(&agentruntimetest.StubPermissions{}, cards, &stubTrust{}, &stubDefinitions{})
+
+	result, err := svc.Get(t.Context(), request(agent.ScorecardWindow30d), actor())
+
+	require.NoError(t, err)
+	assert.Equal(t, verdicts, result.Scorecard.ToolVerdicts)
+}

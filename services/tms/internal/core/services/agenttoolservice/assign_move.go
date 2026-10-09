@@ -24,6 +24,14 @@ func newAssignMoveTool(
 
 func (t *assignMoveTool) Name() string { return "assign_move" }
 
+func (t *assignMoveTool) Prerequisites() []string {
+	return []string{"get_shipment", "rank_move_candidates"}
+}
+
+func (t *assignMoveTool) Recipe() []string {
+	return []string{"get_shipment", "rank_move_candidates", "assign_move"}
+}
+
 func (t *assignMoveTool) Description() string {
 	return "Assign a driver and equipment to a shipment move that has no driver yet. " +
 		"Use it once a driver is chosen, usually from rank_move_candidates or plan_dispatch, " +

@@ -86,6 +86,27 @@ func Promotable(policy serviceports.ToolPolicy) agent.AutonomyTier {
 	return maxTier(policy).AtMost(policy.EgressCeiling())
 }
 
+// AlwaysProposes reports a tool every call of which records a proposal on
+// this agent, whatever it reaches and whatever trust it earns: its own
+// ceiling or its egress keeps it below running on its own, or the agent's
+// ceiling does. The prompt groups only these as changes that wait for a
+// person; it used to call a tool whose static tier ran at once a change that
+// runs as soon as it is called, and a call that the turn's taint, a
+// condition or what it reached held for a person contradicted it.
+func AlwaysProposes(
+	definition *agentdefinition.Definition,
+	policy serviceports.ToolPolicy,
+) bool {
+	if agent.TierAutoExecute.Above(Promotable(policy)) {
+		return true
+	}
+	if definition == nil || !definition.AutonomyCeiling.IsValid() {
+		return false
+	}
+
+	return agent.TierAutoExecute.Above(definition.AutonomyCeiling)
+}
+
 func StaticTier(
 	definition *agentdefinition.Definition,
 	policy serviceports.ToolPolicy,

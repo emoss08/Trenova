@@ -21,7 +21,7 @@ import (
 const (
 	// MaxAttachments bounds one message's files. Each is read into the
 	// prompt, so the bound is a context budget as much as a courtesy.
-	MaxAttachments = 5
+	MaxAttachments = conversation.MaxMessageAttachments
 	// AttachmentResourceType is the resource an attachment is uploaded
 	// against: the thread, so ownership is a plain comparison.
 	AttachmentResourceType = "assistant_thread"

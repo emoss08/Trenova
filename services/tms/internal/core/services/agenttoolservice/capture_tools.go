@@ -28,7 +28,7 @@ const (
 	paramCaptureTargetID  = "targetId"
 	paramCaptureDocType   = "documentTypeId"
 	maxCaptureFilings     = 25
-	captureSupplier       = "from list_capture_batches"
+	captureSources        = "list_capture_batches"
 )
 
 var captureTargetTypes = agenttoolschema.Source(
@@ -187,7 +187,8 @@ func (f *captureFiling) versioned(
 
 func newFileCaptureItemsTool(captures captureKeeper) serviceports.AgentTool {
 	return newReceivableTool(&receivableSpec{
-		name: "file_capture_items",
+		name:   "file_capture_items",
+		recipe: []string{"list_capture_batches", "list_document_types", "file_capture_items"},
 		description: "File scanned documents from capture intake onto the shipment, worker, " +
 			"tractor, trailer, customer or carrier they belong to, as the document type they " +
 			"are. Take the documents and their suggested records from list_capture_batches.",
@@ -281,8 +282,8 @@ func captureFilingProperties() map[string]any {
 			toolschema.KeyItems: map[string]any{
 				toolschema.KeyType: toolschema.TypeObject,
 				toolschema.KeyProperties: map[string]any{
-					paramCaptureItemID: stringProperty("The scanned document, "+
-						captureSupplier+". Never guess one.", 0),
+					paramCaptureItemID: agenttoolschema.ID("The "+scannedDocument,
+						captureSources),
 					paramCaptureTarget: agenttoolschema.Enum("The kind of record it "+
 						"goes on.", captureTargetTypes),
 					paramCaptureTargetID: stringProperty("The record it goes on, by id "+
@@ -339,13 +340,6 @@ func capturedOutcome(result *captureservice.FileItemsResult) string {
 	return summary + "; not filed: " + strings.Join(failures, "; ")
 }
 
-func captureIDProperty(key, what string) map[string]any {
-	return map[string]any{
-		key: stringProperty(fmt.Sprintf("The %s, %s. Never guess one.", what, captureSupplier),
-			0),
-	}
-}
-
 func newDiscardCaptureItemTool(captures captureKeeper) serviceports.AgentTool {
 	build := func(
 		ctx context.Context,
@@ -375,7 +369,9 @@ func newDiscardCaptureItemTool(captures captureKeeper) serviceports.AgentTool {
 		maxTier:     agent.TierActWithApproval,
 		rationale: "Marks one scanned document not worth filing inside Trenova; nothing is " +
 			"sent, and its pages are removed with the stack's other unfiled pages.",
-		properties:  captureIDProperty(paramCaptureItemIDOne, scannedDocument),
+		properties: map[string]any{
+			paramCaptureItemIDOne: agenttoolschema.ID("The "+scannedDocument, captureSources),
+		},
 		required:    []string{paramCaptureItemIDOne},
 		searchTerms: []string{"discard scan", "blank page", "throw away scan"},
 	}, receivablePlan[pulid.ID, *captureservice.DiscardItemPlan]{
@@ -465,7 +461,10 @@ func newDiscardCaptureBatchTool(captures captureKeeper) serviceports.AgentTool {
 		maxTier:     agent.TierPropose,
 		rationale: "Closes a scanned stack inside Trenova and drops its unfiled pages; nothing " +
 			"is sent, but nothing brings the pages back, so it is always proposed.",
-		properties:  captureIDProperty(paramCaptureBatchID, "scanned stack"),
+		properties: map[string]any{
+			paramCaptureBatchID: agenttoolschema.RecordID(permission.ResourceCaptureBatch,
+				"The scanned stack", captureSources),
+		},
 		required:    []string{paramCaptureBatchID},
 		searchTerms: []string{"discard stack", "clear capture intake", "throw away scans"},
 	}, receivablePlan[pulid.ID, *captureservice.DiscardBatchPlan]{

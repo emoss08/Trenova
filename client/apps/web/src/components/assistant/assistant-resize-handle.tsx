@@ -7,6 +7,7 @@ import {
   type AssistantDock,
   type AssistantPanelSize,
 } from "@/lib/assistant-dock";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useRef, type KeyboardEvent, type PointerEvent } from "react";
@@ -93,8 +94,9 @@ export function AssistantResizeHandle({
   };
 
   return (
-    <button
-      type="button"
+    <Button
+      variant="bare"
+      size="bare"
       aria-label={t("Resize the assistant. Use the arrow keys, or double-click to reset.")}
       title={t("Drag to resize, double-click to reset")}
       onPointerDown={handlePointerDown}
@@ -104,7 +106,7 @@ export function AssistantResizeHandle({
       onKeyDown={handleKeyDown}
       onDoubleClick={onReset}
       className={cn(
-        "ui-focus-ring text-muted-foreground absolute z-20 flex size-4 touch-none items-center justify-center outline-none",
+        "text-muted-foreground absolute z-20 flex size-4 touch-none items-center justify-center outline-none",
         "opacity-0 transition-opacity group-hover/panel:opacity-100 focus-visible:opacity-100",
         diagonal,
         top ? "bottom-0" : "top-0",
@@ -119,7 +121,7 @@ export function AssistantResizeHandle({
           strokeLinecap="round"
         />
       </svg>
-    </button>
+    </Button>
   );
 }
 

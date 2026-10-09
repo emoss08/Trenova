@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 )
 
@@ -157,5 +158,39 @@ func (r *repository) MarkThreadRead(
 		}
 
 		return dberror.CheckRowsAffected(res, "Thread", req.ThreadID.String())
+	})
+}
+
+func (r *repository) WakeThread(
+	ctx context.Context,
+	req *repositories.WakeThreadRequest,
+) (bool, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
+		cols := buncolgen.ThreadColumns
+		res, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*conversation.Thread)(nil)).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.ThreadScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ThreadID).
+					Where(cols.UserID.Eq(), req.UserID).
+					Where(cols.SnoozedUntil.IsNotNull())
+			}).
+			Set(cols.SnoozedUntil.SetNull()).
+			Set(cols.SnoozeAnchor.SetNull()).
+			Set(cols.SnoozeStopID.SetNull()).
+			Set(cols.Version.Inc(1)).
+			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+			Exec(ctx)
+		if err != nil {
+			return false, fmt.Errorf("wake thread: %w", err)
+		}
+
+		affected, err := res.RowsAffected()
+		if err != nil {
+			return false, fmt.Errorf("wake thread: %w", err)
+		}
+
+		return affected > 0, nil
 	})
 }

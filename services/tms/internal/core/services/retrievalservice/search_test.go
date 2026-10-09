@@ -510,8 +510,11 @@ func TestMemoryRankerLiftsSimilarMemoriesAboveRecency(t *testing.T) {
 		Query:      usableVector(),
 	})
 	require.NoError(t, err)
-	assert.Equal(t, memories[0].ID, ranked[0].ID, "the most similar memory leads")
-	assert.Len(t, ranked, 4)
+	assert.True(t, ranked.Semantic)
+	assert.Equal(t, memories[0].ID, ranked.Memories[0].ID, "the most similar memory leads")
+	assert.Len(t, ranked.Memories, 4)
+	assert.Equal(t, []pulid.ID{memories[0].ID}, ranked.Similar,
+		"only a memory at or above the floor bears on the query")
 
 	unranked, err := ranker.RankMemories(t.Context(), &serviceports.RankMemoriesRequest{
 		TenantInfo: testTenant,
@@ -519,7 +522,9 @@ func TestMemoryRankerLiftsSimilarMemoriesAboveRecency(t *testing.T) {
 		Memories:   memories,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, memories[3].ID, unranked[0].ID, "without a vector the order is recency")
+	assert.False(t, unranked.Semantic)
+	assert.Empty(t, unranked.Similar)
+	assert.Equal(t, memories[3].ID, unranked.Memories[0].ID, "without a vector the order is recency")
 }
 
 func recencyOrder(t *testing.T, memories []*agent.Memory) []*agent.Memory {
@@ -532,5 +537,5 @@ func recencyOrder(t *testing.T, memories []*agent.Memory) []*agent.Memory {
 		})
 	require.NoError(t, err)
 
-	return ranked
+	return ranked.Memories
 }

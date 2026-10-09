@@ -6,6 +6,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/deskcase"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -61,6 +62,15 @@ type Thread struct {
 	Pinned      bool              `json:"pinned"      bun:"pinned,type:BOOLEAN,notnull,default:false"`
 	SubjectType agent.SubjectType `json:"subjectType" bun:"subject_type,type:VARCHAR(50),nullzero"`
 	SubjectID   pulid.ID          `json:"subjectId"   bun:"subject_id,type:VARCHAR(100),nullzero"`
+
+	// A conversation about a shipment, invoice or dispute is a case. The
+	// person can snooze it until a time, the next appointment or the ETA;
+	// Case is where it stands, worked out when the thread is served and
+	// never stored.
+	SnoozedUntil *int64                `json:"snoozedUntil,omitempty" bun:"snoozed_until,type:BIGINT,nullzero"`
+	SnoozeAnchor deskcase.SnoozeAnchor `json:"snoozeAnchor,omitempty" bun:"snooze_anchor,type:VARCHAR(20),nullzero"`
+	SnoozeStopID pulid.ID              `json:"-"                      bun:"snooze_stop_id,type:VARCHAR(100),nullzero"`
+	Case         *deskcase.Summary     `json:"case,omitempty"         bun:"-"`
 
 	// CanContinue is whether the person reading the conversation may still
 	// ask its agent anything. It is worked out when the thread is served and
@@ -245,6 +255,30 @@ func (t *Thread) AbsorbTaint(taint *agent.RunTaint, now int64) bool {
 // HasSubject reports whether the conversation is about one record.
 func (t *Thread) HasSubject() bool {
 	return t.SubjectType != "" && t.SubjectID.IsNotNil()
+}
+
+// IsCase reports a conversation about a record a case can be about.
+func (t *Thread) IsCase() bool {
+	return t.HasSubject() && deskcase.IsSubject(t.SubjectType)
+}
+
+// CaseRef is the record the case is about.
+func (t *Thread) CaseRef() deskcase.Ref {
+	return deskcase.Ref{Type: t.SubjectType, ID: t.SubjectID}
+}
+
+// Snooze is the conversation's snooze as stored.
+func (t *Thread) Snooze() deskcase.Snooze {
+	return deskcase.Snooze{Until: t.SnoozedUntil, Anchor: t.SnoozeAnchor, StopID: t.SnoozeStopID}
+}
+
+// SetSnooze snoozes the conversation, or wakes it given the zero value.
+func (t *Thread) SetSnooze(snooze deskcase.Snooze) {
+	if !snooze.Set() {
+		t.SnoozedUntil, t.SnoozeAnchor, t.SnoozeStopID = nil, "", pulid.Nil
+		return
+	}
+	t.SnoozedUntil, t.SnoozeAnchor, t.SnoozeStopID = snooze.Until, snooze.Anchor, snooze.StopID
 }
 
 // CompactsItself reports a conversation that is compacted on its own once its

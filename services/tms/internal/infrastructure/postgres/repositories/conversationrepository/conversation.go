@@ -208,6 +208,9 @@ func (r *repository) UpdateThread(
 			Set(cols.AutoCompactOff.Set(), thread.AutoCompactOff).
 			Set(cols.SubjectType.Set(), thread.SubjectType).
 			Set(cols.SubjectID.Set(), thread.SubjectID).
+			Set(cols.SnoozedUntil.Set(), thread.SnoozedUntil).
+			Set(cols.SnoozeAnchor.Set(), thread.SnoozeAnchor).
+			Set(cols.SnoozeStopID.Set(), thread.SnoozeStopID).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 			Set(cols.Version.Set(), thread.Version).
 			Exec(ctx)

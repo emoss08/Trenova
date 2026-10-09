@@ -123,6 +123,37 @@ func TestForModel_StripsExtensionKeywordsAtEveryDepth(t *testing.T) {
 	assert.Equal(t, "shipment", original[KeySubsetOf], "the tool's own schema is untouched")
 }
 
+// A record id's kind is for the runtime's prefix check, never the model's
+// schema: a provider that validates strictly refuses a keyword it does not know.
+func TestForModel_StripsTheRecordKeywordInsideObjectsAndLists(t *testing.T) {
+	t.Parallel()
+
+	schema := map[string]any{
+		KeyType: TypeObject,
+		KeyProperties: map[string]any{
+			"customerId": map[string]any{KeyType: TypeString, KeyRecordOf: "customer"},
+			"stops": map[string]any{
+				KeyType: TypeArray,
+				KeyItems: map[string]any{
+					KeyType: TypeObject,
+					KeyProperties: map[string]any{
+						"locationId": map[string]any{KeyType: TypeString, KeyRecordOf: "location"},
+					},
+				},
+			},
+		},
+	}
+
+	stripped := ForModel(schema)
+
+	properties := stripped[KeyProperties].(map[string]any)
+	assert.NotContains(t, properties["customerId"], KeyRecordOf)
+	stop := properties["stops"].(map[string]any)[KeyItems].(map[string]any)
+	assert.NotContains(t, stop[KeyProperties].(map[string]any)["locationId"], KeyRecordOf)
+	assert.Equal(t, "customer",
+		RecordOf(schema[KeyProperties].(map[string]any)["customerId"].(map[string]any)))
+}
+
 func TestValidate_AcceptsASchemaCarryingTheSubsetKeyword(t *testing.T) {
 	t.Parallel()
 

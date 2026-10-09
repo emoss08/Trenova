@@ -87,6 +87,17 @@ Each API replica runs one reader that blocks on every shard at once, starting
 from each shard's newest entry when the replica starts. It decodes each entry
 once and hands it to the streams open on that replica for the entry's tenant.
 
+## Reading changes from a worker
+
+`realtimebroker.ChangeFeed` (`services.RecordChangeFeed`, provided with the
+publisher in every process) lets code that is not a browser ask what changed to
+a set of records since a cursor: `Head` names the tenant's shard and newest entry,
+and `Since` scans forward from it, bounded, keeping tenant-wide invalidations
+whose record id is in the set. A running agent turn uses it to learn that a
+record it is working with changed; see "The world changing under a turn" in
+[agent-runtime.md](agent-runtime.md). Events addressed to one person and scoped
+presence or typing events are never returned.
+
 ## A stream
 
 `GET /api/v1/realtime/stream/` (add `?presence=users` to join the tenant's online

@@ -32,18 +32,27 @@ export function useStickToBottom({
     if (!element) {
       return;
     }
-    const pin = () => {
-      if (stick.current) {
-        element.scrollTop = element.scrollHeight;
-      }
-    };
-    const onScroll = () => {
+    // Where the reader is, read from the scroller as it is now. A scroll
+    // asks, and so does any change in size: the dock under the conversation
+    // grows and shrinks (a case, its checklist, the queue) and content
+    // settles without the scroller ever firing a scroll, which left the jump
+    // control up over a reader sitting at the bottom.
+    const measure = () => {
       const distance = element.scrollHeight - element.scrollTop - element.clientHeight;
       if (distance < NEAR_BOTTOM) {
         stick.current = true;
         setUnread(0);
       }
       setAway(distance > AWAY);
+    };
+    const pin = () => {
+      if (stick.current) {
+        element.scrollTop = element.scrollHeight;
+      }
+    };
+    const onResize = () => {
+      pin();
+      measure();
     };
     const letGo = () => {
       stick.current = false;
@@ -58,20 +67,20 @@ export function useStickToBottom({
         letGo();
       }
     };
-    element.addEventListener("scroll", onScroll);
+    element.addEventListener("scroll", measure);
     element.addEventListener("wheel", onWheel, { passive: true });
     element.addEventListener("touchmove", letGo, { passive: true });
     element.addEventListener("keydown", onKeyDown);
-    const observer = new ResizeObserver(pin);
+    const observer = new ResizeObserver(onResize);
     observer.observe(element);
     if (element.firstElementChild) {
       observer.observe(element.firstElementChild);
     }
-    pin();
+    onResize();
 
     return () => {
       observer.disconnect();
-      element.removeEventListener("scroll", onScroll);
+      element.removeEventListener("scroll", measure);
       element.removeEventListener("wheel", onWheel);
       element.removeEventListener("touchmove", letGo);
       element.removeEventListener("keydown", onKeyDown);

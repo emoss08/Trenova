@@ -330,6 +330,14 @@ content proposes every later write, is in
 How an agent looks back over a quiet conversation or a settled run and keeps what the work
 taught (`agentreflectionservice`, `reflectionjobs`, the `agent_reflections` table) is under
 "Learning from the work" in agent-runtime.md.
+An agent parking its work until something happens in the world (`wait_until`, a truck
+reaching a stop, a reply, an appointment or free time coming round, drive time running low,
+a time) and picking it up as a new turn or run is described in
+[docs/engineering/agent-waits.md](docs/engineering/agent-waits.md).
+A Desk conversation about a shipment, invoice or dispute is a case: its state (working,
+waiting, snoozed, settled) worked out on read, snoozes that follow the appointment or ETA,
+waiting on the customer's or a carrier's reply, and the ready-to-bill checklist are in
+[docs/engineering/desk-cases.md](docs/engineering/desk-cases.md).
 An agent handing a task to another agent (`delegate_task`, the per-agent
 allowlist, one level only, same person) is described in
 [docs/engineering/agent-delegation.md](docs/engineering/agent-delegation.md).

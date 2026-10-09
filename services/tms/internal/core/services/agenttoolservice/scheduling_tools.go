@@ -246,9 +246,11 @@ func newAssignWorkerShiftTool(schedules scheduleKeeper, scope teamScope) service
 		permission.OpAssign,
 		map[string]any{
 			paramWorkerID: workerProperty(),
-			paramShiftTemplateID: idProperty("The shift pattern, from list_shift_templates. " +
-				"Never guess one."),
-			fieldEffectiveFrom: dayProperty("The first day the worker works it."),
+			paramShiftTemplateID: agenttoolschema.IDText(
+				"The shift pattern, from list_shift_templates. " +
+					"Never guess one.",
+			),
+			fieldEffectiveFrom: agenttoolschema.Date("The first day the worker works it."),
 			paramCycleOffsetWeeks: integerProperty("Which week of a rotating pattern the "+
 				"worker starts on, 0 for the first.", 0, maxCycleOffsetWeeks),
 			fieldNotes: stringProperty("Anything the planner should know.",
@@ -369,9 +371,11 @@ func newEndWorkerShiftAssignmentTool(
 			"assign_worker_shift puts them back on it.",
 		permission.OpAssign,
 		map[string]any{
-			paramShiftAssignmentID: idProperty("The assignment, from get_worker_schedule. " +
-				"Never guess one."),
-			fieldEffectiveTo: dayProperty("The last day the worker works the pattern."),
+			paramShiftAssignmentID: agenttoolschema.IDText(
+				"The assignment, from get_worker_schedule. " +
+					"Never guess one.",
+			),
+			fieldEffectiveTo: agenttoolschema.Date("The last day the worker works the pattern."),
 		},
 		[]string{paramShiftAssignmentID, fieldEffectiveTo},
 		func(params map[string]any) (serviceports.ToolTarget, bool) {
@@ -604,13 +608,21 @@ func newProposeShiftSwapTool(schedules scheduleKeeper) serviceports.AgentTool {
 		rationale: "Opens a request inside Trenova that changes nobody's schedule until it " +
 			"is approved; withdraw_shift_swap takes it back.",
 		properties: map[string]any{
-			paramRequestingWorkerID: idProperty("The worker giving the day up, from " +
-				"search_worker. Never guess one."),
-			paramCounterpartyWorkerID: idProperty("The worker asked to take it, from " +
-				"search_worker. Leave out to offer it to anyone."),
-			paramShiftDate: dayProperty("The day given up."),
-			paramCounterpartyDate: dayProperty("The day offered back, when it is a trade " +
-				"rather than a hand-off."),
+			paramRequestingWorkerID: agenttoolschema.RecordIDText(
+				permission.ResourceWorker,
+				"The worker giving the day up, from "+
+					"search_worker. Never guess one.",
+			),
+			paramCounterpartyWorkerID: agenttoolschema.RecordIDText(
+				permission.ResourceWorker,
+				"The worker asked to take it, from "+
+					"search_worker. Leave out to offer it to anyone.",
+			),
+			paramShiftDate: agenttoolschema.Date("The day given up."),
+			paramCounterpartyDate: agenttoolschema.Date(
+				"The day offered back, when it is a trade " +
+					"rather than a hand-off.",
+			),
 			fieldReason: stringProperty("Why, in the worker's words where you have them.",
 				maxScheduleNote),
 		},
@@ -741,7 +753,9 @@ func newSwapDecisionTool(schedules scheduleKeeper, spec *swapDecisionSpec) servi
 		personOnly:  spec.personOnly,
 		rationale:   spec.rationale,
 		properties: map[string]any{
-			paramSwapID: idProperty("The swap, from get_worker_schedule. Never guess one."),
+			paramSwapID: agenttoolschema.IDText(
+				"The swap, from get_worker_schedule. Never guess one.",
+			),
 			paramNote: stringProperty("What the workers are told about it.",
 				maxScheduleNote),
 		},

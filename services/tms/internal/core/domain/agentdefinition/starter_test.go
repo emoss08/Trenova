@@ -1,6 +1,7 @@
 package agentdefinition_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -312,4 +313,28 @@ func TestTemplates_TheFormulaAssistantIsAChatAgentThatOnlyProposes(t *testing.T)
 	require.Empty(t, assistant.StarterEvents())
 	require.Equal(t, agent.TierPropose, assistant.StarterCeiling())
 	require.NotEmpty(t, assistant.StarterTools())
+}
+
+/*
+A template's instructions say who the agent is, what it puts first, the rules
+it keeps and what is a person's to decide. The order of the work is on the
+tools, as each one's recipe and prerequisites, where it is told with the tool.
+Instructions that walked through the tools named ones a turn had not loaded,
+went stale when a tool was renamed, and told an agent without a tool to call
+it.
+*/
+func TestTemplates_InstructionsLeaveTheOrderOfWorkToTheTools(t *testing.T) {
+	t.Parallel()
+
+	for _, template := range agentdefinition.AllTemplates() {
+		instructions := template.StarterInstructions()
+		for _, tool := range template.StarterTools() {
+			if !strings.Contains(tool, "_") {
+				continue
+			}
+			require.NotContainsf(t, instructions, tool,
+				"the %s instructions name %s; say it on the tool's recipe instead",
+				template.Label(), tool)
+		}
+	}
 }

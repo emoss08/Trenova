@@ -221,8 +221,11 @@ func (t *getEDITransferTool) Description() string {
 }
 
 func (t *getEDITransferTool) ParamSchema() map[string]any {
-	return idSchema(paramEDITransferID, "The load tender transfer's id, from "+
-		"list_edi_transfers, a transferId in get_edi_inbound_file, or this run's subject.")
+	return idSchema(
+		paramEDITransferID,
+		agenttoolschema.IDText("The load tender transfer's id, from "+
+			"list_edi_transfers, a transferId in get_edi_inbound_file, or this run's subject."),
+	)
 }
 
 func (t *getEDITransferTool) Policy() serviceports.ToolPolicy {

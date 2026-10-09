@@ -53,12 +53,25 @@ const (
 	// summary, pinned facts and pinned artifacts carried over. It is sent to
 	// the model like a person's message, and shown as a note.
 	MessageKindHandoffBrief = MessageKind("HandoffBrief")
+	// MessageKindSteer is something the person said while the agent was
+	// still working on a reply, read by the turn at its next step. It is kept
+	// in the person's words and sent to the model inside the turn it steered.
+	MessageKindSteer = MessageKind("Steer")
+	// MessageKindWorldChange is the notice a turn was given when a record it
+	// was working with changed under it. The model reads it where it arrived;
+	// the conversation shows it as a line, not as anything the person said.
+	MessageKindWorldChange = MessageKind("WorldChange")
+	// MessageKindWaitNote is the input of the turn that picks up work the
+	// agent parked on a wait: what it waited for and what came of it. It is
+	// sent to the model like a person's message and shown as a note.
+	MessageKindWaitNote = MessageKind("WaitNote")
 )
 
 func (k MessageKind) IsValid() bool {
 	switch k {
 	case MessageKindMessage, MessageKindDecisionNote, MessageKindDelegated,
-		MessageKindSchedule, MessageKindCompaction, MessageKindHandoff, MessageKindHandoffBrief:
+		MessageKindSchedule, MessageKindCompaction, MessageKindHandoff, MessageKindHandoffBrief,
+		MessageKindSteer, MessageKindWorldChange, MessageKindWaitNote:
 		return true
 	default:
 		return false
@@ -76,6 +89,9 @@ func AllMessageKinds() []MessageKind {
 		MessageKindCompaction,
 		MessageKindHandoff,
 		MessageKindHandoffBrief,
+		MessageKindSteer,
+		MessageKindWorldChange,
+		MessageKindWaitNote,
 	}
 }
 

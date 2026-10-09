@@ -30,6 +30,8 @@ import {
   isShipmentCommentEvent,
 } from "@/lib/shipment-comment-realtime";
 import { isOtherUsersTurnEvent } from "@/lib/assistant-turn-realtime";
+import { boundCaseRecords, CASE_QUERY_ROOTS, touchesCase } from "@/lib/case-realtime";
+import type { AssistantThreadList } from "@/types/assistant";
 import { parseReplyReady } from "@/components/assistant/reply-ready";
 import { announceReplyReady } from "@/components/assistant/reply-ready-toast";
 import { releaseTurnReaders } from "@/components/assistant/turn-readers";
@@ -244,6 +246,15 @@ export function useRealtimeConnection() {
         return;
       }
       useRealtimeStore.getState().setLastEventAt(Date.now());
+
+      // A change to the record a Desk case is about can settle the case or
+      // tick its checklist, whatever else the event moves.
+      const threads = queryClient.getQueryData<AssistantThreadList>(
+        queries.assistant.threads().queryKey,
+      );
+      if (touchesCase(evt, boundCaseRecords(threads))) {
+        enqueueInvalidation(CASE_QUERY_ROOTS);
+      }
 
       if (isShipmentCommentEvent(evt)) {
         handleShipmentCommentEvent(queryClient, evt, user.id);

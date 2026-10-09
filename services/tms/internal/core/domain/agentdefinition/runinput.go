@@ -24,6 +24,8 @@ func BackgroundRunInput(
 		builder.WriteString("This is a scheduled run.")
 	case agent.RunTriggerContinuous:
 		builder.WriteString("This is one pass of a continuous run.")
+	case agent.RunTriggerWait:
+		builder.WriteString("An earlier run parked this work on a wait, and the wait has ended.")
 	default:
 		builder.WriteString("A person started this run.")
 	}

@@ -37,7 +37,7 @@ type Message struct {
 	// Kind is Message for everything but the note that starts the turn after
 	// a decision and the steps of another agent the turn handed work to; see
 	// MessageKind.
-	Kind MessageKind `json:"kind"     bun:"kind,type:VARCHAR(50),notnull,default:'Message'"`
+	Kind MessageKind `json:"kind" bun:"kind,type:VARCHAR(50),notnull,default:'Message'"`
 	// AgentDefinitionID and DelegateCallID mark a step another agent took on
 	// a task this conversation's agent handed it: which agent, and the
 	// delegate_task call it answers. Both are empty on the conversation's own
@@ -65,21 +65,25 @@ type Message struct {
 
 	Content string `json:"content" bun:"content,type:TEXT,nullzero"`
 
+	// WorldChanges are the records a WorldChange notice reported changed.
+	// Nil on every other message.
+	WorldChanges []WorldChange `json:"worldChanges,omitempty" bun:"world_changes,type:JSONB,nullzero"`
+
 	// Compaction says what a compaction summary stands in for. Nil on every
 	// other message.
 	Compaction *Compaction `json:"compaction,omitempty" bun:"compaction,type:JSONB,nullzero"`
 
 	// ToolCalls is what an assistant turn asked for, stored as the normalized
 	// shape rather than any one provider's wire format.
-	ToolCalls []ToolCallRecord `json:"toolCalls"  bun:"tool_calls,type:jsonb,nullzero"`
+	ToolCalls []ToolCallRecord `json:"toolCalls" bun:"tool_calls,type:jsonb,nullzero"`
 	// ToolCallID and ToolName tie a Tool-role message to the call it answers.
-	ToolCallID  string           `json:"toolCallId" bun:"tool_call_id,type:VARCHAR(200),nullzero"`
-	ToolName    string           `json:"toolName"   bun:"tool_name,type:VARCHAR(200),nullzero"`
-	ToolFailed  bool             `json:"toolFailed" bun:"tool_failed,type:BOOLEAN,notnull,default:false"`
+	ToolCallID  string           `json:"toolCallId"            bun:"tool_call_id,type:VARCHAR(200),nullzero"`
+	ToolName    string           `json:"toolName"              bun:"tool_name,type:VARCHAR(200),nullzero"`
+	ToolFailed  bool             `json:"toolFailed"            bun:"tool_failed,type:BOOLEAN,notnull,default:false"`
 	ToolVerdict string           `json:"toolVerdict,omitempty" bun:"tool_verdict,type:VARCHAR(50),nullzero"`
-	ToolEffect  agent.ToolEffect `json:"effect,omitempty" bun:"-"`
-	ToolSummary string           `json:"summary,omitempty" bun:"tool_summary,type:TEXT,nullzero"`
-	FoundTools  []string         `json:"foundTools,omitempty" bun:"found_tools,type:JSONB,nullzero"`
+	ToolEffect  agent.ToolEffect `json:"effect,omitempty"      bun:"-"`
+	ToolSummary string           `json:"summary,omitempty"     bun:"tool_summary,type:TEXT,nullzero"`
+	FoundTools  []string         `json:"foundTools,omitempty"  bun:"found_tools,type:JSONB,nullzero"`
 
 	// ScopeStage, ScopeCategory and ScopeReason record the guard's verdict on a
 	// user turn, or on an assistant turn the output guard refused.
@@ -104,7 +108,7 @@ type Message struct {
 	// did not reason out loud or the provider was not asked to let it.
 	Reasoning *ReasoningTrace `json:"reasoning" bun:"reasoning,type:JSONB,nullzero"`
 
-	Model string `json:"model"        bun:"model,type:VARCHAR(200),nullzero"`
+	Model string `json:"model" bun:"model,type:VARCHAR(200),nullzero"`
 	// Truncated says the provider stopped partway through this reply, and
 	// FallbackFrom names the provider asked first when another one answered.
 	Truncated    bool              `json:"truncated,omitempty"    bun:"truncated,type:BOOLEAN,notnull,default:false"`
@@ -112,13 +116,13 @@ type Message struct {
 	// Failure says why the reply did not finish, for a reply that is only a
 	// closing note: the models that were asked, or that it was stopped.
 	Failure      *ReplyFailure `json:"failure,omitempty" bun:"failure,type:JSONB,nullzero"`
-	ProviderID   pulid.ID      `json:"providerId"   bun:"provider_id,type:VARCHAR(100),nullzero"`
-	InputTokens  int           `json:"inputTokens"  bun:"input_tokens,type:INTEGER,notnull,default:0"`
-	OutputTokens int           `json:"outputTokens" bun:"output_tokens,type:INTEGER,notnull,default:0"`
+	ProviderID   pulid.ID      `json:"providerId"        bun:"provider_id,type:VARCHAR(100),nullzero"`
+	InputTokens  int           `json:"inputTokens"       bun:"input_tokens,type:INTEGER,notnull,default:0"`
+	OutputTokens int           `json:"outputTokens"      bun:"output_tokens,type:INTEGER,notnull,default:0"`
 	// LatencyMs is how long the model took to answer this turn; CostUSD is
 	// what it cost at the provider's price, nil where no price is configured.
-	LatencyMs int64            `json:"latencyMs"    bun:"latency_ms,type:BIGINT,nullzero"`
-	CostUSD   *decimal.Decimal `json:"costUsd"      bun:"cost_usd,type:NUMERIC(14,6),nullzero"`
+	LatencyMs int64            `json:"latencyMs" bun:"latency_ms,type:BIGINT,nullzero"`
+	CostUSD   *decimal.Decimal `json:"costUsd"   bun:"cost_usd,type:NUMERIC(14,6),nullzero"`
 
 	// UsedMemoryIDs are the memories the turn this reply ends used, and
 	// SavedMemories what it kept or offered to keep; both only on a turn's
@@ -131,6 +135,19 @@ type Message struct {
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	Thread *Thread `json:"thread,omitempty" bun:"rel:belongs-to,join:thread_id=id"`
+}
+
+// WorldChange is a record that changed elsewhere while a reply was being
+// written, as the reply was told.
+type WorldChange struct {
+	RecordID    string   `json:"recordId"`
+	Resource    string   `json:"resource"`
+	Label       string   `json:"label,omitempty"`
+	Action      string   `json:"action"`
+	Fields      []string `json:"fields,omitempty"`
+	ActorType   string   `json:"actorType,omitempty"`
+	ActorUserID string   `json:"actorUserId,omitempty"`
+	At          int64    `json:"at"`
 }
 
 // SavedMemory is a memory a turn kept through the remember tool, by the call

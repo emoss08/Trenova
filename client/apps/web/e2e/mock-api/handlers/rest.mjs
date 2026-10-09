@@ -13,7 +13,6 @@ const ROUTES = [
   ["GET", /^\/api\/v1\/me\/permissions\/?$/, () => permissionManifest()],
   ["GET", /^\/api\/v1\/me\/permissions\/version\/?$/, () => ({ checksum: "mock", expiresAt: Math.floor(Date.now() / 1000) + 86400 })],
   ["GET", /^\/api\/v1\/system\/version\/?$/, () => ({ version: "mock", commit: "mock", buildDate: "" })],
-  ["GET", /^\/api\/v1\/system\/network-pulse\/?$/, () => ({ status: "ok" })],
   ["GET", /^\/api\/v1\/system\/public-config\/?$/, () => ({})],
   ["GET", /^\/api\/v1\/auth\/csrf\/?$/, () => ({ csrfToken: "mock-csrf", headerName: "X-CSRF-Token" })],
   [

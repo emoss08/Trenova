@@ -100,6 +100,10 @@ func (fx *handOffEffects) Delegate(
 
 func (*handOffEffects) Supports(string) bool { return true }
 
+func (*handOffEffects) Interject(*agentruntime.Turn, *agentruntime.WorldCheck) agentruntime.Interjections {
+	return agentruntime.Interjections{}
+}
+
 func (*handOffEffects) Now() int64 { return timeutils.NowUnix() }
 
 func savedWithIDs(messages []conversation.Message) []conversation.Message {

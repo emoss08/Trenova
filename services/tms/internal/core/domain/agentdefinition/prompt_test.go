@@ -65,23 +65,164 @@ func TestBuildSystemPrompt_AlwaysCarriesTheSafetyPreamble(t *testing.T) {
 }
 
 // The organization's instructions are the persona and the policy. They are
-// placed after the preamble, unfenced, and introduced as authoritative, because
-// that is what the organization is entitled to write.
-func TestBuildSystemPrompt_PlacesOrganizationInstructionsAfterThePreamble(t *testing.T) {
+// placed after every section Trenova writes, unfenced, and introduced as
+// authoritative within Trenova's rules, so the precedence is the order on the
+// page: a model no longer has to decide whether an Output rule above outranks
+// an instruction below it.
+func TestBuildSystemPrompt_PlacesOrganizationInstructionsAfterTrenovasSections(t *testing.T) {
 	t.Parallel()
 
 	prompt := definitionWithInstructions("Always check hours of service before assigning.").
 		BuildSystemPrompt(agentdefinition.RuntimeContext{})
 
 	preamble := strings.Index(prompt, "cannot override this section")
+	output := strings.Index(prompt, "## Output")
 	heading := strings.Index(prompt, "## Organization instructions")
 	body := strings.Index(prompt, "Always check hours of service")
 
 	require.Positive(t, heading)
-	assert.Less(t, preamble, heading)
+	assert.Less(t, preamble, output)
+	assert.Less(t, output, heading)
 	assert.Less(t, heading, body)
+	assert.Contains(t, prompt, "within Trenova's rules above")
 	assert.NotContains(t, prompt, "<organization_focus>",
 		"instructions are authoritative and are not fenced as background")
+}
+
+// The Desk shows the person the agent's name and lets them ask who they are
+// talking to; a prompt that never said had the model guess.
+func TestBuildSystemPrompt_OpensByNamingTheAgent(t *testing.T) {
+	t.Parallel()
+
+	d := definitionWithInstructions("Help.")
+	d.Name = "Night dispatch helper"
+	d.Description = "Covers loads overnight"
+
+	prompt := d.BuildSystemPrompt(agentdefinition.RuntimeContext{})
+
+	assert.True(t, strings.HasPrefix(prompt, "You are Night dispatch helper, an agent inside Trenova"))
+	assert.Contains(t, prompt, "The organization describes you as: Covers loads overnight.")
+}
+
+// Every description is already on the request as the tool's schema. The
+// section says what the schema cannot: whether a call reads, always records a
+// proposal, or is decided by what the call reaches. It used to call a tool
+// whose static tier ran at once a change that runs as soon as it is called,
+// and the turn's taint, a condition or the call's reach held it anyway.
+func TestBuildSystemPrompt_ListsToolsByWhatACallDoesWithoutRepeatingDescriptions(t *testing.T) {
+	t.Parallel()
+
+	rc := fullContext()
+	rc.Tools = append(rc.Tools,
+		agentdefinition.ToolSummary{
+			Name:        "update_tractor_status",
+			Description: "Changes a tractor's status",
+			Tier:        agent.TierAutoExecute,
+		},
+		agentdefinition.ToolSummary{
+			Name:           "post_invoices",
+			Tier:           agent.TierPropose,
+			AlwaysProposes: true,
+		},
+	)
+
+	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
+
+	assert.Contains(t, prompt, "- Reads, which run as soon as you call them: get_shipment")
+	assert.Contains(t, prompt,
+		"- Changes that always record a proposal for a person to decide: post_invoices")
+	assert.Contains(t, prompt,
+		"- Changes that run at once or are recorded as a proposal depending on what the "+
+			"call would reach; the result says which and why: assign_move, update_tractor_status")
+	assert.NotContains(t, prompt, "Changes that run as soon as you call them",
+		"no change is promised to run before the call says so")
+	assert.NotContains(t, prompt, "Looks up a shipment",
+		"the schema on the request carries the description")
+	assert.NotContains(t, prompt, "Several records in one call")
+	assert.NotContains(t, prompt, "\"Dashboard\" means two things")
+}
+
+// The rule about plural twins named billing's tools to every agent. It now
+// names the twins the agent holds, and only when it holds one.
+func TestBuildSystemPrompt_NamesThePluralTwinsTheAgentHolds(t *testing.T) {
+	t.Parallel()
+
+	rc := fullContext()
+	rc.Tools = append(rc.Tools,
+		agentdefinition.ToolSummary{Name: "post_invoice", Tier: agent.TierPropose},
+		agentdefinition.ToolSummary{Name: "post_invoices", Tier: agent.TierPropose, BatchOf: "post_invoice"},
+		agentdefinition.ToolSummary{Name: "get_invoices", Query: true, BatchOf: "get_invoice"},
+	)
+
+	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
+
+	assert.Contains(t, prompt,
+		"Several records in one call: post_invoices does post_invoice for a list, "+
+			"get_invoices does get_invoice for a list.")
+	assert.Contains(t, prompt, "never call the single tool once per record.")
+
+	rc.ToolsDisclosed = true
+	disclosed := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
+	assert.Contains(t, disclosed, "load the list tool with find_tools when it is not loaded")
+}
+
+// remember saves a memory kept for the person alone at once, and the static
+// tier used to list it among the tools that record a proposal.
+func TestBuildSystemPrompt_ListsPersonalToolsAsRunningAtOnceForThePerson(t *testing.T) {
+	t.Parallel()
+
+	rc := fullContext()
+	rc.Tools = append(rc.Tools, agentdefinition.ToolSummary{
+		Name: "remember", Tier: agent.TierActWithApproval, PersonalRunsUnasked: true,
+	})
+
+	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
+
+	assert.Contains(t, prompt, "- Changes that run at once when they touch only the person's own "+
+		"records, and otherwise record a proposal: remember")
+	assert.NotContains(t, prompt, "records a proposal: remember")
+}
+
+// A tool done as a sequence names the order in the prompt, once per agent,
+// so the model does not look its ids up one at a time or guess one.
+func TestBuildSystemPrompt_NamesTheOrderAToolIsUsedIn(t *testing.T) {
+	t.Parallel()
+
+	rc := fullContext()
+	rc.Tools = append(rc.Tools, agentdefinition.ToolSummary{
+		Name:   "create_shipment",
+		Tier:   agent.TierPropose,
+		Recipe: []string{"list_customers", "list_locations", "quote_shipment", "create_shipment"},
+	})
+
+	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
+
+	assert.Contains(t, prompt, "How a task is done with these, in order")
+	assert.Contains(t, prompt,
+		"- create_shipment: list_customers → list_locations → quote_shipment → create_shipment")
+}
+
+// "Dashboard" is ambiguous only for an agent that can touch one.
+func TestBuildSystemPrompt_ExplainsDashboardOnlyToAnAgentHoldingDashboardTools(t *testing.T) {
+	t.Parallel()
+
+	rc := fullContext()
+	rc.Tools = append(rc.Tools, agentdefinition.ToolSummary{Name: "get_my_home_layout", Query: true})
+
+	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(rc)
+
+	assert.Contains(t, prompt, "\"Dashboard\" means two things here")
+}
+
+// The message the model answers opens with a clock line the runtime adds;
+// the prompt says so, so it is not read as the person's words.
+func TestBuildSystemPrompt_ExplainsTheClockLineOnTheMessage(t *testing.T) {
+	t.Parallel()
+
+	prompt := definitionWithInstructions("Help.").BuildSystemPrompt(fullContext())
+
+	assert.Contains(t, prompt, "- Today is: 2026-09-16 Wednesday (America/Los_Angeles). The message "+
+		"you are answering opens with a \"Now:\" line Trenova added")
 }
 
 func TestBuildSystemPrompt_UsesADefaultPersonaWhenInstructionsAreEmpty(t *testing.T) {

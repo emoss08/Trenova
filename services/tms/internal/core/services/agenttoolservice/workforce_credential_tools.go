@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -85,8 +86,8 @@ func credentialToolProviders() []any {
 }
 
 func credentialIDProperty() map[string]any {
-	return idProperty("The credential, from list_worker_credentials or " +
-		"list_expiring_credentials. Never guess one.")
+	return agenttoolschema.RecordID(permission.ResourceWorkerCredential, "The credential",
+		"list_worker_credentials or list_expiring_credentials")
 }
 
 func credentialRecord(credential *worker.WorkerCredential) toolpreview.Record {
@@ -104,8 +105,8 @@ func credentialFactProperties() map[string]any {
 			"exactly as printed.", maxCredentialField),
 		paramIssuingAuthority: stringProperty("Who issued it, such as the state.",
 			maxCredentialField),
-		paramIssuedAt:   dayProperty("When it was issued."),
-		paramExpiresAt:  dayProperty("When it expires."),
+		paramIssuedAt:   agenttoolschema.Date("When it was issued."),
+		paramExpiresAt:  agenttoolschema.Date("When it expires."),
 		wfParamDocument: wfDocumentProperty(),
 		fieldNotes:      wfNoteProperty("Anything the credential should say."),
 	}
@@ -184,7 +185,7 @@ func credentialCreateFrom(
 func newRecordWorkerCredentialTool(credentials credentialKeeper) serviceports.AgentTool {
 	properties := credentialFactProperties()
 	properties[paramWorkerID] = workerProperty()
-	properties[paramCredentialTypeID] = idProperty("The kind of credential, from " +
+	properties[paramCredentialTypeID] = agenttoolschema.IDText("The kind of credential, from " +
 		"list_worker_credentials. Never guess one.")
 	properties[paramRenew] = booleanProperty("Whether this renews the worker's current " +
 		"credential of the same kind, which is archived as superseded. A second active " +

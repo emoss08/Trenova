@@ -472,8 +472,8 @@ func TestStoreReplay_ScoresACaseReplay(t *testing.T) {
 func TestObserveReplay_ReadsRefusals(t *testing.T) {
 	t.Parallel()
 
-	refused := observeReplay(&serviceports.RunResult{OutputRefused: true})
-	assert.True(t, refused.refused)
+	altered := observeReplay(&serviceports.RunResult{OutputAltered: true})
+	assert.False(t, altered.refused, "a reply the guard took code out of was still given")
 
 	flagged := observeReplay(&serviceports.RunResult{Messages: []conversation.Message{
 		{Role: conversation.RoleAssistant, Refused: true},

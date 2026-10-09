@@ -1,5 +1,7 @@
+import { Button } from "@trenova/shared/components/ui/button";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
+import { deskLinkClass } from "./desk-button-styles";
 import { DeskIcon, type DeskIconName } from "./desk-icons";
 
 /** What a card is about: something failed, something to watch, a boundary, or news. */
@@ -60,14 +62,45 @@ export function DeskErrorButton({
   children: ReactNode;
 }) {
   return (
-    <button
-      type="button"
-      className={cn("dk-ec-btn", ink ? "dk-ink" : "dk-ghost")}
+    <Button
+      variant={ink ? "default" : "quiet"}
+      size="sm"
+      className={cn(
+        "rounded-lg px-2.75",
+        ink
+          ? "bg-dsk-ink text-dsk-ink-fg hover:bg-dsk-ink hover:opacity-90 active:bg-dsk-ink"
+          : "text-dsk-fg2 ring-1 ring-dsk-b ring-inset hover:bg-dsk-fg/6 hover:text-dsk-fg2 active:bg-dsk-fg/6",
+      )}
       disabled={disabled}
       title={title}
       onClick={onClick}
     >
       {children}
-    </button>
+    </Button>
+  );
+}
+
+/** A link-like action in an error card or lock line: underlined text, no fill. */
+export function DeskErrorLink({
+  className,
+  onClick,
+  children,
+}: {
+  className?: string;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <Button
+      variant="bare"
+      size="bare"
+      className={cn(
+        deskLinkClass,
+        className,
+      )}
+      onClick={onClick}
+    >
+      {children}
+    </Button>
   );
 }

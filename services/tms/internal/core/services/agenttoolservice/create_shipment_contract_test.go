@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -338,7 +339,7 @@ func TestCreateShipment_PreviewWarnsOfAShipmentNothingPrices(t *testing.T) {
 func TestLocalTimeProperty_NeverAsksForUnixSeconds(t *testing.T) {
 	t.Parallel()
 
-	property := localTimeProperty("When.")
+	property := agenttoolschema.LocalDateTime("When.")
 	assert.Equal(t, toolschema.TypeString, property[toolschema.KeyType])
 	assert.Contains(t, property[toolschema.KeyDescription], "2026-10-01T08:00")
 

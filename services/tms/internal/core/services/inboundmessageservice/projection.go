@@ -53,6 +53,20 @@ func (s *Service) project(ctx context.Context, message *inboundmessage.InboundMe
 // act on. It fires whatever the outcome: a desk that subscribes to intake is
 // as interested in the tender it may take over as in the one it may not.
 func (s *Service) announce(ctx context.Context, message *inboundmessage.InboundMessage) {
+	related := make([]pulid.ID, 0, 3)
+	for _, id := range []pulid.ID{
+		message.MatchedShipmentID,
+		message.MatchedCarrierID,
+		message.MatchedCustomerID,
+	} {
+		if id.IsNotNil() {
+			related = append(related, id)
+		}
+	}
+
+	// The detail names the message, never what it says: a wait it ends hands
+	// the line to the agent, which reads the message itself, and taints its
+	// work when it does.
 	services.PublishAgentEvent(ctx, s.events, services.AgentEvent{
 		Kind:      agent.EventInboundMessageClassified,
 		SubjectID: message.ID,
@@ -60,6 +74,9 @@ func (s *Service) announce(ctx context.Context, message *inboundmessage.InboundM
 			OrgID: message.OrganizationID,
 			BuID:  message.BusinessUnitID,
 		},
+		Related: related,
+		Detail: "A message arrived from " + message.FromAddress + " (inbound message " +
+			message.ID.String() + "). Read it with get_inbound_message before acting on it.",
 	})
 }
 

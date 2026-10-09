@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -51,16 +52,26 @@ func newSplitMoveTool(moves moveSplitter) serviceports.AgentTool {
 		rationale: "Adds a move and turns a delivery into a relay inside Trenova; the two new " +
 			"windows are times only a person can vouch for, so a person always approves it.",
 		properties: map[string]any{
-			paramMoveID: idProperty("The two-stop move to split, from get_shipment (its moves) " +
-				"or get_dispatch_board. Never guess one."),
-			paramNewDeliveryLocationID: idProperty("Where the freight finally goes, from " +
-				"list_locations. It must differ from the current delivery location."),
-			paramRelayPickupStart: dateTimeProperty("When the new move's pickup at the relay " +
-				"opens; after the current delivery window ends."),
-			paramRelayPickupEnd: dateTimeProperty("When that relay pickup window closes."),
-			paramNewDeliveryStart: dateTimeProperty("When the final delivery window opens; after " +
-				"the relay pickup window."),
-			paramNewDeliveryEnd: dateTimeProperty("When the final delivery window closes."),
+			paramMoveID: agenttoolschema.RecordIDText(
+				permission.ResourceShipmentMove,
+				"The two-stop move to split, from get_shipment (its moves) "+
+					"or get_dispatch_board. Never guess one.",
+			),
+			paramNewDeliveryLocationID: agenttoolschema.RecordIDText(
+				permission.ResourceLocation,
+				"Where the freight finally goes, from "+
+					"list_locations. It must differ from the current delivery location.",
+			),
+			paramRelayPickupStart: agenttoolschema.DateTime(
+				"When the new move's pickup at the relay " +
+					"opens; after the current delivery window ends.",
+			),
+			paramRelayPickupEnd: agenttoolschema.DateTime("When that relay pickup window closes."),
+			paramNewDeliveryStart: agenttoolschema.DateTime(
+				"When the final delivery window opens; after " +
+					"the relay pickup window.",
+			),
+			paramNewDeliveryEnd: agenttoolschema.DateTime("When the final delivery window closes."),
 			fieldPieces:         integerProperty("Pieces going on from the relay.", 1, 1000000),
 			fieldWeight:         integerProperty("Weight going on from the relay.", 1, 1000000),
 		},

@@ -177,7 +177,10 @@ func TestAuthorize_TheRefusalNamesWhoseAccessFellShort(t *testing.T) {
 	assert.Equal(t, aitrace.OutcomeDenied, person.verdict)
 	assert.Equal(t,
 		`Tool "update_worker" is not permitted: the person you are working for `+
-			"does not have update access to worker.",
+			"does not have update access to worker. Do not try it another way or propose it "+
+			"instead. Tell the person plainly that their account does not have update access "+
+			"to worker, that an administrator grants it under their role, and what you would "+
+			"do once it is granted. Do everything else they asked that does not need it.",
 		person.content,
 	)
 
@@ -189,10 +192,12 @@ func TestAuthorize_TheRefusalNamesWhoseAccessFellShort(t *testing.T) {
 	assert.Equal(t, aitrace.OutcomeDenied, unattended.verdict)
 	assert.Equal(t,
 		`Tool "update_worker" is not permitted: this agent's unattended access `+
-			"does not include update on worker.",
+			"does not include update on worker. Do not try it another way. Finish what the "+
+			"run can do without it and say in your report that this step needs a person, or "+
+			"someone to widen what this agent may do unattended in AI Control.",
 		unattended.content,
 	)
-	assert.NotContains(t, unattended.content, "person")
+	assert.NotContains(t, unattended.content, "the person you are working for")
 	assert.Equal(t, "lacks update access to worker", unattended.reason)
 }
 

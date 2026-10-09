@@ -112,6 +112,15 @@ vi.mock("@/components/assistant/use-thread-model", () => ({
     showDock: false,
     stop: () => undefined,
     suggestions: [],
+    waits: { open: [], byId: new Map(), cancel: async () => undefined },
+    waiting: {
+      items: [],
+      add: async () => true,
+      edit: async () => true,
+      remove: async () => undefined,
+      move: async () => undefined,
+      sendNow: async () => undefined,
+    },
   }),
 }));
 

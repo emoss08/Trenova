@@ -90,6 +90,10 @@ func newEvaluateServiceFailuresTool(failures serviceFailureDecider) serviceports
 
 func (t *evaluateServiceFailuresTool) Name() string { return "evaluate_service_failures" }
 
+func (t *evaluateServiceFailuresTool) Recipe() []string {
+	return []string{"get_dispatch_board", "get_shipment_tracking", "evaluate_service_failures"}
+}
+
 func (t *evaluateServiceFailuresTool) Description() string {
 	return "Run the service failure check on a shipment now, opening a failure for a " +
 		"late or missed stop that has none. Every stop is compared against its window " +
@@ -114,9 +118,12 @@ func (t *evaluateServiceFailuresTool) ParamSchema() map[string]any {
 				"description": "One stop of that shipment to check on its own, from " +
 					"get_shipment_tracking or get_shipment. Needs shipmentId.",
 			},
-			"shipmentIds": idListProperty("Several shipments to check in one pass, from "+
-				"list_shipments or search_shipments. Send this or shipmentId.",
-				maxBulkEvaluationShipments),
+			"shipmentIds": agenttoolschema.RecordIDs(
+				permission.ResourceShipment,
+				"Several shipments to check in one pass, from "+
+					"list_shipments or search_shipments. Send this or shipmentId.",
+				maxBulkEvaluationShipments,
+			),
 			"force": map[string]any{
 				"type": "boolean",
 				"description": "Re-check stops that were already evaluated. Default false; " +
@@ -250,6 +257,16 @@ func newResolveServiceFailureTool(failures serviceFailureResolver) serviceports.
 }
 
 func (t *resolveServiceFailureTool) Name() string { return "resolve_service_failure" }
+
+func (t *resolveServiceFailureTool) Recipe() []string {
+	return []string{
+		"list_service_failures",
+		"get_service_failure",
+		"get_shipment_tracking",
+		"list_service_failure_reason_codes",
+		"resolve_service_failure",
+	}
+}
 
 func (t *resolveServiceFailureTool) SearchTerms() []string {
 	return []string{"close service failure", "close out failure"}
@@ -592,6 +609,14 @@ const emailCustomerToolName = customerupdateservice.SourceAgentEmail
 
 func (t *emailCustomerTool) Name() string { return emailCustomerToolName }
 
+func (t *emailCustomerTool) Recipe() []string {
+	return []string{
+		"get_shipment_tracking",
+		"get_customer_update_preferences",
+		emailCustomerToolName,
+	}
+}
+
 func (t *emailCustomerTool) Description() string {
 	return "Email a shipment's customer a status update: a delay and the new expected " +
 		"time, a delivery confirmation, a request to reschedule. The recipients are " +
@@ -715,6 +740,10 @@ func newSendDetentionNoticeTool(detention detentionActor) serviceports.AgentTool
 
 func (t *sendDetentionNoticeTool) Name() string { return "send_detention_notice" }
 
+func (t *sendDetentionNoticeTool) Recipe() []string {
+	return []string{"get_detention_occurrence", "send_detention_notice"}
+}
+
 func (t *sendDetentionNoticeTool) Description() string {
 	return "Send the customer the detention notice for an occurrence on the desk. The " +
 		"notice is the organization's own template with the arrival, the free time " +
@@ -796,6 +825,10 @@ func newWaiveDetentionTool(detention detentionActor) serviceports.AgentTool {
 }
 
 func (t *waiveDetentionTool) Name() string { return "waive_detention" }
+
+func (t *waiveDetentionTool) Recipe() []string {
+	return []string{"list_detention_desk", "get_detention_occurrence", "waive_detention"}
+}
 
 func (t *waiveDetentionTool) Description() string {
 	return "Waive a detention charge, with a coded reason and a note. This gives up " +
