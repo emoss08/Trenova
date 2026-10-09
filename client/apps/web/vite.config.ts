@@ -2,7 +2,8 @@ import tailwindcss from "@tailwindcss/vite";
 import { createRequire } from "node:module";
 import path from "path";
 // import { visualizer } from "rollup-plugin-visualizer";
-import react from "@vitejs/plugin-react";
+import babel from "@rolldown/plugin-babel";
+import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { defineConfig, normalizePath } from "vite";
 import { compression } from "vite-plugin-compression2";
 import { viteStaticCopy } from "vite-plugin-static-copy";
@@ -32,7 +33,11 @@ export default defineConfig({
   plugins: [
     routeCatalogs({ srcDir: path.resolve(dirname, "src") }),
     react(),
-    // babel({ presets: [reactCompilerPreset()] }),
+    // Every component is compiled. Files built on TanStack Virtual, whose virtualizer
+    // changes in place, start with "use no memo", as does any page found showing stale
+    // values: that is how a page opts out. TanStack Table v9 is compiled; a component
+    // that reads table state through a row, column or header subscribes to it.
+    babel({ presets: [reactCompilerPreset()] }),
     tailwindcss(),
     compression({
       algorithms: ["gzip", "brotliCompress"],

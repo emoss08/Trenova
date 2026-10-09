@@ -14,16 +14,23 @@ import {
   TableRow,
 } from "@trenova/shared/components/ui/table";
 import type { AROpenItem } from "@/lib/graphql/accounts-receivable";
+import { sortDirectionOf } from "@/lib/data-table";
+import { useTableAtom } from "@trenova/shared/hooks/use-table-atom";
 import { cn } from "@trenova/shared/lib/utils";
 import type { SettlementStatus } from "@trenova/shared/types/invoice";
-import type { ColumnDef } from "@trenova/shared/types/data-table";
+import type { ClientSortedColumnDef } from "@trenova/shared/types/data-table";
 import {
   flexRender,
   useTable,
+  type Row as CoreRow,
   type RowSelectionState,
   type SortingState,
+  type Table as CoreTable,
 } from "@tanstack/react-table";
-import { dataTableFeatures } from "@trenova/shared/lib/table-features";
+import {
+  clientSortedTableFeatures,
+  type ClientSortedTableFeatures,
+} from "@trenova/shared/lib/table-features";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -32,6 +39,51 @@ import {
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
+
+type OpenItemsCoreTable = CoreTable<ClientSortedTableFeatures, AROpenItem>;
+type OpenItemRow = CoreRow<ClientSortedTableFeatures, AROpenItem>;
+
+/**
+ * Drawn from the rows and the selection as values, so it follows both a tick and a
+ * refetch that keeps the selection: the table's header objects outlive either.
+ */
+function SelectAllOpenItems({
+  table,
+  items,
+  rowSelection,
+  label,
+}: {
+  table: OpenItemsCoreTable;
+  items: readonly AROpenItem[];
+  rowSelection: RowSelectionState;
+  label: string;
+}) {
+  let selected = 0;
+  for (const item of items) {
+    if (rowSelection[item.invoiceId]) selected += 1;
+  }
+  const state = selected === 0 ? "none" : selected === items.length ? "all" : "some";
+  return (
+    <Checkbox
+      checked={state === "all"}
+      indeterminate={state === "some"}
+      onCheckedChange={(checked) => table.toggleAllRowsSelected(checked === true)}
+      aria-label={label}
+    />
+  );
+}
+
+function SelectOpenItem({ row, label }: { row: OpenItemRow; label: string }) {
+  const checked = useTableAtom(row.table.atoms.rowSelection, (selection) => !!selection[row.id]);
+  return (
+    <Checkbox
+      checked={checked}
+      onCheckedChange={(value) => row.toggleSelected(value === true)}
+      aria-label={label}
+      onClick={(e) => e.stopPropagation()}
+    />
+  );
+}
 
 function formatDate(unix: number): string {
   return formatUnixDateMedium(unix, { fallback: "—" });
@@ -52,25 +104,16 @@ export function OpenItemsTable({
 
   const [sorting, setSorting] = useState<SortingState>([{ id: "dueDate", desc: false }]);
 
-  const columns = useMemo<ColumnDef<AROpenItem>[]>(
+  const columns = useMemo<ClientSortedColumnDef<AROpenItem>[]>(
     () => [
       {
         id: "select",
         enableSorting: false,
-        header: ({ table }) => (
-          <Checkbox
-            checked={table.getIsAllRowsSelected()}
-            indeterminate={table.getIsSomeRowsSelected() && !table.getIsAllRowsSelected()}
-            onCheckedChange={(checked) => table.toggleAllRowsSelected(checked === true)}
-            aria-label={t("Select all")}
-          />
-        ),
+        header: () => null,
         cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(checked) => row.toggleSelected(checked === true)}
-            aria-label={t("Select invoice {0}", row.original.invoiceNumber)}
-            onClick={(e) => e.stopPropagation()}
+          <SelectOpenItem
+            row={row}
+            label={t("Select invoice {0}", row.original.invoiceNumber)}
           />
         ),
       },
@@ -178,7 +221,7 @@ export function OpenItemsTable({
   );
 
   const table = useTable({
-    features: dataTableFeatures,
+    features: clientSortedTableFeatures,
     data: items,
     columns,
     state: { sorting, rowSelection },
@@ -211,13 +254,20 @@ export function OpenItemsTable({
                 {headerGroup.headers.map((header) => {
                   const align = (header.column.columnDef.meta as { align?: string } | undefined)
                     ?.align;
-                  const sorted = header.column.getIsSorted();
+                  const sorted = sortDirectionOf(sorting, header.column.id);
                   return (
                     <TableHead
                       key={header.id}
                       className={cn("h-9 text-xs", align === "right" && "text-right")}
                     >
-                      {header.column.getCanSort() ? (
+                      {header.column.id === "select" ? (
+                        <SelectAllOpenItems
+                          table={header.getContext().table}
+                          items={items}
+                          rowSelection={rowSelection}
+                          label={t("Select all")}
+                        />
+                      ) : header.column.getCanSort() ? (
                         <button
                           type="button"
                           onClick={header.column.getToggleSortingHandler()}
@@ -248,7 +298,7 @@ export function OpenItemsTable({
             {table.getRowModel().rows.map((row) => (
               <TableRow
                 key={row.id}
-                data-state={row.getIsSelected() ? "selected" : undefined}
+                data-state={rowSelection[row.id] ? "selected" : undefined}
                 className="cursor-pointer transition-colors"
                 onClick={() => row.toggleSelected()}
               >

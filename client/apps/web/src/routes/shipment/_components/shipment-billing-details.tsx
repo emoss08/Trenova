@@ -59,7 +59,7 @@ import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 function Inner({ children }: { children: React.ReactNode }) {
   const t = useT();
 
-  const { control, getValues } = useFormContext<Shipment>();
+  const { control } = useFormContext<Shipment>();
 
   const serviceTypeId = useWatch({ control, name: "serviceTypeId" });
   const shipmentTypeId = useWatch({ control, name: "shipmentTypeId" });
@@ -68,7 +68,7 @@ function Inner({ children }: { children: React.ReactNode }) {
   const originLocationId = moves?.[0]?.stops?.[0]?.locationId ?? "";
   const lastMove = moves?.[moves.length - 1];
   const destinationLocationId = lastMove?.stops?.[lastMove.stops.length - 1]?.locationId ?? "";
-  const shipmentId = getValues("id");
+  const shipmentId = useWatch({ control, name: "id" });
 
   const previousRatesRequest: GetPreviousRatesRequest = {
     originLocationId,
@@ -438,10 +438,10 @@ function RateDepartureReason() {
 function RatingBreakdownCard() {
   const t = useT();
 
-  const { control, getValues } = useFormContext<Shipment>();
+  const { control } = useFormContext<Shipment>();
   const [showReceipt, setShowReceipt] = useState(false);
   const ratingDetail = useWatch({ control, name: "ratingDetail" });
-  const shipmentId = getValues("id");
+  const shipmentId = useWatch({ control, name: "id" });
 
   const breakdown = ratingDetail?.breakdown ?? [];
   const guardrail = ratingDetail?.guardrail;
@@ -561,10 +561,10 @@ function RatingBreakdownCard() {
 export default function ShipmentBillingDetails() {
   const t = useT();
 
-  const { control, getValues, setValue } = useFormContext<Shipment>();
+  const { control, setValue } = useFormContext<Shipment>();
   const customerId = useWatch({ control, name: "customerId" });
   const customer = useWatch({ control, name: "customer" });
-  const shipmentId = getValues("id");
+  const shipmentId = useWatch({ control, name: "id" });
   const {
     isCalculating,
     error: totalsError,

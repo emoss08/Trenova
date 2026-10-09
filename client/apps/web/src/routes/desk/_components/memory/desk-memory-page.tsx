@@ -1,3 +1,4 @@
+"use no memo";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   createDeskMemory,
