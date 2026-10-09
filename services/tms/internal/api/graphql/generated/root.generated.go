@@ -32,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/billingqueueexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/billingtransferexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/briefingexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/bulkeditexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/captureexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carriercapacityexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierexec"
@@ -42,6 +43,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customerexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customerpaymentexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customfielddefinitionexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/datatableinsightexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/decisionsexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskmemoryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/detentionexec"
@@ -111,6 +113,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/storedmileageexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tablechangealertexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tableconfigurationexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tablelayoutexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/telematicsexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tenantexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tenderexec"
@@ -1574,6 +1577,8 @@ type MutationResolver interface {
 	RetryBillingTransferRun(ctx context.Context, id string) (*gqlmodel.BillingTransferRun, error)
 	MarkBriefingRead(ctx context.Context, id string) (*briefing.Briefing, error)
 	RegenerateBriefing(ctx context.Context, input gqlmodel.TodaysBriefingInput) (*briefing.Briefing, error)
+	StartBulkEdit(ctx context.Context, input gqlmodel.BulkEditInput) (*gqlmodel.BulkEditJob, error)
+	UndoMyBulkEdit(ctx context.Context, id string) (*gqlmodel.BulkEditJob, error)
 	EditCaptureItems(ctx context.Context, batchID string, input gqlmodel.EditCaptureItemsInput) (*capture.CaptureBatch, error)
 	FileCaptureItem(ctx context.Context, id string, input gqlmodel.FileCaptureItemInput) (*capture.CaptureItem, error)
 	FileCaptureItems(ctx context.Context, items []*gqlmodel.FileCaptureItemsEntryInput) (*captureservice.FileItemsResult, error)
@@ -1847,6 +1852,8 @@ type MutationResolver interface {
 	AdjustWorkerPTOBalance(ctx context.Context, input gqlmodel.AdjustWorkerPTOBalanceInput) (*worker.WorkerPTOLedgerEntry, error)
 	RunPTOAccrual(ctx context.Context, input gqlmodel.RunPTOAccrualInput) (*gqlmodel.PTOAccrualRunPayload, error)
 	CreateReportDefinition(ctx context.Context, input gqlmodel.SaveReportDefinitionInput) (*gqlmodel.ReportDefinition, error)
+	ExportTableView(ctx context.Context, input gqlmodel.ExportTableViewInput) (*gqlmodel.TableExportResult, error)
+	ScheduleTableView(ctx context.Context, input gqlmodel.ScheduleTableViewInput) (*gqlmodel.TableExportResult, error)
 	UpdateReportDefinition(ctx context.Context, input gqlmodel.UpdateReportDefinitionInput) (*gqlmodel.ReportDefinition, error)
 	DeleteReportDefinition(ctx context.Context, id string) (bool, error)
 	ForkCannedReport(ctx context.Context, input gqlmodel.ForkCannedReportInput) (*gqlmodel.ReportDefinition, error)
@@ -1908,6 +1915,8 @@ type MutationResolver interface {
 	DeleteTableConfiguration(ctx context.Context, id string) (bool, error)
 	SetDefaultTableConfiguration(ctx context.Context, id string) (*tableconfiguration.TableConfiguration, error)
 	SetOrgDefaultTableConfiguration(ctx context.Context, id string, enabled bool) (*tableconfiguration.TableConfiguration, error)
+	SaveMyTableLayout(ctx context.Context, input gqlmodel.TableLayoutInput) (*gqlmodel.TableLayout, error)
+	ResetMyTableLayout(ctx context.Context, resource string) (bool, error)
 	SaveTelematicsFormMapping(ctx context.Context, input gqlmodel.SaveTelematicsFormMappingInput) (*gqlmodel.TelematicsFormMapping, error)
 	DeleteTelematicsFormMapping(ctx context.Context, id string) (bool, error)
 	UpdateOrganization(ctx context.Context, id string, input gqlmodel.OrganizationInput) (*tenant.Organization, error)
@@ -2278,6 +2287,10 @@ type QueryResolver interface {
 	TodaysBriefing(ctx context.Context, input gqlmodel.TodaysBriefingInput) (*briefing.Briefing, error)
 	Briefing(ctx context.Context, id string) (*briefing.Briefing, error)
 	Briefings(ctx context.Context, input gqlmodel.ListBriefingsInput) ([]*briefing.Briefing, error)
+	BulkEditFields(ctx context.Context, resource string) ([]*gqlmodel.BulkEditField, error)
+	PreviewBulkEdit(ctx context.Context, input gqlmodel.BulkEditInput) (*gqlmodel.BulkEditPreview, error)
+	MyBulkEdit(ctx context.Context, id string) (*gqlmodel.BulkEditJob, error)
+	MyBulkEdits(ctx context.Context, resource *string, limit *int) ([]*gqlmodel.BulkEditJob, error)
 	MyCaptureAccess(ctx context.Context) (*captureservice.Access, error)
 	CaptureAgentRelease(ctx context.Context) (*capturereleaseservice.Release, error)
 	CaptureBatches(ctx context.Context, input gqlmodel.CaptureBatchesInput) (*gqlmodel.CaptureBatchConnection, error)
@@ -2337,6 +2350,10 @@ type QueryResolver interface {
 	Customer(ctx context.Context, id string) (*customer.Customer, error)
 	CustomerPayments(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CustomerPaymentConnection, error)
 	CustomerPayment(ctx context.Context, id string) (*customerpayment.Payment, error)
+	DataTableFacets(ctx context.Context, input gqlmodel.DataTableFacetInput) (*gqlmodel.DataTableFacets, error)
+	DataTableAggregates(ctx context.Context, input gqlmodel.DataTableAggregateInput) (*gqlmodel.DataTableAggregates, error)
+	DataTableSeries(ctx context.Context, input gqlmodel.DataTableSeriesInput) (*gqlmodel.DataTableSeries, error)
+	DataTableInsightFields(ctx context.Context, resource string) ([]*gqlmodel.DataTableInsightField, error)
 	PendingDecisions(ctx context.Context, input gqlmodel.PendingDecisionsInput) (*gqlmodel.PendingDecisionConnection, error)
 	PendingDecisionSummary(ctx context.Context) (*gqlmodel.PendingDecisionSummary, error)
 	RecentDecisions(ctx context.Context, since int, first *int) ([]*gqlmodel.RecentDecision, error)
@@ -2651,6 +2668,7 @@ type QueryResolver interface {
 	TableConfigurations(ctx context.Context, input gqlmodel.DataTableConnectionInput, resource *string, visibility *tableconfiguration.Visibility) (*gqlmodel.TableConfigurationConnection, error)
 	TableConfiguration(ctx context.Context, id string) (*tableconfiguration.TableConfiguration, error)
 	DefaultTableConfiguration(ctx context.Context, resource string) (*tableconfiguration.TableConfiguration, error)
+	MyTableLayout(ctx context.Context, resource string) (*gqlmodel.TableLayout, error)
 	ShipmentFormSubmissions(ctx context.Context, shipmentID string) ([]*gqlmodel.TelematicsFormSubmission, error)
 	TelematicsFormMappings(ctx context.Context) ([]*gqlmodel.TelematicsFormMapping, error)
 	TelematicsFormMapping(ctx context.Context, id string) (*gqlmodel.TelematicsFormMapping, error)
@@ -3116,6 +3134,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		billingqueueexec.Shard,
 		billingtransferexec.Shard,
 		briefingexec.Shard,
+		bulkeditexec.Shard,
 		captureexec.Shard,
 		carrierexec.Shard,
 		carriercapacityexec.Shard,
@@ -3126,6 +3145,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		customerexec.Shard,
 		customerpaymentexec.Shard,
 		customfielddefinitionexec.Shard,
+		datatableinsightexec.Shard,
 		decisionsexec.Shard,
 		deskmemoryexec.Shard,
 		detentionexec.Shard,
@@ -3195,6 +3215,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		storedmileageexec.Shard,
 		tablechangealertexec.Shard,
 		tableconfigurationexec.Shard,
+		tablelayoutexec.Shard,
 		telematicsexec.Shard,
 		tenantexec.Shard,
 		tenderexec.Shard,
@@ -8871,6 +8892,14 @@ input AIProviderEndpointInput {
   allowPrivateNetwork: Boolean!
 }
 
+"Where a model's listed price came from."
+enum AIModelPriceSource {
+  "The provider's own model list."
+  Provider
+  "OpenRouter's public catalog: an estimate of the list price, not what a contract charges."
+  OpenRouter
+}
+
 "One model an endpoint says it serves."
 type AIProviderModelOption {
   id: String!
@@ -8884,6 +8913,10 @@ type AIProviderModelOption {
   embedding: Boolean!
   inputCostPerMillion: Decimal
   outputCostPerMillion: Decimal
+  "Where the prices came from; null when there are none."
+  priceSource: AIModelPriceSource
+  "When the provider released the model (for a local server, when it was pulled), when the endpoint says."
+  createdAt: Timestamp
 }
 
 input AIProviderDraftTestInput {
@@ -9903,6 +9936,86 @@ extend type Mutation {
   markBriefingRead(id: ID!): Briefing!
   "Writes today's page again from current figures, replacing what was there."
   regenerateBriefing(input: TodaysBriefingInput!): Briefing!
+}
+`, BuiltIn: false},
+	{Name: "../schema/bulk_edit.graphqls", Input: `"A value a bulk-editable field can be set to."
+type BulkEditOption {
+  value: String!
+  label: String!
+}
+
+"A field of a table that can be changed on many rows at once."
+type BulkEditField {
+  name: String!
+  label: String!
+  "record (picked from a list of records) or select (one of a fixed set)."
+  kind: String!
+  "For a record field, the select-option resource its values are picked from."
+  record: String
+  options: [BulkEditOption!]!
+}
+
+input BulkEditSelectionInput {
+  "The rows chosen one by one."
+  ids: [ID!]
+  "Or every row matching the table's filters, resolved by the server when the edit runs."
+  filter: DataTableConnectionInput
+  "The table's own list options beyond filters, such as the shipment board's quick filters."
+  options: JSON
+}
+
+input BulkEditInput {
+  resource: String!
+  field: String!
+  value: String!
+  selection: BulkEditSelectionInput!
+}
+
+type BulkEditPreview {
+  "How many rows the edit would reach."
+  count: Int!
+  "True when more rows match than one bulk edit can change."
+  tooMany: Boolean!
+}
+
+type BulkEditFailure {
+  id: ID!
+  message: String!
+}
+
+"One change made to many rows at once, and how far it has got."
+type BulkEditJob {
+  id: ID!
+  resource: String!
+  field: String!
+  value: String!
+  "Queued, Running, Completed, Failed, Undoing or Undone."
+  status: String!
+  totalCount: Int!
+  processedCount: Int!
+  changedCount: Int!
+  failedCount: Int!
+  failureMessage: String!
+  "The first rows that could not be changed, with why."
+  failures: [BulkEditFailure!]!
+  canUndo: Boolean!
+  completedAt: Timestamp
+  undoneAt: Timestamp
+  createdAt: Timestamp!
+}
+
+extend type Query {
+  bulkEditFields(resource: String!): [BulkEditField!]!
+  previewBulkEdit(input: BulkEditInput!): BulkEditPreview!
+  myBulkEdit(id: ID!): BulkEditJob
+  myBulkEdits(resource: String, limit: Int): [BulkEditJob!]!
+}
+
+extend type Mutation {
+  "Starts changing one field on every chosen row; it runs in the background."
+  startBulkEdit(input: BulkEditInput!): BulkEditJob!
+  "Puts back every row the caller's bulk edit changed, within a day of it finishing."
+  undoMyBulkEdit(id: ID!): BulkEditJob!
 }
 `, BuiltIn: false},
 	{Name: "../schema/capture.graphqls", Input: `"Whether a paired companion may still act for its person."
@@ -13087,6 +13200,110 @@ extend type Mutation {
   applyCreditMemo(input: ApplyCreditMemoInput!): [CreditMemoApplication!]!
   "Takes one credit memo application back."
   unapplyCreditMemoApplication(input: UnapplyCreditMemoApplicationInput!): CreditMemoApplication!
+}
+`, BuiltIn: false},
+	{Name: "../schema/data_table_insight.graphqls", Input: `"How many of a table's filtered rows hold each value of one field."
+input DataTableFacetInput {
+  "The table's permission resource, such as shipment."
+  resource: String!
+  field: String!
+  filter: DataTableConnectionInput
+  "Options the table's own list takes beyond filters, such as the shipment board's quick filters."
+  options: JSON
+  limit: Int = 20
+}
+
+type DataTableFacetBucket {
+  "The field's value, or null for rows that have none."
+  value: String
+  count: Int!
+}
+
+type DataTableFacets {
+  field: String!
+  "The most common values first."
+  buckets: [DataTableFacetBucket!]!
+  "Every row the filters match, including those in values not listed."
+  total: Int!
+}
+
+"Totals of a table's filtered rows."
+input DataTableAggregateInput {
+  resource: String!
+  fields: [String!]!
+  filter: DataTableConnectionInput
+  options: JSON
+}
+
+type DataTableAggregateValue {
+  field: String!
+  sum: Decimal
+  average: Decimal
+  min: Decimal
+  max: Decimal
+}
+
+type DataTableAggregates {
+  "Every row the filters match, on every page."
+  count: Int!
+  values: [DataTableAggregateValue!]!
+}
+
+type DataTableInsightField {
+  name: String!
+  facetable: Boolean!
+  summable: Boolean!
+  "Whether the field is a date a chart can follow rows over."
+  timeline: Boolean!
+}
+
+enum DataTableSeriesInterval {
+  WEEK
+  MONTH
+}
+
+"""
+One small chart per row of another table: how many of this table's rows each one has,
+or their total, in each week or month up to now. A customer's shipments, a carrier's
+loads, a location's stops.
+"""
+input DataTableSeriesInput {
+  "The table counted, such as shipment."
+  resource: String!
+  "The field naming the row each chart belongs to, such as customerId."
+  groupField: String!
+  "The rows to chart, at most 200."
+  groupValues: [String!]!
+  "The date that places each counted row in a period."
+  dateField: String!
+  "A field to total instead of counting rows."
+  valueField: String
+  interval: DataTableSeriesInterval! = WEEK
+  "How many periods, ending with the current one."
+  periods: Int! = 12
+  "The time zone periods start in; UTC when absent."
+  timezone: String
+  filter: DataTableConnectionInput
+}
+
+type DataTableSeriesGroup {
+  value: String!
+  "One value per period, oldest first."
+  points: [Decimal!]!
+}
+
+type DataTableSeries {
+  "When each period starts, oldest first."
+  periodStarts: [Timestamp!]!
+  groups: [DataTableSeriesGroup!]!
+}
+
+extend type Query {
+  dataTableFacets(input: DataTableFacetInput!): DataTableFacets!
+  dataTableAggregates(input: DataTableAggregateInput!): DataTableAggregates!
+  dataTableSeries(input: DataTableSeriesInput!): DataTableSeries!
+  "The fields a table can be counted by or totalled, so a screen offers only those."
+  dataTableInsightFields(resource: String!): [DataTableInsightField!]!
 }
 `, BuiltIn: false},
 	{Name: "../schema/decisions.graphqls", Input: `"""
@@ -24029,8 +24246,52 @@ extend type Query {
   reportDashboard(id: ID!): ReportDashboard!
 }
 
+input TableExportColumnInput {
+  "The field the column shows, as the table filters and sorts by it."
+  field: String!
+  label: String!
+}
+
+"What a data table is showing, to export or schedule as a report."
+input TableExportViewInput {
+  resource: String!
+  columns: [TableExportColumnInput!]!
+  filter: DataTableConnectionInput
+}
+
+input ExportTableViewInput {
+  name: String!
+  view: TableExportViewInput!
+  "csv, xlsx or pdf."
+  format: String!
+}
+
+input ScheduleTableViewInput {
+  name: String!
+  view: TableExportViewInput!
+  cronExpression: String!
+  timezone: String
+  formats: [String!]!
+  emailRecipients: [String!]
+  emailAttach: Boolean
+  emailInline: Boolean
+}
+
+type TableExportResult {
+  "The report the view was saved as; it lives in the person's reports."
+  definitionId: ID!
+  run: ReportRun
+  schedule: ReportSchedule
+  "Columns the report could not show, by label."
+  skippedColumns: [String!]!
+}
+
 extend type Mutation {
   createReportDefinition(input: SaveReportDefinitionInput!): ReportDefinition!
+  "Saves a table's view as a report and runs it in the background, with no row limit beyond the report's own."
+  exportTableView(input: ExportTableViewInput!): TableExportResult!
+  "Saves a table's view as a report and sends it on a schedule."
+  scheduleTableView(input: ScheduleTableViewInput!): TableExportResult!
   updateReportDefinition(input: UpdateReportDefinitionInput!): ReportDefinition!
   deleteReportDefinition(id: ID!): Boolean!
   forkCannedReport(input: ForkCannedReportInput!): ReportDefinition!
@@ -24445,6 +24706,7 @@ extend type Query {
 	{Name: "../schema/select_options.graphqls", Input: `enum SelectOptionResource {
   ACCESSORIAL_CHARGE
   ACCOUNT_TYPE
+  AI_PROVIDER
   CAPTURE_DEVICE
   CAPTURE_PROFILE
   CARRIER
@@ -27608,6 +27870,32 @@ extend type Mutation {
   deleteTableConfiguration(id: ID!): Boolean!
   setDefaultTableConfiguration(id: ID!): TableConfiguration!
   setOrgDefaultTableConfiguration(id: ID!, enabled: Boolean!): TableConfiguration!
+}
+`, BuiltIn: false},
+	{Name: "../schema/table_layout.graphqls", Input: `"The arrangement of one data table a person last left it in."
+type TableLayout {
+  resource: String!
+  "Columns shown, ordered, sized and pinned, the density, colour rules and the view it was based on."
+  layout: JSON!
+  version: Int!
+  updatedAt: Timestamp!
+}
+
+input TableLayoutInput {
+  resource: String!
+  layout: JSON!
+}
+
+extend type Query {
+  "The caller's own layout for a table, or null when they have not changed it."
+  myTableLayout(resource: String!): TableLayout
+}
+
+extend type Mutation {
+  "Keeps the caller's arrangement of a table, replacing the one before."
+  saveMyTableLayout(input: TableLayoutInput!): TableLayout!
+  "Forgets the caller's arrangement of a table, so it opens as its default view."
+  resetMyTableLayout(resource: String!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "../schema/telematics.graphqls", Input: `type VehiclePosition {

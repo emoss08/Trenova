@@ -53,6 +53,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingqueuejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingtransferjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/bulkeditjobs"
+	"github.com/emoss08/trenova/internal/core/services/bulkeditservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/briefingjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/capturejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/carrierintelligencejobs"
@@ -156,6 +158,8 @@ func OptionsFor(e *edition.Edition) fx.Option {
 		aiauditjobs.Module,
 		billingjobs.Module,
 		billingtransferjobs.Module,
+		bulkeditjobs.Module,
+		fx.Provide(func(svc *bulkeditservice.Service) bulkeditjobs.Runner { return svc }),
 		billingqueuejobs.Module,
 		detentionjobs.Module,
 		ptojobs.Module,

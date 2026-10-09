@@ -30,6 +30,18 @@ const (
 )
 
 var nonProjectionObjects = map[string]string{
+	"BulkEditFailure":                    "GraphQL bulk edit progress DTO",
+	"BulkEditField":                      "GraphQL bulk edit catalog DTO",
+	"BulkEditJob":                        "GraphQL bulk edit progress DTO",
+	"BulkEditOption":                     "GraphQL bulk edit catalog DTO",
+	"BulkEditPreview":                    "GraphQL bulk edit preview DTO",
+	"DataTableAggregateValue":            "GraphQL table totals DTO",
+	"DataTableAggregates":                "GraphQL table totals DTO",
+	"DataTableFacetBucket":               "GraphQL table value counts DTO",
+	"DataTableFacets":                    "GraphQL table value counts DTO",
+	"DataTableInsightField":              "GraphQL table counts and totals catalog DTO",
+	"DataTableSeries":                    "GraphQL per-row chart DTO",
+	"DataTableSeriesGroup":               "GraphQL per-row chart DTO",
 	"CannedReport":                       "GraphQL report catalog manifest DTO",
 	"ReportCatalog":                      "GraphQL report catalog manifest DTO",
 	"ReportCatalogEntity":                "GraphQL report catalog manifest DTO",

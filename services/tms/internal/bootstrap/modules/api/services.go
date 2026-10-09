@@ -226,6 +226,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentwatchlistservice"
 	"github.com/emoss08/trenova/internal/core/services/sidebarpreferenceservice"
+	"github.com/emoss08/trenova/internal/core/services/tableinsightservice"
+	"github.com/emoss08/trenova/internal/core/services/tablelayoutservice"
+	"github.com/emoss08/trenova/internal/core/services/bulkeditservice"
+	"github.com/emoss08/trenova/internal/core/services/tableexportservice"
 	"github.com/emoss08/trenova/internal/core/services/storedmileageservice"
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
@@ -272,6 +276,14 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	tableconfigurationservice.New,
 	pagefavoriteservice.New,
 	sidebarpreferenceservice.New,
+	tablelayoutservice.New,
+	tableinsightservice.New,
+	bulkeditservice.New,
+	tableexportservice.New,
+	bulkeditservice.NewCustomerEditor,
+	bulkeditservice.NewLocationEditor,
+	bulkeditservice.NewCarrierEditor,
+	bulkeditservice.NewShipmentEditor,
 	homelayoutservice.New,
 	fx.Annotate(
 		reportingcompiler.New,
@@ -346,6 +358,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	agentsafetyservice.New,
 	agenttoolruleservice.New,
 	func(s *agenttoolruleservice.Service) services.AgentToolRuleService { return s },
+	aiproviderservice.NewModelPriceReference,
 	aiproviderservice.NewProber,
 	aiproviderservice.New,
 	func(s *aiproviderservice.Service) services.AIProviderService { return s },

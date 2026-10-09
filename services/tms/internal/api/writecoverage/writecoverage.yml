@@ -2239,6 +2239,18 @@ writes:
   "POST /api/v1/shipments/:shipmentID/comments/typing/":
     exempt: infrastructure
     reason: "Presence and typing signals a browser sends while a person is on the page."
+  "DELETE /api/v1/realtime/presence/:resource/":
+    exempt: infrastructure
+    reason: "Presence and typing signals a browser sends while a person is on the page."
+  "POST /api/v1/realtime/presence/:resource/":
+    exempt: infrastructure
+    reason: "Presence and typing signals a browser sends while a person is on the page."
+  "DELETE /api/v1/realtime/presence/:resource/:recordID/":
+    exempt: infrastructure
+    reason: "Presence and typing signals a browser sends while a person is on the page."
+  "POST /api/v1/realtime/presence/:resource/:recordID/":
+    exempt: infrastructure
+    reason: "Presence and typing signals a browser sends while a person is on the page."
 
   # recurringshipment
   "POST /api/v1/recurring-shipments/":
@@ -2587,6 +2599,30 @@ writes:
     exempt: configuration
     reason: "Sets the table view everyone in the organization starts from."
   "mutation updateTableConfiguration":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+
+  # bulkedit
+  "mutation startBulkEdit":
+    exempt: duplicate
+    reason: "Applies a write listed elsewhere (bulkUpdateCustomerStatus, bulkUpdateLocationStatus, bulkUpdateCarrierStatus, transferShipmentOwnership) to many rows; each row goes through that write's own service."
+  "mutation undoMyBulkEdit":
+    exempt: duplicate
+    reason: "Puts rows back through the same writes startBulkEdit applies (bulkUpdateCustomerStatus, bulkUpdateLocationStatus, bulkUpdateCarrierStatus, transferShipmentOwnership)."
+
+  # tableexport
+  "mutation exportTableView":
+    exempt: duplicate
+    reason: "Saves a table's view through createReportDefinition and runs it through runReport; those writes are listed under report."
+  "mutation scheduleTableView":
+    exempt: duplicate
+    reason: "Saves a table's view through createReportDefinition and schedules it through createReportSchedule; those writes are listed under report."
+
+  # tablelayout
+  "mutation resetMyTableLayout":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+  "mutation saveMyTableLayout":
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
 

@@ -87,33 +87,33 @@ matches anything fails too, so the file cannot drift behind the tools.
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 78 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 260 |
-| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 30 |
-| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 46 |
+| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 32 |
+| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 50 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 78 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 51 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 44 |
-| `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 3 |
+| `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 7 |
 
 ## Totals
 
-1012 writes: 533 GraphQL mutations and 479 REST writes, after merging 72 REST routes into the mutation they duplicate.
+1022 writes: 539 GraphQL mutations and 483 REST writes, after merging 72 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 386 |
-| Exempt | 623 |
+| Exempt | 633 |
 | — Security | 78 |
 | — Configuration | 260 |
-| — User preference | 30 |
-| — Infrastructure | 46 |
+| — User preference | 32 |
+| — Infrastructure | 50 |
 | — Agent administration | 78 |
 | — Counterparty | 33 |
 | — Read-only | 51 |
 | — Attestation | 44 |
-| — Duplicate | 3 |
+| — Duplicate | 7 |
 | **Pending** | **3** |
-| Total | 1012 |
+| Total | 1022 |
 
 Of the 389 writes an agent should be able to make, 386 have a tool (99%).
 
@@ -159,6 +159,7 @@ The writes no tool performs yet, and what the tool would do.
 | billingqueue | 14 | 7 | 4 | 3 |
 | billingtransfer | 3 | 3 | 0 | 0 |
 | briefing | 2 | 0 | 2 | 0 |
+| bulkedit | 2 | 0 | 2 | 0 |
 | capture | 25 | 4 | 21 | 0 |
 | carrier | 4 | 4 | 0 | 0 |
 | carriercapacity | 3 | 3 | 0 | 0 |
@@ -250,9 +251,9 @@ The writes no tool performs yet, and what the tool would do.
 | ratequote | 3 | 0 | 3 | 0 |
 | ratesimulation | 1 | 1 | 0 | 0 |
 | ratezone | 3 | 0 | 3 | 0 |
-| realtime | 3 | 0 | 3 | 0 |
+| realtime | 7 | 0 | 7 | 0 |
 | recurringshipment | 5 | 4 | 1 | 0 |
-| report | 17 | 13 | 4 | 0 |
+| report | 19 | 13 | 6 | 0 |
 | role | 11 | 0 | 11 | 0 |
 | routingguide | 3 | 0 | 3 | 0 |
 | scheduling | 7 | 5 | 2 | 0 |
@@ -270,6 +271,7 @@ The writes no tool performs yet, and what the tool would do.
 | storedmileage | 1 | 0 | 1 | 0 |
 | tablechangealert | 5 | 5 | 0 | 0 |
 | tableconfiguration | 6 | 1 | 5 | 0 |
+| tablelayout | 2 | 0 | 2 | 0 |
 | tablequery | 1 | 0 | 1 | 0 |
 | telematics | 4 | 0 | 4 | 0 |
 | tenant | 1 | 0 | 1 | 0 |
@@ -607,6 +609,13 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation markBriefingRead` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `mutation regenerateBriefing` | Exempt, agent-administration: Asks the briefing agent to write the briefing again. |
+
+### bulkedit
+
+| Write | Decision |
+| --- | --- |
+| `mutation startBulkEdit` | Exempt, duplicate: Applies a write listed elsewhere (bulkUpdateCustomerStatus, bulkUpdateLocationStatus, bulkUpdateCarrierStatus, transferShipmentOwnership) to many rows; each row goes through that write's own service. |
+| `mutation undoMyBulkEdit` | Exempt, duplicate: Puts rows back through the same writes startBulkEdit applies (bulkUpdateCustomerStatus, bulkUpdateLocationStatus, bulkUpdateCarrierStatus, transferShipmentOwnership). |
 
 ### capture
 
@@ -1656,7 +1665,11 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `DELETE /api/v1/realtime/presence/:resource/`<br>realtimehandler.leaveView | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
+| `DELETE /api/v1/realtime/presence/:resource/:recordID/`<br>realtimehandler.leaveRecord | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
 | `DELETE /api/v1/shipments/:shipmentID/comments/presence/`<br>realtimehandler.leaveShipmentComments | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
+| `POST /api/v1/realtime/presence/:resource/`<br>realtimehandler.joinView | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
+| `POST /api/v1/realtime/presence/:resource/:recordID/`<br>realtimehandler.joinRecord | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
 | `POST /api/v1/shipments/:shipmentID/comments/presence/`<br>realtimehandler.joinShipmentComments | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
 | `POST /api/v1/shipments/:shipmentID/comments/typing/`<br>realtimehandler.typingShipmentComments | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
 
@@ -1683,9 +1696,11 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation deleteReportDefinition` | Tool: `delete_report` |
 | `mutation deleteReportSchedule` | Tool: `delete_report_schedule` |
 | `mutation deleteReportView` | Exempt, user-preference: A saved view is one person's own columns and filters on a report page. |
+| `mutation exportTableView` | Exempt, duplicate: Saves a table's view through createReportDefinition and runs it through runReport; those writes are listed under report. |
 | `mutation forkCannedReport` | Tool: `fork_report` |
 | `mutation resetCannedFork` | Tool: `reset_report_fork` |
 | `mutation runReport` | Tool: `run_report` |
+| `mutation scheduleTableView` | Exempt, duplicate: Saves a table's view through createReportDefinition and schedules it through createReportSchedule; those writes are listed under report. |
 | `mutation updateReportDashboard` | Tool: `add_dashboard_tile` |
 | `mutation updateReportDefinition` | Tool: `update_report` |
 | `mutation updateReportSchedule` | Tool: `update_report_schedule` |
@@ -1879,6 +1894,13 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation setDefaultTableConfiguration` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `mutation setOrgDefaultTableConfiguration` | Exempt, configuration: Sets the table view everyone in the organization starts from. |
 | `mutation updateTableConfiguration` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
+
+### tablelayout
+
+| Write | Decision |
+| --- | --- |
+| `mutation resetMyTableLayout` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
+| `mutation saveMyTableLayout` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 
 ### tablequery
 

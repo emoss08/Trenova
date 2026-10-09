@@ -502,6 +502,8 @@ var TCASubscriptionSpec TypeSpec
 
 var TableConfigurationSpec TypeSpec
 
+var TableLayoutSpec TypeSpec
+
 var TenderSpec TypeSpec
 
 var TenderOfferSpec TypeSpec
@@ -23681,6 +23683,33 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
+			},
+		},
+	}
+
+	TableLayoutSpec = TypeSpec{
+		TypeName: "TableLayout",
+		FieldMap: buncolgen.TableLayoutFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "resource",
+				FieldMapKey: "resource",
+			},
+			{
+				Name:        "layout",
+				FieldMapKey: "layout",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
 			},
 		},
 	}

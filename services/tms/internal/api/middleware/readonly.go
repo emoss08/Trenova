@@ -26,6 +26,8 @@ var readOnlyWriteAllowedPaths = map[string]struct{}{
 	"/api/v1/assistant/turns/:turnID/stop":                             {},
 	"/api/v1/shipments/:shipmentID/comments/typing":                    {},
 	"/api/v1/shipments/:shipmentID/comments/presence":                  {},
+	"/api/v1/realtime/presence/:resource":                              {},
+	"/api/v1/realtime/presence/:resource/:recordID":                    {},
 	"/api/v1/shipments/calculate-totals":                               {},
 	"/api/v1/shipments/calculate-distance":                             {},
 	"/api/v1/shipments/check-for-duplicate-bols":                       {},

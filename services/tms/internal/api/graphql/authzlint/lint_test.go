@@ -27,6 +27,11 @@ var authOnlyAllowlist = map[string]string{
 	"QueryResolver.SidebarPreferences":          "returns only the calling user's own preferences",
 	"QueryResolver.SidebarCustomizationOptions": "returns only the calling user's own preferences",
 	"MutationResolver.UpdateSidebarPreferences": "acts only on the calling user's own preferences",
+	"QueryResolver.MyTableLayout":               "returns only the calling user's own table layout",
+	"MutationResolver.SaveMyTableLayout":        "saves only the calling user's own table layout",
+	"MutationResolver.ResetMyTableLayout":       "removes only the calling user's own table layout",
+	"QueryResolver.MyBulkEdit":                  "returns only a bulk edit the calling user started",
+	"QueryResolver.MyBulkEdits":                 "returns only bulk edits the calling user started",
 
 	"QueryResolver.HomeLayout":          "returns only the calling user's own home layout",
 	"QueryResolver.HomeWidgetCatalog":   "static catalog of widgets; carries no resource data",

@@ -220,6 +220,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmenttrackingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmenttyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/sidebarpreferencerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tablelayoutrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/bulkeditrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tableinsight"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ssoconfigrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ssoidentitylinkrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/storedmileagerepository"
@@ -276,6 +279,15 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	reportrepository.NewScheduleRepository,
 	reportrepository.NewViewRepository,
 	sidebarpreferencerepository.New,
+	tablelayoutrepository.New,
+	bulkeditrepository.New,
+	shipmentrepository.NewInsightSource,
+	tableinsight.NewCustomerSource,
+	tableinsight.NewInvoiceSource,
+	tableinsight.NewLocationSource,
+	tableinsight.NewCarrierSource,
+	tableinsight.NewOrderSource,
+	tableinsight.NewServiceFailureSource,
 	homelayoutrepository.New,
 	billingqueuefilterpresetrepository.New,
 	equipmentmanufacturerrepository.New,

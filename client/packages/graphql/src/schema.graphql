@@ -583,6 +583,16 @@ type AIFeedbackTurnSnapshot {
   tools: [AIFeedbackToolLine!]!
 }
 
+"""Where a model's listed price came from."""
+enum AIModelPriceSource {
+  """
+  OpenRouter's public catalog: an estimate of the list price, not what a contract charges.
+  """
+  OpenRouter
+  """The provider's own model list."""
+  Provider
+}
+
 """
 One configured model endpoint. The credential never leaves the server; only
 whether one is stored is exposed.
@@ -750,6 +760,10 @@ enum AIProviderKind {
 type AIProviderModelOption {
   """Tokens of context, when the endpoint or the model id says."""
   contextWindow: Int
+  """
+  When the provider released the model (for a local server, when it was pulled), when the endpoint says.
+  """
+  createdAt: Timestamp
   displayName: String!
   embedding: Boolean!
   id: String!
@@ -757,6 +771,8 @@ type AIProviderModelOption {
   """A local server has it in memory now."""
   loaded: Boolean!
   outputCostPerMillion: Decimal
+  """Where the prices came from; null when there are none."""
+  priceSource: AIModelPriceSource
   """Bytes on disk, for a model a local server holds."""
   sizeBytes: Float
 }
@@ -6333,6 +6349,78 @@ type BulkAssignTrainingPayload {
   skippedCount: Int!
 }
 
+type BulkEditFailure {
+  id: ID!
+  message: String!
+}
+
+"""A field of a table that can be changed on many rows at once."""
+type BulkEditField {
+  """record (picked from a list of records) or select (one of a fixed set)."""
+  kind: String!
+  label: String!
+  name: String!
+  options: [BulkEditOption!]!
+  """
+  For a record field, the select-option resource its values are picked from.
+  """
+  record: String
+}
+
+input BulkEditInput {
+  field: String!
+  resource: String!
+  selection: BulkEditSelectionInput!
+  value: String!
+}
+
+"""One change made to many rows at once, and how far it has got."""
+type BulkEditJob {
+  canUndo: Boolean!
+  changedCount: Int!
+  completedAt: Timestamp
+  createdAt: Timestamp!
+  failedCount: Int!
+  failureMessage: String!
+  """The first rows that could not be changed, with why."""
+  failures: [BulkEditFailure!]!
+  field: String!
+  id: ID!
+  processedCount: Int!
+  resource: String!
+  """Queued, Running, Completed, Failed, Undoing or Undone."""
+  status: String!
+  totalCount: Int!
+  undoneAt: Timestamp
+  value: String!
+}
+
+"""A value a bulk-editable field can be set to."""
+type BulkEditOption {
+  label: String!
+  value: String!
+}
+
+type BulkEditPreview {
+  """How many rows the edit would reach."""
+  count: Int!
+  """True when more rows match than one bulk edit can change."""
+  tooMany: Boolean!
+}
+
+input BulkEditSelectionInput {
+  """
+  Or every row matching the table's filters, resolved by the server when the edit runs.
+  """
+  filter: DataTableConnectionInput
+  """The rows chosen one by one."""
+  ids: [ID!]
+  """
+  The table's own list options beyond filters, such as the shipment board's quick filters.
+  """
+  options: JSON
+}
+
 input BulkSettlementActionInput {
   action: BulkSettlementActionType!
   """Required when action is MarkPaid."""
@@ -9932,6 +10020,28 @@ type DashControl {
   version: Int!
 }
 
+"""Totals of a table's filtered rows."""
+input DataTableAggregateInput {
+  fields: [String!]!
+  filter: DataTableConnectionInput
+  options: JSON
+  resource: String!
+}
+
+type DataTableAggregateValue {
+  average: Decimal
+  field: String!
+  max: Decimal
+  min: Decimal
+  sum: Decimal
+}
+
+type DataTableAggregates {
+  """Every row the filters match, on every page."""
+  count: Int!
+  values: [DataTableAggregateValue!]!
+}
+
 input DataTableConnectionInput {
   after: String
   fieldFilters: [FieldFilterInput!]
@@ -9939,6 +10049,82 @@ input DataTableConnectionInput {
   first: Int = 20
   query: String
   sort: [SortFieldInput!]
+}
+
+type DataTableFacetBucket {
+  count: Int!
+  """The field's value, or null for rows that have none."""
+  value: String
+}
+
+"""How many of a table's filtered rows hold each value of one field."""
+input DataTableFacetInput {
+  field: String!
+  filter: DataTableConnectionInput
+  limit: Int = 20
+  """
+  Options the table's own list takes beyond filters, such as the shipment board's quick filters.
+  """
+  options: JSON
+  """The table's permission resource, such as shipment."""
+  resource: String!
+}
+
+type DataTableFacets {
+  """The most common values first."""
+  buckets: [DataTableFacetBucket!]!
+  field: String!
+  """Every row the filters match, including those in values not listed."""
+  total: Int!
+}
+
+type DataTableInsightField {
+  facetable: Boolean!
+  name: String!
+  summable: Boolean!
+  """Whether the field is a date a chart can follow rows over."""
+  timeline: Boolean!
+}
+
+type DataTableSeries {
+  groups: [DataTableSeriesGroup!]!
+  """When each period starts, oldest first."""
+  periodStarts: [Timestamp!]!
+}
+
+type DataTableSeriesGroup {
+  """One value per period, oldest first."""
+  points: [Decimal!]!
+  value: String!
+}
+
+"""
+One small chart per row of another table: how many of this table's rows each one has,
+or their total, in each week or month up to now. A customer's shipments, a carrier's
+loads, a location's stops.
+"""
+input DataTableSeriesInput {
+  """The date that places each counted row in a period."""
+  dateField: String!
+  filter: DataTableConnectionInput
+  """The field naming the row each chart belongs to, such as customerId."""
+  groupField: String!
+  """The rows to chart, at most 200."""
+  groupValues: [String!]!
+  interval: DataTableSeriesInterval! = WEEK
+  """How many periods, ending with the current one."""
+  periods: Int! = 12
+  """The table counted, such as shipment."""
+  resource: String!
+  """The time zone periods start in; UTC when absent."""
+  timezone: String
+  """A field to total instead of counting rows."""
+  valueField: String
+}
+
+enum DataTableSeriesInterval {
+  MONTH
+  WEEK
 }
 
 input DecideAgentProposalsInput {
@@ -12762,6 +12948,13 @@ enum EtaVerdict {
   Late
   OnTime
   Unknown
+}
+
+input ExportTableViewInput {
+  """csv, xlsx or pdf."""
+  format: String!
+  name: String!
+  view: TableExportViewInput!
 }
 
 """
@@ -17329,6 +17522,10 @@ type Mutation {
   endWorkerPtoPolicyAssignment(input: EndWorkerPTOPolicyAssignmentInput!): WorkerPTOPolicyAssignment!
   endWorkerShiftAssignment(effectiveTo: Timestamp!, id: ID!): WorkerShiftAssignment!
   enrollBenefit(input: EnrollBenefitInput!): WorkerBenefitEnrollment!
+  """
+  Saves a table's view as a report and runs it in the background, with no row limit beyond the report's own.
+  """
+  exportTableView(input: ExportTableViewInput!): TableExportResult!
   """Files one proposed document onto a record, as the caller."""
   fileCaptureItem(id: ID!, input: FileCaptureItemInput!): CaptureItem!
   """
@@ -17553,6 +17750,10 @@ type Mutation {
   resetCannedFork(id: ID!): ReportDefinition!
   resetHomeLayout: HomeLayout!
   """
+  Forgets the caller's arrangement of a table, so it opens as its default view.
+  """
+  resetMyTableLayout(resource: String!): Boolean!
+  """
   Fixes a difference with the accounting system: sends Trenova's document again, or changes Trenova to match.
   """
   resolveAccountingDrift(input: ResolveAccountingDriftInput!): AccountingDriftFinding!
@@ -17641,8 +17842,12 @@ type Mutation {
   Holds a tool lower than its declared rule for this organization, or returns it to the declared rule.
   """
   saveAgentToolRule(input: AgentToolRuleInput!, name: String!, version: Int!): AgentToolRuleSaved!
+  """Keeps the caller's arrangement of a table, replacing the one before."""
+  saveMyTableLayout(input: TableLayoutInput!): TableLayout!
   saveOshaSummary(input: SaveOSHASummaryInput!): OSHAAnnualSummary!
   saveTelematicsFormMapping(input: SaveTelematicsFormMappingInput!): TelematicsFormMapping!
+  """Saves a table's view as a report and sends it on a schedule."""
+  scheduleTableView(input: ScheduleTableViewInput!): TableExportResult!
   sendDetentionNotice(occurrenceId: ID!): DetentionOccurrence!
   """
   Queues the outbound EDI 210 for a posted invoice. force resends one that
@@ -17703,6 +17908,10 @@ type Mutation {
   startAccountingAuthorization(integrationType: AccountingSystem!): AccountingAuthorizationStart!
   startBillingTransferRun(input: StartBillingTransferRunInput!): BillingTransferRun!
   """
+  Starts changing one field on every chosen row; it runs in the background.
+  """
+  startBulkEdit(input: BulkEditInput!): BulkEditJob!
+  """
   Runs one provider's model over the active cases, within the evaluation budget.
   """
   startExtractionEvalRun(input: StartExtractionEvalRunInput!): ExtractionEvalRun!
@@ -17746,6 +17955,10 @@ type Mutation {
   Takes back how a check was settled, and puts back any charge it changed.
   """
   undoBillingQueueIssue(id: ID!, issueId: ID!): BillingQueueItem!
+  """
+  Puts back every row the caller's bulk edit changed, within a day of it finishing.
+  """
+  undoMyBulkEdit(id: ID!): BulkEditJob!
   """
   Takes back the caller's approval of a proposal (with every proposal
   approved with it in one batch) or of a plan, while it is in its undo window;
@@ -19903,6 +20116,7 @@ type Query {
   briefing(id: ID!): Briefing!
   """Recent mornings, newest day first."""
   briefings(input: ListBriefingsInput!): [Briefing!]!
+  bulkEditFields(resource: String!): [BulkEditField!]!
   cannedReports: [CannedReport!]!
   capacityUnitMatches(kind: CapacityUnitKind!, limit: Int = 2, unitId: ID!): [CapacityMatch!]!
   """
@@ -19983,6 +20197,13 @@ type Query {
   customers(input: DataTableConnectionInput!): CustomerConnection!
   """Dash feature toggles for this organization (back office)."""
   dashControl: DashControl!
+  dataTableAggregates(input: DataTableAggregateInput!): DataTableAggregates!
+  dataTableFacets(input: DataTableFacetInput!): DataTableFacets!
+  """
+  The fields a table can be counted by or totalled, so a screen offers only those.
+  """
+  dataTableInsightFields(resource: String!): [DataTableInsightField!]!
+  dataTableSeries(input: DataTableSeriesInput!): DataTableSeries!
   """
   Suggested points for a kind, severity and outcome, so the form starts from
   the house scale.
@@ -20198,6 +20419,8 @@ type Query {
   myAgents(input: MyAgentsInput!): MyAgentConnection!
   """What the signed-in driver has said they would rather work."""
   myAvailability: [WorkerAvailabilityPreference!]!
+  myBulkEdit(id: ID!): BulkEditJob
+  myBulkEdits(limit: Int, resource: String): [BulkEditJob!]!
   """Whether capture is on here and whether the caller may use it."""
   myCaptureAccess: CaptureAccess!
   """The companions the caller has paired."""
@@ -20278,6 +20501,10 @@ type Query {
   """Every swap the signed-in driver is on either side of."""
   myShiftSwaps: [PortalShiftSwap!]!
   """
+  The caller's own layout for a table, or null when they have not changed it.
+  """
+  myTableLayout(resource: String!): TableLayout
+  """
   Everyone the signed-in user answers for, directly or through a terminal they
   run, plus anyone delegated to them.
   """
@@ -20350,6 +20577,7 @@ type Query {
   performanceReview(id: ID!): PerformanceReview!
   performanceReviewTemplate(id: ID!): PerformanceReviewTemplate!
   performanceReviewTemplates(input: PerformanceReviewTemplatesInput!): PerformanceReviewTemplateConnection!
+  previewBulkEdit(input: BulkEditInput!): BulkEditPreview!
   previewDriverSettlement(periodEnd: Timestamp, periodStart: Timestamp, workerId: ID!): DriverSettlement!
   previewReport(definition: ReportIRInput!, params: JSON, supersede: Boolean): ReportPreview!
   previewWorkerPtoAccrual(asOf: Timestamp, workerId: ID!): [PlannedPTOAccrual!]!
@@ -22193,6 +22421,17 @@ input SaveTelematicsFormMappingInput {
   version: Int
 }
 
+input ScheduleTableViewInput {
+  cronExpression: String!
+  emailAttach: Boolean
+  emailInline: Boolean
+  emailRecipients: [String!]
+  formats: [String!]!
+  name: String!
+  timezone: String
+  view: TableExportViewInput!
+}
+
 enum SegregationType {
   Barrier
   Distance
@@ -22221,6 +22460,7 @@ type SelectOptionEdge {
 enum SelectOptionResource {
   ACCESSORIAL_CHARGE
   ACCOUNT_TYPE
+  AI_PROVIDER
   BENEFIT_PLAN
   CAPTURE_DEVICE
   CAPTURE_PROFILE
@@ -25078,6 +25318,44 @@ input TableConfigurationPatchInput {
   tableConfig: JSON @goField(omittable: true)
   """Omit to leave unchanged; null is rejected."""
   visibility: ConfigurationVisibility @goField(omittable: true)
+}
+
+input TableExportColumnInput {
+  """The field the column shows, as the table filters and sorts by it."""
+  field: String!
+  label: String!
+}
+
+type TableExportResult {
+  """The report the view was saved as; it lives in the person's reports."""
+  definitionId: ID!
+  run: ReportRun
+  schedule: ReportSchedule
+  """Columns the report could not show, by label."""
+  skippedColumns: [String!]!
+}
+
+"""What a data table is showing, to export or schedule as a report."""
+input TableExportViewInput {
+  columns: [TableExportColumnInput!]!
+  filter: DataTableConnectionInput
+  resource: String!
+}
+
+"""The arrangement of one data table a person last left it in."""
+type TableLayout {
+  """
+  Columns shown, ordered, sized and pinned, the density, colour rules and the view it was based on.
+  """
+  layout: JSON!
+  resource: String!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+input TableLayoutInput {
+  layout: JSON!
+  resource: String!
 }
 
 """One person on a manager's team."""
