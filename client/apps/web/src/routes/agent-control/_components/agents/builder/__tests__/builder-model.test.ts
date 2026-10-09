@@ -10,6 +10,7 @@ import {
   endOfDay,
   checklist,
   nextRun,
+  opensOnIntro,
   readiness,
   startValues,
   triggerProblem,
@@ -45,9 +46,10 @@ function values(overrides: Partial<AgentFormValues>): AgentFormValues {
 }
 
 describe("startValues", () => {
-  it("starts in shadow, asking first, with the trigger and tool its start implies", () => {
+  it("starts live, asking first, with the trigger and tool its start implies", () => {
     const scheduled = startValues("scheduled", { timezone: "America/Chicago", catalog });
-    expect(scheduled.shadowMode).toBe(true);
+    expect(scheduled.shadowMode).toBe(false);
+    expect(scheduled.simulationMode).toBe(false);
     expect(scheduled.autonomyCeiling).toBe("ActWithApproval");
     expect(scheduled.triggerMode).toBe("Scheduled");
     expect(scheduled.cronExpression).toBe("0 6 * * 1-5");
@@ -64,6 +66,15 @@ describe("startValues", () => {
     expect(chat.triggerMode).toBe("Chat");
     expect(chat.cronExpression).toBe("");
     expect(chat.cronTimezone).toBe("");
+  });
+});
+
+describe("opensOnIntro", () => {
+  it("asks what the agent should do only for a blank start", () => {
+    expect(opensOnIntro("blank")).toBe(true);
+    expect(opensOnIntro("chat")).toBe(false);
+    expect(opensOnIntro("scheduled")).toBe(false);
+    expect(opensOnIntro("event")).toBe(false);
   });
 });
 

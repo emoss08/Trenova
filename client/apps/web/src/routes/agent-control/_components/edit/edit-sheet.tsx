@@ -8,6 +8,7 @@ import { ChangeReview, type EditFields } from "./change-review";
 import { ConflictBar } from "./conflict-bar";
 import { SaveBar } from "./save-bar";
 import type { EditFlow } from "./use-edit-flow";
+import { Button } from "@trenova/shared/components/ui/button";
 
 /** One titled part of an editor. Keys are the fields it holds, to mark it while they differ. */
 export type EditSection = {
@@ -17,6 +18,8 @@ export type EditSection = {
   note?: ReactNode;
   /** Shown at the right of the section's title. */
   actions?: ReactNode;
+  /** A longer explanation, opened from beside the section's title. */
+  help?: ReactNode;
   /** A reason the section needs a look, marked beside its title. */
   warning?: string;
   content: ReactNode;
@@ -102,15 +105,17 @@ export function EditSheet<T extends FieldValues>({
                   )}
                 </div>
                 {headerActions}
-                <button
+                <Button
                   type="button"
-                  className="ib"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="text-muted-foreground hover:text-foreground"
                   title={t("Close (Esc)")}
                   aria-label={t("Close (Esc)")}
                   onClick={flow.tryClose}
                 >
                   <Ic n="x" s={14} />
-                </button>
+                </Button>
               </header>
               {flow.conflict && (
                 <ConflictBar

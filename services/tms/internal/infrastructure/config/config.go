@@ -840,6 +840,14 @@ type AIConfig struct {
 	// administrators can make the server call into its own network.
 	PrivateNetworkProviders *bool `mapstructure:"privateNetworkProviders"`
 	MaxRetries              int   `mapstructure:"maxRetries"              validate:"omitempty,min=0,max=10"`
+	// ModelPriceReference fills in a model's price, when the provider's own
+	// model list gives none, from OpenRouter's public catalog, marked as an
+	// estimate. It is a pointer so an absent key keeps it on; a deployment that
+	// must make no outside call sets it false.
+	ModelPriceReference *bool `mapstructure:"modelPriceReference"`
+	// ModelPriceReferenceTTL is how long the catalog is kept before it is read
+	// again; one read serves every replica and organization for that long.
+	ModelPriceReferenceTTL time.Duration `mapstructure:"modelPriceReferenceTtl" validate:"omitempty,min=0"`
 
 	// DocumentExtraction lets a model classify and extract uploaded
 	// documents. Off by default; the OCR pipeline below runs either way.
@@ -863,6 +871,22 @@ type AIConfig struct {
 }
 
 const defaultVerdictCacheTTL = 24 * time.Hour
+
+const defaultModelPriceReferenceTTL = 24 * time.Hour
+
+// ModelPriceReferenceEnabled is nil-safe on the receiver and the field, so an
+// absent section or key keeps estimated prices on.
+func (c *AIConfig) ModelPriceReferenceEnabled() bool {
+	return c == nil || c.ModelPriceReference == nil || *c.ModelPriceReference
+}
+
+func (c *AIConfig) GetModelPriceReferenceTTL() time.Duration {
+	if c == nil || c.ModelPriceReferenceTTL <= 0 {
+		return defaultModelPriceReferenceTTL
+	}
+
+	return c.ModelPriceReferenceTTL
+}
 
 // GetVerdictCacheTTL is nil-safe: a guard built without this section shares
 // verdicts for a day.

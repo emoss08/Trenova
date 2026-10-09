@@ -212,6 +212,14 @@ input AIProviderEndpointInput {
   allowPrivateNetwork: Boolean!
 }
 
+"Where a model's listed price came from."
+enum AIModelPriceSource {
+  "The provider's own model list."
+  Provider
+  "OpenRouter's public catalog: an estimate of the list price, not what a contract charges."
+  OpenRouter
+}
+
 "One model an endpoint says it serves."
 type AIProviderModelOption {
   id: String!
@@ -225,6 +233,10 @@ type AIProviderModelOption {
   embedding: Boolean!
   inputCostPerMillion: Decimal
   outputCostPerMillion: Decimal
+  "Where the prices came from; null when there are none."
+  priceSource: AIModelPriceSource
+  "When the provider released the model (for a local server, when it was pulled), when the endpoint says."
+  createdAt: Timestamp
 }
 
 input AIProviderDraftTestInput {

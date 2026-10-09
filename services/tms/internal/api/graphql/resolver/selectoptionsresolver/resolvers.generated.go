@@ -90,6 +90,7 @@ type Deps struct {
 	EmailService                 *emailservice.Service
 	DistanceProfileService       *distanceprofileservice.Service
 	ServiceFailureReasonCodeSvc  services.ServiceFailureReasonCodeService
+	AiProviderService            services.AIProviderService
 	CaptureService               *captureservice.Service
 	RoleService                  *roleservice.Service
 	UserService                  *userservice.Service

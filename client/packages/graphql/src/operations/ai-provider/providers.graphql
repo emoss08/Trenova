@@ -113,6 +113,8 @@ query AIProviderModels($input: AIProviderEndpointInput!) {
     embedding
     inputCostPerMillion
     outputCostPerMillion
+    priceSource
+    createdAt
   }
 }
 

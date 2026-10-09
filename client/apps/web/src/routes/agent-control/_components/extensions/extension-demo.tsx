@@ -64,7 +64,7 @@ export function ExtensionDemo({ agentName }: ExtensionDemoProps) {
   const name = user?.name ?? t("You");
 
   return (
-    <div className="demo" aria-label={t("How agents use it")}>
+    <div className="demo select-none" aria-label={t("How agents use it")}>
       <span className="demo-k">
         <Ic n="chat" s={11} />
         {t("How agents use it · Desk")}

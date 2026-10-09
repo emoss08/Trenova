@@ -17,8 +17,16 @@ import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { Row, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useMemo, useState } from "react";
+import { useQueryStates } from "nuqs";
+import { useMemo } from "react";
 import { toast } from "sonner";
+import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
+import {
+  MEMORY_STARTER_PARAM,
+  memoryStarterKinds,
+  memoryStarterParser,
+  type MemoryStarterKind,
+} from "../../ai-control-tabs";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
 import { invalidateAIControlCounts } from "../overview/use-ai-control-stats";
 import { AgentReflections } from "./agent-reflections";
@@ -29,7 +37,12 @@ import { MemoryPanel } from "./memory-panel";
 import { MemorySuggestions } from "./memory-suggestions";
 import { MemoryUsageNotice } from "./memory-usage-notice";
 
-const EXAMPLES: Record<"Instruction" | "Fact" | "Procedure", string> = defineLabels({
+const starterParsers = {
+  ...panelSearchParamsParser,
+  [MEMORY_STARTER_PARAM]: memoryStarterParser,
+};
+
+const EXAMPLES: Record<MemoryStarterKind, string> = defineLabels({
   Instruction: "Always CC the customer's AP inbox on invoices for …",
   Fact: "The receiving dock at … closes at …",
   Procedure: "To clear a rate mismatch: …",
@@ -55,11 +68,22 @@ export default function MemoryTab() {
   });
   const retrievalQuery = useQuery(queries.aiRetrieval.status());
   const controlQuery = useQuery(agentControlQueryOptions());
-  const [starting, setStarting] = useState<Partial<MemoryFormValues> | null>(null);
+  const [{ panelType, [MEMORY_STARTER_PARAM]: starterKind }, setStarter] =
+    useQueryStates(starterParsers);
 
   const byMeaning = Boolean(retrievalQuery.data?.settings.activeModelKey);
   const learningOff = controlQuery.data?.learningOff ?? false;
   const empty = totalQuery.data === 0;
+  // With nothing to list there is no table to hold the create panel, so a link
+  // asking for one, or for a first memory of a kind, opens it here instead.
+  const starting = useMemo<Partial<MemoryFormValues> | null>(
+    () =>
+      starterKind
+        ? { kind: starterKind, content: t(EXAMPLES[starterKind]).replace(/ ?…$/, " ") }
+        : null,
+    [starterKind, t],
+  );
+  const starterOpen = canCreate && empty && (starterKind !== null || panelType === "create");
 
   const setStatus = async (row: Row<AgentMemoryRow>, status: AgentMemoryRow["status"]) => {
     await setAgentMemoryStatus(row.original.id, status);
@@ -122,13 +146,11 @@ export default function MemoryTab() {
             </span>
             {canCreate && (
               <div className="mem-x">
-                {(Object.keys(EXAMPLES) as (keyof typeof EXAMPLES)[]).map((kind) => (
+                {memoryStarterKinds.map((kind) => (
                   <button
                     key={kind}
                     type="button"
-                    onClick={() =>
-                      setStarting({ kind, content: t(EXAMPLES[kind]).replace(/ ?…$/, " ") })
-                    }
+                    onClick={() => void setStarter({ [MEMORY_STARTER_PARAM]: kind })}
                   >
                     <MemoryKindMark kind={kind} />
                     {t(EXAMPLES[kind])}
@@ -158,11 +180,14 @@ export default function MemoryTab() {
         )}
       </section>
       <MemoryPanel
-        open={starting !== null}
+        open={starterOpen}
         mode="create"
         row={null}
         preset={starting}
-        onOpenChange={(open) => !open && setStarting(null)}
+        onOpenChange={(open) =>
+          !open &&
+          void setStarter({ panelType: null, panelEntityId: null, [MEMORY_STARTER_PARAM]: null })
+        }
       />
     </div>
   );

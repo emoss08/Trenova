@@ -18,6 +18,7 @@ import {
   sourceState,
   sourceWaiting,
 } from "./retrieval-model";
+import { Button } from "@trenova/shared/components/ui/button";
 
 const SOURCE_ICON: Record<AIRetrievalSourceType, IcName> = {
   Memory: "brain",
@@ -190,9 +191,9 @@ function SourceRow({
       </div>
       {canUpdate && (
         <div className="src-c">
-          <button
+          <Button
             type="button"
-            className="btn sm"
+            variant="outline" size="sm"
             disabled={!source.enabled || !indexed}
             title={
               !indexed
@@ -205,7 +206,7 @@ function SourceRow({
           >
             <Ic n="refresh" s={12} />
             {t("Re-index")}
-          </button>
+          </Button>
           <Switch
             on={source.enabled}
             label={t("Index {0}", label)}

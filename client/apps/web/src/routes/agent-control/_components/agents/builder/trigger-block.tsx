@@ -1,24 +1,40 @@
-import type { AgentAudienceRole } from "@/lib/graphql/agent-access";
+import { RoleAutocompleteField } from "@/components/autocomplete-fields";
+import { AutoCompleteDatePicker } from "@/components/fields/date-field/date-picker";
+import { FieldWrapper } from "@/components/fields/field-components";
+import { InputField } from "@/components/fields/input-field";
+import { MultiCheckboxField } from "@/components/fields/multi-checkbox-field";
+import { NumberField } from "@/components/fields/number-field";
+import { SegmentedField } from "@/components/fields/segmented-field";
+import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
+import { TimezoneField } from "@/components/fields/timezone-field";
 import type { TriggerMode } from "@/types/assistant";
 import { intlLocale } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
-import { formatTimezoneLabel, listTimezones } from "@trenova/shared/lib/timezones";
+import { formatTimezoneLabel } from "@trenova/shared/lib/timezones";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
-import { Callout, Chips, Sel, Txt } from "../../edit/fields";
+import { Controller, useFormContext } from "react-hook-form";
+import { Callout } from "../../edit/callout";
+import { aicFieldTrigger, aicMultiFieldTrigger } from "../../edit/field-trigger";
 import { Ic, type IcName } from "../../kit/ic";
-import { Seg } from "../../kit/layout";
+import type { AgentFormValues } from "../agent-form-schema";
 import { Blk, useDraftField } from "./block";
 import { schedulePresets } from "./schedule-presets";
 import {
   DEFAULT_INTERVAL_SECONDS,
   DEFAULT_SCHEDULE,
+  calendarDateOf,
   dateIn,
   endOfDay,
   nextRun,
+  pickerDateOf,
   weekStrip,
 } from "./builder-model";
+import { Button } from "@trenova/shared/components/ui/button";
+
+/** A part of the block set off from the one above it. */
+const SECTION = "mt-5 border-t border-border-subtle pt-4";
 
 /** Runs at most this many at once. */
 const MAX_CONCURRENT = 10;
@@ -29,27 +45,26 @@ type TriggerBlockProps = {
   fresh: boolean;
   /** Every event that may start an agent, by kind, with its label. */
   events: readonly { kind: string; label: string }[];
-  /** Every role, as the access preview reads them. */
-  roles: readonly AgentAudienceRole[];
   /** While it is open to everyone, the chosen tools that reach outside or restricted data. */
   sensitiveTools: readonly string[];
   toolTitle: (name: string) => string;
 };
 
 /** What wakes the agent up, when it stops, and who is allowed to start it. */
-export function TriggerBlock({ fresh, events, roles, sensitiveTools, toolTitle }: TriggerBlockProps) {
+export function TriggerBlock({ fresh, events, sensitiveTools, toolTitle }: TriggerBlockProps) {
   const t = useT();
+  const { control } = useFormContext<AgentFormValues>();
   const [trigger, setTrigger] = useDraftField("triggerMode");
   const [cron, setCron] = useDraftField("cronExpression");
   const [timezone, setTimezone] = useDraftField("cronTimezone");
-  const [eventKinds, setEventKinds] = useDraftField("eventKinds");
   const [interval, setInterval] = useDraftField("intervalSeconds");
-  const [concurrent, setConcurrent] = useDraftField("maxConcurrentRuns");
+  const [concurrent] = useDraftField("maxConcurrentRuns");
   const [endsAt, setEndsAt] = useDraftField("endsAt");
   const [accessMode, setAccessMode] = useDraftField("accessMode");
-  const [roleIds, setRoleIds] = useDraftField("accessRoleIds");
+  const [roleIds] = useDraftField("accessRoleIds");
   const [now] = useState(() => Math.floor(Date.now() / 1000));
-  const zone = timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const browserZone = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone, []);
+  const zone = timezone || browserZone;
 
   const triggers: { mode: TriggerMode; icon: IcName; label: string; note: string }[] = [
     { mode: "Chat", icon: "chat", label: t("Someone asks"), note: t("In Desk or the assistant") },
@@ -66,15 +81,9 @@ export function TriggerBlock({ fresh, events, roles, sensitiveTools, toolTitle }
     3600: t("1 hour"),
   };
   const preset = presets.find((entry) => entry.cron === cron.trim());
-  const next = useMemo(() => (trigger === "Scheduled" ? nextRun(cron, zone, now) : null), [
-    cron,
-    now,
-    trigger,
-    zone,
-  ]);
-  const timezones = useMemo(
-    () => listTimezones().map((entry) => [entry, formatTimezoneLabel(entry)] as const),
-    [],
+  const next = useMemo(
+    () => (trigger === "Scheduled" ? nextRun(cron, zone, now) : null),
+    [cron, now, trigger, zone],
   );
 
   const pickTrigger = (mode: TriggerMode) => {
@@ -89,7 +98,7 @@ export function TriggerBlock({ fresh, events, roles, sensitiveTools, toolTitle }
   };
 
   const restricted = accessMode === "Roles";
-  const roleOptions = roles.map((entry) => [entry.role.id, entry.role.name] as const);
+  const accessLabel = trigger === "Chat" ? t("Who can ask it") : t("Who can run it by hand");
   const endsOn = endsAt ? dateIn(endsAt, zone) : "";
 
   return (
@@ -137,17 +146,30 @@ export function TriggerBlock({ fresh, events, roles, sensitiveTools, toolTitle }
           </div>
           <WeekStrip cron={cron} timezone={zone} now={now} />
           <div className="sch-r">
-            <Txt value={cron} onChange={setCron} mono width={160} label={t("Schedule")} />
-            <Sel
-              value={zone}
-              onChange={setTimezone}
-              options={timezones}
-              label={t("Time zone")}
+            <InputField<AgentFormValues>
+              control={control}
+              name="cronExpression"
+              rules={{ required: true }}
+              aria-label={t("Schedule")}
+              className="w-40"
+              inputClassProps={aicFieldTrigger}
             />
+            <div className="sch-tz">
+              <TimezoneField<AgentFormValues>
+                control={control}
+                name="cronTimezone"
+                placeholder={formatTimezoneLabel(browserZone)}
+                triggerClassName={aicFieldTrigger}
+              />
+            </div>
             <span className="sch-h">
               {preset
                 ? next
-                  ? t("{0} · next {1}", preset.says, formatUnixDateTimeShort(next, { timezone: zone }))
+                  ? t(
+                      "{0} · next {1}",
+                      preset.says,
+                      formatUnixDateTimeShort(next, { timezone: zone }),
+                    )
                   : preset.says
                 : next
                   ? t("Custom · next {0}", formatUnixDateTimeShort(next, { timezone: zone }))
@@ -158,91 +180,74 @@ export function TriggerBlock({ fresh, events, roles, sensitiveTools, toolTitle }
       )}
       {trigger === "Event" && (
         <div className="sch">
-          <Chips
-            value={eventKinds}
-            onChange={setEventKinds}
+          <MultiCheckboxField<AgentFormValues, string>
+            control={control}
+            name="eventKinds"
+            rules={{ required: true }}
             label={t("Wakes on")}
-            options={events.map((event) => [event.kind, event.label] as const)}
-          />
-          <p className="es-note">
-            {t(
+            description={t(
               "Each event starts a run about the record it concerns. Repeats inside five minutes are merged.",
             )}
-          </p>
+            options={events.map((event) => ({ value: event.kind, label: event.label }))}
+            emptyAs="array"
+          />
         </div>
       )}
       {trigger === "Continuous" && (
         <div className="sch">
-          <div className="kv2">
-            <div>
-              <span>{t("Every")}</span>
-              <div className="tks">
-                {INTERVALS.map((seconds) => (
-                  <button
-                    key={seconds}
-                    type="button"
-                    className={cn("tkb", interval === seconds && "on first")}
-                    aria-pressed={interval === seconds}
-                    onClick={() => setInterval(seconds)}
-                  >
-                    {intervalLabel[seconds]}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <span>{t("At most")}</span>
-              <div className="stp2">
-                <button
-                  type="button"
-                  aria-label={t("Fewer at once")}
-                  onClick={() => setConcurrent(Math.max(1, concurrent - 1))}
-                >
-                  −
-                </button>
-                <b className="mono">{concurrent}</b>
-                <button
-                  type="button"
-                  aria-label={t("More at once")}
-                  onClick={() => setConcurrent(Math.min(MAX_CONCURRENT, concurrent + 1))}
-                >
-                  +
-                </button>
-                <em>{concurrent === 1 ? t("run at once") : t("runs at once")}</em>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-[minmax(0,1fr)_12rem]">
+            <SegmentedField<AgentFormValues, (typeof INTERVALS)[number]>
+              control={control}
+              name="intervalSeconds"
+              label={t("Every")}
+              description={t(
+                "About {0} checks a week. Each one counts against its runs per day.",
+                Math.round((86_400 / Math.max(60, interval)) * 7).toLocaleString(),
+              )}
+              options={INTERVALS.map((seconds) => ({
+                value: seconds,
+                label: intervalLabel[seconds],
+              }))}
+            />
+            <NumberField<AgentFormValues, "maxConcurrentRuns">
+              control={control}
+              name="maxConcurrentRuns"
+              rules={{ required: true }}
+              label={t("At most")}
+              sideText={concurrent === 1 ? t("run at once") : t("runs at once")}
+              min={1}
+              max={MAX_CONCURRENT}
+              inputClassName={aicFieldTrigger}
+            />
           </div>
-          <p className="es-note">
-            {t(
-              "About {0} checks a week. Each one counts against its runs per day.",
-              Math.round((86_400 / Math.max(60, interval)) * 7).toLocaleString(),
-            )}
-          </p>
         </div>
       )}
       {(trigger === "Scheduled" || trigger === "Continuous") && (
-        <div className="acc">
-          <div className="acc-l">
-            <b>{t("Stop after")}</b>
-            <span>
-              {endsAt
-                ? t("Switches itself off on {0}", endsOn)
-                : t("Optional. It switches itself off after this date.")}
-            </span>
+        <FieldWrapper
+          label={t("Stop after")}
+          description={
+            endsAt
+              ? t("Switches itself off on {0}", endsOn)
+              : t("Optional. It switches itself off after this date.")
+          }
+          className={SECTION}
+        >
+          <div className="w-45">
+            <AutoCompleteDatePicker
+              date={pickerDateOf(endsOn)}
+              setDate={(date) => setEndsAt(date ? endOfDay(calendarDateOf(date), zone) : null)}
+              aria-label={t("Stop after")}
+              placeholder={t("No end date")}
+              className={aicFieldTrigger}
+              clearable
+            />
           </div>
-          <Txt
-            type="date"
-            value={endsOn}
-            width={180}
-            label={t("Stop after")}
-            onChange={(value) => setEndsAt(value ? endOfDay(value, zone) : null)}
-          />
-        </div>
+        </FieldWrapper>
       )}
-      <div className="acc">
-        <div className="acc-l">
-          <b>{trigger === "Chat" ? t("Who can ask it") : t("Who can run it by hand")}</b>
-          <span>
+      <div className="border-border-subtle mt-5 flex items-center justify-between gap-4 border-t pt-4">
+        <div className="flex flex-col">
+          <b className="text-base font-medium">{accessLabel}</b>
+          <span className="text-muted-foreground text-sm">
             {restricted
               ? roleIds.length === 1
                 ? t("1 role")
@@ -250,26 +255,39 @@ export function TriggerBlock({ fresh, events, roles, sensitiveTools, toolTitle }
               : t("Everyone who can use the assistant")}
           </span>
         </div>
-        <Seg
-          v={restricted ? "roles" : "all"}
-          label={trigger === "Chat" ? t("Who can ask it") : t("Who can run it by hand")}
-          opts={[
-            ["all", t("Everyone")],
-            ["roles", t("Specific roles")],
-          ]}
-          onChange={(next) => setAccessMode(next === "roles" ? "Roles" : "Everyone")}
+        <Controller
+          control={control}
+          name="accessMode"
+          render={({ field: { value, onChange } }) => (
+            <SegmentedControl<AgentFormValues["accessMode"]>
+              aria-label={accessLabel}
+              value={value}
+              onValueChange={onChange}
+              items={[
+                { value: "Everyone", label: t("Everyone") },
+                { value: "Roles", label: t("Specific roles") },
+              ]}
+            />
+          )}
         />
       </div>
       {restricted && (
-        <Chips value={roleIds} onChange={setRoleIds} options={roleOptions} label={t("Roles")} />
+        <div className="mt-3">
+          <RoleAutocompleteField<AgentFormValues>
+            control={control}
+            name="accessRoleIds"
+            placeholder={t("Pick the roles that can use it")}
+            triggerClassName={aicMultiFieldTrigger}
+          />
+        </div>
       )}
       {!restricted && sensitiveTools.length > 0 && (
         <Callout
           tone="w"
           action={
-            <button type="button" className="btn sm" onClick={() => setAccessMode("Roles")}>
+            <Button type="button" variant="outline" size="sm" onClick={() => setAccessMode("Roles")}>
               {t("Limit to roles")}
-            </button>
+            </Button>
           }
         >
           {sensitiveTools.length === 1
@@ -315,7 +333,9 @@ function WeekStrip({ cron, timezone, now }: { cron: string; timezone: string; no
       {strip.days.map((day) => (
         <div key={day.start} className={cn("wks-d", day.today && "today")}>
           <div className="wks-t">
-            {day.today && <span className="wks-now" style={{ top: `${strip.nowFraction * 100}%` }} />}
+            {day.today && (
+              <span className="wks-now" style={{ top: `${strip.nowFraction * 100}%` }} />
+            )}
             {day.runs.map((run) => (
               <i
                 key={`${run.hour}:${run.minute}`}
@@ -324,7 +344,9 @@ function WeekStrip({ cron, timezone, now }: { cron: string; timezone: string; no
               />
             ))}
           </div>
-          <span>{day.today ? t("Today") : dayName.format(new Date((day.start + 43_200) * 1000))}</span>
+          <span>
+            {day.today ? t("Today") : dayName.format(new Date((day.start + 43_200) * 1000))}
+          </span>
         </div>
       ))}
       <div className="wks-s">

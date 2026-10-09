@@ -25,7 +25,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { AlertCircleIcon, Sliders01Icon } from "@trenova/shared/components/icons";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { EXTRACTION_STALE_MS } from "./extraction-model";
 import { ShadowFieldsTable } from "./shadow-fields-table";
 import { ShadowFigures } from "./shadow-figures";
@@ -33,6 +33,7 @@ import { getShadowResultColumns } from "./shadow-result-columns";
 import { ShadowResultPanel } from "./shadow-result-panel";
 import { SHADOW_WINDOW_DAYS } from "./shadow-model";
 import { ShadowSettingsDialog } from "./shadow-settings-dialog";
+import { useExtractionDialog } from "./use-extraction-dialog";
 
 function CandidateSummary({ settings }: { settings: ExtractionShadowSettings }) {
   const t = useT();
@@ -66,7 +67,7 @@ function CandidateSummary({ settings }: { settings: ExtractionShadowSettings }) 
  */
 export function ShadowView() {
   const t = useT();
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useExtractionDialog("shadow");
   const { allowed: canUpdate } = usePermission(Resource.AgentEvalSuite, Operation.Update);
   const columns = useMemo(() => getShadowResultColumns(t), [t]);
 
@@ -166,7 +167,11 @@ export function ShadowView() {
       />
 
       {settings.data ? (
-        <ShadowSettingsDialog open={editing} onOpenChange={setEditing} settings={settings.data} />
+        <ShadowSettingsDialog
+          open={editing && canUpdate}
+          onOpenChange={setEditing}
+          settings={settings.data}
+        />
       ) : null}
     </div>
   );

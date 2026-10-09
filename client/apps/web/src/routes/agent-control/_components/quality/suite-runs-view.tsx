@@ -12,7 +12,7 @@ import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
-import { Callout } from "../edit/fields";
+import { Callout } from "../edit/callout";
 import { Ic } from "../kit/ic";
 import { Tile } from "../kit/marks";
 import { ReadSheet } from "../kit/read-sheet";

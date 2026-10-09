@@ -84,6 +84,7 @@ function ArgumentRuleRow({
         <InputField
           control={control}
           name={`${name}.key`}
+          rules={{ required: true }}
           label={t("Argument")}
           placeholder={t("shipmentId")}
         />
@@ -92,6 +93,7 @@ function ArgumentRuleRow({
         <SelectField
           control={control}
           name={`${name}.kind`}
+          rules={{ required: true }}
           label={t("Compared as")}
           description={kind ? TOLERANCE_HELP[kind] : undefined}
           options={kinds.map((option) => ({ value: option, label: TOLERANCE_LABEL[option] }))}

@@ -4,11 +4,15 @@ import { formatList } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
-import { useState } from "react";
+import { InputField } from "@/components/fields/input-field";
+import type { KeyboardEvent } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { aicFieldTrigger } from "../edit/field-trigger";
 import { Ic } from "../kit/ic";
 import { Switch } from "../kit/layout";
 import type { ProviderWeek } from "./provider-line";
 import { formatLatency, formatTokens, type TaskMeta } from "./provider-model";
+import { Button } from "@trenova/shared/components/ui/button";
 
 /** A test someone ran from this page, until the list reloads with its outcome. */
 export type ProviderTestState =
@@ -48,9 +52,9 @@ export function Health({ provider, test, week }: HealthProps) {
   return (
     <span className="hl-w">
       {result ? (
-        <span className={cn("hl", result.state === "ok" ? "ok" : "bad")}>
+        <span className={cn("hl", result.state === "ok" ? "ok" : "bad")} title={result.message}>
           <i />
-          {result.message}
+          <span className="hl-m">{result.message}</span>
           <em>{formatUnixDateTimeShort(result.at)}</em>
         </span>
       ) : (
@@ -116,7 +120,8 @@ export function ProviderDetail({
   onRemove,
 }: ProviderDetailProps) {
   const t = useT();
-  const [key, setKey] = useState("");
+  const keyForm = useForm<{ key: string }>({ defaultValues: { key: "" } });
+  const key = useWatch({ control: keyForm.control, name: "key" });
   const labels = new Map(metas.map((meta) => [meta.task, meta.label]));
   const handled = provider.tasks.map((task) => labels.get(task) ?? task);
   const local = !needsKey && !provider.hasApiKey;
@@ -137,27 +142,35 @@ export function ProviderDetail({
             </span>
           </div>
           <form
-            className="pd-kf"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (key.trim()) onSaveKey(key.trim());
-            }}
+            className="flex items-start gap-2"
+            onSubmit={keyForm.handleSubmit((values) => {
+              if (values.key.trim()) onSaveKey(values.key.trim());
+            })}
           >
-            <Ic n="key" s={13} />
-            <input
+            <InputField<{ key: string }>
+              control={keyForm.control}
+              name="key"
+              rules={{ required: true }}
               type="password"
               autoFocus
               autoComplete="new-password"
               aria-label={t("API key")}
               placeholder={keyPlaceholder}
-              value={key}
               disabled={!canUpdate || savingKey}
-              onChange={(event) => setKey(event.target.value)}
+              leftElement={<Ic n="key" s={13} />}
+              className="min-w-0 flex-1"
+              inputClassProps={aicFieldTrigger}
             />
-            <button type="submit" className="btn ink sm" disabled={!key.trim() || savingKey}>
-              {savingKey && <i className="spn" />}
+            <Button
+              type="submit"
+              variant="default"
+              size="sm"
+              disabled={!key.trim()}
+              isLoading={savingKey}
+              loadingText={t("Save and test")}
+            >
               {t("Save and test")}
-            </button>
+            </Button>
           </form>
         </div>
       )}
@@ -299,6 +312,9 @@ export function ProviderDetail({
 }
 
 const PRICE = /^\d{0,6}(\.\d{0,6})?$/;
+const DOLLAR = <span className="text-muted-foreground text-xs">$</span>;
+
+type PriceValues = { input: string; output: string };
 
 function normalizedPrice(text: string): string | null {
   const trimmed = text.trim();
@@ -316,13 +332,20 @@ function Prices({
   onSave: (prices: { input: string | null; output: string | null }) => void;
 }) {
   const t = useT();
-  const [input, setInput] = useState(provider.inputCostPerMillion ?? "");
-  const [output, setOutput] = useState(provider.outputCostPerMillion ?? "");
+  const form = useForm<PriceValues>({
+    defaultValues: {
+      input: provider.inputCostPerMillion ?? "",
+      output: provider.outputCostPerMillion ?? "",
+    },
+  });
 
   const commit = () => {
+    const { input, output } = form.getValues();
     if (!PRICE.test(input.trim()) || !PRICE.test(output.trim())) {
-      setInput(provider.inputCostPerMillion ?? "");
-      setOutput(provider.outputCostPerMillion ?? "");
+      form.reset({
+        input: provider.inputCostPerMillion ?? "",
+        output: provider.outputCostPerMillion ?? "",
+      });
       return;
     }
     const next = { input: normalizedPrice(input), output: normalizedPrice(output) };
@@ -334,37 +357,36 @@ function Prices({
       onSave(next);
     }
   };
+  const blurOnEnter = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") event.currentTarget.blur();
+  };
 
   return (
-    <div className="price">
-      <label>
-        <span>{t("Input")}</span>
-        <i>$</i>
-        <input
-          className="mono"
-          inputMode="decimal"
-          placeholder="—"
-          value={input}
-          disabled={disabled}
-          onChange={(event) => setInput(event.target.value)}
-          onBlur={commit}
-          onKeyDown={(event) => event.key === "Enter" && event.currentTarget.blur()}
-        />
-      </label>
-      <label>
-        <span>{t("Output")}</span>
-        <i>$</i>
-        <input
-          className="mono"
-          inputMode="decimal"
-          placeholder="—"
-          value={output}
-          disabled={disabled}
-          onChange={(event) => setOutput(event.target.value)}
-          onBlur={commit}
-          onKeyDown={(event) => event.key === "Enter" && event.currentTarget.blur()}
-        />
-      </label>
+    <div className="grid grid-cols-2 gap-3">
+      <InputField<PriceValues>
+        control={form.control}
+        name="input"
+        label={t("Input")}
+        inputMode="decimal"
+        placeholder="—"
+        disabled={disabled}
+        leftElement={DOLLAR}
+        inputClassProps={aicFieldTrigger}
+        onBlur={commit}
+        onKeyDown={blurOnEnter}
+      />
+      <InputField<PriceValues>
+        control={form.control}
+        name="output"
+        label={t("Output")}
+        inputMode="decimal"
+        placeholder="—"
+        disabled={disabled}
+        leftElement={DOLLAR}
+        inputClassProps={aicFieldTrigger}
+        onBlur={commit}
+        onKeyDown={blurOnEnter}
+      />
     </div>
   );
 }

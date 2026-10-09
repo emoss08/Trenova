@@ -1,8 +1,10 @@
+import { InputField } from "@/components/fields/input-field";
 import { formatUsd } from "@/lib/ai-usage-format";
 import { centsToDecimal, decimalToCents } from "@/lib/decimal-cents";
 import type { AIRetrievalSettings } from "@/lib/graphql/ai-retrieval";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { aicFieldTrigger } from "../edit/field-trigger";
 import { Ic } from "../kit/ic";
 import { SecH, Switch } from "../kit/layout";
 import { parseBudgetCents } from "./retrieval-model";
@@ -28,12 +30,12 @@ export function RetrievalSettingsPanel({
 }: RetrievalSettingsProps) {
   const t = useT();
   const savedCents = decimalToCents(settings.monthlyIndexingBudgetUsd);
-  const [draft, setDraft] = useState<{ from: number; text: string } | null>(null);
-  const text = draft && draft.from === savedCents ? draft.text : (savedCents / 100).toFixed(2);
+  const savedText = (savedCents / 100).toFixed(2);
+  const form = useForm<{ budget: string }>({ values: { budget: savedText } });
 
   const commit = () => {
-    const cents = parseBudgetCents(text);
-    setDraft(null);
+    const cents = parseBudgetCents(form.getValues("budget"));
+    form.reset({ budget: savedText });
     if (cents !== null && cents !== savedCents) {
       onBudget(centsToDecimal(cents));
     }
@@ -51,23 +53,21 @@ export function RetrievalSettingsPanel({
             <Ic n="dollar" s={14} />
             <b>{t("Monthly indexing budget")}</b>
           </div>
-          <div className="bud-i">
-            <span>$</span>
-            <input
-              className="mono"
-              inputMode="decimal"
-              aria-label={t("Monthly indexing budget")}
-              value={text}
-              disabled={!canUpdate || busy}
-              onChange={(event) => setDraft({ from: savedCents, text: event.target.value })}
-              onBlur={commit}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") event.currentTarget.blur();
-                if (event.key === "Escape") setDraft(null);
-              }}
-            />
-            <em>{t("per month")}</em>
-          </div>
+          <InputField
+            control={form.control}
+            name="budget"
+            inputMode="decimal"
+            aria-label={t("Monthly indexing budget")}
+            disabled={!canUpdate || busy}
+            leftElement={<span className="text-xs text-muted-foreground">$</span>}
+            sideText={t("per month")}
+            inputClassProps={aicFieldTrigger}
+            onBlur={commit}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") event.currentTarget.blur();
+              if (event.key === "Escape") form.reset({ budget: savedText });
+            }}
+          />
           <p>
             {t(
               "Indexing stops for the month when it's reached. Searches count against each agent's own budget, not this one.",

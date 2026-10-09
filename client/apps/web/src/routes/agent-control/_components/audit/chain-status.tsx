@@ -1,12 +1,13 @@
 import { verifyAIAuditChain, type AIAuditChainStatus } from "@/lib/graphql/ai-audit";
 import { queries } from "@/lib/queries";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { useEffect, useState, type ReactNode } from "react";
-import { Callout } from "../edit/fields";
+import { Callout } from "../edit/callout";
 import { Hero } from "../kit/hero";
 import { Ic } from "../kit/ic";
 import { Figs, type Fig } from "../kit/layout";
@@ -86,15 +87,16 @@ export function ChainStatusHeader() {
         working={pending}
         control={
           <>
-            <button
+            <Button
               type="button"
-              className={pending ? "btn lg" : "btn ink lg"}
-              disabled={pending}
+              size="lg"
+              isLoading={pending}
+              loadingText={busyLabel}
               onClick={() => verify.mutate()}
             >
               <Ic n="shield" s={13} />
-              {pending ? busyLabel : t("Verify now")}
-            </button>
+              {t("Verify now")}
+            </Button>
             <span>
               {pending
                 ? t("The result appears here when the check finishes.")

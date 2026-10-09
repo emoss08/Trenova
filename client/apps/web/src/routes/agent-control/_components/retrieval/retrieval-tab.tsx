@@ -5,7 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { lazy, useCallback, useState } from "react";
+import { useQueryState } from "nuqs";
+import { lazy, useCallback } from "react";
+import { REINDEX_PARAM, reindexParser } from "../../ai-control-tabs";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
 import { formatUsd } from "@/lib/ai-usage-format";
 import { Ic } from "../kit/ic";
@@ -38,7 +40,7 @@ export default function RetrievalTab({ onOpenProviders }: { onOpenProviders: () 
   const t = useT();
   const navigate = useAIControlNavigation();
   const { allowed: canUpdate } = usePermission(Resource.AIProvider, Operation.Update);
-  const [reindexing, setReindexing] = useState<AIRetrievalSourceType | null>(null);
+  const [reindexing, setReindexing] = useQueryState(REINDEX_PARAM, reindexParser);
   const patch = useRetrievalPatch();
 
   const status = useQuery({
@@ -62,7 +64,11 @@ export default function RetrievalTab({ onOpenProviders }: { onOpenProviders: () 
       navigate({ tab: "retrieval", retrievalSource: sourceType }),
     [navigate],
   );
-  const closeReindex = useCallback(() => setReindexing(null), []);
+  const openReindex = useCallback(
+    (sourceType: AIRetrievalSourceType) => void setReindexing(sourceType),
+    [setReindexing],
+  );
+  const closeReindex = useCallback(() => void setReindexing(null), [setReindexing]);
 
   if (status.isError) {
     return (
@@ -109,7 +115,7 @@ export default function RetrievalTab({ onOpenProviders }: { onOpenProviders: () 
             status={data}
             canUpdate={canUpdate}
             busy={patch.isPending}
-            onReindex={setReindexing}
+            onReindex={openReindex}
             onShowFailures={showFailures}
             onToggle={(sourceType, enabled) =>
               patch.mutate({
@@ -141,7 +147,11 @@ export default function RetrievalTab({ onOpenProviders }: { onOpenProviders: () 
           />
         </aside>
       </div>
-      <ReindexDialog sourceType={reindexing} paused={data.settings.paused} onClose={closeReindex} />
+      <ReindexDialog
+        sourceType={canUpdate ? reindexing : null}
+        paused={data.settings.paused}
+        onClose={closeReindex}
+      />
     </div>
   );
 }

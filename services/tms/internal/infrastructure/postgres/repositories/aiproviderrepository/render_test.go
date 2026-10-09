@@ -69,3 +69,29 @@ func TestListForTaskUsesTheContainmentOperator(t *testing.T) {
 	assert.Contains(t, sql, "@>", sql)
 	assert.Contains(t, sql, "enabled", sql)
 }
+
+// A picker of providers offers only those that are on and serve the task, so a
+// person cannot prefer a provider the router would never try for it.
+func TestSelectOptionsFilterKeepsEnabledProvidersThatServeTheTask(t *testing.T) {
+	t.Parallel()
+
+	entities := make([]*aiprovider.Provider, 0, 1)
+	sql := applySelectOptionsFilter(
+		renderDB().NewSelect().Model(&entities),
+		aiprovider.TaskAssistantChat,
+	).String()
+
+	assert.Contains(t, sql, `aiprv.enabled = TRUE`, sql)
+	assert.Contains(t, sql, `aiprv.tasks @> '{"AssistantChat"}'::text[]`, sql)
+	assert.Contains(t, sql, `ORDER BY "aiprv"."priority" ASC`, sql)
+}
+
+func TestSelectOptionsFilterWithoutATaskKeepsEveryEnabledProvider(t *testing.T) {
+	t.Parallel()
+
+	entities := make([]*aiprovider.Provider, 0, 1)
+	sql := applySelectOptionsFilter(renderDB().NewSelect().Model(&entities), "").String()
+
+	assert.Contains(t, sql, `aiprv.enabled = TRUE`, sql)
+	assert.NotContains(t, sql, "@>", sql)
+}

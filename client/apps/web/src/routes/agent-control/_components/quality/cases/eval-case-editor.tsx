@@ -69,6 +69,7 @@ function QuestionSection({ creating }: { creating: boolean }) {
               <SelectField
                 control={control}
                 name="trigger"
+                rules={{ required: true }}
                 label={t("Asked as")}
                 description={t("A conversation, or a run the agent starts on its own.")}
                 options={triggerChoices.map((choice) => ({
@@ -92,6 +93,7 @@ function QuestionSection({ creating }: { creating: boolean }) {
           <TextareaField
             control={control}
             name="input"
+            rules={{ required: true }}
             label={t("Question")}
             rows={4}
             placeholder={t("Put S-100 on hold until Acme pays the open balance.")}
@@ -153,6 +155,7 @@ function ToolsSection() {
             <SelectField
               control={control}
               name="toolMode"
+              rules={{ required: true }}
               label={t("Tool choice")}
               options={toolMatchModes.map((mode) => ({
                 value: mode,
@@ -168,6 +171,7 @@ function ToolsSection() {
                 <InputField
                   control={control}
                   name={`tools.${index}.name`}
+                  rules={{ required: true }}
                   label={t("Tool")}
                   placeholder={t("place_shipment_hold")}
                 />
@@ -267,6 +271,7 @@ function ProposalRow({ index, onRemove }: { index: number; onRemove: () => void 
           <InputField
             control={control}
             name={`proposals.${index}.toolName`}
+            rules={{ required: true }}
             label={t("Tool")}
             placeholder={t("update_rate")}
           />

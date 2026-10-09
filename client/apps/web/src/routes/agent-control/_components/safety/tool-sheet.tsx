@@ -7,6 +7,8 @@ import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useState } from "react";
+import { TOOL_RULE_EDIT_PARAM, toolRuleEditParser } from "../../ai-control-tabs";
+import { useAddressedFlag } from "../../use-addressed-flag";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
 import { Ic, type IcName } from "../kit/ic";
 import { Tile } from "../kit/marks";
@@ -15,6 +17,7 @@ import { PolicyDetails } from "./policy-details";
 import { AnswerBadge, EgressBadges } from "./safety-badges";
 import { kindLabel, needsLabel, readsOutsideLabel, tierLabel } from "./safety-model";
 import { ToolRuleEditor } from "./tool-rule-editor";
+import { Button } from "@trenova/shared/components/ui/button";
 
 const KIND_ICON: Record<AgentToolPolicy["kind"], IcName> = {
   Query: "search",
@@ -40,13 +43,18 @@ export function ToolSheet({ policy: opened, holders, focus, onClose }: ToolSheet
   const navigate = useAIControlNavigation();
   const { allowed: canChange } = usePermission(Resource.AgentControl, Operation.Update);
   const [saved, setSaved] = useState<AgentToolPolicy | null>(null);
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useAddressedFlag(TOOL_RULE_EDIT_PARAM, toolRuleEditParser);
+  // The editor opens over the sheet, so closing the sheet closes the editor with it.
+  const close = () => {
+    setEditing(false);
+    onClose();
+  };
   const policy = opened && saved?.name === opened.name ? saved : opened;
 
   return (
     <ReadSheet
       open={policy !== null}
-      onClose={onClose}
+      onClose={close}
       label={policy?.title ?? t("Tool rule")}
       head={
         policy && (
@@ -129,14 +137,14 @@ export function ToolSheet({ policy: opened, holders, focus, onClose }: ToolSheet
               {t("Audit trail")}
             </button>
             {canChange && (
-              <button type="button" className="btn" onClick={() => setEditing(true)}>
+              <Button type="button" variant="outline" onClick={() => setEditing(true)}>
                 <Ic n="edit" s={13} />
                 {t("Change tool rule")}
-              </button>
+              </Button>
             )}
           </div>
           <ToolRuleEditor
-            open={editing}
+            open={editing && canChange}
             policy={policy}
             holders={holders}
             onClose={() => setEditing(false)}

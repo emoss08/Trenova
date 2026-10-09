@@ -1,30 +1,38 @@
+import { AIProviderAutocomplete } from "@/components/autocomplete-fields";
+import { ErrorMessage } from "@/components/fields/field-components";
 import type { AgentBudgetStatus } from "@/types/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useState, type ReactNode } from "react";
-import { Sel } from "../../edit/fields";
-import { Ic } from "../../kit/ic";
-import { Blk, useDraftField } from "./block";
-
-type Provider = { id: string; name: string; model: string };
+import { useController, useFormContext } from "react-hook-form";
+import { aicFieldTrigger } from "../../edit/field-trigger";
+import { Ic, type IcName } from "../../kit/ic";
+import type { AgentFormValues } from "../agent-form-schema";
+import { Blk } from "./block";
 
 type LimitsBlockProps = {
   fresh: boolean;
-  /** Providers that can answer the agent, enabled, in routing order. */
-  providers: readonly Provider[];
   /** Where it stands against its caps this month, for an agent already saved. */
   budget: AgentBudgetStatus | undefined;
 };
 
+type LimitName = "monthlyBudgetUsd" | "dailyRunLimit" | "runTimeoutSeconds" | "maxToolCalls";
+
+const SECONDS_PER_MINUTE = 60;
+
 /** Where it stops, however well it's going, and how it answers. */
-export function LimitsBlock({ fresh, providers, budget }: LimitsBlockProps) {
+export function LimitsBlock({ fresh, budget }: LimitsBlockProps) {
   const t = useT();
-  const [monthly, setMonthly] = useDraftField("monthlyBudgetUsd");
-  const [runsPerDay, setRunsPerDay] = useDraftField("dailyRunLimit");
-  const [timeout, setTimeoutSeconds] = useDraftField("runTimeoutSeconds");
-  const [toolCalls, setToolCalls] = useDraftField("maxToolCalls");
-  const [preferred, setPreferred] = useDraftField("preferredProviderId");
-  const [output, setOutput] = useDraftField("outputMode");
+  const { control } = useFormContext<AgentFormValues>();
+  const {
+    field: { value: monthly },
+  } = useController({ control, name: "monthlyBudgetUsd" });
+  const {
+    field: { value: runsPerDay },
+  } = useController({ control, name: "dailyRunLimit" });
+  const {
+    field: { value: preferred, onChange: setPreferred },
+  } = useController({ control, name: "preferredProviderId" });
 
   const spent = budget ? Number(budget.spentUsd) : null;
   const share = monthly && spent !== null && monthly > 0 ? Math.min(1, spent / monthly) : null;
@@ -36,14 +44,13 @@ export function LimitsBlock({ fresh, providers, budget }: LimitsBlockProps) {
       title={t("Budget and model")}
       note={t("Where it stops, however well it's going, and how it answers.")}
     >
-      <div className="gr">
-        <Cell
+      <div className="border-border-subtle grid grid-cols-1 border-t md:grid-cols-2">
+        <LimitCell
+          name="monthlyBudgetUsd"
           label={t("Monthly budget")}
           prefix="$"
-          value={monthly === null ? "" : String(monthly)}
           placeholder={t("No cap")}
           step={5}
-          onChange={(next) => setMonthly(next)}
           hint={
             monthly === null
               ? t("Empty means no cap")
@@ -55,90 +62,61 @@ export function LimitsBlock({ fresh, providers, budget }: LimitsBlockProps) {
           allowEmpty
           decimal
         />
-        <Cell
+        <LimitCell
+          name="dailyRunLimit"
           label={t("Runs per day")}
           suffix={t("runs")}
-          value={String(runsPerDay)}
           step={10}
-          onChange={(next) => setRunsPerDay(next ?? 0)}
           hint={runsPerDay ? t("Then it stops for the day and says so") : t("Zero means no cap")}
         />
-        <Cell
+        <LimitCell
+          name="runTimeoutSeconds"
           label={t("Run timeout")}
           suffix={t("min")}
-          value={String(Math.round(timeout / 60))}
           step={1}
           min={1}
-          onChange={(next) => setTimeoutSeconds(Math.max(1, next ?? 1) * 60)}
+          scale={SECONDS_PER_MINUTE}
           hint={t("A run that takes longer is stopped")}
         />
-        <Cell
+        <LimitCell
+          name="maxToolCalls"
           label={t("Tool calls per run")}
           suffix={t("calls")}
-          value={String(toolCalls)}
           step={1}
           min={1}
-          onChange={(next) => setToolCalls(Math.max(1, next ?? 1))}
           hint={t("What one run may spend looking things up and acting")}
         />
       </div>
-      <div className="mdr">
-        <div className="mdr-c">
-          <span className="gr-l">{t("Preferred provider")}</span>
-          <Sel
-            value={preferred}
-            onChange={setPreferred}
+      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="flex flex-col gap-2">
+          <span className="text-muted-foreground text-sm">{t("Preferred provider")}</span>
+          <AIProviderAutocomplete
             label={t("Preferred provider")}
-            options={[
-              ["", t("Automatic")] as const,
-              ...providers.map(
-                (provider) => [provider.id, `${provider.name} · ${provider.model}`] as const,
-              ),
-            ]}
+            value={preferred}
+            onValueChange={setPreferred}
+            placeholder={t("Automatic")}
+            triggerClassName={aicFieldTrigger}
           />
-          <span className="gr-h">
+          <span className="text-muted-foreground text-xs">
             {t("Tried first. Automatic follows the routing on the Providers tab.")}
           </span>
         </div>
-        <div className="mdr-c">
-          <span className="gr-l">{t("Replies as")}</span>
-          <div className="ro" role="radiogroup" aria-label={t("Replies as")}>
-            {(
-              [
-                ["Conversational", "chat", t("A conversation"), t("Answers in prose")],
-                ["Report", "receipt", t("A report"), t("Answers in sections")],
-              ] as const
-            ).map(([mode, icon, label, note]) => (
-              <button
-                key={mode}
-                type="button"
-                role="radio"
-                aria-checked={output === mode}
-                className={cn("ro-o", output === mode && "on")}
-                onClick={() => setOutput(mode)}
-              >
-                <Ic n={icon} s={14} />
-                <span>
-                  <b>{label}</b>
-                  <em>{note}</em>
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
+        <RepliesAs />
       </div>
     </Blk>
   );
 }
 
-type CellProps = {
+type LimitCellProps = {
+  name: LimitName;
   label: string;
   prefix?: string;
   suffix?: string;
-  value: string;
   placeholder?: string;
   step: number;
   min?: number;
+  /** How many stored units one shown unit is, such as seconds in a minute. */
+  scale?: number;
   hint: ReactNode;
   /** How much of the cap is spent, 0 to 1, or null for no bar. */
   bar?: number | null;
@@ -146,76 +124,156 @@ type CellProps = {
   allowEmpty?: boolean;
   /** Takes cents as well as whole numbers. */
   decimal?: boolean;
-  onChange: (value: number | null) => void;
 };
 
-/** One big figure with a stepper. */
-function Cell({
+/** One limit as a big figure, typed in place or stepped. */
+function LimitCell({
+  name,
   label,
   prefix,
   suffix,
-  value,
   placeholder = "0",
   step,
   min = 0,
+  scale = 1,
   hint,
   bar = null,
   allowEmpty = false,
   decimal = false,
-  onChange,
-}: CellProps) {
+}: LimitCellProps) {
   const t = useT();
+  const { control } = useFormContext<AgentFormValues>();
+  const {
+    field: { value: stored, onChange, onBlur, ref, name: fieldName },
+    fieldState,
+  } = useController({ control, name });
   const [typing, setTyping] = useState<string | null>(null);
-  const current = Number(value) || 0;
+
+  const shown = stored === null ? "" : String(Math.round(stored / scale));
+  const current = Number(shown) || 0;
+  const write = (next: number | null) => {
+    if (next === null) {
+      onChange(allowEmpty ? null : min * scale);
+      return;
+    }
+    onChange(Math.max(min, next) * scale);
+  };
+  const stepTo = (next: number) => {
+    setTyping(null);
+    write(next);
+  };
+  const inputId = `limit-${name}`;
 
   return (
-    <div className="gr-c">
-      <span className="gr-l">{label}</span>
-      <div className="gr-v">
-        {prefix && <span className="gr-u">{prefix}</span>}
+    <div className="border-border-subtle flex flex-col gap-1.5 border-b py-4.5 md:odd:pr-5 md:even:border-l md:even:pl-5">
+      <label htmlFor={inputId} className="text-muted-foreground text-sm">
+        {label}
+      </label>
+      <div className="flex items-baseline gap-1">
+        {prefix && <span className="text-muted-foreground text-lg font-medium">{prefix}</span>}
         <input
-          className="mono"
+          id={inputId}
+          name={fieldName}
+          ref={ref}
           inputMode={decimal ? "decimal" : "numeric"}
-          aria-label={label}
-          value={typing ?? value}
+          value={typing ?? shown}
           placeholder={placeholder}
-          onFocus={() => setTyping(value)}
-          onBlur={() => setTyping(null)}
+          aria-invalid={fieldState.invalid || undefined}
+          className={cn(
+            "text-foreground focus:text-brand placeholder:text-muted-foreground w-24 border-0 bg-transparent p-0 font-mono text-3xl font-semibold tracking-tight outline-none placeholder:text-2xl",
+            fieldState.invalid && "text-danger-foreground",
+          )}
+          onFocus={() => setTyping(shown)}
+          onBlur={() => {
+            setTyping(null);
+            onBlur();
+          }}
           onChange={(event) => {
             const raw = event.target.value.replace(decimal ? /[^\d.]/g : /\D/g, "");
             setTyping(raw);
             const parsed = Number(raw);
             if (raw === "" || !Number.isFinite(parsed)) {
-              onChange(allowEmpty ? null : min);
+              write(null);
               return;
             }
-            onChange(decimal ? Math.round(parsed * 100) / 100 : Math.trunc(parsed));
+            write(decimal ? Math.round(parsed * 100) / 100 : Math.trunc(parsed));
           }}
         />
-        {suffix && <span className="gr-u">{suffix}</span>}
-        <span className="gr-st">
+        {suffix && <span className="text-muted-foreground text-lg font-medium">{suffix}</span>}
+        <span className="border-border ml-auto inline-flex self-center overflow-hidden rounded-md border">
           <button
             type="button"
+            className="text-muted-foreground hover:bg-field hover:text-foreground ui-focus-ring h-6.5 w-7 text-base transition-colors"
             aria-label={t("Less {0}", label.toLowerCase())}
-            onClick={() => onChange(Math.max(min, current - step))}
+            onClick={() => stepTo(Math.max(min, current - step))}
           >
             −
           </button>
           <button
             type="button"
+            className="border-border text-muted-foreground hover:bg-field hover:text-foreground ui-focus-ring h-6.5 w-7 border-l text-base transition-colors"
             aria-label={t("More {0}", label.toLowerCase())}
-            onClick={() => onChange(current + step)}
+            onClick={() => stepTo(current + step)}
           >
             +
           </button>
         </span>
       </div>
       {bar !== null && (
-        <span className="gr-bar">
-          <i style={{ width: `${bar * 100}%` }} />
+        <span className="bg-border block h-1 rounded-full">
+          <i className="bg-brand block h-full rounded-full" style={{ width: `${bar * 100}%` }} />
         </span>
       )}
-      <span className="gr-h">{hint}</span>
+      {fieldState.error?.message ? (
+        <ErrorMessage formError={fieldState.error.message} />
+      ) : (
+        <span className="text-muted-foreground text-xs">{hint}</span>
+      )}
+    </div>
+  );
+}
+
+/** How its answers read: a conversation, or a report in sections. */
+function RepliesAs() {
+  const t = useT();
+  const { control } = useFormContext<AgentFormValues>();
+  const {
+    field: { value: mode, onChange },
+  } = useController({ control, name: "outputMode" });
+  const options: readonly [AgentFormValues["outputMode"], IcName, string, string][] = [
+    ["Conversational", "chat", t("A conversation"), t("Answers in prose")],
+    ["Report", "receipt", t("A report"), t("Answers in sections")],
+  ];
+
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-muted-foreground text-sm">{t("Replies as")}</span>
+      <div className="grid grid-cols-2 gap-1.5" role="radiogroup" aria-label={t("Replies as")}>
+        {options.map(([option, icon, label, note]) => {
+          const on = mode === option;
+          return (
+            <button
+              key={option}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              className={cn(
+                "border-border hover:border-border-strong ui-focus-ring flex items-center gap-2.5 rounded-lg border px-2.5 py-2 text-left transition-colors",
+                on && "border-brand/55 bg-brand/6 hover:border-brand/55",
+              )}
+              onClick={() => onChange(option)}
+            >
+              <span className={on ? "text-brand" : "text-muted-foreground"}>
+                <Ic n={icon} s={14} />
+              </span>
+              <span className="flex flex-col">
+                <b className="text-sm font-medium">{label}</b>
+                <span className="text-muted-foreground text-xs">{note}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

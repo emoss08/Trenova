@@ -4,8 +4,9 @@ import type { AutonomyTier, ToolCatalogEntry, TriggerMode } from "@/types/assist
 import { agentFormDefaults, tierWithin, type AgentFormValues } from "../agent-form-schema";
 import { effectiveTier, splitCoreTools, TIER_ORDER } from "../tool-catalog";
 
-export const BUILDER_STARTS = ["chat", "scheduled", "event", "blank"] as const;
-export type BuilderStart = (typeof BUILDER_STARTS)[number];
+import type { BuilderStart } from "../../../ai-control-tabs";
+
+export { BUILDER_STARTS, type BuilderStart } from "../../../ai-control-tabs";
 
 const START_TRIGGER: Record<BuilderStart, TriggerMode> = {
   chat: "Chat",
@@ -29,12 +30,21 @@ const START_TOOLS: Record<BuilderStart, { name: string; tier: AutonomyTier }[]> 
   blank: [],
 };
 
+/**
+ * Whether a start opens on "What should it do?" first. Only a blank start does: the
+ * shapes already say what the agent is, so they open on the agent itself.
+ */
+export function opensOnIntro(start: BuilderStart): boolean {
+  return start === "blank";
+}
+
 export const DEFAULT_SCHEDULE = "0 6 * * 1-5";
 export const DEFAULT_INTERVAL_SECONDS = 300;
 
 /**
- * What a new agent starts as: in shadow, asking a person before any change, with the
- * trigger and the one tool its start implies. Nothing is chosen that the catalog lacks.
+ * What a new agent starts as: live, asking a person before any change, with the trigger
+ * and the one tool its start implies. Nothing is chosen that the catalog lacks. Shadow and
+ * simulation are a choice made in the builder's mode menu, never a default.
  */
 export function startValues(
   start: BuilderStart,
@@ -51,7 +61,7 @@ export function startValues(
     cronExpression: trigger === "Scheduled" ? DEFAULT_SCHEDULE : "",
     cronTimezone: trigger === "Scheduled" ? context.timezone : "",
     autonomyCeiling: "ActWithApproval",
-    shadowMode: true,
+    shadowMode: false,
     simulationMode: false,
     dailyRunLimit: 100,
     maxToolCalls: 10,
@@ -220,6 +230,19 @@ export function endOfDay(date: string, timezone: string): number | null {
 export function dateIn(unix: number, timezone: string): string {
   const wall = wallClockAt(unix, timezone);
   return `${wall.year}-${String(wall.month).padStart(2, "0")}-${String(wall.day).padStart(2, "0")}`;
+}
+
+/** A calendar date ("2026-10-31") as the local midnight a date picker shows. */
+export function pickerDateOf(date: string): Date | undefined {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  if (!match) return undefined;
+  const [, year, month, day] = match.map(Number) as [number, number, number, number];
+  return new Date(year, month - 1, day);
+}
+
+/** The calendar date ("2026-10-31") a date picker's local day stands for. */
+export function calendarDateOf(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 /** The held action tools set above the ceiling, and the highest tier any of them asks for. */

@@ -122,6 +122,22 @@ func (s *Service) ListConnection(
 	return result, nil
 }
 
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	req *repositories.AIProviderSelectOptionsRequest,
+) (*pagination.ListResult[*aiprovider.Provider], error) {
+	result, err := s.repo.SelectOptions(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	for idx, provider := range result.Items {
+		result.Items[idx] = provider.Redacted()
+	}
+
+	return result, nil
+}
+
 func (s *Service) GetByID(
 	ctx context.Context,
 	req repositories.GetAIProviderByIDRequest,

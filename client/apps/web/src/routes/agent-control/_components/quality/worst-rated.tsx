@@ -26,6 +26,7 @@ import { Tile } from "../kit/marks";
 import { ReadSheet } from "../kit/read-sheet";
 import { answerQuestion, getWorstRatedColumns } from "./quality-columns";
 import { TARGET_TYPE_LABEL, ratingReasonLabels } from "./quality-model";
+import { Button } from "@trenova/shared/components/ui/button";
 
 /**
  * What the person saw when they rated an answer down, read-only: the question, the answer
@@ -137,15 +138,15 @@ export function WorstRatedSheet({
           </div>
           <div className="ad-bar sh-f">
             {canCapture && answer.sample && (
-              <button
+              <Button
                 type="button"
-                className="btn sm ink"
+                variant="default" size="sm"
                 disabled={capture.isPending}
                 onClick={() => answer.sample && capture.mutate(answer.sample.id)}
               >
                 <Ic n="plus" s={12} />
                 {t("Add to golden set")}
-              </button>
+              </Button>
             )}
             <button
               type="button"

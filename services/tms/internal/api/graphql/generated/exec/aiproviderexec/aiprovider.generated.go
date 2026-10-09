@@ -634,6 +634,24 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
+			{
+				Name:     "priceSource",
+				ChildErr: errNoChild15,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIProviderModelOption)
+					return obj.PriceSource, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAIModelPriceSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIModelPriceSource),
+			},
+			{
+				Name:     "createdAt",
+				ChildErr: errNoChild13,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AIProviderModelOption)
+					return obj.CreatedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
 		}},
 		{Object: "AIProviderTestOutcome", Fields: []*gqlexec.Field{
 			{
@@ -942,6 +960,7 @@ var (
 	errNoChild12 = errors.New("field of type AIProviderCapAction does not have child fields")
 	errNoChild13 = errors.New("field of type Timestamp does not have child fields")
 	errNoChild14 = errors.New("field of type Float does not have child fields")
+	errNoChild15 = errors.New("field of type AIModelPriceSource does not have child fields")
 )
 
 func field_Mutation_testAIProviderDraft_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -1679,6 +1698,13 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
+func marshalOAIModelPriceSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAIModelPriceSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AIModelPriceSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
 func marshalOAIProvider2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiproviderᚐProvider(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiprovider.Provider) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -1744,6 +1770,14 @@ func marshalOJSON2map(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSe
 		return graphql.Null
 	}
 	res := graphql.MarshalMap(v)
+	return res
+}
+
+func marshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt(*v)
 	return res
 }
 

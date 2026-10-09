@@ -5,6 +5,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Hero, Ref } from "../kit/hero";
 import { Ic } from "../kit/ic";
 import { retrievalSentence } from "./retrieval-model";
+import { Button } from "@trenova/shared/components/ui/button";
 
 type RetrievalHeroProps = {
   status: AIRetrievalStatus;
@@ -36,29 +37,29 @@ export function RetrievalHero({
   const control =
     sentence.kind === "unrouted" ? (
       <>
-        <button type="button" className="btn ink lg" onClick={onRoute}>
+        <Button type="button" variant="default" size="lg" onClick={onRoute}>
           {t("Route Embedding")}
-        </button>
+        </Button>
         <span>{t("Pick a provider on Providers")}</span>
       </>
     ) : (
       <>
         {canUpdate &&
           (status.settings.paused ? (
-            <button
+            <Button
               type="button"
-              className="btn ink lg"
+              variant="default" size="lg"
               disabled={busy}
               onClick={() => onPause(false)}
             >
               <Ic n="play" s={12} />
               {t("Resume indexing")}
-            </button>
+            </Button>
           ) : (
-            <button type="button" className="btn lg" disabled={busy} onClick={() => onPause(true)}>
+            <Button type="button" variant="outline" size="lg" disabled={busy} onClick={() => onPause(true)}>
               <Ic n="pause" s={13} w={2.2} />
               {t("Pause indexing")}
-            </button>
+            </Button>
           ))}
         {routedTo && <span>{t("Routed to {0}", routedTo)}</span>}
       </>

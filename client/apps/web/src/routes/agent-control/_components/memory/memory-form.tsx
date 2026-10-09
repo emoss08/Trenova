@@ -5,12 +5,15 @@ import {
   WorkerAutocompleteField,
 } from "@/components/autocomplete-fields";
 import { DateField } from "@/components/fields/date-field/date-field";
+import { InputField } from "@/components/fields/input-field";
+import { SegmentedField } from "@/components/fields/segmented-field";
+import { SelectField } from "@/components/fields/select-field";
+import { TextareaField } from "@/components/fields/textarea-field";
 import type { AgentMemorySubjectType } from "@trenova/graphql/generated/graphql";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { useController, useFormContext } from "react-hook-form";
-import { F, Sel, Txt } from "../edit/fields";
-import { Seg } from "../kit/layout";
+import { useController, useFormContext, useWatch } from "react-hook-form";
+import { aicFieldTrigger } from "../edit/field-trigger";
 import { MEMORY_CONTENT_LIMIT, type MemoryFormValues } from "./memory-form-schema";
 import { MEMORY_KIND_LABELS, MEMORY_KINDS } from "./memory-kind";
 
@@ -21,43 +24,44 @@ const SUBJECT_LABELS: Record<AgentMemorySubjectType, string> = defineLabels({
   Carrier: "A carrier",
 });
 
+/** "Every agent" is no subject at all; the select spells it as the empty choice. */
 const EVERY_AGENT = "";
+
+const SUBJECT_OPTIONS = [
+  { value: EVERY_AGENT, label: "Every agent" },
+  ...(Object.keys(SUBJECT_LABELS) as AgentMemorySubjectType[]).map((value) => ({
+    value,
+    label: SUBJECT_LABELS[value],
+  })),
+];
 
 /** What to remember, in one or two plain sentences, and what kind of memory it is. */
 export function MemoryText() {
   const t = useT();
   const { control } = useFormContext<MemoryFormValues>();
-  const content = useController({ control, name: "content" });
-  const kind = useController({ control, name: "kind" });
+  const content = useWatch({ control, name: "content" });
 
   return (
-    <div className="cmp-m">
-      <textarea
-        className="mta"
-        aria-label={t("Memory")}
+    <div className="flex flex-col gap-3">
+      <TextareaField<MemoryFormValues>
+        control={control}
+        name="content"
+        rules={{ required: true }}
+        label={t("Memory")}
         placeholder={t("What should the agents know?")}
         autoFocus
-        rows={4}
-        value={content.field.value}
-        onBlur={content.field.onBlur}
-        onChange={(event) =>
-          content.field.onChange(event.target.value.slice(0, MEMORY_CONTENT_LIMIT))
-        }
+        maxLength={MEMORY_CONTENT_LIMIT}
+        description={`${content.length}/${MEMORY_CONTENT_LIMIT}`}
       />
-      <div className="cmp-r">
-        <Seg
-          className="sm"
-          label={t("Kind")}
-          v={kind.field.value}
-          opts={MEMORY_KINDS.map((value) => [value, t(MEMORY_KIND_LABELS[value])] as const)}
-          onChange={kind.field.onChange}
-        />
-        <span className="sp" />
-        <span className="cmp-n mono">
-          {content.field.value.length}/{MEMORY_CONTENT_LIMIT}
-        </span>
-      </div>
-      {content.fieldState.error && <p className="f-h t-w">{content.fieldState.error.message}</p>}
+      <SegmentedField<MemoryFormValues, (typeof MEMORY_KINDS)[number]>
+        control={control}
+        name="kind"
+        label={t("Kind")}
+        options={MEMORY_KINDS.map((value) => ({
+          value,
+          label: t(MEMORY_KIND_LABELS[value]),
+        }))}
+      />
     </div>
   );
 }
@@ -67,48 +71,35 @@ export function MemoryAbout() {
   const t = useT();
   const { control, setValue } = useFormContext<MemoryFormValues>();
   const subjectType = useController({ control, name: "subjectType" });
-  const subjectId = useController({ control, name: "subjectId" });
-  const toolName = useController({ control, name: "toolName" });
-
-  const options = [
-    [EVERY_AGENT, t("Every agent")] as const,
-    ...(Object.keys(SUBJECT_LABELS) as AgentMemorySubjectType[]).map(
-      (value) => [value, t(SUBJECT_LABELS[value])] as const,
-    ),
-  ];
 
   return (
     <>
-      <F label={t("About")} hint={t("A customer's rule, a dock's hours, a driver's preference.")}>
-        <Sel
-          label={t("About")}
-          value={subjectType.field.value ?? EVERY_AGENT}
-          options={options}
-          onChange={(value) => {
-            subjectType.field.onChange(value === EVERY_AGENT ? null : value);
-            setValue("subjectId", null, { shouldDirty: true, shouldValidate: true });
-          }}
-        />
-      </F>
-      {subjectType.field.value && (
-        <F label={t("Record")} error={subjectId.fieldState.error?.message}>
-          <SubjectPicker subjectType={subjectType.field.value} />
-        </F>
-      )}
-      <F
+      <SelectField<MemoryFormValues>
+        control={control}
+        name="subjectType"
+        label={t("About")}
+        description={t("A customer's rule, a dock's hours, a driver's preference.")}
+        options={SUBJECT_OPTIONS}
+        placeholder={t("Every agent")}
+        triggerClassName={aicFieldTrigger}
+        onValueChange={(value) => {
+          if (value === EVERY_AGENT) {
+            setValue("subjectType", null, { shouldDirty: true, shouldValidate: true });
+          }
+          setValue("subjectId", null, { shouldDirty: true, shouldValidate: true });
+        }}
+      />
+      {subjectType.field.value && <SubjectPicker subjectType={subjectType.field.value} />}
+      <InputField<MemoryFormValues>
+        control={control}
+        name="toolName"
         label={t("Tool")}
-        hint={t(
+        description={t(
           "Optional. Only agents holding this tool read it, such as a correction to how it is used.",
         )}
-      >
-        <Txt
-          mono
-          label={t("Tool")}
-          value={toolName.field.value}
-          placeholder="assign_move"
-          onChange={toolName.field.onChange}
-        />
-      </F>
+        placeholder="assign_move"
+        inputClassProps={aicFieldTrigger}
+      />
     </>
   );
 }
@@ -139,7 +130,10 @@ function SubjectPicker({ subjectType }: { subjectType: AgentMemorySubjectType })
         <CustomerAutocompleteField
           control={control}
           name="subjectId"
+          rules={{ required: true }}
+          label={t("Record")}
           placeholder={t("Which customer?")}
+          triggerClassName={aicFieldTrigger}
           clearable
         />
       );
@@ -148,7 +142,10 @@ function SubjectPicker({ subjectType }: { subjectType: AgentMemorySubjectType })
         <LocationAutocompleteField
           control={control}
           name="subjectId"
+          rules={{ required: true }}
+          label={t("Record")}
           placeholder={t("Which location?")}
+          triggerClassName={aicFieldTrigger}
           clearable
         />
       );
@@ -157,7 +154,10 @@ function SubjectPicker({ subjectType }: { subjectType: AgentMemorySubjectType })
         <WorkerAutocompleteField
           control={control}
           name="subjectId"
+          rules={{ required: true }}
+          label={t("Record")}
           placeholder={t("Which driver?")}
+          triggerClassName={aicFieldTrigger}
           clearable
         />
       );
@@ -166,7 +166,10 @@ function SubjectPicker({ subjectType }: { subjectType: AgentMemorySubjectType })
         <CarrierAutocompleteField
           control={control}
           name="subjectId"
+          rules={{ required: true }}
+          label={t("Record")}
           placeholder={t("Which carrier?")}
+          triggerClassName={aicFieldTrigger}
           clearable
         />
       );

@@ -1,13 +1,19 @@
-import { Dialog } from "@base-ui/react/dialog";
+import { SegmentedField } from "@/components/fields/segmented-field";
+import { SelectField } from "@/components/fields/select-field";
 import type { AgentEgressClass, AgentToolPolicy } from "@/lib/graphql/agent-safety";
 import type { AutonomyTier, ToolCatalogEntry } from "@/types/assistant";
-import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import { SearchLgIcon, XCloseIcon } from "@trenova/shared/components/icons";
+import { Input } from "@trenova/shared/components/ui/input";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { useMemo, useState, type CSSProperties, type MouseEvent } from "react";
-import { Callout, Sel } from "../../edit/fields";
+import { lazy, Suspense, useMemo, useState, type CSSProperties } from "react";
+import { useFormContext } from "react-hook-form";
+import { TOOL_PICKER_PARAM, toolPickerParser } from "../../../ai-control-tabs";
+import { useAddressedFlag } from "../../../use-addressed-flag";
+import { Callout } from "../../edit/callout";
+import { aicFieldTrigger, aicToolbarFieldTrigger } from "../../edit/field-trigger";
 import { Ic } from "../../kit/ic";
-import { Seg } from "../../kit/layout";
-import { tierWithin } from "../agent-form-schema";
+import { tierWithin, type AgentFormValues } from "../agent-form-schema";
 import {
   TIER_ORDER,
   groupToolsByResource,
@@ -17,18 +23,13 @@ import {
   toolTitle,
 } from "../tool-catalog";
 import { useDraftField } from "./block";
-import { aboveCeiling, capToCeiling, changeTiers, startingTier } from "./builder-model";
+import { aboveCeiling, capToCeiling, changeTiers } from "./builder-model";
+import { egressLabel, furthest, tierName } from "./tool-picker-model";
+import { Button } from "@trenova/shared/components/ui/button";
 
-/** How far each class of work reaches, nearest first. */
-const EGRESS_ORDER: readonly AgentEgressClass[] = [
-  "None",
-  "Personal",
-  "Internal",
-  "CustomerVisible",
-  "DriverVisible",
-  "ExternalRecipient",
-  "Money",
-];
+const ToolPickerDialog = lazy(() =>
+  import("./tool-picker-dialog").then((module) => ({ default: module.ToolPickerDialog })),
+);
 
 /** Each class is a category, so it takes an accent hue rather than a tone. */
 const EGRESS_DOT: Record<AgentEgressClass, { hue: string; chroma: number }> = {
@@ -42,45 +43,6 @@ const EGRESS_DOT: Record<AgentEgressClass, { hue: string; chroma: number }> = {
 };
 
 const DECISION_TIMEOUTS = [3600, 14_400, 86_400, 259_200, 604_800] as const;
-
-/** The furthest any of a tool's work reaches. */
-function furthest(rule: AgentToolPolicy | undefined): AgentEgressClass {
-  if (!rule) return "None";
-  return rule.egress.reduce<AgentEgressClass>(
-    (far, egress) => (EGRESS_ORDER.indexOf(egress) > EGRESS_ORDER.indexOf(far) ? egress : far),
-    "None",
-  );
-}
-
-function egressLabel(egress: AgentEgressClass, t: TranslateFn): string {
-  switch (egress) {
-    case "None":
-      return t("Reads only");
-    case "Personal":
-      return t("Own records");
-    case "Internal":
-      return t("Internal");
-    case "CustomerVisible":
-      return t("Customer");
-    case "DriverVisible":
-      return t("Driver");
-    case "ExternalRecipient":
-      return t("Outside recipient");
-    case "Money":
-      return t("Money");
-  }
-}
-
-export function tierName(tier: AutonomyTier, t: TranslateFn): string {
-  switch (tier) {
-    case "Propose":
-      return t("Propose");
-    case "ActWithApproval":
-      return t("Ask first");
-    case "AutoExecute":
-      return t("Automatic");
-  }
-}
 
 function Dot({ egress, label }: { egress: AgentEgressClass; label: string }) {
   const dot = EGRESS_DOT[egress];
@@ -112,11 +74,13 @@ export function ToolBench({ catalog, rules }: ToolBenchProps) {
   const [toolTiers, setToolTiers] = useDraftField("toolTiers");
   const [limits, setLimits] = useDraftField("toolDailyLimits");
   const [ceiling, setCeiling] = useDraftField("autonomyCeiling");
-  const [dataAccess, setDataAccess] = useDraftField("dataAccessCeiling");
+  const [dataAccess] = useDraftField("dataAccessCeiling");
   const [timeout, setTimeoutSeconds] = useDraftField("decisionTimeoutSeconds");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "act" | "read">("all");
-  const [picking, setPicking] = useState(false);
+  const [picking, setPicking] = useAddressedFlag(TOOL_PICKER_PARAM, toolPickerParser);
+  const [pickerLoaded, setPickerLoaded] = useState(false);
+  const { control } = useFormContext<AgentFormValues>();
   const [alsoOpen, setAlsoOpen] = useState(false);
 
   const { core, selectable } = useMemo(() => splitCoreTools(catalog), [catalog]);
@@ -144,6 +108,10 @@ export function ToolBench({ catalog, rules }: ToolBenchProps) {
 
   const maxTier = (tool: ToolCatalogEntry): AutonomyTier =>
     (rules.get(tool.name)?.promotableTier as AutonomyTier | undefined) ?? "AutoExecute";
+  const openPicker = () => {
+    setPickerLoaded(true);
+    setPicking(true);
+  };
   const remove = (name: string) => {
     const next = toggleTool(toolNames, toolTiers, name, false);
     setToolNames(next.selected);
@@ -174,20 +142,22 @@ export function ToolBench({ catalog, rules }: ToolBenchProps) {
           tone="w"
           action={
             <span className="cal-a">
-              <button
+              <Button
                 type="button"
-                className="btn sm ink"
+                variant="default"
+                size="sm"
                 onClick={() => setCeiling(over.highest!)}
               >
                 {t("Raise the ceiling to {0}", tierName(over.highest, t))}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className="btn sm"
+                variant="outline"
+                size="sm"
                 onClick={() => setToolTiers(capToCeiling(toolTiers, ceiling))}
               >
                 {t("Hold them at {0}", tierName(ceiling, t))}
-              </button>
+              </Button>
             </span>
           }
         >
@@ -216,29 +186,33 @@ export function ToolBench({ catalog, rules }: ToolBenchProps) {
       <div className="bench">
         <div className="bench-l">
           <div className="bench-tb">
-            <button type="button" className="btn sm" onClick={() => setPicking(true)}>
+            <Button type="button" variant="outline" size="sm" onClick={openPicker}>
               <Ic n="plus" s={12} />
               {t("Add tools")}
-            </button>
-            <label className="srch">
-              <Ic n="search" s={13} />
-              <input
-                value={query}
-                aria-label={t("Filter this agent's tools")}
-                placeholder={t("Filter this agent's tools")}
-                onChange={(event) => setQuery(event.target.value)}
-              />
-              {query && (
-                <button
-                  type="button"
-                  className="ib xs"
-                  aria-label={t("Clear the filter")}
-                  onClick={() => setQuery("")}
-                >
-                  <Ic n="x" s={11} />
-                </button>
-              )}
-            </label>
+            </Button>
+            <Input
+              value={query}
+              aria-label={t("Filter this agent's tools")}
+              placeholder={t("Filter this agent's tools")}
+              className={aicToolbarFieldTrigger}
+              inputContainerClassName="w-full max-w-80 flex-[0_1_20rem]"
+              leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
+              rightElement={
+                query ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    className="text-muted-foreground hover:text-foreground"
+                    aria-label={t("Clear the filter")}
+                    onClick={() => setQuery("")}
+                  >
+                    <XCloseIcon className="size-3" />
+                  </Button>
+                ) : undefined
+              }
+              onChange={(event) => setQuery(event.target.value)}
+            />
             <div className="seg sm" role="radiogroup" aria-label={t("Show")}>
               {(
                 [
@@ -338,29 +312,28 @@ export function ToolBench({ catalog, rules }: ToolBenchProps) {
                           <span className="br-rd">{t("Always runs")}</span>
                         )}
                         {change ? (
-                          <label className="br-lim">
-                            <input
-                              className="mono"
-                              inputMode="numeric"
-                              aria-label={t("Daily limit for {0}", title)}
-                              value={limits[tool.name] ? String(limits[tool.name]) : ""}
-                              placeholder={t("No limit")}
-                              onChange={(event) => setLimit(tool.name, event.target.value)}
-                            />
-                            <span>{t("/day")}</span>
-                          </label>
+                          <Input
+                            inputMode="numeric"
+                            aria-label={t("Daily limit for {0}", title)}
+                            value={limits[tool.name] ? String(limits[tool.name]) : ""}
+                            placeholder={t("No limit")}
+                            sideText={t("/day")}
+                            onChange={(event) => setLimit(tool.name, event.target.value)}
+                          />
                         ) : (
                           <span className="br-rd dim">—</span>
                         )}
-                        <button
+                        <Button
                           type="button"
-                          className="ib xs br-x"
+                          variant="ghost"
+                          size="icon-xs"
+                          className="text-muted-foreground hover:text-foreground br-x"
                           title={t("Remove {0}", title)}
                           aria-label={t("Remove {0}", title)}
                           onClick={() => remove(tool.name)}
                         >
                           <Ic n="x" s={11} />
-                        </button>
+                        </Button>
                       </div>
                     );
                   })}
@@ -370,10 +343,10 @@ export function ToolBench({ catalog, rules }: ToolBenchProps) {
               <div className="bench-e">
                 <b>{t("No tools yet")}</b>
                 <span>{t("Without tools it can only explain how Trenova works.")}</span>
-                <button type="button" className="btn sm ink" onClick={() => setPicking(true)}>
+                <Button type="button" variant="default" size="sm" onClick={openPicker}>
                   <Ic n="plus" s={12} />
                   {t("Add tools")}
-                </button>
+                </Button>
               </div>
             )}
             {held.length > 0 && groups.length === 0 && (
@@ -482,207 +455,57 @@ export function ToolBench({ catalog, rules }: ToolBenchProps) {
             </div>
           </div>
           <div className="bx">
-            <span className="bx-l">{t("Data access")}</span>
-            <Seg
-              v={dataAccess}
-              className="sm"
+            <SegmentedField<AgentFormValues, AgentFormValues["dataAccessCeiling"]>
+              control={control}
+              name="dataAccessCeiling"
               label={t("Data access")}
-              opts={[
-                ["Internal", t("Internal")],
-                ["Restricted", t("Restricted")],
+              description={
+                dataAccess === "Restricted"
+                  ? t("May read restricted records like pay and medical files.")
+                  : t(
+                      "Reads internal records only. Pay, medical and other restricted data stay out.",
+                    )
+              }
+              options={[
+                { value: "Internal", label: t("Internal") },
+                { value: "Restricted", label: t("Restricted") },
               ]}
-              onChange={setDataAccess}
             />
-            <span className="bx-h">
-              {dataAccess === "Restricted"
-                ? t("May read restricted records like pay and medical files.")
-                : t(
-                    "Reads internal records only. Pay, medical and other restricted data stay out.",
-                  )}
-            </span>
           </div>
           <div className="bx">
-            <span className="bx-l">{t("Proposals expire after")}</span>
-            <Sel
-              value={timeout}
-              onChange={setTimeoutSeconds}
+            <SelectField<AgentFormValues>
+              control={control}
+              name="decisionTimeoutSeconds"
+              rules={{ required: true }}
               label={t("Proposals expire after")}
+              description={t("An undecided proposal is withdrawn after this.")}
+              triggerClassName={aicFieldTrigger}
+              placeholder={t("Proposals expire after")}
+              onValueChange={(value) => setTimeoutSeconds(Number(value))}
               options={[
-                ...DECISION_TIMEOUTS.map((seconds) => [seconds, timeouts[seconds]] as const),
+                ...DECISION_TIMEOUTS.map((seconds) => ({
+                  value: seconds,
+                  label: timeouts[seconds],
+                })),
                 ...((DECISION_TIMEOUTS as readonly number[]).includes(timeout)
                   ? []
-                  : [[timeout, t("{0} hours", Math.round(timeout / 3600))] as const]),
+                  : [{ value: timeout, label: t("{0} hours", Math.round(timeout / 3600)) }]),
               ]}
             />
-            <span className="bx-h">{t("An undecided proposal is withdrawn after this.")}</span>
           </div>
         </aside>
-        <ToolPickerDialog
-          open={picking}
-          onClose={() => setPicking(false)}
-          tools={selectable}
-          coreCount={core.length}
-          rules={rules}
-        />
+        {(pickerLoaded || picking) && (
+          <Suspense fallback={null}>
+            <ToolPickerDialog
+              open={picking}
+              onClose={() => setPicking(false)}
+              tools={selectable}
+              coreCount={core.length}
+              rules={rules}
+            />
+          </Suspense>
+        )}
       </div>
     </>
-  );
-}
-
-type ToolPickerDialogProps = {
-  open: boolean;
-  onClose: () => void;
-  tools: readonly ToolCatalogEntry[];
-  coreCount: number;
-  rules: ReadonlyMap<string, AgentToolPolicy>;
-};
-
-/** Every tool an agent may be given, grouped by the record it works on. Writes through at once. */
-function ToolPickerDialog({ open, onClose, tools, coreCount, rules }: ToolPickerDialogProps) {
-  const t = useT();
-  const [toolNames, setToolNames] = useDraftField("toolNames");
-  const [toolTiers, setToolTiers] = useDraftField("toolTiers");
-  const [ceiling] = useDraftField("autonomyCeiling");
-  const [query, setQuery] = useState("");
-  const [group, setGroup] = useState("all");
-  const chosen = new Set(toolNames);
-  const allGroups = useMemo(() => groupToolsByResource(tools, toolNames), [toolNames, tools]);
-  const shown = useMemo(
-    () =>
-      groupToolsByResource(tools, toolNames, query).filter(
-        (entry) => group === "all" || entry.resource === group,
-      ),
-    [group, query, toolNames, tools],
-  );
-  const picked = tools.filter((tool) => chosen.has(tool.name)).length;
-
-  const toggle = (tool: ToolCatalogEntry) => {
-    const on = !chosen.has(tool.name);
-    const next = toggleTool(toolNames, toolTiers, tool.name, on);
-    setToolNames(next.selected);
-    if (on && tool.kind === "action") {
-      const most = rules.get(tool.name)?.promotableTier as AutonomyTier | undefined;
-      setToolTiers({ ...next.tiers, [tool.name]: startingTier(most ?? "AutoExecute", ceiling) });
-    } else {
-      setToolTiers(next.tiers);
-    }
-  };
-
-  const onBackdrop = (event: MouseEvent<HTMLDivElement>) => {
-    if (event.target === event.currentTarget) onClose();
-  };
-
-  return (
-    <Dialog.Root open={open} onOpenChange={(next) => !next && onClose()}>
-      <Dialog.Portal>
-        <div className="aic aic-layer">
-          <Dialog.Popup className="tpk-x" onMouseDown={onBackdrop}>
-            <div className="tpk">
-              <header className="tpk-h">
-                <div>
-                  <Dialog.Title render={<b />}>{t("Tools")}</Dialog.Title>
-                  <Dialog.Description render={<span />}>
-                    {t("Pick what this agent can read and change. Tiers are set on the agent.")}
-                  </Dialog.Description>
-                </div>
-                <button type="button" className="ib" aria-label={t("Close")} onClick={onClose}>
-                  <Ic n="x" s={14} />
-                </button>
-              </header>
-              <div className="tpk-s">
-                <label className="srch">
-                  <Ic n="search" s={13} />
-                  <input
-                    autoFocus
-                    value={query}
-                    aria-label={t("Search tools")}
-                    placeholder={t("Search {0} tools", tools.length)}
-                    onChange={(event) => setQuery(event.target.value)}
-                  />
-                </label>
-              </div>
-              <div className="tpk-m">
-                <nav className="tpk-n" aria-label={t("Records")}>
-                  <button
-                    type="button"
-                    className={group === "all" ? "on" : undefined}
-                    onClick={() => setGroup("all")}
-                  >
-                    <span>{t("All tools")}</span>
-                    <em className="mono">{picked}</em>
-                  </button>
-                  {allGroups.map((entry) => (
-                    <button
-                      key={entry.resource}
-                      type="button"
-                      className={group === entry.resource ? "on" : undefined}
-                      onClick={() => setGroup(entry.resource)}
-                    >
-                      <span>{entry.label}</span>
-                      {entry.chosen > 0 && <em className="mono">{entry.chosen}</em>}
-                    </button>
-                  ))}
-                </nav>
-                <div className="tpk-l">
-                  {shown.map((entry) => (
-                    <div key={entry.resource} className="tpk-g">
-                      <div className="tpk-gh">{entry.label}</div>
-                      {[...entry.tools]
-                        .sort((a, b) => (a.kind === b.kind ? 0 : a.kind === "action" ? 1 : -1))
-                        .map((tool) => {
-                          const on = chosen.has(tool.name);
-                          const rule = rules.get(tool.name);
-                          const top =
-                            (rule?.promotableTier as AutonomyTier | undefined) ?? "AutoExecute";
-                          return (
-                            <button
-                              key={tool.name}
-                              type="button"
-                              role="checkbox"
-                              aria-checked={on}
-                              className={cn("tpk-r", on && "on")}
-                              onClick={() => toggle(tool)}
-                            >
-                              <span className="tpk-c">{on && <Ic n="check" s={11} w={3} />}</span>
-                              <span className="tpk-t">
-                                <b>{toolTitle(tool)}</b>
-                                <em>
-                                  {tool.kind === "action"
-                                    ? t(
-                                        "Changes · {0} · up to {1}",
-                                        egressLabel(furthest(rule), t),
-                                        tierName(top, t).toLowerCase(),
-                                      )
-                                    : t("Reads")}
-                                  {rule && rule.readsExternal !== "Never"
-                                    ? ` · ${t("returns outside text")}`
-                                    : ""}
-                                </em>
-                              </span>
-                              <span className="mono tpk-nm">{tool.name}</span>
-                            </button>
-                          );
-                        })}
-                    </div>
-                  ))}
-                  {shown.length === 0 && (
-                    <div className="nil">{t("No tools match “{0}”.", query)}</div>
-                  )}
-                </div>
-              </div>
-              <footer className="tpk-f">
-                <span>
-                  <b className="mono">{picked}</b> {t("chosen · {0} always on", coreCount)}
-                </span>
-                <span className="sp" />
-                <button type="button" className="btn ink" onClick={onClose}>
-                  {t("Done")}
-                </button>
-              </footer>
-            </div>
-          </Dialog.Popup>
-        </div>
-      </Dialog.Portal>
-    </Dialog.Root>
   );
 }

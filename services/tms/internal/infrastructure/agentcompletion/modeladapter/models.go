@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
@@ -45,6 +46,7 @@ type ModelInfo struct {
 	Embedding            bool
 	InputCostPerMillion  *decimal.Decimal
 	OutputCostPerMillion *decimal.Decimal
+	CreatedAt            int64
 }
 
 func ListModels(ctx context.Context, call *ModelsCall) ([]ModelInfo, error) {
@@ -132,6 +134,7 @@ type anthropicModelsPage struct {
 	Data []struct {
 		ID          string `json:"id"`
 		DisplayName string `json:"display_name"`
+		CreatedAt   string `json:"created_at"`
 	} `json:"data"`
 	HasMore bool   `json:"has_more"`
 	LastID  string `json:"last_id"`
@@ -159,6 +162,7 @@ func listAnthropicModels(ctx context.Context, call *ModelsCall) ([]ModelInfo, er
 			models = append(models, withKnownWindow(ModelInfo{
 				ID:          item.ID,
 				DisplayName: item.DisplayName,
+				CreatedAt:   unixFromRFC3339(item.CreatedAt),
 			}))
 		}
 		if !page.HasMore || page.LastID == "" || page.LastID == after {
@@ -180,6 +184,7 @@ type openAIModelEntry struct {
 	MaxModelLen      int            `json:"max_model_len"`
 	MaxContextLength int            `json:"max_context_length"`
 	Pricing          map[string]any `json:"pricing"`
+	Created          any            `json:"created"`
 	Architecture     *struct {
 		OutputModalities []string `json:"output_modalities"`
 	} `json:"architecture"`
@@ -200,6 +205,33 @@ func listOpenAIModels(
 		return nil, err
 	}
 
+	return decodeOpenAIModels(payload)
+}
+
+// ListReferencePrices reads a public, OpenAI-shaped model catalog that lists
+// prices, such as OpenRouter's, without credentials. Models it gives no price
+// are left out, so what comes back is only what can fill a gap.
+func ListReferencePrices(
+	ctx context.Context,
+	client *http.Client,
+	endpoint string,
+) ([]ModelInfo, error) {
+	payload, err := getBody(ctx, client, endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	models, err := decodeOpenAIModels(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	return slices.DeleteFunc(models, func(model ModelInfo) bool {
+		return model.InputCostPerMillion == nil || !model.InputCostPerMillion.IsPositive()
+	}), nil
+}
+
+func decodeOpenAIModels(payload []byte) ([]ModelInfo, error) {
 	entries, err := openAIEntries(payload)
 	if err != nil {
 		return nil, err
@@ -216,6 +248,7 @@ func listOpenAIModels(
 			DisplayName:   stringutils.FirstNonEmptyTrimmed(entry.DisplayName, entry.Name),
 			ContextWindow: intutils.FirstPositive(entry.ContextLength, entry.ContextWindow, entry.MaxModelLen, entry.MaxContextLength),
 			Embedding:     entry.Type == "embedding" || entry.embeddingOutput() || IsEmbeddingModelID(entry.ID),
+			CreatedAt:     unixFromAny(entry.Created),
 		}
 		info.InputCostPerMillion, info.OutputCostPerMillion = entry.prices()
 		models = append(models, withKnownWindow(info))
@@ -300,10 +333,11 @@ func scaled(perToken *decimal.Decimal) *decimal.Decimal {
 
 type ollamaTags struct {
 	Models []struct {
-		Name    string `json:"name"`
-		Model   string `json:"model"`
-		Size    int64  `json:"size"`
-		Details struct {
+		Name       string `json:"name"`
+		Model      string `json:"model"`
+		Size       int64  `json:"size"`
+		ModifiedAt string `json:"modified_at"`
+		Details    struct {
 			Family   string   `json:"family"`
 			Families []string `json:"families"`
 		} `json:"details"`
@@ -346,6 +380,7 @@ func listOllamaModels(ctx context.Context, call *ModelsCall) ([]ModelInfo, error
 			ID:            id,
 			DisplayName:   model.Name,
 			SizeBytes:     model.Size,
+			CreatedAt:     unixFromRFC3339(model.ModifiedAt),
 			Loaded:        isLoaded,
 			ContextWindow: contextLength,
 			Embedding: IsEmbeddingModelID(id) ||
@@ -354,6 +389,41 @@ func listOllamaModels(ctx context.Context, call *ModelsCall) ([]ModelInfo, error
 	}
 
 	return dedupeModels(models), nil
+}
+
+func unixFromRFC3339(value string) int64 {
+	parsed, err := time.Parse(time.RFC3339Nano, strings.TrimSpace(value))
+	if err != nil {
+		return 0
+	}
+
+	return positiveUnix(parsed.Unix())
+}
+
+func unixFromAny(value any) int64 {
+	switch typed := value.(type) {
+	case float64:
+		return positiveUnix(int64(typed))
+	case int64:
+		return positiveUnix(typed)
+	case string:
+		parsed, err := strconv.ParseInt(strings.TrimSpace(typed), 10, 64)
+		if err != nil {
+			return 0
+		}
+
+		return positiveUnix(parsed)
+	default:
+		return 0
+	}
+}
+
+func positiveUnix(value int64) int64 {
+	if value <= 0 {
+		return 0
+	}
+
+	return value
 }
 
 func ollamaEmbeddingFamily(family string, families []string) bool {

@@ -118,3 +118,14 @@ func TestEmptyReplyAdvice_NamesTheReasoningBudgetRatherThanTheEndpoint(t *testin
 	silent := emptyReplyAdvice(&modeladapter.Response{})
 	assert.Contains(t, silent, "model name")
 }
+
+func TestModelOption_CarriesWhenTheModelWasCreated(t *testing.T) {
+	t.Parallel()
+
+	dated := modelOption(&modeladapter.ModelInfo{ID: "claude-opus-4-1", CreatedAt: 1754352000})
+	require.NotNil(t, dated.CreatedAt)
+	assert.Equal(t, int64(1754352000), *dated.CreatedAt)
+
+	undated := modelOption(&modeladapter.ModelInfo{ID: "local"})
+	assert.Nil(t, undated.CreatedAt)
+}

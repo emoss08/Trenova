@@ -147,6 +147,8 @@ func modelOptionsToModel(models []services.AIProviderModelOption) []*gqlmodel.AI
 			Embedding:            model.Embedding,
 			InputCostPerMillion:  base.DecimalPtrToStringPtr(model.InputCostPerMillion),
 			OutputCostPerMillion: base.DecimalPtrToStringPtr(model.OutputCostPerMillion),
+			PriceSource:          priceSourceToModel(model.PriceSource),
+			CreatedAt:            base.Int64PtrToIntPtr(model.CreatedAt),
 		}
 		if model.SizeBytes != nil {
 			size := float64(*model.SizeBytes)
@@ -156,4 +158,13 @@ func modelOptionsToModel(models []services.AIProviderModelOption) []*gqlmodel.AI
 	}
 
 	return out
+}
+
+func priceSourceToModel(source services.ModelPriceSource) *gqlmodel.AIModelPriceSource {
+	if source == "" {
+		return nil
+	}
+
+	value := gqlmodel.AIModelPriceSource(source)
+	return &value
 }

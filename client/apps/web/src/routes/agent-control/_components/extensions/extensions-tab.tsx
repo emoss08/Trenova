@@ -5,7 +5,9 @@ import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
+import { useQueryState } from "nuqs";
 import { useMemo, useRef, useState } from "react";
+import { EXTENSION_OPEN_PARAM, extensionOpenParser } from "../../ai-control-tabs";
 import { Search, useSlashFocus } from "../kit/controls";
 import { Ic } from "../kit/ic";
 import { Seg, Switch } from "../kit/layout";
@@ -21,6 +23,7 @@ import {
   type ExtensionSort,
 } from "./extension-roster";
 import { ExtensionMark, ExtensionStateTag, ExtensionTile } from "./extension-tile";
+import { Button } from "@trenova/shared/components/ui/button";
 
 const SORT_LABELS: Record<ExtensionSort, string> = defineLabels({
   featured: "Featured",
@@ -48,7 +51,7 @@ export default function ExtensionsTab() {
   const [query, setQuery] = useState("");
   const [shelf, setShelf] = useState<Shelf>("all");
   const [sort, setSort] = useState<ExtensionSort>("featured");
-  const [openType, setOpenType] = useState<string | null>(null);
+  const [openType, setOpenType] = useQueryState(EXTENSION_OPEN_PARAM, extensionOpenParser);
   const [now] = useState(() => Math.floor(Date.now() / 1000));
 
   const items = useMemo(() => catalogQuery.data?.items ?? [], [catalogQuery.data?.items]);
@@ -143,10 +146,14 @@ export default function ExtensionsTab() {
             <div className="spot-a">
               {extensionState(featured) === "on" ? (
                 <>
-                  <button type="button" className="btn" onClick={() => setOpenType(featured.type)}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => void setOpenType(featured.type)}
+                  >
                     <Ic n="gear" s={13} />
                     {t("Manage")}
-                  </button>
+                  </Button>
                   <span className="mkt-u">
                     <span className="ubar">
                       <i style={{ width: `${dailyUsageShare(featured) * 100}%` }} />
@@ -162,14 +169,14 @@ export default function ExtensionsTab() {
                 </>
               ) : (
                 <>
-                  <button
+                  <Button
                     type="button"
-                    className="btn ink lg"
-                    onClick={() => setOpenType(featured.type)}
+                    variant="default" size="lg"
+                    onClick={() => void setOpenType(featured.type)}
                   >
                     {t("Set up {0}", featured.name)}
                     <Ic n="arrowR" s={12} />
-                  </button>
+                  </Button>
                   <span className="spot-s">
                     {featured.configSpec.some((field) => field.sensitive)
                       ? t("About a minute · needs a {0} key", featured.vendor)
@@ -234,7 +241,7 @@ export default function ExtensionsTab() {
                   key={item.type}
                   item={item}
                   now={now}
-                  onOpen={() => setOpenType(item.type)}
+                  onOpen={() => void setOpenType(item.type)}
                 />
               ))}
             </div>
@@ -256,7 +263,7 @@ export default function ExtensionsTab() {
       </div>
       <ReadSheet
         open={open !== null}
-        onClose={() => setOpenType(null)}
+        onClose={() => void setOpenType(null)}
         label={open?.name ?? t("Extension")}
         head={
           open && (

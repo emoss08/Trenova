@@ -24,7 +24,6 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { AlertCircleIcon, Sliders01Icon, XOctagonIcon } from "@trenova/shared/components/icons";
-import { useState } from "react";
 import { toast } from "sonner";
 import { formatShare } from "../quality-model";
 import { RolloutStateBadge } from "./extraction-badges";
@@ -33,6 +32,7 @@ import { RolloutFigures } from "./rollout-figures";
 import { rolloutDraftOf, rolloutInput, rolloutState } from "./rollout-model";
 import { RolloutSettingsDialog } from "./rollout-settings-dialog";
 import { ShadowFieldsTable } from "./shadow-fields-table";
+import { useExtractionDialog } from "./use-extraction-dialog";
 
 function RolloutSummary({ rollout }: { rollout: ExtractionRollout }) {
   const t = useT();
@@ -171,7 +171,7 @@ function GuardProgress({ report }: { report: ExtractionRolloutReport }) {
 export function RolloutView() {
   const t = useT();
   const queryClient = useQueryClient();
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useExtractionDialog("rollout");
   const { allowed: canUpdate } = usePermission(Resource.AIProvider, Operation.Update);
 
   const rollout = useQuery({
@@ -298,7 +298,11 @@ export function RolloutView() {
       )}
 
       {current ? (
-        <RolloutSettingsDialog open={editing} onOpenChange={setEditing} rollout={current} />
+        <RolloutSettingsDialog
+          open={editing && canUpdate}
+          onOpenChange={setEditing}
+          rollout={current}
+        />
       ) : null}
     </div>
   );

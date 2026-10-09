@@ -2,9 +2,16 @@ import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { lazy, useState } from "react";
-import type { QualityView } from "../../ai-control-tabs";
-import { Callout } from "../edit/fields";
+import { useQueryStates } from "nuqs";
+import { lazy, useCallback } from "react";
+import {
+  QUALITY_SHEET_PARAM,
+  SWEEP_SETTINGS_PARAM,
+  qualitySheetParser,
+  sweepSettingsParser,
+  type QualityView,
+} from "../../ai-control-tabs";
+import { Callout } from "../edit/callout";
 import { Ic } from "../kit/ic";
 import { AgentQualitySheet } from "./agent-quality-sheet";
 import { EvalCasesTable } from "./cases";
@@ -12,6 +19,12 @@ import { QualityFigures } from "./quality-figures";
 import { QualityHero } from "./quality-hero";
 import { QUALITY_STALE_MS } from "./quality-model";
 import { SweepSettingsEditor } from "./sweep-settings-editor";
+import { Button } from "@trenova/shared/components/ui/button";
+
+const qualityDialogParsers = {
+  [QUALITY_SHEET_PARAM]: qualitySheetParser,
+  [SWEEP_SETTINGS_PARAM]: sweepSettingsParser,
+};
 
 const AgentsTable = lazy(() => import("./agents-table"));
 const SuiteRunsView = lazy(() => import("./suite-runs-view"));
@@ -28,19 +41,28 @@ export default function QualityTab({ view }: { view: QualityView }) {
   const t = useT();
   const overview = useQuery({ ...queries.agentQuality.overview(), staleTime: QUALITY_STALE_MS });
   const control = useQuery(queries.agentQuality.control());
-  const [openAgent, setOpenAgent] = useState<string | null>(null);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [{ [QUALITY_SHEET_PARAM]: openAgent, [SWEEP_SETTINGS_PARAM]: settingsOpen }, setDialogs] =
+    useQueryStates(qualityDialogParsers);
+  const setOpenAgent = useCallback(
+    (agentId: string | null) => void setDialogs({ [QUALITY_SHEET_PARAM]: agentId }),
+    [setDialogs],
+  );
   const headed = view !== "extraction" && view !== "golden";
 
   const settingsButton = (
-    <button type="button" className="btn" onClick={() => setSettingsOpen(true)}>
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      onClick={() => void setDialogs({ [SWEEP_SETTINGS_PARAM]: true })}
+    >
       <Ic n="gear" s={13} />
       {t("Sweep settings")}
-    </button>
+    </Button>
   );
 
   return (
-    <div className="tabp">
+    <div className="tabp flex flex-col gap-1">
       {headed &&
         (overview.isError ? (
           <Callout tone="d">
@@ -72,9 +94,9 @@ export default function QualityTab({ view }: { view: QualityView }) {
       />
       {control.data && (
         <SweepSettingsEditor
-          open={settingsOpen}
+          open={settingsOpen === true}
           control={control.data}
-          onClose={() => setSettingsOpen(false)}
+          onClose={() => void setDialogs({ [SWEEP_SETTINGS_PARAM]: null })}
         />
       )}
     </div>

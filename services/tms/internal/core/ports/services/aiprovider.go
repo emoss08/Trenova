@@ -124,6 +124,35 @@ type AIProviderModelOption struct {
 	Embedding            bool             `json:"embedding"`
 	InputCostPerMillion  *decimal.Decimal `json:"inputCostPerMillion,omitempty"`
 	OutputCostPerMillion *decimal.Decimal `json:"outputCostPerMillion,omitempty"`
+	// PriceSource says where the prices came from; empty when there are none.
+	PriceSource ModelPriceSource `json:"priceSource,omitempty"`
+	CreatedAt   *int64           `json:"createdAt,omitempty"`
+}
+
+// ModelPriceSource is where a model's listed price came from.
+type ModelPriceSource string
+
+const (
+	// ModelPriceSourceProvider is the provider's own model list.
+	ModelPriceSourceProvider ModelPriceSource = "Provider"
+	// ModelPriceSourceOpenRouter is OpenRouter's public catalog: an estimate of
+	// the list price, not what an organization's own contract charges.
+	ModelPriceSourceOpenRouter ModelPriceSource = "OpenRouter"
+)
+
+// ReferencePrice is a model's estimated price per million tokens.
+type ReferencePrice struct {
+	InputCostPerMillion  decimal.Decimal
+	OutputCostPerMillion *decimal.Decimal
+}
+
+// ModelPriceReference estimates a model's price where its provider lists none.
+// It never fails a model list: a reference that cannot be reached, or is
+// turned off, answers with nothing and the models simply carry no price.
+type ModelPriceReference interface {
+	// Prices returns an estimate for each listed model it recognises, keyed by
+	// the model's ID as the provider lists it.
+	Prices(ctx context.Context, kind aiprovider.Kind, modelIDs []string) map[string]ReferencePrice
 }
 
 // TestAIProviderDraftRequest probes an endpoint that has not been saved.
@@ -249,6 +278,10 @@ type AIProviderService interface {
 		ctx context.Context,
 		req repositories.GetAIProviderByIDRequest,
 	) (*aiprovider.Provider, error)
+	SelectOptions(
+		ctx context.Context,
+		req *repositories.AIProviderSelectOptionsRequest,
+	) (*pagination.ListResult[*aiprovider.Provider], error)
 	Create(
 		ctx context.Context,
 		req *SaveAIProviderRequest,

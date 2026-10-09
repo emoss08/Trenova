@@ -5,9 +5,13 @@ import { useCallback } from "react";
 import { AUDIT_SCOPE_PARAM, auditScopeParser } from "./_components/audit/audit-model";
 import {
   ACTIVITY_VIEW_PARAM,
+  AGENT_EDIT_PARAM,
   AGENT_FILTER_PARAM,
+  AGENT_NEW_PARAM,
+  AGENT_OPEN_PARAM,
   AI_CONTROL_TAB_PARAM,
   AUDIT_VIEW_PARAM,
+  CLEARED_DIALOG_STATE,
   CLEARED_TABLE_STATE,
   QUALITY_AGENT_PARAM,
   QUALITY_SUITE_RUN_PARAM,
@@ -17,7 +21,11 @@ import {
   SAFETY_VIEW_PARAM,
   activityViewParser,
   activityViews,
+  agentEditParser,
   agentFilterParser,
+  agentNewParser,
+  agentOpenParser,
+  aiControlDialogParsers,
   aiControlTabParser,
   auditViewParser,
   auditViews,
@@ -31,6 +39,7 @@ import {
   safetyViews,
   type ActivityView,
   type AgentFilter,
+  type BuilderStart,
   type AIControlTab,
   type AuditView,
   type QualityView,
@@ -41,9 +50,13 @@ import {
 
 const navigationParsers = {
   ...searchParamsParser,
+  ...aiControlDialogParsers,
   [AI_CONTROL_TAB_PARAM]: aiControlTabParser,
   [ACTIVITY_VIEW_PARAM]: activityViewParser,
   [AGENT_FILTER_PARAM]: agentFilterParser,
+  [AGENT_OPEN_PARAM]: agentOpenParser,
+  [AGENT_EDIT_PARAM]: agentEditParser,
+  [AGENT_NEW_PARAM]: agentNewParser,
   [SAFETY_VIEW_PARAM]: safetyViewParser,
   [SAFETY_AGENTS_PARAM]: safetyAgentsParser,
   [QUALITY_VIEW_PARAM]: qualityViewParser,
@@ -59,6 +72,10 @@ export type AIControlDestination = {
   view?: RailView;
   /** Narrows the Agents tab to waiting, shadow or off agents. */
   agentFilter?: AgentFilter;
+  /** Opens one agent's sheet on the Agents tab. */
+  agent?: string;
+  /** Opens the agent builder on the Agents tab: an agent to edit, or what a new one starts from. */
+  builder?: { mode: "edit"; agentId: string } | { mode: "create"; start: BuilderStart };
   /** Narrows the quality views that take an agent to one agent. */
   qualityAgent?: string | null;
   /** Opens one suite run's cases. */
@@ -85,7 +102,8 @@ const isAuditView = (view: RailView): view is AuditView =>
 /**
  * Moves between the page's sections and the tables under them in one write
  * to the address. Every table here keeps its page, search, filters, sort and
- * open row in the same keys, so a move always clears them first; a
+ * open row in the same keys, so a move always clears them, and closes any
+ * dialog the last section had open, first; a
  * destination that wants a filter names it, in the fields of the table it
  * opens.
  */
@@ -98,6 +116,7 @@ export function useAIControlNavigation() {
       void setParams(
         {
           ...CLEARED_TABLE_STATE,
+          ...CLEARED_DIALOG_STATE,
           fieldFilters: destination.fieldFilters ?? null,
           panelType: destination.panel?.mode ?? null,
           panelEntityId:
@@ -120,6 +139,15 @@ export function useAIControlNavigation() {
           [AUDIT_SCOPE_PARAM]: null,
           [AGENT_FILTER_PARAM]:
             destination.tab === "agents" ? (destination.agentFilter ?? null) : null,
+          [AGENT_OPEN_PARAM]: destination.tab === "agents" ? (destination.agent ?? null) : null,
+          [AGENT_EDIT_PARAM]:
+            destination.tab === "agents" && destination.builder?.mode === "edit"
+              ? destination.builder.agentId
+              : null,
+          [AGENT_NEW_PARAM]:
+            destination.tab === "agents" && destination.builder?.mode === "create"
+              ? destination.builder.start
+              : null,
           ...(destination.safetyAgents ? { [SAFETY_AGENTS_PARAM]: destination.safetyAgents } : {}),
         },
         { history: "push" },

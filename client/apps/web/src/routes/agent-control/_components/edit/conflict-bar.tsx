@@ -3,6 +3,7 @@ import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { getNameInitials } from "@trenova/shared/lib/utils";
 import type { EditConflict } from "@trenova/shared/types/errors";
 import { useState } from "react";
+import { Button } from "@trenova/shared/components/ui/button";
 
 type ConflictBarProps = {
   conflict: EditConflict;
@@ -29,18 +30,18 @@ export function ConflictBar({ conflict, onLoadTheirs, onKeepMine }: ConflictBarP
         <span>{t("{0} saved changes {1} while you were editing.", who, when)}</span>
         <span className="sp" />
         {conflict.changes.length > 0 && (
-          <button type="button" className="btn sm" onClick={() => setOpen((shown) => !shown)}>
+          <Button type="button" variant="outline" size="sm" onClick={() => setOpen((shown) => !shown)}>
             {open ? t("Hide") : t("See theirs")}
-          </button>
+          </Button>
         )}
         {onLoadTheirs && (
-          <button type="button" className="btn sm" onClick={onLoadTheirs}>
+          <Button type="button" variant="outline" size="sm" onClick={onLoadTheirs}>
             {t("Load theirs")}
-          </button>
+          </Button>
         )}
-        <button type="button" className="btn sm ink" onClick={onKeepMine}>
+        <Button type="button" variant="default" size="sm" onClick={onKeepMine}>
           {t("Keep mine")}
-        </button>
+        </Button>
       </div>
       {open && (
         <ul className="es-cxl">

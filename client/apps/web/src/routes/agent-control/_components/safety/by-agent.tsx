@@ -23,7 +23,6 @@ import {
   safetyAgentsParser,
 } from "../../ai-control-tabs";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
-import { Menu } from "../kit/controls";
 import { Ic } from "../kit/ic";
 import { Tile } from "../kit/marks";
 import { getAgentToolColumns, holdersOf, type ToolHolding } from "./safety-columns";
@@ -31,6 +30,15 @@ import { SAFETY_SUMMARY_STALE_MS } from "./safety-figures";
 import { reachLabel, tierLabel } from "./safety-model";
 import { useToolHolding } from "./tool-rules-table";
 import { ToolSheet } from "./tool-sheet";
+import { Button } from "@trenova/shared/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@trenova/shared/components/ui/dropdown-menu";
 
 /** An agent's answers move with its settings and trust, so they are re-read after a minute. */
 const AGENT_SAFETY_STALE_MS = 60_000;
@@ -100,34 +108,32 @@ export default function ByAgentView() {
             </span>
           ))}
           {picked.length < MAX_COMPARED_AGENTS && (
-            <div className="rel">
-              <button type="button" className="btn sm" onClick={() => setMenu((open) => !open)}>
+            <DropdownMenu open={menu} onOpenChange={setMenu}>
+              <DropdownMenuTrigger render={<Button type="button" variant="outline" size="sm" />}>
                 <Ic n="plus" s={12} />
                 {picked.length > 0 ? t("Compare another") : t("Pick an agent")}
-              </button>
-              {menu && (
-                <Menu
-                  label={t("Pick an agent")}
-                  onClose={() => setMenu(false)}
-                  items={[
-                    { kind: "heading", label: t("Up to {0} agents", MAX_COMPARED_AGENTS) },
-                    ...agents
-                      .filter((agent) => !picked.includes(agent.id))
-                      .map((agent) => ({
-                        kind: "item" as const,
-                        icon: <Tile agent={agent} s={18} />,
-                        label: agent.name,
-                        note: t(
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-72" listClassName="max-h-80">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>{t("Up to {0} agents", MAX_COMPARED_AGENTS)}</DropdownMenuLabel>
+                  {agents
+                    .filter((agent) => !picked.includes(agent.id))
+                    .map((agent) => (
+                      <DropdownMenuItem
+                        key={agent.id}
+                        title={agent.name}
+                        description={t(
                           "{0, plural, one {# tool} other {# tools}} · ceiling {1}",
                           agent.toolNames.length,
                           tierLabel(t, agent.autonomyCeiling),
-                        ),
-                        onSelect: () => setPicked([...picked, agent.id]),
-                      })),
-                  ]}
-                />
-              )}
-            </div>
+                        )}
+                        startContent={<Tile agent={agent} s={18} />}
+                        onClick={() => setPicked([...picked, agent.id])}
+                      />
+                    ))}
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
         <span className="sp" />
@@ -182,9 +188,9 @@ function AgentHeaders({ agentIds }: { agentIds: readonly string[] }) {
       <div className="bnr d" role="alert">
         <Ic n="alert" s={14} />
         <span>{t("What these agents can do without a person could not be loaded.")}</span>
-        <button type="button" className="btn sm" onClick={() => void query.refetch()}>
+        <Button type="button" variant="outline" size="sm" onClick={() => void query.refetch()}>
           {t("Try again")}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -270,15 +276,15 @@ function AgentHeaderRow({
                 </em>
               )}
             </span>
-            <button
+            <Button
               type="button"
-              className="btn sm"
+              variant="outline" size="sm"
               onClick={() =>
-                navigate({ tab: "agents", panel: { mode: "edit", entityId: header.agentId } })
+                navigate({ tab: "agents", builder: { mode: "edit", agentId: header.agentId } })
               }
             >
               {t("Limit to roles")}
-            </button>
+            </Button>
           </div>
         ) : (
           <div key={warning.kind} className="ah-w">

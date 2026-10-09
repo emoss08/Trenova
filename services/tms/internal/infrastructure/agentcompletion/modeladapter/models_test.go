@@ -156,3 +156,69 @@ func TestIsEmbeddingModelID(t *testing.T) {
 		assert.Equal(t, want, IsEmbeddingModelID(id), id)
 	}
 }
+
+func TestListModels_ReadsWhenEachModelWasCreated(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		kind   aiprovider.Kind
+		routes map[string]string
+		want   map[string]int64
+	}{
+		{
+			name: "anthropic created_at",
+			kind: aiprovider.KindAnthropicMessages,
+			routes: map[string]string{"/v1/models": `{"data":[
+				{"id":"claude-opus-4-1","display_name":"Opus","created_at":"2025-08-05T00:00:00Z"},
+				{"id":"claude-old","display_name":"Old"},
+				{"id":"claude-bad","display_name":"Bad","created_at":"yesterday"}
+			],"has_more":false}`},
+			want: map[string]int64{"claude-opus-4-1": 1754352000, "claude-old": 0, "claude-bad": 0},
+		},
+		{
+			name: "openai created seconds",
+			kind: aiprovider.KindOpenAIResponses,
+			routes: map[string]string{"/v1/models": `{"data":[
+				{"id":"gpt-5","created":1754352000},
+				{"id":"gpt-float","created":1754352000.0},
+				{"id":"gpt-text","created":"1754352000"},
+				{"id":"gpt-none"},
+				{"id":"gpt-neg","created":-5},
+				{"id":"gpt-junk","created":"soon"},
+				{"id":"gpt-obj","created":{"at":1}}
+			]}`},
+			want: map[string]int64{
+				"gpt-5": 1754352000, "gpt-float": 1754352000, "gpt-text": 1754352000,
+				"gpt-none": 0, "gpt-neg": 0, "gpt-junk": 0, "gpt-obj": 0,
+			},
+		},
+		{
+			name: "ollama modified_at",
+			kind: aiprovider.KindOllama,
+			routes: map[string]string{
+				"/api/tags": `{"models":[
+					{"name":"qwen3:32b","model":"qwen3:32b","modified_at":"2025-08-05T02:30:00.123456789+02:30"},
+					{"name":"llama3:8b","model":"llama3:8b"},
+					{"name":"bad:1b","model":"bad:1b","modified_at":"not a time"}
+				]}`,
+				"/api/ps": `{"models":[]}`,
+			},
+			want: map[string]int64{"qwen3:32b": 1754352000, "llama3:8b": 0, "bad:1b": 0},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			server := serveModels(t, tc.routes)
+			models, err := listFrom(t, server, tc.kind, "key")
+			require.NoError(t, err)
+			require.Len(t, models, len(tc.want))
+			for _, model := range models {
+				assert.Equal(t, tc.want[model.ID], model.CreatedAt, model.ID)
+			}
+		})
+	}
+}

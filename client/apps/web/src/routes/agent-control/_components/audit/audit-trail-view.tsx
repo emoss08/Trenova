@@ -11,7 +11,9 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import type { DataTableEmptyStateRenderProps } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryStates } from "nuqs";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
+import { AUDIT_EXPORT_PARAM, auditExportParser } from "../../ai-control-tabs";
+import { useAddressedFlag } from "../../use-addressed-flag";
 import { Ic } from "../kit/ic";
 import { getAuditEventColumns } from "./audit-event-columns";
 import { AuditEventPanel } from "./audit-event-panel";
@@ -24,6 +26,7 @@ import {
 } from "./audit-model";
 import { AuditScopeBar } from "./audit-scope-bar";
 import { ExportTrailDialog } from "./export-trail-dialog";
+import { Button } from "@trenova/shared/components/ui/button";
 
 /** The trail is written by a projector every minute; the table reads again on that beat. */
 const TRAIL_REFRESH_MS = 60_000;
@@ -73,7 +76,7 @@ export default function AuditTrailView({ onOpenExports }: { onOpenExports: () =>
   const scope = params[AUDIT_SCOPE_PARAM];
   const { allowed: canExport } = usePermission(Resource.AIAuditTrail, Operation.Export);
   const { allowed: canPickAgent } = usePermission(Resource.AgentDefinition, Operation.Read);
-  const [exportOpen, setExportOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useAddressedFlag(AUDIT_EXPORT_PARAM, auditExportParser);
 
   const columns = useMemo(() => getAuditEventColumns(t), [t]);
   const scopeFilters = useMemo(() => auditScopeFilters(scope), [scope]);
@@ -102,10 +105,10 @@ export default function AuditTrailView({ onOpenExports }: { onOpenExports: () =>
         canPickAgent={canPickAgent}
         actions={
           canExport ? (
-            <button type="button" className="btn" onClick={() => setExportOpen(true)}>
+            <Button type="button" variant="outline" onClick={() => setExportOpen(true)}>
               <Ic n="download" s={13} />
               {t("Export trail")}
-            </button>
+            </Button>
           ) : null
         }
       />

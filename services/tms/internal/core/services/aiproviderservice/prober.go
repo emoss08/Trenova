@@ -34,6 +34,7 @@ type Prober struct {
 	logger   *zap.Logger
 	cfg      *config.AIConfig
 	adapters *modeladapter.Registry
+	prices   services.ModelPriceReference
 
 	clientsMu sync.Mutex
 	clients   map[bool]*http.Client
@@ -44,6 +45,7 @@ type ProberParams struct {
 
 	Logger *zap.Logger
 	Config *config.Config
+	Prices services.ModelPriceReference `optional:"true"`
 }
 
 func NewProber(p ProberParams) *Prober {
@@ -51,6 +53,7 @@ func NewProber(p ProberParams) *Prober {
 		logger:   p.Logger.Named("service.aiprovider.prober"),
 		cfg:      p.Config.GetAIConfig(),
 		adapters: modeladapter.NewRegistry(),
+		prices:   p.Prices,
 		clients:  make(map[bool]*http.Client, 2),
 	}
 }
@@ -446,8 +449,45 @@ func (p *Prober) ListModels(
 	for idx := range models {
 		options = append(options, modelOption(&models[idx]))
 	}
+	p.estimateMissingPrices(ctx, provider.Kind, options)
 
 	return options, nil
+}
+
+// estimateMissingPrices fills the price of each model its provider lists none
+// for from the price reference, marked as an estimate. A price the provider
+// gave is never replaced.
+func (p *Prober) estimateMissingPrices(
+	ctx context.Context,
+	kind aiprovider.Kind,
+	options []services.AIProviderModelOption,
+) {
+	if p.prices == nil {
+		return
+	}
+
+	missing := make([]string, 0, len(options))
+	for idx := range options {
+		if options[idx].InputCostPerMillion == nil {
+			missing = append(missing, options[idx].ID)
+		}
+	}
+	if len(missing) == 0 {
+		return
+	}
+
+	estimates := p.prices.Prices(ctx, kind, missing)
+	for idx := range options {
+		option := &options[idx]
+		estimate, ok := estimates[option.ID]
+		if !ok || option.InputCostPerMillion != nil {
+			continue
+		}
+		input := estimate.InputCostPerMillion
+		option.InputCostPerMillion = &input
+		option.OutputCostPerMillion = estimate.OutputCostPerMillion
+		option.PriceSource = services.ModelPriceSourceOpenRouter
+	}
 }
 
 func modelOption(model *modeladapter.ModelInfo) services.AIProviderModelOption {
@@ -459,6 +499,9 @@ func modelOption(model *modeladapter.ModelInfo) services.AIProviderModelOption {
 		InputCostPerMillion:  model.InputCostPerMillion,
 		OutputCostPerMillion: model.OutputCostPerMillion,
 	}
+	if model.InputCostPerMillion != nil {
+		option.PriceSource = services.ModelPriceSourceProvider
+	}
 	if model.ContextWindow > 0 {
 		window := model.ContextWindow
 		option.ContextWindow = &window
@@ -466,6 +509,10 @@ func modelOption(model *modeladapter.ModelInfo) services.AIProviderModelOption {
 	if model.SizeBytes > 0 {
 		size := model.SizeBytes
 		option.SizeBytes = &size
+	}
+	if model.CreatedAt > 0 {
+		created := model.CreatedAt
+		option.CreatedAt = &created
 	}
 
 	return option

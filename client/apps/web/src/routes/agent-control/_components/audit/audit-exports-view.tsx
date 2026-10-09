@@ -14,10 +14,13 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Download01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { AUDIT_EXPORT_PARAM, auditExportParser } from "../../ai-control-tabs";
+import { useAddressedFlag } from "../../use-addressed-flag";
 import { Ic } from "../kit/ic";
 import { getAuditExportColumns } from "./audit-export-columns";
 import { DEFAULT_AUDIT_SCOPE, UNFILTERED_AUDIT_TABLE } from "./audit-model";
 import { ExportTrailDialog } from "./export-trail-dialog";
+import { Button } from "@trenova/shared/components/ui/button";
 
 /** Exports change as a background file is written; realtime moves the table, this is the fallback. */
 const EXPORTS_REFRESH_MS = 30_000;
@@ -60,7 +63,7 @@ export default function AuditExportsView() {
   const t = useT();
   const { allowed: canExport } = usePermission(Resource.AIAuditTrail, Operation.Export);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [exportOpen, setExportOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useAddressedFlag(AUDIT_EXPORT_PARAM, auditExportParser);
 
   const download = useCallback(
     async (row: AIAuditExportRow) => {
@@ -116,10 +119,10 @@ export default function AuditExportsView() {
           canExport
             ? {
                 trailing: (
-                  <button type="button" className="btn ink" onClick={() => setExportOpen(true)}>
+                  <Button type="button" variant="default" onClick={() => setExportOpen(true)}>
                     <Ic n="download" s={13} />
                     {t("Export trail")}
-                  </button>
+                  </Button>
                 ),
               }
             : undefined

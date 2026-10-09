@@ -8,7 +8,9 @@ import {
 import type { Row, RowAction } from "@trenova/shared/types/data-table";
 import { Resource } from "@trenova/shared/types/permission";
 import { EyeIcon } from "@trenova/shared/components/icons";
-import { useMemo, useState } from "react";
+import { useQueryState } from "nuqs";
+import { useMemo } from "react";
+import { EVALUATION_OPEN_PARAM, evaluationOpenParser } from "../../ai-control-tabs";
 import { getEvaluationColumns } from "./agent-evaluation-columns";
 import { EvaluationDetailDialog } from "./evaluation-detail-dialog";
 
@@ -20,14 +22,14 @@ import { EvaluationDetailDialog } from "./evaluation-detail-dialog";
 export default function AgentEvaluationTable() {
   const t = useT();
   const columns = useMemo(() => getEvaluationColumns(t), [t]);
-  const [open, setOpen] = useState<string | null>(null);
+  const [open, setOpen] = useQueryState(EVALUATION_OPEN_PARAM, evaluationOpenParser);
 
   const contextMenuActions: RowAction<AgentEvaluationRow>[] = [
     {
       id: "open",
       label: t("Open comparison"),
       icon: EyeIcon,
-      onClick: (row: Row<AgentEvaluationRow>) => setOpen(row.original.id),
+      onClick: (row: Row<AgentEvaluationRow>) => void setOpen(row.original.id),
     },
   ];
 
@@ -45,7 +47,7 @@ export default function AgentEvaluationTable() {
         refetchIntervalMs={15_000}
         initialColumnVisibility={{ model: false, sourceRunId: false }}
       />
-      <EvaluationDetailDialog evaluationId={open} onClose={() => setOpen(null)} />
+      <EvaluationDetailDialog evaluationId={open} onClose={() => void setOpen(null)} />
     </>
   );
 }

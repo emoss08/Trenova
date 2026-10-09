@@ -4,6 +4,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
 import { Ic } from "../kit/ic";
 import type { EditFlow } from "./use-edit-flow";
+import { Button } from "@trenova/shared/components/ui/button";
 
 type SaveBarProps = {
   flow: EditFlow;
@@ -32,12 +33,12 @@ export function SaveBar({ flow, review, saveLabel, leading }: SaveBarProps) {
             : t("Discard {0} unsaved changes?", count)}
         </span>
         <span className="sp" />
-        <button type="button" className="btn sm" autoFocus onClick={flow.keepEditing}>
+        <Button type="button" variant="outline" size="sm" autoFocus onClick={flow.keepEditing}>
           {t("Keep editing")}
-        </button>
-        <button type="button" className="btn sm dng" onClick={flow.close}>
+        </Button>
+        <Button type="button" variant="outline" size="sm" className="border-danger-border text-danger-foreground hover:bg-danger-subtle" onClick={flow.close}>
           {t("Discard and close")}
-        </button>
+        </Button>
       </>
     );
   }
@@ -75,21 +76,21 @@ export function SaveBar({ flow, review, saveLabel, leading }: SaveBarProps) {
       {leading}
       <span className="sp" />
       {flow.dirty && !flow.create && (
-        <button type="button" className="btn sm" onClick={flow.discard}>
+        <Button type="button" variant="outline" size="sm" onClick={flow.discard}>
           {t("Discard")}
-        </button>
+        </Button>
       )}
-      <button type="button" className="btn ink" disabled={!flow.canSave} onClick={flow.save}>
-        {flow.saving ? (
-          <>
-            <i className="spn" />
-            {t("Saving")}
-          </>
-        ) : (
-          (saveLabel ?? (flow.create ? t("Create") : t("Save changes")))
-        )}
-        <span className="kbd">{formatShortcut("S")}</span>
-      </button>
+      <Button
+        type="button"
+        variant="default"
+        disabled={!flow.canSave}
+        isLoading={flow.saving}
+        loadingText={t("Saving")}
+        shortcut={formatShortcut("S")}
+        onClick={flow.save}
+      >
+        {saveLabel ?? (flow.create ? t("Create") : t("Save changes"))}
+      </Button>
     </>
   );
 }

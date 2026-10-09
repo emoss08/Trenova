@@ -1,8 +1,14 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatShortcut } from "@trenova/shared/lib/shortcuts";
+import { TextareaField } from "@/components/fields/textarea-field";
+import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useEffect, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { Ic, type IcName } from "../../kit/ic";
 import type { BuilderStart } from "./builder-model";
+import { Button } from "@trenova/shared/components/ui/button";
 
 /** How long each drafting step shows before the next begins. */
 const STEP_MS = 420;
@@ -21,10 +27,10 @@ type CreateIntroProps = {
  */
 export function CreateIntro({ draftingAvailable, onDraft, onStart }: CreateIntroProps) {
   const t = useT();
-  const [description, setDescription] = useState("");
+  const form = useForm<{ description: string }>({ defaultValues: { description: "" } });
+  const description = useWatch({ control: form.control, name: "description" });
   const [drafting, setDrafting] = useState(false);
   const [step, setStep] = useState(0);
-  const [failure, setFailure] = useState<string | null>(null);
 
   const steps = [
     t("Naming it"),
@@ -39,15 +45,30 @@ export function CreateIntro({ draftingAvailable, onDraft, onStart }: CreateIntro
     t("Warn drivers 30 days before their medical card expires"),
   ];
   const starts: { start: BuilderStart; icon: IcName; label: string; note: string }[] = [
-    { start: "chat", icon: "chat", label: t("Desk agent"), note: t("Answers people in the assistant") },
+    {
+      start: "chat",
+      icon: "chat",
+      label: t("Desk agent"),
+      note: t("Answers people in the assistant"),
+    },
     {
       start: "scheduled",
       icon: "calendar",
       label: t("Scheduled report"),
       note: t("Runs on a timetable and sends a summary"),
     },
-    { start: "event", icon: "bolt", label: t("Event watcher"), note: t("Wakes when something happens") },
-    { start: "blank", icon: "edit", label: t("Start blank"), note: t("Set everything up yourself") },
+    {
+      start: "event",
+      icon: "bolt",
+      label: t("Event watcher"),
+      note: t("Wakes when something happens"),
+    },
+    {
+      start: "blank",
+      icon: "edit",
+      label: t("Set it up yourself"),
+      note: t("An empty agent, no description needed"),
+    },
   ];
 
   useEffect(() => {
@@ -62,12 +83,14 @@ export function CreateIntro({ draftingAvailable, onDraft, onStart }: CreateIntro
   const draft = () => {
     const text = description.trim();
     if (!text || !draftingAvailable || drafting) return;
-    setFailure(null);
+    form.clearErrors("description");
     setStep(0);
     setDrafting(true);
     onDraft(text).catch((error: unknown) => {
       setDrafting(false);
-      setFailure(error instanceof Error ? error.message : t("Nova could not draft it. Try again."));
+      form.setError("description", {
+        message: error instanceof Error ? error.message : t("Nova could not draft it. Try again."),
+      });
     });
   };
 
@@ -87,49 +110,74 @@ export function CreateIntro({ draftingAvailable, onDraft, onStart }: CreateIntro
         </p>
         {!drafting ? (
           <>
-            <div className={draftingAvailable ? "ci-box" : "ci-box off"}>
-              <textarea
-                autoFocus
-                rows={3}
-                value={description}
+            <div className="mt-7">
+              <TextareaField
+                control={form.control}
+                name="description"
+                label=""
                 aria-label={t("What should it do?")}
+                size="lg"
+                autoFocus
                 placeholder={t("When a truck waits more than two hours at a dock…")}
-                onChange={(event) => setDescription(event.target.value)}
                 onKeyDown={(event) => {
                   if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
                     event.preventDefault();
                     draft();
                   }
                 }}
+                footer={
+                  <>
+                    <ScrollArea
+                      className="min-w-0 max-w-sm flex-1"
+                      maskVariant="field"
+                      maskHeight={24}
+                      dragToScroll
+                    >
+                      <div className="flex w-max gap-1">
+                        {examples.map((example) => (
+                          <Tooltip key={example}>
+                            <TooltipTrigger
+                              render={
+                                <Button
+                                  type="button"
+                                  variant="secondary"
+                                  size="xxs"
+                                  className="text-muted-foreground hover:text-foreground h-6.5 max-w-48 shrink-0 rounded-full px-2.5 text-xs font-normal"
+                                  onClick={() =>
+                                    form.setValue("description", example, { shouldDirty: true })
+                                  }
+                                />
+                              }
+                            >
+                              <span className="truncate">{example}</span>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">{example}</TooltipContent>
+                          </Tooltip>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                    {draftingAvailable ? (
+                      <Button
+                        type="button"
+                        variant="default"
+                        className="ml-auto shrink-0"
+                        shortcut={formatShortcut("↵")}
+                        disabled={!description.trim()}
+                        onClick={draft}
+                      >
+                        <AssistMark className="size-3.5" />
+                        {t("Draft it")}
+                      </Button>
+                    ) : (
+                      <span className="text-warning-foreground ml-auto inline-flex shrink-0 items-center gap-1.5 text-sm whitespace-nowrap">
+                        <Ic n="plug" s={12} />
+                        {t("Connect a provider to draft with AI")}
+                      </span>
+                    )}
+                  </>
+                }
               />
-              <div className="ci-bar">
-                <div className="ci-ex">
-                  {examples.map((example) => (
-                    <button key={example} type="button" onClick={() => setDescription(example)}>
-                      {`${example.split(" ").slice(0, 5).join(" ")}…`}
-                    </button>
-                  ))}
-                </div>
-                {draftingAvailable ? (
-                  <button
-                    type="button"
-                    className="btn ink"
-                    disabled={!description.trim()}
-                    onClick={draft}
-                  >
-                    <Ic n="sparkle" s={13} />
-                    {t("Draft it")}
-                    <span className="kbd">{formatShortcut("↵")}</span>
-                  </button>
-                ) : (
-                  <span className="ci-na">
-                    <Ic n="plug" s={12} />
-                    {t("Connect a provider to draft with AI")}
-                  </span>
-                )}
-              </div>
             </div>
-            {failure && <p className="f-h t-w">{failure}</p>}
             <div className="ci-or">
               <span>{draftingAvailable ? t("or start from") : t("Start from")}</span>
             </div>
@@ -157,7 +205,7 @@ export function CreateIntro({ draftingAvailable, onDraft, onStart }: CreateIntro
             {steps.slice(0, step + 1).map((label, index) => (
               <div key={label} className={index === step ? "ci-st cur" : "ci-st"}>
                 <span className="ck">
-                  {index < step ? <Ic n="check" s={12} w={2.4} /> : <i className="spn" />}
+                  {index < step ? <Ic n="check" s={12} w={2.4} /> : <span className="border-border-strong border-t-foreground inline-block size-3 animate-spin rounded-full border-[1.5px]" />}
                 </span>
                 <span className="tx">{label}</span>
               </div>

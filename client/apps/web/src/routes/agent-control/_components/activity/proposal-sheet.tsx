@@ -2,12 +2,15 @@ import type { AgentProposalRow } from "@/lib/graphql/agent-activity-tables";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import { createContext, useContext, useState } from "react";
+import { useQueryState } from "nuqs";
+import { createContext, useContext } from "react";
+import { RUN_OPEN_PARAM, runOpenParser } from "../../ai-control-tabs";
 import { Ic } from "../kit/ic";
 import { ReadSheet } from "../kit/read-sheet";
 import { KV } from "../kit/values";
 import { ProposalStatusBadge, TierBadge } from "./agent-badges";
 import { AgentRunSheet } from "./agent-run-sheet";
+import { Button } from "@trenova/shared/components/ui/button";
 
 export type ProposalActions = {
   canDecide: boolean;
@@ -33,7 +36,12 @@ export function ProposalSheet({
 }) {
   const t = useT();
   const actions = useContext(ProposalActionsContext);
-  const [runId, setRunId] = useState<string | null>(null);
+  const [runId, setRunId] = useQueryState(RUN_OPEN_PARAM, runOpenParser);
+  // The run opens over its proposal, so closing the proposal closes the run with it.
+  const close = () => {
+    void setRunId(null);
+    onClose();
+  };
   const pending = proposal?.status === "Pending";
   const title = proposal ? proposal.rationale || proposal.toolName : t("Proposal");
 
@@ -41,7 +49,7 @@ export function ProposalSheet({
     <>
       <ReadSheet
         open={proposal !== null}
-        onClose={onClose}
+        onClose={close}
         label={title}
         head={
           proposal && (
@@ -70,7 +78,7 @@ export function ProposalSheet({
                     key="run"
                     type="button"
                     className="lnk mono"
-                    onClick={() => setRunId(proposal.runId)}
+                    onClick={() => void setRunId(proposal.runId)}
                   >
                     {proposal.runId}
                   </button>,
@@ -93,26 +101,28 @@ export function ProposalSheet({
             <div className="ad-bar sh-f">
               {pending && actions?.canDecide ? (
                 <>
-                  <button
+                  <Button
                     type="button"
-                    className="btn sm ink"
+                    variant="default"
+                    size="sm"
                     onClick={() => actions.approve(proposal)}
                   >
                     <Ic n="check" s={12} w={2.2} />
                     {t("Approve")}
-                  </button>
+                  </Button>
                   {proposal.parameterFields.length > 0 && (
-                    <button
+                    <Button
                       type="button"
-                      className="btn sm"
+                      variant="outline"
+                      size="sm"
                       onClick={() => actions.modify(proposal)}
                     >
                       {t("Approve with changes")}
-                    </button>
+                    </Button>
                   )}
-                  <button type="button" className="btn sm" onClick={() => actions.reject(proposal)}>
+                  <Button type="button" variant="outline" size="sm" onClick={() => actions.reject(proposal)}>
                     {t("Reject")}
-                  </button>
+                  </Button>
                 </>
               ) : (
                 !pending && (
@@ -122,7 +132,7 @@ export function ProposalSheet({
                 )
               )}
               <span className="sp" />
-              <button type="button" className="xa" onClick={() => setRunId(proposal.runId)}>
+              <button type="button" className="xa" onClick={() => void setRunId(proposal.runId)}>
                 <Ic n="timeline" s={13} />
                 {t("Open the run")}
               </button>
@@ -130,7 +140,7 @@ export function ProposalSheet({
           </>
         )}
       </ReadSheet>
-      <AgentRunSheet runId={runId} onClose={() => setRunId(null)} />
+      <AgentRunSheet runId={proposal ? runId : null} onClose={() => void setRunId(null)} />
     </>
   );
 }

@@ -7,6 +7,7 @@ import { Ic } from "../../kit/ic";
 import { Pop } from "../../kit/pop";
 import type { BlockId } from "./block";
 import type { CheckStatus } from "./builder-model";
+import { Button } from "@trenova/shared/components/ui/button";
 
 export type RailEntry = { id: BlockId; label: string; summary: string; status: CheckStatus };
 
@@ -115,9 +116,10 @@ export function BuilderRail({
                       {current ? (
                         <span className="tg">{t("Current")}</span>
                       ) : (
-                        <button
+                        <Button
                           type="button"
-                          className="btn sm"
+                          variant="outline"
+                          size="sm"
                           disabled={restoring}
                           onClick={() => {
                             setHistory(false);
@@ -125,7 +127,7 @@ export function BuilderRail({
                           }}
                         >
                           {t("Restore")}
-                        </button>
+                        </Button>
                       )}
                     </div>
                   );

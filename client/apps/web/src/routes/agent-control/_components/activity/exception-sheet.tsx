@@ -3,7 +3,9 @@ import type { AgentResolutionState } from "@trenova/graphql/generated/graphql";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
-import { createContext, useContext, useState } from "react";
+import { useQueryState } from "nuqs";
+import { createContext, useContext } from "react";
+import { RUN_OPEN_PARAM, runOpenParser } from "../../ai-control-tabs";
 import { Ic } from "../kit/ic";
 import { ReadSheet } from "../kit/read-sheet";
 import { KV } from "../kit/values";
@@ -11,6 +13,7 @@ import { ResolutionBadge, SeverityBadge } from "./agent-badges";
 import { categoryLabel } from "./agent-exception-columns";
 import { AgentRunSheet } from "./agent-run-sheet";
 import { AgentSubjectCell } from "./agent-subject-cell";
+import { Button } from "@trenova/shared/components/ui/button";
 
 export type ExceptionActions = {
   canResolve: boolean;
@@ -35,7 +38,12 @@ export function ExceptionSheet({
 }) {
   const t = useT();
   const actions = useContext(ExceptionActionsContext);
-  const [runId, setRunId] = useState<string | null>(null);
+  const [runId, setRunId] = useQueryState(RUN_OPEN_PARAM, runOpenParser);
+  // The run opens over its exception, so closing the exception closes the run with it.
+  const close = () => {
+    void setRunId(null);
+    onClose();
+  };
   const title = exception ? categoryLabel(exception.category) : t("Exception");
   const settled = exception ? SETTLED.has(exception.resolutionState) : true;
 
@@ -43,7 +51,7 @@ export function ExceptionSheet({
     <>
       <ReadSheet
         open={exception !== null}
-        onClose={onClose}
+        onClose={close}
         label={title}
         head={
           exception && (
@@ -82,7 +90,7 @@ export function ExceptionSheet({
               ]}
             />
             <div className="ad-bar sh-f">
-              <button type="button" className="xa" onClick={() => setRunId(exception.runId)}>
+              <button type="button" className="xa" onClick={() => void setRunId(exception.runId)}>
                 <Ic n="timeline" s={13} />
                 {t("Open the run")}
               </button>
@@ -90,44 +98,48 @@ export function ExceptionSheet({
               {actions?.canResolve && !settled && (
                 <>
                   {exception.resolutionState === "Open" && (
-                    <button
+                    <Button
                       type="button"
-                      className="btn sm"
+                      variant="outline"
+                      size="sm"
                       onClick={() => actions.transition(exception, "InReview")}
                     >
                       {t("Mark in review")}
-                    </button>
+                    </Button>
                   )}
-                  <button
+                  <Button
                     type="button"
-                    className="btn sm"
+                    variant="outline"
+                    size="sm"
                     onClick={() => actions.transition(exception, "Dismissed")}
                   >
                     {t("Dismiss")}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
-                    className="btn sm ink"
+                    variant="default"
+                    size="sm"
                     onClick={() => actions.transition(exception, "Resolved")}
                   >
                     {t("Mark resolved")}
-                  </button>
+                  </Button>
                 </>
               )}
               {actions?.canResolve && settled && (
-                <button
+                <Button
                   type="button"
-                  className="btn sm"
+                  variant="outline"
+                  size="sm"
                   onClick={() => actions.transition(exception, "Open")}
                 >
                   {t("Reopen")}
-                </button>
+                </Button>
               )}
             </div>
           </>
         )}
       </ReadSheet>
-      <AgentRunSheet runId={runId} onClose={() => setRunId(null)} />
+      <AgentRunSheet runId={exception ? runId : null} onClose={() => void setRunId(null)} />
     </>
   );
 }

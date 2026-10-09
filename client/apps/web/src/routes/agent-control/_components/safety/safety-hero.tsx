@@ -2,6 +2,7 @@ import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Hero, Ref } from "../kit/hero";
 import type { SafetyFacts } from "./safety-model";
+import { Button } from "@trenova/shared/components/ui/button";
 
 type SafetyHeroProps = {
   facts: SafetyFacts;
@@ -20,9 +21,9 @@ export function SafetyHero({ facts, onShowRunning, onReviewOpen }: SafetyHeroPro
       control={
         facts.open.length > 0 && (
           <>
-            <button type="button" className="btn ink lg" onClick={onReviewOpen}>
+            <Button type="button" variant="default" size="lg" onClick={onReviewOpen}>
               {t("Review open agents")}
-            </button>
+            </Button>
             <span>{t("Compare what they can do")}</span>
           </>
         )

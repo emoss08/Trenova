@@ -13,7 +13,7 @@ import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { toast } from "sonner";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
-import { Callout } from "../edit/fields";
+import { Callout } from "../edit/callout";
 import { Ic } from "../kit/ic";
 import { Tile } from "../kit/marks";
 import { ReadSheet } from "../kit/read-sheet";
@@ -217,7 +217,10 @@ function AgentQualityBody({
           type="button"
           className="xa"
           onClick={() =>
-            navigate({ tab: "agents", panel: { mode: "edit", entityId: detail.agentDefinitionId } })
+            navigate({
+              tab: "agents",
+              builder: { mode: "edit", agentId: detail.agentDefinitionId },
+            })
           }
         >
           <Ic n="edit" s={13} />

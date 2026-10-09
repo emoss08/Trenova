@@ -1,3 +1,4 @@
+import { InputField } from "@/components/fields/input-field";
 import { ExternalLink } from "@/components/link";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
@@ -12,14 +13,17 @@ import type { ConfigFieldSpec } from "@/types/integration";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { cn } from "@trenova/shared/lib/utils";
 import { useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { toAgentPanelRow, toSaveRequest } from "../agents/agent-form-schema";
+import { aicFieldTrigger } from "../edit/field-trigger";
 import { Ic } from "../kit/ic";
-import { Seg } from "../kit/layout";
 import { Tile } from "../kit/marks";
 import { extensionState, holdsExtension, withExtensionTools } from "./extension-roster";
+import { Button } from "@trenova/shared/components/ui/button";
 
 const SEARCH_DEPTH_LABELS: Record<string, string> = defineLabels({
   auto: "Auto",
@@ -106,11 +110,12 @@ export function ExtensionDetail({
   const t = useT();
   const queryClient = useQueryClient();
   const { config } = control;
-  const [key, setKey] = useState("");
+  const keyForm = useForm<{ key: string }>({ defaultValues: { key: "" } });
+  const key = useWatch({ control: keyForm.control, name: "key" });
   const [replacing, setReplacing] = useState(false);
   const [test, setTest] = useState<TestState | null>(null);
   const keySaved = () => {
-    setKey("");
+    keyForm.reset({ key: "" });
     setReplacing(false);
   };
 
@@ -182,7 +187,9 @@ export function ExtensionDetail({
   const depthField = config?.spec.find((field) => field.key === "searchType") ?? null;
   const limitField = config?.spec.find((field) => field.key === "dailyRequestLimit") ?? null;
   const limit = Number(valueOf(config, "dailyRequestLimit") || item.dailyRequestLimit);
-  const limits = [...new Set([...DAILY_LIMITS, limit])].filter((value) => value > 0).sort((a, b) => a - b);
+  const limits = [...new Set([...DAILY_LIMITS, limit])]
+    .filter((value) => value > 0)
+    .sort((a, b) => a - b);
   const others = (config?.spec ?? []).filter(
     (field) => !field.sensitive && !OWN_CONTROLS.has(field.key),
   );
@@ -233,7 +240,7 @@ export function ExtensionDetail({
             </div>
           ) : (
             <form
-              className="pd-kf"
+              className="flex w-full items-start gap-2"
               onSubmit={(event) => {
                 event.preventDefault();
                 if (!key.trim() || busy) return;
@@ -248,35 +255,39 @@ export function ExtensionDetail({
                 }
               }}
             >
-              <Ic n="key" s={13} />
-              <input
+              <InputField
+                control={keyForm.control}
+                name="key"
+                rules={{ required: true }}
                 type="password"
                 autoFocus
                 autoComplete="new-password"
                 aria-label={keyField.label}
                 placeholder={keyField.placeholder || t("API key")}
-                value={key}
                 disabled={!canUpdate || busy}
-                onChange={(event) => setKey(event.target.value)}
+                leftElement={<Ic n="key" s={13} />}
+                className="min-w-0 flex-1"
+                inputClassProps={aicFieldTrigger}
               />
               {(on || stored) && (
-                <button type="submit" className="btn sm ink" disabled={!key.trim() || busy}>
+                <Button type="submit" variant="default" size="sm" disabled={!key.trim() || busy}>
                   {t("Save key")}
-                </button>
+                </Button>
               )}
             </form>
           )}
           {depthField && (
             <>
               <h4 className="mt">{t("Search depth")}</h4>
-              <Seg
-                className="sm"
-                label={t("Search depth")}
-                v={valueOf(config, "searchType") || depthField.default || "auto"}
-                opts={(depthField.options ?? []).map(
-                  (option) => [option, SEARCH_DEPTH_LABELS[option] ?? option] as const,
-                )}
-                onChange={(value) =>
+              <SegmentedControl<string>
+                aria-label={t("Search depth")}
+                value={valueOf(config, "searchType") || depthField.default || "auto"}
+                items={(depthField.options ?? []).map((option) => ({
+                  value: option,
+                  label: SEARCH_DEPTH_LABELS[option] ?? option,
+                  disabled: !canUpdate,
+                }))}
+                onValueChange={(value) =>
                   canUpdate && control.save({ configuration: { searchType: value } })
                 }
               />
@@ -285,13 +296,16 @@ export function ExtensionDetail({
           {limitField && (
             <>
               <h4 className="mt">{t("Daily request limit")}</h4>
-              <Seg
-                className="sm"
-                label={t("Daily request limit")}
-                v={limit}
-                opts={limits.map((value) => [value, value.toLocaleString()] as const)}
-                onChange={(value) =>
-                  canUpdate && control.save({ configuration: { dailyRequestLimit: String(value) } })
+              <SegmentedControl<string>
+                aria-label={t("Daily request limit")}
+                value={String(limit)}
+                items={limits.map((value) => ({
+                  value: String(value),
+                  label: value.toLocaleString(),
+                  disabled: !canUpdate,
+                }))}
+                onValueChange={(value) =>
+                  canUpdate && control.save({ configuration: { dailyRequestLimit: value } })
                 }
               />
             </>
@@ -309,15 +323,14 @@ export function ExtensionDetail({
         </div>
         <div className="pd-s">
           <h4>{t("Available to")}</h4>
-          <Seg
-            className="sm"
-            label={t("Available to")}
-            v={availability}
-            opts={[
-              ["SelectedAgents", t("Agents you choose")],
-              ["AllAgents", t("Every agent")],
+          <SegmentedControl<typeof availability>
+            aria-label={t("Available to")}
+            value={availability}
+            items={[
+              { value: "SelectedAgents", label: t("Agents you choose"), disabled: !canUpdate },
+              { value: "AllAgents", label: t("Every agent"), disabled: !canUpdate },
             ]}
-            onChange={(value) =>
+            onValueChange={(value) =>
               canUpdate && value !== availability && control.save({ availability: value })
             }
           />
@@ -364,15 +377,16 @@ export function ExtensionDetail({
               {t("Turn off")}
             </button>
           ) : (
-            <button
+            <Button
               type="button"
-              className="btn sm ink"
+              variant="default" size="sm"
               disabled={!canTurnOn || busy}
+              isLoading={control.saving}
+              loadingText={t("Turn on")}
               onClick={turnOn}
             >
-              {control.saving && <i className="spn" />}
               {t("Turn on")}
-            </button>
+            </Button>
           ))}
         {keyField && item.supportsTestConnect && canUpdate && (
           <button
@@ -414,7 +428,9 @@ function currentConfiguration(config: AgentExtensionConfigResponse): Record<stri
   return Object.fromEntries(
     config.spec.map((field) => [
       field.key,
-      field.sensitive ? "" : (config.fields.find((value) => value.key === field.key)?.value ?? field.default ?? ""),
+      field.sensitive
+        ? ""
+        : (config.fields.find((value) => value.key === field.key)?.value ?? field.default ?? ""),
     ]),
   );
 }
@@ -432,31 +448,30 @@ function OtherField({
   onSave: (value: string) => void;
 }) {
   const t = useT();
-  const [text, setText] = useState(value || field.default || "");
+  const form = useForm<{ text: string }>({
+    defaultValues: { text: value || field.default || "" },
+  });
   const commit = () => {
-    const next = text.trim();
+    const next = form.getValues("text").trim();
     if (field.type === "number" && next !== "" && !/^\d+$/.test(next)) {
-      setText(value);
+      form.setValue("text", value);
       return;
     }
     if (next !== (value || field.default || "")) onSave(next);
   };
   return (
-    <>
-      <h4 className="mt">{t(field.label)}</h4>
-      <label className="inx">
-        <input
-          aria-label={t(field.label)}
-          inputMode={field.type === "number" ? "numeric" : undefined}
-          placeholder={field.placeholder}
-          value={text}
-          disabled={disabled}
-          onChange={(event) => setText(event.target.value)}
-          onBlur={commit}
-          onKeyDown={(event) => event.key === "Enter" && event.currentTarget.blur()}
-        />
-      </label>
-      {field.helpText && <p className="ad-h">{t(field.helpText)}</p>}
-    </>
+    <InputField
+      control={form.control}
+      name="text"
+      label={t(field.label)}
+      description={field.helpText ? t(field.helpText) : undefined}
+      inputMode={field.type === "number" ? "numeric" : undefined}
+      placeholder={field.placeholder}
+      disabled={disabled}
+      className="mt-3"
+      inputClassProps={aicFieldTrigger}
+      onBlur={commit}
+      onKeyDown={(event) => event.key === "Enter" && event.currentTarget.blur()}
+    />
   );
 }

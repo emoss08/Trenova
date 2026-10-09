@@ -1,15 +1,12 @@
+import { SearchLgIcon } from "@trenova/shared/components/icons";
+import { Input } from "@trenova/shared/components/ui/input";
+import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  type CSSProperties,
-  type KeyboardEvent,
-  type ReactNode,
-  type Ref,
-} from "react";
+import { useEffect, type CSSProperties, type Ref } from "react";
+import { aicFieldTrigger } from "../edit/field-trigger";
 import { Ic } from "./ic";
+import { Button } from "@trenova/shared/components/ui/button";
 
 type SearchProps = {
   value: string;
@@ -25,34 +22,41 @@ export function Search({ value, onChange, placeholder, inputRef, size }: SearchP
   const t = useT();
 
   return (
-    <label className={cn("srch", size)}>
-      <Ic n="search" s={size ? 14 : 13} />
-      <input
-        ref={inputRef}
-        value={value}
-        placeholder={placeholder}
-        aria-label={placeholder}
-        onChange={(event) => onChange(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") {
-            onChange("");
-            event.currentTarget.blur();
-          }
-        }}
-      />
-      {value ? (
-        <button
-          type="button"
-          className="ib xs"
-          aria-label={t("Clear the search")}
-          onClick={() => onChange("")}
-        >
-          <Ic n="x" s={11} />
-        </button>
-      ) : (
-        <span className="kbd">/</span>
+    <Input
+      ref={inputRef}
+      value={value}
+      placeholder={placeholder}
+      aria-label={placeholder}
+      inputContainerClassName={cn(
+        "w-full min-w-45 flex-[0_1_20rem]",
+        size === "lg" ? "max-w-95 flex-[0_1_23.75rem]" : "max-w-80",
       )}
-    </label>
+      className={size === "lg" ? "h-9 min-h-9" : aicFieldTrigger}
+      leftElement={<SearchLgIcon className="size-3.5 text-muted-foreground" />}
+      rightElement={
+        value ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            className="text-muted-foreground hover:text-foreground"
+            aria-label={t("Clear the search")}
+            onClick={() => onChange("")}
+          >
+            <Ic n="x" s={11} />
+          </Button>
+        ) : (
+          <Kbd className="mr-1">/</Kbd>
+        )
+      }
+      onChange={(event) => onChange(event.target.value)}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          onChange("");
+          event.currentTarget.blur();
+        }
+      }}
+    />
   );
 }
 
@@ -75,115 +79,6 @@ export function useSlashFocus(inputRef: { current: HTMLInputElement | null }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [inputRef]);
-}
-
-export type MenuItem =
-  | { kind: "heading"; label: string }
-  | { kind: "separator" }
-  | {
-      kind: "item";
-      label: string;
-      note?: string;
-      icon?: ReactNode;
-      danger?: boolean;
-      disabled?: boolean;
-      onSelect: () => void;
-    };
-
-type MenuProps = {
-  items: MenuItem[];
-  onClose: () => void;
-  right?: boolean;
-  className?: string;
-  label: string;
-};
-
-/**
- * A menu dropped from the button beside it. It takes focus on its first item, moves with
- * the arrow keys, and closes on Escape, a choice, or a click anywhere else.
- */
-export function Menu({ items, onClose, right = false, className, label }: MenuProps) {
-  const root = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const first = root.current?.querySelector<HTMLButtonElement>("[role=menuitem]:not(:disabled)");
-    first?.focus();
-    const onDown = (event: MouseEvent) => {
-      if (!root.current?.contains(event.target as Node)) {
-        onClose();
-      }
-    };
-    const timer = window.setTimeout(() => document.addEventListener("mousedown", onDown));
-    return () => {
-      window.clearTimeout(timer);
-      document.removeEventListener("mousedown", onDown);
-    };
-  }, [onClose]);
-
-  const onKeyDown = useCallback(
-    (event: KeyboardEvent<HTMLDivElement>) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        event.stopPropagation();
-        onClose();
-        return;
-      }
-      if (event.key !== "ArrowDown" && event.key !== "ArrowUp") {
-        return;
-      }
-      event.preventDefault();
-      const options = [
-        ...(root.current?.querySelectorAll<HTMLButtonElement>("[role=menuitem]:not(:disabled)") ??
-          []),
-      ];
-      const at = options.indexOf(document.activeElement as HTMLButtonElement);
-      const step = event.key === "ArrowDown" ? 1 : -1;
-      options[(at + step + options.length) % options.length]?.focus();
-    },
-    [onClose],
-  );
-
-  return (
-    <div
-      ref={root}
-      role="menu"
-      aria-label={label}
-      className={cn("mn", right && "right", className)}
-      onKeyDown={onKeyDown}
-    >
-      {items.map((item, index) => {
-        if (item.kind === "separator") {
-          return <span key={index} className="mn-sep" role="separator" />;
-        }
-        if (item.kind === "heading") {
-          return (
-            <div key={index} className="mn-h">
-              {item.label}
-            </div>
-          );
-        }
-        return (
-          <button
-            key={index}
-            type="button"
-            role="menuitem"
-            className="mn-i"
-            disabled={item.disabled}
-            onClick={() => {
-              onClose();
-              item.onSelect();
-            }}
-          >
-            {item.icon}
-            <span className="mn-l">
-              <b className={cn(item.danger && "t-d")}>{item.label}</b>
-              {item.note && <em>{item.note}</em>}
-            </span>
-          </button>
-        );
-      })}
-    </div>
-  );
 }
 
 type RingProps = {

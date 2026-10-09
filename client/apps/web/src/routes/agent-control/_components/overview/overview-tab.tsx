@@ -4,7 +4,9 @@ import { queries } from "@/lib/queries";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
+import { POLICY_EDITOR_PARAM, policyEditorParser } from "../../ai-control-tabs";
+import { useAddressedFlag } from "../../use-addressed-flag";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
 import { NovaSummary } from "../nova/nova-summary";
 import { useNovaTargets } from "../nova/use-nova-targets";
@@ -37,7 +39,10 @@ export default function OverviewTab({ onOpenProviders, onOpenAgents }: OverviewT
   const t = useT();
   const go = useAIControlNavigation();
   const onTarget = useNovaTargets();
-  const [editingPolicy, setEditingPolicy] = useState(false);
+  const [editingPolicy, setEditingPolicy] = useAddressedFlag(
+    POLICY_EDITOR_PARAM,
+    policyEditorParser,
+  );
   const { allowed: canUpdateControl } = usePermission(Resource.AgentControl, Operation.Update);
 
   const summaryQuery = useQuery({
@@ -58,6 +63,7 @@ export default function OverviewTab({ onOpenProviders, onOpenAgents }: OverviewT
     (providerId: string) => go({ tab: "providers", panel: { mode: "edit", entityId: providerId } }),
     [go],
   );
+  const openAgent = useCallback((agentId: string) => go({ tab: "agents", agent: agentId }), [go]);
   const firstEnabled = providersQuery.data?.find((provider) => provider.enabled);
   const taskCount = catalogQuery.data?.tasks.length ?? 0;
   const busiest = Math.max(0, ...(usageQuery.data?.byFeature ?? []).map((slice) => slice.calls));
@@ -105,6 +111,7 @@ export default function OverviewTab({ onOpenProviders, onOpenAgents }: OverviewT
         <aside className="ov-a">
           <AgentsAtWork
             idleReason={noProvider ? "no-provider" : facts?.paused ? "paused" : null}
+            onOpenAgent={openAgent}
             onOpenAgents={onOpenAgents}
           />
           {controlQuery.data && (
@@ -125,7 +132,7 @@ export default function OverviewTab({ onOpenProviders, onOpenAgents }: OverviewT
 
       {controlQuery.data && (
         <PolicyEditor
-          open={editingPolicy}
+          open={editingPolicy && canUpdateControl}
           control={controlQuery.data}
           onClose={() => setEditingPolicy(false)}
         />

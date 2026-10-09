@@ -3,6 +3,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Ic } from "../kit/ic";
 import { ENABLE_VECTOR_COMMAND, availabilityNotice } from "./retrieval-model";
+import { Button } from "@trenova/shared/components/ui/button";
 
 /** Reasons Nova's sentence and its control already speak to. */
 const SAID_ABOVE = new Set(["NoProvider", "Disabled", "BudgetPaused"]);
@@ -47,9 +48,9 @@ export function RetrievalNotice({ availability, onOpenProviders }: RetrievalNoti
         )}
       </span>
       {notice.fix === "providers" && (
-        <button type="button" className="btn sm" onClick={onOpenProviders}>
+        <Button type="button" variant="outline" size="sm" onClick={onOpenProviders}>
           {t("Open Providers")}
-        </button>
+        </Button>
       )}
     </div>
   );

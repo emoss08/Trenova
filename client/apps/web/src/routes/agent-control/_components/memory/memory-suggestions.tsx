@@ -8,13 +8,17 @@ import {
 } from "@/lib/graphql/agent-memories";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
+import { TextareaField } from "@/components/fields/textarea-field";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useQueryState } from "nuqs";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
+import { MEMORY_SUGGESTION_PARAM, memorySuggestionParser } from "../../ai-control-tabs";
 import { Ic } from "../kit/ic";
 import { Modal } from "../kit/modal";
 import { invalidateAIControlCounts } from "../overview/use-ai-control-stats";
 import { MEMORY_CONTENT_LIMIT } from "./memory-form-schema";
+import { Button } from "@trenova/shared/components/ui/button";
 
 export const agentMemorySuggestionsQueryKey = [AGENT_MEMORY_SUGGESTIONS_KEY] as const;
 
@@ -31,10 +35,13 @@ export function MemorySuggestions({ canDecide }: { canDecide: boolean }) {
     queryKey: agentMemorySuggestionsQueryKey,
     queryFn: ({ signal }) => fetchAgentMemorySuggestions({ signal }),
   });
-  const [editing, setEditing] = useState<AgentMemorySuggestion | null>(null);
+  const [editingId, setEditingId] = useQueryState(MEMORY_SUGGESTION_PARAM, memorySuggestionParser);
   const settle = useSettleSuggestion();
 
   const suggestions = suggestionsQuery.data ?? [];
+  const editing = canDecide
+    ? (suggestions.find((suggestion) => suggestion.id === editingId) ?? null)
+    : null;
   if (suggestions.length === 0) {
     return null;
   }
@@ -55,7 +62,7 @@ export function MemorySuggestions({ canDecide }: { canDecide: boolean }) {
           canDecide={canDecide}
           busy={settle.isPending}
           onDismiss={() => settle.mutate({ kind: "dismiss", suggestion })}
-          onEdit={() => setEditing(suggestion)}
+          onEdit={() => void setEditingId(suggestion.id)}
           onApprove={() =>
             settle.mutate({ kind: "approve", suggestion, content: suggestion.content })
           }
@@ -66,11 +73,11 @@ export function MemorySuggestions({ canDecide }: { canDecide: boolean }) {
           key={editing.id}
           suggestion={editing}
           busy={settle.isPending}
-          onClose={() => setEditing(null)}
+          onClose={() => void setEditingId(null)}
           onApprove={(content) =>
             settle.mutate(
               { kind: "approve", suggestion: editing, content },
-              { onSuccess: () => setEditing(null) },
+              { onSuccess: () => void setEditingId(null) },
             )
           }
         />
@@ -175,17 +182,17 @@ function SuggestionCard({
       )}
       {canDecide && (
         <div className="sgm-a">
-          <button type="button" className="btn sm ghost" disabled={busy} onClick={onDismiss}>
+          <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={onDismiss}>
             {t("Dismiss")}
-          </button>
-          <button type="button" className="btn sm" disabled={busy} onClick={onEdit}>
+          </Button>
+          <Button type="button" variant="outline" size="sm" disabled={busy} onClick={onEdit}>
             <Ic n="edit" s={12} />
             {t("Edit")}
-          </button>
-          <button type="button" className="btn sm ink" disabled={busy} onClick={onApprove}>
+          </Button>
+          <Button type="button" variant="default" size="sm" disabled={busy} onClick={onApprove}>
             <Ic n="check" s={12} w={2.2} />
             {t("Approve")}
-          </button>
+          </Button>
         </div>
       )}
     </div>
@@ -199,9 +206,12 @@ type ApproveEditedProps = {
   onApprove: (content: string) => void;
 };
 
+type ApproveEditedValues = { content: string };
+
 function ApproveEdited({ suggestion, busy, onClose, onApprove }: ApproveEditedProps) {
   const t = useT();
-  const [content, setContent] = useState(suggestion.content);
+  const form = useForm<ApproveEditedValues>({ defaultValues: { content: suggestion.content } });
+  const content = useWatch({ control: form.control, name: "content" });
   const trimmed = content.trim();
 
   return (
@@ -218,27 +228,28 @@ function ApproveEdited({ suggestion, busy, onClose, onApprove }: ApproveEditedPr
             {content.length}/{MEMORY_CONTENT_LIMIT}
           </span>
           <span className="sp" />
-          <button type="button" className="btn sm ghost" onClick={onClose}>
+          <Button type="button" variant="ghost" size="sm" onClick={onClose}>
             {t("Cancel")}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="btn sm ink"
+            variant="default"
+            size="sm"
             disabled={busy || trimmed === ""}
             onClick={() => onApprove(trimmed)}
           >
             {t("Approve")}
-          </button>
+          </Button>
         </>
       }
     >
-      <textarea
-        className="mta"
-        aria-label={t("Memory")}
-        value={content}
+      <TextareaField<ApproveEditedValues>
+        control={form.control}
+        name="content"
+        rules={{ required: true }}
+        label={t("Memory")}
         autoFocus
-        rows={4}
-        onChange={(event) => setContent(event.target.value.slice(0, MEMORY_CONTENT_LIMIT))}
+        maxLength={MEMORY_CONTENT_LIMIT}
       />
     </Modal>
   );

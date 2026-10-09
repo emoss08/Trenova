@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { MemorySuggestions } from "../memory-suggestions";
 
 const api = vi.hoisted(() => ({
@@ -46,7 +47,9 @@ function renderSuggestions(canDecide = true) {
 
   return render(
     <QueryClientProvider client={client}>
-      <MemorySuggestions canDecide={canDecide} />
+      <NuqsTestingAdapter hasMemory>
+        <MemorySuggestions canDecide={canDecide} />
+      </NuqsTestingAdapter>
     </QueryClientProvider>,
   );
 }

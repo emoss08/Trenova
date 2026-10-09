@@ -1,9 +1,11 @@
 import { Dialog } from "@base-ui/react/dialog";
+import { FieldWrapper } from "@/components/fields/field-components";
+import { Input } from "@trenova/shared/components/ui/input";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
 import { useId, useState, type MouseEvent, type ReactNode } from "react";
-import { F } from "../edit/fields";
+import { aicFieldTrigger } from "../edit/field-trigger";
 import { Ic } from "./ic";
+import { Button } from "@trenova/shared/components/ui/button";
 
 type ModalProps = {
   open: boolean;
@@ -37,9 +39,9 @@ export function Modal({ open, onClose, title, description, footer, children }: M
                     <Dialog.Description render={<span />}>{description}</Dialog.Description>
                   )}
                 </div>
-                <button type="button" className="ib" aria-label={t("Close")} onClick={onClose}>
+                <Button type="button" variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground" aria-label={t("Close")} onClick={onClose}>
                   <Ic n="x" s={14} />
-                </button>
+                </Button>
               </header>
               {children && <div className="md-b">{children}</div>}
               {footer && <footer className="md-f">{footer}</footer>}
@@ -95,45 +97,51 @@ export function ConfirmDialog({
       footer={
         <>
           <span className="sp" />
-          <button type="button" className="btn sm" onClick={close}>
+          <Button type="button" variant="outline" size="sm" onClick={close}>
             {t("Cancel")}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className={cn("btn sm", danger ? "dng" : "ink")}
-            disabled={!ready || busy}
+            variant={danger ? "outline" : "default"}
+            size="sm"
+            className={
+              danger
+                ? "border-danger-border text-danger-foreground hover:bg-danger-subtle"
+                : undefined
+            }
+            disabled={!ready}
+            isLoading={busy}
+            loadingText={confirmLabel}
             onClick={onConfirm}
           >
-            {busy && <i className="spn" />}
             {confirmLabel}
-          </button>
+          </Button>
         </>
       }
     >
       {typed && (
-        <F
-          htmlFor={inputId}
+        <FieldWrapper
           label={
             <>
-              {t("Type")} <b className="mono">{typed}</b> {t("to confirm")}
+              {t("Type")} <b className="font-mono">{typed}</b> {t("to confirm")}
             </>
           }
         >
-          <label className="inx mono">
-            <input
-              id={inputId}
-              autoFocus
-              autoComplete="off"
-              value={value}
-              onChange={(event) => setValue(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && ready && !busy) {
-                  onConfirm();
-                }
-              }}
-            />
-          </label>
-        </F>
+          <Input
+            id={inputId}
+            autoFocus
+            autoComplete="off"
+            aria-label={`${t("Type")} ${typed} ${t("to confirm")}`}
+            className={aicFieldTrigger}
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && ready && !busy) {
+                onConfirm();
+              }
+            }}
+          />
+        </FieldWrapper>
       )}
     </Modal>
   );

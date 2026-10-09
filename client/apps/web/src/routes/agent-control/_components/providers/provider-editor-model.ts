@@ -221,19 +221,40 @@ export function editorValuesFromPreset(
 }
 
 /** The first thing stopping the editor from saving, in the order a person would fix them. */
+export type EditorProblem = {
+  field: "name" | "baseUrl" | "apiKey" | "model";
+  message: string;
+};
+
+/** What keeps a draft from saving, named by the field that has to change. */
+export function editorProblem(
+  values: ProviderEditorValues,
+  context: {
+    create: boolean;
+    keyRequired: boolean;
+    hasStoredKey: boolean;
+    requiresBaseUrl?: boolean;
+  },
+): EditorProblem | null {
+  if (values.name.trim() === "") return { field: "name", message: translate("Give it a name") };
+  if (context.requiresBaseUrl && values.baseUrl.trim() === "") {
+    return { field: "baseUrl", message: translate("Add the base URL") };
+  }
+  if (baseUrlProblem(values.baseUrl, values.allowPrivateNetwork) !== null) {
+    return { field: "baseUrl", message: translate("Fix the base URL") };
+  }
+  if (context.keyRequired && !context.hasStoredKey && values.apiKey.trim() === "") {
+    return { field: "apiKey", message: translate("Paste an API key") };
+  }
+  if (values.model.trim() === "") return { field: "model", message: translate("Pick a model") };
+  return null;
+}
+
 export function editorBlocker(
   values: ProviderEditorValues,
   context: { create: boolean; keyRequired: boolean; hasStoredKey: boolean },
 ): string | null {
-  if (values.name.trim() === "") return translate("Give it a name");
-  if (baseUrlProblem(values.baseUrl, values.allowPrivateNetwork) !== null) {
-    return translate("Fix the base URL");
-  }
-  if (context.keyRequired && !context.hasStoredKey && values.apiKey.trim() === "") {
-    return translate("Paste an API key");
-  }
-  if (values.model.trim() === "") return translate("Pick a model");
-  return null;
+  return editorProblem(values, context)?.message ?? null;
 }
 
 const toDecimal = (text: string): number | null => (text.trim() === "" ? null : Number(text));

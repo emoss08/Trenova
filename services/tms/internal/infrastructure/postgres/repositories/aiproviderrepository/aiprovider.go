@@ -244,6 +244,49 @@ func (r *repository) ListOrdered(
 // without a live database. The task argument has to reach PostgreSQL as an
 // array literal, and a Go slice and a pgdialect.Array are indistinguishable to
 // the compiler — the difference only shows up in the statement.
+func (r *repository) SelectOptions(
+	ctx context.Context,
+	req *repositories.AIProviderSelectOptionsRequest,
+) (*pagination.ListResult[*aiprovider.Provider], error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*aiprovider.Provider], error) {
+		cols := buncolgen.ProviderColumns
+		return dbhelper.SelectOptions[*aiprovider.Provider](
+			ctx,
+			r.db.DBForContext(ctx),
+			req.SelectQueryRequest,
+			&dbhelper.SelectOptionsConfig{
+				ColumnRefs: []buncolgen.Column{
+					cols.ID,
+					cols.Name,
+					cols.Model,
+					cols.Kind,
+					cols.Enabled,
+					cols.Tasks,
+					cols.Priority,
+					cols.CreatedAt,
+				},
+				OrgColumnRef: &cols.OrganizationID,
+				BuColumnRef:  &cols.BusinessUnitID,
+				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+					return applySelectOptionsFilter(q, req.Task)
+				},
+				EntityName:       "AIProvider",
+				SearchColumnRefs: []buncolgen.Column{cols.Name, cols.Model},
+			},
+		)
+	})
+}
+
+func applySelectOptionsFilter(q *bun.SelectQuery, task aiprovider.Task) *bun.SelectQuery {
+	cols := buncolgen.ProviderColumns
+	q = q.Where(cols.Enabled.IsTrue())
+	if task != "" {
+		q = q.Where(cols.Tasks.Expr("{} @> ?::text[]"), pgdialect.Array([]string{string(task)}))
+	}
+
+	return q.Order(cols.Priority.OrderAsc(), cols.Name.OrderAsc(), cols.ID.OrderAsc())
+}
+
 func buildProvidersForTaskQuery(
 	db bun.IDB,
 	entities *[]*aiprovider.Provider,

@@ -336,6 +336,10 @@ const emailProfileSelectOptionsGraphQL = {
   resource: "EMAIL_PROFILE",
 } satisfies GraphQLSelectOptionsConfig;
 
+const aiProviderSelectOptionsGraphQL = {
+  resource: "AI_PROVIDER",
+} satisfies GraphQLSelectOptionsConfig;
+
 function getDocumentLabel(option: Document) {
   const documentTypeLabel = option.documentType?.name?.trim();
   const fileName = option.originalName?.trim() || option.fileName?.trim() || option.id;
@@ -394,6 +398,54 @@ function EDIOptionStack({ primary, secondary }: { primary: ReactNode; secondary?
         <span className="text-2xs text-muted-foreground w-full truncate">{secondary}</span>
       ) : null}
     </div>
+  );
+}
+
+function aiProviderDisplay(option: GraphQLSelectOption) {
+  return option.description ? `${option.label} · ${option.description}` : option.label;
+}
+
+type AIProviderAutocompleteProps = {
+  label: string;
+  /** The chosen provider's id; empty for none. */
+  value: string;
+  onValueChange: (value: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  triggerClassName?: string;
+};
+
+/**
+ * The enabled providers that answer the assistant, searched by name or model. Clearing
+ * it leaves the value empty rather than null, which is what a form that keeps "none" as
+ * an empty id expects.
+ */
+export function AIProviderAutocomplete({
+  label,
+  value,
+  onValueChange,
+  placeholder,
+  disabled,
+  triggerClassName,
+}: AIProviderAutocompleteProps) {
+  return (
+    <Autocomplete<GraphQLSelectOption, FieldValues>
+      graphql={aiProviderSelectOptionsGraphQL}
+      label={label}
+      value={value || null}
+      onChange={(nextValue: string | number | null | undefined) =>
+        onValueChange(nextValue ? String(nextValue) : "")
+      }
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={aiProviderDisplay}
+      renderOption={(option) => (
+        <EDIOptionStack primary={option.label} secondary={option.description || ""} />
+      )}
+      placeholder={placeholder}
+      disabled={!!disabled}
+      clearable
+      triggerClassName={triggerClassName}
+    />
   );
 }
 

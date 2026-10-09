@@ -3,6 +3,7 @@ import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Hero, Ref } from "../kit/hero";
 import type { ActivityFacts } from "./activity-model";
+import { Button } from "@trenova/shared/components/ui/button";
 
 type ActivityHeroProps = {
   facts: ActivityFacts;
@@ -30,9 +31,9 @@ export function ActivityHero({
       control={
         pending > 0 && (
           <>
-            <button type="button" className="btn ink lg" onClick={onShowProposals}>
+            <Button type="button" variant="default" size="lg" onClick={onShowProposals}>
               {t("{0, plural, one {Decide # proposal} other {Decide # proposals}}", pending)}
-            </button>
+            </Button>
             {facts.oldestWaitSeconds !== null && (
               <span>{t("Oldest waiting {0}", formatCompactAge(facts.oldestWaitSeconds))}</span>
             )}

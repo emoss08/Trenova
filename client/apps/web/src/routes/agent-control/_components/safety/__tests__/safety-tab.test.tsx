@@ -10,7 +10,7 @@ import type {
 } from "@trenova/shared/types/data-table";
 import { NuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import type { ComponentType, ReactNode } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { definition, rule, safety, tool } from "./fixtures";
 
 const api = vi.hoisted(() => ({
@@ -258,6 +258,12 @@ describe("SafetyTab", () => {
 });
 
 describe("Tool rules", () => {
+  // The rules table is a lazy chunk; load it once up front so a test waits on the
+  // table it asserts about, not on the first transform of its module graph.
+  beforeAll(async () => {
+    await import("../tool-rules-table");
+  });
+
   it("draws the rules from the rule connection with the agents that hold each tool", async () => {
     table.rows = [rule({ name: "assign_move", title: "Assign move" }, true), emailCustomer];
     renderTab("rules");

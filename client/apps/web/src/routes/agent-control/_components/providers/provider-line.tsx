@@ -6,6 +6,7 @@ import { Ic } from "../kit/ic";
 import { Switch } from "../kit/layout";
 import { Mark } from "../kit/marks";
 import { formatLatency, type LiveState } from "./provider-model";
+import { Button } from "@trenova/shared/components/ui/button";
 
 /** What the chain shows of a provider's week: from the usage summary and its daily series. */
 export type ProviderWeek = {
@@ -136,21 +137,25 @@ export function ProviderLine({
       </span>
       <span className="pc-c" onClick={(event) => event.stopPropagation()}>
         {needsKey ? (
-          <button type="button" className="btn sm" onClick={() => onOpen(true)}>
+          <Button type="button" variant="outline" size="sm" onClick={() => onOpen(true)}>
             <Ic n="key" s={12} />
             {t("Add key")}
-          </button>
+          </Button>
         ) : (
-          <button
+          <Button
             type="button"
-            className="ib"
+            variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground"
             title={t("Test connection")}
             aria-label={t("Test connection")}
             disabled={live === "run" || !canTest}
             onClick={onTest}
           >
-            {live === "run" ? <i className="spn" /> : <Ic n="plug" s={13} />}
-          </button>
+            {live === "run" ? (
+              <span className="border-border-strong border-t-foreground size-3 animate-spin rounded-full border-[1.5px]" />
+            ) : (
+              <Ic n="plug" s={13} />
+            )}
+          </Button>
         )}
         <Switch
           on={provider.enabled}

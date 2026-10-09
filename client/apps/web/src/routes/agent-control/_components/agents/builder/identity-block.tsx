@@ -5,19 +5,38 @@ import {
   type AgentAccentName,
   type AgentIconName,
 } from "@/components/agent-identity/agent-identity";
+import { ErrorMessage } from "@/components/fields/field-components";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useState, type CSSProperties } from "react";
+import { useController, useFormContext } from "react-hook-form";
 import { Ic } from "../../kit/ic";
 import { ACCENT_HUE, Tile } from "../../kit/marks";
 import { Pop } from "../../kit/pop";
+import type { AgentFormValues } from "../agent-form-schema";
 import { useDraftField } from "./block";
+
+/** A heading typed in place: no box until it is hovered or focused. */
+const HEADING_INPUT =
+  "placeholder:text-muted-foreground/60 hover:bg-field focus:bg-foreground/5 -ml-2 w-full rounded-md border-0 bg-transparent px-2 py-0.5 outline-none transition-colors";
 
 /** The agent's tile, which opens its look, and its name and one-line description. */
 export function IdentityBlock({ fresh }: { fresh: boolean }) {
   const t = useT();
-  const [name, setName] = useDraftField("name");
-  const [description, setDescription] = useDraftField("description");
+  const { control } = useFormContext<AgentFormValues>();
+  const {
+    field: { value: name, onChange: setName, onBlur: onNameBlur, ref: nameRef, name: nameField },
+    fieldState: nameState,
+  } = useController({ control, name: "name" });
+  const {
+    field: {
+      value: description,
+      onChange: setDescription,
+      onBlur: onDescriptionBlur,
+      ref: descriptionRef,
+      name: descriptionField,
+    },
+  } = useController({ control, name: "description" });
   const [icon, setIcon] = useDraftField("icon");
   const [accent, setAccent] = useDraftField("accent");
   const [looking, setLooking] = useState(false);
@@ -75,22 +94,30 @@ export function IdentityBlock({ fresh }: { fresh: boolean }) {
           </Pop>
         )}
       </div>
-      <div className="hero2-f">
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <input
-          className="hero2-n"
+          ref={nameRef}
+          name={nameField}
           value={name}
           maxLength={100}
           aria-label={t("Name")}
+          aria-invalid={nameState.invalid || undefined}
           placeholder={t("Name your agent")}
+          className={cn(HEADING_INPUT, "text-4xl leading-tight font-semibold tracking-tight")}
+          onBlur={onNameBlur}
           onChange={(event) => setName(event.target.value)}
         />
         <input
-          className="hero2-d"
+          ref={descriptionRef}
+          name={descriptionField}
           value={description}
           aria-label={t("Description")}
           placeholder={t("Say what it does in one line")}
+          className={cn(HEADING_INPUT, "text-muted-foreground text-lg")}
+          onBlur={onDescriptionBlur}
           onChange={(event) => setDescription(event.target.value)}
         />
+        {nameState.error?.message && <ErrorMessage formError={nameState.error.message} />}
       </div>
     </div>
   );

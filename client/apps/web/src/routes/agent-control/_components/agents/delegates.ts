@@ -72,3 +72,49 @@ export function delegatesLine(delegates: readonly DelegateSummary[], t: Translat
 export function canDelegate(triggerMode: TriggerMode): boolean {
   return triggerMode === "Chat";
 }
+
+/**
+ * The agents that work on their own page (the import and formula assistants). The server
+ * refuses one as a delegate; it mirrors `agentdefinition.PageAgentKeys`.
+ */
+const PAGE_AGENT_KEYS: ReadonlySet<string> = new Set(["import_assistant", "formula_assistant"]);
+
+/** Why an agent on the list can no longer be handed work, as the server would refuse it. */
+export type DelegateUnavailable = "disabled" | "background" | "page";
+
+type DelegateCandidateAgent = Pick<
+  AgentDefinitionRow,
+  "id" | "enabled" | "triggerMode" | "systemKey"
+>;
+
+export type DelegateCandidate<A extends DelegateCandidateAgent> = {
+  agent: A;
+  /** Null for an agent that may be added; otherwise why it is only shown to be taken off. */
+  unavailable: DelegateUnavailable | null;
+};
+
+function delegateUnavailable(agent: DelegateCandidateAgent): DelegateUnavailable | null {
+  if (PAGE_AGENT_KEYS.has(agent.systemKey)) return "page";
+  if (!canDelegate(agent.triggerMode)) return "background";
+  if (!agent.enabled) return "disabled";
+  return null;
+}
+
+/**
+ * The agents "Can ask" offers, in roster order: enabled agents people talk to, never the
+ * agent itself and never one that works on its own page. An agent runs on its own when a
+ * schedule, an event or a watch starts it, and nobody would read what it was handed. One
+ * already on the list that can no longer be asked stays, marked, so it can be taken off
+ * rather than left on the list where nobody can see it.
+ */
+export function delegateCandidates<A extends DelegateCandidateAgent>(
+  agents: readonly A[],
+  { selfId, chosen }: { selfId: string | null; chosen: readonly string[] },
+): DelegateCandidate<A>[] {
+  const picked = new Set(chosen);
+  return agents.flatMap((agent) => {
+    if (agent.id === selfId) return [];
+    const unavailable = delegateUnavailable(agent);
+    return unavailable === null || picked.has(agent.id) ? [{ agent, unavailable }] : [];
+  });
+}

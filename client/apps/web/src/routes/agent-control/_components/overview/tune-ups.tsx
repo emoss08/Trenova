@@ -20,6 +20,7 @@ import { SecH } from "../kit/layout";
 import { Mark, Tile } from "../kit/marks";
 import { tuneUpCopy, type TuneUpLabels, type TuneUpTone } from "./tune-up-copy";
 import { invalidateAIControlCounts } from "./use-ai-control-stats";
+import { Button } from "@trenova/shared/components/ui/button";
 
 /** How long a row takes to fold away once it is applied or put away. */
 const COLLAPSE_MS = 260;
@@ -185,25 +186,26 @@ function TuneUpRow({ tuneUp }: { tuneUp: AITuneUp }) {
         </div>
         <span className={cn("tu-g", GAIN_TONE[copy.tone])}>{copy.gain}</span>
         <div className="nd-a">
-          <button
+          <Button
             type="button"
-            className="ib"
+            variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground"
             title={t("Dismiss for 30 days")}
             aria-label={t("Dismiss for 30 days")}
             disabled={busy || !canDecide}
             onClick={() => dismiss.mutate({ id: tuneUp.id, version: tuneUp.version })}
           >
             <Ic n="x" s={13} />
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="btn sm"
+            variant="outline" size="sm"
             disabled={busy || !canDecide || !canChange}
+            isLoading={apply.isPending}
+            loadingText={copy.action}
             onClick={() => apply.mutate({ id: tuneUp.id, version: tuneUp.version })}
           >
-            {apply.isPending && <i className="spn" />}
             {copy.action}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

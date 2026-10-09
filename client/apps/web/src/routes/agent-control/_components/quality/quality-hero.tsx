@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { Hero, Ref } from "../kit/hero";
 import { formatShare, qualityHeroFacts } from "./quality-model";
 import { hourLabel } from "./sweep-settings-model";
+import { Button } from "@trenova/shared/components/ui/button";
 
 type QualityHeroProps = {
   overview: AgentQualityOverview;
@@ -29,9 +30,9 @@ export function QualityHero({ overview, onOpenAgent }: QualityHeroProps) {
       control={
         worst && (
           <>
-            <button type="button" className="btn ink lg" onClick={() => onOpenAgent(worst.agentId)}>
+            <Button type="button" variant="default" size="lg" onClick={() => onOpenAgent(worst.agentId)}>
               {t("Look at {0}", worst.agentName)}
-            </button>
+            </Button>
             <span>{sweep}</span>
           </>
         )

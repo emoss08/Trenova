@@ -17,10 +17,11 @@ import { toast } from "sonner";
 import { personAllowanceOptions, promotionThresholdOptions } from "../agent-control-options";
 import type { EditFields } from "../edit/change-review";
 import { EditSheet, type EditSection } from "../edit/edit-sheet";
-import { Callout, F } from "../edit/fields";
+import { SegmentedField } from "@/components/fields/segmented-field";
+import { Callout } from "../edit/callout";
 import { useEditFlow } from "../edit/use-edit-flow";
 import { Ic } from "../kit/ic";
-import { Seg, Switch } from "../kit/layout";
+import { Switch } from "../kit/layout";
 import { TrainingExportHistory } from "../training-export-history";
 import {
   policyFormSchema,
@@ -118,22 +119,12 @@ export function PolicyEditor({ open, control, onClose }: PolicyEditorProps) {
             )}
           </p>
           {values.earnedAutonomy && (
-            <F label={t("Clean approvals in a row")}>
-              <Controller
-                control={form.control}
-                name="promotionThreshold"
-                render={({ field }) => (
-                  <Seg
-                    v={field.value}
-                    label={t("Clean approvals in a row")}
-                    opts={promotionThresholdOptions(field.value).map(
-                      (option) => [option.value, option.label] as const,
-                    )}
-                    onChange={field.onChange}
-                  />
-                )}
-              />
-            </F>
+            <SegmentedField<PolicyFormValues, number>
+              control={form.control}
+              name="promotionThreshold"
+              label={t("Clean approvals in a row")}
+              options={promotionThresholdOptions(values.promotionThreshold)}
+            />
           )}
           {promotes && <PromotionPreview loading={preview.isLoading} promotions={preview.data} />}
         </>
@@ -178,22 +169,15 @@ export function PolicyEditor({ open, control, onClose }: PolicyEditorProps) {
               "How many questions each person may ask the agents in a calendar month. Desk warns people as they get close and says when it refreshes. Each agent's own budget and daily limit still apply.",
             )}
           </p>
-          <F label={t("Questions per person")}>
-            <Controller
-              control={form.control}
-              name="personMonthlyMessages"
-              render={({ field }) => (
-                <Seg
-                  v={field.value}
-                  label={t("Questions per person")}
-                  opts={personAllowanceOptions(field.value).map(
-                    (value) => [value, value === 0 ? t("Unlimited") : value.toLocaleString()] as const,
-                  )}
-                  onChange={field.onChange}
-                />
-              )}
-            />
-          </F>
+          <SegmentedField<PolicyFormValues, number>
+            control={form.control}
+            name="personMonthlyMessages"
+            label={t("Questions per person")}
+            options={personAllowanceOptions(values.personMonthlyMessages).map((value) => ({
+              value,
+              label: value === 0 ? t("Unlimited") : value.toLocaleString(),
+            }))}
+          />
         </>
       ),
     },

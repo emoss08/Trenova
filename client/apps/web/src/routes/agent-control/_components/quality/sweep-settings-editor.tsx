@@ -1,3 +1,5 @@
+import { TimezoneField } from "@/components/fields/timezone-field";
+import { SegmentedField } from "@/components/fields/segmented-field";
 import { usePermission } from "@/hooks/use-permission";
 import {
   fetchAgentQualityControl,
@@ -15,10 +17,10 @@ import { toast } from "sonner";
 import { withPresets } from "../agent-control-options";
 import type { EditFields } from "../edit/change-review";
 import { EditSheet, type EditSection } from "../edit/edit-sheet";
-import { F, Txt } from "../edit/fields";
+import { aicFieldTrigger } from "../edit/field-trigger";
 import { useEditFlow } from "../edit/use-edit-flow";
 import { Ic } from "../kit/ic";
-import { Seg, Switch } from "../kit/layout";
+import { Switch } from "../kit/layout";
 import {
   formatUsd,
   qualityControlSchema,
@@ -128,36 +130,24 @@ export function SweepSettingsEditor({ open, control, onClose }: SweepSettingsEdi
       note: t("Replays each agent's cases and scores the answers."),
       content: values.enabled ? (
         <>
-          <F label={t("Start at")}>
-            <Controller
-              control={form.control}
-              name="runHour"
-              render={({ field }) => (
-                <Seg
-                  v={Number(field.value)}
-                  label={t("Start at")}
-                  opts={withPresets(START_HOUR_PRESETS, Number(field.value)).map(
-                    (hour) => [hour, hourLabel(hour)] as const,
-                  )}
-                  onChange={(hour) => field.onChange(String(hour))}
-                />
-              )}
-            />
-          </F>
-          <F label={t("Timezone")} hint={t("Leave empty for the organization's timezone.")}>
-            <Controller
-              control={form.control}
-              name="timezone"
-              render={({ field }) => (
-                <Txt
-                  value={field.value}
-                  onChange={field.onChange}
-                  label={t("Timezone")}
-                  placeholder={t("The organization's timezone")}
-                />
-              )}
-            />
-          </F>
+          <SegmentedField<QualityControlFormValues, string>
+            control={form.control}
+            name="runHour"
+            label={t("Start at")}
+            options={withPresets(START_HOUR_PRESETS, Number(values.runHour)).map((hour) => ({
+              value: String(hour),
+              label: hourLabel(hour),
+            }))}
+          />
+          <TimezoneField
+            control={form.control}
+            name="timezone"
+            label={t("Timezone")}
+            description={t("Leave empty for the organization's timezone.")}
+            placeholder={t("The organization's timezone")}
+            triggerClassName={aicFieldTrigger}
+            isClearable
+          />
           <PresetField
             control={form.control}
             name="maxCasesPerAgent"
@@ -241,7 +231,6 @@ export function SweepSettingsEditor({ open, control, onClose }: SweepSettingsEdi
             label={t("Per month")}
             presets={MONTHLY_BUDGET_PRESETS}
             format={(cents) => formatUsd(String(cents / 100))}
-            error={form.formState.errors.monthlyBudgetCents?.message}
           />
         </>
       ),
@@ -289,7 +278,6 @@ function PresetField({
   name,
   label,
   hint,
-  error,
   presets,
   format = String,
 }: {
@@ -297,24 +285,18 @@ function PresetField({
   name: NumberName;
   label: string;
   hint?: string;
-  error?: string;
   presets: readonly number[];
   format?: (value: number) => string;
 }) {
+  const current = useWatch({ control, name });
+
   return (
-    <F label={label} hint={hint} error={error}>
-      <Controller
-        control={control}
-        name={name}
-        render={({ field }) => (
-          <Seg
-            v={field.value}
-            label={label}
-            opts={withPresets(presets, field.value).map((value) => [value, format(value)] as const)}
-            onChange={field.onChange}
-          />
-        )}
-      />
-    </F>
+    <SegmentedField<QualityControlFormValues, number>
+      control={control}
+      name={name}
+      label={label}
+      description={hint}
+      options={withPresets(presets, current).map((value) => ({ value, label: format(value) }))}
+    />
   );
 }

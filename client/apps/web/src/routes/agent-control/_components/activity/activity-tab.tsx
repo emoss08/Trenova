@@ -5,7 +5,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { getStartOfDay } from "@trenova/shared/lib/date";
 import { lazy, useMemo } from "react";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
-import { Callout } from "../edit/fields";
+import { Callout } from "../edit/callout";
 import type { ActivityView } from "../rail-items";
 import { ActivityFigures } from "./activity-figures";
 import { ActivityHero } from "./activity-hero";

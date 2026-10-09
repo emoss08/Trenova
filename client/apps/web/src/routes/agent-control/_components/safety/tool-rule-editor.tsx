@@ -1,3 +1,5 @@
+import { InputField } from "@/components/fields/input-field";
+import { SegmentedField } from "@/components/fields/segmented-field";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import {
   AGENT_TOOL_RULE_LIST_KEY,
@@ -13,14 +15,13 @@ import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-quer
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useCallback, useMemo } from "react";
-import { Controller, useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import type { EditFields } from "../edit/change-review";
 import { EditSheet, type EditSection } from "../edit/edit-sheet";
-import { F, Txt } from "../edit/fields";
+import { aicFieldTrigger } from "../edit/field-trigger";
 import { useEditFlow } from "../edit/use-edit-flow";
 import { Ic } from "../kit/ic";
-import { Seg } from "../kit/layout";
 import { Tile } from "../kit/marks";
 import {
   EXTERNAL_READ_ORDER,
@@ -156,72 +157,55 @@ export function ToolRuleEditor({ open, policy, holders, onClose, onSaved }: Tool
             </span>
           </div>
           {ruleHasTier(policy) ? (
-            <F
+            <SegmentedField
+              control={form.control}
+              name="maxTier"
               label={t("Most freedom any agent gets")}
-              hint={t("An agent's own ceiling can hold it lower, never higher.")}
-            >
-              <Controller
-                control={form.control}
-                name="maxTier"
-                render={({ field }) => (
-                  <Seg
-                    v={field.value}
-                    label={t("Most freedom any agent gets")}
-                    opts={TIER_ORDER.map((tier) => [tier, tierLabel(t, tier)] as const)}
-                    disabled={(tier) =>
-                      tierAllowed(tier, policy.declaredMaxTier)
-                        ? null
-                        : t(
-                            "The tool's own rule allows at most {0}",
-                            tierLabel(t, policy.declaredMaxTier),
-                          )
-                    }
-                    onChange={field.onChange}
-                  />
-                )}
-              />
-            </F>
+              description={
+                TIER_ORDER.every((tier) => tierAllowed(tier, policy.declaredMaxTier))
+                  ? t("An agent's own ceiling can hold it lower, never higher.")
+                  : `${t("An agent's own ceiling can hold it lower, never higher.")} ${t(
+                      "The tool's own rule allows at most {0}",
+                      tierLabel(t, policy.declaredMaxTier),
+                    )}.`
+              }
+              options={TIER_ORDER.map((tier) => ({
+                value: tier,
+                label: tierLabel(t, tier),
+                disabled: !tierAllowed(tier, policy.declaredMaxTier),
+              }))}
+            />
           ) : (
             <p className="es-note">{t("Reads never change records, so they always run.")}</p>
           )}
-          <F
+          <SegmentedField
+            control={form.control}
+            name="readsExternal"
             label={t("Treat what it returns as outside text")}
-            hint={t("Outside text can't trigger an automatic action in the same run.")}
-          >
-            <Controller
-              control={form.control}
-              name="readsExternal"
-              render={({ field }) => (
-                <Seg
-                  v={field.value}
-                  label={t("Treat what it returns as outside text")}
-                  opts={EXTERNAL_READ_ORDER.map(
-                    (read) => [read, externalReadLabel(t, read)] as const,
-                  )}
-                  disabled={(read) =>
-                    externalReadAllowed(read, policy.declaredReadsExternal)
-                      ? null
-                      : t("The tool's own rule already treats more as outside text")
-                  }
-                  onChange={field.onChange}
-                />
-              )}
-            />
-          </F>
-          <F label={t("Reason")} hint={t("Saved to the audit trail with the change.")}>
-            <Controller
-              control={form.control}
-              name="reason"
-              render={({ field }) => (
-                <Txt
-                  value={field.value}
-                  onChange={field.onChange}
-                  label={t("Reason")}
-                  placeholder={t("Two wrong releases last week")}
-                />
-              )}
-            />
-          </F>
+            description={
+              EXTERNAL_READ_ORDER.every((read) =>
+                externalReadAllowed(read, policy.declaredReadsExternal),
+              )
+                ? t("Outside text can't trigger an automatic action in the same run.")
+                : `${t("Outside text can't trigger an automatic action in the same run.")} ${t(
+                    "The tool's own rule already treats more as outside text",
+                  )}.`
+            }
+            options={EXTERNAL_READ_ORDER.map((read) => ({
+              value: read,
+              label: externalReadLabel(t, read),
+              disabled: !externalReadAllowed(read, policy.declaredReadsExternal),
+            }))}
+          />
+          <InputField
+            control={form.control}
+            name="reason"
+            rules={values.maxTier !== loaded.maxTier ? { required: true } : undefined}
+            label={t("Reason")}
+            description={t("Saved to the audit trail with the change.")}
+            placeholder={t("Two wrong releases last week")}
+            inputClassProps={aicFieldTrigger}
+          />
         </>
       ),
     },
