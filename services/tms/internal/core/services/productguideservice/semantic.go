@@ -98,6 +98,7 @@ func (s *Service) ranked(
 	}
 
 	terms := agentsearch.Terms(query)
+	delete(terms, productNameTerm)
 	candidates := s.rank(terms, onlyPage)
 	if onlyPage == "" {
 		candidates = s.fuse(candidates, terms, similarity, limit)

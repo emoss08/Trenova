@@ -2012,6 +2012,8 @@ export type SavedMemory = z.infer<typeof savedMemorySchema>;
 export type AssistantMessagePage = z.infer<typeof assistantMessagePageSchema>;
 export type AssistantPageContext = z.infer<typeof pageContextSchema>;
 
+/** Where a conversation is being had: the Desk, or the assistant over a page. */
+export type AssistantSurface = "Desk" | "Assistant";
 export type AssistantPageView = z.infer<typeof pageViewSchema>;
 export type AssistantPageViewFilter = z.infer<typeof pageViewFilterSchema>;
 export type AssistantPageViewKpi = z.infer<typeof pageViewKpiSchema>;

@@ -136,6 +136,8 @@ type RuntimeContext struct {
 	Timezone         string
 	Now              int64
 	Trigger          agent.RunTrigger
+	Surface          agent.Surface
+	SurfaceGuide     *RuntimePage
 	User             *RuntimeUser
 	Subject          *RuntimeSubject
 	Page             *PageContext
@@ -440,10 +442,12 @@ When the person tells you how they want something done from now on, or corrects 
 // asked where something was either said it could not help or described a menu
 // it had never seen.
 const guideSection = `## Trenova itself
-The person may ask how Trenova works, where something is, or how to do something in it. Answer from find_in_trenova, never from memory: the pages, menu places, labels and steps it returns are the app as it is built, and anything else is a guess.
-- Link a page as a markdown link with the path it returned, such as [Rate matrices](/billing/configuration-files/rate-matrices). Never write a path it did not give you.
-- Quote labels exactly as it returns them. Where it says the person cannot open a page, say what access they would need rather than sending them there.
-- When the person asks to go to a page or open one, call open_page: it gives you a link to the page, and the person decides whether to follow it. Asked to show or see something, answer with the information instead; offer the page only as a link they can choose.`
+Trenova is a transportation management system for small and mid-sized trucking carriers in the United States. It runs the whole order-to-cash cycle in one place: shipment entry, dispatch and driver and equipment assignment, rating and accessorials, billing and invoicing, settlement and driver pay, accounting, safety and compliance, EDI with trading partners, and reading and filing freight documents. It is used as Trenova Cloud or run on a carrier's own servers. Its AI agents, you among them, work beside the people who run it. The website is https://trenova.app, with features at https://trenova.app/features/ and pricing at https://trenova.app/pricing/.
+You are one of this organization's agents, built by Trenova and set up by the organization; the model behind you comes from the provider the organization connected. Asked what Trenova is, what you are, who made you or what you can do, answer from this section, the runtime context and your tools in a few sentences, without calling a tool. Asked whether Trenova is open source or where its source is, say it is source-available under the Functional Source License at https://github.com/emoss08/trenova. Otherwise never show code, queries, configuration, file names or anything from how Trenova is built: the people you talk to run freight, not software.
+How Trenova works, where something is and how to do something in it are answered from find_in_trenova, never from memory: the pages, menu places, labels and steps it returns are the app as it is built, and anything else is a guess. Asked about the part of Trenova the person is in, answer from where the runtime context says they are, and call find_in_trenova with that page's path for its tasks.
+- Link a page as a markdown link with the path find_in_trenova returned, such as [Rate matrices](/billing/configuration-files/rate-matrices), and quote labels exactly as it returns them. Never write an app path it did not give you. Where it says the person cannot open a page, say what access they would need rather than sending them there.
+- When the person asks to go to a page or open one, call open_page: it gives them a link, and they decide whether to follow it. Asked to show or see something, answer with the information and offer the page only as a link.
+- For a question about Trenova as a product that neither this section nor find_in_trenova answers, such as a recent release or whether a feature exists yet: when you hold web_search, search trenova.app and Trenova's GitHub repository and answer in plain words from what you read; otherwise point the person to https://trenova.app.`
 
 // buildIdentity is the first line of every prompt: which agent this is. The
 // Desk shows the person the agent's name and asks it who it is, and a prompt
@@ -521,6 +525,10 @@ func (d *Definition) buildContextSection(rc *RuntimeContext) string {
 		lines = append(lines, "- How this run started: "+describeTrigger(rc.Trigger))
 	}
 
+	if surface := describeSurface(rc.Surface, rc.SurfaceGuide); surface != "" {
+		lines = append(lines, surface)
+	}
+
 	if d.HasContextProvider(ContextUser) && rc.User != nil {
 		lines = append(lines, describeUser(rc.User)...)
 	}
@@ -530,7 +538,7 @@ func (d *Definition) buildContextSection(rc *RuntimeContext) string {
 		fenced = append(fenced, describeSubject(rc.Subject))
 	}
 	if d.HasContextProvider(ContextPage) && rc.Page != nil {
-		fenced = append(fenced, describePage(rc.Page, rc.PageGuide))
+		fenced = append(fenced, describePage(rc.Page, rc.PageGuide, rc.Surface))
 		if !rc.Page.View.Empty() {
 			fenced = append(fenced, describePageView(rc.Page.View))
 		}
@@ -757,9 +765,34 @@ func describeSubject(subject *RuntimeSubject) string {
 	return builder.String()
 }
 
-func describePage(page *PageContext, guide *RuntimePage) string {
+func describeSurface(surface agent.Surface, guide *RuntimePage) string {
+	switch surface {
+	case agent.SurfaceDesk:
+		line := "- Where the person is talking to you: the Desk, Trenova's full-page workspace " +
+			"for conversations with its AI agents, at /desk. They are in the Desk now, not on " +
+			"another page of Trenova."
+		if guide == nil || strings.TrimSpace(guide.Summary) == "" {
+			return line
+		}
+
+		return line + " What the Desk is for:\n" + strings.TrimSpace(guide.Summary)
+	case agent.SurfaceAssistant:
+		return "- Where the person is talking to you: the assistant panel, which opens over " +
+			"whichever page of Trenova they are on and can float in a corner, dock to the side " +
+			"or fill the screen. Open in Desk carries the conversation over to the Desk, " +
+			"Trenova's full-page workspace for conversations with its AI agents, at /desk."
+	default:
+		return ""
+	}
+}
+
+func describePage(page *PageContext, guide *RuntimePage, surface agent.Surface) string {
 	var builder strings.Builder
-	builder.WriteString("- What the person is looking at right now:\n")
+	if surface == agent.SurfaceDesk {
+		builder.WriteString("- The page of Trenova the person had open before the Desk:\n")
+	} else {
+		builder.WriteString("- What the person is looking at right now:\n")
+	}
 	builder.WriteString(pageContextOpenTag)
 	builder.WriteString("\npath: ")
 	builder.WriteString(stringutils.NeutralizeCloseTag(page.Path, pageContextCloseTag))

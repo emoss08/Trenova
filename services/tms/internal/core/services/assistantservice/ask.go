@@ -33,6 +33,7 @@ func (s *Service) StartAsk(
 	if page := req.Page.Normalized(); page != nil {
 		page.Validate("context", multiErr)
 	}
+	req.Surface.Validate("surface", multiErr)
 	validateMentions(req.Mentions, multiErr)
 	if multiErr.HasErrors() {
 		return nil, multiErr

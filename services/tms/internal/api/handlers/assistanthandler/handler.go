@@ -661,6 +661,7 @@ func (r *pageContextRequest) page() *agent.PageContext {
 type sendMessageRequest struct {
 	Content string              `json:"content"`
 	Context *pageContextRequest `json:"context"`
+	Surface agent.Surface       `json:"surface"`
 	// ProviderID is the model the person picked in the composer. Empty leaves
 	// the choice to the organization's priority order. It is resolved against
 	// the providers this organization has assigned to the assistant before it
@@ -683,6 +684,7 @@ type sendMessageRequest struct {
 type askRequest struct {
 	Content  string              `json:"content"`
 	Context  *pageContextRequest `json:"context"`
+	Surface  agent.Surface       `json:"surface"`
 	Mentions []agent.EntityRef   `json:"mentions"`
 }
 

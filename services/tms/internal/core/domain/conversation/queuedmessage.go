@@ -31,6 +31,7 @@ var (
 
 type QueuedRequest struct {
 	Page                  *agent.PageContext `json:"page,omitempty"`
+	Surface               agent.Surface      `json:"surface,omitempty"`
 	Mentions              []agent.EntityRef  `json:"mentions,omitempty"`
 	AttachmentDocumentIDs []pulid.ID         `json:"attachmentDocumentIds,omitempty"`
 	ProviderID            pulid.ID           `json:"providerId,omitempty"`
@@ -82,6 +83,7 @@ func (m *QueuedMessage) Validate(multiErr *errortypes.MultiError) {
 	if m.Request.Page != nil {
 		m.Request.Page.Validate("context", multiErr)
 	}
+	m.Request.Surface.Validate("surface", multiErr)
 	agent.ValidateEntityRefs("mentions", m.Request.Mentions, multiErr)
 	if len(m.Request.AttachmentDocumentIDs) > MaxMessageAttachments {
 		multiErr.Add("attachmentDocumentIds", errortypes.ErrInvalid,

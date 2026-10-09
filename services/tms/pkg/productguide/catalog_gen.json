@@ -1,5 +1,5 @@
 {
-  "version": "sha256:e134355a2e0c39c9bc45249ac562c69f86e8b31e60ef6f83ce7d5038d3c004ba",
+  "version": "sha256:f33303c936b4e53989fe1c0fb0dd25b44d9da10f674d83694893faf97753d4e2",
   "modules": [
     {
       "id": "home",
@@ -6260,6 +6260,99 @@
       "inNavigation": true
     },
     {
+      "path": "/billing/configuration-files/case-checklists",
+      "name": "Case checklists",
+      "module": "billing",
+      "breadcrumb": [
+        "Billing management",
+        "Configuration files",
+        "Case checklists"
+      ],
+      "description": "The steps a Desk case shows between a record and what comes next, for your organization and for each customer that bills differently.",
+      "summary": "Case checklists decide what a Desk case shows between a record and what comes next. **Ready to bill** is the checklist for a case about a shipment; **Ready to close** is the one for a case about an invoice. Each step is **Required** (it keeps the record from being ready and can be the next step), **Optional** (shown and ticked, but never blocks) or **Off** (not shown).\n\nYour organization's checklist applies to every case unless the customer billed for the record has its own, which replaces it for that customer. Billing leads use it to drop steps a customer does not need (such as notifying a customer that does not want delivery notices), put steps in the order their team works them, and add steps of their own.",
+      "requires": [
+        {
+          "resource": "billing_control",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "ready to bill checklist",
+        "ready to close checklist",
+        "desk case checklist",
+        "case steps",
+        "billing checklist",
+        "customer checklist"
+      ],
+      "tasks": [
+        {
+          "title": "Change your organization's checklist",
+          "keywords": [
+            "required steps",
+            "optional step",
+            "turn off step",
+            "reorder steps"
+          ],
+          "steps": [
+            "Open [Case checklists](/billing/configuration-files/case-checklists) and choose **Ready to bill** or **Ready to close**.",
+            "With **Your organization** selected, drag a step by its handle to move it, and set each step to **Required**, **Optional** or **Off**.",
+            "Select **Save changes**."
+          ]
+        },
+        {
+          "title": "Give a customer its own checklist",
+          "keywords": [
+            "customer checklist",
+            "customer does not want notification",
+            "per customer steps"
+          ],
+          "steps": [
+            "Open [Case checklists](/billing/configuration-files/case-checklists) and choose the checklist.",
+            "Select **Add a customer** and pick the customer. Its checklist starts as a copy of your organization's.",
+            "Change the steps, then select **Save checklist**."
+          ]
+        },
+        {
+          "title": "Add a step of your own",
+          "keywords": [
+            "custom step",
+            "add step",
+            "manual tick",
+            "document step"
+          ],
+          "steps": [
+            "On the checklist you are changing, select **Add a step**.",
+            "Give it a **Name** and choose what it is **Ticked by**: **A person on the case**, who ticks it on the Desk, or **A document on file**, which ticks it once an accepted copy of the chosen **Document type** is attached to the shipment.",
+            "Optionally set the **Button** text and **What the button asks the agent**, which is sent to the case's agent when the step is the next one.",
+            "Select **Save changes**."
+          ]
+        },
+        {
+          "title": "Remove a customer's checklist or go back to the default",
+          "keywords": [
+            "reset checklist",
+            "delete customer checklist",
+            "default checklist"
+          ],
+          "steps": [
+            "Open [Case checklists](/billing/configuration-files/case-checklists) and select the customer or **Your organization**.",
+            "Select **Remove this customer's checklist** (the customer goes back to your organization's) or **Go back to the default**, and select it again to confirm."
+          ]
+        }
+      ],
+      "notes": "Viewing the page needs read access to billing control, and changing it needs update access.\n\nSome steps follow rules kept elsewhere and always stay required, though they can be moved: **Proof of delivery received** and **Paperwork in** follow the customer's **Required document types** on [Customers](/billing/configuration-files/customers), **Rate confirmation matched** follows rate validation on [Billing control](/admin/billing-controls), and **Delivered**, **Nothing holding the bill**, **Posted**, **Clear of dispute** and **Paid** are steps nothing can be billed or closed without.\n\nA step a person ticks belongs to the record, so everyone working a case about the same shipment or invoice sees the same tick and who made it.",
+      "related": [
+        "/admin/billing-controls",
+        "/billing/configuration-files/customers",
+        "/billing/configuration-files/document-types",
+        "/desk"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": true
+    },
+    {
       "path": "/billing/configuration-files/charge-types",
       "name": "Charge types",
       "module": "billing",
@@ -7964,7 +8057,7 @@
         "Desk"
       ],
       "description": "The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app.",
-      "summary": "The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app. Its **Today** page greets you with the date and one line on what the day holds (the morning briefing's headline when one was written, otherwise how many decisions are waiting on you), and below it the box you ask in. The box names the agent it will ask and types out that agent's starter questions as its placeholder: press Tab to take the one on screen, or ⌘1–3 (Ctrl+1–3) to ask it outright. The rail down the left holds **New conversation**, search, links to **Today**, **Watchtower** and **Decisions**, every conversation grouped by when it was last used (**Pinned** first, then **Today**, **Yesterday**, **Previous 7 days**, **Previous 30 days** and **Older**), **Desk settings** and **Back to Trenova**. On a phone the rail slides over the page from the menu button at the top left.\n\nEach conversation opens in the middle, and anything an agent produces (a table, a draft, a document, a plan) opens in the workspace beside it. Changes an agent wants to make to your records are not applied on their own: in a Desk conversation they wait in a card above the message box, and they are also listed on [Decisions](/desk/decisions).",
+      "summary": "The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app. Its **Today** page greets you with the date and one line on what the day holds (the morning briefing's headline when one was written, otherwise how many decisions are waiting on you), and below it the box you ask in. The box names the agent it will ask and types out that agent's starter questions as its placeholder: press Tab to take the one on screen, or ⌘1–3 (Ctrl+1–3) to ask it outright. The rail down the left holds **New conversation**, search, links to **Today**, **Watchtower** and **Decisions**, every conversation grouped by when it was last used (**Pinned** first, then **Today**, **Yesterday**, **Previous 7 days**, **Previous 30 days** and **Older**), **Desk settings** and **Back to Trenova**. On a phone the rail slides over the page from the menu button at the top left.\n\nEach conversation opens in the middle, and anything an agent produces (a table, a draft, a document, a plan) opens in the workspace beside it. Changes an agent wants to make to your records are not applied on their own: in a Desk conversation they wait in a card above the message box, and they are also listed on [Decisions](/desk/decisions).\n\nWhile an agent replies you can steer it with a correction or queue the next question. The message box names records with @, takes slash commands, files, scans and dictation, and can share the page you came from. A conversation about a shipment, invoice or dispute becomes a case, with a ready-to-bill or ready-to-close checklist, snoozes and waiting on the customer's or carrier's reply. Conversations can also run a request on a schedule, be handed to another agent, keep pinned facts in mind, and compact themselves when they grow long. Each fact an agent looked up carries a number tying it to the step that found it.",
       "requires": [
         {
           "resource": "assistant",
@@ -7980,7 +8073,23 @@
         "ask AI",
         "copilot",
         "AI desk",
-        "conversations"
+        "conversations",
+        "steer the agent",
+        "steering",
+        "interrupt the agent",
+        "slash commands",
+        "at mention",
+        "dictate",
+        "compact conversation",
+        "pinned facts",
+        "snooze",
+        "hand off",
+        "handoff",
+        "chapter",
+        "delegate",
+        "artifacts",
+        "citations",
+        "morning briefing"
       ],
       "tasks": [
         {
@@ -8039,15 +8148,22 @@
             "self-improving",
             "memory",
             "procedure",
-            "lesson",
+            "lesson"
+          ],
+          "steps": [
+            "Once a conversation has been quiet for a while, the agent looks back over it when something went wrong, took several tries or was corrected. What it kept appears under the reply it learned from, marked as learned; a procedure is the steps that worked.",
+            "If you asked to be asked first, or the lesson would reach your team or everyone, the card asks instead. Edit the words, choose who it is for, then select **Save memory**, or **Don't save**.",
+            "To take back a lesson it kept, select **Undo** on the card, or pause or forget it on the Memory page like any other memory."
+          ]
+        },
+        {
+          "title": "Start a new conversation",
+          "keywords": [
             "new chat",
             "blank conversation",
             "start over"
           ],
           "steps": [
-            "Once a conversation has been quiet for a while, the agent looks back over it when something went wrong, took several tries or was corrected. What it kept appears under the reply it learned from, marked as learned; a procedure is the steps that worked.",
-            "If you asked to be asked first, or the lesson would reach your team or everyone, the card asks instead. Edit the words, choose who it is for, then select **Save memory**, or **Don't save**.",
-            "To take back a lesson it kept, select **Undo** on the card, or pause or forget it on the Memory page like any other memory.",
             "Select **New conversation** in the rail of [Desk](/desk), or press ⌘N (Ctrl+N).",
             "Pick the agent in the box and ask your question."
           ]
@@ -8112,14 +8228,658 @@
           ],
           "steps": [
             "Open the conversation from [Desk](/desk).",
-            "In the bar at the top, use **Pin conversation** (or **Unpin conversation**) to keep it at the top of the rail, or **Download transcript** to save it.",
+            "In the bar at the top, open **More actions** and use **Pin conversation** (or **Unpin conversation**) to keep it at the top of the rail, or **Download transcript** to save it.",
             "To rename it, double-click its name in the rail, type the new name and press Enter.",
             "To delete it, hover over it in the rail, select **Delete conversation**, then **Delete** to confirm.",
             "Select **Workspace** in the top bar (or press ⌘\\\\ / Ctrl+\\\\) to show or hide what the agent produced, or **Hide artifacts** inside it to make room for the conversation."
           ]
+        },
+        {
+          "title": "Steer an agent while it is replying",
+          "keywords": [
+            "steer",
+            "steering",
+            "interrupt",
+            "redirect",
+            "change direction",
+            "correct the agent mid-reply",
+            "add detail while working",
+            "send while working"
+          ],
+          "steps": [
+            "While the agent works, a light runs round the message box and a line at its top says what the agent is doing.",
+            "Type your correction or extra detail in the box.",
+            "Press Enter, or select the round arrow button. The agent reads it at its next step and carries on with it in mind.",
+            "To stop the reply altogether, empty the box and select **Stop** (the square button)."
+          ]
+        },
+        {
+          "title": "Queue a follow-up for after the reply",
+          "keywords": [
+            "queue message",
+            "send after",
+            "follow-up",
+            "line up questions",
+            "wait for reply",
+            "send next"
+          ],
+          "steps": [
+            "While the agent works, type the next question.",
+            "Press ⌥Enter (Alt+Enter), or select **Queue a follow-up** beside the send button. It is sent on its own once the current reply finishes.",
+            "Waiting messages are listed above the box in the order they will go. Select **Hide** or **Show** to fold the list.",
+            "On a waiting message, use **Edit**, **Move up**, **Move down** or **Remove**. Select **Send it now** to send it straight away, or **Steer the reply with it now** to hand it to the reply under way.",
+            "If the last reply was stopped or failed, the list pauses. Select **Send next** to carry on."
+          ]
+        },
+        {
+          "title": "Name a shipment, customer or other record with @",
+          "keywords": [
+            "at mention",
+            "@ mention",
+            "reference a load",
+            "tag a shipment",
+            "point the agent at a record",
+            "link invoice"
+          ],
+          "steps": [
+            "In the message box, type @ followed by part of a load number, customer, invoice, driver or carrier.",
+            "Narrow the list with **All**, **Shipments**, **Customers**, **Invoices**, **Drivers** or **Carriers** along its top.",
+            "Use ↑ ↓ to move, and Enter or Tab to insert the record. Esc closes the list.",
+            "The record shows in your message and goes with it, so the agent looks up that exact record. Delete the @name from the text to drop it."
+          ]
+        },
+        {
+          "title": "Use a slash command",
+          "keywords": [
+            "slash command",
+            "shortcut",
+            "/status",
+            "/quote",
+            "/report",
+            "/explain",
+            "quick question"
+          ],
+          "steps": [
+            "In an empty message box, type /. The list shows **Commands** first, then the agent's starter questions.",
+            "Use ↑ ↓ to pick one, then Enter or Tab. A starter question is sent as it is.",
+            "For a command that needs details, such as /status (a PRO or shipment number), /quote (origin and destination city) or /report (a report name), type each one after the command. The grey hints show what is still missing, and **Desk will be asked** shows the full question.",
+            "Press Enter once every detail is filled in. Press Esc to send what you typed as plain text instead.",
+            "/explain asks the agent to explain the page you came from."
+          ]
+        },
+        {
+          "title": "Attach files to a message",
+          "keywords": [
+            "attach",
+            "upload",
+            "add a document",
+            "send a PDF",
+            "rate confirmation",
+            "BOL",
+            "spreadsheet",
+            "drag and drop"
+          ],
+          "steps": [
+            "Select **Attach files** (the plus at the bottom left of the box), then **Upload from computer**. You can also press ⌘U (Ctrl+U), or drag files anywhere onto the Desk and drop them on the box.",
+            "Each file shows above the text while it uploads. Select **Remove** to take one off, or **Try again** if an upload failed.",
+            "Type your question and send it. If you send files with no text, the agent is asked what is in them."
+          ]
+        },
+        {
+          "title": "Scan paper into a message",
+          "keywords": [
+            "scan",
+            "scanner",
+            "paperwork",
+            "scan a BOL",
+            "scan a POD",
+            "Trenova Capture"
+          ],
+          "steps": [
+            "In an open conversation, select **Attach files**, then **Scan from Capture**.",
+            "Under **Computer**, pick the computer your scanner is connected to. Optionally choose the **Scanner**, **Scan settings** and **Document type** (or leave **Let Desk decide**).",
+            "Select **Start scan** and put the pages in the scanner.",
+            "The scan shows above the text and counts pages as they arrive. Select **Done scanning** when the last page is in, or **Cancel scan** to drop it.",
+            "If no computer is set up, select **Download Trenova Capture** or **My scanners** to set one up on [My scanners](/capture/devices)."
+          ]
+        },
+        {
+          "title": "Dictate a message",
+          "keywords": [
+            "voice",
+            "speak",
+            "talk to the agent",
+            "dictation",
+            "microphone",
+            "speech to text"
+          ],
+          "steps": [
+            "Select **Dictate** (the microphone beside the send button).",
+            "Speak. Your words appear in the box as they are recognised, and a timer shows how long it has been listening.",
+            "Select **Stop dictating** when you are done. Check the text, then send it."
+          ]
+        },
+        {
+          "title": "Share the page you came from",
+          "keywords": [
+            "share page",
+            "what I'm looking at",
+            "page context",
+            "stop sharing",
+            "explain this page"
+          ],
+          "steps": [
+            "The chip in the message box names the page you had open before coming to the Desk. If nothing is shared, it reads **No page**.",
+            "Select the chip to see the page. Turn **Share this page with Desk** on to send it with each message, or off so the agent does not see it.",
+            "With a page shared, select **Explain what's on this page** to ask the agent about it."
+          ]
+        },
+        {
+          "title": "Choose which model answers",
+          "keywords": [
+            "model",
+            "switch model",
+            "AI model",
+            "change provider",
+            "faster model",
+            "reasoning model"
+          ],
+          "steps": [
+            "Select the model chip near the send button. It reads **Auto** unless you picked a model.",
+            "Pick **Auto** (**Recommended**: your organization's order decides, and it keeps working if a provider goes down), or a specific model. Use **Search models…** to find one.",
+            "Models that failed their last check are listed but cannot be chosen. Your administrators decide which models are offered."
+          ]
+        },
+        {
+          "title": "Ask a different agent from a conversation",
+          "keywords": [
+            "switch agent",
+            "another agent",
+            "different assistant"
+          ],
+          "steps": [
+            "Select the agent's name in the message box.",
+            "Pick one from **Recent** or **All agents**, or type in **Search agents**.",
+            "A new conversation starts with that agent. Anything you had typed is asked there."
+          ]
+        },
+        {
+          "title": "See how full the conversation is and compact it",
+          "keywords": [
+            "context window",
+            "conversation too long",
+            "memory full",
+            "compact",
+            "summarize conversation",
+            "tokens",
+            "usage limits"
+          ],
+          "steps": [
+            "In a conversation, the ring beside the model chip fills as the conversation grows. From three quarters full it shows a percentage, then turns amber and red.",
+            "Select the ring to open **Context window**. **See detailed breakdown** shows what takes the space.",
+            "Under **Compact conversation**, select **Compact** to summarize older turns. You can also type /compact in the box.",
+            "While it compacts, the box takes nothing new. Select **Cancel** at the top of the box to stop it.",
+            "Use the switch below to let the conversation compact itself as it nears full.",
+            "**Usage limits** in the same panel shows how much of your and the agent's daily and monthly allowance is used, and when each resets."
+          ]
+        },
+        {
+          "title": "Read what a compaction kept",
+          "keywords": [
+            "compacted",
+            "summary",
+            "what did it forget",
+            "auto-compacted",
+            "earlier messages"
+          ],
+          "steps": [
+            "Where the conversation was compacted, a line runs across it with a **Compacted** (or **Auto-compacted**) pill saying how many earlier messages were summarized.",
+            "Select the pill. **What the agent carries forward** lists the summary, and **Kept in full** lists what was not summarized, such as **Pinned facts** and **Pending approvals**.",
+            "Messages above the line are dimmed, because the agent now reads them only through the summary."
+          ]
+        },
+        {
+          "title": "Pin a fact for the whole conversation",
+          "keywords": [
+            "pin fact",
+            "remember this",
+            "keep in mind",
+            "always remember",
+            "context note"
+          ],
+          "steps": [
+            "In the **Keeping in mind** bar above the message box, select **Pin a fact**.",
+            "Type the fact, for example the invoice date or a customer's rule, and press Enter. Esc cancels.",
+            "Every agent in the conversation keeps it in mind for every reply, including after the conversation is compacted.",
+            "Select **Unpin** (×) on a fact to remove it."
+          ]
+        },
+        {
+          "title": "See or cancel what an agent is waiting on",
+          "keywords": [
+            "waiting",
+            "wait until",
+            "parked",
+            "notify me when",
+            "truck arrives",
+            "reply from carrier",
+            "follow up later",
+            "cancel wait",
+            "picked up after a wait"
+          ],
+          "steps": [
+            "Ask the agent to pick a task back up later, for example \"tell me when the truck reaches the consignee\" or \"check back when the carrier replies\".",
+            "Above the message box, a list shows what the agent is waiting on: the kind of wait (an arrival, a departure, a reply, an appointment, free time, drive time or a time), the agent's description, and when it is due or gives up.",
+            "Nothing runs while it waits. When the event happens, the agent comes back to the conversation on its own, and a note marks the place: **Picked up after a wait**, or **Picked up after the wait ran out** if it gave up first.",
+            "Select **Cancel the wait** (×) to drop one you no longer need."
+          ]
+        },
+        {
+          "title": "Make a conversation a case about a shipment, invoice or dispute",
+          "keywords": [
+            "case",
+            "cases",
+            "link conversation to shipment",
+            "attach invoice",
+            "open a case",
+            "dispute case",
+            "about this load"
+          ],
+          "steps": [
+            "Open the conversation from [Desk](/desk).",
+            "In the bar at the top, select the case button (its tip reads **Make this a case**).",
+            "Under **Make this a case about**, choose **Shipment**, **Invoice** or **Dispute**, search for the record (shipments by PRO or BOL number, invoices and disputes by invoice number or customer), and pick it.",
+            "A card for the case now stands above the message box. It names the record, which you can select to open, and shows where the case stands."
+          ]
+        },
+        {
+          "title": "Take a case to ready to bill or ready to close",
+          "keywords": [
+            "case",
+            "ready to bill",
+            "ready to close",
+            "checklist",
+            "next step",
+            "POD",
+            "rate confirmation",
+            "paperwork",
+            "billing checklist",
+            "what's left"
+          ],
+          "steps": [
+            "Open the case's conversation from [Desk](/desk). The card above the message box shows the checklist: **Ready to bill** for a shipment, **Ready to close** for an invoice, with how many steps are done out of how many.",
+            "Select the checklist name to open it. Each step shows whether it is done, holding the record up, or waiting on something outside your control, with a line saying why (for example, which carrier has not confirmed the rate confirmation).",
+            "Select the button for the next step, for example **Request POD**, **Chase the rate confirmation**, **Mark ready to invoice** or **Send invoice**. It asks the case's agent to take that step, worded as your own message. A step that is holding the record up has its own button in the open checklist too.",
+            "For a step your team added that a person ticks off, select its box in the checklist to tick it or untick it."
+          ]
+        },
+        {
+          "title": "Snooze a case",
+          "keywords": [
+            "case",
+            "snooze",
+            "remind me later",
+            "put away",
+            "hide until",
+            "until appointment",
+            "until ETA",
+            "tomorrow morning",
+            "next week"
+          ],
+          "steps": [
+            "Open the case's conversation and select **Case** in the bar at the top.",
+            "Under **Snooze**, pick **In 3 hours**, **Tomorrow morning** or **Next week**. Each one shows the time it ends.",
+            "For a shipment you can also pick **Until the next appointment**, which moves when the appointment does and ends when the truck reaches that stop, or **Until the ETA**, which follows the truck's estimate.",
+            "To choose your own time, select **Pick a time…**, set **Snooze until**, then select **Snooze**.",
+            "To bring it back early, open the menu again and select **Wake it now**."
+          ]
+        },
+        {
+          "title": "Wait for the customer or carrier to reply on a case",
+          "keywords": [
+            "case",
+            "waiting on customer",
+            "waiting on carrier",
+            "follow up when they answer",
+            "park until reply",
+            "waiting on a reply"
+          ],
+          "steps": [
+            "Open the case's conversation and select **Case** in the bar at the top.",
+            "Under **Wait for a reply from**, pick the record's customer or one of its carriers.",
+            "The case shows **Waiting on the customer** or **Waiting on the carrier**. When that party's reply comes in, the agent picks the case back up on its own."
+          ]
+        },
+        {
+          "title": "Move a case to another record or stop treating it as a case",
+          "keywords": [
+            "case",
+            "wrong shipment",
+            "change record",
+            "unlink",
+            "remove case",
+            "move case"
+          ],
+          "steps": [
+            "Open the case's conversation and select **Case** in the bar at the top.",
+            "To point it at a different record, select **Move to another record** and pick the record.",
+            "To make it an ordinary conversation again, select **Stop treating this as a case**. The conversation stays; it is just no longer about the record."
+          ]
+        },
+        {
+          "title": "Hand a conversation to another agent",
+          "keywords": [
+            "hand off",
+            "handoff",
+            "transfer",
+            "pass to another agent",
+            "switch agent keep context"
+          ],
+          "steps": [
+            "Open the conversation from [Desk](/desk) and select the hand-off button in the bar at the top (its tip reads **Hand off to another agent**).",
+            "Under **Hand off to**, pick the agent. The agents your current agent already works with are listed first.",
+            "This starts a new conversation with that agent. It carries over a summary of this conversation, its pinned facts and its pinned artifacts.",
+            "A card in this conversation says who it was handed to and what went with it (**Carried over**). Select **Open their conversation** to go there. The new conversation has a matching card with **Open the earlier conversation**. Both conversations stay open."
+          ]
+        },
+        {
+          "title": "Have an agent run a request on a schedule",
+          "keywords": [
+            "schedule",
+            "recurring",
+            "every morning",
+            "every weekday",
+            "every Monday",
+            "daily report",
+            "run automatically"
+          ],
+          "steps": [
+            "In a conversation on [Desk](/desk), send a message that starts with when it should run, then what to ask. For example: \"every weekday at 7:30am, list shipments still not dispatched for today\". You can also type /schedule, then the when and the request.",
+            "Instead of an answer, a **Scheduled** card appears: **Results will post into this conversation**. The card shows the request, how often it runs and when it runs next.",
+            "On the card, select **Pause** to stop it for now, **Resume** to start it again, or **Delete** to remove it. A deleted one shows **Schedule deleted**."
+          ]
+        },
+        {
+          "title": "Follow a task an agent handed to another agent",
+          "keywords": [
+            "delegate",
+            "asked another agent",
+            "sub-agent",
+            "agent asked agent"
+          ],
+          "steps": [
+            "When the agent you are talking to hands part of the work to another agent, the reply shows a step headed \"Asked\" and that agent's name, with the task beside it.",
+            "While the other agent works, its steps appear beneath it. When it finishes, the step says how it ended, what it made and anything **Waiting for your approval**.",
+            "Open the step to read the **Task**, **What it did** and what it found."
+          ]
+        },
+        {
+          "title": "Take back an approval on the Desk",
+          "keywords": [
+            "undo approval",
+            "approved by mistake",
+            "cancel approved change",
+            "do it now"
+          ],
+          "steps": [
+            "Right after you approve a change, a bar with a countdown takes the card's place. It says what was approved and when it goes through.",
+            "Select **Undo** within those few seconds to take it back; the change waits on you again. Select **Do it now** to let it go straight away."
+          ]
+        },
+        {
+          "title": "Open what an agent produced",
+          "keywords": [
+            "artifacts",
+            "workspace",
+            "agent output",
+            "table the agent made",
+            "switch artifact",
+            "find artifact",
+            "pin artifact",
+            "all artifacts"
+          ],
+          "steps": [
+            "Open the conversation from [Desk](/desk). Select **Workspace** in the top bar to open the workspace beside it. The number on the button is how many things the conversation has produced.",
+            "The open item sits in front of a small stack of the others. Select it (**Switch artifact**) to fan the stack out and pick another, or use **Previous** and **Next** to step through them.",
+            "To see everything the conversation produced, select **All artifacts** at the bottom of the fanned stack, or press ⌘J (Ctrl+J). Type in **Search artifacts** to find one by its title, the tool that made it or the turn it came from, or narrow the list with **All**, **Pinned** or a kind such as a table, record or document. Press Enter to open the first match.",
+            "Select **Pin to conversation** at the bottom of the workspace to keep an item at the top of the conversation. Select it again to unpin it.",
+            "Select **Copy link** to copy a link that opens the conversation with this item beside it, or **Open on its own page** to read it full width in a new tab. On that page, **Open in conversation** takes you back.",
+            "Select **Hide artifacts** to close the workspace."
+          ]
+        },
+        {
+          "title": "Compare versions of a table or report",
+          "keywords": [
+            "version history",
+            "what changed",
+            "earlier version",
+            "read again",
+            "changed cells"
+          ],
+          "steps": [
+            "When an agent reads the same table again later in the conversation, the result becomes a new version of the same item rather than a separate one. A version number shows on the item.",
+            "Select the version number (**Versions**) to list every version. Each one says what changed from the version before it, such as rows added, rows gone or values changed. The newest is marked **Latest**.",
+            "Pick an earlier version to view it. Cells that changed since the version before are highlighted."
+          ]
+        },
+        {
+          "title": "Filter, sort and export a table",
+          "keywords": [
+            "export CSV",
+            "download table",
+            "spreadsheet",
+            "sort rows",
+            "filter results",
+            "Excel"
+          ],
+          "steps": [
+            "Open the table in the workspace beside the conversation.",
+            "Type in the filter box (**Filter rows**) to show only the rows that contain your text. Select a column heading to sort by it, select it again to reverse the order, and a third time to clear the sort.",
+            "Select a row, or the arrow at the end of it (**Open this record**), to open the record it is about.",
+            "Select **Export CSV** at the bottom of the workspace to download the table. A report shown as bars has **Download CSV** and **Open full report** under it instead.",
+            "If the table says it is showing only some of the rows, ask the agent for the rest."
+          ]
+        },
+        {
+          "title": "Read and edit a document an agent wrote",
+          "keywords": [
+            "agent report",
+            "write-up",
+            "edit document",
+            "rewrite paragraph",
+            "shorten",
+            "simplify",
+            "restore version",
+            "document history"
+          ],
+          "steps": [
+            "Open the document in the workspace. Its sources are listed at the end, and the numbers in the text say which source each statement rests on. Point at a number to see the source, and select **Open artifact** to open what it came from.",
+            "To rewrite one passage, select some text in a paragraph while in **Read**, then choose **Shorter** or **Plainer**, or type an instruction in **Ask to change…** and press Enter. The new wording shows under the old one. Select **Accept** to keep it, **Try again** for another attempt, or **Keep original** to drop it.",
+            "To edit by hand, select **Edit**, click any paragraph and type. Select the save button to save your changes as a new version, or **Discard** to throw them away. **Done** leaves editing when nothing has changed.",
+            "Every saved change is a new version. Select the version number (**Versions**) to open an earlier one, then **Restore** to make it the latest again, or **Back to latest** to return."
+          ]
+        },
+        {
+          "title": "Download or copy a document",
+          "keywords": [
+            "export document",
+            "PDF",
+            "Word",
+            "docx",
+            "Markdown",
+            "copy text",
+            "print report"
+          ],
+          "steps": [
+            "Open the document in the workspace and select **Export**.",
+            "Choose **Download as PDF**, **Word document**, **Copy as Markdown** or **Copy text**."
+          ]
+        },
+        {
+          "title": "Review and send an email an agent drafted",
+          "keywords": [
+            "draft email",
+            "agent email",
+            "send message",
+            "edit draft",
+            "email approval"
+          ],
+          "steps": [
+            "Open the email draft in the workspace. It shows who it goes to, the subject and the message, and **Why this wording** when the agent explained its choice.",
+            "While it waits on you, change the subject or the message as needed. If the message comes from your organization's template, the draft says so and the text is written when the email is sent.",
+            "Select **Send for approval** to send your version on for approval, or **Copy** to copy the subject and message. Once it is decided, the draft shows **Sent for approval**, **Sent** or **Set aside**."
+          ]
+        },
+        {
+          "title": "Create a shipment from a document an agent read",
+          "keywords": [
+            "rate confirmation",
+            "extract document",
+            "scanned load",
+            "read fields",
+            "create load from PDF",
+            "document intelligence"
+          ],
+          "steps": [
+            "Upload a document in the conversation. When the agent reads it, the workspace shows the page with a box over every value it found, and the list of fields with how sure it is of each one. Fields that need a look are counted and marked.",
+            "Point at a field to light up where it was found on the page, and the other way round. Use the page numbers to move through a document with several pages.",
+            "Select **Fix fields** to ask the agent to check the doubtful fields against the document again.",
+            "Select **Create shipment from this**. The agent drafts the shipment, and it waits for your approval like any other change. Once it is approved, the item shows **Shipment created**. If the document is already attached to a shipment, it shows **Already a shipment** instead."
+          ]
+        },
+        {
+          "title": "Approve billing items from a Desk table",
+          "keywords": [
+            "billing queue",
+            "approve invoices",
+            "bulk approve",
+            "ready to bill",
+            "invoice review",
+            "assign biller"
+          ],
+          "steps": [
+            "Ask an agent for your billing queue. The table shows each item's current status, and it stays up to date as the queue changes.",
+            "Tick the items you want, or use **Select all**. A bar shows how many are selected, how many are ready, how many have no biller and how many need you.",
+            "Select the approve button to approve the ready ones. If some have no biller, the bar asks first. Choose to assign yourself and approve them all, or approve only the ones that already have a biller. Select **Back** to change your mind.",
+            "For a few seconds after, the bar says how many were approved. Select **Undo** before the count runs out to stop it. Any invoice that could not be approved is reported once the approval finishes.",
+            "To work through items that need you, select the review button on the bar, or select a row to open the item."
+          ]
+        },
+        {
+          "title": "Review one billing item",
+          "keywords": [
+            "billing item",
+            "invoice check",
+            "proof of delivery",
+            "rate con mismatch",
+            "hold invoice",
+            "post invoice"
+          ],
+          "steps": [
+            "Open the item from a billing queue table in the conversation. It shows who it bills, its status and how long it has been in the queue.",
+            "Under **Before it can be approved**, read the five checks: biller, charges against the rate con, proof of delivery, bill-to and terms, and not a duplicate. For a check with no biller, select **Assign to me** or **Someone else…**. For any other flagged check, pick one of the choices offered under it.",
+            "Under **Charges**, compare each line with the rate con. A line that was removed or adjusted can be put back with **Undo**. Under **Shipment**, see the lane and the paperwork, and open the shipment.",
+            "Select **Approve** once every check is clear, or **Hold** and pick **Waiting on paperwork**, **Customer dispute** or **Rate question**. A held item has **Release** to take it off hold.",
+            "An approved item has a post button with its total. Posting sends the invoice to the customer and can't be undone.",
+            "Use **Previous item** and **Next item** to move through the queue, and **Back to the queue** to return to the table. **Activity** lists what has happened to the item. Select **Show earlier** for older entries."
+          ]
+        },
+        {
+          "title": "Check where a fact in a reply came from",
+          "keywords": [
+            "citation",
+            "citations",
+            "source",
+            "step number",
+            "how did the agent know",
+            "reasoning",
+            "why did it do that",
+            "web sources"
+          ],
+          "steps": [
+            "A reply carries small numbers after the facts the agent looked up. Point at a number to see the step behind it: what the agent did, what it found and how long it took.",
+            "Select **Why this step?** to read the agent's own reasoning (**Saw**, **Because**, **Instead of**). Select **Hide reasoning** to close it. If the step produced a table or record, select its name, or the number itself, to open it in the workspace.",
+            "When the agent searched the web, the reply names the site it cites. Point at it to list every page it cites, and select one to open it in a new tab. Under the finished reply, select the sources count to see the search and every page it found.",
+            "To hide the numbers, turn off **Source numbers** in Desk settings."
+          ]
+        },
+        {
+          "title": "Copy, pin or listen to a reply",
+          "keywords": [
+            "copy answer",
+            "bookmark reply",
+            "chapter",
+            "chapters",
+            "read out loud",
+            "text to speech"
+          ],
+          "steps": [
+            "Hover over a reply in a Desk conversation to show its actions.",
+            "Select **Copy reply** to copy its text.",
+            "Select **Pin as chapter** to mark the reply as a chapter of the conversation. It then shows its chapter number. Select **Unpin chapter** to remove it.",
+            "Select **Read aloud** to hear the reply, and **Stop reading** to stop. This button only appears when your browser can read text aloud."
+          ]
+        },
+        {
+          "title": "See or change what an agent can do",
+          "keywords": [
+            "agent permissions",
+            "agent tools",
+            "ask first",
+            "agent limits",
+            "budget",
+            "business hours",
+            "turn agent off",
+            "what can this agent do"
+          ],
+          "steps": [
+            "In a conversation, select the agent's name in the top bar, or open **More actions** and select **What this agent can do**.",
+            "**Look things up** lists what the agent can read, and **Make changes** lists what it can change. Each is set to **Allowed** or **Off**. A change can also be set to **Ask first**, so it waits for your approval. A row with a lock says why some choices are not available.",
+            "**Hands off to** shows which agents take questions outside this agent's work.",
+            "**Limits** shows **Requests today**, this month's budget, the **Largest single change** it may make at once, and whether it may **Only change things during business hours**.",
+            "People who manage agents can switch the agent **On** or **Off** and change any of these. Every change saves straight away. Everyone else sees the page but cannot change it.",
+            "Select **Back to conversation** to return."
+          ]
+        },
+        {
+          "title": "Search the whole Desk",
+          "keywords": [
+            "find conversation",
+            "find message",
+            "find artifact",
+            "find decision",
+            "search desk",
+            "recent searches"
+          ],
+          "steps": [
+            "On [Desk](/desk), select **Search** in the rail or press ⌘K (Ctrl+K).",
+            "Type in **Search chats, messages, artifacts…**. Results are grouped as **Conversations**, **Messages**, **Artifacts** and **Decisions**.",
+            "Narrow the results with **All**, **Chats**, **Messages**, **Artifacts** or **Decisions**, or press Tab to move between them.",
+            "Use the arrow keys and Enter, or select a result. A conversation or message opens its conversation, an artifact opens the conversation with it beside it, and a decision opens [Decisions](/desk/decisions).",
+            "With nothing typed, the search offers **Recent searches** and recent conversations and artifacts."
+          ]
+        },
+        {
+          "title": "Change how the Desk looks and behaves",
+          "keywords": [
+            "desk preferences",
+            "dark mode",
+            "text size",
+            "send with enter",
+            "default agent",
+            "start page",
+            "turn off confetti",
+            "dictation",
+            "scanner"
+          ],
+          "steps": [
+            "On [Desk](/desk), select **Desk settings** at the bottom of the rail.",
+            "Pick a section and change what you need. Every change applies straight away: - **Appearance**: **Theme**, **Conversation width**, **Motion** and **Text size**. - **Conversation**: **Send with** (**Enter** or **⌘ Enter**), **Source numbers**, and **Open Desk to** (**Today** or **Last conversation**). - **Composer**: **Start new conversations with** a chosen agent or **The last one I used**, **Share the page you came from**, **@ mentions**, **Slash commands**, **Dictation** and **Suggested questions**. - **Files & scanning**: **Drop files** (**Anywhere** or **On the composer**), **Scan with** and **Scan settings**. - **Artifacts**: **Open new artifacts** (**Right away** or **When I click**) and **New artifact dot**. - **Agent & approvals**: **Approval celebration** (**Confetti**, **Subtle** or **Off**) and **Working border**.",
+            "Select **Reset to defaults** to put everything back."
+          ]
         }
       ],
-      "notes": "Needs read access to the assistant. If no agents are available, an administrator has to connect an AI provider and enable an agent in [AI control](/admin/agent-control); people who can manage agents see **Open AI Control** on the Desk.\n\nWhen an agent in your own conversation proposes a change, the card above the message box shows it the same way on the Desk and in the floating assistant: what it would set and whether it can be undone, checked against your records as they are now. **Approve** waits until that check has loaded. If the change was drafted against records that have changed since, the card says it is out of date and offers to redraft it instead. A plan of several steps, or several changes of one kind, is approved with one answer. You need only access to the assistant and to that agent, and each change still runs only if your own permissions allow it.\n\nThe conversation marks each decided change with a line (\"Approved\"), and deciding on the card or on [Decisions](/desk/decisions) updates both.\n\nA long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation also becomes read-only when its agent is turned off, removed, set to run on its own, or no longer available to you, and the note in place of the message box says which, and whether an administrator can change it.",
+      "notes": "Needs read access to the assistant. If no agents are available, an administrator has to connect an AI provider and enable an agent in [AI control](/admin/agent-control); people who can manage agents see **Open AI Control** on the Desk.\n\nWhen an agent in your own conversation proposes a change, the card above the message box shows it the same way on the Desk and in the floating assistant: what it would set and whether it can be undone, checked against your records as they are now. **Approve** waits until that check has loaded. If the change was drafted against records that have changed since, the card says it is out of date and offers to redraft it instead. A plan of several steps, or several changes of one kind, is approved with one answer. You need only access to the assistant and to that agent, and each change still runs only if your own permissions allow it.\n\nThe conversation marks each decided change with a line (\"Approved\"), and deciding on the card or on [Decisions](/desk/decisions) updates both.\n\nA long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation also becomes read-only when its agent is turned off, removed, set to run on its own, or no longer available to you, and the note in place of the message box says which, and whether an administrator can change it.\n\n- Enter sends and Shift+Enter starts a new line. In **Desk settings**, **Send with** can be set to **⌘ Enter** instead. **@ mentions**, **Slash commands** and **Dictation** can each be turned off there. - Only words can steer a reply under way. A message carrying files always waits until the reply finishes. Once a steering message has been handed to the agent, it can't be edited or taken back; stopping the reply is the only way to undo it. Waiting messages are kept with the conversation, so they survive a reload or another tab. - You can't change the agent or the model while an agent is replying. - A message can carry up to 5 files, each up to 25 MB: PDF, PNG, JPG, HEIC, TIFF, CSV, Excel, Word, text and email (.eml) files. Password-protected PDFs and other file types are refused before they upload. Scanning works only inside an open conversation, not from the box on Today. - @ search lists only records you are allowed to read. Dictation isn't available in every browser; where it isn't, the microphone says so. - A conversation keeps up to 12 pinned facts of up to 200 characters each. Compacting keeps pinned facts, pending approvals and, where it can, the latest turns in full. A conversation set to compact itself does so at 85% full. - An agent can wait on up to ten things in one conversation. A wait gives up after a day unless the agent sets a longer limit (at most a week); either way the agent picks the task back up and is told it ran out. If the thing has already happened, the agent acts on it right away. - A case is in one of four states, shown on its card, in its menu and beside the conversation in the rail. **Working**: nothing is put off. Waiting: on something such as **Waiting on the customer**, **Waiting on the carrier** or **Waiting on a reply**. **Snoozed**: put away until a time, the next appointment or the ETA. **Settled**: the record is closed. A shipment settles once it is invoiced or canceled, not when it delivers, because the ready-to-bill work comes after delivery; an invoice once it is paid or voided; a dispute once it is resolved or withdrawn. - A case's state is worked out each time you look, so a payment recorded elsewhere settles its invoice's case on its own. Snoozed and settled cases sit on their own **Snoozed** and **Settled** shelves in the rail; a snoozed case comes back on time, or sooner when something the agent was waiting on arrives. A conversation started from a shipment, invoice or dispute is a case from the start. - Which steps a case checklist shows, and whether each is required or optional, is set on [Case checklists](/billing/configuration-files/case-checklists); a customer can have its own. A ticked step belongs to the record, so everyone working a case about the same shipment or invoice sees it. - If a record the agent was working with changes elsewhere during its turn, a note headed **Changed while the agent was working** lists what changed, and the agent reads those records again before relying on them. - An agent can hand a task only to the agents chosen for it in [AI control](/admin/agent-control), and only ones you may use. That agent works as you, its changes still wait for your approval, and it cannot pass the work on again. Hand-off goes to another agent, not to another person. - Anything an agent produces lands in the workspace: tables, reports, record cards, documents, email drafts, plans, read documents, decisions and billing items. With **Open new artifacts** set to **Right away**, a new item opens as it arrives; otherwise a dot on **Workspace** marks something new. - Billing actions on a billing item are your own and need billing queue permissions. The agent never approves or posts an invoice on its own. - Desk settings and chapters are kept in this browser; they do not follow you to another browser or computer. - Changing what an agent can do needs permission to manage agents.",
       "related": [
         "/desk/decisions",
         "/desk/watchtower",
@@ -8127,7 +8887,10 @@
         "/admin/agent-control"
       ],
       "covers": [
-        "/desk/t/:threadId"
+        "/desk/t/:threadId",
+        "/desk/agents/:agentId",
+        "/desk/c/:threadId/a/:slug",
+        "/desk/c/:threadId/a/:slug/page"
       ],
       "createAction": null,
       "inNavigation": false
@@ -8140,8 +8903,8 @@
         "Desk",
         "Decisions"
       ],
-      "description": "Decisions is the queue of changes AI agents have proposed and that need a person to approve before they run, such as updating a record or a multi-step plan.",
-      "summary": "Decisions is the queue of changes AI agents have proposed and that need a person to approve before they run, such as updating a record or a multi-step plan. Each proposal leads with **What changes**: every record the change would touch, what happens to it, and each value before and after, worked out by the same code that would make the change and read from your records as they are now. A message the change would send is shown as it would go out, with the recipients it would really reach, and amounts it would move are shown line by line with the totals before and after. Below that are **Why** the agent wants it, how sure it is, the evidence behind it, and under **Details** the arguments Exactly as proposed. A plan shows What changes, in the order it runs, step by step. Changes that cannot be undone are marked **Can't be undone**. Dispatchers, billing staff and managers work this queue so agents can act on the operation safely.",
+      "description": "Decisions is the queue of changes AI agents have proposed and that wait on a person before they run, such as updating shipments, posting invoices, sending a message, or a plan of several steps.",
+      "summary": "Decisions is the queue of changes AI agents have proposed and that wait on a person before they run, such as updating shipments, posting invoices, sending a message, or a plan of several steps. Open it from **Decisions** in the [Desk](/desk) sidebar, which shows how many are waiting. Dispatchers, billing staff and managers work it so agents only change the operation with a person's say-so.\n\nThe **Queue** on the left lists every waiting proposal, newest first, grouped by the kind of change, with how many of today's are decided. The middle shows one proposal at a time: which agent wants it and when, a one-line title with how many records it touches, the agent's reason, and what it would change. That is worked out by the same code that would make the change, read from your records as they are now. A **Dry run** line says whether it would go through as shown. Changes are marked **Reversible** or **Can't be undone**. The bar underneath approves or declines it.",
       "requires": [
         {
           "resource": "assistant",
@@ -8157,7 +8920,14 @@
         "agent approvals",
         "AI proposals",
         "approval queue",
+        "pending approvals",
         "pending changes",
+        "proposed changes",
+        "agent proposals",
+        "approve agent change",
+        "decline agent change",
+        "agent plan approval",
+        "dry run",
         "human in the loop",
         "review agent actions",
         "preview agent change",
@@ -8165,32 +8935,51 @@
       ],
       "tasks": [
         {
-          "title": "Review what a change would do before approving it",
+          "title": "Review what a change would do",
           "keywords": [
             "preview agent change",
-            "what will this change",
             "before and after",
-            "check proposed values"
+            "dry run",
+            "check proposed values",
+            "would it go through"
           ],
           "steps": [
-            "Open [Decisions](/desk/decisions) and select a proposal (or use j and k to move through the list; the next row is read ahead so it is ready when you reach it).",
-            "Read **What changes**. The old value is struck through with the new one after it; a value that has moved since the agent proposed the change says what it was then (\"Was … when proposed\").",
-            "A value, record or amount you are not allowed to see reads **Hidden by your data access**, and the number of hidden parts is shown under the change. You can still approve it; the decision records that parts were hidden from you.",
-            "If a record the change depends on was edited or removed after the agent proposed it, the change says **Changed since it was proposed** and can only be rejected; ask the agent again for a fresh proposal."
+            "Open [Decisions](/desk/decisions) and select a proposal in the **Queue**. A dot marks proposals you have not opened yet.",
+            "Read the change. When every record gets the same value, it is one line per record with the old value struck through and the new one after it. The first five are shown, then how many more there are. Otherwise each record is listed with every value that changes. A message is shown as it would go out, with its recipients and subject. Money is shown line by line with the total before and after and the difference.",
+            "A value that moved since the agent proposed the change says \"Was … when proposed\". A value that may still move before the change runs says so.",
+            "Read the **Dry run** line. It says the change would go through as shown, or how many records would go through and how many would be refused and why, or how many records changed since the agent drafted it.",
+            "Select **Arguments the agent sent** to see exactly what the agent asked for."
           ]
         },
         {
-          "title": "Approve or reject a proposed change",
+          "title": "Approve a proposed change",
           "keywords": [
             "approve AI action",
-            "deny agent change",
-            "review proposal"
+            "accept agent change",
+            "approve proposal"
           ],
           "steps": [
-            "Open [Decisions](/desk/decisions) and select a proposal.",
-            "Read **What changes**, **Why** and evidence. **Approve** stays off until what the change would do has loaded.",
-            "Select **Approve** (a) or **Reject** (r). The dialog shows what changes again; enter a **Reason** (required when rejecting, optional when approving) and confirm with **Approve and run** or **Reject**.",
-            "If what the change would do moved while you were reading it, nothing is recorded: the dialog shows the change as it is now and says it looks different. Read it again and confirm."
+            "Open [Decisions](/desk/decisions) and select the proposal.",
+            "Read what it changes. **Approve** stays off until that has loaded.",
+            "Select **Approve** (or press a). The change is approved at once and runs. The next proposal in the queue comes up.",
+            "If some records would be refused, the button names how many go through and how many are skipped. Approving runs the rest.",
+            "If the change moved while you were reading it, nothing is recorded. A notice says it changed since you opened it, and the change is shown again as it is now. Read it again and approve.",
+            "If the change was approved but could not be carried out, a message says it didn't go through and why, and it is marked that way under **Decided today**."
+          ]
+        },
+        {
+          "title": "Decline a proposed change",
+          "keywords": [
+            "reject agent change",
+            "deny proposal",
+            "turn down",
+            "decline reason"
+          ],
+          "steps": [
+            "Open [Decisions](/desk/decisions) and select the proposal.",
+            "Select **Decline** (or press d or r).",
+            "In **Decline this change?**, enter a **Reason**. It is required, and both the agent and whoever looks after the agent see it.",
+            "Select **Decline** to confirm, or **Cancel**. A declined change never runs."
           ]
         },
         {
@@ -8198,45 +8987,97 @@
           "keywords": [
             "edit proposal",
             "adjust agent change",
-            "modify and approve"
+            "modify and approve",
+            "approve with changes"
           ],
           "steps": [
             "Open [Decisions](/desk/decisions) and select the proposal.",
-            "Select **Change values** (m) and adjust the values. The record the change is about stays as proposed and cannot be edited; a change can alter what is done to that record, never which record it is.",
-            "As you type, the dialog shows what your values would do. Values the change would refuse say why and cannot be approved.",
-            "Optionally add a reason and confirm with **Approve with changes**. The change runs with the values you saw previewed."
+            "Select **Change values** (or press m). It is offered only for a single change that has values you can edit, not for a plan or a group decided together.",
+            "Adjust the values. A value marked \"Stays as proposed\" cannot be changed: you can change what is done to that record, never which record it is.",
+            "Under the values, the dialog shows what your values would do. Values that would not go through say why, and the change cannot be approved with them.",
+            "Optionally add a **Reason**, then select **Approve with changes**. It stays off while **Nothing changed yet** is shown. The change runs with the values you saw previewed."
           ]
         },
         {
-          "title": "Decide several proposals at once",
+          "title": "Fix a change that would not go through",
+          "keywords": [
+            "would be refused",
+            "refused values",
+            "ask agent to fix",
+            "change refused value"
+          ],
+          "steps": [
+            "Open [Decisions](/desk/decisions) and select the proposal. A change its own rules would refuse shows **This would not go through as it stands**, reason by reason. In the one-line-per-record view, records that would be refused are listed first and marked **Refused**.",
+            "Where you can edit the value a reason names, select the button next to the reason to open the values on it. Then approve with your changes.",
+            "Or select **Ask the agent to fix it**. This opens the decline dialog with the reasons already written as the **Reason**. Decline it, and the agent learns what to fix and can propose it again."
+          ]
+        },
+        {
+          "title": "Decide every change like this one together",
           "keywords": [
             "bulk approve",
-            "batch reject",
-            "approve all"
+            "batch decline",
+            "approve all like this",
+            "decide together"
           ],
           "steps": [
-            "Open [Decisions](/desk/decisions).",
-            "Mark proposals with their checkbox (or x). When the proposal you are reading has others of the same kind waiting, a line above the list says how many and offers to select all of them at once. A batch holds one kind of change at a time, and a plan is always decided on its own.",
-            "Select **Approve all** or **Reject all**, enter one **Reason** for all of them (required when rejecting), and confirm. Approved changes run one after another; one that cannot run, or whose preview changed since you read it, is reported on its own."
+            "Open [Decisions](/desk/decisions) and select a proposal that has others of the same kind waiting. A line under it says how many more are waiting.",
+            "Select the link on that line to decide all of them together (or press x). The line then says how many you are deciding together and how many you have not opened yet. Select **Just this one** (or press x again) to go back.",
+            "Select **Approve** or **Decline**. Both buttons show the count. Declining asks for one **Reason** for all of them.",
+            "If some could not be approved, a message says how many went through and why the rest did not. Those stay in the queue."
           ]
         },
         {
-          "title": "Narrow the queue",
+          "title": "Approve or decline a plan",
           "keywords": [
-            "filter by agent",
-            "filter by change type"
+            "multi-step plan",
+            "agent plan",
+            "plan steps"
+          ],
+          "steps": [
+            "Open [Decisions](/desk/decisions) and select a plan. Its title shows how many steps it has.",
+            "Read each step in the order it runs. A step that works on a record an earlier step also changes says which step, and its values are shown as that step would leave them.",
+            "Select **Approve** or **Decline**. A plan is decided as one, and always on its own. It cannot be grouped with other proposals, and its values cannot be changed. If a step would not go through, **Ask the agent to fix it** declines the plan with the reasons."
+          ]
+        },
+        {
+          "title": "Move through the queue",
+          "keywords": [
+            "next proposal",
+            "previous proposal",
+            "keyboard shortcuts",
+            "decisions shortcuts"
           ],
           "steps": [
             "Open [Decisions](/desk/decisions).",
-            "Choose an agent (or **All agents**) and a kind of change (or **All changes**, or **Plans**). Select **Clear** to reset."
+            "Use **Previous** and **Next** in the bar, or press k and j (or the up and down arrows). The bar shows where you are in the queue.",
+            "Shortcuts: a approves, d or r declines, m opens **Change values**, x decides every change like this one together. They do nothing while you are typing or a dialog is open.",
+            "When more are waiting than the queue shows, select **Load more**. The queue also refreshes on its own every minute."
+          ]
+        },
+        {
+          "title": "See what was decided today",
+          "keywords": [
+            "decided today",
+            "approval history",
+            "who approved"
+          ],
+          "steps": [
+            "Open [Decisions](/desk/decisions).",
+            "Look under **Decided today** at the bottom of the **Queue**. Each change is marked approved, declined, or approved but didn't go through. Hover over one to see who decided it.",
+            "When nothing is waiting, the page says **Queue clear** and how many were decided today."
           ]
         },
         {
           "title": "See where a proposal came from",
-          "keywords": [],
+          "keywords": [
+            "agent conversation",
+            "agent run",
+            "source of proposal"
+          ],
           "steps": [
             "Open [Decisions](/desk/decisions) and select the proposal.",
-            "Select **Open the conversation** or Open the run to see the context the agent was working in."
+            "Select **See the conversation** if an agent proposed it in a conversation, or **See the run** if it came from an agent's run."
           ]
         },
         {
@@ -8244,15 +9085,16 @@
           "keywords": [
             "approval card",
             "approve in chat",
-            "not now"
+            "not now",
+            "redraft"
           ],
           "steps": [
-            "Open the conversation on the [Desk](/desk) (select **Open the conversation**). The change waits on the card above the message box; the floating assistant shows the same card.",
-            "Select **Approve**, **Review** to read it in full, or **Not now** to put it off. A decision made there leaves this queue, and one made here updates the conversation."
+            "Open the conversation on the [Desk](/desk). A change waiting on you sits on a card above the message box.",
+            "Select **Approve**, **Review** to read it in full, or **Not now** to put it off. A change that is out of date offers **Redraft** or **Review** instead of **Approve**. A decision made there leaves this queue."
           ]
         }
       ],
-      "notes": "Needs read access to the assistant and to agent proposals. Approving, rejecting and modifying need update permission on agent proposals. A rejected change never runs.\n\nAn approval records exactly what you were shown. In a batch, a proposal you never opened is recorded as approved without its preview having been reviewed, and the confirmation says how many of those there are. Some changes cannot say exactly what they would do; they show the values they would run with under a warning instead. If what a change would do cannot be loaded at all, you can still approve it, and the decision is recorded as made without a preview.\n\nIn a plan, a step that changes a record an earlier step also changes is shown as that earlier step would leave it, with a note naming the step. When every step of an approved plan changes a different record of the same kind, such as posting several invoices, each step runs whatever became of the others and the plan says how many went through; otherwise the first step that fails stops the rest.",
+      "notes": "You need read access to the assistant and to agent proposals to open this page. Approving, declining and changing values need update permission on agent proposals. Without it, the page says you can read these but not decide them.\n\nAn approval records exactly what you were shown. When you decide several together, a proposal you never opened is recorded as approved without its preview having been reviewed. If what a change would do cannot be loaded, a notice says so and offers **Try again**. You can still approve it, and the decision is recorded as made without a preview.\n\nA value, record or amount you are not allowed to see reads **Hidden by your data access**, and the number of hidden parts is shown under the change. You can still approve it.\n\nIf a record the change depends on was edited or removed after the agent proposed it, the change is out of date. It may say **Changed since it was proposed**, and **Approve** stays off. It can only be declined. Ask the agent again for a fresh proposal.\n\nSome changes cannot say exactly what they would do. They show the values they would run with under a warning instead. In a plan, a later step on a record an earlier step changed runs against what that step left. When every step of an approved plan changes a different record of the same kind, such as posting several invoices, each step runs whatever happens to the others. Otherwise the first step that fails stops the rest.",
       "related": [
         "/desk",
         "/desk/watchtower",
@@ -8270,8 +9112,8 @@
         "Desk",
         "Memory"
       ],
-      "description": "**What Desk remembers** is everything the agents keep about how you work: what you told them to keep in mind, what they saved from your conversations, and what they learned by looking back over their own work.",
-      "summary": "**What Desk remembers** is everything the agents keep about how you work: what you told them to keep in mind, what they saved from your conversations, and what they learned by looking back over their own work. Each memory says who it is for (**Just you**, a team you belong to, or the **Organization**), where it came from and how often it has been used. You can add a memory, edit or pause it, forget it, and choose whether agents save new memories on their own or ask you first.",
+      "description": "**What Desk remembers** lists everything the agents keep about how you and your team work.",
+      "summary": "**What Desk remembers** lists everything the agents keep about how you and your team work. That covers what you told them to keep in mind, what they saved from your conversations, and what they learned by looking back over their own work. Open it from **Memory** in the Desk sidebar.\n\nEach memory shows who it is for (**Just you**, one of your teams, or the **Organization**), when it was saved and where from, and how many times agents have used it. You can add memories, change their words or who they are for, pause them, forget them, and choose whether agents save new memories on their own or ask you first.",
       "requires": [
         {
           "resource": "assistant",
@@ -8281,11 +9123,18 @@
       "capabilities": [],
       "aliases": [
         "agent memory",
+        "AI memory",
         "what the AI remembers",
+        "what Desk remembers",
         "saved preferences",
+        "standing instructions",
         "teach the assistant",
         "learned lessons",
-        "forget something"
+        "learned steps",
+        "forget a memory",
+        "forget something",
+        "memory settings",
+        "remember this"
       ],
       "tasks": [
         {
@@ -8294,27 +9143,91 @@
             "add memory",
             "remember this",
             "standing instruction",
-            "preference"
+            "preference",
+            "tell the agent"
           ],
           "steps": [
-            "Open [What Desk remembers](/desk/memory) and select **Add a memory**.",
-            "Write it as you would tell a colleague, choose **Who it is for**, and select **Save**.",
-            "Every agent you talk to reads it from your next question. A memory for a team or the organization needs permission to create agent memories."
+            "Open [What Desk remembers](/desk/memory).",
+            "Type the memory into the box at the top that starts \"Teach Desk something\", the way you would tell a colleague.",
+            "In the menu next to the box, choose who it is for: **Just you**, one of your teams, or **Organization**.",
+            "Select **Save**. The new memory appears at the top of the list, highlighted, and agents use it from your next question."
           ]
         },
         {
-          "title": "Change, pause or forget a memory",
+          "title": "Find a memory",
           "keywords": [
-            "edit memory",
-            "stop using a memory",
-            "delete memory",
-            "wrong memory"
+            "search memories",
+            "memory filter",
+            "team memories",
+            "organization memories"
           ],
           "steps": [
-            "Open [What Desk remembers](/desk/memory), or use **Search memories** to find one.",
-            "Select **Edit** to change the words or **Who it is for**, then **Save**.",
-            "Select **Pause** to set it aside without losing it, and **Resume** to bring it back.",
-            "Select **Forget** to stop agents using it; **Undo** takes that back while the message shows."
+            "Open [What Desk remembers](/desk/memory).",
+            "Above the list, pick **All**, **Just you**, one of your teams, or **Organization**. Each choice shows how many memories it holds.",
+            "To find a memory by its words, type in **Search memories**. If nothing matches, the list says **No memories match.**"
+          ]
+        },
+        {
+          "title": "Change what a memory says",
+          "keywords": [
+            "edit memory",
+            "fix a memory",
+            "wrong memory",
+            "reword"
+          ],
+          "steps": [
+            "On [What Desk remembers](/desk/memory), find the memory and select **Edit** (the pencil).",
+            "Change the words, then select **Save**. To leave without changing anything, select **Cancel** or press Esc."
+          ]
+        },
+        {
+          "title": "Change who a memory is for",
+          "keywords": [
+            "share memory with team",
+            "make memory private",
+            "move memory to organization"
+          ],
+          "steps": [
+            "On [What Desk remembers](/desk/memory), open the who-it-is-for menu under the memory.",
+            "Choose **Just you**, one of your teams, or **Organization**. The change saves as soon as you pick."
+          ]
+        },
+        {
+          "title": "Pause or resume a memory",
+          "keywords": [
+            "stop using a memory for now",
+            "set aside",
+            "turn off memory"
+          ],
+          "steps": [
+            "On [What Desk remembers](/desk/memory), select **Pause** on the memory. Agents stop using it, but it stays in the list marked **Paused**.",
+            "Select **Resume** to let agents use it again."
+          ]
+        },
+        {
+          "title": "Forget a memory",
+          "keywords": [
+            "delete memory",
+            "remove memory",
+            "forget this"
+          ],
+          "steps": [
+            "On [What Desk remembers](/desk/memory), select **Forget** (the bin) on the memory.",
+            "The row changes to **Forgotten. Agents won't use this again.** Select **Undo** on that row to bring the memory back. The row stays until you leave the page."
+          ]
+        },
+        {
+          "title": "See how a memory has been used and why it was kept",
+          "keywords": [
+            "memory usage",
+            "last used",
+            "why was this remembered",
+            "memory source"
+          ],
+          "steps": [
+            "On [What Desk remembers](/desk/memory), the line under each memory shows when it was saved and where from. That is the conversation's title, or a description such as **Added by you** or **An agent looking back over its work**.",
+            "The same line shows how many times agents have used the memory and when they last did. A memory no agent has used yet says **Not used yet**.",
+            "For a memory an agent saved, the lines under its words show why it was kept (**Why**), a little of what was said (**Said**), the memory it replaced (**Replaces**) and, if a newer memory has since taken over, **Replaced by**."
           ]
         },
         {
@@ -8323,17 +9236,60 @@
             "ask first",
             "automatic saving",
             "memory preference",
-            "learned from conversation"
+            "saving mode"
           ],
           "steps": [
             "Open [What Desk remembers](/desk/memory) and find **Saving new memories**.",
-            "Choose **Automatically** to let agents save what they pick up and tell you in the conversation, or **Ask me first** to have each one offered for you to keep or turn down.",
-            "The choice also covers what an agent learns by looking back over a conversation once it goes quiet: kept and shown under the reply it learned from, or offered there for you to keep.",
-            "A memory an agent learned shows why it was kept, and the memory it replaced, under its words. A memory a newer one replaced says so in the conversation instead of offering **Undo**, so the two never apply at once."
+            "Choose **Automatically** to let agents save what they pick up and tell you in the conversation. Choose **Ask me first** to have each memory offered to you to keep or turn down.",
+            "The choice also covers what an agent learns when it looks back over a conversation after it goes quiet."
+          ]
+        },
+        {
+          "title": "Check which memories a reply used",
+          "keywords": [
+            "used memories",
+            "which memories did the agent use",
+            "memory in conversation"
+          ],
+          "steps": [
+            "In a Desk conversation, a reply that used memories shows a \"Used\" line with the number of memories above it. Select it to open the list.",
+            "Each memory shows who it is for and where it was saved from.",
+            "Select **Forget** to stop agents using one, and **Undo** to take that back."
+          ]
+        },
+        {
+          "title": "Keep or turn down a memory an agent offers",
+          "keywords": [
+            "remember this for",
+            "keep these steps",
+            "not now",
+            "suggested memory",
+            "learned steps"
+          ],
+          "steps": [
+            "When **Ask me first** is on, an agent that wants to save something asks under its reply whether to keep it, and for whom.",
+            "To change who it is for, select the underlined words for who it is for and pick from the list. Teams show only when you may share memories with them.",
+            "To change the words before keeping them, click on them. For steps, put each step on its own line. Enter saves, Shift+Enter adds a line, and Esc cancels.",
+            "Select **Keep** to save it, or **Not now** to turn it down. Either answer can be taken back with **Undo**."
+          ]
+        },
+        {
+          "title": "Change or take back a memory saved in a conversation",
+          "keywords": [
+            "undo saved memory",
+            "learned steps",
+            "saved to memory",
+            "edit learned steps"
+          ],
+          "steps": [
+            "Under the reply, a memory an agent saved reads **Saved to memory**. One the agent learned by looking back reads **Learned steps** when it is steps for a task.",
+            "Select **Edit** to change the words, then **Save**, or **Cancel** to leave them as they were.",
+            "Select **Undo** to remove it. The card then says **Removed from memory**, and **Undo** there brings it back.",
+            "Select **Why** to see why it was kept, what was said, and what it replaced. For learned steps, the replaced steps appear under **Before**."
           ]
         }
       ],
-      "notes": "",
+      "notes": "- You can always keep a memory for **Just you**. Keeping one for a team or the **Organization** needs permission to create agent memories. Without it, those choices are greyed out. - Changing, pausing or forgetting a team or organization memory needs permission to update agent memories, and a team memory also needs you to hold that team's role. Memories you can't change show no **Edit**, **Pause** or **Forget** buttons, and their who-it-is-for menu is locked. - **Saving new memories** is your own setting. It doesn't change anyone else's. - When an agent looks back over its work, a memory meant for a team or the whole organization is always offered rather than saved straight away, whatever your setting. The same goes for anything learned in a conversation that read outside content. Administrators review memories offered for the whole organization in [AI control](/admin/agent-control). - A memory a newer one replaced says **Replaced by a newer memory** in the conversation and offers no **Undo**, so the two never apply at once.",
       "related": [
         "/desk",
         "/admin/agent-control"
@@ -8350,8 +9306,8 @@
         "Desk",
         "Watchtower"
       ],
-      "description": "Watchtower is a live feed of things across the operation that are worth a look: failed agent runs, service failures, expiring credentials, quarantined EDI, inbound mail waiting on a person, telematics arrivals and departures that could not be recorded on their stop, and similar events.",
-      "summary": "Watchtower is a live feed of things across the operation that are worth a look: failed agent runs, service failures, expiring credentials, quarantined EDI, inbound mail waiting on a person, telematics arrivals and departures that could not be recorded on their stop, and similar events. Each item shows its severity, what kind of event it is, a short summary and how long ago it happened, and new items since your last visit are marked. From an item you can open the record, ask an agent about it, or hand it to the agents that watch that kind of event.",
+      "description": "Watchtower is a live feed on the Desk of everything across the operation that is worth a look, newest first.",
+      "summary": "Watchtower is a live feed on the Desk of everything across the operation that is worth a look, newest first. It brings together items from many places: agent insights, proposals and plans, failed agent runs, agent exceptions, drops in agent quality, service failures, carrier changes, hours-of-service problems, weather, quarantined EDI, billing exceptions, detention, inbound messages, expiring driver credentials, moves whose coverage is at risk, truck arrivals and departures that could not be recorded on their stop, and accounting sync problems.\n\nEach item shows a coloured dot for its severity (Critical, Warning or Info), a title, a short summary, what kind of event it is and how long ago it happened. Items that arrived since your last visit have their titles in heavier text. You only see the kinds of items whose records you are allowed to open. An item leaves the feed when the problem behind it is resolved, or when someone dismisses it. The number next to **Watchtower** in the Desk sidebar is how many open items you can see.",
       "requires": [
         {
           "resource": "assistant",
@@ -8364,12 +9320,18 @@
       ],
       "capabilities": [],
       "aliases": [
+        "watchtower",
+        "watch tower",
         "alerts feed",
         "exceptions feed",
+        "exception feed",
         "notifications",
         "things to look at",
         "operational alerts",
-        "AI monitoring"
+        "AI monitoring",
+        "failed agent runs",
+        "agent exceptions",
+        "quarantined EDI"
       ],
       "tasks": [
         {
@@ -8377,23 +9339,52 @@
           "keywords": [
             "check alerts",
             "what went wrong",
-            "exceptions today"
+            "exceptions today",
+            "open alerts"
+          ],
+          "steps": [
+            "Open the [Desk](/desk) and select **Watchtower** in the sidebar, or go straight to [Watchtower](/desk/watchtower).",
+            "Read down the list. The newest items are at the top, and new ones since your last visit have their titles in heavier text.",
+            "Opening Watchtower marks everything in it as seen, so those items are no longer counted as new the next time you come back."
+          ]
+        },
+        {
+          "title": "Filter by severity or kind of event",
+          "keywords": [
+            "show only critical",
+            "filter alerts",
+            "critical alerts",
+            "by event type"
           ],
           "steps": [
             "Open [Watchtower](/desk/watchtower).",
-            "Filter by severity (**Critical**, **Warning**, **Info**) and by kind of event with the chips across the top.",
-            "Hover an item and select the arrow to open the record it is about."
+            "In the row of chips across the top, select **Critical**, **Warning** or **Info** to show only items of that severity. You can turn on more than one.",
+            "After the severity chips come one chip per kind of event that has open items, each with its count, such as service failures, EDI quarantined or credentials expiring. Select one or more to narrow the list to those kinds.",
+            "Select a chip again to turn it off. With every chip off, the feed shows everything."
+          ]
+        },
+        {
+          "title": "Open the record behind an item",
+          "keywords": [
+            "go to the shipment",
+            "view the source",
+            "jump to record"
+          ],
+          "steps": [
+            "Open [Watchtower](/desk/watchtower) and hover the item.",
+            "Select the arrow (**Open the record**) to go to the page of the record the item is about. Items that have no record don't show the arrow."
           ]
         },
         {
           "title": "Ask an agent about an item",
           "keywords": [
             "investigate alert",
-            "explain this exception"
+            "explain this exception",
+            "ask AI about alert"
           ],
           "steps": [
             "Open [Watchtower](/desk/watchtower) and hover the item.",
-            "Select **Ask about this**. A conversation opens on the [Desk](/desk) about that item."
+            "Select **Ask about this**. A new conversation opens on the [Desk](/desk) about the record behind the item. It uses the agent you last talked to, or your first available agent if you haven't talked to one yet."
           ]
         },
         {
@@ -8405,22 +9396,39 @@
           ],
           "steps": [
             "Open [Watchtower](/desk/watchtower) and hover the item.",
-            "Select **Hand off**. The agents that subscribe to that kind of event pick it up; if none does, Watchtower says so."
+            "Select **Hand off**. This button appears only on items about a record an agent can work on.",
+            "A message tells you what happened. If agents are set up to handle that kind of event, the item goes to them and the message names them. If none is, the message says **No agent subscribes to this yet** and names an agent that could take it. If no agent at all can take it, you see **No agent can take this one yet**."
           ]
         },
         {
-          "title": "Clear an item from the feed",
+          "title": "Dismiss an item",
           "keywords": [
-            "dismiss alert",
-            "hide item"
+            "clear alert",
+            "hide item",
+            "remove from feed",
+            "close alert"
           ],
           "steps": [
             "Open [Watchtower](/desk/watchtower) and hover the item.",
-            "Select the dismiss (X) button."
+            "Select the X (**Dismiss**). The item comes off Watchtower for everyone in your organization. The record behind it doesn't change: a dismissed service failure is still a service failure on its own page."
+          ]
+        },
+        {
+          "title": "Rate an item raised by an agent",
+          "keywords": [
+            "thumbs up",
+            "thumbs down",
+            "agent feedback",
+            "rate insight"
+          ],
+          "steps": [
+            "Open [Watchtower](/desk/watchtower) and hover an item raised by an agent's work: an insight, proposal, plan, failed agent run or agent exception.",
+            "Select the thumbs up (**Helpful**) or thumbs down (**Not helpful**). The rating is saved right away, and a small box opens where you can say why. You can close it without answering.",
+            "Select the same thumb again to take the rating back."
           ]
         }
       ],
-      "notes": "Needs read access to the assistant and to Watchtower. **Ask about this** appears only when an agent is available to ask, and **Hand off** only for items an agent can take.",
+      "notes": "- You need read access to the assistant to open the Desk, and read access to Watchtower to open this page. Inside it, you only see each kind of item if you can read that kind of record. For example, EDI items need EDI access and credential items need driver access. - Dismissing, handing off and marking items seen need update access to Watchtower. - **Ask about this** appears only when you have at least one agent available. **Hand off** appears only on items about a record an agent can work on. - When nothing is open, the page says **Nothing is asking for you**.",
       "related": [
         "/desk",
         "/desk/decisions",

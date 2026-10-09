@@ -69,6 +69,7 @@ func (p *AssistantTurnPayload) sendRequest() *serviceports.SendMessageRequest {
 		ThreadID:              p.ThreadID,
 		Content:               p.Content,
 		Page:                  p.Request.Page,
+		Surface:               p.Request.Surface,
 		TenantInfo:            p.tenantInfo(),
 		PreferredProviderID:   p.Request.PreferredProviderID,
 		ProviderChosen:        p.Request.ProviderChosen,
@@ -83,6 +84,7 @@ func (p *AssistantTurnPayload) sendRequest() *serviceports.SendMessageRequest {
 // AssistantTurnRequest is what the person handed over with the message.
 type AssistantTurnRequest struct {
 	Page                  *agent.PageContext `json:"page,omitempty"`
+	Surface               agent.Surface      `json:"surface,omitempty"`
 	Mentions              []agent.EntityRef  `json:"mentions,omitempty"`
 	AttachmentDocumentIDs []pulid.ID         `json:"attachmentDocumentIds,omitempty"`
 	PreferredProviderID   pulid.ID           `json:"preferredProviderId,omitempty"`

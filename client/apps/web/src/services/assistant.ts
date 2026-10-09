@@ -48,6 +48,7 @@ import {
   type AssistantArtifact,
   type AssistantEntityRef,
   type AssistantPageContext,
+  type AssistantSurface,
   type ThreadOrigin,
   type AssistantStreamEvent,
   type AssistantThread,
@@ -167,6 +168,7 @@ export type StartThreadOptions = {
 /** What rides with a message besides the words. */
 export type SendMessageOptions = {
   context?: AssistantPageContext | null;
+  surface?: AssistantSurface;
   providerId?: string;
   /** Documents uploaded to this thread for this message. */
   attachmentDocumentIds?: readonly string[];
@@ -177,6 +179,7 @@ export type SendMessageOptions = {
 /** A quick question from anywhere: no thread yet, the answer makes one. */
 export type AskOptions = {
   context?: AssistantPageContext | null;
+  surface?: AssistantSurface;
   mentions?: readonly AssistantEntityRef[];
 };
 
@@ -683,6 +686,7 @@ export class AssistantService {
       {
         content,
         context: options.context ?? null,
+        surface: options.surface ?? "",
         mentions: options.mentions ?? [],
       },
       { signal },
@@ -813,6 +817,7 @@ function messageBody(content: string, options: SendMessageOptions): Record<strin
   return {
     content,
     context: options.context ?? null,
+    surface: options.surface ?? "",
     providerId: options.providerId ?? "",
     attachmentDocumentIds: options.attachmentDocumentIds ?? [],
     mentions: options.mentions ?? [],

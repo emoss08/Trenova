@@ -24,6 +24,7 @@ type TurnRequest struct {
 	History    []conversation.Message
 	Input      string
 	Page       *agentdefinition.PageContext
+	Surface    agent.Surface
 	// PreferredProviderID is the reader's chosen model for this conversation.
 	PreferredProviderID pulid.ID
 	// ThreadID is the conversation, for attributing what the turn cost.
@@ -158,6 +159,7 @@ func (s *Service) buildContext(
 	bare := agentdefinition.RuntimeContext{
 		Trigger:     agent.RunTriggerChat,
 		Page:        req.Page,
+		Surface:     req.Surface,
 		Subject:     req.Subject,
 		Attachments: req.Attachments,
 		Mentions:    req.Mentions,
@@ -173,6 +175,7 @@ func (s *Service) buildContext(
 		Trigger:     agent.RunTriggerChat,
 		Subject:     req.Subject,
 		Page:        req.Page,
+		Surface:     req.Surface,
 		Attachments: req.Attachments,
 		Mentions:    req.Mentions,
 		Facts:       req.Facts,

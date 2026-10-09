@@ -7,6 +7,7 @@ import type {
   AssistantArtifactEvent,
   AssistantEntityRef,
   AssistantPageContext,
+  AssistantSurface,
   AssistantPlan,
   AssistantProposal,
   AssistantStreamEvent,
@@ -91,6 +92,8 @@ export type ThreadModelOptions = {
    * the Desk is a page of its own, so it sends the page they came from.
    */
   pageContextSource?: () => AssistantPageContext | null;
+  /** Where the conversation is being had, so the agent can say where the person is. */
+  surface: AssistantSurface;
   page?: PageBinding;
   pageRequest?: PageRequest | null;
   onPageRequestSent?: (key: string) => void;
@@ -116,6 +119,7 @@ export function useThreadModel({
   openingHold = false,
   openingPayload,
   pageContextSource,
+  surface,
   page,
   pageRequest,
   onPageRequestSent,
@@ -316,6 +320,7 @@ export function useThreadModel({
     thread.id,
     getTurnContext,
     onConversationEvent,
+    surface,
   );
 
   // What the person types while the agent works: read into the reply under
@@ -333,6 +338,7 @@ export function useThreadModel({
     enabled: thread.canContinue,
     steered,
     context: getTurnContext,
+    surface,
     providerId,
     onStarted: onQueueStarted,
   });

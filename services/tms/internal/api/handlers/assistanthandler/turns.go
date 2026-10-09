@@ -273,6 +273,7 @@ func (h *Handler) ask(c *gin.Context) {
 	thread, err := h.service.StartAsk(c.Request.Context(), &serviceports.AskRequest{
 		Content:    body.Content,
 		Page:       body.Context.page(),
+		Surface:    body.Surface,
 		Mentions:   body.Mentions,
 		TenantInfo: tenantFromAuthContext(authCtx),
 	}, &actor)
@@ -284,6 +285,7 @@ func (h *Handler) ask(c *gin.Context) {
 	turn, _, err := h.askWorker(c, thread.ID, &sendMessageRequest{
 		Content:  body.Content,
 		Context:  body.Context,
+		Surface:  body.Surface,
 		Mentions: body.Mentions,
 	})
 	if err != nil {
@@ -362,6 +364,7 @@ func (h *Handler) startWorkflow(
 			Content: body.Content,
 			Request: assistantjobs.AssistantTurnRequest{
 				Page:                  body.page(),
+				Surface:               body.Surface,
 				Mentions:              body.Mentions,
 				AttachmentDocumentIDs: body.AttachmentDocumentIDs,
 				PreferredProviderID:   providerID,

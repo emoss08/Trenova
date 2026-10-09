@@ -151,11 +151,18 @@ func (c *verdictCache) put(
 // cache cannot be filled with the text of what people asked. Case and
 // surrounding whitespace are normalised because they change nothing about what
 // a request is asking for.
+var classifierPromptDigest = func() string {
+	sum := sha256.Sum256([]byte(classifierSystemPrompt))
+
+	return hex.EncodeToString(sum[:8])
+}()
+
 func verdictKey(orgID pulid.ID, conversation, input string) string {
 	// The conversation is hashed with the message rather than beside it: what
 	// was classified is the pair, and a key that ignored half of it would hand
 	// a follow-up the verdict from a different thread.
-	normalized := strings.ToLower(strings.TrimSpace(conversation)) +
+	normalized := classifierPromptDigest + "\x00" +
+		strings.ToLower(strings.TrimSpace(conversation)) +
 		"\x00" + strings.ToLower(strings.TrimSpace(input))
 	sum := sha256.Sum256([]byte(normalized))
 

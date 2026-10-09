@@ -61,6 +61,7 @@ type SendMessageRequest struct {
 	// Page is what the person was looking at when they asked, if the client
 	// sent it. It is validated and stored with the user turn.
 	Page       *agent.PageContext
+	Surface    agent.Surface
 	TenantInfo pagination.TenantInfo
 	// AttachmentDocumentIDs are files the person uploaded for this message.
 	// Each must be a document they uploaded to this thread; anything else is
@@ -99,6 +100,7 @@ type SendMessageRequest struct {
 type AskRequest struct {
 	Content    string
 	Page       *agent.PageContext
+	Surface    agent.Surface
 	Mentions   []agent.EntityRef
 	TenantInfo pagination.TenantInfo
 }

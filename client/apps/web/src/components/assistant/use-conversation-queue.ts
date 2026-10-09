@@ -5,6 +5,7 @@ import type { QueueOutcome } from "@/services/assistant";
 import type {
   AssistantEntityRef,
   AssistantPageContext,
+  AssistantSurface,
   QueuedMessage,
   QueuedMessageList,
 } from "@/types/assistant";
@@ -26,6 +27,7 @@ export type ConversationQueueOptions = {
   steered: ReadonlySet<string>;
   /** The page, model and records the message is sent with. */
   context: () => AssistantPageContext | null;
+  surface?: AssistantSurface;
   providerId: string;
   /** A message the queue sent as a reply of its own, for the view to follow. */
   onStarted: (turnId: string, content: string, mentions: AssistantEntityRef[]) => void;
@@ -40,7 +42,7 @@ export type ConversationQueueOptions = {
 export function useConversationQueue(threadId: string, options: ConversationQueueOptions) {
   const t = useT();
   const queryClient = useQueryClient();
-  const { enabled, steered, context, providerId, onStarted } = options;
+  const { enabled, steered, context, surface, providerId, onStarted } = options;
   const key = queries.assistant.queue(threadId).queryKey;
   const query = useQuery({ ...queries.assistant.queue(threadId), enabled });
 
@@ -95,6 +97,7 @@ export function useConversationQueue(threadId: string, options: ConversationQueu
       try {
         const outcome = await apiService.assistantService.enqueue(threadId, content, {
           context: context(),
+          surface,
           providerId,
           mentions,
           attachmentDocumentIds:
@@ -113,7 +116,7 @@ export function useConversationQueue(threadId: string, options: ConversationQueu
         return false;
       }
     },
-    [context, failed, providerId, settle, t, threadId],
+    [context, failed, providerId, settle, surface, t, threadId],
   );
 
   const edit = useCallback(

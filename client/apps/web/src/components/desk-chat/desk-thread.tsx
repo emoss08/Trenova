@@ -27,6 +27,7 @@ import type {
   AssistantArtifactEvent,
   AssistantMessage,
   AssistantProposal,
+  AssistantSurface,
   AssistantThread,
 } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -160,6 +161,8 @@ export type DeskThreadProps = {
    * on screen (the assistant over a page), or none.
    */
   pageSource?: "recent" | "screen" | "none";
+  /** Where this conversation is drawn: the Desk, or the assistant over a page. */
+  surface?: AssistantSurface;
   /** Binds the conversation to a page that owns it; see PageBinding. */
   page?: PageBinding;
   pageRequest?: PageRequest | null;
@@ -243,6 +246,7 @@ export function DeskThread({
   onNavigate,
   followNavigation,
   pageSource = "recent",
+  surface = "Desk",
   page,
   pageRequest,
   onPageRequestSent,
@@ -374,6 +378,7 @@ export function DeskThread({
     openingHold,
     openingPayload,
     pageContextSource: page || pageSource === "none" ? undefined : deskPage.context,
+    surface,
     page,
     pageRequest,
     onPageRequestSent,

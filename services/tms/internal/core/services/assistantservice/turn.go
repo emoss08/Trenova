@@ -146,6 +146,7 @@ func (s *Service) prepareTurn(
 	if page != nil {
 		page.Validate("context", multiErr)
 	}
+	req.Surface.Validate("surface", multiErr)
 	mentions := validateMentions(req.Mentions, multiErr)
 	if multiErr.HasErrors() {
 		return nil, nil, multiErr
@@ -194,6 +195,7 @@ func (s *Service) prepareTurn(
 		History:             history,
 		Input:               content,
 		Page:                page,
+		Surface:             req.Surface,
 		PreferredProviderID: thread.PreferredProviderID,
 		ThreadID:            thread.ID,
 		Proposals:           checks.proposals,

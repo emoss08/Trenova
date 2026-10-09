@@ -56,6 +56,16 @@ cases:
     expect: [/desk/decisions]
   - request: where do I read emails customers sent in
     expect: [/inbox]
+  - request: what does the Desk do
+    expect: [/desk]
+  - request: how do I steer the agent while it is still replying
+    expect: [/desk]
+  - request: snooze a case until the truck's ETA
+    expect: [/desk]
+  - request: hand this conversation to another agent
+    expect: [/desk]
+  - request: have an agent run a question every weekday morning
+    expect: [/desk]
 nothing:
   - xyzzy plugh
   - quantum chromodynamics lattice

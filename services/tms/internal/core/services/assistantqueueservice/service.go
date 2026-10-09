@@ -470,6 +470,7 @@ func (s *Service) start(
 				Content: item.Content,
 				Request: assistantjobs.AssistantTurnRequest{
 					Page:                  request.Page,
+					Surface:               request.Surface,
 					Mentions:              request.Mentions,
 					AttachmentDocumentIDs: request.AttachmentDocumentIDs,
 					PreferredProviderID:   request.ProviderID,

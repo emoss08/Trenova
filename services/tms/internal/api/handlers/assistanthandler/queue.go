@@ -34,6 +34,7 @@ type queueListResponse struct {
 type enqueueRequest struct {
 	Content               string              `json:"content"`
 	Context               *pageContextRequest `json:"context"`
+	Surface               agent.Surface       `json:"surface"`
 	ProviderID            *pulid.ID           `json:"providerId"`
 	AttachmentDocumentIDs []pulid.ID          `json:"attachmentDocumentIds"`
 	Mentions              []agent.EntityRef   `json:"mentions"`
@@ -127,6 +128,7 @@ func (h *Handler) enqueue(c *gin.Context) {
 
 	request := conversation.QueuedRequest{
 		Page:                  body.Context.page(),
+		Surface:               body.Surface,
 		Mentions:              body.Mentions,
 		AttachmentDocumentIDs: body.AttachmentDocumentIDs,
 	}

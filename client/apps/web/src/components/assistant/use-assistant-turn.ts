@@ -14,6 +14,7 @@ import type {
   AssistantEntityRef,
   AssistantPageContext,
   AssistantStreamEvent,
+  AssistantSurface,
   QueuedMessageList,
   SendMessageResult,
 } from "@/types/assistant";
@@ -58,6 +59,7 @@ export function useAssistantTurn(
   threadId: string,
   getContext?: () => AssistantPageContext | null,
   onConversationEvent?: (event: AssistantStreamEvent) => void,
+  surface?: AssistantSurface,
 ) {
   const t = useT();
   const queryClient = useQueryClient();
@@ -529,6 +531,7 @@ export function useAssistantTurn(
                 content,
                 {
                   context: pageContext,
+                  surface,
                   providerId,
                   attachmentDocumentIds: attachments,
                   mentions: extras.mentions ?? [],
@@ -578,6 +581,7 @@ export function useAssistantTurn(
       getContext,
       queryClient,
       queuedMentions,
+      surface,
       threadId,
     ],
   );
