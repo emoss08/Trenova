@@ -39,7 +39,8 @@ var (
 		http.MethodPatch:  {},
 		http.MethodDelete: {},
 	}
-	handlerMethod = regexp.MustCompile(`\(\*?` + handlerReceiver + `\)\.(\w+)`)
+	handlerMethod  = regexp.MustCompile(`\(\*?` + handlerReceiver + `\)\.(\w+)`)
+	closureHandler = regexp.MustCompile(`\.func\d+(\.\d+)*$`)
 
 	resolverSkippedDirs = map[string]struct{}{
 		"mappergen":    {},
@@ -191,8 +192,12 @@ func enumerateRoutes(table gin.RoutesInfo, handlersDir string) ([]Write, error) 
 
 		name, isMethod := parseHandler(info.Handler)
 		route := Route{Method: info.Method, Path: info.Path}
+		groupKey := info.Handler
+		if closureHandler.MatchString(info.Handler) {
+			groupKey = info.Handler + " " + route.String()
+		}
 
-		if existing, ok := grouped[info.Handler]; ok {
+		if existing, ok := grouped[groupKey]; ok {
 			existing.Routes = append(existing.Routes, route)
 			continue
 		}
@@ -209,7 +214,7 @@ func enumerateRoutes(table gin.RoutesInfo, handlersDir string) ([]Write, error) 
 			}
 			write.Calls = calls
 		}
-		grouped[info.Handler] = write
+		grouped[groupKey] = write
 	}
 
 	writes := make([]Write, 0, len(grouped))
