@@ -281,8 +281,9 @@ func (c *coercer) text(property map[string]any, value any, path string) (any, bo
 		return value, false
 	}
 	c.note(path, "%s %v was read as the text %q; this parameter takes text", path, value, text)
+	read, _ := c.enum(property, text, path)
 
-	return c.enum(property, text, path)
+	return read, true
 }
 
 var (
