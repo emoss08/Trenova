@@ -4,6 +4,7 @@ import { Controller, type FieldValues } from "react-hook-form";
 import { Checkbox } from "../animate-ui/components/base/checkbox";
 import type { CheckboxProps } from "../animate-ui/primitives/base/checkbox";
 import { Label } from "@trenova/shared/components/ui/label";
+import { useFieldRegistration } from "@trenova/shared/lib/form-field-registry";
 
 type BaseCheckboxFieldProps = Omit<CheckboxProps, "name"> & {
   label: string;
@@ -24,6 +25,7 @@ export function CheckboxField<T extends FieldValues>({
   "aria-describedby": ariaDescribedBy,
   ...props
 }: CheckboxFieldProps<T>) {
+  useFieldRegistration(name, label);
   const inputId = `checkbox-${name}`;
   const descriptionId = `${inputId}-description`;
   const errorId = `${inputId}-error`;

@@ -12,6 +12,7 @@ import {
 } from "@/hooks/use-panel-action-preference";
 import { api } from "@trenova/shared/lib/api";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
+import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -20,11 +21,25 @@ import { Dialog } from "@base-ui/react/dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { XCloseIcon } from "@trenova/shared/components/icons";
 import { parseAsString, useQueryState } from "nuqs";
-import { Suspense, useCallback, useEffect, useRef, type LazyExoticComponent } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type LazyExoticComponent,
+} from "react";
 import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { FormCopyButton } from "./form-copy-button";
+import {
+  FormPanelFooter,
+  PanelDirtyTracker,
+  usePanelCloseGuard,
+  type ChangeFields,
+} from "./form-changes";
+import { createFieldRegistry, FormFieldsProvider } from "@trenova/shared/lib/form-field-registry";
 import { FormSaveDock } from "./form-save-dock";
 
 const PANEL_SIZES = {
@@ -81,6 +96,12 @@ type TabbedFormEditPanelProps<T extends FieldValues, TData extends Record<string
   isRecordLoading?: boolean;
   recordFailed?: boolean;
   mutationFn?: (values: T, row: TData) => Promise<T>;
+  /** Labels for the change review; see FormEditPanel. */
+  changeFields?: ChangeFields;
+  /** Why the form cannot be saved yet, shown in the footer beside the changes. */
+  footerProblem?: string | null;
+  /** More at the left of the footer, such as a test button. */
+  footerLeading?: React.ReactNode;
 };
 
 const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
@@ -118,6 +139,9 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
   isRecordLoading = false,
   recordFailed = false,
   mutationFn,
+  changeFields,
+  footerProblem,
+  footerLeading,
 }: TabbedFormEditPanelProps<T, TData>) {
   const t = useT();
 
@@ -134,10 +158,22 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
     reset,
   } = form;
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     onOpenChange(false);
     reset();
     void setActiveTab(defaultTab);
+  }, [defaultTab, onOpenChange, reset, setActiveTab]);
+  const guard = usePanelCloseGuard({ open, onClose: handleClose });
+  const [fieldRegistry] = useState(createFieldRegistry);
+  const dockClosePrompt = guard.confirmingClose
+    ? { count: guard.changedCount, onKeepEditing: guard.keepEditing, onDiscard: guard.discard }
+    : null;
+  const handleDialogOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      onOpenChange(true);
+      return;
+    }
+    guard.requestClose();
   };
 
   useEffect(() => {
@@ -174,6 +210,9 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
       void queryClient.invalidateQueries({ queryKey: [queryKey] });
 
       const action = pendingActionRef.current;
+      if (action === "save") {
+        reset(form.getValues());
+      }
       if (action === "save-close") {
         reset();
         onOpenChange(false);
@@ -229,7 +268,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
         !activeTabHidesFooter &&
         !saveBlocked &&
         (event.ctrlKey || event.metaKey) &&
-        event.key === "Enter" &&
+        (event.key === "Enter" || event.key.toLowerCase() === "s") &&
         !isSubmitting
       ) {
         event.preventDefault();
@@ -274,7 +313,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
   const rowId = row !== null && row !== undefined ? String(row.id) : "unable to retrieve ID";
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    <Dialog.Root open={open} onOpenChange={handleDialogOpenChange}>
       <Dialog.Portal>
         <Dialog.Popup
           className={cn(
@@ -353,23 +392,28 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
               </div>
 
               <ScrollArea className="flex-1">
-                <FormProvider {...form}>
-                  <Form id="panel-edit-form" onSubmit={() => handleSubmit(handleFormSubmit)()}>
-                    {formTabs.map((tab) => (
-                      <TabsContent key={tab.value} value={tab.value} keepMounted className="p-4">
-                        {tab.content}
-                      </TabsContent>
-                    ))}
-                    {useDock && (
-                      <FormSaveDock
-                        splitButton={splitButtonConfig}
-                        formId="panel-edit-form"
-                        position="right"
-                        showReset={false}
-                      />
-                    )}
-                  </Form>
-                </FormProvider>
+                <FormFieldsProvider registry={fieldRegistry}>
+                  <FormProvider {...form}>
+                    <PanelDirtyTracker form={form} guard={guard} />
+                    <Form id="panel-edit-form" onSubmit={() => handleSubmit(handleFormSubmit)()}>
+                      {formTabs.map((tab) => (
+                        <TabsContent key={tab.value} value={tab.value} keepMounted className="p-4">
+                          {tab.content}
+                        </TabsContent>
+                      ))}
+                      {useDock && (
+                        <FormSaveDock
+                          closePrompt={dockClosePrompt}
+                          changeFields={changeFields}
+                          splitButton={splitButtonConfig}
+                          formId="panel-edit-form"
+                          position="right"
+                          showReset={false}
+                        />
+                      )}
+                    </Form>
+                  </FormProvider>
+                </FormFieldsProvider>
               </ScrollArea>
             </Tabs>
           ) : hasTabs ? (
@@ -395,19 +439,24 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
 
               <ScrollArea className={cn("flex-1", activeTabManagesScroll && "hidden")}>
                 <TabsContent value="details" className="p-4">
-                  <FormProvider {...form}>
-                    <Form id="panel-edit-form" onSubmit={() => handleSubmit(handleFormSubmit)()}>
-                      {formComponent}
-                      {useDock && (
-                        <FormSaveDock
-                          splitButton={splitButtonConfig}
-                          formId="panel-edit-form"
-                          position="right"
-                          showReset={false}
-                        />
-                      )}
-                    </Form>
-                  </FormProvider>
+                  <FormFieldsProvider registry={fieldRegistry}>
+                    <FormProvider {...form}>
+                      <PanelDirtyTracker form={form} guard={guard} />
+                      <Form id="panel-edit-form" onSubmit={() => handleSubmit(handleFormSubmit)()}>
+                        {formComponent}
+                        {useDock && (
+                          <FormSaveDock
+                            closePrompt={dockClosePrompt}
+                            changeFields={changeFields}
+                            splitButton={splitButtonConfig}
+                            formId="panel-edit-form"
+                            position="right"
+                            showReset={false}
+                          />
+                        )}
+                      </Form>
+                    </FormProvider>
+                  </FormFieldsProvider>
                 </TabsContent>
 
                 {tabs
@@ -438,40 +487,55 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
           ) : (
             <ScrollArea className="flex-1">
               <div className="p-4">
-                <FormProvider {...form}>
-                  <Form id="panel-edit-form" onSubmit={() => handleSubmit(handleFormSubmit)()}>
-                    {formComponent}
-                    {useDock && (
-                      <FormSaveDock
-                        splitButton={splitButtonConfig}
-                        formId="panel-edit-form"
-                        position="right"
-                        showReset={false}
-                      />
-                    )}
-                  </Form>
-                </FormProvider>
+                <FormFieldsProvider registry={fieldRegistry}>
+                  <FormProvider {...form}>
+                    <PanelDirtyTracker form={form} guard={guard} />
+                    <Form id="panel-edit-form" onSubmit={() => handleSubmit(handleFormSubmit)()}>
+                      {formComponent}
+                      {useDock && (
+                        <FormSaveDock
+                          closePrompt={dockClosePrompt}
+                          changeFields={changeFields}
+                          splitButton={splitButtonConfig}
+                          formId="panel-edit-form"
+                          position="right"
+                          showReset={false}
+                        />
+                      )}
+                    </Form>
+                  </FormProvider>
+                </FormFieldsProvider>
               </div>
             </ScrollArea>
           )}
 
           <div
             className={cn(
-              "border-border bg-muted/30 flex items-center justify-between gap-2 border-t px-4 py-3",
-              (activeTabHidesFooter || useDock) && "hidden",
+              "border-border bg-muted/30 flex items-center gap-2 border-t px-4 py-3",
+              (useDock || (activeTabHidesFooter && !guard.confirmingClose)) && "hidden",
             )}
           >
-            <Button type="button" variant="outline" onClick={handleClose}>
-              {t("Cancel")}
-            </Button>
-            <SplitButton
-              options={SAVE_OPTIONS}
-              selectedOption={defaultAction}
-              onOptionSelect={handleOptionSelect}
-              isLoading={isSubmitting}
-              disabled={saveBlocked}
-              loadingText={t("Saving...")}
-              formId="panel-edit-form"
+            <FormPanelFooter
+              form={form}
+              create={false}
+              guard={guard}
+              registry={fieldRegistry}
+              changeFields={changeFields}
+              problem={footerProblem}
+              leading={footerLeading}
+              save={
+                <SplitButton
+                  options={SAVE_OPTIONS}
+                  selectedOption={defaultAction}
+                  onOptionSelect={handleOptionSelect}
+                  isLoading={isSubmitting}
+                  disabled={saveBlocked}
+                  loadingText={t("Saving...")}
+                  formId="panel-edit-form"
+                  shortcut={formatShortcut("S")}
+                  tone="primary"
+                />
+              }
             />
           </div>
         </Dialog.Popup>

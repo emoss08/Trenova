@@ -1,5 +1,4 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Button } from "@trenova/shared/components/ui/button";
 import { Form } from "@trenova/shared/components/ui/form";
 import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
@@ -13,12 +12,20 @@ import { api } from "@trenova/shared/lib/api";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { API_ENDPOINTS } from "@trenova/shared/types/server";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { DataTablePanelContainer, type PanelSize } from "./data-table/data-table-panel";
+import {
+  FormPanelFooter,
+  PanelDirtyTracker,
+  usePanelCloseGuard,
+  type ChangeFields,
+} from "./form-changes";
+import { createFieldRegistry, FormFieldsProvider } from "@trenova/shared/lib/form-field-registry";
 import { FormSaveDock } from "./form-save-dock";
 import { toSentenceFragment } from "@trenova/shared/lib/utils";
+import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 
 type FormCreatePanelProps<
   TFieldValues extends FieldValues,
@@ -35,6 +42,15 @@ type FormCreatePanelProps<
   size?: PanelSize;
   notice?: React.ReactNode;
   useDock?: boolean;
+  /**
+   * Labels for the change review. Given, the footer counts unsaved changes, lists
+   * each one with its own undo, and says why the form cannot be saved.
+   */
+  changeFields?: ChangeFields;
+  /** Why the form cannot be saved yet, shown in the footer beside the changes. */
+  footerProblem?: string | null;
+  /** More at the left of the footer, such as a test button. */
+  footerLeading?: React.ReactNode;
   mutationFn?: (values: TSubmitValues) => Promise<TMutationData>;
 };
 
@@ -62,6 +78,9 @@ export function FormCreatePanel<
   notice,
   useDock = false,
   mutationFn,
+  changeFields,
+  footerProblem,
+  footerLeading,
 }: FormCreatePanelProps<TFieldValues, TData, TSubmitValues, TMutationData>) {
   const t = useT();
 
@@ -92,10 +111,15 @@ export function FormCreatePanel<
     }
   }, [open, reset, pristineDefaults]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     onOpenChange(false);
     reset(pristineDefaults);
-  };
+  }, [onOpenChange, reset, pristineDefaults]);
+  const guard = usePanelCloseGuard({ open, onClose: handleClose });
+  const [fieldRegistry] = useState(createFieldRegistry);
+  const dockClosePrompt = guard.confirmingClose
+    ? { count: guard.changedCount, onKeepEditing: guard.keepEditing, onDiscard: guard.discard }
+    : null;
 
   const { mutateAsync } = useApiMutation<TMutationData, CreateSubmitPayload, unknown, TFieldValues>(
     {
@@ -122,6 +146,9 @@ export function FormCreatePanel<
         }
 
         const action = variables.action;
+        if (action === "save") {
+          reset(form.getValues());
+        }
         if (action === "save-close") {
           onOpenChange(false);
           reset(pristineDefaults);
@@ -150,13 +177,16 @@ export function FormCreatePanel<
   const handlePanelOpenChange = (nextOpen: boolean) => {
     if (nextOpen) {
       reset(pristineDefaults);
+      onOpenChange(true);
+      return;
     }
-    onOpenChange(nextOpen);
+    guard.requestClose();
   };
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (open && (event.ctrlKey || event.metaKey) && event.key === "Enter" && !isSubmitting) {
+      const saveKey = event.key === "Enter" || event.key.toLowerCase() === "s";
+      if (open && (event.ctrlKey || event.metaKey) && saveKey && !isSubmitting) {
         event.preventDefault();
         void handleSubmit((values) => onSubmit(values, defaultAction))();
       }
@@ -185,37 +215,50 @@ export function FormCreatePanel<
       size={size}
       footer={
         useDock ? undefined : (
-          <>
-            <Button type="button" variant="outline" onClick={handleClose}>
-              {t("Cancel")}
-            </Button>
-            <SplitButton
-              options={SAVE_OPTIONS}
-              selectedOption={defaultAction}
-              onOptionSelect={handleOptionSelect}
-              isLoading={isSubmitting}
-              loadingText={t("Saving...")}
-              formId="panel-create-form"
-            />
-          </>
+          <FormPanelFooter
+            form={form}
+            create
+            guard={guard}
+            registry={fieldRegistry}
+            changeFields={changeFields}
+            problem={footerProblem}
+            leading={footerLeading}
+            save={
+              <SplitButton
+                options={SAVE_OPTIONS}
+                selectedOption={defaultAction}
+                onOptionSelect={handleOptionSelect}
+                isLoading={isSubmitting}
+                loadingText={t("Saving...")}
+                formId="panel-create-form"
+                shortcut={formatShortcut("S")}
+                tone="primary"
+              />
+            }
+          />
         )
       }
     >
       <div className="flex flex-col gap-4">
         {notice}
-        <FormProvider {...form}>
-          <Form id="panel-create-form" onSubmit={handleSubmit(handleFormSubmit)}>
-            {formComponent}
-            {useDock && (
-              <FormSaveDock
-                splitButton={splitButtonConfig}
-                formId="panel-create-form"
-                position="right"
-                showReset={false}
-              />
-            )}
-          </Form>
-        </FormProvider>
+        <FormFieldsProvider registry={fieldRegistry}>
+          <FormProvider {...form}>
+            <PanelDirtyTracker form={form} guard={guard} />
+            <Form id="panel-create-form" onSubmit={handleSubmit(handleFormSubmit)}>
+              {formComponent}
+              {useDock && (
+                <FormSaveDock
+                  closePrompt={dockClosePrompt}
+                  changeFields={changeFields}
+                  splitButton={splitButtonConfig}
+                  formId="panel-create-form"
+                  position="right"
+                  showReset={false}
+                />
+              )}
+            </Form>
+          </FormProvider>
+        </FormFieldsProvider>
       </div>
     </DataTablePanelContainer>
   );

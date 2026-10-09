@@ -23,4 +23,7 @@ function KbdGroup({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-export { Kbd, KbdGroup };
+/** A key drawn on a solid fill, such as inside a primary button, where the plain key vanishes. */
+const kbdOnSolidClassName = "border-background/25 bg-background/15 text-background";
+
+export { Kbd, KbdGroup, kbdOnSolidClassName };

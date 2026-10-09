@@ -7,19 +7,26 @@ import {
 import { rememberPristineDefaults } from "@/lib/form-defaults";
 import { useQueryClient } from "@tanstack/react-query";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
-import { Button } from "@trenova/shared/components/ui/button";
 import { Form } from "@trenova/shared/components/ui/form";
 import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { api } from "@trenova/shared/lib/api";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
+import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { API_ENDPOINTS } from "@trenova/shared/types/server";
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { DataTablePanelContainer, type PanelSize } from "./data-table/data-table-panel";
+import {
+  FormPanelFooter,
+  PanelDirtyTracker,
+  usePanelCloseGuard,
+  type ChangeFields,
+} from "./form-changes";
+import { createFieldRegistry, FormFieldsProvider } from "@trenova/shared/lib/form-field-registry";
 import { FormSaveDock } from "./form-save-dock";
 
 type FormEditPanelProps<
@@ -39,6 +46,15 @@ type FormEditPanelProps<
   subtitle?: (currentRecord: TData) => React.ReactNode;
   headerActions?: React.ReactNode;
   useDock?: boolean;
+  /**
+   * Labels for the change review. Given, the footer counts unsaved changes, lists
+   * each one with its own undo, and says why the form cannot be saved.
+   */
+  changeFields?: ChangeFields;
+  /** Why the form cannot be saved yet, shown in the footer beside the changes. */
+  footerProblem?: string | null;
+  /** More at the left of the footer, such as a test button. */
+  footerLeading?: React.ReactNode;
   mutationFn?: (values: TSubmitValues, row: TData) => Promise<TMutationData>;
 };
 
@@ -68,6 +84,9 @@ export function FormEditPanel<
   headerActions,
   useDock = false,
   mutationFn,
+  changeFields,
+  footerProblem,
+  footerLeading,
 }: FormEditPanelProps<TFieldValues, TData, TSubmitValues, TMutationData>) {
   const t = useT();
 
@@ -91,9 +110,21 @@ export function FormEditPanel<
   // panel sharing this form has a blank state to return to.
   rememberPristineDefaults<TFieldValues>(form);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     onOpenChange(false);
     reset();
+  }, [onOpenChange, reset]);
+  const guard = usePanelCloseGuard({ open, onClose: handleClose });
+  const [fieldRegistry] = useState(createFieldRegistry);
+  const dockClosePrompt = guard.confirmingClose
+    ? { count: guard.changedCount, onKeepEditing: guard.keepEditing, onDiscard: guard.discard }
+    : null;
+  const handlePanelOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      onOpenChange(true);
+      return;
+    }
+    guard.requestClose();
   };
 
   useEffect(() => {
@@ -136,6 +167,9 @@ export function FormEditPanel<
       }
 
       const action = variables.action;
+      if (action === "save") {
+        reset(form.getValues());
+      }
       if (action === "save-close") {
         reset();
         onOpenChange(false);
@@ -160,7 +194,8 @@ export function FormEditPanel<
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (open && (event.ctrlKey || event.metaKey) && event.key === "Enter" && !isSubmitting) {
+      const saveKey = event.key === "Enter" || event.key.toLowerCase() === "s";
+      if (open && (event.ctrlKey || event.metaKey) && saveKey && !isSubmitting) {
         event.preventDefault();
         void handleSubmit((values) => onSubmit(values, defaultAction))();
       }
@@ -198,7 +233,7 @@ export function FormEditPanel<
   return (
     <DataTablePanelContainer
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={handlePanelOpenChange}
       title={resolvedTitle}
       titleComponent={resolvedTitleComponent}
       subtitle={resolvedSubtitle}
@@ -207,38 +242,51 @@ export function FormEditPanel<
       size={size}
       footer={
         useDock ? undefined : (
-          <>
-            <Button type="button" variant="secondary" onClick={handleClose}>
-              {t("Cancel")}
-            </Button>
-            <SplitButton
-              options={SAVE_OPTIONS}
-              selectedOption={defaultAction}
-              onOptionSelect={handleOptionSelect}
-              isLoading={isSubmitting}
-              loadingText={t("Saving...")}
-              formId="panel-edit-form"
-            />
-          </>
+          <FormPanelFooter
+            form={form}
+            create={false}
+            guard={guard}
+            registry={fieldRegistry}
+            changeFields={changeFields}
+            problem={footerProblem}
+            leading={footerLeading}
+            save={
+              <SplitButton
+                options={SAVE_OPTIONS}
+                selectedOption={defaultAction}
+                onOptionSelect={handleOptionSelect}
+                isLoading={isSubmitting}
+                loadingText={t("Saving...")}
+                formId="panel-edit-form"
+                shortcut={formatShortcut("S")}
+                tone="primary"
+              />
+            }
+          />
         )
       }
     >
       {!row ? (
         <ComponentLoader message={t("Loading {0}...", title)} />
       ) : (
-        <FormProvider {...form}>
-          <Form id="panel-edit-form" onSubmit={handleSubmit(handleFormSubmit)}>
-            {formComponent}
-            {useDock && (
-              <FormSaveDock
-                splitButton={splitButtonConfig}
-                formId="panel-edit-form"
-                position="right"
-                showReset={false}
-              />
-            )}
-          </Form>
-        </FormProvider>
+        <FormFieldsProvider registry={fieldRegistry}>
+          <FormProvider {...form}>
+            <PanelDirtyTracker form={form} guard={guard} />
+            <Form id="panel-edit-form" onSubmit={handleSubmit(handleFormSubmit)}>
+              {formComponent}
+              {useDock && (
+                <FormSaveDock
+                  closePrompt={dockClosePrompt}
+                  changeFields={changeFields}
+                  splitButton={splitButtonConfig}
+                  formId="panel-edit-form"
+                  position="right"
+                  showReset={false}
+                />
+              )}
+            </Form>
+          </FormProvider>
+        </FormFieldsProvider>
       )}
     </DataTablePanelContainer>
   );
