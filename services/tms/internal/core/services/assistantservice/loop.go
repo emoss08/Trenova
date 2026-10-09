@@ -24,6 +24,7 @@ type TurnRequest struct {
 	History    []conversation.Message
 	Input      string
 	Page       *agentdefinition.PageContext
+	Surface    agent.Surface
 	// PreferredProviderID is the reader's chosen model for this conversation.
 	PreferredProviderID pulid.ID
 	// ThreadID is the conversation, for attributing what the turn cost.
@@ -144,7 +145,7 @@ func turnResultOf(
 		result.Messages[0].CreatedAt = asked
 	}
 
-	if run.OutputRefused {
+	if run.OutputAltered {
 		result.Decision = outputDecision(run, result.Messages)
 	}
 
@@ -158,6 +159,7 @@ func (s *Service) buildContext(
 	bare := agentdefinition.RuntimeContext{
 		Trigger:     agent.RunTriggerChat,
 		Page:        req.Page,
+		Surface:     req.Surface,
 		Subject:     req.Subject,
 		Attachments: req.Attachments,
 		Mentions:    req.Mentions,
@@ -173,6 +175,7 @@ func (s *Service) buildContext(
 		Trigger:     agent.RunTriggerChat,
 		Subject:     req.Subject,
 		Page:        req.Page,
+		Surface:     req.Surface,
 		Attachments: req.Attachments,
 		Mentions:    req.Mentions,
 		Facts:       req.Facts,
@@ -415,19 +418,24 @@ func scopedMessage(
 	}
 }
 
+// outputDecision is the turn's decision when the output guard took code out
+// of the answer: still allowed, since the rest of the reply went through, and
+// marked as altered with the rule and reason the reply's message carries, so
+// the signal that something upstream let a code request through is kept.
 func outputDecision(
 	run *serviceports.RunResult,
 	messages []conversation.Message,
 ) agentguard.Decision {
 	decision := agentguard.Decision{
-		Allowed:     false,
+		Allowed:     true,
+		Altered:     true,
 		Stage:       agentguard.StageOutput,
-		Message:     run.Reply,
 		MatchedRule: run.OutputRule,
 	}
 	for i := len(messages) - 1; i >= 0; i-- {
 		message := messages[i]
-		if message.Role == conversation.RoleAssistant && message.Refused {
+		if message.Role == conversation.RoleAssistant &&
+			message.ScopeStage == string(agentguard.StageOutput) {
 			decision.Category = agentguard.Category(message.ScopeCategory)
 			decision.Reason = agentguard.Reason(message.ScopeReason)
 
@@ -465,6 +473,9 @@ func recentTurns(history []conversation.Message) []agentguard.Turn {
 			// conversation, not anything the person said.
 			if message.Compacted() {
 				turns = append(turns, agentguard.Turn{Role: "assistant", Content: message.Content})
+				continue
+			}
+			if message.Kind == conversation.MessageKindWorldChange {
 				continue
 			}
 			turns = append(turns, agentguard.Turn{Role: "user", Content: message.Content})

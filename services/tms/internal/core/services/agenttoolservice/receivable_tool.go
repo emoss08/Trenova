@@ -39,7 +39,11 @@ type receivableSpec struct {
 	properties  map[string]any
 	required    []string
 	searchTerms []string
-	target      func(params map[string]any) (serviceports.ToolTarget, bool)
+	// prerequisites and recipe are the lookups the tool's ids come from and
+	// the order a task with it is done in; see serviceports.RecipeTool.
+	prerequisites []string
+	recipe        []string
+	target        func(params map[string]any) (serviceports.ToolTarget, bool)
 }
 
 type receivablePlan[R, P any] struct {
@@ -91,6 +95,10 @@ func (t *receivableTool[R, P]) Name() string { return t.spec.name }
 func (t *receivableTool[R, P]) Description() string { return t.spec.description }
 
 func (t *receivableTool[R, P]) SearchTerms() []string { return t.spec.searchTerms }
+
+func (t *receivableTool[R, P]) Prerequisites() []string { return t.spec.prerequisites }
+
+func (t *receivableTool[R, P]) Recipe() []string { return t.spec.recipe }
 
 func (t *receivableTool[R, P]) ParamSchema() map[string]any {
 	return map[string]any{
@@ -247,16 +255,6 @@ func stringProperty(description string, maxLength int) map[string]any {
 	}
 
 	return property
-}
-
-func idListProperty(description string, maxItems int) map[string]any {
-	return map[string]any{
-		toolschema.KeyType:        toolschema.TypeArray,
-		toolschema.KeyDescription: description,
-		toolschema.KeyItems:       map[string]any{toolschema.KeyType: toolschema.TypeString},
-		toolschema.KeyMinItems:    1,
-		toolschema.KeyMaxItems:    maxItems,
-	}
 }
 
 func requireEnum[T ~string](params map[string]any, key string, values []T) (T, error) {

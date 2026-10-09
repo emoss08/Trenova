@@ -81,6 +81,10 @@ func (t *createDashboardTool) Prerequisites() []string {
 	return []string{"list_reports", "describe_report"}
 }
 
+func (t *createDashboardTool) Recipe() []string {
+	return []string{"list_reports", "describe_report", "create_dashboard"}
+}
+
 func (t *createDashboardTool) SearchTerms() []string {
 	return []string{"report dashboard", "reports page", "board", "build dashboard", "new dashboard"}
 }
@@ -315,6 +319,10 @@ func newAddDashboardTileTool(dashboards *reporting.Service) serviceports.AgentTo
 }
 
 func (t *addDashboardTileTool) Name() string { return "add_dashboard_tile" }
+
+func (t *addDashboardTileTool) Recipe() []string {
+	return []string{"list_dashboards", "list_reports", "add_dashboard_tile"}
+}
 
 func (t *addDashboardTileTool) Description() string {
 	return "Add one tile to a report dashboard that already exists, placed after the ones " +

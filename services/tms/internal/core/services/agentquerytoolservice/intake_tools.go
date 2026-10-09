@@ -265,6 +265,14 @@ func (t *quoteShipmentTool) SearchTerms() []string {
 	return []string{"rate quote", "price a lane", "quote a lane"}
 }
 
+func (t *quoteShipmentTool) Prerequisites() []string {
+	return []string{"list_customers", "list_service_types", "list_locations"}
+}
+
+func (t *quoteShipmentTool) Recipe() []string {
+	return []string{"list_customers", "list_service_types", "list_locations", "quote_shipment"}
+}
+
 func (t *quoteShipmentTool) Description() string {
 	return "Price a shipment that has not been saved, from the customer's rate " +
 		"agreements and the organization's rating rules. Give the customer, the " +

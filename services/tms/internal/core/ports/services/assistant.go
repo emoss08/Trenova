@@ -2,8 +2,9 @@ package services
 
 import (
 	"context"
-	"github.com/emoss08/trenova/pkg/toolschema"
 	"io"
+
+	"github.com/emoss08/trenova/pkg/toolschema"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -60,6 +61,7 @@ type SendMessageRequest struct {
 	// Page is what the person was looking at when they asked, if the client
 	// sent it. It is validated and stored with the user turn.
 	Page       *agent.PageContext
+	Surface    agent.Surface
 	TenantInfo pagination.TenantInfo
 	// AttachmentDocumentIDs are files the person uploaded for this message.
 	// Each must be a document they uploaded to this thread; anything else is
@@ -86,6 +88,10 @@ type SendMessageRequest struct {
 	// FollowUpPlanID is FollowUpProposalID for a plan: the turn that follows
 	// its decision says how far its steps got.
 	FollowUpPlanID pulid.ID
+	// ResumeWaitID asks for the turn that picks up work the agent parked on a
+	// wait. Like a follow-up, the request carries no content: the wait's note
+	// is the input.
+	ResumeWaitID pulid.ID
 }
 
 // AskRequest is a quick question from anywhere in the application. It runs
@@ -94,6 +100,7 @@ type SendMessageRequest struct {
 type AskRequest struct {
 	Content    string
 	Page       *agent.PageContext
+	Surface    agent.Surface
 	Mentions   []agent.EntityRef
 	TenantInfo pagination.TenantInfo
 }
@@ -389,7 +396,33 @@ const (
 	// AssistantEventMemorySaved says the turn kept a memory, or offered one
 	// for the person to accept when they asked to be asked first.
 	AssistantEventMemorySaved = "memory_saved"
+	// AssistantEventSteered says the turn read something the person said
+	// while it worked, at the step it read it.
+	AssistantEventSteered = "steered"
+	// AssistantEventWorldChanged says records the turn was working with
+	// changed under it, and that it was told so.
+	AssistantEventWorldChanged = "world_changed"
+	// AssistantEventNextTurn names the turn the conversation's queue started
+	// once this one was saved, so the reader can follow it.
+	AssistantEventNextTurn = "next_turn"
 )
+
+type AssistantSteeredEvent struct {
+	ID       pulid.ID          `json:"id"`
+	Content  string            `json:"content"`
+	Mentions []agent.EntityRef `json:"mentions,omitempty"`
+}
+
+type AssistantWorldChangedEvent struct {
+	Changes []WatchedRecordChange `json:"changes"`
+}
+
+type AssistantNextTurnEvent struct {
+	TurnID   pulid.ID `json:"turnId"`
+	ThreadID pulid.ID `json:"threadId"`
+	QueuedID pulid.ID `json:"queuedId"`
+	Input    string   `json:"input"`
+}
 
 // AssistantContextEvent is how full a conversation's context is.
 type AssistantContextEvent struct {
@@ -429,15 +462,23 @@ type RegroundAction string
 const (
 	RegroundRewrite RegroundAction = "rewrite"
 	RegroundNote    RegroundAction = "note"
+	// RegroundStripIDs is a final reply that wrote internal record ids out,
+	// with them taken out; RegroundPointToTable one that reprinted a table
+	// the turn kept beside the conversation, with the reprint replaced by a
+	// sentence pointing to it.
+	RegroundStripIDs     RegroundAction = "strip_ids"
+	RegroundPointToTable RegroundAction = "point_to_table"
 )
 
 type AssistantReplyRegroundedEvent struct {
-	Action         RegroundAction `json:"action"`
-	Figures        []string       `json:"figures,omitempty"`
-	Fields         []string       `json:"fields,omitempty"`
-	Reason         string         `json:"reason"`
-	AgentID        pulid.ID       `json:"agentId,omitempty"`
-	DelegateCallID string         `json:"delegateCallId,omitempty"`
+	Action  RegroundAction `json:"action"`
+	Figures []string       `json:"figures,omitempty"`
+	Fields  []string       `json:"fields,omitempty"`
+	// ArtifactID is the table a reprint was pointed to.
+	ArtifactID     pulid.ID `json:"artifactId,omitempty"`
+	Reason         string   `json:"reason"`
+	AgentID        pulid.ID `json:"agentId,omitempty"`
+	DelegateCallID string   `json:"delegateCallId,omitempty"`
 }
 
 // DelegateScope tags what another agent did on a task the turn's agent
@@ -756,6 +797,11 @@ type AssistantService interface {
 		actor RequestActor,
 		req MentionSearchRequest,
 	) ([]MentionCandidate, error)
+	SearchMentionPage(
+		ctx context.Context,
+		actor RequestActor,
+		req MentionPageRequest,
+	) (*MentionPage, error)
 	SearchDesk(
 		ctx context.Context,
 		actor RequestActor,
@@ -896,6 +942,21 @@ type MentionSearchRequest struct {
 	Kind  string
 }
 
+// MentionPageRequest asks for one page of the records of one kind, for a
+// list that scrolls through them rather than the @ search's first few.
+type MentionPageRequest struct {
+	Query  string
+	Kind   string
+	Offset int
+	Limit  int
+}
+
+// MentionPage is a page of records and whether another follows it.
+type MentionPage struct {
+	Results []MentionCandidate `json:"results"`
+	HasMore bool               `json:"hasMore"`
+}
+
 // ThreadBudget is where a conversation's agent stands against its monthly
 // budget and daily run cap. LimitUSD is empty when the agent has no budget.
 type ThreadBudget struct {
@@ -1009,4 +1070,22 @@ type ResumeFollowUpsRequest struct {
 // waiting. It never fails the turn that ended.
 type DecisionFollowUpResumer interface {
 	ResumeFollowUps(ctx context.Context, req ResumeFollowUpsRequest)
+}
+
+type SettleQueueRequest struct {
+	TenantInfo pagination.TenantInfo
+	ThreadID   pulid.ID
+	UserID     pulid.ID
+	Read       []pulid.ID
+	Dispatch   bool
+}
+
+type QueuedTurn struct {
+	TurnID   pulid.ID `json:"turnId"`
+	QueuedID pulid.ID `json:"queuedId"`
+	Input    string   `json:"input"`
+}
+
+type AssistantQueueSettler interface {
+	SettleQueue(ctx context.Context, req *SettleQueueRequest) *QueuedTurn
 }

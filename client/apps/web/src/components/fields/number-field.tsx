@@ -17,6 +17,8 @@ type BaseNumberFieldProps = {
   label?: React.ReactNode;
   description?: string;
   className?: string;
+  /** Classes for the input alone; `className` also reaches the label's wrapper. */
+  inputClassName?: string;
   placeholder?: string;
   sideText?: string;
   tabIndex?: number;
@@ -93,6 +95,7 @@ function NumberFieldImpl<T extends FieldValues>({
   description,
   label,
   className,
+  inputClassName,
   placeholder = "Enter Valid Number",
   sideText,
   rules,
@@ -145,6 +148,7 @@ function NumberFieldImpl<T extends FieldValues>({
 
         return (
           <FieldWrapper
+            name={name}
             label={label}
             description={description}
             required={!!rules?.required}
@@ -188,6 +192,7 @@ function NumberFieldImpl<T extends FieldValues>({
                   fieldState.invalid && fieldInvalidClass,
                   sideText ? "pr-16" : "pr-12",
                   className,
+                  inputClassName,
                 )}
               />
 

@@ -120,10 +120,10 @@ export function getColumns(t: TranslateFn): ColumnDef<ServiceFailureRow>[] {
       meta: {
         label: t("Shipment"),
         apiField: "shipmentId",
-        filterable: true,
         sortable: true,
-        filterType: "text",
-        defaultFilterOperator: "eq",
+        filterable: true,
+        filterType: "record",
+        filterRecord: "SHIPMENT",
       },
     },
     {
@@ -182,8 +182,8 @@ export function getColumns(t: TranslateFn): ColumnDef<ServiceFailureRow>[] {
         apiField: "reasonCodeId",
         filterable: true,
         sortable: true,
-        filterType: "text",
-        defaultFilterOperator: "eq",
+        filterType: "record",
+        filterRecord: "SERVICE_FAILURE_REASON_CODE",
       },
     },
     {

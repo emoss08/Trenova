@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/timesheetservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -86,8 +87,8 @@ func newGeneratePayrollExportTool(exporter payrollExporter) serviceports.AgentTo
 		"Locks approved hours into a payroll run that pays people, so a person approves it "+
 			"and it runs as them; void_payroll_export takes it back.",
 	), map[string]any{
-		paramFirstDay: dayProperty("The first day of the pay period."),
-		paramLastDay:  dayProperty("The last day of the pay period, included."),
+		paramFirstDay: agenttoolschema.Date("The first day of the pay period."),
+		paramLastDay:  agenttoolschema.Date("The last day of the pay period, included."),
 		fieldNote:     stringProperty("A note kept on the run.", maxPayrollNoteChars),
 	}, paramFirstDay, paramLastDay)
 
@@ -171,8 +172,10 @@ func newVoidPayrollExportTool(exporter payrollExporter) serviceports.AgentTool {
 		"Takes back a payroll run that payroll may already have paid from, so a person "+
 			"approves it and it runs as them; a voided run stays voided.",
 	), map[string]any{
-		paramPayrollExportID: idProperty("The payroll run, from list_payroll_exports. " +
-			"Never guess one."),
+		paramPayrollExportID: agenttoolschema.IDText(
+			"The payroll run, from list_payroll_exports. " +
+				"Never guess one.",
+		),
 		fieldReason: stringProperty("Why the run is voided, kept on it.", maxPayrollNoteChars),
 	}, paramPayrollExportID, fieldReason), paramPayrollExportID, permission.ResourceTimesheet)
 	spec.searchTerms = append(spec.searchTerms, "undo payroll run", "redo payroll", "rerun payroll")

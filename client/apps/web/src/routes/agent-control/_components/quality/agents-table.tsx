@@ -9,9 +9,9 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import type { RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { ListChecksIcon, ThumbsDownIcon } from "@trenova/shared/components/icons";
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
-import { AgentQualityPanel } from "./agent-quality-panel";
+import { AgentQualityPanel } from "./agent-quality-sheet";
 import { getAgentQualityColumns } from "./quality-columns";
 
 /**
@@ -19,7 +19,7 @@ import { getAgentQualityColumns } from "./quality-columns";
  * scores over the window, and how its last suite run went. Opening a row
  * shows the agent's figures and leads to its runs and its worst answers.
  */
-export default function AgentsTable() {
+export default function AgentsTable({ toolbar }: { toolbar?: ReactNode }) {
   const t = useT();
   const navigate = useAIControlNavigation();
   const { allowed: canReadRatings } = usePermission(Resource.AgentFeedback, Operation.Read);
@@ -59,7 +59,13 @@ export default function AgentsTable() {
       TablePanel={AgentQualityPanel}
       enableCreateAction={false}
       enableReadOnlyPanel
-      initialColumnVisibility={{ enabled: false, openRegression: false }}
+      toolbar={toolbar ? { trailing: toolbar } : undefined}
+      initialColumnVisibility={{
+        enabled: false,
+        openRegression: false,
+        satisfaction: false,
+        ratings: false,
+      }}
     />
   );
 }

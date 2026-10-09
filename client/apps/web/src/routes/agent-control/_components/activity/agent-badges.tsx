@@ -108,6 +108,7 @@ const TRIGGER: Record<AgentRunTrigger, { label: string; variant: Variant }> = {
   Scheduled: { label: "Scheduled", variant: "accent-teal" },
   Event: { label: "Event", variant: "accent-amber" },
   Continuous: { label: "Continuous", variant: "accent-violet" },
+  Wait: { label: "Picked up from a wait", variant: "accent-indigo" },
 };
 
 const AGENT_TYPE: Record<AgentType, string> = defineLabels({
@@ -166,9 +167,6 @@ export const EvaluationStatusBadge = ({
 }) => <Labelled entry={EVALUATION_STATUS[value]} t={t} />;
 export const VerdictBadge = ({ value, t }: { value: string; t: TranslateFn }) => (
   <Labelled entry={VERDICT[value]} t={t} />
-);
-export const MemoryKindBadge = ({ value, t }: { value: AgentMemoryKind; t: TranslateFn }) => (
-  <Labelled entry={MEMORY_KIND[value]} t={t} />
 );
 export const MemoryStatusBadge = ({ value, t }: { value: AgentMemoryStatus; t: TranslateFn }) => (
   <Labelled entry={MEMORY_STATUS[value]} t={t} />

@@ -1,9 +1,16 @@
 import { isPlainList, listDelta, previewValue } from "@/lib/edit-diff";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { ReactNode } from "react";
-import { type FieldValues, type UseFormReturn, get } from "react-hook-form";
+import {
+  type FieldPath,
+  type FieldValues,
+  type UseFormReturn,
+  get,
+  useWatch,
+} from "react-hook-form";
 import { Ic } from "../kit/ic";
 import type { EditFlow } from "./use-edit-flow";
+import { Button } from "@trenova/shared/components/ui/button";
 
 /** How an editor names and shows one of its fields in a change review. */
 export type EditField = {
@@ -26,6 +33,10 @@ type ChangeReviewProps<T extends FieldValues> = {
 export function ChangeReview<T extends FieldValues>({ form, flow, fields }: ChangeReviewProps<T>) {
   const t = useT();
   const count = flow.changed.length;
+  const values: unknown[] = useWatch({
+    control: form.control,
+    name: flow.changed as FieldPath<T>[],
+  });
 
   return (
     <div className="es-rv" role="dialog" aria-label={t("Unsaved changes")}>
@@ -33,12 +44,12 @@ export function ChangeReview<T extends FieldValues>({ form, flow, fields }: Chan
         <b>{count === 1 ? t("Review 1 change") : t("Review {0} changes", count)}</b>
         <span>{t("Undo any one before saving")}</span>
       </div>
-      {flow.changed.map((key) => (
+      {flow.changed.map((key, index) => (
         <ChangeRow
           key={key}
           field={fields[key] ?? { label: key }}
           before={get(form.formState.defaultValues, key)}
-          after={form.getValues(key as never)}
+          after={values[index]}
           onUndo={() => flow.undo(key)}
         />
       ))}
@@ -63,15 +74,17 @@ function ChangeRow({
     <div className="cr">
       <span className="cr-l">{field.label}</span>
       <ChangeValue field={field} before={before} after={after} />
-      <button
+      <Button
         type="button"
-        className="ib xs"
+        variant="ghost"
+        size="icon-xs"
+        className="text-muted-foreground hover:text-foreground"
         title={t("Undo this change")}
         aria-label={t("Undo the change to {0}", field.label)}
         onClick={onUndo}
       >
         <Ic n="undo" s={11} />
-      </button>
+      </Button>
     </div>
   );
 }

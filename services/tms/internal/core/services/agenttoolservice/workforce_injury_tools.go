@@ -112,7 +112,8 @@ func injuryToolProviders() []any {
 }
 
 func injuryIDProperty() map[string]any {
-	return idProperty("The injury case, from list_worker_injuries. Never guess one.")
+	return agenttoolschema.RecordID(permission.ResourceWorkerInjury, "The injury case",
+		"list_worker_injuries")
 }
 
 func injuryRecord(injury *worker.WorkerInjury) toolpreview.Record {
@@ -131,8 +132,8 @@ func injuryDetailProperties() map[string]any {
 			oshaIllnessTypes,
 		),
 		paramTreatment:     agenttoolschema.Enum("The most care it took.", injuryTreatments),
-		paramReportedAt:    dayProperty("When the worker reported it."),
-		paramReturnedAt:    dayProperty("When the worker came back to work."),
+		paramReportedAt:    agenttoolschema.Date("When the worker reported it."),
+		paramReturnedAt:    agenttoolschema.Date("When the worker came back to work."),
 		paramEventLocation: stringProperty("Where it happened.", wfShortChars),
 		paramBodyPart:      stringProperty("The part of the body affected.", maxCredentialField),
 		paramHarmfulAgent: stringProperty("What harmed the worker, such as a load strap.",
@@ -149,8 +150,8 @@ func injuryDetailProperties() map[string]any {
 		),
 		paramClaimNumber:  stringProperty("The claim number.", maxCredentialField),
 		paramClaimCarrier: stringProperty("The workers' comp carrier.", maxClaimField),
-		paramClaimFiledAt: dayProperty("When the claim was filed."),
-		paramSafetyEventID: idProperty(
+		paramClaimFiledAt: agenttoolschema.Date("When the claim was filed."),
+		paramSafetyEventID: agenttoolschema.RecordIDText(permission.ResourceWorkerSafetyEvent,
 			"The accident it came from, from list_worker_safety_events.",
 		),
 		wfParamDocument: wfDocumentProperty(),
@@ -276,7 +277,7 @@ func injuryDaysFrom(params map[string]any, req *workerinjuryservice.UpdateInjury
 func newRecordWorkerInjuryTool(injuries injuryKeeper) serviceports.AgentTool {
 	properties := injuryDetailProperties()
 	properties[paramWorkerID] = workerProperty()
-	properties[wfParamOccurred] = dateTimeProperty("When it happened.")
+	properties[wfParamOccurred] = agenttoolschema.DateTime("When it happened.")
 	properties[fieldDescription] = stringProperty("What happened and the injury, as "+
 		"reported.", wfNoteChars)
 	spec := withSchema(wfSpec(
@@ -362,8 +363,8 @@ func newUpdateWorkerInjuryTool(injuries injuryKeeper) serviceports.AgentTool {
 	properties := injuryDetailProperties()
 	properties[paramInjuryID] = injuryIDProperty()
 	properties[paramInjuryStatus] = agenttoolschema.Enum("Open or Closed.", injuryStatuses)
-	properties[paramClaimClosedAt] = dayProperty("When the claim closed.")
-	properties[wfParamOccurred] = dateTimeProperty("When it happened.")
+	properties[paramClaimClosedAt] = agenttoolschema.Date("When the claim closed.")
+	properties[wfParamOccurred] = agenttoolschema.DateTime("When it happened.")
 	properties[fieldDescription] = stringProperty("What happened and the injury.", wfNoteChars)
 	spec := targeting(withSchema(wfSpec(
 		"update_worker_injury",

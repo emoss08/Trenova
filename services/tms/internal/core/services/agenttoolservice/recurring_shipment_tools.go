@@ -114,7 +114,8 @@ type recurringShipmentKeeper interface {
 }
 
 func recurringShipmentIDProperty(what string) map[string]any {
-	return idProperty(what + ", from list_recurring_shipments. Never guess one.")
+	return agenttoolschema.RecordID(permission.ResourceRecurringShipment, what,
+		"list_recurring_shipments")
 }
 
 func targetRecurringShipment(params map[string]any) (serviceports.ToolTarget, bool) {
@@ -155,9 +156,11 @@ func seriesProperties() map[string]any {
 			maxCronExpression),
 		paramTimezone: stringProperty("The IANA timezone the schedule is read in, such as "+
 			"America/Chicago.", maxTimezoneName),
-		fieldRecurringStart: dateProperty("The first day shipments may be generated, in the " +
-			"series' timezone."),
-		fieldRecurringEnd: dateProperty("The last day shipments may be generated, in the " +
+		fieldRecurringStart: agenttoolschema.Date(
+			"The first day shipments may be generated, in the " +
+				"series' timezone.",
+		),
+		fieldRecurringEnd: agenttoolschema.Date("The last day shipments may be generated, in the " +
 			"series' timezone. Leave out for no end."),
 		paramMaxOccurrences: integerProperty("Stop after this many shipments. Leave out for "+
 			"no limit.", 1, maxSeriesOccurrences),
@@ -171,7 +174,7 @@ func seriesProperties() map[string]any {
 			toolschema.KeyType:        toolschema.TypeArray,
 			toolschema.KeyDescription: "Days no shipment is generated, such as holidays.",
 			toolschema.KeyMaxItems:    recurringshipment.MaxBlackoutDates,
-			toolschema.KeyItems:       dateProperty("A blackout day."),
+			toolschema.KeyItems:       agenttoolschema.Date("A blackout day."),
 		},
 		paramAutoGenerate: booleanProperty("Create each shipment on schedule without anyone " +
 			"asking. Off, a person generates each one."),
@@ -665,7 +668,7 @@ func newGenerateRecurringShipmentTool(series recurringShipmentKeeper) servicepor
 			"sent, and a shipment made in error is canceled.",
 		properties: map[string]any{
 			paramRecurringShipmentID: recurringShipmentIDProperty("The series"),
-			paramOccurrenceAt: dateTimeProperty("The slot to generate, one the schedule " +
+			paramOccurrenceAt: agenttoolschema.DateTime("The slot to generate, one the schedule " +
 				"produces. Leave out for the next one."),
 		},
 		required: []string{paramRecurringShipmentID},

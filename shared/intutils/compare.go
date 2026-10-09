@@ -33,3 +33,15 @@ func Abs(value int64) int64 {
 
 	return value
 }
+
+func FirstPositive[T Numeric](values ...T) T {
+	for _, value := range values {
+		if value > 0 {
+			return value
+		}
+	}
+
+	var zero T
+
+	return zero
+}

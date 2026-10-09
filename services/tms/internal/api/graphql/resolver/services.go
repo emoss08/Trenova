@@ -76,6 +76,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/settlementcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/sidebarpreferenceservice"
+	"github.com/emoss08/trenova/internal/core/services/bulkeditservice"
+	"github.com/emoss08/trenova/internal/core/services/tableexportservice"
+	"github.com/emoss08/trenova/internal/core/services/tableinsightservice"
+	"github.com/emoss08/trenova/internal/core/services/tablelayoutservice"
 	"github.com/emoss08/trenova/internal/core/services/storedmileageservice"
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
@@ -252,12 +256,14 @@ type Params struct {
 	ExtractionRolloutService     services.ExtractionRolloutService
 	AITrainingHistoryService     services.AITrainingHistoryService
 	AgentQualityService          services.AgentQualityService
+	AgentActivityService         services.AgentActivityService
 	AgentExceptionService        services.AgentExceptionService
 	AgentDecisionService         services.AgentDecisionService
 	AgentDecisionQueueService    services.AgentDecisionQueueService
 	ApprovalCommitter            services.ApprovalCommitter
 	AgentAccessService           services.AgentAccessService
 	AgentSafetyService           services.AgentSafetyService
+	AgentToolRuleService         services.AgentToolRuleService
 	WatchtowerService            services.WatchtowerService
 	InboundMessageService        *inboundmessageservice.Service
 	CaptureService               *captureservice.Service
@@ -276,6 +282,10 @@ type Params struct {
 	TableChangeAlertService      *tablechangealertservice.Service
 	TableConfigurationService    *tableconfigurationservice.Service
 	SidebarPreferenceService     *sidebarpreferenceservice.Service
+	TableLayoutService           *tablelayoutservice.Service
+	TableInsightService          *tableinsightservice.Service
+	BulkEditService              *bulkeditservice.Service
+	TableExportService           *tableexportservice.Service
 	HomeLayoutService            *homelayoutservice.Service
 	BillingTransferService       *billingtransferservice.Service
 	ReportingService             *reportingservice.Service
@@ -450,12 +460,14 @@ type Services struct {
 	ExtractionRolloutService     services.ExtractionRolloutService
 	AiTrainingHistoryService     services.AITrainingHistoryService
 	AgentQualityService          services.AgentQualityService
+	AgentActivityService         services.AgentActivityService
 	AgentExceptionService        services.AgentExceptionService
 	AgentDecisionService         services.AgentDecisionService
 	AgentDecisionQueueService    services.AgentDecisionQueueService
 	ApprovalCommitter            services.ApprovalCommitter
 	AgentAccessService           services.AgentAccessService
 	AgentSafetyService           services.AgentSafetyService
+	AgentToolRuleService         services.AgentToolRuleService
 	WatchtowerService            services.WatchtowerService
 	InboundMessageService        *inboundmessageservice.Service
 	CaptureService               *captureservice.Service
@@ -474,6 +486,10 @@ type Services struct {
 	TableChangeAlertService      *tablechangealertservice.Service
 	TableConfigurationService    *tableconfigurationservice.Service
 	SidebarPreferenceService     *sidebarpreferenceservice.Service
+	TableLayoutService           *tablelayoutservice.Service
+	TableInsightService          *tableinsightservice.Service
+	BulkEditService              *bulkeditservice.Service
+	TableExportService           *tableexportservice.Service
 	HomeLayoutService            *homelayoutservice.Service
 	NotificationService          *notificationservice.Service
 	DriverPayService             *driverpayservice.Service
@@ -654,12 +670,14 @@ func newServices(p *Params) *Services {
 		ExtractionRolloutService:     p.ExtractionRolloutService,
 		AiTrainingHistoryService:     p.AITrainingHistoryService,
 		AgentQualityService:          p.AgentQualityService,
+		AgentActivityService:         p.AgentActivityService,
 		AgentExceptionService:        p.AgentExceptionService,
 		AgentDecisionService:         p.AgentDecisionService,
 		AgentDecisionQueueService:    p.AgentDecisionQueueService,
 		ApprovalCommitter:            p.ApprovalCommitter,
 		AgentAccessService:           p.AgentAccessService,
 		AgentSafetyService:           p.AgentSafetyService,
+		AgentToolRuleService:         p.AgentToolRuleService,
 		WatchtowerService:            p.WatchtowerService,
 		InboundMessageService:        p.InboundMessageService,
 		CaptureService:               p.CaptureService,
@@ -678,6 +696,10 @@ func newServices(p *Params) *Services {
 		TableChangeAlertService:      p.TableChangeAlertService,
 		TableConfigurationService:    p.TableConfigurationService,
 		SidebarPreferenceService:     p.SidebarPreferenceService,
+		TableLayoutService:           p.TableLayoutService,
+		TableInsightService:          p.TableInsightService,
+		BulkEditService:              p.BulkEditService,
+		TableExportService:           p.TableExportService,
 		HomeLayoutService:            p.HomeLayoutService,
 		NotificationService:          p.NotificationService,
 		BillingTransferService:       p.BillingTransferService,

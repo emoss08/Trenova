@@ -98,6 +98,7 @@ type changeReviewKind struct {
 	idGuidance  string
 	plan        func(context.Context, *changeReviewCall) (*changeReviewPlan, error)
 	run         func(context.Context, *changeReviewCall) error
+	recipe      []string
 }
 
 type ediChangeReviewTool struct {
@@ -111,6 +112,8 @@ var (
 )
 
 func (t *ediChangeReviewTool) Name() string { return t.kind.name }
+
+func (t *ediChangeReviewTool) Recipe() []string { return t.kind.recipe }
 
 func (t *ediChangeReviewTool) Description() string { return t.kind.description }
 
@@ -249,7 +252,8 @@ func (c *changeReviewCall) verb() string {
 
 func newReviewEDITenderChangeTool(reviewer tenderChangeReviewer) serviceports.AgentTool {
 	return &ediChangeReviewTool{kind: changeReviewKind{
-		name: "review_edi_tender_change",
+		name:   "review_edi_tender_change",
+		recipe: []string{"list_edi_tender_changes", "review_edi_tender_change"},
 		description: "Propose applying or rejecting a change another Trenova organization " +
 			"made to a load it tendered to this one over EDI, after this organization " +
 			"received it. Applying takes the new stops, dates, weights or charges onto the " +
@@ -291,6 +295,11 @@ func newReviewEDITenderChangeTool(reviewer tenderChangeReviewer) serviceports.Ag
 func newReviewEDITransferChangeTool(reviewer transferChangeReviewer) serviceports.AgentTool {
 	return &ediChangeReviewTool{kind: changeReviewKind{
 		name: "review_edi_transfer_change",
+		recipe: []string{
+			"get_shipment_tracking",
+			"list_edi_transfer_changes",
+			"review_edi_transfer_change",
+		},
 		description: "Propose applying or rejecting a status or cancellation the other " +
 			"organization on an EDI-linked load reported. It waits for review before it " +
 			"reaches this organization's shipment. Applying moves the shipment to the status reported; " +

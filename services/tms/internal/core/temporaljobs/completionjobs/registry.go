@@ -39,6 +39,16 @@ func NewRegistry(p RegistryParams) *registry.ComposedRegistry {
 				Description: "Probe an AI provider once and record whether it answered",
 			},
 			{
+				Name:        ListAIProviderModelsWorkflowName,
+				Fn:          ListAIProviderModelsWorkflow,
+				Description: "Ask an AI provider's endpoint which models it serves",
+			},
+			{
+				Name:        TestAIProviderDraftWorkflowName,
+				Fn:          TestAIProviderDraftWorkflow,
+				Description: "Probe an unsaved AI provider once and record nothing",
+			},
+			{
 				Name:        WriteBriefingWorkflowName,
 				Fn:          WriteBriefingWorkflow,
 				Description: "Write a day's briefing again for a person who asked",

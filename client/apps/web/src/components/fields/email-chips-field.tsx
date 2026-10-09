@@ -80,6 +80,7 @@ export function EmailChipsField<T extends FieldValues>({
 
         return (
           <FieldWrapper
+            name={name}
             label={label}
             required={!!rules?.required}
             description={description}

@@ -13,7 +13,7 @@ import {
   type AgentAccessPreviewRequest,
 } from "@/lib/graphql/agent-access";
 import { apiService } from "@/services/api";
-import type { DeskSearchKind } from "@/types/assistant";
+import type { DeskSearchKind, MentionPageKind } from "@/types/assistant";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const assistant = createQueryKeys("assistant", {
@@ -49,6 +49,33 @@ export const assistant = createQueryKeys("assistant", {
     queryKey: ["assistant-schedules", threadId],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
       apiService.assistantService.listThreadSchedules(threadId, { signal }),
+  }),
+  // What the person left for a conversation while its agent worked, in send
+  // order. Kept fresh by the "assistant_queue" realtime event, not polled.
+  queue: (threadId: string) => ({
+    queryKey: ["assistant-queue", threadId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.assistantService.listQueue(threadId, { signal }),
+  }),
+  // What the conversation's agent is waiting on. Kept fresh by the
+  // "agent_waits" realtime event, not polled.
+  waits: (threadId: string) => ({
+    queryKey: ["assistant-waits", threadId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.assistantService.listWaits(threadId, { signal }),
+  }),
+  // Where the conversation's case stands and its checklist. Kept fresh by
+  // the "assistant_case" and "agent_waits" events and by changes to the
+  // record the case is about (lib/case-realtime.ts).
+  case: (threadId: string) => ({
+    queryKey: ["assistant-case", threadId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      apiService.assistantService.getCase(threadId, { signal }),
+  }),
+  // Records the person can make a conversation a case about, one kind at a
+  // time, paged by the case picker as it scrolls (use-case-records.ts).
+  caseRecords: (query: string, kind: MentionPageKind) => ({
+    queryKey: [query, kind],
   }),
   activeTurns: () => ({
     queryKey: ["assistant-active-turns"],

@@ -243,6 +243,7 @@ export function PageAssistant({
           threads={NO_THREADS}
           page={page}
           pageSource="none"
+          surface="Assistant"
           openingQuestion={openingQuestion}
           pageRequest={pageRequest}
           onPageRequestSent={onPageRequestSent}

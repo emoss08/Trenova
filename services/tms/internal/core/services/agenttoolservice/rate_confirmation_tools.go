@@ -203,6 +203,14 @@ func newSendRateConfirmationTool(rateCons rateConfirmations) serviceports.AgentT
 
 func (t *sendRateConfirmationTool) Name() string { return "send_rate_confirmation" }
 
+func (t *sendRateConfirmationTool) Recipe() []string {
+	return []string{
+		"list_rate_confirmations",
+		"generate_rate_confirmation",
+		"send_rate_confirmation",
+	}
+}
+
 func (t *sendRateConfirmationTool) Description() string {
 	return "Email a rate confirmation to the carrier, with a link to sign it while it is " +
 		"unsigned. The PDF goes to the carrier's contacts that receive rate confirmations, " +

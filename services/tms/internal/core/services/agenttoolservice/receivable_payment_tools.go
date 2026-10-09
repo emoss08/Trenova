@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
@@ -72,12 +73,13 @@ func targetCustomerPayment(params map[string]any) (serviceports.ToolTarget, bool
 }
 
 func accountingDateProperty() map[string]any {
-	return stringProperty("The day it is booked to the ledger, YYYY-MM-DD, usually today; it "+
-		"must fall in an open fiscal period.", 0)
+	return agenttoolschema.Date("The day it is booked to the ledger, usually today; it must " +
+		"fall in an open fiscal period.")
 }
 
 func customerPaymentIDProperty() map[string]any {
-	return stringProperty("The posted payment, from list_customer_payments. Never guess one.", 0)
+	return agenttoolschema.RecordID(permission.ResourceCustomerPayment, "The posted payment",
+		"list_customer_payments")
 }
 
 func applicationsProperty(description string, withShortPay bool) map[string]any {
@@ -117,7 +119,12 @@ func receivableMoneySpec(spec *receivableSpec) *receivableSpec {
 
 func newApplyCustomerPaymentTool(payments receivablesKeeper) serviceports.AgentTool {
 	return newReceivableTool(receivableMoneySpec(&receivableSpec{
-		name:        "apply_customer_payment",
+		name: "apply_customer_payment",
+		recipe: []string{
+			"list_customer_payments",
+			"list_ar_open_items",
+			"apply_customer_payment",
+		},
 		searchTerms: []string{"unapplied cash", "unapplied payment"},
 		description: "Propose applying a posted payment's unapplied cash to that customer's open " +
 			"invoices. Name each invoice and the amount it takes, and any short pay to write off; " +
@@ -257,7 +264,8 @@ func reversePaymentRequest(
 
 func newApplyCreditMemoTool(payments receivablesKeeper) serviceports.AgentTool {
 	return newReceivableTool(receivableMoneySpec(&receivableSpec{
-		name: "apply_credit_memo",
+		name:   "apply_credit_memo",
+		recipe: []string{"list_ar_open_items", "apply_credit_memo"},
 		description: "Propose settling a customer's open invoices with a posted credit memo of " +
 			"theirs. Name each invoice and the amount of credit it takes; together they cannot " +
 			"exceed what is left of the memo, nor any invoice its open balance. A person always " +

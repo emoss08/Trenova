@@ -152,7 +152,8 @@ type invoiceEDISender interface {
 }
 
 func invoiceIDProperty() map[string]any {
-	return stringProperty("The invoice, from list_invoices or get_invoice. Never guess one.", 0)
+	return agenttoolschema.RecordID(permission.ResourceInvoice, "The invoice",
+		"list_invoices or get_invoice")
 }
 
 func recipientsProperty(description string) map[string]any {
@@ -473,9 +474,12 @@ func newCreateInvoiceTool(invoices invoiceCreator) serviceports.AgentTool {
 		properties: map[string]any{
 			paramOrderID: stringProperty("The order to bill as one grouped invoice, from "+
 				"get_order or get_shipment.", 0),
-			paramShipmentIDs: idListProperty("The shipments to bill, from search_shipments or "+
-				"get_shipment. With orderId, only these of the order's shipments.",
-				maxInvoiceShipments),
+			paramShipmentIDs: agenttoolschema.RecordIDs(
+				permission.ResourceShipment,
+				"The shipments to bill, from search_shipments or "+
+					"get_shipment. With orderId, only these of the order's shipments.",
+				maxInvoiceShipments,
+			),
 			paramOffCycleNote: stringProperty("Why this customer's freight is billed now "+
 				"rather than on their periodic statement. Required only for statement "+
 				"customers.", maxInvoiceReasonChars),
@@ -620,7 +624,7 @@ func newCreateInvoiceMemoTool(invoices invoiceMemoRaiser) serviceports.AgentTool
 			},
 			paramReferenceInvoiceID: stringProperty("The posted invoice this memo relates to, "+
 				"from list_invoices or get_invoice.", 0),
-			paramInvoiceDate: dayProperty("The memo's date; defaults to today."),
+			paramInvoiceDate: agenttoolschema.Date("The memo's date; defaults to today."),
 			paramInvoiceMemo: stringProperty("A note printed on the memo.", maxInvoiceTextChars),
 		},
 		required: []string{paramCustomerID, paramBillType, paramReason, paramAdjustmentLines},

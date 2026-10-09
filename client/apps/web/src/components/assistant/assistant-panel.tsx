@@ -159,6 +159,7 @@ export function AssistantPanel({
         onSwitchAgent={(agentId, draft) => start(agentId, draft)}
         onStartNew={activeAgent && !isStarting ? () => start(activeAgent.id) : undefined}
         pageSource="screen"
+        surface="Assistant"
         onOpenInDesk={(artifactId) => openInDesk(activeThread.id, artifactId)}
         disclaimer={t(
           "The assistant can make mistakes. Check important details before you act on them.",

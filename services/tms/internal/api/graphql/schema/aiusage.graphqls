@@ -126,7 +126,8 @@ extend type Query {
   """
   Model usage day by day for the last days (default 7, at most 90), ending
   today, oldest first. A day with no calls is listed with zeros. Days are read
-  in the IANA timezone given, UTC when absent.
+  in the IANA timezone given, UTC when absent. With providerId, only that
+  provider's calls.
   """
-  aiUsageDaily(days: Int, timezone: String): [AIUsageDay!]!
+  aiUsageDaily(days: Int, timezone: String, providerId: ID): [AIUsageDay!]!
 }

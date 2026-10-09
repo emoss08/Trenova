@@ -141,6 +141,14 @@ export function getColumns(t: TranslateFn): ColumnDef<TractorRow>[] {
         filterType: "text",
         defaultFilterOperator: "contains",
         label: t("Equip. type"),
+        extraFilters: [
+          {
+            apiField: "equipmentTypeId",
+            label: t("Equipment type"),
+            filterType: "record",
+            filterRecord: "EQUIPMENT_TYPE",
+          },
+        ],
       },
     },
     {

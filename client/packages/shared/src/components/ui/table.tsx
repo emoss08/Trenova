@@ -21,7 +21,9 @@ function Table({ className, containerClassName, maskHeight, ...props }: TablePro
         className={cn("w-full caption-bottom text-sm", className)}
         {...props}
       />
-      <ScrollBar orientation="horizontal" />
+      {/* Rendered inside the viewport, so it stacks against the sticky header and
+          footer there; it must sit above them or a totals row hides it. */}
+      <ScrollBar orientation="horizontal" className="z-30" />
     </ScrollArea>
   );
 }

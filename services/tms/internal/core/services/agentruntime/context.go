@@ -18,6 +18,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const deskPath = "/desk"
+
 type ContextBuilderParams struct {
 	fx.In
 
@@ -68,6 +70,7 @@ func (b *ContextBuilder) Build(
 	rc := agentdefinition.RuntimeContext{
 		Now:              timeutils.NowUnix(),
 		Trigger:          req.Trigger,
+		Surface:          req.Surface,
 		Subject:          req.Subject,
 		Page:             req.Page,
 		Attachments:      req.Attachments,
@@ -128,6 +131,7 @@ func (b *ContextBuilder) Build(
 	if memories != nil {
 		rc.Memories = memories.Memories
 		rc.MemorySubjects = memories.Subjects
+		rc.MemoryRelevance = memories.Relevance
 	}
 
 	return rc, nil
@@ -189,6 +193,7 @@ func (b *ContextBuilder) readMemories(
 		ToolNames:         req.Definition.EffectiveToolNames(),
 		Records:           records,
 		Query:             b.memoryQuery(ctx, &req.Query),
+		Text:              req.Query.Text,
 	})
 	if err != nil {
 		b.logger.Warn("agent context: memory lookup failed",
@@ -219,14 +224,23 @@ func (b *ContextBuilder) describeTrenova(
 		req.Actor.PrincipalType == serviceports.PrincipalTypeUser &&
 		slices.Contains(req.Definition.EffectiveToolNames(), agentdefinition.CoreToolFindInTrenova)
 
+	if req.Surface == agent.SurfaceDesk {
+		rc.SurfaceGuide = b.runtimePage(deskPath)
+	}
+
 	if req.Page == nil {
 		return
 	}
-	page, ok := b.guide.PageForPath(req.Page.Path)
+	rc.PageGuide = b.runtimePage(req.Page.Path)
+}
+
+func (b *ContextBuilder) runtimePage(path string) *agentdefinition.RuntimePage {
+	page, ok := b.guide.PageForPath(path)
 	if !ok {
-		return
+		return nil
 	}
-	rc.PageGuide = &agentdefinition.RuntimePage{
+
+	return &agentdefinition.RuntimePage{
 		Name:     page.Name,
 		Location: page.Location(),
 		Summary:  stringutils.FirstNonEmpty(page.Summary, page.Description),

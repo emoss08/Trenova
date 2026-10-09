@@ -1,14 +1,14 @@
 import { useId } from "react";
 
 type SparklineProps = {
-  data: number[];
+  data: readonly number[];
   color?: string;
   width?: number;
   height?: number;
   fill?: boolean;
 };
 
-function buildPath(data: number[], w: number, h: number, pad: number) {
+function buildPath(data: readonly number[], w: number, h: number, pad: number) {
   if (data.length === 0) return { line: "", area: "" };
   const min = Math.min(...data);
   const max = Math.max(...data);

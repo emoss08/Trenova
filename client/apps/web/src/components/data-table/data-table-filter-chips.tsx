@@ -1,4 +1,3 @@
-"use no memo";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { getOperatorLabel, operatorRequiresValue, stringifyUnknown } from "@/lib/data-table";
@@ -9,6 +8,8 @@ import type {
   SingleFilterItem,
 } from "@trenova/shared/types/data-table";
 import { SearchLgIcon, XCloseIcon } from "@trenova/shared/components/icons";
+import { translate } from "@trenova/shared/i18n/runtime";
+import { RecordFilterValue } from "./record-filter-input";
 
 type DataTableFilterChipsProps = {
   filters: FilterItem[];
@@ -33,7 +34,7 @@ function formatFilterValue(filter: SingleFilterItem): string {
       ? `${labels.slice(0, 2).join(", ")} +${labels.length - 2}`
       : labels.join(", ");
   }
-  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "boolean") return value ? translate("Yes") : translate("No");
   const stringValue = stringifyUnknown(value);
   const optionLabel = filter.filterOptions?.find(
     (o) => stringifyUnknown(o.value) === stringValue,
@@ -123,7 +124,14 @@ export default function DataTableFilterChips({
         }
 
         const single = filter as SingleFilterItem;
-        const value = formatFilterValue(single);
+        const value =
+          single.filterType === "record" && single.filterRecord ? (
+            operatorRequiresValue(single.operator) ? (
+              <RecordFilterValue record={single.filterRecord} value={single.value} />
+            ) : null
+          ) : (
+            formatFilterValue(single)
+          );
         return (
           <FilterChip
             key={single.id}

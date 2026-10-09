@@ -67,6 +67,9 @@ export const messageKindSchema = z.enum([
   "Compaction",
   "Handoff",
   "HandoffBrief",
+  "Steer",
+  "WorldChange",
+  "WaitNote",
 ]);
 
 /**
@@ -583,6 +586,20 @@ export const mentionCandidateListSchema = z.object({
 
 export type MentionCandidateRecord = z.infer<typeof mentionCandidateSchema>;
 
+/** The kinds of record a list can page through one at a time. */
+export type MentionPageKind = "shipment" | "invoice" | "invoice_dispute";
+
+/** One page of the records of one kind, and whether another follows. */
+export const mentionPageSchema = z.object({
+  results: z
+    .array(mentionCandidateSchema)
+    .nullish()
+    .transform((results) => results ?? []),
+  hasMore: z.boolean().default(false),
+});
+
+export type MentionPage = z.infer<typeof mentionPageSchema>;
+
 /** Where a conversation's agent and its asker stand against their usage caps. */
 export const threadBudgetSchema = z.object({
   agentName: z.string().optional().default(""),
@@ -857,6 +874,21 @@ export const handoffSchema = z.object({
 
 export type AssistantHandoff = z.infer<typeof handoffSchema>;
 
+/** A record that changed elsewhere while a reply was being written. */
+export const watchedRecordChangeSchema = z.object({
+  recordId: z.string(),
+  resource: z.string().optional().default(""),
+  label: z.string().optional().default(""),
+  action: z.string().optional().default("updated"),
+  fields: z
+    .array(z.string())
+    .nullish()
+    .transform((fields) => fields ?? []),
+  actorType: z.string().optional().default(""),
+  actorUserId: z.string().optional().default(""),
+  at: z.number().optional().default(0),
+});
+
 export const assistantMessageSchema = z.object({
   id: z.string(),
   threadId: z.string(),
@@ -895,6 +927,8 @@ export const assistantMessageSchema = z.object({
   content: z.string().optional().default(""),
   /** On a Compaction message: what the summary stands in for. */
   compaction: compactionRecordSchema.nullish().catch(null),
+  /** On a WorldChange notice: the records that changed while the reply was written. */
+  worldChanges: z.array(watchedRecordChangeSchema).nullish().catch(null),
   toolCalls: z.array(toolCallRecordSchema).nullish(),
   toolCallId: z.string().optional().default(""),
   toolName: z.string().optional().default(""),
@@ -948,6 +982,117 @@ export const threadAttentionSchema = z.object({
 
 export type ThreadAttention = z.infer<typeof threadAttentionSchema>;
 
+/**
+ * Where a case stands: worked out by the server from the record it is about,
+ * its open waits and its snooze each time it is read.
+ */
+export const caseStateSchema = z.enum(["Working", "Waiting", "Snoozed", "Settled"]);
+export const caseWaitingOnSchema = z.enum(["Carrier", "Customer", "Reply", "Event"]);
+export const snoozeAnchorSchema = z.enum(["Time", "Appointment", "ETA"]);
+export const caseSubjectTypeSchema = z.enum(["Shipment", "Invoice", "InvoiceDispute"]);
+
+export const caseRecordSchema = z.object({
+  type: caseSubjectTypeSchema,
+  id: z.string(),
+  /** The record's own number: a PRO, an invoice number. */
+  label: z.string().optional().default(""),
+  status: z.string(),
+  closed: z.boolean().default(false),
+  /** How it closed: Invoiced, Canceled, Paid, Voided, or the dispute's resolution. */
+  closedAs: z.string().optional().default(""),
+  /** The invoice a dispute is on, where the dispute is opened. */
+  invoiceId: z.string().optional().default(""),
+  customerId: z.string().optional().default(""),
+  carrierIds: z
+    .array(z.string())
+    .nullish()
+    .transform((ids) => ids ?? []),
+});
+
+export const caseSummarySchema = z.object({
+  state: caseStateSchema,
+  waitingOn: caseWaitingOnSchema.optional().catch(undefined),
+  openWaits: z.number().default(0),
+  nextWaitDue: z.number().nullish(),
+  snoozedUntil: z.number().nullish(),
+  snoozeAnchor: snoozeAnchorSchema.optional().catch(undefined),
+  record: caseRecordSchema,
+});
+
+export const checklistItemStateSchema = z.enum(["Done", "Blocked", "Pending", "NotNeeded"]);
+
+export const checklistItemSchema = z.object({
+  key: z.string(),
+  state: checklistItemStateSchema,
+  at: z.number().nullish(),
+  /** The checks behind a blocked item, which the Desk words. */
+  codes: z
+    .array(z.string())
+    .nullish()
+    .transform((codes) => codes ?? []),
+  /** The records involved, shown as they are: a document type, a carrier. */
+  names: z
+    .array(z.string())
+    .nullish()
+    .transform((names) => names ?? []),
+  count: z.number().optional().default(0),
+  step: z.string().optional().default(""),
+  /** Shown and ticked, but never keeps the record from being ready. */
+  optional: z.boolean().optional().default(false),
+  /** A step the organization added: its own name, button and request to the agent. */
+  label: z.string().optional().default(""),
+  stepLabel: z.string().optional().default(""),
+  prompt: z.string().optional().default(""),
+  /** A person ticks it on the case. */
+  manual: z.boolean().optional().default(false),
+  tickedBy: z.string().optional().default(""),
+});
+
+export const caseChecklistSchema = z.object({
+  kind: z.enum(["ReadyToBill", "ReadyToClose"]),
+  ready: z.boolean(),
+  items: z.array(checklistItemSchema),
+  next: z.string().optional().default(""),
+});
+
+export const casePartySchema = z.object({
+  kind: z.enum(["Carrier", "Customer"]),
+  id: z.string(),
+  name: z.string(),
+});
+
+export const caseViewSchema = z.object({
+  summary: caseSummarySchema,
+  checklist: caseChecklistSchema.nullish(),
+  parties: z
+    .array(casePartySchema)
+    .nullish()
+    .transform((parties) => parties ?? []),
+});
+
+/** What a write to a case answers with. */
+export const caseBindingSchema = z.object({
+  threadId: z.string(),
+  subjectType: z.string().optional().default(""),
+  subjectId: optionalIdSchema,
+  snoozedUntil: z.number().nullish(),
+  snoozeAnchor: snoozeAnchorSchema.optional().catch(undefined),
+  case: caseSummarySchema.optional(),
+});
+
+export type CaseState = z.infer<typeof caseStateSchema>;
+export type CaseWaitingOn = z.infer<typeof caseWaitingOnSchema>;
+export type SnoozeAnchor = z.infer<typeof snoozeAnchorSchema>;
+export type CaseSubjectType = z.infer<typeof caseSubjectTypeSchema>;
+export type CaseRecord = z.infer<typeof caseRecordSchema>;
+export type CaseSummary = z.infer<typeof caseSummarySchema>;
+export type ChecklistItem = z.infer<typeof checklistItemSchema>;
+export type ChecklistItemState = z.infer<typeof checklistItemStateSchema>;
+export type CaseChecklist = z.infer<typeof caseChecklistSchema>;
+export type CaseParty = z.infer<typeof casePartySchema>;
+export type CaseView = z.infer<typeof caseViewSchema>;
+export type CaseBinding = z.infer<typeof caseBindingSchema>;
+
 export const assistantThreadSchema = z.object({
   id: z.string(),
   businessUnitId: z.string(),
@@ -973,6 +1118,11 @@ export const assistantThreadSchema = z.object({
   /** The record the conversation was opened from, when it was. */
   subjectType: z.string().optional().default(""),
   subjectId: optionalIdSchema,
+  /** A case's snooze: until when, and what it follows. */
+  snoozedUntil: z.number().nullish(),
+  snoozeAnchor: snoozeAnchorSchema.optional().catch(undefined),
+  /** Where the case stands, when the conversation is about a case's record. */
+  case: caseSummarySchema.optional(),
   /**
    * Whether the reader may still ask this conversation's agent anything. False
    * once they lose access to the agent or it is disabled; the conversation
@@ -1140,13 +1290,100 @@ export const assistantThreadListSchema = z.object({
  * request the person scheduled coming round, or the conversation being
  * compacted.
  */
-export const turnOriginSchema = z.enum(["Person", "DecisionFollowUp", "Scheduled", "Compaction"]);
+export const turnOriginSchema = z.enum([
+  "Person",
+  "DecisionFollowUp",
+  "Scheduled",
+  "Compaction",
+  "WaitResolved",
+]);
 
 /**
  * A request the person asked to have repeated in a conversation. `cadence` is
  * when, as the card shows it ("Every weekday · 7:30 AM"); the run times are
  * Unix seconds.
  */
+/**
+ * A message the person left for a conversation while its agent was working:
+ * sent in order as each reply ends, or read into the reply under way at its
+ * next step when it steers.
+ */
+export const queuedMessageSchema = z.object({
+  id: z.string(),
+  threadId: z.string(),
+  content: z.string(),
+  request: z
+    .object({
+      mentions: z
+        .array(entityRefSchema)
+        .nullish()
+        .transform((mentions) => mentions ?? []),
+      attachmentDocumentIds: z
+        .array(z.string())
+        .nullish()
+        .transform((ids) => ids ?? []),
+    })
+    .nullish()
+    .transform((request) => request ?? { mentions: [], attachmentDocumentIds: [] }),
+  position: z.number(),
+  steer: z.boolean().optional().default(false),
+  version: z.number().optional().default(0),
+  createdAt: z.number().optional().default(0),
+});
+
+export const agentWaitKindSchema = z.enum([
+  "Time",
+  "StopArrival",
+  "StopDeparture",
+  "Reply",
+  "AppointmentNear",
+  "FreeTimeEnding",
+  "HOSDriveBelow",
+]);
+
+export const agentWaitStatusSchema = z.enum(["Waiting", "Met", "TimedOut", "Cancelled", "Failed"]);
+
+/**
+ * Work the agent parked until something happens: the conversation picks it up
+ * as a new turn when the wait is met or runs out.
+ */
+export const agentWaitSchema = z.object({
+  id: z.string(),
+  kind: agentWaitKindSchema,
+  description: z.string(),
+  /** What the agent said it would do when the wait ends. */
+  nextStep: z.string().optional().default(""),
+  threadId: z.string().optional().default(""),
+  status: agentWaitStatusSchema,
+  dueAt: z.number().nullish(),
+  expiresAt: z.number(),
+  resolvedAt: z.number().nullish(),
+  outcome: z.string().optional().default(""),
+  resumedTurnId: z.string().optional().default(""),
+  createdAt: z.number().optional().default(0),
+});
+
+export const agentWaitListSchema = z.object({
+  items: z
+    .array(agentWaitSchema)
+    .nullish()
+    .transform((items) => items ?? []),
+});
+
+export type AgentWait = z.infer<typeof agentWaitSchema>;
+export type AgentWaitKind = z.infer<typeof agentWaitKindSchema>;
+export type AgentWaitList = z.infer<typeof agentWaitListSchema>;
+
+export const queuedMessageListSchema = z.object({
+  items: z
+    .array(queuedMessageSchema)
+    .nullish()
+    .transform((items) => items ?? []),
+});
+
+export type QueuedMessage = z.infer<typeof queuedMessageSchema>;
+export type QueuedMessageList = z.infer<typeof queuedMessageListSchema>;
+
 export const conversationScheduleSchema = z.object({
   id: z.string(),
   threadId: z.string(),
@@ -1594,6 +1831,36 @@ export const assistantMemoryUsedEventSchema = z.object({
     .transform((ids) => ids ?? []),
 });
 
+/** Something the person said while the reply was being written, read at its next step. */
+export const assistantSteeredEventSchema = z.object({
+  id: z.string(),
+  content: z.string(),
+  mentions: z
+    .array(entityRefSchema)
+    .nullish()
+    .transform((mentions) => mentions ?? []),
+});
+
+/** Records the reply was working with changed elsewhere while it worked. */
+export const assistantWorldChangedEventSchema = z.object({
+  changes: z
+    .array(watchedRecordChangeSchema)
+    .nullish()
+    .transform((changes) => changes ?? []),
+});
+
+/** The turn the conversation's queue started once this one was saved. */
+export const assistantNextTurnEventSchema = z.object({
+  turnId: z.string(),
+  threadId: z.string(),
+  queuedId: z.string().optional().default(""),
+  input: z.string().optional().default(""),
+});
+
+export type WatchedRecordChange = z.infer<typeof watchedRecordChangeSchema>;
+export type AssistantSteeredEvent = z.infer<typeof assistantSteeredEventSchema>;
+export type AssistantNextTurnEvent = z.infer<typeof assistantNextTurnEventSchema>;
+
 export type AssistantStreamEvent =
   | { event: "accepted"; data: z.infer<typeof assistantAcceptedEventSchema> }
   | { event: "refused"; data: z.infer<typeof assistantRefusedEventSchema> }
@@ -1623,7 +1890,10 @@ export type AssistantStreamEvent =
   | { event: "context"; data: z.infer<typeof assistantContextEventSchema> }
   | { event: "compaction_started"; data: AssistantCompactionEvent }
   | { event: "compaction_finished"; data: AssistantCompactionEvent }
-  | { event: "compaction_cancelled"; data: AssistantCompactionEvent };
+  | { event: "compaction_cancelled"; data: AssistantCompactionEvent }
+  | { event: "steered"; data: AssistantSteeredEvent }
+  | { event: "world_changed"; data: z.infer<typeof assistantWorldChangedEventSchema> }
+  | { event: "next_turn"; data: AssistantNextTurnEvent };
 
 /**
  * An ending the server rebuilt from a turn's record (`replay: true`) rather
@@ -1693,6 +1963,12 @@ export function parseAssistantStreamEvent(event: string, raw: string): Assistant
     case "compaction_finished":
     case "compaction_cancelled":
       return { event, data: assistantCompactionEventSchema.parse(data) };
+    case "steered":
+      return { event, data: assistantSteeredEventSchema.parse(data) };
+    case "world_changed":
+      return { event, data: assistantWorldChangedEventSchema.parse(data) };
+    case "next_turn":
+      return { event, data: assistantNextTurnEventSchema.parse(data) };
     default:
       return null;
   }
@@ -1735,6 +2011,9 @@ export type MemoryNote = z.infer<typeof memoryNoteSchema>;
 export type SavedMemory = z.infer<typeof savedMemorySchema>;
 export type AssistantMessagePage = z.infer<typeof assistantMessagePageSchema>;
 export type AssistantPageContext = z.infer<typeof pageContextSchema>;
+
+/** Where a conversation is being had: the Desk, or the assistant over a page. */
+export type AssistantSurface = "Desk" | "Assistant";
 export type AssistantPageView = z.infer<typeof pageViewSchema>;
 export type AssistantPageViewFilter = z.infer<typeof pageViewFilterSchema>;
 export type AssistantPageViewKpi = z.infer<typeof pageViewKpiSchema>;

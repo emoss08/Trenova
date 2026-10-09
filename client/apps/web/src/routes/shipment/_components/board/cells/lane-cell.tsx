@@ -4,6 +4,7 @@ import { getDestinationLocation, getOriginLocation, getRouteProgress } from "@/l
 import { cn } from "@trenova/shared/lib/utils";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { ArrowRightIcon } from "@trenova/shared/components/icons";
+import { useNow } from "@trenova/shared/hooks/use-now";
 import { useShipmentBoardStore } from "../store";
 
 export function LaneCell({ shipment }: { shipment: Shipment }) {
@@ -11,7 +12,8 @@ export function LaneCell({ shipment }: { shipment: Shipment }) {
   const highlighted = useShipmentBoardStore((state) => state.highlightId === shipment.id);
   const origin = getOriginLocation(shipment);
   const destination = getDestinationLocation(shipment);
-  const progress = getRouteProgress(shipment, Date.now() / 1000);
+  const now = useNow("minute");
+  const progress = getRouteProgress(shipment, now);
   const stage = shipment.stage ?? "NeedsCoverage";
   const moving = stage === "Moving" || stage === "Late";
 

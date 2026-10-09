@@ -12,6 +12,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/agentwait"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -75,6 +76,8 @@ type ActivitiesParams struct {
 	Reflections   serviceports.AgentReflectionScheduler `optional:"true"`
 	Schedules     *DefinitionSchedules
 	PlatformPlans serviceports.PlanService `optional:"true"`
+	// Waits reads the wait whose ending started a run that picks up work.
+	Waits repositories.AgentWaitRepository `optional:"true"`
 }
 
 type Activities struct {
@@ -105,6 +108,7 @@ type Activities struct {
 	reflections   serviceports.AgentReflectionScheduler
 	schedules     *DefinitionSchedules
 	platformPlans serviceports.PlanService
+	waits         repositories.AgentWaitRepository
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -141,6 +145,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		reflections:   p.Reflections,
 		schedules:     p.Schedules,
 		platformPlans: p.PlatformPlans,
+		waits:         p.Waits,
 	}
 }
 
@@ -231,6 +236,15 @@ func (a *Activities) runRequest(
 	}
 
 	input := backgroundInput(payload, subject)
+	resumed, err := a.resumedWait(ctx, payload)
+	if err != nil {
+		return nil, err
+	}
+	var taint *agent.RunTaint
+	if resumed != nil {
+		input += "\n\n" + resumed.ResumeNote()
+		taint = resumed.Taint.Clone()
+	}
 	runtimeContext, err := a.contexts.Build(ctx, &serviceports.RuntimeContextRequest{
 		Definition: definition,
 		Actor:      actor,
@@ -254,6 +268,9 @@ func (a *Activities) runRequest(
 		Input:      input,
 		RunID:      payload.RunID,
 		Unattended: true,
+		// A run picking up a parked wait carries what the run that set it
+		// had read, so the wait's notes are never read as clean.
+		Taint: taint,
 		// The ledger is what makes a retried write safe. Without it a second
 		// attempt re-runs every write the first one made, and the tools do
 		// not dedupe: RequiresIdempotencyKey is checked for presence and, bar
@@ -783,6 +800,26 @@ func agentActor(tenant pagination.TenantInfo) *serviceports.RequestActor {
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
 	}
+}
+
+// resumedWait is the wait whose ending started the run, or nil for a run a
+// wait did not start.
+func (a *Activities) resumedWait(
+	ctx context.Context,
+	payload *AgentRunPayload,
+) (*agentwait.Wait, error) {
+	if payload.WaitID.IsNil() || a.waits == nil {
+		return nil, nil //nolint:nilnil // a run no wait started picks nothing up
+	}
+	wait, err := a.waits.Get(ctx, &repositories.GetAgentWaitRequest{
+		ID:         payload.WaitID,
+		TenantInfo: payload.tenantInfo(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("read the wait this run picks up: %w", err)
+	}
+
+	return wait, nil
 }
 
 func backgroundInput(payload *AgentRunPayload, subject *agentdefinition.RuntimeSubject) string {

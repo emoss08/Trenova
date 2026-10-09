@@ -9,11 +9,20 @@ import (
 
 type Deps struct {
 	*base.Core
-	AgentSafetyService services.AgentSafetyService
+	AgentSafetyService   services.AgentSafetyService
+	AgentToolRuleService services.AgentToolRuleService
 }
 
 type AgentSafetyResolver struct{ *Deps }
 
+type AgentSafetySummaryResolver struct{ *Deps }
+
+type AgentToolHoldersResolver struct{ *Deps }
+
+type AgentToolRuleResolver struct{ *Deps }
+
 type AgentToolSafetyResolver struct{ *Deps }
+
+type MutationResolver struct{ *Deps }
 
 type QueryResolver struct{ *Deps }

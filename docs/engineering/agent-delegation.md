@@ -246,7 +246,7 @@ note on how to read it. It is the same object the reader receives as
 |---|---|---|
 | `completed` | The delegate answered. | succeeded |
 | `exhausted` | It spent its tool budget; `reply` is its best answer. | succeeded |
-| `refused` | The output guard withheld its answer; `reason` is the refusal. | succeeded |
+| `refused` | The output guard withheld its answer; `reason` is the refusal. Only reports from before the guard took code out of a reply instead of refusing it carry this; a delegate's reply with code in it is now `completed` with the block left out. | succeeded |
 | `declined` | It could not be asked; `reason` says why. Nothing ran. | failed |
 | `failed` | Its turn ended partway; `reason` says why. | failed |
 | `stopped` | The person stopped the reply. | failed |

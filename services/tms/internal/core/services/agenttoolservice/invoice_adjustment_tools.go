@@ -162,13 +162,13 @@ func adjustmentLinesProperty() map[string]any {
 }
 
 func supportingDocumentsProperty() map[string]any {
-	return idListProperty("Documents on the invoice's shipments that support it, from "+
+	return agenttoolschema.IDList("Documents on the invoice's shipments that support it, from "+
 		"search_documents or get_shipment.", maxAdjustmentDocuments)
 }
 
 func adjustmentIDProperty(status string) map[string]any {
-	return stringProperty("The "+status+" adjustment, from list_invoice_adjustments or "+
-		"get_invoice_adjustment. Never guess one.", 0)
+	return agenttoolschema.ID("The "+status+" adjustment",
+		"list_invoice_adjustments or get_invoice_adjustment")
 }
 
 func optionalPositiveDecimal(fields map[string]any, key string) (decimal.Decimal, error) {
@@ -319,7 +319,12 @@ type submissionPlan struct {
 
 func newSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) serviceports.AgentTool {
 	return newReportingReceivableTool(&receivableSpec{
-		name:        "submit_invoice_adjustment",
+		name: "submit_invoice_adjustment",
+		recipe: []string{
+			"get_invoice",
+			"save_invoice_adjustment_draft",
+			"submit_invoice_adjustment",
+		},
 		searchTerms: []string{"credit and rebill", "rebill"},
 		description: "Propose crediting, rebilling, reversing or writing off posted invoices. " +
 			"Give adjustments, one per invoice and up to 25 at once, or draftAdjustmentId to " +

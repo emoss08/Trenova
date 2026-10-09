@@ -235,9 +235,6 @@ reporting:
 
 system:
   systemUserPassword: change-me # from .env
-  networkPulse:
-    enabled: false
-    cacheTtl: 60s
 
 twilio:
   enabled: false

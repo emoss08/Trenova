@@ -947,7 +947,7 @@ func newMasterStatusTool[T any, S ~string](spec *masterStatusSpec[T, S]) service
 		reversible:  true,
 		rationale:   spec.rationale,
 		properties: map[string]any{
-			record.idsParam: idListProperty(fmt.Sprintf(
+			record.idsParam: agenttoolschema.IDList(fmt.Sprintf(
 				"The %s records to change, by id %s. One id is the normal case.",
 				record.kind, record.supplier), maxMasterRecordsPerStatusChange),
 			fieldStatus: agenttoolschema.Enum("The status to set. "+spec.statusNote,

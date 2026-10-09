@@ -92,6 +92,11 @@ export const embeddingDimensionsSchema = z
     error: () => translate("Embedding dimensions must be 768, 1024 or 1536"),
   });
 
+export const capActionSchema = z.enum(["Next", "Stop"]);
+
+export const PROVIDER_TIMEOUT_SECONDS = { min: 5, max: 600, initial: 60 } as const;
+export const PROVIDER_MAX_CONCURRENT = { min: 1, max: 64, initial: 8 } as const;
+
 export const aiProviderTestOutcomeSchema = z.object({
   success: z.boolean(),
   message: z.string(),
@@ -129,6 +134,10 @@ export const aiProviderSchema = z.object({
   trusted: z.boolean().default(false),
   enabled: z.boolean().default(false),
   lastTest: aiProviderTestOutcomeSchema.nullable().optional().default(null),
+  timeoutSeconds: z.number().default(PROVIDER_TIMEOUT_SECONDS.initial),
+  maxConcurrent: z.number().default(PROVIDER_MAX_CONCURRENT.initial),
+  monthlyCapUsd: pricePerMillionSchema,
+  onCap: capActionSchema.default("Next"),
   version: z.number().default(0),
   createdAt: z.number(),
   updatedAt: z.number(),
@@ -165,6 +174,33 @@ export const saveAIProviderRequestSchema = z.object({
   embeddingInputStyle: embeddingInputStyleSchema.default("None"),
   trusted: z.boolean().default(false),
   enabled: z.boolean().default(false),
+  timeoutSeconds: z
+    .number()
+    .int()
+    .min(PROVIDER_TIMEOUT_SECONDS.min, {
+      error: () => translate("At least {0} seconds", PROVIDER_TIMEOUT_SECONDS.min),
+    })
+    .max(PROVIDER_TIMEOUT_SECONDS.max, {
+      error: () => translate("At most {0} seconds", PROVIDER_TIMEOUT_SECONDS.max),
+    })
+    .default(PROVIDER_TIMEOUT_SECONDS.initial),
+  maxConcurrent: z
+    .number()
+    .int()
+    .min(PROVIDER_MAX_CONCURRENT.min, {
+      error: () => translate("At least {0}", PROVIDER_MAX_CONCURRENT.min),
+    })
+    .max(PROVIDER_MAX_CONCURRENT.max, {
+      error: () => translate("At most {0}", PROVIDER_MAX_CONCURRENT.max),
+    })
+    .default(PROVIDER_MAX_CONCURRENT.initial),
+  monthlyCapUsd: z
+    .number()
+    .positive({ error: () => translate("A cap must be more than $0") })
+    .nullable()
+    .default(null),
+  onCap: capActionSchema.default("Next"),
+  keepPreviousKey: z.boolean().default(false),
   version: z.number().default(0),
 });
 
@@ -237,6 +273,7 @@ export type AIProvider = z.infer<typeof aiProviderSchema>;
 export type AIProviderTestOutcome = z.infer<typeof aiProviderTestOutcomeSchema>;
 export type AIProviderKind = z.infer<typeof aiProviderKindSchema>;
 export type AITask = z.infer<typeof aiTaskSchema>;
+export type CapAction = z.infer<typeof capActionSchema>;
 export type StructuredOutputMode = z.infer<typeof structuredOutputModeSchema>;
 export type ReasoningEffort = z.infer<typeof reasoningEffortSchema>;
 export type ThinkingStyle = z.infer<typeof thinkingStyleSchema>;

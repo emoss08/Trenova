@@ -88,6 +88,13 @@ func (e *Reflection) GetStaticFieldMap() map[string]string {
 	return buncolgen.ReflectionFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ToolRuleOverride].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.ToolRuleOverrideFieldMap] instead of parsing struct tags via reflection.
+func (e *ToolRuleOverride) GetStaticFieldMap() map[string]string {
+	return buncolgen.ToolRuleOverrideFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ToolTrust].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.ToolTrustFieldMap] instead of parsing struct tags via reflection.

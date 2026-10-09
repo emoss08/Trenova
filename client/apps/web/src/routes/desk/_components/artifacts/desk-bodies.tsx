@@ -1,3 +1,4 @@
+import { Button } from "@trenova/shared/components/ui/button";
 import { isRecordEntityType, RECORD_LINKS } from "@/config/record-links";
 import { decisionRequestOf } from "@/components/assistant/decision-requests";
 import { presentProposal } from "@/components/assistant/proposal-presenters";
@@ -269,9 +270,10 @@ export function DeskRateBody({ artifact }: { artifact: AssistantArtifact }) {
       ))}
       {rate.rejected.length > 0 && (
         <>
-          <button
-            type="button"
-            className="dk-ax-more"
+          <Button
+            variant="bare"
+            size="bare"
+            className="mt-3 gap-1.5 text-sm text-dsk-subtle hover:text-dsk-fg"
             onClick={() => setRejectedOpen((value) => !value)}
           >
             <ArtIcon name={rejectedOpen ? "up" : "down"} size={11} stroke={2.2} />
@@ -279,7 +281,7 @@ export function DeskRateBody({ artifact }: { artifact: AssistantArtifact }) {
               "{0, plural, one {# agreement didn't apply} other {# agreements didn't apply}}",
               rate.rejected.length,
             )}
-          </button>
+          </Button>
           {rejectedOpen && (
             <div className="dk-ax-rej">
               {rate.rejected.map((entry) => (
@@ -556,14 +558,13 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
         </div>
       )}
       <div className="dk-ax-acts">
-        <button
-          type="button"
-          className="dk-ax-btn dk-ghost"
+        <Button
+          variant="quiet"
           onClick={() => void copy(`${subject}\n\n${body}`)}
         >
           <ArtIcon name={copied ? "check" : "copy"} size={13} />
           {copied ? t("Copied") : t("Copy")}
-        </button>
+        </Button>
         <span className="flex-1" />
         {state === "sent" ? (
           <span className="dk-ax-sent">
@@ -577,14 +578,12 @@ export function DeskEmailBody({ artifact }: { artifact: AssistantArtifact }) {
             {t("Sent for approval")}
           </span>
         ) : state === "waiting" ? (
-          <button
-            type="button"
-            className="dk-ax-btn dk-ink"
+          <Button
             disabled={artifact.proposalId === "" || save.isPending}
             onClick={sendForApproval}
           >
             {t("Send for approval")}
-          </button>
+          </Button>
         ) : state === "decided" ? (
           <span className="dk-ax-sent dk-wait">{t("Set aside")}</span>
         ) : null}
@@ -804,23 +803,20 @@ export function DeskDecisionBody({ artifact }: { artifact: AssistantArtifact }) 
       </div>
       {state === "pending" && ids.length + (plan !== null ? 1 : 0) > 0 && (
         <div className="dk-ax-acts">
-          <button
-            type="button"
-            className="dk-ax-btn dk-ghost"
+          <Button
+            variant="quiet"
             disabled={decide.isPending}
             onClick={() => decide.mutate("Rejected")}
           >
             {t("Not now")}
-          </button>
+          </Button>
           <span className="flex-1" />
-          <button
-            type="button"
-            className="dk-ax-btn dk-ink"
+          <Button
             disabled={decide.isPending}
             onClick={() => decide.mutate("Accepted")}
           >
             {t("{0, plural, one {Approve # change} other {Approve # changes}}", proposals.length)}
-          </button>
+          </Button>
         </div>
       )}
     </div>

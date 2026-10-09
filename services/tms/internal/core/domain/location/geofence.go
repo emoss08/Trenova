@@ -30,6 +30,16 @@ func (l *Location) GeofencePolygon() (*postgis.Geometry, error) {
 	return geofence.Polygon(l.geofenceFields())
 }
 
+// GeofenceContains reports whether a point is inside the location's
+// geofence. A rectangle or drawn geofence needs its vertices read first
+// (PopulateGeofenceVertices); a location read from the database has them.
+func (l *Location) GeofenceContains(latitude, longitude float64) bool {
+	return geofence.Contains(l.geofenceFields(), geofence.Coordinates{
+		Latitude:  l.Latitude,
+		Longitude: l.Longitude,
+	}, latitude, longitude)
+}
+
 func (l *Location) PopulateGeofenceVertices() error {
 	fields := l.geofenceFields()
 	if err := geofence.PopulateVertices(&fields); err != nil {

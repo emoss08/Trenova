@@ -15,7 +15,13 @@ type Mask = {
   right: boolean;
 };
 
-export type ScrollAreaMaskVariant = "background" | "card" | "muted" | "popover" | "sidebar";
+export type ScrollAreaMaskVariant =
+  | "background"
+  | "card"
+  | "field"
+  | "muted"
+  | "popover"
+  | "sidebar";
 
 export type ScrollAreaContextProps = {
   isTouch: boolean;
@@ -30,10 +36,93 @@ const ScrollAreaContext = React.createContext<ScrollAreaContextProps>({
 const scrollMaskVariantClassNames: Record<ScrollAreaMaskVariant, string> = {
   background: "before:from-background after:from-background",
   card: "before:from-card after:from-card",
+  field: "before:from-field after:from-field",
   muted: "before:from-muted after:from-muted",
   popover: "before:from-popover after:from-popover",
   sidebar: "before:from-sidebar after:from-sidebar",
 };
+
+/** How far a mouse must move before a press becomes a drag rather than a click. */
+const DRAG_THRESHOLD = 4;
+
+type DragState = {
+  pointerId: number;
+  x: number;
+  y: number;
+  left: number;
+  top: number;
+  moved: boolean;
+};
+
+/**
+ * Press-and-drag scrolling for a mouse. It moves the viewport directly and marks it
+ * with a data attribute, so a drag never re-renders anything; a drag that moved
+ * swallows the click that ends it, so dragging never presses what it started on.
+ */
+function useDragToScroll(
+  viewportRef: React.RefObject<HTMLDivElement | null>,
+  enabled: boolean,
+) {
+  const state = React.useRef<DragState | null>(null);
+  const swallowClick = React.useRef(false);
+
+  const handlers = React.useMemo(() => {
+    const end = () => {
+      const drag = state.current;
+      const element = viewportRef.current;
+      state.current = null;
+      if (!drag?.moved || !element) return;
+      delete element.dataset.dragging;
+      if (element.hasPointerCapture(drag.pointerId)) {
+        element.releasePointerCapture(drag.pointerId);
+      }
+      swallowClick.current = true;
+      window.setTimeout(() => {
+        swallowClick.current = false;
+      }, 0);
+    };
+
+    return {
+      onPointerDown(event: React.PointerEvent<HTMLDivElement>) {
+        const element = viewportRef.current;
+        if (!enabled || !element || event.pointerType !== "mouse" || event.button !== 0) return;
+        state.current = {
+          pointerId: event.pointerId,
+          x: event.clientX,
+          y: event.clientY,
+          left: element.scrollLeft,
+          top: element.scrollTop,
+          moved: false,
+        };
+      },
+      onPointerMove(event: React.PointerEvent<HTMLDivElement>) {
+        const drag = state.current;
+        const element = viewportRef.current;
+        if (!drag || !element || event.pointerId !== drag.pointerId) return;
+        const dx = event.clientX - drag.x;
+        const dy = event.clientY - drag.y;
+        if (!drag.moved) {
+          if (Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) return;
+          drag.moved = true;
+          element.setPointerCapture(drag.pointerId);
+          element.dataset.dragging = "";
+        }
+        element.scrollLeft = drag.left - dx;
+        element.scrollTop = drag.top - dy;
+      },
+      onPointerUp: end,
+      onPointerCancel: end,
+      onClickCapture(event: React.MouseEvent<HTMLDivElement>) {
+        if (!swallowClick.current) return;
+        swallowClick.current = false;
+        event.preventDefault();
+        event.stopPropagation();
+      },
+    };
+  }, [enabled, viewportRef]);
+
+  return { handlers };
+}
 
 const ScrollArea = React.forwardRef<
   React.ComponentRef<typeof ScrollAreaPrimitive.Root>,
@@ -52,6 +141,11 @@ const ScrollArea = React.forwardRef<
      * @default "background"
      */
     maskVariant?: ScrollAreaMaskVariant;
+    /**
+     * Lets a mouse scroll the area by pressing and dragging it, as touch already
+     * does; a click that does not move still reaches what was clicked.
+     */
+    dragToScroll?: boolean;
   }
 >(
   (
@@ -63,6 +157,7 @@ const ScrollArea = React.forwardRef<
       maskClassName,
       maskVariant = "background",
       viewportClassName,
+      dragToScroll = false,
       style,
       ...props
     },
@@ -76,6 +171,7 @@ const ScrollArea = React.forwardRef<
     });
 
     const viewportRef = React.useRef<HTMLDivElement>(null);
+    const drag = useDragToScroll(viewportRef, dragToScroll);
     const isTouch = useTouchPrimary();
     const touchStyle = typeof style === "function" ? undefined : style;
 
@@ -162,7 +258,12 @@ const ScrollArea = React.forwardRef<
             <ScrollAreaPrimitive.Viewport
               ref={viewportRef}
               data-slot="scroll-area-viewport"
-              className={cn("ui-focus-ring size-full rounded-[inherit]", viewportClassName)}
+              className={cn(
+                "ui-focus-ring size-full rounded-[inherit]",
+                dragToScroll && "cursor-grab data-dragging:cursor-grabbing data-dragging:select-none",
+                viewportClassName,
+              )}
+              {...(dragToScroll ? drag.handlers : undefined)}
             >
               {children}
             </ScrollAreaPrimitive.Viewport>

@@ -73,10 +73,13 @@ export function getColumns(
       enableSorting: false,
       size: 110,
       meta: {
+        label: t("Tractor"),
         apiField: "tractorId",
-        filterable: false,
         sortable: false,
         exportValue: (row: IftaMileageEntryRow) => row.tractor?.code ?? "",
+        filterable: true,
+        filterType: "record",
+        filterRecord: "TRACTOR",
       },
     },
     {

@@ -1,10 +1,11 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ColumnDef, DataTableExpansion, RowAction } from "@trenova/shared/types/data-table";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import React from "react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { DataTable } from "../data-table";
+import { seedDataTableQueries } from "@/test/data-table-queries";
 
 /**
  * What one interaction costs the table, in cell renders. A board of a hundred
@@ -17,7 +18,12 @@ type TestRow = { id: string; name: string; stage: number };
 const ROW_COUNT = 100;
 const COLUMN_COUNT = 14;
 
-const { countCellRender, queryResult, useDataTableQueryMock } = vi.hoisted(() => {
+const {
+  countCellRender,
+  countHeaderRender,
+  queryResult,
+  useDataTableQueryMock,
+} = vi.hoisted(() => {
   const results = Array.from({ length: 100 }, (_, index) => ({
     id: `r${index}`,
     name: `Row ${index}`,
@@ -31,6 +37,7 @@ const { countCellRender, queryResult, useDataTableQueryMock } = vi.hoisted(() =>
   };
   return {
     countCellRender: vi.fn(),
+    countHeaderRender: vi.fn(),
     queryResult,
     useDataTableQueryMock: vi.fn((..._args: unknown[]): unknown => queryResult),
   };
@@ -48,19 +55,14 @@ vi.mock("@/hooks/use-permission", () => ({
   }),
 }));
 
-vi.mock("@/hooks/data-table/use-data-table-query", () => ({
+vi.mock("@/hooks/data-table/use-data-table-query", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/hooks/data-table/use-data-table-query")>()),
   useDataTableQuery: useDataTableQueryMock,
 }));
 
-vi.mock("@/lib/queries", () => ({
+vi.mock("@/lib/queries", async () => ({
   queries: {
-    tableConfiguration: {
-      default: () => ({ queryKey: ["tableConfig-default"], queryFn: () => null }),
-      all: () => ({
-        queryKey: ["tableConfig-all"],
-        queryFn: () => ({ results: [], count: 0 }),
-      }),
-    },
+    ...(await import("@/test/data-table-queries")).dataTableQueryMocks,
   },
 }));
 
@@ -88,9 +90,16 @@ function CountingCell({ value }: { value: string }) {
   return <span>{value}</span>;
 }
 
+function CountingHeader({ label }: { label: string }) {
+  countHeaderRender();
+  return <span>{label}</span>;
+}
+
+// The first column draws its own head, so a render of the header row is counted.
 const columns: ColumnDef<TestRow>[] = Array.from({ length: COLUMN_COUNT }, (_, index) => ({
   id: `c${index}`,
-  header: `Column ${index}`,
+  header: index === 0 ? () => <CountingHeader label="Column 0" /> : `Column ${index}`,
+  meta: index === 0 ? { sortable: false } : undefined,
   cell: ({ row }) => <CountingCell value={`${row.original.name}:${index}`} />,
 }));
 
@@ -157,9 +166,9 @@ function Board() {
 }
 
 function renderBoard() {
-  const queryClient = new QueryClient({
+  const queryClient = seedDataTableQueries(new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
-  });
+  }));
   render(
     <QueryClientProvider client={queryClient}>
       <NuqsTestingAdapter hasMemory searchParams="?pageSize=100">
@@ -211,6 +220,40 @@ describe("DataTable render cost", () => {
     const checkboxes = screen.getAllByRole("checkbox", { name: "Select row" });
     expect(measure(() => fireEvent.click(checkboxes[10]))).toBeLessThanOrEqual(COLUMN_COUNT);
     expect(checkboxes[10].getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("ticks rows without redrawing the header row around them", () => {
+    const checkboxes = screen.getAllByRole("checkbox", { name: "Select row" });
+    countHeaderRender.mockClear();
+    fireEvent.click(checkboxes[3]);
+    fireEvent.click(checkboxes[4]);
+    fireEvent.click(checkboxes[3]);
+
+    expect(countHeaderRender).not.toHaveBeenCalled();
+    expect(checkboxes[4].getAttribute("aria-checked")).toBe("true");
+    expect(checkboxes[3].getAttribute("aria-checked")).toBe("false");
+  });
+
+  it("follows a resize drag without rendering the header row or the cells", async () => {
+    const tableElement = document.querySelector<HTMLTableElement>('[data-slot="table"]')!;
+    const width = () => tableElement.style.getPropertyValue("--col-c1-size");
+    const handle = screen.getByRole("separator", { name: "Resize c1 column" });
+
+    fireEvent.mouseDown(handle, { clientX: 200 });
+    countHeaderRender.mockClear();
+    countCellRender.mockClear();
+
+    for (const clientX of [230, 260, 290]) {
+      const before = width();
+      fireEvent.mouseMove(document, { clientX });
+      await waitFor(() => expect(width()).not.toBe(before));
+    }
+
+    expect(countHeaderRender).not.toHaveBeenCalled();
+    expect(countCellRender).not.toHaveBeenCalled();
+    act(() => {
+      fireEvent.mouseUp(document, { clientX: 290 });
+    });
   });
 
   it("still redraws every row when the data itself changes", () => {

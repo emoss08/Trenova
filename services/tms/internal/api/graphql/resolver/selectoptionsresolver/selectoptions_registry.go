@@ -141,6 +141,9 @@ func (r *Deps) SelectOptionRegistry() map[gqlmodel.SelectOptionResource]SelectOp
 		gqlmodel.SelectOptionResourceRole: {
 			Resolve: r.resolveRoleSelectOptions,
 		},
+		gqlmodel.SelectOptionResourceAiProvider: {
+			Resolve: r.resolveAIProviderSelectOptions,
+		},
 		gqlmodel.SelectOptionResourceRateMatrix: {
 			Resolve: r.resolveRateMatrixSelectOptions,
 		},

@@ -5,7 +5,7 @@ const RESOURCES_FILE = fileURLToPath(
   new URL("../../../../../packages/shared/src/types/generated/permission-resources.ts", import.meta.url),
 );
 
-const ALL_OPERATIONS = 0x3fffff;
+const ALL_OPERATIONS = 0x3ffffff;
 
 function resourceValues() {
   const source = readFileSync(RESOURCES_FILE, "utf8");

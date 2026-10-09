@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -47,6 +48,7 @@ type matchDecider interface {
 
 type matchDecision struct {
 	name         string
+	recipe       []string
 	description  string
 	decision     carriersettlementservice.MatchDecision
 	operation    permission.Operation
@@ -70,6 +72,8 @@ var (
 
 func (t *carrierInvoiceMatchTool) Name() string { return t.decision.name }
 
+func (t *carrierInvoiceMatchTool) Recipe() []string { return t.decision.recipe }
+
 func (t *carrierInvoiceMatchTool) Description() string { return t.decision.description }
 
 func (t *carrierInvoiceMatchTool) SearchTerms() []string { return t.decision.searchTerms }
@@ -81,7 +85,7 @@ func (t *carrierInvoiceMatchTool) ParamSchema() map[string]any {
 	}
 
 	return objectParams(map[string]any{
-		paramMatchID: idProperty("The carrier invoice match, from " + matchSourcesTool +
+		paramMatchID: agenttoolschema.IDText("The carrier invoice match, from " + matchSourcesTool +
 			". Never guess one."),
 		paramMatchNote: stringProperty(t.decision.noteText, maxMatchNoteChars),
 	}, required...)
@@ -287,7 +291,8 @@ func provideAcceptCarrierInvoiceMatchTool(
 	s *carriersettlementservice.Service,
 ) serviceports.AgentTool {
 	return &carrierInvoiceMatchTool{matches: s, decision: matchDecision{
-		name: "accept_carrier_invoice_match",
+		name:   "accept_carrier_invoice_match",
+		recipe: []string{"list_carrier_invoice_matches", "accept_carrier_invoice_match"},
 		description: "Propose accepting a carrier's invoice that matches what the load was " +
 			"expected to cost, clearing it for payment on the carrier's settlement. A person " +
 			"always decides. An invoice with a variance needs " +
@@ -367,6 +372,14 @@ func provideCreateCarrierInvoiceMatchTool(
 
 func (t *createCarrierInvoiceMatchTool) Name() string { return "create_carrier_invoice_match" }
 
+func (t *createCarrierInvoiceMatchTool) Recipe() []string {
+	return []string{
+		"list_edi_carrier_invoices",
+		"link_edi_carrier_invoice_to_carrier",
+		"create_carrier_invoice_match",
+	}
+}
+
 func (t *createCarrierInvoiceMatchTool) Description() string {
 	return "Match a carrier's EDI invoice to the load it bills, comparing its total with " +
 		"what the carrier assignment was expected to cost. The match is Matched when within " +
@@ -376,10 +389,13 @@ func (t *createCarrierInvoiceMatchTool) Description() string {
 
 func (t *createCarrierInvoiceMatchTool) ParamSchema() map[string]any {
 	return objectParams(map[string]any{
-		paramEDIInvoiceID: idProperty("The EDI carrier invoice, from " +
+		paramEDIInvoiceID: agenttoolschema.IDText("The EDI carrier invoice, from " +
 			ediInvoiceSourcesTool + ". Never guess one."),
-		fieldShipmentID: idProperty("The shipment it bills, from search_shipments, when the " +
-			"invoice's own references do not find it."),
+		fieldShipmentID: agenttoolschema.RecordIDText(
+			permission.ResourceShipment,
+			"The shipment it bills, from search_shipments, when the "+
+				"invoice's own references do not find it.",
+		),
 		paramMatchProNumber: stringProperty("The pro number it bills, when the invoice "+
 			"carries none.", maxMatchProNumberChars),
 	}, paramEDIInvoiceID)
@@ -561,10 +577,13 @@ func (t *linkEDICarrierInvoiceTool) Description() string {
 
 func (t *linkEDICarrierInvoiceTool) ParamSchema() map[string]any {
 	return objectParams(map[string]any{
-		paramEDIInvoiceID: idProperty("The EDI carrier invoice, from " +
+		paramEDIInvoiceID: agenttoolschema.IDText("The EDI carrier invoice, from " +
 			ediInvoiceSourcesTool + ". Never guess one."),
-		paramCarrierID: idProperty("The carrier it came from, from list_carriers or " +
-			ediInvoiceSourcesTool + "'s suggested carrier."),
+		paramCarrierID: agenttoolschema.RecordIDText(
+			permission.ResourceCarrier,
+			"The carrier it came from, from list_carriers or "+
+				ediInvoiceSourcesTool+"'s suggested carrier.",
+		),
 	}, paramEDIInvoiceID, paramCarrierID)
 }
 

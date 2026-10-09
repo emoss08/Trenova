@@ -1,4 +1,5 @@
 import { recordPath } from "@/config/record-links";
+import type { StopStripStop } from "@/components/data-table/cells/stop-strip-cell";
 import {
   shipmentStatusSchema,
   stopTypeSchema,
@@ -183,4 +184,47 @@ export function canTransferShipmentToBilling(shipment: Shipment) {
  */
 export function shipmentPanelPath(shipmentId: string): string {
   return recordPath("shipment", shipmentId);
+}
+
+/** A stop this many minutes past its window counts as late. */
+const STOP_LATE_GRACE_SECONDS = 15 * 60;
+
+/**
+ * A load's stops in order, each marked done, current, upcoming or canceled and
+ * whether it is (or was) late at `now` (Unix seconds). The current stop is the
+ * first still to be reached once the load has started moving.
+ */
+export function getStopStrip(shipment: Shipment, now: number): StopStripStop[] {
+  const stops = getOrderedStops(shipment);
+  const moving = shipment.status === shipmentStatusSchema.enum.InTransit;
+  let currentFound = false;
+
+  return stops.map((stop, index) => {
+    const due = stop.scheduledWindowEnd ?? stop.scheduledWindowStart ?? null;
+    let state: StopStripStop["state"];
+    if (stop.status === "Canceled") state = "canceled";
+    else if (stop.status === "Completed") state = "done";
+    else if (!currentFound && (moving || stop.status === "InTransit")) {
+      state = "current";
+      currentFound = true;
+    } else state = "upcoming";
+
+    const late =
+      !!due &&
+      state !== "canceled" &&
+      (state === "done"
+        ? !!stop.actualArrival && stop.actualArrival > due + STOP_LATE_GRACE_SECONDS
+        : now > due + STOP_LATE_GRACE_SECONDS);
+
+    return {
+      id: stop.id ?? `${index}`,
+      kind: stop.type === "Pickup" || stop.type === "SplitPickup" ? "pickup" : "delivery",
+      state,
+      late,
+      place: stop.location?.city || "",
+      facility: stop.location?.name || undefined,
+      due: stop.scheduledWindowStart || null,
+      arrived: stop.actualArrival ?? null,
+    };
+  });
 }

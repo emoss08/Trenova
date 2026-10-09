@@ -157,6 +157,7 @@ func (s *Service) StartForDefinition(
 		SubjectType:  subjectType,
 		SubjectID:    subjectID,
 		EventKind:    req.EventKind,
+		WaitID:       req.WaitID,
 		Origin:       aitrace.Traceparent(ctx),
 	}
 
@@ -342,18 +343,25 @@ func workflowIDFor(definition *agentdefinition.Definition, run *agent.AgentRun, 
 	switch {
 	case slot > 0:
 		return fmt.Sprintf("%s%s-%d", workflowIDPrefix, definition.ID, slot)
-	case run.Trigger == agent.RunTriggerEvent && run.SubjectID.IsNotNil():
+	case subjectBound(run):
 		return fmt.Sprintf("%s%s-subject-%s", workflowIDPrefix, definition.ID, run.SubjectID)
 	default:
 		return workflowIDPrefix + run.ID.String()
 	}
 }
 
+// subjectBound reports a run that is one of a subject's: an event or a wait
+// ending starts it, and the subject has one such run open at a time.
+func subjectBound(run *agent.AgentRun) bool {
+	return (run.Trigger == agent.RunTriggerEvent || run.Trigger == agent.RunTriggerWait) &&
+		run.SubjectID.IsNotNil()
+}
+
 // reusePolicyFor says whether a run's workflow id may be used again once the
 // run is over. A slot is filled once, ever; a subject may have a new run
 // whenever its last one has finished.
 func reusePolicyFor(run *agent.AgentRun, slot int64) enums.WorkflowIdReusePolicy {
-	if slot == 0 && run.Trigger == agent.RunTriggerEvent && run.SubjectID.IsNotNil() {
+	if slot == 0 && subjectBound(run) {
 		return enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE
 	}
 
@@ -364,7 +372,8 @@ func reusePolicyFor(run *agent.AgentRun, slot int64) enums.WorkflowIdReusePolicy
 // started is waited on, one a schedule or an event started is not.
 func priorityFor(trigger agent.RunTrigger) int {
 	switch trigger {
-	case agent.RunTriggerScheduled, agent.RunTriggerContinuous, agent.RunTriggerEvent:
+	case agent.RunTriggerScheduled, agent.RunTriggerContinuous, agent.RunTriggerEvent,
+		agent.RunTriggerWait:
 		return agentflow.PriorityBackground
 	default:
 		return agentflow.PriorityOneShot

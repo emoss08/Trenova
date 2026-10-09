@@ -51,7 +51,7 @@ export default function EquipmentTypeTable() {
   );
 
   const handleCellEditCommit = useCallback<CellEditCommitFn<ServiceTypeRow>>(
-    async ({ rowId, columnId, value }) => {
+    async ({ rowId, columnId, value, batch }) => {
       const field = columnId as keyof ServiceTypeRow;
       if (!INLINE_EDITABLE_FIELDS.has(field)) return;
       if (field === "code" && (value === null || value === "")) {
@@ -59,6 +59,7 @@ export default function EquipmentTypeTable() {
       }
 
       await apiService.serviceTypeService.patch(rowId, { [field]: value });
+      if (batch) return;
       await queryClient.invalidateQueries({
         queryKey: ["service-type-list"],
         refetchType: "all",

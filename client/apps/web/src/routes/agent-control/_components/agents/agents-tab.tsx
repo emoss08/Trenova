@@ -1,7 +1,10 @@
-import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
-import { AGENT_CONTROL_QUERY_KEY, agentControlQueryOptions, updateAgentControl } from "@/lib/graphql/agent-control";
+import {
+  AGENT_CONTROL_QUERY_KEY,
+  agentControlQueryOptions,
+  updateAgentControl,
+} from "@/lib/graphql/agent-control";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
@@ -10,13 +13,36 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useQueryState, useQueryStates } from "nuqs";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@trenova/shared/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@trenova/shared/components/ui/dropdown-menu";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import { AGENT_FILTER_PARAM, agentFilterParser, type AgentFilter } from "../../ai-control-tabs";
+import {
+  AGENT_EDIT_PARAM,
+  AGENT_FILTER_PARAM,
+  AGENT_NEW_PARAM,
+  AGENT_OPEN_PARAM,
+  AGENT_TRY_PARAM,
+  TOOL_PICKER_PARAM,
+  agentEditParser,
+  agentFilterParser,
+  agentNewParser,
+  agentOpenParser,
+  agentTryParser,
+  toolPickerParser,
+  type AgentFilter,
+} from "../../ai-control-tabs";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
 import { controlInput } from "../agent-control-options";
-import { Menu, Search, useSlashFocus, type MenuItem } from "../kit/controls";
+import { Search, useSlashFocus } from "../kit/controls";
 import { Ic } from "../kit/ic";
 import { Switch } from "../kit/layout";
 import { Tile } from "../kit/marks";
@@ -30,7 +56,7 @@ import { toAgentPanelRow, toSaveRequest } from "./agent-form-schema";
 import { AgentDetail } from "./agent-detail";
 import { AgentRow } from "./agent-row";
 import { groupAgentsByTrigger } from "./agent-roster";
-import { AgentBuilder, BUILDER_STARTS, type BuilderStart } from "./builder/agent-builder";
+import { AgentBuilder, type BuilderStart } from "./builder/agent-builder";
 import {
   filterRoster,
   modeFlags,
@@ -46,12 +72,27 @@ const SUMMARY_STALE_MS = 30_000;
 const PENDING_REFRESH_MS = 3_000;
 const WORKING_REFRESH_MS = 15_000;
 
-const SHELF_ICON = { Chat: "chat", Scheduled: "calendar", Event: "bolt", Continuous: "refresh" } as const;
+const SHELF_ICON = {
+  Chat: "chat",
+  Scheduled: "calendar",
+  Event: "bolt",
+  Continuous: "refresh",
+} as const;
 
-const panelParsers = {
-  panelType: searchParamsParser.panelType,
-  panelEntityId: searchParamsParser.panelEntityId,
+const builderParsers = {
+  [AGENT_EDIT_PARAM]: agentEditParser,
+  [AGENT_NEW_PARAM]: agentNewParser,
+  [AGENT_TRY_PARAM]: agentTryParser,
+  [TOOL_PICKER_PARAM]: toolPickerParser,
 };
+
+/** The builder closed, with the panels it opened over the agent it was editing. */
+const BUILDER_CLOSED = {
+  [AGENT_EDIT_PARAM]: null,
+  [AGENT_NEW_PARAM]: null,
+  [AGENT_TRY_PARAM]: null,
+  [TOOL_PICKER_PARAM]: null,
+} as const;
 
 /**
  * Every agent in the organization, shelved by what starts it: what each has done in the
@@ -69,9 +110,10 @@ export default function AgentsTab() {
   useSlashFocus(searchRef);
 
   const [filter, setFilter] = useQueryState(AGENT_FILTER_PARAM, agentFilterParser);
-  const [{ panelType, panelEntityId }, setPanel] = useQueryStates(panelParsers);
+  const [{ [AGENT_EDIT_PARAM]: editId, [AGENT_NEW_PARAM]: start }, setBuilder] =
+    useQueryStates(builderParsers);
   const [query, setQuery] = useState("");
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useQueryState(AGENT_OPEN_PARAM, agentOpenParser);
   const [menuOpen, setMenuOpen] = useState(false);
   const [removing, setRemoving] = useState<AgentDefinitionRow | null>(null);
 
@@ -127,13 +169,11 @@ export default function AgentsTab() {
   const pending = on.reduce((total, agent) => total + agent.pendingProposals, 0);
   const waitingNames = on.filter((agent) => agent.pendingProposals > 0).map((agent) => agent.name);
   const openAgent = agents.find((agent) => agent.id === openId) ?? null;
+  const openMissing = openId !== null && agentsQuery.isSuccess && openAgent === null;
   const editing =
-    panelType === "edit" ? (agents.find((agent) => agent.id === panelEntityId) ?? null) : null;
-  const creating = panelType === "create";
-  const start: BuilderStart | null =
-    creating && BUILDER_STARTS.includes(panelEntityId as BuilderStart)
-      ? (panelEntityId as BuilderStart)
-      : null;
+    editId && canUpdate ? (agents.find((agent) => agent.id === editId) ?? null) : null;
+  const creating = editId === null && start !== null && canCreate;
+  const builderOpen = editing !== null || creating;
 
   const refresh = useCallback(async () => {
     await Promise.all([
@@ -177,7 +217,7 @@ export default function AgentsTab() {
     onSuccess: async (_result, agent) => {
       toast.success(t("{0} removed", agent.name));
       setRemoving(null);
-      setOpenId(null);
+      void setOpenId(null);
       await refresh();
     },
     resourceName: t("Agent"),
@@ -230,19 +270,16 @@ export default function AgentsTab() {
   const reviewInDesk = useCallback(() => void navigate(DESK_DECISIONS_PATH), [navigate]);
   const edit = useCallback(
     (agent: AgentDefinitionRow) => {
-      setOpenId(null);
-      void setPanel({ panelType: "edit", panelEntityId: agent.id });
+      void setOpenId(null);
+      void setBuilder({ ...BUILDER_CLOSED, [AGENT_EDIT_PARAM]: agent.id });
     },
-    [setPanel],
+    [setOpenId, setBuilder],
   );
   const create = useCallback(
-    (from: BuilderStart) => void setPanel({ panelType: "create", panelEntityId: from }),
-    [setPanel],
+    (from: BuilderStart) => void setBuilder({ ...BUILDER_CLOSED, [AGENT_NEW_PARAM]: from }),
+    [setBuilder],
   );
-  const closeBuilder = useCallback(
-    () => void setPanel({ panelType: null, panelEntityId: null }),
-    [setPanel],
-  );
+  const closeBuilder = useCallback(() => void setBuilder(BUILDER_CLOSED), [setBuilder]);
   const activity = useCallback(
     (agent: AgentDefinitionRow) =>
       go({
@@ -253,6 +290,14 @@ export default function AgentsTab() {
     [go],
   );
 
+  // An address that names an agent removed since, or one never in this organization, opens
+  // nothing; it is cleared rather than left to open a later agent that reuses the key.
+  useEffect(() => {
+    if (openMissing) {
+      void setOpenId(null, { history: "replace" });
+    }
+  }, [openMissing, setOpenId]);
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
@@ -260,7 +305,7 @@ export default function AgentsTab() {
         event.metaKey ||
         event.ctrlKey ||
         event.altKey ||
-        panelType ||
+        builderOpen ||
         (target && (target.isContentEditable || /INPUT|TEXTAREA|SELECT/.test(target.tagName)))
       ) {
         return;
@@ -284,37 +329,32 @@ export default function AgentsTab() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [canCreate, canRun, canUpdate, edit, openAgent, panelType, run]);
+  }, [builderOpen, canCreate, canRun, canUpdate, edit, openAgent, run]);
 
-  const startItems: MenuItem[] = [
-    { kind: "heading", label: t("Start from") },
+  const startItems: { icon: ReactNode; label: string; note: string; start: BuilderStart }[] = [
     {
-      kind: "item",
       icon: <Ic n="chat" s={14} />,
       label: t("Desk agent"),
       note: t("Answers people in the assistant"),
-      onSelect: () => create("chat"),
+      start: "chat",
     },
     {
-      kind: "item",
       icon: <Ic n="calendar" s={14} />,
       label: t("Scheduled report"),
       note: t("Runs on a timetable and sends a summary"),
-      onSelect: () => create("scheduled"),
+      start: "scheduled",
     },
     {
-      kind: "item",
       icon: <Ic n="bolt" s={14} />,
       label: t("Event watcher"),
       note: t("Wakes when something happens"),
-      onSelect: () => create("event"),
+      start: "event",
     },
     {
-      kind: "item",
       icon: <Ic n="sparkle" s={14} />,
       label: t("Start blank"),
-      note: t("Pick tools and instructions yourself"),
-      onSelect: () => create("blank"),
+      note: t("Describe it for Nova to draft, or set it up yourself"),
+      start: "blank",
     },
   ];
 
@@ -338,10 +378,10 @@ export default function AgentsTab() {
             control={
               pending > 0 ? (
                 <>
-                  <button type="button" className="btn ink lg" onClick={reviewInDesk}>
+                  <Button type="button" variant="default" size="lg" onClick={reviewInDesk}>
                     <Ic n="inbox" s={13} />
                     {t("Review {0} in Desk", pending.toLocaleString())}
-                  </button>
+                  </Button>
                   <span>{formatList(waitingNames)}</span>
                 </>
               ) : undefined
@@ -354,7 +394,7 @@ export default function AgentsTab() {
                   key={going.id}
                   type="button"
                   className="lv-c"
-                  onClick={() => setOpenId(agent.id)}
+                  onClick={() => void setOpenId(agent.id)}
                 >
                   <span className="pc-mk">
                     <Tile agent={agent} s={22} />
@@ -377,13 +417,14 @@ export default function AgentsTab() {
             <b>{t("Agents can't answer until a provider is connected.")}</b>{" "}
             {t("Their settings are kept; they start as soon as one is on.")}
           </span>
-          <button
+          <Button
             type="button"
-            className="btn sm ink"
+            variant="default"
+            size="sm"
             onClick={() => go({ tab: "providers", panel: { mode: "create" } })}
           >
             {t("Connect a provider")}
-          </button>
+          </Button>
         </div>
       )}
       {paused && !noProvider && (
@@ -394,14 +435,15 @@ export default function AgentsTab() {
             {t("Each one below keeps its own switch for when you resume.")}
           </span>
           {canUpdateControl && (
-            <button
+            <Button
               type="button"
-              className="btn sm"
+              variant="outline"
+              size="sm"
               disabled={pause.isPending}
               onClick={() => pause.mutate(false)}
             >
               {t("Resume")}
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -430,27 +472,26 @@ export default function AgentsTab() {
         <span className="sp" />
         <span className="tb-ct mono">{t("{0} of {1} on", on.length, agents.length)}</span>
         {canCreate && (
-          <div className="rel">
-            <button
-              type="button"
-              className="btn ink"
-              aria-haspopup="menu"
-              aria-expanded={menuOpen}
-              onClick={() => setMenuOpen((shown) => !shown)}
-            >
+          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+            <DropdownMenuTrigger render={<Button type="button" variant="default" shortcut="N" />}>
               <Ic n="plus" s={13} />
               {t("New agent")}
-              <span className="kbd">N</span>
-            </button>
-            {menuOpen && (
-              <Menu
-                right
-                label={t("New agent")}
-                items={startItems}
-                onClose={() => setMenuOpen(false)}
-              />
-            )}
-          </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-72">
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>{t("Start from")}</DropdownMenuLabel>
+                {startItems.map((item) => (
+                  <DropdownMenuItem
+                    key={item.start}
+                    title={item.label}
+                    description={item.note}
+                    startContent={item.icon}
+                    onClick={() => create(item.start)}
+                  />
+                ))}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
       {shelves.map((shelf) => (
@@ -483,7 +524,7 @@ export default function AgentsTab() {
                 noProvider={noProvider}
                 canUpdate={canUpdate}
                 canRun={canRun}
-                onOpen={() => setOpenId((current) => (current === agent.id ? null : agent.id))}
+                onOpen={() => void setOpenId((current) => (current === agent.id ? null : agent.id))}
                 onToggle={(enabled) => toggle(agent, enabled)}
                 onRun={() => run.mutate(agent)}
                 onAsk={() => ask(agent)}
@@ -502,29 +543,30 @@ export default function AgentsTab() {
               : t("Describe a job and Nova drafts the agent, or start from a template.")}
           </span>
           {agents.length ? (
-            <button
+            <Button
               type="button"
-              className="btn sm"
+              variant="outline"
+              size="sm"
               onClick={() => {
                 setQuery("");
                 void setFilter(null);
               }}
             >
               {t("Clear")}
-            </button>
+            </Button>
           ) : (
             canCreate && (
-              <button type="button" className="btn sm ink" onClick={() => create("blank")}>
+              <Button type="button" variant="default" size="sm" onClick={() => create("blank")}>
                 <Ic n="plus" s={12} />
                 {t("New agent")}
-              </button>
+              </Button>
             )
           )}
         </div>
       )}
       <ReadSheet
         open={openAgent !== null}
-        onClose={() => setOpenId(null)}
+        onClose={() => void setOpenId(null)}
         label={openAgent?.name ?? t("Agent")}
         head={
           openAgent && (
@@ -541,11 +583,16 @@ export default function AgentsTab() {
                 </span>
               </div>
               {canUpdate && (
-                <button type="button" className="btn sm" onClick={() => edit(openAgent)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  shortcut="E"
+                  onClick={() => edit(openAgent)}
+                >
                   <Ic n="edit" s={12} />
                   {t("Edit")}
-                  <span className="kbd">E</span>
-                </button>
+                </Button>
               )}
               <Switch
                 on={openAgent.enabled}

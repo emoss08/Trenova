@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LoginForm } from "./login-form";
+import { AuthStageContext, type AuthStageControls } from "./stage/auth-stage-context";
 
 const mocks = vi.hoisted(() => ({
   login: vi.fn(),
@@ -106,8 +107,8 @@ function renderLoginForm(ui: ReactNode) {
 
 async function submitCredentials() {
   const user = userEvent.setup();
-  await user.type(screen.getByPlaceholderText("name@work-email.com"), "test@example.com");
-  await user.type(screen.getByLabelText(/password/i), "password123");
+  await user.type(screen.getByLabelText("Email"), "test@example.com");
+  await user.type(screen.getByLabelText("Password"), "password123");
   await user.click(screen.getByRole("button", { name: /sign in/i }));
   return user;
 }
@@ -236,7 +237,12 @@ describe("LoginForm", () => {
     );
   });
 
-  it("renders the step label supplied by the flow", () => {
+  it("hands the second-factor step the flow's step label", async () => {
+    mocks.login.mockResolvedValue({
+      mfaRequired: true,
+      mfaChallengeToken: "challenge-token",
+      expiresAt: 1782403304,
+    });
     renderLoginForm(
       <LoginForm
         stepLabel="01 / 02"
@@ -244,12 +250,26 @@ describe("LoginForm", () => {
         onForgotPassword={mocks.onForgotPassword}
       />,
     );
+    await submitCredentials();
 
-    expect(screen.getByText("01 / 02")).toBeInTheDocument();
-    expect(screen.getByText("Secure sign-in")).toBeInTheDocument();
+    expect(await screen.findByText("01 / 02")).toBeInTheDocument();
   });
 
-  it("swaps the credential form for the Dash hand-off on the driver tab", async () => {
+  it("is an office sign-in only, with no audience switch or Dash hand-off", () => {
+    renderLoginForm(
+      <LoginForm
+        stepLabel="01 / 03"
+        onAuthenticated={mocks.onAuthenticated}
+        onForgotPassword={mocks.onForgotPassword}
+      />,
+    );
+
+    expect(screen.queryByRole("tab")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /dash/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Sign in" })).toBeInTheDocument();
+  });
+
+  it("refuses a malformed address before calling the server", async () => {
     const user = userEvent.setup();
     renderLoginForm(
       <LoginForm
@@ -259,16 +279,96 @@ describe("LoginForm", () => {
       />,
     );
 
-    await user.click(screen.getByRole("tab", { name: "Driver" }));
+    await user.type(screen.getByLabelText("Email"), "not-an-address");
+    await user.type(screen.getByLabelText("Password"), "password123");
+    await user.click(screen.getByRole("button", { name: /sign in/i }));
 
-    expect(screen.getByRole("link", { name: /continue to dash/i })).toHaveAttribute(
-      "href",
-      "/dash/login",
-    );
-    expect(screen.queryByPlaceholderText("name@work-email.com")).not.toBeInTheDocument();
+    expect(
+      await screen.findByText("Enter the work email you were invited with."),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toHaveAttribute("aria-invalid", "true");
+    expect(mocks.login).not.toHaveBeenCalled();
   });
 
-  it("hides the audience toggle on a tenant login page", () => {
+  it("reveals and hides the password from the eye button", async () => {
+    const user = userEvent.setup();
+    renderLoginForm(
+      <LoginForm
+        stepLabel="01 / 03"
+        onAuthenticated={mocks.onAuthenticated}
+        onForgotPassword={mocks.onForgotPassword}
+      />,
+    );
+
+    const password = screen.getByLabelText("Password");
+    expect(password).toHaveAttribute("type", "password");
+
+    await user.click(screen.getByRole("button", { name: "Show password" }));
+    expect(password).toHaveAttribute("type", "text");
+
+    await user.click(screen.getByRole("button", { name: "Hide password" }));
+    expect(password).toHaveAttribute("type", "password");
+  });
+
+  it("carries the typed address to recovery", async () => {
+    const user = userEvent.setup();
+    renderLoginForm(
+      <LoginForm
+        stepLabel="01 / 03"
+        onAuthenticated={mocks.onAuthenticated}
+        onForgotPassword={mocks.onForgotPassword}
+      />,
+    );
+
+    await user.type(screen.getByLabelText("Email"), "dana@example.com");
+    await user.click(screen.getByRole("button", { name: "Forgot?" }));
+
+    expect(mocks.onForgotPassword).toHaveBeenCalledWith("dana@example.com");
+  });
+
+  it("bursts the stage on a valid submit and widens it once signed in", async () => {
+    const stage: AuthStageControls = { burst: vi.fn(), setDone: vi.fn() };
+    renderLoginForm(
+      <AuthStageContext value={stage}>
+        <LoginForm
+          stepLabel="01 / 03"
+          onAuthenticated={mocks.onAuthenticated}
+          onForgotPassword={mocks.onForgotPassword}
+        />
+      </AuthStageContext>,
+    );
+    expect(stage.setDone).toHaveBeenLastCalledWith(false);
+
+    await submitCredentials();
+
+    await waitFor(() => expect(mocks.onAuthenticated).toHaveBeenCalled());
+    expect(stage.burst).toHaveBeenCalledTimes(1);
+    expect(stage.setDone).toHaveBeenLastCalledWith(true);
+  });
+
+  it("narrows the stage again when the flow cannot finish signing in", async () => {
+    const stage: AuthStageControls = { burst: vi.fn(), setDone: vi.fn() };
+    mocks.onAuthenticated.mockRejectedValue(new Error("organizations unavailable"));
+    renderLoginForm(
+      <AuthStageContext value={stage}>
+        <LoginForm
+          stepLabel="01 / 03"
+          onAuthenticated={mocks.onAuthenticated}
+          onForgotPassword={mocks.onForgotPassword}
+        />
+      </AuthStageContext>,
+    );
+
+    await submitCredentials();
+
+    await waitFor(() => expect(stage.setDone).toHaveBeenLastCalledWith(false));
+    expect(stage.setDone).toHaveBeenCalledWith(true);
+  });
+
+  it("shows a tenant's name, its SSO providers and the password form it allows", async () => {
+    mocks.listProviders.mockResolvedValue([
+      { id: "sso_1", name: "Contoso Entra", provider: "AzureAD" },
+    ]);
     renderLoginForm(
       <LoginForm
         organizationSlug="alpha"
@@ -286,7 +386,36 @@ describe("LoginForm", () => {
       />,
     );
 
-    expect(screen.queryByRole("tab", { name: "Driver" })).not.toBeInTheDocument();
-    expect(screen.getByText("Alpha Logistics")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Alpha Logistics" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("link", { name: /continue with contoso entra/i }),
+    ).toHaveAttribute("href", "/sso");
+    expect(screen.getByLabelText("Email")).toBeInTheDocument();
+  });
+
+  it("leaves out the password form on a tenant that signs in by SSO only", async () => {
+    mocks.listProviders.mockResolvedValue([
+      { id: "sso_1", name: "Contoso Okta", provider: "Okta" },
+    ]);
+    renderLoginForm(
+      <LoginForm
+        organizationSlug="alpha"
+        tenantMetadata={{
+          organizationId: "org_1",
+          organizationName: "Alpha Logistics",
+          organizationSlug: "alpha",
+          enabledProviders: [],
+          passwordEnabled: false,
+          enforceSso: true,
+        }}
+        stepLabel="01 / 02"
+        onAuthenticated={mocks.onAuthenticated}
+        onForgotPassword={mocks.onForgotPassword}
+      />,
+    );
+
+    expect(await screen.findByRole("link", { name: /continue with contoso okta/i })).toBeVisible();
+    expect(screen.queryByLabelText("Email")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /sign in/i })).not.toBeInTheDocument();
   });
 });

@@ -1,32 +1,38 @@
-import { SectionPanel } from "@/components/section-panel";
 import {
   AGENT_REFLECTIONS_KEY,
   fetchRecentAgentReflections,
   type AgentReflection,
 } from "@/lib/graphql/agent-reflections";
 import type { AgentReflectionAction } from "@trenova/graphql/generated/graphql";
-import { GraduationHat01Icon } from "@trenova/shared/components/icons";
-import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
+import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
+import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
+import { Ic } from "../kit/ic";
 import { reflectionSignalLabel } from "./reflection-signals";
 
 export const agentReflectionsQueryKey = [AGENT_REFLECTIONS_KEY] as const;
 
-const ACTION: Record<AgentReflectionAction, { label: string; variant: BadgeVariant }> = {
-  Saved: { label: "Kept", variant: "success" },
-  Suggested: { label: "Offered", variant: "warning" },
-  Refreshed: { label: "Already kept", variant: "neutral" },
-  Refused: { label: "Not kept", variant: "neutral" },
+const ACTION_LABEL: Record<AgentReflectionAction, string> = defineLabels({
+  Saved: "Kept",
+  Suggested: "Offered",
+  Refreshed: "Already kept",
+  Refused: "Not kept",
+});
+
+const ACTION_TONE: Record<AgentReflectionAction, string> = {
+  Saved: "k",
+  Suggested: "w",
+  Refreshed: "",
+  Refused: "",
 };
 
 /**
- * What agents taught themselves lately: each time one looked back over a
- * conversation that went quiet or a run that settled and found something
- * worth a decision, with what made it look and what it kept, offered or
- * turned down and why. A lesson kept here is an ordinary memory below, which
- * a person can edit, pause or retire like any other.
+ * What agents taught themselves lately: each time one looked back over a conversation
+ * that went quiet or a run that settled and found something worth a decision, with what
+ * made it look and what it kept, offered or turned down and why. A lesson kept here is
+ * an ordinary memory below, which a person can edit or retire like any other.
  */
 export function AgentReflections() {
   const t = useT();
@@ -41,20 +47,18 @@ export function AgentReflections() {
   }
 
   return (
-    <SectionPanel
-      title={t("What agents learned")}
-      icon={<GraduationHat01Icon />}
-      count={reflections.length}
-      help={t(
-        "Once a conversation goes quiet or a background run settles, its agent looks back over it when something went wrong, took several tries or was corrected. Each lesson it keeps is a memory in the list below.",
-      )}
-    >
-      <ul className="divide-border-subtle flex flex-col divide-y">
-        {reflections.map((reflection) => (
-          <ReflectionRow key={reflection.id} reflection={reflection} />
-        ))}
-      </ul>
-    </SectionPanel>
+    <section className="sec">
+      <header className="sh2">
+        <Ic n="brain" s={14} />
+        <h3>{t("What agents learned")}</h3>
+        <em className="mono">{reflections.length}</em>
+        <span className="sp" />
+        <span className="sh2-n">{t("Each lesson kept is a memory in the list below")}</span>
+      </header>
+      {reflections.map((reflection) => (
+        <ReflectionRow key={reflection.id} reflection={reflection} />
+      ))}
+    </section>
   );
 }
 
@@ -63,58 +67,45 @@ function ReflectionRow({ reflection }: { reflection: AgentReflection }) {
   const where = reflection.subjectType === "Thread" ? t("A conversation") : t("A background run");
 
   return (
-    <li className="flex flex-col gap-2 px-3 py-3">
-      <p className="text-foreground-muted text-xs">
+    <div className="sgm">
+      <p className="sgm-e">
         {where} · {formatUnixDateTimeMedium(reflection.createdAt)}
-        {reflection.tainted ? <> · {t("read content written outside the organization")}</> : null}
+        {reflection.tainted && <> · {t("read content written outside the organization")}</>}
       </p>
-
       {reflection.signals.length > 0 && (
-        <ul aria-label={t("Why it looked")} className="flex flex-wrap gap-1">
+        <ul className="rf-s" aria-label={t("Why it looked")}>
           {reflection.signals.map((signal) => (
-            <li key={signal.kind}>
-              <Badge variant="neutral" appearance="outline">
-                {reflectionSignalLabel(signal.kind, t)}
-                {signal.detail ? ` · ${signal.detail}` : ""}
-              </Badge>
+            <li key={signal.kind} className="tg">
+              {reflectionSignalLabel(signal.kind, t)}
+              {signal.detail ? ` · ${signal.detail}` : ""}
             </li>
           ))}
         </ul>
       )}
-
       {reflection.status === "Failed" ? (
-        <p className="text-danger text-xs">
+        <p className="sgm-e t-d">
           {t("The look back could not finish: {0}", reflection.errorMessage)}
         </p>
       ) : reflection.changes.length === 0 ? (
-        <p className="text-foreground-muted text-sm">
-          {reflection.notes || t("Nothing worth keeping.")}
-        </p>
+        <p className="sgm-c">{reflection.notes || t("Nothing worth keeping.")}</p>
       ) : (
         <>
-          <ul aria-label={t("Lessons")} className="flex flex-col gap-1.5">
+          <ul className="rf-l" aria-label={t("Lessons")}>
             {reflection.changes.map((change, index) => (
-              <li
-                key={change.memoryId ?? `${reflection.id}-${index}`}
-                className="flex flex-col gap-0.5"
-              >
-                <span className="flex items-start gap-2">
-                  <Badge variant={ACTION[change.action].variant}>
-                    {t(ACTION[change.action].label)}
-                  </Badge>
-                  <span className="text-sm leading-relaxed">{change.content}</span>
+              <li key={change.memoryId ?? `${reflection.id}-${index}`} className="rf-c">
+                <span className={cn("tg", ACTION_TONE[change.action])}>
+                  {t(ACTION_LABEL[change.action])}
                 </span>
-                {change.action === "Refused" && change.reason ? (
-                  <span className="text-foreground-muted pl-1 text-xs">{change.reason}</span>
-                ) : null}
+                <span className="sgm-c">{change.content}</span>
+                {change.action === "Refused" && change.reason && (
+                  <span className="sgm-e">{change.reason}</span>
+                )}
               </li>
             ))}
           </ul>
-          {reflection.notes ? (
-            <p className="text-foreground-muted text-xs">{reflection.notes}</p>
-          ) : null}
+          {reflection.notes && <p className="sgm-e">{reflection.notes}</p>}
         </>
       )}
-    </li>
+    </div>
   );
 }

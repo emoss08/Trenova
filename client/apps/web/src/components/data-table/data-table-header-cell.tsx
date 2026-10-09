@@ -1,10 +1,10 @@
-"use no memo";
 import {
   columnHeaderLabel,
   columnSizeVar,
   pinnedCellClass,
-  pinnedCellStyle,
+  pinnedSideStyle,
 } from "@/lib/data-table";
+import { useTableAtom } from "@trenova/shared/hooks/use-table-atom";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { flexRender, type RowData } from "@tanstack/react-table";
@@ -13,22 +13,42 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { Header, SortDirection, SortField } from "@trenova/shared/types/data-table";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableColumnResizeHandle } from "./data-table-column-resize-handle";
+import {
+  DataTableHeaderFacetFilter,
+  type DataTableHeaderFacets,
+} from "./data-table-header-facet-filter";
+import type { FilterableField } from "@/lib/data-table";
 
 type DataTableHeaderCellProps<TData extends RowData> = {
   header: Header<TData, unknown>;
+  /** The field this column's header filters by value, when the table can count it. */
+  facetField?: FilterableField | null;
+  facets?: DataTableHeaderFacets;
   sort: SortField[];
   onSort: (field: string, direction: SortDirection | null) => void;
 };
+
+function ariaSortOf(sort: readonly SortField[], field: string) {
+  const direction = sort.find((entry) => entry.field === field)?.direction;
+  if (direction === "asc") return "ascending";
+  if (direction === "desc") return "descending";
+  return "none";
+}
 
 export function DataTableHeaderCell<TData extends RowData>({
   header,
   sort,
   onSort,
+  facetField,
+  facets,
 }: DataTableHeaderCellProps<TData>) {
   const { column } = header;
   const meta = column.columnDef.meta;
   const isSortable = meta?.sortable !== false;
-  const isPinned = column.getIsPinned();
+  // The column object outlives a pin or unpin, so the side and the boundary edge
+  // are read from the pinning state rather than from the column alone.
+  const isPinned = useTableAtom(column.table.atoms.columnPinning, () => column.getIsPinned());
+  const pinClass = useTableAtom(column.table.atoms.columnPinning, () => pinnedCellClass(column));
   const canReorder = column.id !== "select" && !isPinned;
 
   const { listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -40,8 +60,9 @@ export function DataTableHeaderCell<TData extends RowData>({
     <TableHead
       ref={setNodeRef}
       className={cn(
-        "group/head border-border relative border-b",
-        pinnedCellClass(column) ?? undefined,
+        // design-tokens-ignore: column heads are uppercase across every data table by product decision
+        "group/head border-border relative border-b uppercase",
+        pinClass,
         // A pinned head needs to be opaque over the scrolling content, not a
         // different colour from the heads beside it, and above the resize
         // handles of the heads that scroll under it.
@@ -50,11 +71,15 @@ export function DataTableHeaderCell<TData extends RowData>({
       )}
       style={{
         width: `var(${columnSizeVar(column.id)})`,
-        ...pinnedCellStyle(column),
+        ...pinnedSideStyle(column.id, isPinned),
         transform: canReorder ? CSS.Translate.toString(transform) : undefined,
         transition: canReorder ? transition : undefined,
       }}
       {...(canReorder ? listeners : {})}
+      role="columnheader"
+      aria-colindex={header.index + 1}
+      aria-sort={isSortable ? ariaSortOf(sort, meta?.apiField ?? column.id) : undefined}
+      data-column-id={column.id}
     >
       {header.isPlaceholder ? null : isSortable ? (
         <DataTableColumnHeader
@@ -66,6 +91,11 @@ export function DataTableHeaderCell<TData extends RowData>({
       ) : (
         flexRender(column.columnDef.header, header.getContext())
       )}
+      {facetField && facets ? (
+        <span className="absolute top-1/2 right-2.5 z-10 -translate-y-1/2">
+          <DataTableHeaderFacetFilter field={facetField} facets={facets} />
+        </span>
+      ) : null}
       <DataTableColumnResizeHandle header={header} />
     </TableHead>
   );

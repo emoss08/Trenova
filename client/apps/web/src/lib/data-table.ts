@@ -1,4 +1,5 @@
 import type {
+  DataTableFilterField,
   FieldFilter,
   FilterConnector,
   FilterGroup,
@@ -23,7 +24,7 @@ import type {
   TableConfig,
   TableFormatRule,
 } from "@/types/table-configuration";
-import type { ColumnPinningState, RowData } from "@tanstack/react-table";
+import type { CellData, ColumnPinningState, RowData, SortingState } from "@tanstack/react-table";
 import type { CSSProperties } from "react";
 import { stableStringify } from "@/lib/stable-stringify";
 import { defineLabels, translateLabel } from "@trenova/shared/i18n/labels";
@@ -52,15 +53,15 @@ export function filterItemsToUrlFilterState(items: FilterItem[]): UrlFilterState
   return { fieldFilters, filterGroups };
 }
 
-export function buildFilterItemsFromUrlState<TData extends RowData>(
+export function buildFilterItemsFromUrlState(
   state: UrlFilterState,
-  columns: ColumnDef<TData>[],
+  fields: readonly FilterableField[],
 ): FilterItem[] {
   return [
-    ...initializeFilterItemsFromFieldFilters(state.fieldFilters, columns),
+    ...initializeFilterItemsFromFieldFilters(state.fieldFilters, fields),
     ...initializeFilterItemsFromFilterGroups(
       state.filterGroups.filter((g) => g.filters?.length > 0),
-      columns,
+      fields,
     ),
   ];
 }
@@ -90,6 +91,7 @@ export const FILTER_OPERATORS: Record<FilterVariant, FilterOperator[]> = {
   ],
   select: ["eq", "ne", "in", "notin"],
   boolean: ["eq"],
+  record: ["in", "notin", "eq", "ne", "isnull", "isnotnull"],
 };
 
 export const CONNECTOR_LABELS: Record<FilterConnector, string> = defineLabels({
@@ -152,6 +154,8 @@ export function getDefaultOperatorForVariant(variant: FilterVariant): FilterOper
       return "eq";
     case "boolean":
       return "eq";
+    case "record":
+      return "in";
     default:
       return "eq";
   }
@@ -268,81 +272,136 @@ export function convertFilterItemsToFilterGroups(items: FilterItem[]): FilterGro
   return groups;
 }
 
-function resolveColumnFields<TData extends RowData>(
-  field: string,
-  columns: ColumnDef<TData>[],
-): {
-  columnField: string;
+/**
+ * One way a table can be filtered, resolved from a column or from the table's own
+ * filter fields. `id` names it in the builder; `apiField` is what the server reads.
+ */
+export type FilterableField = {
+  id: string;
   apiField: string;
   label: string;
   filterType: FilterVariant;
   filterOptions?: SelectOption[];
-} {
-  const column = columns.find(
-    (c) => c.meta?.apiField === field || ("accessorKey" in c && c.accessorKey === field),
-  );
-  const columnField =
-    column && "accessorKey" in column ? String(column.accessorKey) : String(column?.id ?? field);
-  const apiField = column?.meta?.apiField || field;
+  filterRecord?: string;
+  defaultOperator: FilterOperator;
+};
+
+function toFilterableField(id: string, field: DataTableFilterField): FilterableField {
   return {
-    columnField,
-    apiField,
-    label: column?.meta?.label || apiField,
-    filterType: (column?.meta?.filterType || "text") as FilterVariant,
-    filterOptions: column?.meta?.filterOptions as SelectOption[] | undefined,
+    id,
+    apiField: field.apiField,
+    label: field.label,
+    filterType: field.filterType,
+    filterOptions: field.filterOptions,
+    filterRecord: field.filterRecord,
+    defaultOperator:
+      field.defaultFilterOperator ?? getDefaultOperatorForVariant(field.filterType),
   };
 }
 
-export function initializeFilterItemsFromFilterGroups<TData extends RowData>(
-  filterGroups: FilterGroup[],
-  columns: ColumnDef<TData>[],
-): FilterItem[] {
-  if (filterGroups.length === 0) return [];
+/**
+ * Every way a table can be filtered: each filterable column, the extra filters a
+ * column offers, then the table's own filter fields. A field named twice is offered
+ * once, by the first that names it.
+ */
+export function getFilterableFields<TData extends RowData>(
+  columns: readonly ColumnDef<TData>[],
+  tableFields: readonly DataTableFilterField[] = [],
+): FilterableField[] {
+  const fields: FilterableField[] = [];
+  const seen = new Set<string>();
+  const add = (id: string, field: DataTableFilterField) => {
+    if (seen.has(field.apiField)) return;
+    seen.add(field.apiField);
+    fields.push(toFilterableField(id, field));
+  };
 
+  for (const column of columns) {
+    const meta = column.meta;
+    if (!meta) continue;
+    const columnId = String("accessorKey" in column ? column.accessorKey : column.id);
+    if (meta.filterable === true && meta.apiField) {
+      add(columnId, {
+        apiField: meta.apiField,
+        label: fieldLabel({ id: columnId, columnDef: column }),
+        filterType: meta.filterType || "text",
+        filterOptions: meta.filterOptions,
+        filterRecord: meta.filterRecord,
+        defaultFilterOperator: meta.defaultFilterOperator,
+      });
+    }
+    for (const extra of meta.extraFilters ?? []) {
+      add(`${columnId}:${extra.apiField}`, extra);
+    }
+  }
+  for (const field of tableFields) {
+    add(`field:${field.apiField}`, field);
+  }
+
+  return fields;
+}
+
+function resolveFilterableField(
+  apiField: string,
+  fields: readonly FilterableField[],
+): FilterableField {
+  return (
+    fields.find((field) => field.apiField === apiField) ?? {
+      id: apiField,
+      apiField,
+      label: translateLabel(toTitleCase(apiField)),
+      filterType: "text",
+      defaultOperator: "contains",
+    }
+  );
+}
+
+export function filterItemFromField(
+  field: FilterableField,
+  filter: Pick<FieldFilter, "operator" | "value">,
+  connector: FilterConnector,
+): SingleFilterItem {
+  return {
+    type: "filter",
+    id: generateFilterId(),
+    connector,
+    field: field.id,
+    apiField: field.apiField,
+    label: field.label,
+    operator: filter.operator,
+    value: filter.value,
+    filterType: field.filterType,
+    filterOptions: field.filterOptions,
+    filterRecord: field.filterRecord,
+  };
+}
+
+export function initializeFilterItemsFromFilterGroups(
+  filterGroups: FilterGroup[],
+  fields: readonly FilterableField[],
+): FilterItem[] {
   const items: FilterItem[] = [];
 
-  for (let groupIndex = 0; groupIndex < filterGroups.length; groupIndex++) {
-    const group = filterGroups[groupIndex];
-
+  for (const group of filterGroups) {
     if (group.filters.length === 1) {
-      const f = group.filters[0];
-      const resolved = resolveColumnFields(f.field, columns);
-
-      items.push({
-        type: "filter",
-        id: generateFilterId(),
-        connector: "and",
-        field: resolved.columnField,
-        apiField: resolved.apiField,
-        label: resolved.label,
-        operator: f.operator,
-        value: f.value,
-        filterType: resolved.filterType,
-        filterOptions: resolved.filterOptions,
-      });
-    } else {
-      const groupItem: FilterGroupItem = {
-        type: "group",
-        id: generateGroupId(),
-        connector: "and",
-        items: group.filters.map((f, filterIndex) => {
-          const resolved = resolveColumnFields(f.field, columns);
-          return {
-            type: "filter" as const,
-            id: generateFilterId(),
-            connector: filterIndex === 0 ? ("and" as const) : ("or" as const),
-            field: resolved.columnField,
-            apiField: resolved.apiField,
-            label: resolved.label,
-            operator: f.operator,
-            value: f.value,
-            filterType: resolved.filterType,
-            filterOptions: resolved.filterOptions,
-          };
-        }),
-      };
-      items.push(groupItem);
+      const filter = group.filters[0];
+      items.push(filterItemFromField(resolveFilterableField(filter.field, fields), filter, "and"));
+      continue;
     }
+
+    const groupItem: FilterGroupItem = {
+      type: "group",
+      id: generateGroupId(),
+      connector: "and",
+      items: group.filters.map((filter, filterIndex) =>
+        filterItemFromField(
+          resolveFilterableField(filter.field, fields),
+          filter,
+          filterIndex === 0 ? "and" : "or",
+        ),
+      ),
+    };
+    items.push(groupItem);
   }
 
   return items;
@@ -417,11 +476,84 @@ export function withRequiredPinning(
 export function pinnedCellStyle<TData extends RowData>(
   column: Column<TData>,
 ): CSSProperties | undefined {
-  const pinned = column.getIsPinned();
-  if (!pinned) return undefined;
-  return pinned === "start"
-    ? { insetInlineStart: `var(${columnPinOffsetVar(column.id, "start")})` }
-    : { insetInlineEnd: `var(${columnPinOffsetVar(column.id, "end")})` };
+  return pinnedSideStyle(column.id, column.getIsPinned());
+}
+
+/** The offset a cell pinned to `side` takes, for a caller that already knows the side. */
+export function pinnedSideStyle(
+  columnId: string,
+  side: false | "start" | "end",
+): CSSProperties | undefined {
+  if (!side) return undefined;
+  return side === "start"
+    ? { insetInlineStart: `var(${columnPinOffsetVar(columnId, "start")})` }
+    : { insetInlineEnd: `var(${columnPinOffsetVar(columnId, "end")})` };
+}
+
+/** The widest a column grows when fitted to its content; wider text is truncated. */
+export const MAX_FITTED_COLUMN_WIDTH = 640;
+
+/**
+ * How wide each column needs to be to show its widest header or cell on the page
+ * without truncating. Each column's width variable is let go to `max-content` for a
+ * single layout pass, every head is read, and the variables are put back, so
+ * fitting any number of columns costs one forced layout.
+ */
+export function measureColumnFits(
+  tableElement: HTMLTableElement,
+  columnIds: readonly string[],
+): Record<string, number> {
+  const { style } = tableElement;
+  const saved = new Map<string, string>();
+  for (const id of columnIds) {
+    const name = columnSizeVar(id);
+    saved.set(name, style.getPropertyValue(name));
+    style.setProperty(name, "max-content");
+  }
+
+  const fits: Record<string, number> = {};
+  try {
+    for (const id of columnIds) {
+      const head = tableElement.querySelector<HTMLElement>(
+        `th[data-column-id="${CSS.escape(id)}"]`,
+      );
+      const width = head?.getBoundingClientRect().width ?? 0;
+      if (width > 0) fits[id] = Math.ceil(width);
+    }
+  } finally {
+    for (const [name, value] of saved) {
+      if (value) style.setProperty(name, value);
+      else style.removeProperty(name);
+    }
+  }
+  return fits;
+}
+
+/** A fitted width kept inside what the column allows and what a table can show. */
+export function clampFittedWidth<TData extends RowData>(
+  column: Column<TData>,
+  width: number,
+): number {
+  const { minSize, maxSize } = column.columnDef;
+  const upper = Math.min(maxSize ?? MAX_FITTED_COLUMN_WIDTH, MAX_FITTED_COLUMN_WIDTH);
+  return Math.max(minSize ?? 0, Math.min(upper, width));
+}
+
+/** Whether a person can change a column's width at all. */
+export function isColumnResizable<TData extends RowData, TValue extends CellData = CellData>(
+  column: Column<TData, TValue>,
+): boolean {
+  const { minSize, maxSize } = column.columnDef;
+  return column.getCanResize() && !(minSize !== undefined && minSize === maxSize);
+}
+
+/** A body cell's width and, when its column is pinned, its offset: what lines a cell up with its header. */
+export function columnCellStyle<TData extends RowData>(column: Column<TData>): CSSProperties {
+  return {
+    width: `var(${columnSizeVar(column.id)})`,
+    maxWidth: `var(${columnSizeVar(column.id)})`,
+    ...pinnedCellStyle(column),
+  };
 }
 
 export function pinnedCellClass<TData extends RowData>(column: Column<TData>): string | undefined {
@@ -609,25 +741,23 @@ export function compileFormatRules<TData extends RowData>(
   };
 }
 
-export function initializeFilterItemsFromFieldFilters<TData extends RowData>(
+export function initializeFilterItemsFromFieldFilters(
   fieldFilters: FieldFilter[],
-  columns: ColumnDef<TData>[],
+  fields: readonly FilterableField[],
 ): FilterItem[] {
-  return fieldFilters.map((f) => {
-    const resolved = resolveColumnFields(f.field, columns);
-    return {
-      type: "filter",
-      id: generateFilterId(),
-      connector: "and",
-      field: resolved.columnField,
-      apiField: resolved.apiField,
-      label: resolved.label,
-      operator: f.operator,
-      value: f.value,
-      filterType: resolved.filterType,
-      filterOptions: resolved.filterOptions,
-    };
-  });
+  return fieldFilters.map((filter) =>
+    filterItemFromField(resolveFilterableField(filter.field, fields), filter, "and"),
+  );
+}
+
+/**
+ * The name a column goes by when it is offered as a field to filter or format by.
+ * Its own label comes first, as it says what is matched ("Customer name") where the
+ * header only names the column ("Customer"); the header is the fallback.
+ */
+export function fieldLabel(column: LabelledColumn): string {
+  const label = column.columnDef.meta?.label;
+  return label ? translateLabel(label) : columnHeaderLabel(column);
 }
 
 type LabelledColumn = {
@@ -657,4 +787,53 @@ export function emptyTableColumns(columns: readonly LabelledColumn[]): EmptyTabl
       label: columnHeaderLabel(column),
       numeric: column.columnDef.meta?.filterType === "number",
     }));
+}
+
+/**
+ * Which way a column is sorted, read from the sorting state itself. A header drawn
+ * from a header group the table caches across sorts reads it this way, so its
+ * arrow follows the sort under the React Compiler.
+ */
+export function sortDirectionOf(sorting: SortingState, columnId: string): false | "asc" | "desc" {
+  const entry = sorting.find((sort) => sort.id === columnId);
+  if (!entry) return false;
+  return entry.desc ? "desc" : "asc";
+}
+
+/**
+ * Whether a row was changed after a moment, read from the `updatedAt` (Unix seconds)
+ * its query carries. A row without one is never marked.
+ */
+export function isChangedSince(row: unknown, since: number): boolean {
+  if (since <= 0 || row === null || typeof row !== "object") return false;
+  const updatedAt = (row as { updatedAt?: unknown }).updatedAt;
+  return typeof updatedAt === "number" && updatedAt > since;
+}
+
+/**
+ * The field a column's header counts and filters values of, when the table can count
+ * it: the column's `facetField`, else its `apiField` for a select or record filter.
+ */
+export function columnFacetField<TData extends RowData>(
+  column: Column<TData>,
+  fields: readonly FilterableField[],
+  facetable: ReadonlySet<string>,
+): FilterableField | null {
+  const meta = column.columnDef.meta;
+  if (!meta || meta.facetField === false) return null;
+  const apiField =
+    meta.facetField ??
+    (meta.filterType === "select" || meta.filterType === "record" ? meta.apiField : undefined);
+  if (!apiField || !facetable.has(apiField)) return null;
+
+  return (
+    fields.find((field) => field.apiField === apiField) ??
+    toFilterableField(`${column.id}:${apiField}`, {
+      apiField,
+      label: fieldLabel(column),
+      filterType: meta.filterType ?? "select",
+      filterOptions: meta.filterOptions,
+      filterRecord: meta.filterRecord,
+    })
+  );
 }

@@ -143,6 +143,7 @@ export function DateField<T extends FieldValues>({
 
         return (
           <FieldWrapper
+            name={name}
             label={label}
             description={description}
             required={!!rules?.required}
@@ -214,6 +215,7 @@ export function AutoCompleteDateField<T extends FieldValues>({
       render={({ field, fieldState }) => {
         return (
           <FieldWrapper
+            name={name}
             label={label}
             description={description}
             descriptionId={descriptionId}

@@ -28,11 +28,6 @@ const (
 	fieldCanceledAt            = "canceledAt"
 )
 
-func dateTimeProperty(description string) map[string]any {
-	return stringProperty(description+" An ISO 8601 date and time with its UTC offset, "+
-		"such as 2026-10-01T08:00:00-05:00.", 0)
-}
-
 func booleanProperty(description string) map[string]any {
 	return map[string]any{
 		toolschema.KeyType:        toolschema.TypeBoolean,
@@ -63,7 +58,7 @@ func optionalDateTime(params map[string]any, key string) (*int64, error) {
 	if raw == "" {
 		if value, given := params[key]; given && value != nil {
 			if _, isText := value.(string); !isText {
-				return nil, fmt.Errorf("parameter %q must be an ISO 8601 date and time", key)
+				return nil, dateRefusal(key, value, toolschema.FormatDateTime)
 			}
 		}
 
@@ -81,9 +76,7 @@ func optionalDateTime(params map[string]any, key string) (*int64, error) {
 func parseDateTime(key, raw string) (int64, error) {
 	parsed, err := time.Parse(time.RFC3339, strings.TrimSpace(raw))
 	if err != nil {
-		return 0, fmt.Errorf(
-			"parameter %q must be an ISO 8601 date and time with its UTC offset, such as "+
-				"2026-10-01T08:00:00-05:00, got %q", key, raw)
+		return 0, dateRefusal(key, raw, toolschema.FormatDateTime)
 	}
 
 	return parsed.Unix(), nil

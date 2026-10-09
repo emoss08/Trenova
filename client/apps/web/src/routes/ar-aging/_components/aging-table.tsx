@@ -10,10 +10,11 @@ import {
   TableRow,
 } from "@trenova/shared/components/ui/table";
 import type { ARAgingRow, ARAgingSummary } from "@/lib/graphql/accounts-receivable";
+import { sortDirectionOf } from "@/lib/data-table";
 import { cn } from "@trenova/shared/lib/utils";
-import type { ColumnDef } from "@trenova/shared/types/data-table";
+import type { ClientSortedColumnDef } from "@trenova/shared/types/data-table";
 import { flexRender, useTable, type SortingState } from "@tanstack/react-table";
-import { dataTableFeatures } from "@trenova/shared/lib/table-features";
+import { clientSortedTableFeatures } from "@trenova/shared/lib/table-features";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -29,7 +30,10 @@ const OVERDUE_CELL_CLASSES: Record<string, string> = {
   daysOver90Minor: "font-medium text-danger-foreground",
 };
 
-function bucketColumn(key: keyof ARAgingRow["buckets"], header: string): ColumnDef<ARAgingRow> {
+function bucketColumn(
+  key: keyof ARAgingRow["buckets"],
+  header: string,
+): ClientSortedColumnDef<ARAgingRow> {
   return {
     id: key,
     header,
@@ -61,7 +65,7 @@ export function AgingTable({
 
   const [sorting, setSorting] = useState<SortingState>([{ id: "totalOpenMinor", desc: true }]);
 
-  const columns = useMemo<ColumnDef<ARAgingRow>[]>(
+  const columns = useMemo<ClientSortedColumnDef<ARAgingRow>[]>(
     () => [
       {
         id: "customerName",
@@ -114,7 +118,7 @@ export function AgingTable({
   );
 
   const table = useTable({
-    features: dataTableFeatures,
+    features: clientSortedTableFeatures,
     data: rows,
     columns,
     state: { sorting },
@@ -130,7 +134,7 @@ export function AgingTable({
               {headerGroup.headers.map((header) => {
                 const align = (header.column.columnDef.meta as { align?: string } | undefined)
                   ?.align;
-                const sorted = header.column.getIsSorted();
+                const sorted = sortDirectionOf(sorting, header.column.id);
                 return (
                   <TableHead
                     key={header.id}

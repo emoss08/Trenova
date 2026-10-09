@@ -72,6 +72,16 @@ func newAssignBillersTool(billing billingQueueDecider) serviceports.AgentTool {
 
 func (t *assignBillersTool) Name() string { return "assign_billing_queue_billers" }
 
+func (t *assignBillersTool) Recipe() []string {
+	return []string{
+		"list_billing_queue_items",
+		"get_billing_queue_items",
+		"assign_billing_queue_billers",
+	}
+}
+
+func (t *assignBillersTool) BatchOf() string { return t.single.Name() }
+
 func (t *assignBillersTool) SearchTerms() []string {
 	return []string{"biller", "reviewer", "assign me", "start review", searchTermBulk}
 }
@@ -159,6 +169,8 @@ func newTransitionItemsToInReviewTool(billing billingQueueDecider) serviceports.
 }
 
 func (t *transitionItemsToInReviewTool) Name() string { return "transition_items_to_in_review" }
+
+func (t *transitionItemsToInReviewTool) BatchOf() string { return t.single.Name() }
 
 func (t *transitionItemsToInReviewTool) SearchTerms() []string {
 	return []string{"review", "unblock", searchTermBulk}

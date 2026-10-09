@@ -5,6 +5,7 @@ import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { DataTable } from "../data-table";
 import type { CellEditCommitFn } from "@trenova/shared/lib/cell-editing-feature";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
+import { seedDataTableQueries } from "@/test/data-table-queries";
 
 type TestRow = { id: string; name: string; status: string };
 
@@ -29,8 +30,9 @@ const testGraphQLConfig = {
   connectionKey: "tests",
 };
 
-const useDataTableQueryMock = vi.hoisted(() =>
-  vi.fn(() => ({
+// One answer, kept across renders, as React Query keeps an unchanged result.
+const useDataTableQueryMock = vi.hoisted(() => {
+  const result = {
     data: {
       results: [
         { id: "1", name: "Alice", status: "active" },
@@ -41,8 +43,9 @@ const useDataTableQueryMock = vi.hoisted(() =>
     isLoading: false,
     isError: false,
     error: null,
-  })),
-);
+  };
+  return vi.fn(() => result);
+});
 
 vi.mock("@/hooks/use-permission", () => ({
   // Both hooks: the config manager inside the table reaches for the
@@ -59,19 +62,14 @@ vi.mock("@/hooks/use-permission", () => ({
   }),
 }));
 
-vi.mock("@/hooks/data-table/use-data-table-query", () => ({
+vi.mock("@/hooks/data-table/use-data-table-query", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/hooks/data-table/use-data-table-query")>()),
   useDataTableQuery: useDataTableQueryMock,
 }));
 
-vi.mock("@/lib/queries", () => ({
+vi.mock("@/lib/queries", async () => ({
   queries: {
-    tableConfiguration: {
-      default: () => ({ queryKey: ["tableConfig-default"], queryFn: () => null }),
-      all: () => ({
-        queryKey: ["tableConfig-all"],
-        queryFn: () => ({ results: [], count: 0 }),
-      }),
-    },
+    ...(await import("@/test/data-table-queries")).dataTableQueryMocks,
   },
 }));
 
@@ -80,9 +78,9 @@ vi.mock("@trenova/shared/hooks/use-debounce", () => ({
 }));
 
 function renderTable(onCellEditCommit?: CellEditCommitFn<TestRow>) {
-  const queryClient = new QueryClient({
+  const queryClient = seedDataTableQueries(new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
-  });
+  }));
   return render(
     <QueryClientProvider client={queryClient}>
       <NuqsTestingAdapter hasMemory resetUrlUpdateQueueOnMount={false}>

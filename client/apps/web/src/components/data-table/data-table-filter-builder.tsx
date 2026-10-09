@@ -1,6 +1,4 @@
-"use no memo";
 import { useT } from "@trenova/shared/i18n/use-t";
-import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Calendar } from "@trenova/shared/components/ui/calendar";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -16,14 +14,15 @@ import {
 import { Switch } from "@trenova/shared/components/ui/switch";
 import {
   CONNECTOR_LABELS,
-  generateFilterId,
+  filterItemFromField,
   generateGroupId,
   getConnectorLabel,
-  getDefaultOperatorForVariant,
   getOperatorLabel,
   getOperatorsForVariant,
   operatorRequiresValue,
+  type FilterableField,
 } from "@/lib/data-table";
+import { RecordFilterInput } from "./record-filter-input";
 import { formatUnixDate, fromUserWallClock, toUserWallClock } from "@trenova/shared/lib/date";
 import { cn, truncateText } from "@trenova/shared/lib/utils";
 import type {
@@ -31,11 +30,8 @@ import type {
   FilterGroupItem,
   FilterItem,
   FilterOperator,
-  FilterVariant,
   SingleFilterItem,
-  ColumnDef,
 } from "@trenova/shared/types/data-table";
-import type { SelectOption } from "@trenova/shared/types/fields";
 import {
   CalendarIcon,
   FilterFunnel01Icon,
@@ -45,71 +41,30 @@ import {
 } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useState } from "react";
 
-type FilterableColumn = {
-  id: string;
-  apiField: string;
-  label: string;
-  filterType: FilterVariant;
-  filterOptions?: SelectOption[];
-  defaultOperator: FilterOperator;
-};
-
-type DataTableFilterBuilderProps<TData extends RowData> = {
-  columns: ColumnDef<TData>[];
+type DataTableFilterBuilderProps = {
+  fields: readonly FilterableField[];
   filters: FilterItem[];
   onFiltersChange: (filters: FilterItem[]) => void;
   labelClassName?: string;
 };
 
-export default function DataTableFilterBuilder<TData extends RowData>({
-  columns,
+export default function DataTableFilterBuilder({
+  fields,
   filters,
   onFiltersChange,
   labelClassName,
-}: DataTableFilterBuilderProps<TData>) {
+}: DataTableFilterBuilderProps) {
   const t = useT();
 
   const [open, setOpen] = useState(false);
 
-  const filterableColumns = useMemo<FilterableColumn[]>(() => {
-    return columns
-      .filter((col) => {
-        const meta = col.meta;
-        return meta?.filterable === true && meta?.apiField;
-      })
-      .map((col) => {
-        const meta = col.meta!;
-        return {
-          id: String("accessorKey" in col ? col.accessorKey : col.id),
-          apiField: meta.apiField!,
-          label: meta.label || String("accessorKey" in col ? col.accessorKey : col.id),
-          filterType: (meta.filterType || "text") as FilterVariant,
-          filterOptions: meta.filterOptions,
-          defaultOperator:
-            meta.defaultFilterOperator ||
-            getDefaultOperatorForVariant((meta.filterType || "text") as FilterVariant),
-        };
-      });
-  }, [columns]);
-
   const createNewFilter = useCallback(
     (connector: FilterConnector = "and"): SingleFilterItem | null => {
-      if (filterableColumns.length === 0) return null;
-      const column = filterableColumns[0];
-      return {
-        type: "filter",
-        id: generateFilterId(),
-        field: column.id,
-        apiField: column.apiField,
-        label: column.label,
-        operator: column.defaultOperator,
-        value: null,
-        filterType: column.filterType,
-        filterOptions: column.filterOptions,
-        connector,
-      };
+      const field = fields[0];
+      if (!field) return null;
+      return filterItemFromField(field, { operator: field.defaultOperator, value: null }, connector);
     },
-    [filterableColumns],
+    [fields],
   );
 
   const handleAddFilter = useCallback(() => {
@@ -152,20 +107,21 @@ export default function DataTableFilterBuilder<TData extends RowData>({
   );
 
   const handleFilterFieldChange = useCallback(
-    (filterId: string, columnId: string) => {
-      const column = filterableColumns.find((c) => c.id === columnId);
-      if (!column) return;
+    (filterId: string, fieldId: string) => {
+      const field = fields.find((candidate) => candidate.id === fieldId);
+      if (!field) return;
       handleUpdateFilter(filterId, {
-        field: column.id,
-        apiField: column.apiField,
-        label: column.label,
-        filterType: column.filterType,
-        filterOptions: column.filterOptions,
-        operator: column.defaultOperator,
+        field: field.id,
+        apiField: field.apiField,
+        label: field.label,
+        filterType: field.filterType,
+        filterOptions: field.filterOptions,
+        filterRecord: field.filterRecord,
+        operator: field.defaultOperator,
         value: null,
       });
     },
-    [filterableColumns, handleUpdateFilter],
+    [fields, handleUpdateFilter],
   );
 
   const handleFilterOperatorChange = useCallback(
@@ -291,7 +247,7 @@ export default function DataTableFilterBuilder<TData extends RowData>({
                 {t("Add filters to narrow down your results.")}
               </p>
             </div>
-            <Button onClick={handleAddFilter} disabled={filterableColumns.length === 0}>
+            <Button onClick={handleAddFilter} disabled={fields.length === 0}>
               <PlusIcon className="size-3.5" />
               {t("Add filter")}
             </Button>
@@ -305,7 +261,7 @@ export default function DataTableFilterBuilder<TData extends RowData>({
                     key={item.id}
                     filter={item}
                     index={index}
-                    columns={filterableColumns}
+                    fields={fields}
                     onFieldChange={handleFilterFieldChange}
                     onOperatorChange={handleFilterOperatorChange}
                     onValueChange={handleFilterValueChange}
@@ -317,7 +273,7 @@ export default function DataTableFilterBuilder<TData extends RowData>({
                     key={item.id}
                     group={item}
                     index={index}
-                    columns={filterableColumns}
+                    fields={fields}
                     onFieldChange={handleFilterFieldChange}
                     onOperatorChange={handleFilterOperatorChange}
                     onValueChange={handleFilterValueChange}
@@ -333,7 +289,7 @@ export default function DataTableFilterBuilder<TData extends RowData>({
               <Button
                 variant="outline"
                 onClick={handleAddFilter}
-                disabled={filterableColumns.length === 0}
+                disabled={fields.length === 0}
               >
                 <PlusIcon className="size-3.5" />
                 {t("Add filter")}
@@ -341,7 +297,7 @@ export default function DataTableFilterBuilder<TData extends RowData>({
               <Button
                 variant="outline"
                 onClick={handleAddFilterGroup}
-                disabled={filterableColumns.length === 0}
+                disabled={fields.length === 0}
               >
                 <FolderPlusIcon className="size-3.5" />
                 {t("Add filter group")}
@@ -362,8 +318,8 @@ export default function DataTableFilterBuilder<TData extends RowData>({
 type FilterGroupRowProps = {
   group: FilterGroupItem;
   index: number;
-  columns: FilterableColumn[];
-  onFieldChange: (filterId: string, columnId: string) => void;
+  fields: readonly FilterableField[];
+  onFieldChange: (filterId: string, fieldId: string) => void;
   onOperatorChange: (filterId: string, operator: FilterOperator) => void;
   onValueChange: (filterId: string, value: unknown) => void;
   onConnectorChange: (itemId: string, connector: FilterConnector) => void;
@@ -375,7 +331,7 @@ type FilterGroupRowProps = {
 function FilterGroupRow({
   group,
   index,
-  columns,
+  fields,
   onFieldChange,
   onOperatorChange,
   onValueChange,
@@ -422,7 +378,7 @@ function FilterGroupRow({
                 key={filter.id}
                 filter={filter}
                 index={filterIndex}
-                columns={columns}
+                fields={fields}
                 onFieldChange={onFieldChange}
                 onOperatorChange={onOperatorChange}
                 onValueChange={onValueChange}
@@ -458,8 +414,8 @@ function FilterGroupRow({
 type FilterRowProps = {
   filter: SingleFilterItem;
   index: number;
-  columns: FilterableColumn[];
-  onFieldChange: (filterId: string, columnId: string) => void;
+  fields: readonly FilterableField[];
+  onFieldChange: (filterId: string, fieldId: string) => void;
   onOperatorChange: (filterId: string, operator: FilterOperator) => void;
   onValueChange: (filterId: string, value: unknown) => void;
   onConnectorChange: (filterId: string, connector: FilterConnector) => void;
@@ -470,7 +426,7 @@ type FilterRowProps = {
 function FilterRow({
   filter,
   index,
-  columns,
+  fields,
   onFieldChange,
   onOperatorChange,
   onValueChange,
@@ -510,14 +466,14 @@ function FilterRow({
       )}
 
       <Select value={filter.field} onValueChange={(val) => onFieldChange(filter.id, val ?? "")}>
-        <SelectTrigger className="w-28">
-          <SelectValue>{t(filter.label)}</SelectValue>
+        <SelectTrigger className="w-40" title={t(filter.label)}>
+          <SelectValue className="truncate">{t(filter.label)}</SelectValue>
         </SelectTrigger>
         <SelectContent className="w-auto">
           <SelectGroup>
-            {columns.map((col) => (
-              <SelectItem key={col.id} value={col.id}>
-                {t(col.label)}
+            {fields.map((field) => (
+              <SelectItem key={field.id} value={field.id}>
+                {t(field.label)}
               </SelectItem>
             ))}
           </SelectGroup>
@@ -543,11 +499,11 @@ function FilterRow({
       </Select>
 
       {needsValue ? (
-        <div className="w-36">
+        <div className={filter.filterType === "record" ? "w-56" : "w-36"}>
           <FilterValueInput filter={filter} onChange={(val) => onValueChange(filter.id, val)} />
         </div>
       ) : (
-        <div className="w-36" />
+        <div className={filter.filterType === "record" ? "w-56" : "w-36"} />
       )}
 
       <Button
@@ -570,7 +526,18 @@ type FilterValueInputProps = {
 function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
   const t = useT();
 
-  const { filterType, operator, value, filterOptions } = filter;
+  const { filterType, operator, value, filterOptions, filterRecord } = filter;
+
+  if (filterType === "record" && filterRecord) {
+    return (
+      <RecordFilterInput
+        record={filterRecord}
+        operator={operator}
+        value={value}
+        onChange={onChange}
+      />
+    );
+  }
 
   const selectedValue = filterOptions?.find((option) => option.value === value)?.label;
 

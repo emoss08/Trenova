@@ -138,11 +138,72 @@ export type AiFeedbackTargetType =
   /** A watchtower item raised by AI work: an insight, a proposal, a plan, a failed run or an agent exception. */
   | 'WatchtowerItem';
 
+/** Where a model's listed price came from. */
+export type AiModelPriceSource =
+  /** OpenRouter's public catalog: an estimate of the list price, not what a contract charges. */
+  | 'OpenRouter'
+  /** The provider's own model list. */
+  | 'Provider';
+
+/** What a provider does with a task once its monthly cap is reached. */
+export type AiProviderCapAction =
+  /** The task goes to the next provider in line. */
+  | 'Next'
+  /** The task fails rather than moving on. */
+  | 'Stop';
+
+export type AiProviderDraftTestInput = {
+  embeddingDimensions?: number | null | undefined;
+  embeddingInputStyle?: AiEmbeddingInputStyle | null | undefined;
+  endpoint: AiProviderEndpointInput;
+  model: string;
+  structuredOutputMode?: AiStructuredOutputMode | null | undefined;
+  tasks: Array<AiTask>;
+  timeoutSeconds?: number | null | undefined;
+};
+
+/**
+ * An endpoint as an editor holds it, before it is saved. With providerId and no
+ * apiKey, the provider's stored key is used.
+ */
+export type AiProviderEndpointInput = {
+  allowPrivateNetwork: boolean;
+  apiKey?: string | null | undefined;
+  baseUrl: string;
+  kind: AiProviderKind;
+  providerId?: string | number | null | undefined;
+};
+
 export type AiProviderKind =
   | 'AnthropicMessages'
   | 'Ollama'
   | 'OpenAIChat'
   | 'OpenAIResponses';
+
+/** The fields of a provider that change on their own, from its row and read sheet. */
+export type AiProviderPatchInput = {
+  allowPrivateNetwork?: boolean | null | undefined;
+  /** A new credential. It replaces the stored one and is never returned. */
+  apiKey?: string | null | undefined;
+  enabled?: boolean | null | undefined;
+  inputCostPerMillion?: string | null | undefined;
+  outputCostPerMillion?: string | null | undefined;
+  tasks?: Array<AiTask> | null | undefined;
+  trusted?: boolean | null | undefined;
+};
+
+/** A provider as its editor holds it, reduced to what decides where tasks go. */
+export type AiProviderRoutingDraftInput = {
+  embeddingDimensions?: number | null | undefined;
+  enabled: boolean;
+  /** The provider being edited. Absent for a new one. */
+  id?: string | number | null | undefined;
+  kind: AiProviderKind;
+  name: string;
+  priority: number;
+  tasks: Array<AiTask>;
+  trusted: boolean;
+};
 
 /**
  * How hard a model is asked to think before it answers. Off sends no reasoning
@@ -1119,7 +1180,8 @@ export type AgentRunTrigger =
   | 'Continuous'
   | 'Event'
   | 'Manual'
-  | 'Scheduled';
+  | 'Scheduled'
+  | 'Wait';
 
 export type AgentScorecardInput = {
   agentDefinitionId: string | number;
@@ -1154,6 +1216,8 @@ export type AgentSubjectType =
   | 'FormulaTemplate'
   | 'InboundMessage'
   | 'Insight'
+  | 'Invoice'
+  | 'InvoiceDispute'
   | 'Organization'
   | 'Report'
   | 'Shipment'
@@ -1231,6 +1295,14 @@ export type AgentToolKind =
   | 'Action'
   | 'Query'
   | 'Runtime';
+
+/** An organization's rule for one tool. Absent fields keep what the tool declares. */
+export type AgentToolRuleInput = {
+  maxTier?: AgentAutonomyTier | null | undefined;
+  readsExternal?: AgentExternalRead | null | undefined;
+  /** Why it changed; required when the most freedom changes, and kept in the audit trail. */
+  reason?: string | null | undefined;
+};
 
 /** Whose records a tool acts on. */
 export type AgentToolScope =
@@ -1539,6 +1611,22 @@ export type BulkAssignTrainingInput = {
   dueAt?: number | null | undefined;
   notes?: string | null | undefined;
   workerIds: Array<string | number>;
+};
+
+export type BulkEditInput = {
+  field: string;
+  resource: string;
+  selection: BulkEditSelectionInput;
+  value: string;
+};
+
+export type BulkEditSelectionInput = {
+  /** Or every row matching the table's filters, resolved by the server when the edit runs. */
+  filter?: DataTableConnectionInput | null | undefined;
+  /** The rows chosen one by one. */
+  ids?: Array<string | number> | null | undefined;
+  /** The table's own list options beyond filters, such as the shipment board's quick filters. */
+  options?: unknown;
 };
 
 export type BulkSettlementActionInput = {
@@ -2640,6 +2728,14 @@ export type DqfSection =
   | 'DrugAlcohol'
   | 'SafetyHistory';
 
+/** Totals of a table's filtered rows. */
+export type DataTableAggregateInput = {
+  fields: Array<string>;
+  filter?: DataTableConnectionInput | null | undefined;
+  options?: unknown;
+  resource: string;
+};
+
 export type DataTableConnectionInput = {
   after?: string | null | undefined;
   fieldFilters?: Array<FieldFilterInput> | null | undefined;
@@ -2648,6 +2744,45 @@ export type DataTableConnectionInput = {
   query?: string | null | undefined;
   sort?: Array<SortFieldInput> | null | undefined;
 };
+
+/** How many of a table's filtered rows hold each value of one field. */
+export type DataTableFacetInput = {
+  field: string;
+  filter?: DataTableConnectionInput | null | undefined;
+  limit?: number | null | undefined;
+  /** Options the table's own list takes beyond filters, such as the shipment board's quick filters. */
+  options?: unknown;
+  /** The table's permission resource, such as shipment. */
+  resource: string;
+};
+
+/**
+ * One small chart per row of another table: how many of this table's rows each one has,
+ * or their total, in each week or month up to now. A customer's shipments, a carrier's
+ * loads, a location's stops.
+ */
+export type DataTableSeriesInput = {
+  /** The date that places each counted row in a period. */
+  dateField: string;
+  filter?: DataTableConnectionInput | null | undefined;
+  /** The field naming the row each chart belongs to, such as customerId. */
+  groupField: string;
+  /** The rows to chart, at most 200. */
+  groupValues: Array<string>;
+  interval?: DataTableSeriesInterval;
+  /** How many periods, ending with the current one. */
+  periods?: number;
+  /** The table counted, such as shipment. */
+  resource: string;
+  /** The time zone periods start in; UTC when absent. */
+  timezone?: string | null | undefined;
+  /** A field to total instead of counting rows. */
+  valueField?: string | null | undefined;
+};
+
+export type DataTableSeriesInterval =
+  | 'MONTH'
+  | 'WEEK';
 
 export type DecideAgentProposalsInput = {
   /** Accepted or Rejected. A change applies to one proposal, from its own card. */
@@ -3373,6 +3508,13 @@ export type EtaVerdict =
   | 'Late'
   | 'OnTime'
   | 'Unknown';
+
+export type ExportTableViewInput = {
+  /** csv, xlsx or pdf. */
+  format: string;
+  name: string;
+  view: TableExportViewInput;
+};
 
 export type ExtractionEvalCaseStatus =
   | 'Active'
@@ -5802,6 +5944,17 @@ export type SaveTelematicsFormMappingInput = {
   version?: number | null | undefined;
 };
 
+export type ScheduleTableViewInput = {
+  cronExpression: string;
+  emailAttach?: boolean | null | undefined;
+  emailInline?: boolean | null | undefined;
+  emailRecipients?: Array<string> | null | undefined;
+  formats: Array<string>;
+  name: string;
+  timezone?: string | null | undefined;
+  view: TableExportViewInput;
+};
+
 export type SegregationType =
   | 'Barrier'
   | 'Distance'
@@ -5811,6 +5964,7 @@ export type SegregationType =
 export type SelectOptionResource =
   | 'ACCESSORIAL_CHARGE'
   | 'ACCOUNT_TYPE'
+  | 'AI_PROVIDER'
   | 'BENEFIT_PLAN'
   | 'CAPTURE_DEVICE'
   | 'CAPTURE_PROFILE'
@@ -6592,6 +6746,24 @@ export type TableConfigurationInput = {
   resource: string;
   tableConfig: unknown;
   visibility?: ConfigurationVisibility | null | undefined;
+};
+
+export type TableExportColumnInput = {
+  /** The field the column shows, as the table filters and sorts by it. */
+  field: string;
+  label: string;
+};
+
+/** What a data table is showing, to export or schedule as a report. */
+export type TableExportViewInput = {
+  columns: Array<TableExportColumnInput>;
+  filter?: DataTableConnectionInput | null | undefined;
+  resource: string;
+};
+
+export type TableLayoutInput = {
+  layout: unknown;
+  resource: string;
 };
 
 export type TelematicsFormMappingItemInput = {
@@ -8943,7 +9115,7 @@ export type AgentQualityOverviewQueryVariables = Exact<{
 }>;
 
 
-export type AgentQualityOverviewQuery = { agentQualityOverview: { windowDays: number, since: number, ratingsVisible: boolean, satisfaction: number | null, ratings: number, qualityScore: number | null, agentsScored: number, suiteRuns: number, regressions: number, openRegressions: number, evalSpendMonthUsd: string, evalUnpricedCalls: number, monthlyBudgetUsd: string, monthStartedAt: number, sweepEnabled: boolean, nextSweepHourLocal: number, nextSweepTimezone: string, agentsWithCases: number, judgeEnabled: boolean, regressionThreshold: number } };
+export type AgentQualityOverviewQuery = { agentQualityOverview: { windowDays: number, since: number, ratingsVisible: boolean, satisfaction: number | null, ratings: number, qualityScore: number | null, agentsScored: number, suiteRuns: number, regressions: number, openRegressions: number, evalSpendMonthUsd: string, evalUnpricedCalls: number, monthlyBudgetUsd: string, monthStartedAt: number, sweepEnabled: boolean, nextSweepHourLocal: number, nextSweepTimezone: string, agentsWithCases: number, judgeEnabled: boolean, regressionThreshold: number, worstRegression: { ' $fragmentRefs'?: { 'AgentSuiteRunFieldsFragment': AgentSuiteRunFieldsFragment } } | null } };
 
 export type AgentQualityAgentTableQueryVariables = Exact<{
   window?: number | null | undefined;
@@ -9077,7 +9249,16 @@ export type AgentRunDetailQuery = { agentRun: (
     & { ' $fragmentRefs'?: { 'AgentRunTableRowFieldsFragment': AgentRunTableRowFieldsFragment } }
   ) | null };
 
-export type AgentToolPolicyFieldsFragment = { id: string, name: string, title: string, kind: AgentToolKind, scope: AgentToolScope, defaultTier: AgentAutonomyTier, maxTier: AgentAutonomyTier, promotableTier: AgentAutonomyTier, egress: Array<AgentEgressClass>, leavesOrganization: boolean, hasClassify: boolean, hasCondition: boolean, conditionDescription: string | null, personalExemption: boolean, effect: AgentToolEffect, artifact: string, reversible: boolean, idempotent: boolean, readsExternal: AgentExternalRead, source: AgentTaintSource | null, carriesTaint: boolean, rationale: string, explanation: string, needs: { resource: string, operation: string } | null } & { ' $fragmentName'?: 'AgentToolPolicyFieldsFragment' };
+export type AgentActivitySummaryQueryVariables = Exact<{
+  since: number;
+}>;
+
+
+export type AgentActivitySummaryQuery = { agentActivitySummary: { since: number, runs: number, runsFailed: number, runsWorking: number, runsAwaiting: number, pendingProposals: number | null, oldestPendingAt: number | null, openExceptions: number | null, decisionWindowDays: number, decided: number | null, approvedAsProposed: number | null } };
+
+export type AgentToolPolicyFieldsFragment = { id: string, name: string, title: string, kind: AgentToolKind, scope: AgentToolScope, defaultTier: AgentAutonomyTier, maxTier: AgentAutonomyTier, promotableTier: AgentAutonomyTier, egress: Array<AgentEgressClass>, leavesOrganization: boolean, hasClassify: boolean, hasCondition: boolean, conditionDescription: string | null, personalExemption: boolean, effect: AgentToolEffect, artifact: string, reversible: boolean, idempotent: boolean, readsExternal: AgentExternalRead, source: AgentTaintSource | null, carriesTaint: boolean, rationale: string, explanation: string, declaredMaxTier: AgentAutonomyTier, declaredReadsExternal: AgentExternalRead, ruleVersion: number, needs: { resource: string, operation: string } | null, rule: { maxTier: AgentAutonomyTier | null, readsExternal: AgentExternalRead | null, reason: string, updatedAt: number, updatedBy: { id: string, name: string } | null } | null } & { ' $fragmentName'?: 'AgentToolPolicyFieldsFragment' };
+
+export type AgentToolRuleImpactFieldsFragment = { agentId: string, agentName: string, before: AgentAutonomyAnswer, after: AgentAutonomyAnswer } & { ' $fragmentName'?: 'AgentToolRuleImpactFieldsFragment' };
 
 export type AgentToolAutonomyFieldsFragment = { answer: AgentAutonomyAnswer, tier: AgentAutonomyTier, heldBy: Array<string>, earned: boolean, approvalsToNext: number | null } & { ' $fragmentName'?: 'AgentToolAutonomyFieldsFragment' };
 
@@ -9108,7 +9289,7 @@ export type AgentToolSafetyTableQuery = { agentToolSafetyConnection: { totalCoun
 export type AgentSafetySummaryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type AgentSafetySummaryQuery = { agentSafetySummary: { toolCount: number, runWithoutPerson: number, leaveOrganization: number, openWithSensitive: number, resources: Array<string> } };
+export type AgentSafetySummaryQuery = { agentSafetySummary: { toolCount: number, runWithoutPerson: number, leaveOrganization: number, openWithSensitive: number, resources: Array<string>, unattendedTools: Array<string>, openSensitiveAgentIds: Array<string>, egressCounts: Array<{ egress: AgentEgressClass, count: number }> } };
 
 export type AgentSafetyQueryVariables = Exact<{
   agentIds?: Array<string | number> | string | number | null | undefined;
@@ -9116,6 +9297,28 @@ export type AgentSafetyQueryVariables = Exact<{
 
 
 export type AgentSafetyQuery = { agentSafety: Array<{ ' $fragmentRefs'?: { 'AgentSafetyHeaderFieldsFragment': AgentSafetyHeaderFieldsFragment } }> };
+
+export type AgentToolHoldersQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AgentToolHoldersQuery = { agentToolHolders: Array<{ policyName: string, agentIds: Array<string> }> };
+
+export type AgentToolRuleImpactQueryVariables = Exact<{
+  name: string;
+  input: AgentToolRuleInput;
+}>;
+
+
+export type AgentToolRuleImpactQuery = { agentToolRuleImpact: Array<{ ' $fragmentRefs'?: { 'AgentToolRuleImpactFieldsFragment': AgentToolRuleImpactFieldsFragment } }> };
+
+export type SaveAgentToolRuleMutationVariables = Exact<{
+  name: string;
+  version: number;
+  input: AgentToolRuleInput;
+}>;
+
+
+export type SaveAgentToolRuleMutation = { saveAgentToolRule: { tool: { ' $fragmentRefs'?: { 'AgentToolPolicyFieldsFragment': AgentToolPolicyFieldsFragment } }, affected: Array<{ ' $fragmentRefs'?: { 'AgentToolRuleImpactFieldsFragment': AgentToolRuleImpactFieldsFragment } }> } };
 
 export type MyAiFeedbackFieldsFragment = { id: string, targetType: AiFeedbackTargetType, targetId: string, targetPart: string, rating: number, reasons: Array<AiFeedbackReason>, comment: string, version: number, updatedAt: number } & { ' $fragmentName'?: 'MyAiFeedbackFieldsFragment' };
 
@@ -9160,6 +9363,8 @@ export type AgentFeedbackSummaryQuery = { agentFeedbackSummary: { agentDefinitio
 
 export type AiProviderCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, kind: AiProviderKind, baseUrl: string, model: string, hasApiKey: boolean, allowPrivateNetwork: boolean, structuredOutputMode: AiStructuredOutputMode, reasoningEffort: AiReasoningEffort, thinkingStyle: AiThinkingStyle, extraBody: unknown, inputCostPerMillion: string | null, outputCostPerMillion: string | null, maxTokens: number, tasks: Array<AiTask>, priority: number, embeddingDimensions: number | null, embeddingInputStyle: AiEmbeddingInputStyle, trusted: boolean, enabled: boolean, version: number, createdAt: number, updatedAt: number, lastTest: { success: boolean, message: string, modelIdentifier: string, schemaHonoured: boolean, latencyMs: number, detail: string, testedAt: number } | null } & { ' $fragmentName'?: 'AiProviderCardFieldsFragment' };
 
+export type AiProviderLimitFieldsFragment = { id: string, timeoutSeconds: number, maxConcurrent: number, monthlyCapUsd: string | null, onCap: AiProviderCapAction, monthSpendUsd: string, apiKey: { prefix: string, lastFour: string, addedAt: number, lastUsedAt: number | null, previousKeyExpiresAt: number | null, addedBy: { id: string, name: string } | null } | null } & { ' $fragmentName'?: 'AiProviderLimitFieldsFragment' };
+
 export type AiProviderCardsQueryVariables = Exact<{
   input: DataTableConnectionInput;
 }>;
@@ -9172,7 +9377,60 @@ export type AiProviderDetailQueryVariables = Exact<{
 }>;
 
 
-export type AiProviderDetailQuery = { aiProvider: { ' $fragmentRefs'?: { 'AiProviderCardFieldsFragment': AiProviderCardFieldsFragment } } | null };
+export type AiProviderDetailQuery = { aiProvider: { ' $fragmentRefs'?: { 'AiProviderCardFieldsFragment': AiProviderCardFieldsFragment;'AiProviderLimitFieldsFragment': AiProviderLimitFieldsFragment } } | null };
+
+export type AiProviderLimitsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type AiProviderLimitsQuery = { aiProviders: { edges: Array<{ node: { ' $fragmentRefs'?: { 'AiProviderLimitFieldsFragment': AiProviderLimitFieldsFragment } } }> } };
+
+export type AiRoutePreviewQueryVariables = Exact<{
+  draft: AiProviderRoutingDraftInput;
+}>;
+
+
+export type AiRoutePreviewQuery = { aiRoutePreview: Array<{ task: AiTask, changed: boolean, before: { providerId: string | null, name: string, draft: boolean } | null, after: { providerId: string | null, name: string, draft: boolean } | null }> };
+
+export type AiProviderModelsQueryVariables = Exact<{
+  input: AiProviderEndpointInput;
+}>;
+
+
+export type AiProviderModelsQuery = { aiProviderModels: Array<{ id: string, displayName: string, contextWindow: number | null, sizeBytes: number | null, loaded: boolean, embedding: boolean, inputCostPerMillion: string | null, outputCostPerMillion: string | null, priceSource: AiModelPriceSource | null, createdAt: number | null }> };
+
+export type AiProviderUsageDailyQueryVariables = Exact<{
+  days?: number | null | undefined;
+  timezone?: string | null | undefined;
+  providerId?: string | number | null | undefined;
+}>;
+
+
+export type AiProviderUsageDailyQuery = { aiUsageDaily: Array<{ day: string, calls: number, failed: number }> };
+
+export type TestAiProviderDraftMutationVariables = Exact<{
+  input: AiProviderDraftTestInput;
+}>;
+
+
+export type TestAiProviderDraftMutation = { testAIProviderDraft: { success: boolean, message: string, detail: string, hint: string, modelIdentifier: string, schemaHonoured: boolean, latencyMs: number } };
+
+export type ReorderAiProvidersMutationVariables = Exact<{
+  ids: Array<string | number> | string | number;
+}>;
+
+
+export type ReorderAiProvidersMutation = { reorderAIProviders: Array<{ ' $fragmentRefs'?: { 'AiProviderCardFieldsFragment': AiProviderCardFieldsFragment } }> };
+
+export type PatchAiProviderMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+  input: AiProviderPatchInput;
+}>;
+
+
+export type PatchAiProviderMutation = { patchAIProvider: { ' $fragmentRefs'?: { 'AiProviderCardFieldsFragment': AiProviderCardFieldsFragment } } };
 
 export type AiUsageSummaryQueryVariables = Exact<{
   since?: number | null | undefined;
@@ -9388,6 +9646,43 @@ export type RegenerateBriefingMutationVariables = Exact<{
 
 
 export type RegenerateBriefingMutation = { regenerateBriefing: { ' $fragmentRefs'?: { 'BriefingFieldsFragment': BriefingFieldsFragment } } };
+
+export type BulkEditJobFieldsFragment = { id: string, resource: string, field: string, value: string, status: string, totalCount: number, processedCount: number, changedCount: number, failedCount: number, failureMessage: string, canUndo: boolean, completedAt: number | null, undoneAt: number | null, createdAt: number, failures: Array<{ id: string, message: string }> } & { ' $fragmentName'?: 'BulkEditJobFieldsFragment' };
+
+export type BulkEditFieldsQueryVariables = Exact<{
+  resource: string;
+}>;
+
+
+export type BulkEditFieldsQuery = { bulkEditFields: Array<{ name: string, label: string, kind: string, record: string | null, options: Array<{ value: string, label: string }> }> };
+
+export type PreviewBulkEditQueryVariables = Exact<{
+  input: BulkEditInput;
+}>;
+
+
+export type PreviewBulkEditQuery = { previewBulkEdit: { count: number, tooMany: boolean } };
+
+export type MyBulkEditQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type MyBulkEditQuery = { myBulkEdit: { ' $fragmentRefs'?: { 'BulkEditJobFieldsFragment': BulkEditJobFieldsFragment } } | null };
+
+export type StartBulkEditMutationVariables = Exact<{
+  input: BulkEditInput;
+}>;
+
+
+export type StartBulkEditMutation = { startBulkEdit: { ' $fragmentRefs'?: { 'BulkEditJobFieldsFragment': BulkEditJobFieldsFragment } } };
+
+export type UndoMyBulkEditMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type UndoMyBulkEditMutation = { undoMyBulkEdit: { ' $fragmentRefs'?: { 'BulkEditJobFieldsFragment': BulkEditJobFieldsFragment } } };
 
 export type CaptureRecordRefFieldsFragment = { resourceType: string, id: string, title: string, subtitle: string } & { ' $fragmentName'?: 'CaptureRecordRefFieldsFragment' };
 
@@ -10225,6 +10520,34 @@ export type CustomerTableQueryVariables = Exact<{
 
 
 export type CustomerTableQuery = { customers: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'CustomerTableRowFieldsFragment': CustomerTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DataTableInsightFieldsQueryVariables = Exact<{
+  resource: string;
+}>;
+
+
+export type DataTableInsightFieldsQuery = { dataTableInsightFields: Array<{ name: string, facetable: boolean, summable: boolean }> };
+
+export type DataTableFacetsQueryVariables = Exact<{
+  input: DataTableFacetInput;
+}>;
+
+
+export type DataTableFacetsQuery = { dataTableFacets: { field: string, total: number, buckets: Array<{ value: string | null, count: number }> } };
+
+export type DataTableAggregatesQueryVariables = Exact<{
+  input: DataTableAggregateInput;
+}>;
+
+
+export type DataTableAggregatesQuery = { dataTableAggregates: { count: number, values: Array<{ field: string, sum: string | null, average: string | null, min: string | null, max: string | null }> } };
+
+export type DataTableSeriesQueryVariables = Exact<{
+  input: DataTableSeriesInput;
+}>;
+
+
+export type DataTableSeriesQuery = { dataTableSeries: { periodStarts: Array<number>, groups: Array<{ value: string, points: Array<string> }> } };
 
 export type DetentionFacilityStatsQueryVariables = Exact<{
   input: DetentionStatsInput;
@@ -13558,6 +13881,20 @@ export type DeleteReportScheduleMutationVariables = Exact<{
 
 export type DeleteReportScheduleMutation = { deleteReportSchedule: boolean };
 
+export type ExportTableViewMutationVariables = Exact<{
+  input: ExportTableViewInput;
+}>;
+
+
+export type ExportTableViewMutation = { exportTableView: { definitionId: string, skippedColumns: Array<string>, run: { id: string, status: string } | null } };
+
+export type ScheduleTableViewMutationVariables = Exact<{
+  input: ScheduleTableViewInput;
+}>;
+
+
+export type ScheduleTableViewMutation = { scheduleTableView: { definitionId: string, skippedColumns: Array<string>, schedule: { id: string } | null } };
+
 export type ReportViewFieldsFragment = { id: string, definitionId: string, ownerId: string, name: string, description: string | null, params: unknown, shared: boolean, pinned: boolean, format: string | null, lastRunAt: number | null, runCount: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ReportViewFieldsFragment' };
 
 export type ReportViewsQueryVariables = Exact<{
@@ -14403,6 +14740,27 @@ export type SetOrgDefaultTableConfigurationMutationVariables = Exact<{
 
 
 export type SetOrgDefaultTableConfigurationMutation = { setOrgDefaultTableConfiguration: { ' $fragmentRefs'?: { 'TableConfigurationFieldsFragment': TableConfigurationFieldsFragment } } };
+
+export type MyTableLayoutQueryVariables = Exact<{
+  resource: string;
+}>;
+
+
+export type MyTableLayoutQuery = { myTableLayout: { resource: string, layout: unknown, version: number, updatedAt: number } | null };
+
+export type SaveMyTableLayoutMutationVariables = Exact<{
+  input: TableLayoutInput;
+}>;
+
+
+export type SaveMyTableLayoutMutation = { saveMyTableLayout: { resource: string, layout: unknown, version: number, updatedAt: number } };
+
+export type ResetMyTableLayoutMutationVariables = Exact<{
+  resource: string;
+}>;
+
+
+export type ResetMyTableLayoutMutation = { resetMyTableLayout: boolean };
 
 export type VehiclePositionsQueryVariables = Exact<{
   maxAgeSeconds?: number | null | undefined;
@@ -17552,6 +17910,14 @@ export const AgentRunTranscriptFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"AgentRunTranscriptFields"}) as unknown as TypedDocumentString<AgentRunTranscriptFieldsFragment, unknown>;
+export const AgentToolRuleImpactFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentToolRuleImpactFields on AgentToolRuleImpact {
+  agentId
+  agentName
+  before
+  after
+}
+    `, {"fragmentName":"AgentToolRuleImpactFields"}) as unknown as TypedDocumentString<AgentToolRuleImpactFieldsFragment, unknown>;
 export const AgentSafetyHeaderFieldsFragmentDoc = new TypedDocumentString(`
     fragment AgentSafetyHeaderFields on AgentSafety {
   agentId
@@ -17607,6 +17973,19 @@ export const AgentToolPolicyFieldsFragmentDoc = new TypedDocumentString(`
   carriesTaint
   rationale
   explanation
+  declaredMaxTier
+  declaredReadsExternal
+  ruleVersion
+  rule {
+    maxTier
+    readsExternal
+    reason
+    updatedAt
+    updatedBy {
+      id
+      name
+    }
+  }
 }
     `, {"fragmentName":"AgentToolPolicyFields"}) as unknown as TypedDocumentString<AgentToolPolicyFieldsFragment, unknown>;
 export const AgentToolAutonomyFieldsFragmentDoc = new TypedDocumentString(`
@@ -17662,6 +18041,19 @@ export const AgentToolSafetyRowFieldsFragmentDoc = new TypedDocumentString(`
   carriesTaint
   rationale
   explanation
+  declaredMaxTier
+  declaredReadsExternal
+  ruleVersion
+  rule {
+    maxTier
+    readsExternal
+    reason
+    updatedAt
+    updatedBy {
+      id
+      name
+    }
+  }
 }
 fragment AgentToolAutonomyFields on AgentToolAutonomy {
   answer
@@ -17758,6 +18150,27 @@ export const AiProviderCardFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"AIProviderCardFields"}) as unknown as TypedDocumentString<AiProviderCardFieldsFragment, unknown>;
+export const AiProviderLimitFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AIProviderLimitFields on AIProvider {
+  id
+  timeoutSeconds
+  maxConcurrent
+  monthlyCapUsd
+  onCap
+  monthSpendUsd
+  apiKey {
+    prefix
+    lastFour
+    addedAt
+    addedBy {
+      id
+      name
+    }
+    lastUsedAt
+    previousKeyExpiresAt
+  }
+}
+    `, {"fragmentName":"AIProviderLimitFields"}) as unknown as TypedDocumentString<AiProviderLimitFieldsFragment, unknown>;
 export const ApiKeyTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment ApiKeyTableRowFields on ApiKey {
   id
@@ -17837,6 +18250,28 @@ export const BriefingFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"BriefingFields"}) as unknown as TypedDocumentString<BriefingFieldsFragment, unknown>;
+export const BulkEditJobFieldsFragmentDoc = new TypedDocumentString(`
+    fragment BulkEditJobFields on BulkEditJob {
+  id
+  resource
+  field
+  value
+  status
+  totalCount
+  processedCount
+  changedCount
+  failedCount
+  failureMessage
+  failures {
+    id
+    message
+  }
+  canUndo
+  completedAt
+  undoneAt
+  createdAt
+}
+    `, {"fragmentName":"BulkEditJobFields"}) as unknown as TypedDocumentString<BulkEditJobFieldsFragment, unknown>;
 export const CaptureSourceInfoFieldsFragmentDoc = new TypedDocumentString(`
     fragment CaptureSourceInfoFields on CaptureSourceInfo {
   name
@@ -25231,7 +25666,7 @@ export const MyPlanPreviewDocument = {"__meta__":{"kind":"query","name":"MyPlanP
 export const AgentProposalTableDocument = {"__meta__":{"kind":"query","name":"AgentProposalTable","hash":"sha256:3ea91ea4a12bd093d74e5812e6f7a869441854dff05bf953622037dbbe289e83"}} as unknown as TypedDocumentString<AgentProposalTableQuery, AgentProposalTableQueryVariables>;
 export const AgentProposalDetailDocument = {"__meta__":{"kind":"query","name":"AgentProposalDetail","hash":"sha256:98e4414f6480a6ee129aa3bb58274ff2507958b28ae959b9642f63bb477957a1"}} as unknown as TypedDocumentString<AgentProposalDetailQuery, AgentProposalDetailQueryVariables>;
 export const DecideAgentProposalDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentProposal","hash":"sha256:d5dd2d9f5f76ec53c9208554a9161365633dc1fa2cb1823a1431098cddcf71bf"}} as unknown as TypedDocumentString<DecideAgentProposalMutation, DecideAgentProposalMutationVariables>;
-export const AgentQualityOverviewDocument = {"__meta__":{"kind":"query","name":"AgentQualityOverview","hash":"sha256:fd588f4ad3aa62b884aa8b47212820447464b06189aede33f9fff7c0313a741b"}} as unknown as TypedDocumentString<AgentQualityOverviewQuery, AgentQualityOverviewQueryVariables>;
+export const AgentQualityOverviewDocument = {"__meta__":{"kind":"query","name":"AgentQualityOverview","hash":"sha256:8e613b1cc35f0a36e26ab0b3d49834f9ca71b8bb1ef9abd9e0c90b6d0126d13f"}} as unknown as TypedDocumentString<AgentQualityOverviewQuery, AgentQualityOverviewQueryVariables>;
 export const AgentQualityAgentTableDocument = {"__meta__":{"kind":"query","name":"AgentQualityAgentTable","hash":"sha256:02b7d69ddd49b36da7d8a72d39d36e8860177855abe0149232e6363974291339"}} as unknown as TypedDocumentString<AgentQualityAgentTableQuery, AgentQualityAgentTableQueryVariables>;
 export const AgentWorstRatedAnswerTableDocument = {"__meta__":{"kind":"query","name":"AgentWorstRatedAnswerTable","hash":"sha256:1754184fcf56f7a454908a044f784df3d4ee77f4a441897ddbf6323455fd21f4"}} as unknown as TypedDocumentString<AgentWorstRatedAnswerTableQuery, AgentWorstRatedAnswerTableQueryVariables>;
 export const AgentQualityDocument = {"__meta__":{"kind":"query","name":"AgentQuality","hash":"sha256:af57c33855f7d519df46239aea6d9d02f06cbf71b134a61d2306fa7a96306c23"}} as unknown as TypedDocumentString<AgentQualityQuery, AgentQualityQueryVariables>;
@@ -25248,17 +25683,28 @@ export const UpdateAiRetrievalSettingsDocument = {"__meta__":{"kind":"mutation",
 export const ReindexAiRetrievalSourceDocument = {"__meta__":{"kind":"mutation","name":"ReindexAIRetrievalSource","hash":"sha256:e12a16a86ab028021de08057a122aca1c4003046b2ebfd026f416b7232e9979c"}} as unknown as TypedDocumentString<ReindexAiRetrievalSourceMutation, ReindexAiRetrievalSourceMutationVariables>;
 export const AgentRunTableDocument = {"__meta__":{"kind":"query","name":"AgentRunTable","hash":"sha256:cb0c75efc8b293a1beed186c94dbd21763979412b273229f4abfdcaa6dab3224"}} as unknown as TypedDocumentString<AgentRunTableQuery, AgentRunTableQueryVariables>;
 export const AgentRunDetailDocument = {"__meta__":{"kind":"query","name":"AgentRunDetail","hash":"sha256:50f295b7b16d885dffc63d488bb379bab474422bcb3f3c62082a9048e47aa8d2"}} as unknown as TypedDocumentString<AgentRunDetailQuery, AgentRunDetailQueryVariables>;
-export const AgentToolRuleTableDocument = {"__meta__":{"kind":"query","name":"AgentToolRuleTable","hash":"sha256:408a5464ca8da78c9b4d995f96b6215368d54ed469ba804e9dac583ad637166b"}} as unknown as TypedDocumentString<AgentToolRuleTableQuery, AgentToolRuleTableQueryVariables>;
-export const AgentToolSafetyTableDocument = {"__meta__":{"kind":"query","name":"AgentToolSafetyTable","hash":"sha256:c321454ad00068bb8fa10e406c16cd524b650c40172887bba015721e6194334e"}} as unknown as TypedDocumentString<AgentToolSafetyTableQuery, AgentToolSafetyTableQueryVariables>;
-export const AgentSafetySummaryDocument = {"__meta__":{"kind":"query","name":"AgentSafetySummary","hash":"sha256:f4e64ef49ec0933e10409b183413a900d0c5d7de2c4f1f7239c6a998dbc341b2"}} as unknown as TypedDocumentString<AgentSafetySummaryQuery, AgentSafetySummaryQueryVariables>;
+export const AgentActivitySummaryDocument = {"__meta__":{"kind":"query","name":"AgentActivitySummary","hash":"sha256:3e12c57f24cc5c14a68f7609d7e2bcffdbc678ff7a643347cd43695e55a20886"}} as unknown as TypedDocumentString<AgentActivitySummaryQuery, AgentActivitySummaryQueryVariables>;
+export const AgentToolRuleTableDocument = {"__meta__":{"kind":"query","name":"AgentToolRuleTable","hash":"sha256:313df44fd49276f88ddfeb42716b73bc8d855c230a60ca92a02a01b05fc1638b"}} as unknown as TypedDocumentString<AgentToolRuleTableQuery, AgentToolRuleTableQueryVariables>;
+export const AgentToolSafetyTableDocument = {"__meta__":{"kind":"query","name":"AgentToolSafetyTable","hash":"sha256:902bbd68f7f1a38873689c7f0332b45c025e0e5bf98291873ae77f32a6208079"}} as unknown as TypedDocumentString<AgentToolSafetyTableQuery, AgentToolSafetyTableQueryVariables>;
+export const AgentSafetySummaryDocument = {"__meta__":{"kind":"query","name":"AgentSafetySummary","hash":"sha256:f52b3deec6899071becaff02b8ac354be7bacfccdc83027cb3c05099ecc02432"}} as unknown as TypedDocumentString<AgentSafetySummaryQuery, AgentSafetySummaryQueryVariables>;
 export const AgentSafetyDocument = {"__meta__":{"kind":"query","name":"AgentSafety","hash":"sha256:f089e6433f198e90913b7d60eb32ede844d86438f8b427651ccf36d087f21d53"}} as unknown as TypedDocumentString<AgentSafetyQuery, AgentSafetyQueryVariables>;
+export const AgentToolHoldersDocument = {"__meta__":{"kind":"query","name":"AgentToolHolders","hash":"sha256:3888e48bdccda4483db5b4cb78bcc422fe244176109b3cd7a4642cdb5794eafd"}} as unknown as TypedDocumentString<AgentToolHoldersQuery, AgentToolHoldersQueryVariables>;
+export const AgentToolRuleImpactDocument = {"__meta__":{"kind":"query","name":"AgentToolRuleImpact","hash":"sha256:25982d51bded8d1e6e551c89a9ccea8bd284b4c2950f40effd078142b9d7c592"}} as unknown as TypedDocumentString<AgentToolRuleImpactQuery, AgentToolRuleImpactQueryVariables>;
+export const SaveAgentToolRuleDocument = {"__meta__":{"kind":"mutation","name":"SaveAgentToolRule","hash":"sha256:f69373369efb41372f3c4722ec5085108f583508db58841fa043877305748be6"}} as unknown as TypedDocumentString<SaveAgentToolRuleMutation, SaveAgentToolRuleMutationVariables>;
 export const MyAiFeedbackDocument = {"__meta__":{"kind":"query","name":"MyAIFeedback","hash":"sha256:4ecd6a4f48bdf601fe636a9cf2dc691b4d999c948e5c8b19b34aa57b705ddd8f"}} as unknown as TypedDocumentString<MyAiFeedbackQuery, MyAiFeedbackQueryVariables>;
 export const SetMyAiFeedbackDocument = {"__meta__":{"kind":"mutation","name":"SetMyAIFeedback","hash":"sha256:dcf84160135d294e635b4b982adf957300ba21c8a9f703ddad23cfcbcc32dde3"}} as unknown as TypedDocumentString<SetMyAiFeedbackMutation, SetMyAiFeedbackMutationVariables>;
 export const ClearMyAiFeedbackDocument = {"__meta__":{"kind":"mutation","name":"ClearMyAIFeedback","hash":"sha256:fe3ab8a659e88516571a342f231d0e575d1a136d9c5a9655bcca2fd93613510a"}} as unknown as TypedDocumentString<ClearMyAiFeedbackMutation, ClearMyAiFeedbackMutationVariables>;
 export const AiFeedbackTableDocument = {"__meta__":{"kind":"query","name":"AIFeedbackTable","hash":"sha256:340427dceb61302fa430510e09fb15618155e62a07eda870abd25d331ae9ee8f"}} as unknown as TypedDocumentString<AiFeedbackTableQuery, AiFeedbackTableQueryVariables>;
 export const AgentFeedbackSummaryDocument = {"__meta__":{"kind":"query","name":"AgentFeedbackSummary","hash":"sha256:0a99eeca389833697ab85daf88747a577c77f96c073a0fdc51df38e67aad7e1b"}} as unknown as TypedDocumentString<AgentFeedbackSummaryQuery, AgentFeedbackSummaryQueryVariables>;
 export const AiProviderCardsDocument = {"__meta__":{"kind":"query","name":"AIProviderCards","hash":"sha256:34c633c35b3a5b33d99238f07fbee597b0a654bca74a4c8cf5d8a04c59e9118d"}} as unknown as TypedDocumentString<AiProviderCardsQuery, AiProviderCardsQueryVariables>;
-export const AiProviderDetailDocument = {"__meta__":{"kind":"query","name":"AIProviderDetail","hash":"sha256:a0c568ce3b9e29ef4c62b6a6f9c95c08b58f39862ecc50de6bf0f63c80db8103"}} as unknown as TypedDocumentString<AiProviderDetailQuery, AiProviderDetailQueryVariables>;
+export const AiProviderDetailDocument = {"__meta__":{"kind":"query","name":"AIProviderDetail","hash":"sha256:dde739bb9a0ef0284fe80801be28c4fe51e14a00c13344b9c2fe4fba93b5ffdb"}} as unknown as TypedDocumentString<AiProviderDetailQuery, AiProviderDetailQueryVariables>;
+export const AiProviderLimitsDocument = {"__meta__":{"kind":"query","name":"AIProviderLimits","hash":"sha256:41e9cec44006dcb45c576a25475ad11a1107a228ba463a0683edae4fabf22d6c"}} as unknown as TypedDocumentString<AiProviderLimitsQuery, AiProviderLimitsQueryVariables>;
+export const AiRoutePreviewDocument = {"__meta__":{"kind":"query","name":"AIRoutePreview","hash":"sha256:0502a524401b35341763abf9b0ff03589358c9ea9f199ca7e9017b44eda92b65"}} as unknown as TypedDocumentString<AiRoutePreviewQuery, AiRoutePreviewQueryVariables>;
+export const AiProviderModelsDocument = {"__meta__":{"kind":"query","name":"AIProviderModels","hash":"sha256:b0861434a19296d912bfa020fac1d1021646451ab6f9decd2bc00fd076ebe90f"}} as unknown as TypedDocumentString<AiProviderModelsQuery, AiProviderModelsQueryVariables>;
+export const AiProviderUsageDailyDocument = {"__meta__":{"kind":"query","name":"AIProviderUsageDaily","hash":"sha256:8c15d40d351e26f4e0e74838332e965bdfa69be1aa66452482fc3399dad511c7"}} as unknown as TypedDocumentString<AiProviderUsageDailyQuery, AiProviderUsageDailyQueryVariables>;
+export const TestAiProviderDraftDocument = {"__meta__":{"kind":"mutation","name":"TestAIProviderDraft","hash":"sha256:5cd1d34923e16b5189644e35108d85429a67b9f2554cd7b3aa90add20ba6f689"}} as unknown as TypedDocumentString<TestAiProviderDraftMutation, TestAiProviderDraftMutationVariables>;
+export const ReorderAiProvidersDocument = {"__meta__":{"kind":"mutation","name":"ReorderAIProviders","hash":"sha256:0740f4db19e7d458cce20f4ed2bc9f45310b991e507683feb6368a9c8518e958"}} as unknown as TypedDocumentString<ReorderAiProvidersMutation, ReorderAiProvidersMutationVariables>;
+export const PatchAiProviderDocument = {"__meta__":{"kind":"mutation","name":"PatchAIProvider","hash":"sha256:7803e372858278e3b6980cf91b8c8e74d3a6c108b58ab7aeb40d111fb124731b"}} as unknown as TypedDocumentString<PatchAiProviderMutation, PatchAiProviderMutationVariables>;
 export const AiUsageSummaryDocument = {"__meta__":{"kind":"query","name":"AIUsageSummary","hash":"sha256:22b752f36ea7369cb330c482bae62e65443c496110818dff32d26d4405302d17"}} as unknown as TypedDocumentString<AiUsageSummaryQuery, AiUsageSummaryQueryVariables>;
 export const ApiKeyTableDocument = {"__meta__":{"kind":"query","name":"ApiKeyTable","hash":"sha256:aeacf34d9ae14863db97c29a2ea928d83c46bba47f49ecd6a05ccdf7d4a33951"}} as unknown as TypedDocumentString<ApiKeyTableQuery, ApiKeyTableQueryVariables>;
 export const AttentionSummaryDocument = {"__meta__":{"kind":"query","name":"AttentionSummary","hash":"sha256:f5497f5bda3b38c5a3875db4677a9a034d1bcc1c4866b6c698351fc2198b1322"}} as unknown as TypedDocumentString<AttentionSummaryQuery, AttentionSummaryQueryVariables>;
@@ -25287,6 +25733,11 @@ export const RetryBillingTransferRunDocument = {"__meta__":{"kind":"mutation","n
 export const TodaysBriefingDocument = {"__meta__":{"kind":"query","name":"TodaysBriefing","hash":"sha256:efa1e68a6557f06f8c90f3e6482f6a73399254696a433c83e2f5a821f891a838"}} as unknown as TypedDocumentString<TodaysBriefingQuery, TodaysBriefingQueryVariables>;
 export const MarkBriefingReadDocument = {"__meta__":{"kind":"mutation","name":"MarkBriefingRead","hash":"sha256:a528508c33bf6da76c15bf36e4159bdb24aeeb7c644cabbd8e779423cfe86371"}} as unknown as TypedDocumentString<MarkBriefingReadMutation, MarkBriefingReadMutationVariables>;
 export const RegenerateBriefingDocument = {"__meta__":{"kind":"mutation","name":"RegenerateBriefing","hash":"sha256:78838e889a7a2e313f67553e5f19966a6338ae041961bd169a6bf8e9ad5108df"}} as unknown as TypedDocumentString<RegenerateBriefingMutation, RegenerateBriefingMutationVariables>;
+export const BulkEditFieldsDocument = {"__meta__":{"kind":"query","name":"BulkEditFields","hash":"sha256:e8bae28f9e4ea095187e632237753391be53fcab8b5f3d4e0362143651c1d2c7"}} as unknown as TypedDocumentString<BulkEditFieldsQuery, BulkEditFieldsQueryVariables>;
+export const PreviewBulkEditDocument = {"__meta__":{"kind":"query","name":"PreviewBulkEdit","hash":"sha256:e76b638c49a776a340eeccbeb2fa3bdc0126f619f8d708bb52b091209c833ac8"}} as unknown as TypedDocumentString<PreviewBulkEditQuery, PreviewBulkEditQueryVariables>;
+export const MyBulkEditDocument = {"__meta__":{"kind":"query","name":"MyBulkEdit","hash":"sha256:28174f12de0ca9c2d6e3da811a30585afb75a8114b8270a848f61f7ce56cab6a"}} as unknown as TypedDocumentString<MyBulkEditQuery, MyBulkEditQueryVariables>;
+export const StartBulkEditDocument = {"__meta__":{"kind":"mutation","name":"StartBulkEdit","hash":"sha256:f9743a0aaf5edad11f10533e9d4f16a6acb9dbfde16f3fc54b097e11e4ef2af3"}} as unknown as TypedDocumentString<StartBulkEditMutation, StartBulkEditMutationVariables>;
+export const UndoMyBulkEditDocument = {"__meta__":{"kind":"mutation","name":"UndoMyBulkEdit","hash":"sha256:c9f23d134c6e106d3639355fabd9939fdd2f7e61c5e647f36de94d8aa83007b5"}} as unknown as TypedDocumentString<UndoMyBulkEditMutation, UndoMyBulkEditMutationVariables>;
 export const MyCaptureAccessDocument = {"__meta__":{"kind":"query","name":"MyCaptureAccess","hash":"sha256:0e0e3bed6cfbb9210e5d3a2f3d7a07d91e26763205dd3c68f4b4885d3d7b23c2"}} as unknown as TypedDocumentString<MyCaptureAccessQuery, MyCaptureAccessQueryVariables>;
 export const CaptureAgentReleaseDocument = {"__meta__":{"kind":"query","name":"CaptureAgentRelease","hash":"sha256:871e3e29040b717530d9bdae990b25cbdefea215ade1970666878959c1219e44"}} as unknown as TypedDocumentString<CaptureAgentReleaseQuery, CaptureAgentReleaseQueryVariables>;
 export const CaptureBatchesDocument = {"__meta__":{"kind":"query","name":"CaptureBatches","hash":"sha256:d40d49842db626aa6d822a89f8f3be992c716d71db561f1a4deb6127f19e40ce"}} as unknown as TypedDocumentString<CaptureBatchesQuery, CaptureBatchesQueryVariables>;
@@ -25392,6 +25843,10 @@ export const PostAndApplyCustomerPaymentDocument = {"__meta__":{"kind":"mutation
 export const ApplyUnappliedCustomerPaymentDocument = {"__meta__":{"kind":"mutation","name":"ApplyUnappliedCustomerPayment","hash":"sha256:1c0798232c1c035894870e85c421a9f0f214ff7407eb9f35155cfd9b87a9b4e0"}} as unknown as TypedDocumentString<ApplyUnappliedCustomerPaymentMutation, ApplyUnappliedCustomerPaymentMutationVariables>;
 export const ReverseCustomerPaymentDocument = {"__meta__":{"kind":"mutation","name":"ReverseCustomerPayment","hash":"sha256:fe84be95798f92734cec53df3348b8593909fafde378deb329d583affe25145f"}} as unknown as TypedDocumentString<ReverseCustomerPaymentMutation, ReverseCustomerPaymentMutationVariables>;
 export const CustomerTableDocument = {"__meta__":{"kind":"query","name":"CustomerTable","hash":"sha256:5ac4908d539bd6bee48049a6729a62ad4ac0e1a6a6c7e4ddf366f208b533ef1b"}} as unknown as TypedDocumentString<CustomerTableQuery, CustomerTableQueryVariables>;
+export const DataTableInsightFieldsDocument = {"__meta__":{"kind":"query","name":"DataTableInsightFields","hash":"sha256:22fecf32b7271231ed11fa6894b1067fa462fe7647a51aec3ce2573a6dead073"}} as unknown as TypedDocumentString<DataTableInsightFieldsQuery, DataTableInsightFieldsQueryVariables>;
+export const DataTableFacetsDocument = {"__meta__":{"kind":"query","name":"DataTableFacets","hash":"sha256:65addc4be5159ffbc133b39c9fdd7f1fc5052ee694ffe223537fa75fb3351f6f"}} as unknown as TypedDocumentString<DataTableFacetsQuery, DataTableFacetsQueryVariables>;
+export const DataTableAggregatesDocument = {"__meta__":{"kind":"query","name":"DataTableAggregates","hash":"sha256:0bce5400a204835b85f3b9246d4a61cd213afb549e8ad2121531b270af0cee00"}} as unknown as TypedDocumentString<DataTableAggregatesQuery, DataTableAggregatesQueryVariables>;
+export const DataTableSeriesDocument = {"__meta__":{"kind":"query","name":"DataTableSeries","hash":"sha256:8d8e8c711b6016baea4017406b8933bd6cc55c7d24ce733be4a353af719fa243"}} as unknown as TypedDocumentString<DataTableSeriesQuery, DataTableSeriesQueryVariables>;
 export const DetentionFacilityStatsDocument = {"__meta__":{"kind":"query","name":"DetentionFacilityStats","hash":"sha256:c7c1f1b8d0b5c5fa3dced842b3436b910f8525f3f3dc5992cd753d0e247a40c2"}} as unknown as TypedDocumentString<DetentionFacilityStatsQuery, DetentionFacilityStatsQueryVariables>;
 export const DetentionCustomerStatsDocument = {"__meta__":{"kind":"query","name":"DetentionCustomerStats","hash":"sha256:188bf76366f9651b4c37387fa0792d2ba42578a237866a2bbfa3a1d0d904c056"}} as unknown as TypedDocumentString<DetentionCustomerStatsQuery, DetentionCustomerStatsQueryVariables>;
 export const DetentionWaiverStatsDocument = {"__meta__":{"kind":"query","name":"DetentionWaiverStats","hash":"sha256:23077469702670463ce465420c6147c9583c2fbb143df6d60a5c0ac2276d0da1"}} as unknown as TypedDocumentString<DetentionWaiverStatsQuery, DetentionWaiverStatsQueryVariables>;
@@ -25822,6 +26277,8 @@ export const ReportSchedulesDocument = {"__meta__":{"kind":"query","name":"Repor
 export const CreateReportScheduleDocument = {"__meta__":{"kind":"mutation","name":"CreateReportSchedule","hash":"sha256:907de6b8f0e39ca398a1e197391b3674219741259c01eb7ed29cc3be47bcc952"}} as unknown as TypedDocumentString<CreateReportScheduleMutation, CreateReportScheduleMutationVariables>;
 export const UpdateReportScheduleDocument = {"__meta__":{"kind":"mutation","name":"UpdateReportSchedule","hash":"sha256:5bb42d52908ad8346bebbc9944d422dfb6f8b8604f7f7d80db6b3a2933f7369d"}} as unknown as TypedDocumentString<UpdateReportScheduleMutation, UpdateReportScheduleMutationVariables>;
 export const DeleteReportScheduleDocument = {"__meta__":{"kind":"mutation","name":"DeleteReportSchedule","hash":"sha256:dfe8e966e00cda20ec071774d07a7c9d7f28d22648db9faa0ece2d7e233c2bf6"}} as unknown as TypedDocumentString<DeleteReportScheduleMutation, DeleteReportScheduleMutationVariables>;
+export const ExportTableViewDocument = {"__meta__":{"kind":"mutation","name":"ExportTableView","hash":"sha256:6ef9327c817145236a43750e1eb6cdbe0fc3fb4b09418bf5f193ef69879ff615"}} as unknown as TypedDocumentString<ExportTableViewMutation, ExportTableViewMutationVariables>;
+export const ScheduleTableViewDocument = {"__meta__":{"kind":"mutation","name":"ScheduleTableView","hash":"sha256:69e77a05f6730df6ae7609ae79840c09553a90dda332cccf9ce8638d4ff0e30e"}} as unknown as TypedDocumentString<ScheduleTableViewMutation, ScheduleTableViewMutationVariables>;
 export const ReportViewsDocument = {"__meta__":{"kind":"query","name":"ReportViews","hash":"sha256:600b2d0308c168f6ea3cc20979d60661695409e382b3563966bbbcdb9eba2c60"}} as unknown as TypedDocumentString<ReportViewsQuery, ReportViewsQueryVariables>;
 export const CreateReportViewDocument = {"__meta__":{"kind":"mutation","name":"CreateReportView","hash":"sha256:98f7d9af3b3d8bd99781ee22198f1938a90f7739b986d704463e504d1b2c6b5b"}} as unknown as TypedDocumentString<CreateReportViewMutation, CreateReportViewMutationVariables>;
 export const UpdateReportViewDocument = {"__meta__":{"kind":"mutation","name":"UpdateReportView","hash":"sha256:b2575a3fea359ee9b24c354d454aa68f5aa61298c45c180ccd79ba4dfcc7ae7d"}} as unknown as TypedDocumentString<UpdateReportViewMutation, UpdateReportViewMutationVariables>;
@@ -25922,6 +26379,9 @@ export const UpdateTableConfigurationDocument = {"__meta__":{"kind":"mutation","
 export const DeleteTableConfigurationDocument = {"__meta__":{"kind":"mutation","name":"DeleteTableConfiguration","hash":"sha256:5c2f8a0d5ce9cc3f5ae7702ee9785c067097d3a04de36ae8b17d43afeb5e4951"}} as unknown as TypedDocumentString<DeleteTableConfigurationMutation, DeleteTableConfigurationMutationVariables>;
 export const SetDefaultTableConfigurationDocument = {"__meta__":{"kind":"mutation","name":"SetDefaultTableConfiguration","hash":"sha256:d186244dea4960f7116982c1281aa7b3daec229ba06143417bbd3064d746340b"}} as unknown as TypedDocumentString<SetDefaultTableConfigurationMutation, SetDefaultTableConfigurationMutationVariables>;
 export const SetOrgDefaultTableConfigurationDocument = {"__meta__":{"kind":"mutation","name":"SetOrgDefaultTableConfiguration","hash":"sha256:739270b19dc50a3d42f57caf1791f4dc556c4b51547b84eef44000bceb25aadc"}} as unknown as TypedDocumentString<SetOrgDefaultTableConfigurationMutation, SetOrgDefaultTableConfigurationMutationVariables>;
+export const MyTableLayoutDocument = {"__meta__":{"kind":"query","name":"MyTableLayout","hash":"sha256:04638a0f3a4fa85af6b0ffe1d4277c439983678962ef90b68edfdd5c5db84c58"}} as unknown as TypedDocumentString<MyTableLayoutQuery, MyTableLayoutQueryVariables>;
+export const SaveMyTableLayoutDocument = {"__meta__":{"kind":"mutation","name":"SaveMyTableLayout","hash":"sha256:be3ca7124e977b3c1455e0ed994d91bd1b0efdcabfd92d254706fc7bb049644b"}} as unknown as TypedDocumentString<SaveMyTableLayoutMutation, SaveMyTableLayoutMutationVariables>;
+export const ResetMyTableLayoutDocument = {"__meta__":{"kind":"mutation","name":"ResetMyTableLayout","hash":"sha256:0643b1cceab64c96a7c1dba08ba2e71603a23c8d39b52334f1a8323572f7c177"}} as unknown as TypedDocumentString<ResetMyTableLayoutMutation, ResetMyTableLayoutMutationVariables>;
 export const VehiclePositionsDocument = {"__meta__":{"kind":"query","name":"VehiclePositions","hash":"sha256:1ea010c608c8a6a56a22bdb956c0b3456a84a178dbd0b26b546394151f2643b7"}} as unknown as TypedDocumentString<VehiclePositionsQuery, VehiclePositionsQueryVariables>;
 export const WorkerHosStatesDocument = {"__meta__":{"kind":"query","name":"WorkerHosStates","hash":"sha256:e993196b73825d21c3252bd8ab5924aa96894e77dfbff5a79ff2c27b82ce94c9"}} as unknown as TypedDocumentString<WorkerHosStatesQuery, WorkerHosStatesQueryVariables>;
 export const WorkerHosStateDocument = {"__meta__":{"kind":"query","name":"WorkerHosState","hash":"sha256:cc49820a722034cd85add21c54f6a0f71735ab5ee21b8fda9bb4fa168950b241"}} as unknown as TypedDocumentString<WorkerHosStateQuery, WorkerHosStateQueryVariables>;

@@ -22,7 +22,6 @@
   "Delete draft…": "Eliminar el borrador…",
   "Delete the {0} draft?": "¿Eliminar el borrador de {0}?",
   "Draft figures move with the data. Finalized locks them. Filed is immutable; corrections open an amendment.": "Las cifras del borrador cambian con los datos. Al finalizar se bloquean. Lo presentado es inmutable; las correcciones abren una modificación.",
-  "Due {0}": "Vence el {0}",
   "Every completed move in the quarter already has a jurisdiction breakdown. There is nothing to backfill.": "Todos los tramos completados del trimestre ya tienen desglose por jurisdicción. No hay nada que rellenar.",
   "Every completed move in {0} that has distance but no jurisdiction breakdown is re-routed for its state-by-state report. Each move is a billable distance request, so the quarter is counted first.": "Todos los tramos completados de {0} que tienen distancia pero no desglose por jurisdicción se vuelven a enrutar para su informe estado por estado. Cada tramo es una solicitud de distancia facturable, por lo que primero se cuenta el trimestre.",
   "Every line was rebuilt from the miles, fuel and rates on file now.": "Todas las líneas se reconstruyeron con las millas, el combustible y los tipos que constan ahora.",

@@ -59,11 +59,11 @@ const NEW_LANE: RateAgreementRule = {
 export function LaneEditor() {
   const t = useT();
 
-  const { control, getValues } = useFormContext<RateAgreement>();
+  const { control } = useFormContext<RateAgreement>();
   const { fields, append, remove } = useFieldArray({ control, name: "rules" });
   const rules = (useWatch({ control, name: "rules" }) ?? []) as RateAgreementRule[];
   const resolveScopeValue = useLaneScopeLabels(rules);
-  const agreementId = getValues("id") ?? undefined;
+  const agreementId = useWatch({ control, name: "id" }) ?? undefined;
 
   // `rules` is a watched array and so is a fresh reference on every render.
   // Keying the memo on what coverage actually depends on means it recomputes

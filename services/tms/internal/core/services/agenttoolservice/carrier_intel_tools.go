@@ -150,7 +150,8 @@ func requireCarrierGrant(
 }
 
 func carrierIDProperty(what string) map[string]any {
-	return idProperty(what + ", from list_carriers or get_carrier. Never guess one.")
+	return agenttoolschema.RecordID(permission.ResourceCarrier, what,
+		"list_carriers or get_carrier")
 }
 
 func targetCarrier(params map[string]any) (serviceports.ToolTarget, bool) {
@@ -321,8 +322,11 @@ func newVetCustomerBrokerTool(intel carrierIntelOperator) serviceports.AgentTool
 		rationale: "Spends the organization's carrier intelligence budget on a lookup and " +
 			"records the result; nothing is sent to the customer.",
 		properties: map[string]any{
-			fieldCustomerID: idProperty("The broker customer, from list_customers. Never " +
-				"guess one."),
+			fieldCustomerID: agenttoolschema.RecordIDText(
+				permission.ResourceCustomer,
+				"The broker customer, from list_customers. Never "+
+					"guess one.",
+			),
 			paramForceResend: booleanProperty("Look up again even when the last result is " +
 				"still current. It is charged; only when the person asks."),
 		},
@@ -397,7 +401,11 @@ func newSetCarrierMonitoringTool(intel carrierIntelOperator) serviceports.AgentT
 			"undoes it, and nothing is sent to the carriers.",
 		properties: map[string]any{
 			paramCarrierIDs: toolschema.RecordSubset(permission.ResourceCarrier.String(),
-				idListProperty("The carriers, from list_carriers.", maxMonitoredCarriers)),
+				agenttoolschema.RecordIDs(
+					permission.ResourceCarrier,
+					"The carriers, from list_carriers.",
+					maxMonitoredCarriers,
+				)),
 			paramEnabled: booleanProperty("True to monitor them, false to stop."),
 		},
 		required: []string{paramCarrierIDs, paramEnabled},
@@ -646,8 +654,11 @@ func newApplyCarrierIntelSuggestionsTool(
 					syncFieldValues,
 				),
 			},
-			paramPolicyIDs: idListProperty("The insurance policies to correct, by the policy "+
-				"id on the page you are on.", maxSuggestionPolicies),
+			paramPolicyIDs: agenttoolschema.IDList(
+				"The insurance policies to correct, by the policy "+
+					"id on the page you are on.",
+				maxSuggestionPolicies,
+			),
 		},
 		required: []string{paramCarrierID},
 		target:   targetCarrier,
@@ -900,7 +911,7 @@ func newVerifyCarrierEquipmentTool(intel carrierIntelOperator) serviceports.Agen
 		rationale: "Records an equipment check inside Trenova after a provider lookup; " +
 			"nothing is sent to the carrier.",
 		properties: map[string]any{
-			paramCarrierAssignmentID: idProperty("The carrier assignment, from " +
+			paramCarrierAssignmentID: agenttoolschema.IDText("The carrier assignment, from " +
 				"list_rate_confirmations or get_shipment. Never guess one."),
 			paramUnitType: agenttoolschema.Enum("What was checked.", unitTypes),
 			paramVIN:      stringProperty("The vehicle identification number.", maxVINChars),

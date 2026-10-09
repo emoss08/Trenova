@@ -23,6 +23,8 @@ const (
 	lastEventIDHeader  = "Last-Event-ID"
 	retryAfterSeconds  = 5
 	shipmentCommentsNS = "shipment-comments:"
+	viewNS             = "view:"
+	recordNS           = "record:"
 )
 
 type Params struct {
@@ -72,6 +74,13 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
 		h.typingShipmentComments,
 	)
+
+	views := rg.Group("/realtime/presence/:resource")
+	canRead := h.pm.RequireParamPermission("resource", permission.OpRead)
+	views.POST("/", canRead, h.joinView)
+	views.DELETE("/", canRead, h.leaveView)
+	views.POST("/:recordID/", canRead, h.joinRecord)
+	views.DELETE("/:recordID/", canRead, h.leaveRecord)
 }
 
 type presenceRequest struct {
@@ -187,23 +196,7 @@ func (h *Handler) joinShipmentComments(c *gin.Context) {
 	if !ok {
 		return
 	}
-
-	var body presenceRequest
-	if err := c.ShouldBindJSON(&body); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	snapshot, err := h.gateway.JoinPresence(
-		c.Request.Context(),
-		scopeRequest(c, body.ConnectionID, scope),
-	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, snapshot)
+	h.join(c, scope)
 }
 
 // @Summary Leave shipment comment presence
@@ -221,16 +214,7 @@ func (h *Handler) leaveShipmentComments(c *gin.Context) {
 	if !ok {
 		return
 	}
-
-	if err := h.gateway.LeavePresence(
-		c.Request.Context(),
-		scopeRequest(c, c.Query("connectionId"), scope),
-	); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	c.Status(http.StatusNoContent)
+	h.leave(c, scope)
 }
 
 // @Summary Signal typing in shipment comments
@@ -268,6 +252,123 @@ func (h *Handler) typingShipmentComments(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+// @Summary Join a table's presence
+// @Description Marks the caller's live connection as looking at a table and returns
+// @Description everyone else looking at it.
+// @ID joinViewPresence
+// @Tags Realtime
+// @Accept json
+// @Produce json
+// @Param resource path string true "Permission resource, such as shipment"
+// @Param request body presenceRequest true "Live connection"
+// @Success 200 {object} services.RealtimePresenceSnapshot
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /realtime/presence/{resource}/ [post]
+func (h *Handler) joinView(c *gin.Context) {
+	h.join(c, viewNS+c.Param("resource"))
+}
+
+// @Summary Leave a table's presence
+// @ID leaveViewPresence
+// @Tags Realtime
+// @Param resource path string true "Permission resource"
+// @Param connectionId query string true "Live connection ID"
+// @Success 204
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /realtime/presence/{resource}/ [delete]
+func (h *Handler) leaveView(c *gin.Context) {
+	h.leave(c, viewNS+c.Param("resource"))
+}
+
+// @Summary Join a record's presence
+// @Description Marks the caller's live connection as having one record open and returns
+// @Description everyone else who has it open.
+// @ID joinRecordPresence
+// @Tags Realtime
+// @Accept json
+// @Produce json
+// @Param resource path string true "Permission resource, such as shipment"
+// @Param recordID path string true "Record ID"
+// @Param request body presenceRequest true "Live connection"
+// @Success 200 {object} services.RealtimePresenceSnapshot
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /realtime/presence/{resource}/{recordID}/ [post]
+func (h *Handler) joinRecord(c *gin.Context) {
+	scope, ok := h.recordScope(c)
+	if !ok {
+		return
+	}
+	h.join(c, scope)
+}
+
+// @Summary Leave a record's presence
+// @ID leaveRecordPresence
+// @Tags Realtime
+// @Param resource path string true "Permission resource"
+// @Param recordID path string true "Record ID"
+// @Param connectionId query string true "Live connection ID"
+// @Success 204
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /realtime/presence/{resource}/{recordID}/ [delete]
+func (h *Handler) leaveRecord(c *gin.Context) {
+	scope, ok := h.recordScope(c)
+	if !ok {
+		return
+	}
+	h.leave(c, scope)
+}
+
+func (h *Handler) join(c *gin.Context, scope string) {
+	var body presenceRequest
+	if err := c.ShouldBindJSON(&body); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	snapshot, err := h.gateway.JoinPresence(
+		c.Request.Context(),
+		scopeRequest(c, body.ConnectionID, scope),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, snapshot)
+}
+
+func (h *Handler) leave(c *gin.Context, scope string) {
+	if err := h.gateway.LeavePresence(
+		c.Request.Context(),
+		scopeRequest(c, c.Query("connectionId"), scope),
+	); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+func (h *Handler) recordScope(c *gin.Context) (string, bool) {
+	recordID := c.Param("recordID")
+	if !pulid.LooksLike(recordID) {
+		h.eh.HandleError(c, errortypes.NewValidationError(
+			"recordId", errortypes.ErrInvalid, "Record ID is invalid",
+		))
+		return "", false
+	}
+
+	return recordNS + c.Param("resource") + ":" + recordID, true
 }
 
 func (h *Handler) shipmentCommentsScope(c *gin.Context) (string, bool) {

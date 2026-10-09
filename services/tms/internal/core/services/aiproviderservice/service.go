@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/secretutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -27,6 +28,7 @@ type Params struct {
 	Logger       *zap.Logger
 	DB           ports.DBConnection
 	Repo         repositories.AIProviderRepository
+	Keys         repositories.AIProviderKeyRepository `optional:"true"`
 	Versions     repositories.SettingVersionRepository
 	Encryption   *encryptionservice.Service
 	Prober       *Prober
@@ -43,12 +45,18 @@ type EndpointProber interface {
 		provider *aiprovider.Provider,
 		apiKey string,
 	) *services.TestAIProviderResult
+	ListModels(
+		ctx context.Context,
+		provider *aiprovider.Provider,
+		apiKey string,
+	) ([]services.AIProviderModelOption, error)
 }
 
 type Service struct {
 	l          *zap.Logger
 	db         ports.DBConnection
 	repo       repositories.AIProviderRepository
+	keys       repositories.AIProviderKeyRepository
 	versions   repositories.SettingVersionRepository
 	encryption *encryptionservice.Service
 	prober     EndpointProber
@@ -72,6 +80,7 @@ func New(p Params) *Service {
 		l:          p.Logger.Named("service.aiprovider"),
 		db:         p.DB,
 		repo:       p.Repo,
+		keys:       p.Keys,
 		versions:   p.Versions,
 		encryption: p.Encryption,
 		prober:     p.Prober,
@@ -113,6 +122,22 @@ func (s *Service) ListConnection(
 	return result, nil
 }
 
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	req *repositories.AIProviderSelectOptionsRequest,
+) (*pagination.ListResult[*aiprovider.Provider], error) {
+	result, err := s.repo.SelectOptions(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	for idx, provider := range result.Items {
+		result.Items[idx] = provider.Redacted()
+	}
+
+	return result, nil
+}
+
 func (s *Service) GetByID(
 	ctx context.Context,
 	req repositories.GetAIProviderByIDRequest,
@@ -134,7 +159,7 @@ func (s *Service) Create(
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 	}
-	if err := s.apply(provider, req); err != nil {
+	if err := s.apply(provider, req, actor); err != nil {
 		return nil, err
 	}
 
@@ -179,9 +204,10 @@ func (s *Service) Update(
 
 	updated := *existing
 	updated.Version = req.Version
-	if err = s.apply(&updated, req); err != nil {
+	if err = s.apply(&updated, req, actor); err != nil {
 		return nil, err
 	}
+	updated.ForgetExpiredPreviousKey(timeutils.NowUnix())
 
 	multiErr := errortypes.NewMultiError()
 	if keptKeyForNewEndpoint(existing, &updated, req) {
@@ -277,6 +303,7 @@ func (s *Service) RunTest(
 		return nil, err
 	}
 
+	s.tidyKey(ctx, provider, apiKey, req.TenantInfo)
 	result := s.prober.Probe(ctx, provider, apiKey)
 
 	if err = s.repo.MarkTested(ctx, repositories.MarkAIProviderTestedRequest{
@@ -300,22 +327,56 @@ func (s *Service) RunTest(
 	return result, nil
 }
 
+// tidyKey records the ends of a key stored before they were kept, and drops
+// a replaced key whose day as a fallback is over.
+func (s *Service) tidyKey(
+	ctx context.Context,
+	provider *aiprovider.Provider,
+	apiKey string,
+	tenantInfo pagination.TenantInfo,
+) {
+	if s.keys == nil {
+		return
+	}
+	if provider.NeedsKeyFingerprint() && apiKey != "" {
+		fingerprint := secretutils.FingerprintOf(apiKey)
+		if err := s.keys.RecordFingerprint(ctx, repositories.RecordAIProviderKeyFingerprintRequest{
+			ID:         provider.ID,
+			TenantInfo: tenantInfo,
+			Prefix:     fingerprint.Prefix,
+			LastFour:   fingerprint.LastFour,
+		}); err != nil {
+			s.l.Warn("failed to record ai provider key fingerprint", zap.Error(err))
+		}
+	}
+	if provider.PreviousKeyExpired(timeutils.NowUnix()) {
+		if _, err := s.keys.ClearExpiredPrevious(ctx, repositories.ClearExpiredAIProviderKeysRequest{
+			TenantInfo: tenantInfo,
+			Now:        timeutils.NowUnix(),
+		}); err != nil {
+			s.l.Warn("failed to clear expired ai provider keys", zap.Error(err))
+		}
+	}
+}
+
 // apply copies a save request onto an entity, encrypting the credential and
 // defaulting the fields an administrator can reasonably leave blank.
 func (s *Service) apply(
 	provider *aiprovider.Provider,
 	req *services.SaveAIProviderRequest,
+	actor *services.RequestActor,
 ) error {
+	// A replaced key is kept as a fallback only for the endpoint it was
+	// entered for; kept across a move, it would be sent somewhere new.
+	sameEndpoint := provider.Kind == req.Kind &&
+		httpsafe.SameOrigin(provider.BaseURL, strings.TrimSpace(req.BaseURL))
 	provider.Name = strings.TrimSpace(req.Name)
 	provider.Description = strings.TrimSpace(req.Description)
 	provider.Kind = req.Kind
 	provider.BaseURL = strings.TrimSpace(req.BaseURL)
 	provider.Model = strings.TrimSpace(req.Model)
-	if req.AllowPrivateNetwork && !s.ai.PrivateNetworkProvidersAllowed() {
-		return errortypes.NewValidationError(
-			"allowPrivateNetwork", errortypes.ErrForbidden,
-			"This server does not allow providers on private network addresses",
-		)
+	if err := s.checkPrivateNetwork(req.AllowPrivateNetwork); err != nil {
+		return err
 	}
 	provider.AllowPrivateNetwork = req.AllowPrivateNetwork
 	provider.MaxTokens = req.MaxTokens
@@ -345,6 +406,7 @@ func (s *Service) apply(
 	}
 	provider.InputCostPerMillion = req.InputCostPerMillion
 	provider.OutputCostPerMillion = req.OutputCostPerMillion
+	applyLimits(provider, req)
 
 	// A nil key means "leave what is stored alone", so an administrator can
 	// retask a provider without re-entering its secret.
@@ -352,21 +414,84 @@ func (s *Service) apply(
 		return nil
 	}
 
-	incoming := strings.TrimSpace(*req.APIKey)
+	return s.replaceKey(provider, &keyChange{
+		incoming:     *req.APIKey,
+		keepPrevious: req.KeepPreviousKey && sameEndpoint,
+		actor:        actor,
+	})
+}
+
+// applyLimits copies the limits, taking the default for one left at zero.
+func applyLimits(provider *aiprovider.Provider, req *services.SaveAIProviderRequest) {
+	provider.TimeoutSeconds = req.TimeoutSeconds
+	if provider.TimeoutSeconds == 0 {
+		provider.TimeoutSeconds = aiprovider.DefaultTimeoutSeconds
+	}
+	provider.MaxConcurrent = req.MaxConcurrent
+	if provider.MaxConcurrent == 0 {
+		provider.MaxConcurrent = aiprovider.DefaultMaxConcurrent
+	}
+	provider.MonthlyCapUSD = req.MonthlyCapUSD
+	provider.OnCap = req.OnCap
+	if provider.OnCap == "" {
+		provider.OnCap = aiprovider.CapActionNext
+	}
+}
+
+func (s *Service) checkPrivateNetwork(allow bool) error {
+	if allow && !s.ai.PrivateNetworkProvidersAllowed() {
+		return errortypes.NewValidationError(
+			"allowPrivateNetwork", errortypes.ErrForbidden,
+			"This server does not allow providers on private network addresses",
+		)
+	}
+
+	return nil
+}
+
+type keyChange struct {
+	incoming     string
+	keepPrevious bool
+	actor        *services.RequestActor
+}
+
+// replaceKey stores a new credential, or clears it when the new one is
+// blank.
+func (s *Service) replaceKey(provider *aiprovider.Provider, change *keyChange) error {
+	replacement, err := s.keyReplacement(change)
+	if err != nil {
+		return err
+	}
+	provider.ReplaceAPIKey(replacement)
+
+	return nil
+}
+
+// keyReplacement encrypts a new credential. Only its ends are kept in the
+// clear, to tell two keys apart.
+func (s *Service) keyReplacement(change *keyChange) (aiprovider.KeyReplacement, error) {
+	incoming := strings.TrimSpace(change.incoming)
+	replacement := aiprovider.KeyReplacement{
+		AddedByID:    change.actor.PersonUserID(),
+		Now:          timeutils.NowUnix(),
+		KeepPrevious: change.keepPrevious,
+	}
 	if incoming == "" {
-		provider.APIKey = ""
-		return nil
+		return replacement, nil
 	}
 
 	encrypted, err := s.encryption.EncryptString(incoming)
 	if err != nil {
-		return errortypes.NewBusinessError(
+		return replacement, errortypes.NewBusinessError(
 			"failed to encrypt the credential for this AI provider",
 		).WithInternal(err)
 	}
-	provider.APIKey = encrypted
+	fingerprint := secretutils.FingerprintOf(incoming)
+	replacement.Encrypted = encrypted
+	replacement.Prefix = fingerprint.Prefix
+	replacement.LastFour = fingerprint.LastFour
 
-	return nil
+	return replacement, nil
 }
 
 // keptKeyForNewEndpoint reports a save that moves a provider to a different

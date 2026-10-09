@@ -130,9 +130,11 @@ func newStartWorkerChecklistTool(checklists checklistKeeper) serviceports.AgentT
 		permission.OpCreate,
 	), map[string]any{
 		paramWorkerID: workerProperty(),
-		paramChecklistTemplate: idProperty("The template, from list_worker_checklists. Never " +
-			"guess one."),
-		paramStartedAt: dayProperty("The day it starts, which its items fall due from. " +
+		paramChecklistTemplate: agenttoolschema.IDText(
+			"The template, from list_worker_checklists. Never " +
+				"guess one.",
+		),
+		paramStartedAt: agenttoolschema.Date("The day it starts, which its items fall due from. " +
 			"Defaults to today."),
 	}, paramWorkerID, paramChecklistTemplate)
 
@@ -298,14 +300,18 @@ func newUpdateWorkerChecklistItemTool(checklists checklistKeeper) serviceports.A
 		permission.ResourceWorkerChecklist,
 		permission.OpUpdate,
 	), map[string]any{
-		paramChecklistItemID: idProperty("The item, from list_worker_checklists. Never guess " +
-			"one."),
+		paramChecklistItemID: agenttoolschema.IDText(
+			"The item, from list_worker_checklists. Never guess " +
+				"one.",
+		),
 		paramItemMove: agenttoolschema.Enum("Complete, Skip, NotApplicable or Reopen.",
 			checklistItemMoves),
 		fieldNote: stringProperty("What was done, or why it was skipped or does not apply. "+
 			"Required to skip or mark not applicable.", wfNoteChars),
-		paramEvidenceDocument: idProperty("For Complete: a document filed on the worker " +
-			"that shows it done, from search_documents."),
+		paramEvidenceDocument: agenttoolschema.IDText(
+			"For Complete: a document filed on the worker " +
+				"that shows it done, from search_documents.",
+		),
 	}, paramChecklistItemID, paramItemMove), paramChecklistItemID,
 		permission.ResourceWorkerChecklist)
 
@@ -398,8 +404,10 @@ func newCancelWorkerChecklistTool(checklists checklistKeeper) serviceports.Agent
 		permission.ResourceWorkerChecklist,
 		permission.OpCancel,
 	), map[string]any{
-		paramChecklistID: idProperty("The checklist, from list_worker_checklists. Never " +
-			"guess one."),
+		paramChecklistID: agenttoolschema.IDText(
+			"The checklist, from list_worker_checklists. Never " +
+				"guess one.",
+		),
 		fieldReason: stringProperty("Why it no longer applies.", wfShortChars),
 	}, paramChecklistID, fieldReason), paramChecklistID, permission.ResourceWorkerChecklist)
 	spec.searchTerms = []string{"drop checklist", "no longer applies"}

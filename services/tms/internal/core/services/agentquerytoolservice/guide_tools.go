@@ -101,15 +101,21 @@ type guideTask struct {
 }
 
 type guideAnswer struct {
-	Name     string     `json:"name"`
-	Location string     `json:"location"`
-	Path     string     `json:"path"`
-	Summary  string     `json:"summary,omitempty"`
-	CanOpen  bool       `json:"canOpen"`
-	Missing  []string   `json:"missing,omitempty"`
-	Task     *guideTask `json:"task,omitempty"`
-	Related  []string   `json:"related,omitempty"`
+	Name       string     `json:"name"`
+	Location   string     `json:"location"`
+	Path       string     `json:"path"`
+	Summary    string     `json:"summary,omitempty"`
+	CanOpen    bool       `json:"canOpen"`
+	Missing    []string   `json:"missing,omitempty"`
+	Task       *guideTask `json:"task,omitempty"`
+	OtherTasks []string   `json:"otherTasks,omitempty"`
+	Notes      string     `json:"notes,omitempty"`
+	Related    []string   `json:"related,omitempty"`
 }
+
+const guideNote = "Link a page as [name](path) with the path given. Quote step labels " +
+	"exactly. Where canOpen is false, say what access is missing instead of sending them " +
+	"there. Call open_page only if the person asks to be taken there."
 
 type guideSearchResult struct {
 	Answers []guideAnswer `json:"answers"`
@@ -129,11 +135,12 @@ func (t *findInTrenovaTool) Query(
 		return nil, err
 	}
 
+	page := optionalString(params.Params, "page")
 	matches, err := t.guide.Search(ctx, &serviceports.ProductGuideSearchRequest{
 		Actor:      params.Actor,
 		TenantInfo: guideTenant(params),
 		Query:      question,
-		Page:       optionalString(params.Params, "page"),
+		Page:       page,
 		Limit:      guideAnswerLimit,
 		Attribution: serviceports.AIUsageAttribution{
 			UserID:            params.Actor.UserID,
@@ -152,17 +159,21 @@ func (t *findInTrenovaTool) Query(
 		}, nil
 	}
 
+	if page != "" && len(matches) == 1 {
+		return guideSearchResult{
+			Answers: []guideAnswer{pageAnswerFrom(&matches[0])},
+			Note: guideNote + " otherTasks are the page's other tasks: for the steps of one, " +
+				"call again with its title as the question and the same page. When neither " +
+				"the page nor its tasks cover what was asked, call again without page.",
+		}, nil
+	}
+
 	answers := make([]guideAnswer, 0, len(matches))
 	for i := range matches {
 		answers = append(answers, answerFrom(&matches[i], i == 0))
 	}
 
-	return guideSearchResult{
-		Answers: answers,
-		Note: "Link a page as [name](path) with the path given. Quote step labels exactly. " +
-			"Where canOpen is false, say what access is missing instead of sending them there. " +
-			"Call open_page only if the person asks to be taken there.",
-	}, nil
+	return guideSearchResult{Answers: answers, Note: guideNote}, nil
 }
 
 // answerFrom shapes one match. Only the best one carries its steps: the
@@ -186,6 +197,21 @@ func answerFrom(match *serviceports.ProductGuideMatch, withSteps bool) guideAnsw
 	}
 	if withSteps {
 		answer.Related = page.Related
+	}
+
+	return answer
+}
+
+func pageAnswerFrom(match *serviceports.ProductGuideMatch) guideAnswer {
+	answer := answerFrom(match, true)
+	answer.Notes = match.Page.Notes
+	answer.OtherTasks = make([]string, 0, len(match.Page.Tasks))
+	for i := range match.Page.Tasks {
+		task := &match.Page.Tasks[i]
+		if match.Task != nil && task.Title == match.Task.Title {
+			continue
+		}
+		answer.OtherTasks = append(answer.OtherTasks, task.Title)
 	}
 
 	return answer

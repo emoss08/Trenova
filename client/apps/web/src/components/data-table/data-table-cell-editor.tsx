@@ -1,4 +1,3 @@
-"use no memo";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Input } from "@trenova/shared/components/ui/input";
 import {
@@ -79,7 +78,6 @@ type DataTableCellEditorProps<TData extends Record<string, any>> = {
 export function DataTableCellEditor<TData extends Record<string, any>>({
   cell,
 }: DataTableCellEditorProps<TData>) {
-  "use no memo";
   const t = useT();
 
   const variant = (cell.column.columnDef.meta?.filterType ?? "text") as FilterVariant;

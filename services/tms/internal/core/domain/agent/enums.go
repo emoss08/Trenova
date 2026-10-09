@@ -56,6 +56,8 @@ const (
 	SubjectAccountingSyncRecord = SubjectType("AccountingSyncRecord")
 	SubjectAccountingInbound    = SubjectType("AccountingInboundChange")
 	SubjectAccountingDrift      = SubjectType("AccountingDriftFinding")
+	SubjectInvoice              = SubjectType("Invoice")
+	SubjectInvoiceDispute       = SubjectType("InvoiceDispute")
 )
 
 // Resource is the permission a person needs to read a record of this kind.
@@ -95,6 +97,10 @@ func (s SubjectType) Resource() (permission.Resource, bool) {
 		return permission.ResourceFormulaTemplate, true
 	case SubjectAccountingSyncRecord, SubjectAccountingInbound, SubjectAccountingDrift:
 		return permission.ResourceAccountingSync, true
+	case SubjectInvoice:
+		return permission.ResourceInvoice, true
+	case SubjectInvoiceDispute:
+		return permission.ResourceInvoiceDispute, true
 	default:
 		return "", false
 	}
@@ -108,6 +114,9 @@ const (
 	RunTriggerScheduled  = RunTrigger("Scheduled")
 	RunTriggerEvent      = RunTrigger("Event")
 	RunTriggerContinuous = RunTrigger("Continuous")
+	// RunTriggerWait is a run that picks up work an earlier run parked on a
+	// wait, once what it waited for happened or the wait ran out.
+	RunTriggerWait = RunTrigger("Wait")
 )
 
 func (t RunTrigger) IsValid() bool {
@@ -116,7 +125,8 @@ func (t RunTrigger) IsValid() bool {
 		RunTriggerChat,
 		RunTriggerScheduled,
 		RunTriggerEvent,
-		RunTriggerContinuous:
+		RunTriggerContinuous,
+		RunTriggerWait:
 		return true
 	default:
 		return false
@@ -144,7 +154,9 @@ func (s SubjectType) IsValid() bool {
 		SubjectFormulaTemplate,
 		SubjectAccountingSyncRecord,
 		SubjectAccountingInbound,
-		SubjectAccountingDrift:
+		SubjectAccountingDrift,
+		SubjectInvoice,
+		SubjectInvoiceDispute:
 		return true
 	default:
 		return false
@@ -173,6 +185,8 @@ func AllSubjectTypes() []SubjectType {
 		SubjectAccountingSyncRecord,
 		SubjectAccountingInbound,
 		SubjectAccountingDrift,
+		SubjectInvoice,
+		SubjectInvoiceDispute,
 	}
 }
 

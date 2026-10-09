@@ -16,6 +16,7 @@ type Deps struct {
 	AgentMemoryService        services.AgentMemoryService
 	AgentReflectionService    services.AgentReflectionService
 	AgentEvaluationService    services.AgentEvaluationService
+	AgentActivityService      services.AgentActivityService
 	AgentExceptionService     services.AgentExceptionService
 	AgentDecisionService      services.AgentDecisionService
 	AgentDecisionQueueService services.AgentDecisionQueueService

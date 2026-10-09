@@ -60,6 +60,8 @@ type Params struct {
 	AccountingDrift   repositories.AccountingDriftFindingRepository  `optional:"true"`
 	Dispatch          repositories.DispatchControlRepository         `optional:"true"`
 	Formulas          repositories.FormulaTemplateRepository         `optional:"true"`
+	Invoices          repositories.InvoiceRepository                 `optional:"true"`
+	Disputes          repositories.InvoiceDisputeRepository          `optional:"true"`
 }
 
 // Service describes the record an agent run or a conversation is about, so
@@ -87,6 +89,8 @@ type Service struct {
 	accountingDrift   repositories.AccountingDriftFindingRepository
 	dispatch          repositories.DispatchControlRepository
 	formulas          repositories.FormulaTemplateRepository
+	invoices          repositories.InvoiceRepository
+	disputes          repositories.InvoiceDisputeRepository
 	logger            *zap.Logger
 }
 
@@ -113,6 +117,8 @@ func New(p Params) serviceports.AgentSubjectDescriber {
 		inbound:           p.Inbound,
 		dispatch:          p.Dispatch,
 		formulas:          p.Formulas,
+		invoices:          p.Invoices,
+		disputes:          p.Disputes,
 		logger:            p.Logger.Named("service.agentsubject"),
 	}
 }
@@ -160,6 +166,10 @@ func (s *Service) Describe(
 		return s.accountingDriftFinding(ctx, tenant, subjectID)
 	case agent.SubjectFormulaTemplate:
 		return s.formulaTemplate(ctx, tenant, subjectID)
+	case agent.SubjectInvoice:
+		return s.invoice(ctx, tenant, subjectID)
+	case agent.SubjectInvoiceDispute:
+		return s.invoiceDispute(ctx, tenant, subjectID)
 	case agent.SubjectOrganization, "":
 		return nil, nil
 	default:

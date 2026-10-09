@@ -15,6 +15,7 @@ import {
 } from "@/lib/graphql/agent-capabilities";
 import { queries } from "@/lib/queries";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useNavigate, useSearchParams } from "react-router";
@@ -108,10 +109,15 @@ export function DeskAgentPage({ agentId }: { agentId: string }) {
   return (
     <div className="dk-pg">
       <div className="dk-pg-in dk-narrow">
-        <button type="button" className="dk-pg-back" onClick={back}>
+        <Button
+          variant="quiet"
+          size="sm"
+          className="-mt-3 mb-1 -ml-1.5 gap-1.25 self-start text-sm text-dsk-muted hover:bg-dsk-hover hover:text-dsk-fg has-[>svg]:pr-2.25 has-[>svg]:pl-1.5"
+          onClick={back}
+        >
           <DeskIcon name="chevL" size={13} />
           {from ? t("Back to conversation") : t("Back to Today")}
-        </button>
+        </Button>
         {capsQuery.isError ? (
           <p className="dk-ag-empty">
             {t("This agent's page could not be opened. You may not have access to it.")}
@@ -135,9 +141,13 @@ export function DeskAgentPage({ agentId }: { agentId: string }) {
                 <h1>{caps.name}</h1>
                 <p>{agentByline(caps, t)}</p>
               </div>
-              <button
-                type="button"
-                className={cn("dk-ag-on", caps.enabled && "dk-on")}
+              <Button
+                variant="bare"
+                size="bare"
+                className={cn(
+                  "dk-ag-on h-7 gap-2 rounded-full pr-3 pl-1 text-sm font-medium disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-100",
+                  caps.enabled ? "bg-dsk-hover text-dsk-fg" : "bg-dsk-sunken text-dsk-muted",
+                )}
                 aria-pressed={caps.enabled}
                 disabled={!editable}
                 title={
@@ -147,9 +157,9 @@ export function DeskAgentPage({ agentId }: { agentId: string }) {
                   change({ enabled: !caps.enabled }, { ...caps, enabled: !caps.enabled })
                 }
               >
-                <i />
+                <i className="size-5 rounded-full bg-dsk-card" />
                 {caps.enabled ? t("On") : t("Off")}
-              </button>
+              </Button>
             </header>
             {!caps.canEdit && (
               <p className="dk-pgc-tip">
@@ -251,22 +261,31 @@ function ToolSection({
                 )}
               </span>
               <div
-                className={cn("dk-mm-seg dk-sm", isLocked(tool) && "dk-locked")}
+                className={cn(
+                  "dk-ag-seg flex flex-none rounded-lg bg-dsk-sunken p-0.5 inset-ring inset-ring-dsk-b-sub",
+                  isLocked(tool) && "opacity-70",
+                )}
                 role="radiogroup"
                 aria-label={tool.label}
               >
                 {capabilityOptions(tool, canEdit).map((option) => (
-                  <button
+                  <Button
                     key={option.mode}
-                    type="button"
+                    variant="bare"
+                    size="bare"
                     role="radio"
                     aria-checked={option.selected}
                     disabled={option.disabled}
-                    className={cn(option.selected && "dk-on")}
+                    className={cn(
+                      "h-6 rounded-md px-2.25 text-xs font-medium transition-colors duration-140 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-100",
+                      option.selected
+                        ? "dk-on bg-dsk-card text-dsk-fg"
+                        : "text-dsk-muted enabled:hover:text-dsk-fg",
+                    )}
                     onClick={() => onMode(tool, option.mode)}
                   >
                     {MODE_LABEL[option.mode]}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -342,12 +361,16 @@ function Limits({
             <b>{t("Only change things during business hours")}</b>
             <em>{businessHoursLabel(limits.businessHoursStart, limits.businessHoursEnd, zone)}</em>
           </span>
-          <button
-            type="button"
+          <Button
+            variant="bare"
+            size="bare"
             role="switch"
             aria-checked={hoursOn}
             aria-label={t("Only change things during business hours")}
-            className={cn("dk-ag-on dk-sm", hoursOn && "dk-on")}
+            className={cn(
+              "dk-ag-on h-5.5 w-9.5 rounded-full px-0.5 disabled:pointer-events-auto disabled:cursor-not-allowed disabled:opacity-100",
+              hoursOn ? "bg-dsk-ink" : "bg-dsk-sunken",
+            )}
             disabled={!canEdit}
             onClick={() =>
               onChange(
@@ -356,8 +379,13 @@ function Limits({
               )
             }
           >
-            <i />
-          </button>
+            <i
+              className={cn(
+                "size-4.5 rounded-full bg-dsk-card transition-transform duration-220 ease-(--dk-spring)",
+                hoursOn && "translate-x-4",
+              )}
+            />
+          </Button>
         </div>
       </div>
     </section>

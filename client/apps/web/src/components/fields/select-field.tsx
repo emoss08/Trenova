@@ -21,7 +21,7 @@ import {
   SelectCommandItem,
 } from "@trenova/shared/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
-import { FieldWrapper } from "./field-components";
+import { FieldWrapper, type FieldLayout } from "./field-components";
 import { fieldInvalidClass, fieldTriggerClass } from "@trenova/shared/lib/variants/field";
 
 export type BaseSelectFieldProps = {
@@ -33,11 +33,13 @@ export type BaseSelectFieldProps = {
   isBoolean?: boolean;
   isInvalid?: boolean;
   className?: string;
+  triggerClassName?: string;
   placeholder?: string;
   isClearable?: boolean;
   renderOption?: (option: SelectOption, searchValue: string) => React.ReactNode;
   onValueChange?: (value: string) => void;
   warning?: WarningProps;
+  layout?: FieldLayout;
 };
 
 type SelectFieldProps<T extends FieldValues> = BaseSelectFieldProps & FormControlProps<T>;
@@ -49,6 +51,7 @@ export function SelectField<T extends FieldValues>({
   control,
   rules,
   className,
+  triggerClassName,
   options,
   groups,
   warning,
@@ -57,6 +60,7 @@ export function SelectField<T extends FieldValues>({
   isClearable = false,
   renderOption,
   onValueChange,
+  layout,
 }: SelectFieldProps<T>) {
   const t = useT();
 
@@ -128,12 +132,15 @@ export function SelectField<T extends FieldValues>({
 
         return (
           <FieldWrapper
+            name={name}
             label={label}
             description={description}
             warning={warning}
             required={!!rules?.required}
             error={fieldState.error?.message}
             className={className}
+            layout={layout}
+            formatValue={(selected) => optionMap.get(String(selected).toLowerCase())?.label}
           >
             <Popover open={isOpen} onOpenChange={setIsOpen}>
               <PopoverTrigger
@@ -151,6 +158,7 @@ export function SelectField<T extends FieldValues>({
                       isReadOnly && "pointer-events-none cursor-not-allowed opacity-60",
                       warning?.show &&
                         "ui-focus-ring border-warning bg-warning-subtle ring-0 ring-warning placeholder:text-warning-foreground focus:outline-hidden",
+                      triggerClassName,
                     )}
                   >
                     <div

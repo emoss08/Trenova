@@ -14,6 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	reportingservice "github.com/emoss08/trenova/internal/core/services/reporting"
+	"github.com/emoss08/trenova/internal/core/services/tableexportservice"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -749,4 +751,59 @@ func (r *QueryResolver) ReportDashboard(ctx context.Context, id string) (*gqlmod
 	}
 
 	return reportDashboardToModel(entity)
+}
+
+func (r *MutationResolver) ExportTableView(ctx context.Context, input gqlmodel.ExportTableViewInput) (*gqlmodel.TableExportResult, error) {
+	if input.View == nil {
+		return nil, errortypes.NewValidationError("view", errortypes.ErrRequired, "Say which table to export")
+	}
+	authCtx, err := r.RequirePermission(ctx, permission.Resource(input.View.Resource), permission.OpExport)
+	if err != nil {
+		return nil, err
+	}
+	view, err := tableExportView(ctx, authCtx, input.View)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.TableExportService.Export(ctx, &tableexportservice.ExportRequest{
+		Request: reportingRequest(authCtx),
+		Name:    input.Name,
+		View:    view,
+		Format:  report.Format(input.Format),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return tableExportResultToModel(result), nil
+}
+
+func (r *MutationResolver) ScheduleTableView(ctx context.Context, input gqlmodel.ScheduleTableViewInput) (*gqlmodel.TableExportResult, error) {
+	if input.View == nil {
+		return nil, errortypes.NewValidationError("view", errortypes.ErrRequired, "Say which table to export")
+	}
+	authCtx, err := r.RequirePermission(ctx, permission.Resource(input.View.Resource), permission.OpExport)
+	if err != nil {
+		return nil, err
+	}
+	view, err := tableExportView(ctx, authCtx, input.View)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.TableExportService.Schedule(ctx, &tableexportservice.ScheduleRequest{
+		Request:         reportingRequest(authCtx),
+		Name:            input.Name,
+		View:            view,
+		CronExpression:  input.CronExpression,
+		Timezone:        base.StringValue(input.Timezone),
+		Formats:         input.Formats,
+		EmailRecipients: input.EmailRecipients,
+		EmailAttach:     base.BoolValue(input.EmailAttach),
+		EmailInline:     base.BoolValue(input.EmailInline),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return tableExportResultToModel(result), nil
 }

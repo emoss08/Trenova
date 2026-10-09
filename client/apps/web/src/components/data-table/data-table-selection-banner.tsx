@@ -1,32 +1,42 @@
-"use no memo";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useRichT } from "@trenova/shared/i18n/rich";
+import { useTableAtom, type TableAtomSource } from "@trenova/shared/hooks/use-table-atom";
+import { countSelectedRows } from "@trenova/shared/lib/table-features";
+import type { RowSelectionState } from "@tanstack/react-table";
 
 type DataTableSelectionBannerProps = {
-  visible: boolean;
-  selectedCount: number;
+  selection: TableAtomSource<RowSelectionState>;
+  pageRowIds: readonly string[];
   totalCount: number;
   maxSelectable: number;
   isSelectingAll: boolean;
   onSelectAllMatching: () => void;
   onClearSelection: () => void;
+  /** Edits every row the filters match on the server, however many there are. */
+  onEditAllMatching?: () => void;
 };
 
 export function DataTableSelectionBanner({
-  visible,
-  selectedCount,
+  selection,
+  pageRowIds,
   totalCount,
   maxSelectable,
   isSelectingAll,
   onSelectAllMatching,
   onClearSelection,
+  onEditAllMatching,
 }: DataTableSelectionBannerProps) {
   const t = useT();
   const rt = useRichT();
+  const allPageRowsSelected = useTableAtom(
+    selection,
+    (current) => pageRowIds.length > 0 && pageRowIds.every((id) => current[id]),
+  );
+  const selectedCount = useTableAtom(selection, countSelectedRows);
 
-  if (!visible) return null;
+  if (!allPageRowsSelected || totalCount <= pageRowIds.length) return null;
 
   const target = Math.min(totalCount, maxSelectable);
 
@@ -58,6 +68,17 @@ export function DataTableSelectionBanner({
           )}
         </Button>
       )}
+      {onEditAllMatching ? (
+        <Button
+          type="button"
+          variant="link"
+          size="xs"
+          className="h-auto p-0 text-xs"
+          onClick={onEditAllMatching}
+        >
+          {t("Edit all {0} matching", totalCount.toLocaleString())}
+        </Button>
+      ) : null}
       <Button
         type="button"
         variant="link"

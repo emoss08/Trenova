@@ -24,6 +24,8 @@ type AgentToolPolicyView struct {
 	Promotable  agent.AutonomyTier
 	Leaves      bool
 	Explanation string
+	Declared    *ToolPolicy
+	Override    *agent.ToolRuleOverride
 }
 
 type ToolAutonomy struct {
@@ -40,6 +42,7 @@ type AgentToolSafety struct {
 	PolicyName string
 	Clean      ToolAutonomy
 	Tainted    ToolAutonomy
+	Policy     *AgentToolPolicyView
 }
 
 func (s *AgentToolSafety) RowID() string {
@@ -64,6 +67,7 @@ type ListAgentSafetyRequest struct {
 type AssessAgentSafetyRequest struct {
 	Subject *AgentSafetySubject
 	Trust   []*agent.ToolTrust
+	Rules   map[string]*agent.ToolRuleOverride
 }
 
 type AgentReachRequest struct {
@@ -107,11 +111,31 @@ type AgentToolPolicyPage struct {
 }
 
 type AgentSafetySummary struct {
-	ToolCount         int
-	RunWithoutPerson  int
-	LeaveOrganization int
-	OpenWithSensitive int
-	Resources         []string
+	ToolCount             int
+	RunWithoutPerson      int
+	LeaveOrganization     int
+	OpenWithSensitive     int
+	Resources             []string
+	EgressCounts          []AgentEgressCount
+	UnattendedTools       []string
+	OpenSensitiveAgentIDs []pulid.ID
+}
+
+type RuleImpactRequest struct {
+	TenantInfo pagination.TenantInfo
+	ToolName   string
+	Before     ToolPolicy
+	After      ToolPolicy
+}
+
+type AgentToolHolders struct {
+	PolicyName string
+	AgentIDs   []pulid.ID
+}
+
+type AgentEgressCount struct {
+	Egress agent.EgressClass
+	Count  int
 }
 
 type AgentSafetyService interface {
@@ -126,6 +150,8 @@ type AgentSafetyService interface {
 		req *ListAgentToolSafetyRequest,
 	) (*AgentToolSafetyPage, error)
 	Summary(ctx context.Context, tenantInfo pagination.TenantInfo) (*AgentSafetySummary, error)
+	ToolHolders(ctx context.Context, tenantInfo pagination.TenantInfo) ([]AgentToolHolders, error)
+	RuleImpact(ctx context.Context, req *RuleImpactRequest) ([]AgentToolRuleImpact, error)
 	ListSubjects(
 		ctx context.Context,
 		req *ListAgentSafetyRequest,

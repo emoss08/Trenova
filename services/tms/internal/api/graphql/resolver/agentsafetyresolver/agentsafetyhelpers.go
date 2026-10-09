@@ -57,8 +57,28 @@ func ToolPolicyViewToModel(view *services.AgentToolPolicyView) *gqlmodel.AgentTo
 		source := policy.Source
 		out.Source = &source
 	}
+	applyRule(out, view)
 
 	return out
+}
+
+func applyRule(out *gqlmodel.AgentToolPolicy, view *services.AgentToolPolicyView) {
+	declared := &view.Policy
+	if view.Declared != nil {
+		declared = view.Declared
+	}
+	out.DeclaredMaxTier = tierOr(declared.MaxTier, agent.TierAutoExecute)
+	out.DeclaredReadsExternal = declared.ReadsExternal
+	if !out.DeclaredReadsExternal.IsValid() {
+		out.DeclaredReadsExternal = agent.ExternalReadNever
+	}
+	if view.Override == nil {
+		return
+	}
+	out.RuleVersion = int(view.Override.Version)
+	if !view.Override.Empty() {
+		out.Rule = view.Override
+	}
 }
 
 func (r *Deps) AgentToolSafetyPolicy(
@@ -66,6 +86,9 @@ func (r *Deps) AgentToolSafetyPolicy(
 ) (*gqlmodel.AgentToolPolicy, error) {
 	if obj == nil {
 		return nil, errortypes.NewNotFoundError("Tool not found")
+	}
+	if obj.Policy != nil {
+		return ToolPolicyViewToModel(obj.Policy), nil
 	}
 
 	view, ok := r.AgentSafetyService.ToolPolicy(obj.PolicyName)
@@ -154,4 +177,25 @@ func (r *Deps) AgentSafetyReach(
 	}
 
 	return reach, nil
+}
+
+func toolRuleChange(input *gqlmodel.AgentToolRuleInput) services.ToolRuleChange {
+	var change services.ToolRuleChange
+	if input.MaxTier != nil {
+		change.MaxTier = *input.MaxTier
+	}
+	if input.ReadsExternal != nil {
+		change.ReadsExternal = *input.ReadsExternal
+	}
+
+	return change
+}
+
+func impactPointers(impacts []services.AgentToolRuleImpact) []*services.AgentToolRuleImpact {
+	out := make([]*services.AgentToolRuleImpact, len(impacts))
+	for idx := range impacts {
+		out[idx] = &impacts[idx]
+	}
+
+	return out
 }

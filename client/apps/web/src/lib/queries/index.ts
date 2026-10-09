@@ -22,6 +22,7 @@ import { manualJournal } from "./manual-journal";
 import { audit } from "./audit";
 import { briefing } from "./briefing";
 import { billingControl } from "./billing-control";
+import { caseChecklist } from "./case-checklist";
 import { billingQueue } from "./billing-queue";
 import { customer } from "./customer";
 import { customerPayment } from "./customer-payment";
@@ -64,6 +65,9 @@ import { sidebarPreferences } from "./sidebar-preferences";
 import { notification } from "@trenova/shared/lib/queries/notification";
 import { tableChangeAlert } from "./table-change-alert";
 import { tableConfiguration } from "./table-configuration";
+import { tableLayout } from "./table-layout";
+import { dataTableInsight } from "./data-table-insight";
+import { bulkEdit } from "./bulk-edit";
 import { user, userOrganization } from "./user";
 import { weatherAlert } from "./weather-alert";
 import { weatherRadar } from "./weather-radar";
@@ -85,6 +89,7 @@ const financialQueries = mergeQueryKeys(
   journalReversal,
   manualJournal,
   billingControl,
+  caseChecklist,
   billingQueue,
   invoice,
   invoiceAdjustment,
@@ -126,6 +131,9 @@ const workspaceQueries = mergeQueryKeys(
   userOrganization,
   pageFavoite,
   tableConfiguration,
+  tableLayout,
+  dataTableInsight,
+  bulkEdit,
   homeLayout,
   sidebarPreferences,
   user,

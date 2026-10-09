@@ -16,6 +16,7 @@ import {
   type AssistantThread,
 } from "@/types/assistant";
 import { hashKey, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -470,11 +471,13 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
           onTogglePin={(thread) => pinMutation.mutate(thread)}
           onDelete={(thread) => deleteMutation.mutate(thread.id)}
           onRename={(thread, title) => renameMutation.mutate({ thread, title })}
+          onCaseWake={refreshThreads}
         />
         {railOpen && (
-          <button
-            type="button"
-            className="dk-rail-scrim"
+          <Button
+            variant="bare"
+            size="bare"
+            className="dk-rail-scrim fixed inset-0 z-39 hidden max-[720px]:block"
             aria-label={t("Close the menu")}
             onClick={() => setRailOpen(false)}
           />

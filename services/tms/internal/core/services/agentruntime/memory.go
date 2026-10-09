@@ -4,7 +4,6 @@ import (
 	"context"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,44 +14,29 @@ func (s *Service) memoriesForPrompt(
 	ctx context.Context,
 	req *serviceports.RunRequest,
 	rc *agentdefinition.RuntimeContext,
-) []*agent.Memory {
+) agentdefinition.MemoryFit {
 	if !req.Definition.HasContextProvider(agentdefinition.ContextMemory) {
-		return nil
+		return agentdefinition.MemoryFit{}
 	}
 
-	fitted := req.Definition.FitMemories(rc)
-	if len(fitted) == 0 || s.memories == nil || req.Actor == nil {
-		return fitted
+	fit := req.Definition.PlanMemories(rc)
+	if len(fit.Used) == 0 || s.memories == nil || req.Actor == nil {
+		return fit
 	}
 
 	if err := s.memories.RecordUse(ctx, serviceports.RecordMemoryUseRequest{
 		TenantInfo: req.Actor.TenantInfo(),
-		IDs:        memoryIDs(fitted),
+		IDs:        fit.Used,
 	}); err != nil {
-		s.logger.Warn("agent memory: could not count the memories a prompt carried",
+		s.logger.Warn("agent memory: could not count the memories a turn used",
 			zap.Error(err),
 		)
 	}
 
-	return fitted
+	return fit
 }
 
-func memoryIDs(memories []*agent.Memory) []pulid.ID {
-	if len(memories) == 0 {
-		return nil
-	}
-
-	ids := make([]pulid.ID, 0, len(memories))
-	for _, memory := range memories {
-		if memory != nil && memory.ID.IsNotNil() {
-			ids = append(ids, memory.ID)
-		}
-	}
-
-	return ids
-}
-
-// announceMemories tells the reader which memories the prompt carried, before
+// announceMemories tells the reader which memories bore on the turn, before
 // the first word of the reply, so the note that says so sits above it.
 func (t *Turn) announceMemories(fx TurnEffects) {
 	if len(t.result.UsedMemoryIDs) == 0 {
@@ -87,6 +71,31 @@ func (t *Turn) noteMemories(fx TurnEffects, outcome *toolOutcome) {
 			Event: serviceports.AssistantEventMemorySaved,
 			Data:  *saved,
 		})
+	}
+}
+
+// noteToolMemories counts the memories about a tool as used once the turn
+// calls it: they were carried because the tool was on hand, and bear on the
+// reply only when it is.
+func (t *Turn) noteToolMemories(fx TurnEffects, tool string) {
+	if t.req.Delegation != nil || len(t.toolMemories) == 0 {
+		return
+	}
+	ids, ok := t.toolMemories[tool]
+	if !ok {
+		return
+	}
+	delete(t.toolMemories, tool)
+
+	added := false
+	for _, id := range ids {
+		if id.IsNotNil() && !slices.Contains(t.result.UsedMemoryIDs, id) {
+			t.result.UsedMemoryIDs = append(t.result.UsedMemoryIDs, id)
+			added = true
+		}
+	}
+	if added {
+		fx.Emit(memoryUsedEvent(t.result.UsedMemoryIDs))
 	}
 }
 

@@ -29,6 +29,20 @@ import { Form } from "@trenova/shared/components/ui/form";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { useTableAtom, type TableAtomSource } from "@trenova/shared/hooks/use-table-atom";
+import type { RowSelectionState } from "@tanstack/react-table";
+
+const NO_SELECTION: TableAtomSource<RowSelectionState> = {
+  get: () => ({}),
+  subscribe: () => ({ unsubscribe: () => {} }),
+};
+
+function firstSelectedRowId(selection: RowSelectionState): string | undefined {
+  for (const id in selection) {
+    if (selection[id]) return id;
+  }
+  return undefined;
+}
 
 type FormEditModalProps<T extends FieldValues> = EditTableSheetProps<T> & {
   url: API_ENDPOINTS;
@@ -83,7 +97,10 @@ export function FormEditModal<T extends FieldValues>({
   const navigationQueueRef = useRef<string | null>(null);
   const isNavigatingRef = useRef(false);
   const [pendingNavigationId, setPendingNavigationId] = React.useState<string | null>(null);
-  const selectedRowKey = dataTable ? Object.keys(dataTable.rowSelection)?.[0] : undefined;
+  const selectedRowKey = useTableAtom(
+    dataTable?.table.atoms.rowSelection ?? NO_SELECTION,
+    firstSelectedRowId,
+  );
   const modalOpen = open ?? !!selectedRowKey;
 
   const selectedRow = React.useMemo(() => {

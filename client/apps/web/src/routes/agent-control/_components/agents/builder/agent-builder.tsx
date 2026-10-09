@@ -1,9 +1,6 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { agentAccessPreviewRequest } from "@/lib/graphql/agent-access";
-import {
-  fetchAgentDefinition,
-  fetchAgentVersionDraft,
-} from "@/lib/graphql/agent-builder";
+import { fetchAgentDefinition, fetchAgentVersionDraft } from "@/lib/graphql/agent-builder";
 import { agentControlQueryOptions } from "@/lib/graphql/agent-control";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
@@ -18,11 +15,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
+import { AGENT_TRY_PARAM, agentTryParser } from "../../../ai-control-tabs";
+import { useAddressedFlag } from "../../../use-addressed-flag";
 import { ConflictBar } from "../../edit/conflict-bar";
 import { ChangeReview, type EditFields } from "../../edit/change-review";
 import { SaveBar } from "../../edit/save-bar";
 import { useEditFlow } from "../../edit/use-edit-flow";
-import { Menu } from "../../kit/controls";
 import { Ic } from "../../kit/ic";
 import { Switch } from "../../kit/layout";
 import { Tile } from "../../kit/marks";
@@ -43,7 +41,9 @@ import {
   changeTiers,
   checklist,
   chosenTools,
+  opensOnIntro,
   readiness,
+  startingTier,
   startValues,
   triggerProblem,
   type BuilderStart,
@@ -60,6 +60,15 @@ import { TriggerBlock } from "./trigger-block";
 import { TryPanel } from "./try-panel";
 import { schedulePreset } from "./schedule-presets";
 import { useAgentDrafting } from "./use-agent-drafting";
+import { Button } from "@trenova/shared/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@trenova/shared/components/ui/dropdown-menu";
 
 export { BUILDER_STARTS, type BuilderStart } from "./builder-model";
 
@@ -101,10 +110,17 @@ type AgentBuilderProps = {
 
 /**
  * The whole viewport for building one agent: a checklist down the left, the agent on a
- * canvas section by section, and a panel to try the unsaved draft. A new agent opens on
- * "What should it do?" and starts in shadow.
+ * canvas section by section, and a panel to try the unsaved draft. A blank new agent opens
+ * on "What should it do?"; one started from a shape opens on the shape. Either goes live on
+ * save unless the mode menu says shadow or simulation.
  */
-export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }: AgentBuilderProps) {
+export function AgentBuilder({
+  agent,
+  start,
+  onClose,
+  onOpenActivity,
+  onOpened,
+}: AgentBuilderProps) {
   const t = useT();
   const queryClient = useQueryClient();
   const timezone = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone, []);
@@ -141,9 +157,9 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
   const values = useWatch({ control: form.control }) as AgentFormValues;
   const savedAccess = useRef(agent ? accessOf(formValuesOf(agent)) : NEW_AGENT_ACCESS);
 
-  const [intro, setIntro] = useState(agent === null);
+  const [intro, setIntro] = useState(agent === null && opensOnIntro(start));
   const [fresh, setFresh] = useState<BlockId[]>([]);
-  const [tryOpen, setTryOpen] = useState(false);
+  const [tryOpen, setTryOpen] = useAddressedFlag(AGENT_TRY_PARAM, agentTryParser);
   const [tried, setTried] = useState<string | null>(null);
   const [active, setActive] = useState<BlockId>("who");
   const [pop, setPop] = useState<"mode" | "more" | null>(null);
@@ -349,11 +365,13 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
   const giveTool = useCallback(
     (name: string) => {
       if (values.toolNames.includes(name)) return;
-      const rule = rules.get(name);
-      const top = (rule?.promotableTier as AutonomyTier | undefined) ?? values.autonomyCeiling;
+      const most = rules.get(name)?.promotableTier as AutonomyTier | undefined;
       set("toolNames", [...values.toolNames, name]);
       if (catalog.find((tool) => tool.name === name)?.kind === "action") {
-        set("toolTiers", { ...values.toolTiers, [name]: top });
+        set("toolTiers", {
+          ...values.toolTiers,
+          [name]: startingTier(most, values.autonomyCeiling),
+        });
       }
     },
     [catalog, rules, set, values.autonomyCeiling, values.toolNames, values.toolTiers],
@@ -408,7 +426,10 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
     instructions: {
       label: t("Instructions"),
       format: (value) =>
-        t("{0} words", (typeof value === "string" ? value : "").split(/\s+/).filter(Boolean).length),
+        t(
+          "{0} words",
+          (typeof value === "string" ? value : "").split(/\s+/).filter(Boolean).length,
+        ),
     },
     guardrails: { label: t("Never") },
     triggerMode: { label: t("Starts when") },
@@ -430,11 +451,17 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
         return tool ? toolTitle(tool) : String(name);
       },
     },
-    toolTiers: { label: t("Tool freedom"), format: (value) => t("{0} set", Object.keys(value ?? {}).length) },
+    toolTiers: {
+      label: t("Tool freedom"),
+      format: (value) => t("{0} set", Object.keys(value ?? {}).length),
+    },
     toolDailyLimits: {
       label: t("Daily tool limits"),
       format: (value) =>
-        t("{0} set", Object.values((value ?? {}) as Record<string, number | null>).filter(Boolean).length),
+        t(
+          "{0} set",
+          Object.values((value ?? {}) as Record<string, number | null>).filter(Boolean).length,
+        ),
     },
     autonomyCeiling: { label: t("Ceiling") },
     dataAccessCeiling: { label: t("Data access") },
@@ -499,7 +526,12 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
             : t("No events yet");
   const learningOffForAll = controlQuery.data?.learningOff ?? false;
   const entries: RailEntry[] = [
-    { id: "who", label: t("Identity"), summary: values.name.trim() || t("Unnamed"), status: status.who },
+    {
+      id: "who",
+      label: t("Identity"),
+      summary: values.name.trim() || t("Unnamed"),
+      status: status.who,
+    },
     {
       id: "instr",
       label: t("Instructions"),
@@ -521,9 +553,7 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
       id: "limits",
       label: t("Budget and model"),
       summary: `${
-        values.monthlyBudgetUsd === null
-          ? t("No cap")
-          : t("${0}/mo", values.monthlyBudgetUsd)
+        values.monthlyBudgetUsd === null ? t("No cap") : t("${0}/mo", values.monthlyBudgetUsd)
       } · ${values.outputMode === "Report" ? t("reports") : t("conversational")}`,
       status: status.limits,
     },
@@ -568,9 +598,6 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
       : mode === "shadow"
         ? t("Create in shadow")
         : t("Create in simulation");
-  const providers = (providersQuery.data ?? [])
-    .filter((provider) => provider.enabled && provider.tasks.includes("AssistantChat"))
-    .map((provider) => ({ id: provider.id, name: provider.name, model: provider.model }));
   const shadow = shadowQuery.data;
 
   return (
@@ -592,7 +619,10 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
                 {t("Agents")}
               </button>
               <span className="ab-sl">/</span>
-              <Tile agent={{ name: values.name, icon: values.icon, accent: values.accent }} s={22} />
+              <Tile
+                agent={{ name: values.name, icon: values.icon, accent: values.accent }}
+                s={22}
+              />
               <b className="ab-n">{values.name.trim() || t("New agent")}</b>
               {!intro && (
                 <div className="rel">
@@ -653,73 +683,77 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
                     type="button"
                     className={cn("ab-tb", tryOpen && "on")}
                     aria-pressed={tryOpen}
-                    onClick={() => setTryOpen((open) => !open)}
+                    onClick={() => setTryOpen(!tryOpen)}
                   >
                     <Ic n="flask" s={13} />
                     {t("Try it")}
                   </button>
                   {agent && (
-                    <div className="rel">
-                      <button
-                        type="button"
-                        className="ib"
-                        aria-label={t("More")}
-                        aria-haspopup="menu"
-                        aria-expanded={pop === "more"}
-                        onClick={() => setPop(pop === "more" ? null : "more")}
+                    <DropdownMenu
+                      open={pop === "more"}
+                      onOpenChange={(open) => setPop(open ? "more" : null)}
+                    >
+                      <DropdownMenuTrigger
+                        render={
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            className="text-muted-foreground hover:text-foreground"
+                            aria-label={t("More")}
+                          />
+                        }
                       >
                         <Ic n="more" s={15} />
-                      </button>
-                      {pop === "more" && (
-                        <Menu
-                          right
-                          label={t("More")}
-                          onClose={() => setPop(null)}
-                          items={[
-                            {
-                              kind: "item",
-                              icon: <Ic n="copy" s={14} />,
-                              label: t("Duplicate"),
-                              onSelect: () => void duplicate().catch(() => toast.error(t("It could not be duplicated"))),
-                            },
-                            {
-                              kind: "item",
-                              icon: <Ic n="download" s={14} />,
-                              label: t("Export as JSON"),
-                              note: t("Import it into another organization"),
-                              onSelect: () =>
-                                downloadJsonFile(
-                                  `${slugify(values.name || "agent")}.agent.json`,
-                                  toSaveRequest(values),
-                                ),
-                            },
-                            ...(onOpenActivity
-                              ? [
-                                  {
-                                    kind: "item" as const,
-                                    icon: <Ic n="timeline" s={14} />,
-                                    label: t("Runs and proposals"),
-                                    onSelect: () => {
-                                      onOpenActivity();
-                                      flow.tryClose();
-                                    },
-                                  },
-                                ]
-                              : []),
-                            { kind: "separator" },
-                            {
-                              kind: "item",
-                              icon: <Ic n={agent.systemKey ? "lock" : "trash"} s={14} />,
-                              label: agent.systemKey ? t("System agent") : t("Remove agent"),
-                              note: agent.systemKey ? t("Started by Trenova; turn it off instead") : undefined,
-                              danger: !agent.systemKey,
-                              disabled: Boolean(agent.systemKey),
-                              onSelect: () => setRemoving(true),
-                            },
-                          ]}
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-64">
+                        <DropdownMenuGroup>
+                          <DropdownMenuItem
+                            title={t("Duplicate")}
+                            startContent={<Ic n="copy" s={14} />}
+                            onClick={() =>
+                              void duplicate().catch(() =>
+                                toast.error(t("It could not be duplicated")),
+                              )
+                            }
+                          />
+                          <DropdownMenuItem
+                            title={t("Export as JSON")}
+                            description={t("Import it into another organization")}
+                            startContent={<Ic n="download" s={14} />}
+                            onClick={() =>
+                              downloadJsonFile(
+                                `${slugify(values.name || "agent")}.agent.json`,
+                                toSaveRequest(values),
+                              )
+                            }
+                          />
+                          {onOpenActivity && (
+                            <DropdownMenuItem
+                              title={t("Runs and proposals")}
+                              startContent={<Ic n="timeline" s={14} />}
+                              onClick={() => {
+                                onOpenActivity();
+                                flow.tryClose();
+                              }}
+                            />
+                          )}
+                        </DropdownMenuGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          title={agent.systemKey ? t("System agent") : t("Remove agent")}
+                          description={
+                            agent.systemKey
+                              ? t("Started by Trenova; turn it off instead")
+                              : undefined
+                          }
+                          startContent={<Ic n={agent.systemKey ? "lock" : "trash"} s={14} />}
+                          color={agent.systemKey ? undefined : "danger"}
+                          disabled={Boolean(agent.systemKey)}
+                          onClick={() => setRemoving(true)}
                         />
-                      )}
-                    </div>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   )}
                   <span className="ab-vr" />
                 </>
@@ -731,15 +765,17 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
                   review={<ChangeReview form={form} flow={flow} fields={fields} />}
                 />
               </div>
-              <button
+              <Button
                 type="button"
-                className="ib"
+                variant="ghost"
+                size="icon-sm"
+                className="text-muted-foreground hover:text-foreground"
                 title={t("Close (Esc)")}
                 aria-label={t("Close (Esc)")}
                 onClick={flow.tryClose}
               >
                 <Ic n="x" s={14} />
-              </button>
+              </Button>
             </header>
             {flow.conflict && (
               <ConflictBar
@@ -773,7 +809,10 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
                     modeNote={
                       mode === "live"
                         ? t("It's set to go live when you save")
-                        : t("It stays in {0} until you switch it", modeLabels[mode].label.toLowerCase())
+                        : t(
+                            "It stays in {0} until you switch it",
+                            modeLabels[mode].label.toLowerCase(),
+                          )
                     }
                     versions={versionsQuery.data ?? null}
                     currentVersion={agent?.version ?? 0}
@@ -789,12 +828,18 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
                           <Ic n="eyeOff" s={14} />
                           <div>
                             <b>
-                              {t("Going live after {0} shadow proposals", shadow.recorded.toLocaleString())}
+                              {t(
+                                "Going live after {0} shadow proposals",
+                                shadow.recorded.toLocaleString(),
+                              )}
                             </b>
                             <span>
                               {[
                                 shadow.matchRate !== null && shadow.matchRate !== undefined
-                                  ? t("{0}% matched what people did", Math.round(shadow.matchRate * 100))
+                                  ? t(
+                                      "{0}% matched what people did",
+                                      Math.round(shadow.matchRate * 100),
+                                    )
                                   : t("No one has answered one yet"),
                                 shadow.wouldReject === 1
                                   ? t("1 would have been rejected")
@@ -808,9 +853,9 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
                             </span>
                           </div>
                           {onOpenActivity && (
-                            <button type="button" className="btn sm" onClick={onOpenActivity}>
+                            <Button type="button" variant="outline" size="sm" onClick={onOpenActivity}>
                               {t("Read them")}
-                            </button>
+                            </Button>
                           )}
                         </div>
                       )}
@@ -835,7 +880,6 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
                       <TriggerBlock
                         fresh={fresh.includes("trig")}
                         events={events}
-                        roles={roles}
                         sensitiveTools={sensitiveTools}
                         toolTitle={(name) => {
                           const tool = catalog.find((entry) => entry.name === name);
@@ -852,13 +896,10 @@ export function AgentBuilder({ agent, start, onClose, onOpenActivity, onOpened }
                       >
                         <ToolBench catalog={catalog} rules={rules} />
                       </Blk>
-                      <LimitsBlock
-                        fresh={fresh.includes("limits")}
-                        providers={providers}
-                        budget={budgetQuery.data}
-                      />
+                      <LimitsBlock fresh={fresh.includes("limits")} budget={budgetQuery.data} />
                       <TeamBlock
-                        agents={(agentsQuery.data ?? []).filter((entry) => entry.id !== agent?.id)}
+                        agents={agentsQuery.data ?? []}
+                        selfId={agent?.id ?? null}
                         learningOffForAll={learningOffForAll}
                       />
                       {agent && (

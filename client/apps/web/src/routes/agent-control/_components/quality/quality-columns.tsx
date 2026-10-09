@@ -1,4 +1,3 @@
-import { Sparkline } from "@/components/kpi/sparkline";
 import type {
   AgentQualityRow,
   AgentSuiteRun,
@@ -17,6 +16,9 @@ import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { evaluationStatusChoices } from "../activity/agent-badges";
+import { Ic } from "../kit/ic";
+import { Tile } from "../kit/marks";
+import { Line, Pts } from "../kit/values";
 import { readCaseChecks } from "./cases/case-checks";
 import {
   SUITE_RUN_STATUS,
@@ -24,6 +26,8 @@ import {
   formatDelta,
   formatShare,
   formatUsd,
+  pointsChange,
+  ratingReasonLabels,
   sparklineValues,
   suiteRunStatusChoices,
   targetTypeChoices,
@@ -81,19 +85,16 @@ function QualityLineCell({ row }: { row: AgentQualityRow }) {
   const t = useT();
   const values = sparklineValues(row.qualityPoints);
   if (values.length === 0) {
-    return <span className="text-muted-foreground text-xs">{t("No scored runs")}</span>;
+    return <span className="dim">{t("No scored runs")}</span>;
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <Sparkline
-        data={values}
-        color={row.openRegression ? "var(--chart-5)" : "var(--chart-1)"}
-        width={80}
-        height={22}
-      />
-      <span className="tabular-nums">{formatShare(row.qualityScore)}</span>
-    </div>
+    <span className="qs">
+      <b className="mono">{formatShare(row.qualityScore)}</b>
+      <span className={row.openRegression ? "t-d" : "t-b"}>
+        <Line values={values} />
+      </span>
+    </span>
   );
 }
 
@@ -131,14 +132,13 @@ export function getAgentQualityColumns(
       accessorKey: "name",
       header: t("Agent"),
       cell: ({ row }) => (
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="truncate">{row.original.name}</span>
-          {!row.original.enabled ? (
-            <Badge variant="neutral" appearance="outline">
-              {t("Off")}
-            </Badge>
-          ) : null}
-        </div>
+        <span className="agc">
+          <Tile agent={{ id: row.original.agentDefinitionId, name: row.original.name }} s={22} />
+          <span className="tl">
+            <b>{row.original.name}</b>
+            {!row.original.enabled && <span>{t("Off")}</span>}
+          </span>
+        </span>
       ),
       size: 240,
       meta: {
@@ -187,6 +187,26 @@ export function getAgentQualityColumns(
       },
     },
     {
+      id: "change",
+      accessorFn: (row) => pointsChange(row.lastSuiteRun ?? null),
+      header: t("Change"),
+      cell: ({ row }) => <Pts value={pointsChange(row.original.lastSuiteRun ?? null)} />,
+      size: 100,
+      meta: { label: t("Change"), filterable: false, sortable: false },
+    },
+    {
+      accessorKey: "ratings",
+      header: t("Ratings"),
+      cell: ({ row }) =>
+        row.original.ratingsVisible ? (
+          <span className="mono">{row.original.ratings.toLocaleString()}</span>
+        ) : (
+          <span className="dim">{t("Hidden")}</span>
+        ),
+      size: 100,
+      meta: { label: t("Ratings"), filterable: false, sortable: false },
+    },
+    {
       accessorKey: "openRegression",
       header: t("Regressed"),
       cell: ({ row }) => (row.original.openRegression ? t("Yes") : t("No")),
@@ -222,26 +242,19 @@ export function getAgentQualityColumns(
 export function getSuiteRunColumns(t: TranslateFn): ColumnDef<AgentSuiteRunRow>[] {
   return [
     {
-      accessorKey: "startedAt",
-      header: t("Started"),
-      cell: ({ row }) => (
-        <span className="tabular-nums">
-          {formatUnixInUserTimezone(row.original.startedAt, RUN_TIME_FORMAT)}
-        </span>
-      ),
-      size: 160,
-      meta: {
-        label: t("Started"),
-        apiField: "startedAt",
-        filterable: true,
-        sortable: true,
-        filterType: "date",
-      },
-    },
-    {
       accessorKey: "agentName",
       header: t("Agent"),
-      cell: ({ row }) => <span className="truncate">{row.original.agentName}</span>,
+      cell: ({ row }) => (
+        <span className="agc">
+          <Tile
+            agent={{ id: row.original.agentDefinitionId, name: row.original.agentName }}
+            s={22}
+          />
+          <span className="tl">
+            <b>{row.original.agentName}</b>
+          </span>
+        </span>
+      ),
       size: 200,
       meta: {
         label: t("Agent"),
@@ -298,18 +311,28 @@ export function getSuiteRunColumns(t: TranslateFn): ColumnDef<AgentSuiteRunRow>[
     },
     {
       accessorKey: "casesFailed",
-      header: t("Cases"),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground tabular-nums">
-          {t(
-            "{0} passed, {1} failed, {2} skipped",
-            row.original.casesPassed,
-            row.original.casesFailed,
-            row.original.casesSkipped,
-          )}
-        </span>
-      ),
-      size: 220,
+      header: t("Cases asked"),
+      cell: ({ row }) => {
+        const asked = row.original.casesPassed + row.original.casesFailed;
+        const total = row.original.casesTotal;
+        return (
+          <span
+            className="cs"
+            title={t(
+              "{0} passed, {1} failed, {2} skipped",
+              row.original.casesPassed,
+              row.original.casesFailed,
+              row.original.casesSkipped,
+            )}
+          >
+            <span className="ubar">
+              <i style={{ width: `${total > 0 ? (asked / total) * 100 : 0}%` }} />
+            </span>
+            <span className="mono">{t("{0}/{1}", asked, total)}</span>
+          </span>
+        );
+      },
+      size: 160,
       meta: {
         label: t("Cases failed"),
         apiField: "casesFailed",
@@ -317,6 +340,14 @@ export function getSuiteRunColumns(t: TranslateFn): ColumnDef<AgentSuiteRunRow>[
         sortable: true,
         filterType: "number",
       },
+    },
+    {
+      id: "change",
+      accessorFn: (row) => pointsChange(row),
+      header: t("Change"),
+      cell: ({ row }) => <Pts value={pointsChange(row.original)} />,
+      size: 100,
+      meta: { label: t("Change"), filterable: false, sortable: false },
     },
     {
       accessorKey: "changeSummary",
@@ -341,6 +372,23 @@ export function getSuiteRunColumns(t: TranslateFn): ColumnDef<AgentSuiteRunRow>[
         apiField: "costUsd",
         filterable: false,
         sortable: true,
+      },
+    },
+    {
+      accessorKey: "startedAt",
+      header: t("Started"),
+      cell: ({ row }) => (
+        <span className="tabular-nums">
+          {formatUnixInUserTimezone(row.original.startedAt, RUN_TIME_FORMAT)}
+        </span>
+      ),
+      size: 160,
+      meta: {
+        label: t("Started"),
+        apiField: "startedAt",
+        filterable: true,
+        sortable: true,
+        filterType: "date",
       },
     },
   ];
@@ -477,18 +525,37 @@ export function answerQuestion(answer: AgentWorstRatedAnswer): string {
   return answer.sample?.turnSnapshot?.question.trim() ?? "";
 }
 
+/** The answer people rated down, quoted, with what they said about it under it. */
+function RatedAnswerCell({ answer }: { answer: AgentWorstRatedAnswer }) {
+  const t = useT();
+  const snapshot = answer.sample?.turnSnapshot;
+  const text = snapshot?.answer?.trim() || answerQuestion(answer);
+  const why = answer.sample
+    ? [...ratingReasonLabels(t, answer.sample.reasons), answer.sample.comment ?? ""]
+        .filter(Boolean)
+        .join(" · ")
+    : "";
+
+  return (
+    <div className="tl">
+      <b className="q">{text ? t("“{0}”", text) : t("What was asked was not kept")}</b>
+      {why && (
+        <span>
+          <Ic n="down" s={10} /> {why}
+        </span>
+      )}
+    </div>
+  );
+}
+
 /** The answers people liked least, most disliked first unless sorted. */
 export function getWorstRatedColumns(t: TranslateFn): ColumnDef<AgentWorstRatedRow>[] {
   return [
     {
       id: "question",
       accessorFn: (row) => answerQuestion(row),
-      header: t("Question"),
-      cell: ({ row }) => (
-        <span className="line-clamp-2">
-          {answerQuestion(row.original) || t("What was asked was not kept")}
-        </span>
-      ),
+      header: t("Answer"),
+      cell: ({ row }) => <RatedAnswerCell answer={row.original} />,
       size: 380,
       meta: {
         label: t("Question"),
@@ -501,7 +568,20 @@ export function getWorstRatedColumns(t: TranslateFn): ColumnDef<AgentWorstRatedR
     {
       accessorKey: "agentName",
       header: t("Agent"),
-      cell: ({ row }) => <span className="truncate">{row.original.agentName || "—"}</span>,
+      cell: ({ row }) =>
+        row.original.agentName ? (
+          <span className="agc">
+            <Tile
+              agent={{ id: row.original.agentDefinitionId, name: row.original.agentName }}
+              s={22}
+            />
+            <span className="tl">
+              <b>{row.original.agentName}</b>
+            </span>
+          </span>
+        ) : (
+          "—"
+        ),
       size: 180,
       meta: {
         label: t("Agent"),

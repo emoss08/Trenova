@@ -3,7 +3,7 @@ import { translate } from "@trenova/shared/i18n/runtime";
 import { Extension, type JSONContent } from "@tiptap/core";
 import Mention from "@tiptap/extension-mention";
 import Placeholder from "@tiptap/extension-placeholder";
-import { EditorContent, useEditor, type Editor } from "@tiptap/react";
+import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { PluginKey } from "@tiptap/pm/state";
 import {
@@ -152,7 +152,15 @@ function ToolbarButton({ icon, label, isActive, onClick, disabled }: ToolbarButt
   );
 }
 
-function LinkControl({ editor, disabled }: { editor: Editor; disabled?: boolean }) {
+function LinkControl({
+  editor,
+  isActive,
+  disabled,
+}: {
+  editor: Editor;
+  isActive: boolean;
+  disabled?: boolean;
+}) {
   const t = useT();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -175,8 +183,6 @@ function LinkControl({ editor, disabled }: { editor: Editor; disabled?: boolean 
     document.addEventListener("mousedown", onOutsideMouseDown, true);
     return () => document.removeEventListener("mousedown", onOutsideMouseDown, true);
   }, [isOpen]);
-
-  const isActive = editor.isActive("link");
 
   const apply = useCallback(() => {
     const trimmed = href.trim();
@@ -455,6 +461,21 @@ export const CommentEditor = forwardRef<CommentEditorHandle, CommentEditorProps>
       [editor],
     );
 
+    // The editor changes in place, so the toolbar follows the marks under the cursor
+    // through a subscription rather than by asking the editor while it renders: it
+    // redraws when a mark turns on or off, and never on a keystroke that leaves them.
+    const active = useEditorState({
+      editor,
+      selector: ({ editor: current }) => ({
+        bold: current?.isActive("bold") ?? false,
+        italic: current?.isActive("italic") ?? false,
+        underline: current?.isActive("underline") ?? false,
+        bulletList: current?.isActive("bulletList") ?? false,
+        orderedList: current?.isActive("orderedList") ?? false,
+        link: current?.isActive("link") ?? false,
+      }),
+    });
+
     const overLimit = characterCount > COMMENT_EDITOR_MAX_LENGTH;
     const nearLimit = characterCount > COMMENT_EDITOR_MAX_LENGTH - 500;
 
@@ -505,39 +526,43 @@ export const CommentEditor = forwardRef<CommentEditorHandle, CommentEditorProps>
               <ToolbarButton
                 icon={<Bold01Icon className="size-3.5" />}
                 label={translate("Bold")}
-                isActive={editor.isActive("bold")}
+                isActive={active?.bold ?? false}
                 onClick={() => editor.chain().focus().toggleBold().run()}
                 disabled={disabled}
               />
               <ToolbarButton
                 icon={<Italic01Icon className="size-3.5" />}
                 label={translate("Italic")}
-                isActive={editor.isActive("italic")}
+                isActive={active?.italic ?? false}
                 onClick={() => editor.chain().focus().toggleItalic().run()}
                 disabled={disabled}
               />
               <ToolbarButton
                 icon={<Underline01Icon className="size-3.5" />}
                 label={translate("Underline")}
-                isActive={editor.isActive("underline")}
+                isActive={active?.underline ?? false}
                 onClick={() => editor.chain().focus().toggleUnderline().run()}
                 disabled={disabled}
               />
               <ToolbarButton
                 icon={<ListIcon className="size-3.5" />}
                 label={translate("Bullet list")}
-                isActive={editor.isActive("bulletList")}
+                isActive={active?.bulletList ?? false}
                 onClick={() => editor.chain().focus().toggleBulletList().run()}
                 disabled={disabled}
               />
               <ToolbarButton
                 icon={<ListOrderedIcon className="size-3.5" />}
                 label={translate("Numbered list")}
-                isActive={editor.isActive("orderedList")}
+                isActive={active?.orderedList ?? false}
                 onClick={() => editor.chain().focus().toggleOrderedList().run()}
                 disabled={disabled}
               />
-              <LinkControl editor={editor} disabled={disabled} />
+              <LinkControl
+                editor={editor}
+                isActive={active?.link ?? false}
+                disabled={disabled}
+              />
             </>
           )}
           {nearLimit && (

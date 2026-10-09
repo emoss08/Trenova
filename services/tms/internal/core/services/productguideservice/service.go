@@ -42,6 +42,8 @@ const (
 
 	capabilityBrokerage       = "brokerage"
 	capabilityAssetOperations = "assetOperations"
+
+	productNameTerm = "trenova"
 )
 
 var Module = fx.Module("product-guide-service", fx.Provide(New))

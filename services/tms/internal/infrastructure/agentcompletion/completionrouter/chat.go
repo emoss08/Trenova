@@ -78,6 +78,9 @@ func (s *Service) runChat(
 	if err != nil {
 		return nil, err
 	}
+	if usable, err = s.underCap(ctx, req.TenantInfo, usable); err != nil {
+		return nil, err
+	}
 
 	var lastErr error
 	var failures []serviceports.ChatProviderFailure
@@ -125,6 +128,7 @@ func (s *Service) runChat(
 			failover:    failover,
 		})
 		if attemptErr == nil {
+			s.touchKey(ctx, provider, req.TenantInfo)
 			result.LatencyMs = latency.Milliseconds()
 			if first := firstOtherThan(failures, provider.ID); first != nil {
 				result.FallbackFrom = first
@@ -453,10 +457,18 @@ func (s *Service) attemptChat(
 		return nil, streamed, err
 	}
 
-	apiKey, err := s.resolveAPIKey(provider)
+	timeout := provider.ResolvedTimeout()
+	release, err := s.claimSlot(ctx, provider, timeout)
 	if err != nil {
 		return nil, streamed, err
 	}
+	defer release()
+
+	// The timeout bounds the wait for the first word. A streamed reply that
+	// has started is held to the idle guard instead, so a long answer is not
+	// cut off for being long.
+	limited := s.withDeadline(ctx, timeout)
+	ctx = limited.ctx
 
 	maxTokens := req.MaxTokens
 	if maxTokens <= 0 {
@@ -465,7 +477,6 @@ func (s *Service) attemptChat(
 
 	call := &modeladapter.Call{
 		Provider:     provider,
-		APIKey:       apiKey,
 		Client:       s.clientFor(provider),
 		StreamClient: s.streamClientFor(provider),
 		StreamIdle:   s.ai.GetStreamIdleTimeout(),
@@ -487,6 +498,7 @@ func (s *Service) attemptChat(
 	// cut off before its usage frame reports no tokens, and thinking is
 	// billed as output all the same.
 	call.Reasoning = func(delta string) {
+		limited.disarm()
 		streamed.markFirst()
 		streamed.reasoningRunes += utf8.RuneCountInString(delta)
 		if req.ReasoningSink != nil {
@@ -514,17 +526,31 @@ func (s *Service) attemptChat(
 
 	if streamer, ok := adapter.(modeladapter.Streamer); ok && sink != nil {
 		first := func(delta string) {
+			limited.disarm()
 			streamed.markFirst()
 			sink(delta)
 		}
-		resp, streamed.text, err = s.executeStreamWithRetry(ctx, streamer, call, first, busy)
+		err = s.withKeyFallback(provider, func(apiKey string) error {
+			call.APIKey = apiKey
+			var streamErr error
+			resp, streamed.text, streamErr = s.executeStreamWithRetry(ctx, streamer, call, first, busy)
+
+			return streamErr
+		})
 	} else {
-		resp, err = s.executeWithRetryNoticed(ctx, adapter, call, busy)
+		err = s.withKeyFallback(provider, func(apiKey string) error {
+			call.APIKey = apiKey
+			var callErr error
+			resp, callErr = s.executeWithRetryNoticed(ctx, adapter, call, busy)
+
+			return callErr
+		})
 		if err == nil && sink != nil && resp.Text != "" {
 			sink(resp.Text)
 			streamed.text = resp.Text
 		}
 	}
+	err = limited.finish(err)
 	if err != nil {
 		return nil, streamed, err
 	}

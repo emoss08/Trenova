@@ -410,3 +410,155 @@ describe("useAssistantTurn stopping before the turn starts", () => {
     });
   });
 });
+
+/**
+ * When a reply is saved, the server starts the next message the person queued
+ * and names it on the ending stream (next_turn, before done). The view follows
+ * it straight on, showing the queued words as the new question with the
+ * records they named, rather than going quiet until the live list catches up.
+ */
+describe("useAssistantTurn following the queue", () => {
+  function done(sequence: number): AssistantStreamEvent {
+    return {
+      event: "done",
+      data: {
+        thread: {} as SendMessageResult["thread"],
+        messages: [savedMessage(sequence), savedMessage(sequence + 1)],
+        reply: `m${sequence + 1}`,
+        refused: false,
+        proposals: null,
+        proposalsUnrecorded: false,
+        artifacts: null,
+      },
+    } as AssistantStreamEvent;
+  }
+
+  it("follows the reply the queue started once the first is saved", async () => {
+    activeTurn.mockResolvedValue(null);
+    startTurn.mockResolvedValue(started);
+    const second = deferred<undefined>();
+    const seen: string[] = [];
+    attachTurn.mockImplementation(async (turnId, onEvent) => {
+      seen.push(turnId);
+      if (turnId === "atrn_1") {
+        onEvent(
+          {
+            event: "next_turn",
+            data: {
+              turnId: "atrn_2",
+              threadId: "athr_1",
+              queuedId: "aqm_1",
+              input: "Then bill it.",
+            },
+          },
+          "1",
+        );
+        onEvent(done(0), "2");
+        return;
+      }
+      await second.promise;
+    });
+
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    client.setQueryData(queries.assistant.queue("athr_1").queryKey, {
+      items: [
+        {
+          id: "aqm_1",
+          threadId: "athr_1",
+          content: "Then bill it.",
+          request: {
+            mentions: [{ type: "shipment", id: "shp_1", label: "S1" }],
+            attachmentDocumentIds: [],
+          },
+          position: 1,
+          steer: false,
+          version: 0,
+          createdAt: 0,
+        },
+      ],
+    });
+    const { result } = renderTurn(client);
+
+    await act(async () => {
+      void result.current.send("m0");
+    });
+
+    await waitFor(() => expect(seen).toEqual(["atrn_1", "atrn_2"]));
+    expect(result.current.isActive).toBe(true);
+    expect(result.current.turn?.userContent).toBe("Then bill it.");
+    expect(result.current.turn?.mentions).toEqual([{ type: "shipment", id: "shp_1", label: "S1" }]);
+
+    await act(async () => {
+      second.resolve(undefined);
+    });
+  });
+
+  it("follows a reply the queue started on request, unless one is already being followed", async () => {
+    const hung = deferred<undefined>();
+    attachTurn.mockImplementation(async () => hung.promise);
+
+    const { result } = renderTurn();
+
+    await act(async () => {
+      void result.current.followStarted("atrn_9", "Send the invoice.");
+    });
+    await waitFor(() => expect(attachTurn).toHaveBeenCalledTimes(1));
+    expect(attachTurn.mock.calls[0]?.[0]).toBe("atrn_9");
+    expect(result.current.turn?.userContent).toBe("Send the invoice.");
+
+    await act(async () => {
+      void result.current.followStarted("atrn_10", "Something else.");
+    });
+    expect(attachTurn).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      hung.resolve(undefined);
+    });
+  });
+});
+
+/**
+ * The agent is told where the conversation is being had, so "where am I?"
+ * on the Desk is answered with the Desk rather than with the page the person
+ * came from.
+ */
+describe("useAssistantTurn surface", () => {
+  function renderOn(surface?: "Desk" | "Assistant") {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    return renderHook(() => useAssistantTurn("athr_1", () => null, undefined, surface), {
+      wrapper,
+    });
+  }
+
+  it.each(["Desk", "Assistant"] as const)(
+    "sends the %s surface with the question",
+    async (surface) => {
+      activeTurn.mockResolvedValue(null);
+      startTurn.mockReturnValue(new Promise(() => undefined));
+
+      const { result } = renderOn(surface);
+      act(() => {
+        void result.current.send("What does this do?");
+      });
+
+      await waitFor(() => expect(startTurn).toHaveBeenCalledTimes(1));
+      expect(startTurn.mock.calls[0]?.[2]).toMatchObject({ surface });
+    },
+  );
+
+  it("names no surface when the view gave none", async () => {
+    activeTurn.mockResolvedValue(null);
+    startTurn.mockReturnValue(new Promise(() => undefined));
+
+    const { result } = renderOn();
+    act(() => {
+      void result.current.send("What does this do?");
+    });
+
+    await waitFor(() => expect(startTurn).toHaveBeenCalledTimes(1));
+    expect(startTurn.mock.calls[0]?.[2]).toMatchObject({ surface: undefined });
+  });
+});

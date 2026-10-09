@@ -41,6 +41,10 @@ func provideRecordStopActualTool(
 
 func (t *recordStopActualTool) Name() string { return "record_stop_actual" }
 
+func (t *recordStopActualTool) Recipe() []string {
+	return []string{"get_dispatch_board", "get_shipment_tracking", "record_stop_actual"}
+}
+
 func (t *recordStopActualTool) Description() string {
 	return "Record that a driver arrived at or departed from a stop. This is what " +
 		"advances a shipment: the move's status and everything downstream follow from " +
@@ -67,9 +71,11 @@ func (t *recordStopActualTool) ParamSchema() map[string]any {
 				"Which event happened.",
 				agenttoolschema.StopActualActions,
 			),
-			"occurredAt": localTimeProperty("When it happened. Leave it out unless you " +
-				"were given a time: omitted means now, which is right when someone is " +
-				"reporting an event as it happens."),
+			"occurredAt": agenttoolschema.LocalDateTime(
+				"When it happened. Leave it out unless you " +
+					"were given a time: omitted means now, which is right when someone is " +
+					"reporting an event as it happens.",
+			),
 		},
 		"required":             []string{"moveId", "stopId", "action"},
 		"additionalProperties": false,

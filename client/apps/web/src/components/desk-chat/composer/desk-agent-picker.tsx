@@ -1,6 +1,7 @@
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatCompactAge } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
@@ -138,15 +139,19 @@ export function DeskAgentPicker({
     const selected = candidate.id === agent.id;
     const used = lastUsedAt?.get(candidate.id);
     return (
-      <button
+      <Button
         key={candidate.id}
         id={`${listId}-${position}`}
-        type="button"
+        variant="bare"
+        size="bare"
         role="option"
         tabIndex={-1}
         aria-selected={selected}
         data-i={position}
-        className={cn("dk-ap-r", highlighted === position && "dk-hi", selected && "dk-sel")}
+        className={cn(
+          "flex h-11 w-full animate-[dk-mprow_260ms_var(--dk-settle)_both] gap-2.5 rounded-lg px-2 text-left",
+          highlighted === position && "bg-dsk-hover",
+        )}
         onMouseMove={() => highlighted !== position && setHighlighted(position)}
         onClick={() => pick(candidate)}
       >
@@ -163,16 +168,20 @@ export function DeskAgentPicker({
             <DeskIcon name="check" size={13} stroke={2.4} />
           </span>
         )}
-      </button>
+      </Button>
     );
   };
 
   return (
     <span className="dk-ap" ref={rootRef}>
-      <button
-        type="button"
+      <Button
+        variant="bare"
+        size="bare"
         ref={buttonRef}
-        className={cn("dk-ap-b", open && "dk-on")}
+        className={cn(
+          "h-7 max-w-55 gap-1.75 rounded-full pr-1.75 pl-1 text-sm text-dsk-fg2 transition-colors duration-150 hover:bg-dsk-hover hover:text-dsk-fg",
+          open && "bg-dsk-hover text-dsk-fg",
+        )}
         disabled={disabled}
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -195,7 +204,7 @@ export function DeskAgentPicker({
         >
           <path d="M8 9l4-4 4 4M8 15l4 4 4-4" />
         </svg>
-      </button>
+      </Button>
       {open && (
         <div className="dk-ap-pop" onKeyDown={onKeyDown}>
           <div className="dk-ap-s">

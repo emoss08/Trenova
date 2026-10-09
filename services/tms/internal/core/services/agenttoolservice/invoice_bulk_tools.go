@@ -133,6 +133,12 @@ func newPostInvoicesTool(
 
 func (t *postInvoicesTool) Name() string { return "post_invoices" }
 
+func (t *postInvoicesTool) Recipe() []string {
+	return []string{"approve_billing_queue_items", "post_invoices", "send_invoices"}
+}
+
+func (t *postInvoicesTool) BatchOf() string { return t.single.Name() }
+
 func (t *postInvoicesTool) Description() string { return bulkPostDescription }
 
 func (t *postInvoicesTool) ParamSchema() map[string]any {
@@ -216,6 +222,8 @@ func newSendInvoicesTool(
 
 func (t *sendInvoicesTool) Name() string { return "send_invoices" }
 
+func (t *sendInvoicesTool) BatchOf() string { return t.single.Name() }
+
 func (t *sendInvoicesTool) Description() string { return bulkSendDescription }
 
 func (t *sendInvoicesTool) ParamSchema() map[string]any {
@@ -298,6 +306,18 @@ func newApproveBillingQueueItemsTool(
 }
 
 func (t *approveBillingQueueItemsTool) Name() string { return "approve_billing_queue_items" }
+
+func (t *approveBillingQueueItemsTool) Recipe() []string {
+	return []string{
+		"list_billing_queue_items",
+		"get_billing_queue_items",
+		"assign_billing_queue_billers",
+		"approve_billing_queue_items",
+		"post_invoices",
+	}
+}
+
+func (t *approveBillingQueueItemsTool) BatchOf() string { return t.single.Name() }
 
 func (t *approveBillingQueueItemsTool) Description() string { return bulkApprovalDescription }
 

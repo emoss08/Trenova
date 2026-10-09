@@ -1,3 +1,4 @@
+"use no memo";
 import { cn } from "@trenova/shared/lib/utils";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useRef, type ReactNode } from "react";

@@ -4,6 +4,7 @@ import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixMonthDay, formatUnixTime } from "@trenova/shared/lib/date";
 import { useCallback, type ReactNode } from "react";
 import { toast } from "sonner";
+import { DeskErrorLink } from "./desk-error-card";
 import { DeskIcon } from "./desk-icons";
 import { useRichT } from "@trenova/shared/i18n/rich";
 
@@ -88,9 +89,9 @@ export function deskComposerLock({
   openAgentControl: () => void;
 }): DeskComposerLock | null {
   const link = (label: string, onClick: () => void) => (
-    <button type="button" className="dk-ec-link" onClick={onClick}>
+    <DeskErrorLink className="in-[.dk-ec-offmsg]:mt-px" onClick={onClick}>
       {label}
-    </button>
+    </DeskErrorLink>
   );
 
   if (thread.canContinue === false) {

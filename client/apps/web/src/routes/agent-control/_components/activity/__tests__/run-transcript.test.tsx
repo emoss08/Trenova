@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { MemoryRouter } from "react-router";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -10,7 +11,7 @@ import type {
   AgentRunTranscriptMessage,
 } from "@/lib/graphql/agent-activity-tables";
 import { queries } from "@/lib/queries";
-import { AgentRunPanel } from "../agent-run-panel";
+import { AgentRunPanel } from "../agent-run-sheet";
 import { transcriptBlocks } from "../run-transcript";
 import { RunTranscriptView } from "../run-transcript-view";
 
@@ -188,57 +189,72 @@ describe("AgentRunPanel", () => {
   const row = {
     id: RUN,
     agentType: "AssistantChat",
+    agentDefinitionId: "",
     status: "Completed",
     trigger: "Schedule",
     summary: "I could not reassign the driver.",
     modelIdentifier: "test-model",
     errorMessage: "",
+    traceUrl: null,
+    handedBy: null,
+    startedAt: 1_790_000_000,
+    completedAt: 1_790_000_042,
     createdAt: 1_790_000_000,
   } as unknown as AgentRunRow;
 
-  it("reads the transcript only when it is opened", async () => {
-    const user = userEvent.setup();
-    const client = new QueryClient({
+  function client(transcript: AgentRunTranscript | null, run: AgentRunRow = row) {
+    const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false, staleTime: Infinity } },
     });
-    client.setQueryData(queries.agentRun.transcript(RUN).queryKey, deniedRun());
+    queryClient.setQueryData(queries.agentRun.detail(run.id).queryKey, { run, transcript });
+    return queryClient;
+  }
 
-    render(wrap(<AgentRunPanel open onOpenChange={() => {}} mode="edit" row={row} />, client));
+  function renderPanel(queryClient: QueryClient, run: AgentRunRow = row) {
+    return render(
+      <NuqsTestingAdapter>
+        {wrap(<AgentRunPanel open onOpenChange={() => {}} mode="edit" row={run} />, queryClient)}
+      </NuqsTestingAdapter>,
+    );
+  }
 
-    expect(screen.queryByText("Checking the driver first.")).toBeNull();
-    await user.click(screen.getByRole("button", { name: "Transcript" }));
+  it("shows what the run did as soon as it opens", async () => {
+    renderPanel(client(deniedRun()));
 
-    expect(await screen.findByText("Checking the driver first.")).toBeTruthy();
-    expect(screen.getByText("Not permitted")).toBeTruthy();
+    const sheet = await screen.findByRole("complementary", {
+      name: "I could not reassign the driver.",
+    });
+    expect(within(sheet).getByText("What it did")).toBeTruthy();
+    expect(await within(sheet).findByText("Checking the driver first.")).toBeTruthy();
+    expect(within(sheet).getByText("Not permitted")).toBeTruthy();
+    expect(within(sheet).getByText("test-model")).toBeTruthy();
   });
 
-  it("downloads the run's transcript from its disclosure", async () => {
+  it("downloads the run's transcript from its sheet", async () => {
     const user = userEvent.setup();
-    const client = new QueryClient({
-      defaultOptions: { queries: { retry: false, staleTime: Infinity } },
-    });
-    client.setQueryData(queries.agentRun.transcript(RUN).queryKey, deniedRun());
+    renderPanel(client(deniedRun()));
 
-    render(wrap(<AgentRunPanel open onOpenChange={() => {}} mode="edit" row={row} />, client));
-
-    expect(screen.queryByRole("button", { name: "Download transcript" })).toBeNull();
-    await user.click(screen.getByRole("button", { name: "Transcript" }));
     await user.click(await screen.findByRole("button", { name: "Download transcript" }));
 
     expect(mocks.download).toHaveBeenCalledExactlyOnceWith(RUN);
   });
 
-  it("says so when the run kept no transcript", async () => {
-    const user = userEvent.setup();
-    const client = new QueryClient({
-      defaultOptions: { queries: { retry: false, staleTime: Infinity } },
-    });
-    client.setQueryData(queries.agentRun.transcript(RUN).queryKey, null);
-
-    render(wrap(<AgentRunPanel open onOpenChange={() => {}} mode="edit" row={row} />, client));
-    await user.click(screen.getByRole("button", { name: "Transcript" }));
+  it("says so when the run kept no transcript, and offers no download", async () => {
+    renderPanel(client(null));
 
     expect(await screen.findByText(/This run kept no transcript/)).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Download transcript" })).toBeNull();
+  });
+
+  it("shows why a failed run failed and leads to the providers", async () => {
+    const failed = {
+      ...row,
+      status: "Failed",
+      errorMessage: "dial tcp 127.0.0.1:8000: connection refused",
+    } as AgentRunRow;
+    renderPanel(client(null, failed), failed);
+
+    expect(await screen.findByText("dial tcp 127.0.0.1:8000: connection refused")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Check providers" })).toBeTruthy();
   });
 });

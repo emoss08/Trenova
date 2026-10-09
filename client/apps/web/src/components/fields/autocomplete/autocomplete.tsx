@@ -7,7 +7,9 @@ import {
 } from "@/lib/graphql/select-options";
 import { cn } from "@trenova/shared/lib/utils";
 import type { API_ENDPOINTS, SELECT_OPTIONS_ENDPOINTS } from "@trenova/shared/types/server";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { useFieldValueFormat } from "@trenova/shared/lib/form-field-registry";
 import React, { useCallback, useId, useMemo, useState } from "react";
 import type { Control, Path, RegisterOptions } from "react-hook-form";
 import { Controller, type FieldValues } from "react-hook-form";
@@ -231,6 +233,128 @@ export type AutocompleteFieldProps<TOption, TForm extends FieldValues> = Omit<
     description?: string;
   };
 
+type SelectedOptionSource = {
+  link?: SELECT_OPTIONS_ENDPOINTS;
+  valueLookupLink?: SELECT_OPTIONS_ENDPOINTS | API_ENDPOINTS;
+  graphql?: GraphQLSelectOptionsConfig;
+  filters?: Record<string, unknown>;
+};
+
+/**
+ * The record behind a picker's value: one query per source and value, shared by the
+ * field, which shows it, and a change review, which names it, so neither asks twice.
+ */
+function selectedOptionQuery<TOption>(source: SelectedOptionSource, value: string) {
+  return queryOptions({
+    queryKey: [
+      "autocomplete-option",
+      source.link,
+      source.valueLookupLink,
+      value,
+      source.graphql,
+      source.graphql?.resource,
+      source.filters,
+    ],
+    queryFn: async ({ signal }): Promise<TOption | null> => {
+      if (!value) return null;
+      if (source.graphql) {
+        return (await fetchGraphQLSelectedOption(
+          source.graphql.resource,
+          value,
+          source.filters,
+          { signal },
+        )) as TOption | null;
+      }
+
+      if (!source.valueLookupLink) {
+        throw new Error(MISSING_OPTION_SOURCE_ERROR);
+      }
+
+      const candidates = buildSelectedValueLookupCandidates(source.valueLookupLink, value);
+
+      for (const [index, candidate] of candidates.entries()) {
+        let response: Response;
+
+        try {
+          response = await fetchOptionQueued(candidate.url, candidate.lookupLink);
+        } catch (error) {
+          if (index === candidates.length - 1) {
+            throw error;
+          }
+
+          const nextCandidate = candidates[index + 1];
+          logOptionRequestDebug("fallback_retry", {
+            value,
+            primaryLink: candidate.lookupLink,
+            primaryUrl: candidate.url,
+            fallbackLink: nextCandidate.lookupLink,
+            fallbackUrl: nextCandidate.url,
+            error:
+              error instanceof Error ? { name: error.name, message: error.message } : String(error),
+          });
+          continue;
+        }
+
+        if (response.ok) {
+          return await response.json();
+        }
+
+        logOptionRequestDebug("not_ok", {
+          link: source.link,
+          valueLookupLink: source.valueLookupLink,
+          value,
+          url: candidate.url,
+          status: response.status,
+          statusText: response.statusText,
+        });
+
+        if (
+          isAuthFailure(response) ||
+          !isRouteStyleLookupFailure(response) ||
+          index === candidates.length - 1
+        ) {
+          throw new Error("Failed to fetch option");
+        }
+
+        const nextCandidate = candidates[index + 1];
+        logOptionRequestDebug("fallback_retry", {
+          value,
+          primaryLink: candidate.lookupLink,
+          primaryUrl: candidate.url,
+          fallbackLink: nextCandidate.lookupLink,
+          fallbackUrl: nextCandidate.url,
+          status: response.status,
+          statusText: response.statusText,
+        });
+      }
+
+      return null;
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
+}
+
+/** A record's name in a change review, read from the picker's own query. */
+function RecordName<TOption>({
+  query,
+  getDisplayValue,
+  fallback,
+}: {
+  query: ReturnType<typeof selectedOptionQuery<TOption>>;
+  getDisplayValue: (option: TOption) => React.ReactNode;
+  fallback: string;
+}) {
+  const { data, isPending } = useQuery(query);
+  if (isPending) {
+    return <Skeleton className="inline-block h-3 w-20 align-middle" />;
+  }
+  return <>{data ? getDisplayValue(data) : fallback}</>;
+}
+
 export function Autocomplete<TOption, TForm extends FieldValues>({
   link,
   selectedValueLink,
@@ -278,17 +402,15 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
     [graphQLFilters],
   );
 
-  const getOptionQueryKey = useCallback(
-    (optionValue: string) => [
-      "autocomplete-option",
-      link,
-      valueLookupLink,
-      optionValue,
-      graphql,
-      graphql?.resource,
-      normalizedGraphQLFilters,
-    ],
+
+  const optionSource = useMemo<SelectedOptionSource>(
+    () => ({ link, valueLookupLink, graphql, filters: normalizedGraphQLFilters }),
     [link, valueLookupLink, graphql, normalizedGraphQLFilters],
+  );
+
+  const getOptionQueryKey = useCallback(
+    (optionValue: string) => selectedOptionQuery<TOption>(optionSource, optionValue).queryKey,
+    [optionSource],
   );
 
   const {
@@ -296,97 +418,20 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
     isLoading: isSelectedOptionLoading,
     isError: isSelectedOptionError,
   } = useQuery({
-    queryKey: [
-      "autocomplete-option",
-      link,
-      valueLookupLink,
-      value,
-      graphql,
-      graphql?.resource,
-      normalizedGraphQLFilters,
-    ],
-    queryFn: async ({ signal }) => {
-      if (!value) return null;
-      if (graphql) {
-        return (await fetchGraphQLSelectedOption(
-          graphql.resource,
-          value,
-          normalizedGraphQLFilters,
-          { signal },
-        )) as TOption | null;
-      }
-
-      if (!valueLookupLink) {
-        throw new Error(MISSING_OPTION_SOURCE_ERROR);
-      }
-
-      const candidates = buildSelectedValueLookupCandidates(valueLookupLink, value);
-
-      for (const [index, candidate] of candidates.entries()) {
-        let response: Response;
-
-        try {
-          response = await fetchOptionQueued(candidate.url, candidate.lookupLink);
-        } catch (error) {
-          if (index === candidates.length - 1) {
-            throw error;
-          }
-
-          const nextCandidate = candidates[index + 1];
-          logOptionRequestDebug("fallback_retry", {
-            value,
-            primaryLink: candidate.lookupLink,
-            primaryUrl: candidate.url,
-            fallbackLink: nextCandidate.lookupLink,
-            fallbackUrl: nextCandidate.url,
-            error:
-              error instanceof Error ? { name: error.name, message: error.message } : String(error),
-          });
-          continue;
-        }
-
-        if (response.ok) {
-          return await response.json();
-        }
-
-        logOptionRequestDebug("not_ok", {
-          link,
-          valueLookupLink,
-          value,
-          url: candidate.url,
-          status: response.status,
-          statusText: response.statusText,
-        });
-
-        if (
-          isAuthFailure(response) ||
-          !isRouteStyleLookupFailure(response) ||
-          index === candidates.length - 1
-        ) {
-          throw new Error("Failed to fetch option");
-        }
-
-        const nextCandidate = candidates[index + 1];
-        logOptionRequestDebug("fallback_retry", {
-          value,
-          primaryLink: candidate.lookupLink,
-          primaryUrl: candidate.url,
-          fallbackLink: nextCandidate.lookupLink,
-          fallbackUrl: nextCandidate.url,
-          status: response.status,
-          statusText: response.statusText,
-        });
-      }
-
-      return null;
-    },
+    ...selectedOptionQuery<TOption>(optionSource, value ?? ""),
     enabled: !!value && (!userSelectedOptionState || userSelectedOptionState.value !== value),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    retry: 1,
   });
+
+  const canLookUp = Boolean(optionSource.graphql || optionSource.valueLookupLink);
+  useFieldValueFormat((optionValue) =>
+    !canLookUp || optionValue === null || optionValue === undefined || optionValue === "" ? undefined : (
+      <RecordName
+        query={selectedOptionQuery<TOption>(optionSource, String(optionValue))}
+        getDisplayValue={getDisplayValue}
+        fallback={String(optionValue)}
+      />
+    ),
+  );
 
   const selectedOption = useMemo(() => {
     if (!value) return null;
@@ -531,6 +576,7 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
       render={({ field, fieldState }) => {
         return (
           <FieldWrapper
+            name={name}
             label={label}
             description={description}
             required={!!rules?.required}

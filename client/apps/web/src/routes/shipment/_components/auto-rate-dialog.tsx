@@ -15,7 +15,7 @@ import { Separator } from "@trenova/shared/components/ui/separator";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import type { ContractRate, Shipment } from "@trenova/shared/types/shipment";
 import { useState } from "react";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
@@ -31,14 +31,14 @@ import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 export function AutoRateDialog() {
   const t = useT();
 
-  const { getValues, setValue } = useFormContext<Shipment>();
+  const { control, setValue } = useFormContext<Shipment>();
   const queryClient = useQueryClient();
 
   const [open, setOpen] = useState(false);
   const [applied, setApplied] = useState<ContractRate | null>(null);
 
-  const shipmentId = getValues("id");
-  const rateLocked = Boolean(getValues("rateLocked"));
+  const shipmentId = useWatch({ control, name: "id" });
+  const rateLocked = Boolean(useWatch({ control, name: "rateLocked" }));
 
   const mutation = useMutation({
     mutationFn: () => apiService.shipmentService.autoRate(shipmentId ?? ""),

@@ -10,6 +10,7 @@ import { Switch } from "@trenova/shared/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { InfoCircleIcon } from "@trenova/shared/components/icons";
 import { fieldInvalidClass } from "@trenova/shared/lib/variants/field";
+import { useFieldRegistration } from "@trenova/shared/lib/form-field-registry";
 
 type BaseSwitchFieldProps = Omit<SwitchProps, "name"> & {
   label: string;
@@ -41,6 +42,7 @@ export function SwitchField<T extends FieldValues>({
   "aria-describedby": ariaDescribedBy,
   ...props
 }: SwitchFieldProps<T>) {
+  useFieldRegistration(name, label);
   const t = useT();
   const inputId = `switch-${name}`;
   const descriptionId = `${inputId}-description`;

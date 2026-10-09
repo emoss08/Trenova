@@ -1,4 +1,6 @@
 aliases:
+  AgentToolRule:
+    updatedBy: updatedById
   Shipment:
     stage: status
   CaptureBatch:
@@ -186,6 +188,8 @@ virtuals:
     - agents
   AIProvider:
     - hasApiKey
+    - monthSpendUsd
+    - apiKey
   Carrier:
     - intelligence
     - openIntelEventCount

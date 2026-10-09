@@ -86,6 +86,49 @@ func (d *Dispatcher) Test(
 	return &result, nil
 }
 
+// ListModels asks an endpoint for its models on a worker. Each request is
+// its own call, abandoned when the editor stops waiting.
+func (d *Dispatcher) ListModels(
+	ctx context.Context,
+	req *serviceports.ProbeAIProviderModelsRequest,
+) ([]serviceports.AIProviderModelOption, error) {
+	var result []serviceports.AIProviderModelOption
+	if err := d.await(ctx, &call{
+		id:           "ai-provider-models/" + pulid.MustNew("apml_").String(),
+		workflow:     ListAIProviderModelsWorkflowName,
+		summary:      "List an AI provider's models",
+		feature:      jobFeatureModelList,
+		organization: req.TenantInfo.OrgID,
+		exclusive:    true,
+		payload:      &ListAIProviderModelsPayload{Request: req},
+	}, &result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// TestDraft probes an unsaved endpoint on a worker.
+func (d *Dispatcher) TestDraft(
+	ctx context.Context,
+	req *serviceports.ProbeAIProviderDraftRequest,
+) (*serviceports.AIProviderDraftTestResult, error) {
+	var result serviceports.AIProviderDraftTestResult
+	if err := d.await(ctx, &call{
+		id:           "ai-provider-draft-test/" + pulid.MustNew("apdt_").String(),
+		workflow:     TestAIProviderDraftWorkflowName,
+		summary:      "Test an unsaved AI provider",
+		feature:      jobFeatureProviderTest,
+		organization: req.TenantInfo.OrgID,
+		exclusive:    true,
+		payload:      &TestAIProviderDraftPayload{Request: req},
+	}, &result); err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
 // WriteForDay writes a day's briefing on a worker. Two requests to rewrite the
 // same page at once share the one write.
 func (d *Dispatcher) WriteForDay(

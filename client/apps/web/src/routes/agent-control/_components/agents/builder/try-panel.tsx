@@ -6,7 +6,7 @@ import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { getNameInitials } from "@trenova/shared/lib/utils";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Callout } from "../../edit/fields";
+import { Callout } from "../../edit/callout";
 import { Ic } from "../../kit/ic";
 import { Tile } from "../../kit/marks";
 import {
@@ -16,6 +16,7 @@ import {
   type DryRunOutcome,
   type DryRunState,
 } from "./dry-run-model";
+import { Button } from "@trenova/shared/components/ui/button";
 
 type TryRun = DryRunState & {
   id: number;
@@ -187,9 +188,9 @@ export function TryPanel({
             {t("Clear")}
           </button>
         )}
-        <button type="button" className="ib" title={t("Hide")} aria-label={t("Hide")} onClick={onClose}>
+        <Button type="button" variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground" title={t("Hide")} aria-label={t("Hide")} onClick={onClose}>
           <Ic n="x" s={13} />
-        </button>
+        </Button>
       </header>
       <div className="tp2-b" ref={thread} aria-live="polite">
         {runs.length === 0 ? (
@@ -243,7 +244,7 @@ export function TryPanel({
                         <div key={step.callId} className={going ? "tr-s cur" : "tr-s"}>
                           <span className="ck">
                             {going ? (
-                              <i className="spn" />
+                              <span className="border-border-strong border-t-foreground inline-block size-3 animate-spin rounded-full border-[1.5px]" />
                             ) : skipped ? (
                               <Ic n="ban" s={12} />
                             ) : (
@@ -281,9 +282,9 @@ export function TryPanel({
                     <div className="tp2-st">
                       <Ic n="refresh" s={12} />
                       <span>{t("You changed the draft since this run")}</span>
-                      <button type="button" className="btn sm" onClick={() => ask(run.question)}>
+                      <Button type="button" variant="outline" size="sm" onClick={() => ask(run.question)}>
                         {t("Run again")}
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>

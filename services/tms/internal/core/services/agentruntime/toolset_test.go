@@ -306,23 +306,37 @@ func TestSystemPrompt_SaysTheToolListIsPartialWhenDisclosed(t *testing.T) {
 
 	whole := definition.BuildSystemPrompt(runtimeContextWith(summaries, false))
 	assert.NotContains(t, whole, findToolsName)
-	assert.Contains(t, whole, "only these tools")
+	assert.Contains(t, whole, "are the only ones you have")
 }
 
-// The disclosed prompt lists names without descriptions; repeating every
-// description there would spend the context the narrowing just saved.
-func TestSystemPrompt_DisclosedListingIsShorterThanTheFullOne(t *testing.T) {
+// A tool not loaded on a disclosed turn is named with the first sentence of
+// its description, enough to know to ask find_tools for it. The rest stays
+// with its schema: repeating whole descriptions would spend the context the
+// narrowing just saved.
+func TestSystemPrompt_DisclosedListingGivesOneSentencePerUnloadedTool(t *testing.T) {
 	t.Parallel()
 
-	service, names := wideRuntime(t)
-	definition := testDefinition(names...)
-	summaries := service.ToolSummaries(definition)
+	definition := testDefinition("list_reports", "get_shipment")
+	summaries := []agentdefinition.ToolSummary{
+		{
+			Name:        "list_reports",
+			Description: "List saved reports by name. Filter by owner, schedule or last run.",
+			Query:       true,
+		},
+		{
+			Name:        "get_shipment",
+			Description: "Retrieve one shipment by id. Includes stops and moves.",
+			Query:       true,
+			Loaded:      true,
+		},
+	}
 
 	disclosed := definition.BuildSystemPrompt(runtimeContextWith(summaries, true))
-	whole := definition.BuildSystemPrompt(runtimeContextWith(summaries, false))
 
-	assert.Less(t, len(disclosed), len(whole),
-		fmt.Sprintf("disclosed=%d whole=%d", len(disclosed), len(whole)))
+	assert.Contains(t, disclosed, "- list_reports — List saved reports by name.")
+	assert.NotContains(t, disclosed, "Filter by owner, schedule or last run.")
+	assert.Contains(t, disclosed, "Loaded now:\n- get_shipment")
+	assert.NotContains(t, disclosed, "Retrieve one shipment by id.")
 }
 
 func runtimeContextWith(

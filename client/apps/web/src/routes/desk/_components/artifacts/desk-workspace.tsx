@@ -1,3 +1,4 @@
+import { Button } from "@trenova/shared/components/ui/button";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
@@ -7,6 +8,7 @@ import type { AssistantArtifact } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, downloadFromUrl } from "@trenova/shared/lib/utils";
+import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import {
   useCallback,
   useEffect,
@@ -34,6 +36,7 @@ import {
   DeskViewBody,
 } from "./desk-bodies";
 import { DeskDocBody } from "./desk-doc-body";
+import { VERSION_OPTION_CLASS, versionTriggerClass } from "./desk-version-classes";
 import { DeskExtractBody } from "./desk-extract-body";
 import { groupLineages, lineageContaining, type ArtifactLineage } from "./desk-lineage";
 import { olderNote, pushRecent, stackLineages, stepLineage } from "./desk-workspace-state";
@@ -124,9 +127,10 @@ function ArtStack({
         const offset = fan ? index * gap : Math.min(index, 2) * 6;
         const scale = fan ? 1 : 1 - Math.min(index, 2) * 0.035;
         return (
-          <button
+          <Button
             key={lineage.id}
-            type="button"
+            variant="bare"
+            size="bare"
             className={cn(
               "dk-ax-card",
               index === 0 && "dk-front",
@@ -170,12 +174,13 @@ function ArtStack({
                 <ArtIcon name="down" size={11} stroke={2.2} />
               </span>
             )}
-          </button>
+          </Button>
         );
       })}
-      <button
-        type="button"
-        className="dk-ax-card dk-ax-all"
+      <Button
+        variant="bare"
+        size="bare"
+        className="dk-ax-card border border-dashed border-dsk-b-strong bg-dsk-sunken! ring-1! ring-dsk-b-sub hover:bg-dsk-hover!"
         onClick={() => {
           onAll();
           close();
@@ -200,7 +205,7 @@ function ArtStack({
         <span className="dk-kbd" aria-hidden>
           ⌘J
         </span>
-      </button>
+      </Button>
     </div>
   );
 }
@@ -258,9 +263,10 @@ function VersionPicker({
 
   return (
     <span className="dk-axv" ref={rootRef}>
-      <button
-        type="button"
-        className={cn("dk-axv-b", open && "dk-on", index !== last && "dk-old")}
+      <Button
+        variant="bare"
+        size="bare"
+        className={versionTriggerClass(index !== last)}
         ref={buttonRef}
         title={t("Versions")}
         aria-haspopup="listbox"
@@ -269,7 +275,7 @@ function VersionPicker({
       >
         v{index + 1}
         <ArtIcon name="down" size={9} stroke={2.6} />
-      </button>
+      </Button>
       {open && (
         <div
           className="dk-axv-pop"
@@ -281,13 +287,14 @@ function VersionPicker({
           {[...lineage.versions].reverse().map((version) => {
             const at = lineage.versions.indexOf(version);
             return (
-              <button
+              <Button
                 key={version.id}
-                type="button"
+                variant="bare"
+                size="bare"
                 role="option"
                 aria-selected={at === index}
                 tabIndex={at === index ? 0 : -1}
-                className={cn("dk-axv-r", at === index && "dk-on")}
+                className={VERSION_OPTION_CLASS}
                 onClick={() => {
                   onChange(at);
                   close();
@@ -302,7 +309,7 @@ function VersionPicker({
                   </i>
                 </span>
                 {at === index && <ArtIcon name="check" size={12} stroke={2.4} />}
-              </button>
+              </Button>
             );
           })}
         </div>
@@ -586,14 +593,14 @@ export function DeskWorkspace({
         <div className="dk-axe">
           <div className="dk-axe-in">
             <b className="dk-axe-t">{t("This conversation's artifacts could not be loaded.")}</b>
-            <button
-              type="button"
-              className="dk-ec-btn"
-              style={{ marginTop: 14 }}
+            <Button
+              variant="quiet"
+              size="sm"
+              className="mt-3.5"
               onClick={() => void artifactsQuery.refetch()}
             >
               {t("Try again")}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -672,33 +679,36 @@ export function DeskWorkspace({
               onAll={() => setBrowsing(true)}
             />
             <div className="dk-ax-nav">
-              <button
-                type="button"
-                className="dk-ax-ib"
+              <Button
+                variant="quiet"
+                size="icon-sm"
+                className="text-dsk-subtle"
                 title={t("Previous")}
                 aria-label={t("Previous")}
                 onClick={() => go(-1)}
               >
                 <ArtIcon name="up" size={13} stroke={2.2} />
-              </button>
-              <button
-                type="button"
-                className="dk-ax-ib"
+              </Button>
+              <Button
+                variant="quiet"
+                size="icon-sm"
+                className="text-dsk-subtle"
                 title={t("Next")}
                 aria-label={t("Next")}
                 onClick={() => go(1)}
               >
                 <ArtIcon name="down" size={13} stroke={2.2} />
-              </button>
-              <button
-                type="button"
-                className="dk-ax-ib"
+              </Button>
+              <Button
+                variant="quiet"
+                size="icon-sm"
+                className="text-dsk-subtle"
                 title={t("Close")}
                 aria-label={t("Hide artifacts")}
                 onClick={onClose}
               >
                 <ArtIcon name="x" size={13} stroke={2.2} />
-              </button>
+              </Button>
             </div>
           </div>
           <div className="dk-ax-body" key={isDocument ? active.id : artifact.id}>
@@ -723,36 +733,50 @@ export function DeskWorkspace({
             />
           </div>
           <div className="dk-ax-foot">
-            <button type="button" className="dk-ax-link" onClick={copyLink} title={t("Copy link")}>
+            <Button
+              variant="bare"
+              size="bare"
+              className="h-7 min-w-0 gap-1.75 rounded-lg px-2.25 font-plex-mono text-xs text-dsk-subtle transition-colors duration-120 hover:bg-dsk-hover hover:text-dsk-fg [&_b]:font-medium [&_b]:text-dsk-fg2 [&_span]:truncate"
+              onClick={copyLink}
+              title={t("Copy link")}
+            >
               <ArtIcon name="copy" size={12} />
               <span>
                 desk/c/{threadId.slice(-4).toLowerCase()}/a/<b>{artifact.slug || artifact.id}</b>
               </span>
-            </button>
+            </Button>
             <span className="flex-1" />
-            <button
-              type="button"
-              className={cn("dk-ax-ib", pinned && "dk-on")}
+            <Button
+              variant="quiet"
+              size="icon-sm"
+              className={cn(
+                "text-dsk-subtle",
+                pinned && "text-dsk-fg [&_svg_path]:fill-current",
+              )}
               title={pinned ? t("Unpin") : t("Pin to conversation")}
               aria-label={t("Pin to conversation")}
               aria-pressed={pinned}
               onClick={() => pinMutation.mutate({ id: artifact.id, pinned: !pinned })}
             >
               <ArtIcon name="pin" size={14} />
-            </button>
+            </Button>
             {tabular && (
-              <button
-                type="button"
-                className="dk-ax-ib"
+              <Button
+                variant="quiet"
+                size="icon-sm"
+                className="text-dsk-subtle"
                 title={t("Export CSV")}
                 aria-label={t("Export CSV")}
                 onClick={() => downloadFromUrl(artifactCsvUrl(threadId, artifact.id))}
               >
                 <ArtIcon name="dl" size={14} />
-              </button>
+              </Button>
             )}
             <a
-              className="dk-ax-ib"
+              className={cn(
+                buttonVariants({ variant: "quiet", size: "icon-sm" }),
+                "text-dsk-subtle",
+              )}
               href={artifactPageLink(artifact)}
               target="_blank"
               rel="noreferrer"

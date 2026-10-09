@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/agentaccessservice"
 	"github.com/emoss08/trenova/internal/core/services/agentactivityservice"
+	"github.com/emoss08/trenova/internal/core/services/agentactivitysummaryservice"
 	"github.com/emoss08/trenova/internal/core/services/agentbudgetservice"
 	"github.com/emoss08/trenova/internal/core/services/agentcapabilityservice"
 	"github.com/emoss08/trenova/internal/core/services/agentcontrolservice"
@@ -46,6 +47,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentshadowservice"
 	"github.com/emoss08/trenova/internal/core/services/agentsubjectservice"
 	"github.com/emoss08/trenova/internal/core/services/agenttestpromptservice"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolruleservice"
 	"github.com/emoss08/trenova/internal/core/services/agenttrustservice"
 	"github.com/emoss08/trenova/internal/core/services/aicontrolsummaryservice"
 	"github.com/emoss08/trenova/internal/core/services/aicorrectionservice"
@@ -224,6 +226,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentwatchlistservice"
 	"github.com/emoss08/trenova/internal/core/services/sidebarpreferenceservice"
+	"github.com/emoss08/trenova/internal/core/services/tableinsightservice"
+	"github.com/emoss08/trenova/internal/core/services/tablelayoutservice"
+	"github.com/emoss08/trenova/internal/core/services/bulkeditservice"
+	"github.com/emoss08/trenova/internal/core/services/tableexportservice"
 	"github.com/emoss08/trenova/internal/core/services/storedmileageservice"
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
@@ -270,6 +276,14 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	tableconfigurationservice.New,
 	pagefavoriteservice.New,
 	sidebarpreferenceservice.New,
+	tablelayoutservice.New,
+	tableinsightservice.New,
+	bulkeditservice.New,
+	tableexportservice.New,
+	bulkeditservice.NewCustomerEditor,
+	bulkeditservice.NewLocationEditor,
+	bulkeditservice.NewCarrierEditor,
+	bulkeditservice.NewShipmentEditor,
 	homelayoutservice.New,
 	fx.Annotate(
 		reportingcompiler.New,
@@ -342,6 +356,9 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	func(s services.AgentDefinitionService) services.SystemAgentProvisioner { return s },
 	agentaccessservice.New,
 	agentsafetyservice.New,
+	agenttoolruleservice.New,
+	func(s *agenttoolruleservice.Service) services.AgentToolRuleService { return s },
+	aiproviderservice.NewModelPriceReference,
 	aiproviderservice.NewProber,
 	aiproviderservice.New,
 	func(s *aiproviderservice.Service) services.AIProviderService { return s },
@@ -419,6 +436,7 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	agentbudgetservice.New,
 	agentevaluationservice.New,
 	agentevalcaseservice.New,
+	agentactivitysummaryservice.New,
 	agentqualityservice.New,
 	agentqualityservice.AsService,
 	agentqualityservice.AsEvaluationBudget,

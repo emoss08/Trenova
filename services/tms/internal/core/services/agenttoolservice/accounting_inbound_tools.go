@@ -89,6 +89,10 @@ func (t *applyAccountingInboundChangeTool) Name() string {
 	return "apply_accounting_inbound_change"
 }
 
+func (t *applyAccountingInboundChangeTool) Recipe() []string {
+	return []string{"list_accounting_inbound_changes", "apply_accounting_inbound_change"}
+}
+
 func (t *applyAccountingInboundChangeTool) Description() string {
 	return "Accept an inbound change: one payment the accounting system recorded against " +
 		"documents Trenova sent, shown as Proposed by list_accounting_inbound_changes. " +

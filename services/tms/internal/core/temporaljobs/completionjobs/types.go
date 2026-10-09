@@ -14,6 +14,7 @@ import (
 const (
 	jobFeatureStructured   = "structured_completion"
 	jobFeatureProviderTest = "provider_test"
+	jobFeatureModelList    = "provider_models"
 	jobFeatureBriefing     = "briefing_write"
 	jobFailureAbandoned    = "abandoned"
 	jobFailureFailed       = "failed"
@@ -22,6 +23,8 @@ const (
 const (
 	StructuredCompletionWorkflowName = "StructuredCompletionWorkflow"
 	TestAIProviderWorkflowName       = "TestAIProviderWorkflow"
+	ListAIProviderModelsWorkflowName = "ListAIProviderModelsWorkflow"
+	TestAIProviderDraftWorkflowName  = "TestAIProviderDraftWorkflow"
 	WriteBriefingWorkflowName        = "WriteBriefingWorkflow"
 )
 
@@ -57,6 +60,14 @@ type StructuredCompletionPayload struct {
 
 type TestAIProviderPayload struct {
 	Request repositories.GetAIProviderByIDRequest `json:"request"`
+}
+
+type ListAIProviderModelsPayload struct {
+	Request *serviceports.ProbeAIProviderModelsRequest `json:"request"`
+}
+
+type TestAIProviderDraftPayload struct {
+	Request *serviceports.ProbeAIProviderDraftRequest `json:"request"`
 }
 
 type WriteBriefingPayload struct {

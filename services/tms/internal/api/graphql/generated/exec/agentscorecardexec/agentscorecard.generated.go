@@ -20,6 +20,8 @@ var Shard = &gqlexec.Shard{
 		{Name: "AgentScorecardPoint", Implementors: []string{"AgentScorecardPoint"}},
 		{Name: "AgentToolOutcome", Implementors: []string{"AgentToolOutcome"}},
 		{Name: "AgentToolTrust", Implementors: []string{"AgentToolTrust"}},
+		{Name: "AgentToolVerdict", Implementors: []string{"AgentToolVerdict"}},
+		{Name: "AgentToolVerdictReason", Implementors: []string{"AgentToolVerdictReason"}},
 	},
 	Fields: []gqlexec.Fields{
 		{Object: "AgentScorecard", Fields: []*gqlexec.Field{
@@ -222,6 +224,17 @@ var Shard = &gqlexec.Shard{
 					return obj.ByTool, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentToolOutcome2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐToolOutcomeCountᚄ),
+			},
+			{
+				Name:      "toolVerdicts",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AgentToolVerdict",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AgentScorecard)
+					return obj.ToolVerdicts, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentToolVerdict2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐToolVerdictCountᚄ),
 			},
 			{
 				Name:      "trend",
@@ -468,6 +481,71 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
 		}},
+		{Object: "AgentToolVerdict", Fields: []*gqlexec.Field{
+			{
+				Name:     "toolName",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.ToolVerdictCount)
+					return obj.ToolName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "verdict",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.ToolVerdictCount)
+					return obj.Verdict, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "calls",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.ToolVerdictCount)
+					return obj.Calls, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:      "topReasons",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AgentToolVerdictReason",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.ToolVerdictCount)
+					return obj.TopReasons, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentToolVerdictReason2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐToolVerdictReasonᚄ),
+			},
+		}},
+		{Object: "AgentToolVerdictReason", Fields: []*gqlexec.Field{
+			{
+				Name:     "reason",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.ToolVerdictReason)
+					return obj.Reason, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "calls",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.ToolVerdictReason)
+					return obj.Calls, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "agentScorecard",
@@ -642,6 +720,34 @@ func marshalNAgentToolTrust2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AgentToolTrust", v)
+}
+
+func marshalNAgentToolVerdict2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐToolVerdictCountᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*agent.ToolVerdictCount) graphql.Marshaler {
+	return gqlexec.List[*agent.ToolVerdictCount]{
+		Elem:        marshalNAgentToolVerdict2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐToolVerdictCount,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNAgentToolVerdict2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐToolVerdictCount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.ToolVerdictCount) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AgentToolVerdict", v)
+}
+
+func marshalNAgentToolVerdictReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐToolVerdictReason(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.ToolVerdictReason) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "AgentToolVerdictReason", &v)
+}
+
+func marshalNAgentToolVerdictReason2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐToolVerdictReasonᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []agent.ToolVerdictReason) graphql.Marshaler {
+	return gqlexec.List[agent.ToolVerdictReason]{
+		Elem:        marshalNAgentToolVerdictReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐToolVerdictReason,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {

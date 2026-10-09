@@ -10,6 +10,7 @@ import { Ic } from "../kit/ic";
 import { Switch } from "../kit/layout";
 import { Tile } from "../kit/marks";
 import type { RowFact } from "./roster-model";
+import { Button } from "@trenova/shared/components/ui/button";
 
 /** An approval rate under this reads as a warning. */
 const APPROVAL_WARN_BELOW = 0.85;
@@ -175,27 +176,31 @@ export function AgentRow({
       </span>
       <span className="al-x" onClick={(event) => event.stopPropagation()}>
         {chat ? (
-          <button
+          <Button
             type="button"
-            className="ib"
+            variant="ghost"
+            size="icon-sm"
+            className="text-muted-foreground hover:text-foreground"
             title={t("Ask in Desk")}
             aria-label={t("Ask {0} in Desk", agent.name)}
             disabled={!agent.enabled}
             onClick={onAsk}
           >
             <Ic n="chat" s={13} />
-          </button>
+          </Button>
         ) : (
-          <button
+          <Button
             type="button"
-            className="ib"
+            variant="ghost"
+            size="icon-sm"
+            className="text-muted-foreground hover:text-foreground"
             title={t("Run now")}
             aria-label={t("Run {0} now", agent.name)}
             disabled={!agent.enabled || !canRun}
             onClick={onRun}
           >
             <Ic n="play" s={12} />
-          </button>
+          </Button>
         )}
         <Switch
           on={agent.enabled}

@@ -36,6 +36,26 @@ fragment AIProviderCardFields on AIProvider {
   updatedAt
 }
 
+fragment AIProviderLimitFields on AIProvider {
+  id
+  timeoutSeconds
+  maxConcurrent
+  monthlyCapUsd
+  onCap
+  monthSpendUsd
+  apiKey {
+    prefix
+    lastFour
+    addedAt
+    addedBy {
+      id
+      name
+    }
+    lastUsedAt
+    previousKeyExpiresAt
+  }
+}
+
 query AIProviderCards($input: DataTableConnectionInput!) {
   aiProviders(input: $input) {
     edges {
@@ -51,6 +71,81 @@ query AIProviderCards($input: DataTableConnectionInput!) {
 
 query AIProviderDetail($id: ID!) {
   aiProvider(id: $id) {
+    ...AIProviderCardFields
+    ...AIProviderLimitFields
+  }
+}
+
+query AIProviderLimits($input: DataTableConnectionInput!) {
+  aiProviders(input: $input) {
+    edges {
+      node {
+        ...AIProviderLimitFields
+      }
+    }
+  }
+}
+
+query AIRoutePreview($draft: AIProviderRoutingDraftInput!) {
+  aiRoutePreview(draft: $draft) {
+    task
+    before {
+      providerId
+      name
+      draft
+    }
+    after {
+      providerId
+      name
+      draft
+    }
+    changed
+  }
+}
+
+query AIProviderModels($input: AIProviderEndpointInput!) {
+  aiProviderModels(input: $input) {
+    id
+    displayName
+    contextWindow
+    sizeBytes
+    loaded
+    embedding
+    inputCostPerMillion
+    outputCostPerMillion
+    priceSource
+    createdAt
+  }
+}
+
+query AIProviderUsageDaily($days: Int, $timezone: String, $providerId: ID) {
+  aiUsageDaily(days: $days, timezone: $timezone, providerId: $providerId) {
+    day
+    calls
+    failed
+  }
+}
+
+mutation TestAIProviderDraft($input: AIProviderDraftTestInput!) {
+  testAIProviderDraft(input: $input) {
+    success
+    message
+    detail
+    hint
+    modelIdentifier
+    schemaHonoured
+    latencyMs
+  }
+}
+
+mutation ReorderAIProviders($ids: [ID!]!) {
+  reorderAIProviders(ids: $ids) {
+    ...AIProviderCardFields
+  }
+}
+
+mutation PatchAIProvider($id: ID!, $version: Int!, $input: AIProviderPatchInput!) {
+  patchAIProvider(id: $id, version: $version, input: $input) {
     ...AIProviderCardFields
   }
 }

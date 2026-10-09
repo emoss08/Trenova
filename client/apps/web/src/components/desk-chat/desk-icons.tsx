@@ -1,3 +1,4 @@
+import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
 
 const PATHS = {
@@ -59,6 +60,7 @@ const PATHS = {
   ),
   check: <path d="M5 12.5l4.5 4.5L19 7" />,
   up: <path d="M12 19V5M6 11l6-6 6 6" />,
+  down: <path d="M12 5v14M6 13l6 6 6-6" />,
   stop: <rect x="7" y="7" width="10" height="10" rx="2" />,
   mic: (
     <>
@@ -186,13 +188,16 @@ export function DeskIcon({
   name,
   size = 14,
   stroke = 1.7,
+  className,
 }: {
   name: DeskIconName;
   size?: number;
   stroke?: number;
+  className?: string;
 }) {
   return (
     <svg
+      className={cn("size-auto", className)}
       width={size}
       height={size}
       viewBox="0 0 24 24"

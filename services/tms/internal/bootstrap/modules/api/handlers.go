@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/bankreceipthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/bankreceiptworkitemhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingcontrolhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/casechecklisthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingqueuehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/capturehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/carrierassignmenthandler"
@@ -237,6 +238,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	journalreversalhandler.New,
 	manualjournalhandler.New,
 	billingcontrolhandler.New,
+	casechecklisthandler.New,
 	billingqueuehandler.New,
 	dataentrycontrolhandler.New,
 	dispatchcontrolhandler.New,

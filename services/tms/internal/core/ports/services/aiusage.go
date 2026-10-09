@@ -140,6 +140,8 @@ type AIUsageDailyRequest struct {
 	Days int
 	// Timezone is the IANA zone a day is read in. Defaults to UTC.
 	Timezone string
+	// ProviderID narrows the days to one provider's calls when set.
+	ProviderID pulid.ID
 }
 
 type AIUsageService interface {

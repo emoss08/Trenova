@@ -78,6 +78,7 @@ export function TextChipsField<T extends FieldValues>({
 
         return (
           <FieldWrapper
+            name={name}
             label={label}
             required={!!rules?.required}
             description={description}

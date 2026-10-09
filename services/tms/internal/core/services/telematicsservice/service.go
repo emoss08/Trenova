@@ -43,6 +43,7 @@ type Params struct {
 	Logger              *zap.Logger
 	ProviderOverride    services.TelematicsProvider  `optional:"true"`
 	Watchtower          services.WatchtowerProjector `optional:"true"`
+	Waits               services.AgentWaitNotifier   `optional:"true"`
 }
 
 type Service struct {
@@ -61,6 +62,7 @@ type Service struct {
 	customFieldValues   *customfieldservice.ValuesService
 	providerOverride    services.TelematicsProvider
 	watchtower          services.WatchtowerProjector
+	waits               services.AgentWaitNotifier
 	l                   *zap.Logger
 }
 
@@ -81,6 +83,7 @@ func New(p Params) *Service { //nolint:gocritic // dependency injection
 		customFieldValues:   p.CustomFieldValues,
 		providerOverride:    p.ProviderOverride,
 		watchtower:          p.Watchtower,
+		waits:               p.Waits,
 		l:                   p.Logger.Named("telematics-service"),
 	}
 }

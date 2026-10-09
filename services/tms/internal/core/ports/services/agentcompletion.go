@@ -22,6 +22,12 @@ var (
 	// is paused after repeated failures, so nothing was attempted.
 	ErrProvidersResting            = errors.New("every usable AI provider is resting after repeated failures")
 	ErrRequiredProviderUnavailable = errors.New("the required AI provider cannot serve this task")
+	// ErrProviderCapReached reports a provider that has spent its monthly
+	// cap: every one the request could use, or one set to stop there.
+	ErrProviderCapReached = errors.New("the AI provider has reached its monthly spending cap")
+	// ErrProviderBusy reports a provider already taking as many calls at
+	// once as it is allowed.
+	ErrProviderBusy = errors.New("the AI provider is at its limit of calls at once")
 )
 
 type ContextSection struct {

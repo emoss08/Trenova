@@ -67,24 +67,22 @@ const (
 	rateAgreementRecordEntity = "rate_agreement"
 	rateAgreementKind         = "rate agreement"
 
-	maxAgreementCode      = 50
-	maxAgreementName      = 150
-	maxAgreementText      = 2000
-	maxContractRef        = 100
-	maxAgreementPriority  = 1000
-	maxRenewalNotice      = 365
-	maxAgreementLanes     = 200
-	maxLaneLabel          = 150
-	maxLaneValue          = 120
-	maxLaneCity           = 100
-	maxReviewComment      = 1000
-	maxIncreaseScope      = 50
-	maxSampleShipments    = 50000
-	maxPreviewLanes       = 5
-	rateAgreementSupplier = "The rate agreement, from list_rate_agreements or " +
-		"get_rate_agreement. Never guess one."
-	rateImportSupplier = "The rate import, from list_rate_imports. Never guess one."
-	rateDraftTaintHold = "An agreement drafted from a rate sheet or a message someone " +
+	maxAgreementCode     = 50
+	maxAgreementName     = 150
+	maxAgreementText     = 2000
+	maxContractRef       = 100
+	maxAgreementPriority = 1000
+	maxRenewalNotice     = 365
+	maxAgreementLanes    = 200
+	maxLaneLabel         = 150
+	maxLaneValue         = 120
+	maxLaneCity          = 100
+	maxReviewComment     = 1000
+	maxIncreaseScope     = 50
+	maxSampleShipments   = 50000
+	maxPreviewLanes      = 5
+	rateImportSupplier   = "The rate import, from list_rate_imports. Never guess one."
+	rateDraftTaintHold   = "An agreement drafted from a rate sheet or a message someone " +
 		"outside sent is proposed, since its lanes are what the organization will charge."
 )
 
@@ -190,7 +188,8 @@ func targetRateAgreement(params map[string]any) (serviceports.ToolTarget, bool) 
 }
 
 func rateAgreementIDProperty() map[string]any {
-	return stringProperty(rateAgreementSupplier, 0)
+	return agenttoolschema.RecordID(permission.ResourceRateAgreement, "The rate agreement",
+		"list_rate_agreements or get_rate_agreement")
 }
 
 func laneProperty(forRevision bool) map[string]any {
@@ -546,8 +545,8 @@ func agreementHeaderProperties() map[string]any {
 			maxContractRef),
 		paramPriority: integerProperty("Which agreement wins when two price a shipment; "+
 			"higher wins.", 0, maxAgreementPriority),
-		paramEffectiveFrom: dateProperty("The first day the agreement prices shipments."),
-		paramEffectiveTo: dateProperty(
+		paramEffectiveFrom: agenttoolschema.Date("The first day the agreement prices shipments."),
+		paramEffectiveTo: agenttoolschema.Date(
 			"The last day it prices shipments. Leave it out for an open-ended agreement.",
 		),
 		paramAutoRenew: booleanProperty("Whether it renews itself at its end."),
@@ -983,6 +982,11 @@ func newReviseRateAgreementDraftTool(
 
 	return newReportingReceivableTool(rateDraftSpec(&receivableSpec{
 		name: "revise_rate_agreement_draft",
+		recipe: []string{
+			"duplicate_rate_agreement",
+			"get_rate_agreement",
+			"revise_rate_agreement_draft",
+		},
 		description: "Rewrite a draft rate agreement before it is submitted: its header " +
 			"terms or its lanes. Fields left out keep their value. Only a draft is revised " +
 			"here; an active agreement's lanes change with amend_rate_agreement_rules. Read it " +
@@ -1157,6 +1161,7 @@ func newDuplicateRateAgreementTool(agreements rateAgreementKeeper) serviceports.
 
 type agreementReviewStep struct {
 	name        string
+	recipe      []string
 	review      rateagreementservice.Review
 	operation   permission.Operation
 	money       bool
@@ -1179,6 +1184,7 @@ func (s *agreementReviewStep) spec() *receivableSpec {
 
 	spec := &receivableSpec{
 		name:        s.name,
+		recipe:      s.recipe,
 		description: s.description,
 		searchTerms: s.searchTerms,
 		operation:   s.operation,
@@ -1276,7 +1282,12 @@ func newAgreementReviewTool(
 func agreementReviewSteps() []*agreementReviewStep {
 	return []*agreementReviewStep{
 		{
-			name:        "submit_rate_agreement",
+			name: "submit_rate_agreement",
+			recipe: []string{
+				"draft_rate_agreement",
+				"run_rate_simulation",
+				"submit_rate_agreement",
+			},
 			searchTerms: []string{"submit for approval", "send for approval"},
 			review:      rateagreementservice.ReviewSubmit,
 			operation:   permission.OpSubmit,
@@ -1403,8 +1414,10 @@ func newAmendRateAgreementRulesTool(
 			"a live contract.",
 		properties: map[string]any{
 			paramRateAgreementID: rateAgreementIDProperty(),
-			paramEffectiveFrom:   dateProperty("The first day the new lanes price shipments."),
-			paramSupersededRuleIDs: idListProperty("The lanes this closes out, by ruleId "+
+			paramEffectiveFrom: agenttoolschema.Date(
+				"The first day the new lanes price shipments.",
+			),
+			paramSupersededRuleIDs: agenttoolschema.IDList("The lanes this closes out, by ruleId "+
 				"from get_rate_agreement.", maxAgreementLanes),
 			paramLanes: laneProperty(false),
 		},
@@ -1596,9 +1609,15 @@ func newApplyRateIncreaseTool(agreements rateAgreementKeeper) serviceports.Agent
 		rationale: "Changes the rates many agreements charge customers or pay carriers; " +
 			"only a person applies a rate increase.",
 		properties: map[string]any{
-			paramEffectiveFrom: dateProperty("The first day the new rates price shipments."),
-			paramAgreementIDs: idListProperty("The agreements to move, from "+
-				"list_rate_agreements; wins over the other scopes.", maxIncreaseScope),
+			paramEffectiveFrom: agenttoolschema.Date(
+				"The first day the new rates price shipments.",
+			),
+			paramAgreementIDs: agenttoolschema.RecordIDs(
+				permission.ResourceRateAgreement,
+				"The agreements to move, from "+
+					"list_rate_agreements; wins over the other scopes.",
+				maxIncreaseScope,
+			),
 			paramCustomerID: stringProperty("Every active agreement with this customer, from "+
 				"list_customers.", 0),
 			paramCarrierID: stringProperty("Every active agreement with this carrier, from "+

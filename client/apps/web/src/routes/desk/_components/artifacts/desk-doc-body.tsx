@@ -1,3 +1,4 @@
+import { Button } from "@trenova/shared/components/ui/button";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { apiService } from "@/services/api";
@@ -8,6 +9,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, downloadFromUrl } from "@trenova/shared/lib/utils";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useOutsideDismiss } from "@/components/desk-chat/use-outside-dismiss";
+import { VERSION_OPTION_CLASS, versionTriggerClass } from "./desk-version-classes";
 import { documentFrom, type DocumentSource } from "./artifact-payloads";
 import { ArtIcon } from "./desk-art-kinds";
 import type { ArtifactLineage } from "./desk-lineage";
@@ -28,6 +30,16 @@ type Selection = { blockId: string; x: number; y: number };
 type Suggestion = { blockId: string; mode: RewriteMode; ask: string; text: string };
 
 const TOAST_MS = 1600;
+
+const DOC_MENU_ITEM =
+  "w-full gap-2.5 rounded-lg px-2 py-1.75 text-left text-sm text-dsk-fg2 hover:bg-dsk-hover hover:text-dsk-fg [&_svg]:mx-1.5 [&_svg]:text-dsk-subtle";
+
+function docModeClass(on: boolean): string {
+  return cn(
+    "h-6.5 rounded-md px-2.75 text-sm font-medium text-dsk-muted transition-colors duration-140 disabled:opacity-40",
+    on && "bg-dsk-card text-dsk-fg ring-1 ring-dsk-b-sub",
+  );
+}
 
 function shortTime(at: number): string {
   return new Date(at * 1000).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
@@ -63,24 +75,30 @@ function Cite({
       contentEditable={false}
       data-cite={n}
     >
-      <button
-        type="button"
+      <Button
+        variant="bare"
+        size="bare"
         className="dk-dx-c"
         onClick={() => source?.artifactId && onOpen(source.artifactId)}
         aria-label={source ? source.label : t("Source {0}", n)}
       >
         {n}
-      </button>
+      </Button>
       {open && source && (
         <span className="dk-dx-cp" onMouseEnter={show} onMouseLeave={hide}>
           {source.tool !== "" && <code>{source.tool}</code>}
           <b>{source.label}</b>
           {source.detail !== "" && <em>{source.detail}</em>}
           {source.artifactId !== "" && (
-            <button type="button" onClick={() => onOpen(source.artifactId)}>
+            <Button
+              variant="bare"
+              size="bare"
+              className="mt-1.25 gap-1.25 self-start text-xs font-medium"
+              onClick={() => onOpen(source.artifactId)}
+            >
               <ArtIcon name="ext" size={11} />
               {t("Open artifact")}
-            </button>
+            </Button>
           )}
         </span>
       )}
@@ -141,16 +159,17 @@ function DocMenu({
 
   return (
     <span className="dk-dx-m" ref={rootRef}>
-      <button
-        type="button"
-        className={cn("dk-dx-tb", open && "dk-on")}
+      <Button
+        variant="bare"
+        size="bare"
+        className="h-7.5 gap-1.5 rounded-lg px-2.25 text-sm font-medium text-dsk-fg2 ring-1 ring-dsk-b-sub ring-inset hover:bg-dsk-hover aria-expanded:bg-dsk-hover [&>svg:last-child]:text-dsk-subtle"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
         {icon}
         {label}
         <ArtIcon name="down" size={10} stroke={2.4} />
-      </button>
+      </Button>
       {open && (
         // oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- the menu's own buttons carry the keys; the wrapper only folds it after a choice
         <div className="dk-dx-mp dk-right" onClick={close}>
@@ -422,16 +441,12 @@ export function DeskDocBody({
             <Rich text={suggestion.text} sources={sources} onOpen={onOpenArtifact} />
           </p>
           <div className="dk-dx-sga">
-            <button
-              type="button"
-              className="dk-ax-btn dk-ghost"
-              onClick={() => setSuggestion(null)}
-            >
+            <Button variant="quiet" size="sm" onClick={() => setSuggestion(null)}>
               {t("Keep original")}
-            </button>
-            <button
-              type="button"
-              className="dk-ax-btn dk-ghost"
+            </Button>
+            <Button
+              variant="quiet"
+              size="sm"
               onClick={() => {
                 const again = suggestion;
                 setSuggestion(null);
@@ -440,11 +455,11 @@ export function DeskDocBody({
               }}
             >
               {t("Try again")}
-            </button>
-            <button type="button" className="dk-ax-btn dk-ink" onClick={accept}>
+            </Button>
+            <Button size="sm" onClick={accept}>
               <ArtIcon name="check" size={12} stroke={2.4} />
               {t("Accept")}
-            </button>
+            </Button>
           </div>
         </div>
       );
@@ -538,45 +553,49 @@ export function DeskDocBody({
     <div className={cn("dk-dx", editing && "dk-editing")}>
       <div className="dk-dx-bar">
         <div className="dk-dx-seg" role="group" aria-label={t("Mode")}>
-          <button
-            type="button"
-            className={mode === "read" ? "dk-on" : undefined}
+          <Button
+            variant="bare"
+            size="bare"
+            className={docModeClass(mode === "read")}
             onClick={() => switchMode("read")}
           >
             {t("Read")}
-          </button>
-          <button
-            type="button"
-            className={mode === "edit" ? "dk-on" : undefined}
+          </Button>
+          <Button
+            variant="bare"
+            size="bare"
+            className={docModeClass(mode === "edit")}
             disabled={old}
             onClick={() => switchMode("edit")}
           >
             {t("Edit")}
-          </button>
+          </Button>
         </div>
         <span className="dk-axv" ref={versionsRef}>
-          <button
-            type="button"
-            className={cn("dk-axv-b", versionsOpen && "dk-on", old && "dk-old")}
+          <Button
+            variant="bare"
+            size="bare"
+            className={versionTriggerClass(old)}
             title={t("Versions")}
             aria-expanded={versionsOpen}
             onClick={() => setVersionsOpen((value) => !value)}
           >
             v{current.lineageSeq}
             <ArtIcon name="down" size={9} stroke={2.6} />
-          </button>
+          </Button>
           {versionsOpen && (
             <div className="dk-axv-pop" role="listbox">
               {[...versions].reverse().map((version) => {
                 const at = versions.indexOf(version);
                 const versionDoc = documentFrom(version);
                 return (
-                  <button
+                  <Button
                     key={version.id}
-                    type="button"
+                    variant="bare"
+                    size="bare"
                     role="option"
                     aria-selected={at === index}
-                    className={cn("dk-axv-r", at === index && "dk-on")}
+                    className={VERSION_OPTION_CLASS}
                     onClick={() => {
                       setView(at === latestIndex ? null : at);
                       setVersionsOpen(false);
@@ -593,7 +612,7 @@ export function DeskDocBody({
                       </i>
                     </span>
                     {at === index && <ArtIcon name="check" size={12} stroke={2.4} />}
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -601,8 +620,10 @@ export function DeskDocBody({
         </span>
         <span className="flex-1" />
         <DocMenu label={t("Export")} icon={<ArtIcon name="dl" size={13} />}>
-          <button
-            type="button"
+          <Button
+            variant="bare"
+            size="bare"
+            className={DOC_MENU_ITEM}
             onClick={() => {
               downloadFromUrl(artifactDocumentUrl(threadId, current.id, "pdf"));
               setNotice(t("Downloading PDF…"));
@@ -610,9 +631,11 @@ export function DeskDocBody({
           >
             <span className="dk-dx-fx">PDF</span>
             {t("Download as PDF")}
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="bare"
+            size="bare"
+            className={DOC_MENU_ITEM}
             onClick={() => {
               downloadFromUrl(artifactDocumentUrl(threadId, current.id, "docx"));
               setNotice(t("Downloading .docx…"));
@@ -620,31 +643,41 @@ export function DeskDocBody({
           >
             <span className="dk-dx-fx">DOC</span>
             {t("Word document")}
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="bare"
+            size="bare"
+            className={DOC_MENU_ITEM}
             onClick={() => void copy(`# ${current.title}\n\n${doc.body}`, t("Copied as Markdown"))}
           >
             <span className="dk-dx-fx">MD</span>
             {t("Copy as Markdown")}
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="bare"
+            size="bare"
+            className={DOC_MENU_ITEM}
             onClick={() =>
               void copy(`${current.title}\n\n${plainText(doc.body)}`, t("Copied plain text"))
             }
           >
             <ArtIcon name="copy" size={13} />
             {t("Copy text")}
-          </button>
+          </Button>
         </DocMenu>
       </div>
       {headings.length > 1 && (
         <nav className="dk-dx-toc" aria-label={t("Contents")}>
           {headings.map((heading) => (
-            <button key={heading.id} type="button" onClick={() => scrollTo(heading.id)}>
+            <Button
+              key={heading.id}
+              variant="bare"
+              size="bare"
+              className="h-6 rounded-full bg-dsk-sunken px-2.25 text-xs text-dsk-muted hover:bg-dsk-hover hover:text-dsk-fg"
+              onClick={() => scrollTo(heading.id)}
+            >
               {plainText(heading.text ?? "")}
-            </button>
+            </Button>
           ))}
         </nav>
       )}
@@ -653,17 +686,22 @@ export function DeskDocBody({
           <span>
             {t("Viewing")} <b>v{current.lineageSeq}</b> · {doc.versionNote || t("First draft")}
           </span>
-          <button type="button" onClick={() => setView(null)}>
+          <Button
+            variant="bare"
+            size="bare"
+            className="h-6.5 rounded-md px-2.5 text-sm font-medium text-dsk-fg hover:bg-dsk-warn/14"
+            onClick={() => setView(null)}
+          >
             {t("Back to latest")}
-          </button>
-          <button
-            type="button"
-            className="dk-ink"
+          </Button>
+          <Button
+            size="sm"
+            className="h-6.5 px-2.5"
             disabled={restoreMutation.isPending}
             onClick={() => restoreMutation.mutate(current.id)}
           >
             {t("Restore")}
-          </button>
+          </Button>
         </div>
       )}
       {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- selecting text is how a passage is chosen to rewrite; the keyboard path is the Edit mode */}
@@ -690,10 +728,11 @@ export function DeskDocBody({
             <h4>{t("Sources")}</h4>
             {doc.sources.map((source) =>
               source.artifactId !== "" ? (
-                <button
+                <Button
                   key={source.n}
-                  type="button"
-                  className="dk-go"
+                  variant="bare"
+                  size="bare"
+                  className="hover:bg-dsk-hover"
                   onClick={() => onOpenArtifact(source.artifactId)}
                 >
                   <span className="dk-dx-c">{source.n}</span>
@@ -702,7 +741,7 @@ export function DeskDocBody({
                     <code>{source.tool}</code>
                   </span>
                   <ArtIcon name="ext" size={11} />
-                </button>
+                </Button>
               ) : (
                 <div key={source.n}>
                   <span className="dk-dx-c">{source.n}</span>
@@ -724,12 +763,22 @@ export function DeskDocBody({
               if (!(event.target instanceof HTMLInputElement)) event.preventDefault();
             }}
           >
-            <button type="button" onClick={() => rewrite("shorter")}>
+            <Button
+              variant="bare"
+              size="bare"
+              className="h-6.5 rounded-md px-2 font-medium whitespace-nowrap hover:bg-dsk-ink-fg/14"
+              onClick={() => rewrite("shorter")}
+            >
               {t("Shorter")}
-            </button>
-            <button type="button" onClick={() => rewrite("plain")}>
+            </Button>
+            <Button
+              variant="bare"
+              size="bare"
+              className="h-6.5 rounded-md px-2 font-medium whitespace-nowrap hover:bg-dsk-ink-fg/14"
+              onClick={() => rewrite("plain")}
+            >
               {t("Plainer")}
-            </button>
+            </Button>
             <i />
             <input
               value={ask}
@@ -751,18 +800,17 @@ export function DeskDocBody({
             {dirty ? t("Unsaved changes") : t("Click any paragraph to edit")}
           </span>
           <span className="flex-1" />
-          <button type="button" className="dk-ax-btn dk-ghost" onClick={discard}>
+          <Button variant="quiet" size="sm" onClick={discard}>
             {dirty ? t("Discard") : t("Done")}
-          </button>
+          </Button>
           {dirty && (
-            <button
-              type="button"
-              className="dk-ax-btn dk-ink"
+            <Button
+              size="sm"
               disabled={saveMutation.isPending}
               onClick={save}
             >
               {t("Save as v{0}", versions[latestIndex].lineageSeq + 1)}
-            </button>
+            </Button>
           )}
         </div>
       )}

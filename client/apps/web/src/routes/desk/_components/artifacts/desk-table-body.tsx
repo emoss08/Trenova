@@ -9,6 +9,7 @@ import {
   type DisplayType,
 } from "@/components/assistant/readable-values";
 import type { AssistantArtifact } from "@/types/assistant";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { BillingQueueSummary } from "@trenova/shared/types/billing-queue";
@@ -313,14 +314,13 @@ export function DeskReportBars({ artifact, bars }: { artifact: AssistantArtifact
         </div>
       </div>
       <div className="dk-ax-acts">
-        <button
-          type="button"
-          className="dk-ax-btn dk-ghost"
+        <Button
+          variant="quiet"
           onClick={() => downloadFromUrl(artifactCsvUrl(artifact.threadId, artifact.id))}
         >
           <ArtIcon name="dl" size={13} />
           {t("Download CSV")}
-        </button>
+        </Button>
         <Link
           className="dk-ax-btn dk-ghost"
           to={fullReport}

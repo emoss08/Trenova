@@ -1,4 +1,3 @@
-"use no memo";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";

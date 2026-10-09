@@ -1,6 +1,7 @@
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { conversationPath } from "@/lib/conversation-path";
 import type { AssistantHandoff } from "@/types/assistant";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useNavigate } from "react-router";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
@@ -67,14 +68,13 @@ export function DeskHandoffCard({
           </div>
         </div>
       )}
-      <button
-        type="button"
-        className="dk-ho-go"
+      <Button
+        className="h-7.5 gap-1.25 self-start rounded-lg px-3 has-[>svg]:px-3"
         onClick={() => void navigate(conversationPath(targetThread))}
       >
         {incoming ? t("Open the earlier conversation") : t("Open their conversation")}
         <DeskIcon name="chevR" size={12} />
-      </button>
+      </Button>
     </div>
   );
 }

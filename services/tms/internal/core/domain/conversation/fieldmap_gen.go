@@ -18,6 +18,13 @@ func (e *Message) GetStaticFieldMap() map[string]string {
 	return buncolgen.MessageFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [QueuedMessage].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.QueuedMessageFieldMap] instead of parsing struct tags via reflection.
+func (e *QueuedMessage) GetStaticFieldMap() map[string]string {
+	return buncolgen.QueuedMessageFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Thread].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.ThreadFieldMap] instead of parsing struct tags via reflection.

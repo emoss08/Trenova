@@ -16,6 +16,7 @@ var RealtimePublisherModule = fx.Module("realtime-publisher",
 			fx.As(fx.Self()),
 			fx.As(new(services.RealtimePublisher)),
 		),
+		realtimebroker.NewChangeFeed,
 	),
 )
 

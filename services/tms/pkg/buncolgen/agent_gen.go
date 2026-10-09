@@ -3444,6 +3444,188 @@ var ReflectionFilter = struct {
 }
 
 // ---------------------------------------------------------------------------
+// ToolRuleOverride — table "agent_tool_rule_overrides", alias "atro"
+// ---------------------------------------------------------------------------
+
+// ToolRuleOverrideTable holds the table name, alias, and primary key columns
+// for the "agent_tool_rule_overrides" table. The alias "atro" is used in all generated
+// SQL fragments (e.g. "atro.id = ?").
+var ToolRuleOverrideTable = TableInfo{
+	Name:       "agent_tool_rule_overrides",
+	Alias:      "atro",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// ToolRuleOverrideColumns provides type-safe column references for the "agent_tool_rule_overrides" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(ToolRuleOverrideColumns.ID.String())
+//	// SELECT atro.id FROM agent_tool_rule_overrides AS atro
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(ToolRuleOverrideColumns.ID.Eq(), id)           // WHERE atro.id = ?
+//	q.Order(ToolRuleOverrideColumns.CreatedAt.OrderDesc())  // ORDER BY atro.created_at DESC
+var ToolRuleOverrideColumns = struct {
+	ID             Column // "id" → qualified: "atro.id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "atro.business_unit_id"
+	OrganizationID Column // "organization_id" → qualified: "atro.organization_id"
+	ToolName       Column // "tool_name" → qualified: "atro.tool_name"
+	MaxTier        Column // "max_tier" → qualified: "atro.max_tier"
+	ReadsExternal  Column // "reads_external" → qualified: "atro.reads_external"
+	Reason         Column // "reason" → qualified: "atro.reason"
+	UpdatedByID    Column // "updated_by_id" → qualified: "atro.updated_by_id"
+	Version        Column // "version" → qualified: "atro.version"
+	CreatedAt      Column // "created_at" → qualified: "atro.created_at"
+	UpdatedAt      Column // "updated_at" → qualified: "atro.updated_at"
+}{
+	ID:             NewColumn("id", "atro"),
+	BusinessUnitID: NewColumn("business_unit_id", "atro"),
+	OrganizationID: NewColumn("organization_id", "atro"),
+	ToolName:       NewColumn("tool_name", "atro"),
+	MaxTier:        NewColumn("max_tier", "atro"),
+	ReadsExternal:  NewColumn("reads_external", "atro"),
+	Reason:         NewColumn("reason", "atro"),
+	UpdatedByID:    NewColumn("updated_by_id", "atro"),
+	Version:        NewColumn("version", "atro"),
+	CreatedAt:      NewColumn("created_at", "atro"),
+	UpdatedAt:      NewColumn("updated_at", "atro"),
+}
+
+// ToolRuleOverrideFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by ToolRuleOverride.GetStaticFieldMap().
+var ToolRuleOverrideFieldMap = map[string]string{
+	"id":             "id",
+	"businessUnitId": "business_unit_id",
+	"organizationId": "organization_id",
+	"toolName":       "tool_name",
+	"maxTier":        "max_tier",
+	"readsExternal":  "reads_external",
+	"reason":         "reason",
+	"updatedById":    "updated_by_id",
+	"version":        "version",
+	"createdAt":      "created_at",
+	"updatedAt":      "updated_at",
+}
+
+// ToolRuleOverrideInsertableColumns lists column names suitable for INSERT statements on the "agent_tool_rule_overrides" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var ToolRuleOverrideInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"tool_name",
+	"max_tier",
+	"reads_external",
+	"reason",
+	"updated_by_id",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// ToolRuleOverrideScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE atro.organization_id = ? AND atro.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.ToolRuleOverrideScopeTenant(sq, ti).
+//		Where(buncolgen.ToolRuleOverrideColumns.ID.Eq(), id)
+func ToolRuleOverrideScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, ToolRuleOverrideColumns.OrganizationID, ToolRuleOverrideColumns.BusinessUnitID, ti)
+}
+
+// ToolRuleOverrideScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.ToolRuleOverrideScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.ToolRuleOverrideColumns.ID.In(), bun.List(ids))
+//	})
+func ToolRuleOverrideScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, ToolRuleOverrideColumns.OrganizationID, ToolRuleOverrideColumns.BusinessUnitID, ti)
+}
+
+// ToolRuleOverrideScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.ToolRuleOverrideScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.ToolRuleOverrideColumns.ID.Eq(), id)
+//	})
+func ToolRuleOverrideScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, ToolRuleOverrideColumns.OrganizationID, ToolRuleOverrideColumns.BusinessUnitID, ti)
+}
+
+// ToolRuleOverrideApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.ToolRuleOverrideApplyTenant(tenantInfo))
+func ToolRuleOverrideApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(ToolRuleOverrideColumns.OrganizationID, ToolRuleOverrideColumns.BusinessUnitID, ti)
+}
+
+// ToolRuleOverrideFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "agent_tool_rule_overrides" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	ToolRuleOverrideFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var ToolRuleOverrideFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ToolName       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolName" → DB: "tool_name"
+	MaxTier        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxTier" → DB: "max_tier"
+	ReadsExternal  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "readsExternal" → DB: "reads_external"
+	Reason         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reason" → DB: "reason"
+	UpdatedByID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedById" → DB: "updated_by_id"
+	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	ToolName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("toolName", op, value)
+	},
+	MaxTier: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("maxTier", op, value)
+	},
+	ReadsExternal: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("readsExternal", op, value)
+	},
+	Reason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("reason", op, value)
+	},
+	UpdatedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedById", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // ToolTrust — table "agent_tool_trust", alias "att"
 // ---------------------------------------------------------------------------
 

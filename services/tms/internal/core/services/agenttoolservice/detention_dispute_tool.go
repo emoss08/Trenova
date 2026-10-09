@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 )
 
@@ -45,8 +46,10 @@ func newDisputeDetentionTool(detentions detentionDisputer) serviceports.AgentToo
 		rationale: "Marks a detention charge disputed inside Trenova and holds it from " +
 			"billing; nothing is sent, but the hold is not undone by a tool.",
 		properties: map[string]any{
-			paramOccurrenceID: idProperty("The occurrence, from list_detention_desk or " +
-				"get_shipment. Never guess one."),
+			paramOccurrenceID: agenttoolschema.IDText(
+				"The occurrence, from list_detention_desk or " +
+					"get_shipment. Never guess one.",
+			),
 			paramNote: stringProperty("What the customer disputes, in their words where "+
 				"you have them.", maxOperationNoteChars),
 		},

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -296,9 +297,9 @@ func requireDay(params map[string]any, key string) (int64, error) {
 		return 0, err
 	}
 
-	day, err := time.Parse("2006-01-02", strings.TrimSpace(raw))
+	day, err := time.Parse(time.DateOnly, strings.TrimSpace(raw))
 	if err != nil {
-		return 0, fmt.Errorf("parameter %q must be YYYY-MM-DD, got %q", key, raw)
+		return 0, dateRefusal(key, raw, toolschema.FormatDate)
 	}
 
 	return day.Unix(), nil
@@ -345,12 +346,6 @@ func optionalPulidParam(params map[string]any, key string) (*pulid.ID, error) {
 	return &id, nil
 }
 
-func localTimeProperty(description string) map[string]any {
-	return stringProperty(description+" A local date and time where it happens, without a UTC "+
-		"offset, such as 2026-10-01T08:00. It is read in the timezone of the stop's location, or "+
-		"the organization's when the location names none; never send Unix seconds.", 0)
-}
-
 func requireLocalTime(params map[string]any, key string, loc *time.Location) (int64, error) {
 	raw, given := params[key]
 	if !given || raw == nil {
@@ -360,8 +355,7 @@ func requireLocalTime(params map[string]any, key string, loc *time.Location) (in
 
 	text, isText := raw.(string)
 	if !isText {
-		return 0, errortypes.NewValidationError(key, errortypes.ErrInvalid,
-			"Send a local date and time such as 2026-10-01T08:00, not a number")
+		return 0, dateRefusal(key, raw, toolschema.FormatLocalDateTime)
 	}
 
 	seconds, fieldErr := parseLocalTime(key, text, loc)
@@ -392,9 +386,7 @@ func optionalLocalTime(params map[string]any, key string, loc *time.Location) (*
 func parseLocalTime(field, value string, loc *time.Location) (int64, *errortypes.Error) {
 	text := strings.TrimSpace(value)
 	if _, offset := timeutils.ParseTimeRFC3339(text); offset {
-		return 0, errortypes.NewValidationError(field, errortypes.ErrInvalid,
-			"{0} carries a UTC offset or is a Unix time; send the local time where it happens, "+
-				"such as 2026-10-01T08:00", text)
+		return 0, dateRefusal(field, text, toolschema.FormatLocalDateTime)
 	}
 
 	seconds, err := timeutils.ParseLocalDateTime(text, loc)
@@ -405,7 +397,16 @@ func parseLocalTime(field, value string, loc *time.Location) (int64, *errortypes
 		return 0, errortypes.NewValidationError(field, errortypes.ErrInvalid,
 			"{0} does not exist in {1}: the clocks move forward past it", text, loc.String())
 	default:
-		return 0, errortypes.NewValidationError(field, errortypes.ErrInvalid,
-			"{0} is not a local date and time such as 2026-10-01T08:00", text)
+		return 0, dateRefusal(field, text, toolschema.FormatLocalDateTime)
 	}
+}
+
+// dateRefusal is how a tool refuses a date its schema's format should have
+// refused first, in the schema's own sentence: a call that reaches the tool
+// another way, an approver's edit or a draft's field, is told what a model
+// is told, and the wording lives in one place.
+func dateRefusal(field string, value any, format string) *errortypes.Error {
+	message, _ := toolschema.FormatMessage(value, format)
+
+	return errortypes.NewValidationError(field, errortypes.ErrInvalid, message)
 }

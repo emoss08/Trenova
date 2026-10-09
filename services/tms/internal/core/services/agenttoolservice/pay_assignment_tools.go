@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/driverpayservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -70,10 +71,10 @@ func (t *assignPayProfileTool) Description() string {
 func (t *assignPayProfileTool) ParamSchema() map[string]any {
 	return objectParams(map[string]any{
 		paramWorkerID: workerProperty(),
-		paramPayProfileID: idProperty("The pay profile, from " + payProfileSourcesTool +
+		paramPayProfileID: agenttoolschema.IDText("The pay profile, from " + payProfileSourcesTool +
 			". Never guess one."),
-		paramEffectiveFrom: dateProperty("The first day pay is computed under it."),
-		paramEffectiveTo: dateProperty("The day it stops, when it is temporary; leave it " +
+		paramEffectiveFrom: agenttoolschema.Date("The first day pay is computed under it."),
+		paramEffectiveTo: agenttoolschema.Date("The day it stops, when it is temporary; leave it " +
 			"out for open-ended."),
 		paramSplitPercent: amountProperty("The driver's share of each load, as a percent; " +
 			"50 for an even team split. Leave it out for 100."),
@@ -316,9 +317,9 @@ func (t *endPayAssignmentTool) Description() string {
 
 func (t *endPayAssignmentTool) ParamSchema() map[string]any {
 	return objectParams(map[string]any{
-		paramAssignmentID: idProperty("The assignment, from " + assignmentSourcesTool +
+		paramAssignmentID: agenttoolschema.IDText("The assignment, from " + assignmentSourcesTool +
 			". Never guess one."),
-		paramEndDate: dateProperty("The day it stops applying."),
+		paramEndDate: agenttoolschema.Date("The day it stops applying."),
 	}, paramAssignmentID, paramEndDate)
 }
 

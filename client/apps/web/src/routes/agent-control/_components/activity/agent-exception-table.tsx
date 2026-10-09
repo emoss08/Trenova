@@ -7,13 +7,15 @@ import {
 } from "@/lib/graphql/agent-activity-tables";
 import { resolveAgentException } from "@/lib/graphql/agent-decisions";
 import type { AgentResolutionState } from "@trenova/graphql/generated/graphql";
-import type { Row, RowAction } from "@trenova/shared/types/data-table";
+import type { RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircleIcon, EyeIcon, XCircleIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { getExceptionColumns } from "./agent-exception-columns";
+import { invalidateAIControlCounts } from "../overview/use-ai-control-stats";
+import { ExceptionActionsContext, ExceptionPanel } from "./exception-sheet";
 import { ReasonDialog, type ReasonDialogRequest } from "./reason-dialog";
 
 export default function AgentExceptionTable() {
@@ -23,8 +25,7 @@ export default function AgentExceptionTable() {
   const { allowed: canResolve } = usePermission(Resource.AgentException, Operation.Update);
   const [dialog, setDialog] = useState<ReasonDialogRequest | null>(null);
 
-  const transition = (row: Row<AgentExceptionRow>, state: AgentResolutionState) => {
-    const exception = row.original;
+  const transition = (exception: AgentExceptionRow, state: AgentResolutionState) => {
     const copy: Record<AgentResolutionState, { title: string; confirm: string; message: string }> =
       {
         Open: { title: t("Reopen this case?"), confirm: t("Reopen"), message: t("Case reopened") },
@@ -60,7 +61,10 @@ export default function AgentExceptionTable() {
           resolutionNotes: notes || undefined,
         });
         toast.success(copy[state].message);
-        await queryClient.invalidateQueries({ queryKey: ["agent-exception-list"] });
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["agent-exception-list"] }),
+          invalidateAIControlCounts(queryClient),
+        ]);
       },
     });
   };
@@ -70,14 +74,14 @@ export default function AgentExceptionTable() {
       id: "review",
       label: t("Mark in review"),
       icon: EyeIcon,
-      onClick: (row) => transition(row, "InReview"),
+      onClick: (row) => transition(row.original, "InReview"),
       hidden: (row) => !canResolve || row.original.resolutionState !== "Open",
     },
     {
       id: "resolve",
       label: t("Resolve"),
       icon: CheckCircleIcon,
-      onClick: (row) => transition(row, "Resolved"),
+      onClick: (row) => transition(row.original, "Resolved"),
       hidden: (row) =>
         !canResolve ||
         row.original.resolutionState === "Resolved" ||
@@ -88,7 +92,7 @@ export default function AgentExceptionTable() {
       label: t("Dismiss"),
       icon: XCircleIcon,
       variant: "destructive",
-      onClick: (row) => transition(row, "Dismissed"),
+      onClick: (row) => transition(row.original, "Dismissed"),
       hidden: (row) =>
         !canResolve ||
         row.original.resolutionState === "Resolved" ||
@@ -97,7 +101,7 @@ export default function AgentExceptionTable() {
   ];
 
   return (
-    <>
+    <ExceptionActionsContext.Provider value={{ canResolve, transition }}>
       <DataTable<AgentExceptionRow>
         name="Agent Exception"
         emptyTitle={t("No agent exceptions yet")}
@@ -107,9 +111,11 @@ export default function AgentExceptionTable() {
         columns={columns}
         contextMenuActions={contextMenuActions}
         enableCreateAction={false}
+        enableReadOnlyPanel
+        TablePanel={ExceptionPanel}
         refetchIntervalMs={30_000}
       />
       <ReasonDialog request={dialog} onClose={() => setDialog(null)} />
-    </>
+    </ExceptionActionsContext.Provider>
   );
 }

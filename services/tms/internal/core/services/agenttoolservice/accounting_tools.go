@@ -46,6 +46,10 @@ func provideCheckAccountingConnectionTool(
 
 func (t *checkAccountingConnectionTool) Name() string { return "check_accounting_connection" }
 
+func (t *checkAccountingConnectionTool) Recipe() []string {
+	return []string{"check_accounting_connection", "get_accounting_sync_status", "raise_exception"}
+}
+
 func (t *checkAccountingConnectionTool) Description() string {
 	return "Check the accounting system connection now and record whether it answers. " +
 		"It renews the authorization if it is about to expire and refreshes the company's " +

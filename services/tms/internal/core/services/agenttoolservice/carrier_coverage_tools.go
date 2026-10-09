@@ -68,6 +68,10 @@ func newAssignMoveToCarrierTool(carriers carrierCoverage) serviceports.AgentTool
 
 func (t *assignMoveToCarrierTool) Name() string { return "assign_move_to_carrier" }
 
+func (t *assignMoveToCarrierTool) Recipe() []string {
+	return []string{"shop_carriers", "assign_move_to_carrier", "generate_rate_confirmation"}
+}
+
 func (t *assignMoveToCarrierTool) Description() string {
 	return "Cover a move with an outside carrier at a rate the carrier already agreed to. " +
 		"Use it outside a tender: a contract carrier on its contract rate, or a carrier who " +

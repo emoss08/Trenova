@@ -29,6 +29,7 @@ separate system: see [ai-audit-trail.md](ai-audit-trail.md).
 | Trenova support session started, elevated to write, returned to read-only, ended (Cloud edition) | `audit_entries` | `internal/cloud/supportaccess/supportaccessservice` | yes |
 | Request refused inside a Trenova support session (Cloud edition) | `audit_entries` | `internal/cloud/supportaccess/supportaccessservice` | yes |
 | Platform staff member added or removed (`trenova cloud staff`, Cloud edition) | `audit_entries` | `internal/cloud/supportaccess/supportaccessservice.StaffManager` | yes |
+| Agent tool rule held lower or returned to its declared rule, with the reason and the agents whose answer moved | `audit_entries` | `agenttoolruleservice` | yes |
 | Document downloaded or viewed (content or presigned URL) | `audit_entries` | `documentservice` | — |
 | Cross-tenant request refused | `audit_entries` | `middleware.TenantBoundaryMiddleware` | yes |
 

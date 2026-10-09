@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
+	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
@@ -150,6 +151,16 @@ var subjectTables = map[agent.SubjectType]subjectTable{
 		model:  func() any { return (*formulatemplate.FormulaTemplate)(nil) },
 		tenant: buncolgen.FormulaTemplateApplyTenant,
 		id:     buncolgen.FormulaTemplateColumns.ID,
+	},
+	agent.SubjectInvoice: {
+		model:  func() any { return (*invoice.Invoice)(nil) },
+		tenant: buncolgen.InvoiceApplyTenant,
+		id:     buncolgen.InvoiceColumns.ID,
+	},
+	agent.SubjectInvoiceDispute: {
+		model:  func() any { return (*invoice.InvoiceDispute)(nil) },
+		tenant: buncolgen.InvoiceDisputeApplyTenant,
+		id:     buncolgen.InvoiceDisputeColumns.ID,
 	},
 }
 

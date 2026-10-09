@@ -8,13 +8,18 @@ package aiproviderresolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/shopspring/decimal"
 )
 
 func (r *AIProviderResolver) InputCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error) {
@@ -105,4 +110,120 @@ func (r *QueryResolver) AiRoutePreview(ctx context.Context, draft gqlmodel.AIPro
 		out[idx] = &routes[idx]
 	}
 	return out, nil
+}
+
+func (r *AIProviderResolver) MonthlyCapUsd(ctx context.Context, obj *aiprovider.Provider) (*string, error) {
+	return base.DecimalPtrToStringPtr(obj.MonthlyCapUSD), nil
+}
+
+func (r *AIProviderResolver) MonthSpendUsd(ctx context.Context, obj *aiprovider.Provider) (string, error) {
+	l, ok := loaders.FromContext(ctx)
+	if !ok || l == nil {
+		return decimal.Zero.String(), nil
+	}
+
+	spend, err := l.AIProviderMonthSpend.Load(ctx, obj.ID.String())
+	if err != nil {
+		return "", err
+	}
+
+	return spend.String(), nil
+}
+
+func (r *AIProviderResolver) APIKey(ctx context.Context, obj *aiprovider.Provider) (*aiprovider.KeyInfo, error) {
+	return obj.KeyInfo(timeutils.NowUnix()), nil
+}
+
+func (r *MutationResolver) TestAIProviderDraft(ctx context.Context, input gqlmodel.AIProviderDraftTestInput) (*services.TestAIProviderResult, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpManage)
+	if err != nil {
+		return nil, err
+	}
+
+	endpoint, err := endpointFromInput(input.Endpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	req := &services.TestAIProviderDraftRequest{
+		TenantInfo:          base.TenantInfo(authCtx),
+		Endpoint:            endpoint,
+		Model:               input.Model,
+		Tasks:               input.Tasks,
+		EmbeddingDimensions: input.EmbeddingDimensions,
+		TimeoutSeconds:      input.TimeoutSeconds,
+	}
+	if input.StructuredOutputMode != nil {
+		req.StructuredOutputMode = *input.StructuredOutputMode
+	}
+	if input.EmbeddingInputStyle != nil {
+		req.EmbeddingInputStyle = *input.EmbeddingInputStyle
+	}
+
+	return r.AiProviderService.TestDraft(ctx, req)
+}
+
+func (r *MutationResolver) ReorderAIProviders(ctx context.Context, ids []string) ([]*aiprovider.Provider, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	providerIDs, err := base.ParseIDs(ids)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AiProviderService.Reorder(ctx, &services.ReorderAIProvidersRequest{
+		TenantInfo:  base.TenantInfo(authCtx),
+		ProviderIDs: providerIDs,
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) PatchAIProvider(ctx context.Context, id string, version int, input gqlmodel.AIProviderPatchInput) (*aiprovider.Provider, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	providerID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := patchFromInput(&input)
+	if err != nil {
+		return nil, err
+	}
+	req.ID = providerID
+	req.Version = int64(version)
+	req.TenantInfo = base.TenantInfo(authCtx)
+
+	return r.AiProviderService.Patch(ctx, req, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *QueryResolver) AiProviderModels(ctx context.Context, input gqlmodel.AIProviderEndpointInput) ([]*gqlmodel.AIProviderModelOption, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpManage)
+	if err != nil {
+		return nil, err
+	}
+
+	endpoint, err := endpointFromInput(&input)
+	if err != nil {
+		return nil, err
+	}
+
+	models, err := r.AiProviderService.ListModels(ctx, &services.ListAIProviderModelsRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		Endpoint:   endpoint,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return modelOptionsToModel(models), nil
+}
+
+func (r *AIProviderKeyInfoResolver) AddedBy(ctx context.Context, obj *aiprovider.KeyInfo) (*tenant.User, error) {
+	return base.LoadUser(ctx, obj.AddedByID)
 }

@@ -77,10 +77,6 @@ type reportAdministrator interface {
 
 var _ reportAdministrator = (*reporting.Service)(nil)
 
-func reportIDProperty(description string) map[string]any {
-	return stringProperty(description, 0)
-}
-
 func reportTarget(key string) func(map[string]any) (serviceports.ToolTarget, bool) {
 	return func(params map[string]any) (serviceports.ToolTarget, bool) {
 		return targetOf(params, key, permission.ResourceReport)
@@ -117,7 +113,7 @@ func newCancelReportRunTool(reports reportAdministrator) serviceports.AgentTool 
 		maxTier:     agent.TierAutoExecute,
 		rationale: "Stops a report the person asked for from running; nothing is changed or " +
 			"sent, and running the report again gives the same rows.",
-		properties: map[string]any{paramReportRunID: reportIDProperty(reportRunSupplier)},
+		properties: map[string]any{paramReportRunID: agenttoolschema.IDText(reportRunSupplier)},
 		required:   []string{paramReportRunID},
 		target:     reportTarget(paramReportRunID),
 	}), receivablePlan[*reporting.GetRunRequest, *reporting.RunChange]{
@@ -188,7 +184,10 @@ func newDeleteReportTool(reports reportAdministrator) serviceports.AgentTool {
 		rationale: "Removes a saved report colleagues may run and nothing brings it back, so " +
 			"a person always decides.",
 		properties: map[string]any{
-			paramDefinitionID: reportIDProperty(reportDefinitionSupplier),
+			paramDefinitionID: agenttoolschema.RecordIDText(
+				permission.ResourceReport,
+				reportDefinitionSupplier,
+			),
 		},
 		required: []string{paramDefinitionID},
 		target:   reportTarget(paramDefinitionID),
@@ -242,8 +241,11 @@ func newResetReportForkTool(reports reportAdministrator) serviceports.AgentTool 
 		rationale: "Rewrites a report the person owns from the built-in catalog; nothing is " +
 			"sent, but the person's changes to it are lost.",
 		properties: map[string]any{
-			paramDefinitionID: reportIDProperty(reportDefinitionSupplier + " It must be a " +
-				"copy of a built-in report."),
+			paramDefinitionID: agenttoolschema.RecordIDText(
+				permission.ResourceReport,
+				reportDefinitionSupplier+" It must be a "+
+					"copy of a built-in report.",
+			),
 		},
 		required: []string{paramDefinitionID},
 		target:   reportTarget(paramDefinitionID),
@@ -302,7 +304,10 @@ func newDeleteDashboardTool(reports reportAdministrator) serviceports.AgentTool 
 		rationale: "Removes a dashboard colleagues may open and nothing brings it back, so a " +
 			"person always decides.",
 		properties: map[string]any{
-			paramDashboardID: reportIDProperty(reportDashboardSupplier),
+			paramDashboardID: agenttoolschema.RecordIDText(
+				permission.ResourceDashboard,
+				reportDashboardSupplier,
+			),
 		},
 		required: []string{paramDashboardID},
 		target: func(params map[string]any) (serviceports.ToolTarget, bool) {
@@ -518,9 +523,12 @@ func newUpdateReportScheduleTool(reports reportAdministrator) serviceports.Agent
 		rationale: "Changes where and when a report is emailed, which may be to addresses " +
 			"outside the organization.",
 		properties: map[string]any{
-			paramReportScheduleID: reportIDProperty(reportScheduleSupplier),
-			paramDefinitionID: reportIDProperty("The saved report it runs, from list_reports. " +
-				"Leave it out to keep it."),
+			paramReportScheduleID: agenttoolschema.IDText(reportScheduleSupplier),
+			paramDefinitionID: agenttoolschema.RecordIDText(
+				permission.ResourceReport,
+				"The saved report it runs, from list_reports. "+
+					"Leave it out to keep it.",
+			),
 			paramCronExpression: stringProperty("When it runs, as five cron fields, such as "+
 				"\"0 7 * * 1\" for 07:00 every Monday.", 0),
 			paramTimezone: stringProperty("The zone the schedule is read in, as an IANA name "+
@@ -609,7 +617,7 @@ func newDeleteReportScheduleTool(reports reportAdministrator) serviceports.Agent
 		rationale: "Stops a report reaching the people it was scheduled for; nothing brings " +
 			"the schedule back but setting it up again, so a person always decides.",
 		properties: map[string]any{
-			paramReportScheduleID: reportIDProperty(reportScheduleSupplier),
+			paramReportScheduleID: agenttoolschema.IDText(reportScheduleSupplier),
 		},
 		required:    []string{paramReportScheduleID},
 		target:      reportTarget(paramReportScheduleID),

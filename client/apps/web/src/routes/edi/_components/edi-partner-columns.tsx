@@ -113,8 +113,10 @@ export function getPartnerColumns(t: TranslateFn): ColumnDef<EDIPartner>[] {
       meta: {
         label: t("Connection"),
         apiField: "ediConnectionId",
-        filterable: false,
         sortable: false,
+        filterable: true,
+        filterType: "record",
+        filterRecord: "EDI_CONNECTION",
       },
     },
     {

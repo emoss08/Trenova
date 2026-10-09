@@ -2,6 +2,7 @@ import { Dialog } from "@base-ui/react/dialog";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { MouseEvent, ReactNode } from "react";
 import { Ic } from "./ic";
+import { Button } from "@trenova/shared/components/ui/button";
 
 type ReadSheetProps = {
   open: boolean;
@@ -30,15 +31,17 @@ export function ReadSheet({ open, onClose, label, head, children }: ReadSheetPro
             <aside className="sheet" aria-label={label}>
               <header className="sh-h">
                 {head}
-                <button
+                <Button
                   type="button"
-                  className="ib"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="text-muted-foreground hover:text-foreground"
                   title={t("Close (Esc)")}
                   aria-label={t("Close (Esc)")}
                   onClick={onClose}
                 >
                   <Ic n="x" s={14} />
-                </button>
+                </Button>
               </header>
               <div className="sh-b">{children}</div>
             </aside>

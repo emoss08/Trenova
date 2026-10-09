@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -49,6 +50,8 @@ func newGetBillingQueueItemsTool(
 
 func (t *getBillingQueueItemsTool) Name() string { return "get_billing_queue_items" }
 
+func (t *getBillingQueueItemsTool) BatchOf() string { return "get_billing_queue_item" }
+
 func (t *getBillingQueueItemsTool) SearchTerms() []string {
 	return []string{"billing queue", "review", "approve", "post", "batch", "readiness"}
 }
@@ -67,7 +70,7 @@ func (t *getBillingQueueItemsTool) ParamSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			paramBillingQueueItemIDs: idListProperty("The items' ids, from "+
+			paramBillingQueueItemIDs: agenttoolschema.IDList("The items' ids, from "+
 				"list_billing_queue_items, the page you are on or the proposals that named "+
 				"them.", maxBatchBillingQueueItems),
 		},

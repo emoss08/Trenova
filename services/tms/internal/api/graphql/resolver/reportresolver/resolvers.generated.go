@@ -5,11 +5,13 @@ package reportresolver
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	reportingservice "github.com/emoss08/trenova/internal/core/services/reporting"
+	tableexportservice "github.com/emoss08/trenova/internal/core/services/tableexportservice"
 )
 
 type Deps struct {
 	*base.Core
-	ReportingService *reportingservice.Service
+	TableExportService *tableexportservice.Service
+	ReportingService   *reportingservice.Service
 }
 
 type MutationResolver struct{ *Deps }

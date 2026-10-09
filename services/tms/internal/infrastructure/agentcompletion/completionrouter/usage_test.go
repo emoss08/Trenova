@@ -234,3 +234,10 @@ func (f *fakeUsage) EvaluationCost(
 ) (*repositories.AIUsageCost, error) {
 	return &repositories.AIUsageCost{CostUSD: decimal.Zero}, nil
 }
+
+func (f *fakeUsage) SpendByProvider(
+	context.Context,
+	repositories.AIUsageProviderSpendRequest,
+) (map[pulid.ID]decimal.Decimal, error) {
+	return map[pulid.ID]decimal.Decimal{}, nil
+}

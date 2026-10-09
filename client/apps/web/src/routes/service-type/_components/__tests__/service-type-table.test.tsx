@@ -3,11 +3,13 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import ServiceTypeTable from "../service-type-table";
+import { seedDataTableQueries } from "@/test/data-table-queries";
 
 const patchMock = vi.hoisted(() => vi.fn());
 
-const useDataTableQueryMock = vi.hoisted(() =>
-  vi.fn(() => ({
+// One answer, kept across renders, as React Query keeps an unchanged result.
+const useDataTableQueryMock = vi.hoisted(() => {
+  const result = {
     data: {
       results: [
         {
@@ -24,8 +26,9 @@ const useDataTableQueryMock = vi.hoisted(() =>
     isLoading: false,
     isError: false,
     error: null,
-  })),
-);
+  };
+  return vi.fn(() => result);
+});
 
 vi.mock("../service-type-panel", () => ({
   ServiceTypePanel: () => null,
@@ -52,19 +55,14 @@ vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),
 }));
 
-vi.mock("@/hooks/data-table/use-data-table-query", () => ({
+vi.mock("@/hooks/data-table/use-data-table-query", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/hooks/data-table/use-data-table-query")>()),
   useDataTableQuery: useDataTableQueryMock,
 }));
 
-vi.mock("@/lib/queries", () => ({
+vi.mock("@/lib/queries", async () => ({
   queries: {
-    tableConfiguration: {
-      default: () => ({ queryKey: ["tableConfig-default"], queryFn: () => null }),
-      all: () => ({
-        queryKey: ["tableConfig-all"],
-        queryFn: () => ({ results: [], count: 0 }),
-      }),
-    },
+    ...(await import("@/test/data-table-queries")).dataTableQueryMocks,
   },
 }));
 
@@ -73,9 +71,9 @@ vi.mock("@trenova/shared/hooks/use-debounce", () => ({
 }));
 
 function renderServiceTypeTable() {
-  const queryClient = new QueryClient({
+  const queryClient = seedDataTableQueries(new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
-  });
+  }));
   const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
   render(
     <QueryClientProvider client={queryClient}>

@@ -19,10 +19,19 @@ import type { AssistantMessage } from "@/types/assistant";
  *   the schedule's card under it; nothing answered it there and then
  * - `compaction` — the summary a compaction wrote, shown as the line where the
  *   conversation was compacted and never as something the person said
+ * - `steer` — what the person said while a reply was being written, shown as
+ *   theirs and marked as read by the reply under way
+ * - `world` — the notice a reply was given when a record it was working with
+ *   changed elsewhere; neither side said it
+ * - `wait` — the note that started the turn picking up work the agent parked
+ *   on a wait, shown as the wait it records and never as its text
  * - `user` / `assistant` — ordinary turns
  */
 export type MessagePresentation =
   | "compaction"
+  | "steer"
+  | "world"
+  | "wait"
   | "delegated"
   | "handoff"
   | "tool"
@@ -66,8 +75,20 @@ export function classifyMessage(message: AssistantMessage): MessagePresentation 
     return "compaction";
   }
 
+  if (message.kind === "WorldChange") {
+    return "world";
+  }
+
+  if (message.kind === "WaitNote") {
+    return "wait";
+  }
+
   if (message.role === "Tool") {
     return "tool";
+  }
+
+  if (message.kind === "Steer") {
+    return "steer";
   }
 
   if (message.kind === "Schedule") {

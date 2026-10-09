@@ -52,6 +52,7 @@ func TestContextBuilder_ReadsTheMemoriesOfWhatTheTurnIsAbout(t *testing.T) {
 			ID:       customer,
 			Relation: agent.MemoryRelationDirect,
 		}},
+		Relevance: agent.MemoryRelevance{Judged: true},
 	}}
 	builder := &ContextBuilder{
 		logger:        zap.NewNop(),
@@ -94,6 +95,7 @@ func TestContextBuilder_ReadsTheMemoriesOfWhatTheTurnIsAbout(t *testing.T) {
 	assert.Equal(t, definition.EffectiveToolNames(), memories.asked.ToolNames)
 	assert.Equal(t, memories.answer.Memories, rc.Memories)
 	assert.Equal(t, memories.answer.Subjects, rc.MemorySubjects)
+	assert.Equal(t, memories.answer.Relevance, rc.MemoryRelevance)
 	assert.Empty(t, memories.used, "building the context counts nothing as used")
 }
 
@@ -185,4 +187,80 @@ func TestSavedOrRefreshed_ARefreshedMemoryIsUsedNotSaved(t *testing.T) {
 	content := refreshedContent("remember", again)
 	assert.Contains(t, content, "already remembered as memory "+again.ID.String())
 	assert.Contains(t, content, "instead of saving a duplicate")
+}
+
+type memoryEvents struct {
+	TurnEffects
+
+	events []serviceports.StreamEvent
+}
+
+func (fx *memoryEvents) Emit(event serviceports.StreamEvent) {
+	fx.events = append(fx.events, event)
+}
+
+func TestOpenTurn_CountsOnlyTheMemoriesThatBearOnTheTurn(t *testing.T) {
+	t.Parallel()
+
+	memories := &fakeMemories{}
+	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
+	rt.memories = memories
+
+	rule := &agent.Memory{
+		ID: pulid.MustNew("amem_"), Kind: agent.MemoryKindInstruction,
+		Content: "Assess ELD applicability for each driver.",
+	}
+	bearing := &agent.Memory{
+		ID: pulid.MustNew("amem_"), Kind: agent.MemoryKindFact,
+		Content: "Copy dispatch when a customer is told a load delivered.",
+	}
+	unrelated := &agent.Memory{
+		ID: pulid.MustNew("amem_"), Kind: agent.MemoryKindFact,
+		Content: "The yard closes at six.",
+	}
+
+	turn := rt.OpenTurn(t.Context(), &serviceports.RunRequest{
+		Definition: testDefinition(),
+		Actor:      testActor(),
+		Input:      "Let the customer know the load delivered.",
+		Context: agentdefinition.RuntimeContext{
+			Memories: []*agent.Memory{rule, bearing, unrelated},
+			MemoryRelevance: agent.MemoryRelevance{
+				Judged: true,
+				IDs:    map[pulid.ID]struct{}{bearing.ID: {}},
+			},
+		},
+	})
+
+	assert.Equal(t, []pulid.ID{bearing.ID}, memories.used)
+	assert.Equal(t, []pulid.ID{bearing.ID}, turn.State().Result.UsedMemoryIDs)
+	system := turn.State().System
+	assert.Contains(t, system, rule.Content, "a standing rule is followed whether or not it bears")
+	assert.Contains(t, system, bearing.Content)
+	assert.NotContains(t, system, unrelated.Content, "a fact that does not bear is left to recall")
+}
+
+func TestNoteToolMemories_AToolsMemoriesAreUsedOnceItIsCalled(t *testing.T) {
+	t.Parallel()
+
+	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
+	fix := pulid.MustNew("amem_")
+	already := pulid.MustNew("amem_")
+	turn := rt.RestoreTurn(&serviceports.RunRequest{Definition: testDefinition()}, TurnState{
+		Result:       serviceports.RunResult{UsedMemoryIDs: []pulid.ID{already}},
+		ToolMemories: map[string][]pulid.ID{"assign_move": {fix}},
+	})
+	fx := &memoryEvents{}
+
+	turn.noteToolMemories(fx, "search_shipments")
+	assert.Empty(t, fx.events, "a call to another tool uses nothing")
+
+	turn.noteToolMemories(fx, "assign_move")
+	require.Len(t, fx.events, 1)
+	assert.Equal(t, serviceports.AssistantEventMemoryUsed, fx.events[0].Event)
+	assert.Equal(t, []pulid.ID{already, fix}, turn.State().Result.UsedMemoryIDs)
+	assert.Empty(t, turn.State().ToolMemories)
+
+	turn.noteToolMemories(fx, "assign_move")
+	assert.Len(t, fx.events, 1, "a second call announces nothing new")
 }

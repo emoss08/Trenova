@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-  EGRESS_ACCENT,
+  EGRESS_HUE,
+  egressSegments,
+  safetyFacts,
   EGRESS_ORDER,
   KIND_ORDER,
   answerChoices,
@@ -47,8 +49,8 @@ describe("labels", () => {
   });
 
   it("gives every class its own accent", () => {
-    const accents = EGRESS_ORDER.map((egress) => EGRESS_ACCENT[egress]);
-    expect(new Set(accents).size).toBe(EGRESS_ORDER.length);
+    const hues = EGRESS_ORDER.map((egress) => EGRESS_HUE[egress].hue);
+    expect(new Set(hues).size).toBe(EGRESS_ORDER.length);
   });
 
   it("names every reason the server holds a call for", () => {
@@ -157,5 +159,43 @@ describe("filter choices", () => {
       "general",
       "shipment_move",
     ]);
+  });
+});
+
+describe("egressSegments", () => {
+  it("leaves out reads and empty audiences and keeps nowhere-to-money order", () => {
+    expect(
+      egressSegments([
+        { egress: "Money", count: 2 },
+        { egress: "None", count: 40 },
+        { egress: "Internal", count: 18 },
+        { egress: "Personal", count: 0 },
+      ]).map((segment) => [segment.egress, segment.count]),
+    ).toEqual([
+      ["Internal", 18],
+      ["Money", 2],
+    ]);
+  });
+
+  it("keeps a small audience wide enough to read", () => {
+    const [internal, money] = egressSegments([
+      { egress: "Internal", count: 98 },
+      { egress: "Money", count: 2 },
+    ]);
+    expect(internal?.grow).toBe(98);
+    expect(money?.grow).toBe(9);
+  });
+});
+
+describe("safetyFacts", () => {
+  it("reads the open agents from the ids the server named", () => {
+    expect(
+      safetyFacts({
+        runWithoutPerson: 1,
+        unattendedTools: ["Assign move"],
+        leaveOrganization: 3,
+        openSensitiveAgentIds: ["agdef_1"],
+      }),
+    ).toEqual({ runs: 1, runningTools: ["Assign move"], leave: 3, open: ["agdef_1"] });
   });
 });

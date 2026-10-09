@@ -72,9 +72,19 @@ func (s *Service) ListToolPolicies(
 		req = &services.ListAgentToolPoliciesRequest{}
 	}
 
+	rules, err := s.overridesFor(ctx, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
 	rows := make([]toolRuleRow, len(s.entries))
 	for idx := range s.entries {
 		rows[idx].entry = &s.entries[idx]
+		if override, ok := rules[s.entries[idx].view.Policy.Name]; ok {
+			overridden := s.entries[idx]
+			overridden.view = OverriddenView(overridden.view.Policy, override)
+			rows[idx].entry = &overridden
+		}
 	}
 
 	attended := req.WithAttendance || s.toolRules.References(&req.Table, FieldRunsWithoutPerson)

@@ -35,6 +35,10 @@ func newDismissInsightTool(insights insightDismisser) serviceports.AgentTool {
 
 func (t *dismissInsightTool) Name() string { return "dismiss_insight" }
 
+func (t *dismissInsightTool) Recipe() []string {
+	return []string{"get_insight", "list_insights", "dismiss_insight"}
+}
+
 func (t *dismissInsightTool) Description() string {
 	return "Dismiss an insight that is not worth acting on, with the reason a person would " +
 		"want to read later. Use it for a known seasonal pattern, a customer already being " +

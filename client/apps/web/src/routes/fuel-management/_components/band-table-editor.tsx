@@ -1,3 +1,4 @@
+"use no memo";
 import { translate } from "@trenova/shared/i18n/runtime";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";

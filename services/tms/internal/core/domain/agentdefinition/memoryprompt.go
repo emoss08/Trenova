@@ -60,57 +60,113 @@ func (rc *RuntimeContext) MemoryRecords() []agent.EntityRef {
 	return records
 }
 
-// FitMemories picks what the prompt carries: the memories that have not gone
-// stale, best first, as many as fit both the agent's token budget and
-// MaxPromptMemories. Whatever is left out stays recallable.
+// MemoryFit is what a turn does with the memories it read. Carried is what
+// the prompt holds. Used is what bore on the turn: memories about the records
+// it is about, about a tool picked for it, or that share meaning or words
+// with what it asked. ByTool holds the carried memories about a tool that
+// was only on hand, which become used when the turn calls it. HeldBack
+// counts the candidates left out, each still a recall_memory call away.
+type MemoryFit struct {
+	Carried  []*agent.Memory
+	Used     []pulid.ID
+	ByTool   map[string][]pulid.ID
+	HeldBack int
+}
+
+// FitMemories picks what the prompt carries.
 func (d *Definition) FitMemories(rc *RuntimeContext) []*agent.Memory {
+	return d.PlanMemories(rc).Carried
+}
+
+// PlanMemories fits the memories that have not gone stale to the agent's
+// token budget and MaxPromptMemories, best first, and says which of them
+// bear on the turn. A memory in no tier of its own (a Fact, or a Correction
+// to a tool not in play) is carried only when it bears on what was asked;
+// when there was nothing to judge by, every candidate bears, as before.
+func (d *Definition) PlanMemories(rc *RuntimeContext) MemoryFit {
 	if rc == nil || len(rc.Memories) == 0 {
-		return nil
+		return MemoryFit{HeldBack: heldBack(rc, 0)}
 	}
 
-	ordered := orderMemoriesForPrompt(rc, agent.WithoutStaleMemories(rc.Memories))
+	ranked := rankMemoriesForPrompt(rc, agent.WithoutStaleMemories(rc.Memories))
 	budget := d.EffectiveMemoryTokenBudget()
 	spent := 0
-	headed := make(map[string]struct{}, len(ordered))
-	fitted := make([]*agent.Memory, 0, min(len(ordered), MaxPromptMemories))
-	for _, memory := range ordered {
-		if len(fitted) == MaxPromptMemories {
+	headed := make(map[string]struct{}, len(ranked))
+	fit := MemoryFit{
+		Carried: make([]*agent.Memory, 0, min(len(ranked), MaxPromptMemories)),
+		Used:    make([]pulid.ID, 0, min(len(ranked), MaxPromptMemories)),
+	}
+	for _, entry := range ranked {
+		if len(fit.Carried) == MaxPromptMemories {
 			break
 		}
-		if memory.DrawnFromOutside() {
-			cost := llmtokens.Estimate(outsideMemoryLine(memory))
-			if spent+cost <= budget {
-				spent += cost
-				fitted = append(fitted, memory)
-			}
-
+		if entry.tier == memoryTierRest && !entry.relevant {
 			continue
 		}
 
-		cost := llmtokens.Estimate(memoryLine(memory))
-		key := memoryGroupKey(memory)
-		_, hasHeading := headed[key]
-		if !hasHeading {
-			cost += llmtokens.Estimate(memoryHeading(memory))
+		memory := entry.memory
+		var cost int
+		if memory.DrawnFromOutside() {
+			cost = llmtokens.Estimate(outsideMemoryLine(memory))
+		} else {
+			cost = llmtokens.Estimate(memoryLine(memory))
+			if _, hasHeading := headed[memoryGroupKey(memory)]; !hasHeading {
+				cost += llmtokens.Estimate(memoryHeading(memory))
+			}
 		}
 		if spent+cost > budget {
 			continue
 		}
 		spent += cost
-		headed[key] = struct{}{}
-		fitted = append(fitted, memory)
+		if !memory.DrawnFromOutside() {
+			headed[memoryGroupKey(memory)] = struct{}{}
+		}
+		fit.Carried = append(fit.Carried, memory)
+		fit.note(rc, entry)
+	}
+	fit.HeldBack = heldBack(rc, len(ranked)-len(fit.Carried))
+
+	return fit
+}
+
+func heldBack(rc *RuntimeContext, left int) int {
+	if rc == nil {
+		return max(left, 0)
 	}
 
-	return fitted
+	return max(left, 0) + rc.MemoriesHeldBack
+}
+
+func (f *MemoryFit) note(rc *RuntimeContext, entry rankedMemory) {
+	memory := entry.memory
+	if memory.ID.IsNil() {
+		return
+	}
+
+	switch {
+	case entry.tier == memoryTierDirectSubject,
+		entry.tier == memoryTierRelatedSubject,
+		entry.relevant:
+		f.Used = append(f.Used, memory.ID)
+	case entry.tier == memoryTierLoadedTool && rc.ToolsDisclosed:
+		f.Used = append(f.Used, memory.ID)
+	case entry.tier == memoryTierLoadedTool:
+		if f.ByTool == nil {
+			f.ByTool = make(map[string][]pulid.ID, 4)
+		}
+		tool := strings.TrimSpace(memory.ToolName)
+		f.ByTool[tool] = append(f.ByTool[tool], memory.ID)
+	}
 }
 
 type rankedMemory struct {
-	memory *agent.Memory
-	tier   memoryTier
-	rank   int
+	memory   *agent.Memory
+	tier     memoryTier
+	rank     int
+	relevant bool
 }
 
-func orderMemoriesForPrompt(rc *RuntimeContext, memories []*agent.Memory) []*agent.Memory {
+func rankMemoriesForPrompt(rc *RuntimeContext, memories []*agent.Memory) []rankedMemory {
 	relations := memoryRelations(rc.MemorySubjects)
 	loaded := loadedToolNames(rc)
 
@@ -120,15 +176,22 @@ func orderMemoriesForPrompt(rc *RuntimeContext, memories []*agent.Memory) []*age
 			continue
 		}
 		ranked = append(ranked, rankedMemory{
-			memory: memory,
-			tier:   tierOf(memory, relations, loaded),
-			rank:   idx,
+			memory:   memory,
+			tier:     tierOf(memory, relations, loaded),
+			rank:     idx,
+			relevant: rc.MemoryRelevance.Bears(memory.ID),
 		})
 	}
 
 	slices.SortStableFunc(ranked, func(a, b rankedMemory) int {
 		if a.tier != b.tier {
 			return int(a.tier) - int(b.tier)
+		}
+		if a.relevant != b.relevant {
+			if a.relevant {
+				return -1
+			}
+			return 1
 		}
 		if a.tier != memoryTierRest {
 			if byKind := a.memory.Kind.Rank() - b.memory.Kind.Rank(); byKind != 0 {
@@ -139,12 +202,7 @@ func orderMemoriesForPrompt(rc *RuntimeContext, memories []*agent.Memory) []*age
 		return a.rank - b.rank
 	})
 
-	ordered := make([]*agent.Memory, 0, len(ranked))
-	for _, entry := range ranked {
-		ordered = append(ordered, entry.memory)
-	}
-
-	return ordered
+	return ranked
 }
 
 type subjectKey struct {

@@ -191,9 +191,11 @@ func fuelPurchaseProperties(forCorrection bool) map[string]any {
 		paramJurisdictionID: stringProperty("The state or province the fuel was bought in, "+
 			"from list_ifta_jurisdictions; it decides which line of the return the tax-paid "+
 			"gallons credit."+keep, 0),
-		paramPurchasedAt: dateTimeProperty("When it was bought, as the receipt says." + keep),
-		paramVendor:      stringProperty("The truck stop or vendor."+keep, maxFuelVendorText),
-		paramVendorCity:  stringProperty("The vendor's city."+keep, maxFuelVendorText),
+		paramPurchasedAt: agenttoolschema.DateTime(
+			"When it was bought, as the receipt says." + keep,
+		),
+		paramVendor:     stringProperty("The truck stop or vendor."+keep, maxFuelVendorText),
+		paramVendorCity: stringProperty("The vendor's city."+keep, maxFuelVendorText),
 		paramFuelType: agenttoolschema.Enum("The fuel as IFTA classifies it; DEF, Reefer "+
 			"and Other are spend only and never enter the return."+keep, fuelTypes),
 		paramQuantity: stringProperty("The quantity bought, as a decimal such as 100.5, in "+
@@ -508,7 +510,8 @@ func newRecordFuelPurchaseTool(
 	jurisdictions jurisdictionLabeler,
 ) serviceports.AgentTool {
 	return newReportingReceivableTool(fuelInternalSpec(&receivableSpec{
-		name: "record_fuel_purchase",
+		name:   "record_fuel_purchase",
+		recipe: []string{"list_fuel_purchases", "record_fuel_purchase"},
 		description: "Record fuel bought for a tractor from a receipt or a statement line: " +
 			"where it was bought for IFTA, when, what fuel, how much and what it cost. It is " +
 			"a tax record the quarter's IFTA return is computed from. Check " +
@@ -1055,6 +1058,12 @@ func fuelImportIDFrom(params *serviceports.ToolExecuteParams) (pulid.ID, error) 
 func newCommitFuelPurchaseImportTool(imports fuelImportKeeper) serviceports.AgentTool {
 	return newReceivableTool(fuelInternalSpec(&receivableSpec{
 		name: "commit_fuel_purchase_import",
+		recipe: []string{
+			"list_fuel_purchase_imports",
+			"assign_fuel_card",
+			"resolve_fuel_purchase_import_rows",
+			"commit_fuel_purchase_import",
+		},
 		description: "Commit a staged fuel card statement: every row ready to commit becomes " +
 			"a fuel purchase in one step, and rows whose reference is already on file are " +
 			"skipped. Read it with list_fuel_purchase_imports first; rows in error stay " +

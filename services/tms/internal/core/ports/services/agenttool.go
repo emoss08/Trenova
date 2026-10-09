@@ -27,6 +27,13 @@ type ToolExecuteParams struct {
 	Taint      *agent.RunTaint
 	ProposalID pulid.ID
 	Timezone   string
+	// DefinitionID, ThreadID and Delegated say whose work the call is: the
+	// agent, the conversation it is answering, and whether it is a task
+	// another agent handed it. A tool that parks the work, such as
+	// wait_until, reads them from here rather than trusting the model.
+	DefinitionID pulid.ID
+	ThreadID     pulid.ID
+	Delegated    bool
 }
 
 type TenantTimezoneReader interface {
@@ -121,6 +128,12 @@ type AgentToolDescriptor struct {
 	Query         bool     `json:"query"`
 	SearchTerms   []string `json:"searchTerms,omitempty"`
 	Prerequisites []string `json:"prerequisites,omitempty"`
+	// BatchOf names the tool this one does to several records at once, for
+	// a tool that is the plural twin of another.
+	BatchOf string `json:"batchOf,omitempty"`
+	// Recipe is the tools a task with this one is done with, in order, the
+	// tool itself among them.
+	Recipe []string `json:"recipe,omitempty"`
 }
 
 // SearchableTool is a tool with words a person uses for it that its name and
@@ -137,6 +150,25 @@ type SearchableTool interface {
 // holding the tool.
 type PrerequisiteTool interface {
 	Prerequisites() []string
+}
+
+// BatchTool is a tool that does to a list of records what another tool does
+// to one, in one call and, for a change, on one card. The prompt names each
+// pair an agent holds, so a model asked for one change across several records
+// reaches for the twin rather than calling the single tool once per record;
+// the examples it used to be given named billing tools to every agent.
+type BatchTool interface {
+	BatchOf() string
+}
+
+// RecipeTool is a tool whose use is a sequence: the lookups that hand out
+// its arguments in the order the work is done, the tool itself, and what
+// follows it. A model handed create_shipment with eight id parameters and
+// no order went looking for them one at a time, or guessed; the recipe is
+// told with the tool wherever it is named, in the prompt and in a find_tools
+// answer, so one call does what three round trips used to.
+type RecipeTool interface {
+	Recipe() []string
 }
 
 // SelfScopeOwnerParam is where the runtime records whose records a
@@ -169,6 +201,12 @@ func DescribeTool(
 	}
 	if dependent, ok := tool.(PrerequisiteTool); ok {
 		descriptor.Prerequisites = dependent.Prerequisites()
+	}
+	if batch, ok := tool.(BatchTool); ok {
+		descriptor.BatchOf = batch.BatchOf()
+	}
+	if recipe, ok := tool.(RecipeTool); ok {
+		descriptor.Recipe = recipe.Recipe()
 	}
 
 	return descriptor

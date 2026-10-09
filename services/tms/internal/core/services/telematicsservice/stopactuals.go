@@ -3,17 +3,22 @@ package telematicsservice
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
 
@@ -42,7 +47,11 @@ type stopEvent struct {
 }
 
 func (s *Service) applyStopEvent(ctx context.Context, event *stopEvent) {
-	if !s.autoStopActualsEnabled(ctx, event.tenantInfo) {
+	// The visit reaches the agents' waits whether or not stop actuals are
+	// recorded from it: a wait on a truck reaching a stop is about the truck,
+	// not about the paperwork.
+	autoActuals := s.autoStopActualsEnabled(ctx, event.tenantInfo)
+	if !autoActuals && s.waits == nil {
 		return
 	}
 
@@ -78,6 +87,11 @@ func (s *Service) applyStopEvent(ctx context.Context, event *stopEvent) {
 		return
 	}
 
+	s.notifyVisitWaits(ctx, event, move)
+	if !autoActuals {
+		return
+	}
+
 	result, ok := s.settleStopVisit(ctx, event, move)
 	if !ok {
 		return
@@ -91,6 +105,41 @@ func (s *Service) applyStopEvent(ctx context.Context, event *stopEvent) {
 	}
 
 	s.projectStopVisit(ctx, event.tenantInfo, event.record, move.ShipmentID)
+}
+
+// notifyVisitWaits tells the waits on the move that the truck reached or left
+// one of its stops, when the visit matches one. A visit that matches no stop
+// on the move cannot be what any wait on it is for.
+func (s *Service) notifyVisitWaits(
+	ctx context.Context,
+	event *stopEvent,
+	move *shipment.ShipmentMove,
+) {
+	if s.waits == nil {
+		return
+	}
+	stop, match := move.MatchObservedVisit(event.record.LocationID, event.visit)
+	if stop == nil || match == shipment.VisitMatchNoStop {
+		return
+	}
+
+	kind, verb := agent.EventShipmentMoveArrived, "entered"
+	if event.visit == shipment.VisitDeparture {
+		kind, verb = agent.EventShipmentMoveDeparted, "left"
+	}
+	at := event.record.OccurredAt
+	if at == 0 {
+		at = timeutils.NowUnix()
+	}
+
+	s.waits.NotifyEvent(ctx, &services.AgentEvent{
+		Kind:       kind,
+		SubjectID:  move.ID,
+		TenantInfo: event.tenantInfo,
+		Related:    []pulid.ID{stop.ID},
+		Detail: fmt.Sprintf("The truck %s the geofence of stop %s at %s.", verb, stop.ID,
+			time.Unix(at, 0).UTC().Format("Mon Jan 2 15:04 MST")),
+	})
 }
 
 func (s *Service) settleStopVisit(

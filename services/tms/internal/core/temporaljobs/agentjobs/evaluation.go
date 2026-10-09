@@ -468,7 +468,7 @@ func observeReplay(outcome *serviceports.RunResult) observedReplay {
 		}
 	}
 
-	observed := observedReplay{refused: outcome.OutputRefused}
+	observed := observedReplay{}
 	for i := range outcome.Messages {
 		message := &outcome.Messages[i]
 		if message.Delegated() {

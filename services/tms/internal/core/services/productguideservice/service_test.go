@@ -352,3 +352,57 @@ func TestDestination_RefusesWhatItCannotOrMayNotOpen(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err), "a page the person may not open is refused")
 }
+
+const productNameFixture = `{
+  "version": "sha256:test",
+  "modules": [],
+  "pages": [
+    {
+      "path": "/admin/capture",
+      "name": "Scanning and printing",
+      "module": "admin",
+      "breadcrumb": ["Organization settings", "Scanning and printing"],
+      "description": "Trenova Capture settings.",
+      "summary": "Where administrators run Trenova Capture, the companion that scans paper into Trenova.",
+      "requires": [],
+      "capabilities": [],
+      "aliases": [],
+      "tasks": [{"title": "Roll out Trenova Capture", "keywords": ["install"], "steps": ["Download Trenova Capture."]}],
+      "notes": "",
+      "related": [],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": true
+    }
+  ],
+  "records": []
+}`
+
+func TestSearch_DoesNotMatchAPageOnTheProductsOwnName(t *testing.T) {
+	t.Parallel()
+
+	catalog, err := productguide.Load([]byte(productNameFixture))
+	require.NoError(t, err)
+	service := newService(Params{
+		Logger:        zap.NewNop(),
+		Permissions:   &stubPermissions{allowed: map[string]bool{}},
+		Organizations: &stubOrganizations{},
+	}, catalog)
+
+	search := func(query string) []serviceports.ProductGuideMatch {
+		matches, searchErr := service.Search(t.Context(), &serviceports.ProductGuideSearchRequest{
+			Actor: actor(),
+			Query: query,
+		})
+		require.NoError(t, searchErr)
+
+		return matches
+	}
+
+	assert.Empty(t, search("Tell me about Trenova"))
+	assert.Empty(t, search("What product in Trenova am I currently in?"))
+
+	matches := search("how do I install Trenova Capture")
+	require.Len(t, matches, 1)
+	assert.Equal(t, "/admin/capture", matches[0].Page.Path)
+}

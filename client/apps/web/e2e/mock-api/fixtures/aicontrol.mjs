@@ -158,16 +158,17 @@ function buildAgents(anchor, { paused }) {
 
 const PROVIDER_SPECS = {
   configured: [
-    { key: "anthropic", name: "Anthropic", kind: "AnthropicMessages", model: "claude-sonnet-5", on: false, key2: false, trusted: true, tasks: ["BillingDiagnosis", "AssistantChat"], priority: 10, price: [3, 15] },
+    { key: "anthropic", name: "Anthropic", kind: "AnthropicMessages", model: "claude-sonnet-5", on: false, key2: false, trusted: true, tasks: ["BillingDiagnosis", "AssistantChat"], priority: 10, price: [3, 15], cap: 200 },
     { key: "ollama", name: "Local Ollama", kind: "Ollama", model: "qwen2.5:14b", on: true, trusted: false, priv: true, base: "http://localhost:11434", tasks: ["ScopeClassification", "DocumentClassification", "OperationalInsights", "DailyBriefing", "General"], priority: 20, test: [true, "Connected", 386, 6 * HOUR], week: { calls: 672, failed: 5, ms: 410, tokens: 900000 } },
     { key: "vllm", name: "Workstation vLLM", kind: "OpenAIChat", model: "meta-llama/Llama-3.3-70B-Instruct", on: true, trusted: false, priv: true, base: "http://localhost:8000/v1", tasks: ["AssistantChat", "DocumentExtraction", "FormulaAssistant", "OperationalInsights", "General"], priority: 30, test: [false, "Could not connect", 0, 6.2 * HOUR], week: { calls: 612, failed: 24, ms: 1420, tokens: 2200000 }, failing: 24 },
   ],
   many: [
-    { key: "openai", name: "OpenAI", kind: "OpenAIResponses", model: "gpt-5.1-mini", on: true, key2: true, trusted: true, tasks: ["DocumentClassification", "ScopeClassification"], priority: 10, price: [0.4, 1.6], test: [true, "Connected", 290, 3.5 * HOUR], week: { calls: 1840, failed: 2, ms: 310, tokens: 1400000 } },
+    { key: "openai", name: "OpenAI", kind: "OpenAIResponses", model: "gpt-5.1-mini", on: true, key2: "sk-proj-", cap: 200, spent: 76.4, trusted: true, tasks: ["DocumentClassification", "ScopeClassification"], priority: 10, price: [0.4, 1.6], test: [true, "Connected", 290, 3.5 * HOUR], week: { calls: 1840, failed: 2, ms: 310, tokens: 1400000 } },
     { key: "groq", name: "Groq", kind: "OpenAIChat", model: "llama-3.3-70b-versatile", on: true, key2: true, base: "https://api.groq.com/openai/v1", tasks: ["OperationalInsights", "General"], priority: 20, price: [0.59, 0.79], test: [true, "Connected", 120, 4 * HOUR], week: { calls: 960, failed: 0, ms: 140, tokens: 800000 } },
     { key: "azure", name: "Azure OpenAI", kind: "OpenAIChat", model: "gpt-5.1", on: true, key2: true, trusted: true, base: "https://trenova.openai.azure.com/openai/v1", tasks: ["DocumentExtraction", "BillingDiagnosis", "AssistantChat"], priority: 30, price: [1.25, 10], test: [true, "Connected", 520, DAY], week: { calls: 412, failed: 1, ms: 980, tokens: 1100000 } },
     { key: "gemini", name: "Google Gemini", kind: "OpenAIChat", model: "gemini-3-flash", on: false, key2: true, base: "https://generativelanguage.googleapis.com/v1beta/openai", tasks: ["DailyBriefing"], priority: 40, test: [true, "Connected", 340, 4 * DAY] },
     { key: "mistral", name: "Mistral", kind: "OpenAIChat", model: "mistral-large-3", on: false, base: "https://api.mistral.ai/v1", tasks: [], priority: 50 },
+    { key: "bedrock", name: "AWS Bedrock", kind: "AnthropicMessages", model: "anthropic.claude-sonnet-5", on: false, key2: true, trusted: true, base: "https://bedrock-runtime.us-east-1.amazonaws.com", tasks: ["AssistantChat"], priority: 60, test: [false, "Access denied", 0, 5 * DAY] },
   ],
   none: [],
 };
@@ -200,6 +201,21 @@ function buildProviders(anchor, mode) {
       embeddingInputStyle: "None",
       trusted: !!spec.trusted,
       enabled: spec.on,
+      timeoutSeconds: spec.timeout ?? 60,
+      maxConcurrent: spec.concurrent ?? 8,
+      monthlyCapUsd: spec.cap ? String(spec.cap) : null,
+      onCap: spec.onCap ?? "Next",
+      monthSpendUsd: String(spec.spent ?? 0),
+      apiKey: spec.key2
+        ? {
+            prefix: typeof spec.key2 === "string" ? spec.key2 : spec.kind === "AnthropicMessages" ? "sk-ant-" : "sk-",
+            lastFour: "4f2a",
+            addedAt: anchor - 26 * DAY,
+            addedBy: { id: "usr_sarah", name: "Sarah Alvarez" },
+            lastUsedAt: anchor - 120,
+            previousKeyExpiresAt: null,
+          }
+        : null,
       lastTest: spec.test
         ? {
             success: spec.test[0],

@@ -46,6 +46,8 @@ type Params struct {
 	// Permissions decides whether the person may read the record a
 	// conversation is about before any of it reaches the model.
 	Permissions serviceports.PermissionEngine
+	// Cases says where each conversation that is a case stands.
+	Cases serviceports.AssistantCaseStates `optional:"true"`
 	// Runs says which agent raised each of a conversation's proposals: its
 	// own, or one it handed a task to.
 	Runs         repositories.AgentRunRepository     `optional:"true"`
@@ -71,6 +73,8 @@ type Params struct {
 	// is served.
 	Memories serviceports.AgentMemoryService `optional:"true"`
 	Quota    serviceports.QuotaGuard         `optional:"true"`
+	// Waits reads a wait whose ending a turn picks up.
+	Waits repositories.AgentWaitRepository `optional:"true"`
 }
 
 // Module provides the assistant once, as itself for the worker that runs its
@@ -108,6 +112,7 @@ type Service struct {
 	documents     repositories.DocumentRepository
 	contents      serviceports.DocumentContentService
 	permissions   serviceports.PermissionEngine
+	cases         serviceports.AssistantCaseStates
 	runs          repositories.AgentRunRepository
 	systemAgents  serviceports.SystemAgentProvisioner
 	pageThreads   repositories.PageThreadRepository
@@ -120,6 +125,7 @@ type Service struct {
 	pdfs          serviceports.PDFRenderer
 	memories      serviceports.AgentMemoryService
 	quota         serviceports.QuotaGuard
+	waits         repositories.AgentWaitRepository
 }
 
 func New(p Params) *Service {
@@ -146,7 +152,9 @@ func New(p Params) *Service {
 		documents:     p.Documents,
 		contents:      p.Contents,
 		permissions:   p.Permissions,
+		cases:         p.Cases,
 		runs:          p.Runs,
+		waits:         p.Waits,
 		systemAgents:  p.SystemAgents,
 		pageThreads:   p.PageThreads,
 		agentControls: p.AgentControls,

@@ -103,3 +103,24 @@ export function toMemoryInput(values: MemoryFormValues): AgentMemoryInput {
     version: values.version,
   };
 }
+
+/** A kept memory as the editor holds it. */
+export function memoryValuesFromRow(row: {
+  kind: MemoryFormValues["kind"];
+  content: string;
+  subjectType?: MemoryFormValues["subjectType"] | null;
+  subjectId?: string | null;
+  toolName?: string | null;
+  expiresAt?: number | null;
+  version: number;
+}): MemoryFormValues {
+  return {
+    kind: row.kind,
+    content: row.content,
+    subjectType: row.subjectType ?? null,
+    subjectId: row.subjectId ?? null,
+    toolName: row.toolName ?? "",
+    expiresAt: row.expiresAt ?? null,
+    version: row.version,
+  };
+}

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -184,14 +185,17 @@ func (r *repository) Daily(
 		cols := buncolgen.AIUsageRecordColumns
 
 		var rows []dayRow
-		if err := r.db.DBForContext(ctx).NewSelect().
+		q := r.db.DBForContext(ctx).NewSelect().
 			Model((*aiusage.AIUsageRecord)(nil)).
 			ColumnExpr("to_char(to_timestamp("+cols.CreatedAt.Qualified()+") AT TIME ZONE ?, 'YYYY-MM-DD') AS day", req.Timezone).
 			ColumnExpr(aggregateColumns).
 			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
 			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where(cols.CreatedAt.Gte(), req.Since).
-			GroupExpr("day").
+			Where(cols.CreatedAt.Gte(), req.Since)
+		if req.ProviderID.IsNotNil() {
+			q = q.Where(cols.ProviderID.Eq(), req.ProviderID)
+		}
+		if err := q.GroupExpr("day").
 			OrderExpr("day ASC").
 			Scan(ctx, &rows); err != nil {
 			return nil, fmt.Errorf("summarise ai usage by day: %w", err)
@@ -433,5 +437,49 @@ func (r *repository) ProviderTaskTotals(
 			})
 		}
 		return totals, nil
+	})
+}
+
+type providerSpendRow struct {
+	ProviderID string `bun:"provider_id"`
+	CostUSD    string `bun:"cost_usd"`
+}
+
+func (r *repository) SpendByProvider(
+	ctx context.Context,
+	req repositories.AIUsageProviderSpendRequest,
+) (map[pulid.ID]decimal.Decimal, error) {
+	if len(req.ProviderIDs) == 0 {
+		return map[pulid.ID]decimal.Decimal{}, nil
+	}
+
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]decimal.Decimal, error) {
+		cols := buncolgen.AIUsageRecordColumns
+
+		rows := make([]providerSpendRow, 0, len(req.ProviderIDs))
+		if err := r.db.DBForContext(ctx).NewSelect().
+			Model((*aiusage.AIUsageRecord)(nil)).
+			ColumnExpr(cols.ProviderID.As("provider_id")).
+			ColumnExpr("COALESCE(SUM(" + cols.CostUSD.Qualified() + "), 0)::text AS cost_usd").
+			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+			Where(cols.ProviderID.In(), bun.In(req.ProviderIDs)).
+			Where(cols.CreatedAt.Gte(), req.Since).
+			Where(cols.CostUSD.IsNotNull()).
+			GroupExpr(cols.ProviderID.Qualified()).
+			Scan(ctx, &rows); err != nil {
+			return nil, fmt.Errorf("sum ai provider spend: %w", err)
+		}
+
+		spend := make(map[pulid.ID]decimal.Decimal, len(rows))
+		for idx := range rows {
+			cost, err := decimal.NewFromString(rows[idx].CostUSD)
+			if err != nil {
+				return nil, fmt.Errorf("read ai provider spend %q: %w", rows[idx].CostUSD, err)
+			}
+			spend[pulidFrom(rows[idx].ProviderID)] = cost
+		}
+
+		return spend, nil
 	})
 }

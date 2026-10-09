@@ -2,6 +2,7 @@ import { queries } from "@/lib/queries";
 import { useDeskStore } from "@/stores/desk-store";
 import type { AssistantArtifact } from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
@@ -159,16 +160,20 @@ export function DeskExtractBody({ artifact }: { artifact: AssistantArtifact }) {
           {extraction.pageCount > 1 && (
             <div className="dk-ex-pg">
               {Array.from({ length: extraction.pageCount }, (_, index) => (
-                <button
+                <Button
                   key={index}
-                  type="button"
-                  className={page === index + 1 ? "dk-on" : undefined}
+                  variant="bare"
+                  size="bare"
+                  className={cn(
+                    "h-5.5 w-6 justify-center rounded-md font-plex-mono text-xs text-dsk-subtle hover:bg-dsk-hover",
+                    page === index + 1 && "bg-dsk-ink text-dsk-ink-fg hover:bg-dsk-ink",
+                  )}
                   aria-label={t("Page {0}", index + 1)}
                   aria-current={page === index + 1}
                   onClick={() => setPage(index + 1)}
                 >
                   {index + 1}
-                </button>
+                </Button>
               ))}
             </div>
           )}
@@ -209,9 +214,8 @@ export function DeskExtractBody({ artifact }: { artifact: AssistantArtifact }) {
         </div>
       </div>
       <div className="dk-ax-acts">
-        <button
-          type="button"
-          className="dk-ax-btn dk-ghost"
+        <Button
+          variant="quiet"
           disabled={low.length === 0 || asked !== null}
           onClick={() =>
             ask(
@@ -224,7 +228,7 @@ export function DeskExtractBody({ artifact }: { artifact: AssistantArtifact }) {
           }
         >
           {t("Fix fields")}
-        </button>
+        </Button>
         <span className="flex-1" />
         {extraction.attachedShipmentId !== "" ? (
           <span className="dk-ax-sent">
@@ -244,9 +248,7 @@ export function DeskExtractBody({ artifact }: { artifact: AssistantArtifact }) {
         ) : requested || asked !== null ? (
           <span className="dk-ax-sent dk-wait">{t("Drafting the shipment…")}</span>
         ) : (
-          <button
-            type="button"
-            className="dk-ax-btn dk-ink"
+          <Button
             disabled={extraction.documentId === ""}
             onClick={() => {
               setRequested(true);
@@ -260,7 +262,7 @@ export function DeskExtractBody({ artifact }: { artifact: AssistantArtifact }) {
             }}
           >
             {t("Create shipment from this")}
-          </button>
+          </Button>
         )}
       </div>
     </div>

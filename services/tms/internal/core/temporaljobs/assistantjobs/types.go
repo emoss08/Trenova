@@ -69,6 +69,7 @@ func (p *AssistantTurnPayload) sendRequest() *serviceports.SendMessageRequest {
 		ThreadID:              p.ThreadID,
 		Content:               p.Content,
 		Page:                  p.Request.Page,
+		Surface:               p.Request.Surface,
 		TenantInfo:            p.tenantInfo(),
 		PreferredProviderID:   p.Request.PreferredProviderID,
 		ProviderChosen:        p.Request.ProviderChosen,
@@ -76,18 +77,23 @@ func (p *AssistantTurnPayload) sendRequest() *serviceports.SendMessageRequest {
 		Mentions:              p.Request.Mentions,
 		FollowUpProposalID:    p.Request.FollowUpProposalID,
 		FollowUpPlanID:        p.Request.FollowUpPlanID,
+		ResumeWaitID:          p.Request.ResumeWaitID,
 	}
 }
 
 // AssistantTurnRequest is what the person handed over with the message.
 type AssistantTurnRequest struct {
 	Page                  *agent.PageContext `json:"page,omitempty"`
+	Surface               agent.Surface      `json:"surface,omitempty"`
 	Mentions              []agent.EntityRef  `json:"mentions,omitempty"`
 	AttachmentDocumentIDs []pulid.ID         `json:"attachmentDocumentIds,omitempty"`
 	PreferredProviderID   pulid.ID           `json:"preferredProviderId,omitempty"`
 	ProviderChosen        bool               `json:"providerChosen"`
 	FollowUpProposalID    pulid.ID           `json:"followUpProposalId,omitempty"`
 	FollowUpPlanID        pulid.ID           `json:"followUpPlanId,omitempty"`
+	// ResumeWaitID asks for the turn that picks up work the agent parked on
+	// a wait, in place of content.
+	ResumeWaitID pulid.ID `json:"resumeWaitId,omitempty"`
 	// Awaited says the request that asked is waiting for the turn's result
 	// rather than reading its stream. That caller has the reply as soon as
 	// the turn ends, so nobody is told later that it is ready.
@@ -98,6 +104,12 @@ type AssistantTurnRequest struct {
 // to answer something the person asked.
 func (r AssistantTurnRequest) reportsDecision() bool {
 	return r.FollowUpProposalID.IsNotNil() || r.FollowUpPlanID.IsNotNil()
+}
+
+// resumesWait says the turn was started to pick up work the agent parked on
+// a wait rather than to answer something the person asked.
+func (r AssistantTurnRequest) resumesWait() bool {
+	return r.ResumeWaitID.IsNotNil()
 }
 
 // AssistantTurnResult is what the turn came to.
@@ -126,6 +138,9 @@ type FinishTurnInput struct {
 	Failure         *modelcall.Failure            `json:"failure,omitempty"`
 	Artifacts       []*assistantartifact.Artifact `json:"artifacts,omitempty"`
 	Events          []temporaltype.StreamItem     `json:"events,omitempty"`
+	// Steered are the queued messages the turn read while it worked, which
+	// are cleared from the queue once the turn is saved.
+	Steered []pulid.ID `json:"steered,omitempty"`
 }
 
 // TurnEnding is how the turn ended: its result, and the last event its reader
@@ -136,6 +151,9 @@ type TurnEnding struct {
 	// Compact is set when the turn left the conversation full enough to
 	// compact itself, with the context use either side of doing so.
 	Compact *CompactionCue `json:"compact,omitempty"`
+	// Next is the turn the conversation's queue started once this one was
+	// saved.
+	Next *serviceports.QueuedTurn `json:"next,omitempty"`
 }
 
 // CompactionCue is a conversation a turn left full enough to compact itself.

@@ -46,7 +46,10 @@ Keywords: user activity, actions by user
 ### Export audit entries
 Keywords: download audit log, CSV export
 1. Open [Audit entries](/admin/audit-logs) and filter to the entries you need.
-2. Select **Export to CSV** in the toolbar.
+2. Select **Export, print or schedule** in the toolbar.
+3. Under **Destination**, choose **CSV** to download now, **Print** to print or save a PDF,
+   **Report** to build it on the server with every matching row, or **Schedule** to send it
+   regularly.
 
 ## Notes
 Viewing the page needs read access to audit logs; exporting needs export access. Audit logs are

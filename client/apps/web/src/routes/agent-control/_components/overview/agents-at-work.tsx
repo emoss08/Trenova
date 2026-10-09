@@ -16,6 +16,9 @@ const WORKING_REFRESH_MS = 15_000;
 type AgentsAtWorkProps = {
   /** Why nothing can run, when something stops every agent. */
   idleReason: "no-provider" | "paused" | null;
+  /** Opens one agent on the Agents tab. */
+  onOpenAgent: (agentId: string) => void;
+  /** Opens the whole roster. */
   onOpenAgents: () => void;
 };
 
@@ -23,7 +26,7 @@ type AgentsAtWorkProps = {
  * The agents at a glance: who is working right now and on what, then every agent as a
  * tile, greyed when off, outlined when in shadow, with what waits on a person.
  */
-export function AgentsAtWork({ idleReason, onOpenAgents }: AgentsAtWorkProps) {
+export function AgentsAtWork({ idleReason, onOpenAgent, onOpenAgents }: AgentsAtWorkProps) {
   const t = useT();
   const agentsQuery = useQuery(queries.assistant.agents(false));
   const runsQuery = useQuery({
@@ -54,7 +57,12 @@ export function AgentsAtWork({ idleReason, onOpenAgents }: AgentsAtWorkProps) {
       {working.length > 0 ? (
         <div className="wn">
           {working.map(({ agent, run }) => (
-            <button key={run.id} type="button" className="wn-r" onClick={onOpenAgents}>
+            <button
+              key={run.id}
+              type="button"
+              className="wn-r"
+              onClick={() => onOpenAgent(agent.id)}
+            >
               <span className="pc-mk">
                 <Tile agent={agent} s={26} />
                 <i className="pc-dot run sm" />
@@ -88,7 +96,7 @@ export function AgentsAtWork({ idleReason, onOpenAgents }: AgentsAtWorkProps) {
                   ? t("{0} · shadow", agent.name)
                   : agent.name
             }
-            onClick={onOpenAgents}
+            onClick={() => onOpenAgent(agent.id)}
           >
             <Tile agent={agent} s={28} />
             {agent.enabled && agent.pendingProposals > 0 && (

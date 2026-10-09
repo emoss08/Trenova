@@ -2,6 +2,7 @@ import type { AgentControl } from "@/lib/graphql/agent-control";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Ic, type IcName } from "../kit/ic";
 import { SecH } from "../kit/layout";
+import { Button } from "@trenova/shared/components/ui/button";
 
 type OrganizationWideProps = {
   control: AgentControl;
@@ -60,10 +61,10 @@ export function OrganizationWide({
         t={t("Organization-wide")}
         r={
           canEdit ? (
-            <button type="button" className="btn sm" onClick={onEdit}>
+            <Button type="button" variant="outline" size="sm" onClick={onEdit}>
               <Ic n="edit" s={12} />
               {t("Edit")}
-            </button>
+            </Button>
           ) : undefined
         }
       />

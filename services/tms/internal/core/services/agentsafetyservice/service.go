@@ -45,6 +45,7 @@ type Params struct {
 	Controls    repositories.AgentControlRepository
 	Trust       repositories.AgentToolTrustRepository
 	Registry    *permission.Registry
+	Rules       services.ToolRuleOverrides `optional:"true"`
 }
 
 type Service struct {
@@ -54,6 +55,7 @@ type Service struct {
 	controls    repositories.AgentControlRepository
 	trust       toolTrustLister
 	sensitive   agentaccessservice.SensitiveToolRule
+	rules       services.ToolRuleOverrides
 	entries     []policyEntry
 	byName      map[string]int
 	resources   []string
@@ -70,6 +72,7 @@ func New(p Params) services.AgentSafetyService {
 		controls:    p.Controls,
 		trust:       p.Trust,
 		sensitive:   agentaccessservice.DefaultSensitiveRule(p.Registry),
+		rules:       p.Rules,
 	})
 }
 
@@ -80,6 +83,7 @@ type serviceDeps struct {
 	controls    repositories.AgentControlRepository
 	trust       toolTrustLister
 	sensitive   agentaccessservice.SensitiveToolRule
+	rules       services.ToolRuleOverrides
 }
 
 func newService(deps serviceDeps) *Service {
@@ -90,6 +94,7 @@ func newService(deps serviceDeps) *Service {
 		controls:    deps.controls,
 		trust:       deps.trust,
 		sensitive:   deps.sensitive,
+		rules:       deps.rules,
 	}
 	svc.indexPolicies(PolicyViews(deps.policies.All()))
 
@@ -120,6 +125,36 @@ func PolicyView(policy services.ToolPolicy) services.AgentToolPolicyView {
 	}
 
 	return view
+}
+
+func OverriddenView(
+	declared services.ToolPolicy,
+	override *agent.ToolRuleOverride,
+) services.AgentToolPolicyView {
+	view := PolicyView(agenttoolpolicy.ApplyOverride(declared, override))
+	if override != nil {
+		original := declared
+		view.Declared = &original
+		view.Override = override
+	}
+
+	return view
+}
+
+func (s *Service) overridesFor(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (map[string]*agent.ToolRuleOverride, error) {
+	if s.rules == nil || tenantInfo.OrgID.IsNil() {
+		return map[string]*agent.ToolRuleOverride{}, nil
+	}
+
+	rules, err := s.rules.For(ctx, tenantInfo)
+	if err != nil {
+		return nil, fmt.Errorf("read tool rules for safety: %w", err)
+	}
+
+	return rules, nil
 }
 
 func (s *Service) ToolPolicies() []services.AgentToolPolicyView {
@@ -183,10 +218,23 @@ func (s *Service) Assess(
 		}
 	}
 
+	rules := req.Rules
+	if rules == nil {
+		loaded, err := s.overridesFor(ctx, pagination.TenantInfo{
+			OrgID: req.Subject.Agent.OrganizationID,
+			BuID:  req.Subject.Agent.BusinessUnitID,
+		})
+		if err != nil {
+			loaded = map[string]*agent.ToolRuleOverride{}
+		}
+		rules = loaded
+	}
+
 	held := s.heldPolicies(req.Subject.Agent)
 	out := make([]services.AgentToolSafety, 0, len(held))
 	for idx := range held {
-		policy := held[idx]
+		view := OverriddenView(held[idx], rules[held[idx].Name])
+		policy := view.Policy
 		input := agenttoolpolicy.AssessInput{
 			Policy:     policy,
 			Definition: req.Subject.Agent,
@@ -203,6 +251,7 @@ func (s *Service) Assess(
 			PolicyName: policy.Name,
 			Clean:      clean,
 			Tainted:    tainted,
+			Policy:     &view,
 		})
 	}
 

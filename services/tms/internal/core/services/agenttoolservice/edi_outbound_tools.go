@@ -70,6 +70,14 @@ func newSendEDILoadTenderTool(tenders loadTenderSubmitter) serviceports.AgentToo
 
 func (t *sendEDILoadTenderTool) Name() string { return "send_edi_tender" }
 
+func (t *sendEDILoadTenderTool) Prerequisites() []string {
+	return []string{"search_shipments", "list_edi_partners"}
+}
+
+func (t *sendEDILoadTenderTool) Recipe() []string {
+	return []string{"search_shipments", "list_edi_partners", "send_edi_tender", "list_edi_transfers"}
+}
+
 func (t *sendEDILoadTenderTool) Description() string {
 	return "Propose tendering a New shipment to another organization on Trenova over EDI, " +
 		"which it accepts or declines on its side. The partner is the customer's internal EDI " +

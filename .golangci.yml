@@ -173,6 +173,12 @@ linters:
         text: 'ST1005: error strings should not be capitalized'
         linters:
           - staticcheck
+      # gqlgen writes every resolver signature, with input objects by value, and
+      # rewrites it on each regeneration; the shape is not ours to change.
+      - path: internal/api/graphql/resolver/.*\.resolvers\.go
+        text: 'hugeParam'
+        linters:
+          - gocritic
     paths:
       - internal/infrastructure/database/*
       - cmd/*

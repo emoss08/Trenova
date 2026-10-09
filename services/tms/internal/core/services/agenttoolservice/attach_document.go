@@ -42,6 +42,10 @@ func newAttachDocumentTool(documents documentAttacher) serviceports.AgentTool {
 
 func (t *attachDocumentTool) Name() string { return "attach_document_to_shipment" }
 
+func (t *attachDocumentTool) Recipe() []string {
+	return []string{"get_inbound_message", "attach_document_to_shipment", "mark_inbound_message"}
+}
+
 func (t *attachDocumentTool) Description() string {
 	return "Attach a document that already exists to a shipment, so it rides with the load " +
 		"and its billing. Use it for a POD, a rate confirmation or a signed bill that arrived " +

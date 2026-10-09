@@ -1,4 +1,3 @@
-"use no memo";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { RowData } from "@tanstack/react-table";
 import {
@@ -12,8 +11,32 @@ import {
   ContextMenuTrigger,
 } from "@trenova/shared/components/ui/context-menu";
 import { useDataTableRowActions } from "@/contexts/data-table-row-context";
+import { useOptionalDataTable } from "@/contexts/data-table-context";
+import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import type { RowAction, Row } from "@trenova/shared/types/data-table";
-import { Edit02Icon, EyeIcon } from "@trenova/shared/components/icons";
+import {
+  ArrowNarrowDownIcon,
+  ClipboardIcon,
+  Columns01Icon,
+  Copy01Icon,
+  Edit02Icon,
+  EyeIcon,
+  Pin01Icon,
+  PinOffIcon,
+  Rows01Icon,
+} from "@trenova/shared/components/icons";
+import {
+  buildClipboardGrid,
+  clipboardColumns,
+  writeClipboardGrid,
+  type ClipboardGrid,
+} from "@/lib/data-table-clipboard";
+import { toast } from "sonner";
+import { useState } from "react";
+import { useTableAtom } from "@trenova/shared/hooks/use-table-atom";
+
+/** The most rows a person can keep pinned at the top of one table. */
+export const MAX_PINNED_ROWS = 25;
 import type { ReactNode } from "react";
 
 interface DataTableContextMenuProps<TData extends RowData> {
@@ -23,6 +46,7 @@ interface DataTableContextMenuProps<TData extends RowData> {
   hasPanel: boolean;
   canOpenPanel: boolean;
   canUpdate: boolean;
+  canPin?: boolean;
 }
 
 type ActionGroup<TData extends RowData> = {
@@ -60,9 +84,31 @@ export function DataTableContextMenu<TData extends RowData>({
   hasPanel,
   canOpenPanel,
   canUpdate,
+  canPin = false,
 }: DataTableContextMenuProps<TData>) {
   const t = useT();
   const actions = useDataTableRowActions<TData>();
+  const dataTable = useOptionalDataTable<TData, unknown>();
+  // The row object outlives a pin, so whether it is pinned is read from the state.
+  const pinned = useTableAtom(row.table.atoms.rowPinning, (pinning) =>
+    pinning.top.includes(row.id),
+  );
+  const pinnedCount = useTableAtom(
+    row.table.atoms.rowPinning,
+    (pinning) => pinning.top.length,
+  );
+  // The cell the menu was opened on, so "Copy cell" and "Copy column" know which.
+  const [columnId, setColumnId] = useState<string | null>(null);
+
+  const copy = (grid: ClipboardGrid) => {
+    writeClipboardGrid(grid).then(
+      () => toast.success(t("Copied")),
+      (error: unknown) =>
+        toast.error(t("Nothing was copied"), {
+          description: error instanceof Error ? error.message : undefined,
+        }),
+    );
+  };
 
   const allActions: RowAction<TData>[] = [];
 
@@ -77,6 +123,90 @@ export function DataTableContextMenu<TData extends RowData>({
 
   allActions.push(...actions);
 
+  const textColumns = clipboardColumns(row.table.getAllLeafColumns());
+  const visibleColumnIds = row.table.getVisibleLeafColumns().map((column) => column.id);
+  const copyableColumn = columnId && textColumns.has(columnId) ? columnId : null;
+  if (copyableColumn) {
+    allActions.push({
+      id: "copy-cell",
+      label: "Copy cell",
+      icon: Copy01Icon,
+      group: "__copy__",
+      onClick: (target) =>
+        copy(buildClipboardGrid([target.original], [copyableColumn], textColumns)),
+    });
+  }
+  allActions.push({
+    id: "copy-row",
+    label: "Copy row",
+    icon: Rows01Icon,
+    group: "__copy__",
+    onClick: (target) =>
+      copy(
+        buildClipboardGrid([target.original], visibleColumnIds, textColumns, {
+          includeHeader: true,
+        }),
+      ),
+  });
+  if (copyableColumn) {
+    allActions.push({
+      id: "copy-column",
+      label: "Copy column",
+      icon: Columns01Icon,
+      group: "__copy__",
+      onClick: (target) => {
+        const rows = [...target.table.getTopRows(), ...target.table.getCenterRows()];
+        copy(
+          buildClipboardGrid(
+            rows.map((entry) => entry.original),
+            [copyableColumn],
+            textColumns,
+            { includeHeader: true },
+          ),
+        );
+      },
+    });
+  }
+
+  const editableCell =
+    canUpdate && columnId
+      ? row.getVisibleCells().find((cell) => cell.column.id === columnId && cell.getCanEdit())
+      : undefined;
+  if (dataTable && editableCell) {
+    allActions.push({
+      id: "paste",
+      label: "Paste",
+      icon: ClipboardIcon,
+      shortcut: formatShortcut("V"),
+      group: "__edit_cells__",
+      onClick: (target) => {
+        if (!editableCell.getIsSelected()) target.table.setFocusedCell(target.id, editableCell.column.id);
+        dataTable.pasteFromClipboard();
+      },
+    });
+    allActions.push({
+      id: "fill-down",
+      label: "Fill down",
+      icon: ArrowNarrowDownIcon,
+      shortcut: formatShortcut("D"),
+      group: "__edit_cells__",
+      disabled: () => row.table.getSelectedCellCount() < 2,
+      onClick: () => dataTable.fillDown(),
+    });
+  }
+
+  if (canPin) {
+    allActions.push({
+      id: "pin",
+      label: pinned ? "Unpin" : "Pin to top",
+      icon: pinned ? PinOffIcon : Pin01Icon,
+      shortcut: "P",
+      group: "__pin__",
+      disabled: () => !pinned && pinnedCount >= MAX_PINNED_ROWS,
+      onClick: (target) => target.pin(pinned ? false : "top"),
+    });
+  }
+
   const visibleActions = allActions.filter((action) => !action.hidden?.(row));
 
   if (visibleActions.length === 0) {
@@ -90,7 +220,13 @@ export function DataTableContextMenu<TData extends RowData>({
 
   return (
     <ContextMenu>
-      <ContextMenuTrigger render={children as React.ReactElement} />
+      <ContextMenuTrigger
+        render={children as React.ReactElement}
+        onContextMenu={(event) => {
+          const cell = (event.target as HTMLElement).closest<HTMLElement>("td[data-column-id]");
+          setColumnId(cell?.dataset.columnId ?? null);
+        }}
+      />
       <ContextMenuContent className="w-auto min-w-[160px]">
         {standardGroups.map((group, groupIndex) => (
           <ContextMenuGroup key={group.id}>

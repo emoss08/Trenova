@@ -2,6 +2,8 @@
   "Anything the next person maintaining this card should know.": "下一位维护此卡片的人应知道的事项。",
   "Assign card": "指派卡片",
   "Assign card {0}": "指派卡片 {0}",
+  "Assigned tractor": "已分配牵引车",
+  "Assigned worker": "已分配司机",
   "At least ten characters. Kept with the card as the record of why it was cancelled.": "至少十个字符。会与卡片一并保存，作为取消原因的记录。",
   "Cancel card": "取消卡片",
   "Cancel {0}?": "要取消 {0} 吗？",

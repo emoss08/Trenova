@@ -538,4 +538,8 @@ func (fx *effects) Delegate(
 
 func (*effects) Supports(string) bool { return true }
 
+func (*effects) Interject(*agentruntime.Turn, *agentruntime.WorldCheck) agentruntime.Interjections {
+	return agentruntime.Interjections{}
+}
+
 func (*effects) Now() int64 { return FixedNow }

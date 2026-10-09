@@ -70,5 +70,6 @@ func TestRecencyRanker_RanksThroughThePort(t *testing.T) {
 		Memories:   []*agent.Memory{old, recent},
 	})
 	require.NoError(t, err)
-	assert.Equal(t, []*agent.Memory{recent, old}, ranked)
+	assert.Equal(t, []*agent.Memory{recent, old}, ranked.Memories)
+	assert.False(t, ranked.Semantic)
 }

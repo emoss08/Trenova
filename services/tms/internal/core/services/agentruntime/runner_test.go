@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -149,7 +150,7 @@ func TestRun_AnswersAndRecordsTheTurn(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "Load 12345 is with Maria Ortiz.", result.Reply)
-	assert.False(t, result.OutputRefused)
+	assert.False(t, result.OutputAltered)
 	require.Len(t, result.Messages, 2)
 	assert.Equal(t, conversation.RoleUser, result.Messages[0].Role)
 	assert.Equal(t, conversation.RoleAssistant, result.Messages[1].Role)
@@ -488,24 +489,46 @@ func TestRun_ForwardsThePreferredProvider(t *testing.T) {
 	assert.Equal(t, definition.PreferredProviderID, completion.LastReq.PreferredProviderID)
 }
 
-func TestRun_RefusesAReplyContainingCode(t *testing.T) {
+// A reply with a code block keeps its answer: the block is taken out, the
+// streamed reply is withdrawn and sent again as recorded, and the message and
+// the result keep the guard's signal.
+func TestRun_TakesTheCodeOutOfAReply(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
-		textTurn("Here you go:\n```python\nprint('hi')\n```"),
+		textTurn("Load 12345 is in transit.\n```python\nprint('hi')\n```"),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
-
-	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+	req := &serviceports.RunRequest{
 		Definition: testDefinition(),
 		Actor:      testActor(),
 		Input:      "How do I check a load status?",
-	})
+	}
+	events := recordEvents(req)
+
+	result, err := rt.Run(t.Context(), req)
 	require.NoError(t, err)
 
-	assert.True(t, result.OutputRefused)
-	assert.NotContains(t, result.Reply, "print(")
-	assert.True(t, result.Messages[1].Refused)
+	assert.True(t, result.OutputAltered)
+	assert.Equal(t, "output_code_fence_with_language", result.OutputRule)
+	assert.Equal(t, "Load 12345 is in transit.\n"+agentguard.CodeBlockOmitted, result.Reply)
+	reply := result.Messages[len(result.Messages)-1]
+	assert.False(t, reply.Refused)
+	assert.Equal(t, string(agentguard.StageOutput), reply.ScopeStage)
+	assert.Equal(t, string(agentguard.ReasonCodeGeneration), reply.ScopeReason)
+
+	var resent string
+	for _, event := range *events {
+		if retry, ok := event.Data.(serviceports.AssistantRetryingEvent); ok &&
+			retry.Kind == serviceports.RetryKindRestart {
+			resent = ""
+			continue
+		}
+		if delta, ok := event.Data.(serviceports.AssistantDeltaEvent); ok {
+			resent += delta.Text
+		}
+	}
+	assert.Equal(t, result.Reply, resent, "the reader is left with what was recorded")
 }
 
 func TestRun_DoesNotReplayRefusedHistory(t *testing.T) {

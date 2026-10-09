@@ -23,6 +23,13 @@ type ListAIProvidersForTaskRequest struct {
 	TenantInfo pagination.TenantInfo
 }
 
+// AIProviderSelectOptionsRequest pages the enabled providers that serve a task,
+// searched by name and model, for a picker.
+type AIProviderSelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest
+	Task               aiprovider.Task
+}
+
 type DeleteAIProviderRequest struct {
 	ID         pulid.ID
 	TenantInfo pagination.TenantInfo
@@ -62,6 +69,10 @@ type AIProviderRepository interface {
 	// them: by priority, then by age.
 	ListEnabled(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*aiprovider.Provider, error)
 	ListOrdered(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*aiprovider.Provider, error)
+	SelectOptions(
+		ctx context.Context,
+		req *AIProviderSelectOptionsRequest,
+	) (*pagination.ListResult[*aiprovider.Provider], error)
 	Create(ctx context.Context, entity *aiprovider.Provider) (*aiprovider.Provider, error)
 	Update(ctx context.Context, entity *aiprovider.Provider) (*aiprovider.Provider, error)
 	Delete(ctx context.Context, req DeleteAIProviderRequest) error

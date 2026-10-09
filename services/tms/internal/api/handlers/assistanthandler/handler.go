@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agentwaitservice"
+	"github.com/emoss08/trenova/internal/core/services/assistantqueueservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
 	"github.com/emoss08/trenova/internal/core/services/conversationscheduleservice"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -31,6 +33,9 @@ type Params struct {
 	Workflows            serviceports.WorkflowStarter
 	Schedules            *conversationscheduleservice.Service
 	Handoffs             serviceports.AssistantHandoffService `optional:"true"`
+	Queue                *assistantqueueservice.Service
+	Waits                *agentwaitservice.Service
+	Cases                serviceports.AssistantCaseService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	Logger               *zap.Logger
@@ -42,6 +47,9 @@ type Handler struct {
 	workflows serviceports.WorkflowStarter
 	schedules scheduleService
 	handoffs  serviceports.AssistantHandoffService
+	queue     *assistantqueueservice.Service
+	waits     *agentwaitservice.Service
+	cases     serviceports.AssistantCaseService
 	eh        *helpers.ErrorHandler
 	pm        *middleware.PermissionMiddleware
 	logger    *zap.Logger
@@ -53,6 +61,9 @@ func New(p Params) *Handler {
 		turns:     p.Turns,
 		workflows: p.Workflows,
 		handoffs:  p.Handoffs,
+		queue:     p.Queue,
+		waits:     p.Waits,
+		cases:     p.Cases,
 		eh:        p.ErrorHandler,
 		pm:        p.PermissionMiddleware,
 		logger:    p.Logger.Named("assistanthandler"),
@@ -215,6 +226,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	)
 	h.registerScheduleRoutes(api, resource)
 	h.registerArtifactRoutes(api, resource)
+	h.registerQueueRoutes(api, resource)
+	h.registerWaitRoutes(api, resource)
+	h.registerCaseRoutes(api, resource)
 }
 
 func requestActorFromAuthContext(authCtx *authctx.AuthContext) serviceports.RequestActor {
@@ -647,6 +661,7 @@ func (r *pageContextRequest) page() *agent.PageContext {
 type sendMessageRequest struct {
 	Content string              `json:"content"`
 	Context *pageContextRequest `json:"context"`
+	Surface agent.Surface       `json:"surface"`
 	// ProviderID is the model the person picked in the composer. Empty leaves
 	// the choice to the organization's priority order. It is resolved against
 	// the providers this organization has assigned to the assistant before it
@@ -669,6 +684,7 @@ type sendMessageRequest struct {
 type askRequest struct {
 	Content  string              `json:"content"`
 	Context  *pageContextRequest `json:"context"`
+	Surface  agent.Surface       `json:"surface"`
 	Mentions []agent.EntityRef   `json:"mentions"`
 }
 
@@ -684,9 +700,14 @@ func (r *sendMessageRequest) page() *agent.PageContext {
 	return r.Context.page()
 }
 
+// searchMentionsQuery is the @ search's tab, or with a limit one page of a
+// single kind for a list that scrolls through every record of it.
 type searchMentionsQuery struct {
-	Query string `form:"query"`
-	Type  string `form:"type"`
+	Query  string `form:"query"`
+	Type   string `form:"type"`
+	Kind   string `form:"kind"`
+	Offset int    `form:"offset"`
+	Limit  int    `form:"limit"`
 }
 
 func (h *Handler) searchMentions(c *gin.Context) {
@@ -695,6 +716,25 @@ func (h *Handler) searchMentions(c *gin.Context) {
 	var query searchMentionsQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
 		h.eh.HandleError(c, err)
+		return
+	}
+
+	if query.Limit > 0 {
+		page, err := h.service.SearchMentionPage(
+			c.Request.Context(),
+			requestActorFromAuthContext(authCtx),
+			serviceports.MentionPageRequest{
+				Query:  query.Query,
+				Kind:   query.Kind,
+				Offset: query.Offset,
+				Limit:  query.Limit,
+			},
+		)
+		if err != nil {
+			h.eh.HandleError(c, err)
+			return
+		}
+		c.JSON(http.StatusOK, page)
 		return
 	}
 

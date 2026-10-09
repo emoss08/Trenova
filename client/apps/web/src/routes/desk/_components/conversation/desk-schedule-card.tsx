@@ -1,8 +1,12 @@
 import type { ConversationSchedule } from "@/types/assistant";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { scheduleLine } from "./desk-schedules";
+
+const ICON_BUTTON_CLASS =
+  "size-6.5 rounded-lg text-dsk-subtle transition-colors duration-140 hover:bg-dsk-hover hover:text-dsk-fg";
 
 /**
  * One schedule as a row: the clock, the request, when it runs and next, and
@@ -36,26 +40,28 @@ export function DeskScheduleRow({
         <b>{schedule.prompt}</b>
         <em>{scheduleLine(schedule, now, timezone, t)}</em>
       </span>
-      <button
-        type="button"
-        className="dk-ib"
+      <Button
+        variant="quiet"
+        size="icon-sm"
+        className={ICON_BUTTON_CLASS}
         title={schedule.enabled ? t("Pause") : t("Resume")}
         aria-label={schedule.enabled ? t("Pause") : t("Resume")}
         disabled={disabled}
         onClick={() => onToggle(schedule)}
       >
         <DeskIcon name={schedule.enabled ? "pause" : "play"} size={13} />
-      </button>
-      <button
-        type="button"
-        className="dk-ib"
+      </Button>
+      <Button
+        variant="quiet"
+        size="icon-sm"
+        className={ICON_BUTTON_CLASS}
         title={t("Delete")}
         aria-label={t("Delete")}
         disabled={disabled}
         onClick={() => onDelete(schedule)}
       >
         <DeskIcon name="trash" size={13} />
-      </button>
+      </Button>
     </div>
   );
 }

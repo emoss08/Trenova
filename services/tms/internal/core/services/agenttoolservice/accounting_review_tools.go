@@ -177,7 +177,8 @@ func newConfirmAccountingMappingProposalsTool(
 	mappings accountingMappingReviewer,
 ) serviceports.AgentTool {
 	return newReceivableTool(mappingReviewSpec(&receivableSpec{
-		name: "confirm_accounting_mapping_proposals",
+		name:   "confirm_accounting_mapping_proposals",
+		recipe: []string{"list_accounting_mapping_gaps", "confirm_accounting_mapping_proposals"},
 		description: "Confirm Trenova's proposed accounting system matches exactly as " +
 			"list_accounting_mapping_gaps shows them, several at once, so sync can use them. " +
 			"A proposal that changed since it was read is refused; to choose a different " +
@@ -317,7 +318,8 @@ func planRelease(
 
 func newReleaseAccountingSyncTool(sync accountingSyncReleaser) serviceports.AgentTool {
 	return newReceivableTool(&receivableSpec{
-		name: "release_accounting_sync",
+		name:   "release_accounting_sync",
+		recipe: []string{"get_accounting_sync_record", "release_accounting_sync"},
 		description: "Propose releasing documents the organization holds for approval before " +
 			"they go to the accounting system, so they are sent. Name each by its sync record; " +
 			"the person approving may untick some. What is sent cannot be called back, so a " +
@@ -334,7 +336,7 @@ func newReleaseAccountingSyncTool(sync accountingSyncReleaser) serviceports.Agen
 			paramAccountingSystem: accountingSystemSchema(),
 			paramSyncRecordIDs: toolschema.RecordSubset(
 				permission.ResourceAccountingSync.String(),
-				idListProperty(fmt.Sprintf(
+				agenttoolschema.IDList(fmt.Sprintf(
 					"Up to %d sync records awaiting approval, from "+
 						"list_accounting_sync_records or get_accounting_sync_record.",
 					maxSyncReleaseIDs,

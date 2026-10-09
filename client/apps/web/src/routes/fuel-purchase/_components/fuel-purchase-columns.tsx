@@ -69,10 +69,13 @@ export function getColumns(
       enableSorting: false,
       size: 110,
       meta: {
+        label: t("Tractor"),
         apiField: "tractorId",
-        filterable: false,
         sortable: false,
         exportValue: (row: FuelPurchaseRow) => row.tractor?.code ?? "",
+        filterable: true,
+        filterType: "record",
+        filterRecord: "TRACTOR",
       },
     },
     {
@@ -101,10 +104,13 @@ export function getColumns(
       },
       enableSorting: false,
       meta: {
+        label: t("Driver"),
         apiField: "workerId",
-        filterable: false,
         sortable: false,
         exportValue: (row: FuelPurchaseRow) => row.worker?.wholeName ?? "",
+        filterable: true,
+        filterType: "record",
+        filterRecord: "WORKER",
       },
     },
     {

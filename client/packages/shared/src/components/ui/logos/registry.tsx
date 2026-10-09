@@ -1,6 +1,9 @@
 import type { ComponentType } from "react";
 import { AnthropicLogo } from "./anthropic";
 import { AWSLogo } from "./aws";
+import { AzureLogo } from "./azure";
+import { BedrockLogo } from "./bedrock";
+import { DeepInfraLogo } from "./deepinfra";
 import { DeepSeekLogo } from "./deepseek";
 import { ExaLogo } from "./exa";
 import { FireworksLogo } from "./fireworks";
@@ -15,6 +18,7 @@ import { OpenAILogo } from "./openai";
 import { OpenRouterLogo } from "./openrouter";
 import { TogetherLogo } from "./together";
 import { VLLMLogo } from "./vllm";
+import { VoyageLogo } from "./voyage";
 
 export type BrandMark = ComponentType<{ className?: string }>;
 
@@ -23,14 +27,19 @@ export type BrandMark = ComponentType<{ className?: string }>;
  * them means a logo renders with no API key, no network request and no layout
  * shift, which the Brandfetch CDN cannot promise.
  *
- * Each is redrawn flat in one colour from the vendor's own geometry, used to
- * name that vendor in a list of endpoints and nothing else.
+ * Each keeps its vendor's own colours, and is used to name that vendor in a
+ * list of endpoints and nothing else. A vendor whose mark is black (Anthropic,
+ * OpenAI, Ollama, Groq, LM Studio) draws it in the text colour, so it stays
+ * legible in either theme. The coloured marks are taken from LobeHub's icon
+ * set (@lobehub/icons-static-svg 1.95.1, MIT, Copyright (c) LobeHub).
  */
 const MARKS_BY_PRESET: Record<string, BrandMark> = {
   anthropic: AnthropicLogo,
   openai: OpenAILogo,
   openrouter: OpenRouterLogo,
-  bedrock: AWSLogo,
+  bedrock: BedrockLogo,
+  deepinfra: DeepInfraLogo,
+  voyage: VoyageLogo,
   ollama: OllamaLogo,
   vllm: VLLMLogo,
   lmstudio: LMStudioLogo,
@@ -49,6 +58,10 @@ const MARKS_BY_DOMAIN: Record<string, BrandMark> = {
   "openrouter.ai": OpenRouterLogo,
   "aws.amazon.com": AWSLogo,
   "amazonaws.com": AWSLogo,
+  "azure.com": AzureLogo,
+  "azure.microsoft.com": AzureLogo,
+  "deepinfra.com": DeepInfraLogo,
+  "voyageai.com": VoyageLogo,
   "ollama.com": OllamaLogo,
   "vllm.ai": VLLMLogo,
   "lmstudio.ai": LMStudioLogo,

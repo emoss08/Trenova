@@ -6,6 +6,7 @@ import {
   type MeterPart,
 } from "@/components/assistant/compaction";
 import type { ContextUsage, ThreadBudget } from "@/types/assistant";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixMonthDay, formatUnixTime } from "@trenova/shared/lib/date";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -170,9 +171,14 @@ export function DeskContextMeter({
 
   return (
     <span className={cn("dk-cx", view.tone && `dk-${view.tone}`)} ref={ref}>
-      <button
-        type="button"
-        className={cn("dk-cx-b", open && "dk-on", compacting && "dk-busy")}
+      <Button
+        variant="bare"
+        size="bare"
+        className={cn(
+          "h-7 min-w-7 justify-center gap-1.25 rounded-full px-1.5 text-dsk-muted transition-colors duration-150 hover:bg-dsk-hover hover:text-dsk-fg",
+          open && "bg-dsk-hover text-dsk-fg",
+          compacting && "[&_.dk-cx-ring]:animate-[dk-spin_1.1s_linear_infinite]",
+        )}
         title={compacting ? t("Compacting…") : t("Context {0}% used", view.pct)}
         aria-label={compacting ? t("Compacting…") : t("Context {0}% used", view.pct)}
         aria-expanded={open}
@@ -180,18 +186,23 @@ export function DeskContextMeter({
       >
         <DeskContextRing share={view.share} />
         {view.showPct && <span className="dk-cx-pc">{view.pct}%</span>}
-      </button>
+      </Button>
       {open && (
         <div className="dk-cx-pop" role="dialog" aria-label={t("Context window")}>
-          <button type="button" className="dk-cx-row dk-cx-h" onClick={() => setMore((m) => !m)}>
-            <span>{t("Context window")}</span>
+          <Button
+            variant="bare"
+            size="bare"
+            className="flex h-6 w-full gap-2 px-3.5 text-left text-dsk-muted hover:text-dsk-fg"
+            onClick={() => setMore((m) => !m)}
+          >
+            <span className="min-w-0 flex-1 truncate">{t("Context window")}</span>
             <span className="dk-cx-v">
               {kfmt(view.used)} / {kfmt(view.window)} ({view.pct}%)
             </span>
             <span className={cn("dk-cx-cv", more && "dk-on")}>
               <DeskIcon name="chevR" size={12} stroke={2} />
             </span>
-          </button>
+          </Button>
           <div className="dk-cx-bar">
             {view.parts.map((part) =>
               part.tokens > 0 ? (
@@ -229,9 +240,10 @@ export function DeskContextMeter({
                 )}
               </span>
             </div>
-            <button
-              type="button"
-              className="dk-cx-go"
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-6.5 flex-none rounded-md bg-dsk-sunken px-2.5 text-sm font-medium text-dsk-fg ring-1 ring-dsk-b-sub transition-colors duration-100 ring-inset hover:bg-dsk-hover hover:ring-dsk-b-strong active:bg-dsk-hover"
               disabled={compacting || !view.canCompact}
               onClick={() => {
                 setOpen(false);
@@ -239,19 +251,28 @@ export function DeskContextMeter({
               }}
             >
               {compacting ? t("Compacting…") : t("Compact")}
-            </button>
+            </Button>
           </div>
           <label className="dk-cx-auto">
             <span>{t("Compact automatically at {0}%", Math.round(AUTO_COMPACT_SHARE * 100))}</span>
-            <button
-              type="button"
+            <Button
+              variant="bare"
+              size="bare"
               role="switch"
               aria-checked={auto}
-              className={cn("dk-cx-sw", auto && "dk-on")}
+              className={cn(
+                "relative h-3.75 w-6.5 rounded-full bg-dsk-b-strong transition-colors duration-150",
+                auto && "bg-(--dk-cx1)",
+              )}
               onClick={() => onAutoChange(!auto)}
             >
-              <i />
-            </button>
+              <i
+                className={cn(
+                  "absolute top-0.5 left-0.5 size-2.75 rounded-full bg-dsk-on-solid transition-transform duration-200 ease-(--dk-spring)",
+                  auto && "translate-x-2.75",
+                )}
+              />
+            </Button>
           </label>
           {rows.length > 0 && (
             <>
@@ -283,9 +304,14 @@ export function DeskContextMeter({
             </>
           )}
           <div className="dk-cx-f">
-            <button type="button" className="dk-cx-fb" onClick={() => setMore((m) => !m)}>
+            <Button
+              variant="secondary"
+              size="xs"
+              className="rounded-md bg-dsk-hover px-2.25 text-sm font-normal text-dsk-fg hover:bg-dsk-b-sub active:bg-dsk-b-sub"
+              onClick={() => setMore((m) => !m)}
+            >
               {t("See detailed breakdown")}
-            </button>
+            </Button>
           </div>
         </div>
       )}

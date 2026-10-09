@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import { AssistantIconButton } from "./assistant-icon-button";
 import { dockLabel } from "./dock-label";
 
 const DOCK_ORDER: readonly AssistantDock[] = [
@@ -61,9 +62,7 @@ export function AssistantPlacementMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <button
-            type="button"
-            className="dk-ib"
+          <AssistantIconButton
             title={t("Position and size")}
             aria-label={t("Position and size")}
           />

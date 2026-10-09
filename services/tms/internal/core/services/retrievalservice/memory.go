@@ -154,14 +154,15 @@ func NewMemoryRankerFrom(
 func (r *MemoryRanker) RankMemories(
 	ctx context.Context,
 	req *serviceports.RankMemoriesRequest,
-) ([]*agent.Memory, error) {
+) (serviceports.RankedMemories, error) {
 	if req == nil {
-		return []*agent.Memory{}, nil
+		return serviceports.RankedMemories{Memories: []*agent.Memory{}}, nil
 	}
 
 	recency := agentmemoryservice.RankByRecencyAndUse(req.Memories, req.Now)
-	if !req.Query.Usable() || len(recency) < 2 {
-		return recency, nil
+	ranked := serviceports.RankedMemories{Memories: recency}
+	if !req.Query.Usable() || len(recency) == 0 {
+		return ranked, nil
 	}
 
 	similar, err := r.searcher.SimilarMemories(ctx, &serviceports.SimilarMemoriesRequest{
@@ -170,13 +171,39 @@ func (r *MemoryRanker) RankMemories(
 		Limit:      MaxSimilarMemories,
 	})
 	if err != nil {
-		return recency, err
+		return ranked, err
 	}
 	if !similar.Semantics.Used {
-		return recency, nil
+		return ranked, nil
 	}
 
-	return FuseMemoryRanking(recency, similar.Memories, r.tuning), nil
+	ranked.Semantic = true
+	ranked.Similar = similarCandidates(recency, similar.Memories, r.tuning)
+	ranked.Memories = fuseBySimilarity(recency, ranked.Similar, r.tuning.normalized().RRFK)
+
+	return ranked, nil
+}
+
+func similarCandidates(
+	candidates []*agent.Memory,
+	similar []serviceports.MemorySimilarity,
+	tuning SearchTuning,
+) []pulid.ID {
+	tuning = tuning.normalized()
+
+	known := make(map[pulid.ID]struct{}, len(candidates))
+	for _, memory := range candidates {
+		known[memory.ID] = struct{}{}
+	}
+
+	ids := make([]pulid.ID, 0, min(len(similar), len(candidates)))
+	for _, hit := range similar {
+		if _, ok := known[hit.MemoryID]; ok && hit.Similarity >= tuning.SimilarityFloor {
+			ids = append(ids, hit.MemoryID)
+		}
+	}
+
+	return ids
 }
 
 func FuseMemoryRanking(
@@ -186,24 +213,20 @@ func FuseMemoryRanking(
 ) []*agent.Memory {
 	tuning = tuning.normalized()
 
-	candidates := make(map[pulid.ID]struct{}, len(recency))
-	recencyOrder := make([]pulid.ID, 0, len(recency))
-	for _, memory := range recency {
-		candidates[memory.ID] = struct{}{}
-		recencyOrder = append(recencyOrder, memory.ID)
-	}
+	return fuseBySimilarity(recency, similarCandidates(recency, similar, tuning), tuning.RRFK)
+}
 
-	similarOrder := make([]pulid.ID, 0, len(similar))
-	for _, hit := range similar {
-		if _, ok := candidates[hit.MemoryID]; ok && hit.Similarity >= tuning.SimilarityFloor {
-			similarOrder = append(similarOrder, hit.MemoryID)
-		}
-	}
+func fuseBySimilarity(recency []*agent.Memory, similarOrder []pulid.ID, rrfk int) []*agent.Memory {
 	if len(similarOrder) == 0 {
 		return recency
 	}
 
-	scores := rankfusion.Reciprocal(tuning.RRFK, similarOrder, recencyOrder)
+	recencyOrder := make([]pulid.ID, 0, len(recency))
+	for _, memory := range recency {
+		recencyOrder = append(recencyOrder, memory.ID)
+	}
+
+	scores := rankfusion.Reciprocal(rrfk, similarOrder, recencyOrder)
 	ranked := slices.Clone(recency)
 	slices.SortStableFunc(ranked, func(a, b *agent.Memory) int {
 		switch left, right := scores[a.ID], scores[b.ID]; {

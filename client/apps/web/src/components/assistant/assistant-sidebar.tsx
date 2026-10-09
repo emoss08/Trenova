@@ -4,9 +4,11 @@ import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { deskThreadState } from "@/components/desk-chat/rail/desk-thread-state";
 import { RailDot, RailKnobCard, useRailKnob } from "@/components/desk-chat/rail/rail-parts";
 import type { AssistantThread } from "@/types/assistant";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { AssistantIconButton } from "./assistant-icon-button";
 import { AssistantMark } from "./assistant-mark";
 import { assistantShelfHeading, threadAge, type AssistantThreadList } from "./assistant-history";
 import { assistantShelves } from "./thread-grouping";
@@ -80,15 +82,14 @@ export function AssistantSidebar({
             <AssistantMark className="size-3.5" />
           </span>
           <b>{t("Assistant")}</b>
-          <button
-            type="button"
-            className="dk-ib as-sb-new"
+          <AssistantIconButton
+            className="as-sb-new bg-dsk-card text-dsk-fg"
             title={t("New conversation")}
             aria-label={t("New conversation")}
             onClick={onNew}
           >
             <DeskIcon name="plus" size={15} />
-          </button>
+          </AssistantIconButton>
         </div>
         <div className="as-sb-s">
           {searching ? (
@@ -109,22 +110,29 @@ export function AssistantSidebar({
                 aria-label={t("Search conversations")}
               />
               {query !== "" && (
-                <button
-                  type="button"
+                <Button
+                  variant="bare"
+                  size="bare"
+                  className="size-5 justify-center rounded-md text-dsk-subtle hover:bg-dsk-hover hover:text-dsk-fg"
                   aria-label={t("Clear the search")}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={closeSearch}
                 >
                   <DeskIcon name="x" size={12} />
-                </button>
+                </Button>
               )}
             </label>
           ) : (
-            <button type="button" className="as-sb-sb" onClick={() => setSearching(true)}>
+            <Button
+              variant="bare"
+              size="bare"
+              className="flex h-7.5 w-full gap-2.5 rounded-lg pr-1.5 pl-2.5 text-sm text-dsk-subtle transition-colors duration-150 hover:bg-dsk-fg/4 hover:text-dsk-fg"
+              onClick={() => setSearching(true)}
+            >
               <DeskIcon name="search" size={13} />
-              <span>{t("Search")}</span>
+              <span className="flex-1 text-left">{t("Search")}</span>
               <span className="dk-kbd">⌘K</span>
-            </button>
+            </Button>
           )}
         </div>
         <div className="dk-sb-list" ref={listRef}>
@@ -143,11 +151,15 @@ export function AssistantSidebar({
                 });
                 const title = thread.title || t("Untitled conversation");
                 return (
-                  <button
+                  <Button
                     key={thread.id}
-                    type="button"
+                    variant="bare"
+                    size="bare"
                     data-k={`c:${thread.id}`}
-                    className={cn("dk-sb-i dk-sb-c", active && "dk-on")}
+                    className={cn(
+                      "dk-sb-c group/row relative z-1 flex h-7.5 w-full gap-2.5 rounded-lg pr-2 pl-2.5 text-left text-sm text-dsk-muted transition-colors duration-150",
+                      active ? "dk-on text-dsk-fg" : "hover:bg-dsk-fg/4 hover:text-dsk-fg",
+                    )}
                     aria-current={active || undefined}
                     title={[title, agent?.name ?? t("Agent unavailable")].join(" · ")}
                     onClick={() => onOpen(thread)}
@@ -156,13 +168,23 @@ export function AssistantSidebar({
                       state={state === "wait" ? null : state}
                       accent={AGENT_ACCENTS[resolveAgentIdentity(agent ?? {}).accent]}
                     />
-                    <span className="dk-sb-t">{title}</span>
+                    <span className="dk-sb-t min-w-0 flex-1 truncate">{title}</span>
                     {shelf.key === "waiting" ? (
-                      <i className="as-wd" aria-label={t("Waiting on your approval")} />
+                      <i
+                        className="as-wd mr-0.75 ml-auto"
+                        aria-label={t("Waiting on your approval")}
+                      />
                     ) : (
-                      <em>{threadAge(thread, now)}</em>
+                      <em
+                        className={cn(
+                          "ml-auto font-mono text-xs text-dsk-faint not-italic opacity-0 transition-opacity duration-150 group-hover/row:opacity-100",
+                          active && "opacity-100",
+                        )}
+                      >
+                        {threadAge(thread, now)}
+                      </em>
                     )}
-                  </button>
+                  </Button>
                 );
               })}
             </Fragment>

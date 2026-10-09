@@ -60,6 +60,10 @@ func newScheduleReportTool(schedules *reporting.Service) serviceports.AgentTool 
 
 func (t *scheduleReportTool) Name() string { return "schedule_report" }
 
+func (t *scheduleReportTool) Recipe() []string {
+	return []string{"list_reports", "schedule_report"}
+}
+
 func (t *scheduleReportTool) Description() string {
 	return "Put a saved report on a schedule and email it to people. Use it when somebody " +
 		"wants a number regularly rather than now — \"send me the unbilled aging every " +

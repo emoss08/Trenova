@@ -137,6 +137,7 @@ func (s *service) LogAction(params *services.LogActionParams, opts ...services.L
 		return fmt.Errorf("invalid audit entry: %w", err)
 	}
 	s.agents.credit(entry)
+	s.publishRecordChanges(context.Background(), []*audit.Entry{entry})
 
 	if err := s.sdm.SanitizeEntry(entry); err != nil {
 		s.logger.Error("failed to sanitize sensitive data", zap.Error(err))
@@ -197,6 +198,11 @@ func (s *service) LogActions(bulkEntries []services.BulkLogEntry) error {
 	if validCount == 0 {
 		return fmt.Errorf("all %d audit entries failed validation/sanitization", len(bulkEntries))
 	}
+
+	changed := make([]*audit.Entry, 0, len(criticalEntries)+len(nonCriticalEntries))
+	changed = append(changed, criticalEntries...)
+	changed = append(changed, nonCriticalEntries...)
+	s.publishRecordChanges(context.Background(), changed)
 
 	criticalErr := s.insertCriticalEntries(criticalEntries)
 
@@ -427,6 +433,67 @@ func (s *service) publishRealtimeInvalidation(ctx context.Context, entries []*au
 				zap.Error(err),
 				zap.String("organizationID", batch.orgID.String()),
 				zap.String("businessUnitID", batch.buID.String()),
+				zap.String("action", action),
+			)
+		}
+	}
+}
+
+func (s *service) publishRecordChanges(ctx context.Context, entries []*audit.Entry) {
+	if s.realtime == nil || len(entries) == 0 {
+		return
+	}
+
+	type resourceBatch struct {
+		entry *audit.Entry
+		count int
+	}
+
+	batches := make(map[string]*resourceBatch, len(entries))
+	order := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		if entry == nil || entry.OrganizationID.IsNil() || entry.BusinessUnitID.IsNil() {
+			continue
+		}
+		if !realtimeinvalidation.IsRecordChange(entry.Resource, entry.Operation) {
+			continue
+		}
+
+		key := entry.RealtimeBatchKey() + ":" + string(entry.Resource)
+		batch, ok := batches[key]
+		if !ok {
+			batch = &resourceBatch{entry: entry}
+			batches[key] = batch
+			order = append(order, key)
+		}
+		batch.count++
+	}
+
+	for _, key := range order {
+		batch := batches[key]
+		entry := batch.entry
+		action := realtimeinvalidation.RecordChangeAction(entry.Operation)
+		recordID := pulid.ID(entry.ResourceID)
+		if batch.count > 1 {
+			action = "bulk_" + action
+			recordID = pulid.ID("")
+		}
+
+		if err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
+			OrganizationID: entry.OrganizationID,
+			BusinessUnitID: entry.BusinessUnitID,
+			ActorUserID:    entry.UserID,
+			ActorType:      services.PrincipalType(entry.PrincipalType),
+			ActorID:        entry.PrincipalID,
+			ActorAPIKeyID:  entry.APIKeyID,
+			Resource:       realtimeinvalidation.RecordChangeResource(entry.Resource),
+			Action:         action,
+			RecordID:       recordID,
+		}); err != nil {
+			s.logger.Warn(
+				"failed to publish record change",
+				zap.Error(err),
+				zap.String("resource", string(entry.Resource)),
 				zap.String("action", action),
 			)
 		}

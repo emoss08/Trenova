@@ -136,11 +136,12 @@ func leaveToolProviders() []any {
 }
 
 func leaveCaseIDProperty() map[string]any {
-	return idProperty("The leave case, from list_worker_leave_cases. Never guess one.")
+	return agenttoolschema.RecordID(permission.ResourceWorkerLeave, "The leave case",
+		"list_worker_leave_cases")
 }
 
 func leaveDayIDProperty() map[string]any {
-	return idProperty("The day of leave, from list_worker_leave_cases. Never guess one.")
+	return agenttoolschema.ID("The day of leave", "list_worker_leave_cases")
 }
 
 func leaveCaseRecord(entity *worker.WorkerLeaveCase) toolpreview.Record {
@@ -162,7 +163,7 @@ func leaveCaseProperties() map[string]any {
 			"the certification carries that.", wfShortChars),
 		paramMilitaryCaregiver: booleanProperty("Whether it is leave to care for a covered " +
 			"servicemember."),
-		paramEndsAt: dayProperty("The last day of leave, when it is known."),
+		paramEndsAt: agenttoolschema.Date("The last day of leave, when it is known."),
 		paramEligibilityHours: integerProperty("Hours worked in the twelve months before, "+
 			"for eligibility.", 0, maxEligibilityHours),
 		wfParamDocument: wfDocumentProperty(),
@@ -214,8 +215,10 @@ func applyLeaveCaseOpen(entity *worker.WorkerLeaveCase, params map[string]any) e
 func newOpenLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
 	properties := leaveCaseProperties()
 	properties[paramWorkerID] = workerProperty()
-	properties[paramStartsAt] = dayProperty("The first day of leave.")
-	properties[paramRequestedAt] = dayProperty("The day the worker asked. Defaults to today.")
+	properties[paramStartsAt] = agenttoolschema.Date("The first day of leave.")
+	properties[paramRequestedAt] = agenttoolschema.Date(
+		"The day the worker asked. Defaults to today.",
+	)
 	spec := withSchema(wfSpec(
 		"open_leave_case",
 		"Open a leave case for a worker who asked for FMLA, medical, military, parental or "+
@@ -365,7 +368,7 @@ func renderLeaveCaseChange(
 func newUpdateLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
 	properties := leaveCaseProperties()
 	properties[paramLeaveCaseID] = leaveCaseIDProperty()
-	properties[paramStartsAt] = dayProperty("The first day of leave.")
+	properties[paramStartsAt] = agenttoolschema.Date("The first day of leave.")
 	spec := targeting(withSchema(wfSpec(
 		"update_leave_case",
 		"Correct or fill in a leave case as it goes: the kind, how it is taken, the dates, "+
@@ -427,6 +430,7 @@ func newCloseLeaveCaseTool(cases leaveKeeper) serviceports.AgentTool {
 	), map[string]any{paramLeaveCaseID: leaveCaseIDProperty()}, paramLeaveCaseID),
 		paramLeaveCaseID, permission.ResourceWorkerLeave))
 	spec.searchTerms = []string{"returned from leave", "leave ended", "close fmla"}
+	spec.recipe = []string{"list_worker_leave_cases", "close_leave_case"}
 	render := renderLeaveCaseChange("Would close the leave case.",
 		[]string{wfFieldClosedAt}, fieldStatus, wfFieldClosedAt, "endsAt")
 
@@ -473,7 +477,7 @@ func newRequestLeaveCertificationTool(cases leaveKeeper) serviceports.AgentTool 
 		permission.OpUpdate,
 	), map[string]any{
 		paramLeaveCaseID:      leaveCaseIDProperty(),
-		paramCertificationDue: dayProperty("When it is due, when not the usual window."),
+		paramCertificationDue: agenttoolschema.Date("When it is due, when not the usual window."),
 	}, paramLeaveCaseID), paramLeaveCaseID, permission.ResourceWorkerLeave)
 	spec.searchTerms = []string{"fmla certification", "certification clock"}
 	render := renderLeaveCaseChange("Would record that certification was requested.",
@@ -563,9 +567,9 @@ func newRecordLeaveDayTool(cases leaveKeeper) serviceports.AgentTool {
 		permission.OpCreate,
 	), map[string]any{
 		paramLeaveCaseID: leaveCaseIDProperty(),
-		paramUsedOn:      dayProperty("The day the leave was taken."),
+		paramUsedOn:      agenttoolschema.Date("The day the leave was taken."),
 		paramLeaveHours:  amountProperty("Hours taken that day, such as 8 or 4.5."),
-		paramPTOLink: idProperty("Paid time off booked for the same day, from " +
+		paramPTOLink: agenttoolschema.IDText("Paid time off booked for the same day, from " +
 			"list_time_off, when the leave runs concurrently."),
 		fieldNotes: wfNoteProperty("Anything the day should say."),
 	}, paramLeaveCaseID, paramUsedOn, paramLeaveHours)
@@ -664,8 +668,10 @@ func newUpdateLeaveDayTool(cases leaveKeeper) serviceports.AgentTool {
 		paramLeaveHours:   amountProperty("Hours taken that day, such as 8 or 4.5."),
 		paramCounts: booleanProperty("Whether this day counts against the FMLA " +
 			"entitlement."),
-		paramPTOLink: idProperty("Paid time off booked for the same day, from list_time_off."),
-		fieldNotes:   wfNoteProperty("The day's note."),
+		paramPTOLink: agenttoolschema.IDText(
+			"Paid time off booked for the same day, from list_time_off.",
+		),
+		fieldNotes: wfNoteProperty("The day's note."),
 	}, paramLeaveEntryID), paramLeaveEntryID, permission.ResourceWorkerLeave)
 
 	return newReportingReceivableTool(spec, receivablePlan[

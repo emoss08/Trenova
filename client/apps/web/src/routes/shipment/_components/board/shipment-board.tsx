@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import { lazy, Suspense, useCallback, useMemo, useState } from "react";
 import { ShipmentExpandedRow } from "./expanded-row/shipment-expanded-row";
 import { useShipmentRecordActions } from "./record-actions";
-import { getColumns, SHIPMENT_HIDDEN_COLUMNS } from "./shipment-columns";
+import { getColumns, getShipmentFilterFields, SHIPMENT_HIDDEN_COLUMNS } from "./shipment-columns";
 import { GroupMenu, PanelToggle, TOOLBAR_RESPONSIVE, ViewSwitch } from "./toolbar/board-controls";
 import { useBoardActions } from "./use-board-actions";
 import { useBoardGrouping } from "./use-board-grouping";
@@ -64,6 +64,7 @@ export function ShipmentBoard({ panelOpen, onPanelOpenChange }: ShipmentBoardPro
     () => getColumns({ t, onToggleExpanded: toggleExpanded }),
     [t, toggleExpanded],
   );
+  const filterFields = useMemo(() => getShipmentFilterFields(t), [t]);
 
   const grouping = useBoardGrouping();
 
@@ -191,6 +192,7 @@ export function ShipmentBoard({ panelOpen, onPanelOpenChange }: ShipmentBoardPro
       queryKey="shipment-list"
       graphql={graphql}
       columns={columns}
+      filterFields={filterFields}
       initialColumnVisibility={SHIPMENT_HIDDEN_COLUMNS}
       initialColumnPinning={PINNED_COLUMNS}
       initialDensity="compact"

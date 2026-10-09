@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { UsStateAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
-import { SelectField } from "@/components/fields/select-field";
+import { TimezoneField } from "@/components/fields/timezone-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { FormSaveDock } from "@/components/form-save-dock";
 import { ImageCropUploadDialog } from "@/components/image-crop-upload-dialog";
@@ -10,7 +10,6 @@ import {
   organizationSettingsTabParser,
   type OrganizationSettingsTabValue,
 } from "@/hooks/use-organization-setting-state";
-import { timezoneGroupedChoices } from "@/lib/choices";
 import { updateOrganizationSettingsGraphQL } from "@/lib/graphql/organization";
 import { validateCroppableImage } from "@/lib/images/crop-image";
 import { IMAGE_UPLOAD_ACCEPT, organizationLogoCropConfig } from "@/lib/images/upload-config";
@@ -399,21 +398,12 @@ function GeneralForm() {
             />
           </FormControl>
           <FormControl cols="full">
-            <SelectField
+            <TimezoneField
               control={control}
               rules={{ required: true }}
               name="timezone"
               label={t("Timezone")}
               placeholder={t("Select timezone")}
-              groups={timezoneGroupedChoices}
-              renderOption={(option) => (
-                <span className="flex w-full items-center justify-between gap-3">
-                  <span>{t(option.label)}</span>
-                  {option.description && (
-                    <span className="text-muted-foreground text-xs">{t(option.description)}</span>
-                  )}
-                </span>
-              )}
             />
           </FormControl>
           <FormControl>

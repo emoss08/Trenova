@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { describe, expect, it, vi } from "vitest";
 import { useEditFlow } from "../use-edit-flow";
 
@@ -10,12 +11,15 @@ type Values = { name: string; tools: string[]; version: number };
 
 const loaded: Values = { name: "Billing desk", tools: ["get_invoice"], version: 3 };
 
-function setup(onSave: (values: Values) => Promise<Values>, options: { create?: boolean } = {}) {
+function setup(
+  onSave: (values: Values) => Promise<Values>,
+  options: { create?: boolean; nameRequired?: boolean } = {},
+) {
   const onClose = vi.fn();
   const loadLatest = vi.fn(async () => ({ ...loaded, name: "Their name", version: 4 }));
   const hook = renderHook(() => {
     const form = useForm<Values>({ defaultValues: loaded });
-    form.register("name");
+    form.register("name", options.nameRequired ? { required: "Name is required" } : undefined);
     form.register("tools");
     form.register("version");
     const flow = useEditFlow({ form, onSave, onClose, loadLatest, create: options.create });
@@ -138,5 +142,59 @@ describe("useEditFlow", () => {
     act(() => result.current.flow.save());
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
+  });
+});
+
+/**
+ * An editor draws only some of its fields, so a save stopped by validation must say why
+ * on its own: neither a rule the form checks before sending nor a field the server
+ * refuses may fail without a word.
+ */
+describe("useEditFlow when a save is refused", () => {
+  it("says why when the form's own rules stop the save, and sends nothing", async () => {
+    vi.mocked(toast.error).mockClear();
+    const onSave = vi.fn(async (values: Values) => values);
+    const { result } = setup(onSave, { nameRequired: true });
+
+    act(() => result.current.form.setValue("name", "", { shouldDirty: true }));
+    await waitFor(() => expect(result.current.flow.canSave).toBe(true));
+    act(() => result.current.flow.save());
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "This change could not be saved",
+        expect.objectContaining({ description: expect.stringContaining("Name is required") }),
+      ),
+    );
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it("says why when the server refuses a field the editor never shows", async () => {
+    vi.mocked(toast.error).mockClear();
+    const onSave = vi.fn(async () => {
+      throw new ApiRequestError(422, {
+        type: "validation-error",
+        title: "Validation Error",
+        status: 422,
+        errors: [
+          { field: "tools", message: "This tool needs a trusted provider", code: "INVALID" },
+        ],
+      });
+    });
+    const { result } = setup(onSave);
+
+    act(() => result.current.form.setValue("name", "Payroll desk", { shouldDirty: true }));
+    await waitFor(() => expect(result.current.flow.canSave).toBe(true));
+    act(() => result.current.flow.save());
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "This change could not be saved",
+        expect.objectContaining({
+          description: expect.stringContaining("This tool needs a trusted provider"),
+        }),
+      ),
+    );
+    expect(result.current.flow.saving).toBe(false);
   });
 });

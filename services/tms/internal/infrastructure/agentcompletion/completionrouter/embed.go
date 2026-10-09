@@ -235,6 +235,9 @@ func (s *Service) embeddingCandidates(
 	if err != nil {
 		return nil, "", err
 	}
+	if ready, err = s.underCap(ctx, tenant, ready); err != nil {
+		return nil, "", err
+	}
 
 	return ready, modelKey, nil
 }
@@ -291,6 +294,7 @@ func (s *Service) embedBatch(
 		})
 
 		if attemptErr == nil {
+			s.touchKey(ctx, provider, req.TenantInfo)
 			served.cost = provider.InputCostFor(served.tokens)
 
 			return served, nil
@@ -326,26 +330,31 @@ func (s *Service) attemptEmbed(
 		return nil, err
 	}
 
-	apiKey, err := s.resolveAPIKey(provider)
+	timeout := provider.ResolvedTimeout()
+	release, err := s.claimSlot(ctx, provider, timeout)
 	if err != nil {
 		return nil, err
 	}
+	defer release()
 
 	call := &modeladapter.EmbedCall{
 		Provider: provider,
-		APIKey:   apiKey,
 		Client:   s.clientFor(provider),
 		Purpose:  purpose,
 		Inputs:   batch.inputs,
 	}
 
+	limited := s.withDeadline(ctx, timeout)
 	var resp *modeladapter.EmbedResponse
-	if err = s.retrying(ctx, func() error {
-		var callErr error
-		resp, callErr = embedder.Embed(ctx, call)
+	if err = limited.finish(s.withKeyFallback(provider, func(apiKey string) error {
+		call.APIKey = apiKey
+		return s.retrying(limited.ctx, func() error {
+			var callErr error
+			resp, callErr = embedder.Embed(limited.ctx, call)
 
-		return callErr
-	}, nil); err != nil {
+			return callErr
+		}, nil)
+	})); err != nil {
 		return nil, err
 	}
 

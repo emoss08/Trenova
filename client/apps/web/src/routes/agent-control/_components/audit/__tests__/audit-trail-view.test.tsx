@@ -25,7 +25,6 @@ vi.mock("@/components/data-table/data-table", () => ({
   },
 }));
 
-vi.mock("../chain-status", () => ({ ChainStatusStrip: () => null }));
 vi.mock("../audit-scope-bar", () => ({
   AuditScopeBar: ({ actions }: { actions?: React.ReactNode }) => <div>{actions}</div>,
 }));

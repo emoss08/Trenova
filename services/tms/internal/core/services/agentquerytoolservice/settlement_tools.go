@@ -366,8 +366,14 @@ func (t *getDriverSettlementTool) Description() string {
 }
 
 func (t *getDriverSettlementTool) ParamSchema() map[string]any {
-	return idSchema(paramSettlementID, "The driver settlement's id, from list_driver_settlements "+
-		"or the page you are on.")
+	return idSchema(
+		paramSettlementID,
+		agenttoolschema.RecordIDText(
+			permission.ResourceDriverSettlement,
+			"The driver settlement's id, from list_driver_settlements "+
+				"or the page you are on.",
+		),
+	)
 }
 
 func (t *getDriverSettlementTool) Policy() serviceports.ToolPolicy {
@@ -726,8 +732,14 @@ func (t *getWorkerEarningsSummaryTool) Description() string {
 }
 
 func (t *getWorkerEarningsSummaryTool) ParamSchema() map[string]any {
-	return idSchema(paramWorkerID, "The driver's id, from list_workers, search_worker or the "+
-		"page you are on.")
+	return idSchema(
+		paramWorkerID,
+		agenttoolschema.RecordIDText(
+			permission.ResourceWorker,
+			"The driver's id, from list_workers, search_worker or the "+
+				"page you are on.",
+		),
+	)
 }
 
 func (t *getWorkerEarningsSummaryTool) Policy() serviceports.ToolPolicy {
@@ -806,8 +818,14 @@ func (t *getSettlementDisputeTool) Description() string {
 }
 
 func (t *getSettlementDisputeTool) ParamSchema() map[string]any {
-	return idSchema("disputeId", "The dispute's id, from get_driver_settlement's openDisputes, "+
-		"the page you are on, or this run's subject.")
+	return idSchema(
+		"disputeId",
+		agenttoolschema.RecordIDText(
+			permission.ResourceSettlementDispute,
+			"The dispute's id, from get_driver_settlement's openDisputes, "+
+				"the page you are on, or this run's subject.",
+		),
+	)
 }
 
 func (t *getSettlementDisputeTool) Policy() serviceports.ToolPolicy {
@@ -1066,8 +1084,8 @@ func (t *getCarrierSettlementTool) Description() string {
 }
 
 func (t *getCarrierSettlementTool) ParamSchema() map[string]any {
-	return idSchema(paramSettlementID, "The carrier settlement's id, from "+
-		"list_carrier_settlements or the page you are on.")
+	return idSchema(paramSettlementID, agenttoolschema.IDText("The carrier settlement's id, from "+
+		"list_carrier_settlements or the page you are on."))
 }
 
 func (t *getCarrierSettlementTool) Policy() serviceports.ToolPolicy {

@@ -5,6 +5,7 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 
 const permissions = vi.hoisted(() => ({ denied: new Set<string>() }));
 
@@ -133,7 +134,9 @@ function renderView() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <RolloutView />
+      <NuqsTestingAdapter hasMemory>
+        <RolloutView />
+      </NuqsTestingAdapter>
     </QueryClientProvider>,
   );
 }

@@ -13,9 +13,11 @@ import {
   toolTrustListSchema,
   assistantMessagePageSchema,
   mentionCandidateListSchema,
+  mentionPageSchema,
   deskSearchResultListSchema,
   threadBudgetSchema,
   type DeskSearchKind,
+  type MentionPageKind,
   type MentionSearchType,
   assistantArtifactListSchema,
   assistantArtifactPageSchema,
@@ -30,6 +32,12 @@ import {
   assistantThreadListSchema,
   assistantThreadSchema,
   conversationScheduleListSchema,
+  queuedMessageListSchema,
+  agentWaitListSchema,
+  agentWaitSchema,
+  caseBindingSchema,
+  caseViewSchema,
+  queuedMessageSchema,
   conversationScheduleSchema,
   createdScheduleSchema,
   handoffResultSchema,
@@ -40,11 +48,16 @@ import {
   type AssistantArtifact,
   type AssistantEntityRef,
   type AssistantPageContext,
+  type AssistantSurface,
   type ThreadOrigin,
   type AssistantStreamEvent,
   type AssistantThread,
+  type CaseParty,
+  type CaseSubjectType,
   type ConversationSchedule,
+  type QueuedMessage,
   type SaveAgentDefinitionRequest,
+  type SnoozeAnchor,
 } from "@/types/assistant";
 
 /**
@@ -97,6 +110,26 @@ const startedTurnSchema = z.object({
 
 export type StartedTurn = z.infer<typeof startedTurnSchema>;
 
+/**
+ * What became of a message handed to the queue: still waiting (with why, when
+ * the conversation was free but could not take it), read into the reply under
+ * way, or sent as a reply of its own.
+ */
+const queueOutcomeSchema = z.object({
+  item: queuedMessageSchema.nullish(),
+  steering: z.boolean().optional().default(false),
+  held: z.string().optional().default(""),
+  turn: startedTurnSchema.nullish(),
+});
+
+export type QueueOutcome = z.infer<typeof queueOutcomeSchema>;
+
+/** A message for the queue: the words, and what rides with them. */
+export type EnqueueOptions = SendMessageOptions & {
+  /** Read it into the reply under way at its next step, rather than after it. */
+  steer?: boolean;
+};
+
 /** A reply a conversation is still producing. */
 export type ActiveTurn = {
   id: string;
@@ -108,7 +141,7 @@ export type ActiveTurn = {
    * a request the person scheduled coming round, or the conversation being
    * compacted.
    */
-  origin?: "Person" | "DecisionFollowUp" | "Scheduled" | "Compaction";
+  origin?: "Person" | "DecisionFollowUp" | "Scheduled" | "Compaction" | "WaitResolved";
   /** The question the turn answers, when a person asked one. */
   input?: string;
 };
@@ -135,6 +168,7 @@ export type StartThreadOptions = {
 /** What rides with a message besides the words. */
 export type SendMessageOptions = {
   context?: AssistantPageContext | null;
+  surface?: AssistantSurface;
   providerId?: string;
   /** Documents uploaded to this thread for this message. */
   attachmentDocumentIds?: readonly string[];
@@ -145,6 +179,7 @@ export type SendMessageOptions = {
 /** A quick question from anywhere: no thread yet, the answer makes one. */
 export type AskOptions = {
   context?: AssistantPageContext | null;
+  surface?: AssistantSurface;
   mentions?: readonly AssistantEntityRef[];
 };
 
@@ -338,6 +373,136 @@ export class AssistantService {
     return safeParse(startedTurnSchema, response, "Assistant Turn");
   }
 
+  /** What the person left for the conversation, in the order it will be sent. */
+  public async listQueue(
+    threadId: AssistantThread["id"],
+    { signal }: { signal?: AbortSignal } = {},
+  ) {
+    const response = await api.get(`/assistant/threads/${threadId}/queue/`, { signal });
+    return safeParse(queuedMessageListSchema, response, "Queued Message");
+  }
+
+  /**
+   * Leaves a message for the conversation. With steer, the reply under way
+   * reads it at its next step; otherwise it is sent once the reply ends. A
+   * conversation with nothing under way sends it at once, and the outcome
+   * carries the turn to follow.
+   */
+  public async enqueue(
+    threadId: AssistantThread["id"],
+    content: string,
+    options: EnqueueOptions = {},
+  ): Promise<QueueOutcome> {
+    const response = await api.post(`/assistant/threads/${threadId}/queue/`, {
+      ...messageBody(content, options),
+      steer: options.steer ?? false,
+    });
+    return safeParse(queueOutcomeSchema, response, "Queued Message");
+  }
+
+  public async editQueued(
+    threadId: AssistantThread["id"],
+    item: Pick<QueuedMessage, "id" | "version">,
+    content: string,
+  ) {
+    const response = await api.patch(`/assistant/threads/${threadId}/queue/${item.id}/`, {
+      content,
+      version: item.version,
+    });
+    return safeParse(queuedMessageSchema, response, "Queued Message");
+  }
+
+  public async removeQueued(threadId: AssistantThread["id"], id: QueuedMessage["id"]) {
+    await api.delete(`/assistant/threads/${threadId}/queue/${id}/`);
+  }
+
+  /** Puts the waiting messages in this order; every one of them is named once. */
+  public async reorderQueue(threadId: AssistantThread["id"], ids: readonly string[]) {
+    const response = await api.put(`/assistant/threads/${threadId}/queue/order/`, { ids });
+    return safeParse(queuedMessageListSchema, response, "Queued Message");
+  }
+
+  /**
+   * Sends a waiting message now: into the reply under way when there is one,
+   * or as a reply of its own ahead of the rest of the queue.
+   */
+  public async sendQueued(threadId: AssistantThread["id"], id: QueuedMessage["id"]) {
+    const response = await api.post(`/assistant/threads/${threadId}/queue/${id}/send/`, {});
+    return safeParse(queueOutcomeSchema, response, "Queued Message");
+  }
+
+  /** What the conversation's agent is waiting on, newest first. */
+  public async listWaits(
+    threadId: AssistantThread["id"],
+    { signal }: { signal?: AbortSignal } = {},
+  ) {
+    const response = await api.get(`/assistant/threads/${threadId}/waits/`, { signal });
+    return safeParse(agentWaitListSchema, response, "Agent Wait");
+  }
+
+  /** Ends a wait without the agent picking the work up. */
+  public async cancelWait(threadId: AssistantThread["id"], waitId: string) {
+    const response = await api.post(`/assistant/threads/${threadId}/waits/${waitId}/cancel/`, {});
+    return safeParse(agentWaitSchema, response, "Agent Wait");
+  }
+
+  /** Where the conversation's case stands, what stands between its record and what comes next. */
+  public async getCase(threadId: AssistantThread["id"], { signal }: { signal?: AbortSignal } = {}) {
+    const response = await api.get(`/assistant/threads/${threadId}/case/`, { signal });
+    return safeParse(caseViewSchema, response, "Case");
+  }
+
+  /** Makes the conversation a case about a shipment, invoice or dispute. */
+  public async bindCase(
+    threadId: AssistantThread["id"],
+    subject: { subjectType: CaseSubjectType; subjectId: string },
+  ) {
+    const response = await api.put(`/assistant/threads/${threadId}/case/`, subject);
+    return safeParse(caseBindingSchema, response, "Case");
+  }
+
+  /** Makes the case an ordinary conversation again. */
+  public async unbindCase(threadId: AssistantThread["id"]) {
+    const response = await api.delete(`/assistant/threads/${threadId}/case/`);
+    return safeParse(caseBindingSchema, response, "Case");
+  }
+
+  /**
+   * Puts the case out of the way until a time, the shipment's next
+   * appointment or its ETA. `until` is the time, or the fallback for an ETA
+   * the shipment does not have yet.
+   */
+  public async snoozeCase(
+    threadId: AssistantThread["id"],
+    snooze: { anchor: SnoozeAnchor; until?: number },
+  ) {
+    const response = await api.post(`/assistant/threads/${threadId}/case/snooze/`, snooze);
+    return safeParse(caseBindingSchema, response, "Case");
+  }
+
+  public async wakeCase(threadId: AssistantThread["id"]) {
+    const response = await api.post(`/assistant/threads/${threadId}/case/wake/`, {});
+    return safeParse(caseBindingSchema, response, "Case");
+  }
+
+  /** Ticks, or unticks, a step the organization added for a person to tick. */
+  public async tickCaseItem(threadId: AssistantThread["id"], itemKey: string, ticked: boolean) {
+    const response = await api.post(`/assistant/threads/${threadId}/case/ticks/`, {
+      itemKey,
+      ticked,
+    });
+    return safeParse(caseViewSchema, response, "Case");
+  }
+
+  /** Parks the case until the customer or one of the carriers replies. */
+  public async awaitCaseReply(
+    threadId: AssistantThread["id"],
+    party: { party: CaseParty["kind"]; partyId: string; giveUpAfterHours?: number },
+  ) {
+    const response = await api.post(`/assistant/threads/${threadId}/case/await-reply/`, party);
+    return safeParse(agentWaitSchema, response, "Agent Wait");
+  }
+
   public async getThread(id: AssistantThread["id"]) {
     const response = await api.get(`/assistant/threads/${id}/`);
     return safeParse(assistantThreadSchema, response, "Assistant Thread");
@@ -424,6 +589,23 @@ export class AssistantService {
     return parsed.results;
   }
 
+  /** One page of the records of one kind, for a list that scrolls through them all. */
+  public async searchMentionPage(
+    query: string,
+    kind: MentionPageKind,
+    { offset, limit, signal }: { offset: number; limit: number; signal?: AbortSignal },
+  ) {
+    const params = new URLSearchParams({
+      query,
+      kind,
+      offset: String(offset),
+      limit: String(limit),
+    });
+    const response = await api.get(`/assistant/mentions/?${params.toString()}`, { signal });
+
+    return safeParse(mentionPageSchema, response, "Assistant Mentions");
+  }
+
   /**
    * The person's own conversations, what was said in them and what they
    * produced. With nothing typed, the conversations and artifacts that are
@@ -504,6 +686,7 @@ export class AssistantService {
       {
         content,
         context: options.context ?? null,
+        surface: options.surface ?? "",
         mentions: options.mentions ?? [],
       },
       { signal },
@@ -634,6 +817,7 @@ function messageBody(content: string, options: SendMessageOptions): Record<strin
   return {
     content,
     context: options.context ?? null,
+    surface: options.surface ?? "",
     providerId: options.providerId ?? "",
     attachmentDocumentIds: options.attachmentDocumentIds ?? [],
     mentions: options.mentions ?? [],

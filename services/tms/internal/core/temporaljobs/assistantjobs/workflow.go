@@ -174,6 +174,7 @@ func (w *Workflows) AssistantTurnWorkflow(
 	}
 
 	w.compactIfFull(keep, stream, payload, &ending)
+	announceNext(keep, stream, payload, ending.Next)
 	stream.Publish(keep, ending.Event)
 	stream.Close(keep)
 	w.notifyUnseen(keep, stream, finish, &ending)
@@ -235,9 +236,35 @@ func (w *Workflows) answer(
 	finish.Run = outcome.Result
 	finish.Artifacts = outcome.Artifacts
 	finish.Events = append(finish.Events, outcome.Events...)
+	finish.Steered = outcome.Steered
 	finish.Failure = modelcall.FailureOf(err)
 
 	return finish
+}
+
+// announceNext tells the reader which turn the conversation's queue started
+// once this one was saved, ahead of this turn's ending, so the reader goes on
+// to follow it.
+func announceNext(
+	ctx workflow.Context,
+	stream *agentflow.Stream,
+	payload *AssistantTurnPayload,
+	next *serviceports.QueuedTurn,
+) {
+	if next == nil || next.TurnID.IsNil() {
+		return
+	}
+
+	stream.Publish(ctx, temporaltype.StreamItem{
+		Event: serviceports.AssistantEventNextTurn,
+		Data: serviceports.AssistantNextTurnEvent{
+			TurnID:   next.TurnID,
+			ThreadID: payload.ThreadID,
+			QueuedID: next.QueuedID,
+			Input:    next.Input,
+		},
+		At: workflow.Now(ctx).Unix(),
+	})
 }
 
 // rejectionOf is the reason a question was turned away, when it was turned

@@ -226,3 +226,70 @@ func TestOpenPage_OffersTheRegistrysRecordKinds(t *testing.T) {
 		assert.True(t, ok, name)
 	}
 }
+
+func TestFindInTrenova_AnswersAQuestionAboutOnePageFromAllOfIt(t *testing.T) {
+	t.Parallel()
+
+	desk := &productguide.Page{
+		Path:       "/desk",
+		Name:       "Desk",
+		Breadcrumb: []string{"Desk"},
+		Summary:    "Where you talk to agents.",
+		Notes:      "Only words can steer a reply under way.",
+		Related:    []string{"/desk/decisions"},
+		Tasks: []productguide.Task{
+			{Title: "Ask an agent a question", Steps: []string{"Open Desk."}},
+			{Title: "Steer an agent while it is replying", Steps: []string{"Type.", "Press Enter."}},
+			{Title: "Snooze a case", Steps: []string{"Select Case."}},
+		},
+	}
+	guide := &stubGuide{matches: []serviceports.ProductGuideMatch{
+		{Page: desk, Task: &desk.Tasks[1], CanOpen: true},
+	}}
+
+	result, err := newFindInTrenovaTool(guide).Query(t.Context(), testParams(map[string]any{
+		"question": "what is steering",
+		"page":     "/desk",
+	}))
+	require.NoError(t, err)
+
+	found, ok := result.(guideSearchResult)
+	require.True(t, ok)
+	require.Len(t, found.Answers, 1)
+
+	answer := found.Answers[0]
+	require.NotNil(t, answer.Task)
+	assert.Equal(t, "Steer an agent while it is replying", answer.Task.Title)
+	assert.Equal(t, []string{"Type.", "Press Enter."}, answer.Task.Steps)
+	assert.Equal(t, []string{"Ask an agent a question", "Snooze a case"}, answer.OtherTasks)
+	assert.Equal(t, "Only words can steer a reply under way.", answer.Notes)
+	assert.Equal(t, []string{"/desk/decisions"}, answer.Related)
+	assert.Contains(t, found.Note, "call again with its title as the question and the same page")
+	assert.Contains(t, found.Note, "call again without page")
+}
+
+func TestFindInTrenova_KeepsAnswersShortWhenNoPageWasNamed(t *testing.T) {
+	t.Parallel()
+
+	page := rateMatrices()
+	page.Notes = "Rates apply from their effective date."
+	page.Tasks = []productguide.Task{
+		{Title: "Add a rate matrix", Steps: []string{"Open it."}},
+		{Title: "Retire a rate matrix", Steps: []string{"Set Status."}},
+	}
+	guide := &stubGuide{matches: []serviceports.ProductGuideMatch{
+		{Page: page, Task: &page.Tasks[0], CanOpen: true},
+	}}
+
+	result, err := newFindInTrenovaTool(guide).Query(t.Context(), testParams(map[string]any{
+		"question": "how do I add a rate matrix",
+	}))
+	require.NoError(t, err)
+
+	found, ok := result.(guideSearchResult)
+	require.True(t, ok)
+	require.Len(t, found.Answers, 1)
+	assert.Empty(t, found.Answers[0].OtherTasks)
+	assert.Empty(t, found.Answers[0].Notes)
+	assert.NotContains(t, found.Note, "otherTasks")
+}

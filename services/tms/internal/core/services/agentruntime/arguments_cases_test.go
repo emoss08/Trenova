@@ -71,7 +71,7 @@ func requireRefusalNames(t *testing.T, content string, paths []string) {
 	t.Helper()
 
 	assert.Contains(t, content, "do not fit the tool")
-	assert.Contains(t, content, "Fix the call and send it again.")
+	assert.Contains(t, content, "Fix the call and send it again, changing only what is named.")
 	for _, path := range paths {
 		assert.Contains(t, content, "\n- "+path+": ", "the refusal names %s", path)
 	}

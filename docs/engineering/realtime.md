@@ -54,6 +54,27 @@ or reset.
   without `entity` and `fields`: they learn that a kind of record changed, never
   what it now says.
 
+### Record changes from the audit trail
+
+Every write that is audited also announces itself, so a list stays live without its
+service publishing anything. When `AuditService.LogAction` or `LogActions` records an
+entry, it publishes `audited:<permission resource>` (`audited:commodity`) with action
+`created`, `updated` or `deleted` and the record's ID, or `bulk_<action>` with no ID
+when one call records several of the same resource. It is published as the entry is
+recorded, not when the audit buffer flushes, and carries no entity and no fields, so it
+reveals only that a record of that kind changed. Reads, exports and the audit log's own
+entries announce nothing. The names live in `pkg/realtimeinvalidation/recordchange.go`.
+
+The browser maps these in `RECORD_CHANGE_KEYS` (`client/packages/shared/src/hooks/realtime-patching.ts`).
+List only resources with no richer event of their own: a resource that already
+publishes its own event (shipments, customers, workers) patches rows in place, which an
+`audited:` event cannot do.
+
+A data table shows a refetched page at once when it holds the same rows in the same
+order, and the rows whose values changed glow once (`--animate-row-changed-a/-b`). A page
+that gained, lost or reordered rows waits behind the "new updates" pill rather than
+moving rows under the reader (`useDataTableLiveRefresh`).
+
 ## The bus
 
 Events are appended to one of `shardCount` Redis Streams, chosen by an FNV hash of
@@ -65,6 +86,17 @@ where a tenant's events live.
 Each API replica runs one reader that blocks on every shard at once, starting
 from each shard's newest entry when the replica starts. It decodes each entry
 once and hands it to the streams open on that replica for the entry's tenant.
+
+## Reading changes from a worker
+
+`realtimebroker.ChangeFeed` (`services.RecordChangeFeed`, provided with the
+publisher in every process) lets code that is not a browser ask what changed to
+a set of records since a cursor: `Head` names the tenant's shard and newest entry,
+and `Since` scans forward from it, bounded, keeping tenant-wide invalidations
+whose record id is in the set. A running agent turn uses it to learn that a
+record it is working with changed; see "The world changing under a turn" in
+[agent-runtime.md](agent-runtime.md). Events addressed to one person and scoped
+presence or typing events are never returned.
 
 ## A stream
 
@@ -132,6 +164,16 @@ authorization. Today that is the shipment comment thread:
 | `POST /api/v1/shipments/:shipmentID/comments/presence/` | join, returns the snapshot |
 | `DELETE /api/v1/shipments/:shipmentID/comments/presence/?connectionId=` | leave |
 | `POST /api/v1/shipments/:shipmentID/comments/typing/` | typing, or `stop: true` |
+| `POST /api/v1/realtime/presence/:resource/` | join a table (`view:{resource}`), returns the snapshot |
+| `DELETE /api/v1/realtime/presence/:resource/?connectionId=` | leave a table |
+| `POST /api/v1/realtime/presence/:resource/:recordID/` | join a record (`record:{resource}:{id}`) |
+| `DELETE /api/v1/realtime/presence/:resource/:recordID/?connectionId=` | leave a record |
+
+The table and record routes take the permission resource from the path and check
+read access on it (`PermissionMiddleware.RequireParamPermission`), so anyone who can
+see a table can see who else is on it, and no one else can. Every data table joins
+its own scope from the toolbar (`DataTableViewers`), and its edit panel joins the
+open record's (`RecordPresence`), so the panel header shows who else has it open.
 
 Each takes the caller's `connectionId`, and the gateway checks that the
 connection belongs to the caller in the caller's current tenant. The scope is

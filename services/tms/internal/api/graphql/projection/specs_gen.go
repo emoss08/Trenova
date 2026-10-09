@@ -70,6 +70,8 @@ var AgentSuiteRunSpec TypeSpec
 
 var AgentTestPromptSpec TypeSpec
 
+var AgentToolRuleSpec TypeSpec
+
 var AgentToolTrustSpec TypeSpec
 
 var ApiKeySpec TypeSpec
@@ -499,6 +501,8 @@ var StoredMileageSpec TypeSpec
 var TCASubscriptionSpec TypeSpec
 
 var TableConfigurationSpec TypeSpec
+
+var TableLayoutSpec TypeSpec
 
 var TenderSpec TypeSpec
 
@@ -1383,6 +1387,30 @@ func init() {
 			{
 				Name:        "lastTest",
 				FieldMapKey: "lastTest",
+			},
+			{
+				Name:        "timeoutSeconds",
+				FieldMapKey: "timeoutSeconds",
+			},
+			{
+				Name:        "maxConcurrent",
+				FieldMapKey: "maxConcurrent",
+			},
+			{
+				Name:        "monthlyCapUsd",
+				FieldMapKey: "monthlyCapUsd",
+			},
+			{
+				Name:        "onCap",
+				FieldMapKey: "onCap",
+			},
+			{
+				Name:    "monthSpendUsd",
+				Special: "monthSpendUsd",
+			},
+			{
+				Name:    "apiKey",
+				Special: "apiKey",
 			},
 			{
 				Name:        "version",
@@ -4183,6 +4211,37 @@ func init() {
 			{
 				Name:        "createdAt",
 				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
+	AgentToolRuleSpec = TypeSpec{
+		TypeName: "AgentToolRule",
+		FieldMap: buncolgen.ToolRuleOverrideFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "maxTier",
+				FieldMapKey: "maxTier",
+			},
+			{
+				Name:        "readsExternal",
+				FieldMapKey: "readsExternal",
+			},
+			{
+				Name:        "reason",
+				FieldMapKey: "reason",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:        "updatedBy",
+				FieldMapKey: "updatedById",
 			},
 		},
 	}
@@ -23624,6 +23683,33 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
+			},
+		},
+	}
+
+	TableLayoutSpec = TypeSpec{
+		TypeName: "TableLayout",
+		FieldMap: buncolgen.TableLayoutFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "resource",
+				FieldMapKey: "resource",
+			},
+			{
+				Name:        "layout",
+				FieldMapKey: "layout",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
 			},
 		},
 	}

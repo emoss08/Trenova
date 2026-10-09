@@ -583,12 +583,26 @@ type AIFeedbackTurnSnapshot {
   tools: [AIFeedbackToolLine!]!
 }
 
+"""Where a model's listed price came from."""
+enum AIModelPriceSource {
+  """
+  OpenRouter's public catalog: an estimate of the list price, not what a contract charges.
+  """
+  OpenRouter
+  """The provider's own model list."""
+  Provider
+}
+
 """
 One configured model endpoint. The credential never leaves the server; only
 whether one is stored is exposed.
 """
 type AIProvider {
   allowPrivateNetwork: Boolean!
+  """
+  The stored credential, described without the secret. Null when none is stored.
+  """
+  apiKey: AIProviderKeyInfo
   baseUrl: String!
   businessUnitId: ID!
   createdAt: Timestamp!
@@ -614,9 +628,23 @@ type AIProvider {
   inputCostPerMillion: Decimal
   kind: AIProviderKind!
   lastTest: AIProviderTestOutcome
+  """
+  Calls this provider takes at once across every server. Past it, work moves to the next provider.
+  """
+  maxConcurrent: Int!
   maxTokens: Int!
   model: String!
+  """
+  Spend so far this calendar month (UTC), over the calls that carried a price.
+  """
+  monthSpendUsd: Decimal!
+  """
+  Most this provider may spend in a calendar month, in USD. Null means no cap.
+  """
+  monthlyCapUsd: Decimal
   name: String!
+  """What happens to a task once the monthly cap is reached."""
+  onCap: AIProviderCapAction!
   organizationId: ID!
   """USD per million output tokens; null means unknown."""
   outputCostPerMillion: Decimal
@@ -626,9 +654,21 @@ type AIProvider {
   tasks: [AITask!]!
   """How a Claude model behind an id the system cannot read takes thinking."""
   thinkingStyle: AIThinkingStyle!
+  """
+  How long one call may take before it fails and the task moves to the next provider.
+  """
+  timeoutSeconds: Int!
   trusted: Boolean!
   updatedAt: Timestamp!
   version: Int!
+}
+
+"""What a provider does with a task once its monthly cap is reached."""
+enum AIProviderCapAction {
+  """The task goes to the next provider in line."""
+  Next
+  """The task fails rather than moving on."""
+  Stop
 }
 
 type AIProviderConnection {
@@ -637,9 +677,46 @@ type AIProviderConnection {
   totalCount: Int
 }
 
+input AIProviderDraftTestInput {
+  embeddingDimensions: Int
+  embeddingInputStyle: AIEmbeddingInputStyle
+  endpoint: AIProviderEndpointInput!
+  model: String!
+  structuredOutputMode: AIStructuredOutputMode
+  tasks: [AITask!]!
+  timeoutSeconds: Int
+}
+
+"""
+What a probe of an unsaved endpoint revealed, with a next step when it failed.
+"""
+type AIProviderDraftTestResult {
+  """The endpoint's own words, such as the transport error."""
+  detail: String!
+  """What to try next. Empty when it worked."""
+  hint: String!
+  latencyMs: Int!
+  message: String!
+  modelIdentifier: String!
+  schemaHonoured: Boolean!
+  success: Boolean!
+}
+
 type AIProviderEdge {
   cursor: String!
   node: AIProvider!
+}
+
+"""
+An endpoint as an editor holds it, before it is saved. With providerId and no
+apiKey, the provider's stored key is used.
+"""
+input AIProviderEndpointInput {
+  allowPrivateNetwork: Boolean!
+  apiKey: String
+  baseUrl: String!
+  kind: AIProviderKind!
+  providerId: ID
 }
 
 """
@@ -653,11 +730,65 @@ type AIProviderFailure {
   providerId: ID!
 }
 
+"""
+A stored credential, described without the secret: enough of its ends to tell
+two keys apart, who added it and when it was last used.
+"""
+type AIProviderKeyInfo {
+  addedAt: Timestamp!
+  addedBy: User
+  lastFour: String!
+  lastUsedAt: Timestamp
+  """
+  The vendor prefix the key starts with, such as sk-ant-; empty when it has none.
+  """
+  prefix: String!
+  """
+  While the key it replaced is still kept as a fallback, when that stops.
+  """
+  previousKeyExpiresAt: Timestamp
+}
+
 enum AIProviderKind {
   AnthropicMessages
   Ollama
   OpenAIChat
   OpenAIResponses
+}
+
+"""One model an endpoint says it serves."""
+type AIProviderModelOption {
+  """Tokens of context, when the endpoint or the model id says."""
+  contextWindow: Int
+  """
+  When the provider released the model (for a local server, when it was pulled), when the endpoint says.
+  """
+  createdAt: Timestamp
+  displayName: String!
+  embedding: Boolean!
+  id: String!
+  inputCostPerMillion: Decimal
+  """A local server has it in memory now."""
+  loaded: Boolean!
+  outputCostPerMillion: Decimal
+  """Where the prices came from; null when there are none."""
+  priceSource: AIModelPriceSource
+  """Bytes on disk, for a model a local server holds."""
+  sizeBytes: Float
+}
+
+"""
+The fields of a provider that change on their own, from its row and read sheet.
+"""
+input AIProviderPatchInput {
+  allowPrivateNetwork: Boolean @goField(omittable: true)
+  """A new credential. It replaces the stored one and is never returned."""
+  apiKey: String @goField(omittable: true)
+  enabled: Boolean @goField(omittable: true)
+  inputCostPerMillion: Decimal @goField(omittable: true)
+  outputCostPerMillion: Decimal @goField(omittable: true)
+  tasks: [AITask!] @goField(omittable: true)
+  trusted: Boolean @goField(omittable: true)
 }
 
 """
@@ -2689,6 +2820,44 @@ input AgentAccessPreviewInput {
   toolNames: [String!]!
 }
 
+"""
+What the organization's agents did since a moment the reader names (the start of their day),
+for the head of Activity. Counts a reader may not see are null.
+"""
+type AgentActivitySummary {
+  """
+  The share of those approved exactly as proposed; null when none was decided or it may not be read.
+  """
+  approvedAsProposed: Float
+  """
+  Proposals people decided in the window; null without read access to agent proposals.
+  """
+  decided: Int
+  """The days the decisions below are counted over."""
+  decisionWindowDays: Int!
+  """
+  When the longest-waiting proposal was made; null when none waits or it may not be read.
+  """
+  oldestPendingAt: Timestamp
+  """
+  Exceptions open or in review; null without read access to agent exceptions.
+  """
+  openExceptions: Int
+  """
+  Proposals waiting on a person; null without read access to agent proposals.
+  """
+  pendingProposals: Int
+  """Runs started since then."""
+  runs: Int!
+  """Runs waiting on a person's decision, whenever they started."""
+  runsAwaiting: Int!
+  """Runs started since then that failed."""
+  runsFailed: Int!
+  """Runs working now, whenever they started."""
+  runsWorking: Int!
+  since: Timestamp!
+}
+
 """How much of an agent a role could use."""
 enum AgentAudienceCoverage {
   """The role grants everything the agent's tools need."""
@@ -3192,6 +3361,12 @@ enum AgentEgressClass {
   None
   """Changes only the caller's own records."""
   Personal
+}
+
+"""How many tools that change something reach one audience at most."""
+type AgentEgressCount {
+  count: Int!
+  egress: AgentEgressClass!
 }
 
 """
@@ -4391,6 +4566,10 @@ type AgentQualityOverview {
   suiteRuns: Int!
   sweepEnabled: Boolean!
   windowDays: Int!
+  """
+  The open regression that fell furthest below its agent's recent median; null when none is open.
+  """
+  worstRegression: AgentSuiteRun
 }
 
 """One scored suite run on an agent's quality line."""
@@ -4775,6 +4954,7 @@ enum AgentRunTrigger {
   Event
   Manual
   Scheduled
+  Wait
 }
 
 """What one agent can do without a person."""
@@ -4791,8 +4971,14 @@ type AgentSafety {
 The figures that head the safety section, counted over every tool and agent.
 """
 type AgentSafetySummary {
+  """
+  Tools that change something, counted by the widest audience their work reaches.
+  """
+  egressCounts: [AgentEgressCount!]!
   """Tools some of whose work leaves the organization."""
   leaveOrganization: Int!
+  """The agents counted in openWithSensitive."""
+  openSensitiveAgentIds: [ID!]!
   """
   Agents open to everyone that hold a tool reaching restricted data or leaving the organization.
   """
@@ -4807,6 +4993,8 @@ type AgentSafetySummary {
   runWithoutPerson: Int!
   """Every tool an agent can be given."""
   toolCount: Int!
+  """The titles of the tools counted in runWithoutPerson, alphabetically."""
+  unattendedTools: [String!]!
 }
 
 """
@@ -4847,6 +5035,10 @@ type AgentScorecard {
   """The start of the window."""
   since: Timestamp!
   toolTrust: [AgentToolTrust!]!
+  """
+  How each tool's calls ended, by tool and verdict, with the commonest reasons.
+  """
+  toolVerdicts: [AgentToolVerdict!]!
   trend: [AgentScorecardPoint!]!
   window: AgentScorecardWindow!
 }
@@ -4931,6 +5123,8 @@ enum AgentSubjectType {
   FormulaTemplate
   InboundMessage
   Insight
+  Invoice
+  InvoiceDispute
   Organization
   Report
   Shipment
@@ -5146,6 +5340,12 @@ enum AgentToolEffect {
   Present
 }
 
+"""The agents that hold one tool."""
+type AgentToolHolders {
+  agentIds: [ID!]!
+  policyName: String!
+}
+
 enum AgentToolKind {
   Action
   Query
@@ -5174,6 +5374,12 @@ type AgentToolPolicy {
   """Its result can carry outside text into a later run."""
   carriesTaint: Boolean!
   conditionDescription: String
+  """
+  The most freedom the rule declared beside the tool allows; maxTier is lower when the organization holds it lower.
+  """
+  declaredMaxTier: AgentAutonomyTier!
+  """How much of its result the declared rule treats as outside text."""
+  declaredReadsExternal: AgentExternalRead!
   defaultTier: AgentAutonomyTier!
   effect: AgentToolEffect!
   egress: [AgentEgressClass!]!
@@ -5208,6 +5414,14 @@ type AgentToolPolicy {
   rationale: String!
   readsExternal: AgentExternalRead!
   reversible: Boolean!
+  """
+  The organization's own rule for the tool; null when it keeps the declared one.
+  """
+  rule: AgentToolRule
+  """
+  The version of the organization's rule an edit is made against; 0 when there is none yet.
+  """
+  ruleVersion: Int!
   """
   Whether the tool changes something and, on at least one of the
   organization's agents, can do so without a person. Read only by
@@ -5273,6 +5487,43 @@ type AgentToolRequirement {
   resource: String!
 }
 
+"""An organization holding one tool lower than its declared rule."""
+type AgentToolRule {
+  """Null when it keeps the declared most freedom."""
+  maxTier: AgentAutonomyTier
+  """Null when it keeps the declared outside text setting."""
+  readsExternal: AgentExternalRead
+  reason: String!
+  updatedAt: Timestamp!
+  updatedBy: User
+}
+
+"""What one agent holding the tool does before and after a rule change."""
+type AgentToolRuleImpact {
+  after: AgentAutonomyAnswer!
+  agentId: ID!
+  agentName: String!
+  before: AgentAutonomyAnswer!
+}
+
+"""
+An organization's rule for one tool. Absent fields keep what the tool declares.
+"""
+input AgentToolRuleInput {
+  maxTier: AgentAutonomyTier
+  readsExternal: AgentExternalRead
+  """
+  Why it changed; required when the most freedom changes, and kept in the audit trail.
+  """
+  reason: String
+}
+
+type AgentToolRuleSaved {
+  """The agents whose answer moved."""
+  affected: [AgentToolRuleImpact!]!
+  tool: AgentToolPolicy!
+}
+
 """
 One tool an agent holds, before and after the run has read outside text.
 """
@@ -5336,6 +5587,32 @@ type AgentToolTrust {
   """
   streak: Int!
   toolName: String!
+}
+
+"""
+How often one tool's calls ended one way over the window, counted from every
+call that reached the tool, refusals included. A call the runtime refused
+never became a proposal, so the proposal counts cannot show it.
+"""
+type AgentToolVerdict {
+  calls: Int!
+  toolName: String!
+  """
+  The reasons given most often, most frequent first. A call that ran gives none.
+  """
+  topReasons: [AgentToolVerdictReason!]!
+  """
+  ran, proposed, simulated, denied, invalid, duplicate, over_budget, failed or unknown.
+  """
+  verdict: String!
+}
+
+"""
+One reason a tool's calls were refused or failed, and how many calls gave it.
+"""
+type AgentToolVerdictReason {
+  calls: Int!
+  reason: String!
 }
 
 enum AgentTriggerMode {
@@ -6103,6 +6380,78 @@ type BulkAssignTrainingPayload {
   failedCount: Int!
   outcomes: [BulkAssignTrainingOutcome!]!
   skippedCount: Int!
+}
+
+type BulkEditFailure {
+  id: ID!
+  message: String!
+}
+
+"""A field of a table that can be changed on many rows at once."""
+type BulkEditField {
+  """record (picked from a list of records) or select (one of a fixed set)."""
+  kind: String!
+  label: String!
+  name: String!
+  options: [BulkEditOption!]!
+  """
+  For a record field, the select-option resource its values are picked from.
+  """
+  record: String
+}
+
+input BulkEditInput {
+  field: String!
+  resource: String!
+  selection: BulkEditSelectionInput!
+  value: String!
+}
+
+"""One change made to many rows at once, and how far it has got."""
+type BulkEditJob {
+  canUndo: Boolean!
+  changedCount: Int!
+  completedAt: Timestamp
+  createdAt: Timestamp!
+  failedCount: Int!
+  failureMessage: String!
+  """The first rows that could not be changed, with why."""
+  failures: [BulkEditFailure!]!
+  field: String!
+  id: ID!
+  processedCount: Int!
+  resource: String!
+  """Queued, Running, Completed, Failed, Undoing or Undone."""
+  status: String!
+  totalCount: Int!
+  undoneAt: Timestamp
+  value: String!
+}
+
+"""A value a bulk-editable field can be set to."""
+type BulkEditOption {
+  label: String!
+  value: String!
+}
+
+type BulkEditPreview {
+  """How many rows the edit would reach."""
+  count: Int!
+  """True when more rows match than one bulk edit can change."""
+  tooMany: Boolean!
+}
+
+input BulkEditSelectionInput {
+  """
+  Or every row matching the table's filters, resolved by the server when the edit runs.
+  """
+  filter: DataTableConnectionInput
+  """The rows chosen one by one."""
+  ids: [ID!]
+  """
+  The table's own list options beyond filters, such as the shipment board's quick filters.
+  """
+  options: JSON
 }
 
 input BulkSettlementActionInput {
@@ -9704,6 +10053,28 @@ type DashControl {
   version: Int!
 }
 
+"""Totals of a table's filtered rows."""
+input DataTableAggregateInput {
+  fields: [String!]!
+  filter: DataTableConnectionInput
+  options: JSON
+  resource: String!
+}
+
+type DataTableAggregateValue {
+  average: Decimal
+  field: String!
+  max: Decimal
+  min: Decimal
+  sum: Decimal
+}
+
+type DataTableAggregates {
+  """Every row the filters match, on every page."""
+  count: Int!
+  values: [DataTableAggregateValue!]!
+}
+
 input DataTableConnectionInput {
   after: String
   fieldFilters: [FieldFilterInput!]
@@ -9711,6 +10082,82 @@ input DataTableConnectionInput {
   first: Int = 20
   query: String
   sort: [SortFieldInput!]
+}
+
+type DataTableFacetBucket {
+  count: Int!
+  """The field's value, or null for rows that have none."""
+  value: String
+}
+
+"""How many of a table's filtered rows hold each value of one field."""
+input DataTableFacetInput {
+  field: String!
+  filter: DataTableConnectionInput
+  limit: Int = 20
+  """
+  Options the table's own list takes beyond filters, such as the shipment board's quick filters.
+  """
+  options: JSON
+  """The table's permission resource, such as shipment."""
+  resource: String!
+}
+
+type DataTableFacets {
+  """The most common values first."""
+  buckets: [DataTableFacetBucket!]!
+  field: String!
+  """Every row the filters match, including those in values not listed."""
+  total: Int!
+}
+
+type DataTableInsightField {
+  facetable: Boolean!
+  name: String!
+  summable: Boolean!
+  """Whether the field is a date a chart can follow rows over."""
+  timeline: Boolean!
+}
+
+type DataTableSeries {
+  groups: [DataTableSeriesGroup!]!
+  """When each period starts, oldest first."""
+  periodStarts: [Timestamp!]!
+}
+
+type DataTableSeriesGroup {
+  """One value per period, oldest first."""
+  points: [Decimal!]!
+  value: String!
+}
+
+"""
+One small chart per row of another table: how many of this table's rows each one has,
+or their total, in each week or month up to now. A customer's shipments, a carrier's
+loads, a location's stops.
+"""
+input DataTableSeriesInput {
+  """The date that places each counted row in a period."""
+  dateField: String!
+  filter: DataTableConnectionInput
+  """The field naming the row each chart belongs to, such as customerId."""
+  groupField: String!
+  """The rows to chart, at most 200."""
+  groupValues: [String!]!
+  interval: DataTableSeriesInterval! = WEEK
+  """How many periods, ending with the current one."""
+  periods: Int! = 12
+  """The table counted, such as shipment."""
+  resource: String!
+  """The time zone periods start in; UTC when absent."""
+  timezone: String
+  """A field to total instead of counting rows."""
+  valueField: String
+}
+
+enum DataTableSeriesInterval {
+  MONTH
+  WEEK
 }
 
 input DecideAgentProposalsInput {
@@ -12534,6 +12981,13 @@ enum EtaVerdict {
   Late
   OnTime
   Unknown
+}
+
+input ExportTableViewInput {
+  """csv, xlsx or pdf."""
+  format: String!
+  name: String!
+  view: TableExportViewInput!
 }
 
 """
@@ -17101,6 +17555,10 @@ type Mutation {
   endWorkerPtoPolicyAssignment(input: EndWorkerPTOPolicyAssignmentInput!): WorkerPTOPolicyAssignment!
   endWorkerShiftAssignment(effectiveTo: Timestamp!, id: ID!): WorkerShiftAssignment!
   enrollBenefit(input: EnrollBenefitInput!): WorkerBenefitEnrollment!
+  """
+  Saves a table's view as a report and runs it in the background, with no row limit beyond the report's own.
+  """
+  exportTableView(input: ExportTableViewInput!): TableExportResult!
   """Files one proposed document onto a record, as the caller."""
   fileCaptureItem(id: ID!, input: FileCaptureItemInput!): CaptureItem!
   """
@@ -17189,6 +17647,7 @@ type Mutation {
   openInvoiceDispute(input: OpenInvoiceDisputeInput!): InvoiceDispute!
   openLeaveCase(input: OpenLeaveCaseInput!): WorkerLeaveCase!
   overrideCarrierEquipmentVerification(id: ID!, reason: String!): CarrierEquipmentVerification!
+  patchAIProvider(id: ID!, input: AIProviderPatchInput!, version: Int!): AIProvider!
   patchEquipmentManufacturer(id: ID!, input: EquipmentManufacturerPatchInput!): EquipmentManufacturer!
   patchEquipmentType(id: ID!, input: EquipmentTypePatchInput!): EquipmentType!
   patchTableConfiguration(id: ID!, input: TableConfigurationPatchInput!): TableConfiguration!
@@ -17302,6 +17761,10 @@ type Mutation {
   reopenWorkerChecklistItem(id: ID!, version: Int): WorkerChecklist!
   reopenWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
   """
+  Sets the routing order: the first ID takes work first. Every provider must be listed once.
+  """
+  reorderAIProviders(ids: [ID!]!): [AIProvider!]!
+  """
   Replays a case against its agent as it is now, writes simulated, and scores it.
   """
   replayAgentEvalCase(id: ID!): AgentEvaluation!
@@ -17319,6 +17782,10 @@ type Mutation {
   rescindDisciplinaryAction(input: RescindDisciplinaryActionInput!): WorkerDisciplinaryAction!
   resetCannedFork(id: ID!): ReportDefinition!
   resetHomeLayout: HomeLayout!
+  """
+  Forgets the caller's arrangement of a table, so it opens as its default view.
+  """
+  resetMyTableLayout(resource: String!): Boolean!
   """
   Fixes a difference with the accounting system: sends Trenova's document again, or changes Trenova to match.
   """
@@ -17404,8 +17871,16 @@ type Mutation {
   Saves the organization's own app keys after checking them with the accounting system. While a company is connected, only its app's secret and verifier token can change.
   """
   saveAccountingApp(input: SaveAccountingAppInput!): AccountingSyncStatus!
+  """
+  Holds a tool lower than its declared rule for this organization, or returns it to the declared rule.
+  """
+  saveAgentToolRule(input: AgentToolRuleInput!, name: String!, version: Int!): AgentToolRuleSaved!
+  """Keeps the caller's arrangement of a table, replacing the one before."""
+  saveMyTableLayout(input: TableLayoutInput!): TableLayout!
   saveOshaSummary(input: SaveOSHASummaryInput!): OSHAAnnualSummary!
   saveTelematicsFormMapping(input: SaveTelematicsFormMappingInput!): TelematicsFormMapping!
+  """Saves a table's view as a report and sends it on a schedule."""
+  scheduleTableView(input: ScheduleTableViewInput!): TableExportResult!
   sendDetentionNotice(occurrenceId: ID!): DetentionOccurrence!
   """
   Queues the outbound EDI 210 for a posted invoice. force resends one that
@@ -17466,6 +17941,10 @@ type Mutation {
   startAccountingAuthorization(integrationType: AccountingSystem!): AccountingAuthorizationStart!
   startBillingTransferRun(input: StartBillingTransferRunInput!): BillingTransferRun!
   """
+  Starts changing one field on every chosen row; it runs in the background.
+  """
+  startBulkEdit(input: BulkEditInput!): BulkEditJob!
+  """
   Runs one provider's model over the active cases, within the evaluation budget.
   """
   startExtractionEvalRun(input: StartExtractionEvalRunInput!): ExtractionEvalRun!
@@ -17487,6 +17966,8 @@ type Mutation {
   """
   syncFuelCardFeed(provider: FuelCardProvider!): FuelCardSyncResult!
   tenderShipments(input: TenderShipmentsInput!): TenderShipmentsResult!
+  """Probes an unsaved endpoint once and records nothing."""
+  testAIProviderDraft(input: AIProviderDraftTestInput!): AIProviderDraftTestResult!
   """
   Tightens an agent's instructions (at most 20000 characters) without changing
   what they ask for. Saves nothing. Needs permission to create or update agents.
@@ -17507,6 +17988,10 @@ type Mutation {
   Takes back how a check was settled, and puts back any charge it changed.
   """
   undoBillingQueueIssue(id: ID!, issueId: ID!): BillingQueueItem!
+  """
+  Puts back every row the caller's bulk edit changed, within a day of it finishing.
+  """
+  undoMyBulkEdit(id: ID!): BulkEditJob!
   """
   Takes back the caller's approval of a proposal (with every proposal
   approved with it in one batch) or of a plan, while it is in its undo window;
@@ -19430,6 +19915,8 @@ type Query {
   and changes nothing.
   """
   agentAccessPreview(input: AgentAccessPreviewInput!): AgentAccessPreview!
+  """What agents did since the moment given, at most 31 days ago."""
+  agentActivitySummary(since: Timestamp!): AgentActivitySummary!
   """What an agent can do. Anyone who may use the agent may read it."""
   agentCapabilities(agentId: ID!): AgentCapabilities!
   agentControl: AgentControl!
@@ -19533,6 +20020,8 @@ type Query {
   agentSuiteRuns(input: AgentSuiteRunsInput!): AgentSuiteRunConnection! @deprecated(reason: "Use agentSuiteRunConnection, which takes the data table's filters and sort.")
   """The prompts kept with an agent, oldest first. At most 20."""
   agentTestPrompts(agentId: ID!): [AgentTestPrompt!]!
+  """Every tool some agent holds, with the agents that hold it."""
+  agentToolHolders: [AgentToolHolders!]!
   """Every tool's safety policy, by name."""
   agentToolPolicies: [AgentToolPolicy!]! @deprecated(reason: "Use agentToolRuleConnection, which pages, filters and sorts on the server.")
   """The tool rules a page at a time, searched and filtered on the server."""
@@ -19543,6 +20032,10 @@ type Query {
   on the same fields.
   """
   agentToolRuleConnection(input: DataTableConnectionInput!): AgentToolPolicyConnection!
+  """
+  What every agent holding the tool would do under a rule, before saving it.
+  """
+  agentToolRuleImpact(input: AgentToolRuleInput!, name: String!): [AgentToolRuleImpact!]!
   """
   Every tool the named agents hold, what each does before and after the run
   has read outside text, a page at a time. Between one and ten agents. Filters
@@ -19574,6 +20067,8 @@ type Query {
   """Everyone's ratings, for administrators."""
   aiFeedback(input: DataTableConnectionInput!): AIFeedbackConnection!
   aiProvider(id: ID!): AIProvider
+  """The models an endpoint serves, asked of the endpoint itself."""
+  aiProviderModels(input: AIProviderEndpointInput!): [AIProviderModelOption!]!
   aiProviders(input: DataTableConnectionInput!): AIProviderConnection!
   """
   The thousand most recent sources whose indexing failed or is waiting to retry,
@@ -19600,9 +20095,10 @@ type Query {
   """
   Model usage day by day for the last days (default 7, at most 90), ending
   today, oldest first. A day with no calls is listed with zeros. Days are read
-  in the IANA timezone given, UTC when absent.
+  in the IANA timezone given, UTC when absent. With providerId, only that
+  provider's calls.
   """
-  aiUsageDaily(days: Int, timezone: String): [AIUsageDay!]!
+  aiUsageDaily(days: Int, providerId: ID, timezone: String): [AIUsageDay!]!
   """
   Model usage by feature over the last days (default 7, at most 366), as a table.
   """
@@ -19653,6 +20149,7 @@ type Query {
   briefing(id: ID!): Briefing!
   """Recent mornings, newest day first."""
   briefings(input: ListBriefingsInput!): [Briefing!]!
+  bulkEditFields(resource: String!): [BulkEditField!]!
   cannedReports: [CannedReport!]!
   capacityUnitMatches(kind: CapacityUnitKind!, limit: Int = 2, unitId: ID!): [CapacityMatch!]!
   """
@@ -19733,6 +20230,13 @@ type Query {
   customers(input: DataTableConnectionInput!): CustomerConnection!
   """Dash feature toggles for this organization (back office)."""
   dashControl: DashControl!
+  dataTableAggregates(input: DataTableAggregateInput!): DataTableAggregates!
+  dataTableFacets(input: DataTableFacetInput!): DataTableFacets!
+  """
+  The fields a table can be counted by or totalled, so a screen offers only those.
+  """
+  dataTableInsightFields(resource: String!): [DataTableInsightField!]!
+  dataTableSeries(input: DataTableSeriesInput!): DataTableSeries!
   """
   Suggested points for a kind, severity and outcome, so the form starts from
   the house scale.
@@ -19948,6 +20452,8 @@ type Query {
   myAgents(input: MyAgentsInput!): MyAgentConnection!
   """What the signed-in driver has said they would rather work."""
   myAvailability: [WorkerAvailabilityPreference!]!
+  myBulkEdit(id: ID!): BulkEditJob
+  myBulkEdits(limit: Int, resource: String): [BulkEditJob!]!
   """Whether capture is on here and whether the caller may use it."""
   myCaptureAccess: CaptureAccess!
   """The companions the caller has paired."""
@@ -20028,6 +20534,10 @@ type Query {
   """Every swap the signed-in driver is on either side of."""
   myShiftSwaps: [PortalShiftSwap!]!
   """
+  The caller's own layout for a table, or null when they have not changed it.
+  """
+  myTableLayout(resource: String!): TableLayout
+  """
   Everyone the signed-in user answers for, directly or through a terminal they
   run, plus anyone delegated to them.
   """
@@ -20100,6 +20610,7 @@ type Query {
   performanceReview(id: ID!): PerformanceReview!
   performanceReviewTemplate(id: ID!): PerformanceReviewTemplate!
   performanceReviewTemplates(input: PerformanceReviewTemplatesInput!): PerformanceReviewTemplateConnection!
+  previewBulkEdit(input: BulkEditInput!): BulkEditPreview!
   previewDriverSettlement(periodEnd: Timestamp, periodStart: Timestamp, workerId: ID!): DriverSettlement!
   previewReport(definition: ReportIRInput!, params: JSON, supersede: Boolean): ReportPreview!
   previewWorkerPtoAccrual(asOf: Timestamp, workerId: ID!): [PlannedPTOAccrual!]!
@@ -21943,6 +22454,17 @@ input SaveTelematicsFormMappingInput {
   version: Int
 }
 
+input ScheduleTableViewInput {
+  cronExpression: String!
+  emailAttach: Boolean
+  emailInline: Boolean
+  emailRecipients: [String!]
+  formats: [String!]!
+  name: String!
+  timezone: String
+  view: TableExportViewInput!
+}
+
 enum SegregationType {
   Barrier
   Distance
@@ -21971,6 +22493,7 @@ type SelectOptionEdge {
 enum SelectOptionResource {
   ACCESSORIAL_CHARGE
   ACCOUNT_TYPE
+  AI_PROVIDER
   BENEFIT_PLAN
   CAPTURE_DEVICE
   CAPTURE_PROFILE
@@ -24828,6 +25351,44 @@ input TableConfigurationPatchInput {
   tableConfig: JSON @goField(omittable: true)
   """Omit to leave unchanged; null is rejected."""
   visibility: ConfigurationVisibility @goField(omittable: true)
+}
+
+input TableExportColumnInput {
+  """The field the column shows, as the table filters and sorts by it."""
+  field: String!
+  label: String!
+}
+
+type TableExportResult {
+  """The report the view was saved as; it lives in the person's reports."""
+  definitionId: ID!
+  run: ReportRun
+  schedule: ReportSchedule
+  """Columns the report could not show, by label."""
+  skippedColumns: [String!]!
+}
+
+"""What a data table is showing, to export or schedule as a report."""
+input TableExportViewInput {
+  columns: [TableExportColumnInput!]!
+  filter: DataTableConnectionInput
+  resource: String!
+}
+
+"""The arrangement of one data table a person last left it in."""
+type TableLayout {
+  """
+  Columns shown, ordered, sized and pinned, the density, colour rules and the view it was based on.
+  """
+  layout: JSON!
+  resource: String!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+input TableLayoutInput {
+  layout: JSON!
+  resource: String!
 }
 
 """One person on a manager's team."""

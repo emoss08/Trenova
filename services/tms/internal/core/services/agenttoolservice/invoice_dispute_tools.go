@@ -84,12 +84,14 @@ func targetDispute(params map[string]any) (serviceports.ToolTarget, bool) {
 }
 
 func disputeIDProperty() map[string]any {
-	return stringProperty("The open dispute, from list_invoice_disputes. Never guess one.", 0)
+	return agenttoolschema.RecordID(permission.ResourceInvoiceDispute, "The open dispute",
+		"list_invoice_disputes")
 }
 
 func newOpenInvoiceDisputeTool(disputes invoiceDisputer) serviceports.AgentTool {
 	return newReceivableTool(&receivableSpec{
-		name: "open_invoice_dispute",
+		name:   "open_invoice_dispute",
+		recipe: []string{"get_invoice", "open_invoice_dispute"},
 		description: "Open a dispute on a posted invoice the customer is withholding payment on. " +
 			"The invoice is marked Disputed until the case is resolved or withdrawn. The disputed " +
 			"amount cannot exceed the open balance, and an invoice holds one open case at a time. " +
@@ -178,6 +180,11 @@ func openDisputeRequest(
 func newResolveInvoiceDisputeTool(disputes invoiceDisputer) serviceports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name: "resolve_invoice_dispute",
+		recipe: []string{
+			"list_invoice_disputes",
+			"list_invoice_adjustments",
+			"resolve_invoice_dispute",
+		},
 		description: "Propose closing an open invoice dispute with its outcome. A credit or a " +
 			"write-off must name the executed adjustment that settled it, from " +
 			"list_invoice_adjustments; an upheld invoice, a rebill or a customer who dropped it " +

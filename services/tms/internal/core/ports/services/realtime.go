@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
+
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -225,4 +227,23 @@ type RealtimeBroker interface {
 	Throttle(ctx context.Context, key string, window time.Duration) (bool, error)
 	Release(ctx context.Context, key string) error
 	Drain()
+}
+
+type WatchedRecordChange = conversation.WorldChange
+
+type RecordChangesRequest struct {
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+	Cursor         string
+	Records        []string
+}
+
+type RecordChanges struct {
+	Cursor  string
+	Changes []WatchedRecordChange
+}
+
+type RecordChangeFeed interface {
+	Head(ctx context.Context, orgID, buID pulid.ID) (string, error)
+	Since(ctx context.Context, req *RecordChangesRequest) (*RecordChanges, error)
 }

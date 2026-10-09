@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/journalreversalservice"
 	"github.com/emoss08/trenova/internal/core/services/manualjournalservice"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -191,7 +192,7 @@ func manualJournalDraftProperties(forRevision bool) map[string]any {
 		paramJournalDescription: stringProperty(description, maxManualJournalDescription),
 		paramReason: stringProperty("Why the entry is needed: the evidence or the "+
 			"correction it makes.", maxManualJournalReason),
-		paramAccountingDate: dateProperty(date),
+		paramAccountingDate: agenttoolschema.Date(date),
 		paramJournalCurrency: stringProperty("The ISO currency code, such as USD. Leave it "+
 			"out for the organization's functional currency.", manualJournalCurrencyPattern),
 		paramJournalLines: lines,
@@ -883,8 +884,10 @@ func newRequestJournalReversalTool(
 		properties: map[string]any{
 			paramJournalEntryID: stringProperty("The posted journal entry to reverse, from "+
 				"list_journal_entries or get_journal_entry. Never guess one.", 0),
-			paramAccountingDate: dateProperty("The day the reversal is booked; a day in a " +
-				"closed period moves to the next open one where policy allows."),
+			paramAccountingDate: agenttoolschema.Date(
+				"The day the reversal is booked; a day in a " +
+					"closed period moves to the next open one where policy allows.",
+			),
 			paramReversalReasonCode: stringProperty("A short code for the kind of error, such "+
 				"as WrongAccount or Duplicate.", maxReversalReasonCode),
 			paramReversalReasonText: stringProperty("What was wrong with the entry, as the "+

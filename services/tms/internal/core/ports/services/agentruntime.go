@@ -240,26 +240,33 @@ type DecisionRequest struct {
 }
 
 // ShownArtifact is what the person now sees for a tool call, so the model can
-// be told it is there rather than repeating it.
+// be told it is there rather than repeating it. It crosses from the activity
+// that ran the tool to the loop in workflow code, which keeps the tables a
+// turn showed for the reply pass.
 type ShownArtifact struct {
-	ID    pulid.ID
-	Kind  string
-	Title string
+	ID    pulid.ID `json:"id"`
+	Kind  string   `json:"kind"`
+	Title string   `json:"title"`
+	// Labels are the values of a table's first column, row by row, as far as
+	// the kept rows go: what a reply that reprints the table writes down its
+	// left edge, which is how the reply pass tells the reprint from a table
+	// of something else.
+	Labels []string `json:"labels,omitempty"`
 	// Rows is how many rows a table holds in all, and zero for anything
 	// that is not a table. It decides whether the reply repeats the rows or
 	// points to the table.
-	Rows int
+	Rows int `json:"rows,omitempty"`
 	// Actionable is a table the person works from, not just reads: its rows
 	// can be selected and acted on beside the conversation, so it is pointed
 	// to however short it is.
-	Actionable bool
+	Actionable bool `json:"actionable,omitempty"`
 	// Opens is a composed view: it opens the live table rather than being
 	// worked from where it is drawn.
-	Opens bool
+	Opens bool `json:"opens,omitempty"`
 	// Ranked is a table whose order is the answer, such as drivers ranked
 	// for a move: the person picks from it, so it is pointed to however
 	// short it is.
-	Ranked bool
+	Ranked bool `json:"ranked,omitempty"`
 }
 
 // PublishedDocument is a write-up the model asked to keep beside the
@@ -295,9 +302,10 @@ type RunResult struct {
 	Reply    string
 	Messages []conversation.Message
 	Actions  []PendingAction
-	// OutputRefused is set when the answer, rather than the question, was
-	// declined by the output guard. Reply then carries the refusal.
-	OutputRefused bool
+	// OutputAltered is set when the output guard took code out of the answer
+	// and let the rest through; OutputRule names the rule that found it, so
+	// the audit and the turn's decision still record the signal.
+	OutputAltered bool
 	OutputRule    string
 	Model         string
 	ProviderID    pulid.ID
@@ -431,6 +439,7 @@ type RuntimeContextRequest struct {
 	Trigger    agent.RunTrigger
 	Subject    *agentdefinition.RuntimeSubject
 	Page       *agentdefinition.PageContext
+	Surface    agent.Surface
 	// Attachments and Mentions are what the person handed over with the
 	// message that started this turn.
 	Attachments []agentdefinition.RuntimeAttachment

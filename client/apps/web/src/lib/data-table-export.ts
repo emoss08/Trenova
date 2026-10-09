@@ -1,5 +1,7 @@
 import type { RowData } from "@tanstack/react-table";
+import { columnHeaderLabel } from "@/lib/data-table";
 import { fetchGraphQLData } from "@/hooks/data-table/use-data-table-query";
+import type { TableExportViewInput } from "@trenova/graphql/generated/graphql";
 import type {
   DataTableGraphQLSource,
   DataTableQueryOptions,
@@ -46,7 +48,7 @@ export function buildExportColumns<TData extends RowData>(
     const exportValue = meta?.exportValue;
     if (!accessorKey && !exportValue) continue;
 
-    const header = typeof def.header === "string" ? def.header : (meta?.label ?? column.id);
+    const header = exportHeader(column);
 
     exportColumns.push({
       id: column.id,
@@ -58,7 +60,46 @@ export function buildExportColumns<TData extends RowData>(
   return exportColumns;
 }
 
-function formatCsvValue(value: unknown): string {
+function exportHeader<TData extends RowData>(column: Column<TData, unknown>): string {
+  return columnHeaderLabel(column);
+}
+
+/**
+ * What the table shows, as the server builds it into a report: each exportable column
+ * by the field it filters and sorts on, with the filters, search and sort in force. A
+ * column with no such field is still named, so the server can say it was left out.
+ */
+export function buildTableExportView<TData extends RowData>(
+  leafColumns: Column<TData, unknown>[],
+  visibleOnly: boolean,
+  resource: string,
+  options: Omit<DataTableQueryOptions, "cursor">,
+): TableExportViewInput {
+  const columns: TableExportViewInput["columns"] = [];
+  for (const column of leafColumns) {
+    const meta = column.columnDef.meta;
+    if (meta?.exportable === false) continue;
+    if (visibleOnly && !column.getIsVisible()) continue;
+    const def = column.columnDef;
+    const accessorKey = "accessorKey" in def ? String(def.accessorKey) : null;
+    const field = meta?.apiField ?? accessorKey;
+    if (!field) continue;
+    columns.push({ field, label: exportHeader(column) });
+  }
+
+  return {
+    resource,
+    columns,
+    filter: {
+      query: options.query || undefined,
+      fieldFilters: options.fieldFilters ?? [],
+      filterGroups: options.filterGroups ?? [],
+      sort: options.sort ?? [],
+    },
+  };
+}
+
+export function formatCsvValue(value: unknown): string {
   if (value === null || value === undefined) return "";
   if (typeof value === "string") return value;
   if (typeof value === "boolean") return value ? "true" : "false";

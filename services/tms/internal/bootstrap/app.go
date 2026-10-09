@@ -14,14 +14,21 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolruleservice"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
+	"github.com/emoss08/trenova/internal/core/services/agentwaitservice"
 	"github.com/emoss08/trenova/internal/core/services/aiauditservice"
 	"github.com/emoss08/trenova/internal/core/services/aidocumentservice"
+	"github.com/emoss08/trenova/internal/core/services/aiproviderspendservice"
 	"github.com/emoss08/trenova/internal/core/services/aitraininghistoryservice"
 	"github.com/emoss08/trenova/internal/core/services/analyticsservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantfollowupservice"
+	"github.com/emoss08/trenova/internal/core/services/assistantcaseservice"
+	"github.com/emoss08/trenova/internal/core/services/assistantqueueservice"
+	"github.com/emoss08/trenova/internal/core/services/casechecklistservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
+	"github.com/emoss08/trenova/internal/core/services/bulkeditservice"
 	"github.com/emoss08/trenova/internal/core/services/conversationscheduleservice"
 	"github.com/emoss08/trenova/internal/core/services/editransport"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
@@ -42,6 +49,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentqualityjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentwaitjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/aiauditjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/aicorrectionjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/aifeedbackjobs"
@@ -52,6 +60,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingqueuejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingtransferjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/briefingjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/bulkeditjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/capturejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/carrierintelligencejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/carriersettlementjobs"
@@ -154,8 +163,11 @@ func OptionsFor(e *edition.Edition) fx.Option {
 		aiauditjobs.Module,
 		billingjobs.Module,
 		billingtransferjobs.Module,
+		bulkeditjobs.Module,
+		fx.Provide(func(svc *bulkeditservice.Service) bulkeditjobs.Runner { return svc }),
 		billingqueuejobs.Module,
 		detentionjobs.Module,
+		agentwaitjobs.Module,
 		ptojobs.Module,
 		distancemileagejobs.Module,
 		documentintelligencejobs.Module,
@@ -198,8 +210,14 @@ func OptionsFor(e *edition.Edition) fx.Option {
 		assistantservice.Module,
 		assistantturnservice.Module,
 		assistantfollowupservice.Module,
+		assistantqueueservice.Module,
+		agentwaitservice.Module,
+		assistantcaseservice.Module,
+		casechecklistservice.Module,
 		conversationscheduleservice.Module,
 		conversationschedulejobs.Module,
+		aiproviderspendservice.Module,
+		agenttoolruleservice.LoaderModule,
 		completionrouter.Module,
 		recurringshipmentjobs.Module,
 		settlementjobs.Module,

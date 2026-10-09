@@ -1,46 +1,27 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTable } from "@/components/data-table/data-table";
-import { usePermission } from "@/hooks/use-permission";
 import { agentRunTableGraphQLConfig, type AgentRunRow } from "@/lib/graphql/agent-activity-tables";
-import { AGENT_EVALUATION_LIST_KEY, replayAgentRun } from "@/lib/graphql/agent-evaluations";
-import type { Row, RowAction } from "@trenova/shared/types/data-table";
-import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useQueryClient } from "@tanstack/react-query";
+import type { RowAction } from "@trenova/shared/types/data-table";
+import { Resource } from "@trenova/shared/types/permission";
 import { RefreshCcw01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
-import { toast } from "sonner";
 import { getRunColumns } from "./agent-run-columns";
-import { AgentRunPanel } from "./agent-run-panel";
+import { runIsWorking } from "./activity-model";
+import { AgentRunPanel, useReplayRun } from "./agent-run-sheet";
 
 export default function AgentRunTable() {
   const t = useT();
-  const queryClient = useQueryClient();
   const columns = useMemo(() => getRunColumns(t), [t]);
-  const { allowed: canReplay } = usePermission(Resource.AgentRun, Operation.Create);
-
-  // A replay spends model calls and counts against the agent's budget, so it
-  // is a deliberate action on a finished run rather than a button on every
-  // row. The outcome lands in Evaluations.
-  const replay = async (row: Row<AgentRunRow>) => {
-    await replayAgentRun(row.original.id);
-    toast.success(t("Replay started"), {
-      description: t("The comparison appears under Evaluations when it finishes."),
-    });
-    await queryClient.invalidateQueries({ queryKey: [AGENT_EVALUATION_LIST_KEY] });
-  };
+  const replay = useReplayRun();
 
   const contextMenuActions: RowAction<AgentRunRow>[] = [
     {
       id: "replay",
       label: t("Replay against the current agent"),
       icon: RefreshCcw01Icon,
-      onClick: (row) => void replay(row),
+      onClick: (row) => void replay.run(row.original.id),
       hidden: (row) =>
-        !canReplay ||
-        !row.original.agentDefinitionId ||
-        row.original.status === "Pending" ||
-        row.original.status === "GatheringContext" ||
-        row.original.status === "Diagnosing",
+        !replay.allowed || !row.original.agentDefinitionId || runIsWorking(row.original.status),
     },
   ];
 
@@ -57,7 +38,7 @@ export default function AgentRunTable() {
       enableReadOnlyPanel
       TablePanel={AgentRunPanel}
       refetchIntervalMs={30_000}
-      initialColumnVisibility={{ modelIdentifier: false, completedAt: false }}
+      initialColumnVisibility={{ modelIdentifier: false, completedAt: false, trigger: false }}
     />
   );
 }

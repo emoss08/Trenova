@@ -68,7 +68,7 @@ func (t *issuePayAdvanceTool) ParamSchema() map[string]any {
 		paramAdvanceSource:   agenttoolschema.Enum("How it was given.", advanceSources),
 		paramAdvanceRef: stringProperty("The money code, card transaction or receipt "+
 			"number.", maxPayReferenceChars),
-		paramIssuedDate: dateProperty("The day it was given; leave it out for today."),
+		paramIssuedDate: agenttoolschema.Date("The day it was given; leave it out for today."),
 		paramDriverPayNotes: stringProperty("Why it was given, for payroll.",
 			maxDriverPayNotes),
 	}, paramWorkerID, paramDriverPayAmount, paramAdvanceSource)
@@ -244,7 +244,7 @@ func (t *writeOffPayAdvanceTool) Description() string {
 
 func (t *writeOffPayAdvanceTool) ParamSchema() map[string]any {
 	return objectParams(map[string]any{
-		paramAdvanceID: idProperty("The advance, from " + advanceSourcesTool +
+		paramAdvanceID: agenttoolschema.IDText("The advance, from " + advanceSourcesTool +
 			". Never guess one."),
 		paramWriteOffReason: stringProperty("Why it cannot be recovered.", maxWriteOffReason),
 	}, paramAdvanceID, paramWriteOffReason)

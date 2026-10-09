@@ -380,6 +380,7 @@ func dayText(seconds int64) string {
 
 type batchText struct {
 	name      string
+	recipe    []string
 	resource  permission.Resource
 	rationale string
 }
@@ -466,7 +467,13 @@ func provideGenerateDriverSettlementBatchTool(
 
 func driverBatchText() batchText {
 	return batchText{
-		name:     "generate_driver_settlement_batch",
+		name: "generate_driver_settlement_batch",
+		recipe: []string{
+			"list_driver_pay_events",
+			"get_worker_earnings_summary",
+			"generate_driver_settlement_batch",
+			"submit_driver_settlement",
+		},
 		resource: permission.ResourceDriverSettlement,
 		rationale: "Drafts the period's settlements from pay already accrued inside Trenova; " +
 			"nothing is paid until a person approves them, and hands-off approval is only " +
@@ -475,6 +482,8 @@ func driverBatchText() batchText {
 }
 
 func (t *generateDriverBatchTool) Name() string { return driverBatchText().name }
+
+func (t *generateDriverBatchTool) Recipe() []string { return driverBatchText().recipe }
 
 func (t *generateDriverBatchTool) Description() string {
 	return "Generate the pay period's driver settlement batch: a draft settlement for every " +

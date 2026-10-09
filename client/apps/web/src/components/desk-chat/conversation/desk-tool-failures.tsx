@@ -1,10 +1,11 @@
 import { humanizeToolName } from "@/components/assistant/proposal-state";
 import { toolRefusal, type ToolRefusal, type ToolStep } from "@/components/assistant/activity";
 import type { AssistantProposal } from "@/types/assistant";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
-import { DeskErrorButton, DeskErrorCard } from "../desk-error-card";
+import { DeskErrorButton, DeskErrorCard, DeskErrorLink } from "../desk-error-card";
 import { DeskIcon, type DeskIconName } from "../desk-icons";
 
 /** One record a write or a step did not get to, and why. */
@@ -47,16 +48,20 @@ export function DeskBulkList({
       {reasons.length > 1 && (
         <div className="dk-bl-rs">
           {reasons.map(([text, count]) => (
-            <button
+            <Button
               key={text}
-              type="button"
-              className={cn(reason === text && "dk-on")}
+              variant="bare"
+              size="bare"
+              className={cn(
+                "h-6 gap-1.5 rounded-full pr-2.25 pl-1.75 text-xs text-dsk-fg2 transition-colors duration-120",
+                reason === text && "dk-on",
+              )}
               aria-pressed={reason === text}
               onClick={() => setReason((value) => (value === text ? null : text))}
             >
               <b>{count}</b>
               {text}
-            </button>
+            </Button>
           ))}
         </div>
       )}
@@ -89,9 +94,9 @@ export function DeskBulkList({
       </div>
       {rows.length > limit && (
         <div className="dk-bl-f">
-          <button type="button" className="dk-ec-link" onClick={() => setAll((value) => !value)}>
+          <DeskErrorLink onClick={() => setAll((value) => !value)}>
             {all ? t("Show fewer") : t("Show all {0}", rows.length)}
-          </button>
+          </DeskErrorLink>
         </div>
       )}
     </div>
@@ -262,9 +267,10 @@ export function DeskStepFailures({ steps }: { steps: readonly ToolStep[] }) {
 
   return (
     <div className={cn("dk-sf", open && "dk-open")}>
-      <button
-        type="button"
-        className="dk-sf-h"
+      <Button
+        variant="bare"
+        size="bare"
+        className="dk-sf-h flex h-9 w-full justify-start gap-2.25 pr-2.5 pl-2.75 text-left text-sm transition-colors duration-120 hover:bg-dsk-hover [&_b]:font-medium [&_b]:text-dsk-fg"
         aria-expanded={open}
         onClick={() => {
           setOpen((value) => !value);
@@ -285,7 +291,7 @@ export function DeskStepFailures({ steps }: { steps: readonly ToolStep[] }) {
         <span className="dk-sf-cv">
           <DeskIcon name="chevR" size={11} stroke={2.2} />
         </span>
-      </button>
+      </Button>
       {open && (
         <div className="dk-sf-l">
           {groups.map((group) => {
@@ -301,10 +307,13 @@ export function DeskStepFailures({ steps }: { steps: readonly ToolStep[] }) {
                   selected === group.kind && "dk-on",
                 )}
               >
-                <button
-                  type="button"
-                  className="dk-sf-rh"
-                  style={{ cursor: many ? "pointer" : "default" }}
+                <Button
+                  variant="bare"
+                  size="bare"
+                  className={cn(
+                    "dk-sf-rh flex min-h-7.5 w-full justify-start gap-2 pr-2.5 pl-2.75 text-left text-sm hover:bg-dsk-hover [&_b]:font-medium [&_b]:whitespace-nowrap",
+                    many ? "cursor-pointer" : "cursor-default",
+                  )}
                   onClick={() =>
                     many && setSelected((value) => (value === group.kind ? null : group.kind))
                   }
@@ -319,7 +328,7 @@ export function DeskStepFailures({ steps }: { steps: readonly ToolStep[] }) {
                       <DeskIcon name="chevR" size={10} stroke={2.2} />
                     </span>
                   )}
-                </button>
+                </Button>
                 {selected === group.kind && (
                   <div className="dk-sf-items">
                     <DeskBulkList

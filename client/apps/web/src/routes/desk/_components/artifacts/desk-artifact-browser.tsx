@@ -1,3 +1,4 @@
+import { Button } from "@trenova/shared/components/ui/button";
 import { apiService } from "@/services/api";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -17,6 +18,13 @@ import { NO_PENDING_LOOKUPS, withoutPendingLookups } from "./pending-lookups";
 
 /** How many lineages each page the browser reads holds. */
 const PAGE = 60;
+
+function filterChipClass(on: boolean): string {
+  return cn(
+    "h-6.5 flex-none gap-1.25 rounded-full px-2.25 text-xs text-dsk-muted ring-1 ring-dsk-b-sub ring-inset transition-all duration-120 hover:text-dsk-fg hover:ring-dsk-b [&_i]:font-plex-mono [&_i]:text-xs [&_i]:text-dsk-faint [&_i]:not-italic",
+    on && "bg-dsk-ink text-dsk-ink-fg ring-0 hover:text-dsk-ink-fg [&_i]:text-dsk-ink-fg",
+  );
+}
 /** How long the search waits after the last keystroke before it asks. */
 const SEARCH_DELAY_MS = 200;
 
@@ -177,15 +185,16 @@ export function DeskArtifactBrowser({
   return (
     <div className="dk-axb">
       <div className="dk-axb-top">
-        <button
-          type="button"
-          className="dk-ax-ib"
+        <Button
+          variant="quiet"
+          size="icon-sm"
+          className="text-dsk-subtle [&_svg]:-rotate-90"
           onClick={onBack}
           title={t("Back")}
           aria-label={t("Back")}
         >
           <ArtIcon name="up" size={13} stroke={2.2} />
-        </button>
+        </Button>
         <b>{t("All artifacts")}</b>
         <span className="dk-axb-n">{counts?.all ?? total}</span>
         <span className="sr-only" aria-live="polite">
@@ -194,15 +203,16 @@ export function DeskArtifactBrowser({
             : ""}
         </span>
         <span className="flex-1" />
-        <button
-          type="button"
-          className="dk-ax-ib"
+        <Button
+          variant="quiet"
+          size="icon-sm"
+          className="text-dsk-subtle"
           onClick={onClose}
           title={t("Close")}
           aria-label={t("Hide artifacts")}
         >
           <ArtIcon name="x" size={13} stroke={2.2} />
-        </button>
+        </Button>
       </div>
       <div className="dk-axb-s">
         <ArtIcon name="search" size={14} />
@@ -234,10 +244,11 @@ export function DeskArtifactBrowser({
         </span>
       </div>
       <div className="dk-axb-f" role="group" aria-label={t("Filter artifacts")}>
-        <button
-          type="button"
+        <Button
+          variant="bare"
+          size="bare"
           aria-pressed={kind === "all" && !onlyPinned}
-          className={kind === "all" && !onlyPinned ? "dk-on" : undefined}
+          className={filterChipClass(kind === "all" && !onlyPinned)}
           onClick={() => {
             setKind("all");
             setOnlyPinned(false);
@@ -245,11 +256,12 @@ export function DeskArtifactBrowser({
           }}
         >
           {t("All")} <i>{counts?.all ?? total}</i>
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="bare"
+          size="bare"
           aria-pressed={onlyPinned}
-          className={onlyPinned ? "dk-on" : undefined}
+          className={filterChipClass(onlyPinned)}
           onClick={() => {
             setOnlyPinned((value) => !value);
             resetPaging();
@@ -257,14 +269,15 @@ export function DeskArtifactBrowser({
         >
           <ArtIcon name="pin" size={11} />
           {t("Pinned")} <i>{counts?.pinned ?? 0}</i>
-        </button>
+        </Button>
         {DESK_ART_KINDS.filter((candidate) => (counts?.families[candidate] ?? 0) > 0).map(
           (candidate) => (
-            <button
+            <Button
               key={candidate}
-              type="button"
+              variant="bare"
+              size="bare"
               aria-pressed={kind === candidate}
-              className={kind === candidate ? "dk-on" : undefined}
+              className={filterChipClass(kind === candidate)}
               onClick={() => {
                 setKind((current) => (current === candidate ? "all" : candidate));
                 resetPaging();
@@ -274,7 +287,7 @@ export function DeskArtifactBrowser({
                 <DeskArtKindIcon kind={candidate} size={11} />
               </span>
               {deskArtKindName(candidate, t)} <i>{counts?.families[candidate]}</i>
-            </button>
+            </Button>
           ),
         )}
       </div>
@@ -296,9 +309,13 @@ export function DeskArtifactBrowser({
                   const preview = artifactPreview(lineage.latest, t);
                   return (
                     <Fragment key={lineage.id}>
-                      <button
-                        type="button"
-                        className={cn("dk-axb-r", lineage.id === activeId && "dk-on")}
+                      <Button
+                        variant="bare"
+                        size="bare"
+                        className={cn(
+                          "group flex w-full gap-2.75 rounded-lg px-2 py-1.75 text-left transition-colors duration-100 hover:bg-dsk-hover",
+                          lineage.id === activeId && "bg-dsk-hover",
+                        )}
                         aria-current={lineage.id === activeId ? "true" : undefined}
                         onClick={() => onPick(lineage.id)}
                       >
@@ -324,10 +341,10 @@ export function DeskArtifactBrowser({
                             <ArtIcon name="pin" size={11} />
                           </span>
                         )}
-                        <span className="dk-axb-go">
+                        <span className="text-dsk-subtle opacity-0 transition-opacity duration-120 group-hover:opacity-100">
                           <ArtIcon name="ext" size={12} />
                         </span>
-                      </button>
+                      </Button>
                     </Fragment>
                   );
                 })}

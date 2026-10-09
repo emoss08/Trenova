@@ -248,6 +248,57 @@ pipeline:
       additionalProperties: false
     args: {shipmentId: shp_1}
     refused: [shipmentId]
+  - name: a numeral sent as text is read as the number
+    schema:
+      type: object
+      properties: {shipmentId: {type: string}, limit: {type: integer}}
+      required: [shipmentId]
+      additionalProperties: false
+    args: {shipmentId: shp_1, limit: "30"}
+    want: {shipmentId: shp_1, limit: 30.0}
+  - name: a lone value sent for a list is read as a list of one
+    schema:
+      type: object
+      properties: {ids: {type: array, items: {type: string}}}
+      required: [ids]
+      additionalProperties: false
+    args: {ids: shp_1}
+    want: {ids: [shp_1]}
+  - name: an enum value in another case is read as the declared one
+    schema:
+      type: object
+      properties:
+        shipmentId: {type: string}
+        priority: {type: string, enum: [Low, Normal, High, Urgent]}
+      required: [shipmentId]
+      additionalProperties: false
+    args: {shipmentId: shp_1, priority: urgent}
+    want: {shipmentId: shp_1, priority: Urgent}
+  - name: an optional parameter in another spelling is renamed
+    schema:
+      type: object
+      properties: {shipmentId: {type: string}, note: {type: string}}
+      required: [shipmentId]
+      additionalProperties: false
+    args: {shipmentId: shp_1, NOTE: late}
+    want: {shipmentId: shp_1, note: late}
+  - name: a null sent for an optional parameter is dropped
+    schema:
+      type: object
+      properties: {shipmentId: {type: string}, note: {type: string}}
+      required: [shipmentId]
+      additionalProperties: false
+    args: {shipmentId: shp_1, note: null}
+    want: {shipmentId: shp_1}
+  - name: a name sent where a record id was wanted is refused
+    schema:
+      type: object
+      properties:
+        customerId: {type: string, description: "The customer, from list_customers."}
+      required: [customerId]
+      additionalProperties: false
+    args: {customerId: Acme Foods}
+    refused: [customerId]
 
 malformed:
   - name: text cut off by the output limit

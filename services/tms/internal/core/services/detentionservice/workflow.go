@@ -401,7 +401,7 @@ func (s *Service) publishBillingHoldChange(
 		return
 	}
 
-	orgID, buID := saved.OrganizationID, saved.BusinessUnitID
+	orgID, buID, shipmentID := saved.OrganizationID, saved.BusinessUnitID, saved.ShipmentID
 	ports.AfterCommit(ctx, func(runCtx context.Context) {
 		if err := realtimeinvalidation.Publish(
 			runCtx,
@@ -412,6 +412,7 @@ func (s *Service) publishBillingHoldChange(
 				ActorUserID:    actorUserID,
 				Resource:       permission.ResourceBillingQueue.String(),
 				Action:         "updated",
+				Entity:         map[string]string{"shipmentId": shipmentID.String()},
 			},
 		); err != nil {
 			s.l.Warn("failed to publish billing queue invalidation for a detention hold",

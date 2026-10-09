@@ -47,14 +47,14 @@ func permitOptions() []toolpreview.Option {
 
 func permitFactProperties() map[string]any {
 	return map[string]any{
-		paramStateID: idProperty("The state that issued it, as the stateId of the " +
+		paramStateID: agenttoolschema.IDText("The state that issued it, as the stateId of the " +
 			"requirement it satisfies in list_shipment_permits. Never guess one."),
 		paramPermitNumber: stringProperty("The permit number exactly as the state printed it.",
 			maxPermitNumber),
 		fieldStatus: agenttoolschema.Enum("Where the permit stands. An active permit "+
 			"records when it expires.", permitStatuses),
-		paramPermitIssued: dateTimeProperty("When the permit takes effect."),
-		paramPermitExpiry: dateTimeProperty("When the permit stops covering the move."),
+		paramPermitIssued: agenttoolschema.DateTime("When the permit takes effect."),
+		paramPermitExpiry: agenttoolschema.DateTime("When the permit stops covering the move."),
 		paramPermitCost: amountProperty("What the state charged, as a decimal string such " +
 			"as 85.00."),
 		fieldNotes: wfNoteProperty("Route conditions, escort or travel-time restrictions " +
@@ -147,6 +147,7 @@ func newRecordShipmentPermitTool(permits serviceports.PermitService) serviceport
 		permission.OpCreate,
 	), properties, paramShipmentID, paramStateID, paramPermitNumber), paramShipmentID,
 		permission.ResourceShipment)
+	spec.recipe = []string{"list_shipment_permits", "record_shipment_permit"}
 
 	return newReportingReceivableTool(spec, receivablePlan[*permit.Permit, *permit.Permit]{
 		request: func(params *serviceports.ToolExecuteParams) (*permit.Permit, error) {
@@ -225,7 +226,7 @@ func (e *permitEdit) entity(
 func newUpdateShipmentPermitTool(permits serviceports.PermitService) serviceports.AgentTool {
 	properties := permitFactProperties()
 	properties[paramShipmentID] = shipmentIDProperty("The shipment the permit covers")
-	properties[paramPermitID] = idProperty("The permit, from list_shipment_permits. " +
+	properties[paramPermitID] = agenttoolschema.IDText("The permit, from list_shipment_permits. " +
 		"Never guess one.")
 	spec := targeting(withSchema(permitSpec(
 		"update_shipment_permit",

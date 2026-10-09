@@ -10,9 +10,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
 import type { AgentFormValues } from "../agent-form-schema";
 
-export type DraftedAgent = Partial<AgentFormValues> & { notes: AgentDraft["notes"] };
+export type DraftedAgent = Partial<Omit<AgentFormValues, "shadowMode" | "simulationMode">> & {
+  notes: AgentDraft["notes"];
+};
 
-/** A drafted agent in the builder's own fields. */
+/**
+ * A drafted agent in the builder's own fields. The mode is left out: the drafter marks every
+ * draft shadow, and whether the agent goes live is the person's choice in the builder.
+ */
 export function draftedValues(draft: AgentDraft): DraftedAgent {
   const tiers =
     draft.toolTiers && typeof draft.toolTiers === "object"
@@ -36,8 +41,6 @@ export function draftedValues(draft: AgentDraft): DraftedAgent {
     dataAccessCeiling: draft.dataAccessCeiling,
     outputMode: draft.outputMode,
     enabled: draft.enabled,
-    shadowMode: draft.shadowMode,
-    simulationMode: false,
     decisionTimeoutSeconds: draft.decisionTimeoutSeconds,
     runTimeoutSeconds: draft.runTimeoutSeconds,
     maxToolCalls: draft.maxToolCalls,
@@ -57,9 +60,6 @@ export function useAgentDrafting(): {
     async (description: string) => draftedValues(await draftAgentFromDescription(description)),
     [],
   );
-  const tighten = useCallback(
-    (instructions: string) => tightenAgentInstructions(instructions),
-    [],
-  );
+  const tighten = useCallback((instructions: string) => tightenAgentInstructions(instructions), []);
   return { available: availableQuery.data ?? false, draft, tighten };
 }

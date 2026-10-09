@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -110,8 +111,12 @@ func newDeleteDocumentsTool(documents documentKeeper) serviceports.AgentTool {
 		rationale: "Removes documents and their stored files from Trenova for good; nothing " +
 			"is sent, but nothing restores them either.",
 		properties: map[string]any{
-			paramDocumentIDs: idListProperty("The documents to delete, "+documentSupplier+
-				". One id is the normal case.", maxDocumentsPerDelete),
+			paramDocumentIDs: agenttoolschema.RecordIDs(
+				permission.ResourceDocument,
+				"The documents to delete, "+documentSupplier+
+					". One id is the normal case.",
+				maxDocumentsPerDelete,
+			),
 		},
 		required:    []string{paramDocumentIDs},
 		searchTerms: []string{"delete document", "remove duplicate upload", "wrong file"},

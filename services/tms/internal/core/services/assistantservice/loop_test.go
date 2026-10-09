@@ -211,13 +211,13 @@ func TestRun_ReportsToolFailureToTheModel(t *testing.T) {
 }
 
 // The output guard is the last line: a model that produces code despite
-// everything upstream still has its turn refused, and the decision the thread
-// records says which stage declined it.
-func TestRun_RefusesAReplyContainingCode(t *testing.T) {
+// everything upstream has the code taken out and the rest of its answer kept,
+// and the decision the thread records says which stage altered it.
+func TestRun_TakesCodeOutOfAReply(t *testing.T) {
 	t.Parallel()
 
 	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
-		textTurn("Here you go:\n```python\nprint('hi')\n```"),
+		textTurn("Load 12345 is in transit.\n```python\nprint('hi')\n```"),
 	}}
 	svc := newService(completion, &stubQueryRegistry{}, &stubActionRegistry{})
 
@@ -228,11 +228,15 @@ func TestRun_RefusesAReplyContainingCode(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	assert.False(t, result.Decision.Allowed)
+	assert.True(t, result.Decision.Allowed)
+	assert.True(t, result.Decision.Altered)
 	assert.Equal(t, agentguard.StageOutput, result.Decision.Stage)
 	assert.Equal(t, agentguard.ReasonCodeGeneration, result.Decision.Reason)
+	assert.Equal(t, "output_code_fence_with_language", result.Decision.MatchedRule)
 	assert.NotContains(t, result.Reply, "print(")
-	assert.True(t, result.Messages[1].Refused)
+	assert.Contains(t, result.Reply, "Load 12345 is in transit.")
+	assert.Contains(t, result.Reply, agentguard.CodeBlockOmitted)
+	assert.False(t, result.Messages[1].Refused)
 }
 
 // The stream is how a reader watches a turn happen: the guard's verdict first,

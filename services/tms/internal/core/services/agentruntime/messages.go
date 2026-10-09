@@ -153,8 +153,11 @@ func replayHistory(
 				continue
 			}
 			content := msg.Content
-			if msg.Compacted() {
+			switch {
+			case msg.Compacted():
 				content = compactionPreamble + content
+			case msg.Kind == conversation.MessageKindSteer:
+				content = SteerPrompt(content, msg.Mentions)
 			}
 			messages = append(messages, serviceports.Message{
 				Role:    serviceports.RoleUser,
@@ -241,8 +244,7 @@ func recentTurnStart(history []conversation.Message, turns int) int {
 		// a turn of questions, so it does not push results out of the window;
 		// nor does a compaction summary, which nobody asked.
 		if history[idx].Role != conversation.RoleUser || history[idx].Refused ||
-			history[idx].Kind == conversation.MessageKindDecisionNote ||
-			history[idx].Kind == conversation.MessageKindCompaction {
+			!opensTurn(history[idx].Kind) {
 			continue
 		}
 		seen++
@@ -252,6 +254,17 @@ func recentTurnStart(history []conversation.Message, turns int) int {
 	}
 
 	return 0
+}
+
+// opensTurn reports whether a person's message of this kind starts a turn of
+// questions. A decision note, a compaction summary, a word said while a reply
+// was being written and a notice of a record changing all arrive inside the
+// conversation's flow rather than opening a turn of their own.
+func opensTurn(kind conversation.MessageKind) bool {
+	return kind != conversation.MessageKindDecisionNote &&
+		kind != conversation.MessageKindCompaction &&
+		kind != conversation.MessageKindSteer &&
+		kind != conversation.MessageKindWorldChange
 }
 
 // compactToolResult cuts an older result to its opening and says what was

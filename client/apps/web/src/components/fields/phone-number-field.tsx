@@ -33,6 +33,7 @@ export function PhoneNumberField<T extends FieldValues>({
       rules={rules}
       render={({ field, fieldState }) => (
         <FieldWrapper
+          name={name}
           label={label}
           description={description}
           required={!!rules?.required}

@@ -7,6 +7,8 @@ import type {
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
+import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import { Tile } from "../kit/marks";
 import { AnswerBadge, EgressBadges, HeldByChips } from "./safety-badges";
 import {
   answerChoices,
@@ -25,11 +27,44 @@ import {
 
 function ToolName({ title, name }: { title: string; name: string }) {
   return (
-    <div className="flex min-w-0 flex-col">
-      <span className="truncate">{title}</span>
-      <span className="text-muted-foreground truncate font-mono text-xs">{name}</span>
+    <div className="tl">
+      <b>{title}</b>
+      <span className="mono">{name}</span>
     </div>
   );
+}
+
+/** How many tiles a row stacks before it counts the rest. */
+const STACKED_HOLDERS = 4;
+
+function Holders({ agents }: { agents: readonly AgentDefinitionRow[] }) {
+  if (agents.length === 0) {
+    return <span className="dim">—</span>;
+  }
+
+  return (
+    <span className="stk" aria-label={agents.map((agent) => agent.name).join(", ")}>
+      {agents.slice(0, STACKED_HOLDERS).map((agent) => (
+        <Tile key={agent.id} agent={agent} s={20} />
+      ))}
+      {agents.length > STACKED_HOLDERS && (
+        <em className="mono">+{agents.length - STACKED_HOLDERS}</em>
+      )}
+    </span>
+  );
+}
+
+/** Which agents hold each tool, read once for the whole table. */
+export type ToolHolding = {
+  byTool: ReadonlyMap<string, readonly string[]>;
+  agents: ReadonlyMap<string, AgentDefinitionRow>;
+};
+
+export function holdersOf(holding: ToolHolding, toolName: string): AgentDefinitionRow[] {
+  return (holding.byTool.get(toolName) ?? []).flatMap((id) => {
+    const agent = holding.agents.get(id);
+    return agent ? [agent] : [];
+  });
 }
 
 function MaxTierCell({ policy }: { policy: AgentToolPolicy }) {
@@ -78,6 +113,7 @@ function Muted({ children }: { children: React.ReactNode }) {
 export function getToolRuleColumns(
   t: TranslateFn,
   resources: readonly string[],
+  holding: ToolHolding,
 ): ColumnDef<AgentToolRuleRow>[] {
   return [
     {
@@ -182,6 +218,13 @@ export function getToolRuleColumns(
         filterOptions: externalReadChoices(t),
         defaultFilterOperator: "eq",
       },
+    },
+    {
+      id: "holders",
+      header: t("Agents"),
+      cell: ({ row }) => <Holders agents={holdersOf(holding, row.original.name)} />,
+      size: 130,
+      meta: { label: t("Agents"), filterable: false, sortable: false },
     },
     {
       accessorKey: "runsWithoutPerson",

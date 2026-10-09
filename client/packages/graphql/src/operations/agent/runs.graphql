@@ -76,3 +76,19 @@ query AgentRunDetail($id: ID!) {
     }
   }
 }
+
+query AgentActivitySummary($since: Timestamp!) {
+  agentActivitySummary(since: $since) {
+    since
+    runs
+    runsFailed
+    runsWorking
+    runsAwaiting
+    pendingProposals
+    oldestPendingAt
+    openExceptions
+    decisionWindowDays
+    decided
+    approvedAsProposed
+  }
+}

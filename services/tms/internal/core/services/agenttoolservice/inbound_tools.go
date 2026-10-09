@@ -136,6 +136,10 @@ func newLinkInboundMessageTool(inbox inboundMessageDesk) serviceports.AgentTool 
 
 func (t *linkInboundMessageTool) Name() string { return "link_inbound_message" }
 
+func (t *linkInboundMessageTool) Recipe() []string {
+	return []string{"get_inbound_message", "link_inbound_message"}
+}
+
 func (t *linkInboundMessageTool) Description() string {
 	return "Say which shipment, customer or carrier a message that arrived on a monitored " +
 		"address is about, when the automatic match missed it or got it wrong. Give the " +
@@ -274,6 +278,10 @@ func newMarkInboundMessageTool(inbox inboundMessageDesk) serviceports.AgentTool 
 }
 
 func (t *markInboundMessageTool) Name() string { return "mark_inbound_message" }
+
+func (t *markInboundMessageTool) Recipe() []string {
+	return []string{"get_inbound_message", "mark_inbound_message"}
+}
 
 func (t *markInboundMessageTool) SearchTerms() []string {
 	return []string{"spam", "mark handled", "actioned", "ignored"}
@@ -464,6 +472,15 @@ func newReplyToInboundMessageTool(p replyToInboundMessageParams) serviceports.Ag
 }
 
 func (t *replyToInboundMessageTool) Name() string { return "reply_to_inbound_message" }
+
+func (t *replyToInboundMessageTool) Recipe() []string {
+	return []string{
+		"get_inbound_message",
+		"get_shipment_tracking",
+		"reply_to_inbound_message",
+		"mark_inbound_message",
+	}
+}
 
 func (t *replyToInboundMessageTool) SearchTerms() []string {
 	return []string{"reply to email", "answer the sender", "write back", "respond"}

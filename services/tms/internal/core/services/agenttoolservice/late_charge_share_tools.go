@@ -82,9 +82,15 @@ func newAssessLateChargesTool(charges lateChargeAssessor) serviceports.AgentTool
 		rationale: "Bills customers for paying late; only a person assesses late charges, " +
 			"and the billing control may post the memos as they are raised.",
 		properties: map[string]any{
-			paramAsOfDate: dayProperty("The day overdue periods are counted to, usually today;"),
-			paramCustomerIDs: idListProperty("Only these customers, from list_customers or "+
-				"list_ar_open_items.", maxLateCustomers),
+			paramAsOfDate: agenttoolschema.Date(
+				"The day overdue periods are counted to, usually today.",
+			),
+			paramCustomerIDs: agenttoolschema.RecordIDs(
+				permission.ResourceCustomer,
+				"Only these customers, from list_customers or "+
+					"list_ar_open_items.",
+				maxLateCustomers,
+			),
 		},
 		required: []string{paramAsOfDate},
 	}, receivablePlan[*serviceports.LateChargeAssessmentRequest, *serviceports.LateChargeAssessmentResult]{
@@ -209,6 +215,7 @@ func renderLateCharges(
 func newShareInvoiceTool(shares invoiceSharer) serviceports.AgentTool {
 	return newReceivableTool(&receivableSpec{
 		name:        "share_invoice",
+		recipe:      []string{"list_invoice_share_candidates", "share_invoice"},
 		searchTerms: []string{"loop in teammate", "teammate", "colleague"},
 		description: "Propose sharing an invoice with teammates, who get a notification and an " +
 			"email with your note and a link to it. Pick them with " +
@@ -224,8 +231,10 @@ func newShareInvoiceTool(shares invoiceSharer) serviceports.AgentTool {
 			"with a note they read as theirs; only that person sends it.",
 		properties: map[string]any{
 			paramInvoiceID: stringProperty("The invoice, from list_invoices or get_invoice.", 0),
-			paramUserIDs: idListProperty("The teammates, from list_invoice_share_candidates.",
-				invoice.MaxShareRecipients),
+			paramUserIDs: agenttoolschema.IDList(
+				"The teammates, from list_invoice_share_candidates.",
+				invoice.MaxShareRecipients,
+			),
 			paramShareNote: stringProperty("A note for them, such as what to look at.",
 				invoice.MaxShareNoteLength),
 			paramShareTab: agenttoolschema.Enum("The part of the invoice the link opens on. "+

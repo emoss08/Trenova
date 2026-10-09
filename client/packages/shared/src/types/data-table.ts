@@ -14,7 +14,11 @@ import type {
 import type { IconComponent } from "@trenova/shared/components/icons";
 import { z } from "zod";
 import type { CellEditCommitFn } from "../lib/cell-editing-feature";
-import type { DataTableFeatures } from "../lib/table-features";
+import type {
+  ClientSortedTableFeatures,
+  DataTableFeatures,
+  DataTableViewState,
+} from "../lib/table-features";
 import type { SelectOption } from "./fields";
 import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 import type { GraphQLExecutableDocument, TypedGraphQLDocument } from "./graphql";
@@ -41,7 +45,17 @@ export type Column<TData extends RowData, TValue extends CellData = CellData> = 
 
 export type Row<TData extends RowData> = TanStackRow<DataTableFeatures, TData>;
 
-export type Table<TData extends RowData> = TanStackReactTable<DataTableFeatures, TData>;
+export type Table<TData extends RowData> = TanStackReactTable<
+  DataTableFeatures,
+  TData,
+  DataTableViewState
+>;
+
+/** A column of a table that sorts its rows in the browser. */
+export type ClientSortedColumnDef<
+  TData extends RowData,
+  TValue extends CellData = CellData,
+> = TanStackColumnDef<ClientSortedTableFeatures, TData, TValue>;
 
 export type Cell<TData extends RowData, TValue extends CellData = CellData> = TanStackCell<
   DataTableFeatures,
@@ -142,6 +156,11 @@ export type AddRecordAction = {
 
 export type DataTableProps<TData extends Record<string, any>> = {
   columns: ColumnDef<TData>[];
+  /**
+   * Ways to filter the table beyond its columns, such as the records a row points at
+   * that have no column of their own. Offered in the filter builder after the columns.
+   */
+  filterFields?: DataTableFilterField[];
   name: string;
   queryKey: string;
   graphql: DataTableGraphQLSource<TData>;
@@ -433,7 +452,14 @@ export const filterOperatorSchema = z.enum([
 
 export type FilterOperator = z.infer<typeof filterOperatorSchema>;
 
-export const filterVariantSchema = z.enum(["text", "number", "select", "date", "boolean"]);
+export const filterVariantSchema = z.enum([
+  "text",
+  "number",
+  "select",
+  "date",
+  "boolean",
+  "record",
+]);
 
 export type FilterVariant = z.infer<typeof filterVariantSchema>;
 
@@ -481,7 +507,40 @@ export interface SingleFilterItem extends FilterItemBase {
   value: unknown;
   filterType: FilterVariant;
   filterOptions?: SelectOption[];
+  /** For a `record` filter, the kind of record its values name (a customer, a location). */
+  filterRecord?: string;
 }
+
+export type DataTableAggregateKind = "sum" | "average" | "min" | "max";
+
+/**
+ * A column's total across every row the filters match, computed by the server. The
+ * table must offer the field for totals; a column whose field it does not is left blank.
+ */
+export type DataTableColumnAggregate = {
+  /** The server field totalled; the column's `apiField` when absent. */
+  field?: string;
+  format?: "money" | "number";
+  /** Shown in the totals row; the rest appear on hover. Defaults to the sum. */
+  kind?: DataTableAggregateKind;
+  /** Written before the total in the totals row, such as "Revenue". */
+  label?: string;
+  /** How large the total is drawn: 12px, 15px or 17px. Defaults to `md`. */
+  size?: "sm" | "md" | "lg";
+};
+
+/**
+ * One way a table can be filtered. A column offers its own; a table can add more
+ * that are not columns at all (who owns a shipment, its bill-to customer).
+ */
+export type DataTableFilterField = {
+  apiField: string;
+  label: string;
+  filterType: FilterVariant;
+  filterOptions?: SelectOption[];
+  filterRecord?: string;
+  defaultFilterOperator?: FilterOperator;
+};
 
 export interface FilterGroupItem extends FilterItemBase {
   type: "group";

@@ -4,11 +4,13 @@ import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useCallback, useMemo, useReducer, useRef } from "react";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
+import { DeskTip } from "@/components/desk-chat/desk-tip";
 import { useOutsideDismiss } from "@/components/desk-chat/use-outside-dismiss";
 import { HANDOFF_MENU_CLOSED, handoffMenuReducer, handoffTargets } from "./handoff-state";
 
@@ -58,18 +60,23 @@ export function DeskHandoffMenu({
 
   return (
     <span className="dk-hom" ref={root}>
-      <button
-        type="button"
-        className={cn("dk-ib", state.open && "dk-on")}
-        title={t("Hand off to another agent")}
-        aria-label={t("Hand off to another agent")}
-        aria-expanded={state.open}
-        aria-haspopup="menu"
-        disabled={state.pendingAgentId !== null}
-        onClick={() => dispatch({ type: "toggle" })}
-      >
-        <DeskIcon name="handoff" size={14} />
-      </button>
+      <DeskTip label={t("Hand off to another agent")}>
+        <Button
+          variant="quiet"
+          size="icon-sm"
+          className={cn(
+            "size-7.5 rounded-lg text-dsk-subtle transition-colors duration-140 hover:bg-dsk-hover hover:text-dsk-fg",
+            state.open && "bg-dsk-hover text-dsk-fg",
+          )}
+          aria-label={t("Hand off to another agent")}
+          aria-expanded={state.open}
+          aria-haspopup="menu"
+          disabled={state.pendingAgentId !== null}
+          onClick={() => dispatch({ type: "toggle" })}
+        >
+          <DeskIcon name="handoff" size={14} />
+        </Button>
+      </DeskTip>
       {state.open && (
         <div className="dk-hom-p" role="menu">
           <div className="dk-hom-h">
@@ -80,21 +87,25 @@ export function DeskHandoffMenu({
             <p className="dk-hom-empty">{t("There is no other agent you can hand this to.")}</p>
           ) : (
             targets.map((target) => (
-              <button
+              <Button
                 key={target.id}
-                type="button"
+                variant="bare"
+                size="bare"
                 role="menuitem"
+                className="flex w-full gap-2.5 rounded-lg px-2 py-1.75 text-left hover:bg-dsk-hover"
                 onClick={() => {
                   dispatch({ type: "pick", agentId: target.id });
                   handoff.mutate(target.id);
                 }}
               >
                 <DeskAgentTile agent={target} size="xs" />
-                <span>
-                  <b>{target.name}</b>
-                  <em>{target.description}</em>
+                <span className="flex min-w-0 flex-col">
+                  <b className="text-sm font-medium">{target.name}</b>
+                  <em className="truncate text-xs text-dsk-subtle not-italic">
+                    {target.description}
+                  </em>
                 </span>
-              </button>
+              </Button>
             ))
           )}
         </div>

@@ -25,6 +25,12 @@ export type ThreadEntry =
   | { kind: "schedule"; message: AssistantMessage }
   /** Where the conversation was compacted: everything before it is summarized for the agent. */
   | { kind: "compaction"; message: AssistantMessage }
+  /** Something the person said while a reply was being written, read by it at its next step. */
+  | { kind: "steer"; message: AssistantMessage }
+  /** Records the reply was working with changed elsewhere, and it was told. */
+  | { kind: "world"; message: AssistantMessage }
+  /** A wait the agent set ended, and this turn picks the work up. */
+  | { kind: "wait"; message: AssistantMessage }
   | { kind: "assistant"; message: AssistantMessage; tools: ToolExchange[] };
 
 /**
@@ -95,6 +101,15 @@ export function groupThread(messages: readonly AssistantMessage[]): ThreadEntry[
         break;
       case "compaction":
         entries.push({ kind: "compaction", message });
+        break;
+      case "steer":
+        entries.push({ kind: "steer", message });
+        break;
+      case "world":
+        entries.push({ kind: "world", message });
+        break;
+      case "wait":
+        entries.push({ kind: "wait", message });
         break;
       case "assistant": {
         const tools: ToolExchange[] = [...orphans];

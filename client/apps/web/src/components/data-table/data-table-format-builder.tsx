@@ -1,4 +1,4 @@
-"use no memo";
+import { fieldLabel } from "@/lib/data-table";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -198,7 +198,10 @@ export default function DataTableFormatBuilder<TData extends RowData>({
         .filter((col) => col.meta?.filterable && col.meta.apiField)
         .map((col) => ({
           field: col.meta!.apiField!,
-          label: col.meta!.label ?? col.meta!.apiField!,
+          label: fieldLabel({
+            id: col.id ?? ("accessorKey" in col ? String(col.accessorKey) : col.meta!.apiField!),
+            columnDef: col,
+          }),
           filterType: (col.meta!.filterType ?? "text") as FilterVariant,
           filterOptions: col.meta!.filterOptions,
         })),
@@ -282,7 +285,7 @@ export default function DataTableFormatBuilder<TData extends RowData>({
                         <SelectGroup>
                           {formatColumns.map((col) => (
                             <SelectItem key={col.field} value={col.field}>
-                              {t(col.label)}
+                              {col.label}
                             </SelectItem>
                           ))}
                         </SelectGroup>

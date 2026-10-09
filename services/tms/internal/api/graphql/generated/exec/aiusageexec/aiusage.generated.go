@@ -644,7 +644,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_aiUsageDaily_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AiUsageDaily(ctx, fc.Args["days"].(*int), fc.Args["timezone"].(*string))
+					return gqlexec.Resolver[resolverQuery](ec, "Query").AiUsageDaily(ctx, fc.Args["days"].(*int), fc.Args["timezone"].(*string), fc.Args["providerId"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNAIUsageDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageDayᚄ),
 			},
@@ -658,7 +658,7 @@ var Shard = &gqlexec.Shard{
 type resolverQuery interface {
 	AiUsageFeatures(ctx context.Context, input gqlmodel.DataTableConnectionInput, days *int) (*gqlmodel.AIUsageFeatureConnection, error)
 	AiUsageSummary(ctx context.Context, since *int) (*services.AIUsageSummary, error)
-	AiUsageDaily(ctx context.Context, days *int, timezone *string) ([]*services.AIUsageDay, error)
+	AiUsageDaily(ctx context.Context, days *int, timezone *string, providerID *string) ([]*services.AIUsageDay, error)
 }
 
 var (
@@ -705,7 +705,7 @@ func field_Query_aiUsageSummary_args(ctx context.Context, ec *gqlexec.Exec, rawA
 }
 
 func field_Query_aiUsageDaily_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 2)
+	args := make(map[string]any, 3)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "days",
 		func(ctx context.Context, v any) (*int, error) {
 			return unmarshalOInt2ᚖint(ctx, ec, v)
@@ -722,6 +722,14 @@ func field_Query_aiUsageDaily_args(ctx context.Context, ec *gqlexec.Exec, rawArg
 		return nil, err
 	}
 	args["timezone"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "providerId",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOID2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["providerId"] = arg2
 	return args, nil
 }
 
@@ -732,6 +740,14 @@ func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exe
 func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.DataTableConnectionInput, error) {
 	res, err := unmarshalInputDataTableConnectionInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {

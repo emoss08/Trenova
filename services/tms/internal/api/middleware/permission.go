@@ -57,6 +57,24 @@ func (m *PermissionMiddleware) RequirePermission(
 	}
 }
 
+func (m *PermissionMiddleware) RequireParamPermission(
+	param string,
+	operation permission.Operation,
+) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		resource := c.Param(param)
+		if !permission.LooksLikeResource(resource) {
+			m.errorHandler.HandleError(c, errortypes.NewValidationError(
+				param,
+				errortypes.ErrInvalid,
+				"Resource is invalid",
+			))
+			return
+		}
+		m.RequirePermission(resource, operation)(c)
+	}
+}
+
 type PermissionCheck struct {
 	Resource  string
 	Operation permission.Operation

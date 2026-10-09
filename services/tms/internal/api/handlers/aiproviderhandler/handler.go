@@ -133,6 +133,11 @@ type saveProviderRequest struct {
 	EmbeddingInputStyle  aiprovider.EmbeddingInputStyle  `json:"embeddingInputStyle"`
 	Trusted              bool                            `json:"trusted"`
 	Enabled              bool                            `json:"enabled"`
+	TimeoutSeconds       int                             `json:"timeoutSeconds"`
+	MaxConcurrent        int                             `json:"maxConcurrent"`
+	MonthlyCapUSD        *decimal.Decimal                `json:"monthlyCapUsd"`
+	OnCap                aiprovider.CapAction            `json:"onCap"`
+	KeepPreviousKey      bool                            `json:"keepPreviousKey"`
 	Version              int64                           `json:"version"`
 }
 
@@ -163,6 +168,11 @@ func (r *saveProviderRequest) toServiceRequest(
 		EmbeddingInputStyle:  r.EmbeddingInputStyle,
 		Trusted:              r.Trusted,
 		Enabled:              r.Enabled,
+		TimeoutSeconds:       r.TimeoutSeconds,
+		MaxConcurrent:        r.MaxConcurrent,
+		MonthlyCapUSD:        r.MonthlyCapUSD,
+		OnCap:                r.OnCap,
+		KeepPreviousKey:      r.KeepPreviousKey,
 		Version:              r.Version,
 		TenantInfo:           tenantInfo,
 	}

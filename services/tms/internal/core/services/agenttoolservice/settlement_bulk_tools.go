@@ -77,6 +77,30 @@ var postSettlements = settlementBulk{
 	},
 }
 
+// settlementBulkRecipes is the order a pay period's settlements move in, by
+// the bulk tool that takes them a step: read, submit, approve, post, record
+// the payment. The bulk tools are named from their single twins, so the
+// order is kept by name here rather than on each spec.
+var settlementBulkRecipes = map[string][]string{
+	"approve_driver_settlements": {
+		"list_driver_settlements",
+		"get_driver_settlement",
+		"submit_driver_settlement",
+		"approve_driver_settlements",
+		"post_driver_settlements",
+	},
+	"post_driver_settlements": {
+		"approve_driver_settlements",
+		"post_driver_settlements",
+		"record_driver_settlement_payment",
+	},
+	"approve_carrier_settlements": {
+		"generate_carrier_settlement_batch",
+		"approve_carrier_settlements",
+		"post_carrier_settlements",
+	},
+}
+
 type settlementBulkTool[E any] struct {
 	name        string
 	description string
@@ -153,6 +177,10 @@ func settlementNumbers[E any](
 }
 
 func (t *settlementBulkTool[E]) Name() string { return t.name }
+
+func (t *settlementBulkTool[E]) Recipe() []string { return settlementBulkRecipes[t.name] }
+
+func (t *settlementBulkTool[E]) BatchOf() string { return t.single.Name() }
 
 func (t *settlementBulkTool[E]) Description() string { return t.description }
 

@@ -12,6 +12,7 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 import { Ic } from "../kit/ic";
 import { Mark } from "../kit/marks";
+import { Button } from "@trenova/shared/components/ui/button";
 
 type ProviderFailureStripProps = {
   failures: readonly AIProviderFailure[];
@@ -103,32 +104,30 @@ function FailureRow({
         </span>
       </div>
       <div className="ovb-a">
-        <button type="button" className="btn sm" disabled={testing} onClick={() => test.mutate()}>
-          {testing ? (
-            <>
-              <i className="spn" />
-              {t("Testing")}
-            </>
-          ) : (
-            <>
-              <Ic n="plug" s={12} />
-              {t("Test again")}
-            </>
-          )}
-        </button>
-        <button type="button" className="btn sm" onClick={() => onEditProvider(failure.providerId)}>
-          {t("Edit connection")}
-        </button>
-        <button
+        <Button
           type="button"
-          className="ib"
+          variant="outline"
+          size="sm"
+          isLoading={testing}
+          loadingText={t("Testing")}
+          onClick={() => test.mutate()}
+        >
+          <Ic n="plug" s={12} />
+          {t("Test again")}
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={() => onEditProvider(failure.providerId)}>
+          {t("Edit connection")}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground"
           title={t("Hide until it fails again")}
           aria-label={t("Hide until it fails again")}
           disabled={dismiss.isPending}
           onClick={() => dismiss.mutate()}
         >
           <Ic n="x" s={13} />
-        </button>
+        </Button>
       </div>
     </div>
   );

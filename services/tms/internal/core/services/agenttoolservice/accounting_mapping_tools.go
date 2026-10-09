@@ -203,6 +203,14 @@ func provideSetAccountingMappingTool(
 
 func (t *setAccountingMappingTool) Name() string { return "set_accounting_mapping" }
 
+func (t *setAccountingMappingTool) Recipe() []string {
+	return []string{
+		"list_accounting_mapping_gaps",
+		"get_accounting_mapping",
+		"set_accounting_mapping",
+	}
+}
+
 func (t *setAccountingMappingTool) Description() string {
 	return "Choose which accounting system record a Trenova record or setting is sent as, " +
 		"and confirm it. Use an externalId from the mapping's candidates or from " +
@@ -401,6 +409,10 @@ func (t *createAccountingReferenceRecordTool) Name() string {
 	return "create_accounting_reference_record"
 }
 
+func (t *createAccountingReferenceRecordTool) Recipe() []string {
+	return []string{"get_accounting_mapping", "create_accounting_reference_record"}
+}
+
 func (t *createAccountingReferenceRecordTool) Description() string {
 	return "Create an item, customer or vendor in the accounting system and map a Trenova " +
 		"record to it. Use it for an accessorial charge, line type, customer or carrier " +
@@ -502,6 +514,10 @@ func provideRefreshAccountingReferenceDataTool(
 
 func (t *refreshAccountingReferenceDataTool) Name() string {
 	return "refresh_accounting_reference_data"
+}
+
+func (t *refreshAccountingReferenceDataTool) Recipe() []string {
+	return []string{"refresh_accounting_reference_data", "list_accounting_mapping_gaps"}
 }
 
 func (t *refreshAccountingReferenceDataTool) Description() string {

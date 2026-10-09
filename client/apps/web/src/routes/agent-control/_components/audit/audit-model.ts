@@ -138,6 +138,14 @@ export type AuditTableState = {
   sort: SortField[];
 };
 
+/** No search, filter or sort: an export of the scope alone. */
+export const UNFILTERED_AUDIT_TABLE: AuditTableState = {
+  query: "",
+  fieldFilters: [],
+  filterGroups: [],
+  sort: [],
+};
+
 export type AuditExportRequestParams = {
   format: AiAuditExportFormat;
   from: number;
@@ -387,6 +395,21 @@ export function isVerificationPending(
   }
 
   return (status.lastVerifiedAt ?? null) === request.baseline;
+}
+
+/** Rows recorded since the last seal; they are sealed at the next check. */
+export function unsealedRows(
+  status: Pick<AIAuditChainStatus, "lastSeq" | "sealedThroughSeq">,
+): number {
+  return Math.max(0, status.lastSeq - status.sealedThroughSeq);
+}
+
+/** Whether a row of the trail has been sealed into the chain yet. */
+export function isSealed(
+  seq: number,
+  status: Pick<AIAuditChainStatus, "sealedThroughSeq"> | null | undefined,
+): boolean | null {
+  return status ? seq <= status.sealedThroughSeq : null;
 }
 
 /** A mismatch is the trail no longer matching its chain; a missing key only stops the check. */

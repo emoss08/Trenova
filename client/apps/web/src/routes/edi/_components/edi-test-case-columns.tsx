@@ -48,8 +48,10 @@ export function getTestCaseColumns(t: TranslateFn): ColumnDef<EDITestCaseTableRo
       meta: {
         label: t("Partner"),
         apiField: "partnerDocumentProfileId",
-        filterable: false,
         sortable: false,
+        filterable: true,
+        filterType: "record",
+        filterRecord: "EDI_PARTNER_DOCUMENT_PROFILE",
       },
     },
     {

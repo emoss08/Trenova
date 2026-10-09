@@ -6,6 +6,7 @@ import { useQueryStates } from "nuqs";
 import { DataTable } from "../data-table";
 import { parseAsFieldFilters, parseAsFilterGroups } from "@/hooks/data-table/use-data-table-state";
 import type { ColumnDef, FieldFilter } from "@trenova/shared/types/data-table";
+import { seedDataTableQueries } from "@/test/data-table-queries";
 
 type TestRow = { id: string; name: string };
 
@@ -29,8 +30,9 @@ const testGraphQLConfig = {
   connectionKey: "tests",
 };
 
-const useDataTableQueryMock = vi.hoisted(() =>
-  vi.fn(() => ({
+// One answer, kept across renders, as React Query keeps an unchanged result.
+const useDataTableQueryMock = vi.hoisted(() => {
+  const result = {
     data: {
       results: [
         { id: "1", name: "Alice" },
@@ -41,8 +43,9 @@ const useDataTableQueryMock = vi.hoisted(() =>
     isLoading: false,
     isError: false,
     error: null,
-  })),
-);
+  };
+  return vi.fn(() => result);
+});
 
 vi.mock("@/hooks/use-permission", () => ({
   // Both hooks: the config manager inside the table reaches for the
@@ -59,19 +62,14 @@ vi.mock("@/hooks/use-permission", () => ({
   }),
 }));
 
-vi.mock("@/hooks/data-table/use-data-table-query", () => ({
+vi.mock("@/hooks/data-table/use-data-table-query", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/hooks/data-table/use-data-table-query")>()),
   useDataTableQuery: useDataTableQueryMock,
 }));
 
-vi.mock("@/lib/queries", () => ({
+vi.mock("@/lib/queries", async () => ({
   queries: {
-    tableConfiguration: {
-      default: () => ({ queryKey: ["tableConfig-default"], queryFn: () => null }),
-      all: () => ({
-        queryKey: ["tableConfig-all"],
-        queryFn: () => ({ results: [], count: 0 }),
-      }),
-    },
+    ...(await import("@/test/data-table-queries")).dataTableQueryMocks,
   },
 }));
 
@@ -105,9 +103,9 @@ function ExternalFilterWriter({ fieldFilters }: { fieldFilters: FieldFilter[] })
 }
 
 function renderHarness(externalFieldFilters: FieldFilter[]) {
-  const queryClient = new QueryClient({
+  const queryClient = seedDataTableQueries(new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
-  });
+  }));
   return render(
     <QueryClientProvider client={queryClient}>
       {/* resetUrlUpdateQueueOnMount runs in the adapter's render body, so any

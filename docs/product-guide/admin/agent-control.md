@@ -33,67 +33,92 @@ up providers and agents; reviewers use **Activity** to approve or reject what ag
 ## Tasks
 
 ### Connect an AI provider
-Keywords: add LLM, model endpoint, OpenAI, API key, gateway, self-hosted model
-1. Open [AI control](/admin/agent-control) and select **Providers** in the rail.
-2. Select **New provider**.
-3. Optionally pick a **Deployment** under **Start from a preset** to fill in the endpoint and
-   output settings for a known deployment.
-4. Under **Endpoint**, fill in **Name**, **Protocol**, **Model**, **Base URL** and the API key if
-   the provider needs one.
-5. Under **Routing**, choose the AI tasks in **Handles these tasks** and set **Priority** (lower
-   runs first; providers behind it act as fallbacks). Turn on **Trusted for financial work** only
-   for a provider that may take tasks that read sensitive records.
-6. Leave **Enabled** on and select **Save**.
-7. Back on the provider's card, select **Test** to check the endpoint answers and honours JSON
-   schemas.
+Keywords: add LLM, model endpoint, OpenAI, API key, gateway, self-hosted model, Ollama, vLLM
+1. Open [AI control](/admin/agent-control) and select **Providers**.
+2. Select **New provider** (or press N), then choose the vendor under **Provider**, from
+   **Hosted** or **On your network**; it fills in that vendor's usual settings. With no provider
+   yet, pick it from **Connect a model to wake your agents**.
+3. Under **Connection**, check **Name**, **Kind** and **Base URL**. A base URL on your own network
+   needs **Private network**; select **Turn on Private network** when the editor asks.
+4. Under **Model**, select **Fetch models** to pick from what the endpoint actually serves, or
+   type the **Model ID**.
+5. Paste the **Key** under **API key** when the provider needs one.
+6. Under **What it handles**, choose the tasks. **When you save** lists every task whose provider
+   changes.
+7. Select **Test draft**, then **Save & close**. A provider whose test connected is saved turned
+   on; one that has not passed a test is saved off until it does.
+
+### Order providers and route tasks
+Keywords: provider priority, fallback, routing, which provider, reorder providers, assign task
+1. Open [AI control](/admin/agent-control) and select **Providers**.
+2. **The chain** lists providers top to bottom; each task goes to the first one that is on,
+   assigned and, for tasks marked with a shield, **Trusted**. Drag a row to reorder, or open it and
+   select **Move up** or **Move down**.
+3. Under **Routing**, select a cell to assign or unassign a task. **Goes to** shows where each task
+   lands, and a task nothing takes says what happens instead.
+4. Providers that are off keep their place in line; select **Show** to list them.
+
+### Limit what a provider may spend or how long it waits
+Keywords: timeout, concurrency, monthly cap, spend limit, budget per provider, price per million tokens
+1. Open the provider in **Providers** and select **Edit connection**.
+2. Under **Limits and price**, set **Timeout** and **Concurrent calls**. A call past the timeout,
+   or past the concurrent limit, moves to the next provider.
+3. Set **Monthly spend cap** and choose **At the cap**: **Hand to next** passes work on, **Stop**
+   fails it. Set **Input price** and **Output price** so spend can be counted.
+4. Select **Save changes**.
+
+### Replace a provider's API key
+Keywords: rotate key, new API key, key rotation, expired key, leaked key
+1. Open the provider in **Providers** and select **Edit connection**.
+2. Under **API key**, paste the new key into **Replace key**.
+3. Leave **Keep the old key working for 24 hours** on so calls fall back to the old key while
+   other systems switch over, then select **Save changes**.
 
 ### Set up an embedding provider
 Keywords: embeddings, embedding model, semantic search, search by meaning, vector search, Voyage, Gemini embeddings, OpenAI embeddings, nomic-embed-text, retrieval
-1. Open [AI control](/admin/agent-control) and select **Providers** in the rail.
-2. Select **New provider** and, under **Start from a preset**, pick one of the embedding presets:
-   Voyage AI, Gemini, OpenAI, or Ollama for a model on your own hardware. The preset fills in the
-   endpoint, the model, and the embedding task.
-3. Under **Routing**, **Handles these tasks** shows **Embedding** ticked. An embedding model serves
-   nothing else, so leave the other tasks for a separate provider. Anthropic has no embedding
-   endpoint, so the task cannot be ticked on an Anthropic provider.
-4. Under **Embedding**, check **Dimensions** matches the vector size the model returns and set
-   **Input style** to how the endpoint tells a stored document from a search query.
-5. Enter the API key, optionally the **Input price, USD per million tokens**, and select **Save**.
-6. Select **Test** on the provider's card. The test asks for one embedding and fails when the
-   model returns a different size than **Dimensions**.
+1. Open [AI control](/admin/agent-control) and select **Providers**.
+2. Select **New provider** and, under **Provider**, choose one of the embedding vendors: Voyage
+   AI, Gemini, OpenAI, or Ollama for a model on your own hardware. It fills in the endpoint, the
+   model and the **Embedding** task.
+3. An embedding model serves nothing else, so leave the other tasks under **What it handles** for a
+   separate provider. Anthropic has no embedding endpoint.
+4. Under **Advanced**, check **Vector size** matches what the model returns and set **Embedding
+   input** to how the endpoint tells a stored document from a search query.
+5. Paste the key, select **Test draft**, then **Save & close**. The test asks for one embedding
+   and fails when the model returns a different size; a provider that fails is saved off.
 
 ### Let agents search the web
 Keywords: web search, internet, Exa, look up regulations, ELD rules, hours of service, current information, extension marketplace
-1. Open [AI control](/admin/agent-control) and select **Extensions** in the rail.
-2. On the web search card, select **Set up**.
-3. Paste the organization's Exa API key and select **Save changes**. The key is stored encrypted
-   and never shown again; leave the field blank later to keep it.
+1. Open [AI control](/admin/agent-control) and select **Extensions**.
+2. Open **Web search**, under **Featured** or from **All extensions**.
+3. Paste the organization's Exa API key under **Connection** and select **Turn on**. The key is
+   stored encrypted and never shown again; select **Replace** to change it later.
 4. Select **Test connection** to check the key works.
-5. Turn the extension on, and under **Available to** choose **Every agent** to give all agents,
-   the assistant included, the web search tools, or **Agents you choose** to add them only to
-   the agents you give them with **Add tools** under an agent's **Tools and autonomy**. Then
-   select **Save changes**.
-6. Optionally change the search depth, the results per search, the daily request limit and the
-   sites agents never receive results from.
+5. Under **Available to**, choose **Every agent** to give all agents, the assistant included, the
+   web search tools, or **Agents you choose** and select the agents that get them.
+6. Optionally change **Search depth**, **Daily request limit**, the results per search and the
+   sites agents never receive results from. Each change is saved as you make it.
 
 ### Set up search by meaning
 Keywords: semantic search, search by meaning, retrieval, vector search, embeddings, index documents, index email, re-index, indexing budget, pgvector, keyword only, words only
 1. Set up an embedding provider first (see the task above). Until one is routed, agents search by
    keywords only.
 2. Open [AI control](/admin/agent-control) and select **Retrieval** in the rail.
-3. Read the notice at the top, if there is one. It says why agents are searching by keyword only
-   and what fixes it: install pgvector 0.8 or newer and run the command it shows on the server,
-   route the Embedding task (**Open Providers** goes there), or change the settings on this page
-   (**Go to the settings**). With none shown, search by meaning is working.
-4. Read the figures: **Indexed**, **Pending**, **Failed**, **Cost this month** against the
+3. Read Nova's sentence at the top. It says whether agents search by meaning or by keyword
+   only, how much is left to index, and what failed. Beside it, **Route Embedding** goes to
+   Providers when nothing handles the Embedding task, and **Pause indexing** or
+   **Resume indexing** stops or restarts the indexer. A notice under it says when the database
+   needs pgvector 0.8 or newer, with the command to run on the server, or when the embedding
+   provider is failing (**Open Providers** goes there).
+4. Read the figures: **Indexed**, **Waiting**, **Failed**, **Cost this month** against the
    indexing budget, and **Last run**.
-5. In **Settings**, turn **Memories**, **Documents** and **Inbound email** on or off, set the
-   **Monthly indexing budget (USD)**, and use **Pause indexing** to stop indexing for a while.
-   Then select **Save settings**. A source turned on is indexed within the hour.
-6. In **Sources**, each source shows how far it is indexed. To embed a source again after its
-   text or the model changed, select **Re-index** on its row; the dialog shows what it could cost
-   at most before you confirm with **Re-index**.
-7. Select **Show failures** on a source to list the items that could not be indexed, with the
+5. In **Sources**, turn **Memories**, **Documents** and **Inbound email** on or off with the
+   switch on each row; a source turned on is indexed within the hour. To embed a source again
+   after its text or the model changed, select **Re-index** on its row; the dialog shows what it
+   could cost at most before you confirm with **Re-index**.
+6. In **Settings**, type the **Monthly indexing budget**; it is saved when you leave the field.
+   **Pause indexing** stops indexing for a while.
+7. Select the failed count on a source to list the items that could not be indexed, with the
    error for each, in the table at the bottom. **Show every source** lists them all again. Select
    a row to read the whole error.
 
@@ -161,9 +186,16 @@ Keywords: disable agent, enable agent, start run, delete agent, shadow mode, sim
 
 ### Approve or reject what an agent proposed
 Keywords: agent decisions, pending proposals, review agent changes, approve plan, preview agent change
-1. Open [AI control](/admin/agent-control), select **Activity** in the rail and then
-   **Proposals**.
-2. Right-click a pending proposal and choose **Approve**, **Approve with changes** or **Reject**.
+1. Open [AI control](/admin/agent-control) and select **Activity** in the rail. The sentence at
+   the top says how many runs there were today and how many failed, how many proposals wait on a
+   person, and how many exceptions are still open; select any of them to open the runs, proposals
+   or exceptions narrowed to it. The figures show **Runs today**, **Failed**,
+   **Awaiting a decision** and how many were **Approved as proposed** over the last week.
+2. Select the button beside the sentence, or **Proposals** under **View**. Select a pending
+   proposal to read it, its **Autonomy** and **Confidence**, and a warning when its run read an
+   email or document written outside the organization; then select **Approve**,
+   **Approve with changes** or **Reject**. **Open the run** shows the run that proposed it. The
+   same choices are on the row's menu when you right-click it.
 3. Read **What changes** in the dialog: each record the change would touch and its values before
    and after, worked out from the records as they are now. Anything you may not see reads
    **Hidden by your data access**. **Approve and run** stays off until it has loaded, and for a
@@ -202,64 +234,74 @@ Keywords: tune-ups, suggestions, recommendations, improve AI setup, reorder prov
 
 ### See what agents can do without a person
 Keywords: AI safety, autonomy, what can the AI do on its own, auto execute, approval, tool policy, egress, prompt injection, outside text, sensitive tools, audit agents
-1. Open [AI control](/admin/agent-control) and select **Safety** in the rail. Safety has two
-   tables under it in the rail, **Tool rules** and **By agent**.
-2. Read the figures at the top: **Tools that run without a person** (tools that change records
-   and, on at least one agent, can run without anyone approving), **Tools that send outside the
-   organization**, and **Open agents with sensitive tools** (agents everyone can use that hold
-   tools reaching restricted data or leaving the organization).
-3. Select **Tool rules**. Every tool is listed with **Who sees it**, its **Max tier**, what it
-   **Needs** of the person using it, whether it **Reads outside content**, and whether it
-   **Runs without a person** on at least one agent. Use the search box to find a tool by name, or
-   select **Filter** to narrow by **Who sees it**, **Max tier**, **Needs**, **Kind**,
-   **Reads outside content** or **Runs without a person**, and **Sort** to order by any of them.
-   **Display** shows hidden columns such as **Name** and **Kind** and changes the row density.
-4. Select a row to open its rule: the **Rationale**, **How far it may go** and any
-   **Record condition**. A tool marked **Depends on the call** goes further for some calls than
-   others; its rule says why.
-5. Select **By agent**, then **Add an agent** and choose one; add up to ten to compare them in one
-   table. Nothing is read until you add an agent. Each agent shows **Who can use it** and its
-   **Ceiling**, and the table lists every tool the agents hold with what happens
-   **Before outside text** and **After outside text**: **Runs on its own**,
-   **Depends on the call**, **Needs approval**, **Proposes only** or **Simulated**. Select
-   **Filter** to narrow to one **Agent**, an answer, or a **Held by** reason. Select the cross
-   beside an agent's name to take it out of the comparison.
-6. The **Held by** chips say which limit stops a tool going further, such as the agent's
-   ceiling, where the work goes, or that the run has read outside text. A tool whose tier was
-   earned shows **Tier earned**, and one still earning shows how many clean approvals it needs
-   for the next tier. Select a row to read both answers beside the tool's rule.
+1. Open [AI control](/admin/agent-control) and select **Safety** in the rail. The sentence at the
+   top says how many tools run without a person, how many send outside the organization (every
+   one waits for approval), and how many agents everyone can use hold them. Select the count of
+   tools that run to narrow the rules to them. When open agents hold sensitive tools, select
+   **Review open agents** to compare the first three.
+2. Read the figures: **Tools that run without a person**, **Tools that send outside the
+   organization** and **Open agents with sensitive tools**. **Who sees the work** lays out every
+   tool that changes something by the widest audience its work reaches; select an audience to
+   narrow the rules to it, and **Clear** to show them all again.
+3. Under **View**, select **Tool rules**. Every tool is listed with **Who sees it**, its
+   **Max tier**, what it **Needs** of the person using it, whether it **Reads outside content**,
+   the **Agents** that hold it, and whether it **Runs without a person** on at least one agent.
+   Use the search box to find a tool by name, or **Filter** and **Sort** by any of them.
+4. Select a row to open the tool: **Most it may do**, **Needs**, **Reads outside content** and
+   **Who sees its work**, then every agent holding it with what that agent does before and after
+   reading outside text, and **The whole rule**. **Audit trail** opens the audit trail.
+5. To hold a tool lower for your organization, select **Change tool rule**. Choose the
+   **Most freedom any agent gets** (choices looser than the tool's own rule are closed) and
+   whether to **Treat what it returns as outside text**, and write a **Reason**; a change to the
+   most freedom cannot be saved without one. **Who's affected** lists every agent holding the tool
+   and how its answer moves before you save. Select **Save changes**: the change, its reason and
+   the agents it moved go to the audit trail, and the open tool shows
+   **Your organization's rule**. Choosing what the tool declares returns it to its own rule.
+6. Under **View**, select **By agent**, then **Pick an agent**; select **Compare another** to
+   compare up to four. Nothing is read until you pick one. Each agent shows who can use it and its
+   ceiling, warns when everyone can use it, and offers **Limit to roles**. The table lists every
+   tool the agents hold with what happens **Before outside text** and **After outside text**:
+   **Runs on its own**, **Depends on the call**, **Needs approval**, **Proposes only** or
+   **Simulated**. The **Held by** chips say which limit stops a tool going further; a tool whose
+   tier was earned shows **Tier earned**.
 
 ### Check how well an agent is doing
 Keywords: AI quality, agent score, regression, satisfaction, thumbs down, golden set, evaluation cases, nightly sweep, eval budget, agent got worse
-1. Open [AI control](/admin/agent-control) and select **Quality** in the rail. Quality lists its
-   tables under it in the rail: **Agents**, **Suite runs**, **Worst-rated answers**,
-   **Golden set** and **Settings**.
-2. Read the figures at the top: **Satisfaction** (the share of rated answers that were thumbs
-   up), **Ratings**, **Quality score** (how the agents score against their golden sets),
-   **Regressions**, and **Eval spend this month** against the monthly budget.
-3. In **Agents**, each agent is listed with its satisfaction against the window before, a line of
-   its recent suite scores, and how its **Last run** went: **Completed**, **Skipped** (nothing
-   about the agent or its cases changed), **Budget stopped** or **Failed**. An agent whose score
-   fell shows **Regressed**. Select **Filter** to narrow by **Last run** or **Regressed**, and
-   **Sort** to order by **Satisfaction** or **Quality score**.
-4. Select an agent's row to open it. **Quality over time** shows its scores. To score it now
-   instead of waiting for the nightly sweep, select **Run suite now**. Select **Its suite runs**
-   or **Its worst-rated answers** to open those tables narrowed to the agent; **Show every agent**
-   widens them again.
-5. In **Suite runs**, each run shows its **Status**, **Quality score**, **Cases** and
-   **What changed** about the agent since the run before, such as its instructions, tools or
-   model. Select a run to read it, then **See the cases** to list what each case scored; select a
+1. Open [AI control](/admin/agent-control) and select **Quality** in the rail. The sentence at the
+   top says how the agents score against their golden sets, how many of the answers people rated
+   they liked, and which agent fell furthest after its last change. Select its name, or the
+   button beside the sentence, to open that agent.
+2. Read the figures: **Satisfaction** (the share of rated answers that were thumbs up),
+   **Ratings**, **Quality score**, **Regressions** still open, and **Eval spend this month**
+   against the monthly budget.
+3. Under **View**, choose **Agents**, **Suite runs**, **Worst rated**, **Golden set** or
+   **Document extraction**.
+4. In **Agents**, each agent is listed with its **Quality score** and a line of its recent runs,
+   the **Change** against its recent median, and how its **Last run** went: **Completed**,
+   **Skipped** (nothing about the agent or its cases changed), **Budget stopped** or **Failed**.
+   **Display** shows **Satisfaction** and **Ratings**. Select **Filter** to narrow by
+   **Last run** or **Regressed**, and **Sort** to order by **Quality score**.
+5. Select an agent to open it: its score and the change, **Satisfaction**, the
+   **Regression threshold**, the **Judge**, **Cases per night**, **What changed** and the answers
+   rated **Lowest rated**. Select **Run suite now** to score it without waiting for the night,
+   **Open agent** to edit it, or **All runs** to list its suite runs; **Show every agent** widens
+   them again.
+6. In **Suite runs**, each run shows its **Status**, **Cases asked** and **Quality score**. Select
+   a run to read its **Score**, **Change**, **Cost** and **What changed**, with a square for every
+   case: red ones scored below the bar. **See the cases** lists what each case scored; select a
    case to read the reply and the judge's note. **Back to suite runs** returns to the runs.
-6. **Worst-rated answers** lists the answers people rated down in the last 30 days, most disliked
-   first. Select one to read the question, the answer and **Why**. Select **Open the
-   conversation** to read one you were part of.
-7. Keep the cases the agents are scored against in **Golden set**: **Activate** a candidate
+7. **Worst rated** lists the answers people rated down in the last 30 days, most disliked first.
+   Select one to read **The question**, **The answer** and **What they said**. Select
+   **Add to golden set** to score the agent against it every night, **Write a memory** to tell
+   the agents what was wrong, or **Open the conversation** to read one you were part of.
+8. Keep the cases the agents are scored against in **Golden set**: **Activate** a candidate
    captured from a decided proposal, **Add case** to write one by hand, or **Quarantine** a case
    that is no longer fair.
-8. In **Settings**, turn **Run the nightly sweep** on or off, choose the **Hour it starts**, set
-   **Most cases per agent**, the **Nightly budget (USD)** and **Monthly budget (USD)**, the
-   **Regression threshold (points)**, and whether to **Have a judge read a sample**. Then select
-   **Save settings**.
+9. In **Agents**, select **Sweep settings** to change the **Nightly sweep**: when it should
+   **Start at**, the **Cases per agent**, and when to **Rerun an unchanged agent after**; turn the
+   **Judge model** on and choose its **Share of answers**; set the **Regression threshold** and
+   the **Fewest cases to compare**; and the **Budget** **Per night** and **Per month**. Select
+   **Save changes**. Changing these needs permission to update AI control and the golden set.
 
 ### Try a new document extraction model on real documents
 Keywords: shadow traffic, shadow model, candidate model, fine-tuned model, compare extraction models, A/B test extraction, new extraction provider, model rollout
@@ -326,10 +368,13 @@ Keywords: extraction accuracy over time, model drift, accuracy dropped, provider
 
 ### Read what agents did on the audit trail
 Keywords: AI audit trail, agent audit log, who approved, what did the agent do, AI compliance, tool calls, model calls, AI decisions, evaluations
-1. Open [AI control](/admin/agent-control) and select **Audit trail** in the rail, then **Trail**.
-2. Read the figures at the top: **Chain** says whether the trail is **Signed** with a key held
-   outside the database or **Unsigned**, **Sealed through** is the last row the trail has sealed,
-   and **Last verified** is what the last check found.
+1. Open [AI control](/admin/agent-control) and select **Audit trail** in the rail, then **Trail**
+   under **View**.
+2. The sentence at the top says whether every agent action is written to a signed chain, when it
+   was last checked and what that found, and how many of the newest rows wait to be sealed. The
+   figures say the same: **Chain** is **Signed** with a key held outside the database or
+   **Unsigned**, **Sealed through** is the last row the trail has sealed, and **Last verified** is
+   what the last check found.
 3. Choose the range at the left of the bar above the table: **Last 24 hours**, **Last 7 days**
    (where it starts), **Last 30 days**, **Last 90 days**, or pick days on the calendar and select
    **Apply**. Select **Every agent** to narrow to one agent, pick a person in **Anyone** to see the
@@ -341,13 +386,14 @@ Keywords: AI audit trail, agent audit log, who approved, what did the agent do, 
    **Tier**, **Model**, **Tainted** or **Trace**.
 5. Select a row to read the event in full: **Who**, **What**, **Why** (the tier, what set it and
    what held it back), **Changed** (the record, its versions, and the audit log entries
-   **Matched by time**), **Provenance**, **Model**, **Arguments**, **Trace** and **Chain**.
+   **Matched by time**), **Provenance**, **Model**, **Arguments**, **Trace** and **Chain**. Its
+   header says **Sealed** once the row is in the sealed chain, or **Next check** until then.
 
 ### Check that the audit trail has not been changed
 Keywords: verify audit trail, hash chain, tamper evidence, audit integrity, signing key
 1. Open [AI control](/admin/agent-control) and select **Audit trail** in the rail.
-2. Select **Verify now**. The check runs in the background and the button shows **Verifying…**
-   until its result is stored.
+2. Select **Verify now** beside the sentence. The check runs in the background; the button shows
+   **Verifying…** until its result is stored, and the trail is also checked every night on its own.
 3. Read **Last verified**: **Verified** means every row still matches its chain, **Mismatch**
    means a row was changed or removed and says at which row, and **Key missing** means a row names
    a signing key that is no longer configured.
@@ -356,27 +402,33 @@ Keywords: verify audit trail, hash chain, tamper evidence, audit integrity, sign
 Keywords: download audit trail, AI audit export, CSV, JSON, auditor, compliance export, SHA-256
 1. Open [AI control](/admin/agent-control), select **Audit trail** in the rail and narrow the
    trail if you want to export part of it.
-2. Select **Export trail…**.
+2. Select **Export trail** above the table. On **Exports**, **Export trail** exports the whole
+   trail without the trail's filters.
 3. Choose the **Format**, CSV or JSON, set **From** and **To**, and leave **Use current filters** on to
    carry the agent, person, evaluations and table filters into the file, or turn it off to export
    every row in the range.
 4. Select **Export**. A small export downloads at once and shows its rows, size and SHA-256;
    **Download again** fetches it again. A large one is written in the background: you are
    notified when it is ready, and **Open exports** shows it.
-5. Select **Exports** in the rail to see every export with its status, **Rows**, **Size**,
+5. Select **Exports** under **View** to see every export with its status, **Rows**, **Size**,
    **SHA-256**, **Chain** (**Complete** or **Filtered**) and when it **Expires**. Select
    **Download** on your own export to download it.
 
 ### Read or download what an agent run did
 Keywords: run transcript, agent run log, what did the agent say, download transcript, background run, scheduled run
 1. Open [AI control](/admin/agent-control), select **Activity** in the rail and then **Runs**.
-2. Select a run to open it: its **Status**, what it was **Started by**, the **Model** and its
-   **Summary**.
-3. Open **Transcript** to read what the agent said and thought and each tool it called, with what
+2. Select a run to open it: why it failed if it did, the **Agent**, what it was **Started by**,
+   the **Model** and how long it **Took**.
+3. Under **What it did**, read what the agent said and thought and each tool it called, with what
    it sent and got back. A long run keeps its opening and its end; the stretch left out between
    them is counted where it fell.
 4. Select **Download** to save the transcript as a Markdown file, laid out the way a downloaded
-   conversation is, with the number of messages left out stated in it.
+   conversation is, with the number of messages left out stated in it. **Open trace** opens the
+   run's trace where a tracing backend is configured, and a failed run offers
+   **Check providers**.
+5. Exceptions are cases an agent could not settle on its own. Under **View**, select
+   **Exceptions** and select one to read **What happened**, then **Mark in review**,
+   **Mark resolved** or **Dismiss** it; **Open the run** shows the run it came from.
 
 ### Find the trace of an agent's work
 Keywords: trace id, tracing, OpenTelemetry, Tempo, Jaeger, span
@@ -392,10 +444,10 @@ Keywords: agent memory, standing instruction, fact, correction, retire memory
 2. Select **New memory**.
 3. Choose the **Kind** (**Instruction**, **Fact**, **Correction** or **Procedure**), write the
    **Memory**, and optionally set **Until**.
-4. To make it about one record, pick a **Kind of record** and the record; leave it empty for
-   something every agent should know. Then select **Save**.
-5. To stop agents reading an entry, right-click it and choose **Retire**; **Restore** brings it
-   back.
+4. To make it about one record, set **About** to the kind of record and pick the record; leave it
+   on **Every agent** for something every agent should know. Then select **Save memory**.
+5. To stop agents reading an entry, open it and select **Retire memory**, or right-click it and
+   choose **Retire**; **Restore** brings it back.
 
 ### Let agents learn from their work
 Keywords: self-improving agents, learning, reflection, look back, lessons, procedures, what the agent learned
@@ -407,8 +459,8 @@ Keywords: self-improving agents, learning, reflection, look back, lessons, proce
    back over its work: what made it look (a tool that worked after failing, a person correcting
    it, a proposal changed or refused, a reply rated unhelpful, a long task) and each lesson it
    kept, offered or turned down, with the reason.
-4. A lesson shared beyond one person waits under **Suggested memories**, with the memory it
-   would retire. Select **Review and approve** to edit and keep it, or **Dismiss**.
+4. A lesson shared beyond one person waits under **Nova suggests**, with the memory it would
+   retire. Select **Approve** to keep it as written, **Edit** to reword it first, or **Dismiss**.
 5. Open any memory in the list to see **Where it came from**: why it was kept, what made the
    agent look back, what was said, the conversation or run it was drawn from, and the memory it
    replaces or that has replaced it.
@@ -457,10 +509,10 @@ longer holds.
 Opening the page needs read access to AI control. Each section in the rail appears only for
 people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions,
 agent memory); a section someone cannot open is left out. **Safety** appears for people who may
-read agents, and **Quality** for people who may read the evaluation suite. **Worst-rated answers**
-and satisfaction need read access to agent feedback, **Run suite now** needs create access to the
-evaluation suite, and changing **Settings** needs update access to both the evaluation suite and
-AI control, because the budgets are spend. The organization-wide switches need
+read agents, and **Quality** for people who may read the evaluation suite. **Worst rated**
+and satisfaction need read access to agent feedback, **Run suite now** and **Add to golden set**
+need create access to the evaluation suite, and changing **Sweep settings** needs update access to
+both the evaluation suite and AI control, because the budgets are spend. The organization-wide switches need
 update access to AI control, deciding proposals needs update access to agent proposals, and
 **Test** on a provider needs manage access to AI providers. Viewing **Extensions** needs read
 access to agent extensions, and turning one on, changing its settings or testing it needs update
@@ -490,7 +542,7 @@ needs update access to both agents and roles; someone without update access to r
 save the rest of an agent as long as they leave who can use it as it was. The same grants can be managed from a role's page
 on [Roles](/admin/roles), under **Agents**.
 
-Every night, at the hour chosen in **Settings** (in the organization's timezone unless another
+Every night, at the hour chosen in **Sweep settings** (in the organization's timezone unless another
 is chosen there), each agent with active cases is replayed against a sample of its golden set
 with every write simulated. The sample always includes the cases the agent failed most recently
 and is otherwise spread across where the cases came from; it is the same sample for the same run.
@@ -502,7 +554,7 @@ Watchtower item is raised (critical when a case failed a hard check), and the pe
 update AI control are told once, with what changed.
 
 The **Audit trail** section appears for people with read access to the AI audit trail; reading
-agent runs does not grant it. **Verify now** needs the same read access. **Export trail…** and
+agent runs does not grant it. **Verify now** needs the same read access. **Export trail** and
 **Download** need export access to the AI audit trail, and only the person who asked for an export
 can download it; the file can be downloaded until it expires, seven days after it was written
 unless the organization's configuration says otherwise. Requesting and downloading an export are

@@ -9,11 +9,15 @@ import (
 	"context"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentsafetyservice"
+	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
 func (r *AgentSafetyResolver) AgentID(ctx context.Context, obj *services.AgentSafetySubject) (string, error) {
@@ -144,4 +148,104 @@ func (r *QueryResolver) AgentSafety(ctx context.Context, agentIds []string) ([]*
 		TenantInfo: base.TenantInfo(authCtx),
 		AgentIDs:   ids,
 	})
+}
+
+func (r *AgentSafetySummaryResolver) OpenSensitiveAgentIds(ctx context.Context, obj *services.AgentSafetySummary) ([]string, error) {
+	return base.PulidsToStrings(obj.OpenSensitiveAgentIDs), nil
+}
+
+func (r *AgentToolHoldersResolver) AgentIds(ctx context.Context, obj *services.AgentToolHolders) ([]string, error) {
+	return base.PulidsToStrings(obj.AgentIDs), nil
+}
+
+func (r *QueryResolver) AgentToolHolders(ctx context.Context) ([]*services.AgentToolHolders, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	holders, err := r.AgentSafetyService.ToolHolders(ctx, base.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]*services.AgentToolHolders, len(holders))
+	for idx := range holders {
+		out[idx] = &holders[idx]
+	}
+
+	return out, nil
+}
+
+func (r *AgentToolRuleResolver) MaxTier(ctx context.Context, obj *agent.ToolRuleOverride) (*agent.AutonomyTier, error) {
+	if obj == nil || obj.MaxTier == "" {
+		return nil, nil
+	}
+	tier := obj.MaxTier
+
+	return &tier, nil
+}
+
+func (r *AgentToolRuleResolver) ReadsExternal(ctx context.Context, obj *agent.ToolRuleOverride) (*agent.ExternalRead, error) {
+	if obj == nil || obj.ReadsExternal == "" {
+		return nil, nil
+	}
+	read := obj.ReadsExternal
+
+	return &read, nil
+}
+
+func (r *AgentToolRuleResolver) UpdatedBy(ctx context.Context, obj *agent.ToolRuleOverride) (*tenant.User, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	return base.LoadUser(ctx, obj.UpdatedByID)
+}
+
+func (r *MutationResolver) SaveAgentToolRule(ctx context.Context, name string, version int, input gqlmodel.AgentToolRuleInput) (*gqlmodel.AgentToolRuleSaved, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentControl, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	declared, ok := r.AgentSafetyService.ToolPolicy(name)
+	if !ok {
+		return nil, errortypes.NewNotFoundError("Tool policy not found")
+	}
+
+	result, err := r.AgentToolRuleService.Save(ctx, &services.SaveToolRuleRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		ToolName:   name,
+		Change:     toolRuleChange(&input),
+		Reason:     base.DerefString(input.Reason),
+		Version:    int64(version),
+	}, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	view := agentsafetyservice.OverriddenView(declared.Policy, result.Override)
+
+	return &gqlmodel.AgentToolRuleSaved{
+		Tool:     ToolPolicyViewToModel(&view),
+		Affected: impactPointers(result.Affected),
+	}, nil
+}
+
+func (r *QueryResolver) AgentToolRuleImpact(ctx context.Context, name string, input gqlmodel.AgentToolRuleInput) ([]*services.AgentToolRuleImpact, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentControl, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	impacts, err := r.AgentToolRuleService.Impact(ctx, &services.ToolRuleImpactRequest{
+		TenantInfo: base.TenantInfo(authCtx),
+		ToolName:   name,
+		Change:     toolRuleChange(&input),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return impactPointers(impacts), nil
 }

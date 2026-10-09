@@ -129,11 +129,17 @@ func parseLoaderID(value string) (pulid.ID, error) {
 
 type fetchCountsByIDFunc func(context.Context, []pulid.ID) (map[pulid.ID]int, error)
 
+type fetchValuesByIDFunc[T any] func(context.Context, []pulid.ID) (map[pulid.ID]T, error)
+
 type fetchGroupsByIDFunc[T any] func(context.Context, []pulid.ID) (map[pulid.ID][]T, error)
 
 func batchCountFunc(fetch fetchCountsByIDFunc) batchFetchFunc[int] {
-	return func(ctx context.Context, keys []string) ([]int, []error) {
-		values := make([]int, len(keys))
+	return batchValueFunc(fetchValuesByIDFunc[int](fetch))
+}
+
+func batchValueFunc[T any](fetch fetchValuesByIDFunc[T]) batchFetchFunc[T] {
+	return func(ctx context.Context, keys []string) ([]T, []error) {
+		values := make([]T, len(keys))
 		errs := make([]error, len(keys))
 
 		ids, indexesByID := parseBatchKeys(keys, errs)
@@ -141,7 +147,7 @@ func batchCountFunc(fetch fetchCountsByIDFunc) batchFetchFunc[int] {
 			return values, errs
 		}
 
-		counts, err := fetch(ctx, ids)
+		found, err := fetch(ctx, ids)
 		if err != nil {
 			fillMissingErrors(errs, err)
 			return values, errs
@@ -149,7 +155,7 @@ func batchCountFunc(fetch fetchCountsByIDFunc) batchFetchFunc[int] {
 
 		for _, id := range ids {
 			for _, idx := range indexesByID[id] {
-				values[idx] = counts[id]
+				values[idx] = found[id]
 			}
 		}
 

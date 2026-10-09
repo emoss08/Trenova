@@ -13,6 +13,7 @@ import type {
   AssistantEntityRef,
   AssistantMessageAttachment,
 } from "@/types/assistant";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { memo, useMemo, type ReactNode } from "react";
@@ -20,7 +21,7 @@ import { DeskMentionText } from "../composer/desk-mentions";
 import { DeskMessageAttachments } from "../composer/desk-uploads";
 import { DeskMemoryRecall, DeskMemorySavedList } from "../memory/desk-memory-notes";
 import { citeSteps, withCitations } from "./citations";
-import { useCitationOverrides } from "./desk-citations";
+import { artifactBadgeClass, useCitationOverrides } from "./desk-citations";
 import { DeskMessageActions } from "./desk-message-actions";
 import { DeskStepFailures } from "./desk-tool-failures";
 import { DeskWebCites, DeskWebSources } from "./desk-web";
@@ -129,15 +130,20 @@ export function DeskInlineArtifact({
 }) {
   const t = useT();
   return (
-    <button
-      type="button"
-      className={cn("dk-abadge dk-inline", active && "dk-on")}
+    <Button
+      variant="bare"
+      size="bare"
+      className={cn(
+        "dk-abadge dk-inline mx-px max-w-full align-[-1px] text-sm [&>span]:truncate",
+        artifactBadgeClass,
+        active && "dk-on",
+      )}
       aria-label={t("Open {0}", artifact.title)}
       onClick={() => onOpen(artifact.id)}
     >
       <ArtifactKindIcon kind={artifact.kind} className="dk-abadge-i" />
       <span>{children}</span>
-    </button>
+    </Button>
   );
 }
 

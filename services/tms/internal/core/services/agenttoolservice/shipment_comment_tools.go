@@ -105,8 +105,8 @@ type commentPermissions interface {
 }
 
 func commentIDProperty() map[string]any {
-	return idProperty("The comment, from the recentComments get_shipment lists or the page " +
-		"you are on. Never guess one.")
+	return agenttoolschema.RecordID(permission.ResourceShipmentComment, "The comment",
+		"the recentComments get_shipment lists or the page you are on")
 }
 
 func commentRecord(comment *shipment.ShipmentComment) toolpreview.Record {

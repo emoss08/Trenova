@@ -6,6 +6,7 @@ import {
   type SlashCommand,
 } from "@/components/assistant/composer-commands";
 import type { Suggestion } from "@/components/assistant/suggestions";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Fragment, useState, type KeyboardEvent, type RefObject } from "react";
@@ -233,11 +234,15 @@ export function DeskSlashMenu({ slash, agentName }: { slash: DeskSlash; agentNam
         {slash.entries.map((entry, index) => (
           <Fragment key={entry.kind + entry.label}>
             {index === firstQuestion && <div className="dk-mn-h">{t("Ask {0}", agentName)}</div>}
-            <button
-              type="button"
+            <Button
+              variant="bare"
+              size="bare"
               role="option"
               aria-selected={slash.highlighted === index}
-              className={cn("dk-sl-r", slash.highlighted === index && "dk-hi")}
+              className={cn(
+                "dk-sl-r flex min-h-10 w-full gap-2.5 rounded-lg px-2 py-1.5 text-left",
+                slash.highlighted === index && "bg-dsk-hover",
+              )}
               onMouseMove={() => slash.highlighted !== index && slash.setHighlighted(index)}
               onClick={() => slash.choose(entry)}
             >
@@ -269,7 +274,7 @@ export function DeskSlashMenu({ slash, agentName }: { slash: DeskSlash; agentNam
                   {entry.kind === "command" && entry.command.slots.length > 0 ? "Tab" : "↵"}
                 </span>
               )}
-            </button>
+            </Button>
           </Fragment>
         ))}
         {slash.entries.length === 0 && (

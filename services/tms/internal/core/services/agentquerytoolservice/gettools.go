@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -65,18 +66,17 @@ func (t *getTool) Policy() serviceports.ToolPolicy {
 	})
 }
 
+// ParamSchema marks the id with the tool's resource when that resource is one
+// kind of record with one prefix, which every get tool's is: the record it
+// reads is the resource it is permitted under. A resource covering several
+// kinds is left unmarked, and its id is checked for shape alone.
 func (t *getTool) ParamSchema() map[string]any {
-	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			t.spec.paramName: map[string]any{
-				"type":        "string",
-				"description": t.spec.idDescription(),
-			},
-		},
-		"required":             []string{t.spec.paramName},
-		"additionalProperties": false,
+	property := agenttoolschema.IDText(t.spec.idDescription())
+	if _, typed := t.spec.resource.IDPrefix(); typed {
+		property = agenttoolschema.RecordIDText(t.spec.resource, t.spec.idDescription())
 	}
+
+	return idSchema(t.spec.paramName, property)
 }
 
 func (s getSpec) idDescription() string {
@@ -221,15 +221,10 @@ func specOfGet(tool serviceports.AgentQueryTool) getSpec {
 	return tool.(*getTool).spec //nolint:errcheck,forcetypeassert // constructed above
 }
 
-func idSchema(param, description string) map[string]any {
+func idSchema(param string, property map[string]any) map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			param: map[string]any{
-				"type":        "string",
-				"description": description,
-			},
-		},
+		"type":                 "object",
+		"properties":           map[string]any{param: property},
 		"required":             []string{param},
 		"additionalProperties": false,
 	}

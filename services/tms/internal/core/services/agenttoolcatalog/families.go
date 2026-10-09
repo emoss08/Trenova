@@ -57,6 +57,9 @@ var families = [...][]string{
 		"transition_items_to_in_review",
 	},
 	{"approve_billing_queue_items", "post_invoices", "send_invoices", "get_invoices"},
+	{"quote_shipment", "create_shipment", "duplicate_shipment"},
+	{"get_dispatch_board", "rank_move_candidates", "assign_move", "assign_move_to_carrier"},
+	{"list_invoice_runs", "get_invoice_run", "commit_invoice_run", "cancel_invoice_run"},
 }
 
 // indexFamilies maps each family member to the others, in family order.

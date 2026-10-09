@@ -125,6 +125,12 @@ type ThreadAttentionRow struct {
 	LastTurnStatus      conversation.AssistantTurnStatus
 }
 
+type WakeThreadRequest struct {
+	ThreadID   pulid.ID
+	UserID     pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
 type MarkThreadReadRequest struct {
 	ThreadID   pulid.ID
 	UserID     pulid.ID
@@ -137,6 +143,9 @@ type SearchMentionsRequest struct {
 	Query        string
 	Kinds        []string
 	LimitPerKind int
+	// Offset skips that many rows of each kind, for a list paging through
+	// one kind.
+	Offset int
 }
 
 type MentionRow struct {
@@ -186,6 +195,9 @@ type ConversationRepository interface {
 		req ListThreadAttentionRequest,
 	) (map[pulid.ID]ThreadAttentionRow, error)
 	MarkThreadRead(ctx context.Context, req MarkThreadReadRequest) error
+	// WakeThread ends a snooze the conversation is under, reporting whether
+	// there was one.
+	WakeThread(ctx context.Context, req *WakeThreadRequest) (bool, error)
 	CreateThread(ctx context.Context, thread *conversation.Thread) (*conversation.Thread, error)
 	GetThread(ctx context.Context, req GetThreadRequest) (*conversation.Thread, error)
 	// GetThreadOwned reads a thread within a tenant whoever owns it, so the

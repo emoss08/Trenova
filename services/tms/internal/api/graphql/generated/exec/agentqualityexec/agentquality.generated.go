@@ -1148,6 +1148,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
 			},
+			{
+				Name:      "worstRegression",
+				HasChild:  true,
+				ChildType: "AgentSuiteRun",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*services.AgentQualityOverview)
+					return obj.WorstRegression, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentqualityᚐSuiteRun),
+			},
 		}},
 		{Object: "AgentQualityPoint", Fields: []*gqlexec.Field{
 			{

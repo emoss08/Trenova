@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 // contractArguments is what a tool receives: the model's arguments with a
@@ -31,6 +32,32 @@ func contractArguments(
 	name string,
 	schema, args map[string]any,
 ) (map[string]any, []argumentAlias, error) {
+	contract, err := contractCall(validator, name, schema, args)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return contract.args, contract.aliases, nil
+}
+
+// argumentContract is what a tool receives and what was done to get there.
+type argumentContract struct {
+	args      map[string]any
+	aliases   []argumentAlias
+	coercions []argumentCoercion
+}
+
+// note is what the result tells the model about the call it sent, so the
+// next one is sent as the tool declares it.
+func (c argumentContract) note() string {
+	return argumentNote(c.aliases, c.coercions)
+}
+
+func contractCall(
+	validator *toolschema.Validator,
+	name string,
+	schema, args map[string]any,
+) (argumentContract, error) {
 	aliased, aliases := aliasArguments(schema, args)
 	if _, owned := aliased[serviceports.SelfScopeOwnerParam]; owned {
 		stripped := make(map[string]any, len(aliased)-1)
@@ -41,12 +68,21 @@ func contractArguments(
 		}
 		aliased = stripped
 	}
+	coerced, coercions := coerceArguments(schema, aliased)
 
-	if err := validator.ValidateFor(name, schema, aliased); err != nil {
-		return nil, nil, err
+	if err := validator.ValidateFor(name, schema, coerced); err != nil {
+		return argumentContract{}, err
+	}
+	if problems := idShapeProblems(schema, coerced); len(problems) > 0 {
+		multiErr := errortypes.NewMultiError()
+		for _, problem := range problems {
+			multiErr.Add(problem.Path, errortypes.ErrInvalid, problem.Message)
+		}
+
+		return argumentContract{}, multiErr
 	}
 
-	return aliased, aliases, nil
+	return argumentContract{args: coerced, aliases: aliases, coercions: coercions}, nil
 }
 
 type argumentAlias struct {
@@ -81,11 +117,111 @@ func argumentProblems(multiErr *errortypes.MultiError) []string {
 	return lines
 }
 
+// describedProblems is argumentProblems with what the tool wanted at each
+// path, read from the schema: the type, the allowed values and the
+// parameter's own description, which says where an id comes from. A
+// refusal that only said "got string, want integer" left the model to
+// guess what the parameter was for; one that names the parameter's shape
+// and source is answered by one corrected call.
+func describedProblems(multiErr *errortypes.MultiError, schema map[string]any) []string {
+	lines := make([]string, 0, len(multiErr.Errors))
+	for _, entry := range multiErr.Errors {
+		line := entry.Field + ": " + entry.Message
+		if expected := expectedAt(schema, entry.Field, entry.Message); expected != "" {
+			line += " (" + expected + ")"
+		}
+		lines = append(lines, line)
+	}
+	sort.Strings(lines)
+
+	return lines
+}
+
+// expectedAt says what the schema declares at a path. For a key the tool
+// does not take, it names the parameters it does, so the model picks one
+// instead of inventing another.
+func expectedAt(schema map[string]any, path, message string) string {
+	parent, property := propertyAt(schema, path)
+	if message == "This tool does not take this value" {
+		if names := propertyNames(parent); len(names) > 0 {
+			return "this tool takes: " + strings.Join(names, ", ")
+		}
+
+		return ""
+	}
+	if property == nil {
+		return ""
+	}
+
+	parts := make([]string, 0, 3)
+	if kind := toolschema.DeclaredType(property); kind != "" {
+		parts = append(parts, kind)
+	}
+	if values := toolschema.EnumValues(property); len(values) > 0 {
+		parts = append(parts, "one of "+strings.Join(values, ", "))
+	}
+	if description, _ := property["description"].(string); description != "" {
+		parts = append(parts, strings.TrimSpace(stringutils.FirstSentence(description)))
+	}
+
+	return strings.Join(parts, "; ")
+}
+
+// propertyAt walks a schema to a field path written as the validator writes
+// it, names joined by dots and indices in brackets, and returns the object
+// schema the field sits in and the field's own schema.
+func propertyAt(schema map[string]any, path string) (parent, property map[string]any) {
+	current := schema
+	segments := strings.Split(path, ".")
+	for idx, segment := range segments {
+		name := segment
+		indexed := false
+		if at := strings.Index(segment, "["); at >= 0 {
+			name = segment[:at]
+			indexed = true
+		}
+		properties, _ := current["properties"].(map[string]any)
+		next, ok := properties[name].(map[string]any)
+		if !ok {
+			return current, nil
+		}
+		if indexed {
+			items, _ := next["items"].(map[string]any)
+			next = items
+		}
+		if idx == len(segments)-1 {
+			return current, next
+		}
+		current = next
+	}
+
+	return current, nil
+}
+
+const maxNamedParameters = 16
+
+func propertyNames(schema map[string]any) []string {
+	properties, _ := schema["properties"].(map[string]any)
+	if len(properties) == 0 {
+		return nil
+	}
+	names := make([]string, 0, len(properties))
+	for name := range properties {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	if len(names) > maxNamedParameters {
+		names = append(names[:maxNamedParameters], "…")
+	}
+
+	return names
+}
+
 // argumentOutcome is the refusal a call gets when its arguments do not fit
 // the tool's schema. A schema that could not be compiled is the tool's
 // fault, not the model's, and is reported as a failure rather than a call
 // to fix.
-func argumentOutcome(name string, err error) toolOutcome {
+func argumentOutcome(name string, schema map[string]any, err error) toolOutcome {
 	var multiErr *errortypes.MultiError
 	if !errors.As(err, &multiErr) {
 		return refusedOutcome(
@@ -96,14 +232,12 @@ func argumentOutcome(name string, err error) toolOutcome {
 		)
 	}
 
-	problems := argumentProblems(multiErr)
-
 	return refusedOutcome(
 		aitrace.OutcomeInvalid,
-		strings.Join(problems, "; "),
-		"Tool %q was not run: its arguments do not fit the tool.\n- %s\n"+
-			"Fix the call and send it again.",
-		name, strings.Join(problems, "\n- "),
+		strings.Join(argumentProblems(multiErr), "; "),
+		"Tool %q was not run or proposed: its arguments do not fit the tool.\n- %s\n"+
+			"Fix the call and send it again, changing only what is named.",
+		name, strings.Join(describedProblems(multiErr, schema), "\n- "),
 	)
 }
 
@@ -240,5 +374,5 @@ func missingRequired(schema, properties, args map[string]any) []string {
 // argumentShape is a name with its spelling taken out: case, underscores and
 // hyphens, so shipment_id, ShipmentID and shipmentId read alike.
 func argumentShape(name string) string {
-	return strings.ToLower(strings.NewReplacer("_", "", "-", "").Replace(name))
+	return toolschema.NameShape(name)
 }

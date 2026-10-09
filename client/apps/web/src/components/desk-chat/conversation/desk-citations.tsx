@@ -2,6 +2,7 @@ import { describeActivity, groupActivity, type ToolStep } from "@/components/ass
 import { ArtifactKindIcon } from "@/components/assistant/voice/artifact-chrome";
 import { MarkdownLink } from "@/components/elements/ai-markdown";
 import type { AssistantArtifact, StepRationale } from "@/types/assistant";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import {
@@ -26,6 +27,9 @@ function stepDuration(step: ToolStep): string {
     ? `${step.durationSeconds.toFixed(1)}s`
     : `${Math.round(step.durationSeconds)}s`;
 }
+
+/** The dark-blue artifact badge's shape; its colours and motion live in desk-chat.css. */
+export const artifactBadgeClass = "h-5.5 gap-1.25 rounded-md pr-2 pl-1.5 font-medium";
 
 /** How far a popover keeps from the window's edges. */
 const EDGE = 12;
@@ -176,14 +180,15 @@ function StepSummary({
         </span>
       )}
       {artifact && (
-        <button
-          type="button"
-          className="dk-abadge dk-sm"
+        <Button
+          variant="bare"
+          size="bare"
+          className={cn("dk-abadge dk-sm mt-0.5 self-start text-xs", artifactBadgeClass)}
           onClick={() => onOpenArtifact(artifact.id)}
         >
           <ArtifactKindIcon kind={artifact.kind} className="dk-abadge-i" />
           {artifact.title}
-        </button>
+        </Button>
       )}
       {citation.step.why && <StepWhyToggle why={citation.step.why} />}
     </>
@@ -207,9 +212,10 @@ function StepWhyToggle({ why }: { why: StepRationale }) {
 
   return (
     <>
-      <button
-        type="button"
-        className={cn("dk-fnp-why", open && "dk-on")}
+      <Button
+        variant="bare"
+        size="bare"
+        className="mt-1.5 gap-1 text-xs font-medium text-dsk-subtle hover:text-dsk-fg aria-expanded:text-dsk-fg"
         aria-expanded={open}
         onClick={(event) => {
           event.stopPropagation();
@@ -218,7 +224,7 @@ function StepWhyToggle({ why }: { why: StepRationale }) {
       >
         <DeskIcon name="why" size={12} />
         {open ? t("Hide reasoning") : t("Why this step?")}
-      </button>
+      </Button>
       {open && <StepWhy rows={rows} />}
     </>
   );
@@ -270,16 +276,20 @@ function CitationNumber({
       onFocus={show}
       onBlur={hide}
     >
-      <button
-        type="button"
-        className={cn("dk-fn", place && "dk-hot")}
+      <Button
+        variant="bare"
+        size="bare"
+        className={cn(
+          "dk-fn ml-0.5 h-4 min-w-4 justify-center rounded-lg bg-dsk-sunken px-1 align-[2px] text-dsk-muted ring-1 ring-dsk-b-sub transition-all duration-160 ease-(--dk-ease) ring-inset hover:-translate-y-px hover:bg-dsk-fg hover:text-dsk-canvas hover:ring-0",
+          place && "-translate-y-px bg-dsk-fg text-dsk-canvas ring-0",
+        )}
         aria-label={
           group.citations.length > 1 ? t("Steps {0}", group.label) : t("Step {0}", first.n)
         }
         onClick={() => artifact && onOpenArtifact(artifact.id)}
       >
         {group.label}
-      </button>
+      </Button>
       {place && (
         <MarkPopoverLayer place={place}>
           <span

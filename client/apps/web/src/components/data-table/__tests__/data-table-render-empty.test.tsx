@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { DataTable } from "../data-table";
 import { DataTableEmptyState } from "../data-table-empty-state";
+import { seedDataTableQueries } from "@/test/data-table-queries";
 
 type TestRow = { id: string; name: string; amount: number };
 
@@ -42,15 +43,13 @@ vi.mock("@/hooks/use-permission", () => ({
     isLoading: false,
   }),
 }));
-vi.mock("@/hooks/data-table/use-data-table-query", () => ({
+vi.mock("@/hooks/data-table/use-data-table-query", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/hooks/data-table/use-data-table-query")>()),
   useDataTableQuery: () => ({ ...queryResult.current, error: null }),
 }));
-vi.mock("@/lib/queries", () => ({
+vi.mock("@/lib/queries", async () => ({
   queries: {
-    tableConfiguration: {
-      default: () => ({ queryKey: ["tableConfig-default"], queryFn: () => null }),
-      all: () => ({ queryKey: ["tableConfig-all"], queryFn: () => ({ results: [], count: 0 }) }),
-    },
+    ...(await import("@/test/data-table-queries")).dataTableQueryMocks,
   },
 }));
 vi.mock("@trenova/shared/hooks/use-debounce", () => ({
@@ -65,7 +64,7 @@ vi.mock("@/lib/data-table", async (importOriginal) => ({
 type Props = Partial<React.ComponentProps<typeof DataTable<TestRow>>>;
 
 function renderTable(props: Props = {}, searchParams = "", onUrlUpdate?: OnUrlUpdateFunction) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  const client = seedDataTableQueries(new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } }));
   render(
     <QueryClientProvider client={client}>
       <NuqsTestingAdapter hasMemory searchParams={searchParams} onUrlUpdate={onUrlUpdate}>

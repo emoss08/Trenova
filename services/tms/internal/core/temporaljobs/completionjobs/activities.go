@@ -60,6 +60,39 @@ func (a *Activities) TestAIProviderActivity(
 	return a.providers.RunTest(ctx, payload.Request)
 }
 
+// ListAIProviderModelsActivity asks an endpoint which models it serves.
+func (a *Activities) ListAIProviderModelsActivity(
+	ctx context.Context,
+	payload *ListAIProviderModelsPayload,
+) ([]serviceports.AIProviderModelOption, error) {
+	stop := modelcall.Heartbeat(ctx)
+	defer stop()
+
+	models, err := a.providers.RunListModels(ctx, payload.Request)
+	if err != nil {
+		return nil, modelcall.Classify(err)
+	}
+
+	return models, nil
+}
+
+// TestAIProviderDraftActivity probes an unsaved endpoint and records nothing.
+// Like a saved provider's test, a failed call is the result.
+func (a *Activities) TestAIProviderDraftActivity(
+	ctx context.Context,
+	payload *TestAIProviderDraftPayload,
+) (*serviceports.AIProviderDraftTestResult, error) {
+	stop := modelcall.Heartbeat(ctx)
+	defer stop()
+
+	result, err := a.providers.RunTestDraft(ctx, payload.Request)
+	if err != nil {
+		return nil, modelcall.Classify(err)
+	}
+
+	return result, nil
+}
+
 // WriteBriefingActivity writes a day's briefing for the roles asked for.
 func (a *Activities) WriteBriefingActivity(
 	ctx context.Context,

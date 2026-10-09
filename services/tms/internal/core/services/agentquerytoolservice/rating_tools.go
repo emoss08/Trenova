@@ -334,8 +334,14 @@ func (t *getRateAgreementTool) Description() string {
 }
 
 func (t *getRateAgreementTool) ParamSchema() map[string]any {
-	return idSchema("rateAgreementId", "The rate agreement's id, from list_rate_agreements, "+
-		"explain_rate or the page you are on.")
+	return idSchema(
+		"rateAgreementId",
+		agenttoolschema.RecordIDText(
+			permission.ResourceRateAgreement,
+			"The rate agreement's id, from list_rate_agreements, "+
+				"explain_rate or the page you are on.",
+		),
+	)
 }
 
 func (t *getRateAgreementTool) Policy() serviceports.ToolPolicy {

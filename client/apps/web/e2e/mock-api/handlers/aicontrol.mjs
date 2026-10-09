@@ -1,7 +1,6 @@
 // AI control: the GraphQL operations and REST routes /admin/agent-control sends.
 import {
   EVENT_KINDS,
-  EXTENSION_CATALOG,
   PROVIDER_CATALOG,
   ROLES,
   SHADOW_RECORDED,
@@ -890,7 +889,6 @@ export const AI_ROUTES = [
     },
   ],
   ["GET", /^\/api\/v1\/ai-providers\/catalog\/?$/, () => PROVIDER_CATALOG],
-  ["GET", /^\/api\/v1\/agent-extensions\/catalog\/?$/, () => EXTENSION_CATALOG],
   ["GET", /^\/api\/v1\/agent-definitions\/tools\/?$/, () => TOOL_CATALOG],
   ["GET", /^\/api\/v1\/agent-definitions\/event-kinds\/?$/, () => EVENT_KINDS],
 ];

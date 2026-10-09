@@ -28,6 +28,7 @@ export function AutoCompleteDateTimeField<T extends FieldValues>({
       render={({ field, fieldState }) => {
         return (
           <FieldWrapper
+            name={name}
             label={label}
             description={description}
             descriptionId={descriptionId}

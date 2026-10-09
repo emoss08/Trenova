@@ -15,7 +15,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/httpsafe"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -32,6 +34,7 @@ type Prober struct {
 	logger   *zap.Logger
 	cfg      *config.AIConfig
 	adapters *modeladapter.Registry
+	prices   services.ModelPriceReference
 
 	clientsMu sync.Mutex
 	clients   map[bool]*http.Client
@@ -42,6 +45,7 @@ type ProberParams struct {
 
 	Logger *zap.Logger
 	Config *config.Config
+	Prices services.ModelPriceReference `optional:"true"`
 }
 
 func NewProber(p ProberParams) *Prober {
@@ -49,6 +53,7 @@ func NewProber(p ProberParams) *Prober {
 		logger:   p.Logger.Named("service.aiprovider.prober"),
 		cfg:      p.Config.GetAIConfig(),
 		adapters: modeladapter.NewRegistry(),
+		prices:   p.Prices,
 		clients:  make(map[bool]*http.Client, 2),
 	}
 }
@@ -151,6 +156,7 @@ func (p *Prober) Probe(
 			ModelIdentifier: resp.ModelIdentifier,
 			LatencyMS:       latency,
 			Detail:          emptyReplyAdvice(resp),
+			Hint:            emptyReplyHint(resp),
 		}
 	}
 
@@ -172,6 +178,7 @@ func (p *Prober) unreachable(err error, latency int64) *services.TestAIProviderR
 			Success:   false,
 			Message:   "The endpoint did not answer in time",
 			LatencyMS: latency,
+			Hint:      "Try again once the model has loaded, or raise the timeout",
 			Detail: fmt.Sprintf(
 				"No response within %s. The test asks the model for a short reply, so a "+
 					"queued free tier or a model still loading can exceed it while the "+
@@ -187,6 +194,39 @@ func (p *Prober) unreachable(err error, latency int64) *services.TestAIProviderR
 		Message:   "Could not reach the endpoint",
 		LatencyMS: latency,
 		Detail:    err.Error(),
+		Hint:      transportHint(err),
+	}
+}
+
+// transportHint names the setting a failed call points at.
+func transportHint(err error) string {
+	var failure services.ProviderFailure
+	if !errors.As(err, &failure) {
+		return "Check the base URL, and that this server can reach that address"
+	}
+
+	switch status := failure.ProviderStatus(); {
+	case status == http.StatusUnauthorized, status == http.StatusForbidden:
+		return "Check the API key: the endpoint refused it"
+	case status == http.StatusNotFound:
+		return "Check the base URL and the model ID: the endpoint has no such path or model"
+	case status == http.StatusTooManyRequests:
+		return "The endpoint is limiting this key; try again shortly"
+	case status >= http.StatusInternalServerError:
+		return "The endpoint failed on its side; try again shortly"
+	default:
+		return ""
+	}
+}
+
+func emptyReplyHint(resp *modeladapter.Response) string {
+	switch {
+	case resp.ReasoningTokens > 0:
+		return "Lower the reasoning effort, or raise max tokens"
+	case resp.Truncated:
+		return "Raise max tokens"
+	default:
+		return "Check the model ID"
 	}
 }
 
@@ -223,6 +263,7 @@ func (p *Prober) evaluate(
 		result.SchemaHonoured = false
 		result.Message = "Connected, but the reply could not be read as JSON"
 		result.Detail = p.schemaAdvice(provider)
+		result.Hint = schemaHint(provider)
 
 		return result
 	}
@@ -231,6 +272,7 @@ func (p *Prober) evaluate(
 		result.SchemaHonoured = false
 		result.Message = "Connected, but the reply did not match the requested shape"
 		result.Detail = p.schemaAdvice(provider)
+		result.Hint = schemaHint(provider)
 
 		return result
 	}
@@ -290,6 +332,14 @@ func (p *Prober) schemaAdvice(provider *aiprovider.Provider) string {
 	default:
 		return ""
 	}
+}
+
+func schemaHint(provider *aiprovider.Provider) string {
+	if provider.StructuredOutputMode == aiprovider.StructuredOutputPrompted {
+		return "Use a larger or instruction-tuned model"
+	}
+
+	return "Set structured output to Prompted"
 }
 
 func (p *Prober) clientFor(provider *aiprovider.Provider) *http.Client {
@@ -362,6 +412,7 @@ func (p *Prober) probeEmbedding(
 			Message:   "Connected, but the model returned a different dimension than configured",
 			LatencyMS: latency,
 			Detail:    err.Error(),
+			Hint:      "Set the embedding size to the one this model returns",
 		}
 	case errors.Is(err, services.ErrEmbeddingResponseInvalid):
 		return &services.TestAIProviderResult{
@@ -373,4 +424,121 @@ func (p *Prober) probeEmbedding(
 	default:
 		return p.unreachable(err, latency)
 	}
+}
+
+// ListModels asks the endpoint which models it serves. A failure is a
+// refusal a person can act on, named by what it points at.
+func (p *Prober) ListModels(
+	ctx context.Context,
+	provider *aiprovider.Provider,
+	apiKey string,
+) ([]services.AIProviderModelOption, error) {
+	ctx, cancel := context.WithTimeout(ctx, p.cfg.GetProbeTimeout())
+	defer cancel()
+
+	models, err := modeladapter.ListModels(ctx, &modeladapter.ModelsCall{
+		Provider: provider,
+		APIKey:   apiKey,
+		Client:   p.clientFor(provider),
+	})
+	if err != nil {
+		return nil, modelListError(err)
+	}
+
+	options := make([]services.AIProviderModelOption, 0, len(models))
+	for idx := range models {
+		options = append(options, modelOption(&models[idx]))
+	}
+	p.estimateMissingPrices(ctx, provider.Kind, options)
+
+	return options, nil
+}
+
+// estimateMissingPrices fills the price of each model its provider lists none
+// for from the price reference, marked as an estimate. A price the provider
+// gave is never replaced.
+func (p *Prober) estimateMissingPrices(
+	ctx context.Context,
+	kind aiprovider.Kind,
+	options []services.AIProviderModelOption,
+) {
+	if p.prices == nil {
+		return
+	}
+
+	missing := make([]string, 0, len(options))
+	for idx := range options {
+		if options[idx].InputCostPerMillion == nil {
+			missing = append(missing, options[idx].ID)
+		}
+	}
+	if len(missing) == 0 {
+		return
+	}
+
+	estimates := p.prices.Prices(ctx, kind, missing)
+	for idx := range options {
+		option := &options[idx]
+		estimate, ok := estimates[option.ID]
+		if !ok || option.InputCostPerMillion != nil {
+			continue
+		}
+		input := estimate.InputCostPerMillion
+		option.InputCostPerMillion = &input
+		option.OutputCostPerMillion = estimate.OutputCostPerMillion
+		option.PriceSource = services.ModelPriceSourceOpenRouter
+	}
+}
+
+func modelOption(model *modeladapter.ModelInfo) services.AIProviderModelOption {
+	option := services.AIProviderModelOption{
+		ID:                   model.ID,
+		DisplayName:          stringutils.FirstNonEmptyTrimmed(model.DisplayName, model.ID),
+		Loaded:               model.Loaded,
+		Embedding:            model.Embedding,
+		InputCostPerMillion:  model.InputCostPerMillion,
+		OutputCostPerMillion: model.OutputCostPerMillion,
+	}
+	if model.InputCostPerMillion != nil {
+		option.PriceSource = services.ModelPriceSourceProvider
+	}
+	if model.ContextWindow > 0 {
+		window := model.ContextWindow
+		option.ContextWindow = &window
+	}
+	if model.SizeBytes > 0 {
+		size := model.SizeBytes
+		option.SizeBytes = &size
+	}
+	if model.CreatedAt > 0 {
+		created := model.CreatedAt
+		option.CreatedAt = &created
+	}
+
+	return option
+}
+
+func modelListError(err error) error {
+	refusal := errortypes.NewBusinessError(modelListMessage(err)).WithInternal(err)
+	refusal.Details = err.Error()
+
+	return refusal
+}
+
+func modelListMessage(err error) string {
+	if isTimeout(err) {
+		return "The endpoint did not list its models in time"
+	}
+
+	var failure services.ProviderFailure
+	if errors.As(err, &failure) {
+		switch failure.ProviderStatus() {
+		case http.StatusUnauthorized, http.StatusForbidden:
+			return "The endpoint refused the API key"
+		case http.StatusNotFound, http.StatusMethodNotAllowed:
+			return "This endpoint does not list its models; type the model ID instead"
+		}
+	}
+
+	return "Could not reach the endpoint to list its models"
 }

@@ -52,6 +52,7 @@ var _ fiscalPeriodKeeper = (*fiscalperiodservice.Service)(nil)
 
 type fiscalPeriodMove struct {
 	name        string
+	recipe      []string
 	transition  fiscalperiodservice.Transition
 	operation   permission.Operation
 	description string
@@ -62,7 +63,12 @@ type fiscalPeriodMove struct {
 
 func closeFiscalPeriodMove() *fiscalPeriodMove {
 	return &fiscalPeriodMove{
-		name:       "close_fiscal_period",
+		name: "close_fiscal_period",
+		recipe: []string{
+			"list_fiscal_periods",
+			"get_fiscal_close_blockers",
+			"close_fiscal_period",
+		},
 		transition: fiscalperiodservice.TransitionClose,
 		operation:  permission.OpClose,
 		description: "Propose closing a fiscal period once get_fiscal_close_blockers shows " +
@@ -76,7 +82,12 @@ func closeFiscalPeriodMove() *fiscalPeriodMove {
 
 func lockFiscalPeriodMove() *fiscalPeriodMove {
 	return &fiscalPeriodMove{
-		name:       "lock_fiscal_period",
+		name: "lock_fiscal_period",
+		recipe: []string{
+			"list_fiscal_periods",
+			"get_fiscal_close_blockers",
+			"lock_fiscal_period",
+		},
 		transition: fiscalperiodservice.TransitionLock,
 		operation:  permission.OpLock,
 		description: "Propose locking an open fiscal period while its books are " +
@@ -232,6 +243,7 @@ func newFiscalPeriodTool(
 ) serviceports.AgentTool {
 	return newReceivableTool(ledgerMoneySpec(&receivableSpec{
 		name:        move.name,
+		recipe:      move.recipe,
 		description: move.description,
 		resource:    permission.ResourceFiscalPeriod,
 		operation:   move.operation,

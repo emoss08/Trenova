@@ -1,11 +1,8 @@
-import { centsToDecimal, decimalToCents } from "@/lib/decimal-cents";
 import type {
   AIRetrievalAvailability,
   AIRetrievalFailedEntryRow,
   AIRetrievalModelChange,
   AIRetrievalReindexEstimate,
-  AIRetrievalSettings,
-  AIRetrievalSettingsPatch,
   AIRetrievalSource,
   AIRetrievalSourceType,
   AIRetrievalStatus,
@@ -13,8 +10,6 @@ import type {
 } from "@/lib/graphql/ai-retrieval";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { BadgeAttrProps } from "@trenova/shared/lib/status-phase";
-import { z } from "zod";
-import { translate } from "@trenova/shared/i18n/runtime";
 
 /** The index moves with the indexer, a batch at a time; half a minute old is still true. */
 export const RETRIEVAL_STALE_MS = 30_000;
@@ -373,61 +368,6 @@ export function estimateExceedsBudget(estimate: AIRetrievalReindexEstimate): boo
   return Number.isFinite(cost) && Number.isFinite(remaining) && cost > remaining;
 }
 
-export const retrievalSettingsSchema = z.object({
-  memoryEnabled: z.boolean(),
-  documentsEnabled: z.boolean(),
-  inboundMessagesEnabled: z.boolean(),
-  paused: z.boolean(),
-  monthlyIndexingBudgetCents: z
-    .number()
-    .int()
-    .min(0, { error: () => translate("A budget cannot be negative") })
-    .max(10_000_000, { error: () => translate("A budget is at most 100,000") }),
-});
-
-export type RetrievalSettingsFormValues = z.infer<typeof retrievalSettingsSchema>;
-
-/** What the settings form starts from: the saved settings, in the units a person edits. */
-export function toSettingsFormValues(settings: AIRetrievalSettings): RetrievalSettingsFormValues {
-  return {
-    memoryEnabled: settings.memoryEnabled,
-    documentsEnabled: settings.documentsEnabled,
-    inboundMessagesEnabled: settings.inboundMessagesEnabled,
-    paused: settings.paused && settings.pausedReason === "Manual",
-    monthlyIndexingBudgetCents: decimalToCents(settings.monthlyIndexingBudgetUsd),
-  };
-}
-
-/**
- * Only what the person changed. The server leaves an absent field alone, so
- * saving one switch never overwrites a budget someone else raised meanwhile,
- * and a budget pause is not lifted by a form that never touched pausing.
- */
-export function toSettingsPatch(
-  values: RetrievalSettingsFormValues,
-  initial: RetrievalSettingsFormValues,
-): AIRetrievalSettingsPatch {
-  const patch: AIRetrievalSettingsPatch = {};
-
-  if (values.memoryEnabled !== initial.memoryEnabled) {
-    patch.memoryEnabled = values.memoryEnabled;
-  }
-  if (values.documentsEnabled !== initial.documentsEnabled) {
-    patch.documentsEnabled = values.documentsEnabled;
-  }
-  if (values.inboundMessagesEnabled !== initial.inboundMessagesEnabled) {
-    patch.inboundMessagesEnabled = values.inboundMessagesEnabled;
-  }
-  if (values.paused !== initial.paused) {
-    patch.paused = values.paused;
-  }
-  if (values.monthlyIndexingBudgetCents !== initial.monthlyIndexingBudgetCents) {
-    patch.monthlyIndexingBudgetUsd = centsToDecimal(values.monthlyIndexingBudgetCents);
-  }
-
-  return patch;
-}
-
 /** The settings field that turns a source on or off. */
 export const SOURCE_SETTING: Record<
   AIRetrievalSourceType,
@@ -437,3 +377,70 @@ export const SOURCE_SETTING: Record<
   Document: "documentsEnabled",
   InboundMessage: "inboundMessagesEnabled",
 };
+
+/** What Nova says heads the tab: nothing routed, paused, indexing, or caught up. */
+export type RetrievalSentence =
+  | { kind: "unrouted"; waiting: number }
+  | { kind: "paused"; budget: boolean }
+  | { kind: "indexing"; model: string; waiting: number }
+  | { kind: "done"; model: string; failed: number };
+
+export function retrievalSentence(status: AIRetrievalStatus): RetrievalSentence {
+  const totals = retrievalTotals(status.sources);
+  const reason = status.availability.reason;
+  const model = status.settings.activeModelKey ?? status.configuredModelKey ?? "";
+
+  if (reason === "NoProvider" || (!status.settings.activeModelKey && !status.configuredModelKey)) {
+    const waiting = status.sources
+      .filter((source) => source.enabled)
+      .reduce((sum, source) => sum + Math.max(0, source.total - source.skipped), 0);
+    return { kind: "unrouted", waiting };
+  }
+  if (status.settings.paused || reason === "Disabled" || reason === "BudgetPaused") {
+    return {
+      kind: "paused",
+      budget: reason === "BudgetPaused" || status.settings.pausedReason === "Budget",
+    };
+  }
+  if (totals.waiting > 0) {
+    return { kind: "indexing", model, waiting: totals.waiting };
+  }
+
+  return { kind: "done", model, failed: totals.failed };
+}
+
+/** A source's state as the tag beside its name is coloured. */
+export const SOURCE_STATE_TONE: Record<SourceState, string> = {
+  off: "",
+  paused: "w",
+  pending: "b",
+  indexing: "b",
+  indexed: "k",
+  failed: "d",
+};
+
+/** A source's bar: the share indexed, failed and skipped of everything it holds. */
+export function sourceShares(source: AIRetrievalSource): {
+  indexed: number;
+  failed: number;
+  skipped: number;
+} {
+  const total = Math.max(1, source.total);
+
+  return {
+    indexed: (source.indexed / total) * 100,
+    failed: (source.failed / total) * 100,
+    skipped: (source.skipped / total) * 100,
+  };
+}
+
+/** A budget typed in dollars, in cents; null when it is not a budget the server takes. */
+export function parseBudgetCents(text: string): number | null {
+  const cleaned = text.replace(/[$,\s]/g, "");
+  if (!/^\d+(\.\d{0,2})?$/.test(cleaned)) {
+    return null;
+  }
+  const cents = Math.round(Number(cleaned) * 100);
+
+  return cents <= 10_000_000 ? cents : null;
+}

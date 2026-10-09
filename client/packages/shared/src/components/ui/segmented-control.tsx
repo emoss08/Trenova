@@ -144,7 +144,7 @@ export function SegmentedControl<TValue extends string>({
       aria-label={props["aria-label"]}
       onKeyDown={handleKeyDown}
       className={cn(
-        "relative isolate flex items-stretch gap-0.5 rounded-lg bg-muted/60 p-0.5",
+        "border-border relative isolate flex items-stretch gap-0.5 rounded-lg border bg-muted/10 p-0.5",
         fullWidth ? "w-full" : "w-fit",
         className,
       )}
@@ -152,7 +152,7 @@ export function SegmentedControl<TValue extends string>({
       {indicator && (
         <m.div
           aria-hidden
-          className="absolute inset-y-0.5 left-0 -z-10 rounded-md bg-background ring-1 ring-border/60"
+          className="absolute inset-y-0.5 left-0 -z-10 rounded-md bg-field"
           initial={false}
           animate={{ x: indicator.left, width: indicator.width }}
           transition={INDICATOR_TRANSITION}

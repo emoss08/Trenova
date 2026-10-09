@@ -26,7 +26,7 @@ import {
 } from "./comments-toolbar";
 import { PinnedStrip } from "./pinned-strip";
 import { TypingIndicator } from "./typing-indicator";
-import { ViewersStack } from "./viewers-stack";
+import { ViewersStack } from "@/components/presence/viewers-stack";
 
 export default function ShipmentCommentsTab({ shipmentId }: { shipmentId: string }) {
   const t = useT();

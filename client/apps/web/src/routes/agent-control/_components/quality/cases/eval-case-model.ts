@@ -317,7 +317,7 @@ export const evalCaseFormSchema = z
       .string()
       .trim()
       .max(200, { error: () => translate("Keep the title to 200 characters") }),
-    trigger: z.enum(["Chat", "Continuous", "Event", "Manual", "Scheduled"]),
+    trigger: z.enum(["Chat", "Continuous", "Event", "Manual", "Scheduled", "Wait"]),
     input: z
       .string()
       .trim()

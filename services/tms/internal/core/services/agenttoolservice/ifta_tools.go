@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/iftaservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -300,6 +301,7 @@ func iftaReturnIDFrom(params *serviceports.ToolExecuteParams) (pulid.ID, error) 
 func newRecomputeIFTAReturnTool(returns iftaReturnKeeper) serviceports.AgentTool {
 	return newReceivableTool(iftaInternalSpec(&receivableSpec{
 		name:        "recompute_ifta_return",
+		recipe:      []string{"list_ifta_returns", "recompute_ifta_return"},
 		searchTerms: []string{"refresh draft return", "recompute after corrections"},
 		description: "Recompute a draft IFTA return from the miles, purchases and tax rates " +
 			"on file now, after purchases or mileage were corrected. Only a draft can be " +
@@ -509,7 +511,7 @@ func iftaMileageProperties(forCorrection bool) map[string]any {
 			"list_tractors."+keep, 0),
 		paramJurisdictionID: stringProperty("The state or province the miles were driven in, "+
 			"from list_ifta_jurisdictions."+keep, 0),
-		paramTraveledAt: dateTimeProperty("When the miles were driven; it decides the " +
+		paramTraveledAt: agenttoolschema.DateTime("When the miles were driven; it decides the " +
 			"quarter they count in." + keep),
 		paramMiles: stringProperty("The miles as a decimal such as 212.5."+keep, 0),
 		paramLoaded: booleanProperty("Whether the tractor was loaded. Defaults to true." +

@@ -21,6 +21,7 @@ import { conversationPath } from "@/lib/conversation-path";
 import type { ProposalPreview as ProposalPreviewData } from "@/lib/graphql/agent-preview";
 import { agentRunPath } from "@/lib/record-paths";
 import { formatTimeAgo } from "@/lib/time-utils";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
@@ -120,9 +121,10 @@ function RawArguments({ value }: { value: unknown }) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button
-        type="button"
-        className="dk-dc2-raw"
+      <Button
+        variant="bare"
+        size="bare"
+        className="mt-4 gap-1.5 text-sm text-dsk-subtle hover:text-dsk-fg"
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
       >
@@ -133,7 +135,7 @@ function RawArguments({ value }: { value: unknown }) {
           <DeskIcon name="chevR" size={10} stroke={2.4} />
         </span>
         {t("Arguments the agent sent")}
-      </button>
+      </Button>
       {open && <pre className="dk-dc2-pre">{JSON.stringify(value, null, 2)}</pre>}
     </>
   );

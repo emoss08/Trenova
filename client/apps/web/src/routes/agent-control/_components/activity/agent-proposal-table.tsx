@@ -7,7 +7,7 @@ import {
 } from "@/lib/graphql/agent-activity-tables";
 import { decideAgentProposal } from "@/lib/graphql/agent-decisions";
 import { invalidateAIControlCounts } from "../overview/use-ai-control-stats";
-import type { Row, RowAction } from "@trenova/shared/types/data-table";
+import type { RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { invalidateProposalViews } from "@/lib/proposal-cache";
 import { useQueryClient } from "@tanstack/react-query";
@@ -18,6 +18,7 @@ import { ProposalEditor, type ProposalEditorRequest } from "@/components/assista
 import { presentProposal } from "@/components/assistant/proposal-presenters";
 import type { AssistantProposal } from "@/types/assistant";
 import { getProposalColumns } from "./agent-proposal-columns";
+import { ProposalActionsContext, ProposalPanel, type ProposalActions } from "./proposal-sheet";
 import { ReasonDialog, type ReasonDialogRequest } from "./reason-dialog";
 
 export default function AgentProposalTable() {
@@ -39,11 +40,10 @@ export default function AgentProposalTable() {
   };
 
   const decide = (
-    row: Row<AgentProposalRow>,
+    proposal: AgentProposalRow,
     decision: "Accepted" | "Rejected",
     initialReason?: string,
   ) => {
-    const proposal = row.original;
     const accepting = decision === "Accepted";
 
     setDialog({
@@ -51,7 +51,7 @@ export default function AgentProposalTable() {
       // A write the preview says would be refused is turned down with its
       // reasons rather than approved: the approval closes and the rejection
       // opens with them written.
-      onAskAgent: accepting ? (reason) => decide(row, "Rejected", reason) : undefined,
+      onAskAgent: accepting ? (reason) => decide(proposal, "Rejected", reason) : undefined,
       title: accepting ? t("Approve this change?") : t("Reject this change?"),
       description: accepting
         ? t(
@@ -81,8 +81,7 @@ export default function AgentProposalTable() {
   // The values open as a form built from the tool's schema. Only real
   // changes are sent; the server validates them against the tool before it
   // records the decision, and runs the tool with them.
-  const modify = (row: Row<AgentProposalRow>) => {
-    const proposal = row.original;
+  const modify = (proposal: AgentProposalRow) => {
     const args = (proposal.toolParams ?? {}) as Record<string, unknown>;
     setEditor({
       summary: presentProposal({
@@ -110,14 +109,14 @@ export default function AgentProposalTable() {
       id: "approve",
       label: t("Approve"),
       icon: CheckIcon,
-      onClick: (row) => decide(row, "Accepted"),
+      onClick: (row) => decide(row.original, "Accepted"),
       hidden: (row) => !canDecide || row.original.status !== "Pending",
     },
     {
       id: "modify",
       label: t("Approve with changes"),
       icon: Edit02Icon,
-      onClick: modify,
+      onClick: (row) => modify(row.original),
       hidden: (row) =>
         !canDecide ||
         row.original.status !== "Pending" ||
@@ -128,13 +127,20 @@ export default function AgentProposalTable() {
       label: t("Reject"),
       icon: XCloseIcon,
       variant: "destructive",
-      onClick: (row) => decide(row, "Rejected"),
+      onClick: (row) => decide(row.original, "Rejected"),
       hidden: (row) => !canDecide || row.original.status !== "Pending",
     },
   ];
 
+  const actions: ProposalActions = {
+    canDecide,
+    approve: (proposal) => decide(proposal, "Accepted"),
+    modify,
+    reject: (proposal) => decide(proposal, "Rejected"),
+  };
+
   return (
-    <>
+    <ProposalActionsContext.Provider value={actions}>
       <DataTable<AgentProposalRow>
         name="Agent Proposal"
         emptyTitle={t("No agent proposals yet")}
@@ -144,11 +150,13 @@ export default function AgentProposalTable() {
         columns={columns}
         contextMenuActions={contextMenuActions}
         enableCreateAction={false}
+        enableReadOnlyPanel
+        TablePanel={ProposalPanel}
         refetchIntervalMs={30_000}
         initialColumnVisibility={{ runId: false }}
       />
       <ReasonDialog request={dialog} onClose={() => setDialog(null)} />
       <ProposalEditor request={editor} onClose={() => setEditor(null)} />
-    </>
+    </ProposalActionsContext.Provider>
   );
 }

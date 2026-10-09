@@ -124,7 +124,8 @@ func trainingToolProviders() []any {
 }
 
 func trainingIDProperty() map[string]any {
-	return idProperty("The training assignment, from list_worker_training. Never guess one.")
+	return agenttoolschema.RecordID(permission.ResourceWorkerTraining, "The training assignment",
+		"list_worker_training")
 }
 
 func trainingRecord(record *worker.WorkerTrainingRecord) toolpreview.Record {
@@ -227,11 +228,15 @@ func newAssignWorkerTrainingTool(training trainingKeeper) serviceports.AgentTool
 		permission.ResourceWorkerTraining,
 		permission.OpAssign,
 	), map[string]any{
-		paramTrainingWorkers: idListProperty("The workers, from search_worker or "+
-			"list_workers.", maxTrainingWorkers),
-		paramCourseIDs: idListProperty("The courses, from list_training_courses.",
+		paramTrainingWorkers: agenttoolschema.RecordIDs(
+			permission.ResourceWorker,
+			"The workers, from search_worker or "+
+				"list_workers.",
+			maxTrainingWorkers,
+		),
+		paramCourseIDs: agenttoolschema.IDList("The courses, from list_training_courses.",
 			maxTrainingCourses),
-		wfParamDueDate: dayProperty("When it is due, when not the course's own schedule."),
+		wfParamDueDate: agenttoolschema.Date("When it is due, when not the course's own schedule."),
 		fieldNotes:     wfNoteProperty("Anything the assignment should say."),
 	}, paramTrainingWorkers, paramCourseIDs)
 	spec.egress = agent.EgressDriverVisible
@@ -415,9 +420,11 @@ func newRecordTrainingCompletionTool(training trainingKeeper) serviceports.Agent
 	), map[string]any{
 		paramTrainingID: trainingIDProperty(),
 		paramWorkerID:   workerProperty(),
-		paramCourseID:   idProperty("The course, from list_training_courses."),
-		paramCompletedAt: dayProperty("The day it was finished. Defaults to today; never a " +
-			"day to come."),
+		paramCourseID:   agenttoolschema.IDText("The course, from list_training_courses."),
+		paramCompletedAt: agenttoolschema.Date(
+			"The day it was finished. Defaults to today; never a " +
+				"day to come.",
+		),
 		paramScore:      amountProperty("The score, such as 92, for a scored course."),
 		wfParamDocument: wfDocumentProperty(),
 		fieldNotes:      wfNoteProperty("Anything the record should say."),

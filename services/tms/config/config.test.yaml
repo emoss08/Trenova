@@ -86,3 +86,7 @@ aiAudit:
 # makes an accidental real render fail loudly instead of reaching out.
 renderer:
   gotenbergUrl: ""
+
+# AI: no outside calls from tests
+ai:
+  modelPriceReference: false

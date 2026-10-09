@@ -189,10 +189,12 @@ type anthropicBlock struct {
 
 	// thinking and redacted_thinking. The signature is the provider's proof
 	// that the block is its own; a tool result replayed without it is refused.
-	Thinking  string `json:"thinking,omitempty"`
-	Signature string `json:"signature,omitempty"`
-	Data      string `json:"data,omitempty"`
-	IsError   bool   `json:"is_error,omitempty"`
+	// Thinking is a pointer because a thinking block must carry the field even
+	// when its summary came back empty, and every other block must omit it.
+	Thinking  *string `json:"thinking,omitempty"`
+	Signature string  `json:"signature,omitempty"`
+	Data      string  `json:"data,omitempty"`
+	IsError   bool    `json:"is_error,omitempty"`
 }
 
 type anthropicTool struct {
@@ -475,7 +477,8 @@ func (a anthropicAdapter) Stream(
 		case "text":
 			block.Text = streamed.text.String()
 		case "thinking":
-			block.Thinking = streamed.thinking.String()
+			thinking := streamed.thinking.String()
+			block.Thinking = &thinking
 		case "tool_use":
 			if raw := streamed.input.String(); strings.TrimSpace(raw) != "" {
 				block.Input, block.InputError = decodeArguments(raw)
@@ -515,7 +518,9 @@ func anthropicReasoning(blocks []anthropicBlock) *ReasoningTrace {
 		switch block.Type {
 		case "thinking":
 			found = true
-			text.WriteString(block.Thinking)
+			if block.Thinking != nil {
+				text.WriteString(*block.Thinking)
+			}
 			trace.Signature = stringutils.FirstNonEmpty(trace.Signature, block.Signature)
 		case "redacted_thinking":
 			found = true
@@ -541,7 +546,7 @@ func replayThinking(trace *ReasoningTrace) []anthropicBlock {
 	if trace.Signature != "" {
 		blocks = append(blocks, anthropicBlock{
 			Type:      "thinking",
-			Thinking:  trace.Text,
+			Thinking:  &trace.Text,
 			Signature: trace.Signature,
 		})
 	}

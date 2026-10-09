@@ -168,13 +168,29 @@ func idsOf(value any) []string {
 // ForModel is the schema as a model is shown it: a copy without the
 // extension keywords ("x-…") this package reads for people. A provider that
 // validates tool schemas strictly refuses a keyword it does not know, and
-// none of them means anything to a model.
+// none of them means anything to a model. Everything else, a date's format
+// and examples included, is JSON Schema that Anthropic and OpenAI's own
+// endpoints take as it is.
 func ForModel(schema map[string]any) map[string]any {
 	if schema == nil {
 		return nil
 	}
 
-	return stripSchema(schema)
+	return stripSchema(schema, false)
+}
+
+// ForPortableModel is ForModel for a server that speaks OpenAI's protocol
+// without being OpenAI, Gemini's compatible endpoint and Ollama among them:
+// it also leaves out examples, which Gemini's schema has no keyword for, and
+// the local-date-time format, which is this package's own and no server
+// knows. The shape is said in the parameter's description either way, and
+// the runtime asserts the format on the tool's own schema.
+func ForPortableModel(schema map[string]any) map[string]any {
+	if schema == nil {
+		return nil
+	}
+
+	return stripSchema(schema, true)
 }
 
 // nameMaps are the keywords whose value maps names to schemas: the names are
@@ -187,42 +203,55 @@ var nameMaps = map[string]struct{}{
 	"dependentSchemas":  {},
 }
 
-func stripSchema(schema map[string]any) map[string]any {
+func stripSchema(schema map[string]any, portable bool) map[string]any {
 	out := make(map[string]any, len(schema))
 	for key, value := range schema {
-		if strings.HasPrefix(key, extensionPrefix) {
+		if strings.HasPrefix(key, extensionPrefix) || (portable && unportable(key, value)) {
 			continue
 		}
 		if _, named := nameMaps[key]; named {
 			if children, ok := value.(map[string]any); ok {
-				out[key] = stripNamed(children)
+				out[key] = stripNamed(children, portable)
 
 				continue
 			}
 		}
-		out[key] = stripValue(value)
+		out[key] = stripValue(value, portable)
 	}
 
 	return out
 }
 
-func stripNamed(children map[string]any) map[string]any {
+func unportable(key string, value any) bool {
+	switch key {
+	case KeyExamples:
+		return true
+	case KeyFormat:
+		format, _ := value.(string)
+
+		return format == FormatLocalDateTime
+	default:
+		return false
+	}
+}
+
+func stripNamed(children map[string]any, portable bool) map[string]any {
 	out := make(map[string]any, len(children))
 	for name, child := range children {
-		out[name] = stripValue(child)
+		out[name] = stripValue(child, portable)
 	}
 
 	return out
 }
 
-func stripValue(value any) any {
+func stripValue(value any, portable bool) any {
 	switch typed := value.(type) {
 	case map[string]any:
-		return stripSchema(typed)
+		return stripSchema(typed, portable)
 	case []any:
 		out := make([]any, 0, len(typed))
 		for _, item := range typed {
-			out = append(out, stripValue(item))
+			out = append(out, stripValue(item, portable))
 		}
 
 		return out

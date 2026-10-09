@@ -343,7 +343,12 @@ func (r *artifactRecorder) attachMessages(index map[string]pulid.ID) {
 // keepLinked drops the views of lookups the reply did not point to. A lookup
 // is how the agent finds things out; its result is worth a place beside the
 // conversation only when the reply uses it to answer. Documents, drafts,
-// plans and decision requests were made on purpose and always stay.
+// plans and decision requests were made on purpose and always stay, and so
+// does a table the reply was told to point to rather than reprint: a long
+// list, a ranking, a queue to work from or a live view. A model that
+// summarized sixty shipments and forgot the link used to lose the table
+// with the summary; the reader draws a badge for a kept table the reply
+// did not name, so keeping it costs nothing.
 func (r *artifactRecorder) keepLinked(linked map[string]bool) {
 	if r == nil {
 		return
@@ -352,6 +357,9 @@ func (r *artifactRecorder) keepLinked(linked map[string]bool) {
 	var unused []pulid.ID
 	for _, artifact := range r.recorded {
 		if !assistantartifact.IsLookup(artifact.Kind) || linked[artifact.ID.String()] {
+			continue
+		}
+		if mustBePointedTo(artifact) {
 			continue
 		}
 		unused = append(unused, artifact.ID)
@@ -532,11 +540,29 @@ func shownArtifact(artifact *assistantartifact.Artifact) *services.ShownArtifact
 		ID:         artifact.ID,
 		Kind:       string(artifact.Kind),
 		Title:      artifact.Title,
+		Labels:     tableLabels(artifact),
 		Rows:       int(numberOf(artifact.Payload, "rowCount")),
 		Actionable: actionableTable(artifact),
 		Opens:      opensView(artifact),
 		Ranked:     rankedTable(artifact),
 	}
+}
+
+// mustBePointedTo is a lookup the model was told to point to rather than
+// reprint (shownNote's opens, actionable, ranked and long-table branches),
+// which stays beside the conversation whether or not the reply managed the
+// link.
+func mustBePointedTo(artifact *assistantartifact.Artifact) bool {
+	shown := shownArtifact(artifact)
+	if shown.Opens || shown.Actionable || shown.Ranked {
+		return true
+	}
+
+	return tabularKind(artifact.Kind) && shown.Rows > agentruntime.InlineRows
+}
+
+func tabularKind(kind assistantartifact.Kind) bool {
+	return kind == assistantartifact.KindTableView || kind == assistantartifact.KindReportPreview
 }
 
 // rankedTable is a table whose order is what the person decides from: the

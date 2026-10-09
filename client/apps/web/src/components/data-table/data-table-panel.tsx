@@ -1,4 +1,4 @@
-"use no memo";
+import { RecordViewers } from "@/components/presence/data-table-viewers";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -68,6 +68,7 @@ export function DataTablePanelContainer({
               </div>
             )}
             <div className="flex items-center gap-1">
+              <RecordViewers />
               {headerActions}
               <Dialog.Close
                 render={

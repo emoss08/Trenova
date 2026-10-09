@@ -32,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/billingqueueexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/billingtransferexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/briefingexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/bulkeditexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/captureexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carriercapacityexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierexec"
@@ -42,6 +43,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customerexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customerpaymentexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customfielddefinitionexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/datatableinsightexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/decisionsexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskmemoryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/detentionexec"
@@ -111,6 +113,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/storedmileageexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tablechangealertexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tableconfigurationexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tablelayoutexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/telematicsexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tenantexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tenderexec"
@@ -253,6 +256,7 @@ type ResolverRoot interface {
 	AICorrection() AICorrectionResolver
 	AIFeedback() AIFeedbackResolver
 	AIProvider() AIProviderResolver
+	AIProviderKeyInfo() AIProviderKeyInfoResolver
 	AIRouteChoice() AIRouteChoiceResolver
 	AITuneUpEvidence() AITuneUpEvidenceResolver
 	AccessorialCharge() AccessorialChargeResolver
@@ -291,7 +295,10 @@ type ResolverRoot interface {
 	AgentRun() AgentRunResolver
 	AgentRunEvent() AgentRunEventResolver
 	AgentSafety() AgentSafetyResolver
+	AgentSafetySummary() AgentSafetySummaryResolver
 	AgentSuiteRun() AgentSuiteRunResolver
+	AgentToolHolders() AgentToolHoldersResolver
+	AgentToolRule() AgentToolRuleResolver
 	AgentToolSafety() AgentToolSafetyResolver
 	AgentWorstRatedAnswer() AgentWorstRatedAnswerResolver
 	ApiKey() ApiKeyResolver
@@ -527,6 +534,13 @@ type AIFeedbackResolver interface {
 type AIProviderResolver interface {
 	InputCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
 	OutputCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
+	MonthlyCapUsd(ctx context.Context, obj *aiprovider.Provider) (*string, error)
+	MonthSpendUsd(ctx context.Context, obj *aiprovider.Provider) (string, error)
+	APIKey(ctx context.Context, obj *aiprovider.Provider) (*aiprovider.KeyInfo, error)
+}
+
+type AIProviderKeyInfoResolver interface {
+	AddedBy(ctx context.Context, obj *aiprovider.KeyInfo) (*tenant.User, error)
 }
 
 type AIRouteChoiceResolver interface {
@@ -758,12 +772,26 @@ type AgentSafetyResolver interface {
 	Reach(ctx context.Context, obj *services.AgentSafetySubject) (*gqlmodel.AgentReach, error)
 }
 
+type AgentSafetySummaryResolver interface {
+	OpenSensitiveAgentIds(ctx context.Context, obj *services.AgentSafetySummary) ([]string, error)
+}
+
 type AgentSuiteRunResolver interface {
 	AgentName(ctx context.Context, obj *agentquality.SuiteRun) (string, error)
 	Fingerprint(ctx context.Context, obj *agentquality.SuiteRun) (map[string]any, error)
 	FingerprintChanges(ctx context.Context, obj *agentquality.SuiteRun) ([]*gqlmodel.AgentFingerprintChange, error)
 	ChangeSummary(ctx context.Context, obj *agentquality.SuiteRun) (string, error)
 	CostUsd(ctx context.Context, obj *agentquality.SuiteRun) (string, error)
+}
+
+type AgentToolHoldersResolver interface {
+	AgentIds(ctx context.Context, obj *services.AgentToolHolders) ([]string, error)
+}
+
+type AgentToolRuleResolver interface {
+	MaxTier(ctx context.Context, obj *agent.ToolRuleOverride) (*agent.AutonomyTier, error)
+	ReadsExternal(ctx context.Context, obj *agent.ToolRuleOverride) (*agent.ExternalRead, error)
+	UpdatedBy(ctx context.Context, obj *agent.ToolRuleOverride) (*tenant.User, error)
 }
 
 type AgentToolSafetyResolver interface {
@@ -1518,6 +1546,7 @@ type MutationResolver interface {
 	ReplayAgentEvalCase(ctx context.Context, id string) (*agent.Evaluation, error)
 	RunAgentSuite(ctx context.Context, agentDefinitionID string) (*agentquality.SuiteRun, error)
 	UpdateAgentQualityControl(ctx context.Context, input gqlmodel.UpdateAgentQualityControlInput) (*agentquality.Control, error)
+	SaveAgentToolRule(ctx context.Context, name string, version int, input gqlmodel.AgentToolRuleInput) (*gqlmodel.AgentToolRuleSaved, error)
 	RequestAIAuditExport(ctx context.Context, input gqlmodel.RequestAIAuditExportInput) (*aiaudit.AIAuditExport, error)
 	AiAuditExportDownload(ctx context.Context, id string) (*services.AIAuditExportDownload, error)
 	VerifyAIAuditChain(ctx context.Context) (*services.AIAuditChainStatus, error)
@@ -1528,6 +1557,9 @@ type MutationResolver interface {
 	RestoreAITuneUp(ctx context.Context, id string, version int) (*gqlmodel.AITuneUp, error)
 	SetMyAIFeedback(ctx context.Context, input gqlmodel.SetMyAIFeedbackInput) (*aifeedback.Feedback, error)
 	ClearMyAIFeedback(ctx context.Context, input gqlmodel.AIFeedbackTargetInput) (bool, error)
+	TestAIProviderDraft(ctx context.Context, input gqlmodel.AIProviderDraftTestInput) (*services.TestAIProviderResult, error)
+	ReorderAIProviders(ctx context.Context, ids []string) ([]*aiprovider.Provider, error)
+	PatchAIProvider(ctx context.Context, id string, version int, input gqlmodel.AIProviderPatchInput) (*aiprovider.Provider, error)
 	UpdateAIRetrievalSettings(ctx context.Context, input gqlmodel.AIRetrievalSettingsPatchInput) (*services.AIRetrievalStatus, error)
 	ReindexAIRetrievalSource(ctx context.Context, sourceType airetrieval.SourceType) (*services.AIRetrievalStatus, error)
 	CreateBenefitPlan(ctx context.Context, input gqlmodel.BenefitPlanInput) (*driverpay.BenefitPlan, error)
@@ -1545,6 +1577,8 @@ type MutationResolver interface {
 	RetryBillingTransferRun(ctx context.Context, id string) (*gqlmodel.BillingTransferRun, error)
 	MarkBriefingRead(ctx context.Context, id string) (*briefing.Briefing, error)
 	RegenerateBriefing(ctx context.Context, input gqlmodel.TodaysBriefingInput) (*briefing.Briefing, error)
+	StartBulkEdit(ctx context.Context, input gqlmodel.BulkEditInput) (*gqlmodel.BulkEditJob, error)
+	UndoMyBulkEdit(ctx context.Context, id string) (*gqlmodel.BulkEditJob, error)
 	EditCaptureItems(ctx context.Context, batchID string, input gqlmodel.EditCaptureItemsInput) (*capture.CaptureBatch, error)
 	FileCaptureItem(ctx context.Context, id string, input gqlmodel.FileCaptureItemInput) (*capture.CaptureItem, error)
 	FileCaptureItems(ctx context.Context, items []*gqlmodel.FileCaptureItemsEntryInput) (*captureservice.FileItemsResult, error)
@@ -1818,6 +1852,8 @@ type MutationResolver interface {
 	AdjustWorkerPTOBalance(ctx context.Context, input gqlmodel.AdjustWorkerPTOBalanceInput) (*worker.WorkerPTOLedgerEntry, error)
 	RunPTOAccrual(ctx context.Context, input gqlmodel.RunPTOAccrualInput) (*gqlmodel.PTOAccrualRunPayload, error)
 	CreateReportDefinition(ctx context.Context, input gqlmodel.SaveReportDefinitionInput) (*gqlmodel.ReportDefinition, error)
+	ExportTableView(ctx context.Context, input gqlmodel.ExportTableViewInput) (*gqlmodel.TableExportResult, error)
+	ScheduleTableView(ctx context.Context, input gqlmodel.ScheduleTableViewInput) (*gqlmodel.TableExportResult, error)
 	UpdateReportDefinition(ctx context.Context, input gqlmodel.UpdateReportDefinitionInput) (*gqlmodel.ReportDefinition, error)
 	DeleteReportDefinition(ctx context.Context, id string) (bool, error)
 	ForkCannedReport(ctx context.Context, input gqlmodel.ForkCannedReportInput) (*gqlmodel.ReportDefinition, error)
@@ -1879,6 +1915,8 @@ type MutationResolver interface {
 	DeleteTableConfiguration(ctx context.Context, id string) (bool, error)
 	SetDefaultTableConfiguration(ctx context.Context, id string) (*tableconfiguration.TableConfiguration, error)
 	SetOrgDefaultTableConfiguration(ctx context.Context, id string, enabled bool) (*tableconfiguration.TableConfiguration, error)
+	SaveMyTableLayout(ctx context.Context, input gqlmodel.TableLayoutInput) (*gqlmodel.TableLayout, error)
+	ResetMyTableLayout(ctx context.Context, resource string) (bool, error)
 	SaveTelematicsFormMapping(ctx context.Context, input gqlmodel.SaveTelematicsFormMappingInput) (*gqlmodel.TelematicsFormMapping, error)
 	DeleteTelematicsFormMapping(ctx context.Context, id string) (bool, error)
 	UpdateOrganization(ctx context.Context, id string, input gqlmodel.OrganizationInput) (*tenant.Organization, error)
@@ -2167,6 +2205,7 @@ type QueryResolver interface {
 	AgentException(ctx context.Context, id string) (*agent.AgentException, error)
 	AgentControl(ctx context.Context) (*tenant.AgentControl, error)
 	AgentPromotionPreview(ctx context.Context, threshold int) ([]*services.ToolPromotion, error)
+	AgentActivitySummary(ctx context.Context, since int) (*gqlmodel.AgentActivitySummary, error)
 	AgentDefinitions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentDefinitionConnection, error)
 	AgentInstructionLint(ctx context.Context, input gqlmodel.AgentInstructionLintInput) ([]*agentlint.Finding, error)
 	AgentShadowReport(ctx context.Context, agentID string, days *int) (*agentshadow.Report, error)
@@ -2198,6 +2237,8 @@ type QueryResolver interface {
 	AgentSuiteRunCaseConnection(ctx context.Context, suiteRunID string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentSuiteRunCaseConnection, error)
 	AgentQualityControl(ctx context.Context) (*agentquality.Control, error)
 	AgentRunEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentRunEventConnection, error)
+	AgentToolRuleImpact(ctx context.Context, name string, input gqlmodel.AgentToolRuleInput) ([]*services.AgentToolRuleImpact, error)
+	AgentToolHolders(ctx context.Context) ([]*services.AgentToolHolders, error)
 	AgentToolPolicies(ctx context.Context) ([]*gqlmodel.AgentToolPolicy, error)
 	AgentToolPolicyConnection(ctx context.Context, input gqlmodel.AgentToolPolicyConnectionInput) (*gqlmodel.AgentToolPolicyConnection, error)
 	AgentToolRuleConnection(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentToolPolicyConnection, error)
@@ -2216,6 +2257,7 @@ type QueryResolver interface {
 	MyAIFeedback(ctx context.Context, input gqlmodel.MyAIFeedbackInput) ([]*aifeedback.Feedback, error)
 	AiFeedback(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIFeedbackConnection, error)
 	AgentFeedbackSummary(ctx context.Context, agentDefinitionID string, window *int) (*services.AgentFeedbackSummary, error)
+	AiProviderModels(ctx context.Context, input gqlmodel.AIProviderEndpointInput) ([]*gqlmodel.AIProviderModelOption, error)
 	AiProviders(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIProviderConnection, error)
 	AiProvider(ctx context.Context, id string) (*aiprovider.Provider, error)
 	AiRoutePreview(ctx context.Context, draft gqlmodel.AIProviderRoutingDraftInput) ([]*aiprovider.TaskRoute, error)
@@ -2225,7 +2267,7 @@ type QueryResolver interface {
 	AiTrainingExportHistory(ctx context.Context) ([]*aitraining.ExportHistoryEntry, error)
 	AiUsageFeatures(ctx context.Context, input gqlmodel.DataTableConnectionInput, days *int) (*gqlmodel.AIUsageFeatureConnection, error)
 	AiUsageSummary(ctx context.Context, since *int) (*services.AIUsageSummary, error)
-	AiUsageDaily(ctx context.Context, days *int, timezone *string) ([]*services.AIUsageDay, error)
+	AiUsageDaily(ctx context.Context, days *int, timezone *string, providerID *string) ([]*services.AIUsageDay, error)
 	APIKeys(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.APIKeyConnection, error)
 	APIKey(ctx context.Context, id string) (*apikey.Key, error)
 	AttentionSummary(ctx context.Context) (*gqlmodel.AttentionSummary, error)
@@ -2245,6 +2287,10 @@ type QueryResolver interface {
 	TodaysBriefing(ctx context.Context, input gqlmodel.TodaysBriefingInput) (*briefing.Briefing, error)
 	Briefing(ctx context.Context, id string) (*briefing.Briefing, error)
 	Briefings(ctx context.Context, input gqlmodel.ListBriefingsInput) ([]*briefing.Briefing, error)
+	BulkEditFields(ctx context.Context, resource string) ([]*gqlmodel.BulkEditField, error)
+	PreviewBulkEdit(ctx context.Context, input gqlmodel.BulkEditInput) (*gqlmodel.BulkEditPreview, error)
+	MyBulkEdit(ctx context.Context, id string) (*gqlmodel.BulkEditJob, error)
+	MyBulkEdits(ctx context.Context, resource *string, limit *int) ([]*gqlmodel.BulkEditJob, error)
 	MyCaptureAccess(ctx context.Context) (*captureservice.Access, error)
 	CaptureAgentRelease(ctx context.Context) (*capturereleaseservice.Release, error)
 	CaptureBatches(ctx context.Context, input gqlmodel.CaptureBatchesInput) (*gqlmodel.CaptureBatchConnection, error)
@@ -2304,6 +2350,10 @@ type QueryResolver interface {
 	Customer(ctx context.Context, id string) (*customer.Customer, error)
 	CustomerPayments(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CustomerPaymentConnection, error)
 	CustomerPayment(ctx context.Context, id string) (*customerpayment.Payment, error)
+	DataTableFacets(ctx context.Context, input gqlmodel.DataTableFacetInput) (*gqlmodel.DataTableFacets, error)
+	DataTableAggregates(ctx context.Context, input gqlmodel.DataTableAggregateInput) (*gqlmodel.DataTableAggregates, error)
+	DataTableSeries(ctx context.Context, input gqlmodel.DataTableSeriesInput) (*gqlmodel.DataTableSeries, error)
+	DataTableInsightFields(ctx context.Context, resource string) ([]*gqlmodel.DataTableInsightField, error)
 	PendingDecisions(ctx context.Context, input gqlmodel.PendingDecisionsInput) (*gqlmodel.PendingDecisionConnection, error)
 	PendingDecisionSummary(ctx context.Context) (*gqlmodel.PendingDecisionSummary, error)
 	RecentDecisions(ctx context.Context, since int, first *int) ([]*gqlmodel.RecentDecision, error)
@@ -2618,6 +2668,7 @@ type QueryResolver interface {
 	TableConfigurations(ctx context.Context, input gqlmodel.DataTableConnectionInput, resource *string, visibility *tableconfiguration.Visibility) (*gqlmodel.TableConfigurationConnection, error)
 	TableConfiguration(ctx context.Context, id string) (*tableconfiguration.TableConfiguration, error)
 	DefaultTableConfiguration(ctx context.Context, resource string) (*tableconfiguration.TableConfiguration, error)
+	MyTableLayout(ctx context.Context, resource string) (*gqlmodel.TableLayout, error)
 	ShipmentFormSubmissions(ctx context.Context, shipmentID string) ([]*gqlmodel.TelematicsFormSubmission, error)
 	TelematicsFormMappings(ctx context.Context) ([]*gqlmodel.TelematicsFormMapping, error)
 	TelematicsFormMapping(ctx context.Context, id string) (*gqlmodel.TelematicsFormMapping, error)
@@ -3083,6 +3134,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		billingqueueexec.Shard,
 		billingtransferexec.Shard,
 		briefingexec.Shard,
+		bulkeditexec.Shard,
 		captureexec.Shard,
 		carrierexec.Shard,
 		carriercapacityexec.Shard,
@@ -3093,6 +3145,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		customerexec.Shard,
 		customerpaymentexec.Shard,
 		customfielddefinitionexec.Shard,
+		datatableinsightexec.Shard,
 		decisionsexec.Shard,
 		deskmemoryexec.Shard,
 		detentionexec.Shard,
@@ -3162,6 +3215,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		storedmileageexec.Shard,
 		tablechangealertexec.Shard,
 		tableconfigurationexec.Shard,
+		tablelayoutexec.Shard,
 		telematicsexec.Shard,
 		tenantexec.Shard,
 		tenderexec.Shard,
@@ -3202,6 +3256,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AICorrection":                       func() any { return r.AICorrection() },
 			"AIFeedback":                         func() any { return r.AIFeedback() },
 			"AIProvider":                         func() any { return r.AIProvider() },
+			"AIProviderKeyInfo":                  func() any { return r.AIProviderKeyInfo() },
 			"AIRouteChoice":                      func() any { return r.AIRouteChoice() },
 			"AITuneUpEvidence":                   func() any { return r.AITuneUpEvidence() },
 			"AccessorialCharge":                  func() any { return r.AccessorialCharge() },
@@ -3240,7 +3295,10 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"AgentRun":                           func() any { return r.AgentRun() },
 			"AgentRunEvent":                      func() any { return r.AgentRunEvent() },
 			"AgentSafety":                        func() any { return r.AgentSafety() },
+			"AgentSafetySummary":                 func() any { return r.AgentSafetySummary() },
 			"AgentSuiteRun":                      func() any { return r.AgentSuiteRun() },
+			"AgentToolHolders":                   func() any { return r.AgentToolHolders() },
+			"AgentToolRule":                      func() any { return r.AgentToolRule() },
 			"AgentToolSafety":                    func() any { return r.AgentToolSafety() },
 			"AgentWorstRatedAnswer":              func() any { return r.AgentWorstRatedAnswer() },
 			"ApiKey":                             func() any { return r.ApiKey() },
@@ -5063,6 +5121,8 @@ enum AgentSubjectType {
   AccountingInboundChange
   AccountingDriftFinding
   FormulaTemplate
+  Invoice
+  InvoiceDispute
 }
 
 enum AgentRunTrigger {
@@ -5071,6 +5131,7 @@ enum AgentRunTrigger {
   Scheduled
   Event
   Continuous
+  Wait
 }
 
 enum AgentRunStatus {
@@ -5981,6 +6042,39 @@ extend type Mutation {
   dismissAgentMemorySuggestion(id: ID!, version: Int!): AgentMemory!
   resolveAgentException(id: ID!, input: AgentExceptionResolveInput!): AgentException!
   updateAgentControl(input: AgentControlInput!): AgentControl!
+}
+
+"""
+What the organization's agents did since a moment the reader names (the start of their day),
+for the head of Activity. Counts a reader may not see are null.
+"""
+type AgentActivitySummary {
+  since: Timestamp!
+  "Runs started since then."
+  runs: Int!
+  "Runs started since then that failed."
+  runsFailed: Int!
+  "Runs working now, whenever they started."
+  runsWorking: Int!
+  "Runs waiting on a person's decision, whenever they started."
+  runsAwaiting: Int!
+  "Proposals waiting on a person; null without read access to agent proposals."
+  pendingProposals: Int
+  "When the longest-waiting proposal was made; null when none waits or it may not be read."
+  oldestPendingAt: Timestamp
+  "Exceptions open or in review; null without read access to agent exceptions."
+  openExceptions: Int
+  "The days the decisions below are counted over."
+  decisionWindowDays: Int!
+  "Proposals people decided in the window; null without read access to agent proposals."
+  decided: Int
+  "The share of those approved exactly as proposed; null when none was decided or it may not be read."
+  approvedAsProposed: Float
+}
+
+extend type Query {
+  "What agents did since the moment given, at most 31 days ago."
+  agentActivitySummary(since: Timestamp!): AgentActivitySummary!
 }
 `, BuiltIn: false},
 	{Name: "../schema/agentdefinition.graphqls", Input: `enum AgentTemplate {
@@ -7176,6 +7270,8 @@ type AgentQualityOverview {
   agentsWithCases: Int!
   judgeEnabled: Boolean!
   regressionThreshold: Float!
+  "The open regression that fell furthest below its agent's recent median; null when none is open."
+  worstRegression: AgentSuiteRun
 }
 
 "An answer people rated down, with the most recent thumbs down on it."
@@ -7541,6 +7637,47 @@ type AgentToolPolicy {
   agentToolRuleConnection; null everywhere else.
   """
   runsWithoutPerson: Boolean
+  "The most freedom the rule declared beside the tool allows; maxTier is lower when the organization holds it lower."
+  declaredMaxTier: AgentAutonomyTier!
+  "How much of its result the declared rule treats as outside text."
+  declaredReadsExternal: AgentExternalRead!
+  "The organization's own rule for the tool; null when it keeps the declared one."
+  rule: AgentToolRule
+  "The version of the organization's rule an edit is made against; 0 when there is none yet."
+  ruleVersion: Int!
+}
+
+"An organization holding one tool lower than its declared rule."
+type AgentToolRule {
+  "Null when it keeps the declared most freedom."
+  maxTier: AgentAutonomyTier
+  "Null when it keeps the declared outside text setting."
+  readsExternal: AgentExternalRead
+  reason: String!
+  updatedAt: Timestamp!
+  updatedBy: User
+}
+
+"An organization's rule for one tool. Absent fields keep what the tool declares."
+input AgentToolRuleInput {
+  maxTier: AgentAutonomyTier
+  readsExternal: AgentExternalRead
+  "Why it changed; required when the most freedom changes, and kept in the audit trail."
+  reason: String
+}
+
+"What one agent holding the tool does before and after a rule change."
+type AgentToolRuleImpact {
+  agentId: ID!
+  agentName: String!
+  before: AgentAutonomyAnswer!
+  after: AgentAutonomyAnswer!
+}
+
+type AgentToolRuleSaved {
+  tool: AgentToolPolicy!
+  "The agents whose answer moved."
+  affected: [AgentToolRuleImpact!]!
 }
 
 "What one tool does on one agent for a representative call."
@@ -7660,9 +7797,31 @@ type AgentSafetySummary {
   openWithSensitive: Int!
   "The resources the tools need, for filtering; general for a tool that needs no grant."
   resources: [String!]!
+  "Tools that change something, counted by the widest audience their work reaches."
+  egressCounts: [AgentEgressCount!]!
+  "The titles of the tools counted in runWithoutPerson, alphabetically."
+  unattendedTools: [String!]!
+  "The agents counted in openWithSensitive."
+  openSensitiveAgentIds: [ID!]!
+}
+
+"The agents that hold one tool."
+type AgentToolHolders {
+  policyName: String!
+  agentIds: [ID!]!
+}
+
+"How many tools that change something reach one audience at most."
+type AgentEgressCount {
+  egress: AgentEgressClass!
+  count: Int!
 }
 
 extend type Query {
+  "What every agent holding the tool would do under a rule, before saving it."
+  agentToolRuleImpact(name: String!, input: AgentToolRuleInput!): [AgentToolRuleImpact!]!
+  "Every tool some agent holds, with the agents that hold it."
+  agentToolHolders: [AgentToolHolders!]!
   "Every tool's safety policy, by name."
   agentToolPolicies: [AgentToolPolicy!]!
     @deprecated(reason: "Use agentToolRuleConnection, which pages, filters and sorts on the server.")
@@ -7693,6 +7852,11 @@ extend type Query {
   """
   agentSafety(agentIds: [ID!]): [AgentSafety!]!
 }
+
+extend type Mutation {
+  "Holds a tool lower than its declared rule for this organization, or returns it to the declared rule."
+  saveAgentToolRule(name: String!, version: Int!, input: AgentToolRuleInput!): AgentToolRuleSaved!
+}
 `, BuiltIn: false},
 	{Name: "../schema/agentscorecard.graphqls", Input: `"How far back a scorecard looks."
 enum AgentScorecardWindow {
@@ -7714,6 +7878,26 @@ type AgentToolOutcome {
   pending: Int!
   "Writes the trust ladder let through without asking anyone."
   automatic: Int!
+}
+
+"""
+How often one tool's calls ended one way over the window, counted from every
+call that reached the tool, refusals included. A call the runtime refused
+never became a proposal, so the proposal counts cannot show it.
+"""
+type AgentToolVerdict {
+  toolName: String!
+  "ran, proposed, simulated, denied, invalid, duplicate, over_budget, failed or unknown."
+  verdict: String!
+  calls: Int!
+  "The reasons given most often, most frequent first. A call that ran gives none."
+  topReasons: [AgentToolVerdictReason!]!
+}
+
+"One reason a tool's calls were refused or failed, and how many calls gave it."
+type AgentToolVerdictReason {
+  reason: String!
+  calls: Int!
 }
 
 "One day of the trend line."
@@ -7789,6 +7973,8 @@ type AgentScorecard {
   estimatedMinutesSaved: Int!
 
   byTool: [AgentToolOutcome!]!
+  "How each tool's calls ended, by tool and verdict, with the commonest reasons."
+  toolVerdicts: [AgentToolVerdict!]!
   trend: [AgentScorecardPoint!]!
   toolTrust: [AgentToolTrust!]!
 }
@@ -8636,9 +8822,44 @@ type AIProvider {
   trusted: Boolean!
   enabled: Boolean!
   lastTest: AIProviderTestOutcome
+  "How long one call may take before it fails and the task moves to the next provider."
+  timeoutSeconds: Int!
+  "Calls this provider takes at once across every server. Past it, work moves to the next provider."
+  maxConcurrent: Int!
+  "Most this provider may spend in a calendar month, in USD. Null means no cap."
+  monthlyCapUsd: Decimal
+  "What happens to a task once the monthly cap is reached."
+  onCap: AIProviderCapAction!
+  "Spend so far this calendar month (UTC), over the calls that carried a price."
+  monthSpendUsd: Decimal!
+  "The stored credential, described without the secret. Null when none is stored."
+  apiKey: AIProviderKeyInfo
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"What a provider does with a task once its monthly cap is reached."
+enum AIProviderCapAction {
+  "The task goes to the next provider in line."
+  Next
+  "The task fails rather than moving on."
+  Stop
+}
+
+"""
+A stored credential, described without the secret: enough of its ends to tell
+two keys apart, who added it and when it was last used.
+"""
+type AIProviderKeyInfo {
+  "The vendor prefix the key starts with, such as sk-ant-; empty when it has none."
+  prefix: String!
+  lastFour: String!
+  addedAt: Timestamp!
+  addedBy: User
+  lastUsedAt: Timestamp
+  "While the key it replaced is still kept as a fallback, when that stops."
+  previousKeyExpiresAt: Timestamp
 }
 
 type AIProviderEdge {
@@ -8684,11 +8905,95 @@ type AITaskRoute {
   changed: Boolean!
 }
 
+"""
+An endpoint as an editor holds it, before it is saved. With providerId and no
+apiKey, the provider's stored key is used.
+"""
+input AIProviderEndpointInput {
+  providerId: ID
+  kind: AIProviderKind!
+  baseUrl: String!
+  apiKey: String
+  allowPrivateNetwork: Boolean!
+}
+
+"Where a model's listed price came from."
+enum AIModelPriceSource {
+  "The provider's own model list."
+  Provider
+  "OpenRouter's public catalog: an estimate of the list price, not what a contract charges."
+  OpenRouter
+}
+
+"One model an endpoint says it serves."
+type AIProviderModelOption {
+  id: String!
+  displayName: String!
+  "Tokens of context, when the endpoint or the model id says."
+  contextWindow: Int
+  "Bytes on disk, for a model a local server holds."
+  sizeBytes: Float
+  "A local server has it in memory now."
+  loaded: Boolean!
+  embedding: Boolean!
+  inputCostPerMillion: Decimal
+  outputCostPerMillion: Decimal
+  "Where the prices came from; null when there are none."
+  priceSource: AIModelPriceSource
+  "When the provider released the model (for a local server, when it was pulled), when the endpoint says."
+  createdAt: Timestamp
+}
+
+input AIProviderDraftTestInput {
+  endpoint: AIProviderEndpointInput!
+  model: String!
+  structuredOutputMode: AIStructuredOutputMode
+  tasks: [AITask!]!
+  embeddingDimensions: Int
+  embeddingInputStyle: AIEmbeddingInputStyle
+  timeoutSeconds: Int
+}
+
+"What a probe of an unsaved endpoint revealed, with a next step when it failed."
+type AIProviderDraftTestResult {
+  success: Boolean!
+  message: String!
+  "The endpoint's own words, such as the transport error."
+  detail: String!
+  "What to try next. Empty when it worked."
+  hint: String!
+  modelIdentifier: String!
+  schemaHonoured: Boolean!
+  latencyMs: Int!
+}
+
+"The fields of a provider that change on their own, from its row and read sheet."
+input AIProviderPatchInput {
+  enabled: Boolean @goField(omittable: true)
+  trusted: Boolean @goField(omittable: true)
+  allowPrivateNetwork: Boolean @goField(omittable: true)
+  tasks: [AITask!] @goField(omittable: true)
+  "A new credential. It replaces the stored one and is never returned."
+  apiKey: String @goField(omittable: true)
+  inputCostPerMillion: Decimal @goField(omittable: true)
+  outputCostPerMillion: Decimal @goField(omittable: true)
+}
+
 extend type Query {
+  "The models an endpoint serves, asked of the endpoint itself."
+  aiProviderModels(input: AIProviderEndpointInput!): [AIProviderModelOption!]!
   aiProviders(input: DataTableConnectionInput!): AIProviderConnection!
   aiProvider(id: ID!): AIProvider
   "Where each task goes now and where it would go with the draft saved. Saves nothing."
   aiRoutePreview(draft: AIProviderRoutingDraftInput!): [AITaskRoute!]!
+}
+
+extend type Mutation {
+  "Probes an unsaved endpoint once and records nothing."
+  testAIProviderDraft(input: AIProviderDraftTestInput!): AIProviderDraftTestResult!
+  "Sets the routing order: the first ID takes work first. Every provider must be listed once."
+  reorderAIProviders(ids: [ID!]!): [AIProvider!]!
+  patchAIProvider(id: ID!, version: Int!, input: AIProviderPatchInput!): AIProvider!
 }
 `, BuiltIn: false},
 	{Name: "../schema/airetrieval.graphqls", Input: `"What retrieval indexes by meaning."
@@ -9045,9 +9350,10 @@ extend type Query {
   """
   Model usage day by day for the last days (default 7, at most 90), ending
   today, oldest first. A day with no calls is listed with zeros. Days are read
-  in the IANA timezone given, UTC when absent.
+  in the IANA timezone given, UTC when absent. With providerId, only that
+  provider's calls.
   """
-  aiUsageDaily(days: Int, timezone: String): [AIUsageDay!]!
+  aiUsageDaily(days: Int, timezone: String, providerId: ID): [AIUsageDay!]!
 }
 `, BuiltIn: false},
 	{Name: "../schema/api_key.graphqls", Input: `type ApiKey {
@@ -9655,6 +9961,86 @@ extend type Mutation {
   markBriefingRead(id: ID!): Briefing!
   "Writes today's page again from current figures, replacing what was there."
   regenerateBriefing(input: TodaysBriefingInput!): Briefing!
+}
+`, BuiltIn: false},
+	{Name: "../schema/bulk_edit.graphqls", Input: `"A value a bulk-editable field can be set to."
+type BulkEditOption {
+  value: String!
+  label: String!
+}
+
+"A field of a table that can be changed on many rows at once."
+type BulkEditField {
+  name: String!
+  label: String!
+  "record (picked from a list of records) or select (one of a fixed set)."
+  kind: String!
+  "For a record field, the select-option resource its values are picked from."
+  record: String
+  options: [BulkEditOption!]!
+}
+
+input BulkEditSelectionInput {
+  "The rows chosen one by one."
+  ids: [ID!]
+  "Or every row matching the table's filters, resolved by the server when the edit runs."
+  filter: DataTableConnectionInput
+  "The table's own list options beyond filters, such as the shipment board's quick filters."
+  options: JSON
+}
+
+input BulkEditInput {
+  resource: String!
+  field: String!
+  value: String!
+  selection: BulkEditSelectionInput!
+}
+
+type BulkEditPreview {
+  "How many rows the edit would reach."
+  count: Int!
+  "True when more rows match than one bulk edit can change."
+  tooMany: Boolean!
+}
+
+type BulkEditFailure {
+  id: ID!
+  message: String!
+}
+
+"One change made to many rows at once, and how far it has got."
+type BulkEditJob {
+  id: ID!
+  resource: String!
+  field: String!
+  value: String!
+  "Queued, Running, Completed, Failed, Undoing or Undone."
+  status: String!
+  totalCount: Int!
+  processedCount: Int!
+  changedCount: Int!
+  failedCount: Int!
+  failureMessage: String!
+  "The first rows that could not be changed, with why."
+  failures: [BulkEditFailure!]!
+  canUndo: Boolean!
+  completedAt: Timestamp
+  undoneAt: Timestamp
+  createdAt: Timestamp!
+}
+
+extend type Query {
+  bulkEditFields(resource: String!): [BulkEditField!]!
+  previewBulkEdit(input: BulkEditInput!): BulkEditPreview!
+  myBulkEdit(id: ID!): BulkEditJob
+  myBulkEdits(resource: String, limit: Int): [BulkEditJob!]!
+}
+
+extend type Mutation {
+  "Starts changing one field on every chosen row; it runs in the background."
+  startBulkEdit(input: BulkEditInput!): BulkEditJob!
+  "Puts back every row the caller's bulk edit changed, within a day of it finishing."
+  undoMyBulkEdit(id: ID!): BulkEditJob!
 }
 `, BuiltIn: false},
 	{Name: "../schema/capture.graphqls", Input: `"Whether a paired companion may still act for its person."
@@ -12839,6 +13225,110 @@ extend type Mutation {
   applyCreditMemo(input: ApplyCreditMemoInput!): [CreditMemoApplication!]!
   "Takes one credit memo application back."
   unapplyCreditMemoApplication(input: UnapplyCreditMemoApplicationInput!): CreditMemoApplication!
+}
+`, BuiltIn: false},
+	{Name: "../schema/data_table_insight.graphqls", Input: `"How many of a table's filtered rows hold each value of one field."
+input DataTableFacetInput {
+  "The table's permission resource, such as shipment."
+  resource: String!
+  field: String!
+  filter: DataTableConnectionInput
+  "Options the table's own list takes beyond filters, such as the shipment board's quick filters."
+  options: JSON
+  limit: Int = 20
+}
+
+type DataTableFacetBucket {
+  "The field's value, or null for rows that have none."
+  value: String
+  count: Int!
+}
+
+type DataTableFacets {
+  field: String!
+  "The most common values first."
+  buckets: [DataTableFacetBucket!]!
+  "Every row the filters match, including those in values not listed."
+  total: Int!
+}
+
+"Totals of a table's filtered rows."
+input DataTableAggregateInput {
+  resource: String!
+  fields: [String!]!
+  filter: DataTableConnectionInput
+  options: JSON
+}
+
+type DataTableAggregateValue {
+  field: String!
+  sum: Decimal
+  average: Decimal
+  min: Decimal
+  max: Decimal
+}
+
+type DataTableAggregates {
+  "Every row the filters match, on every page."
+  count: Int!
+  values: [DataTableAggregateValue!]!
+}
+
+type DataTableInsightField {
+  name: String!
+  facetable: Boolean!
+  summable: Boolean!
+  "Whether the field is a date a chart can follow rows over."
+  timeline: Boolean!
+}
+
+enum DataTableSeriesInterval {
+  WEEK
+  MONTH
+}
+
+"""
+One small chart per row of another table: how many of this table's rows each one has,
+or their total, in each week or month up to now. A customer's shipments, a carrier's
+loads, a location's stops.
+"""
+input DataTableSeriesInput {
+  "The table counted, such as shipment."
+  resource: String!
+  "The field naming the row each chart belongs to, such as customerId."
+  groupField: String!
+  "The rows to chart, at most 200."
+  groupValues: [String!]!
+  "The date that places each counted row in a period."
+  dateField: String!
+  "A field to total instead of counting rows."
+  valueField: String
+  interval: DataTableSeriesInterval! = WEEK
+  "How many periods, ending with the current one."
+  periods: Int! = 12
+  "The time zone periods start in; UTC when absent."
+  timezone: String
+  filter: DataTableConnectionInput
+}
+
+type DataTableSeriesGroup {
+  value: String!
+  "One value per period, oldest first."
+  points: [Decimal!]!
+}
+
+type DataTableSeries {
+  "When each period starts, oldest first."
+  periodStarts: [Timestamp!]!
+  groups: [DataTableSeriesGroup!]!
+}
+
+extend type Query {
+  dataTableFacets(input: DataTableFacetInput!): DataTableFacets!
+  dataTableAggregates(input: DataTableAggregateInput!): DataTableAggregates!
+  dataTableSeries(input: DataTableSeriesInput!): DataTableSeries!
+  "The fields a table can be counted by or totalled, so a screen offers only those."
+  dataTableInsightFields(resource: String!): [DataTableInsightField!]!
 }
 `, BuiltIn: false},
 	{Name: "../schema/decisions.graphqls", Input: `"""
@@ -23781,8 +24271,52 @@ extend type Query {
   reportDashboard(id: ID!): ReportDashboard!
 }
 
+input TableExportColumnInput {
+  "The field the column shows, as the table filters and sorts by it."
+  field: String!
+  label: String!
+}
+
+"What a data table is showing, to export or schedule as a report."
+input TableExportViewInput {
+  resource: String!
+  columns: [TableExportColumnInput!]!
+  filter: DataTableConnectionInput
+}
+
+input ExportTableViewInput {
+  name: String!
+  view: TableExportViewInput!
+  "csv, xlsx or pdf."
+  format: String!
+}
+
+input ScheduleTableViewInput {
+  name: String!
+  view: TableExportViewInput!
+  cronExpression: String!
+  timezone: String
+  formats: [String!]!
+  emailRecipients: [String!]
+  emailAttach: Boolean
+  emailInline: Boolean
+}
+
+type TableExportResult {
+  "The report the view was saved as; it lives in the person's reports."
+  definitionId: ID!
+  run: ReportRun
+  schedule: ReportSchedule
+  "Columns the report could not show, by label."
+  skippedColumns: [String!]!
+}
+
 extend type Mutation {
   createReportDefinition(input: SaveReportDefinitionInput!): ReportDefinition!
+  "Saves a table's view as a report and runs it in the background, with no row limit beyond the report's own."
+  exportTableView(input: ExportTableViewInput!): TableExportResult!
+  "Saves a table's view as a report and sends it on a schedule."
+  scheduleTableView(input: ScheduleTableViewInput!): TableExportResult!
   updateReportDefinition(input: UpdateReportDefinitionInput!): ReportDefinition!
   deleteReportDefinition(id: ID!): Boolean!
   forkCannedReport(input: ForkCannedReportInput!): ReportDefinition!
@@ -24197,6 +24731,7 @@ extend type Query {
 	{Name: "../schema/select_options.graphqls", Input: `enum SelectOptionResource {
   ACCESSORIAL_CHARGE
   ACCOUNT_TYPE
+  AI_PROVIDER
   CAPTURE_DEVICE
   CAPTURE_PROFILE
   CARRIER
@@ -27360,6 +27895,32 @@ extend type Mutation {
   deleteTableConfiguration(id: ID!): Boolean!
   setDefaultTableConfiguration(id: ID!): TableConfiguration!
   setOrgDefaultTableConfiguration(id: ID!, enabled: Boolean!): TableConfiguration!
+}
+`, BuiltIn: false},
+	{Name: "../schema/table_layout.graphqls", Input: `"The arrangement of one data table a person last left it in."
+type TableLayout {
+  resource: String!
+  "Columns shown, ordered, sized and pinned, the density, colour rules and the view it was based on."
+  layout: JSON!
+  version: Int!
+  updatedAt: Timestamp!
+}
+
+input TableLayoutInput {
+  resource: String!
+  layout: JSON!
+}
+
+extend type Query {
+  "The caller's own layout for a table, or null when they have not changed it."
+  myTableLayout(resource: String!): TableLayout
+}
+
+extend type Mutation {
+  "Keeps the caller's arrangement of a table, replacing the one before."
+  saveMyTableLayout(input: TableLayoutInput!): TableLayout!
+  "Forgets the caller's arrangement of a table, so it opens as its default view."
+  resetMyTableLayout(resource: String!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "../schema/telematics.graphqls", Input: `type VehiclePosition {

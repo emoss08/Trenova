@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -124,8 +125,10 @@ func fuelIndexPriceFrom(
 func fuelPriceProperties(idKey, idDescription string) map[string]any {
 	return map[string]any{
 		idKey: stringProperty(idDescription, 0),
-		paramPriceDate: dateProperty("The day the price applies to, as the index publishes " +
-			"it."),
+		paramPriceDate: agenttoolschema.Date(
+			"The day the price applies to, as the index publishes " +
+				"it.",
+		),
 		paramPrice: stringProperty("The price per gallon as a decimal such as 3.899.", 0),
 	}
 }
@@ -188,7 +191,8 @@ func newRecordFuelIndexPriceTool(prices fuelIndexPriceKeeper) serviceports.Agent
 
 func newCorrectFuelIndexPriceTool(prices fuelIndexPriceKeeper) serviceports.AgentTool {
 	return newReceivableTool(fuelPriceMoneySpec(&receivableSpec{
-		name: "correct_fuel_index_price",
+		name:   "correct_fuel_index_price",
+		recipe: []string{"list_fuel_index_prices", "correct_fuel_index_price"},
 		description: "Propose correcting a manual price on a custom fuel index that was " +
 			"entered wrong: its day or its price. A price fetched from EIA cannot be " +
 			"corrected. Every surcharge that follows the index prices from it, so a person " +

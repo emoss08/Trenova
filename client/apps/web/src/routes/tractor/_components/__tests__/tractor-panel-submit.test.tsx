@@ -76,7 +76,7 @@ describe("TractorPanel fuel and IFTA fields", () => {
     await user.type(screen.getByLabelText(/^Fuel type/), "Gasoline");
     await user.click(screen.getByRole("switch", { name: /IFTA qualified/i }));
 
-    await user.click(screen.getByRole("button", { name: /save/i }));
+    await user.click(screen.getByRole("button", { name: /^save/i }));
 
     await waitFor(() => {
       expect(post).toHaveBeenCalled();

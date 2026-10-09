@@ -15,6 +15,7 @@ import { BankReceiptService } from "./bank-receipt";
 import { BankReceiptBatchService } from "./bank-receipt-batch";
 import { BankReceiptWorkItemService } from "./bank-receipt-work-item";
 import { BillingControlService } from "./billing-control";
+import { CaseChecklistService } from "./case-checklist";
 import { BillingQueueService } from "./billing-queue";
 import { CommodityService } from "./commodity";
 import { CustomFieldService } from "./custom-field";
@@ -132,6 +133,7 @@ class APIService {
   public shipmentEventService: ShipmentEventService;
   public shipmentService: ShipmentService;
   public billingControlService: BillingControlService;
+  public caseChecklistService: CaseChecklistService;
   public invoiceAdjustmentControlService: InvoiceAdjustmentControlService;
   public invoiceAdjustmentService: InvoiceAdjustmentService;
   public billingQueueService: BillingQueueService;
@@ -225,6 +227,7 @@ class APIService {
     this.shipmentEventService = new ShipmentEventService();
     this.shipmentService = new ShipmentService();
     this.billingControlService = new BillingControlService();
+    this.caseChecklistService = new CaseChecklistService();
     this.invoiceAdjustmentControlService = new InvoiceAdjustmentControlService();
     this.invoiceAdjustmentService = new InvoiceAdjustmentService();
     this.billingQueueService = new BillingQueueService();

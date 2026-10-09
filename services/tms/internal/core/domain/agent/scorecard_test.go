@@ -114,7 +114,30 @@ func TestNewScorecard_NeverHandsBackNilSlices(t *testing.T) {
 	empty := agent.NewScorecard("agd_1", agent.ScorecardWindow7d, 0, &agent.ScorecardTotals{})
 
 	assert.NotNil(t, empty.ByTool)
+	assert.NotNil(t, empty.ToolVerdicts)
 	assert.NotNil(t, empty.Trend)
+}
+
+// How a tool's calls ended is carried as counted, beside the proposals: a call
+// the runtime refused never became a proposal, so nothing else counts it.
+func TestNewScorecard_CarriesToolVerdicts(t *testing.T) {
+	t.Parallel()
+
+	verdicts := []agent.ToolVerdictCount{{
+		ToolName: "list_shipments",
+		Verdict:  "invalid",
+		Calls:    7,
+		TopReasons: []agent.ToolVerdictReason{
+			{Reason: "its arguments did not match the tool's schema", Calls: 6},
+		},
+	}}
+
+	got := agent.NewScorecard("agd_1", agent.ScorecardWindow7d, 0, &agent.ScorecardTotals{
+		ToolVerdicts: verdicts,
+	})
+
+	assert.Equal(t, verdicts, got.ToolVerdicts)
+	assert.Zero(t, got.Proposals, "a refused call is not a proposal")
 }
 
 func TestScorecardWindow_Days(t *testing.T) {

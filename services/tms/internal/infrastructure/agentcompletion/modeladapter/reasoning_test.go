@@ -164,11 +164,46 @@ func TestToAnthropicMessages_ReplaysSignedThinkingAheadOfToolCalls(t *testing.T)
 	blocks := messages[1].Content
 	require.Len(t, blocks, 3)
 	assert.Equal(t, "thinking", blocks[0].Type)
-	assert.Equal(t, "Hold seems right.", blocks[0].Thinking)
+	require.NotNil(t, blocks[0].Thinking)
+	assert.Equal(t, "Hold seems right.", *blocks[0].Thinking)
 	assert.Equal(t, "sig_1", blocks[0].Signature)
 	assert.Equal(t, "redacted_thinking", blocks[1].Type)
 	assert.Equal(t, "blob", blocks[1].Data)
 	assert.Equal(t, "tool_use", blocks[2].Type)
+}
+
+// A signed thinking block whose summary came back empty still carries the
+// thinking field: Anthropic refuses the block without it, which failed every
+// tool loop where the model thought briefly. Other blocks never carry it.
+func TestToAnthropicMessages_ReplaysEmptyThinkingWithItsField(t *testing.T) {
+	t.Parallel()
+
+	messages := toAnthropicMessages([]Message{
+		{Role: RoleUser, Content: "who works here"},
+		{
+			Role: RoleAssistant,
+			ToolCalls: []ToolCall{
+				{ID: "toolu_1", Name: "find_in_trenova", Arguments: map[string]any{}},
+			},
+			Reasoning: &ReasoningTrace{Signature: "sig_1"},
+		},
+		{Role: RoleTool, ToolCallID: "toolu_1", Content: "{}"},
+	})
+
+	require.Len(t, messages, 3)
+	encoded, err := sonic.Marshal(messages[1].Content)
+	require.NoError(t, err)
+
+	var blocks []map[string]any
+	require.NoError(t, sonic.Unmarshal(encoded, &blocks))
+	require.Len(t, blocks, 2)
+	assert.Equal(t, "thinking", blocks[0]["type"])
+	thinking, present := blocks[0]["thinking"]
+	assert.True(t, present)
+	assert.Empty(t, thinking)
+	assert.Equal(t, "sig_1", blocks[0]["signature"])
+	assert.Equal(t, "tool_use", blocks[1]["type"])
+	assert.NotContains(t, blocks[1], "thinking")
 }
 
 // A trace without a signature — one read off a provider that never signed it

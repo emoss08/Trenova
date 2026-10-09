@@ -326,3 +326,92 @@ func TestTypingShipmentComments_PassesStop(t *testing.T) {
 	assert.True(t, gateway.typing.Stop)
 	assert.Equal(t, "shipment-comments:"+shipmentID.String(), gateway.typing.Scope)
 }
+
+func TestJoinView_ScopesToTheTablesResource(t *testing.T) {
+	t.Parallel()
+
+	gateway := &stubGateway{snapshot: &servicesport.RealtimePresenceSnapshot{Scope: "view:customer"}}
+	router := newTestRouter(t, gateway, authUser)
+
+	req := httptest.NewRequest(
+		http.MethodPost,
+		"/api/v1/realtime/presence/customer/",
+		bytes.NewBufferString(`{"connectionId":"rtc_01J00000000000000000000000"}`),
+	)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	require.NotNil(t, gateway.joined)
+	assert.Equal(t, "view:customer", gateway.joined.Scope)
+}
+
+func TestJoinRecord_ScopesToTheResourceAndRecord(t *testing.T) {
+	t.Parallel()
+
+	customerID := pulid.MustNew("cus_")
+	gateway := &stubGateway{snapshot: &servicesport.RealtimePresenceSnapshot{}}
+	router := newTestRouter(t, gateway, authUser)
+
+	req := httptest.NewRequest(
+		http.MethodPost,
+		"/api/v1/realtime/presence/customer/"+customerID.String()+"/",
+		bytes.NewBufferString(`{"connectionId":"rtc_01J00000000000000000000000"}`),
+	)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	require.NotNil(t, gateway.joined)
+	assert.Equal(t, "record:customer:"+customerID.String(), gateway.joined.Scope)
+}
+
+func TestLeaveRecord(t *testing.T) {
+	t.Parallel()
+
+	customerID := pulid.MustNew("cus_")
+	gateway := &stubGateway{}
+	router := newTestRouter(t, gateway, authUser)
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, httptest.NewRequest(
+		http.MethodDelete,
+		"/api/v1/realtime/presence/customer/"+customerID.String()+
+			"/?connectionId=rtc_01J00000000000000000000000",
+		nil,
+	))
+
+	assert.Equal(t, http.StatusNoContent, w.Code)
+	require.NotNil(t, gateway.left)
+	assert.Equal(t, "record:customer:"+customerID.String(), gateway.left.Scope)
+}
+
+func TestPresence_RefusesMalformedResourceAndRecord(t *testing.T) {
+	t.Parallel()
+
+	for name, path := range map[string]string{
+		"resource with a colon": "/api/v1/realtime/presence/customer:x/",
+		"resource in capitals":  "/api/v1/realtime/presence/Customer/",
+		"record not an id":      "/api/v1/realtime/presence/customer/not-an-id/",
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			gateway := &stubGateway{}
+			router := newTestRouter(t, gateway, authUser)
+			req := httptest.NewRequest(
+				http.MethodPost,
+				path,
+				bytes.NewBufferString(`{"connectionId":"rtc_01J00000000000000000000000"}`),
+			)
+			req.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, req)
+
+			assert.Equal(t, http.StatusBadRequest, w.Code)
+			assert.Nil(t, gateway.joined)
+		})
+	}
+}

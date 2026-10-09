@@ -1,10 +1,15 @@
 import { hotkeyOf } from "@/config/keybinds.config";
 import { handleMutationError } from "@/hooks/use-api-mutation";
+import { fieldErrorMessages, refusedFieldMessages } from "@/lib/form-errors";
+import { translate } from "@trenova/shared/i18n/runtime";
+import { ApiRequestError } from "@trenova/shared/lib/api";
+import { toast } from "sonner";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { editConflictOf } from "@trenova/shared/lib/edit-conflict";
 import type { EditConflict } from "@trenova/shared/types/errors";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  type FieldErrors,
   type FieldPath,
   type FieldValues,
   type PathValue,
@@ -14,6 +19,21 @@ import {
 
 /** How long "Saved" stays in the save bar after a save. */
 const SAVED_NOTICE_MS = 1800;
+
+/**
+ * Says why a save was stopped. An editor draws only some of its fields, so an error on
+ * one it does not show would otherwise stop the save without a word.
+ */
+function reportRefusal(errors: FieldErrors): void {
+  sayRefused(fieldErrorMessages(errors));
+}
+
+function sayRefused(messages: readonly string[]): void {
+  if (messages.length === 0) {
+    return;
+  }
+  toast.error(translate("This change could not be saved"), { description: messages.join(" ") });
+}
 
 export type EditFlowOptions<T extends FieldValues> = {
   form: UseFormReturn<T>;
@@ -144,6 +164,11 @@ export function useEditFlow<T extends FieldValues>({
             return;
           }
           handleMutationError({ error, form, resourceName });
+          // A refused field the editor does not draw is set on the form and seen nowhere;
+          // messages the server sent for no field have already been said, on the root.
+          if (error instanceof ApiRequestError && error.isValidationError()) {
+            sayRefused(refusedFieldMessages(error.getFieldErrors(), form.control));
+          }
         })
         .finally(() => setSaving(false));
     },
@@ -154,7 +179,7 @@ export function useEditFlow<T extends FieldValues>({
     if (!canSave) {
       return;
     }
-    void form.handleSubmit(submit)();
+    void form.handleSubmit(submit, reportRefusal)();
   }, [canSave, form, submit]);
 
   const discard = useCallback(() => {
@@ -184,7 +209,7 @@ export function useEditFlow<T extends FieldValues>({
     }
     form.setValue(versionField, conflict.version as PathValue<T, FieldPath<T>>);
     setConflict(null);
-    void form.handleSubmit(submit)();
+    void form.handleSubmit(submit, reportRefusal)();
   }, [conflict, form, submit, versionField]);
 
   const back = useCallback(() => {

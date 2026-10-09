@@ -75,6 +75,10 @@ func newEscalateDetentionTool(detention detentionEscalator) serviceports.AgentTo
 
 func (t *escalateDetentionTool) Name() string { return "escalate_detention" }
 
+func (t *escalateDetentionTool) Recipe() []string {
+	return []string{"get_detention_occurrence", "escalate_detention"}
+}
+
 func (t *escalateDetentionTool) Description() string {
 	return "Hand a detention clock to a person, with the reason it cannot be worked " +
 		"automatically. Use it when the notice window has closed, a gate is holding the " +
@@ -230,6 +234,10 @@ func newApproveDetentionTool(detention detentionApprover) serviceports.AgentTool
 }
 
 func (t *approveDetentionTool) Name() string { return "approve_detention" }
+
+func (t *approveDetentionTool) Recipe() []string {
+	return []string{"list_detention_desk", "get_detention_occurrence", "approve_detention"}
+}
 
 func (t *approveDetentionTool) Description() string {
 	return "Propose approving a detention charge that is waiting on approval, so it can " +
@@ -409,6 +417,10 @@ func newRequestCredentialRenewalTool(credentials credentialActor) serviceports.A
 
 func (t *requestCredentialRenewalTool) Name() string { return "request_credential_renewal" }
 
+func (t *requestCredentialRenewalTool) Recipe() []string {
+	return []string{"get_worker", "get_worker_credential", "request_credential_renewal"}
+}
+
 func (t *requestCredentialRenewalTool) Description() string {
 	return "Ask a driver to renew the papers that are coming due, in one message covering " +
 		"every credential rather than one per certificate. Name each credential and its " +
@@ -557,6 +569,10 @@ func newPlaceWorkerDispatchHoldTool(workers workerHolder) serviceports.AgentTool
 }
 
 func (t *placeWorkerDispatchHoldTool) Name() string { return "place_worker_dispatch_hold" }
+
+func (t *placeWorkerDispatchHoldTool) Recipe() []string {
+	return []string{"get_worker", "request_credential_renewal", "place_worker_dispatch_hold"}
+}
 
 func (t *placeWorkerDispatchHoldTool) SearchTerms() []string {
 	return []string{"stop dispatching", "dispatch block", "no loads", "hold until renewed"}
@@ -729,7 +745,15 @@ func (t *acknowledgeCarrierIntelEventTool) Name() string {
 	return "acknowledge_carrier_intel_event"
 }
 
+func (t *acknowledgeCarrierIntelEventTool) Recipe() []string {
+	return []string{"get_carrier_intel_event", "acknowledge_carrier_intel_event"}
+}
+
 func (t *resolveCarrierIntelEventTool) Name() string { return "resolve_carrier_intel_event" }
+
+func (t *resolveCarrierIntelEventTool) Recipe() []string {
+	return []string{"get_carrier_intel_event", "get_carrier", "resolve_carrier_intel_event"}
+}
 
 func (t *resolveCarrierIntelEventTool) SearchTerms() []string {
 	return []string{"carrier finding", "insurance lapse", "finding resolved"}

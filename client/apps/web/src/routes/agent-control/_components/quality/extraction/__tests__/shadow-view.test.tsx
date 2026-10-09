@@ -11,6 +11,7 @@ import type { ColumnDef, DataTablePanelProps } from "@trenova/shared/types/data-
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { ComponentType, ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 
 const permissions = vi.hoisted(() => ({ denied: new Set<string>() }));
 
@@ -176,7 +177,9 @@ function renderView() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <ShadowView />
+      <NuqsTestingAdapter hasMemory>
+        <ShadowView />
+      </NuqsTestingAdapter>
     </QueryClientProvider>,
   );
 }
