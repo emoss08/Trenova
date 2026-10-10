@@ -3,11 +3,12 @@ package tenderservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs/tendercontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -39,11 +40,11 @@ func (s *Service) RecordResponse(
 
 	err = s.workflows.SignalWorkflow(
 		ctx,
-		tenderjobs.WorkflowID(offer.TenderID),
+		tendercontract.WorkflowID(offer.TenderID),
 		"",
-		tenderjobs.TenderSignalName,
-		tenderjobs.Signal{
-			Kind:          tenderjobs.SignalKindResponse,
+		tendercontract.TenderSignalName,
+		tendercontract.Signal{
+			Kind:          tendercontract.SignalKindResponse,
 			OfferID:       offer.ID,
 			Action:        req.Action,
 			Source:        req.Source,
@@ -55,7 +56,7 @@ func (s *Service) RecordResponse(
 		s.l.Error("failed to signal tender workflow with response",
 			zap.Error(err),
 			zap.String("offerId", offer.ID.String()),
-			zap.String("workflowId", tenderjobs.WorkflowID(offer.TenderID)))
+			zap.String("workflowId", tendercontract.WorkflowID(offer.TenderID)))
 		return errortypes.NewBusinessError(
 			"The response could not be recorded right now. Retry in a moment",
 		)

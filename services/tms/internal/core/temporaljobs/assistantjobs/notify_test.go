@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -90,7 +92,7 @@ func notifyInput(status conversation.AssistantTurnStatus) *NotifyUnseenTurnInput
 	userID := pulid.MustNew("usr_")
 
 	return &NotifyUnseenTurnInput{
-		Payload: &AssistantTurnPayload{
+		Payload: &assistantcontract.AssistantTurnPayload{
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: pulid.MustNew("org_"),
 				BusinessUnitID: pulid.MustNew("bu_"),

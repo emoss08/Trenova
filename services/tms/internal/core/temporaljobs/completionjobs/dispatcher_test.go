@@ -6,10 +6,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/briefing"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -88,7 +89,7 @@ func TestDispatcher_RunsTheCallOnTheChatQueueWithinTheRequestsDeadline(t *testin
 	assert.Equal(t, temporaltype.TaskQueueAgentChat.String(), options.TaskQueue)
 	assert.Equal(t, StructuredCompletionWorkflowName, starter.workflows[0])
 	assert.Same(t, req, starter.payloads[0].(*StructuredCompletionPayload).Request)
-	assert.Equal(t, agentflow.PriorityOneShot, options.Priority.PriorityKey)
+	assert.Equal(t, agentflowcontract.PriorityOneShot, options.Priority.PriorityKey)
 	assert.Equal(t, req.TenantInfo.OrgID.String(), options.Priority.FairnessKey)
 	assert.LessOrEqual(t, options.WorkflowExecutionTimeout, 30*time.Second-answerMargin,
 		"the call ends before the request that waits on it")

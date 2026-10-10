@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -40,7 +42,7 @@ func TestRunReadsASteerAtItsNextStep(t *testing.T) {
 		Return(func(_ context.Context, in *ModelCallInput) (*agentruntime.ModelReply, error) {
 			asked = append(asked, in.Request)
 			if len(asked) == 1 {
-				h.env.SignalWorkflow(SteerSignal, agentruntime.Steer{
+				h.env.SignalWorkflow(agentflowcontract.SteerSignal, agentruntime.Steer{
 					ID:      pulid.ID("aqm_01J9STEERSTEERSTEERSTEER00"),
 					Content: "Actually the carrier is Werner, not JB Hunt.",
 					Mentions: []agent.EntityRef{
@@ -80,8 +82,8 @@ func TestRunReadsTheSameSteerOnce(t *testing.T) {
 	h := newHarness(t, harnessParams{})
 	steer := agentruntime.Steer{ID: pulid.ID("aqm_01J9ONCEONCEONCEONCEONCE0"), Content: "Use the later slot."}
 	h.env.RegisterDelayedCallback(func() {
-		h.env.SignalWorkflow(SteerSignal, steer)
-		h.env.SignalWorkflow(SteerSignal, steer)
+		h.env.SignalWorkflow(agentflowcontract.SteerSignal, steer)
+		h.env.SignalWorkflow(agentflowcontract.SteerSignal, steer)
 	}, 0)
 	h.replies(textReply("Booked the later slot."))
 

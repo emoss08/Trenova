@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/emoss08/trenova/internal/bootstrap"
+	"github.com/emoss08/trenova/internal/bootstrap/apiapp"
 	"github.com/spf13/cobra"
 )
 
@@ -24,11 +25,8 @@ Examples:
 	RunE: runAPI,
 }
 
-func runAPI(cmd *cobra.Command, args []string) error {
-	app := bootstrap.NewApp(
-		bootstrap.APIOptions(),
-	)
-	app.Run()
+func runAPI(_ *cobra.Command, _ []string) error {
+	apiapp.Run(bootstrap.Options())
 	return nil
 }
 

@@ -3,6 +3,8 @@ package invoiceadjustmentjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs/invoiceadjustmentcontract"
+
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -24,7 +26,7 @@ var batchItemActivityOptions = workflow.ActivityOptions{
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
-			Name:        InvoiceAdjustmentBatchWorkflowName,
+			Name:        invoiceadjustmentcontract.InvoiceAdjustmentBatchWorkflowName,
 			Fn:          InvoiceAdjustmentBatchWorkflow,
 			TaskQueue:   temporaltype.TaskQueueBilling.String(),
 			Description: "Process invoice adjustment batches with per-item retries and progress tracking",
@@ -34,7 +36,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 
 func InvoiceAdjustmentBatchWorkflow(
 	ctx workflow.Context,
-	payload *BatchWorkflowPayload,
+	payload *invoiceadjustmentcontract.BatchWorkflowPayload,
 ) error {
 	ctx = workflow.WithActivityOptions(ctx, batchItemActivityOptions)
 

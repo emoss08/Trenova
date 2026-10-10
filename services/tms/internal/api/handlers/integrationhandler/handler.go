@@ -3,6 +3,8 @@ package integrationhandler
 import (
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs/samsaracontract"
+
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
@@ -10,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
 	"github.com/emoss08/trenova/internal/core/services/samsarasyncservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/gin-gonic/gin"
@@ -22,7 +23,7 @@ type Params struct {
 
 	IntegrationService   *integrationservice.Service
 	SyncService          *samsarasyncservice.Service
-	JobsManager          *samsarajobs.Manager
+	JobsManager          *samsaracontract.Manager
 	PermissionMiddleware *middleware.PermissionMiddleware
 	ErrorHandler         *helpers.ErrorHandler
 }
@@ -30,7 +31,7 @@ type Params struct {
 type Handler struct {
 	integrationService *integrationservice.Service
 	syncService        *samsarasyncservice.Service
-	jobsManager        *samsarajobs.Manager
+	jobsManager        *samsaracontract.Manager
 	pm                 *middleware.PermissionMiddleware
 	eh                 *helpers.ErrorHandler
 }

@@ -4,6 +4,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
@@ -110,7 +113,7 @@ const changeNotifyUnseenTurn = "assistant-turn-notify-unseen"
 // prepare reads the question and makes it ready to answer.
 func prepare(
 	ctx workflow.Context,
-	payload *AssistantTurnPayload,
+	payload *assistantcontract.AssistantTurnPayload,
 	plan *assistantservice.TurnPlan,
 ) error {
 	var a *Activities
@@ -145,8 +148,8 @@ func NewWorkflows(runtime *agentruntime.Service) *Workflows {
 // saved like any other ending.
 func (w *Workflows) AssistantTurnWorkflow(
 	ctx workflow.Context,
-	payload *AssistantTurnPayload,
-) (*AssistantTurnResult, error) {
+	payload *assistantcontract.AssistantTurnPayload,
+) (*assistantcontract.AssistantTurnResult, error) {
 	stream, err := agentflow.HostStream(ctx)
 	if err != nil {
 		return nil, err
@@ -196,7 +199,7 @@ func (w *Workflows) AssistantTurnWorkflow(
 func (w *Workflows) answer(
 	ctx workflow.Context,
 	stream *agentflow.Stream,
-	payload *AssistantTurnPayload,
+	payload *assistantcontract.AssistantTurnPayload,
 ) *FinishTurnInput {
 	finish := &FinishTurnInput{Payload: payload}
 
@@ -226,7 +229,7 @@ func (w *Workflows) answer(
 		return finish
 	}
 
-	run := agentflow.NewRunContext(plan.RunRequest(&payload.Actor), agentflow.PriorityInteractive)
+	run := agentflow.NewRunContext(plan.RunRequest(&payload.Actor), agentflowcontract.PriorityInteractive)
 	run.StepOwner = serviceports.RunStepOwner{
 		Kind: serviceports.RunStepOwnerAssistantTurn,
 		ID:   payload.TurnID,
@@ -248,7 +251,7 @@ func (w *Workflows) answer(
 func announceNext(
 	ctx workflow.Context,
 	stream *agentflow.Stream,
-	payload *AssistantTurnPayload,
+	payload *assistantcontract.AssistantTurnPayload,
 	next *serviceports.QueuedTurn,
 ) {
 	if next == nil || next.TurnID.IsNil() {
@@ -294,10 +297,10 @@ func rejectionDetails(err error) map[string]string {
 
 func withPriority(
 	options workflow.ActivityOptions,
-	payload *AssistantTurnPayload,
+	payload *assistantcontract.AssistantTurnPayload,
 ) workflow.ActivityOptions {
 	options.Priority = temporal.Priority{
-		PriorityKey: agentflow.PriorityInteractive,
+		PriorityKey: agentflowcontract.PriorityInteractive,
 		FairnessKey: payload.OrganizationID.String(),
 	}
 
@@ -350,7 +353,7 @@ func (w *Workflows) notifyUnseen(
 // conversation is not left refusing every later question.
 func (w *Workflows) closeRecord(
 	ctx workflow.Context,
-	payload *AssistantTurnPayload,
+	payload *assistantcontract.AssistantTurnPayload,
 	cause error,
 ) {
 	if workflow.GetVersion(ctx, changeCloseUnsavedTurn, workflow.DefaultVersion, 1) != 1 {
@@ -381,7 +384,7 @@ func (w *Workflows) closeRecord(
 func (w *Workflows) compactIfFull(
 	ctx workflow.Context,
 	stream *agentflow.Stream,
-	payload *AssistantTurnPayload,
+	payload *assistantcontract.AssistantTurnPayload,
 	ending *TurnEnding,
 ) {
 	if ending.Compact == nil {

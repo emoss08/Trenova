@@ -5,6 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -29,7 +32,7 @@ type AgentRunWorkflowTestSuite struct {
 
 	env       *testsuite.TestWorkflowEnvironment
 	runtime   *agentruntime.Service
-	payload   *AgentRunPayload
+	payload   *agentcontract.AgentRunPayload
 	completed []CompleteRunInput
 	expired   []ExpireProposalsInput
 	opened    *OpenRunInput
@@ -49,7 +52,7 @@ func (s *AgentRunWorkflowTestSuite) SetupTest() {
 		ActionTools: &agentruntimetest.StubActionRegistry{},
 		Permissions: &agentruntimetest.StubPermissions{},
 	})
-	s.payload = &AgentRunPayload{
+	s.payload = &agentcontract.AgentRunPayload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: pulid.MustNew("org_"),
 			BusinessUnitID: pulid.MustNew("bu_"),
@@ -64,7 +67,7 @@ func (s *AgentRunWorkflowTestSuite) SetupTest() {
 	s.env.RegisterActivity(&Activities{})
 	s.env.RegisterActivity(&agentflow.Activities{})
 	s.env.RegisterWorkflowWithOptions(NewWorkflows(s.runtime).AgentRunWorkflow,
-		workflow.RegisterOptions{Name: AgentRunWorkflowName})
+		workflow.RegisterOptions{Name: agentcontract.AgentRunWorkflowName})
 
 	var a *Activities
 	s.env.OnActivity(a.CompleteRunActivity, mock.Anything, mock.Anything).
@@ -110,7 +113,7 @@ func (s *AgentRunWorkflowTestSuite) prepared(shadow bool, decisionTimeout int) *
 func (s *AgentRunWorkflowTestSuite) stubPrepare(result *PrepareRunResult) {
 	var a *Activities
 	s.env.OnActivity(a.PrepareRunActivity, mock.Anything, mock.Anything).
-		Return(func(_ context.Context, payload *AgentRunPayload) (*PrepareRunResult, error) {
+		Return(func(_ context.Context, payload *agentcontract.AgentRunPayload) (*PrepareRunResult, error) {
 			s.Equal(s.payload.RunID, payload.RunID)
 			return result, nil
 		}).Once()
@@ -132,7 +135,7 @@ func (s *AgentRunWorkflowTestSuite) stubOpen() {
 			}
 
 			return &OpenRunResult{
-				Run:  agentflow.NewRunContext(req, agentflow.PriorityBackground),
+				Run:  agentflow.NewRunContext(req, agentflowcontract.PriorityBackground),
 				Turn: s.runtime.OpenTurn(ctx, req).State(),
 			}, nil
 		}).Once()
@@ -161,7 +164,7 @@ func (s *AgentRunWorkflowTestSuite) stubFinish(pending int) {
 }
 
 func (s *AgentRunWorkflowTestSuite) run() {
-	s.env.ExecuteWorkflow(AgentRunWorkflowName, s.payload)
+	s.env.ExecuteWorkflow(agentcontract.AgentRunWorkflowName, s.payload)
 	s.True(s.env.IsWorkflowCompleted())
 }
 
@@ -173,7 +176,7 @@ func (s *AgentRunWorkflowTestSuite) tenant() pagination.TenantInfo {
 }
 
 func (s *AgentRunWorkflowTestSuite) decide() {
-	s.env.SignalWorkflow(AgentDecisionSignalName, DecisionSignal{
+	s.env.SignalWorkflow(agentcontract.AgentDecisionSignalName, agentcontract.DecisionSignal{
 		ProposalID:      pulid.MustNew("agp_"),
 		Decision:        agent.DecisionAccepted,
 		DecidedByUserID: pulid.MustNew("usr_"),

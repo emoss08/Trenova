@@ -3,6 +3,8 @@ package documentuploadjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs/documentuploadcontract"
+
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
@@ -47,7 +49,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 
 func FinalizeDocumentUploadWorkflow(
 	ctx workflow.Context,
-	payload *FinalizeUploadPayload,
+	payload *documentuploadcontract.FinalizeUploadPayload,
 ) (*FinalizeUploadResult, error) {
 	ctx = workflow.WithActivityOptions(ctx, finalizeActivityOptions)
 
@@ -138,7 +140,7 @@ func ReconcileDocumentUploadsWorkflow(
 
 func CleanupDocumentStorageWorkflow(
 	ctx workflow.Context,
-	payload *CleanupDocumentStoragePayload,
+	payload *documentuploadcontract.CleanupDocumentStoragePayload,
 ) error {
 	ctx = workflow.WithActivityOptions(ctx, finalizeActivityOptions)
 

@@ -84,10 +84,7 @@ var heavyTools = map[string]struct{}{
 // where kinds of work share a queue, and fairness keys by organization then
 // share each priority out between tenants.
 const (
-	PriorityInteractive = 1
-	PriorityOneShot     = 2
-	PriorityBackground  = 3
-	PriorityEvaluation  = 5
+	PriorityEvaluation = 5
 )
 
 // Non-retryable error types of a tool call. A call that fails with one of these
@@ -258,10 +255,6 @@ type Outcome struct {
 	// Steered are the queued messages the turn read while it worked.
 	Steered []pulid.ID `json:"steered,omitempty"`
 }
-
-// SteerSignal carries something the person said to a turn while it works.
-// The turn reads it at its next step.
-const SteerSignal = "assistant-turn-steer"
 
 const (
 	worldCheckTimeout      = 5 * time.Second

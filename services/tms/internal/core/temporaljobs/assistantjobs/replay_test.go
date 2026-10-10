@@ -4,6 +4,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -35,12 +37,12 @@ func replayRuntime() *agentruntime.Service {
 	})
 }
 
-func replayPayload() *AssistantTurnPayload {
+func replayPayload() *assistantcontract.AssistantTurnPayload {
 	org := pulid.MustNew("org_")
 	bu := pulid.MustNew("bu_")
 	user := pulid.MustNew("usr_")
 
-	return &AssistantTurnPayload{
+	return &assistantcontract.AssistantTurnPayload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: org,
 			BusinessUnitID: bu,
@@ -62,7 +64,7 @@ func replayPayload() *AssistantTurnPayload {
 func replayPlan(
 	t *testing.T,
 	runtime *agentruntime.Service,
-	payload *AssistantTurnPayload,
+	payload *assistantcontract.AssistantTurnPayload,
 ) *assistantservice.TurnPlan {
 	t.Helper()
 
@@ -92,7 +94,7 @@ func TestAssistantTurnWorkflow_ReplaysRecordedHistories(t *testing.T) {
 	replaytest.Dir(t, filepath.Join("testdata", "replay"), func(r worker.WorkflowReplayer) {
 		r.RegisterWorkflowWithOptions(
 			NewWorkflows(replayRuntime()).AssistantTurnWorkflow,
-			workflow.RegisterOptions{Name: AssistantTurnWorkflowName},
+			workflow.RegisterOptions{Name: assistantcontract.AssistantTurnWorkflowName},
 		)
 	})
 }

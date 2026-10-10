@@ -4,12 +4,13 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs/shipmentcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -100,10 +101,10 @@ func TestServiceDuplicate_StartsShipmentDuplicateWorkflow(t *testing.T) {
 				args ...any,
 			) (client.WorkflowRun, error) {
 				assert.Equal(t, temporaltype.TaskQueueSystem.String(), options.TaskQueue)
-				assert.Equal(t, shipmentjobs.BulkDuplicateShipmentsWorkflowName, workflow)
+				assert.Equal(t, shipmentcontract.BulkDuplicateShipmentsWorkflowName, workflow)
 
 				require.Len(t, args, 1)
-				payload, ok := args[0].(*shipmentjobs.BulkDuplicateShipmentsPayload)
+				payload, ok := args[0].(*shipmentcontract.BulkDuplicateShipmentsPayload)
 				require.True(t, ok)
 				assert.Equal(t, req.ShipmentID, payload.ShipmentID)
 				assert.Equal(t, req.Count, payload.Count)

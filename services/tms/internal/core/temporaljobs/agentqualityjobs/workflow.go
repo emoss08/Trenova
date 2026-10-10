@@ -3,10 +3,11 @@ package agentqualityjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/services/agentqualityservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/api/enums/v1"
@@ -246,8 +247,8 @@ func AgentSuiteRunWorkflow(
 				agentquality.EvaluationWorkflowID(suiteCase.EvaluationID),
 				tenant.OrgID,
 			))
-			if err = workflow.ExecuteChildWorkflow(childCtx, agentjobs.AgentEvaluationWorkflowName,
-				&agentjobs.AgentEvaluationPayload{
+			if err = workflow.ExecuteChildWorkflow(childCtx, agentcontract.AgentEvaluationWorkflowName,
+				&agentcontract.AgentEvaluationPayload{
 					BasePayload: temporaltype.BasePayload{
 						OrganizationID: tenant.OrgID,
 						BusinessUnitID: tenant.BuID,

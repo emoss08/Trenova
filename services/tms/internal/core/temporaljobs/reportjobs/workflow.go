@@ -4,6 +4,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs/reportcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
@@ -64,7 +66,7 @@ var cleanupActivityOptions = workflow.ActivityOptions{
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
-			Name:        "RunReportWorkflow",
+			Name:        reportcontract.RunReportWorkflowName,
 			Fn:          RunReportWorkflow,
 			TaskQueue:   temporaltype.ReportTaskQueue,
 			Description: "Compile, execute, render, and deliver a report run",
@@ -92,7 +94,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 
 func RunReportWorkflow(
 	ctx workflow.Context,
-	payload *RunReportPayload,
+	payload *reportcontract.RunReportPayload,
 ) (*RunReportResult, error) {
 	var a *Activities
 	startedAt := workflow.Now(ctx)
@@ -187,7 +189,7 @@ func RunReportWorkflow(
 // workflow cancellation — so a run can never be left stuck in queued/running.
 func finalizeFailure(
 	ctx workflow.Context,
-	payload *RunReportPayload,
+	payload *reportcontract.RunReportPayload,
 	startedAt time.Time,
 	cause error,
 ) (*RunReportResult, error) {

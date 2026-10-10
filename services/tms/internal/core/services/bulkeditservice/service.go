@@ -5,12 +5,13 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/bulkeditjobs/bulkeditcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/bulkedit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/tableinsightservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/bulkeditjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -190,14 +191,14 @@ func (s *Service) Undo(
 func (s *Service) run(ctx context.Context, entity *bulkedit.BulkEdit) (*bulkedit.BulkEdit, error) {
 	_, err := s.workflows.StartWorkflow(ctx,
 		client.StartWorkflowOptions{
-			ID: bulkeditjobs.WorkflowIDPrefix + entity.ID.String() + "-" + string(
+			ID: bulkeditcontract.WorkflowIDPrefix + entity.ID.String() + "-" + string(
 				entity.Status,
 			),
 			TaskQueue:             temporaltype.TaskQueueSystem.String(),
 			WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
 		},
-		bulkeditjobs.BulkEditWorkflow,
-		&bulkeditjobs.EditPayload{
+		bulkeditcontract.BulkEditWorkflowName,
+		&bulkeditcontract.EditPayload{
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: entity.OrganizationID,
 				BusinessUnitID: entity.BusinessUnitID,

@@ -2,13 +2,15 @@ package invoiceservice
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/core/services/invoiceledger"
-	"github.com/emoss08/trenova/internal/core/services/journalposting"
 	"image"
 	"image/color"
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/core/services/invoiceledger"
+	"github.com/emoss08/trenova/internal/core/services/journalposting"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
@@ -24,7 +26,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -1047,10 +1048,10 @@ func TestGeneratePDFStartsWorkflow(t *testing.T) {
 				return strings.HasPrefix(options.ID, "invoice-pdf-generate-"+invoiceID.String()) &&
 					options.TaskQueue == temporaltype.TaskQueueBilling.String()
 			}),
-			billingjobs.GenerateInvoicePDFWorkflowName,
+			billingcontract.GenerateInvoicePDFWorkflowName,
 			mock.MatchedBy(func(args []any) bool {
 				require.Len(t, args, 1)
-				payload, ok := args[0].(*billingjobs.GenerateInvoicePDFPayload)
+				payload, ok := args[0].(*billingcontract.GenerateInvoicePDFPayload)
 				return ok &&
 					payload.InvoiceID == invoiceID &&
 					payload.BaseURL == "https://billing.example.test" &&

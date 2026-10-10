@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/emoss08/trenova/shared/i18n"
 	"time"
+
+	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs/reportcontract"
+	"github.com/emoss08/trenova/shared/i18n"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
@@ -140,7 +142,7 @@ func classifyCompileError(err error) error {
 
 func (a *Activities) PrepareRunActivity(
 	ctx context.Context,
-	payload *RunReportPayload,
+	payload *reportcontract.RunReportPayload,
 ) (*PreparedRun, error) {
 	tenant := pagination.TenantInfo{
 		OrgID: payload.OrganizationID,

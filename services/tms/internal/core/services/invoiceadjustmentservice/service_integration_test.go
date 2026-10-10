@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs/invoiceadjustmentcontract"
+
 	"github.com/emoss08/trenova/internal/core/services/rateengine/rateenginetest"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/chargeallocationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerledgerrepository"
@@ -25,7 +27,6 @@ import (
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
@@ -979,7 +980,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			require.Len(t, temporalStarter.calls, 1)
 			assert.Equal(
 				t,
-				invoiceadjustmentjobs.InvoiceAdjustmentBatchWorkflowName,
+				invoiceadjustmentcontract.InvoiceAdjustmentBatchWorkflowName,
 				temporalStarter.calls[0].workflow,
 			)
 		},

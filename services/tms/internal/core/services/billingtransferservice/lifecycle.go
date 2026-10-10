@@ -3,9 +3,10 @@ package billingtransferservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingtransferjobs/billingtransfercontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingtransferjobs"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -49,7 +50,7 @@ func (s *Service) Cancel(
 			ctx,
 			canceled.TemporalWorkflowID,
 			canceled.TemporalRunID,
-			billingtransferjobs.CancelSignalName,
+			billingtransfercontract.CancelSignalName,
 			nil,
 		); sigErr != nil {
 			// Not an error the caller needs to see: the flag is already written

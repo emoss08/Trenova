@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs/tendercontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -14,7 +16,6 @@ import (
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/dispatchguard"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -772,11 +773,11 @@ func (s *Service) persistAndStart(
 		return nil, err
 	}
 
-	workflowID := tenderjobs.WorkflowID(entity.ID)
+	workflowID := tendercontract.WorkflowID(entity.ID)
 	_, err = s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
 		ID:        workflowID,
 		TaskQueue: temporaltype.TaskQueueDispatch.String(),
-	}, tenderjobs.CarrierTenderWorkflowName, tenderjobs.WorkflowInput{
+	}, tendercontract.CarrierTenderWorkflowName, tendercontract.WorkflowInput{
 		TenderID:       entity.ID,
 		OrganizationID: entity.OrganizationID,
 		BusinessUnitID: entity.BusinessUnitID,

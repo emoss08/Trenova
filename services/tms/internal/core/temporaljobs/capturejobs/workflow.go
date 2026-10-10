@@ -4,6 +4,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs/documentuploadcontract"
+
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -126,7 +128,7 @@ func FileCaptureItemWorkflow(ctx workflow.Context, payload *FileItemPayload) err
 	err := workflow.ExecuteChildWorkflow(
 		childCtx,
 		documentuploadjobs.FinalizeDocumentUploadWorkflow,
-		&documentuploadjobs.FinalizeUploadPayload{
+		&documentuploadcontract.FinalizeUploadPayload{
 			BasePayload:   payload.BasePayload,
 			SessionID:     payload.SessionID,
 			PrincipalType: services.PrincipalTypeUser,

@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs/shipmentcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -22,7 +24,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/servicefailuretrigger"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -1213,7 +1214,7 @@ func (s *service) Duplicate(
 		return nil, err
 	}
 
-	payload := &shipmentjobs.BulkDuplicateShipmentsPayload{
+	payload := &shipmentcontract.BulkDuplicateShipmentsPayload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: req.TenantInfo.OrgID,
 			BusinessUnitID: req.TenantInfo.BuID,
@@ -1251,7 +1252,7 @@ func (s *service) Duplicate(
 				req.Count,
 			),
 		},
-		shipmentjobs.BulkDuplicateShipmentsWorkflowName,
+		shipmentcontract.BulkDuplicateShipmentsWorkflowName,
 		payload,
 	)
 	if err != nil {

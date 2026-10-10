@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -335,8 +336,8 @@ func (s *Service) startEDISendWorkflow(
 			TaskQueue:     temporaltype.TaskQueueBilling.String(),
 			StaticSummary: "Send invoice " + entity.Number + " by EDI",
 		},
-		billingjobs.SendInvoiceEDIWorkflowName,
-		&billingjobs.SendInvoiceEDIPayload{
+		billingcontract.SendInvoiceEDIWorkflowName,
+		&billingcontract.SendInvoiceEDIPayload{
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: entity.OrganizationID,
 				BusinessUnitID: entity.BusinessUnitID,

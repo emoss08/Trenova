@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs/tendercontract"
+
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -75,11 +77,11 @@ func (a *Activities) SweepStalledTendersActivity(
 		// The stored workflow_id is informational; the identifier is fully
 		// deterministic, so a tender that crashed before recording it is
 		// still recoverable.
-		workflowID := WorkflowID(entity.ID)
+		workflowID := tendercontract.WorkflowID(entity.ID)
 
 		signalErr := a.workflows.SignalWorkflow(
-			ctx, workflowID, "", TenderSignalName,
-			Signal{Kind: SignalKindSweepNudge},
+			ctx, workflowID, "", tendercontract.TenderSignalName,
+			tendercontract.Signal{Kind: SignalKindSweepNudge},
 		)
 		if signalErr == nil {
 			result.Nudged++
@@ -94,7 +96,7 @@ func (a *Activities) SweepStalledTendersActivity(
 		_, startErr := a.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
 			ID:        workflowID,
 			TaskQueue: temporaltype.TaskQueueDispatch.String(),
-		}, CarrierTenderWorkflowName, WorkflowInput{
+		}, tendercontract.CarrierTenderWorkflowName, tendercontract.WorkflowInput{
 			TenderID:       entity.ID,
 			OrganizationID: entity.OrganizationID,
 			BusinessUnitID: entity.BusinessUnitID,

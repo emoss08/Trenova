@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+
 	"github.com/emoss08/trenova/shared/timeutils"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -14,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/proposalexecutor"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -622,8 +623,8 @@ func (s *Service) signalWorkflow(
 		return nil
 	}
 
-	return s.workflows.SignalWorkflow(ctx, run.WorkflowID, "", agentjobs.AgentDecisionSignalName,
-		agentjobs.DecisionSignal{
+	return s.workflows.SignalWorkflow(ctx, run.WorkflowID, "", agentcontract.AgentDecisionSignalName,
+		agentcontract.DecisionSignal{
 			ProposalID:      *decision.ProposalID,
 			Decision:        decision.Decision,
 			DecidedByUserID: decision.DecidedByUserID,

@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
@@ -136,7 +138,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 // startup rather than a compile error.
 func (a *Activities) PrepareTurnActivity(
 	ctx context.Context,
-	payload *AssistantTurnPayload,
+	payload *assistantcontract.AssistantTurnPayload,
 ) (*assistantservice.TurnPlan, error) {
 	if payload.Actor.UserID.IsNil() {
 		// A turn runs as the person who asked. A worker that carried on
@@ -502,7 +504,7 @@ func (a *Activities) finish(
 		return keptInThread(failedEndingFor(status, failedMessage, in.Failure)), cause, nil
 	default:
 		return &TurnEnding{
-			Result: AssistantTurnResult{
+			Result: assistantcontract.AssistantTurnResult{
 				Status:  string(status),
 				Refused: result.Refused,
 				Result:  result,
@@ -551,7 +553,7 @@ func (a *Activities) recordFingerprint(ctx context.Context, in *FinishTurnInput)
 
 func failedEnding(status conversation.AssistantTurnStatus, message string) *TurnEnding {
 	return &TurnEnding{
-		Result: AssistantTurnResult{Status: string(status), Message: message},
+		Result: assistantcontract.AssistantTurnResult{Status: string(status), Message: message},
 		Event: temporaltype.StreamItem{
 			Event: serviceports.AssistantEventError,
 			Data:  map[string]any{"message": message},
@@ -683,7 +685,7 @@ func (a *Activities) alreadySaved(
 	event := assistantturnservice.ClosingEvent(turn)
 
 	return &TurnEnding{
-		Result: AssistantTurnResult{Status: string(turn.Status)},
+		Result: assistantcontract.AssistantTurnResult{Status: string(turn.Status)},
 		Event:  temporaltype.StreamItem{Event: event.Event, Data: event.Data},
 	}
 }
@@ -694,7 +696,7 @@ func (a *Activities) alreadySaved(
 // conversation for its next question.
 func (a *Activities) CloseTurnActivity(
 	ctx context.Context,
-	payload *AssistantTurnPayload,
+	payload *assistantcontract.AssistantTurnPayload,
 	message string,
 ) error {
 	turn, err := a.turnRepo.GetByID(ctx, repositories.GetAssistantTurnRequest{
@@ -750,7 +752,7 @@ func (a *Activities) recordLoopRefusals(ctx context.Context, in *FinishTurnInput
 
 // claimSave reserves saving the turn for this attempt, and reports whether
 // this attempt may save it.
-func (a *Activities) claimSave(ctx context.Context, payload *AssistantTurnPayload) (bool, error) {
+func (a *Activities) claimSave(ctx context.Context, payload *assistantcontract.AssistantTurnPayload) (bool, error) {
 	tenant := payload.tenantInfo()
 	recorded, err := a.steps.Loaded(ctx, tenant, serviceports.RunStepOwner{
 		Kind: serviceports.RunStepOwnerAssistantTurn,
@@ -776,7 +778,7 @@ func (a *Activities) claimSave(ctx context.Context, payload *AssistantTurnPayloa
 	return verdict.State == serviceports.StepFresh, nil
 }
 
-func saveStep(ctx context.Context, payload *AssistantTurnPayload) serviceports.RunStep {
+func saveStep(ctx context.Context, payload *assistantcontract.AssistantTurnPayload) serviceports.RunStep {
 	attempt := int(activity.GetInfo(ctx).Attempt)
 
 	return serviceports.RunStep{
@@ -792,7 +794,7 @@ func saveStep(ctx context.Context, payload *AssistantTurnPayload) serviceports.R
 // settle closes this attempt's claim so the ledger agrees with the record.
 func (a *Activities) settle(
 	ctx context.Context,
-	payload *AssistantTurnPayload,
+	payload *assistantcontract.AssistantTurnPayload,
 	status serviceports.RunStepStatus,
 	content string,
 ) {
@@ -816,7 +818,7 @@ func (a *Activities) settle(
 func (a *Activities) recordTrajectory(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	payload *AssistantTurnPayload,
+	payload *assistantcontract.AssistantTurnPayload,
 	events []temporaltype.StreamItem,
 	ending temporaltype.StreamItem,
 ) {

@@ -5,11 +5,12 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs/smscontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +23,7 @@ import (
 type recordingStarter struct {
 	serviceports.WorkflowStarter
 
-	texts []*smsjobs.SendSMSPayload
+	texts []*smscontract.SendSMSPayload
 }
 
 func (r *recordingStarter) Enabled() bool { return true }
@@ -33,7 +34,7 @@ func (r *recordingStarter) StartWorkflow(
 	_ any,
 	args ...any,
 ) (client.WorkflowRun, error) {
-	payload, ok := args[0].(*smsjobs.SendSMSPayload)
+	payload, ok := args[0].(*smscontract.SendSMSPayload)
 	if !ok {
 		return nil, errors.New("not an SMS")
 	}

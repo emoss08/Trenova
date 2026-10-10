@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentwaitjobs/agentwaitcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agentwait"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -19,17 +21,17 @@ import (
 // ended.
 type scriptedWorker struct {
 	mu       sync.Mutex
-	schedule Schedule
-	checks   []Check
+	schedule agentwaitcontract.Schedule
+	checks   []agentwaitcontract.Check
 	checked  []int64
-	finished []FinishInput
+	finished []agentwaitcontract.FinishInput
 }
 
-func (w *scriptedWorker) Schedule(context.Context, pagination.TenantInfo, pulid.ID) (*Schedule, error) {
+func (w *scriptedWorker) Schedule(context.Context, pagination.TenantInfo, pulid.ID) (*agentwaitcontract.Schedule, error) {
 	return &w.schedule, nil
 }
 
-func (w *scriptedWorker) Check(_ context.Context, _ pagination.TenantInfo, _ pulid.ID, now int64) (*Check, error) {
+func (w *scriptedWorker) Check(_ context.Context, _ pagination.TenantInfo, _ pulid.ID, now int64) (*agentwaitcontract.Check, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	w.checked = append(w.checked, now)
@@ -41,7 +43,7 @@ func (w *scriptedWorker) Check(_ context.Context, _ pagination.TenantInfo, _ pul
 
 func (w *scriptedWorker) ReconcileOverdue(context.Context) (int, error) { return 0, nil }
 
-func (w *scriptedWorker) Finish(_ context.Context, in *FinishInput) error {
+func (w *scriptedWorker) Finish(_ context.Context, in *agentwaitcontract.FinishInput) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	w.finished = append(w.finished, *in)
@@ -60,7 +62,7 @@ func run(t *testing.T, worker *scriptedWorker, during func(*testsuite.TestWorkfl
 		during(env)
 	}
 
-	env.ExecuteWorkflow(AgentWaitWorkflow, &Payload{
+	env.ExecuteWorkflow(AgentWaitWorkflow, &agentwaitcontract.Payload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: pulid.MustNew("org_"),
 			BusinessUnitID: pulid.MustNew("bu_"),
@@ -81,9 +83,9 @@ func TestAgentWaitWorkflow_AnEventEndsTheWait(t *testing.T) {
 
 	worker := &scriptedWorker{}
 	run(t, worker, func(env *testsuite.TestWorkflowEnvironment) {
-		worker.schedule = Schedule{Open: true, ExpiresAt: clock(env, 24*time.Hour)}
+		worker.schedule = agentwaitcontract.Schedule{Open: true, ExpiresAt: clock(env, 24*time.Hour)}
 		env.RegisterDelayedCallback(func() {
-			env.SignalWorkflow(MetSignal, Met{Detail: "Arrived at stop stp_1."})
+			env.SignalWorkflow(agentwaitcontract.MetSignal, agentwaitcontract.Met{Detail: "Arrived at stop stp_1."})
 		}, 2*time.Hour)
 	})
 
@@ -99,8 +101,8 @@ func TestAgentWaitWorkflow_AMovedAppointmentPutsTheWaitOff(t *testing.T) {
 	worker := &scriptedWorker{}
 	run(t, worker, func(env *testsuite.TestWorkflowEnvironment) {
 		due, later := clock(env, time.Hour), clock(env, 3*time.Hour)
-		worker.schedule = Schedule{Open: true, DueAt: &due, ExpiresAt: clock(env, 24*time.Hour)}
-		worker.checks = []Check{
+		worker.schedule = agentwaitcontract.Schedule{Open: true, DueAt: &due, ExpiresAt: clock(env, 24*time.Hour)}
+		worker.checks = []agentwaitcontract.Check{
 			{DueAt: &later},
 			{Met: true, Detail: "The appointment at Kroger DC is at 16:00."},
 		}
@@ -118,7 +120,7 @@ func TestAgentWaitWorkflow_AWaitThatRunsOutIsPickedUpAnyway(t *testing.T) {
 
 	worker := &scriptedWorker{}
 	run(t, worker, func(env *testsuite.TestWorkflowEnvironment) {
-		worker.schedule = Schedule{Open: true, ExpiresAt: clock(env, 6*time.Hour)}
+		worker.schedule = agentwaitcontract.Schedule{Open: true, ExpiresAt: clock(env, 6*time.Hour)}
 	})
 
 	require.Len(t, worker.finished, 1)
@@ -128,7 +130,7 @@ func TestAgentWaitWorkflow_AWaitThatRunsOutIsPickedUpAnyway(t *testing.T) {
 func TestAgentWaitWorkflow_AClosedWaitDoesNothing(t *testing.T) {
 	t.Parallel()
 
-	worker := &scriptedWorker{schedule: Schedule{Open: false}}
+	worker := &scriptedWorker{schedule: agentwaitcontract.Schedule{Open: false}}
 	run(t, worker, nil)
 
 	assert.Empty(t, worker.finished)
@@ -140,8 +142,8 @@ func TestAgentWaitWorkflow_AWaitClosedMeanwhileEndsQuietly(t *testing.T) {
 	worker := &scriptedWorker{}
 	run(t, worker, func(env *testsuite.TestWorkflowEnvironment) {
 		due := clock(env, time.Hour)
-		worker.schedule = Schedule{Open: true, DueAt: &due, ExpiresAt: clock(env, 24*time.Hour)}
-		worker.checks = []Check{{Closed: true}}
+		worker.schedule = agentwaitcontract.Schedule{Open: true, DueAt: &due, ExpiresAt: clock(env, 24*time.Hour)}
+		worker.checks = []agentwaitcontract.Check{{Closed: true}}
 	})
 
 	assert.Empty(t, worker.finished)
@@ -152,14 +154,14 @@ func TestAgentWaitWorkflow_AMovedDueTimeIsReadAgain(t *testing.T) {
 
 	worker := &scriptedWorker{}
 	run(t, worker, func(env *testsuite.TestWorkflowEnvironment) {
-		worker.schedule = Schedule{Open: true, ExpiresAt: clock(env, 24*time.Hour)}
+		worker.schedule = agentwaitcontract.Schedule{Open: true, ExpiresAt: clock(env, 24*time.Hour)}
 		env.RegisterDelayedCallback(func() {
 			soon := clock(env, 30*time.Minute)
 			worker.mu.Lock()
-			worker.schedule = Schedule{Open: true, DueAt: &soon, ExpiresAt: clock(env, 24*time.Hour)}
-			worker.checks = []Check{{Met: true, Detail: "Drive time left: about 1h 59m."}}
+			worker.schedule = agentwaitcontract.Schedule{Open: true, DueAt: &soon, ExpiresAt: clock(env, 24*time.Hour)}
+			worker.checks = []agentwaitcontract.Check{{Met: true, Detail: "Drive time left: about 1h 59m."}}
 			worker.mu.Unlock()
-			env.SignalWorkflow(RescheduleSignal, nil)
+			env.SignalWorkflow(agentwaitcontract.RescheduleSignal, nil)
 		}, time.Hour)
 	})
 

@@ -6,6 +6,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
@@ -149,7 +151,7 @@ func runContext(tools ...string) RunContext {
 			BusinessUnitID: pulid.MustNew("bu_"),
 		},
 		Input:       "Where is load 12345?",
-		PriorityKey: PriorityInteractive,
+		PriorityKey: agentflowcontract.PriorityInteractive,
 	}
 }
 

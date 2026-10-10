@@ -7,14 +7,7 @@ import (
 )
 
 const (
-	BulkBillingTransferWorkflowName = "BulkBillingTransferWorkflow"
 	ReconcileZombieRunsWorkflowName = "ReconcileZombieBillingTransferRunsWorkflow"
-
-	// CancelSignalName shortens how long a cancel waits to take effect. It is
-	// never the authority for one: the run row's cancel_requested_at is, because
-	// that survives a worker restart and a Temporal outage and is visible to the
-	// dialog the instant it is written.
-	CancelSignalName = "billing-transfer-cancel"
 )
 
 const (
@@ -33,12 +26,6 @@ const (
 	ErrTypeTransferValidation = "BILLING_TRANSFER_VALIDATION"
 	ErrTypeTransferCandidates = "BILLING_TRANSFER_CANDIDATES"
 )
-
-type TransferRunPayload struct {
-	temporaltype.BasePayload
-
-	RunID pulid.ID `json:"runId"`
-}
 
 type PreparedRun struct {
 	RunID          pulid.ID `json:"runId"`

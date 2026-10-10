@@ -6,10 +6,11 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/services/agentqualityservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -92,14 +93,14 @@ func newSuiteHarness(t *testing.T, script suiteScript) *suiteHarness {
 	env.RegisterWorkflowWithOptions(AgentSuiteRunWorkflow,
 		workflow.RegisterOptions{Name: AgentSuiteRunWorkflowName})
 	env.RegisterWorkflowWithOptions(
-		func(_ workflow.Context, payload *agentjobs.AgentEvaluationPayload) error {
+		func(_ workflow.Context, payload *agentcontract.AgentEvaluationPayload) error {
 			h.mu.Lock()
 			defer h.mu.Unlock()
 			h.replayed = append(h.replayed, payload.EvaluationID)
 
 			return nil
 		},
-		workflow.RegisterOptions{Name: agentjobs.AgentEvaluationWorkflowName},
+		workflow.RegisterOptions{Name: agentcontract.AgentEvaluationWorkflowName},
 	)
 	env.RegisterActivity(&Activities{})
 	env.SetOnActivityStartedListener(h.record)

@@ -469,6 +469,13 @@ middleware join through the `internal/api/routegroup` value groups, GraphQL exte
 `public_config_contributors`. Decide behaviour from an injected port (`PlanService.EnforcesPlans`,
 `EditionInfo.SharedTenancy`, an onboarding row existing), never from `platform.mode`.
 
+**Binaries and edition registration.** Besides `cmd/cli` (the production image's `api run`
+and `worker run`), the service builds `cmd/api` and `cmd/worker`, which link only the API's
+or the worker's graph (`internal/bootstrap/core` plus `apiapp` or `workerapp`). Each main
+registers its edition separately, so an overlay must also add `cmd/api/edition_cloud.go` and
+`cmd/worker/edition_cloud.go`, each calling `edition.Register(cloud.Edition())`; without them
+those two binaries run the self-hosted edition.
+
 ## Bun ORM
 
 For help with Bun ORM, look in the [docs](docs/bun/).

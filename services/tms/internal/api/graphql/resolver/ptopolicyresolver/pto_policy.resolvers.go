@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/ptojobs/ptocontract"
+
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
@@ -18,7 +20,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/core/services/ptopolicyservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/ptojobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -201,7 +202,7 @@ func (r *MutationResolver) RunPTOAccrual(ctx context.Context, input gqlmodel.Run
 		run, startErr := r.WorkflowStarter.StartWorkflow(ctx, client.StartWorkflowOptions{
 			ID:        fmt.Sprintf("pto-accrual-%s-%d", info.OrgID.String(), timeutils.NowUnix()),
 			TaskQueue: temporaltype.TaskQueueSystem.String(),
-		}, ptojobs.PTOAccrualWorkflowName, ptojobs.PTOAccrualWorkflowInput{
+		}, ptocontract.PTOAccrualWorkflowName, ptocontract.PTOAccrualWorkflowInput{
 			OrganizationID: info.OrgID,
 			BusinessUnitID: info.BuID,
 			AsOf:           asOf,

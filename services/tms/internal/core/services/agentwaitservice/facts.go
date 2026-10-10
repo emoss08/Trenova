@@ -6,12 +6,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentwaitjobs/agentwaitcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentwait"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentwaitjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -200,7 +201,7 @@ func (f *facts) recheck(
 	ctx context.Context,
 	wait *agentwait.Wait,
 	now int64,
-) (*agentwaitjobs.Check, error) {
+) (*agentwaitcontract.Check, error) {
 	tenant := tenantOf(wait)
 	c := wait.Condition
 
@@ -216,7 +217,7 @@ func (f *facts) recheck(
 		}
 		due := stop.ScheduledWindowStart - int64(c.MinutesBefore)*60
 		if due > now+rearmSlack {
-			return &agentwaitjobs.Check{DueAt: &due}, nil
+			return &agentwaitcontract.Check{DueAt: &due}, nil
 		}
 		return met("The appointment at %s is at %s.", stopName(stop),
 			stamp(stop.ScheduledWindowStart)), nil
@@ -231,7 +232,7 @@ func (f *facts) recheck(
 		}
 		due := occurrence.FreeTimeExpiresAt - int64(c.MinutesBefore)*60
 		if due > now+rearmSlack {
-			return &agentwaitjobs.Check{DueAt: &due}, nil
+			return &agentwaitcontract.Check{DueAt: &due}, nil
 		}
 		return met("Free time ends at %s.", stamp(occurrence.FreeTimeExpiresAt)), nil
 
@@ -248,23 +249,23 @@ func (f *facts) recheck(
 			return met("Drive time left: about %s, projected from the clock read at %s "+
 				"while driving.", durationText(left), stamp(state.RecordedAt)), nil
 		}
-		return &agentwaitjobs.Check{DueAt: crossingAt(state, c.DriveMinutesBelow)}, nil
+		return &agentwaitcontract.Check{DueAt: crossingAt(state, c.DriveMinutesBelow)}, nil
 
 	default:
 		return met("It is %s.", stamp(now)), nil
 	}
 }
 
-func met(format string, args ...any) *agentwaitjobs.Check {
-	return &agentwaitjobs.Check{Met: true, Detail: fmt.Sprintf(format, args...)}
+func met(format string, args ...any) *agentwaitcontract.Check {
+	return &agentwaitcontract.Check{Met: true, Detail: fmt.Sprintf(format, args...)}
 }
 
 // goneOr ends a wait whose record disappeared, saying so, and reports any
 // other failure for the activity to retry.
-func goneOr(err error, gone string) (*agentwaitjobs.Check, error) {
+func goneOr(err error, gone string) (*agentwaitcontract.Check, error) {
 	var missing *recordMissingError
 	if errors.As(err, &missing) {
-		return &agentwaitjobs.Check{Met: true, Detail: gone}, nil
+		return &agentwaitcontract.Check{Met: true, Detail: gone}, nil
 	}
 
 	return nil, err

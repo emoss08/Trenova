@@ -17,6 +17,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
@@ -104,13 +107,13 @@ func TestRecordAgentLoopHistories(t *testing.T) {
 			w := worker.New(c, queue, worker.Options{})
 			w.RegisterWorkflowWithOptions(
 				NewWorkflows(runtime).AgentRunWorkflow,
-				workflow.RegisterOptions{Name: AgentRunWorkflowName},
+				workflow.RegisterOptions{Name: agentcontract.AgentRunWorkflowName},
 			)
 			registerLoopStandIns(t, w, runtime, rec)
 			require.NoError(t, w.Start())
 			defer w.Stop()
 
-			payload := &AgentRunPayload{
+			payload := &agentcontract.AgentRunPayload{
 				BasePayload: temporaltype.BasePayload{
 					OrganizationID: pulid.MustNew("org_"),
 					BusinessUnitID: pulid.MustNew("bu_"),
@@ -125,7 +128,7 @@ func TestRecordAgentLoopHistories(t *testing.T) {
 			run, err := c.ExecuteWorkflow(t.Context(), client.StartWorkflowOptions{
 				ID:        fmt.Sprintf("replay-record/%s/%d", rec.name, time.Now().UnixNano()),
 				TaskQueue: queue,
-			}, AgentRunWorkflowName, payload)
+			}, agentcontract.AgentRunWorkflowName, payload)
 			require.NoError(t, err)
 
 			leaveOpen := rec.drive(t, c, run)
@@ -152,7 +155,7 @@ func registerLoopStandIns(
 	t.Helper()
 
 	w.RegisterActivityWithOptions(
-		func(_ context.Context, p *AgentRunPayload) (*PrepareRunResult, error) {
+		func(_ context.Context, p *agentcontract.AgentRunPayload) (*PrepareRunResult, error) {
 			return &PrepareRunResult{
 				Definition:             loopReplayDefinition(p.DefinitionID),
 				DecisionTimeoutSeconds: 86400,
@@ -179,7 +182,7 @@ func registerLoopStandIns(
 			}
 
 			return &OpenRunResult{
-				Run:  agentflow.NewRunContext(req, agentflow.PriorityBackground),
+				Run:  agentflow.NewRunContext(req, agentflowcontract.PriorityBackground),
 				Turn: runtime.OpenTurn(ctx, req).State(),
 			}, nil
 		},

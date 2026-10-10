@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/contrib/workflowstreams"
 	"go.temporal.io/sdk/workflow"
@@ -12,10 +14,6 @@ import (
 )
 
 const (
-	// DrainWindow is how long a finished run waits for its reader to say it
-	// has the last event. A reader that is there says so within a poll or
-	// two; one that is not is not coming, and the run closes without it.
-	DrainWindow = 15 * time.Second
 
 	// flushTimeout bounds an activity handing its last events to the stream.
 	flushTimeout = 10 * time.Second
@@ -71,7 +69,7 @@ func (h *Stream) Publish(ctx workflow.Context, item StreamItem) {
 // no longer be read. It waits, bounded, for the reader to say it has the last
 // event, then releases any poll still waiting and lets its handlers finish.
 func (h *Stream) Close(ctx workflow.Context) {
-	if _, err := workflow.AwaitWithTimeout(ctx, DrainWindow, func() bool {
+	if _, err := workflow.AwaitWithTimeout(ctx, agentflowcontract.DrainWindow, func() bool {
 		return h.drained
 	}); err != nil {
 		workflow.GetLogger(ctx).Warn("waiting for the reader was cut short",

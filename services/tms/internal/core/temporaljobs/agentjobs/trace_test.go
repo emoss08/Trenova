@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -29,7 +31,7 @@ func TestFinishRun_EmitsTheRunsRootAtItsAnchorFromItsRealStart(t *testing.T) {
 	runID := pulid.MustNew("ar_")
 	definition := loopReplayDefinition(pulid.MustNew("agdef_"))
 	definition.Version = 11
-	payload := &AgentRunPayload{
+	payload := &agentcontract.AgentRunPayload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: pulid.MustNew("org_"),
 			BusinessUnitID: pulid.MustNew("bu_"),
@@ -80,7 +82,7 @@ func TestFinishRun_AFailedRunsRootSaysHowItFailed(t *testing.T) {
 
 	runID := pulid.MustNew("ar_")
 	emitRunRoot(t.Context(), &FinishRunInput{
-		Payload:    &AgentRunPayload{RunID: runID, Trigger: agent.RunTriggerScheduled},
+		Payload:    &agentcontract.AgentRunPayload{RunID: runID, Trigger: agent.RunTriggerScheduled},
 		Definition: loopReplayDefinition(pulid.MustNew("agdef_")),
 		Failure:    &modelcall.Failure{TimedOut: true},
 	}, &agent.AgentRun{}, &FinishRunResult{})

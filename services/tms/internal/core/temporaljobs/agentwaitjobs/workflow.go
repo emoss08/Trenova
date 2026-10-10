@@ -3,6 +3,8 @@ package agentwaitjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentwaitjobs/agentwaitcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agentwait"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
@@ -40,7 +42,7 @@ var finishOptions = workflow.ActivityOptions{
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
-			Name:        WorkflowName,
+			Name:        agentwaitcontract.WorkflowName,
 			Fn:          AgentWaitWorkflow,
 			TaskQueue:   temporaltype.TaskQueueSystem.String(),
 			Description: "Hold an agent's parked work until what it waits for happens",
@@ -58,11 +60,11 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 // out, or until it is told that what it waits for happened, and then hands
 // the work back. A cancelled wait is a cancelled workflow: the service has
 // already closed the wait, so there is nothing left to do.
-func AgentWaitWorkflow(ctx workflow.Context, payload *Payload) error {
+func AgentWaitWorkflow(ctx workflow.Context, payload *agentwaitcontract.Payload) error {
 	var a *Activities
 	readCtx := workflow.WithActivityOptions(ctx, readOptions)
 
-	var schedule Schedule
+	var schedule agentwaitcontract.Schedule
 	if err := workflow.ExecuteActivity(readCtx, a.ScheduleWaitActivity, payload).
 		Get(ctx, &schedule); err != nil {
 		return err
@@ -71,8 +73,8 @@ func AgentWaitWorkflow(ctx workflow.Context, payload *Payload) error {
 		return nil
 	}
 
-	met := workflow.GetSignalChannel(ctx, MetSignal)
-	reschedule := workflow.GetSignalChannel(ctx, RescheduleSignal)
+	met := workflow.GetSignalChannel(ctx, agentwaitcontract.MetSignal)
+	reschedule := workflow.GetSignalChannel(ctx, agentwaitcontract.RescheduleSignal)
 	for {
 		woke, signal, err := sleepUntilNext(ctx, met, reschedule, &schedule)
 		if ctx.Err() != nil {
@@ -101,7 +103,7 @@ func AgentWaitWorkflow(ctx workflow.Context, payload *Payload) error {
 			return finish(ctx, payload, agentwait.StatusTimedOut, "")
 		}
 
-		var check Check
+		var check agentwaitcontract.Check
 		if err = workflow.ExecuteActivity(readCtx, a.CheckWaitActivity, &CheckInput{
 			Payload: payload,
 			Now:     now,
@@ -132,8 +134,8 @@ const (
 func sleepUntilNext(
 	ctx workflow.Context,
 	met, reschedule workflow.ReceiveChannel,
-	schedule *Schedule,
-) (wakeReason, Met, error) {
+	schedule *agentwaitcontract.Schedule,
+) (wakeReason, agentwaitcontract.Met, error) {
 	wake := schedule.ExpiresAt
 	if schedule.DueAt != nil && *schedule.DueAt < wake {
 		wake = *schedule.DueAt
@@ -147,7 +149,7 @@ func sleepUntilNext(
 	defer cancelTimer()
 	timer := workflow.NewTimer(timerCtx, wait)
 
-	var signal Met
+	var signal agentwaitcontract.Met
 	woke := wokeTimer
 	var timerErr error
 	selector := workflow.NewSelector(ctx)
@@ -169,7 +171,7 @@ func sleepUntilNext(
 		return woke, signal, nil
 	}
 
-	return wokeTimer, Met{}, timerErr
+	return wokeTimer, agentwaitcontract.Met{}, timerErr
 }
 
 // ReconcileAgentWaitsWorkflow closes the waits whose own workflow is gone
@@ -190,14 +192,14 @@ func ReconcileAgentWaitsWorkflow(ctx workflow.Context) (int, error) {
 
 func finish(
 	ctx workflow.Context,
-	payload *Payload,
+	payload *agentwaitcontract.Payload,
 	status agentwait.Status,
 	outcome string,
 ) error {
 	var a *Activities
 	finishCtx := workflow.WithActivityOptions(ctx, finishOptions)
 
-	return workflow.ExecuteActivity(finishCtx, a.FinishWaitActivity, &FinishInput{
+	return workflow.ExecuteActivity(finishCtx, a.FinishWaitActivity, &agentwaitcontract.FinishInput{
 		Payload: payload,
 		Status:  status,
 		Outcome: outcome,

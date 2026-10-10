@@ -7,13 +7,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -179,7 +180,7 @@ func (s *Service) start(
 	}
 
 	workflowID := "agent-evaluation-" + created.ID.String()
-	payload := &agentjobs.AgentEvaluationPayload{
+	payload := &agentcontract.AgentEvaluationPayload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: evaluation.OrganizationID,
 			BusinessUnitID: evaluation.BusinessUnitID,
@@ -194,7 +195,7 @@ func (s *Service) start(
 		ID:                    workflowID,
 		TaskQueue:             temporaltype.TaskQueueAgentHeavy.String(),
 		WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
-	}, agentjobs.AgentEvaluationWorkflowName, payload); err != nil {
+	}, agentcontract.AgentEvaluationWorkflowName, payload); err != nil {
 		completedAt := timeutils.NowUnix()
 		created.Status = agent.EvaluationStatusFailed
 		created.ErrorMessage = err.Error()

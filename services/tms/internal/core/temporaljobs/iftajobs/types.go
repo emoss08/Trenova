@@ -7,26 +7,9 @@ import (
 )
 
 const (
-	BackfillJurisdictionMilesWorkflowName = "BackfillJurisdictionMilesWorkflow"
-
-	DefaultBackfillMaxMoves = 2000
-	ListMovesPageSize       = 200
-	AttributeBatchSize      = 20
+	ListMovesPageSize  = 200
+	AttributeBatchSize = 20
 )
-
-type BackfillInput struct {
-	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
-	Start      int64                 `json:"start"`
-	End        int64                 `json:"end"`
-	MaxMoves   int                   `json:"maxMoves"`
-}
-
-func (i BackfillInput) EffectiveMaxMoves() int {
-	if i.MaxMoves <= 0 {
-		return DefaultBackfillMaxMoves
-	}
-	return i.MaxMoves
-}
 
 type ListMovesMissingBreakdownInput struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`

@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/decisioncommitjobs/decisioncommitcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -15,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/proposalexecutor"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/decisioncommitjobs"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -420,7 +421,7 @@ func TestApproval_WaitsOutItsWindowAndThenCommits(t *testing.T) {
 	assert.Equal(t, agent.ProposalStatusApproving, h.proposals.status(id))
 	assert.Empty(t, h.proposals.executed, "nothing runs while the approval can still be undone")
 	require.Len(t, h.workflows.started, 1)
-	assert.Equal(t, decisioncommitjobs.WorkflowID(id), h.workflows.started[0].ID)
+	assert.Equal(t, decisioncommitcontract.WorkflowID(id), h.workflows.started[0].ID)
 	assert.Contains(t, h.activity.actions, services.ActivityApproving)
 
 	h.closeWindow(t)
@@ -446,7 +447,7 @@ func TestApproval_UndoneInItsWindowNeverRuns(t *testing.T) {
 
 	assert.Equal(t, agent.ProposalStatusPending, h.proposals.status(id))
 	require.Len(t, h.workflows.signals, 1)
-	assert.Equal(t, decisioncommitjobs.UndoSignalName, h.workflows.signals[0].name)
+	assert.Equal(t, decisioncommitcontract.UndoSignalName, h.workflows.signals[0].name)
 	assert.Contains(t, h.activity.actions, services.ActivityUndone)
 
 	// A workflow that never heard the undo commits nothing when it wakes.
@@ -486,7 +487,7 @@ func TestApproval_CommitNowSignalsTheWorkflow(t *testing.T) {
 	require.NoError(t, h.service.CommitOwnApprovalNow(t.Context(), h.settle(h.ids[0]), h.actor))
 
 	require.Len(t, h.workflows.signals, 1)
-	assert.Equal(t, decisioncommitjobs.CommitNowSignalName, h.workflows.signals[0].name)
+	assert.Equal(t, decisioncommitcontract.CommitNowSignalName, h.workflows.signals[0].name)
 	assert.Empty(t, h.proposals.executed, "the workflow commits on the signal, not the request")
 }
 

@@ -6,17 +6,9 @@ import (
 )
 
 const (
-	PTOAccrualWorkflowName = "PTOAccrualWorkflow"
-	ScheduleID             = "pto-accrual"
-	accrualPageSize        = 100
+	ScheduleID      = "pto-accrual"
+	accrualPageSize = 100
 )
-
-type PTOAccrualWorkflowInput struct {
-	OrganizationID pulid.ID `json:"organizationId,omitempty"`
-	BusinessUnitID pulid.ID `json:"businessUnitId,omitempty"`
-	WorkerID       pulid.ID `json:"workerId,omitempty"`
-	AsOf           int64    `json:"asOf,omitempty"`
-}
 
 type AccrualTenantPageInput struct {
 	temporaljobs.TenantWorkItem

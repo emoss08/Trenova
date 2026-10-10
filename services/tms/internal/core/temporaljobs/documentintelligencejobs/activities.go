@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs/documentintelligencecontract"
+
 	"github.com/disintegration/imaging"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
@@ -142,7 +144,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 
 func (a *Activities) ProcessDocumentIntelligenceActivity(
 	ctx context.Context,
-	payload *ProcessDocumentIntelligencePayload,
+	payload *documentintelligencecontract.ProcessDocumentIntelligencePayload,
 ) (*ProcessDocumentIntelligenceResult, error) {
 	tenantInfo := pagination.TenantInfo{
 		OrgID:  payload.OrganizationID,
@@ -369,7 +371,7 @@ func (a *Activities) persistIndexedContentAndAssociate(
 
 func (a *Activities) runExtractionPipeline(
 	ctx context.Context,
-	payload *ProcessDocumentIntelligencePayload,
+	payload *documentintelligencecontract.ProcessDocumentIntelligencePayload,
 	doc *document.Document,
 	tenantInfo pagination.TenantInfo,
 	control *tenant.DocumentControl,
@@ -585,7 +587,7 @@ func (a *Activities) ReconcileDocumentIntelligenceActivity(
 				WorkflowIDReusePolicy:                    enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
 			},
 			"ProcessDocumentIntelligenceWorkflow",
-			&ProcessDocumentIntelligencePayload{
+			&documentintelligencecontract.ProcessDocumentIntelligencePayload{
 				BasePayload: temporaltype.BasePayload{
 					OrganizationID: doc.OrganizationID,
 					BusinessUnitID: doc.BusinessUnitID,

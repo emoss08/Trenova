@@ -3,6 +3,8 @@ package documentintelligencejobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs/documentintelligencecontract"
+
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -102,7 +104,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 
 func ProcessDocumentIntelligenceWorkflow(
 	ctx workflow.Context,
-	payload *ProcessDocumentIntelligencePayload,
+	payload *documentintelligencecontract.ProcessDocumentIntelligencePayload,
 ) (*ProcessDocumentIntelligenceResult, error) {
 	ctx = workflow.WithActivityOptions(ctx, defaultActivityOptions)
 

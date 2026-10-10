@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs/thumbnailcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/documentshipmentdraft"
@@ -14,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	workflowstarterservice "github.com/emoss08/trenova/internal/core/services/workflowstarter"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -197,7 +198,7 @@ func (s *Service) RegeneratePreview(
 		)
 	}
 
-	payload := &thumbnailjobs.GenerateThumbnailPayload{
+	payload := &thumbnailcontract.GenerateThumbnailPayload{
 		DocumentID:     doc.ID,
 		OrganizationID: doc.OrganizationID,
 		BusinessUnitID: doc.BusinessUnitID,

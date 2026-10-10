@@ -3,6 +3,8 @@ package iftajobs
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/iftajobs/iftacontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -42,9 +44,9 @@ func TestChunkMoveIDs(t *testing.T) {
 func TestBackfillInputEffectiveMaxMoves(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, DefaultBackfillMaxMoves, BackfillInput{}.EffectiveMaxMoves())
-	assert.Equal(t, DefaultBackfillMaxMoves, BackfillInput{MaxMoves: -1}.EffectiveMaxMoves())
-	assert.Equal(t, 30, BackfillInput{MaxMoves: 30}.EffectiveMaxMoves())
+	assert.Equal(t, iftacontract.DefaultBackfillMaxMoves, iftacontract.BackfillInput{}.EffectiveMaxMoves())
+	assert.Equal(t, iftacontract.DefaultBackfillMaxMoves, iftacontract.BackfillInput{MaxMoves: -1}.EffectiveMaxMoves())
+	assert.Equal(t, 30, iftacontract.BackfillInput{MaxMoves: 30}.EffectiveMaxMoves())
 }
 
 func TestAttributeMovesActivityCountsResults(t *testing.T) {

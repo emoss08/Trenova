@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs/documentuploadcontract"
+
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
@@ -49,13 +52,13 @@ var generateInvoicePDFActivityOptions = workflow.ActivityOptions{
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
-			Name:        AutoPostInvoiceWorkflowName,
+			Name:        billingcontract.AutoPostInvoiceWorkflowName,
 			Fn:          AutoPostInvoiceWorkflow,
 			TaskQueue:   temporaltype.TaskQueueBilling.String(),
 			Description: "Automatically post a draft invoice after billing approval",
 		},
 		{
-			Name:        SendInvoiceEmailWorkflowName,
+			Name:        billingcontract.SendInvoiceEmailWorkflowName,
 			Fn:          SendInvoiceEmailWorkflow,
 			TaskQueue:   temporaltype.TaskQueueBilling.String(),
 			Description: "Send a customer invoice email and supporting documents",
@@ -67,13 +70,13 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			Description: "Bill every closed, unbilled statement period",
 		},
 		{
-			Name:        GenerateInvoicePDFWorkflowName,
+			Name:        billingcontract.GenerateInvoicePDFWorkflowName,
 			Fn:          GenerateInvoicePDFWorkflow,
 			TaskQueue:   temporaltype.TaskQueueBilling.String(),
 			Description: "Generate an invoice PDF through the document upload lifecycle",
 		},
 		{
-			Name:        SendInvoiceEDIWorkflowName,
+			Name:        billingcontract.SendInvoiceEDIWorkflowName,
 			Fn:          SendInvoiceEDIWorkflow,
 			TaskQueue:   temporaltype.TaskQueueBilling.String(),
 			Description: "Generate and deliver the outbound EDI 210 for a posted invoice",
@@ -89,7 +92,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 
 func AutoPostInvoiceWorkflow(
 	ctx workflow.Context,
-	payload *AutoPostInvoicePayload,
+	payload *billingcontract.AutoPostInvoicePayload,
 ) (*AutoPostInvoiceResult, error) {
 	ctx = workflow.WithActivityOptions(ctx, autoPostInvoiceActivityOptions)
 
@@ -109,7 +112,7 @@ func AutoPostInvoiceWorkflow(
 
 func SendInvoiceEmailWorkflow(
 	ctx workflow.Context,
-	payload *SendInvoiceEmailPayload,
+	payload *billingcontract.SendInvoiceEmailPayload,
 ) (*SendInvoiceEmailResult, error) {
 	ctx = workflow.WithActivityOptions(ctx, autoPostInvoiceActivityOptions)
 
@@ -129,7 +132,7 @@ func SendInvoiceEmailWorkflow(
 
 func GenerateInvoicePDFWorkflow(
 	ctx workflow.Context,
-	payload *GenerateInvoicePDFPayload,
+	payload *billingcontract.GenerateInvoicePDFPayload,
 ) (*GenerateInvoicePDFResult, error) {
 	ctx = workflow.WithActivityOptions(ctx, generateInvoicePDFActivityOptions)
 
@@ -152,7 +155,7 @@ func GenerateInvoicePDFWorkflow(
 	if err := workflow.ExecuteChildWorkflow(
 		childCtx,
 		documentuploadjobs.FinalizeDocumentUploadWorkflow,
-		&documentuploadjobs.FinalizeUploadPayload{
+		&documentuploadcontract.FinalizeUploadPayload{
 			BasePayload:   payload.BasePayload,
 			SessionID:     prepared.SessionID,
 			PrincipalType: payload.PrincipalType,

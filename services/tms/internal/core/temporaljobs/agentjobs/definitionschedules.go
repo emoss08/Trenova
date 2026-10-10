@@ -7,10 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -217,7 +218,7 @@ func scheduleOptionsFor(definition *agentdefinition.Definition) (*client.Schedul
 				BusinessUnitID: definition.BusinessUnitID,
 			}},
 			Priority: temporal.Priority{
-				PriorityKey: agentflow.PriorityBackground,
+				PriorityKey: agentflowcontract.PriorityBackground,
 				FairnessKey: definition.OrganizationID.String(),
 			},
 		},

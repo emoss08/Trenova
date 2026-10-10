@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/bulkeditjobs/bulkeditcontract"
+
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
@@ -26,7 +28,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 
 func (a *Activities) PrepareEditActivity(
 	ctx context.Context,
-	payload *EditPayload,
+	payload *bulkeditcontract.EditPayload,
 ) (*PreparedEdit, error) {
 	entity, err := a.runner.Prepare(ctx, tenantOf(payload.BasePayload), payload.EditID)
 	if err != nil {

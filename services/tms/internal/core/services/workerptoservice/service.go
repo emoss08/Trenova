@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs/smscontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -18,7 +20,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
 	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -470,7 +471,7 @@ func (s *Service) sendTransitionSMS(
 		return
 	}
 
-	payload := &smsjobs.SendSMSPayload{
+	payload := &smscontract.SendSMSPayload{
 		PhoneNumber:    sms.PhoneNumber,
 		Message:        sms.Message,
 		OrganizationID: req.TenantInfo.OrgID,

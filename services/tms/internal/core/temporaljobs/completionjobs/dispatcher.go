@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
@@ -205,7 +207,7 @@ func (d *Dispatcher) await(ctx context.Context, c *call, result any) (err error)
 		WorkflowIDConflictPolicy: enums.WORKFLOW_ID_CONFLICT_POLICY_USE_EXISTING,
 		StaticSummary:            c.summary,
 		Priority: temporal.Priority{
-			PriorityKey: agentflow.PriorityOneShot,
+			PriorityKey: agentflowcontract.PriorityOneShot,
 			FairnessKey: c.organization.String(),
 		},
 	}, c.workflow, c.payload)

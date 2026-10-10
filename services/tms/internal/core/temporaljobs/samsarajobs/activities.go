@@ -3,6 +3,8 @@ package samsarajobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs/samsaracontract"
+
 	"github.com/emoss08/trenova/internal/core/services/samsarasyncservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -28,8 +30,8 @@ func NewActivities(p ActivitiesParams) *Activities {
 
 func (a *Activities) SyncWorkersToSamsaraActivity(
 	ctx context.Context,
-	payload *WorkersSyncWorkflowPayload,
-) (*WorkersSyncWorkflowResult, error) {
+	payload *samsaracontract.WorkersSyncWorkflowPayload,
+) (*samsaracontract.WorkersSyncWorkflowResult, error) {
 	logger := activity.GetLogger(ctx)
 	if payload == nil {
 		logger.Error("Samsara sync payload is required")
@@ -50,7 +52,7 @@ func (a *Activities) SyncWorkersToSamsaraActivity(
 	}
 
 	logger.Info("Samsara worker sync activity completed")
-	return &WorkersSyncWorkflowResult{
+	return &samsaracontract.WorkersSyncWorkflowResult{
 		Result: result,
 	}, nil
 }

@@ -18,117 +18,19 @@
 package assistantjobs
 
 import (
-	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const AssistantTurnWorkflowName = "AssistantTurnWorkflow"
-
-// WorkflowIDFor names the execution carrying a turn.
-func WorkflowIDFor(turnID pulid.ID) string {
-	return conversation.AssistantTurnWorkflowID(turnID)
-}
-
-// AssistantTurnPayload is one question and everything needed to answer it.
-//
-// The actor travels with the turn rather than being rebuilt on the worker.
-// A turn runs as the person who asked and as nobody else, and a worker that
-// reconstructed an actor from a tenant would be inventing an authority that
-// nobody granted.
-type AssistantTurnPayload struct {
-	temporaltype.BasePayload
-
-	TurnID   pulid.ID                  `json:"turnId"`
-	ThreadID pulid.ID                  `json:"threadId"`
-	Actor    serviceports.RequestActor `json:"actor"`
-	Content  string                    `json:"content"`
-	Request  AssistantTurnRequest      `json:"request"`
-	// Origin is the W3C traceparent of the request that started the turn,
-	// so the turn's trace links back to it. Empty on a turn started before
-	// it was kept, or from outside any trace.
-	Origin string `json:"traceOrigin,omitempty"`
-}
-
-func (p *AssistantTurnPayload) tenantInfo() pagination.TenantInfo {
-	return pagination.TenantInfo{
-		OrgID:  p.OrganizationID,
-		BuID:   p.BusinessUnitID,
-		UserID: p.Actor.UserID,
-	}
-}
-
-func (p *AssistantTurnPayload) sendRequest() *serviceports.SendMessageRequest {
-	return &serviceports.SendMessageRequest{
-		ThreadID:              p.ThreadID,
-		Content:               p.Content,
-		Page:                  p.Request.Page,
-		Surface:               p.Request.Surface,
-		TenantInfo:            p.tenantInfo(),
-		PreferredProviderID:   p.Request.PreferredProviderID,
-		ProviderChosen:        p.Request.ProviderChosen,
-		AttachmentDocumentIDs: p.Request.AttachmentDocumentIDs,
-		Mentions:              p.Request.Mentions,
-		FollowUpProposalID:    p.Request.FollowUpProposalID,
-		FollowUpPlanID:        p.Request.FollowUpPlanID,
-		ResumeWaitID:          p.Request.ResumeWaitID,
-		DirectedAgentID:       p.Request.DirectedAgentID,
-	}
-}
-
-// AssistantTurnRequest is what the person handed over with the message.
-type AssistantTurnRequest struct {
-	Page                  *agent.PageContext `json:"page,omitempty"`
-	Surface               agent.Surface      `json:"surface,omitempty"`
-	Mentions              []agent.EntityRef  `json:"mentions,omitempty"`
-	AttachmentDocumentIDs []pulid.ID         `json:"attachmentDocumentIds,omitempty"`
-	PreferredProviderID   pulid.ID           `json:"preferredProviderId,omitempty"`
-	ProviderChosen        bool               `json:"providerChosen"`
-	FollowUpProposalID    pulid.ID           `json:"followUpProposalId,omitempty"`
-	FollowUpPlanID        pulid.ID           `json:"followUpPlanId,omitempty"`
-	// ResumeWaitID asks for the turn that picks up work the agent parked on
-	// a wait, in place of content.
-	ResumeWaitID pulid.ID `json:"resumeWaitId,omitempty"`
-	// DirectedAgentID hands the message to another agent the person chose,
-	// run from this conversation in place of its own agent's reply.
-	DirectedAgentID pulid.ID `json:"directedAgentId,omitempty"`
-	// Awaited says the request that asked is waiting for the turn's result
-	// rather than reading its stream. That caller has the reply as soon as
-	// the turn ends, so nobody is told later that it is ready.
-	Awaited bool `json:"awaited,omitempty"`
-}
-
-// reportsDecision says the turn was started to report a decision rather than
-// to answer something the person asked.
-func (r AssistantTurnRequest) reportsDecision() bool {
-	return r.FollowUpProposalID.IsNotNil() || r.FollowUpPlanID.IsNotNil()
-}
-
-// resumesWait says the turn was started to pick up work the agent parked on
-// a wait rather than to answer something the person asked.
-func (r AssistantTurnRequest) resumesWait() bool {
-	return r.ResumeWaitID.IsNotNil()
-}
-
-// AssistantTurnResult is what the turn came to.
-type AssistantTurnResult struct {
-	Status  string `json:"status"`
-	Refused bool   `json:"refused"`
-	// Result is the saved turn, when it finished. A turn that failed or was
-	// stopped has Message instead, written for the person who asked.
-	Result  *serviceports.SendMessageResult `json:"result,omitempty"`
-	Message string                          `json:"message,omitempty"`
-}
-
 // FinishTurnInput is everything the turn did, for saving.
 type FinishTurnInput struct {
-	Payload *AssistantTurnPayload `json:"payload"`
+	Payload *assistantcontract.AssistantTurnPayload `json:"payload"`
 	// Plan is nil when the question was turned away before it was planned:
 	// then there is nothing to save, only the turn's record to close.
 	Plan *assistantservice.TurnPlan `json:"plan,omitempty"`
@@ -150,8 +52,8 @@ type FinishTurnInput struct {
 // TurnEnding is how the turn ended: its result, and the last event its reader
 // is sent.
 type TurnEnding struct {
-	Result AssistantTurnResult     `json:"result"`
-	Event  temporaltype.StreamItem `json:"event"`
+	Result assistantcontract.AssistantTurnResult `json:"result"`
+	Event  temporaltype.StreamItem               `json:"event"`
 	// Compact is set when the turn left the conversation full enough to
 	// compact itself, with the context use either side of doing so.
 	Compact *CompactionCue `json:"compact,omitempty"`
@@ -169,7 +71,7 @@ type CompactionCue struct {
 // NotifyUnseenTurnInput is a turn that ended with nobody reading it, for
 // telling the person who asked.
 type NotifyUnseenTurnInput struct {
-	Payload *AssistantTurnPayload `json:"payload"`
+	Payload *assistantcontract.AssistantTurnPayload `json:"payload"`
 	// Status is how the turn ended.
 	Status conversation.AssistantTurnStatus `json:"status"`
 }

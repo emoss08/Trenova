@@ -10,6 +10,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs/documentuploadcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs/thumbnailcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentupload"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -21,8 +24,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/core/services/usageservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -660,7 +661,7 @@ func (s *Service) startFinalizeWorkflow(
 			),
 		},
 		"FinalizeDocumentUploadWorkflow",
-		&documentuploadjobs.FinalizeUploadPayload{
+		&documentuploadcontract.FinalizeUploadPayload{
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: req.TenantInfo.OrgID,
 				BusinessUnitID: req.TenantInfo.BuID,
@@ -907,7 +908,7 @@ func (s *Service) startThumbnailWorkflow(ctx context.Context, doc *document.Docu
 	}
 
 	workflowID := fmt.Sprintf("thumbnail-%s", doc.ID.String())
-	payload := &thumbnailjobs.GenerateThumbnailPayload{
+	payload := &thumbnailcontract.GenerateThumbnailPayload{
 		DocumentID:     doc.ID,
 		OrganizationID: doc.OrganizationID,
 		BusinessUnitID: doc.BusinessUnitID,

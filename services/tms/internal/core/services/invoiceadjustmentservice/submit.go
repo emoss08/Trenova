@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs/invoiceadjustmentcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -424,8 +425,8 @@ func (s *Service) BulkSubmit( //nolint:funlen // legacy workflow
 			TaskQueue:     temporaltype.TaskQueueBilling.String(),
 			StaticSummary: "Invoice adjustment batch " + created.ID.String(),
 		},
-		invoiceadjustmentjobs.InvoiceAdjustmentBatchWorkflowName,
-		&invoiceadjustmentjobs.BatchWorkflowPayload{
+		invoiceadjustmentcontract.InvoiceAdjustmentBatchWorkflowName,
+		&invoiceadjustmentcontract.BatchWorkflowPayload{
 			BatchID:         created.ID,
 			ItemIDs:         collectBatchItemIDs(created.Items),
 			OrganizationID:  req.TenantInfo.OrgID,

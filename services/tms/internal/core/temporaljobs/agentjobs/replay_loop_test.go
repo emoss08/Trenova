@@ -4,6 +4,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -60,7 +62,7 @@ func TestAgentRunWorkflow_ReplaysRecordedLoopHistories(t *testing.T) {
 	replaytest.Dir(t, filepath.Join("testdata", "replay-loop"), func(r worker.WorkflowReplayer) {
 		r.RegisterWorkflowWithOptions(
 			NewWorkflows(loopReplayRuntime()).AgentRunWorkflow,
-			workflow.RegisterOptions{Name: AgentRunWorkflowName},
+			workflow.RegisterOptions{Name: agentcontract.AgentRunWorkflowName},
 		)
 	})
 }

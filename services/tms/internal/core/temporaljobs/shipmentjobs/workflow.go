@@ -3,6 +3,8 @@ package shipmentjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs/shipmentcontract"
+
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -38,7 +40,7 @@ var autoCancelActivityOptions = workflow.ActivityOptions{
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
-			Name:        BulkDuplicateShipmentsWorkflowName,
+			Name:        shipmentcontract.BulkDuplicateShipmentsWorkflowName,
 			Fn:          BulkDuplicateShipmentsWorkflow,
 			TaskQueue:   temporaltype.TaskQueueSystem.String(),
 			Description: "Duplicate a shipment and its move/stop graph in bulk",
@@ -60,7 +62,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 
 func BulkDuplicateShipmentsWorkflow(
 	ctx workflow.Context,
-	payload *BulkDuplicateShipmentsPayload,
+	payload *shipmentcontract.BulkDuplicateShipmentsPayload,
 ) (*BulkDuplicateShipmentsResult, error) {
 	ctx = workflow.WithActivityOptions(ctx, bulkDuplicateActivityOptions)
 

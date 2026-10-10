@@ -4,12 +4,13 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/decisioncommitjobs/decisioncommitcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/decisioncommitjobs"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -41,7 +42,7 @@ func (s *Service) approveDeferred(
 	}
 
 	now := time.Now()
-	commitsAt := decisioncommitjobs.CommitsAt(now)
+	commitsAt := decisioncommitcontract.CommitsAt(now)
 	plan, err := s.plans.UpdateStatus(ctx, repositories.UpdateAgentPlanStatusRequest{
 		ID:              prepared.plan.ID,
 		TenantInfo:      req.TenantInfo,
@@ -55,14 +56,14 @@ func (s *Service) approveDeferred(
 		return nil, err
 	}
 
-	workflowID := decisioncommitjobs.WorkflowID(plan.ID)
+	workflowID := decisioncommitcontract.WorkflowID(plan.ID)
 	if _, err = s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
 		ID:                       workflowID,
-		TaskQueue:                decisioncommitjobs.TaskQueue,
+		TaskQueue:                decisioncommitcontract.TaskQueue,
 		WorkflowIDReusePolicy:    enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
 		WorkflowIDConflictPolicy: enums.WORKFLOW_ID_CONFLICT_POLICY_TERMINATE_EXISTING,
 		StaticSummary:            "Plan approval undo window",
-	}, decisioncommitjobs.ProposalCommitWorkflowName, &services.CommitApprovalRequest{
+	}, decisioncommitcontract.ProposalCommitWorkflowName, &services.CommitApprovalRequest{
 		OrganizationID:  req.TenantInfo.OrgID,
 		BusinessUnitID:  req.TenantInfo.BuID,
 		DecidedByUserID: actor.UserID,
@@ -163,7 +164,7 @@ func (s *Service) UndoOwnApproval(
 	}
 
 	if err = s.workflows.SignalWorkflow(
-		ctx, decisioncommitjobs.WorkflowID(plan.ID), "", decisioncommitjobs.UndoSignalName, nil,
+		ctx, decisioncommitcontract.WorkflowID(plan.ID), "", decisioncommitcontract.UndoSignalName, nil,
 	); err != nil {
 		s.l.Warn("an undo could not reach its plan's commit workflow",
 			zap.String("plan", plan.ID.String()), zap.Error(err))
@@ -193,9 +194,9 @@ func (s *Service) CommitOwnApprovalNow(
 		return nil
 	}
 
-	workflowID := decisioncommitjobs.WorkflowID(plan.ID)
+	workflowID := decisioncommitcontract.WorkflowID(plan.ID)
 	if err = s.workflows.SignalWorkflow(
-		ctx, workflowID, "", decisioncommitjobs.CommitNowSignalName, nil,
+		ctx, workflowID, "", decisioncommitcontract.CommitNowSignalName, nil,
 	); err == nil {
 		return nil
 	}

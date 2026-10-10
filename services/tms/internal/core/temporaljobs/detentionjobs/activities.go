@@ -3,6 +3,8 @@ package detentionjobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/detentionjobs/detentioncontract"
+
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
@@ -84,7 +86,7 @@ func (a *Activities) SweepTenantNoticesActivity(
 // the same notice is uploaded while it retries.
 func (a *Activities) AttachNoticePDFDocumentActivity(
 	ctx context.Context,
-	payload *StoreNoticePDFPayload,
+	payload *detentioncontract.StoreNoticePDFPayload,
 	documentID pulid.ID,
 ) (*StoreNoticePDFResult, error) {
 	tenantInfo := pagination.TenantInfo{

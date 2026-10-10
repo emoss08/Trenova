@@ -21,6 +21,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -80,7 +82,7 @@ func TestRecordAgentRunHistories(t *testing.T) {
 			drive: func(t *testing.T, c client.Client, run client.WorkflowRun) bool {
 				waitForTimer(t, c, run)
 				require.NoError(t, c.SignalWorkflow(t.Context(), run.GetID(), run.GetRunID(),
-					AgentDecisionSignalName, DecisionSignal{
+					agentcontract.AgentDecisionSignalName, agentcontract.DecisionSignal{
 						ProposalID:      pulid.MustNew("ap_"),
 						Decision:        agent.DecisionAccepted,
 						DecidedByUserID: pulid.MustNew("usr_"),
@@ -109,13 +111,13 @@ func TestRecordAgentRunHistories(t *testing.T) {
 			w := worker.New(c, queue, worker.Options{})
 			w.RegisterWorkflowWithOptions(
 				NewWorkflows(nil).AgentRunWorkflow,
-				workflow.RegisterOptions{Name: AgentRunWorkflowName},
+				workflow.RegisterOptions{Name: agentcontract.AgentRunWorkflowName},
 			)
 			registerStandIns(w, rec)
 			require.NoError(t, w.Start())
 			defer w.Stop()
 
-			payload := &AgentRunPayload{
+			payload := &agentcontract.AgentRunPayload{
 				BasePayload: temporaltype.BasePayload{
 					OrganizationID: pulid.MustNew("org_"),
 					BusinessUnitID: pulid.MustNew("bu_"),
@@ -128,7 +130,7 @@ func TestRecordAgentRunHistories(t *testing.T) {
 			run, err := c.ExecuteWorkflow(t.Context(), client.StartWorkflowOptions{
 				ID:        fmt.Sprintf("replay-record/%s/%d", rec.name, time.Now().UnixNano()),
 				TaskQueue: queue,
-			}, AgentRunWorkflowName, payload)
+			}, agentcontract.AgentRunWorkflowName, payload)
 			require.NoError(t, err)
 
 			leaveOpen := rec.drive(t, c, run)
@@ -148,7 +150,7 @@ func TestRecordAgentRunHistories(t *testing.T) {
 
 func registerStandIns(w worker.Worker, rec recordedRun) {
 	w.RegisterActivityWithOptions(
-		func(_ context.Context, p *AgentRunPayload) (*PrepareRunResult, error) {
+		func(_ context.Context, p *agentcontract.AgentRunPayload) (*PrepareRunResult, error) {
 			return &PrepareRunResult{
 				Definition: &agentdefinition.Definition{
 					ID:   p.DefinitionID,

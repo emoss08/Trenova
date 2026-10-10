@@ -5,6 +5,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -158,7 +160,7 @@ func finishActivities(turn *conversation.AssistantTurn, steps *ledger) (*Activit
 
 func finishInput(turn *conversation.AssistantTurn) *FinishTurnInput {
 	return &FinishTurnInput{
-		Payload: &AssistantTurnPayload{
+		Payload: &assistantcontract.AssistantTurnPayload{
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: turn.OrganizationID,
 				BusinessUnitID: turn.BusinessUnitID,
@@ -385,7 +387,7 @@ func TestFinishTurn_ResumesFromAQuestionTurnedAway(t *testing.T) {
 func TestFinishTurn_DoesNotResumeFromAFollowUpThatNeverStarted(t *testing.T) {
 	t.Parallel()
 
-	for name, request := range map[string]AssistantTurnRequest{
+	for name, request := range map[string]assistantcontract.AssistantTurnRequest{
 		"proposal": {FollowUpProposalID: pulid.MustNew("aprop_")},
 		"plan":     {FollowUpPlanID: pulid.MustNew("apl_")},
 	} {

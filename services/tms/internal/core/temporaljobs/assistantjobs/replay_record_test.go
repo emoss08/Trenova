@@ -21,6 +21,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
@@ -70,7 +72,7 @@ func TestRecordAssistantTurnHistories(t *testing.T) {
 			w := worker.New(c, queue, worker.Options{})
 			w.RegisterWorkflowWithOptions(
 				NewWorkflows(runtime).AssistantTurnWorkflow,
-				workflow.RegisterOptions{Name: AssistantTurnWorkflowName},
+				workflow.RegisterOptions{Name: assistantcontract.AssistantTurnWorkflowName},
 			)
 			payload := replayPayload()
 			registerTurnStandIns(t, w, runtime, payload)
@@ -80,14 +82,14 @@ func TestRecordAssistantTurnHistories(t *testing.T) {
 			run, err := c.ExecuteWorkflow(t.Context(), client.StartWorkflowOptions{
 				ID:        fmt.Sprintf("replay-record/turn/%s/%d", rec.name, time.Now().UnixNano()),
 				TaskQueue: queue,
-			}, AssistantTurnWorkflowName, payload)
+			}, assistantcontract.AssistantTurnWorkflowName, payload)
 			require.NoError(t, err)
 
 			if rec.drained {
 				require.NoError(t, c.SignalWorkflow(t.Context(), run.GetID(), run.GetRunID(),
 					temporaltype.SignalStreamDrained, nil))
 			}
-			var result AssistantTurnResult
+			var result assistantcontract.AssistantTurnResult
 			require.NoError(t, run.Get(t.Context(), &result))
 			require.Equal(t, string(conversation.AssistantTurnStatusCompleted), result.Status)
 
@@ -100,13 +102,13 @@ func registerTurnStandIns(
 	t *testing.T,
 	w worker.Worker,
 	runtime *agentruntime.Service,
-	payload *AssistantTurnPayload,
+	payload *assistantcontract.AssistantTurnPayload,
 ) {
 	t.Helper()
 
 	plan := replayPlan(t, runtime, payload)
 	w.RegisterActivityWithOptions(
-		func(context.Context, *AssistantTurnPayload) (*assistantservice.TurnPlan, error) {
+		func(context.Context, *assistantcontract.AssistantTurnPayload) (*assistantservice.TurnPlan, error) {
 			return plan, nil
 		},
 		activity.RegisterOptions{Name: "PrepareTurnActivity"},
@@ -155,7 +157,7 @@ func registerTurnStandIns(
 	w.RegisterActivityWithOptions(
 		func(_ context.Context, in *FinishTurnInput) (*TurnEnding, error) {
 			return &TurnEnding{
-				Result: AssistantTurnResult{
+				Result: assistantcontract.AssistantTurnResult{
 					Status: string(conversation.AssistantTurnStatusCompleted),
 				},
 				Event: temporaltype.StreamItem{
@@ -171,7 +173,7 @@ func registerTurnStandIns(
 		return nil
 	}, activity.RegisterOptions{Name: "NotifyUnseenTurnActivity"})
 
-	w.RegisterActivityWithOptions(func(context.Context, *AssistantTurnPayload, string) error {
+	w.RegisterActivityWithOptions(func(context.Context, *assistantcontract.AssistantTurnPayload, string) error {
 		return nil
 	}, activity.RegisterOptions{Name: "CloseTurnActivity"})
 }

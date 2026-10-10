@@ -8,6 +8,9 @@ import (
 	"slices"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs/documentuploadcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs/thumbnailcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentupload"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -19,7 +22,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/core/services/usageservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -103,7 +105,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 
 func (a *Activities) FinalizeUploadActivity(
 	ctx context.Context,
-	payload *FinalizeUploadPayload,
+	payload *documentuploadcontract.FinalizeUploadPayload,
 ) (*FinalizeUploadResult, error) {
 	tenantInfo := pagination.TenantInfo{
 		OrgID:  payload.OrganizationID,
@@ -284,7 +286,7 @@ func (a *Activities) finalizeUploadPersistDocument(
 	session *documentupload.DocumentUploadSession,
 	parts []storage.UploadedPart,
 	doc *document.Document,
-	payload *FinalizeUploadPayload,
+	payload *documentuploadcontract.FinalizeUploadPayload,
 ) (*FinalizeUploadResult, error) {
 	session.DocumentID = &doc.ID
 	session.UploadedParts = toDomainUploadedParts(parts)
@@ -335,7 +337,7 @@ func (a *Activities) finalizeUploadPersistDocument(
 func (a *Activities) recordDocumentUploadUsage(
 	ctx context.Context,
 	doc *document.Document,
-	payload *FinalizeUploadPayload,
+	payload *documentuploadcontract.FinalizeUploadPayload,
 ) {
 	actor := services.RequestActor{
 		PrincipalType:  payload.PrincipalType,
@@ -522,7 +524,7 @@ func (a *Activities) ListReconcileUploadsTenantsActivity(
 
 func (a *Activities) CleanupDocumentStorageActivity(
 	ctx context.Context,
-	payload *CleanupDocumentStoragePayload,
+	payload *documentuploadcontract.CleanupDocumentStoragePayload,
 ) error {
 	for _, path := range payload.Paths {
 		if path == "" {
@@ -1041,7 +1043,7 @@ func (a *Activities) startFinalizeWorkflowForSession(
 			),
 		},
 		"FinalizeDocumentUploadWorkflow",
-		&FinalizeUploadPayload{
+		&documentuploadcontract.FinalizeUploadPayload{
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: session.OrganizationID,
 				BusinessUnitID: session.BusinessUnitID,
@@ -1080,7 +1082,7 @@ func (a *Activities) startThumbnailWorkflow(ctx context.Context, doc *document.D
 	}
 
 	workflowID := fmt.Sprintf("thumbnail-%s", doc.ID.String())
-	payload := &thumbnailjobs.GenerateThumbnailPayload{
+	payload := &thumbnailcontract.GenerateThumbnailPayload{
 		DocumentID:     doc.ID,
 		OrganizationID: doc.OrganizationID,
 		BusinessUnitID: doc.BusinessUnitID,

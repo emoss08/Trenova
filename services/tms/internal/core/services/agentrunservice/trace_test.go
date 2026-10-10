@@ -4,9 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +24,7 @@ func TestStartForDefinition_StartsTheWorkflowUnderTheRunsAnchor(t *testing.T) {
 
 	def := definitionFixture(true)
 	var startedUnder trace.SpanContext
-	var payload *agentjobs.AgentRunPayload
+	var payload *agentcontract.AgentRunPayload
 	svc := &Service{
 		l:           zap.NewNop(),
 		validator:   NewValidator(ValidatorParams{}),
@@ -42,7 +43,7 @@ func TestStartForDefinition_StartsTheWorkflowUnderTheRunsAnchor(t *testing.T) {
 				args ...any,
 			) (client.WorkflowRun, error) {
 				startedUnder = trace.SpanContextFromContext(ctx)
-				payload, _ = args[0].(*agentjobs.AgentRunPayload)
+				payload, _ = args[0].(*agentcontract.AgentRunPayload)
 				return nil, nil
 			},
 		},

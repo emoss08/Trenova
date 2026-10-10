@@ -21,6 +21,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/conversationschedule"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
@@ -28,7 +30,6 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -542,8 +543,8 @@ func (s *Service) run(
 		Origin:     conversation.AssistantTurnOriginScheduled,
 		Input:      schedule.Prompt,
 	}, func(turn *conversation.AssistantTurn) (string, error) {
-		started, startErr := assistantjobs.StartTurnWorkflow(ctx, s.workflows, turn,
-			assistantjobs.TurnStart{
+		started, startErr := assistantcontract.StartTurnWorkflow(ctx, s.workflows, turn,
+			assistantcontract.TurnStart{
 				Actor:   owner,
 				Content: schedule.Prompt,
 			})

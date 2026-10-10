@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentwaitjobs/agentwaitcontract"
+
 	"go.temporal.io/sdk/temporal"
 	"go.uber.org/fx"
 )
@@ -11,11 +13,11 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	Worker Worker
+	Worker agentwaitcontract.Worker
 }
 
 type Activities struct {
-	worker Worker
+	worker agentwaitcontract.Worker
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -24,12 +26,12 @@ func NewActivities(p ActivitiesParams) *Activities {
 
 func (a *Activities) ScheduleWaitActivity(
 	ctx context.Context,
-	payload *Payload,
-) (*Schedule, error) {
+	payload *agentwaitcontract.Payload,
+) (*agentwaitcontract.Schedule, error) {
 	return a.worker.Schedule(ctx, payload.tenant(), payload.WaitID)
 }
 
-func (a *Activities) CheckWaitActivity(ctx context.Context, in *CheckInput) (*Check, error) {
+func (a *Activities) CheckWaitActivity(ctx context.Context, in *CheckInput) (*agentwaitcontract.Check, error) {
 	return a.worker.Check(ctx, in.Payload.tenant(), in.Payload.WaitID, in.Now)
 }
 
@@ -37,9 +39,9 @@ func (a *Activities) ReconcileOverdueWaitsActivity(ctx context.Context) (int, er
 	return a.worker.ReconcileOverdue(ctx)
 }
 
-func (a *Activities) FinishWaitActivity(ctx context.Context, in *FinishInput) error {
+func (a *Activities) FinishWaitActivity(ctx context.Context, in *agentwaitcontract.FinishInput) error {
 	err := a.worker.Finish(ctx, in)
-	if errors.Is(err, ErrConversationBusy) {
+	if errors.Is(err, agentwaitcontract.ErrConversationBusy) {
 		return temporal.NewApplicationError(err.Error(), errTypeBusy)
 	}
 

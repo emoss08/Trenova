@@ -5,6 +5,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -80,7 +82,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 
 func (a *Activities) AutoPostInvoiceActivity(
 	ctx context.Context,
-	payload *AutoPostInvoicePayload,
+	payload *billingcontract.AutoPostInvoicePayload,
 ) (*AutoPostInvoiceResult, error) {
 	tenantInfo := pagination.TenantInfo{
 		OrgID:  payload.OrganizationID,
@@ -131,7 +133,7 @@ func (a *Activities) AutoPostInvoiceActivity(
 
 func (a *Activities) SendInvoiceEmailActivity(
 	ctx context.Context,
-	payload *SendInvoiceEmailPayload,
+	payload *billingcontract.SendInvoiceEmailPayload,
 ) (*SendInvoiceEmailResult, error) {
 	tenantInfo := pagination.TenantInfo{
 		OrgID:  payload.OrganizationID,
@@ -165,7 +167,7 @@ func (a *Activities) SendInvoiceEmailActivity(
 
 func (a *Activities) PrepareInvoicePDFUploadActivity(
 	ctx context.Context,
-	payload *GenerateInvoicePDFPayload,
+	payload *billingcontract.GenerateInvoicePDFPayload,
 ) (*PrepareInvoicePDFUploadResult, error) {
 	tenantInfo := pagination.TenantInfo{
 		OrgID:  payload.OrganizationID,
@@ -247,7 +249,7 @@ func (a *Activities) PrepareInvoicePDFUploadActivity(
 
 func (a *Activities) CompleteInvoicePDFGenerationActivity(
 	ctx context.Context,
-	payload *GenerateInvoicePDFPayload,
+	payload *billingcontract.GenerateInvoicePDFPayload,
 	documentID pulid.ID,
 ) (*GenerateInvoicePDFResult, error) {
 	tenantInfo := pagination.TenantInfo{
@@ -348,7 +350,7 @@ func (a *Activities) invoicePDFLineageID(
 	return currentPDF.LineageID.String(), nil
 }
 
-func invoicePDFActor(payload *GenerateInvoicePDFPayload) services.RequestActor {
+func invoicePDFActor(payload *billingcontract.GenerateInvoicePDFPayload) services.RequestActor {
 	return services.RequestActor{
 		PrincipalType:  payload.PrincipalType,
 		PrincipalID:    payload.PrincipalID,

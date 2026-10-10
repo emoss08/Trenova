@@ -3,6 +3,8 @@ package smsjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs/smscontract"
+
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -37,7 +39,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 
 func SendSMSWorkflow(
 	ctx workflow.Context,
-	payload *SendSMSPayload,
+	payload *smscontract.SendSMSPayload,
 ) (*SendSMSResult, error) {
 	ctx = workflow.WithActivityOptions(ctx, smsActivityOptions)
 

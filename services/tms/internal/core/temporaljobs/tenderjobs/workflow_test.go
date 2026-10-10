@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs/tendercontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,7 +24,7 @@ func newTenderWorkflowTestEnv(t *testing.T) *testsuite.TestWorkflowEnvironment {
 }
 
 type testPlanFixture struct {
-	input    *WorkflowInput
+	input    *tendercontract.WorkflowInput
 	plan     *serviceports.TenderPlan
 	offerOne pulid.ID
 	offerTwo pulid.ID
@@ -34,7 +36,7 @@ func newPlanFixture(mode tender.Mode) *testPlanFixture {
 	offerTwo := pulid.MustNew("tof_")
 
 	return &testPlanFixture{
-		input: &WorkflowInput{
+		input: &tendercontract.WorkflowInput{
 			TenderID:       tenderID,
 			OrganizationID: pulid.MustNew("org_"),
 			BusinessUnitID: pulid.MustNew("bu_"),
@@ -110,8 +112,8 @@ func TestCarrierTenderWorkflow_WaterfallAcceptShortCircuits(t *testing.T) {
 		Return(nil).Once()
 
 	env.RegisterDelayedCallback(func() {
-		env.SignalWorkflow(TenderSignalName, Signal{
-			Kind:    SignalKindResponse,
+		env.SignalWorkflow(tendercontract.TenderSignalName, tendercontract.Signal{
+			Kind:    tendercontract.SignalKindResponse,
 			OfferID: fixture.offerOne,
 			Action:  tender.ResponseActionAccept,
 			Source:  tender.ResponseSourceEmail,
@@ -148,8 +150,8 @@ func TestCarrierTenderWorkflow_AcceptIssuesRateConfirmation(t *testing.T) {
 	)).Return(nil).Once()
 
 	env.RegisterDelayedCallback(func() {
-		env.SignalWorkflow(TenderSignalName, Signal{
-			Kind:    SignalKindResponse,
+		env.SignalWorkflow(tendercontract.TenderSignalName, tendercontract.Signal{
+			Kind:    tendercontract.SignalKindResponse,
 			OfferID: fixture.offerOne,
 			Action:  tender.ResponseActionAccept,
 			Source:  tender.ResponseSourceEmail,
@@ -181,8 +183,8 @@ func TestCarrierTenderWorkflow_RateConIssueFailureDoesNotFailWorkflow(t *testing
 		Return(errors.New("issuance is down"))
 
 	env.RegisterDelayedCallback(func() {
-		env.SignalWorkflow(TenderSignalName, Signal{
-			Kind:    SignalKindResponse,
+		env.SignalWorkflow(tendercontract.TenderSignalName, tendercontract.Signal{
+			Kind:    tendercontract.SignalKindResponse,
 			OfferID: fixture.offerOne,
 			Action:  tender.ResponseActionAccept,
 			Source:  tender.ResponseSourceEmail,
@@ -218,8 +220,8 @@ func TestCarrierTenderWorkflow_WaterfallDeclineAdvances(t *testing.T) {
 		Return(nil).Once()
 
 	env.RegisterDelayedCallback(func() {
-		env.SignalWorkflow(TenderSignalName, Signal{
-			Kind:          SignalKindResponse,
+		env.SignalWorkflow(tendercontract.TenderSignalName, tendercontract.Signal{
+			Kind:          tendercontract.SignalKindResponse,
 			OfferID:       fixture.offerOne,
 			Action:        tender.ResponseActionDecline,
 			Source:        tender.ResponseSourceEmail,
@@ -253,8 +255,8 @@ func TestCarrierTenderWorkflow_NeedsReviewHalts(t *testing.T) {
 	)).Return(nil).Once()
 
 	env.RegisterDelayedCallback(func() {
-		env.SignalWorkflow(TenderSignalName, Signal{
-			Kind:    SignalKindResponse,
+		env.SignalWorkflow(tendercontract.TenderSignalName, tendercontract.Signal{
+			Kind:    tendercontract.SignalKindResponse,
 			OfferID: fixture.offerOne,
 			Action:  tender.ResponseActionAccept,
 			Source:  tender.ResponseSourceEDI,
@@ -288,8 +290,8 @@ func TestCarrierTenderWorkflow_BroadcastFirstAcceptWins(t *testing.T) {
 	)).Return(nil).Once()
 
 	env.RegisterDelayedCallback(func() {
-		env.SignalWorkflow(TenderSignalName, Signal{
-			Kind:    SignalKindResponse,
+		env.SignalWorkflow(tendercontract.TenderSignalName, tendercontract.Signal{
+			Kind:    tendercontract.SignalKindResponse,
 			OfferID: fixture.offerTwo,
 			Action:  tender.ResponseActionAccept,
 			Source:  tender.ResponseSourceEmail,
@@ -318,8 +320,8 @@ func TestCarrierTenderWorkflow_CancelSignalWithdraws(t *testing.T) {
 	)).Return(nil).Once()
 
 	env.RegisterDelayedCallback(func() {
-		env.SignalWorkflow(TenderSignalName, Signal{
-			Kind:   SignalKindCancel,
+		env.SignalWorkflow(tendercontract.TenderSignalName, tendercontract.Signal{
+			Kind:   tendercontract.SignalKindCancel,
 			Reason: "Shipment was canceled",
 		})
 	}, time.Minute)
@@ -387,8 +389,8 @@ func TestCarrierTenderWorkflow_StaleResponseRecordedAsLate(t *testing.T) {
 		Return(nil).Once()
 
 	env.RegisterDelayedCallback(func() {
-		env.SignalWorkflow(TenderSignalName, Signal{
-			Kind:          SignalKindResponse,
+		env.SignalWorkflow(tendercontract.TenderSignalName, tendercontract.Signal{
+			Kind:          tendercontract.SignalKindResponse,
 			OfferID:       fixture.offerOne,
 			Action:        tender.ResponseActionDecline,
 			Source:        tender.ResponseSourceEmail,
@@ -396,8 +398,8 @@ func TestCarrierTenderWorkflow_StaleResponseRecordedAsLate(t *testing.T) {
 		})
 	}, time.Minute)
 	env.RegisterDelayedCallback(func() {
-		env.SignalWorkflow(TenderSignalName, Signal{
-			Kind:    SignalKindResponse,
+		env.SignalWorkflow(tendercontract.TenderSignalName, tendercontract.Signal{
+			Kind:    tendercontract.SignalKindResponse,
 			OfferID: fixture.offerOne,
 			Action:  tender.ResponseActionAccept,
 			Source:  tender.ResponseSourceEmail,

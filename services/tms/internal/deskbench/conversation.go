@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
@@ -14,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -141,10 +142,10 @@ func (c *Conversation) Say(ctx context.Context, u Utterance) ([]*TurnRecord, err
 		Origin:     conversation.AssistantTurnOriginPerson,
 		Input:      u.Content,
 	}, func(turn *conversation.AssistantTurn) (string, error) {
-		start := assistantjobs.TurnStart{
+		start := assistantcontract.TurnStart{
 			Actor:   c.session.Actor,
 			Content: u.Content,
-			Request: assistantjobs.AssistantTurnRequest{
+			Request: assistantcontract.AssistantTurnRequest{
 				Page:                u.Page,
 				Surface:             surface,
 				Mentions:            u.Mentions,
@@ -156,7 +157,7 @@ func (c *Conversation) Say(ctx context.Context, u Utterance) ([]*TurnRecord, err
 		}
 		var runID string
 		startErr := retryNamespaceLookup(ctx, func() error {
-			run, err := assistantjobs.StartTurnWorkflow(ctx, bench.watcher, turn, start)
+			run, err := assistantcontract.StartTurnWorkflow(ctx, bench.watcher, turn, start)
 			if err != nil {
 				return err
 			}
@@ -316,7 +317,7 @@ func (c *Conversation) capture(ctx context.Context, started StartedTurn) *TurnRe
 	}
 
 	runCtx, cancelRun := context.WithTimeout(ctx, turnTimeout)
-	var outcome assistantjobs.AssistantTurnResult
+	var outcome assistantcontract.AssistantTurnResult
 	runErr := started.Run.Get(runCtx, &outcome)
 	timedOut := errors.Is(runCtx.Err(), context.DeadlineExceeded)
 	cancelRun()
@@ -375,7 +376,7 @@ func (c *Conversation) capture(ctx context.Context, started StartedTurn) *TurnRe
 func (c *Conversation) fill(
 	ctx context.Context,
 	record *TurnRecord,
-	outcome *assistantjobs.AssistantTurnResult,
+	outcome *assistantcontract.AssistantTurnResult,
 ) {
 	if outcome.Status != "" {
 		record.Status = conversation.AssistantTurnStatus(outcome.Status)

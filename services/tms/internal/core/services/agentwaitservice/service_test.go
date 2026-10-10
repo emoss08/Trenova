@@ -5,6 +5,8 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentwaitjobs/agentwaitcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentwait"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
@@ -15,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentwaitjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -206,7 +207,7 @@ func (r fakeRun) GetWithOptions(context.Context, any, client.WorkflowRunGetOptio
 
 type signal struct {
 	workflowID string
-	met        agentwaitjobs.Met
+	met        agentwaitcontract.Met
 }
 
 type fakeWorkflows struct {
@@ -234,7 +235,7 @@ func (f *fakeWorkflows) SignalWorkflow(_ context.Context, workflowID, _, _ strin
 			return err
 		}
 	}
-	met, _ := arg.(agentwaitjobs.Met)
+	met, _ := arg.(agentwaitcontract.Met)
 	f.signals = append(f.signals, signal{workflowID: workflowID, met: met})
 
 	return nil
@@ -375,8 +376,8 @@ func TestRegister_WaitsOnAStopAndStartsItsWorkflow(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, move.ID, wait.WatchID)
 	assert.Equal(t, now+agentwait.DefaultLifetimeSecs, wait.ExpiresAt)
-	assert.Equal(t, []string{agentwaitjobs.WorkflowIDFor(wait.ID)}, h.workflows.started)
-	assert.Equal(t, agentwaitjobs.WorkflowIDFor(wait.ID), wait.WorkflowID)
+	assert.Equal(t, []string{agentwaitcontract.WorkflowIDFor(wait.ID)}, h.workflows.started)
+	assert.Equal(t, agentwaitcontract.WorkflowIDFor(wait.ID), wait.WorkflowID)
 }
 
 func TestRegister_RefusesToWaitForWhatHasHappened(t *testing.T) {
@@ -458,7 +459,7 @@ func openWait(kind agentwait.Kind, condition agentwait.Condition) *agentwait.Wai
 		Status:            agentwait.StatusWaiting,
 	}
 	wait.Normalize()
-	wait.WorkflowID = agentwaitjobs.WorkflowIDFor(wait.ID)
+	wait.WorkflowID = agentwaitcontract.WorkflowIDFor(wait.ID)
 
 	return wait
 }
@@ -528,12 +529,12 @@ func TestNotifyHOS_EndsTheWaitOnceDriveTimeDropsBelow(t *testing.T) {
 	assert.Contains(t, h.workflows.signals[0].met.Detail, "1h 45m")
 }
 
-func finishInput(wait *agentwait.Wait, status agentwait.Status) *agentwaitjobs.FinishInput {
-	payload := &agentwaitjobs.Payload{WaitID: wait.ID}
+func finishInput(wait *agentwait.Wait, status agentwait.Status) *agentwaitcontract.FinishInput {
+	payload := &agentwaitcontract.Payload{WaitID: wait.ID}
 	payload.OrganizationID = wait.OrganizationID
 	payload.BusinessUnitID = wait.BusinessUnitID
 
-	return &agentwaitjobs.FinishInput{Payload: payload, Status: status, Outcome: "Arrived."}
+	return &agentwaitcontract.FinishInput{Payload: payload, Status: status, Outcome: "Arrived."}
 }
 
 func TestFinish_PicksTheConversationUpAsItsOwnerOnce(t *testing.T) {
@@ -560,7 +561,7 @@ func TestFinish_ABusyConversationIsTriedAgain(t *testing.T) {
 	h.turns.active = &conversation.AssistantTurn{ID: pulid.MustNew("atrn_")}
 
 	err := h.svc.Finish(context.Background(), finishInput(wait, agentwait.StatusMet))
-	require.ErrorIs(t, err, agentwaitjobs.ErrConversationBusy)
+	require.ErrorIs(t, err, agentwaitcontract.ErrConversationBusy)
 	assert.Equal(t, agentwait.StatusMet, wait.Status, "the wait is closed; only the pick-up waits")
 
 	h.turns.active = nil

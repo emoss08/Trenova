@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingqueuejobs/billingqueuecontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -123,7 +125,7 @@ func (s *Service) startWorkflow(
 			WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
 		},
 		billingqueuejobs.BulkApprovalWorkflow,
-		&billingqueuejobs.ApprovalRunPayload{
+		&billingqueuecontract.ApprovalRunPayload{
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: run.OrganizationID,
 				BusinessUnitID: run.BusinessUnitID,
@@ -208,7 +210,7 @@ func (s *Service) Undo(
 
 	if run.TemporalWorkflowID != "" {
 		if sigErr := s.workflows.SignalWorkflow(
-			ctx, run.TemporalWorkflowID, run.TemporalRunID, billingqueuejobs.UndoSignalName, nil,
+			ctx, run.TemporalWorkflowID, run.TemporalRunID, billingqueuecontract.UndoSignalName, nil,
 		); sigErr != nil {
 			s.l.Warn("failed to signal an approval undo",
 				zap.String("runId", run.ID.String()), zap.Error(sigErr))

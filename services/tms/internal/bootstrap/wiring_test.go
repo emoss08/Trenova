@@ -4,6 +4,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/bootstrap"
+	"github.com/emoss08/trenova/internal/bootstrap/apiapp"
+	"github.com/emoss08/trenova/internal/bootstrap/core"
+	"github.com/emoss08/trenova/internal/bootstrap/workerapp"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"github.com/stretchr/testify/require"
@@ -42,6 +45,25 @@ func TestWiring_WorkerGraphResolves(t *testing.T) {
 	))
 }
 
+func TestWiring_APIBinaryGraphResolves(t *testing.T) {
+	t.Parallel()
+
+	require.NoError(t, fx.ValidateApp(
+		core.Options(),
+		apiapp.Options(),
+	))
+}
+
+func TestWiring_WorkerBinaryGraphResolves(t *testing.T) {
+	t.Parallel()
+
+	require.NoError(t, fx.ValidateApp(
+		core.Options(),
+		workerapp.Modules(),
+		workerapp.Options(),
+	))
+}
+
 /*
 An optional dependency that nothing provides resolves to nil and the service
 carries on without it. That is the point of `optional:"true"` — a projector or
@@ -54,8 +76,10 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 	t.Parallel()
 
 	options := map[string]fx.Option{
-		"api":    bootstrap.APIOptions(),
-		"worker": bootstrap.WorkerOptions(),
+		"api":           fx.Options(bootstrap.Options(), bootstrap.APIOptions()),
+		"worker":        fx.Options(bootstrap.Options(), bootstrap.WorkerOptions()),
+		"api-binary":    fx.Options(core.Options(), apiapp.Options()),
+		"worker-binary": fx.Options(core.Options(), workerapp.Modules(), workerapp.Options()),
 	}
 
 	for name, processOptions := range options {
@@ -63,7 +87,6 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 			t.Parallel()
 
 			require.NoError(t, fx.ValidateApp(
-				bootstrap.Options(),
 				processOptions,
 				fx.Invoke(
 					func(

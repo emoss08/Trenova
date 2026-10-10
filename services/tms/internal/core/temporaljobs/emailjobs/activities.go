@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/emailjobs/emailcontract"
+
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -33,7 +35,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 
 func (a *Activities) SendEmailActivity(
 	ctx context.Context,
-	payload *SendEmailPayload,
+	payload *emailcontract.SendEmailPayload,
 ) (*SendEmailResult, error) {
 	logger := activity.GetLogger(ctx)
 	logger.Info(

@@ -4,6 +4,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	assistant "github.com/emoss08/trenova/internal/core/services/shipmentimportassistantservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
@@ -235,7 +237,7 @@ func (t *turn) modelOptions() workflow.ActivityOptions {
 
 func (t *turn) priority() temporal.Priority {
 	return temporal.Priority{
-		PriorityKey: agentflow.PriorityInteractive,
+		PriorityKey: agentflowcontract.PriorityInteractive,
 		FairnessKey: t.payload.TenantInfo.OrgID.String(),
 	}
 }

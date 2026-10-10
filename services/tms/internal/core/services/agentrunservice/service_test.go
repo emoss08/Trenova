@@ -5,11 +5,12 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -194,7 +195,7 @@ func TestStartForDefinitionLaunchesWorkflow(t *testing.T) {
 	def := definitionFixture(true)
 	var started client.StartWorkflowOptions
 	var startedName any
-	var payload *agentjobs.AgentRunPayload
+	var payload *agentcontract.AgentRunPayload
 	var createdAfterStart bool
 	audit := &fakeAuditService{}
 	svc := &Service{
@@ -221,7 +222,7 @@ func TestStartForDefinitionLaunchesWorkflow(t *testing.T) {
 				started = options
 				startedName = name
 				if len(args) == 1 {
-					payload, _ = args[0].(*agentjobs.AgentRunPayload)
+					payload, _ = args[0].(*agentcontract.AgentRunPayload)
 				}
 				return nil, nil
 			},
@@ -267,8 +268,8 @@ func TestStartForDefinitionLaunchesWorkflow(t *testing.T) {
 		t.Fatalf("expected a subject to take a new run once its last one ended, got %v",
 			started.WorkflowIDReusePolicy)
 	}
-	if startedName != agentjobs.AgentRunWorkflowName {
-		t.Fatalf("expected workflow %s, got %v", agentjobs.AgentRunWorkflowName, startedName)
+	if startedName != agentcontract.AgentRunWorkflowName {
+		t.Fatalf("expected workflow %s, got %v", agentcontract.AgentRunWorkflowName, startedName)
 	}
 	if payload == nil {
 		t.Fatalf("expected an agent run payload")

@@ -6,6 +6,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -19,8 +20,6 @@ const (
 	// that started before it replays on the code it started on.
 	agentflowChange = "agent-loop-in-workflow"
 
-	AgentRunWorkflowName              = "AgentRunWorkflow"
-	AgentEvaluationWorkflowName       = "AgentEvaluationWorkflow"
 	AgentScheduledRunWorkflowName     = "AgentScheduledRunWorkflow"
 	ReconcileSchedulesWorkflowName    = "ReconcileDefinitionSchedulesWorkflow"
 	ReconcileSchedulesScheduleID      = "agent-definition-schedules"
@@ -28,40 +27,7 @@ const (
 	ExpireStaleProposalsScheduleID    = "agent-proposal-expiry"
 	DeleteStaleAskThreadsWorkflowName = "DeleteStaleAskThreadsWorkflow"
 	DeleteStaleAskThreadsScheduleID   = "assistant-ask-thread-retention"
-	AgentDecisionSignalName           = "agent-decision"
 )
-
-type AgentRunPayload struct {
-	temporaltype.BasePayload
-
-	RunID        pulid.ID          `json:"runId"`
-	DefinitionID pulid.ID          `json:"definitionId"`
-	Trigger      agent.RunTrigger  `json:"trigger"`
-	SubjectType  agent.SubjectType `json:"subjectType"`
-	SubjectID    pulid.ID          `json:"subjectId"`
-	EventKind    agent.EventKind   `json:"eventKind,omitempty"`
-	// WaitID is the wait whose ending started the run, on a run that picks
-	// up work an earlier run parked.
-	WaitID pulid.ID `json:"waitId,omitempty"`
-	// Origin is the W3C traceparent of whatever started the run: the
-	// request, the event or the schedule firing. Empty on a run started
-	// before it was kept, or from outside any trace.
-	Origin string `json:"traceOrigin,omitempty"`
-}
-
-func (p *AgentRunPayload) tenantInfo() pagination.TenantInfo {
-	return pagination.TenantInfo{
-		OrgID: p.OrganizationID,
-		BuID:  p.BusinessUnitID,
-	}
-}
-
-type DecisionSignal struct {
-	ProposalID      pulid.ID           `json:"proposalId"`
-	Decision        agent.DecisionType `json:"decision"`
-	DecidedByUserID pulid.ID           `json:"decidedByUserId"`
-	ReasonCode      string             `json:"reasonCode"`
-}
 
 type PrepareRunResult struct {
 	Definition             *agentdefinition.Definition     `json:"definition"`
@@ -72,14 +38,14 @@ type PrepareRunResult struct {
 }
 
 type RunAgentInput struct {
-	Payload    *AgentRunPayload                `json:"payload"`
+	Payload    *agentcontract.AgentRunPayload  `json:"payload"`
 	Definition *agentdefinition.Definition     `json:"definition"`
 	Subject    *agentdefinition.RuntimeSubject `json:"subject,omitempty"`
 }
 
 // OpenRunInput is a prepared run, to be opened as a turn.
 type OpenRunInput struct {
-	Payload    *AgentRunPayload                `json:"payload"`
+	Payload    *agentcontract.AgentRunPayload  `json:"payload"`
 	Definition *agentdefinition.Definition     `json:"definition"`
 	Subject    *agentdefinition.RuntimeSubject `json:"subject,omitempty"`
 	Shadow     bool                            `json:"shadow"`
@@ -93,7 +59,7 @@ type OpenRunResult struct {
 
 // FinishRunInput is what a run's loop came to.
 type FinishRunInput struct {
-	Payload    *AgentRunPayload                `json:"payload"`
+	Payload    *agentcontract.AgentRunPayload  `json:"payload"`
 	Definition *agentdefinition.Definition     `json:"definition"`
 	Subject    *agentdefinition.RuntimeSubject `json:"subject,omitempty"`
 	Run        *serviceports.RunResult         `json:"run,omitempty"`
@@ -182,21 +148,6 @@ type RemindPendingProposalsResult struct {
 	Reminded int `json:"reminded"`
 }
 
-// AgentEvaluationPayload names the evaluation to carry out: a recorded run
-// replayed against its agent as it is now.
-type AgentEvaluationPayload struct {
-	temporaltype.BasePayload
-
-	EvaluationID pulid.ID `json:"evaluationId"`
-}
-
-func (p *AgentEvaluationPayload) tenantInfo() pagination.TenantInfo {
-	return pagination.TenantInfo{
-		OrgID: p.OrganizationID,
-		BuID:  p.BusinessUnitID,
-	}
-}
-
 // OpenReplayResult is an evaluation's replay as the workflow drives it. Done
 // is set for an evaluation that had already finished.
 type OpenReplayResult struct {
@@ -208,9 +159,9 @@ type OpenReplayResult struct {
 
 // FinishReplayInput is what a replay's loop came to.
 type FinishReplayInput struct {
-	Payload   *AgentEvaluationPayload  `json:"payload"`
-	Originals []agent.OriginalProposal `json:"originals,omitempty"`
-	Run       *serviceports.RunResult  `json:"run,omitempty"`
+	Payload   *agentcontract.AgentEvaluationPayload `json:"payload"`
+	Originals []agent.OriginalProposal              `json:"originals,omitempty"`
+	Run       *serviceports.RunResult               `json:"run,omitempty"`
 }
 
 type ReplayRunResult struct {

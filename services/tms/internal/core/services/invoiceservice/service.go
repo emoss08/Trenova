@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 
 	"github.com/bytedance/sonic"
@@ -25,7 +27,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/core/services/invoicelines"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -1003,7 +1004,7 @@ func (s *Service) EnqueueAutoPost(
 	}
 
 	auditActor := actor.AuditActor()
-	payload := &billingjobs.AutoPostInvoicePayload{
+	payload := &billingcontract.AutoPostInvoicePayload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: entity.OrganizationID,
 			BusinessUnitID: entity.BusinessUnitID,
@@ -1030,7 +1031,7 @@ func (s *Service) EnqueueAutoPost(
 			TaskQueue:     temporaltype.TaskQueueBilling.String(),
 			StaticSummary: "Auto-post invoice " + entity.Number,
 		},
-		billingjobs.AutoPostInvoiceWorkflowName,
+		billingcontract.AutoPostInvoiceWorkflowName,
 		payload,
 	)
 	return err

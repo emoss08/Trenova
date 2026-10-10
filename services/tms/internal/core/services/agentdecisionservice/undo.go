@@ -4,12 +4,13 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/decisioncommitjobs/decisioncommitcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/decisioncommitjobs"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,8 +31,8 @@ type undoWindow struct {
 
 func newUndoWindow(key pulid.ID, now time.Time) *undoWindow {
 	return &undoWindow{
-		workflowID: decisioncommitjobs.WorkflowID(key),
-		commitsAt:  decisioncommitjobs.CommitsAt(now),
+		workflowID: decisioncommitcontract.WorkflowID(key),
+		commitsAt:  decisioncommitcontract.CommitsAt(now),
 	}
 }
 
@@ -111,14 +112,14 @@ func (s *Service) startCommit(
 ) error {
 	_, err := s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
 		ID:        window.workflowID,
-		TaskQueue: decisioncommitjobs.TaskQueue,
+		TaskQueue: decisioncommitcontract.TaskQueue,
 		// The same proposal approved again after an undo reuses the id. A
 		// wait from the earlier approval that never heard its undo is ended
 		// here; it would find nothing of its own to commit anyway.
 		WorkflowIDReusePolicy:    enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
 		WorkflowIDConflictPolicy: enums.WORKFLOW_ID_CONFLICT_POLICY_TERMINATE_EXISTING,
 		StaticSummary:            "Approval undo window",
-	}, decisioncommitjobs.ProposalCommitWorkflowName, &services.CommitApprovalRequest{
+	}, decisioncommitcontract.ProposalCommitWorkflowName, &services.CommitApprovalRequest{
 		OrganizationID:  tenant.OrgID,
 		BusinessUnitID:  tenant.BuID,
 		DecidedByUserID: actor.UserID,
@@ -329,7 +330,7 @@ func (s *Service) UndoOwnApproval(
 	}
 
 	if err = s.workflows.SignalWorkflow(
-		ctx, window[0].CommitWorkflowID, "", decisioncommitjobs.UndoSignalName, nil,
+		ctx, window[0].CommitWorkflowID, "", decisioncommitcontract.UndoSignalName, nil,
 	); err != nil {
 		// The commit claims only what is still in the window, so a wait that
 		// never hears this finds nothing to do when it closes.
@@ -386,7 +387,7 @@ func (s *Service) CommitOwnApprovalNow(
 
 	workflowID := window[0].CommitWorkflowID
 	if err = s.workflows.SignalWorkflow(
-		ctx, workflowID, "", decisioncommitjobs.CommitNowSignalName, nil,
+		ctx, workflowID, "", decisioncommitcontract.CommitNowSignalName, nil,
 	); err == nil {
 		return nil
 	}

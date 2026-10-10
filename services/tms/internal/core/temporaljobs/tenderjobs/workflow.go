@@ -3,6 +3,8 @@ package tenderjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs/tendercontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -26,7 +28,7 @@ var tenderActivityOptions = workflow.ActivityOptions{
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
-			Name:        CarrierTenderWorkflowName,
+			Name:        tendercontract.CarrierTenderWorkflowName,
 			Fn:          CarrierTenderWorkflow,
 			TaskQueue:   temporaltype.TaskQueueDispatch.String(),
 			Description: "Drive one carrier tender through dispatch, expiry, and response",
@@ -38,7 +40,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 // arrive as signals from the single service funnel; expiry is the workflow's
 // own timer. Activities are all CAS-idempotent, so the workflow restarts
 // cleanly from whatever the rows say.
-func CarrierTenderWorkflow(ctx workflow.Context, in *WorkflowInput) error {
+func CarrierTenderWorkflow(ctx workflow.Context, in *tendercontract.WorkflowInput) error {
 	ctx = workflow.WithActivityOptions(ctx, tenderActivityOptions)
 
 	var a *Activities
@@ -57,7 +59,7 @@ func CarrierTenderWorkflow(ctx workflow.Context, in *WorkflowInput) error {
 		return nil
 	}
 
-	signals := workflow.GetSignalChannel(ctx, TenderSignalName)
+	signals := workflow.GetSignalChannel(ctx, tendercontract.TenderSignalName)
 
 	if in.Mode.IsSequential() {
 		return runSequential(ctx, a, base, plan, signals)
@@ -297,11 +299,11 @@ func handleSignal(
 	ctx workflow.Context,
 	a *Activities,
 	base TenderActivityInput,
-	sig Signal,
+	sig tendercontract.Signal,
 	relevant func(pulid.ID) bool,
 ) (responseOutcome, error) {
 	switch sig.Kind {
-	case SignalKindCancel:
+	case tendercontract.SignalKindCancel:
 		in := base
 		in.Reason = sig.Reason
 		in.ActorUserID = sig.ActorUserID
@@ -313,7 +315,7 @@ func handleSignal(
 		return outcomeFinished, nil
 	case SignalKindSweepNudge:
 		return outcomeContinue, nil
-	case SignalKindResponse:
+	case tendercontract.SignalKindResponse:
 		if !relevant(sig.OfferID) {
 			// The response was in flight when its offer expired or was
 			// superseded, so the service-side gate never saw it as late.
@@ -342,7 +344,7 @@ func handleResponse(
 	ctx workflow.Context,
 	a *Activities,
 	base TenderActivityInput,
-	sig Signal,
+	sig tendercontract.Signal,
 ) (responseOutcome, error) {
 	in := base
 	in.OfferID = sig.OfferID
@@ -407,19 +409,19 @@ func receiveOrDeadline(
 	ctx workflow.Context,
 	signals workflow.ReceiveChannel,
 	deadline int64,
-) (Signal, bool) {
+) (tendercontract.Signal, bool) {
 	remaining := time.Duration(deadline-workflow.Now(ctx).Unix()) * time.Second
 	if remaining <= 0 {
-		var sig Signal
+		var sig tendercontract.Signal
 		if signals.ReceiveAsync(&sig) {
 			return sig, false
 		}
-		return Signal{}, true
+		return tendercontract.Signal{}, true
 	}
 
 	timer := workflow.NewTimer(ctx, remaining)
 
-	var sig Signal
+	var sig tendercontract.Signal
 	var timedOut bool
 	sel := workflow.NewSelector(ctx)
 	sel.AddReceive(signals, func(c workflow.ReceiveChannel, _ bool) {

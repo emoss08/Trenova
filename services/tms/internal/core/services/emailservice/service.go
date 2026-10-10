@@ -9,6 +9,8 @@ import (
 	"io"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/emailjobs/emailcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
@@ -19,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/emailjobs"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -694,8 +695,8 @@ func (s *Service) startSendWorkflow(
 			TaskQueue:     temporaltype.EmailTaskQueue,
 			StaticSummary: "Send email message " + msg.ID.String(),
 		},
-		emailjobs.SendEmailWorkflowName,
-		&emailjobs.SendEmailPayload{
+		emailcontract.SendEmailWorkflowName,
+		&emailcontract.SendEmailPayload{
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: msg.OrganizationID,
 				BusinessUnitID: msg.BusinessUnitID,

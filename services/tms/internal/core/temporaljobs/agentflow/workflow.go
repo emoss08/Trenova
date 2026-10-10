@@ -6,6 +6,8 @@ import (
 	"slices"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
@@ -37,7 +39,7 @@ func Run(
 		runtime: runtime,
 		run:     rc,
 		events:  events,
-		steers:  workflow.GetSignalChannel(ctx, SteerSignal),
+		steers:  workflow.GetSignalChannel(ctx, agentflowcontract.SteerSignal),
 	}
 	result, err := runtime.Drive(runtime.RestoreTurn(rc.request(), state), fx)
 

@@ -9,6 +9,8 @@ import (
 	"io"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs/thumbnailcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
@@ -180,8 +182,8 @@ func thumbnailDocument() *document.Document {
 	}
 }
 
-func thumbnailPayload(doc *document.Document) *GenerateThumbnailPayload {
-	return &GenerateThumbnailPayload{
+func thumbnailPayload(doc *document.Document) *thumbnailcontract.GenerateThumbnailPayload {
+	return &thumbnailcontract.GenerateThumbnailPayload{
 		DocumentID:     doc.ID,
 		OrganizationID: doc.OrganizationID,
 		BusinessUnitID: doc.BusinessUnitID,

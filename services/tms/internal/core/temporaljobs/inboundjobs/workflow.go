@@ -4,6 +4,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs/documentuploadcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
@@ -290,7 +292,7 @@ func finalizeAttachment(
 	if err := workflow.ExecuteChildWorkflow(
 		childCtx,
 		documentuploadjobs.FinalizeDocumentUploadWorkflow,
-		&documentuploadjobs.FinalizeUploadPayload{
+		&documentuploadcontract.FinalizeUploadPayload{
 			BasePayload:   payload.BasePayload,
 			SessionID:     ref.SessionID,
 			PrincipalType: services.PrincipalTypeSystem,

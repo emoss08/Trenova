@@ -12,14 +12,15 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -469,11 +470,11 @@ func (s *Service) start(
 		Origin: conversation.AssistantTurnOriginPerson,
 		Input:  item.Content,
 	}, func(turn *conversation.AssistantTurn) (string, error) {
-		run, err := assistantjobs.StartTurnWorkflow(ctx, s.workflows, turn,
-			assistantjobs.TurnStart{
+		run, err := assistantcontract.StartTurnWorkflow(ctx, s.workflows, turn,
+			assistantcontract.TurnStart{
 				Actor:   actor,
 				Content: item.Content,
-				Request: assistantjobs.AssistantTurnRequest{
+				Request: assistantcontract.AssistantTurnRequest{
 					Page:                  request.Page,
 					Surface:               request.Surface,
 					Mentions:              request.Mentions,
@@ -515,7 +516,7 @@ func (s *Service) steer(
 	if item.Request != nil {
 		mentions = item.Request.Mentions
 	}
-	err := s.workflows.SignalWorkflow(ctx, active.ExecutionID(), "", agentflow.SteerSignal,
+	err := s.workflows.SignalWorkflow(ctx, active.ExecutionID(), "", agentflowcontract.SteerSignal,
 		agentruntime.Steer{ID: item.ID, Content: item.Content, Mentions: mentions})
 	if err == nil {
 		return true

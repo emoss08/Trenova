@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -451,8 +452,8 @@ func (s *Service) enqueueInvoiceSendWorkflow(
 			TaskQueue:     temporaltype.TaskQueueBilling.String(),
 			StaticSummary: "Send invoice email " + entity.Number,
 		},
-		billingjobs.SendInvoiceEmailWorkflowName,
-		&billingjobs.SendInvoiceEmailPayload{
+		billingcontract.SendInvoiceEmailWorkflowName,
+		&billingcontract.SendInvoiceEmailPayload{
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: entity.OrganizationID,
 				BusinessUnitID: entity.BusinessUnitID,

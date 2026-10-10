@@ -3,11 +3,12 @@ package billingtransferservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingtransferjobs/billingtransfercontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingtransferjobs"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -152,8 +153,8 @@ func (s *Service) startWorkflow(
 			TaskQueue:             temporaltype.TaskQueueBilling.String(),
 			WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
 		},
-		billingtransferjobs.BulkBillingTransferWorkflow,
-		&billingtransferjobs.TransferRunPayload{
+		billingtransfercontract.BulkBillingTransferWorkflowName,
+		&billingtransfercontract.TransferRunPayload{
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: run.OrganizationID,
 				BusinessUnitID: run.BusinessUnitID,

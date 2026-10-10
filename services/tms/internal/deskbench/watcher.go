@@ -5,8 +5,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/client"
 )
@@ -16,7 +17,7 @@ type StartedTurn struct {
 	TurnID   pulid.ID
 	ThreadID pulid.ID
 	Content  string
-	Request  assistantjobs.AssistantTurnRequest
+	Request  assistantcontract.AssistantTurnRequest
 	Run      client.WorkflowRun
 }
 
@@ -95,13 +96,13 @@ func (w *TurnWatcher) StartWorkflow(
 		return run, err
 	}
 
-	if name, ok := workflow.(string); !ok || name != assistantjobs.AssistantTurnWorkflowName {
+	if name, ok := workflow.(string); !ok || name != assistantcontract.AssistantTurnWorkflowName {
 		return run, nil
 	}
 	if len(args) != 1 {
 		return run, nil
 	}
-	payload, ok := args[0].(*assistantjobs.AssistantTurnPayload)
+	payload, ok := args[0].(*assistantcontract.AssistantTurnPayload)
 	if !ok || payload == nil {
 		return run, nil
 	}

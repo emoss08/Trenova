@@ -3,6 +3,8 @@ package smsjobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs/smscontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
@@ -38,7 +40,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 
 func (a *Activities) SendSMSActivity(
 	ctx context.Context,
-	payload *SendSMSPayload,
+	payload *smscontract.SendSMSPayload,
 ) (*SendSMSResult, error) {
 	logger := activity.GetLogger(ctx)
 	logger.Info("Starting SMS send activity",

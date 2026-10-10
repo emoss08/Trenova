@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs/shipmentcontract"
+
 	"github.com/emoss08/trenova/internal/core/services/shipmentinvalidation"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -74,7 +76,7 @@ func TestActivitiesBulkDuplicateShipmentsActivity(t *testing.T) {
 
 	result, err := activities.BulkDuplicateShipmentsActivity(
 		t.Context(),
-		&BulkDuplicateShipmentsPayload{
+		&shipmentcontract.BulkDuplicateShipmentsPayload{
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: orgID,
 				BusinessUnitID: buID,

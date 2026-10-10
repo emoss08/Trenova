@@ -3,8 +3,9 @@ package reflectionjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -231,7 +232,7 @@ func withPriority(
 	tenant pagination.TenantInfo,
 ) workflow.Context {
 	options.Priority = temporal.Priority{
-		PriorityKey: agentflow.PriorityBackground,
+		PriorityKey: agentflowcontract.PriorityBackground,
 		FairnessKey: tenant.OrgID.String(),
 	}
 

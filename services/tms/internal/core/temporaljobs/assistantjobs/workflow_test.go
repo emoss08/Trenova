@@ -7,6 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
@@ -33,7 +36,7 @@ type AssistantTurnWorkflowTestSuite struct {
 
 	env      *testsuite.TestWorkflowEnvironment
 	runtime  *agentruntime.Service
-	payload  *AssistantTurnPayload
+	payload  *assistantcontract.AssistantTurnPayload
 	finished *FinishTurnInput
 	notified []*NotifyUnseenTurnInput
 }
@@ -51,7 +54,7 @@ func (s *AssistantTurnWorkflowTestSuite) SetupTest() {
 		ActionTools: &agentruntimetest.StubActionRegistry{},
 		Permissions: &agentruntimetest.StubPermissions{},
 	})
-	s.payload = &AssistantTurnPayload{
+	s.payload = &assistantcontract.AssistantTurnPayload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: pulid.MustNew("org_"),
 			BusinessUnitID: pulid.MustNew("bu_"),
@@ -74,7 +77,7 @@ func (s *AssistantTurnWorkflowTestSuite) SetupTest() {
 	s.env.RegisterActivity(&agentflow.Activities{})
 	s.env.RegisterWorkflowWithOptions(
 		NewWorkflows(s.runtime).AssistantTurnWorkflow,
-		workflow.RegisterOptions{Name: AssistantTurnWorkflowName},
+		workflow.RegisterOptions{Name: assistantcontract.AssistantTurnWorkflowName},
 	)
 }
 
@@ -146,14 +149,14 @@ func (s *AssistantTurnWorkflowTestSuite) finishes(ending *TurnEnding, err error)
 
 func doneEnding() *TurnEnding {
 	return &TurnEnding{
-		Result: AssistantTurnResult{Status: "Completed"},
+		Result: assistantcontract.AssistantTurnResult{Status: "Completed"},
 		Event:  temporaltype.StreamItem{Event: serviceports.AssistantEventDone},
 	}
 }
 
 func (s *AssistantTurnWorkflowTestSuite) run() {
 	s.notifies(nil)
-	s.env.ExecuteWorkflow(AssistantTurnWorkflowName, s.payload)
+	s.env.ExecuteWorkflow(assistantcontract.AssistantTurnWorkflowName, s.payload)
 	s.True(s.env.IsWorkflowCompleted())
 }
 
@@ -165,7 +168,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestAnswersTheQuestionAndSavesIt() {
 	s.run()
 
 	s.NoError(s.env.GetWorkflowError())
-	var result AssistantTurnResult
+	var result assistantcontract.AssistantTurnResult
 	s.NoError(s.env.GetWorkflowResult(&result))
 	s.Equal("Completed", result.Status)
 
@@ -200,7 +203,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestPassesOnWhyAQuestionWasTurnedAway()
 	s.prepares(nil, temporal.NewNonRetryableApplicationError(
 		"This conversation is full. Start a new one.", errTypeRejected, nil,
 	))
-	s.finishes(&TurnEnding{Result: AssistantTurnResult{Status: "Failed"}}, nil)
+	s.finishes(&TurnEnding{Result: assistantcontract.AssistantTurnResult{Status: "Failed"}}, nil)
 
 	s.run()
 
@@ -222,7 +225,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestSavesATurnTheModelCouldNotFinish() 
 				Details:      []any{map[string]any{"status": http.StatusBadRequest}},
 			}),
 	).Once()
-	s.finishes(&TurnEnding{Result: AssistantTurnResult{Status: "Failed"}}, nil)
+	s.finishes(&TurnEnding{Result: assistantcontract.AssistantTurnResult{Status: "Failed"}}, nil)
 
 	s.run()
 
@@ -242,7 +245,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestSavesAStoppedTurn() {
 		After(time.Minute).
 		Return(&agentruntime.ModelReply{}, nil).
 		Maybe()
-	s.finishes(&TurnEnding{Result: AssistantTurnResult{Status: "Stopped"}}, nil)
+	s.finishes(&TurnEnding{Result: assistantcontract.AssistantTurnResult{Status: "Stopped"}}, nil)
 	s.env.RegisterDelayedCallback(s.env.CancelWorkflow, time.Second)
 
 	s.run()
@@ -271,7 +274,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestClosesAsSoonAsItsReaderIsDone() {
 	closedAt = s.env.Now()
 
 	s.NoError(s.env.GetWorkflowError())
-	s.Less(closedAt.Sub(started), agentflow.DrainWindow)
+	s.Less(closedAt.Sub(started), agentflowcontract.DrainWindow)
 }
 
 func (s *AssistantTurnWorkflowTestSuite) TestFailsLoudlyWhenTheTurnCannotBeSaved() {
@@ -281,7 +284,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestFailsLoudlyWhenTheTurnCannotBeSaved
 	closed := ""
 	var a *Activities
 	s.env.OnActivity(a.CloseTurnActivity, mock.Anything, mock.Anything, mock.Anything).Return(
-		func(_ context.Context, payload *AssistantTurnPayload, message string) error {
+		func(_ context.Context, payload *assistantcontract.AssistantTurnPayload, message string) error {
 			closed = message
 			s.Equal(s.payload.TurnID, payload.TurnID)
 
@@ -298,7 +301,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestFailsLoudlyWhenTheTurnCannotBeSaved
 
 func answeredEnding(reply string) *TurnEnding {
 	return &TurnEnding{
-		Result: AssistantTurnResult{
+		Result: assistantcontract.AssistantTurnResult{
 			Status: "Completed",
 			Result: &serviceports.SendMessageResult{Reply: reply},
 		},
@@ -350,7 +353,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestSaysNothingAboutAStoppedTurn() {
 		After(time.Minute).
 		Return(&agentruntime.ModelReply{}, nil).
 		Maybe()
-	s.finishes(&TurnEnding{Result: AssistantTurnResult{Status: "Stopped"}}, nil)
+	s.finishes(&TurnEnding{Result: assistantcontract.AssistantTurnResult{Status: "Stopped"}}, nil)
 	s.env.RegisterDelayedCallback(s.env.CancelWorkflow, time.Second)
 
 	s.run()
@@ -416,7 +419,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestTellsThePersonAboutARefusal() {
 	plan.Turn = agentruntime.TurnState{}
 	s.prepares(plan, nil)
 	s.finishes(&TurnEnding{
-		Result: AssistantTurnResult{
+		Result: assistantcontract.AssistantTurnResult{
 			Status:  "Refused",
 			Refused: true,
 			Result: &serviceports.SendMessageResult{
@@ -443,7 +446,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestAReplyNobodyCouldBeToldAboutStillCo
 	s.run()
 
 	s.NoError(s.env.GetWorkflowError())
-	var result AssistantTurnResult
+	var result assistantcontract.AssistantTurnResult
 	s.NoError(s.env.GetWorkflowResult(&result))
 	s.Equal("Completed", result.Status)
 	s.NotEmpty(s.notified)

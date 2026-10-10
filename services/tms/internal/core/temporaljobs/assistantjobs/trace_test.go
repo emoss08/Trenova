@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
@@ -23,7 +25,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func tracedTurn(t *testing.T) (*AssistantTurnPayload, *conversation.AssistantTurn) {
+func tracedTurn(t *testing.T) (*assistantcontract.AssistantTurnPayload, *conversation.AssistantTurn) {
 	t.Helper()
 
 	payload := replayPayload()

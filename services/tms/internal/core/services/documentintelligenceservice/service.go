@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs/documentintelligencecontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/documentshipmentdraft"
@@ -15,7 +17,6 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
 	workflowstarterservice "github.com/emoss08/trenova/internal/core/services/workflowstarter"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -245,7 +246,7 @@ func (s *Service) EnqueueExtraction(
 			),
 		},
 		"ProcessDocumentIntelligenceWorkflow",
-		&documentintelligencejobs.ProcessDocumentIntelligencePayload{
+		&documentintelligencecontract.ProcessDocumentIntelligencePayload{
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: doc.OrganizationID,
 				BusinessUnitID: doc.BusinessUnitID,

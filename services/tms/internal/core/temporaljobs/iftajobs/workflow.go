@@ -3,6 +3,8 @@ package iftajobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/iftajobs/iftacontract"
+
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -24,7 +26,7 @@ var backfillActivityOptions = workflow.ActivityOptions{
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
-			Name:        BackfillJurisdictionMilesWorkflowName,
+			Name:        iftacontract.BackfillJurisdictionMilesWorkflowName,
 			Fn:          BackfillJurisdictionMilesWorkflow,
 			TaskQueue:   temporaltype.TaskQueueSystem.String(),
 			Description: "Attribute completed moves without a jurisdiction breakdown for IFTA",
@@ -34,7 +36,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 
 func BackfillJurisdictionMilesWorkflow(
 	ctx workflow.Context,
-	input BackfillInput,
+	input iftacontract.BackfillInput,
 ) (*BackfillResult, error) {
 	ctx = workflow.WithActivityOptions(ctx, backfillActivityOptions)
 	logger := workflow.GetLogger(ctx)

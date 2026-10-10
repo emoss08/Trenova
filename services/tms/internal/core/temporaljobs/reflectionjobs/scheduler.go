@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
@@ -105,7 +106,7 @@ func tenantOnly(tenant pagination.TenantInfo) pagination.TenantInfo {
 
 func priorityFor(tenant pagination.TenantInfo) temporal.Priority {
 	return temporal.Priority{
-		PriorityKey: agentflow.PriorityBackground,
+		PriorityKey: agentflowcontract.PriorityBackground,
 		FairnessKey: tenant.OrgID.String(),
 	}
 }

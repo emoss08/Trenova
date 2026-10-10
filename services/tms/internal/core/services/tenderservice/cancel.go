@@ -3,12 +3,13 @@ package tenderservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs/tendercontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/tenderjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -49,9 +50,9 @@ func (s *Service) Cancel(ctx context.Context, req *CancelTenderRequest) error {
 	switch entity.Status {
 	case tender.StatusActive:
 		signalErr := s.workflows.SignalWorkflow(
-			ctx, tenderjobs.WorkflowID(entity.ID), "", tenderjobs.TenderSignalName,
-			tenderjobs.Signal{
-				Kind:        tenderjobs.SignalKindCancel,
+			ctx, tendercontract.WorkflowID(entity.ID), "", tendercontract.TenderSignalName,
+			tendercontract.Signal{
+				Kind:        tendercontract.SignalKindCancel,
 				Reason:      req.Reason,
 				ActorUserID: req.TenantInfo.UserID,
 			},

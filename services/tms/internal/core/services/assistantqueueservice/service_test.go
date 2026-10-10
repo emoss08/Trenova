@@ -7,14 +7,15 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -355,7 +356,7 @@ func TestEnqueue_SteersTheReplyUnderWay(t *testing.T) {
 	require.Len(t, h.workflows.signals, 1)
 	sent := h.workflows.signals[0]
 	assert.Equal(t, active.ExecutionID(), sent.workflowID)
-	assert.Equal(t, agentflow.SteerSignal, sent.name)
+	assert.Equal(t, agentflowcontract.SteerSignal, sent.name)
 	assert.Equal(t, outcome.Item.ID, sent.steer.ID, "the turn reads it under the row's id")
 	assert.Equal(t, "Actually the carrier is Werner.", sent.steer.Content)
 	assert.Len(t, sent.steer.Mentions, 1)
@@ -595,7 +596,7 @@ func TestEnqueue_AStepForAnotherAgentStartsItsTurnDirected(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, outcome.Turn)
 	require.Len(t, h.workflows.starts, 1)
-	payload, ok := h.workflows.starts[0].(*assistantjobs.AssistantTurnPayload)
+	payload, ok := h.workflows.starts[0].(*assistantcontract.AssistantTurnPayload)
 	require.True(t, ok, "the turn's workflow is started with its payload")
 	assert.Equal(t, agentID, payload.Request.DirectedAgentID)
 	assert.Equal(t, "Mark shipment SEED-PAY-001 ready to invoice.", payload.Content)

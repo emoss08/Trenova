@@ -3,6 +3,8 @@ package emailjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/emailjobs/emailcontract"
+
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -30,7 +32,7 @@ var emailActivityOptions = workflow.ActivityOptions{
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
-			Name:        SendEmailWorkflowName,
+			Name:        emailcontract.SendEmailWorkflowName,
 			Fn:          SendEmailWorkflow,
 			TaskQueue:   temporaltype.EmailTaskQueue,
 			Description: "Send persisted email message via provider",
@@ -40,7 +42,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 
 func SendEmailWorkflow(
 	ctx workflow.Context,
-	payload *SendEmailPayload,
+	payload *emailcontract.SendEmailPayload,
 ) (*SendEmailResult, error) {
 	ctx = workflow.WithActivityOptions(ctx, emailActivityOptions)
 

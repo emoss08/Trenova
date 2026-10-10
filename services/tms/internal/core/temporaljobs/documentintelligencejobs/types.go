@@ -4,6 +4,8 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs/documentintelligencecontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
@@ -112,12 +114,6 @@ var Boundaries = []string{
 	"pickup", "delivery", "received by", "signed by", "receiver signature", "consignee signature",
 	"bill of lading", "bol", "reference", "load", "pro", "commodity", "description", "weight",
 	"pieces", "packages", "remarks", "exceptions", "carrier", "invoice", "bill to",
-}
-
-type ProcessDocumentIntelligencePayload struct {
-	temporaltype.BasePayload
-
-	DocumentID pulid.ID `json:"documentId"`
 }
 
 type ProcessDocumentIntelligenceResult struct {
@@ -380,7 +376,7 @@ func (d *AIDiagnostics) ToMap() map[string]any {
 }
 
 type EnrichmentPayload struct {
-	Payload        *ProcessDocumentIntelligencePayload
+	Payload        *documentintelligencecontract.ProcessDocumentIntelligencePayload
 	Document       *document.Document
 	Control        *tenant.DocumentControl
 	Extracted      *ExtractionResult
@@ -484,7 +480,7 @@ type RegexValueFieldParams struct {
 
 type FinalizeIntelligenceParams struct {
 	Document       *document.Document
-	Payload        *ProcessDocumentIntelligencePayload
+	Payload        *documentintelligencecontract.ProcessDocumentIntelligencePayload
 	Content        *documentcontent.Content
 	Extracted      *ExtractionResult
 	Classification *ClassificationResult

@@ -3,6 +3,8 @@ package ptojobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/ptojobs/ptocontract"
+
 	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,7 +35,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 
 func (a *Activities) ListAccrualTenantsActivity(
 	ctx context.Context,
-	input PTOAccrualWorkflowInput,
+	input ptocontract.PTOAccrualWorkflowInput,
 ) ([]temporaljobs.TenantWorkItem, error) {
 	if !input.OrganizationID.IsNil() && !input.BusinessUnitID.IsNil() {
 		return []temporaljobs.TenantWorkItem{

@@ -3,6 +3,8 @@ package shipmentjobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs/shipmentcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -54,7 +56,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 
 func (a *Activities) BulkDuplicateShipmentsActivity(
 	ctx context.Context,
-	payload *BulkDuplicateShipmentsPayload,
+	payload *shipmentcontract.BulkDuplicateShipmentsPayload,
 ) (*BulkDuplicateShipmentsResult, error) {
 	a.logger.Info(
 		"Starting shipment bulk duplication activity",
@@ -141,7 +143,7 @@ func (a *Activities) BulkDuplicateShipmentsActivity(
 	}, nil
 }
 
-func paginationTenantInfoFromPayload(payload *BulkDuplicateShipmentsPayload) pagination.TenantInfo {
+func paginationTenantInfoFromPayload(payload *shipmentcontract.BulkDuplicateShipmentsPayload) pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID:  payload.OrganizationID,
 		BuID:   payload.BusinessUnitID,

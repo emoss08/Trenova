@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/iftajobs/iftacontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/distancecalculation"
 	"github.com/emoss08/trenova/internal/core/domain/distancecontrol"
 	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
@@ -22,7 +24,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/iftajobs"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -605,7 +606,7 @@ func (s *Service) BackfillJurisdictionMiles(
 
 	maxMoves := req.MaxMoves
 	if maxMoves <= 0 {
-		maxMoves = iftajobs.DefaultBackfillMaxMoves
+		maxMoves = iftacontract.DefaultBackfillMaxMoves
 	}
 	tenantInfo := req.TenantInfo
 	if !req.UserID.IsNil() {
@@ -630,8 +631,8 @@ func (s *Service) BackfillJurisdictionMiles(
 				page.TotalMoves,
 			),
 		},
-		iftajobs.BackfillJurisdictionMilesWorkflowName,
-		iftajobs.BackfillInput{
+		iftacontract.BackfillJurisdictionMilesWorkflowName,
+		iftacontract.BackfillInput{
 			TenantInfo: tenantInfo,
 			Start:      req.Start,
 			End:        req.End,

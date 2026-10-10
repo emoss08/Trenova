@@ -5,13 +5,14 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/conversationschedule"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -200,7 +201,7 @@ func (f *fakeTurns) Active(
 
 type fakeWorkflows struct {
 	serviceports.WorkflowStarter
-	payloads []*assistantjobs.AssistantTurnPayload
+	payloads []*assistantcontract.AssistantTurnPayload
 }
 
 func (f *fakeWorkflows) StartWorkflow(
@@ -209,7 +210,7 @@ func (f *fakeWorkflows) StartWorkflow(
 	_ any,
 	args ...any,
 ) (client.WorkflowRun, error) {
-	f.payloads = append(f.payloads, args[0].(*assistantjobs.AssistantTurnPayload))
+	f.payloads = append(f.payloads, args[0].(*assistantcontract.AssistantTurnPayload))
 
 	return startedRun{id: options.ID}, nil
 }

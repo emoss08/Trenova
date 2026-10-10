@@ -3,6 +3,8 @@ package smsjobs
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs/smscontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/platformplan"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -25,7 +27,7 @@ func TestSendSMSActivityRefusesWithoutCallingTwilioWhenThePlanRestrictsSMS(t *te
 	env := s.NewTestActivityEnvironment()
 	env.RegisterActivity(activities)
 
-	_, err := env.ExecuteActivity(activities.SendSMSActivity, &SendSMSPayload{
+	_, err := env.ExecuteActivity(activities.SendSMSActivity, &smscontract.SendSMSPayload{
 		PhoneNumber:    "+15555550100",
 		Message:        "Your PTO was approved",
 		OrganizationID: tenant.OrgID,

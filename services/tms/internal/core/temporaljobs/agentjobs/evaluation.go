@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
@@ -57,7 +59,7 @@ type replaySource struct {
 // activity feed: the evaluation row is the only thing it writes.
 func (a *Activities) openReplay(
 	ctx context.Context,
-	payload *AgentEvaluationPayload,
+	payload *agentcontract.AgentEvaluationPayload,
 ) (*replay, error) {
 	tenant := payload.tenantInfo()
 
@@ -506,7 +508,7 @@ func observeReplay(outcome *serviceports.RunResult) observedReplay {
 // code call it.
 func (a *Activities) ReplayRunActivity(
 	ctx context.Context,
-	payload *AgentEvaluationPayload,
+	payload *agentcontract.AgentEvaluationPayload,
 ) (*ReplayRunResult, error) {
 	opened, err := a.openReplay(ctx, payload)
 	if err != nil {
@@ -532,7 +534,7 @@ func (a *Activities) ReplayRunActivity(
 // finishedReplay is what an evaluation that already finished came to.
 func (a *Activities) finishedReplay(
 	ctx context.Context,
-	payload *AgentEvaluationPayload,
+	payload *agentcontract.AgentEvaluationPayload,
 ) (*ReplayRunResult, error) {
 	evaluation, err := a.evaluations.GetByID(ctx, repositories.GetAgentEvaluationByIDRequest{
 		ID:         payload.EvaluationID,
@@ -549,7 +551,7 @@ func (a *Activities) finishedReplay(
 // to drive. Done is set for an evaluation that has already finished.
 func (a *Activities) OpenReplayActivity(
 	ctx context.Context,
-	payload *AgentEvaluationPayload,
+	payload *agentcontract.AgentEvaluationPayload,
 ) (*OpenReplayResult, error) {
 	opened, err := a.openReplay(ctx, payload)
 	if err != nil {
@@ -739,7 +741,7 @@ func (a *Activities) replayInput(
 	}
 
 	return &replayInput{
-		input:   backgroundInput(&AgentRunPayload{Trigger: source.Trigger}, subject),
+		input:   backgroundInput(&agentcontract.AgentRunPayload{Trigger: source.Trigger}, subject),
 		context: runtimeContext,
 	}, nil
 }

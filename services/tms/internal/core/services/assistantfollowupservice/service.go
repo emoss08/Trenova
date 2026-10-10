@@ -12,12 +12,13 @@ package assistantfollowupservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
@@ -137,10 +138,10 @@ func (s *Service) FollowUp(ctx context.Context, req serviceports.DecisionFollowU
 	// A worker answers it like any other turn, so the report survives the
 	// request that decided and can be watched and stopped like any reply.
 	_, err = s.turns.StartTurn(ctx, start, func(turn *conversation.AssistantTurn) (string, error) {
-		run, startErr := assistantjobs.StartTurnWorkflow(ctx, s.workflows, turn,
-			assistantjobs.TurnStart{
+		run, startErr := assistantcontract.StartTurnWorkflow(ctx, s.workflows, turn,
+			assistantcontract.TurnStart{
 				Actor: actor,
-				Request: assistantjobs.AssistantTurnRequest{
+				Request: assistantcontract.AssistantTurnRequest{
 					FollowUpProposalID: req.ProposalID,
 					FollowUpPlanID:     req.PlanID,
 				},

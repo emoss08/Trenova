@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -131,8 +132,8 @@ func (s *Service) GeneratePDF(
 				req.InvoiceID.String(),
 			),
 		},
-		billingjobs.GenerateInvoicePDFWorkflowName,
-		&billingjobs.GenerateInvoicePDFPayload{
+		billingcontract.GenerateInvoicePDFWorkflowName,
+		&billingcontract.GenerateInvoicePDFPayload{
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: req.TenantInfo.OrgID,
 				BusinessUnitID: req.TenantInfo.BuID,

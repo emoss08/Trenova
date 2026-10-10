@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingqueuejobs/billingqueuecontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,8 +17,8 @@ import (
 	"go.temporal.io/sdk/testsuite"
 )
 
-func testPayload() *ApprovalRunPayload {
-	return &ApprovalRunPayload{
+func testPayload() *billingqueuecontract.ApprovalRunPayload {
+	return &billingqueuecontract.ApprovalRunPayload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: pulid.ID("org_test"),
 			BusinessUnitID: pulid.ID("bu_test"),
@@ -62,7 +64,7 @@ func TestBulkApprovalCommitsAfterTheUndoWindow(t *testing.T) {
 
 	var startedAt time.Time
 	env.OnActivity("StartApprovalRunActivity", mock.Anything, mock.Anything).
-		Return(func(context.Context, *ApprovalRunPayload) (bool, error) {
+		Return(func(context.Context, *billingqueuecontract.ApprovalRunPayload) (bool, error) {
 			startedAt = env.Now()
 			return true, nil
 		})
@@ -89,7 +91,7 @@ func TestBulkApprovalCommitsAfterTheUndoWindow(t *testing.T) {
 func TestBulkApprovalUndoneBeforeItStartsWritesNothing(t *testing.T) {
 	env := newEnv(t)
 	env.RegisterDelayedCallback(func() {
-		env.SignalWorkflow(UndoSignalName, nil)
+		env.SignalWorkflow(billingqueuecontract.UndoSignalName, nil)
 	}, 2*time.Second)
 
 	finalized := captureFinalize(env)

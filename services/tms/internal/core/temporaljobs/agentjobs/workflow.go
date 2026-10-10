@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
@@ -91,7 +94,7 @@ var sweepStartOptions = workflow.ActivityOptions{
 func (w *Workflows) background() []registry.WorkflowDefinition {
 	return []registry.WorkflowDefinition{
 		{
-			Name:        AgentRunWorkflowName,
+			Name:        agentcontract.AgentRunWorkflowName,
 			Fn:          w.AgentRunWorkflow,
 			Description: "Run one agent definition against its subject and wait for decisions on what it proposes",
 		},
@@ -133,7 +136,7 @@ func (w *Workflows) background() []registry.WorkflowDefinition {
 func (w *Workflows) heavy() []registry.WorkflowDefinition {
 	return []registry.WorkflowDefinition{
 		{
-			Name:        AgentEvaluationWorkflowName,
+			Name:        agentcontract.AgentEvaluationWorkflowName,
 			Fn:          w.AgentEvaluationWorkflow,
 			Description: "Replay a recorded agent run against the agent as it is now, writes simulated, and compare the outcome",
 		},
@@ -232,7 +235,7 @@ func NewWorkflows(runtime *agentruntime.Service) *Workflows {
 // in testdata replay, most of them parked in a day-long wait for a decision.
 // Every run started since runs the loop here, one activity per model call and
 // per tool call.
-func (w *Workflows) AgentRunWorkflow(ctx workflow.Context, payload *AgentRunPayload) error {
+func (w *Workflows) AgentRunWorkflow(ctx workflow.Context, payload *agentcontract.AgentRunPayload) error {
 	if workflow.GetVersion(ctx, agentflowChange, workflow.DefaultVersion, 1) ==
 		workflow.DefaultVersion {
 		return runInOneActivity(ctx, payload)
@@ -242,7 +245,7 @@ func (w *Workflows) AgentRunWorkflow(ctx workflow.Context, payload *AgentRunPayl
 	tenant := payload.tenantInfo()
 
 	prepareCtx := workflow.WithActivityOptions(ctx, withPriority(prepareActivityOptions, payload,
-		agentflow.PriorityBackground))
+		agentflowcontract.PriorityBackground))
 	var prepared PrepareRunResult
 	if err := workflow.ExecuteActivity(prepareCtx, a.PrepareRunActivity, payload).
 		Get(prepareCtx, &prepared); err != nil {
@@ -263,7 +266,7 @@ func (w *Workflows) AgentRunWorkflow(ctx workflow.Context, payload *AgentRunPayl
 	})
 
 	openCtx := workflow.WithActivityOptions(runCtx, withPriority(prepareActivityOptions, payload,
-		agentflow.PriorityBackground))
+		agentflowcontract.PriorityBackground))
 	var opened OpenRunResult
 	if err := workflow.ExecuteActivity(openCtx, a.OpenRunActivity, &OpenRunInput{
 		Payload:    payload,
@@ -284,7 +287,7 @@ func (w *Workflows) AgentRunWorkflow(ctx workflow.Context, payload *AgentRunPayl
 	}
 
 	finishCtx := workflow.WithActivityOptions(ctx, withPriority(persistActivityOptions, payload,
-		agentflow.PriorityBackground))
+		agentflowcontract.PriorityBackground))
 	var finished FinishRunResult
 	if err := workflow.ExecuteActivity(finishCtx, a.FinishRunActivity, &FinishRunInput{
 		Payload:    payload,
@@ -331,17 +334,17 @@ func (w *Workflows) AgentRunWorkflow(ctx workflow.Context, payload *AgentRunPayl
 func awaitEveryDecision(
 	ctx workflow.Context,
 	a *Activities,
-	payload *AgentRunPayload,
+	payload *agentcontract.AgentRunPayload,
 	timeoutSeconds int,
 ) bool {
 	if timeoutSeconds <= 0 {
 		timeoutSeconds = agentdefinition.DefaultDecisionTimeoutSeconds
 	}
 
-	decisions := workflow.GetSignalChannel(ctx, AgentDecisionSignalName)
+	decisions := workflow.GetSignalChannel(ctx, agentcontract.AgentDecisionSignalName)
 	deadline := workflow.Now(ctx).Add(time.Duration(timeoutSeconds) * time.Second)
 	countCtx := workflow.WithActivityOptions(ctx, withPriority(persistActivityOptions, payload,
-		agentflow.PriorityBackground))
+		agentflowcontract.PriorityBackground))
 
 	for {
 		remaining := deadline.Sub(workflow.Now(ctx))
@@ -349,7 +352,7 @@ func awaitEveryDecision(
 			return true
 		}
 
-		var decision DecisionSignal
+		var decision agentcontract.DecisionSignal
 		if received, _ := decisions.ReceiveWithTimeout(ctx, remaining, &decision); !received {
 			return true
 		}
@@ -370,7 +373,7 @@ func awaitEveryDecision(
 
 func withPriority(
 	options workflow.ActivityOptions,
-	payload *AgentRunPayload,
+	payload *agentcontract.AgentRunPayload,
 	priorityKey int,
 ) workflow.ActivityOptions {
 	options.Priority = temporal.Priority{
@@ -398,7 +401,7 @@ func expireProposals(
 // code: the whole loop inside one activity, and the first decision ending the
 // wait. It runs only executions that started on it, and must not change: a
 // change to what it schedules breaks every one of them mid-wait.
-func runInOneActivity(ctx workflow.Context, payload *AgentRunPayload) error {
+func runInOneActivity(ctx workflow.Context, payload *agentcontract.AgentRunPayload) error {
 	var a *Activities
 	tenant := payload.tenantInfo()
 
@@ -456,7 +459,7 @@ func runInOneActivity(ctx workflow.Context, payload *AgentRunPayload) error {
 // the one activity it started on. Every one since drives the loop here.
 func (w *Workflows) AgentEvaluationWorkflow(
 	ctx workflow.Context,
-	payload *AgentEvaluationPayload,
+	payload *agentcontract.AgentEvaluationPayload,
 ) error {
 	if workflow.GetVersion(ctx, agentflowChange, workflow.DefaultVersion, 1) ==
 		workflow.DefaultVersion {
@@ -513,7 +516,7 @@ func (w *Workflows) AgentEvaluationWorkflow(
 func failEvaluation(
 	ctx workflow.Context,
 	a *Activities,
-	payload *AgentEvaluationPayload,
+	payload *agentcontract.AgentEvaluationPayload,
 	cause error,
 ) {
 	failCtx := workflow.WithActivityOptions(ctx, persistActivityOptions)
@@ -530,7 +533,7 @@ func failEvaluation(
 // replayInOneActivity is the replay as it was before the loop moved into
 // workflow code. It runs only evaluations that started on it, and must not
 // change.
-func replayInOneActivity(ctx workflow.Context, payload *AgentEvaluationPayload) error {
+func replayInOneActivity(ctx workflow.Context, payload *agentcontract.AgentEvaluationPayload) error {
 	var a *Activities
 
 	replayCtx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
@@ -619,15 +622,15 @@ func runTimeout(seconds int) time.Duration {
 	return timeout
 }
 
-func awaitDecision(ctx workflow.Context, timeoutSeconds int) (DecisionSignal, bool) {
+func awaitDecision(ctx workflow.Context, timeoutSeconds int) (agentcontract.DecisionSignal, bool) {
 	if timeoutSeconds <= 0 {
 		timeoutSeconds = agentdefinition.DefaultDecisionTimeoutSeconds
 	}
 
-	ch := workflow.GetSignalChannel(ctx, AgentDecisionSignalName)
+	ch := workflow.GetSignalChannel(ctx, agentcontract.AgentDecisionSignalName)
 	timer := workflow.NewTimer(ctx, time.Duration(timeoutSeconds)*time.Second)
 
-	var decision DecisionSignal
+	var decision agentcontract.DecisionSignal
 	var timedOut bool
 
 	sel := workflow.NewSelector(ctx)

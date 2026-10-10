@@ -4,6 +4,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -60,8 +62,8 @@ func TestInvoicePDFResourceAnchorsByWhatTheInvoiceHas(t *testing.T) {
 	require.Error(t, err)
 }
 
-func autoPostPayload(invoiceID pulid.ID, tenantInfo pagination.TenantInfo) *AutoPostInvoicePayload {
-	return &AutoPostInvoicePayload{
+func autoPostPayload(invoiceID pulid.ID, tenantInfo pagination.TenantInfo) *billingcontract.AutoPostInvoicePayload {
+	return &billingcontract.AutoPostInvoicePayload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
@@ -157,8 +159,8 @@ func newEDIActivityFixture(t *testing.T) *ediActivityFixture {
 	return f
 }
 
-func (f *ediActivityFixture) payload(force bool) *SendInvoiceEDIPayload {
-	return &SendInvoiceEDIPayload{
+func (f *ediActivityFixture) payload(force bool) *billingcontract.SendInvoiceEDIPayload {
+	return &billingcontract.SendInvoiceEDIPayload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: f.tenantInfo.OrgID,
 			BusinessUnitID: f.tenantInfo.BuID,

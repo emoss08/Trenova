@@ -5,12 +5,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -318,10 +319,10 @@ func (f *ediWiredFixture) expectWorkflowStart(t *testing.T, force bool) {
 			mock.MatchedBy(func(options client.StartWorkflowOptions) bool {
 				return strings.HasPrefix(options.ID, "invoice-edi-send-"+f.inv.ID.String())
 			}),
-			billingjobs.SendInvoiceEDIWorkflowName,
+			billingcontract.SendInvoiceEDIWorkflowName,
 			mock.MatchedBy(func(args []any) bool {
 				require.Len(t, args, 1)
-				payload, ok := args[0].(*billingjobs.SendInvoiceEDIPayload)
+				payload, ok := args[0].(*billingcontract.SendInvoiceEDIPayload)
 				return ok && payload.InvoiceID == f.inv.ID && payload.Force == force &&
 					payload.OrganizationID == f.tenantInfo.OrgID
 			}),
@@ -484,7 +485,7 @@ func TestEnqueueEDIAfterPostMarksFailedWhenTheWorkflowCannotStart(t *testing.T) 
 	f := newEDIWiredFixture(t, invoice.EDISendStatusNotSent)
 	f.starter.EXPECT().Enabled().Return(true).Once()
 	f.starter.EXPECT().
-		StartWorkflow(mock.Anything, mock.Anything, billingjobs.SendInvoiceEDIWorkflowName, mock.Anything).
+		StartWorkflow(mock.Anything, mock.Anything, billingcontract.SendInvoiceEDIWorkflowName, mock.Anything).
 		Return(nil, errors.New("temporal down")).
 		Once()
 	f.repo.EXPECT().

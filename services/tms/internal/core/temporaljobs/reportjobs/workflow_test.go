@@ -4,6 +4,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs/reportcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -13,8 +15,8 @@ import (
 	"go.temporal.io/sdk/testsuite"
 )
 
-func testPayload() *RunReportPayload {
-	return &RunReportPayload{
+func testPayload() *reportcontract.RunReportPayload {
+	return &reportcontract.RunReportPayload{
 		RunID:          pulid.ID("rrun_test"),
 		OrganizationID: pulid.ID("org_test"),
 		BusinessUnitID: pulid.ID("bu_test"),

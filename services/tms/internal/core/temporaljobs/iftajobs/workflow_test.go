@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/iftajobs/iftacontract"
+
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -59,7 +61,7 @@ func (s *BackfillWorkflowTestSuite) runBackfill(
 			})
 	}
 
-	s.env.ExecuteWorkflow(BackfillJurisdictionMilesWorkflow, BackfillInput{
+	s.env.ExecuteWorkflow(BackfillJurisdictionMilesWorkflow, iftacontract.BackfillInput{
 		TenantInfo: tenantInfo,
 		Start:      100,
 		End:        200,

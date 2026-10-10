@@ -40,6 +40,8 @@ docs/screenshots/dark/
 # repository and is copied here only for Cloud builds (docs/engineering/editions.md).
 services/tms/internal/cloud/
 services/tms/cmd/cli/edition_cloud.go
+services/tms/cmd/api/edition_cloud.go
+services/tms/cmd/worker/edition_cloud.go
 client/packages/cloud/
 
 *:Zone.Identifier

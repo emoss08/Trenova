@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/detentionjobs/detentioncontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs/documentuploadcontract"
+
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -48,7 +51,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			Description: "Send due detention notices for tenants whose policies auto-send",
 		},
 		{
-			Name:        StoreNoticePDFWorkflowName,
+			Name:        detentioncontract.StoreNoticePDFWorkflowName,
 			Fn:          StoreNoticePDFWorkflow,
 			TaskQueue:   temporaltype.TaskQueueBilling.String(),
 			Description: "File a sent detention notice PDF as a shipment document",
@@ -64,7 +67,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 // finalization, and the filing must not be lost if it fails once.
 func StoreNoticePDFWorkflow(
 	ctx workflow.Context,
-	payload *StoreNoticePDFPayload,
+	payload *detentioncontract.StoreNoticePDFPayload,
 ) (*StoreNoticePDFResult, error) {
 	activityCtx := workflow.WithActivityOptions(ctx, storeNoticePDFActivityOptions)
 
@@ -76,7 +79,7 @@ func StoreNoticePDFWorkflow(
 	if err := workflow.ExecuteChildWorkflow(
 		childCtx,
 		documentuploadjobs.FinalizeDocumentUploadWorkflow,
-		&documentuploadjobs.FinalizeUploadPayload{
+		&documentuploadcontract.FinalizeUploadPayload{
 			BasePayload:   payload.BasePayload,
 			SessionID:     payload.SessionID,
 			PrincipalType: payload.PrincipalType,

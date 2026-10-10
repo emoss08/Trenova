@@ -3,6 +3,8 @@ package billingqueuejobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingqueuejobs/billingqueuecontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -44,7 +46,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 // run was undone first, in which case nothing is approved.
 func (a *Activities) StartApprovalRunActivity(
 	ctx context.Context,
-	payload *ApprovalRunPayload,
+	payload *billingqueuecontract.ApprovalRunPayload,
 ) (bool, error) {
 	info := activity.GetInfo(ctx)
 	started, err := a.repo.MarkApprovalRunRunning(ctx, &repositories.MarkApprovalRunRunningRequest{
@@ -63,7 +65,7 @@ func (a *Activities) StartApprovalRunActivity(
 
 func (a *Activities) ListApprovalRunItemsActivity(
 	ctx context.Context,
-	payload *ApprovalRunPayload,
+	payload *billingqueuecontract.ApprovalRunPayload,
 ) ([]pulid.ID, error) {
 	items, err := a.repo.ListPendingApprovalRunItems(ctx, payload.tenant(), payload.RunID)
 	if err != nil {

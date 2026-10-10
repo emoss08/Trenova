@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingtransferjobs/billingtransfercontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -65,7 +67,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 // a browser connection open.
 func (a *Activities) PrepareRunActivity(
 	ctx context.Context,
-	payload *TransferRunPayload,
+	payload *billingtransfercontract.TransferRunPayload,
 ) (*PreparedRun, error) {
 	tenant := payload.tenant()
 
@@ -546,14 +548,6 @@ func (a *Activities) publishRunChanged(
 	); err != nil {
 		a.l.Warn("failed to publish billing transfer progress",
 			zap.String("runId", run.ID.String()), zap.Error(err))
-	}
-}
-
-func (p *TransferRunPayload) tenant() pagination.TenantInfo {
-	return pagination.TenantInfo{
-		OrgID:  p.OrganizationID,
-		BuID:   p.BusinessUnitID,
-		UserID: p.UserID,
 	}
 }
 

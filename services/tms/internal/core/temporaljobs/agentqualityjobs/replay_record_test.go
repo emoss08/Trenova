@@ -10,10 +10,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/services/agentqualityservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 	enumspb "go.temporal.io/api/enums/v1"
@@ -53,8 +54,8 @@ func TestRecordQualityHistories(t *testing.T) {
 			w.RegisterWorkflowWithOptions(AgentSuiteRunWorkflow,
 				workflow.RegisterOptions{Name: AgentSuiteRunWorkflowName})
 			w.RegisterWorkflowWithOptions(
-				func(workflow.Context, *agentjobs.AgentEvaluationPayload) error { return nil },
-				workflow.RegisterOptions{Name: agentjobs.AgentEvaluationWorkflowName},
+				func(workflow.Context, *agentcontract.AgentEvaluationPayload) error { return nil },
+				workflow.RegisterOptions{Name: agentcontract.AgentEvaluationWorkflowName},
 			)
 			registerQualityStandIns(w, rec)
 			require.NoError(t, w.Start())

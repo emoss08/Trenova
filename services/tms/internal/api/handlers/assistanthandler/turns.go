@@ -3,12 +3,13 @@ package assistanthandler
 import (
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -236,7 +237,7 @@ func (h *Handler) sendMessage(c *gin.Context) {
 		return
 	}
 
-	var outcome assistantjobs.AssistantTurnResult
+	var outcome assistantcontract.AssistantTurnResult
 	if err = run.Get(c.Request.Context(), &outcome); err != nil {
 		if temporal.IsCanceledError(err) {
 			h.eh.HandleError(c, errortypes.NewBusinessError(
@@ -358,11 +359,11 @@ func (h *Handler) startWorkflow(
 ) (client.WorkflowRun, error) {
 	providerID, providerChosen := body.provider()
 
-	return assistantjobs.StartTurnWorkflow(c.Request.Context(), h.workflows, turn,
-		assistantjobs.TurnStart{
+	return assistantcontract.StartTurnWorkflow(c.Request.Context(), h.workflows, turn,
+		assistantcontract.TurnStart{
 			Actor:   requestActorFromAuthContext(authCtx),
 			Content: body.Content,
-			Request: assistantjobs.AssistantTurnRequest{
+			Request: assistantcontract.AssistantTurnRequest{
 				Page:                  body.page(),
 				Surface:               body.Surface,
 				Mentions:              body.Mentions,
@@ -402,8 +403,8 @@ func (h *Handler) compactThread(c *gin.Context) {
 	}
 
 	authCtx := authctx.GetAuthContext(c)
-	turn, err := assistantjobs.StartCompaction(c.Request.Context(), h.turns, h.workflows,
-		assistantjobs.StartCompactionRequest{
+	turn, err := assistantcontract.StartCompaction(c.Request.Context(), h.turns, h.workflows,
+		assistantcontract.StartCompactionRequest{
 			ThreadID:   thread.ID,
 			TenantInfo: req.TenantInfo,
 			Actor:      requestActorFromAuthContext(authCtx),

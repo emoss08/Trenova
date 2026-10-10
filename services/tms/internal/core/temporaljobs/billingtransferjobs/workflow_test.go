@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingtransferjobs/billingtransfercontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,8 +17,8 @@ import (
 	"go.temporal.io/sdk/testsuite"
 )
 
-func testPayload() *TransferRunPayload {
-	return &TransferRunPayload{
+func testPayload() *billingtransfercontract.TransferRunPayload {
+	return &billingtransfercontract.TransferRunPayload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: pulid.ID("org_test"),
 			BusinessUnitID: pulid.ID("bu_test"),
@@ -152,7 +154,7 @@ func TestWorkflowStopsOnCancelSignalBetweenBatches(t *testing.T) {
 	// Delivered before the loop's first turn, so the run stops without touching
 	// a single shipment — which is the whole point of reading it up there.
 	env.RegisterDelayedCallback(func() {
-		env.SignalWorkflow(CancelSignalName, nil)
+		env.SignalWorkflow(billingtransfercontract.CancelSignalName, nil)
 	}, 0)
 
 	env.ExecuteWorkflow(BulkBillingTransferWorkflow, testPayload())

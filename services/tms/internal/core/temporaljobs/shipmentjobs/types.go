@@ -6,18 +6,8 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const BulkDuplicateShipmentsWorkflowName = "BulkDuplicateShipmentsWorkflow"
 const AutoDelayShipmentsWorkflowName = "AutoDelayShipmentsWorkflow"
 const AutoCancelShipmentsWorkflowName = "AutoCancelShipmentsWorkflow"
-
-type BulkDuplicateShipmentsPayload struct {
-	temporaltype.BasePayload
-	ShipmentID    pulid.ID `json:"shipmentId"`
-	Count         int      `json:"count"`
-	OverrideDates bool     `json:"overrideDates"`
-	FirstPickupAt *int64   `json:"firstPickupAt,omitempty"`
-	RequestedBy   pulid.ID `json:"requestedBy"`
-}
 
 type BulkDuplicateShipmentsResult struct {
 	ShipmentIDs      []pulid.ID `json:"shipmentIds"`

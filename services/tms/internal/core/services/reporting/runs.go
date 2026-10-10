@@ -3,10 +3,11 @@ package reporting
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs/reportcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -64,8 +65,8 @@ func (s *Service) RunReport(ctx context.Context, req *RunReportRequest) (*report
 			TaskQueue:             temporaltype.ReportTaskQueue,
 			WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
 		},
-		reportjobs.RunReportWorkflow,
-		&reportjobs.RunReportPayload{
+		reportcontract.RunReportWorkflowName,
+		&reportcontract.RunReportPayload{
 			RunID:          created.ID,
 			OrganizationID: created.OrganizationID,
 			BusinessUnitID: created.BusinessUnitID,

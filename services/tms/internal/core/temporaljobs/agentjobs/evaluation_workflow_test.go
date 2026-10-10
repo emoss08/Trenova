@@ -5,6 +5,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -49,7 +51,7 @@ func runEvaluationWorkflow(
 	env.RegisterActivity(&Activities{})
 	env.RegisterActivity(&agentflow.Activities{})
 	env.RegisterWorkflowWithOptions(NewWorkflows(runtime).AgentEvaluationWorkflow,
-		workflow.RegisterOptions{Name: AgentEvaluationWorkflowName})
+		workflow.RegisterOptions{Name: agentcontract.AgentEvaluationWorkflowName})
 
 	result := &evaluationRun{}
 	var mu sync.Mutex
@@ -63,7 +65,7 @@ func runEvaluationWorkflow(
 	var a *Activities
 	var fa *agentflow.Activities
 	env.OnActivity(a.OpenReplayActivity, mock.Anything, mock.Anything).
-		Return(func(ctx context.Context, _ *AgentEvaluationPayload) (*OpenReplayResult, error) {
+		Return(func(ctx context.Context, _ *agentcontract.AgentEvaluationPayload) (*OpenReplayResult, error) {
 			opened, err := open(ctx)
 			if err != nil || opened.Done {
 				return opened, err
@@ -101,7 +103,7 @@ func runEvaluationWorkflow(
 			return nil
 		}).Maybe()
 
-	env.ExecuteWorkflow(AgentEvaluationWorkflowName, &AgentEvaluationPayload{
+	env.ExecuteWorkflow(agentcontract.AgentEvaluationWorkflowName, &agentcontract.AgentEvaluationPayload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: pulid.MustNew("org_"),
 			BusinessUnitID: pulid.MustNew("bu_"),

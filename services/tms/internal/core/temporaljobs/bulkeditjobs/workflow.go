@@ -4,6 +4,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/bulkeditjobs/bulkeditcontract"
+
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -44,14 +46,14 @@ var finalizeOptions = workflow.ActivityOptions{
 
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{{
-		Name:        BulkEditWorkflowName,
+		Name:        bulkeditcontract.BulkEditWorkflowName,
 		Fn:          BulkEditWorkflow,
 		TaskQueue:   temporaltype.TaskQueueSystem.String(),
 		Description: "Change one field on many rows, batch by batch, or put them back",
 	}}
 }
 
-func BulkEditWorkflow(ctx workflow.Context, payload *EditPayload) (*EditResult, error) {
+func BulkEditWorkflow(ctx workflow.Context, payload *bulkeditcontract.EditPayload) (*EditResult, error) {
 	var a *Activities
 
 	var prepared *PreparedEdit
@@ -82,7 +84,7 @@ func BulkEditWorkflow(ctx workflow.Context, payload *EditPayload) (*EditResult, 
 
 func finalize(
 	ctx workflow.Context,
-	payload *EditPayload,
+	payload *bulkeditcontract.EditPayload,
 	failure string,
 	cause error,
 ) (*EditResult, error) {

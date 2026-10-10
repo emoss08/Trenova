@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
@@ -25,7 +27,7 @@ type CompactionWorkflowTestSuite struct {
 	testsuite.WorkflowTestSuite
 
 	env     *testsuite.TestWorkflowEnvironment
-	payload *CompactionPayload
+	payload *assistantcontract.CompactionPayload
 	ended   *CompactionEndInput
 	saved   *SummarizedInput
 }
@@ -36,7 +38,7 @@ func TestConversationCompactionWorkflow(t *testing.T) {
 
 func (s *CompactionWorkflowTestSuite) SetupTest() {
 	s.env = s.NewTestWorkflowEnvironment()
-	s.payload = &CompactionPayload{
+	s.payload = &assistantcontract.CompactionPayload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: pulid.MustNew("org_"),
 			BusinessUnitID: pulid.MustNew("bu_"),
@@ -56,7 +58,7 @@ func (s *CompactionWorkflowTestSuite) SetupTest() {
 	s.env.RegisterActivity(&agentflow.Activities{})
 	s.env.RegisterWorkflowWithOptions(
 		NewWorkflows(nil).ConversationCompactionWorkflow,
-		workflow.RegisterOptions{Name: CompactionWorkflowName},
+		workflow.RegisterOptions{Name: assistantcontract.CompactionWorkflowName},
 	)
 }
 
@@ -93,7 +95,7 @@ func (s *CompactionWorkflowTestSuite) ends() {
 }
 
 func (s *CompactionWorkflowTestSuite) run() {
-	s.env.ExecuteWorkflow(CompactionWorkflowName, s.payload)
+	s.env.ExecuteWorkflow(assistantcontract.CompactionWorkflowName, s.payload)
 	s.True(s.env.IsWorkflowCompleted())
 	s.NoError(s.env.GetWorkflowError(), "every ending is told to the reader, not failed")
 }
@@ -170,7 +172,7 @@ func (s *CompactionWorkflowTestSuite) TestPassesOnWhyACompactionWasTurnedAway() 
 func TestCompactionEndingFor_TellsTheReaderHowItEnded(t *testing.T) {
 	t.Parallel()
 
-	payload := &CompactionPayload{TurnID: pulid.MustNew("atrn_"), Auto: true}
+	payload := &assistantcontract.CompactionPayload{TurnID: pulid.MustNew("atrn_"), Auto: true}
 
 	cancelled := compactionEndingFor(&CompactionEndInput{
 		Payload: payload,
@@ -236,7 +238,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestStartsCompactingAConversationTheTur
 	started := false
 	var a *Activities
 	s.env.OnActivity(a.StartAutoCompactionActivity, mock.Anything, mock.Anything).Return(
-		func(_ context.Context, payload *AssistantTurnPayload) (*StartedCompaction, error) {
+		func(_ context.Context, payload *assistantcontract.AssistantTurnPayload) (*StartedCompaction, error) {
 			started = true
 			s.Equal(s.payload.ThreadID, payload.ThreadID)
 

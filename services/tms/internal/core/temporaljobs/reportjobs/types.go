@@ -6,12 +6,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type RunReportPayload struct {
-	RunID          pulid.ID `json:"runId"`
-	OrganizationID pulid.ID `json:"organizationId"`
-	BusinessUnitID pulid.ID `json:"businessUnitId"`
-}
-
 type PreparedRun struct {
 	RunID          pulid.ID       `json:"runId"`
 	OrganizationID pulid.ID       `json:"organizationId"`

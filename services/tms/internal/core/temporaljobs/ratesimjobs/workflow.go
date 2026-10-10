@@ -3,12 +3,12 @@ package ratesimjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/ratesimjobs/ratesimcontract"
+
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
-
-const RunRateSimulationWorkflowName = "RunRateSimulationWorkflow"
 
 // A simulation is not retried on failure the way an integration poll is.
 //
@@ -32,7 +32,7 @@ var runRateSimulationActivityOptions = workflow.ActivityOptions{
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
-			Name:      RunRateSimulationWorkflowName,
+			Name:      ratesimcontract.RunRateSimulationWorkflowName,
 			Fn:        RunRateSimulationWorkflow,
 			TaskQueue: temporaltype.IntegrationTaskQueue,
 			Description: "Replay a rate agreement against historical shipments and " +
@@ -43,7 +43,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 
 func RunRateSimulationWorkflow(
 	ctx workflow.Context,
-	payload *RunSimulationPayload,
+	payload *ratesimcontract.RunSimulationPayload,
 ) (*RunSimulationResult, error) {
 	activityCtx := workflow.WithActivityOptions(ctx, runRateSimulationActivityOptions)
 

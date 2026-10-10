@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs/documentintelligencecontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/documentshipmentdraft"
@@ -133,7 +135,7 @@ func TestProcessDocumentIntelligenceActivity_SkipsWhenControlDisabled(t *testing
 
 	result, err := activities.ProcessDocumentIntelligenceActivity(
 		context.Background(),
-		&ProcessDocumentIntelligencePayload{
+		&documentintelligencecontract.ProcessDocumentIntelligencePayload{
 			DocumentID: docID,
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: orgID,
@@ -195,7 +197,7 @@ func TestProcessDocumentIntelligenceActivity_RefusesAProfileThatIsNotRead(t *tes
 
 	result, err := activities.ProcessDocumentIntelligenceActivity(
 		context.Background(),
-		&ProcessDocumentIntelligencePayload{
+		&documentintelligencecontract.ProcessDocumentIntelligencePayload{
 			DocumentID:  docID,
 			BasePayload: temporaltype.BasePayload{OrganizationID: orgID, BusinessUnitID: buID},
 		},
@@ -308,7 +310,7 @@ func TestProcessDocumentIntelligenceActivity_SuppressesShipmentDraftOutsideShipm
 
 	result, err := activities.ProcessDocumentIntelligenceActivity(
 		context.Background(),
-		&ProcessDocumentIntelligencePayload{
+		&documentintelligencecontract.ProcessDocumentIntelligencePayload{
 			DocumentID: docID,
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: orgID,
@@ -442,7 +444,7 @@ func TestProcessDocumentIntelligenceActivity_AutoCreatesAndAssociatesDocumentTyp
 
 	result, err := activities.ProcessDocumentIntelligenceActivity(
 		context.Background(),
-		&ProcessDocumentIntelligencePayload{
+		&documentintelligencecontract.ProcessDocumentIntelligencePayload{
 			DocumentID: docID,
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: orgID,
@@ -568,7 +570,7 @@ func TestProcessDocumentIntelligenceActivity_AssociatesExistingDocumentTypeByNam
 
 	result, err := activities.ProcessDocumentIntelligenceActivity(
 		context.Background(),
-		&ProcessDocumentIntelligencePayload{
+		&documentintelligencecontract.ProcessDocumentIntelligencePayload{
 			DocumentID: docID,
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: orgID,
@@ -689,7 +691,7 @@ func TestProcessDocumentIntelligenceActivity_EnqueuesAsyncAIExtraction(t *testin
 
 	_, err := activities.ProcessDocumentIntelligenceActivity(
 		context.Background(),
-		&ProcessDocumentIntelligencePayload{
+		&documentintelligencecontract.ProcessDocumentIntelligencePayload{
 			DocumentID: docID,
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: orgID,

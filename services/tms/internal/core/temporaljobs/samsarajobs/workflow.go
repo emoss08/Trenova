@@ -3,6 +3,8 @@ package samsarajobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs/samsaracontract"
+
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -24,7 +26,7 @@ var samsaraSyncActivityOptions = workflow.ActivityOptions{
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
-			Name:        SyncWorkersToSamsaraWorkflowName,
+			Name:        samsaracontract.SyncWorkersToSamsaraWorkflowName,
 			Fn:          SyncWorkersToSamsaraWorkflow,
 			TaskQueue:   temporaltype.IntegrationTaskQueue,
 			Description: "Synchronize workers from TMS to Samsara",
@@ -34,12 +36,12 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 
 func SyncWorkersToSamsaraWorkflow(
 	ctx workflow.Context,
-	payload *WorkersSyncWorkflowPayload,
-) (*WorkersSyncWorkflowResult, error) {
+	payload *samsaracontract.WorkersSyncWorkflowPayload,
+) (*samsaracontract.WorkersSyncWorkflowResult, error) {
 	ctx = workflow.WithActivityOptions(ctx, samsaraSyncActivityOptions)
 
 	var a *Activities
-	result := new(WorkersSyncWorkflowResult)
+	result := new(samsaracontract.WorkersSyncWorkflowResult)
 	if err := workflow.ExecuteActivity(
 		ctx,
 		a.SyncWorkersToSamsaraActivity,

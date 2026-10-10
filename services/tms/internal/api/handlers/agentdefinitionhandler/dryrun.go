@@ -3,10 +3,11 @@ package agentdefinitionhandler
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -48,7 +49,7 @@ func (h *Handler) dryRun(c *gin.Context) {
 
 	actor := requestActorFromAuthContext(authCtx)
 	runID := pulid.MustNew(agent.EvaluationIDPrefix)
-	run, err := assistantjobs.StartDryRunWorkflow(ctx, h.workflows, &assistantjobs.AgentDryRunPayload{
+	run, err := assistantcontract.StartDryRunWorkflow(ctx, h.workflows, &assistantcontract.AgentDryRunPayload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: tenant.OrgID,
 			BusinessUnitID: tenant.BuID,

@@ -3,6 +3,8 @@ package thumbnailjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs/thumbnailcontract"
+
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -38,7 +40,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 
 func GenerateThumbnailWorkflow(
 	ctx workflow.Context,
-	payload *GenerateThumbnailPayload,
+	payload *thumbnailcontract.GenerateThumbnailPayload,
 ) (*GenerateThumbnailResult, error) {
 	ctx = workflow.WithActivityOptions(ctx, thumbnailActivityOptions)
 

@@ -11,43 +11,15 @@ package decisioncommitjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/decisioncommitjobs/decisioncommitcontract"
+
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/temporaltype"
-	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
 
-const (
-	ProposalCommitWorkflowName = "ProposalCommitWorkflow"
-	// UndoSignalName takes the approval back; the workflow ends without
-	// committing. CommitNowSignalName ends the wait early.
-	UndoSignalName      = "decision-undo"
-	CommitNowSignalName = "decision-commit-now"
-)
-
-// TaskQueue is the agent's cheap periodic queue: a commit is one short
-// activity, and the decisions it runs start no model call of their own.
-var TaskQueue = temporaltype.TaskQueueAgent.String()
-
-// WorkflowID names the commit of one approval: a proposal's, a batch's by its
-// first proposal, or a plan's.
-func WorkflowID(key pulid.ID) string {
-	return "proposal-commit/" + key.String()
-}
-
-// CommitsAt is when an approval made at now goes through: the undo window,
-// rounded up to a whole second. Rounding up, never down, means the countdown
-// a client draws from it starts at the full window and the person always has
-// at least that long.
-func CommitsAt(now time.Time) int64 {
-	due := now.Add(services.ApprovalUndoWindow)
-	if due.Nanosecond() > 0 {
-		return due.Unix() + 1
-	}
-
-	return due.Unix()
-}
+const ()
 
 // CommitResult says how the window closed.
 type CommitResult struct {
@@ -68,9 +40,9 @@ var commitOptions = workflow.ActivityOptions{
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
-			Name:        ProposalCommitWorkflowName,
+			Name:        decisioncommitcontract.ProposalCommitWorkflowName,
 			Fn:          ProposalCommitWorkflow,
-			TaskQueue:   TaskQueue,
+			TaskQueue:   decisioncommitcontract.TaskQueue,
 			Description: "Hold an approval for its undo window, then carry it out",
 		},
 	}
@@ -95,8 +67,8 @@ func ProposalCommitWorkflow(
 
 	timerCtx, cancelTimer := workflow.WithCancel(ctx)
 	timer := workflow.NewTimer(timerCtx, wait)
-	undo := workflow.GetSignalChannel(ctx, UndoSignalName)
-	now := workflow.GetSignalChannel(ctx, CommitNowSignalName)
+	undo := workflow.GetSignalChannel(ctx, decisioncommitcontract.UndoSignalName)
+	now := workflow.GetSignalChannel(ctx, decisioncommitcontract.CommitNowSignalName)
 
 	undone := false
 	var signal struct{}

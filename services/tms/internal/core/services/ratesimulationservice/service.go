@@ -11,6 +11,8 @@ package ratesimulationservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/ratesimjobs/ratesimcontract"
+
 	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
 
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
@@ -20,7 +22,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/ratesimjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	simmath "github.com/emoss08/trenova/pkg/ratesimulation"
@@ -189,8 +190,8 @@ func (s *Service) enqueue(
 			TaskQueue:             temporaltype.IntegrationTaskQueue,
 			WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
 		},
-		ratesimjobs.RunRateSimulationWorkflow,
-		&ratesimjobs.RunSimulationPayload{
+		ratesimcontract.RunRateSimulationWorkflowName,
+		&ratesimcontract.RunSimulationPayload{
 			OrgID:            entity.OrganizationID,
 			BuID:             entity.BusinessUnitID,
 			UserID:           idOrZero(entity.RequestedBy),

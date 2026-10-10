@@ -5,6 +5,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -13,8 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/planservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -144,7 +145,7 @@ func (s *Service) StartForDefinition(
 	anchor := aitrace.AnchorFor(aitrace.AnchorAgentRun, run.ID.String())
 	run.TraceID = anchor.TraceID.String()
 
-	payload := &agentjobs.AgentRunPayload{
+	payload := &agentcontract.AgentRunPayload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: req.TenantInfo.OrgID,
 			BusinessUnitID: req.TenantInfo.BuID,
@@ -181,7 +182,7 @@ func (s *Service) StartForDefinition(
 			PriorityKey: priorityFor(trigger),
 			FairnessKey: req.TenantInfo.OrgID.String(),
 		},
-	}, agentjobs.AgentRunWorkflowName, payload); err != nil {
+	}, agentcontract.AgentRunWorkflowName, payload); err != nil {
 		var started *serviceerror.WorkflowExecutionAlreadyStarted
 		if errors.As(err, &started) {
 			return nil, services.ErrAgentRunAlreadyOpen
@@ -374,9 +375,9 @@ func priorityFor(trigger agent.RunTrigger) int {
 	switch trigger {
 	case agent.RunTriggerScheduled, agent.RunTriggerContinuous, agent.RunTriggerEvent,
 		agent.RunTriggerWait:
-		return agentflow.PriorityBackground
+		return agentflowcontract.PriorityBackground
 	default:
-		return agentflow.PriorityOneShot
+		return agentflowcontract.PriorityOneShot
 	}
 }
 

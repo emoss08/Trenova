@@ -3,9 +3,10 @@ package assistantjobs
 import (
 	"context"
 	"fmt"
-	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agentdryrun"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
@@ -13,40 +14,18 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/jsonutils"
-	"github.com/emoss08/trenova/shared/pulid"
-	"go.temporal.io/api/enums/v1"
-	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
 
 const (
-	AgentDryRunWorkflowName = "AgentDryRunWorkflow"
+
 	// AssistantEventDryRunSteps is the last event of a dry run before its
 	// end: each tool call with what it would have come to.
 	AssistantEventDryRunSteps = "dry_run_steps"
-	dryRunFailedMessage  = "The dry run could not finish. Try again in a moment."
-	dryRunStoppedMessage = "The dry run took too long and was stopped."
-	// dryRunTimeout bounds a dry run; a person is watching it.
-	dryRunTimeout = 5 * time.Minute
+	dryRunFailedMessage       = "The dry run could not finish. Try again in a moment."
+	dryRunStoppedMessage      = "The dry run took too long and was stopped."
 )
-
-// DryRunWorkflowIDFor names the execution carrying a dry run.
-func DryRunWorkflowIDFor(runID pulid.ID) string {
-	return "agent-dry-run:" + runID.String()
-}
-
-// AgentDryRunPayload is a draft agent and the message it is tried with. The
-// draft travels whole: it is not saved, so there is nothing to read it back
-// from.
-type AgentDryRunPayload struct {
-	temporaltype.BasePayload
-
-	RunID      pulid.ID                    `json:"runId"`
-	Actor      serviceports.RequestActor   `json:"actor"`
-	Definition *agentdefinition.Definition `json:"definition"`
-	Prompt     string                      `json:"prompt"`
-}
 
 // DryRunStepsEvent is the dry run's account of its tool calls.
 type DryRunStepsEvent struct {
@@ -54,32 +33,11 @@ type DryRunStepsEvent struct {
 	Reply string             `json:"reply"`
 }
 
-// StartDryRunWorkflow starts a dry run on the chat queue, where somebody is
-// watching it arrive.
-func StartDryRunWorkflow(
-	ctx context.Context,
-	workflows serviceports.WorkflowStarter,
-	payload *AgentDryRunPayload,
-) (client.WorkflowRun, error) {
-	return workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
-		ID:                                       DryRunWorkflowIDFor(payload.RunID),
-		TaskQueue:                                temporaltype.TaskQueueAgentChat.String(),
-		WorkflowIDReusePolicy:                    enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
-		WorkflowExecutionErrorWhenAlreadyStarted: true,
-		WorkflowExecutionTimeout:                 dryRunTimeout + agentflow.DrainWindow,
-		StaticSummary:                            "Agent dry run",
-		Priority: temporal.Priority{
-			PriorityKey: agentflow.PriorityInteractive,
-			FairnessKey: payload.Actor.OrganizationID.String(),
-		},
-	}, AgentDryRunWorkflowName, payload)
-}
-
 // PrepareDryRunActivity opens the turn a draft agent would answer the message
 // with.
 func (a *Activities) PrepareDryRunActivity(
 	ctx context.Context,
-	payload *AgentDryRunPayload,
+	payload *assistantcontract.AgentDryRunPayload,
 ) (*assistantservice.DryRunPlan, error) {
 	if payload.Actor.UserID.IsNil() {
 		return nil, temporal.NewNonRetryableApplicationError(
@@ -108,7 +66,7 @@ func (a *Activities) PrepareDryRunActivity(
 // it would have come to had the draft been saved.
 func (w *Workflows) AgentDryRunWorkflow(
 	ctx workflow.Context,
-	payload *AgentDryRunPayload,
+	payload *assistantcontract.AgentDryRunPayload,
 ) error {
 	stream, err := agentflow.HostStream(ctx)
 	if err != nil {
@@ -125,13 +83,13 @@ func (w *Workflows) AgentDryRunWorkflow(
 func (w *Workflows) dryRun(
 	ctx workflow.Context,
 	stream *agentflow.Stream,
-	payload *AgentDryRunPayload,
+	payload *assistantcontract.AgentDryRunPayload,
 ) temporaltype.StreamItem {
 	var a *Activities
 	var plan assistantservice.DryRunPlan
 	options := prepareOptions
 	options.Priority = temporal.Priority{
-		PriorityKey: agentflow.PriorityInteractive,
+		PriorityKey: agentflowcontract.PriorityInteractive,
 		FairnessKey: payload.Actor.OrganizationID.String(),
 	}
 	if err := workflow.ExecuteActivity(
@@ -157,12 +115,12 @@ func (w *Workflows) dryRun(
 	runCtx, cancel := workflow.WithCancel(ctx)
 	defer cancel()
 	workflow.Go(ctx, func(timerCtx workflow.Context) {
-		if workflow.Sleep(timerCtx, dryRunTimeout) == nil {
+		if workflow.Sleep(timerCtx, assistantcontract.dryRunTimeout) == nil {
 			cancel()
 		}
 	})
 
-	run := agentflow.NewRunContext(plan.RunRequest(&payload.Actor), agentflow.PriorityInteractive)
+	run := agentflow.NewRunContext(plan.RunRequest(&payload.Actor), agentflowcontract.PriorityInteractive)
 	outcome, err := agentflow.Run(runCtx, w.runtime, stream.Events(), run, plan.Turn)
 	if err != nil {
 		return dryRunError(ctx, err)
@@ -244,4 +202,3 @@ func dryRunSteps(plan *assistantservice.DryRunPlan, outcome *agentflow.Outcome) 
 		Shadow: plan.Shadow,
 	}, calls, actions)
 }
-

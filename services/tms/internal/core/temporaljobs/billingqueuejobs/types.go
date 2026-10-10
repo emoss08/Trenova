@@ -8,12 +8,6 @@ import (
 )
 
 const (
-	BulkApprovalWorkflowName = "BillingQueueBulkApprovalWorkflow"
-
-	// UndoSignalName ends a run inside its undo window. Like the transfer's
-	// cancel signal it only shortens the wait: the run row's
-	// cancel_requested_at is the authority, read when the window closes.
-	UndoSignalName = "billing-queue-approval-undo"
 
 	// invalidationResource is the key the browser maps back to its approval
 	// run query; it must match RESOURCE_QUERY_KEY_MAP on the client.
@@ -21,23 +15,6 @@ const (
 
 	ErrTypeApprovalItem = "BILLING_QUEUE_APPROVAL_ITEM"
 )
-
-type ApprovalRunPayload struct {
-	temporaltype.BasePayload
-
-	RunID pulid.ID `json:"runId"`
-	// AssignApprover: the person agreed to become the biller of the items
-	// that have none.
-	AssignApprover bool `json:"assignApprover,omitempty"`
-}
-
-func (p *ApprovalRunPayload) tenant() pagination.TenantInfo {
-	return pagination.TenantInfo{
-		OrgID:  p.OrganizationID,
-		BuID:   p.BusinessUnitID,
-		UserID: p.UserID,
-	}
-}
 
 type ApproveItemPayload struct {
 	temporaltype.BasePayload

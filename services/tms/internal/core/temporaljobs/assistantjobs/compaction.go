@@ -6,27 +6,23 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
-	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"go.temporal.io/api/enums/v1"
-	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 	"go.uber.org/zap"
 )
-
-const CompactionWorkflowName = "ConversationCompactionWorkflow"
 
 // errTypeCompactionRejected is a compaction turned away for a reason written
 // for the person: nothing to compact, an agent switched off, a spent budget.
@@ -89,25 +85,6 @@ var startCompactionOptions = workflow.ActivityOptions{
 	},
 }
 
-// CompactionPayload is one compaction of a conversation.
-type CompactionPayload struct {
-	temporaltype.BasePayload
-
-	TurnID   pulid.ID                  `json:"turnId"`
-	ThreadID pulid.ID                  `json:"threadId"`
-	Actor    serviceports.RequestActor `json:"actor"`
-	// Auto says the conversation is compacting itself.
-	Auto bool `json:"auto"`
-}
-
-func (p *CompactionPayload) tenantInfo() pagination.TenantInfo {
-	return pagination.TenantInfo{
-		OrgID:  p.OrganizationID,
-		BuID:   p.BusinessUnitID,
-		UserID: p.Actor.UserID,
-	}
-}
-
 // StartedCompaction names the turn compacting a conversation; empty when none
 // was started.
 type StartedCompaction struct {
@@ -116,53 +93,21 @@ type StartedCompaction struct {
 
 // SummarizedInput is a compaction's plan and what the model wrote for it.
 type SummarizedInput struct {
-	Payload *CompactionPayload               `json:"payload"`
-	Plan    *assistantservice.CompactionPlan `json:"plan"`
-	Reply   *agentruntime.ModelReply         `json:"reply"`
+	Payload *assistantcontract.CompactionPayload `json:"payload"`
+	Plan    *assistantservice.CompactionPlan     `json:"plan"`
+	Reply   *agentruntime.ModelReply             `json:"reply"`
 }
 
 // CompactionEndInput is how a compaction that saved nothing ended.
 type CompactionEndInput struct {
-	Payload *CompactionPayload               `json:"payload"`
-	Status  conversation.AssistantTurnStatus `json:"status"`
-	Message string                           `json:"message"`
+	Payload *assistantcontract.CompactionPayload `json:"payload"`
+	Status  conversation.AssistantTurnStatus     `json:"status"`
+	Message string                               `json:"message"`
 }
 
 // CompactionEnding is the last event a compaction's reader is sent.
 type CompactionEnding struct {
 	Event temporaltype.StreamItem `json:"event"`
-}
-
-// StartCompactionWorkflow hands a recorded compaction turn to a worker.
-func StartCompactionWorkflow(
-	ctx context.Context,
-	workflows serviceports.WorkflowStarter,
-	turn *conversation.AssistantTurn,
-	actor serviceports.RequestActor,
-	auto bool,
-) (client.WorkflowRun, error) {
-	return workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
-		ID:                                       WorkflowIDFor(turn.ID),
-		TaskQueue:                                temporaltype.TaskQueueAgentChat.String(),
-		WorkflowIDReusePolicy:                    enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
-		WorkflowExecutionErrorWhenAlreadyStarted: true,
-		StaticSummary:                            "Compact a conversation",
-		Priority: temporal.Priority{
-			PriorityKey: agentflow.PriorityInteractive,
-			FairnessKey: actor.OrganizationID.String(),
-		},
-	}, CompactionWorkflowName, &CompactionPayload{
-		BasePayload: temporaltype.BasePayload{
-			OrganizationID: actor.OrganizationID,
-			BusinessUnitID: actor.BusinessUnitID,
-			UserID:         actor.UserID,
-			Timestamp:      timeutils.NowUnix(),
-		},
-		TurnID:   turn.ID,
-		ThreadID: turn.ThreadID,
-		Actor:    actor,
-		Auto:     auto,
-	})
 }
 
 // ConversationCompactionWorkflow summarizes the older part of a conversation
@@ -175,7 +120,7 @@ func StartCompactionWorkflow(
 // it is whole.
 func (w *Workflows) ConversationCompactionWorkflow(
 	ctx workflow.Context,
-	payload *CompactionPayload,
+	payload *assistantcontract.CompactionPayload,
 ) error {
 	stream, err := agentflow.HostStream(ctx)
 	if err != nil {
@@ -196,7 +141,7 @@ func (w *Workflows) ConversationCompactionWorkflow(
 func (w *Workflows) compact(
 	ctx workflow.Context,
 	stream *agentflow.Stream,
-	payload *CompactionPayload,
+	payload *assistantcontract.CompactionPayload,
 ) CompactionEnding {
 	var a *Activities
 	var plan assistantservice.CompactionPlan
@@ -248,7 +193,7 @@ func (w *Workflows) compact(
 // away, or failed.
 func (w *Workflows) endCompaction(
 	ctx workflow.Context,
-	payload *CompactionPayload,
+	payload *assistantcontract.CompactionPayload,
 	cause error,
 	rejection string,
 ) CompactionEnding {
@@ -285,10 +230,10 @@ func (w *Workflows) endCompaction(
 
 func withCompactionPriority(
 	options workflow.ActivityOptions,
-	payload *CompactionPayload,
+	payload *assistantcontract.CompactionPayload,
 ) workflow.ActivityOptions {
 	options.Priority = temporal.Priority{
-		PriorityKey: agentflow.PriorityInteractive,
+		PriorityKey: agentflowcontract.PriorityInteractive,
 		FairnessKey: payload.OrganizationID.String(),
 	}
 
@@ -334,7 +279,7 @@ func compactionEndingFor(in *CompactionEndInput, autoOff bool) CompactionEnding 
 // request ready.
 func (a *Activities) PrepareCompactionActivity(
 	ctx context.Context,
-	payload *CompactionPayload,
+	payload *assistantcontract.CompactionPayload,
 ) (*assistantservice.CompactionPlan, error) {
 	if payload.Actor.UserID.IsNil() {
 		return nil, temporal.NewNonRetryableApplicationError(
@@ -437,7 +382,7 @@ func (a *Activities) EndCompactionActivity(
 // conversation was busy compacting.
 func (a *Activities) closeCompaction(
 	ctx context.Context,
-	payload *CompactionPayload,
+	payload *assistantcontract.CompactionPayload,
 	status conversation.AssistantTurnStatus,
 	message string,
 ) {
@@ -475,9 +420,9 @@ func (a *Activities) closeCompaction(
 // cue the compaction when it ends.
 func (a *Activities) StartAutoCompactionActivity(
 	ctx context.Context,
-	payload *AssistantTurnPayload,
+	payload *assistantcontract.AssistantTurnPayload,
 ) (*StartedCompaction, error) {
-	turn, err := StartCompaction(ctx, a.turns, a.workflows, StartCompactionRequest{
+	turn, err := assistantcontract.StartCompaction(ctx, a.turns, a.workflows, assistantcontract.StartCompactionRequest{
 		ThreadID:   payload.ThreadID,
 		TenantInfo: payload.tenantInfo(),
 		Actor:      payload.Actor,
@@ -492,52 +437,6 @@ func (a *Activities) StartAutoCompactionActivity(
 	}
 
 	return &StartedCompaction{TurnID: turn.ID}, nil
-}
-
-// StartCompactionRequest asks for a conversation to be compacted.
-type StartCompactionRequest struct {
-	ThreadID   pulid.ID
-	TenantInfo pagination.TenantInfo
-	Actor      serviceports.RequestActor
-	Auto       bool
-}
-
-// compactionTurns is the part of the turn service starting a compaction
-// needs.
-type compactionTurns interface {
-	StartTurn(
-		ctx context.Context,
-		req assistantturnservice.StartRequest,
-		start func(turn *conversation.AssistantTurn) (string, error),
-	) (*conversation.AssistantTurn, error)
-}
-
-// StartCompaction records a compaction as the conversation's live turn and
-// hands it to a worker. A person asking and a conversation compacting itself
-// both start here.
-func StartCompaction(
-	ctx context.Context,
-	turns compactionTurns,
-	workflows serviceports.WorkflowStarter,
-	req StartCompactionRequest,
-) (*conversation.AssistantTurn, error) {
-	if workflows == nil {
-		return nil, errors.New("no workflow client to start a compaction with")
-	}
-
-	return turns.StartTurn(ctx, assistantturnservice.StartRequest{
-		ThreadID:   req.ThreadID,
-		UserID:     req.Actor.UserID,
-		TenantInfo: req.TenantInfo,
-		Origin:     conversation.AssistantTurnOriginCompaction,
-	}, func(turn *conversation.AssistantTurn) (string, error) {
-		run, err := StartCompactionWorkflow(ctx, workflows, turn, req.Actor, req.Auto)
-		if err != nil {
-			return "", err
-		}
-
-		return run.GetID(), nil
-	})
 }
 
 // compactionReply is what the model wrote, as the conversation keeps it.

@@ -1,4 +1,4 @@
-package api
+package core
 
 import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"

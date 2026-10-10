@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/decisioncommitjobs/decisioncommitcontract"
+
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -45,7 +47,7 @@ func (c *commitEnv) run() *CommitResult {
 		OrganizationID:  pulid.ID("org_test"),
 		BusinessUnitID:  pulid.ID("bu_test"),
 		DecidedByUserID: pulid.ID("usr_test"),
-		WorkflowID:      WorkflowID(pulid.ID("ap_test")),
+		WorkflowID:      decisioncommitcontract.WorkflowID(pulid.ID("ap_test")),
 		CommitsAt:       c.started.Add(services.ApprovalUndoWindow).Unix(),
 	})
 
@@ -76,7 +78,7 @@ func TestProposalCommitWorkflow_UndoBeforeTheCommitCommitsNothing(t *testing.T) 
 
 	c := newCommitEnv(t)
 	c.env.RegisterDelayedCallback(func() {
-		c.env.SignalWorkflow(UndoSignalName, nil)
+		c.env.SignalWorkflow(decisioncommitcontract.UndoSignalName, nil)
 	}, 2*time.Second)
 	result := c.run()
 
@@ -93,7 +95,7 @@ func TestProposalCommitWorkflow_CommitNowSkipsTheRestOfTheWait(t *testing.T) {
 
 	c := newCommitEnv(t)
 	c.env.RegisterDelayedCallback(func() {
-		c.env.SignalWorkflow(CommitNowSignalName, nil)
+		c.env.SignalWorkflow(decisioncommitcontract.CommitNowSignalName, nil)
 	}, time.Second)
 	result := c.run()
 
@@ -110,6 +112,6 @@ func TestCommitsAt_RoundsTheWindowUp(t *testing.T) {
 	t.Parallel()
 
 	whole := time.Unix(1_000, 0)
-	assert.Equal(t, int64(1_005), CommitsAt(whole))
-	assert.Equal(t, int64(1_006), CommitsAt(whole.Add(300*time.Millisecond)))
+	assert.Equal(t, int64(1_005), decisioncommitcontract.CommitsAt(whole))
+	assert.Equal(t, int64(1_006), decisioncommitcontract.CommitsAt(whole.Add(300*time.Millisecond)))
 }

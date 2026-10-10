@@ -5,12 +5,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/detentionjobs/detentioncontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/detentionjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -267,8 +268,8 @@ func (s *Service) startNoticePDFStorage(
 				"Filing detention notice PDF for notice %s", f.Notice.ID.String(),
 			),
 		},
-		detentionjobs.StoreNoticePDFWorkflowName,
-		&detentionjobs.StoreNoticePDFPayload{
+		detentioncontract.StoreNoticePDFWorkflowName,
+		&detentioncontract.StoreNoticePDFPayload{
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: f.Notice.OrganizationID,
 				BusinessUnitID: f.Notice.BusinessUnitID,

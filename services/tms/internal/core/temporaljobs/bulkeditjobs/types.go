@@ -10,10 +10,9 @@ import (
 )
 
 const (
-	BulkEditWorkflowName = "BulkEditWorkflow"
-	BatchSize            = 50
-	WorkflowIDPrefix     = "bulk-edit-"
-	ErrTypeNotRunnable   = "BULK_EDIT_NOT_RUNNABLE"
+	BatchSize = 50
+
+	ErrTypeNotRunnable = "BULK_EDIT_NOT_RUNNABLE"
 )
 
 type Runner interface {
@@ -34,12 +33,6 @@ type Runner interface {
 		id pulid.ID,
 		failure string,
 	) (*bulkedit.BulkEdit, error)
-}
-
-type EditPayload struct {
-	temporaltype.BasePayload
-
-	EditID pulid.ID `json:"editId"`
 }
 
 type PreparedEdit struct {

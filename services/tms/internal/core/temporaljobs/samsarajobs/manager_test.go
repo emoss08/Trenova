@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs/samsaracontract"
+
 	commonpb "go.temporal.io/api/common/v1"
 	enumspb "go.temporal.io/api/enums/v1"
 	"go.temporal.io/api/serviceerror"
@@ -93,14 +95,14 @@ func (f *fakeTemporalClient) GetWorkflow(
 func setupManager(
 	t *testing.T,
 	temporalClient client.Client,
-) (*Manager, *mocks.MockWorkerRepository) {
+) (*samsaracontract.Manager, *mocks.MockWorkerRepository) {
 	t.Helper()
 	repo := mocks.NewMockWorkerRepository(t)
 	svc := samsarasyncservice.New(samsarasyncservice.Params{
 		Logger: zap.NewNop(),
 		Repo:   repo,
 	})
-	return NewManager(ManagerParams{
+	return samsaracontract.NewManager(samsaracontract.ManagerParams{
 		TemporalClient: temporalClient,
 		WorkflowStarter: workflowstarter.New(workflowstarter.Params{
 			TemporalClient: temporalClient,
@@ -123,7 +125,7 @@ func TestManager_StartWorkersSyncWorkflow(t *testing.T) {
 		manager, repo := setupManager(t, &fakeTemporalClient{
 			executeWorkflowFunc: func(_ context.Context, options client.StartWorkflowOptions, workflow any, _ ...any) (client.WorkflowRun, error) {
 				assert.Equal(t, temporaltype.IntegrationTaskQueue, options.TaskQueue)
-				assert.Equal(t, SyncWorkersToSamsaraWorkflowName, workflow)
+				assert.Equal(t, samsaracontract.SyncWorkersToSamsaraWorkflowName, workflow)
 				return &fakeWorkflowRun{workflowID: options.ID, runID: "run-1"}, nil
 			},
 		})
@@ -193,7 +195,7 @@ func TestManager_GetWorkersSyncWorkflowStatus(t *testing.T) {
 		OrgID: pulid.MustNew("org_"),
 		BuID:  pulid.MustNew("bu_"),
 	}
-	workflowID := buildWorkersSyncWorkflowID(tenantInfo)
+	workflowID := samsaracontract.buildWorkersSyncWorkflowID(tenantInfo)
 	startedAt := time.Unix(1710000000, 0)
 
 	manager, _ := setupManager(t, &fakeTemporalClient{

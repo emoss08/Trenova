@@ -9,6 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -151,7 +154,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 
 func (a *Activities) PrepareRunActivity(
 	ctx context.Context,
-	payload *AgentRunPayload,
+	payload *agentcontract.AgentRunPayload,
 ) (*PrepareRunResult, error) {
 	tenant := payload.tenantInfo()
 
@@ -225,7 +228,7 @@ func (a *Activities) trajectoryFor(
 // agent, unattended, with every write claimed in the run's ledger.
 func (a *Activities) runRequest(
 	ctx context.Context,
-	payload *AgentRunPayload,
+	payload *agentcontract.AgentRunPayload,
 	definition *agentdefinition.Definition,
 	subject *agentdefinition.RuntimeSubject,
 ) (*serviceports.RunRequest, error) {
@@ -358,7 +361,7 @@ func (a *Activities) OpenRunActivity(
 	}
 
 	return &OpenRunResult{
-		Run:  agentflow.NewRunContext(req, agentflow.PriorityBackground),
+		Run:  agentflow.NewRunContext(req, agentflowcontract.PriorityBackground),
 		Turn: a.runtime.OpenTurn(ctx, req).State(),
 	}, nil
 }
@@ -490,7 +493,7 @@ func countPending(proposals []*agent.AgentProposal) int {
 
 func (a *Activities) recordTrajectory(
 	ctx context.Context,
-	payload *AgentRunPayload,
+	payload *agentcontract.AgentRunPayload,
 	events []temporaltype.StreamItem,
 ) {
 	writer := a.trajectoryFor(ctx, payload.tenantInfo(), payload.RunID)
@@ -506,7 +509,7 @@ func (a *Activities) recordTrajectory(
 
 // settleRunParams groups what filing a finished run needs.
 type settleRunParams struct {
-	Payload    *AgentRunPayload
+	Payload    *agentcontract.AgentRunPayload
 	Definition *agentdefinition.Definition
 	Subject    *agentdefinition.RuntimeSubject
 	Outcome    *serviceports.RunResult
@@ -839,7 +842,7 @@ func agentActor(tenant pagination.TenantInfo) *serviceports.RequestActor {
 // wait did not start.
 func (a *Activities) resumedWait(
 	ctx context.Context,
-	payload *AgentRunPayload,
+	payload *agentcontract.AgentRunPayload,
 ) (*agentwait.Wait, error) {
 	if payload.WaitID.IsNil() || a.waits == nil {
 		return nil, nil //nolint:nilnil // a run no wait started picks nothing up
@@ -855,7 +858,7 @@ func (a *Activities) resumedWait(
 	return wait, nil
 }
 
-func backgroundInput(payload *AgentRunPayload, subject *agentdefinition.RuntimeSubject) string {
+func backgroundInput(payload *agentcontract.AgentRunPayload, subject *agentdefinition.RuntimeSubject) string {
 	return agentdefinition.BackgroundRunInput(payload.Trigger, payload.EventKind, subject)
 }
 

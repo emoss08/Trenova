@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
@@ -57,7 +59,7 @@ func settle(t *testing.T, messages []conversation.Message) *agent.AgentRun {
 	runs := &settledRuns{}
 	a := &Activities{logger: zap.NewNop(), runRepo: runs, proposalRepo: filedProposals{}}
 	_, run, err := a.settleRun(t.Context(), settleRunParams{
-		Payload: &AgentRunPayload{
+		Payload: &agentcontract.AgentRunPayload{
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: pulid.MustNew("org_"),
 				BusinessUnitID: pulid.MustNew("bu_"),

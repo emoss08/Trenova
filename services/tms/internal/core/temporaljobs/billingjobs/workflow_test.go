@@ -3,6 +3,9 @@ package billingjobs
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs/documentuploadcontract"
+
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,7 +32,7 @@ func (s *BillingWorkflowTestSuite) AfterTest(_, _ string) {
 
 func (s *BillingWorkflowTestSuite) TestSendInvoiceEmailWorkflow() {
 	invoiceID := pulid.MustNew("inv_")
-	payload := &SendInvoiceEmailPayload{
+	payload := &billingcontract.SendInvoiceEmailPayload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: pulid.MustNew("org_"),
 			BusinessUnitID: pulid.MustNew("bu_"),
@@ -65,7 +68,7 @@ func (s *BillingWorkflowTestSuite) TestGenerateInvoicePDFWorkflow() {
 	invoiceID := pulid.MustNew("inv_")
 	sessionID := pulid.MustNew("dus_")
 	documentID := pulid.MustNew("doc_")
-	payload := &GenerateInvoicePDFPayload{
+	payload := &billingcontract.GenerateInvoicePDFPayload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: pulid.MustNew("org_"),
 			BusinessUnitID: pulid.MustNew("bu_"),
@@ -95,7 +98,7 @@ func (s *BillingWorkflowTestSuite) TestGenerateInvoicePDFWorkflow() {
 	s.env.OnWorkflow(
 		documentuploadjobs.FinalizeDocumentUploadWorkflow,
 		mock.Anything,
-		mock.MatchedBy(func(childPayload *documentuploadjobs.FinalizeUploadPayload) bool {
+		mock.MatchedBy(func(childPayload *documentuploadcontract.FinalizeUploadPayload) bool {
 			return childPayload.SessionID == sessionID
 		}),
 	).Return(finalized, nil)

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs/reportcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/report"
@@ -165,7 +167,7 @@ func (a *Activities) dispatchScheduleRuns(
 				WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
 			},
 			RunReportWorkflow,
-			&RunReportPayload{
+			&reportcontract.RunReportPayload{
 				RunID:          created.ID,
 				OrganizationID: created.OrganizationID,
 				BusinessUnitID: created.BusinessUnitID,

@@ -3,12 +3,13 @@ package documentintelligenceservice_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs/documentintelligencecontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/documentintelligenceservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -103,7 +104,7 @@ func TestReextractResetsStateAndRequeuesWorkflow(t *testing.T) {
 				if len(args) != 1 {
 					return false
 				}
-				payload, ok := args[0].(*documentintelligencejobs.ProcessDocumentIntelligencePayload)
+				payload, ok := args[0].(*documentintelligencecontract.ProcessDocumentIntelligencePayload)
 				return ok && payload.DocumentID == documentID && payload.UserID == userID
 			}),
 		).

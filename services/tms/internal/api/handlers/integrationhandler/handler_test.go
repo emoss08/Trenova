@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs/samsaracontract"
+
 	commonpb "go.temporal.io/api/common/v1"
 	enumspb "go.temporal.io/api/enums/v1"
 	workflowpb "go.temporal.io/api/workflow/v1"
@@ -19,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/samsarasyncservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -106,7 +107,7 @@ func setupIntegrationHandler(
 		Logger: logger,
 		Repo:   repo,
 	})
-	jobsManager := samsarajobs.NewManager(samsarajobs.ManagerParams{
+	jobsManager := samsaracontract.NewManager(samsaracontract.ManagerParams{
 		TemporalClient: temporalClient,
 		SyncService:    syncService,
 	})
@@ -136,7 +137,7 @@ func TestIntegrationHandler_StartWorkerSync_Success(t *testing.T) {
 	h, repo := setupIntegrationHandler(t, &fakeTemporalClient{
 		executeWorkflowFunc: func(_ context.Context, options client.StartWorkflowOptions, workflow any, args ...any) (client.WorkflowRun, error) {
 			assert.Equal(t, temporaltype.IntegrationTaskQueue, options.TaskQueue)
-			assert.Equal(t, samsarajobs.SyncWorkersToSamsaraWorkflowName, workflow)
+			assert.Equal(t, samsaracontract.SyncWorkersToSamsaraWorkflowName, workflow)
 			return &fakeWorkflowRun{workflowID: options.ID, runID: "run-1"}, nil
 		},
 	})

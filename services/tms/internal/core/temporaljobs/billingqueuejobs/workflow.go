@@ -4,6 +4,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingqueuejobs/billingqueuecontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -48,7 +50,7 @@ var finalizeActivityOptions = workflow.ActivityOptions{
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
-			Name:        BulkApprovalWorkflowName,
+			Name:        billingqueuecontract.BulkApprovalWorkflowName,
 			Fn:          BulkApprovalWorkflow,
 			TaskQueue:   temporaltype.TaskQueueBilling.String(),
 			Description: "Approve several billing queue items after an undo window",
@@ -69,11 +71,11 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 // the others; it is recorded against that item.
 func BulkApprovalWorkflow(
 	ctx workflow.Context,
-	payload *ApprovalRunPayload,
+	payload *billingqueuecontract.ApprovalRunPayload,
 ) (*ApprovalRunResult, error) {
 	var a *Activities
 
-	undoCh := workflow.GetSignalChannel(ctx, UndoSignalName)
+	undoCh := workflow.GetSignalChannel(ctx, billingqueuecontract.UndoSignalName)
 	timerCtx, cancelTimer := workflow.WithCancel(ctx)
 	timer := workflow.NewTimer(timerCtx, billingqueue.ApprovalUndoWindowSeconds*time.Second)
 
@@ -141,7 +143,7 @@ func BulkApprovalWorkflow(
 
 func finalize(
 	ctx workflow.Context,
-	payload *ApprovalRunPayload,
+	payload *billingqueuecontract.ApprovalRunPayload,
 	status billingqueue.ApprovalRunStatus,
 	message string,
 	leftover billingqueue.ApprovalFailureCode,
@@ -167,7 +169,7 @@ func finalize(
 // with nobody coming back for it.
 func finalizeFailure(
 	ctx workflow.Context,
-	payload *ApprovalRunPayload,
+	payload *billingqueuecontract.ApprovalRunPayload,
 	cause error,
 ) (*ApprovalRunResult, error) {
 	disconnected, cancel := workflow.NewDisconnectedContext(ctx)

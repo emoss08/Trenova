@@ -2,7 +2,7 @@ package completionjobs
 
 import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/temporal"
@@ -132,7 +132,7 @@ func waitedOptions(
 		RetryPolicy:            modelcall.RetryPolicy(attempts),
 		Summary:                summary,
 		Priority: temporal.Priority{
-			PriorityKey: agentflow.PriorityOneShot,
+			PriorityKey: agentflowcontract.PriorityOneShot,
 			FairnessKey: organizationID.String(),
 		},
 	}

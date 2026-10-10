@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
@@ -158,7 +160,7 @@ type replayWorld struct {
 	contexts      *recordingContexts
 	users         *mocks.MockUserRepository
 	activities    *Activities
-	payload       *AgentEvaluationPayload
+	payload       *agentcontract.AgentEvaluationPayload
 }
 
 func newReplayWorld(t *testing.T) *replayWorld {
@@ -247,7 +249,7 @@ func newReplayWorld(t *testing.T) *replayWorld {
 		contexts:      contexts,
 		users:         users,
 		activities:    activities,
-		payload: &AgentEvaluationPayload{
+		payload: &agentcontract.AgentEvaluationPayload{
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: tenantInfo.OrgID,
 				BusinessUnitID: tenantInfo.BuID,

@@ -15,6 +15,10 @@ import (
 	"slices"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentwaitjobs/agentwaitcontract"
+
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentwait"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
@@ -23,8 +27,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentwaitjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -109,7 +111,7 @@ type Service struct {
 var (
 	_ serviceports.AgentWaitService  = (*Service)(nil)
 	_ serviceports.AgentWaitNotifier = (*Service)(nil)
-	_ agentwaitjobs.Worker           = (*Service)(nil)
+	_ agentwaitcontract.Worker       = (*Service)(nil)
 )
 
 func New(p Params) *Service { //nolint:gocritic // fx param structs are passed by value
@@ -143,7 +145,7 @@ func NewWaitService(s *Service) serviceports.AgentWaitService { return s }
 
 func NewNotifier(s *Service) serviceports.AgentWaitNotifier { return s }
 
-func NewWorker(s *Service) agentwaitjobs.Worker { return s }
+func NewWorker(s *Service) agentwaitcontract.Worker { return s }
 
 // Register parks the work. It reads the records the wait names first: a wait
 // on something that has already happened, or on a record that is not there,
@@ -259,13 +261,13 @@ func expiry(wait *agentwait.Wait, now, lifetime int64) int64 {
 }
 
 func (s *Service) start(ctx context.Context, wait *agentwait.Wait) error {
-	workflowID := agentwaitjobs.WorkflowIDFor(wait.ID)
+	workflowID := agentwaitcontract.WorkflowIDFor(wait.ID)
 	_, err := s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
 		ID:                    workflowID,
 		TaskQueue:             temporaltype.TaskQueueSystem.String(),
 		WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
 		StaticSummary:         "Agent wait: " + wait.Description,
-	}, agentwaitjobs.WorkflowName, &agentwaitjobs.Payload{
+	}, agentwaitcontract.WorkflowName, &agentwaitcontract.Payload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: wait.OrganizationID,
 			BusinessUnitID: wait.BusinessUnitID,
@@ -474,7 +476,7 @@ func (s *Service) reschedule(ctx context.Context, wait *agentwait.Wait, due *int
 	}
 	wait.DueAt = due
 	if err := s.workflows.SignalWorkflow(ctx, wait.WorkflowID, "",
-		agentwaitjobs.RescheduleSignal, nil); err != nil {
+		agentwaitcontract.RescheduleSignal, nil); err != nil {
 		s.l.Debug("could not tell a wait its due time moved; it reads it when it next wakes",
 			zap.String("wait", wait.ID.String()), zap.Error(err))
 	}
@@ -522,8 +524,8 @@ func driveBelow(state *telematics.WorkerHOSState, minutes int) bool {
 // the same arrival finds; the wait is read again first so nothing is picked
 // up twice.
 func (s *Service) meet(ctx context.Context, wait *agentwait.Wait, detail string) {
-	err := s.workflows.SignalWorkflow(ctx, wait.WorkflowID, "", agentwaitjobs.MetSignal,
-		agentwaitjobs.Met{Detail: detail, At: s.now()})
+	err := s.workflows.SignalWorkflow(ctx, wait.WorkflowID, "", agentwaitcontract.MetSignal,
+		agentwaitcontract.Met{Detail: detail, At: s.now()})
 	if err == nil {
 		return
 	}
@@ -551,8 +553,8 @@ func (s *Service) finishLost(
 	status agentwait.Status,
 	detail string,
 ) {
-	if fErr := s.Finish(ctx, &agentwaitjobs.FinishInput{
-		Payload: &agentwaitjobs.Payload{
+	if fErr := s.Finish(ctx, &agentwaitcontract.FinishInput{
+		Payload: &agentwaitcontract.Payload{
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: wait.OrganizationID,
 				BusinessUnitID: wait.BusinessUnitID,
@@ -597,13 +599,13 @@ func (s *Service) Schedule(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	id pulid.ID,
-) (*agentwaitjobs.Schedule, error) {
+) (*agentwaitcontract.Schedule, error) {
 	wait, err := s.waits.Get(ctx, &repositories.GetAgentWaitRequest{ID: id, TenantInfo: tenant})
 	if err != nil {
 		return nil, err
 	}
 
-	return &agentwaitjobs.Schedule{
+	return &agentwaitcontract.Schedule{
 		Open:      wait.Status.Open(),
 		DueAt:     wait.DueAt,
 		ExpiresAt: wait.ExpiresAt,
@@ -617,13 +619,13 @@ func (s *Service) Check(
 	tenant pagination.TenantInfo,
 	id pulid.ID,
 	now int64,
-) (*agentwaitjobs.Check, error) {
+) (*agentwaitcontract.Check, error) {
 	wait, err := s.waits.Get(ctx, &repositories.GetAgentWaitRequest{ID: id, TenantInfo: tenant})
 	if err != nil {
 		return nil, err
 	}
 	if !wait.Status.Open() {
-		return &agentwaitjobs.Check{Closed: true}, nil
+		return &agentwaitcontract.Check{Closed: true}, nil
 	}
 
 	check, err := s.facts.recheck(ctx, wait, now)
@@ -645,7 +647,7 @@ func (s *Service) Check(
 
 // Finish closes a wait as met or run out and picks the work up. A retried
 // attempt finds the wait closed and picks up only what it has not.
-func (s *Service) Finish(ctx context.Context, in *agentwaitjobs.FinishInput) error {
+func (s *Service) Finish(ctx context.Context, in *agentwaitcontract.FinishInput) error {
 	tenant := pagination.TenantInfo{
 		OrgID: in.Payload.OrganizationID,
 		BuID:  in.Payload.BusinessUnitID,
@@ -705,7 +707,7 @@ func (s *Service) resumeConversation(ctx context.Context, wait *agentwait.Wait) 
 		return err
 	}
 	if active != nil {
-		return agentwaitjobs.ErrConversationBusy
+		return agentwaitcontract.ErrConversationBusy
 	}
 
 	owner := serviceports.RequestActor{
@@ -721,10 +723,10 @@ func (s *Service) resumeConversation(ctx context.Context, wait *agentwait.Wait) 
 		TenantInfo: tenant,
 		Origin:     conversation.AssistantTurnOriginWaitResolved,
 	}, func(turn *conversation.AssistantTurn) (string, error) {
-		run, startErr := assistantjobs.StartTurnWorkflow(ctx, s.workflows, turn,
-			assistantjobs.TurnStart{
+		run, startErr := assistantcontract.StartTurnWorkflow(ctx, s.workflows, turn,
+			assistantcontract.TurnStart{
 				Actor:   owner,
-				Request: assistantjobs.AssistantTurnRequest{ResumeWaitID: wait.ID},
+				Request: assistantcontract.AssistantTurnRequest{ResumeWaitID: wait.ID},
 			})
 		if startErr != nil {
 			return "", startErr
@@ -733,7 +735,7 @@ func (s *Service) resumeConversation(ctx context.Context, wait *agentwait.Wait) 
 		return run.GetID(), nil
 	})
 	if errortypes.IsBusinessError(err) {
-		return agentwaitjobs.ErrConversationBusy
+		return agentwaitcontract.ErrConversationBusy
 	}
 	if err != nil {
 		return err
@@ -782,7 +784,7 @@ func (s *Service) resumeRun(ctx context.Context, wait *agentwait.Wait) error {
 		nil,
 	)
 	if errors.Is(err, serviceports.ErrAgentRunAlreadyOpen) {
-		return agentwaitjobs.ErrConversationBusy
+		return agentwaitcontract.ErrConversationBusy
 	}
 	if errortypes.IsBusinessError(err) {
 		s.l.Info("a wait ended but its agent could not pick the work up",

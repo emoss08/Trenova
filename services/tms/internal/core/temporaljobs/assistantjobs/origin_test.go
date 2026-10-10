@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -20,15 +22,15 @@ import (
 func TestAssistantTurnPayload_OriginIsOptional(t *testing.T) {
 	t.Parallel()
 
-	encoded, err := sonic.MarshalString(AssistantTurnPayload{})
+	encoded, err := sonic.MarshalString(assistantcontract.AssistantTurnPayload{})
 	require.NoError(t, err)
 	assert.NotContains(t, encoded, "traceOrigin")
 
 	traceparent := "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
-	encoded, err = sonic.MarshalString(AssistantTurnPayload{Origin: traceparent})
+	encoded, err = sonic.MarshalString(assistantcontract.AssistantTurnPayload{Origin: traceparent})
 	require.NoError(t, err)
 
-	var decoded AssistantTurnPayload
+	var decoded assistantcontract.AssistantTurnPayload
 	require.NoError(t, sonic.UnmarshalString(encoded, &decoded))
 	assert.Equal(t, traceparent, decoded.Origin)
 }
@@ -37,7 +39,7 @@ type anchoredStarter struct {
 	serviceports.WorkflowStarter
 
 	startedUnder trace.SpanContext
-	payload      *AssistantTurnPayload
+	payload      *assistantcontract.AssistantTurnPayload
 }
 
 func (s *anchoredStarter) StartWorkflow(
@@ -47,7 +49,7 @@ func (s *anchoredStarter) StartWorkflow(
 	args ...any,
 ) (client.WorkflowRun, error) {
 	s.startedUnder = trace.SpanContextFromContext(ctx)
-	s.payload, _ = args[0].(*AssistantTurnPayload)
+	s.payload, _ = args[0].(*assistantcontract.AssistantTurnPayload)
 
 	return nil, nil
 }
@@ -62,7 +64,7 @@ func TestStartTurnWorkflow_StartsTheTurnUnderItsAnchorAndKeepsTheRequest(t *test
 		ThreadID: pulid.MustNew("athr_"),
 	}
 	ctx, request := otel.Tracer("assistantjobs-test").Start(t.Context(), "POST /assistant/turns/")
-	_, err := StartTurnWorkflow(ctx, starter, turn, TurnStart{Content: "Where is 12345?"})
+	_, err := assistantcontract.StartTurnWorkflow(ctx, starter, turn, assistantcontract.TurnStart{Content: "Where is 12345?"})
 	request.End()
 	require.NoError(t, err)
 

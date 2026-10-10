@@ -4,6 +4,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingtransferjobs/billingtransfercontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/billingtransfer"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
@@ -58,7 +60,7 @@ var reconcileActivityOptions = workflow.ActivityOptions{
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
-			Name:        BulkBillingTransferWorkflowName,
+			Name:        billingtransfercontract.BulkBillingTransferWorkflowName,
 			Fn:          BulkBillingTransferWorkflow,
 			TaskQueue:   temporaltype.TaskQueueBilling.String(),
 			Description: "Move a run's shipments into the billing queue, batch by batch",
@@ -80,11 +82,11 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 // for yet. A batch that answers for nothing means the run is done.
 func BulkBillingTransferWorkflow(
 	ctx workflow.Context,
-	payload *TransferRunPayload,
+	payload *billingtransfercontract.TransferRunPayload,
 ) (*TransferRunResult, error) {
 	var a *Activities
 
-	cancelCh := workflow.GetSignalChannel(ctx, CancelSignalName)
+	cancelCh := workflow.GetSignalChannel(ctx, billingtransfercontract.CancelSignalName)
 
 	var prepared *PreparedRun
 	prepareCtx := workflow.WithActivityOptions(ctx, prepareActivityOptions)
@@ -156,7 +158,7 @@ func BulkBillingTransferWorkflow(
 // in Queued or Running with nobody coming back for it.
 func finalizeFailure(
 	ctx workflow.Context,
-	payload *TransferRunPayload,
+	payload *billingtransfercontract.TransferRunPayload,
 	cause error,
 ) (*TransferRunResult, error) {
 	status := billingtransfer.RunStatusFailed

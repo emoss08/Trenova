@@ -5,6 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs/billingcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -18,17 +20,6 @@ import (
 	"go.temporal.io/sdk/workflow"
 	"go.uber.org/zap"
 )
-
-const SendInvoiceEDIWorkflowName = "SendInvoiceEDIWorkflow"
-
-type SendInvoiceEDIPayload struct {
-	temporaltype.BasePayload
-	InvoiceID     pulid.ID               `json:"invoiceId"`
-	Force         bool                   `json:"force"`
-	PrincipalType services.PrincipalType `json:"principalType"`
-	PrincipalID   pulid.ID               `json:"principalId"`
-	APIKeyID      pulid.ID               `json:"apiKeyId"`
-}
 
 type SendInvoiceEDIResult struct {
 	InvoiceID   pulid.ID              `json:"invoiceId"`
@@ -61,7 +52,7 @@ var sendInvoiceEDIActivityOptions = workflow.ActivityOptions{
 // hands it to the partner's delivery channel.
 func SendInvoiceEDIWorkflow(
 	ctx workflow.Context,
-	payload *SendInvoiceEDIPayload,
+	payload *billingcontract.SendInvoiceEDIPayload,
 ) (*SendInvoiceEDIResult, error) {
 	ctx = workflow.WithActivityOptions(ctx, sendInvoiceEDIActivityOptions)
 
@@ -84,7 +75,7 @@ func SendInvoiceEDIWorkflow(
 // task queue and writes Sending, Sent, Failed or DeadLettered back as it goes.
 func (a *Activities) SendInvoiceEDIActivity(
 	ctx context.Context,
-	payload *SendInvoiceEDIPayload,
+	payload *billingcontract.SendInvoiceEDIPayload,
 ) (*SendInvoiceEDIResult, error) {
 	tenantInfo := pagination.TenantInfo{
 		OrgID:  payload.OrganizationID,

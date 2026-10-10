@@ -3,6 +3,8 @@ package ratesimjobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/ratesimjobs/ratesimcontract"
+
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -10,18 +12,6 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
-
-// RunSimulationPayload names the simulation to carry out.
-//
-// It carries an id rather than the simulation itself: a Temporal payload is
-// serialized and replayed, and a stale copy of a run's own state is the last
-// thing that should decide what it does.
-type RunSimulationPayload struct {
-	OrgID            pulid.ID `json:"orgId"`
-	BuID             pulid.ID `json:"buId"`
-	UserID           pulid.ID `json:"userId"`
-	RateSimulationID pulid.ID `json:"rateSimulationId"`
-}
 
 type RunSimulationResult struct {
 	RateSimulationID pulid.ID `json:"rateSimulationId"`
@@ -53,7 +43,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 // between whole simulations.
 func (a *Activities) RunSimulationActivity(
 	ctx context.Context,
-	payload *RunSimulationPayload,
+	payload *ratesimcontract.RunSimulationPayload,
 ) (*RunSimulationResult, error) {
 	tenantInfo := pagination.TenantInfo{
 		OrgID:  payload.OrgID,

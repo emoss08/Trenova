@@ -4,8 +4,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -103,7 +104,7 @@ func CheckAccountingConnectionsWorkflow(ctx workflow.Context) (*HealthSweepResul
 func withFairness(base *workflow.ActivityOptions, orgID pulid.ID) workflow.ActivityOptions {
 	options := *base
 	options.Priority = temporal.Priority{
-		PriorityKey: agentflow.PriorityBackground,
+		PriorityKey: agentflowcontract.PriorityBackground,
 		FairnessKey: orgID.String(),
 	}
 	return options

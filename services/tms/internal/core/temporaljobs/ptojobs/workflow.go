@@ -3,6 +3,8 @@ package ptojobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/ptojobs/ptocontract"
+
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,7 +28,7 @@ var ptoActivityOptions = workflow.ActivityOptions{
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
-			Name:        PTOAccrualWorkflowName,
+			Name:        ptocontract.PTOAccrualWorkflowName,
 			Fn:          PTOAccrualWorkflow,
 			TaskQueue:   temporaltype.TaskQueueSystem.String(),
 			Description: "Post scheduled PTO accruals, carryover caps, and expiries for every assigned worker",
@@ -36,7 +38,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 
 func PTOAccrualWorkflow(
 	ctx workflow.Context,
-	input PTOAccrualWorkflowInput,
+	input ptocontract.PTOAccrualWorkflowInput,
 ) (*PTOAccrualResult, error) {
 	ctx = workflow.WithActivityOptions(ctx, ptoActivityOptions)
 	logger := workflow.GetLogger(ctx)

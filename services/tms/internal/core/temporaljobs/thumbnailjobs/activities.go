@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs/thumbnailcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -47,7 +49,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 
 func (a *Activities) GenerateThumbnailActivity(
 	ctx context.Context,
-	payload *GenerateThumbnailPayload,
+	payload *thumbnailcontract.GenerateThumbnailPayload,
 ) (*GenerateThumbnailResult, error) {
 	logger := activity.GetLogger(ctx)
 	logger.Info("Starting thumbnail generation",
@@ -93,7 +95,7 @@ func (a *Activities) GenerateThumbnailActivity(
 
 func (a *Activities) getDocument(
 	ctx context.Context,
-	payload *GenerateThumbnailPayload,
+	payload *thumbnailcontract.GenerateThumbnailPayload,
 ) (*document.Document, *GenerateThumbnailResult, error) {
 	logger := activity.GetLogger(ctx)
 	activity.RecordHeartbeat(ctx, "loading document record")
@@ -121,7 +123,7 @@ func (a *Activities) getDocument(
 }
 
 func (a *Activities) failure(
-	payload *GenerateThumbnailPayload,
+	payload *thumbnailcontract.GenerateThumbnailPayload,
 	format string,
 	err error,
 ) *GenerateThumbnailResult {
@@ -138,7 +140,7 @@ func (a *Activities) retryable(message string, err error) error {
 
 func (a *Activities) downloadFileData(
 	ctx context.Context,
-	payload *GenerateThumbnailPayload,
+	payload *thumbnailcontract.GenerateThumbnailPayload,
 	doc *document.Document,
 ) ([]byte, *GenerateThumbnailResult, error) {
 	logger := activity.GetLogger(ctx)
@@ -217,7 +219,7 @@ func (a *Activities) downloadFileData(
 
 func (a *Activities) generateThumbnail(
 	ctx context.Context,
-	payload *GenerateThumbnailPayload,
+	payload *thumbnailcontract.GenerateThumbnailPayload,
 	fileData []byte,
 ) ([]byte, *GenerateThumbnailResult, error) {
 	logger := activity.GetLogger(ctx)
@@ -269,7 +271,7 @@ func (a *Activities) generateThumbnail(
 
 func (a *Activities) uploadThumbnail(
 	ctx context.Context,
-	payload *GenerateThumbnailPayload,
+	payload *thumbnailcontract.GenerateThumbnailPayload,
 	doc *document.Document,
 	thumbData []byte,
 ) (string, *GenerateThumbnailResult, error) {
@@ -344,7 +346,7 @@ func (a *Activities) cleanupThumbnail(ctx context.Context, previewPath string) {
 
 func (a *Activities) updateDocumentPreview(
 	ctx context.Context,
-	payload *GenerateThumbnailPayload,
+	payload *thumbnailcontract.GenerateThumbnailPayload,
 	doc *document.Document,
 	previewPath string,
 ) (*GenerateThumbnailResult, error) {
@@ -393,7 +395,7 @@ func documentStorageAAD(
 
 func (a *Activities) MarkThumbnailFailedActivity(
 	ctx context.Context,
-	payload *GenerateThumbnailPayload,
+	payload *thumbnailcontract.GenerateThumbnailPayload,
 ) error {
 	doc, err := a.docRepo.GetByID(ctx, repositories.GetDocumentByIDRequest{
 		ID: payload.DocumentID,

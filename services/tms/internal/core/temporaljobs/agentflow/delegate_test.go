@@ -5,6 +5,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow/agentflowcontract"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
@@ -296,7 +298,7 @@ func TestRunContext_CarriesTheRecordsTheTurnIsAboutAsData(t *testing.T) {
 	run := NewRunContext(&serviceports.RunRequest{
 		Definition: &agentdefinition.Definition{ID: pulid.MustNew("agdef_")},
 		Records:    records,
-	}, PriorityInteractive)
+	}, agentflowcontract.PriorityInteractive)
 
 	assert.Equal(t, records, run.Records)
 	assert.Equal(t, records, run.request().Records)

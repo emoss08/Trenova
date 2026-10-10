@@ -2,6 +2,7 @@ package assistantjobs
 
 import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/worker"
@@ -47,15 +48,15 @@ func NewRegistry(p RegistryParams) *registry.ComposedRegistry {
 			agentflow.RegisterDynamic(w, p.Flow)
 		},
 		Workflows: []registry.WorkflowDefinition{{
-			Name:        AssistantTurnWorkflowName,
+			Name:        assistantcontract.AssistantTurnWorkflowName,
 			Fn:          p.Workflows.AssistantTurnWorkflow,
 			Description: "Answer one question in a conversation, publishing the reply as it is written",
 		}, {
-			Name:        AgentDryRunWorkflowName,
+			Name:        assistantcontract.AgentDryRunWorkflowName,
 			Fn:          p.Workflows.AgentDryRunWorkflow,
 			Description: "Try a draft agent once against live data with every write simulated, writing nothing",
 		}, {
-			Name:        CompactionWorkflowName,
+			Name:        assistantcontract.CompactionWorkflowName,
 			Fn:          p.Workflows.ConversationCompactionWorkflow,
 			Description: "Summarize the older part of a conversation so it fits its model's window",
 		}},

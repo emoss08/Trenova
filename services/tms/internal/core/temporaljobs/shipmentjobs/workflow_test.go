@@ -4,6 +4,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs/shipmentcontract"
+
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,7 +33,7 @@ func (s *ShipmentWorkflowTestSuite) AfterTest(_, _ string) {
 func (s *ShipmentWorkflowTestSuite) TestBulkDuplicateShipmentsWorkflow() {
 	sourceID := pulid.MustNew("shp_")
 	copyID := pulid.MustNew("shp_")
-	payload := &BulkDuplicateShipmentsPayload{
+	payload := &shipmentcontract.BulkDuplicateShipmentsPayload{
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: pulid.MustNew("org_"),
 			BusinessUnitID: pulid.MustNew("bu_"),

@@ -12,6 +12,9 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs/documentuploadcontract"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs/thumbnailcontract"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
@@ -25,8 +28,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/core/services/usageservice"
 	workflowstarterservice "github.com/emoss08/trenova/internal/core/services/workflowstarter"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -497,7 +498,7 @@ func (s *Service) startThumbnailWorkflow(
 
 	workflowID := fmt.Sprintf("thumbnail-%s", doc.ID.String())
 
-	payload := &thumbnailjobs.GenerateThumbnailPayload{
+	payload := &thumbnailcontract.GenerateThumbnailPayload{
 		DocumentID:     doc.ID,
 		OrganizationID: doc.OrganizationID,
 		BusinessUnitID: doc.BusinessUnitID,
@@ -1270,7 +1271,7 @@ func (s *Service) enqueueStorageCleanup(
 			StaticSummary: fmt.Sprintf("Cleaning up document storage for %s", documentID.String()),
 		},
 		"CleanupDocumentStorageWorkflow",
-		&documentuploadjobs.CleanupDocumentStoragePayload{
+		&documentuploadcontract.CleanupDocumentStoragePayload{
 			BasePayload: temporaltype.BasePayload{
 				Timestamp: timeutils.NowUnix(),
 			},

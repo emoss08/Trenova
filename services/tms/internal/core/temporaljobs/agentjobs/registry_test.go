@@ -3,6 +3,8 @@ package agentjobs
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs/agentcontract"
+
 	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/stretchr/testify/assert"
@@ -30,7 +32,7 @@ func TestWorkflows_KeepTheWorkloadClassesApart(t *testing.T) {
 	)
 	background := names(workflows.background())
 	for _, name := range []string{
-		AgentRunWorkflowName,
+		agentcontract.AgentRunWorkflowName,
 		AgentScheduledRunWorkflowName,
 		ReconcileSchedulesWorkflowName,
 		ExpireStaleProposalsWorkflowName,
@@ -38,11 +40,11 @@ func TestWorkflows_KeepTheWorkloadClassesApart(t *testing.T) {
 	} {
 		assert.Contains(t, background, name)
 	}
-	assert.NotContains(t, background, AgentEvaluationWorkflowName,
+	assert.NotContains(t, background, agentcontract.AgentEvaluationWorkflowName,
 		"an evaluation costs as much as a run and must not queue behind one")
 
 	assert.Equal(t, temporaltype.TaskQueueAgentHeavy.String(), HeavyDomainConfig.TaskQueue)
-	assert.Contains(t, names(workflows.heavy()), AgentEvaluationWorkflowName)
+	assert.Contains(t, names(workflows.heavy()), agentcontract.AgentEvaluationWorkflowName)
 }
 
 func TestWorkflows_DrainCoversEverythingOnTheOldQueue(t *testing.T) {
@@ -56,8 +58,8 @@ func TestWorkflows_DrainCoversEverythingOnTheOldQueue(t *testing.T) {
 	drain := names(workflows.drain())
 	require.Len(t, drain, len(workflows.background())+len(workflows.heavy()))
 	assert.Equal(t, temporaltype.TaskQueueAgent.String(), DrainDomainConfig.TaskQueue)
-	assert.Contains(t, drain, AgentRunWorkflowName)
-	assert.Contains(t, drain, AgentEvaluationWorkflowName)
+	assert.Contains(t, drain, agentcontract.AgentRunWorkflowName)
+	assert.Contains(t, drain, agentcontract.AgentEvaluationWorkflowName)
 }
 
 // A workflow a schedule starts is started by its function, so the name it is
