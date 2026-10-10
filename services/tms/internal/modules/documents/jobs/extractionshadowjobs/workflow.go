@@ -3,7 +3,7 @@ package extractionshadowjobs
 import (
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -50,7 +50,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 
 func shadowPriority(orgID pulid.ID) temporal.Priority {
 	return temporal.Priority{
-		PriorityKey: agentflow.PriorityEvaluation,
+		PriorityKey: agentflowcontract.PriorityEvaluation,
 		FairnessKey: orgID.String(),
 	}
 }

@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
@@ -326,14 +326,14 @@ func (s *AgentScheduledRunWorkflowTestSuite) AfterTest(_, _ string) {
 // workflow, so the same slot cannot start two runs.
 func (s *AgentScheduledRunWorkflowTestSuite) TestStartsTheRunForTheSlot() {
 	var a *Activities
-	payload := &ScheduledRunPayload{
+	payload := &agentcontract.ScheduledRunPayload{
 		DefinitionID:   pulid.MustNew("agd_"),
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 	}
 	var slot int64
 	s.env.OnActivity(a.StartScheduledRunActivity, mock.Anything, mock.Anything).
-		Return(func(_ context.Context, fired *ScheduledRunPayload) (*StartScheduledRunResult, error) {
+		Return(func(_ context.Context, fired *agentcontract.ScheduledRunPayload) (*StartScheduledRunResult, error) {
 			s.Equal(payload.DefinitionID, fired.DefinitionID)
 			slot = fired.Slot
 			return &StartScheduledRunResult{Started: true, RunID: "ar_1"}, nil

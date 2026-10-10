@@ -3,6 +3,7 @@ package completionjobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/completionjobs/completioncontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
@@ -53,7 +54,7 @@ func (a *Activities) CompleteStructuredActivity(
 // an error.
 func (a *Activities) TestAIProviderActivity(
 	ctx context.Context,
-	payload *TestAIProviderPayload,
+	payload *completioncontract.TestAIProviderPayload,
 ) (*agentports.TestAIProviderResult, error) {
 	stop := modelcall.Heartbeat(ctx)
 	defer stop()
@@ -64,7 +65,7 @@ func (a *Activities) TestAIProviderActivity(
 // ListAIProviderModelsActivity asks an endpoint which models it serves.
 func (a *Activities) ListAIProviderModelsActivity(
 	ctx context.Context,
-	payload *ListAIProviderModelsPayload,
+	payload *completioncontract.ListAIProviderModelsPayload,
 ) ([]agentports.AIProviderModelOption, error) {
 	stop := modelcall.Heartbeat(ctx)
 	defer stop()
@@ -81,7 +82,7 @@ func (a *Activities) ListAIProviderModelsActivity(
 // Like a saved provider's test, a failed call is the result.
 func (a *Activities) TestAIProviderDraftActivity(
 	ctx context.Context,
-	payload *TestAIProviderDraftPayload,
+	payload *completioncontract.TestAIProviderDraftPayload,
 ) (*agentports.AIProviderDraftTestResult, error) {
 	stop := modelcall.Heartbeat(ctx)
 	defer stop()
@@ -97,7 +98,7 @@ func (a *Activities) TestAIProviderDraftActivity(
 // WriteBriefingActivity writes a day's briefing for the roles asked for.
 func (a *Activities) WriteBriefingActivity(
 	ctx context.Context,
-	payload *WriteBriefingPayload,
+	payload *completioncontract.WriteBriefingPayload,
 ) (*briefingports.WriteBriefingResult, error) {
 	stop := modelcall.Heartbeat(ctx)
 	defer stop()

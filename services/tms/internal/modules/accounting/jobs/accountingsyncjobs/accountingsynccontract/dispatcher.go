@@ -1,4 +1,4 @@
-package accountingsyncjobs
+package accountingsynccontract
 
 import (
 	"context"

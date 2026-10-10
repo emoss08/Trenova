@@ -1,4 +1,4 @@
-package completionjobs
+package completioncontract
 
 import (
 	"context"
@@ -6,10 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -220,7 +219,7 @@ func (d *Dispatcher) await(ctx context.Context, c *call, result any) (err error)
 			d.abandon(ctx, run)
 		}
 
-		return modelcall.Err(err)
+		return modelcallcontract.Err(err)
 	}
 
 	return nil
@@ -238,7 +237,7 @@ func jobFailure(ctx context.Context, err error) string {
 	if ctx.Err() != nil {
 		return jobFailureAbandoned
 	}
-	if kind := agentflow.FailureKind(modelcall.FailureOf(err)); kind != "" {
+	if kind := agentflowcontract.FailureKind(modelcallcontract.FailureOf(err)); kind != "" {
 		return kind
 	}
 
@@ -264,7 +263,7 @@ func (d *Dispatcher) abandon(ctx context.Context, run client.WorkflowRun) {
 func waitFor(ctx context.Context) time.Duration {
 	deadline, ok := ctx.Deadline()
 	if !ok {
-		return defaultWait
+		return DefaultWait
 	}
 
 	return max(time.Until(deadline)-answerMargin, minWait)

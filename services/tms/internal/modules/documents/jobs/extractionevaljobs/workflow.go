@@ -3,9 +3,9 @@ package extractionevaljobs
 import (
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/extractionevaljobs/extractionevalcontract"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/temporal"
@@ -46,7 +46,7 @@ var evaluateOptions = workflow.ActivityOptions{
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
-			Name:        ExtractionEvalRunWorkflowName,
+			Name:        extractionevalcontract.ExtractionEvalRunWorkflowName,
 			Fn:          ExtractionEvalRunWorkflow,
 			TaskQueue:   temporaltype.DocumentIntelligenceTaskQueue,
 			Description: "Run one AI provider's model over the active extraction cases within the evaluation budget and score each field",
@@ -54,21 +54,14 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	}
 }
 
-func evaluationPriority(orgID pulid.ID) temporal.Priority {
-	return temporal.Priority{
-		PriorityKey: agentflow.PriorityEvaluation,
-		FairnessKey: orgID.String(),
-	}
-}
-
 func withPriority(options workflow.ActivityOptions, orgID pulid.ID) workflow.ActivityOptions {
-	options.Priority = evaluationPriority(orgID)
+	options.Priority = extractionevalcontract.EvaluationPriority(orgID)
 	return options
 }
 
 func ExtractionEvalRunWorkflow(
 	ctx workflow.Context,
-	payload *RunPayload,
+	payload *extractionevalcontract.RunPayload,
 ) (*RunOutcome, error) {
 	input := RunInput{
 		OrganizationID: payload.OrganizationID,
@@ -102,13 +95,17 @@ func ExtractionEvalRunWorkflow(
 
 		for _, pending := range page {
 			if evaluated >= casesPerExecution {
-				return nil, workflow.NewContinueAsNewError(ctx, ExtractionEvalRunWorkflow, &RunPayload{
-					OrganizationID: payload.OrganizationID,
-					BusinessUnitID: payload.BusinessUnitID,
-					RunID:          payload.RunID,
-					AfterOrdinal:   after,
-					Evaluated:      payload.Evaluated + evaluated,
-				})
+				return nil, workflow.NewContinueAsNewError(
+					ctx,
+					ExtractionEvalRunWorkflow,
+					&extractionevalcontract.RunPayload{
+						OrganizationID: payload.OrganizationID,
+						BusinessUnitID: payload.BusinessUnitID,
+						RunID:          payload.RunID,
+						AfterOrdinal:   after,
+						Evaluated:      payload.Evaluated + evaluated,
+					},
+				)
 			}
 
 			var decision ContinueDecision

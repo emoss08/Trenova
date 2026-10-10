@@ -18,11 +18,11 @@
 package assistantjobs
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,7 +41,7 @@ type FinishTurnInput struct {
 	// usage cap and when it lifts.
 	RejectionParams map[string]string             `json:"rejectionParams,omitempty"`
 	Run             *agentports.RunResult         `json:"run,omitempty"`
-	Failure         *modelcall.Failure            `json:"failure,omitempty"`
+	Failure         *modelcallcontract.Failure    `json:"failure,omitempty"`
 	Artifacts       []*assistantartifact.Artifact `json:"artifacts,omitempty"`
 	Events          []temporaltype.StreamItem     `json:"events,omitempty"`
 	// Steered are the queued messages the turn read while it worked, which

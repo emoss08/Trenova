@@ -3,6 +3,7 @@ package accountingsyncjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/jobs/accountingsyncjobs/accountingsynccontract"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -33,7 +34,7 @@ var sweepLongActivityOptions = workflow.ActivityOptions{
 func syncWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
-			Name:        DrainAccountingOutboxWorkflowName,
+			Name:        accountingsynccontract.DrainAccountingOutboxWorkflowName,
 			Fn:          DrainAccountingOutboxWorkflow,
 			TaskQueue:   temporaltype.IntegrationTaskQueue,
 			Description: "Send one connection's queued documents to its accounting system",
@@ -57,7 +58,7 @@ func syncWorkflows() []temporaltype.WorkflowDefinition {
 			Description: "Clear old accounting sync payloads and attempts",
 		},
 		{
-			Name:        BackfillAccountingWorkflowName,
+			Name:        accountingsynccontract.BackfillAccountingWorkflowName,
 			Fn:          BackfillAccountingWorkflow,
 			TaskQueue:   temporaltype.IntegrationTaskQueue,
 			Description: "Queue documents dated from the start date until sync began",
@@ -67,10 +68,10 @@ func syncWorkflows() []temporaltype.WorkflowDefinition {
 
 func DrainAccountingOutboxWorkflow(
 	ctx workflow.Context,
-	payload *DrainPayload,
+	payload *accountingsynccontract.DrainPayload,
 ) (*DrainRunResult, error) {
 	var a *Activities
-	signals := workflow.GetSignalChannel(ctx, DrainSignalName)
+	signals := workflow.GetSignalChannel(ctx, accountingsynccontract.DrainSignalName)
 	actx := workflow.WithActivityOptions(
 		ctx,
 		withFairness(&drainActivityOptions, payload.OrganizationID),
@@ -83,7 +84,7 @@ func DrainAccountingOutboxWorkflow(
 			return result, workflow.NewContinueAsNewError(
 				ctx,
 				DrainAccountingOutboxWorkflow,
-				&DrainPayload{
+				&accountingsynccontract.DrainPayload{
 					OrganizationID: payload.OrganizationID,
 					BusinessUnitID: payload.BusinessUnitID,
 					ConnectionID:   payload.ConnectionID,
@@ -114,7 +115,7 @@ func DrainAccountingOutboxWorkflow(
 
 func drainSignals(signals workflow.ReceiveChannel) {
 	for {
-		var signal DrainSignal
+		var signal accountingsynccontract.DrainSignal
 		if !signals.ReceiveAsync(&signal) {
 			return
 		}
@@ -128,7 +129,7 @@ func waitForKick(ctx workflow.Context, signals workflow.ReceiveChannel) bool {
 	received := false
 	selector := workflow.NewSelector(ctx)
 	selector.AddReceive(signals, func(channel workflow.ReceiveChannel, _ bool) {
-		var signal DrainSignal
+		var signal accountingsynccontract.DrainSignal
 		channel.Receive(ctx, &signal)
 		received = true
 	})
@@ -163,7 +164,7 @@ func PurgeAccountingSyncWorkflow(ctx workflow.Context) (*PurgeResult, error) {
 
 func BackfillAccountingWorkflow(
 	ctx workflow.Context,
-	payload *BackfillPayload,
+	payload *accountingsynccontract.BackfillPayload,
 ) (*BackfillRunResult, error) {
 	var a *Activities
 	actx := workflow.WithActivityOptions(
@@ -177,7 +178,7 @@ func BackfillAccountingWorkflow(
 			return result, workflow.NewContinueAsNewError(
 				ctx,
 				BackfillAccountingWorkflow,
-				&BackfillPayload{
+				&accountingsynccontract.BackfillPayload{
 					OrganizationID: payload.OrganizationID,
 					BusinessUnitID: payload.BusinessUnitID,
 					BackfillID:     payload.BackfillID,

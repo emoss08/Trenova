@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,7 +23,7 @@ func TestClassifyMakesAPlanLimitNonRetryableAndKeepsItWhole(t *testing.T) {
 	assert.Equal(t, ErrTypeModelRejected, appErr.Type())
 	assert.False(t, Transient(quota))
 
-	failure := FailureOf(classified)
+	failure := modelcallcontract.FailureOf(classified)
 	require.NotNil(t, failure.Plan)
 	assert.Equal(t, "ai.spend_cents", failure.Plan.Meter)
 
@@ -37,7 +38,7 @@ func TestClassifyCarriesAPlanRestrictionThrough(t *testing.T) {
 	t.Parallel()
 
 	restriction := errortypes.NewPlanRestrictionError("document_intelligence", "plan_restricted", "free_demo")
-	failure := FailureOf(Classify(restriction))
+	failure := modelcallcontract.FailureOf(Classify(restriction))
 
 	require.NotNil(t, failure.Plan)
 	restored, ok := errors.AsType[*errortypes.PlanRestrictionError](failure.Err())

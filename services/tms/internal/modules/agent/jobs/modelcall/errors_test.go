@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
@@ -171,7 +172,7 @@ func TestFailureSurvivesTheActivityBoundary(t *testing.T) {
 
 			converter := temporal.GetDefaultFailureConverter()
 			crossed := converter.FailureToError(converter.ErrorToFailure(Classify(tt.err)))
-			failure := FailureOf(crossed)
+			failure := modelcallcontract.FailureOf(crossed)
 			require.NotNil(t, failure)
 			assert.False(t, failure.Stopped)
 			tt.check(t, failure.Err())
@@ -182,13 +183,13 @@ func TestFailureSurvivesTheActivityBoundary(t *testing.T) {
 func TestFailureOfAStopIsAStop(t *testing.T) {
 	t.Parallel()
 
-	failure := FailureOf(temporal.NewCanceledError())
+	failure := modelcallcontract.FailureOf(temporal.NewCanceledError())
 	require.NotNil(t, failure)
 	assert.True(t, failure.Stopped)
 	assert.ErrorIs(t, failure.Err(), context.Canceled)
 
-	assert.Nil(t, FailureOf(nil))
-	assert.NoError(t, (*Failure)(nil).Err())
+	assert.Nil(t, modelcallcontract.FailureOf(nil))
+	assert.NoError(t, (*modelcallcontract.Failure)(nil).Err())
 }
 
 func TestTransient(t *testing.T) {
@@ -229,18 +230,28 @@ func TestErrRebuildsWhatTheCallReturned(t *testing.T) {
 	refused := errortypes.NewBusinessError("AI is turned off for %s", "Acme")
 	refused.Details = "an administrator can turn it on"
 	var business *errortypes.BusinessError
-	require.ErrorAs(t, Err(cross(refused)), &business)
+	require.ErrorAs(t, modelcallcontract.Err(cross(refused)), &business)
 	assert.Equal(t, refused.Error(), business.Error())
 
-	assert.ErrorIs(t, Err(cross(fmt.Errorf("route: %w", agentports.ErrNoProviderConfigured))),
-		agentports.ErrNoProviderConfigured)
-	assert.ErrorIs(t, Err(cross(fmt.Errorf("parse: %w", agentports.ErrModelSchemaValidation))),
-		agentports.ErrModelSchemaValidation)
+	assert.ErrorIs(
+		t,
+		modelcallcontract.Err(cross(fmt.Errorf("route: %w", agentports.ErrNoProviderConfigured))),
+		agentports.ErrNoProviderConfigured,
+	)
+	assert.ErrorIs(
+		t,
+		modelcallcontract.Err(cross(fmt.Errorf("parse: %w", agentports.ErrModelSchemaValidation))),
+		agentports.ErrModelSchemaValidation,
+	)
 
-	assert.ErrorIs(t, Err(temporal.NewTimeoutError(0, nil)), context.DeadlineExceeded)
+	assert.ErrorIs(
+		t,
+		modelcallcontract.Err(temporal.NewTimeoutError(0, nil)),
+		context.DeadlineExceeded,
+	)
 
 	plain := errors.New("not a model call")
-	assert.Same(t, plain, Err(plain))
+	assert.Same(t, plain, modelcallcontract.Err(plain))
 }
 
 // Outside an activity nothing retries a call, so a service that falls back on
@@ -254,7 +265,7 @@ func TestFinalAttemptOutsideAnActivity(t *testing.T) {
 func TestFailureErrKeepsTheModelsAsked(t *testing.T) {
 	t.Parallel()
 
-	failure := &Failure{
+	failure := &modelcallcontract.Failure{
 		Message:   "every provider failed",
 		Status:    529,
 		Retryable: true,

@@ -311,7 +311,7 @@ Two ledgers record the moves so the overlay can be rewritten mechanically.
 | Ledger | Lines | Format | Records |
 |---|---|---|---|
 | `services/tms/docs/modules/moves.tsv` | 743 | `old/import/path<TAB>new/import/path` | each package moved from `internal/core/{domain,services,temporaljobs}` and `internal/infrastructure/postgres/repositories` into a module |
-| `services/tms/docs/modules/symbol-moves.tsv` | 6,837 | `old/path.Symbol<TAB>new/path.Symbol` | each symbol that changed package: the split of `internal/core/ports/{repositories,services,storage}` and the root `ports` package into `<entity>ports` and `kernelports`, the mocks into `<entity>portsmock`, contract types out of jobs packages, and test helpers into `<name>test` packages |
+| `services/tms/docs/modules/symbol-moves.tsv` | 11,138 | `old/path.Symbol<TAB>new/path.Symbol` | each symbol that changed package: the split of `internal/core/ports/{repositories,services,storage}` and the root `ports` package into `<entity>ports` and `kernelports`, the mocks into `<entity>portsmock`, contract types out of jobs packages, test helpers into `<name>test` packages, and the generated column helpers into `pkg/buncolgen/<domain>col` |
 
 `scripts/buildbench/rewrite-imports` applies both to a tree of Go files, in place. Run it from
 `services/tms`:
@@ -327,9 +327,8 @@ goimports, which drops imports left unused. It handles named imports; it does no
 imports. It prints how many files it changed.
 
 When you move a package, append its line to `moves.tsv`; when you move a symbol between
-packages, append it to `symbol-moves.tsv`. The ledgers do not cover the column helper split: a
-reference to `buncolgen.ShipmentColumns` in overlay code has to become
-`shipmentcol.ShipmentColumns` by hand.
+packages, append it to `symbol-moves.tsv`. The column helper split is in the symbol ledger too,
+so `buncolgen.ShipmentColumns` in overlay code becomes `shipmentcol.ShipmentColumns`.
 
 ## Build benchmark
 

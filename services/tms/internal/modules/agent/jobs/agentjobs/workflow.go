@@ -7,12 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/temporal"
@@ -99,7 +99,7 @@ func (w *Workflows) background() []registry.WorkflowDefinition {
 			Description: "Run one agent definition against its subject and wait for decisions on what it proposes",
 		},
 		{
-			Name:        AgentScheduledRunWorkflowName,
+			Name:        agentcontract.AgentScheduledRunWorkflowName,
 			Fn:          AgentScheduledRunWorkflow,
 			Description: "Start a scheduled or continuous agent's run on the slot its schedule fired for",
 		},
@@ -294,7 +294,7 @@ func (w *Workflows) AgentRunWorkflow(ctx workflow.Context, payload *agentcontrac
 		Definition: opened.Run.Definition,
 		Subject:    prepared.Subject,
 		Run:        outcome.Result,
-		Failure:    modelcall.FailureOf(runErr),
+		Failure:    modelcallcontract.FailureOf(runErr),
 		Events:     outcome.Events,
 	}).Get(finishCtx, &finished); err != nil {
 		_ = failRun(ctx, a, payload.RunID, tenant, err)
@@ -469,7 +469,7 @@ func (w *Workflows) AgentEvaluationWorkflow(
 	var a *Activities
 	options := prepareActivityOptions
 	options.Priority = temporal.Priority{
-		PriorityKey: agentflow.PriorityEvaluation,
+		PriorityKey: agentflowcontract.PriorityEvaluation,
 		FairnessKey: payload.OrganizationID.String(),
 	}
 
@@ -568,7 +568,7 @@ func replayInOneActivity(ctx workflow.Context, payload *agentcontract.AgentEvalu
 // run however often this is retried.
 func AgentScheduledRunWorkflow(
 	ctx workflow.Context,
-	payload *ScheduledRunPayload,
+	payload *agentcontract.ScheduledRunPayload,
 ) (*StartScheduledRunResult, error) {
 	var a *Activities
 
@@ -597,11 +597,11 @@ var scheduledStartTime = temporal.NewSearchAttributeKeyTime("TemporalScheduledSt
 
 // ReconcileDefinitionSchedulesWorkflow makes every agent's schedule match the
 // agent. It runs when a worker starts and every quarter hour after.
-func ReconcileDefinitionSchedulesWorkflow(ctx workflow.Context) (*ReconcileResult, error) {
+func ReconcileDefinitionSchedulesWorkflow(ctx workflow.Context) (*agentcontract.ReconcileResult, error) {
 	var a *Activities
 
 	reconcileCtx := workflow.WithActivityOptions(ctx, reconcileOptions)
-	var result ReconcileResult
+	var result agentcontract.ReconcileResult
 	if err := workflow.ExecuteActivity(reconcileCtx, a.ReconcileDefinitionSchedulesActivity).
 		Get(reconcileCtx, &result); err != nil {
 		return nil, err

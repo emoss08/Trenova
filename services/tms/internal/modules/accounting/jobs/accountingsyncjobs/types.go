@@ -79,14 +79,9 @@ func ReferenceWorkflowID(connectionID pulid.ID) string {
 }
 
 const (
-	DrainAccountingOutboxWorkflowName = "DrainAccountingOutboxWorkflow"
 	KickDueAccountingSyncWorkflowName = "KickDueAccountingSyncWorkflow"
 	AccountingSafetyNetWorkflowName   = "AccountingSafetyNetWorkflow"
 	PurgeAccountingSyncWorkflowName   = "PurgeAccountingSyncWorkflow"
-	BackfillAccountingWorkflowName    = "BackfillAccountingWorkflow"
-	DrainWorkflowIDPrefix             = "accounting-sync:"
-	BackfillWorkflowIDPrefix          = "accounting-backfill:"
-	DrainSignalName                   = "accounting-sync-kick"
 	drainBatchesPerRun                = 50
 	drainIdleWait                     = time.Minute
 	drainBatchLimit                   = 25
@@ -96,25 +91,12 @@ const (
 	backfillStepsPerRun               = 200
 )
 
-type DrainPayload struct {
-	OrganizationID pulid.ID `json:"organizationId"`
-	BusinessUnitID pulid.ID `json:"businessUnitId"`
-	ConnectionID   pulid.ID `json:"connectionId"`
-	Batches        int      `json:"batches"`
-}
-
-func (p *DrainPayload) TenantInfo() pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: p.OrganizationID, BuID: p.BusinessUnitID}
-}
-
 type DrainRunResult struct {
 	Batches int  `json:"batches"`
 	Claimed int  `json:"claimed"`
 	Synced  int  `json:"synced"`
 	Held    bool `json:"held"`
 }
-
-type DrainSignal struct{}
 
 type KickDueResult struct {
 	Due    int `json:"due"`
@@ -133,27 +115,8 @@ type PurgeResult struct {
 	AttemptsDeleted int64 `json:"attemptsDeleted"`
 }
 
-type BackfillPayload struct {
-	OrganizationID pulid.ID `json:"organizationId"`
-	BusinessUnitID pulid.ID `json:"businessUnitId"`
-	BackfillID     pulid.ID `json:"backfillId"`
-	Steps          int      `json:"steps"`
-}
-
-func (p *BackfillPayload) TenantInfo() pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: p.OrganizationID, BuID: p.BusinessUnitID}
-}
-
 type BackfillRunResult struct {
 	Steps    int  `json:"steps"`
 	Enqueued int  `json:"enqueued"`
 	Done     bool `json:"done"`
-}
-
-func DrainWorkflowID(connectionID pulid.ID) string {
-	return DrainWorkflowIDPrefix + connectionID.String()
-}
-
-func BackfillWorkflowID(backfillID pulid.ID) string {
-	return BackfillWorkflowIDPrefix + backfillID.String()
 }

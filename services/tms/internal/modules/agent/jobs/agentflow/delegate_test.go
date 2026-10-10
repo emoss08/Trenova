@@ -5,13 +5,13 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -280,10 +280,10 @@ func TestDeclinedDelegate_AStopIsNotARefusal(t *testing.T) {
 	assert.Contains(t, lost.Declined, "could not be started")
 
 	assert.Contains(t,
-		delegateFailureReason("Shipment Desk", &modelcall.Failure{TimedOut: true}),
+		delegateFailureReason("Shipment Desk", &modelcallcontract.Failure{TimedOut: true}),
 		"did not answer Shipment Desk in time")
 	assert.Contains(t,
-		delegateFailureReason("Shipment Desk", &modelcall.Failure{Status: 503}),
+		delegateFailureReason("Shipment Desk", &modelcallcontract.Failure{Status: 503}),
 		"status 503")
 }
 

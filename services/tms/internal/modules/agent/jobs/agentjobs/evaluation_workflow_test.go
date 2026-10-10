@@ -5,11 +5,12 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -83,7 +84,7 @@ func runEvaluationWorkflow(
 				Unattended:   true,
 				UsagePurpose: aiusageports.AIUsagePurposeEvaluation,
 			}
-			opened.Run = agentflow.NewRunContext(req, agentflow.PriorityEvaluation)
+			opened.Run = agentflow.NewRunContext(req, agentflowcontract.PriorityEvaluation)
 			opened.Turn = runtime.OpenTurn(ctx, req).State()
 
 			return opened, nil

@@ -1,4 +1,4 @@
-package completionjobs
+package completioncontract
 
 import (
 	"context"
@@ -66,6 +66,13 @@ func dispatcher(starter *fakeStarter) *Dispatcher {
 	return &Dispatcher{workflows: starter, l: zap.NewNop()}
 }
 
+func request() *agentports.StructuredCompletionRequest {
+	return &agentports.StructuredCompletionRequest{
+		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+		System:     "Answer in JSON.",
+	}
+}
+
 func TestDispatcher_RunsTheCallOnTheChatQueueWithinTheRequestsDeadline(t *testing.T) {
 	t.Parallel()
 
@@ -109,7 +116,7 @@ func TestDispatcher_GivesEveryCallItsOwnExecution(t *testing.T) {
 
 	require.Len(t, starter.options, 2)
 	assert.NotEqual(t, starter.options[0].ID, starter.options[1].ID)
-	assert.Equal(t, defaultWait, starter.options[0].WorkflowExecutionTimeout,
+	assert.Equal(t, DefaultWait, starter.options[0].WorkflowExecutionTimeout,
 		"a caller with no deadline of its own waits the API's request timeout")
 }
 

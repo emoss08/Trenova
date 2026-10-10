@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/extractionevaljobs/extractionevalcontract"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -13,8 +14,8 @@ import (
 	"go.temporal.io/sdk/workflow"
 )
 
-func runPayload() *RunPayload {
-	return &RunPayload{
+func runPayload() *extractionevalcontract.RunPayload {
+	return &extractionevalcontract.RunPayload{
 		OrganizationID: pulid.ID("org_1"),
 		BusinessUnitID: pulid.ID("bu_1"),
 		RunID:          pulid.ID("eer_1"),
@@ -135,5 +136,5 @@ func TestExtractionEvalRunWorkflow_ContinuesAsNewOnLongRuns(t *testing.T) {
 	require.Error(t, err)
 	var continued *workflow.ContinueAsNewError
 	require.ErrorAs(t, err, &continued)
-	assert.Equal(t, ExtractionEvalRunWorkflowName, continued.WorkflowType.Name)
+	assert.Equal(t, extractionevalcontract.ExtractionEvalRunWorkflowName, continued.WorkflowType.Name)
 }

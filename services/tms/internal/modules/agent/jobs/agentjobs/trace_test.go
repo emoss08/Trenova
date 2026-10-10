@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -83,7 +83,7 @@ func TestFinishRun_AFailedRunsRootSaysHowItFailed(t *testing.T) {
 	emitRunRoot(t.Context(), &FinishRunInput{
 		Payload:    &agentcontract.AgentRunPayload{RunID: runID, Trigger: agent.RunTriggerScheduled},
 		Definition: loopReplayDefinition(pulid.MustNew("agdef_")),
-		Failure:    &modelcall.Failure{TimedOut: true},
+		Failure:    &modelcallcontract.Failure{TimedOut: true},
 	}, &agent.AgentRun{}, &FinishRunResult{})
 
 	anchor := aitrace.AnchorFor(aitrace.AnchorAgentRun, runID.String())

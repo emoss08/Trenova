@@ -3,6 +3,7 @@ package accountingsyncjobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/jobs/accountingsyncjobs/accountingsynccontract"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -31,7 +32,7 @@ func syncError(err error) error {
 
 func (a *Activities) DrainAccountingOutboxActivity(
 	ctx context.Context,
-	payload *DrainPayload,
+	payload *accountingsynccontract.DrainPayload,
 ) (*DrainBatchResult, error) {
 	result, err := a.sync.Drain(ctx, &accountingsyncports.DrainAccountingSyncRequest{
 		TenantInfo:   payload.TenantInfo(),
@@ -129,7 +130,7 @@ func (a *Activities) PurgeAccountingSyncHistoryActivity(ctx context.Context) (*P
 
 func (a *Activities) AccountingBackfillStepActivity(
 	ctx context.Context,
-	payload *BackfillPayload,
+	payload *accountingsynccontract.BackfillPayload,
 ) (*BackfillStepResult, error) {
 	result, err := a.sync.BackfillStep(ctx, payload.TenantInfo(), payload.BackfillID)
 	if err != nil {

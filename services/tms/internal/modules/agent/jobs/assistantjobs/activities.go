@@ -9,20 +9,20 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -315,9 +315,9 @@ func emitTurnRoots(
 				delegateStatus = string(agentports.DelegateStatusFailed)
 			}
 		}
-		var failure *modelcall.Failure
+		var failure *modelcallcontract.Failure
 		if delegation.Failed {
-			failure = &modelcall.Failure{Message: delegateStatus}
+			failure = &modelcallcontract.Failure{Message: delegateStatus}
 		}
 		agentflow.EmitRoot(ctx, &agentflow.RootParams{
 			Anchor:         anchor,
@@ -565,7 +565,7 @@ func failedEnding(status conversation.AssistantTurnStatus, message string) *Turn
 func failedEndingFor(
 	status conversation.AssistantTurnStatus,
 	message string,
-	failure *modelcall.Failure,
+	failure *modelcallcontract.Failure,
 ) *TurnEnding {
 	ending := failedEnding(status, message)
 	if failure == nil {
@@ -616,7 +616,7 @@ const (
 	planLimitKind      = "plan_limit"
 )
 
-func planLimit(refusal *modelcall.PlanRefusal) map[string]any {
+func planLimit(refusal *modelcallcontract.PlanRefusal) map[string]any {
 	return map[string]any{
 		"kind":     planLimitKind,
 		"used":     strconv.FormatInt(refusal.Used, 10),
@@ -715,7 +715,7 @@ func (a *Activities) CloseTurnActivity(
 	}
 	emitTurnRoots(ctx, &FinishTurnInput{
 		Payload: payload,
-		Failure: &modelcall.Failure{Message: message},
+		Failure: &modelcallcontract.Failure{Message: message},
 	}, turn, string(conversation.AssistantTurnStatusFailed))
 
 	return nil

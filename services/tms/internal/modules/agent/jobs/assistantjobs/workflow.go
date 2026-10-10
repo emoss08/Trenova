@@ -4,13 +4,13 @@ import (
 	"errors"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
@@ -204,7 +204,7 @@ func (w *Workflows) answer(
 
 	var plan assistantservice.TurnPlan
 	if err := prepare(ctx, payload, &plan); err != nil {
-		finish.Failure = modelcall.FailureOf(err)
+		finish.Failure = modelcallcontract.FailureOf(err)
 		finish.Rejection = rejectionOf(err)
 		finish.RejectionParams = rejectionDetails(err)
 
@@ -239,7 +239,7 @@ func (w *Workflows) answer(
 	finish.Artifacts = outcome.Artifacts
 	finish.Events = append(finish.Events, outcome.Events...)
 	finish.Steered = outcome.Steered
-	finish.Failure = modelcall.FailureOf(err)
+	finish.Failure = modelcallcontract.FailureOf(err)
 
 	return finish
 }

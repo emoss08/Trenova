@@ -6,22 +6,9 @@ import (
 )
 
 const (
-	ExtractionEvalRunWorkflowName = "ExtractionEvalRunWorkflow"
-	casesPerExecution             = 100
-	evaluateAttempts              = 3
+	casesPerExecution = 100
+	evaluateAttempts  = 3
 )
-
-type RunPayload struct {
-	OrganizationID pulid.ID `json:"organizationId"`
-	BusinessUnitID pulid.ID `json:"businessUnitId"`
-	RunID          pulid.ID `json:"runId"`
-	AfterOrdinal   int      `json:"afterOrdinal,omitempty"`
-	Evaluated      int      `json:"evaluated,omitempty"`
-}
-
-func (p *RunPayload) tenant() pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: p.OrganizationID, BuID: p.BusinessUnitID}
-}
 
 type RunInput struct {
 	OrganizationID pulid.ID `json:"organizationId"`

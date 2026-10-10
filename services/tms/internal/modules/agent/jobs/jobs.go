@@ -1,10 +1,6 @@
 package jobs
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/app/runstepledger"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs"
@@ -39,10 +35,6 @@ func WorkerOptions() fx.Option {
 		assistantjobs.Module,
 		completionjobs.Module,
 		importassistantjobs.Module,
-		agentquerytoolservice.Module,
-		agenttoolcatalog.Module,
-		agenttoolpolicy.Module,
-		agentruntime.Module,
 		runstepledger.Module,
 		conversationschedulejobs.Module,
 		insightjobs.Module,
@@ -54,8 +46,5 @@ func WorkerOptions() fx.Option {
 		decisioncommitjobs.Module,
 		retrievaljobs.Module,
 		dispatchjobs.Module,
-		agentjobs.WorkerModule,
-		conversationschedulejobs.WorkerModule,
-		agentqualityjobs.WorkerModule,
 	)
 }

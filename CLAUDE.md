@@ -81,7 +81,7 @@ Never reach across apps or import an app package from another app.
 ```bash
 # Go
 go test -v -run TestFunctionName ./path/to/package
-go test -v -run TestFunctionName ./internal/core/services/organization/...
+go test -v -run TestFunctionName ./internal/modules/identity/app/organizationservice/...
 
 # Client
 pnpm vitest run src/path/to/file.test.ts
@@ -93,22 +93,25 @@ pnpm vitest run src/path/to/file.test.ts
 
 ```
 services/tms/
-├── cmd/cli/                    # CLI entry point (Cobra)
-│   ├── api/                    # API server command
-│   └── db/                     # Database management commands
+├── cmd/
+│   ├── cli/                    # CLI entry point (Cobra): api run, worker run, db, redis, ...
+│   ├── api/                    # API-only binary
+│   └── worker/                 # Worker-only binary
 ├── internal/
-│   ├── api/                    # HTTP layer (Gin framework)
+│   ├── api/                    # HTTP layer (Gin framework) and GraphQL: inbound adapters
 │   │   ├── handlers/           # Request handlers
 │   │   ├── middleware/         # HTTP middleware
 │   │   └── router.go           # Route registration
-│   ├── bootstrap/              # Uber FX dependency injection modules
-│   ├── core/                   # Business logic (pure domain)
+│   ├── bootstrap/              # Uber FX graphs: core (shared), apiapp, workerapp
+│   ├── modules/<module>/       # One hexagon per business module
 │   │   ├── domain/             # Domain entities and value objects
-│   │   ├── ports/              # Interface definitions
-│   │   │   ├── repositories/   # Data access contracts
-│   │   │   └── services/       # Service port definitions
-│   │   └── services/           # Business logic implementations
-│   └── infrastructure/         # Technical implementations
+│   │   ├── ports/<entity>ports # Repository and service interfaces per entity
+│   │   ├── app/                # Application services
+│   │   ├── adapters/postgres/  # Repositories
+│   │   ├── jobs/               # Temporal workflows and activities; <name>contract packages
+│   │   └── module.go           # The module's fx options
+│   ├── core/                   # Packages not yet assigned to a module
+│   └── infrastructure/         # Cross-cutting technical adapters
 │       ├── postgres/           # PostgreSQL adapters (Bun ORM)
 │       ├── redis/              # Redis cache adapters
 │       ├── database/           # Migrations and seeding
@@ -189,7 +192,7 @@ Supports nested paths (`user.address.street`) and array indices (`items[0].name`
 - Do not add comments to code
 - Use Bun ORM for database operations
 - Use Ozzo validation for struct validation
-- Follow hexagonal architecture — keep domain logic in `core/`, adapters in `infrastructure/`
+- Follow the modular hexagonal architecture — domain, ports, app, adapters and jobs live in their module under `internal/modules/<module>/` (see "Modules" below)
 - Use `sonic` for JSON — `encoding/json` is forbidden by lint
 - Format with `goimports` and `golines`
 - Use `t.Context()` instead of `context.Background()` in tests (Go 1.25+)
@@ -322,7 +325,7 @@ turn stream, per-agent schedules, the one-shot and batch workflows, and the
 `GetVersion` branches waiting on in-flight executions to drain.
 **Read [docs/engineering/agent-runtime.md](docs/engineering/agent-runtime.md)
 before changing anything under `internal/modules/agent/app/agentruntime/`,
-`assistantservice/`, or `internal/core/temporaljobs/{agentflow,modelcall,agentjobs,assistantjobs,completionjobs,importassistantjobs}/`.**
+`assistantservice/`, or `internal/modules/agent/jobs/{agentflow,modelcall,agentjobs,assistantjobs,completionjobs,importassistantjobs}/`.**
 Extensions (web search and anything like it) add agent-only tools that an organization turns
 on with its own vendor account; how they are gated, metered, and why a turn that read outside
 content proposes every later write, is in

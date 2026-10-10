@@ -22,10 +22,10 @@ package agentflow
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -80,13 +80,6 @@ var heavyTools = map[string]struct{}{
 	"compare_report_runs": {},
 	"plan_dispatch":       {},
 }
-
-// Priority keys order a queue's work: lower runs first. They matter only
-// where kinds of work share a queue, and fairness keys by organization then
-// share each priority out between tenants.
-const (
-	PriorityEvaluation = 5
-)
 
 // Non-retryable error types of a tool call. A call that fails with one of these
 // would fail the same way however many times it was asked.

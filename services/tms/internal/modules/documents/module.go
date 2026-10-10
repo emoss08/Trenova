@@ -29,10 +29,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/extractionrolloutservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/extractionshadowservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/extractionevaljobs/extractionevalcontract"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"go.uber.org/fx"
 )
@@ -91,6 +93,8 @@ func SharedOptions() fx.Option {
 			extractionevalservice.AsService,
 			extractionevalservice.AsRunner,
 			extractionevalservice.AsDriftChecker,
+			extractionevalcontract.NewRunStarter,
+			func(s *extractionevalcontract.RunStarter) extractionevalports.ExtractionEvalRunStarter { return s },
 			extractionrolloutservice.New,
 			extractionrolloutservice.AsService,
 			extractionrolloutservice.AsRouter,

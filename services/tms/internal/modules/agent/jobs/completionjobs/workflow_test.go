@@ -6,7 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/completionjobs/completioncontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -54,7 +56,7 @@ func TestStructuredCompletionWorkflow_ReturnsTheModelsAnswer(t *testing.T) {
 
 	env.ExecuteWorkflow(
 		StructuredCompletionWorkflow,
-		&StructuredCompletionPayload{Request: request()},
+		&completioncontract.StructuredCompletionPayload{Request: request()},
 	)
 
 	require.True(t, env.IsWorkflowCompleted())
@@ -84,7 +86,7 @@ func TestStructuredCompletionWorkflow_RetriesATransientFailure(t *testing.T) {
 
 	env.ExecuteWorkflow(
 		StructuredCompletionWorkflow,
-		&StructuredCompletionPayload{Request: request()},
+		&completioncontract.StructuredCompletionPayload{Request: request()},
 	)
 
 	require.NoError(t, env.GetWorkflowError())
@@ -108,7 +110,7 @@ func TestStructuredCompletionWorkflow_DoesNotRetryARejection(t *testing.T) {
 
 	env.ExecuteWorkflow(
 		StructuredCompletionWorkflow,
-		&StructuredCompletionPayload{Request: request()},
+		&completioncontract.StructuredCompletionPayload{Request: request()},
 	)
 
 	err := env.GetWorkflowError()
@@ -116,7 +118,7 @@ func TestStructuredCompletionWorkflow_DoesNotRetryARejection(t *testing.T) {
 	assert.Equal(t, 1, calls)
 
 	var failure agentports.ProviderFailure
-	require.ErrorAs(t, modelcall.Err(err), &failure)
+	require.ErrorAs(t, modelcallcontract.Err(err), &failure)
 	assert.Equal(t, http.StatusBadRequest, failure.ProviderStatus())
 }
 
@@ -131,11 +133,11 @@ func TestStructuredCompletionWorkflow_KeepsARefusalWhole(t *testing.T) {
 
 	env.ExecuteWorkflow(
 		StructuredCompletionWorkflow,
-		&StructuredCompletionPayload{Request: request()},
+		&completioncontract.StructuredCompletionPayload{Request: request()},
 	)
 
 	var business *errortypes.BusinessError
-	require.ErrorAs(t, modelcall.Err(env.GetWorkflowError()), &business)
+	require.ErrorAs(t, modelcallcontract.Err(env.GetWorkflowError()), &business)
 	assert.Equal(t, "AI is turned off", business.Error())
 }
 
@@ -148,13 +150,16 @@ func TestTestAIProviderWorkflow_ProbesOnce(t *testing.T) {
 	var a *Activities
 	calls := 0
 	env.OnActivity(a.TestAIProviderActivity, mock.Anything, mock.Anything).
-		Return(func(context.Context, *TestAIProviderPayload) (*agentports.TestAIProviderResult, error) {
+		Return(func(
+			context.Context,
+			*completioncontract.TestAIProviderPayload,
+		) (*agentports.TestAIProviderResult, error) {
 			calls++
 
 			return nil, modelcall.Classify(context.DeadlineExceeded)
 		})
 
-	env.ExecuteWorkflow(TestAIProviderWorkflow, &TestAIProviderPayload{})
+	env.ExecuteWorkflow(TestAIProviderWorkflow, &completioncontract.TestAIProviderPayload{})
 
 	require.Error(t, env.GetWorkflowError())
 	assert.Equal(t, 1, calls)
@@ -169,7 +174,7 @@ func TestWriteBriefingWorkflow_ReturnsWhatWasWritten(t *testing.T) {
 		Return(&briefingports.WriteBriefingResult{Written: 1, Narrated: 1}, nil).
 		Once()
 
-	env.ExecuteWorkflow(WriteBriefingWorkflow, &WriteBriefingPayload{})
+	env.ExecuteWorkflow(WriteBriefingWorkflow, &completioncontract.WriteBriefingPayload{})
 
 	require.NoError(t, env.GetWorkflowError())
 	var result briefingports.WriteBriefingResult

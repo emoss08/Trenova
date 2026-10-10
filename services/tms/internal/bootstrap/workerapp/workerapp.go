@@ -3,6 +3,10 @@ package workerapp
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentqualityjobs"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/conversationschedulejobs"
+
 	"github.com/emoss08/trenova/internal/bootstrap/edition"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/carrierintelligencejobs"
@@ -66,6 +70,9 @@ func Options() fx.Option {
 func OptionsFor(e *edition.Edition) fx.Option {
 	return fx.Options(
 		temporaljobs.WorkerModule,
+		agentjobs.WorkerModule,
+		conversationschedulejobs.WorkerModule,
+		agentqualityjobs.WorkerModule,
 		e.WorkerOption(),
 	)
 }

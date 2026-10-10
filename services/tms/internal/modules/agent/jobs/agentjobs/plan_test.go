@@ -3,6 +3,8 @@ package agentjobs
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,7 +18,7 @@ func TestStartScheduledRunSkipsOrganizationsWithoutAutomation(t *testing.T) {
 	tenant := plantest.Tenant()
 	a := &Activities{platformPlans: plantest.Restricting(t, platformplan.CapabilityAgentAutomation)}
 
-	result, err := a.StartScheduledRunActivity(t.Context(), &ScheduledRunPayload{
+	result, err := a.StartScheduledRunActivity(t.Context(), &agentcontract.ScheduledRunPayload{
 		DefinitionID:   pulid.MustNew("agd_"),
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,

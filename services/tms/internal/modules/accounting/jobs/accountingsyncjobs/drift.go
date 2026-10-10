@@ -2,32 +2,25 @@ package accountingsyncjobs
 
 import (
 	"context"
-	"errors"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/accounting/jobs/accountingsyncjobs/accountingsynccontract"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
-	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/activity"
-	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
-	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const (
-	ReconcileAccountingDriftWorkflowName     = "ReconcileAccountingDriftWorkflow"
 	KickAccountingDriftWorkflowName          = "KickAccountingDriftWorkflow"
 	AnnounceAccountingReconciliationWorkflow = "AnnounceAccountingReconciliationWorkflow"
-	DriftWorkflowIDPrefix                    = "accounting-drift:"
 	driftBatchesPerRun                       = 50
 	driftEventsPerRun                        = 20
 	driftConnectionsPage                     = 100
@@ -43,32 +36,6 @@ var driftActivityOptions = workflow.ActivityOptions{
 	},
 }
 
-type DriftPayload struct {
-	OrganizationID  pulid.ID       `json:"organizationId"`
-	BusinessUnitID  pulid.ID       `json:"businessUnitId"`
-	ConnectionID    pulid.ID       `json:"connectionId"`
-	Started         bool           `json:"started"`
-	Balances        bool           `json:"balances"`
-	AfterID         pulid.ID       `json:"afterId"`
-	AfterCustomerID pulid.ID       `json:"afterCustomerId"`
-	EventsLeft      int            `json:"eventsLeft"`
-	Totals          DriftRunResult `json:"totals"`
-}
-
-func (p *DriftPayload) TenantInfo() pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: p.OrganizationID, BuID: p.BusinessUnitID}
-}
-
-type DriftRunResult struct {
-	Batches   int  `json:"batches"`
-	Compared  int  `json:"compared"`
-	Customers int  `json:"customers"`
-	Opened    int  `json:"opened"`
-	Resolved  int  `json:"resolved"`
-	Events    int  `json:"events"`
-	Held      bool `json:"held"`
-}
-
 type KickDriftResult struct {
 	Connections int `json:"connections"`
 	Started     int `json:"started"`
@@ -78,14 +45,10 @@ type AnnounceReconciliationResult struct {
 	Connections int `json:"connections"`
 }
 
-func DriftWorkflowID(connectionID pulid.ID) string {
-	return DriftWorkflowIDPrefix + connectionID.String()
-}
-
 func driftWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
-			Name:        ReconcileAccountingDriftWorkflowName,
+			Name:        accountingsynccontract.ReconcileAccountingDriftWorkflowName,
 			Fn:          ReconcileAccountingDriftWorkflow,
 			TaskQueue:   temporaltype.IntegrationTaskQueue,
 			Description: "Compare what one accounting system holds with what Trenova sent it",
@@ -107,8 +70,8 @@ func driftWorkflows() []temporaltype.WorkflowDefinition {
 
 func ReconcileAccountingDriftWorkflow(
 	ctx workflow.Context,
-	payload *DriftPayload,
-) (*DriftRunResult, error) {
+	payload *accountingsynccontract.DriftPayload,
+) (*accountingsynccontract.DriftRunResult, error) {
 	var a *Activities
 	actx := workflow.WithActivityOptions(
 		ctx,
@@ -149,7 +112,11 @@ func ReconcileAccountingDriftWorkflow(
 	return result, err
 }
 
-func reconcileRecords(actx workflow.Context, a *Activities, payload *DriftPayload) error {
+func reconcileRecords(
+	actx workflow.Context,
+	a *Activities,
+	payload *accountingsynccontract.DriftPayload,
+) error {
 	var batch accountingsyncports.AccountingDriftBatchResult
 	if err := workflow.ExecuteActivity(actx, a.ReconcileAccountingDriftActivity, payload).
 		Get(actx, &batch); err != nil {
@@ -170,7 +137,11 @@ func reconcileRecords(actx workflow.Context, a *Activities, payload *DriftPayloa
 	return nil
 }
 
-func reconcileBalances(actx workflow.Context, a *Activities, payload *DriftPayload) (bool, error) {
+func reconcileBalances(
+	actx workflow.Context,
+	a *Activities,
+	payload *accountingsynccontract.DriftPayload,
+) (bool, error) {
 	var page accountingsyncports.AccountingDriftBalanceResult
 	if err := workflow.ExecuteActivity(actx, a.ReconcileAccountingDriftBalancesActivity, payload).
 		Get(actx, &page); err != nil {
@@ -209,7 +180,7 @@ func AnnounceAccountingReconciliationDueWorkflow(
 
 func (a *Activities) ReconcileAccountingDriftActivity(
 	ctx context.Context,
-	payload *DriftPayload,
+	payload *accountingsynccontract.DriftPayload,
 ) (*accountingsyncports.AccountingDriftBatchResult, error) {
 	result, err := a.drift.ReconcileBatch(ctx, &accountingsyncports.ReconcileAccountingDriftRequest{
 		TenantInfo:   payload.TenantInfo(),
@@ -225,7 +196,7 @@ func (a *Activities) ReconcileAccountingDriftActivity(
 
 func (a *Activities) ReconcileAccountingDriftBalancesActivity(
 	ctx context.Context,
-	payload *DriftPayload,
+	payload *accountingsynccontract.DriftPayload,
 ) (*accountingsyncports.AccountingDriftBalanceResult, error) {
 	result, err := a.drift.ReconcileBalances(ctx, &accountingsyncports.ReconcileAccountingDriftBalancesRequest{
 		TenantInfo:      payload.TenantInfo(),
@@ -241,7 +212,7 @@ func (a *Activities) ReconcileAccountingDriftBalancesActivity(
 
 func (a *Activities) FinishAccountingDriftCheckActivity(
 	ctx context.Context,
-	payload *DriftPayload,
+	payload *accountingsynccontract.DriftPayload,
 ) error {
 	return syncError(a.drift.FinishCheck(ctx, &accountingsyncports.FinishAccountingDriftCheckRequest{
 		TenantInfo:   payload.TenantInfo(),
@@ -326,45 +297,4 @@ func (a *Activities) AnnounceAccountingReconciliationActivity(
 	)
 	result.Connections = connections
 	return result, err
-}
-
-type DriftCheckerParams struct {
-	fx.In
-
-	Workflows kernelports.WorkflowStarter
-}
-
-type DriftChecker struct {
-	workflows kernelports.WorkflowStarter
-}
-
-var _ accountingsyncports.AccountingDriftChecker = (*DriftChecker)(nil)
-
-func NewDriftChecker(p DriftCheckerParams) *DriftChecker {
-	return &DriftChecker{workflows: p.Workflows}
-}
-
-func (c *DriftChecker) CheckNow(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	connectionID pulid.ID,
-) error {
-	_, err := c.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
-		ID:                       DriftWorkflowID(connectionID),
-		TaskQueue:                temporaltype.IntegrationTaskQueue,
-		WorkflowIDReusePolicy:    enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
-		WorkflowIDConflictPolicy: enums.WORKFLOW_ID_CONFLICT_POLICY_USE_EXISTING,
-		StaticSummary: "Compare the accounting system with Trenova for connection " +
-			connectionID.String(),
-	}, ReconcileAccountingDriftWorkflowName, &DriftPayload{
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-		ConnectionID:   connectionID,
-	})
-	if errors.Is(err, kernelports.ErrWorkflowStarterDisabled) {
-		return errortypes.NewBusinessError(
-			"Background work is not available on this server, so the books cannot be checked now",
-		).WithInternal(err)
-	}
-	return err
 }

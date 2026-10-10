@@ -3,6 +3,8 @@ package conversationschedulejobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/conversationschedulejobs/conversationschedulecontract"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
@@ -37,7 +39,7 @@ var reconcileOptions = workflow.ActivityOptions{
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
-			Name:        RunWorkflowName,
+			Name:        conversationschedulecontract.RunWorkflowName,
 			Fn:          ConversationScheduleRunWorkflow,
 			TaskQueue:   temporaltype.TaskQueueSystem.String(),
 			Description: "Ask a scheduled request in the conversation it was made in",
@@ -56,7 +58,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 // workflow, so this one ends as soon as the turn has begun.
 func ConversationScheduleRunWorkflow(
 	ctx workflow.Context,
-	payload *RunPayload,
+	payload *conversationschedulecontract.RunPayload,
 ) (*conversationscheduleports.FireConversationScheduleResult, error) {
 	var a *Activities
 
@@ -75,11 +77,11 @@ func ConversationScheduleRunWorkflow(
 
 // ReconcileConversationSchedulesWorkflow makes every conversation schedule's
 // Temporal schedule match its row. It runs when a worker starts and hourly.
-func ReconcileConversationSchedulesWorkflow(ctx workflow.Context) (*ReconcileResult, error) {
+func ReconcileConversationSchedulesWorkflow(ctx workflow.Context) (*conversationschedulecontract.ReconcileResult, error) {
 	var a *Activities
 
 	reconcileCtx := workflow.WithActivityOptions(ctx, reconcileOptions)
-	var result ReconcileResult
+	var result conversationschedulecontract.ReconcileResult
 	if err := workflow.ExecuteActivity(reconcileCtx, a.ReconcileConversationSchedulesActivity).
 		Get(reconcileCtx, &result); err != nil {
 		return nil, err

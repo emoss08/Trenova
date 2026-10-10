@@ -2,6 +2,7 @@ package completionjobs
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/completionjobs/completioncontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
@@ -14,7 +15,7 @@ import (
 // the way the provider's answer says, within the time its caller waits.
 func StructuredCompletionWorkflow(
 	ctx workflow.Context,
-	payload *StructuredCompletionPayload,
+	payload *completioncontract.StructuredCompletionPayload,
 ) (*agentports.StructuredCompletionResult, error) {
 	var a *Activities
 	callCtx := workflow.WithActivityOptions(ctx, waitedOptions(
@@ -35,7 +36,7 @@ func StructuredCompletionWorkflow(
 // hid a first failure would answer a different question.
 func TestAIProviderWorkflow(
 	ctx workflow.Context,
-	payload *TestAIProviderPayload,
+	payload *completioncontract.TestAIProviderPayload,
 ) (*agentports.TestAIProviderResult, error) {
 	var a *Activities
 	testCtx := workflow.WithActivityOptions(ctx, waitedOptions(
@@ -56,7 +57,7 @@ func TestAIProviderWorkflow(
 // shown to them rather than retried behind their back.
 func ListAIProviderModelsWorkflow(
 	ctx workflow.Context,
-	payload *ListAIProviderModelsPayload,
+	payload *completioncontract.ListAIProviderModelsPayload,
 ) ([]agentports.AIProviderModelOption, error) {
 	var a *Activities
 	listCtx := workflow.WithActivityOptions(ctx, waitedOptions(
@@ -76,7 +77,7 @@ func ListAIProviderModelsWorkflow(
 // reason a saved provider's test is not retried.
 func TestAIProviderDraftWorkflow(
 	ctx workflow.Context,
-	payload *TestAIProviderDraftPayload,
+	payload *completioncontract.TestAIProviderDraftPayload,
 ) (*agentports.AIProviderDraftTestResult, error) {
 	var a *Activities
 	testCtx := workflow.WithActivityOptions(ctx, waitedOptions(
@@ -96,7 +97,7 @@ func TestAIProviderDraftWorkflow(
 // again.
 func WriteBriefingWorkflow(
 	ctx workflow.Context,
-	payload *WriteBriefingPayload,
+	payload *completioncontract.WriteBriefingPayload,
 ) (*briefingports.WriteBriefingResult, error) {
 	var a *Activities
 	writeCtx := workflow.WithActivityOptions(ctx, waitedOptions(
@@ -123,7 +124,7 @@ func waitedOptions(
 ) workflow.ActivityOptions {
 	budget := workflow.GetInfo(ctx).WorkflowExecutionTimeout
 	if budget <= 0 {
-		budget = defaultWait
+		budget = completioncontract.DefaultWait
 	}
 
 	return workflow.ActivityOptions{

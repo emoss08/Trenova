@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdryrun"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdryrun"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -149,7 +149,7 @@ func dryRunError(ctx workflow.Context, err error) temporaltype.StreamItem {
 	message := dryRunFailedMessage
 	if text := rejectionOf(err); text != "" {
 		message = text
-	} else if failure := modelcall.FailureOf(err); failure != nil && failure.Stopped {
+	} else if failure := modelcallcontract.FailureOf(err); failure != nil && failure.Stopped {
 		message = dryRunStoppedMessage
 	}
 

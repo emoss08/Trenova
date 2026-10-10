@@ -7,15 +7,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentscoring"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentscoring"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
@@ -566,7 +567,7 @@ func (a *Activities) OpenReplayActivity(
 	}
 
 	return &OpenReplayResult{
-		Run:       agentflow.NewRunContext(opened.request, agentflow.PriorityEvaluation),
+		Run:       agentflow.NewRunContext(opened.request, agentflowcontract.PriorityEvaluation),
 		Turn:      a.runtime.OpenTurn(ctx, opened.request).State(),
 		Originals: opened.originals,
 	}, nil
@@ -612,9 +613,9 @@ func emitEvaluationRoot(
 	status agent.EvaluationStatus,
 	errorType string,
 ) {
-	var failure *modelcall.Failure
+	var failure *modelcallcontract.Failure
 	if errorType != "" {
-		failure = &modelcall.Failure{Message: errorType}
+		failure = &modelcallcontract.Failure{Message: errorType}
 	}
 	var started int64
 	if evaluation.StartedAt != nil {

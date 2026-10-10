@@ -1,8 +1,9 @@
 package completionjobs
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/completionjobs/completioncontract"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -29,27 +30,27 @@ func NewRegistry(p RegistryParams) *registry.ComposedRegistry {
 		Activities: []any{p.Activities},
 		Workflows: []registry.WorkflowDefinition{
 			{
-				Name:        StructuredCompletionWorkflowName,
+				Name:        completioncontract.StructuredCompletionWorkflowName,
 				Fn:          StructuredCompletionWorkflow,
 				Description: "Ask the model one structured question for a person waiting on the answer",
 			},
 			{
-				Name:        TestAIProviderWorkflowName,
+				Name:        completioncontract.TestAIProviderWorkflowName,
 				Fn:          TestAIProviderWorkflow,
 				Description: "Probe an AI provider once and record whether it answered",
 			},
 			{
-				Name:        ListAIProviderModelsWorkflowName,
+				Name:        completioncontract.ListAIProviderModelsWorkflowName,
 				Fn:          ListAIProviderModelsWorkflow,
 				Description: "Ask an AI provider's endpoint which models it serves",
 			},
 			{
-				Name:        TestAIProviderDraftWorkflowName,
+				Name:        completioncontract.TestAIProviderDraftWorkflowName,
 				Fn:          TestAIProviderDraftWorkflow,
 				Description: "Probe an unsaved AI provider once and record nothing",
 			},
 			{
-				Name:        WriteBriefingWorkflowName,
+				Name:        completioncontract.WriteBriefingWorkflowName,
 				Fn:          WriteBriefingWorkflow,
 				Description: "Write a day's briefing again for a person who asked",
 			},

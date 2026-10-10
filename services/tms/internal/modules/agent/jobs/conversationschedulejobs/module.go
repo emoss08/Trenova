@@ -6,7 +6,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
@@ -43,11 +42,6 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 
 var Module = fx.Module("conversation-schedule-jobs",
 	fx.Provide(NewActivities),
-	fx.Provide(fx.Annotate(
-		NewSchedules,
-		fx.As(fx.Self()),
-		fx.As(new(conversationscheduleports.ConversationScheduleSyncer)),
-	)),
 	fx.Provide(schedule.AsProvider(NewScheduleProvider)),
 	fx.Provide(
 		fx.Annotate(

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -77,14 +78,14 @@ type turn struct {
 
 // converse runs the turn to its reply. Every failure is returned as data, for
 // the turn's record and for the person.
-func (t *turn) converse() (*shipmentports.ShipmentImportChatResponse, *modelcall.Failure) {
+func (t *turn) converse() (*shipmentports.ShipmentImportChatResponse, *modelcallcontract.Failure) {
 	var a *Activities
 
 	prepareCtx := workflow.WithActivityOptions(t.ctx, t.options(prepareTimeout, readAttempts))
 	var prepared assistant.PreparedTurn
 	if err := workflow.ExecuteActivity(prepareCtx, a.PrepareImportTurnActivity, t.payload).
 		Get(prepareCtx, &prepared); err != nil {
-		return nil, modelcall.FailureOf(err)
+		return nil, modelcallcontract.FailureOf(err)
 	}
 
 	messages := prepared.Messages
@@ -107,7 +108,7 @@ func (t *turn) converse() (*shipmentports.ShipmentImportChatResponse, *modelcall
 			},
 			Stream: t.payload.Stream,
 		}).Get(modelCtx, &result); err != nil {
-			return nil, modelcall.FailureOf(err)
+			return nil, modelcallcontract.FailureOf(err)
 		}
 
 		t.record.RecordModelCall(&result)
@@ -133,7 +134,7 @@ func (t *turn) converse() (*shipmentports.ShipmentImportChatResponse, *modelcall
 		Payload: t.payload,
 		Record:  t.record,
 	}).Get(finishCtx, &response); err != nil {
-		return nil, modelcall.FailureOf(err)
+		return nil, modelcallcontract.FailureOf(err)
 	}
 
 	return &response, nil

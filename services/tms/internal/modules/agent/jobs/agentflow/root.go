@@ -2,12 +2,12 @@ package agentflow
 
 import (
 	"context"
-	"strconv"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,15 +18,6 @@ import (
 )
 
 const (
-	failureStopped    = "cancelled"
-	failureTimedOut   = "timeout"
-	failureNoProvider = "no_provider"
-	failureResting    = "providers_resting"
-	failureRefused    = "refused"
-	failureSchema     = "schema_invalid"
-	failureOther      = "failed"
-	failureHTTPPrefix = "http_"
-
 	delegateFieldCallID    = "delegateCallId"
 	delegateFieldStatus    = "status"
 	delegateFieldToolCalls = "toolCallsUsed"
@@ -45,7 +36,7 @@ type RootParams struct {
 	Tenant         pagination.TenantInfo
 	Trigger        string
 	Status         string
-	Failure        *modelcall.Failure
+	Failure        *modelcallcontract.Failure
 	Result         *agentports.RunResult
 	Usage          *agentports.RunUsage
 	ToolCalls      int
@@ -74,7 +65,7 @@ func EmitRoot(ctx context.Context, p *RootParams) {
 		BusinessUnitID: p.Tenant.BuID,
 		Trigger:        p.Trigger,
 		Status:         p.Status,
-		ErrorType:      FailureKind(p.Failure),
+		ErrorType:      agentflowcontract.FailureKind(p.Failure),
 		ToolCalls:      p.ToolCalls,
 		Purpose:        p.Purpose,
 		Start:          p.Start,
@@ -110,29 +101,6 @@ func EmitRoot(ctx context.Context, p *RootParams) {
 	}
 
 	aitrace.EmitInvokeAgent(ctx, spec)
-}
-
-func FailureKind(failure *modelcall.Failure) string {
-	switch {
-	case failure == nil:
-		return ""
-	case failure.Stopped:
-		return failureStopped
-	case failure.TimedOut:
-		return failureTimedOut
-	case failure.NoProvider:
-		return failureNoProvider
-	case failure.Resting:
-		return failureResting
-	case failure.Refusal != nil:
-		return failureRefused
-	case failure.SchemaInvalid:
-		return failureSchema
-	case failure.Status != 0:
-		return failureHTTPPrefix + strconv.Itoa(failure.Status)
-	default:
-		return failureOther
-	}
 }
 
 func StartedAt(times ...int64) time.Time {

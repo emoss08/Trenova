@@ -6,19 +6,16 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/accounting/jobs/accountingsyncjobs/accountingsynccontract"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/testutil/agenteventstest"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"go.temporal.io/api/enums/v1"
-	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/testsuite"
 	"go.temporal.io/sdk/workflow"
 	"go.uber.org/zap"
@@ -43,8 +40,8 @@ func (s *DriftWorkflowSuite) AfterTest(_, _ string) {
 	s.env.AssertExpectations(s.T())
 }
 
-func driftPayload() *DriftPayload {
-	return &DriftPayload{
+func driftPayload() *accountingsynccontract.DriftPayload {
+	return &accountingsynccontract.DriftPayload{
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		ConnectionID:   pulid.MustNew("acctc_"),
@@ -55,9 +52,9 @@ func (s *DriftWorkflowSuite) TestComparesEveryBatchThenBalancesThenFinishes() {
 	var a *Activities
 	first, second := pulid.MustNew("acctsr_"), pulid.MustNew("acctsr_")
 	customer := pulid.MustNew("cus_")
-	var seen []*DriftPayload
+	var seen []*accountingsynccontract.DriftPayload
 	record := func(args mock.Arguments) {
-		copied := *args.Get(1).(*DriftPayload)
+		copied := *args.Get(1).(*accountingsynccontract.DriftPayload)
 		seen = append(seen, &copied)
 	}
 	s.env.OnActivity(a.ReconcileAccountingDriftActivity, mock.Anything, mock.Anything).
@@ -81,7 +78,7 @@ func (s *DriftWorkflowSuite) TestComparesEveryBatchThenBalancesThenFinishes() {
 
 	s.Require().True(s.env.IsWorkflowCompleted())
 	s.Require().NoError(s.env.GetWorkflowError())
-	var result DriftRunResult
+	var result accountingsynccontract.DriftRunResult
 	s.Require().NoError(s.env.GetWorkflowResult(&result))
 	s.Equal(4, result.Batches)
 	s.Equal(240, result.Compared)
@@ -108,7 +105,7 @@ func (s *DriftWorkflowSuite) TestStopsWithoutFinishingWhenTheConnectionHolds() {
 	s.env.ExecuteWorkflow(ReconcileAccountingDriftWorkflow, driftPayload())
 
 	s.Require().NoError(s.env.GetWorkflowError())
-	var result DriftRunResult
+	var result accountingsynccontract.DriftRunResult
 	s.Require().NoError(s.env.GetWorkflowResult(&result))
 	s.True(result.Held)
 }
@@ -137,19 +134,13 @@ func (s *DriftWorkflowSuite) TestContinuesAsNewAfterTheBatchLimitKeepingItsPlace
 	s.True(workflow.IsContinueAsNewError(err))
 }
 
-func TestDriftWorkflowIDIsPerConnection(t *testing.T) {
-	t.Parallel()
-	id := pulid.MustNew("acctc_")
-	assert.Equal(t, "accounting-drift:"+id.String(), DriftWorkflowID(id))
-}
-
 func TestDriftWorkflowsAndSchedulesAreRegistered(t *testing.T) {
 	t.Parallel()
 	names := map[string]bool{}
 	for _, def := range RegisterWorkflows() {
 		names[def.Name] = true
 	}
-	require.True(t, names[ReconcileAccountingDriftWorkflowName])
+	require.True(t, names[accountingsynccontract.ReconcileAccountingDriftWorkflowName])
 	require.True(t, names[KickAccountingDriftWorkflowName])
 	require.True(t, names[AnnounceAccountingReconciliationWorkflow])
 
@@ -159,47 +150,6 @@ func TestDriftWorkflowsAndSchedulesAreRegistered(t *testing.T) {
 	}
 	assert.True(t, schedules["accounting-drift-reconcile"])
 	assert.True(t, schedules["accounting-drift-weekly"])
-}
-
-type fakeStarter struct {
-	kernelports.WorkflowStarter
-	options  []client.StartWorkflowOptions
-	payloads []any
-	err      error
-}
-
-func (f *fakeStarter) StartWorkflow(
-	_ context.Context,
-	options client.StartWorkflowOptions,
-	_ any,
-	args ...any,
-) (client.WorkflowRun, error) {
-	f.options = append(f.options, options)
-	f.payloads = append(f.payloads, args...)
-	return nil, f.err
-}
-
-func TestCheckNowStartsOneRunPerConnection(t *testing.T) {
-	t.Parallel()
-	starter := &fakeStarter{}
-	checker := NewDriftChecker(DriftCheckerParams{Workflows: starter})
-	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	connectionID := pulid.MustNew("acctc_")
-
-	require.NoError(t, checker.CheckNow(t.Context(), tenant, connectionID))
-
-	require.Len(t, starter.options, 1)
-	assert.Equal(t, DriftWorkflowID(connectionID), starter.options[0].ID)
-	assert.Equal(t, enums.WORKFLOW_ID_CONFLICT_POLICY_USE_EXISTING,
-		starter.options[0].WorkflowIDConflictPolicy, "a second click joins the run already going")
-	payload, ok := starter.payloads[0].(*DriftPayload)
-	require.True(t, ok)
-	assert.Equal(t, connectionID, payload.ConnectionID)
-	assert.Equal(t, tenant.OrgID, payload.OrganizationID)
-
-	starter.err = kernelports.ErrWorkflowStarterDisabled
-	err := checker.CheckNow(t.Context(), tenant, connectionID)
-	assert.True(t, errortypes.IsBusinessError(err))
 }
 
 type fakeActiveConnections struct {

@@ -33,7 +33,7 @@ func TestWorkflows_KeepTheWorkloadClassesApart(t *testing.T) {
 	background := names(workflows.background())
 	for _, name := range []string{
 		agentcontract.AgentRunWorkflowName,
-		AgentScheduledRunWorkflowName,
+		agentcontract.AgentScheduledRunWorkflowName,
 		ReconcileSchedulesWorkflowName,
 		ExpireStaleProposalsWorkflowName,
 		DeleteStaleAskThreadsWorkflowName,

@@ -6,10 +6,11 @@ import (
 	"slices"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -347,7 +348,7 @@ func (fx *workflowEffects) Delegate(
 		ExternalContent: turn.ReadExternalContent(),
 	}
 	if err != nil {
-		failure := modelcall.FailureOf(err)
+		failure := modelcallcontract.FailureOf(err)
 		run.Stopped = failure.Stopped
 		if !failure.Stopped {
 			run.Failure = delegateFailureReason(call.Delegate.Name, failure)
@@ -378,7 +379,7 @@ func declinedDelegate(call agentruntime.DelegateCall, err error) agentruntime.De
 
 // delegateFailureReason says why another agent's turn ended partway, in words
 // the asking agent can pass on, without the provider's own message.
-func delegateFailureReason(name string, failure *modelcall.Failure) string {
+func delegateFailureReason(name string, failure *modelcallcontract.Failure) string {
 	switch {
 	case failure == nil:
 		return name + " stopped before it finished."

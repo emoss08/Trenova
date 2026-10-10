@@ -1,9 +1,9 @@
 package extractionevaljobs
 
 import (
-	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentintelligencejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentintelligencejobs"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.uber.org/fx"
@@ -49,9 +49,7 @@ var Module = fx.Module("extraction-eval-jobs",
 	fx.Provide(
 		NewActivities,
 		NewPredictor,
-		NewRunStarter,
 		func(p *Predictor) extractionevalports.ExtractionPredictor { return p },
-		func(s *RunStarter) extractionevalports.ExtractionEvalRunStarter { return s },
 	),
 	fx.Provide(fx.Annotate(
 		NewRegistry,

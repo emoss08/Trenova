@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,9 +35,9 @@ func TestAPlanRefusalTurnsAQuestionAwayAsAUsageLimit(t *testing.T) {
 func TestAFailedTurnSaysWhichPlanLimitStoppedIt(t *testing.T) {
 	t.Parallel()
 
-	ending := failedEndingFor(conversation.AssistantTurnStatusFailed, failedMessage, &modelcall.Failure{
+	failure := &modelcallcontract.Failure{
 		Message: "limit",
-		Plan: &modelcall.PlanRefusal{
+		Plan: &modelcallcontract.PlanRefusal{
 			Code:    string(errortypes.ErrQuotaExceeded),
 			Message: "This organization has reached the limit of its plan",
 			Meter:   "ai.spend_cents",
@@ -45,7 +45,8 @@ func TestAFailedTurnSaysWhichPlanLimitStoppedIt(t *testing.T) {
 			Used:    151,
 			Plan:    "free_demo",
 		},
-	})
+	}
+	ending := failedEndingFor(conversation.AssistantTurnStatusFailed, failedMessage, failure)
 
 	data, ok := ending.Event.Data.(map[string]any)
 	require.True(t, ok)

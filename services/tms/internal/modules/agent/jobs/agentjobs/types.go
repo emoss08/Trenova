@@ -1,12 +1,12 @@
 package agentjobs
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -20,7 +20,6 @@ const (
 	// that started before it replays on the code it started on.
 	agentflowChange = "agent-loop-in-workflow"
 
-	AgentScheduledRunWorkflowName     = "AgentScheduledRunWorkflow"
 	ReconcileSchedulesWorkflowName    = "ReconcileDefinitionSchedulesWorkflow"
 	ReconcileSchedulesScheduleID      = "agent-definition-schedules"
 	ExpireStaleProposalsWorkflowName  = "ExpireStaleProposalsWorkflow"
@@ -63,7 +62,7 @@ type FinishRunInput struct {
 	Definition *agentdefinition.Definition     `json:"definition"`
 	Subject    *agentdefinition.RuntimeSubject `json:"subject,omitempty"`
 	Run        *agentports.RunResult           `json:"run,omitempty"`
-	Failure    *modelcall.Failure              `json:"failure,omitempty"`
+	Failure    *modelcallcontract.Failure      `json:"failure,omitempty"`
 	Events     []temporaltype.StreamItem       `json:"events,omitempty"`
 }
 
@@ -97,15 +96,6 @@ type CompleteRunInput struct {
 type ExpireProposalsInput struct {
 	RunID      pulid.ID              `json:"runId"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
-}
-
-// ScheduledRunPayload is what a definition's schedule fires with. Slot is the
-// time the schedule fired for, filled in by the workflow it starts.
-type ScheduledRunPayload struct {
-	DefinitionID   pulid.ID `json:"definitionId"`
-	OrganizationID pulid.ID `json:"organizationId"`
-	BusinessUnitID pulid.ID `json:"businessUnitId"`
-	Slot           int64    `json:"slot,omitempty"`
 }
 
 type StartScheduledRunResult struct {

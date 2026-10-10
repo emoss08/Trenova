@@ -10,25 +10,25 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentscoring"
+	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentscoring"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
-	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -83,7 +83,7 @@ type ActivitiesParams struct {
 	// failure nobody was watching for still reaches someone.
 	Watchtower    watchtowerports.WatchtowerProjector `optional:"true"`
 	Reflections   agentports.AgentReflectionScheduler `optional:"true"`
-	Schedules     *DefinitionSchedules
+	Schedules     *agentcontract.DefinitionSchedules
 	PlatformPlans platformplanports.PlanService `optional:"true"`
 	// Waits reads the wait whose ending started a run that picks up work.
 	Waits agentwaitports.AgentWaitRepository `optional:"true"`
@@ -115,7 +115,7 @@ type Activities struct {
 	activity      agentports.AgentActivityPublisher
 	watchtower    watchtowerports.WatchtowerProjector
 	reflections   agentports.AgentReflectionScheduler
-	schedules     *DefinitionSchedules
+	schedules     *agentcontract.DefinitionSchedules
 	platformPlans platformplanports.PlanService
 	waits         agentwaitports.AgentWaitRepository
 }
@@ -679,7 +679,7 @@ func (a *Activities) ExpireProposalsActivity(
 // workflow, so the same slot cannot start two runs.
 func (a *Activities) StartScheduledRunActivity(
 	ctx context.Context,
-	payload *ScheduledRunPayload,
+	payload *agentcontract.ScheduledRunPayload,
 ) (*StartScheduledRunResult, error) {
 	tenant := pagination.TenantInfo{OrgID: payload.OrganizationID, BuID: payload.BusinessUnitID}
 	now := timeutils.NowUnix()
@@ -706,7 +706,7 @@ func (a *Activities) StartScheduledRunActivity(
 			"agent definition unavailable", "DefinitionUnavailable", err,
 		)
 	}
-	if !definition.Enabled || !definition.IsBackground() || !Scheduled(definition) {
+	if !definition.Enabled || !definition.IsBackground() || !agentcontract.Scheduled(definition) {
 		return &StartScheduledRunResult{Skipped: "not_runnable"}, nil
 	}
 	if definition.EndsAt != nil && *definition.EndsAt <= now {
@@ -768,7 +768,7 @@ func (a *Activities) StartScheduledRunActivity(
 // agent.
 func (a *Activities) ReconcileDefinitionSchedulesActivity(
 	ctx context.Context,
-) (*ReconcileResult, error) {
+) (*agentcontract.ReconcileResult, error) {
 	return a.schedules.Reconcile(ctx)
 }
 

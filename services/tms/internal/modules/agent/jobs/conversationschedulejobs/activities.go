@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/conversationschedulejobs/conversationschedulecontract"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/conversationscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -14,7 +16,7 @@ import (
 
 // reconciler is what the reconcile activity asks of the schedules.
 type reconciler interface {
-	Reconcile(ctx context.Context) (*ReconcileResult, error)
+	Reconcile(ctx context.Context) (*conversationschedulecontract.ReconcileResult, error)
 }
 
 type ActivitiesParams struct {
@@ -22,7 +24,7 @@ type ActivitiesParams struct {
 
 	Runner    conversationscheduleports.ConversationScheduleRunner
 	Syncer    conversationscheduleports.ConversationScheduleSyncer
-	Schedules *Schedules
+	Schedules *conversationschedulecontract.Schedules
 	Logger    *zap.Logger
 }
 
@@ -92,6 +94,6 @@ func (a *Activities) FireConversationScheduleActivity(
 // Temporal schedule match its row.
 func (a *Activities) ReconcileConversationSchedulesActivity(
 	ctx context.Context,
-) (*ReconcileResult, error) {
+) (*conversationschedulecontract.ReconcileResult, error) {
 	return a.reconciler.Reconcile(ctx)
 }

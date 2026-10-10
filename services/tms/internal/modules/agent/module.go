@@ -67,12 +67,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentrosterservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruneventservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentrunservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentsafetyservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentscorecardservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadowservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentsubjectservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttestpromptservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolruleservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttrustservice"
@@ -112,13 +115,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/tablequeryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowerservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/completionjobs/completioncontract"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/conversationschedulejobs/conversationschedulecontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"go.uber.org/fx"
 )
@@ -127,8 +135,26 @@ import (
 func SharedOptions() fx.Option {
 	return fx.Options(
 		agenttoolservice.Module,
+		agentquerytoolservice.Module,
+		agentruntime.Module,
+		agenttoolcatalog.Module,
+		agenttoolpolicy.Module,
+		fx.Provide(fx.Annotate(
+			conversationschedulecontract.NewSchedules,
+			fx.As(fx.Self()),
+			fx.As(new(conversationscheduleports.ConversationScheduleSyncer)),
+		)),
+		fx.Provide(fx.Annotate(
+			agentcontract.NewDefinitionSchedules,
+			fx.As(fx.Self()),
+			fx.As(new(agentdefinitionports.AgentDefinitionScheduler)),
+		)),
 		fx.Provide(
 			assistantcontract.NewTurnCanceller,
+			completioncontract.NewDispatcher,
+			func(d *completioncontract.Dispatcher) agentports.StructuredCompleter { return d },
+			func(d *completioncontract.Dispatcher) agentports.AIProviderTester { return d },
+			func(d *completioncontract.Dispatcher) briefingports.BriefingDayWriter { return d },
 			assistantqueuerepository.New,
 			agentwaitrepository.New,
 			agentrunrepository.New,

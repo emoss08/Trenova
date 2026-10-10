@@ -151,7 +151,7 @@ when the store answers again. A completion is never failed or held up by the
 store. Without Redis (tests, a CLI) the router is built without the port and
 the breaker is exactly the in-memory one.
 
-The kind of failure travels in the error's details (`modelcall.Failure`), so
+The kind of failure travels in the error's details (`modelcallcontract.Failure`), so
 whoever reads it afterwards — the saved turn, a request waiting on a one-shot
 call — still knows whether the provider refused, was unreachable, timed out, or
 no provider was configured, and a refusal keeps its own words.

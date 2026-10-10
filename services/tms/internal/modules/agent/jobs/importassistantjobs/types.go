@@ -7,9 +7,9 @@ package importassistantjobs
 import (
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentimportassistantservice"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -88,5 +88,5 @@ type ToolInput struct {
 type FinishInput struct {
 	Payload *TurnPayload                               `json:"payload"`
 	Record  *shipmentimportassistantservice.TurnRecord `json:"record"`
-	Failure *modelcall.Failure                         `json:"failure,omitempty"`
+	Failure *modelcallcontract.Failure                 `json:"failure,omitempty"`
 }

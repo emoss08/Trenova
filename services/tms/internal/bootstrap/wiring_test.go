@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/bootstrap/apiapp"
 	"github.com/emoss08/trenova/internal/bootstrap/core"
 	"github.com/emoss08/trenova/internal/bootstrap/workerapp"
-	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
@@ -92,9 +92,15 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 		"worker-binary": fx.Options(core.Options(), workerapp.Modules(), workerapp.Options()),
 	}
 
+	workerReachable := fx.Invoke(func(extractionevalports.ExtractionPredictor) {})
+
 	for name, processOptions := range options {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
+
+			if name != "api-binary" {
+				processOptions = fx.Options(processOptions, workerReachable)
+			}
 
 			require.NoError(t, fx.ValidateApp(
 				processOptions,
@@ -122,7 +128,6 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 						agentports.RecordLabeler,
 						aicorrectionports.AICorrectionService,
 						agentqualityports.EvaluationBudget,
-						extractionevalports.ExtractionPredictor,
 						extractionevalports.ExtractionEvalRunStarter,
 						extractionevalports.ExtractionEvalRunner,
 						aitrainingports.AITrainingHistoryService,

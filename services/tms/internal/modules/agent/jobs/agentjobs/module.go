@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
@@ -26,11 +25,6 @@ func asRegistry(constructor any) any {
 
 var Module = fx.Module("agent-jobs",
 	fx.Provide(NewActivities, NewWorkflows),
-	fx.Provide(fx.Annotate(
-		NewDefinitionSchedules,
-		fx.As(fx.Self()),
-		fx.As(new(agentdefinitionports.AgentDefinitionScheduler)),
-	)),
 	fx.Provide(schedule.AsProvider(NewScheduleProvider)),
 	fx.Provide(
 		asRegistry(NewBackgroundRegistry),

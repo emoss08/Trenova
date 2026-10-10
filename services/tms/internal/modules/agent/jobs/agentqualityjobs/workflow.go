@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityservice"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/api/enums/v1"
@@ -52,7 +52,7 @@ var (
 
 func evaluationPriority(orgID pulid.ID) temporal.Priority {
 	return temporal.Priority{
-		PriorityKey: agentflow.PriorityEvaluation,
+		PriorityKey: agentflowcontract.PriorityEvaluation,
 		FairnessKey: orgID.String(),
 	}
 }

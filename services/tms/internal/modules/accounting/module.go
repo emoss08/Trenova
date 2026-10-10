@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalreversalservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/manualjournalservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/jobs/accountingsyncjobs/accountingsynccontract"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"go.uber.org/fx"
 )
@@ -73,6 +74,14 @@ func SharedOptions() fx.Option {
 			journalreversalservice.New,
 			manualjournalservice.New,
 		),
+		fx.Provide(fx.Annotate(
+			accountingsynccontract.NewSyncDispatcher,
+			fx.As(new(accountingsyncports.AccountingSyncDispatcher)),
+		)),
+		fx.Provide(fx.Annotate(
+			accountingsynccontract.NewDriftChecker,
+			fx.As(new(accountingsyncports.AccountingDriftChecker)),
+		)),
 	)
 }
 

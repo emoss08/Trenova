@@ -1,13 +1,13 @@
-package completionjobs
+package completioncontract
 
 import (
 	"context"
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -44,7 +44,7 @@ func TestDispatcher_AOneShotCallIsAJobOfItsOwnLinkedToTheRequest(t *testing.T) {
 	}}}
 	req := request()
 	req.Attribution.Feature = aiusage.FeatureTableQuery
-	ctx, caller := otel.Tracer("completionjobs-test").Start(t.Context(), "POST /graphql")
+	ctx, caller := otel.Tracer("completioncontract-test").Start(t.Context(), "POST /graphql")
 
 	_, err := (&Dispatcher{workflows: starter}).CompleteStructured(ctx, req)
 	caller.End()
