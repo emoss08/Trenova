@@ -1,12 +1,12 @@
 package tablechangealertservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/tablechangealertportsmock"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/testutil/mocks/tablechangealertportsmock"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/tablechangealertports"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

@@ -1,13 +1,13 @@
 package authservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
+	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"

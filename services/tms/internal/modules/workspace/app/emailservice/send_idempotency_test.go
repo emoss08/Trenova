@@ -1,15 +1,15 @@
 package emailservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/emailportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"context"
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/mocks/emailportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
+
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

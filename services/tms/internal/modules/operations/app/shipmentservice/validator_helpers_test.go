@@ -8,7 +8,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/operationstest"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
 )
 
 func newTestValidator(t testing.TB) *Validator {

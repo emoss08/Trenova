@@ -1,19 +1,19 @@
 package integrationservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"context"
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/require"
@@ -31,7 +31,9 @@ type stubIntegrationRepo struct {
 	upsertErr          error
 }
 
-type stubAuditService struct{ *auditportsmock.MockAuditService }
+type stubAuditService struct {
+	*auditportsmock.MockAuditService
+}
 
 func (s *stubAuditService) List(
 	context.Context,

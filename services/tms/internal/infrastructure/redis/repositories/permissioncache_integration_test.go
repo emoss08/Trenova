@@ -3,13 +3,13 @@
 package repositories
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/redis/go-redis/v9"

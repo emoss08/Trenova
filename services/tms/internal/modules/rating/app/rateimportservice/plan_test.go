@@ -1,14 +1,14 @@
 package rateimportservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 	"context"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateimport"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateimportports"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	pkgrateimport "github.com/emoss08/trenova/pkg/rateimport"
 	"github.com/emoss08/trenova/shared/pulid"

@@ -1,12 +1,12 @@
 package usageservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/platformcatalogportsmock"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformcatalogportsmock"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

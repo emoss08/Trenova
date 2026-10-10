@@ -1,12 +1,12 @@
 package glbalanceservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/glbalanceportsmock"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/testutil/mocks/glbalanceportsmock"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"

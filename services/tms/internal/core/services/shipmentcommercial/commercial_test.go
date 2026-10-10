@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial/shipmentcommercialtest"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"

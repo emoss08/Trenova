@@ -1,12 +1,12 @@
 package shipmentcommercialtest
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/ratequoteportsmock"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/testutil/mocks/ratequoteportsmock"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"

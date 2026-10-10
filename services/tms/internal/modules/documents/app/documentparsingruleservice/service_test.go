@@ -1,16 +1,16 @@
 package documentparsingruleservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentparsingrule"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -620,7 +620,9 @@ func TestSaveFixtureUpdateUsesStoredRuleSetIDBeforeValidation(t *testing.T) {
 	require.Equal(t, ruleSetID, updated.RuleSetID)
 }
 
-type noopAuditService struct{ *auditportsmock.MockAuditService }
+type noopAuditService struct {
+	*auditportsmock.MockAuditService
+}
 
 func (noopAuditService) List(
 	context.Context,
