@@ -113,6 +113,8 @@ func anthropicTraits(model string) anthropicModel {
 		traits.bindsPrefix = version >= 51
 	case "mythos":
 		traits.thinksAlways = true
+	case "haiku":
+		traits.disableNeedsLowEffort = version >= 55
 	}
 
 	return traits

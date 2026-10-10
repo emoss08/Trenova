@@ -67,3 +67,38 @@ scenarios:
           rubric: >
             Finds Completed shipments with no invoice and not ReadyToInvoice, by pro number,
             and explains what moving them to billing would do.
+
+  - name: lumper-charge-on-a-load
+    description: >
+      An accessorial added to a saved load, at an amount the person names rather than the charge's
+      configured $150. Exercises add_shipment_charge, which Billing exceptions holds since DB-019 and
+      no other case reached. Lumper charges earlier runs added are removed first, so the load starts
+      without one.
+    tags: [billing, write]
+    exclusive: SEED-SHP-008
+    setup:
+      - >
+        DELETE FROM additional_charges AS ac USING shipments AS sp, accessorial_charges AS acc
+        WHERE ac.shipment_id = sp.id AND acc.id = ac.accessorial_charge_id
+          AND sp.pro_number = 'SEED-SHP-008' AND acc.code = 'LUMP'
+          AND NOT ac.is_system_generated
+    steps:
+      - say: "add a 175 lumper to SEED-SHP-008, the receiver charged our driver at the dock"
+        expect:
+          proposals: [{ tool: add_shipment_charge }]
+          maxFailedCalls: 1
+          rubric: >
+            Proposes one lumper charge of $175 on SEED-SHP-008, not the charge's configured $150,
+            and says it waits for approval.
+      - decide: approve
+        expect:
+          executed: true
+          db:
+            - sql: >
+                select coalesce(sum(ac.amount), 0)::numeric(10,2)::text
+                from additional_charges ac
+                join shipments sp on sp.id = ac.shipment_id
+                join accessorial_charges acc on acc.id = ac.accessorial_charge_id
+                where sp.pro_number = 'SEED-SHP-008' and acc.code = 'LUMP'
+              equals: "175.00"
+              note: one lumper charge of $175 is on the load

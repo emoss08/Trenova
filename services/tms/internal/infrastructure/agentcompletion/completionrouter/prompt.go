@@ -44,6 +44,7 @@ func structuredRun(req *serviceports.StructuredCompletionRequest) *runRequest {
 		PreferredProviderID: req.PreferredProviderID,
 		RequireProvider:     req.RequireProvider,
 		HedgeAfter:          req.HedgeAfter,
+		Reasoning:           req.Reasoning,
 		Attribution:         req.Attribution,
 	}
 }

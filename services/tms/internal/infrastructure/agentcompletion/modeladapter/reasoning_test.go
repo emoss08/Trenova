@@ -544,3 +544,25 @@ func TestReplay_SendsATraceOnlyToTheProtocolThatProducedIt(t *testing.T) {
 	assert.Len(t, replayReasoning(fromResponses), 1)
 	assert.Len(t, replayReasoning(untagged), 1)
 }
+
+// A request's reasoning override wins over the provider's setting, so a
+// classifier on a provider configured Off still tells the model not to reason.
+func TestOpenAIResponsesAdapter_ARequestCanAskForNoReasoning(t *testing.T) {
+	t.Parallel()
+
+	server, captured := streamServer(t, "text/event-stream", sse(
+		[2]string{"response.created", `{"type":"response.created","response":{"model":"gpt-x"}}`},
+		[2]string{
+			"response.completed",
+			`{"type":"response.completed","response":{"model":"gpt-x","status":"completed","output":[],"usage":{"input_tokens":3,"output_tokens":1}}}`,
+		},
+	))
+	_, _ = streamWith(t, NewOpenAIResponsesAdapter(), reasoningCall(
+		aiprovider.KindOpenAIResponses, server.URL, aiprovider.ReasoningOff,
+		&Request{Messages: UserMessage("hi"), Reasoning: aiprovider.ReasoningNone},
+	))
+
+	reasoning, _ := (*captured)["reasoning"].(map[string]any)
+	require.NotNil(t, reasoning)
+	assert.Equal(t, "none", reasoning["effort"])
+}

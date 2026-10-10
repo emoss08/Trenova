@@ -163,7 +163,9 @@ type runRequest struct {
 	RequireProvider     bool
 	// HedgeAfter asks the next provider too when the one asked last has not
 	// answered by then; zero tries them one after another.
-	HedgeAfter  time.Duration
+	HedgeAfter time.Duration
+	// Reasoning overrides each provider's configured effort for this call.
+	Reasoning   aiprovider.ReasoningEffort
 	Attribution serviceports.AIUsageAttribution
 }
 
@@ -531,6 +533,7 @@ func (s *Service) callFor(
 			SchemaName:   req.SchemaName,
 			MaxTokens:    maxTokens,
 			Sampling:     modeladapter.SamplingForTask(req.Task),
+			Reasoning:    req.Reasoning,
 		},
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/stretchr/testify/require"
@@ -87,7 +88,8 @@ func TestEvaluate_TheStricterPostureStillRefusesOnATimeout(t *testing.T) {
 type hedgeRecorder struct {
 	serviceports.CompletionService
 
-	hedge time.Duration
+	hedge     time.Duration
+	reasoning aiprovider.ReasoningEffort
 }
 
 func (h *hedgeRecorder) CompleteStructured(
@@ -95,6 +97,7 @@ func (h *hedgeRecorder) CompleteStructured(
 	req *serviceports.StructuredCompletionRequest,
 ) (*serviceports.StructuredCompletionResult, error) {
 	h.hedge = req.HedgeAfter
+	h.reasoning = req.Reasoning
 
 	return &serviceports.StructuredCompletionResult{
 		Text: `{"category":"TransportationOperations","reasoning":"stub"}`,
@@ -120,4 +123,22 @@ func TestEvaluate_TheClassifierAsksTheNextProviderAtHalfItsBudget(t *testing.T) 
 
 	require.True(t, decision.Allowed)
 	require.Equal(t, 1500*time.Millisecond, stub.hedge)
+}
+
+/*
+The classifier has three seconds. With reasoning left to each provider, which
+is Off and so says nothing, gpt-6-luna reasoned on every call and Haiku 5.5
+thought at its default effort; 488 of 2,482 classifications hit the budget.
+The classification asks every provider not to reason.
+*/
+func TestEvaluate_TheClassifierAsksProvidersNotToReason(t *testing.T) {
+	t.Parallel()
+
+	stub := &hedgeRecorder{}
+	guard := &agentguard.Service{ClassifierTimeout: 3 * time.Second}
+	agentguard.SetCompletionForTest(guard, stub)
+
+	guard.Evaluate(t.Context(), agentguard.EvaluateRequest{Input: "how many shipments are in transit"})
+
+	require.Equal(t, aiprovider.ReasoningNone, stub.reasoning)
 }

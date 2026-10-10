@@ -417,11 +417,11 @@ findings:
       accessorials in the shipment form through updateShipment.
     fix: >
       add_shipment_charge already existed with no holder; Billing exceptions now holds it (DB-019).
-    fixedIn: "uncommitted; held by Billing exceptions (no scenario calls add_shipment_charge yet)"
+    fixedIn: "uncommitted; verified by the new lumper-charge-on-a-load case (both models: one $175 lumper proposed, approved and on SEED-SHP-008)"
     files:
       - services/tms/internal/core/services/agenttoolservice/shipment_edit_tools.go
       - services/tms/internal/core/domain/agentdefinition/tools.go
-
+      - services/tms/deskbench/scenarios/billing.yaml
   - id: DB-018
     title: A one-day time-off request is refused by its own validation
     status: fixed
@@ -3103,3 +3103,35 @@ findings:
     fixedIn: uncommitted; verified in .deskbench/runs (note-on-a-load-approved, Haiku, twice)
     files:
       - services/tms/internal/core/services/agentquerytoolservice/shipment_tools.go
+
+  - id: DB-141
+    title: The scope classifier reasoned on every question, so a fifth of checks ran out its 3 s budget
+    status: fixed
+    severity: medium
+    area: agent guard / model adapters
+    found: 2026-10-10, ai_usage_records (task ScopeClassification, two days)
+    models: [gpt-6-luna, claude-haiku-5-5]
+    scenarios: []
+    problem: >
+      Both providers are set to reasoning Off, which sends no reasoning setting at all, so gpt-6-luna
+      reasoned by default (about 37 tokens a classification): 488 of 2,482 calls hit the 3 s budget and
+      32 came back empty or broken. Haiku 5.5 thinks adaptively at its default effort, and the adapter
+      had no way to turn that off for it.
+    fix: >
+      A structured completion can override the provider's reasoning for that one call
+      (StructuredCompletionRequest.Reasoning), and the classifier asks for none: thinking disabled on
+      Haiku 5.5, reasoning effort none on gpt-6-luna; its free-text reason is capped at eight words.
+      Measured on ten real classifications each: gpt-6-luna p50/p90 1.78/2.36 s to 1.46/1.90 s
+      (reasoning tokens 370 to 0), Haiku 5.5 1.51/1.59 s to 1.43/1.68 s, no failures. The provider
+      order is unchanged: routing has one priority per provider, so putting Haiku first would also
+      move chat; with medians within 30 ms the hedge at 1.5 s still asks the second provider about
+      half the time, at roughly a hundredth of a cent each.
+    fixedIn: uncommitted; TestEvaluate_TheClassifierAsksProvidersNotToReason,
+      TestAnthropicAdapter_ARequestCanTurnThinkingOffOnHaiku55, TestOpenAIResponsesAdapter_ARequestCanAskForNoReasoning
+    files:
+      - services/tms/internal/core/services/agentguard/classifier.go
+      - services/tms/internal/core/ports/services/agentcompletion.go
+      - services/tms/internal/infrastructure/agentcompletion/completionrouter/router.go
+      - services/tms/internal/infrastructure/agentcompletion/completionrouter/prompt.go
+      - services/tms/internal/infrastructure/agentcompletion/modeladapter/adapter.go
+      - services/tms/internal/infrastructure/agentcompletion/modeladapter/anthropicmodels.go

@@ -44,6 +44,11 @@ type Request struct {
 	// empty value leaves the endpoint's own defaults alone, which is what
 	// every call used to do.
 	Sampling Sampling
+	// Reasoning overrides the provider's configured effort for this one
+	// request. Empty keeps the provider's. A classifier that has to answer
+	// inside a few seconds asks for None, so a model that thinks unless told
+	// otherwise answers at once instead of spending its budget thinking.
+	Reasoning aiprovider.ReasoningEffort
 }
 
 // Response is a normalized reply. Text is the raw model output; the router is
@@ -123,6 +128,9 @@ func (c *Call) think(delta string) {
 // providers never name it, so treating the empty string as anything else
 // would have a provider nobody configured to think counted as thinking.
 func (c *Call) reasoning() aiprovider.ReasoningEffort {
+	if c.Request != nil && c.Request.Reasoning != "" {
+		return c.Request.Reasoning
+	}
 	if c.Provider == nil || c.Provider.ReasoningEffort == "" {
 		return aiprovider.ReasoningOff
 	}

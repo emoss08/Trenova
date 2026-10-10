@@ -61,6 +61,10 @@ type StructuredCompletionRequest struct {
 	// asked too and the first answer wins, so one slow provider does not spend
 	// the whole budget. Zero asks the providers one after another.
 	HedgeAfter time.Duration
+	// Reasoning overrides how hard the providers think for this call; empty
+	// keeps each provider's configured effort. A short-deadline caller asks
+	// for None.
+	Reasoning aiprovider.ReasoningEffort
 	// Attribution says who the call is for, so its cost lands somewhere.
 	Attribution AIUsageAttribution
 }
