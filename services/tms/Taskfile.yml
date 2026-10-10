@@ -93,6 +93,11 @@ tasks:
     cmds:
       - air {{.AIR_FLAGS}} api run
 
+  build-bench:
+    desc: "Measure rebuild times after representative edits (task build-bench -- --target cli --mode air)"
+    cmds:
+      - ./scripts/buildbench/buildbench.sh {{.CLI_ARGS}}
+
   run-worker:
     desc: Run the worker service
     deps: [build-cli]
