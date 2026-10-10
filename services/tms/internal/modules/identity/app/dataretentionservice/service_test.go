@@ -96,7 +96,7 @@ func TestUpdate_KeepsTheCurrentAIAuditTrailRetentionWhenNotSent(t *testing.T) {
 	svc, repo := newTestService(t)
 	info := testTenant()
 	repo.EXPECT().
-		Get(mock.Anything, mock.AnythingOfType("repositories.GetDataRetentionRequest")).
+		Get(mock.Anything, mock.AnythingOfType("tenantports.GetDataRetentionRequest")).
 		Return(&tenant.DataRetention{
 			AuditRetentionPeriod:         120,
 			AgentEvalCaseRetentionPeriod: 90,
@@ -160,7 +160,7 @@ func TestGet_DefaultsAICorrectionRetentionWhenNothingIsSaved(t *testing.T) {
 
 	svc, repo := newTestService(t)
 	repo.EXPECT().
-		Get(mock.Anything, mock.AnythingOfType("repositories.GetDataRetentionRequest")).
+		Get(mock.Anything, mock.AnythingOfType("tenantports.GetDataRetentionRequest")).
 		Return(nil, errortypes.NewNotFoundError("data retention not found")).
 		Once()
 

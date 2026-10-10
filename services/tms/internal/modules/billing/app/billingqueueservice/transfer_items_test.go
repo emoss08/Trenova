@@ -131,7 +131,7 @@ func TestTransferToBillingItemsCreatesOneItemPerPayer(t *testing.T) {
 
 	customerRepo := customerportsmock.NewMockCustomerRepository(t)
 	customerRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("repositories.GetCustomerByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("customerports.GetCustomerByIDRequest")).
 		RunAndReturn(func(_ context.Context, req customerports.GetCustomerByIDRequest) (*customer.Customer, error) {
 			return &customer.Customer{
 				ID:             req.ID,
@@ -326,7 +326,7 @@ func TestTransferToBillingItemsSkipsAPayerWhoOwesNothing(t *testing.T) {
 
 	customerRepo := customerportsmock.NewMockCustomerRepository(t)
 	customerRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("repositories.GetCustomerByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("customerports.GetCustomerByIDRequest")).
 		RunAndReturn(func(_ context.Context, req customerports.GetCustomerByIDRequest) (*customer.Customer, error) {
 			return &customer.Customer{
 				ID:             req.ID,
@@ -392,7 +392,7 @@ func transferringService(
 
 	customerRepo := customerportsmock.NewMockCustomerRepository(t)
 	customerRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("repositories.GetCustomerByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("customerports.GetCustomerByIDRequest")).
 		RunAndReturn(func(_ context.Context, req customerports.GetCustomerByIDRequest) (*customer.Customer, error) {
 			return &customer.Customer{ID: req.ID, BillingProfile: &customer.CustomerBillingProfile{}}, nil
 		}).

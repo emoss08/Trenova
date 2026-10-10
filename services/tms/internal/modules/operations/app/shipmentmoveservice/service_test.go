@@ -65,7 +65,7 @@ func TestUpdateStatus_RecomputesShipmentState(t *testing.T) {
 
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(&shipment.Shipment{
 			ID:                shipmentID,
 			OrganizationID:    tenantInfo.OrgID,
@@ -303,7 +303,7 @@ func TestSplitMove_RecomputesShipmentState(t *testing.T) {
 		}, nil).
 		Once()
 	moveRepo.EXPECT().
-		SplitMove(mock.Anything, mock.AnythingOfType("*repositories.SplitMoveRequest")).
+		SplitMove(mock.Anything, mock.AnythingOfType("*shipmentports.SplitMoveRequest")).
 		Return(&shipmentports.SplitMoveResponse{
 			OriginalMove: &shipment.ShipmentMove{
 				ID:         moveID,
@@ -320,7 +320,7 @@ func TestSplitMove_RecomputesShipmentState(t *testing.T) {
 
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(&shipment.Shipment{
 			ID:                shipmentID,
 			OrganizationID:    tenantInfo.OrgID,
@@ -412,7 +412,7 @@ func TestUpdateStatus_RecomputesDelayedShipmentStateUsingControlThreshold(t *tes
 		}, nil).
 		Once()
 	moveRepo.EXPECT().
-		UpdateStatus(mock.Anything, mock.AnythingOfType("*repositories.UpdateMoveStatusRequest")).
+		UpdateStatus(mock.Anything, mock.AnythingOfType("*shipmentports.UpdateMoveStatusRequest")).
 		Return(&shipment.ShipmentMove{
 			ID:         moveID,
 			ShipmentID: shipmentID,
@@ -422,7 +422,7 @@ func TestUpdateStatus_RecomputesDelayedShipmentStateUsingControlThreshold(t *tes
 
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(&shipment.Shipment{
 			ID:                shipmentID,
 			OrganizationID:    tenantInfo.OrgID,
@@ -528,7 +528,7 @@ func TestUpdateStatus_DoesNotAutoDelayShipmentWhenToggleDisabled(t *testing.T) {
 		}, nil).
 		Once()
 	moveRepo.EXPECT().
-		UpdateStatus(mock.Anything, mock.AnythingOfType("*repositories.UpdateMoveStatusRequest")).
+		UpdateStatus(mock.Anything, mock.AnythingOfType("*shipmentports.UpdateMoveStatusRequest")).
 		Return(&shipment.ShipmentMove{
 			ID:         moveID,
 			ShipmentID: shipmentID,
@@ -538,7 +538,7 @@ func TestUpdateStatus_DoesNotAutoDelayShipmentWhenToggleDisabled(t *testing.T) {
 
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(&shipment.Shipment{
 			ID:                shipmentID,
 			OrganizationID:    tenantInfo.OrgID,
@@ -854,7 +854,7 @@ func TestUpdateStatus_AdvancesEquipmentContinuityOnCompletion(t *testing.T) {
 
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(&shipment.Shipment{
 			ID:                shipmentID,
 			OrganizationID:    tenantInfo.OrgID,

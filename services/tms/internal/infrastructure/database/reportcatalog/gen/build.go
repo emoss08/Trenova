@@ -2,12 +2,11 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/infrastructure/database/structparse"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -33,16 +32,13 @@ func newBuilder(manifest *Manifest, domainDir string, enumPkgDirs []string) (*bu
 		permissions:       permission.NewRegistry(),
 	}
 
-	entries, err := os.ReadDir(domainDir)
+	pkgDirs, err := structparse.PackageDirs(domainDir)
 	if err != nil {
-		return nil, fmt.Errorf("read domain directory: %w", err)
+		return nil, fmt.Errorf("read domain directories: %w", err)
 	}
 
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-		if err = b.indexPackage(filepath.Join(domainDir, entry.Name())); err != nil {
+	for _, dir := range pkgDirs {
+		if err = b.indexPackage(dir); err != nil {
 			return nil, err
 		}
 	}

@@ -61,6 +61,8 @@ var nonProjectionObjects = map[string]string{
 	"FormulaTemplateBreakdownDefinition": "GraphQL value object stored as JSONB without Bun projection metadata",
 	"SelectOption":                       "GraphQL select-option DTO",
 	"SidebarPreferences":                 "GraphQL sidebar preferences DTO",
+	"SidebarSectionOption":               "GraphQL sidebar customization catalog DTO",
+	"SidebarAttentionMetricOption":       "GraphQL sidebar customization catalog DTO",
 	"SidebarQuickActionOption":           "GraphQL sidebar quick-action DTO",
 	"HomeWidgetCategory":                 "GraphQL home widget catalog DTO",
 	"HomeWidgetOption":                   "GraphQL home widget catalog DTO",
@@ -78,6 +80,7 @@ var nonProjectionObjects = map[string]string{
 	"DocumentTemplateVariable":           "GraphQL registry catalog DTO, not a table",
 	"DocumentTemplateDiagnostic":         "GraphQL template engine finding DTO",
 	"DocumentTemplatePreview":            "GraphQL template preview DTO",
+	"ShipmentBoardGroup":                 "GraphQL shipment board group DTO built by its resolver",
 	"ShipmentAxleWeight":                 "GraphQL shipment workflow DTO",
 	"ShipmentContractRateAccessorial":    "GraphQL shipment workflow DTO",
 	"ShipmentHazmatZone":                 "GraphQL shipment workflow DTO",
@@ -616,7 +619,7 @@ func exactStructSelection(typeName string, data discovery) (typeSelection, bool,
 			continue
 		}
 		fieldMap, ok := data.FieldMaps[st.Name]
-		if !ok {
+		if !ok || !fieldMapCoversStruct(&fieldMap, &st) {
 			continue
 		}
 
@@ -657,7 +660,7 @@ func coverageStructSelection(typeName string, data discovery) (typeSelection, er
 	candidates := []candidate{}
 	for _, st := range data.Structs {
 		fieldMap, ok := data.FieldMaps[st.Name]
-		if !ok {
+		if !ok || !fieldMapCoversStruct(&fieldMap, &st) {
 			continue
 		}
 
@@ -1501,6 +1504,10 @@ func columnImports(specs []generatedSpec) string {
 			packages[match[1]] = struct{}{}
 		}
 	}
+	if len(packages) == 0 {
+		return ""
+	}
+
 	names := make([]string, 0, len(packages))
 	for name := range packages {
 		names = append(names, name)

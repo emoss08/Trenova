@@ -14,8 +14,10 @@ import (
 )
 
 const (
-	maxCallDepth = 4
-	corePackages = "/internal/core/"
+	maxCallDepth   = 4
+	corePackages   = "/internal/core/"
+	modulePackages = "/internal/modules/"
+	moduleAdapters = "adapters"
 )
 
 var readPrefixes = []string{
@@ -138,7 +140,7 @@ func (x *receiverIndex) addFields(decl *ast.GenDecl, imports map[string]string) 
 		}
 		for _, field := range structType.Fields.List {
 			key, resolved := typeKey(field.Type, imports)
-			if !resolved || !strings.Contains(key, corePackages) {
+			if !resolved || !isServiceType(key) {
 				continue
 			}
 			for _, name := range field.Names {
@@ -211,6 +213,23 @@ func (x *receiverIndex) walk(
 
 		return true
 	})
+}
+
+func isServiceType(key string) bool {
+	if strings.Contains(key, corePackages) {
+		return true
+	}
+	_, module, found := strings.Cut(key, modulePackages)
+	if !found {
+		return false
+	}
+	_, inner, found := strings.Cut(module, "/")
+	if !found {
+		return false
+	}
+	layer, _, _ := strings.Cut(inner, "/")
+
+	return layer != moduleAdapters
 }
 
 func isRead(method string) bool {

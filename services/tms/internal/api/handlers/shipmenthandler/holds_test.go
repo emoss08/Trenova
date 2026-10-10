@@ -66,7 +66,7 @@ func TestShipmentHandler_CreateHold_Success(t *testing.T) {
 				req.HoldReasonID == holdReasonID &&
 				req.TenantInfo.OrgID == testutil.TestOrgID &&
 				req.TenantInfo.BuID == testutil.TestBuID
-		}), mock.AnythingOfType("*services.RequestActor")).
+		}), mock.AnythingOfType("*permissionports.RequestActor")).
 		RunAndReturn(func(_ context.Context, req *shipmentports.CreateShipmentHoldRequest, _ *permissionports.RequestActor) (*shipment.ShipmentHold, error) {
 			return &shipment.ShipmentHold{
 				ID:             pulid.MustNew("shh_"),

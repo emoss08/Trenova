@@ -137,7 +137,7 @@ func TestUpdate_RejectsReleasedHold(t *testing.T) {
 	releasedAt := int64(500)
 
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentHoldByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentHoldByIDRequest")).
 		Return(&shipment.ShipmentHold{ID: holdID, ShipmentID: shipmentID, OrganizationID: testutil.TestOrgID, BusinessUnitID: testutil.TestBuID, Type: holdreason.HoldTypeOperational, Severity: holdreason.HoldSeverityAdvisory, Source: shipment.HoldSourceUser, StartedAt: 100, ReleasedAt: &releasedAt, Version: 1}, nil).
 		Once()
 
@@ -189,7 +189,7 @@ func TestRelease_SetsReleasedFieldsAuditsAndPublishes(t *testing.T) {
 	shipmentID := pulid.MustNew("shp_")
 
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentHoldByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentHoldByIDRequest")).
 		Return(&shipment.ShipmentHold{ID: holdID, ShipmentID: shipmentID, OrganizationID: testutil.TestOrgID, BusinessUnitID: testutil.TestBuID, Type: holdreason.HoldTypeOperational, Severity: holdreason.HoldSeverityBlocking, Source: shipment.HoldSourceUser, StartedAt: 100, Version: 1}, nil).
 		Once()
 

@@ -109,7 +109,7 @@ func newPlanFixture(t *testing.T, moveStatus shipment.MoveStatus) *planFixture {
 
 func (f *planFixture) expectShipmentRead() {
 	f.shipments.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		RunAndReturn(func(
 			context.Context,
 			*shipmentports.GetShipmentByIDRequest,
@@ -125,7 +125,7 @@ func (f *planFixture) expectShipmentRead() {
 
 func (f *planFixture) expectCarrier(entity *carrier.Carrier) {
 	f.carriers.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("repositories.GetCarrierByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("carrierports.GetCarrierByIDRequest")).
 		Return(entity, nil).
 		Once()
 }

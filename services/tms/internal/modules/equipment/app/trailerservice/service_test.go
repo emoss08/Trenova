@@ -418,7 +418,7 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(&shipment.Shipment{
 			ID:                shipmentID,
 			OrganizationID:    orgID,

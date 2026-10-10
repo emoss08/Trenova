@@ -80,7 +80,7 @@ func TestValidatorValidateUpdate_RejectsMoveRemovalWhenDisallowed(t *testing.T) 
 
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(cloneShipment(original), nil).
 		Once()
 

@@ -131,9 +131,6 @@ virtuals:
   AccountingReferenceObject:
     - label
     - usable
-  FormSubmissionField:
-    - label
-    - value
   AgentControl:
     - billingAgentEnabled
     - decisionTimeoutSeconds
@@ -145,6 +142,7 @@ virtuals:
   AgentMemory:
     - supersedes
     - replacedBy
+    - taints
   AgentPlan:
     - run
   AgentRun:
@@ -415,11 +413,6 @@ virtuals:
     - payment
 
 specials:
-  AgentMemory:
-    taints:
-      - tainted
-      - reviewedAt
-      - reviewedByUserId
   Tractor:
     lastKnownLocation:
       - lastKnownLocation

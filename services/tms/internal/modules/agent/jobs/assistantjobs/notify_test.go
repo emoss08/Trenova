@@ -6,11 +6,11 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/productguide"
@@ -365,7 +365,7 @@ func TestTurnCanceller_SaysWhenNoExecutionCarriesTheTurn(t *testing.T) {
 	t.Parallel()
 
 	workflows := &cancels{err: serviceerror.NewNotFound("workflow not found")}
-	canceller := NewTurnCanceller(workflows)
+	canceller := assistantcontract.NewTurnCanceller(workflows)
 
 	err := canceller.CancelTurn(t.Context(), "assistant-turn:atrn_1")
 
@@ -377,7 +377,7 @@ func TestTurnCanceller_PassesOnAnyOtherFailure(t *testing.T) {
 	t.Parallel()
 
 	down := errors.New("temporal is down")
-	canceller := NewTurnCanceller(&cancels{err: down})
+	canceller := assistantcontract.NewTurnCanceller(&cancels{err: down})
 
 	err := canceller.CancelTurn(t.Context(), "assistant-turn:atrn_1")
 
@@ -390,6 +390,6 @@ func TestTurnCanceller_CancelsTheExecution(t *testing.T) {
 
 	workflows := &cancels{}
 
-	require.NoError(t, NewTurnCanceller(workflows).CancelTurn(t.Context(), "assistant-turn:atrn_1"))
+	require.NoError(t, assistantcontract.NewTurnCanceller(workflows).CancelTurn(t.Context(), "assistant-turn:atrn_1"))
 	assert.Equal(t, "assistant-turn:atrn_1", workflows.cancelled)
 }

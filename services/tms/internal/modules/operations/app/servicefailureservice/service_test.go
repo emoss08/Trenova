@@ -272,7 +272,7 @@ func TestCreateOrUpdateDetectedUpdatesExistingSnapshotIdempotently(t *testing.T)
 		Return(nil, errortypes.NewNotFoundError("not found")).
 		Once()
 	repo.EXPECT().
-		FindUnresolvedByStop(mock.Anything, mock.AnythingOfType("*repositories.ServiceFailureActiveStopRequest")).
+		FindUnresolvedByStop(mock.Anything, mock.AnythingOfType("*servicefailureports.ServiceFailureActiveStopRequest")).
 		Return(&existing, nil).
 		Once()
 	repo.EXPECT().
@@ -328,7 +328,7 @@ func TestCreateOrUpdateDetectedCreatesWithGeneratedNumber(t *testing.T) {
 		Return(nil, errortypes.NewNotFoundError("not found")).
 		Once()
 	repo.EXPECT().
-		FindUnresolvedByStop(mock.Anything, mock.AnythingOfType("*repositories.ServiceFailureActiveStopRequest")).
+		FindUnresolvedByStop(mock.Anything, mock.AnythingOfType("*servicefailureports.ServiceFailureActiveStopRequest")).
 		Return(nil, errortypes.NewNotFoundError("not found")).
 		Once()
 	repo.EXPECT().
@@ -385,7 +385,7 @@ func TestEvaluateShipmentIncludesCreatedStopSummaries(t *testing.T) {
 	}
 
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(source, nil).
 		Once()
 	dispatchRepo.EXPECT().
@@ -400,7 +400,7 @@ func TestEvaluateShipmentIncludesCreatedStopSummaries(t *testing.T) {
 		Return(nil, errortypes.NewNotFoundError("not found")).
 		Once()
 	repo.EXPECT().
-		FindUnresolvedByStop(mock.Anything, mock.AnythingOfType("*repositories.ServiceFailureActiveStopRequest")).
+		FindUnresolvedByStop(mock.Anything, mock.AnythingOfType("*servicefailureports.ServiceFailureActiveStopRequest")).
 		Return(nil, errortypes.NewNotFoundError("not found")).
 		Once()
 	repo.EXPECT().
@@ -495,7 +495,7 @@ func TestEvaluateShipmentIncludesUpdatedStopSummaries(t *testing.T) {
 	}
 
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(source, nil).
 		Once()
 	dispatchRepo.EXPECT().
@@ -510,7 +510,7 @@ func TestEvaluateShipmentIncludesUpdatedStopSummaries(t *testing.T) {
 		Return(nil, errortypes.NewNotFoundError("not found")).
 		Once()
 	repo.EXPECT().
-		FindUnresolvedByStop(mock.Anything, mock.AnythingOfType("*repositories.ServiceFailureActiveStopRequest")).
+		FindUnresolvedByStop(mock.Anything, mock.AnythingOfType("*servicefailureports.ServiceFailureActiveStopRequest")).
 		Return(existing, nil).
 		Once()
 	repo.EXPECT().
@@ -565,7 +565,7 @@ func TestEvaluateShipmentSkippedStopsIncludeStopContext(t *testing.T) {
 	}
 
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(source, nil).
 		Once()
 	dispatchRepo.EXPECT().
@@ -645,7 +645,7 @@ func TestLifecycleReviewRequiresUserAndRecordsAudit(t *testing.T) {
 	}
 
 	repo.EXPECT().
-		GetByShipment(mock.Anything, mock.AnythingOfType("*repositories.GetServiceFailureByShipmentRequest")).
+		GetByShipment(mock.Anything, mock.AnythingOfType("*servicefailureports.GetServiceFailureByShipmentRequest")).
 		Return(entity, nil).
 		Once()
 	repo.EXPECT().
@@ -703,7 +703,7 @@ func TestPreflightServiceFailure214BlocksMandatoryDiagnostics(t *testing.T) {
 	svc := &service{l: zap.NewNop(), ediService: ediSvc}
 
 	ediSvc.EXPECT().
-		PreviewServiceFailure214ForLifecycle(mock.Anything, mock.AnythingOfType("*services.ServiceFailure214LifecycleRequest")).
+		PreviewServiceFailure214ForLifecycle(mock.Anything, mock.AnythingOfType("*ediports.ServiceFailure214LifecycleRequest")).
 		Return(&servicefailureports.ServiceFailure214LifecycleResult{
 			Trigger:   servicefailureports.ServiceFailureEDITriggerReviewed,
 			Action:    ediports.ServiceFailureEDIActionBlocked,
@@ -816,7 +816,7 @@ func TestGenerateServiceFailure214RecordsGeneratedAndDuplicateOnly(t *testing.T)
 					Return(nil).
 					Once()
 				comments.EXPECT().
-					CreateSystem(mock.Anything, mock.AnythingOfType("*services.CreateSystemShipmentCommentRequest")).
+					CreateSystem(mock.Anything, mock.AnythingOfType("*shipmentports.CreateSystemShipmentCommentRequest")).
 					Return(&shipment.ShipmentComment{}, nil).
 					Once()
 			}

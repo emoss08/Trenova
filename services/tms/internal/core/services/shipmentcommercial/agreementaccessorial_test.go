@@ -145,7 +145,7 @@ func TestAdoptContractRate_SkipsAccessorialWhoseConditionIsFalse(t *testing.T) {
 
 	predicate := formulatemplateportsmock.NewMockFormulaPredicateEvaluator(t)
 	predicate.EXPECT().
-		EvaluatePredicate(mock.Anything, mock.AnythingOfType("*services.EvaluatePredicateRequest")).
+		EvaluatePredicate(mock.Anything, mock.AnythingOfType("*formulatemplateports.EvaluatePredicateRequest")).
 		Return(false, nil).
 		Once()
 
@@ -168,7 +168,7 @@ func TestAdoptContractRate_WithholdsAccessorialWhenConditionErrors(t *testing.T)
 
 	predicate := formulatemplateportsmock.NewMockFormulaPredicateEvaluator(t)
 	predicate.EXPECT().
-		EvaluatePredicate(mock.Anything, mock.AnythingOfType("*services.EvaluatePredicateRequest")).
+		EvaluatePredicate(mock.Anything, mock.AnythingOfType("*formulatemplateports.EvaluatePredicateRequest")).
 		Return(false, errors.New("compile failed")).
 		Once()
 
@@ -199,7 +199,7 @@ func TestSyncFuelSurcharge_PassesAgreementFuelBinding(t *testing.T) {
 	fuel.EXPECT().
 		ResolveShipmentCharge(
 			mock.Anything,
-			mock.AnythingOfType("*services.ResolveShipmentChargeRequest"),
+			mock.AnythingOfType("*fuelsurchargeports.ResolveShipmentChargeRequest"),
 		).
 		RunAndReturn(func(
 			_ context.Context,

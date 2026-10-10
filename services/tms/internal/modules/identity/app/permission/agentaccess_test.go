@@ -57,7 +57,7 @@ func newAgentAccessFixture(t *testing.T, parentOps ...permission.Operation) *age
 	key := allRolesKey(f.actor.UserID, f.actor.OrganizationID)
 	cacheRepo.On("Get", mock.Anything, key).Return(nil, nil)
 	cacheRepo.On("Set", mock.Anything, key,
-		mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).Return(nil)
+		mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).Return(nil)
 
 	return f
 }

@@ -35,7 +35,7 @@ func TestRecalculate_PricesFormulaOnlyAndPersistsNoQuote(t *testing.T) {
 
 	engine := ratequoteportsmock.NewMockRateEngine(t)
 	engine.EXPECT().
-		RateShipment(mock.Anything, mock.AnythingOfType("*services.RateShipmentRequest")).
+		RateShipment(mock.Anything, mock.AnythingOfType("*ratequoteports.RateShipmentRequest")).
 		RunAndReturn(func(
 			_ context.Context,
 			req *ratequoteports.RateShipmentRequest,
@@ -305,7 +305,7 @@ func TestRecordRateDeparture_RecordsWhatWasGivenAway(t *testing.T) {
 
 	quoteRepo := ratequoteportsmock.NewMockRateQuoteRepository(t)
 	quoteRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetRateQuoteByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*ratequoteports.GetRateQuoteByIDRequest")).
 		Return(contractQuote, nil).
 		Once()
 	quoteRepo.EXPECT().
@@ -438,7 +438,7 @@ func TestRateAndAdoptContract_AddsNoAccessorialsWhenNothingPricedTheLane(t *test
 
 	engine := ratequoteportsmock.NewMockRateEngine(t)
 	engine.EXPECT().
-		RateShipment(mock.Anything, mock.AnythingOfType("*services.RateShipmentRequest")).
+		RateShipment(mock.Anything, mock.AnythingOfType("*ratequoteports.RateShipmentRequest")).
 		Return(&ratequoteports.RatedShipment{
 			Amount:   decimal.Zero,
 			Currency: "USD",
@@ -478,7 +478,7 @@ func departingCalculator(
 
 	engine := ratequoteportsmock.NewMockRateEngine(t)
 	engine.EXPECT().
-		RateShipment(mock.Anything, mock.AnythingOfType("*services.RateShipmentRequest")).
+		RateShipment(mock.Anything, mock.AnythingOfType("*ratequoteports.RateShipmentRequest")).
 		Return(&ratequoteports.RatedShipment{
 			Amount:      linehaul,
 			Currency:    "USD",
@@ -513,7 +513,7 @@ func agreementRepoFor(
 
 	repo := rateagreementportsmock.NewMockRateAgreementRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetRateAgreementByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*rateagreementports.GetRateAgreementByIDRequest")).
 		RunAndReturn(func(
 			_ context.Context,
 			req *rateagreementports.GetRateAgreementByIDRequest,

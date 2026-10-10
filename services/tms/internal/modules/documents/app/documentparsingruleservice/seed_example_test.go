@@ -87,17 +87,7 @@ func loadParsingRuleExampleSeedDataForTest(t *testing.T) *parsingRuleExampleSeed
 func loadParsingRuleExamplePagesForTest(t *testing.T) ([]documentparsingruleports.DocumentParsingPage, string) {
 	t.Helper()
 
-	raw, err := os.ReadFile(filepath.Join(
-		"..",
-		"..",
-		"..",
-		"infrastructure",
-		"database",
-		"seeds",
-		"development",
-		"data",
-		"document_parsing_rule_example_ch_robinson.txt",
-	))
+	raw, err := os.ReadFile(filepath.Join("..", "..", "..", "..", "infrastructure", "database", "seeds", "development", "data", "document_parsing_rule_example_ch_robinson.txt"))
 	require.NoError(t, err)
 
 	pagePattern := regexp.MustCompile(`(?m)^--- PAGE (\d+) ---\n`)

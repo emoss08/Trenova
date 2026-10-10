@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs/samsaracontract"
 	accountinginfra "github.com/emoss08/trenova/internal/infrastructure/accounting"
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionrouter"
 	agentextensioninfra "github.com/emoss08/trenova/internal/infrastructure/agentextension"
 	carrierintelinfra "github.com/emoss08/trenova/internal/infrastructure/carrierintel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -19,6 +20,7 @@ import (
 	reportingrender "github.com/emoss08/trenova/internal/infrastructure/reporting/render"
 	reportingresultcache "github.com/emoss08/trenova/internal/infrastructure/reporting/resultcache"
 	telematicsinfra "github.com/emoss08/trenova/internal/infrastructure/telematics"
+	"github.com/emoss08/trenova/internal/infrastructure/turnstream"
 	"github.com/emoss08/trenova/internal/modules/accounting"
 	"github.com/emoss08/trenova/internal/modules/agent"
 	"github.com/emoss08/trenova/internal/modules/billing"
@@ -92,6 +94,8 @@ func OptionsFor(e *edition.Edition) fx.Option {
 		billing.SharedOptions(),
 		settlement.SharedOptions(),
 		agent.SharedOptions(),
+		turnstream.Module,
+		completionrouter.Module,
 		e.Option(),
 	)
 }

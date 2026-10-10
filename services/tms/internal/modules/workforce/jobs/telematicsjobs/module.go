@@ -1,14 +1,12 @@
 package telematicsjobs
 
 import (
-	"github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
 	"go.uber.org/fx"
 )
 
 var Module = fx.Module("telematics-jobs",
-	fx.Provide(telematicsservice.New),
 	fx.Provide(NewActivities),
 	fx.Provide(schedule.AsProvider(NewScheduleProvider)),
 	fx.Provide(

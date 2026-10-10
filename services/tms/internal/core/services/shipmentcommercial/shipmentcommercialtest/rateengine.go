@@ -43,7 +43,7 @@ func StubRateEngineForAgreement(
 
 	engine := ratequoteportsmock.NewMockRateEngine(t)
 	engine.EXPECT().
-		RateShipment(mock.Anything, mock.AnythingOfType("*services.RateShipmentRequest")).
+		RateShipment(mock.Anything, mock.AnythingOfType("*ratequoteports.RateShipmentRequest")).
 		Return(&ratequoteports.RatedShipment{
 			Amount:      linehaul,
 			Currency:    "USD",

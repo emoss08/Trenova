@@ -101,7 +101,7 @@ func TestCheck_AllowedByPermission(t *testing.T) {
 			},
 		},
 	}, nil)
-	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).
 		Return(nil)
 
 	result, err := eng.Check(ctx, &permissionports.PermissionCheckRequest{
@@ -151,7 +151,7 @@ func TestCheck_NoPermission(t *testing.T) {
 			},
 		},
 	}, nil)
-	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).
 		Return(nil)
 
 	result, err := eng.Check(ctx, &permissionports.PermissionCheckRequest{
@@ -356,7 +356,7 @@ func TestCheck_NoRoles(t *testing.T) {
 	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{}, nil)
-	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).
 		Return(nil)
 
 	result, err := eng.Check(ctx, &permissionports.PermissionCheckRequest{
@@ -387,7 +387,7 @@ func TestCheckBatch(t *testing.T) {
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{}, nil).
 		Once()
-	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).
 		Return(nil).
 		Once()
 
@@ -441,7 +441,7 @@ func TestGetLightManifest_RegularUser(t *testing.T) {
 			},
 		},
 	}, nil)
-	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).
 		Return(nil)
 	manifest, err := eng.GetLightManifest(ctx, userID, orgID)
 
@@ -515,7 +515,7 @@ func TestGetLightManifest_DoesNotRequireRoleActivationWithoutAuthorizedRoles(t *
 	cacheRepo.On("Get", ctx, activeRolesKey(ctx, userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{}, nil)
-	cacheRepo.On("Set", ctx, activeRolesKey(ctx, userID, orgID), mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+	cacheRepo.On("Set", ctx, activeRolesKey(ctx, userID, orgID), mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).
 		Return(nil)
 
 	manifest, err := eng.GetLightManifest(ctx, userID, orgID)
@@ -712,7 +712,7 @@ func TestExpiredAssignmentsIgnored(t *testing.T) {
 			Permissions:    []*permission.ResourcePermission{},
 		},
 	}, nil)
-	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).
 		Return(nil)
 
 	result, err := eng.Check(ctx, &permissionports.PermissionCheckRequest{
@@ -879,7 +879,7 @@ func TestGetLightManifest_OrgSummariesError(t *testing.T) {
 	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{}, nil)
-	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).
 		Return(nil)
 	userRepo.On("GetUserOrganizationSummaries", ctx, userID).
 		Return(nil, errors.New("summaries error"))
@@ -922,7 +922,7 @@ func TestGetResourcePermissions_RegularUser(t *testing.T) {
 			},
 		},
 	}, nil)
-	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).
 		Return(nil)
 
 	result, err := eng.GetResourcePermissions(ctx, userID, orgID, "shipment")
@@ -970,7 +970,7 @@ func TestGetResourcePermissions_NoPermissionForResource(t *testing.T) {
 			},
 		},
 	}, nil)
-	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).
 		Return(nil)
 
 	result, err := eng.GetResourcePermissions(ctx, userID, orgID, "shipment")

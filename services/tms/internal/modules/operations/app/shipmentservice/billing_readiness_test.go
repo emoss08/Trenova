@@ -74,7 +74,7 @@ func TestServiceGetBillingReadiness_UsesTenantEnforcementOverride(t *testing.T) 
 		Return(nil, nil).
 		Once()
 	customerRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("repositories.GetCustomerByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("customerports.GetCustomerByIDRequest")).
 		RunAndReturn(func(_ context.Context, req customerports.GetCustomerByIDRequest) (*customer.Customer, error) {
 			assert.Equal(t, entity.CustomerID, req.ID)
 			return &customer.Customer{
@@ -159,7 +159,7 @@ func TestServiceGetBillingReadiness_FallsBackToCustomerSettings(t *testing.T) {
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(entity, nil).
 		Twice()
 
@@ -172,7 +172,7 @@ func TestServiceGetBillingReadiness_FallsBackToCustomerSettings(t *testing.T) {
 		Return(nil, nil).
 		Once()
 	customerRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("repositories.GetCustomerByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("customerports.GetCustomerByIDRequest")).
 		Return(&customer.Customer{
 			ID: entity.CustomerID,
 			BillingProfile: &customer.CustomerBillingProfile{
@@ -191,7 +191,7 @@ func TestServiceGetBillingReadiness_FallsBackToCustomerSettings(t *testing.T) {
 
 	documentRepo := documentportsmock.NewMockDocumentRepository(t)
 	documentRepo.EXPECT().
-		GetByResourceID(mock.Anything, mock.AnythingOfType("*repositories.GetDocumentsByResourceRequest")).
+		GetByResourceID(mock.Anything, mock.AnythingOfType("*documentports.GetDocumentsByResourceRequest")).
 		Return([]*document.Document{
 			{
 				ID:             matchingDocID,
@@ -256,7 +256,7 @@ func TestValidateBillingReadinessForStatusChange_RejectsMissingRequirements(t *t
 		Return(nil, nil).
 		Once()
 	customerRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("repositories.GetCustomerByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("customerports.GetCustomerByIDRequest")).
 		Return(&customer.Customer{
 			ID: entity.CustomerID,
 			BillingProfile: &customer.CustomerBillingProfile{
@@ -275,7 +275,7 @@ func TestValidateBillingReadinessForStatusChange_RejectsMissingRequirements(t *t
 
 	documentRepo := documentportsmock.NewMockDocumentRepository(t)
 	documentRepo.EXPECT().
-		GetByResourceID(mock.Anything, mock.AnythingOfType("*repositories.GetDocumentsByResourceRequest")).
+		GetByResourceID(mock.Anything, mock.AnythingOfType("*documentports.GetDocumentsByResourceRequest")).
 		Return([]*document.Document{}, nil).
 		Once()
 

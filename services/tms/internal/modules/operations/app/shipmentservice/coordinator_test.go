@@ -303,7 +303,7 @@ func TestServiceUpdate_RejectsReadyToInvoiceBeforeCompletion(t *testing.T) {
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		RunAndReturn(func(
 			_ context.Context,
 			req *shipmentports.GetShipmentByIDRequest,
@@ -379,7 +379,7 @@ func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		RunAndReturn(func(
 			_ context.Context,
 			_ *shipmentports.GetShipmentByIDRequest,
@@ -418,7 +418,7 @@ func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 		}, nil).
 		Once()
 	repo.EXPECT().
-		CheckForDuplicateBOLs(mock.Anything, mock.AnythingOfType("*repositories.DuplicateBOLCheckRequest")).
+		CheckForDuplicateBOLs(mock.Anything, mock.AnythingOfType("*shipmentports.DuplicateBOLCheckRequest")).
 		Return([]*shipmentports.DuplicateBOLResult{}, nil).
 		Once()
 	formula := formulatemplateportsmock.NewMockFormulaCalculator(t)
@@ -503,7 +503,7 @@ func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) 
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(cloneShipment(original), nil).
 		Once()
 	repo.EXPECT().
@@ -514,7 +514,7 @@ func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) 
 		}).
 		Once()
 	repo.EXPECT().
-		CheckForDuplicateBOLs(mock.Anything, mock.AnythingOfType("*repositories.DuplicateBOLCheckRequest")).
+		CheckForDuplicateBOLs(mock.Anything, mock.AnythingOfType("*shipmentports.DuplicateBOLCheckRequest")).
 		Return([]*shipmentports.DuplicateBOLResult{}, nil).
 		Once()
 
@@ -632,7 +632,7 @@ func TestServiceUpdate_RejectsMoveTransitionToInTransitWhenEquipmentActiveElsewh
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(cloneShipment(original), nil).
 		Once()
 
@@ -739,7 +739,7 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(cloneShipment(original), nil).
 		Once()
 
@@ -767,7 +767,7 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 	assignmentRepo.EXPECT().
 		FindNearestActualEventByTractorID(
 			mock.Anything,
-			mock.AnythingOfType("repositories.FindNearestActualTimelineEventRequest"),
+			mock.AnythingOfType("shipmentports.FindNearestActualTimelineEventRequest"),
 			tractorID,
 		).
 		Return(nil, nil).
@@ -775,7 +775,7 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 	assignmentRepo.EXPECT().
 		FindNearestActualEventByPrimaryWorkerID(
 			mock.Anything,
-			mock.AnythingOfType("repositories.FindNearestActualTimelineEventRequest"),
+			mock.AnythingOfType("shipmentports.FindNearestActualTimelineEventRequest"),
 			workerID,
 		).
 		Return(nil, nil).
@@ -783,7 +783,7 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 	assignmentRepo.EXPECT().
 		FindOverlappingActualWindowByTractorID(
 			mock.Anything,
-			mock.AnythingOfType("repositories.FindOverlappingActualTimelineWindowRequest"),
+			mock.AnythingOfType("shipmentports.FindOverlappingActualTimelineWindowRequest"),
 			tractorID,
 		).
 		Return(&shipmentports.ActualTimelineWindow{
@@ -796,7 +796,7 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 	assignmentRepo.EXPECT().
 		FindOverlappingActualWindowByPrimaryWorkerID(
 			mock.Anything,
-			mock.AnythingOfType("repositories.FindOverlappingActualTimelineWindowRequest"),
+			mock.AnythingOfType("shipmentports.FindOverlappingActualTimelineWindowRequest"),
 			workerID,
 		).
 		Return(&shipmentports.ActualTimelineWindow{
@@ -882,7 +882,7 @@ func TestServiceUpdate_RejectsTwoMovesGoingInTransitWithSameTrailerInPayload(t *
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(cloneShipment(original), nil).
 		Once()
 
@@ -982,7 +982,7 @@ func TestServiceUpdate_PreservesAssignedStateWhenPayloadSendsNew(t *testing.T) {
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		RunAndReturn(func(
 			_ context.Context,
 			_ *shipmentports.GetShipmentByIDRequest,
@@ -1017,7 +1017,7 @@ func TestServiceUpdate_PreservesAssignedStateWhenPayloadSendsNew(t *testing.T) {
 		}, nil).
 		Once()
 	repo.EXPECT().
-		CheckForDuplicateBOLs(mock.Anything, mock.AnythingOfType("*repositories.DuplicateBOLCheckRequest")).
+		CheckForDuplicateBOLs(mock.Anything, mock.AnythingOfType("*shipmentports.DuplicateBOLCheckRequest")).
 		Return([]*shipmentports.DuplicateBOLResult{}, nil).
 		Once()
 	formula := formulatemplateportsmock.NewMockFormulaCalculator(t)
@@ -1074,7 +1074,7 @@ func TestServiceUpdate_RejectsDirectInvoiceFromCompleted(t *testing.T) {
 
 	repo := shipmentportsmock.NewMockShipmentRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		RunAndReturn(func(
 			_ context.Context,
 			_ *shipmentports.GetShipmentByIDRequest,

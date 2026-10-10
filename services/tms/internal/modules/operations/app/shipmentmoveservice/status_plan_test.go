@@ -44,7 +44,7 @@ func TestPreviewUpdateStatus_ProjectsTheMovesAndTheirShipment(t *testing.T) {
 	assignmentRepo.EXPECT().GetByMoveID(mock.Anything, tenantInfo, moveID).Return(nil, nil).Once()
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(&shipment.Shipment{
 			ID:             shipmentID,
 			OrganizationID: tenantInfo.OrgID,

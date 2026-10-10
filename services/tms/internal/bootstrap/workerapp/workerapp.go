@@ -14,9 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/settlementjobs"
-	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionrouter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/turnstream"
 	accountingworker "github.com/emoss08/trenova/internal/modules/accounting/jobs"
 	agentworker "github.com/emoss08/trenova/internal/modules/agent/jobs"
 	billingworker "github.com/emoss08/trenova/internal/modules/billing/jobs"
@@ -56,8 +54,6 @@ func Modules() fx.Option {
 		fuelpricejobs.Module,
 		ratesimjobs.Module,
 		samsarajobs.Module,
-		turnstream.Module,
-		completionrouter.Module,
 		settlementjobs.Module,
 		compliancejobs.Module,
 	)

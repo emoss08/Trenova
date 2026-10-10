@@ -70,7 +70,7 @@ func newDetectionFixture(t *testing.T) *detectionFixture {
 	}
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(source, nil).
 		Once()
 	dispatchRepo := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
@@ -108,7 +108,7 @@ func TestPreviewEvaluateShipment_PlansTheFailureWithoutSavingIt(t *testing.T) {
 
 	fixture := newDetectionFixture(t)
 	fixture.repo.EXPECT().
-		FindUnresolvedByStop(mock.Anything, mock.AnythingOfType("*repositories.ServiceFailureActiveStopRequest")).
+		FindUnresolvedByStop(mock.Anything, mock.AnythingOfType("*servicefailureports.ServiceFailureActiveStopRequest")).
 		Return(nil, errortypes.NewNotFoundError("not found")).
 		Once()
 
@@ -143,7 +143,7 @@ func TestPreviewEvaluateShipment_RefreshesAnOpenFailureInsteadOfOpeningAnother(t
 		LateMinutes:     1,
 	}
 	fixture.repo.EXPECT().
-		FindUnresolvedByStop(mock.Anything, mock.AnythingOfType("*repositories.ServiceFailureActiveStopRequest")).
+		FindUnresolvedByStop(mock.Anything, mock.AnythingOfType("*servicefailureports.ServiceFailureActiveStopRequest")).
 		Return(existing, nil).
 		Once()
 

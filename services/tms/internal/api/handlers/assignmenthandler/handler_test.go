@@ -99,7 +99,7 @@ func TestAssignmentHandler_Unassign_ServiceError(t *testing.T) {
 	moveID := pulid.MustNew("sm_")
 	service := shipmentportsmock.NewMockAssignmentService(t)
 	service.EXPECT().
-		Unassign(mock.Anything, mock.AnythingOfType("*repositories.UnassignShipmentMoveRequest")).
+		Unassign(mock.Anything, mock.AnythingOfType("*shipmentports.UnassignShipmentMoveRequest")).
 		Return(errortypes.NewBusinessError("Only fresh assigned shipment moves can be unassigned")).
 		Once()
 

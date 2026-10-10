@@ -57,7 +57,7 @@ func previewUnassignService(
 
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		RunAndReturn(func(
 			context.Context,
 			*shipmentports.GetShipmentByIDRequest,

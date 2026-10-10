@@ -74,6 +74,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentsubjectservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttestpromptservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolruleservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttrustservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentwaitservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditservice"
@@ -111,6 +112,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/tablequeryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowerservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
@@ -124,7 +126,9 @@ import (
 //nolint:funlen // the module's providers are its part of the application graph
 func SharedOptions() fx.Option {
 	return fx.Options(
+		agenttoolservice.Module,
 		fx.Provide(
+			assistantcontract.NewTurnCanceller,
 			assistantqueuerepository.New,
 			agentwaitrepository.New,
 			agentrunrepository.New,

@@ -318,7 +318,7 @@ func updateHarness(
 
 	repo := rateagreementportsmock.NewMockRateAgreementRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetRateAgreementByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*rateagreementports.GetRateAgreementByIDRequest")).
 		RunAndReturn(func(
 			_ context.Context,
 			req *rateagreementports.GetRateAgreementByIDRequest,

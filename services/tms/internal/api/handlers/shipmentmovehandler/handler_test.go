@@ -174,7 +174,7 @@ func TestShipmentMoveHandler_RecordStopActual_BusinessErrorPassthrough(t *testin
 	stopID := pulid.MustNew("stp_")
 	service := shipmentportsmock.NewMockShipmentMoveService(t)
 	service.EXPECT().
-		RecordStopActual(mock.Anything, mock.AnythingOfType("*repositories.RecordStopActualRequest")).
+		RecordStopActual(mock.Anything, mock.AnythingOfType("*shipmentports.RecordStopActualRequest")).
 		Return(nil, errortypes.NewBusinessError("You've already arrived at this stop")).
 		Once()
 

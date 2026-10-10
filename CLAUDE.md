@@ -476,6 +476,15 @@ registers its edition separately, so an overlay must also add `cmd/api/edition_c
 `cmd/worker/edition_cloud.go`, each calling `edition.Register(cloud.Edition())`; without them
 those two binaries run the self-hosted edition.
 
+## Modules
+
+`services/tms` is split into levelled modules, `internal/modules/<module>/{domain,ports,app,adapters/postgres,jobs}`
+with a `module.go` (`SharedOptions`, `APIOptions`) and a `jobs/jobs.go` (`WorkerOptions`). A module may import only
+the `domain`, `ports` and `<name>contract` packages of strictly lower modules, plus `pkg/*` and `internal/infrastructure/*`;
+an upward need is an inversion port declared low and provided by the higher `module.go`. `go tool go-arch-lint check`
+(`task lint`) enforces it against `.go-arch-lint.yml`. New code goes in its module, never in `internal/core`.
+**Read [docs/engineering/module-architecture.md](docs/engineering/module-architecture.md) before adding a module, an entity, a port, a service or a job.**
+
 ## Bun ORM
 
 For help with Bun ORM, look in the [docs](docs/bun/).

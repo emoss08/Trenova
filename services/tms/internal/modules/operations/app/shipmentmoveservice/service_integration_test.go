@@ -53,7 +53,7 @@ func TestUpdateStatusIntegrationRecomputesShipmentStatus(t *testing.T) {
 	// Only the flows that recompute shipment state read the control record, so
 	// the expectation belongs to those tests rather than the shared harness.
 	controlRepo.EXPECT().
-		Get(mock.Anything, mock.AnythingOfType("repositories.GetShipmentControlRequest")).
+		Get(mock.Anything, mock.AnythingOfType("tenantports.GetShipmentControlRequest")).
 		Return(&tenant.ShipmentControl{
 			AutoDelayShipments:          true,
 			AutoDelayShipmentsThreshold: int16Ptr(30),
@@ -151,7 +151,7 @@ func TestSplitMoveIntegrationPersistsTwoLegHandoff(t *testing.T) {
 	// Only the flows that recompute shipment state read the control record, so
 	// the expectation belongs to those tests rather than the shared harness.
 	controlRepo.EXPECT().
-		Get(mock.Anything, mock.AnythingOfType("repositories.GetShipmentControlRequest")).
+		Get(mock.Anything, mock.AnythingOfType("tenantports.GetShipmentControlRequest")).
 		Return(&tenant.ShipmentControl{
 			AutoDelayShipments:          true,
 			AutoDelayShipmentsThreshold: int16Ptr(30),
@@ -239,7 +239,7 @@ func TestRecordStopActualIntegrationPersistsBackdatedActuals(t *testing.T) {
 
 	svc, _, moveRepo, tenantInfo, fixture, controlRepo := newIntegrationService(t, ctx, db)
 	controlRepo.EXPECT().
-		Get(mock.Anything, mock.AnythingOfType("repositories.GetShipmentControlRequest")).
+		Get(mock.Anything, mock.AnythingOfType("tenantports.GetShipmentControlRequest")).
 		Return(&tenant.ShipmentControl{}, nil)
 	graph := testutil.CreateShipmentGraph(
 		t,

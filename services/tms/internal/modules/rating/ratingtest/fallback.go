@@ -32,7 +32,7 @@ func NewFallbackEngine(t *testing.T, formula formulatemplateports.FormulaCalcula
 
 	agreementRepo := rateagreementportsmock.NewMockRateAgreementRepository(t)
 	agreementRepo.EXPECT().
-		ResolveRules(mock.Anything, mock.AnythingOfType("*repositories.ResolveRateRulesRequest")).
+		ResolveRules(mock.Anything, mock.AnythingOfType("*rateagreementports.ResolveRateRulesRequest")).
 		Return(&rateagreementports.ResolveRateRulesResult{}, nil).
 		Maybe()
 
@@ -40,7 +40,7 @@ func NewFallbackEngine(t *testing.T, formula formulatemplateports.FormulaCalcula
 	zoneRepo.EXPECT().
 		ResolveMembership(
 			mock.Anything,
-			mock.AnythingOfType("*repositories.ResolveZoneMembershipRequest"),
+			mock.AnythingOfType("*ratezoneports.ResolveZoneMembershipRequest"),
 		).
 		Return(nil, nil).
 		Maybe()

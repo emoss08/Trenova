@@ -120,7 +120,7 @@ func agreementRepoReturning(
 
 	repo := rateagreementportsmock.NewMockRateAgreementRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetRateAgreementByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*rateagreementports.GetRateAgreementByIDRequest")).
 		RunAndReturn(func(
 			context.Context,
 			*rateagreementports.GetRateAgreementByIDRequest,

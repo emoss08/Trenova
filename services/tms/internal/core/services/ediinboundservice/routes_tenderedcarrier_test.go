@@ -389,7 +389,7 @@ func TestRouteShipmentStatus_X3RecordsOriginArrivalWithEventTime(t *testing.T) {
 		Once()
 	var recorded *shipmentports.RecordStopActualRequest
 	fixture.moveSvc.EXPECT().
-		RecordStopActual(mock.Anything, mock.AnythingOfType("*repositories.RecordStopActualRequest")).
+		RecordStopActual(mock.Anything, mock.AnythingOfType("*shipmentports.RecordStopActualRequest")).
 		RunAndReturn(
 			func(_ context.Context, req *shipmentports.RecordStopActualRequest) (*shipment.ShipmentMove, error) {
 				recorded = req
@@ -441,12 +441,12 @@ func TestRouteShipmentStatus_D1RecordsArriveAndDepartAtDestination(t *testing.T)
 
 	move, _, destination := fixture.tenderedMoveWithStops(moveID)
 	fixture.moveRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetMoveByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetMoveByIDRequest")).
 		Return(move, nil).
 		Once()
 	recorded := make([]*shipmentports.RecordStopActualRequest, 0, 2)
 	fixture.moveSvc.EXPECT().
-		RecordStopActual(mock.Anything, mock.AnythingOfType("*repositories.RecordStopActualRequest")).
+		RecordStopActual(mock.Anything, mock.AnythingOfType("*shipmentports.RecordStopActualRequest")).
 		RunAndReturn(
 			func(_ context.Context, req *shipmentports.RecordStopActualRequest) (*shipment.ShipmentMove, error) {
 				recorded = append(recorded, req)
@@ -499,11 +499,11 @@ func TestRouteShipmentStatus_StopActualBusinessErrorBecomesWarningKeepsComment(t
 
 	move, _, _ := fixture.tenderedMoveWithStops(moveID)
 	fixture.moveRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetMoveByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetMoveByIDRequest")).
 		Return(move, nil).
 		Once()
 	fixture.moveSvc.EXPECT().
-		RecordStopActual(mock.Anything, mock.AnythingOfType("*repositories.RecordStopActualRequest")).
+		RecordStopActual(mock.Anything, mock.AnythingOfType("*shipmentports.RecordStopActualRequest")).
 		Return(nil, errortypes.NewBusinessError("Complete the earlier stops on this load first")).
 		Once()
 

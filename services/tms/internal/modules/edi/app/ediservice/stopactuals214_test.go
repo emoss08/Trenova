@@ -119,7 +119,7 @@ func (f *stopActuals214Fixture) expectMoveLoad() {
 
 func (f *stopActuals214Fixture) expectRecordStopActual(times int) {
 	f.moveSvc.EXPECT().
-		RecordStopActual(mock.Anything, mock.AnythingOfType("*repositories.RecordStopActualRequest")).
+		RecordStopActual(mock.Anything, mock.AnythingOfType("*shipmentports.RecordStopActualRequest")).
 		RunAndReturn(
 			func(_ context.Context, req *shipmentports.RecordStopActualRequest) (*shipment.ShipmentMove, error) {
 				f.recorded = append(f.recorded, req)
@@ -274,7 +274,7 @@ func TestRecordTenderedShipmentStatus_StopActualBusinessErrorDegradesToWarning(t
 	fixture := newStopActuals214Fixture(t)
 	fixture.expectMoveLoad()
 	fixture.moveSvc.EXPECT().
-		RecordStopActual(mock.Anything, mock.AnythingOfType("*repositories.RecordStopActualRequest")).
+		RecordStopActual(mock.Anything, mock.AnythingOfType("*shipmentports.RecordStopActualRequest")).
 		Return(nil, errortypes.NewBusinessError("Complete the earlier stops on this load first")).
 		Once()
 
@@ -295,7 +295,7 @@ func TestRecordTenderedShipmentStatus_StopActualInfrastructureErrorPropagates(t 
 	fixture := newStopActuals214Fixture(t)
 	fixture.expectMoveLoad()
 	fixture.moveSvc.EXPECT().
-		RecordStopActual(mock.Anything, mock.AnythingOfType("*repositories.RecordStopActualRequest")).
+		RecordStopActual(mock.Anything, mock.AnythingOfType("*shipmentports.RecordStopActualRequest")).
 		Return(nil, errors.New("database unavailable")).
 		Once()
 
@@ -314,7 +314,7 @@ func TestRecordTenderedShipmentStatus_MoveNotFoundDegradesToWarning(t *testing.T
 
 	fixture := newStopActuals214Fixture(t)
 	fixture.moveRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetMoveByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetMoveByIDRequest")).
 		Return(nil, errortypes.NewNotFoundError("Shipment move")).
 		Once()
 

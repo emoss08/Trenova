@@ -5,7 +5,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/runstepledger"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs"
@@ -40,7 +39,6 @@ func WorkerOptions() fx.Option {
 		assistantjobs.Module,
 		completionjobs.Module,
 		importassistantjobs.Module,
-		agenttoolservice.Module,
 		agentquerytoolservice.Module,
 		agenttoolcatalog.Module,
 		agenttoolpolicy.Module,

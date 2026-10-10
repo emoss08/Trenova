@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workertrainingrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/permitservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/samsarasyncservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
@@ -32,6 +33,7 @@ import (
 func SharedOptions() fx.Option {
 	return fx.Options(
 		fx.Provide(
+			telematicsservice.New,
 			workerrepository.New,
 			workerptorepository.New,
 			workercredentialrepository.New,

@@ -6835,3 +6835,4 @@ github.com/emoss08/trenova/internal/modules/rating/app/rateengine/rateenginetest
 github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports.ShipmentEta	github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports.ShipmentEta
 github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports.ShipmentEtaReader	github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports.ShipmentEtaReader
 github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports.ShipmentTrackingReader	github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports.ShipmentTrackingReader
+github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs.NewTurnCanceller	github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract.NewTurnCanceller

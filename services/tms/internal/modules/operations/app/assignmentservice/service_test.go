@@ -92,7 +92,7 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 		}).
 		Once()
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetAssignmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetAssignmentByIDRequest")).
 		RunAndReturn(func(
 			_ context.Context,
 			req *shipmentports.GetAssignmentByIDRequest,
@@ -115,7 +115,7 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		RunAndReturn(func(
 			_ context.Context,
 			_ *shipmentports.GetShipmentByIDRequest,
@@ -316,13 +316,13 @@ func TestAssignToMove_RejectsTrailerContinuityMismatch(t *testing.T) {
 
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(shipment.CloneForUpdate(original), nil).
 		Once()
 
 	holdRepo := shipmentportsmock.NewMockShipmentHoldRepository(t)
 	holdRepo.EXPECT().
-		HasActiveDispatchHold(mock.Anything, mock.AnythingOfType("*repositories.ActiveShipmentHoldRequest")).
+		HasActiveDispatchHold(mock.Anything, mock.AnythingOfType("*shipmentports.ActiveShipmentHoldRequest")).
 		Return(false, nil).
 		Once()
 
@@ -442,13 +442,13 @@ func TestAssignToMove_RejectsDriverNotInOrganization(t *testing.T) {
 
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(validShipment(shipmentID, moveID, tenantInfo), nil).
 		Once()
 
 	holdRepo := shipmentportsmock.NewMockShipmentHoldRepository(t)
 	holdRepo.EXPECT().
-		HasActiveDispatchHold(mock.Anything, mock.AnythingOfType("*repositories.ActiveShipmentHoldRequest")).
+		HasActiveDispatchHold(mock.Anything, mock.AnythingOfType("*shipmentports.ActiveShipmentHoldRequest")).
 		Return(false, nil).
 		Once()
 
@@ -519,7 +519,7 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 		}).
 		Once()
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetAssignmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetAssignmentByIDRequest")).
 		Return(&shipment.Assignment{
 			ID:              pulid.MustNew("asn_"),
 			OrganizationID:  tenantInfo.OrgID,
@@ -534,7 +534,7 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(shipment.CloneForUpdate(original), nil).
 		Once()
 	shipmentRepo.EXPECT().
@@ -546,7 +546,7 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 	holdRepo.EXPECT().
 		HasActiveDispatchHold(
 			mock.Anything,
-			mock.AnythingOfType("*repositories.ActiveShipmentHoldRequest"),
+			mock.AnythingOfType("*shipmentports.ActiveShipmentHoldRequest"),
 		).
 		Return(false, nil).
 		Once()
@@ -674,7 +674,7 @@ func newUnassignService(t *testing.T, params unassignServiceParams) *service {
 
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		RunAndReturn(func(_ context.Context, _ *shipmentports.GetShipmentByIDRequest) (*shipment.Shipment, error) {
 			return shipment.CloneForUpdate(original), nil
 		}).
@@ -766,7 +766,7 @@ func TestUnassign_RejectsMissingAssignment(t *testing.T) {
 
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(validShipment(pulid.MustNew("shp_"), moveID, tenantInfo), nil).
 		Once()
 
@@ -990,7 +990,7 @@ func newAssignToMoveService(
 		}).
 		Once()
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetAssignmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetAssignmentByIDRequest")).
 		RunAndReturn(func(
 			_ context.Context,
 			req *shipmentports.GetAssignmentByIDRequest,
@@ -1014,7 +1014,7 @@ func newAssignToMoveService(
 
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		RunAndReturn(func(
 			_ context.Context,
 			_ *shipmentports.GetShipmentByIDRequest,
@@ -1035,7 +1035,7 @@ func newAssignToMoveService(
 
 	holdRepo := shipmentportsmock.NewMockShipmentHoldRepository(t)
 	holdRepo.EXPECT().
-		HasActiveDispatchHold(mock.Anything, mock.AnythingOfType("*repositories.ActiveShipmentHoldRequest")).
+		HasActiveDispatchHold(mock.Anything, mock.AnythingOfType("*shipmentports.ActiveShipmentHoldRequest")).
 		Return(false, nil).
 		Once()
 

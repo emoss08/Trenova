@@ -15,7 +15,7 @@ import (
 
 const (
 	handlerDir     = "../../handlers"
-	permissionDir  = "../../../core/domain/permission"
+	permissionDir  = "../../../modules/identity/domain/permission"
 	resourceSource = "resource_gen.go"
 	operationFile  = "operations.go"
 )

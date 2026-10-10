@@ -157,7 +157,7 @@ func TestResolveServiceFailure214CandidateSkippedReasons(t *testing.T) {
 			}
 			if !tt.source.CustomerID.IsNil() {
 				partnerRepo.EXPECT().
-					List(mock.Anything, mock.AnythingOfType("*repositories.ListEDIPartnersRequest")).
+					List(mock.Anything, mock.AnythingOfType("*ediports.ListEDIPartnersRequest")).
 					Return(&pagination.ListResult[*edi.EDIPartner]{
 						Items: tt.partners,
 						Total: len(tt.partners),
@@ -168,7 +168,7 @@ func TestResolveServiceFailure214CandidateSkippedReasons(t *testing.T) {
 				documentProfileRepo.EXPECT().
 					ListPartnerDocumentProfiles(
 						mock.Anything,
-						mock.AnythingOfType("*repositories.ListEDIPartnerDocumentProfilesRequest"),
+						mock.AnythingOfType("*ediports.ListEDIPartnerDocumentProfilesRequest"),
 					).
 					Return(&pagination.ListResult[*edi.EDIPartnerDocumentProfile]{
 						Items: tt.profiles,
@@ -228,11 +228,11 @@ func TestPreviewServiceFailure214ForLifecycleReadyForGeneration(t *testing.T) {
 		Return(nil, sql.ErrNoRows).
 		Once()
 	shipmentSvc.EXPECT().
-		Get(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		Get(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(&shipment.Shipment{ID: shipmentID, CustomerID: customerID}, nil).
 		Once()
 	partnerRepo.EXPECT().
-		List(mock.Anything, mock.AnythingOfType("*repositories.ListEDIPartnersRequest")).
+		List(mock.Anything, mock.AnythingOfType("*ediports.ListEDIPartnersRequest")).
 		Return(&pagination.ListResult[*edi.EDIPartner]{
 			Items: []*edi.EDIPartner{{
 				ID:                 pulid.MustNew("edip_"),
@@ -245,7 +245,7 @@ func TestPreviewServiceFailure214ForLifecycleReadyForGeneration(t *testing.T) {
 	documentProfileRepo.EXPECT().
 		ListPartnerDocumentProfiles(
 			mock.Anything,
-			mock.AnythingOfType("*repositories.ListEDIPartnerDocumentProfilesRequest"),
+			mock.AnythingOfType("*ediports.ListEDIPartnerDocumentProfilesRequest"),
 		).
 		Return(&pagination.ListResult[*edi.EDIPartnerDocumentProfile]{
 			Items: []*edi.EDIPartnerDocumentProfile{activeServiceFailure214Profile(false)},

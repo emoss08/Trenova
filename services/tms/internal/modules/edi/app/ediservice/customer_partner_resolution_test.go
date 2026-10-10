@@ -190,7 +190,7 @@ func TestService_SubmitLoadTenderFailsWhenCustomerHasNoPartner(t *testing.T) {
 
 	shipmentSvc := shipmentportsmock.NewMockShipmentService(t)
 	shipmentSvc.EXPECT().
-		Get(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		Get(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		Return(&shipment.Shipment{
 			ID:             sourceShipmentID,
 			BusinessUnitID: buID,

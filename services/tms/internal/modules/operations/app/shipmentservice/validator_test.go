@@ -578,7 +578,7 @@ func TestValidateUpdate_RejectsActualArrivalBeforePreviousTractorEvent(t *testin
 	assignmentRepo.EXPECT().
 		FindNearestActualEventByPrimaryWorkerID(
 			mock.Anything,
-			mock.AnythingOfType("repositories.FindNearestActualTimelineEventRequest"),
+			mock.AnythingOfType("shipmentports.FindNearestActualTimelineEventRequest"),
 			*entity.Moves[0].Assignment.PrimaryWorkerID,
 		).
 		Return(nil, nil).
@@ -643,7 +643,7 @@ func TestValidateUpdate_RejectsActualDepartureAfterNextPrimaryWorkerEvent(t *tes
 	assignmentRepo.EXPECT().
 		FindNearestActualEventByTractorID(
 			mock.Anything,
-			mock.AnythingOfType("repositories.FindNearestActualTimelineEventRequest"),
+			mock.AnythingOfType("shipmentports.FindNearestActualTimelineEventRequest"),
 			*entity.Moves[0].Assignment.TractorID,
 		).
 		Return(nil, nil).
@@ -663,14 +663,14 @@ func TestValidateUpdate_RejectsOverlappingActualTimesWithinShipmentForSameTracto
 	assignmentRepo.EXPECT().
 		FindNearestActualEventByTractorID(
 			mock.Anything,
-			mock.AnythingOfType("repositories.FindNearestActualTimelineEventRequest"),
+			mock.AnythingOfType("shipmentports.FindNearestActualTimelineEventRequest"),
 			mock.AnythingOfType("pulid.ID"),
 		).
 		Return(nil, nil)
 	assignmentRepo.EXPECT().
 		FindNearestActualEventByPrimaryWorkerID(
 			mock.Anything,
-			mock.AnythingOfType("repositories.FindNearestActualTimelineEventRequest"),
+			mock.AnythingOfType("shipmentports.FindNearestActualTimelineEventRequest"),
 			mock.AnythingOfType("pulid.ID"),
 		).
 		Return(nil, nil)
@@ -742,7 +742,7 @@ func TestValidateUpdate_RejectsActualArrivalWithinPersistedTractorWindow(t *test
 	assignmentRepo.EXPECT().
 		FindNearestActualEventByTractorID(
 			mock.Anything,
-			mock.AnythingOfType("repositories.FindNearestActualTimelineEventRequest"),
+			mock.AnythingOfType("shipmentports.FindNearestActualTimelineEventRequest"),
 			*entity.Moves[0].Assignment.TractorID,
 		).
 		Return(nil, nil).
@@ -750,7 +750,7 @@ func TestValidateUpdate_RejectsActualArrivalWithinPersistedTractorWindow(t *test
 	assignmentRepo.EXPECT().
 		FindNearestActualEventByPrimaryWorkerID(
 			mock.Anything,
-			mock.AnythingOfType("repositories.FindNearestActualTimelineEventRequest"),
+			mock.AnythingOfType("shipmentports.FindNearestActualTimelineEventRequest"),
 			*entity.Moves[0].Assignment.PrimaryWorkerID,
 		).
 		Return(nil, nil).
@@ -776,7 +776,7 @@ func TestValidateUpdate_RejectsActualArrivalWithinPersistedTractorWindow(t *test
 	assignmentRepo.EXPECT().
 		FindOverlappingActualWindowByPrimaryWorkerID(
 			mock.Anything,
-			mock.AnythingOfType("repositories.FindOverlappingActualTimelineWindowRequest"),
+			mock.AnythingOfType("shipmentports.FindOverlappingActualTimelineWindowRequest"),
 			*entity.Moves[0].Assignment.PrimaryWorkerID,
 		).
 		Return(nil, nil).
@@ -939,14 +939,14 @@ func allowNoExternalTimelineOverlap(
 	assignmentRepo.EXPECT().
 		FindOverlappingActualWindowByTractorID(
 			mock.Anything,
-			mock.AnythingOfType("repositories.FindOverlappingActualTimelineWindowRequest"),
+			mock.AnythingOfType("shipmentports.FindOverlappingActualTimelineWindowRequest"),
 			mock.AnythingOfType("pulid.ID"),
 		).
 		Return(nil, nil)
 	assignmentRepo.EXPECT().
 		FindOverlappingActualWindowByPrimaryWorkerID(
 			mock.Anything,
-			mock.AnythingOfType("repositories.FindOverlappingActualTimelineWindowRequest"),
+			mock.AnythingOfType("shipmentports.FindOverlappingActualTimelineWindowRequest"),
 			mock.AnythingOfType("pulid.ID"),
 		).
 		Return(nil, nil)

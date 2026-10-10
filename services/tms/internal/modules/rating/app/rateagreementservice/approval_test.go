@@ -54,7 +54,7 @@ func TestApprove_RefusesFromTheWrongStatus(t *testing.T) {
 
 	repo := rateagreementportsmock.NewMockRateAgreementRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetRateAgreementByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*rateagreementports.GetRateAgreementByIDRequest")).
 		Return(agreement, nil).
 		Once()
 
@@ -220,7 +220,7 @@ func serviceFor(
 
 	repo := rateagreementportsmock.NewMockRateAgreementRepository(t)
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetRateAgreementByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*rateagreementports.GetRateAgreementByIDRequest")).
 		RunAndReturn(func(
 			_ context.Context,
 			req *rateagreementports.GetRateAgreementByIDRequest,

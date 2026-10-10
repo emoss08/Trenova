@@ -1,4 +1,4 @@
-package assistantjobs
+package assistantcontract
 
 import (
 	"context"

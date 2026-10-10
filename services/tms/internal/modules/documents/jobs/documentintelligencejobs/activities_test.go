@@ -274,7 +274,7 @@ func TestProcessDocumentIntelligenceActivity_SuppressesShipmentDraftOutsideShipm
 		ReplacePages(mock.Anything, mock.AnythingOfType("*documentcontent.Content"), mock.AnythingOfType("[]*documentcontent.Page")).
 		Return(nil)
 	docRepo.EXPECT().
-		UpdateIntelligence(mock.Anything, mock.AnythingOfType("*repositories.UpdateDocumentIntelligenceRequest")).
+		UpdateIntelligence(mock.Anything, mock.AnythingOfType("*documentports.UpdateDocumentIntelligenceRequest")).
 		RunAndReturn(func(_ context.Context, req *documentports.UpdateDocumentIntelligenceRequest) error {
 			docUpdates = append(docUpdates, *req)
 			return nil
@@ -398,7 +398,7 @@ func TestProcessDocumentIntelligenceActivity_AutoCreatesAndAssociatesDocumentTyp
 		ReplacePages(mock.Anything, mock.AnythingOfType("*documentcontent.Content"), mock.AnythingOfType("[]*documentcontent.Page")).
 		Return(nil)
 	docRepo.EXPECT().
-		UpdateIntelligence(mock.Anything, mock.AnythingOfType("*repositories.UpdateDocumentIntelligenceRequest")).
+		UpdateIntelligence(mock.Anything, mock.AnythingOfType("*documentports.UpdateDocumentIntelligenceRequest")).
 		RunAndReturn(func(_ context.Context, req *documentports.UpdateDocumentIntelligenceRequest) error {
 			docUpdates = append(docUpdates, *req)
 			return nil
@@ -530,7 +530,7 @@ func TestProcessDocumentIntelligenceActivity_AssociatesExistingDocumentTypeByNam
 		ReplacePages(mock.Anything, mock.AnythingOfType("*documentcontent.Content"), mock.AnythingOfType("[]*documentcontent.Page")).
 		Return(nil)
 	docRepo.EXPECT().
-		UpdateIntelligence(mock.Anything, mock.AnythingOfType("*repositories.UpdateDocumentIntelligenceRequest")).
+		UpdateIntelligence(mock.Anything, mock.AnythingOfType("*documentports.UpdateDocumentIntelligenceRequest")).
 		RunAndReturn(func(_ context.Context, req *documentports.UpdateDocumentIntelligenceRequest) error {
 			docUpdates = append(docUpdates, *req)
 			return nil
@@ -648,7 +648,7 @@ func TestProcessDocumentIntelligenceActivity_EnqueuesAsyncAIExtraction(t *testin
 		ReplacePages(mock.Anything, mock.AnythingOfType("*documentcontent.Content"), mock.AnythingOfType("[]*documentcontent.Page")).
 		Return(nil)
 	docRepo.EXPECT().
-		UpdateIntelligence(mock.Anything, mock.AnythingOfType("*repositories.UpdateDocumentIntelligenceRequest")).
+		UpdateIntelligence(mock.Anything, mock.AnythingOfType("*documentports.UpdateDocumentIntelligenceRequest")).
 		Return(nil).Twice()
 	searchProjection.EXPECT().
 		Upsert(mock.Anything, mock.AnythingOfType("*document.Document"), mock.Anything).

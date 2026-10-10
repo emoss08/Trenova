@@ -369,8 +369,6 @@ var FiscalYearSpec TypeSpec
 
 var FleetCodeSpec TypeSpec
 
-var FormSubmissionFieldSpec TypeSpec
-
 var FormulaTemplateSpec TypeSpec
 
 var FuelCardSpec TypeSpec
@@ -1448,6 +1446,14 @@ func init() {
 			{
 				Name:        "outputCostPerMillion",
 				FieldMapKey: "outputCostPerMillion",
+			},
+			{
+				Name:        "cacheReadCostPerMillion",
+				FieldMapKey: "cacheReadCostPerMillion",
+			},
+			{
+				Name:        "cacheWriteCostPerMillion",
+				FieldMapKey: "cacheWriteCostPerMillion",
 			},
 			{
 				Name:        "maxTokens",
@@ -3480,6 +3486,18 @@ func init() {
 			{
 				Name:        "tainted",
 				FieldMapKey: "tainted",
+			},
+			{
+				Name:    "taints",
+				Special: "taints",
+			},
+			{
+				Name:        "reviewedByUserId",
+				FieldMapKey: "reviewedByUserId",
+			},
+			{
+				Name:        "reviewedAt",
+				FieldMapKey: "reviewedAt",
 			},
 			{
 				Name:        "taintRunId",
@@ -13674,25 +13692,6 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
-			},
-		},
-	}
-
-	FormSubmissionFieldSpec = TypeSpec{
-		TypeName: "FormSubmissionField",
-		FieldMap: watchtowercol.ItemFieldMap,
-		AlwaysColumns: []string{
-			"id",
-			"created_at",
-		},
-		Fields: []FieldSpec{
-			{
-				Name:    "label",
-				Special: "label",
-			},
-			{
-				Name:    "value",
-				Special: "value",
 			},
 		},
 	}

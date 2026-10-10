@@ -11,10 +11,14 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 )
+
+const agentMemoryTaintsSpecial = "taints"
 
 func agentRunColumns(ctx context.Context, nodePathPrefix string) []string {
 	selection := projection.Select(
@@ -118,15 +122,16 @@ func agentEvaluationConnectionToModel(
 }
 
 func agentMemoryColumns(ctx context.Context, nodePathPrefix string) []string {
-	selection := projection.Select(
-		projection.AgentMemorySpec,
-		func(path string) bool {
-			return graphql.FieldRequested(ctx, path)
-		},
-		projection.SelectOptions{PathPrefix: nodePathPrefix},
-	)
+	selection := base.ProjectedSelection(ctx, projection.AgentMemorySpec, nodePathPrefix)
+	if !selection.HasSpecial(agentMemoryTaintsSpecial) || len(selection.Columns) == 0 {
+		return selection.Columns
+	}
 
-	return selection.Columns
+	cols := agentcol.MemoryColumns
+	columns := sliceutils.AppendIfMissing(selection.Columns, cols.Tainted.Bare())
+	columns = sliceutils.AppendIfMissing(columns, cols.ReviewedByUserID.Bare())
+
+	return sliceutils.AppendIfMissing(columns, cols.ReviewedAt.Bare())
 }
 
 func agentMemoryConnectionToModel(

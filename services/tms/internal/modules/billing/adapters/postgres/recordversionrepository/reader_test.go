@@ -79,9 +79,7 @@ func TestEveryResourceAToolTargetsHasAVersionLookup(t *testing.T) {
 func resourceNames(t *testing.T) map[string]permission.Resource {
 	t.Helper()
 
-	source, err := os.ReadFile(filepath.Join(
-		"..", "..", "..", "..", "core", "domain", "permission", "resource_gen.go",
-	))
+	source, err := os.ReadFile(filepath.Join("..", "..", "..", "..", "identity", "domain", "permission", "resource_gen.go"))
 	require.NoError(t, err)
 
 	out := make(map[string]permission.Resource)
