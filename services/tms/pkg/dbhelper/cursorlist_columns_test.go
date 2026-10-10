@@ -1,13 +1,13 @@
 package dbhelper
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
 	"database/sql"
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
+
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/uptrace/bun"

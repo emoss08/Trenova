@@ -1,13 +1,13 @@
 package shipmentrepository
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
+
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/uptrace/bun"

@@ -1,21 +1,21 @@
 package permitrepository
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/pkg/buncolgen/holdreasoncol"
 	"github.com/emoss08/trenova/pkg/buncolgen/jurisdictionrulecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/permitcol"
-	"context"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
-	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"

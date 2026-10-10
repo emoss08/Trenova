@@ -2,10 +2,7 @@
 
 package commodity
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/commoditycol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/commoditycol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Commodity].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

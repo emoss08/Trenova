@@ -1,14 +1,15 @@
 package aifeedbackrepository
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
 	"context"
 	"database/sql"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"

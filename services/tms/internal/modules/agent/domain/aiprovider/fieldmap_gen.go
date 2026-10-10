@@ -2,10 +2,7 @@
 
 package aiprovider
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/aiprovidercol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/aiprovidercol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [FailureDismissal].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

@@ -1,7 +1,6 @@
 package assistantartifactrepository
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/assistantartifactcol"
 	"context"
 	"encoding/base64"
 	"errors"
@@ -9,11 +8,12 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/pkg/buncolgen/assistantartifactcol"
+
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

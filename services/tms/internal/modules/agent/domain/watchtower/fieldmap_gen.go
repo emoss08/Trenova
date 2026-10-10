@@ -2,10 +2,7 @@
 
 package watchtower
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/watchtowercol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/watchtowercol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Cursor].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

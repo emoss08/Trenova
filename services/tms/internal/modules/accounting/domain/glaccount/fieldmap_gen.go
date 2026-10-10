@@ -2,10 +2,7 @@
 
 package glaccount
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/glaccountcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/glaccountcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [GLAccount].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

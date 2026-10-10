@@ -2,10 +2,7 @@
 
 package equipmentmanufacturer
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/equipmentmanufacturercol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/equipmentmanufacturercol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EquipmentManufacturer].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

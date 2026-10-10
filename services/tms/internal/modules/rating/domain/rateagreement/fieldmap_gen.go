@@ -2,10 +2,7 @@
 
 package rateagreement
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateAgreement].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

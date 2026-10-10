@@ -2,10 +2,7 @@
 
 package customer
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/customercol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Customer].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

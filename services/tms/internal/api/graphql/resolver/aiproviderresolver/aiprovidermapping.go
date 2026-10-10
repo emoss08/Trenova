@@ -1,8 +1,9 @@
 package aiproviderresolver
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/aiprovidercol"
 	"context"
+
+	"github.com/emoss08/trenova/pkg/buncolgen/aiprovidercol"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
@@ -10,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/optional"

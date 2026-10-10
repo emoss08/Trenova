@@ -2,10 +2,7 @@
 
 package bankreceiptbatch
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/bankreceiptbatchcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/bankreceiptbatchcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [BankReceiptBatch].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

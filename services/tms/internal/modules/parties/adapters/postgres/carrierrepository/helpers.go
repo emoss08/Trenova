@@ -2,7 +2,6 @@ package carrierrepository
 
 import (
 	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 )
 

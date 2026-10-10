@@ -2,19 +2,19 @@
 package capturerepository
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/pkg/buncolgen/capturecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-	"context"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbscope"

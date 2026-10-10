@@ -2,10 +2,7 @@
 
 package exchangerate
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/exchangeratecol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/exchangeratecol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ExchangeRate].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

@@ -2,10 +2,7 @@
 
 package aifeedback
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/aifeedbackcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/aifeedbackcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Feedback].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

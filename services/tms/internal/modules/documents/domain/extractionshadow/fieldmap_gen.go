@@ -2,10 +2,7 @@
 
 package extractionshadow
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/extractionshadowcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/extractionshadowcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ShadowResult].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

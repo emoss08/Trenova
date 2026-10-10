@@ -1,16 +1,16 @@
 package fuelpurchaserepository
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/fuelpurchasecol"
 	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
+	"github.com/emoss08/trenova/pkg/buncolgen/fuelpurchasecol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )

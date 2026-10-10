@@ -2,10 +2,7 @@
 
 package worker
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/workercol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ApprovalDelegation].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

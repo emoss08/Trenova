@@ -1,16 +1,17 @@
 package rateagreementrepository
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/accessorialchargecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/pkg/buncolgen/accessorialchargecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"

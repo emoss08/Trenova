@@ -2,10 +2,7 @@
 
 package documentupload
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/documentuploadcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/documentuploadcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DocumentUploadSession].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

@@ -1,16 +1,16 @@
 package tenantbootstrap
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
 	"github.com/uptrace/bun"

@@ -1,15 +1,15 @@
 package tractorrepository
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
 	"context"
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )

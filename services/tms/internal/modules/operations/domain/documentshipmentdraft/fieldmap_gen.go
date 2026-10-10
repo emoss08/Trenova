@@ -2,10 +2,7 @@
 
 package documentshipmentdraft
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/documentshipmentdraftcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/documentshipmentdraftcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DocumentShipmentDraft].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

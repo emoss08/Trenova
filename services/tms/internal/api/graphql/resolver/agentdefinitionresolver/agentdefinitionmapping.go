@@ -1,8 +1,9 @@
 package agentdefinitionresolver
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
 	"context"
+
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
@@ -11,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/sliceutils"

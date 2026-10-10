@@ -2,10 +2,7 @@
 
 package deskcase
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/deskcasecol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/deskcasecol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ChecklistTemplate].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

@@ -2,10 +2,7 @@
 
 package tenant
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingControl].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

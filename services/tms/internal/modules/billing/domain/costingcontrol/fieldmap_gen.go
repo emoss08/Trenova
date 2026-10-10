@@ -2,10 +2,7 @@
 
 package costingcontrol
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/costingcontrolcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/costingcontrolcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CostCategory].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

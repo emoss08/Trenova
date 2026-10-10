@@ -2,10 +2,7 @@
 
 package instancebootstrap
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/instancebootstrapcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/instancebootstrapcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InstanceBootstrap].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

@@ -1,13 +1,13 @@
 package carrierintelrepository
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
+
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"

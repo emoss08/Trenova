@@ -1,21 +1,22 @@
 package dispatchconsolerepository
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/emoss08/trenova/pkg/buncolgen/fleetcodecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/trailercol"
 	"github.com/emoss08/trenova/pkg/buncolgen/usstatecol"
 	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-	"context"
-	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"

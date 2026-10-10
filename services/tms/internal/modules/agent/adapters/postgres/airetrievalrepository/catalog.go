@@ -1,13 +1,14 @@
 package airetrievalrepository
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/airetrievalcol"
 	"context"
 	"database/sql"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
+	"github.com/emoss08/trenova/pkg/buncolgen/airetrievalcol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/timeutils"

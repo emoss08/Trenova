@@ -1,17 +1,17 @@
 package settingversionrepository
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/settingversioncol"
 	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion"
+	"github.com/emoss08/trenova/pkg/buncolgen/settingversioncol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/settingversionports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"

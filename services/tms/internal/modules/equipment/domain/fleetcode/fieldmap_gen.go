@@ -2,10 +2,7 @@
 
 package fleetcode
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/fleetcodecol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/fleetcodecol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [FleetCode].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

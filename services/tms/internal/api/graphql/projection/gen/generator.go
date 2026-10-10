@@ -1190,7 +1190,7 @@ func loadGoStructsFrom(root string, modulePath string, structs map[string]goStru
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("walking Go domain structs in %q: %w", root, err)
+		return fmt.Errorf("walking Go domain structs in %q: %w", root, err)
 	}
 
 	return nil

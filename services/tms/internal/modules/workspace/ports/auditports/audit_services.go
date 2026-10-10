@@ -3,9 +3,9 @@ package auditports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -34,13 +34,12 @@ type BulkLogEntry struct {
 
 type SensitiveFieldAction int
 
-const SensitiveFieldOmit SensitiveFieldAction = iota
-
-const SensitiveFieldMask
-
-const SensitiveFieldHash
-
-const SensitiveFieldEncrypt
+const (
+	SensitiveFieldOmit SensitiveFieldAction = iota
+	SensitiveFieldMask
+	SensitiveFieldHash
+	SensitiveFieldEncrypt
+)
 
 type SensitiveField struct {
 	Name    string

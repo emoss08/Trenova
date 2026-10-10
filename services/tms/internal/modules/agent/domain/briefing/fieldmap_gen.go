@@ -2,10 +2,7 @@
 
 package briefing
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/briefingcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/briefingcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Briefing].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

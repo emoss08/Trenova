@@ -7,21 +7,22 @@ import (
 	"sync"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
+
+	"github.com/emoss08/trenova/internal/core/services/subjectaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
-	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
-	"github.com/emoss08/trenova/internal/core/services/subjectaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
+	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -49,7 +50,7 @@ type Params struct {
 
 	Logger      *zap.Logger
 	Permissions permissionports.PermissionEngine
-	Tracking    shipmentports.ShipmentTrackingReader
+	Tracking    shipmenttrackingports.ShipmentTrackingReader
 	Invoices    invoiceports.InvoiceRepository
 	Tractors    tractorports.TractorRepository
 	Trailers    trailerports.TrailerRepository
@@ -62,7 +63,7 @@ type Params struct {
 type Dependencies struct {
 	Logger      *zap.Logger
 	Permissions permissionports.PermissionEngine
-	Tracking    shipmentports.ShipmentTrackingReader
+	Tracking    shipmenttrackingports.ShipmentTrackingReader
 	Invoices    invoiceports.InvoiceRepository
 	Tractors    tractorports.TractorRepository
 	Trailers    trailerports.TrailerRepository

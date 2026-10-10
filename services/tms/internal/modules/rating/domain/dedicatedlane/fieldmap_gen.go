@@ -2,10 +2,7 @@
 
 package dedicatedlane
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/dedicatedlanecol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/dedicatedlanecol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [PatternConfig].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

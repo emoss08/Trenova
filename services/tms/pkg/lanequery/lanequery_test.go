@@ -1,13 +1,13 @@
 package lanequery_test
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/lanequery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

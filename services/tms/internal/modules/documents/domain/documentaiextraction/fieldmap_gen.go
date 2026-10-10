@@ -2,10 +2,7 @@
 
 package documentaiextraction
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/documentaiextractioncol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/documentaiextractioncol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Extraction].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

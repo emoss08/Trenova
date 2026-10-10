@@ -2,10 +2,7 @@
 
 package shipmentevent
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmenteventcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/shipmenteventcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Event].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

@@ -1,18 +1,18 @@
 package development
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/fuelpurchasecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/iftacol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
 	"context"
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/buncolgen/fuelpurchasecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/iftacol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
+
+	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/seedhelpers"

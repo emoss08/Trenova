@@ -2,10 +2,7 @@
 
 package settingversion
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/settingversioncol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/settingversioncol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [SettingVersion].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

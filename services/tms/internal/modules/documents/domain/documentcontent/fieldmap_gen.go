@@ -2,10 +2,7 @@
 
 package documentcontent
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/documentcontentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/documentcontentcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Content].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

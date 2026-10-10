@@ -2,10 +2,7 @@
 
 package permit
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/permitcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/permitcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Permit].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

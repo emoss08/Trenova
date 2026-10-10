@@ -1,15 +1,15 @@
 package shipmentsuggestionrepository
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentsuggestioncol"
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentsuggestioncol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"

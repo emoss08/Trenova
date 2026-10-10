@@ -2,10 +2,7 @@
 
 package documenttemplate
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/documenttemplatecol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/documenttemplatecol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DocumentTemplate].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

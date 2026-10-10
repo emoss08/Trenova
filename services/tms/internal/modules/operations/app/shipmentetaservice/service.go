@@ -4,12 +4,14 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
+
+	"github.com/emoss08/trenova/internal/core/services/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/services/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -70,15 +72,15 @@ type Service struct {
 }
 
 var (
-	_ shipmentports.ShipmentEtaReader      = (*Service)(nil)
-	_ shipmentports.ShipmentTrackingReader = (*Service)(nil)
+	_ shipmenttrackingports.ShipmentEtaReader      = (*Service)(nil)
+	_ shipmenttrackingports.ShipmentTrackingReader = (*Service)(nil)
 )
 
-func New(p Params) shipmentports.ShipmentEtaReader {
+func New(p Params) shipmenttrackingports.ShipmentEtaReader {
 	return fromParams(p)
 }
 
-func NewTrackingReader(p Params) shipmentports.ShipmentTrackingReader {
+func NewTrackingReader(p Params) shipmenttrackingports.ShipmentTrackingReader {
 	return fromParams(p)
 }
 
@@ -113,8 +115,8 @@ func (s *Service) EtasByShipmentIDs(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	shipmentIDs []pulid.ID,
-) (map[pulid.ID]*shipmentports.ShipmentEta, error) {
-	out := make(map[pulid.ID]*shipmentports.ShipmentEta, len(shipmentIDs))
+) (map[pulid.ID]*shipmenttrackingports.ShipmentEta, error) {
+	out := make(map[pulid.ID]*shipmenttrackingports.ShipmentEta, len(shipmentIDs))
 	err := s.eachSnapshot(ctx, &snapshotRequest{
 		tenant:   tenantInfo,
 		ids:      shipmentIDs,
@@ -353,12 +355,12 @@ func EtaOf(
 	entity *shipment.Shipment,
 	snapshot *shipmenttracking.Snapshot,
 	failureReason string,
-) *shipmentports.ShipmentEta {
+) *shipmenttrackingports.ShipmentEta {
 	if snapshot == nil || snapshot.NextStop == nil || entity.Status == shipment.StatusCanceled {
 		return nil
 	}
 
-	eta := &shipmentports.ShipmentEta{
+	eta := &shipmenttrackingports.ShipmentEta{
 		ShipmentID: entity.ID,
 		Verdict:    shipmenttracking.VerdictUnknown,
 	}

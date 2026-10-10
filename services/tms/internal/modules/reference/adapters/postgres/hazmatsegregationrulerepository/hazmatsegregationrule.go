@@ -1,14 +1,14 @@
 package hazmatsegregationrulerepository
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/hazmatsegregationrulecol"
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
+	"github.com/emoss08/trenova/pkg/buncolgen/hazmatsegregationrulecol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/hazmatsegregationruleports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"

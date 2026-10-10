@@ -6832,3 +6832,6 @@ github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice/shipm
 github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice/shipmentservicetest.NewCustomerRepository	github.com/emoss08/trenova/internal/modules/operations/operationstest.NewCustomerRepository
 github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp/exchangeratestamptest.NewFixedForTest	github.com/emoss08/trenova/internal/modules/identity/identitytest.NewFixedForTest
 github.com/emoss08/trenova/internal/modules/rating/app/rateengine/rateenginetest.NewFallbackEngine	github.com/emoss08/trenova/internal/modules/rating/ratingtest.NewFallbackEngine
+github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports.ShipmentEta	github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports.ShipmentEta
+github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports.ShipmentEtaReader	github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports.ShipmentEtaReader
+github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports.ShipmentTrackingReader	github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports.ShipmentTrackingReader

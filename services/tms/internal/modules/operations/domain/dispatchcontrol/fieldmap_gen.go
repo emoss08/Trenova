@@ -2,10 +2,7 @@
 
 package dispatchcontrol
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/dispatchcontrolcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/dispatchcontrolcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DispatchControl].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

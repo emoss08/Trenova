@@ -2,10 +2,7 @@
 
 package hazardousmaterial
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/hazardousmaterialcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/hazardousmaterialcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [HazardousMaterial].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

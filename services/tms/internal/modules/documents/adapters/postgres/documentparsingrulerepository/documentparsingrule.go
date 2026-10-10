@@ -1,15 +1,15 @@
 package documentparsingrulerepository
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/documentparsingrulecol"
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documentparsingrule"
+	"github.com/emoss08/trenova/pkg/buncolgen/documentparsingrulecol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentparsingrule"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"

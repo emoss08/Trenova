@@ -2,10 +2,7 @@
 
 package documentsearchprojection
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/documentsearchprojectioncol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/documentsearchprojectioncol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Projection].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

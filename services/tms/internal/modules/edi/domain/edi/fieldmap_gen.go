@@ -2,10 +2,7 @@
 
 package edi
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/edicol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CarrierInvoice].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

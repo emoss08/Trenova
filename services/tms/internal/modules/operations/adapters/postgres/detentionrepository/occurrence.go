@@ -1,18 +1,18 @@
 package detentionrepository
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
 	"github.com/emoss08/trenova/pkg/buncolgen/detentioncol"
 	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"context"
-	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"

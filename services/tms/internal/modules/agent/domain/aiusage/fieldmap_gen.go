@@ -2,10 +2,7 @@
 
 package aiusage
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/aiusagecol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/aiusagecol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AIUsageRecord].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

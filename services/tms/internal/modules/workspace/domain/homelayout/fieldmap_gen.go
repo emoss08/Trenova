@@ -2,10 +2,7 @@
 
 package homelayout
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/homelayoutcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/homelayoutcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Preference].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

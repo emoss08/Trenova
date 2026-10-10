@@ -19,9 +19,9 @@ const (
 )
 
 var (
-	domainDir     = flag.String("domain", "", "Glob of domain directories containing entity packages")
-	outputDir     = flag.String("output", "", "Output directory for generated column files")
-	outputImport  = flag.String("import", helperImportPath, "Import path of the output directory")
+	domainDir    = flag.String("domain", "", "Glob of domain directories containing entity packages")
+	outputDir    = flag.String("output", "", "Output directory for generated column files")
+	outputImport = flag.String("import", helperImportPath, "Import path of the output directory")
 )
 
 var excludedPackages = map[string]struct{}{

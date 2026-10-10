@@ -2,10 +2,7 @@
 
 package jurisdictionrule
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/jurisdictionrulecol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/jurisdictionrulecol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EscortThreshold].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

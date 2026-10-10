@@ -1,9 +1,8 @@
 package rateagreementrepository
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 )

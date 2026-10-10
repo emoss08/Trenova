@@ -2,10 +2,7 @@
 
 package agent
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AgentDecision].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

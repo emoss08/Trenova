@@ -2,10 +2,7 @@
 
 package rateimport
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/rateimportcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/rateimportcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateImportBatch].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

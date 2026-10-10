@@ -2,10 +2,7 @@
 
 package tender
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/tendercol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/tendercol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RoutingGuide].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

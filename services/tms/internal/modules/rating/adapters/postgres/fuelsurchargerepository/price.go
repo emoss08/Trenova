@@ -1,14 +1,14 @@
 package fuelsurchargerepository
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/fuelsurchargecol"
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
+	"github.com/emoss08/trenova/pkg/buncolgen/fuelsurchargecol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"

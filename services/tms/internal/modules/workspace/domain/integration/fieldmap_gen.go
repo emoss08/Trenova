@@ -2,10 +2,7 @@
 
 package integration
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/integrationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/integrationcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Integration].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

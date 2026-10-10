@@ -3,13 +3,14 @@ package assistantcaseservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -23,7 +24,7 @@ type StatesParams struct {
 	Logger *zap.Logger
 	Cases  deskcaseports.AssistantCaseRepository
 	Waits  agentwaitports.AgentWaitRepository
-	Etas   shipmentports.ShipmentEtaReader `optional:"true"`
+	Etas   shipmenttrackingports.ShipmentEtaReader `optional:"true"`
 }
 
 // States works out where cases stand. It holds nothing it could not read
@@ -32,7 +33,7 @@ type StatesParams struct {
 type States struct {
 	cases deskcaseports.AssistantCaseRepository
 	waits agentwaitports.AgentWaitRepository
-	etas  shipmentports.ShipmentEtaReader
+	etas  shipmenttrackingports.ShipmentEtaReader
 	now   func() int64
 	l     *zap.Logger
 }

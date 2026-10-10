@@ -2,10 +2,7 @@
 
 package shipment
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AdditionalCharge].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

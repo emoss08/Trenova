@@ -2,10 +2,7 @@
 
 package latecharge
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/latechargecol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/latechargecol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [LateChargeAssessment].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

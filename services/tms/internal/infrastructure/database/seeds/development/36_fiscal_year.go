@@ -1,7 +1,6 @@
 package development
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/fiscalyearcol"
 	"context"
 	"database/sql"
 	"errors"
@@ -9,9 +8,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
+	"github.com/emoss08/trenova/pkg/buncolgen/fiscalyearcol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"

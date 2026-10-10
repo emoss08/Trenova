@@ -2,16 +2,16 @@
 package weatheralertrepository
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/weatheralertcol"
 	"context"
 	"maps"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
+	"github.com/emoss08/trenova/pkg/buncolgen/weatheralertcol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"

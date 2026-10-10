@@ -2,10 +2,7 @@
 
 package equipmentcontinuity
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/equipmentcontinuitycol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/equipmentcontinuitycol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EquipmentContinuity].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

@@ -2,10 +2,7 @@
 
 package carrierintel
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CarrierEquipmentVerification].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

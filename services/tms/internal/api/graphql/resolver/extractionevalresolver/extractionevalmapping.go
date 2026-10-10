@@ -1,16 +1,16 @@
 package extractionevalresolver
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/aicorrectioncol"
 	"context"
 	"slices"
+
+	"github.com/emoss08/trenova/pkg/buncolgen/aicorrectioncol"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/sliceutils"
 )

@@ -1,7 +1,6 @@
 package hazardousmaterialrepository
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/hazardousmaterialcol"
 	"context"
 	"fmt"
 	"regexp"
@@ -9,11 +8,12 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
+	"github.com/emoss08/trenova/pkg/buncolgen/hazardousmaterialcol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/hazardousmaterialports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"

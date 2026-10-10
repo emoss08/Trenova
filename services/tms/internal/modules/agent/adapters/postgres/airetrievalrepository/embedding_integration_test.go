@@ -3,15 +3,15 @@
 package airetrievalrepository
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/airetrievalcol"
 	"context"
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/pkg/buncolgen/airetrievalcol"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"

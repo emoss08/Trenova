@@ -2,10 +2,7 @@
 
 package driversettlement
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Dispute].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

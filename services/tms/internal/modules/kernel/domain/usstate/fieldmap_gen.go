@@ -2,10 +2,7 @@
 
 package usstate
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/usstatecol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/usstatecol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [UsState].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

@@ -2,7 +2,6 @@ package ratequoterepository
 
 import (
 	"github.com/emoss08/trenova/pkg/buncolgen/ratequotecol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/uptrace/bun"
 )
 

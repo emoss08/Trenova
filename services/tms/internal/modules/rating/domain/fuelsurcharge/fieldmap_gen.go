@@ -2,10 +2,7 @@
 
 package fuelsurcharge
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/fuelsurchargecol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/fuelsurchargecol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [FuelIndex].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

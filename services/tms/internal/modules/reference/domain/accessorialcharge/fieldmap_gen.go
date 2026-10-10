@@ -2,10 +2,7 @@
 
 package accessorialcharge
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/accessorialchargecol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/accessorialchargecol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccessorialCharge].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

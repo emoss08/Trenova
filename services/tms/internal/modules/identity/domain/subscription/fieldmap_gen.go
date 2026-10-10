@@ -2,10 +2,7 @@
 
 package subscription
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/subscriptioncol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/subscriptioncol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Subscription].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

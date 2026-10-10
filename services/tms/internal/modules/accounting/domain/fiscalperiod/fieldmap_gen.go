@@ -2,10 +2,7 @@
 
 package fiscalperiod
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/fiscalperiodcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/fiscalperiodcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [FiscalPeriod].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

@@ -2,10 +2,7 @@
 
 package capture
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/capturecol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/capturecol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CaptureBatch].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

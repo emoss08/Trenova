@@ -2,10 +2,7 @@
 
 package recurringshipment
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/recurringshipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/recurringshipmentcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RecurringShipment].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

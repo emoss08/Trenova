@@ -2,10 +2,7 @@
 
 package conversation
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AssistantTurn].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

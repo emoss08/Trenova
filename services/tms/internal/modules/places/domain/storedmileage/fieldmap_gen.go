@@ -2,10 +2,7 @@
 
 package storedmileage
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/storedmileagecol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/storedmileagecol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [StoredMileage].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

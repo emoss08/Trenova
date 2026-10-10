@@ -2,10 +2,7 @@
 
 package driverpay
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/driverpaycol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/driverpaycol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [BenefitPlan].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

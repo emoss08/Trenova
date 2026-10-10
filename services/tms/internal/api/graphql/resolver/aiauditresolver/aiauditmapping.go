@@ -1,10 +1,11 @@
 package aiauditresolver
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/aiauditcol"
 	"context"
 	"fmt"
 	"slices"
+
+	"github.com/emoss08/trenova/pkg/buncolgen/aiauditcol"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"

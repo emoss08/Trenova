@@ -2,10 +2,7 @@
 
 package invoiceadjustment
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/invoiceadjustmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/invoiceadjustmentcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InvoiceAdjustment].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

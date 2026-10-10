@@ -2,10 +2,7 @@
 
 package rateconfirmation
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/rateconfirmationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/rateconfirmationcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateConfirmation].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

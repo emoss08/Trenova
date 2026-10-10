@@ -2,10 +2,7 @@
 
 package ratematrix
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/ratematrixcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/ratematrixcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DensityScale].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

@@ -2,10 +2,7 @@
 
 package aicorrection
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/aicorrectioncol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/aicorrectioncol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Correction].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

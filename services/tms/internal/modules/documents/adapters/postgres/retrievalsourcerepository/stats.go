@@ -1,15 +1,16 @@
 package retrievalsourcerepository
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/documentcontentcol"
 	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
-	"context"
-	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/intutils"

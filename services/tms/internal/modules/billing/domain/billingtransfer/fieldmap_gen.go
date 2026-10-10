@@ -2,10 +2,7 @@
 
 package billingtransfer
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/billingtransfercol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/billingtransfercol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [BillingTransferRun].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

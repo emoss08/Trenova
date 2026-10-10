@@ -2,10 +2,7 @@
 
 package conversationschedule
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/conversationschedulecol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/conversationschedulecol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Schedule].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

@@ -2,10 +2,7 @@
 
 package distanceoverride
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/distanceoverridecol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/distanceoverridecol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DistanceOverride].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

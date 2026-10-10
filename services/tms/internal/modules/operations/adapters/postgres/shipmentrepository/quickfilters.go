@@ -1,16 +1,17 @@
 package shipmentrepository
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/detentioncol"
-	"github.com/emoss08/trenova/pkg/buncolgen/modeprofilecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/buncolgen/detentioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/modeprofilecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"

@@ -2,10 +2,7 @@
 
 package agentdefinition
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Definition].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

@@ -2,10 +2,7 @@
 
 package documentpacketrule
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/documentpacketrulecol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/documentpacketrulecol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DocumentPacketRule].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

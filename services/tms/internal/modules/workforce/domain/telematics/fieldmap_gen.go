@@ -2,10 +2,7 @@
 
 package telematics
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/telematicscol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/telematicscol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [FeedState].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

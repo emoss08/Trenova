@@ -2,10 +2,7 @@
 
 package servicetype
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/servicetypecol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/servicetypecol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ServiceType].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

@@ -2,10 +2,7 @@
 
 package billingqueuefilterpreset
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/billingqueuefilterpresetcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/billingqueuefilterpresetcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [BillingQueueFilterPreset].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

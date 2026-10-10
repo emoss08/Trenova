@@ -1,14 +1,14 @@
 package bulkeditrepository
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/bulkeditcol"
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/bulkedit"
+	"github.com/emoss08/trenova/pkg/buncolgen/bulkeditcol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/bulkedit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/bulkeditports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"

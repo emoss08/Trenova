@@ -2,10 +2,7 @@
 
 package invoicerun
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/invoiceruncol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/invoiceruncol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InvoiceRun].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

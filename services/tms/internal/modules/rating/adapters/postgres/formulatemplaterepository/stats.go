@@ -1,12 +1,12 @@
 package formulatemplaterepository
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
 	"context"
+
+	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"

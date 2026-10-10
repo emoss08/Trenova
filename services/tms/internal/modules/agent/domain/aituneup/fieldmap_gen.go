@@ -2,10 +2,7 @@
 
 package aituneup
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/aituneupcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/aituneupcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TuneUp].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

@@ -2,10 +2,7 @@
 
 package servicefailure
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/servicefailurecol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/servicefailurecol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ReasonCode].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

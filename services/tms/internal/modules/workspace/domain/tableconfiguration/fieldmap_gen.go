@@ -2,10 +2,7 @@
 
 package tableconfiguration
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/tableconfigurationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/tableconfigurationcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TableConfiguration].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

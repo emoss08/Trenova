@@ -2,10 +2,7 @@
 
 package journalentry
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/journalentrycol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/journalentrycol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [JournalBatch].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

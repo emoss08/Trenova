@@ -1,18 +1,19 @@
 package aicorrectionrepository
 
 import (
-	"github.com/emoss08/trenova/pkg/buncolgen/aicorrectioncol"
-	"github.com/emoss08/trenova/pkg/buncolgen/extractionevalcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
+	"github.com/emoss08/trenova/pkg/buncolgen/aicorrectioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/extractionevalcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"

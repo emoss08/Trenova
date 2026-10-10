@@ -2,10 +2,7 @@
 
 package inboundmessage
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InboundAttachment].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

@@ -2,10 +2,7 @@
 
 package bulkedit
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/bulkeditcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/bulkeditcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [BulkEdit].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

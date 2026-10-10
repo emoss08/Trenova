@@ -2,10 +2,7 @@
 
 package accountingsync
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingAppCredential].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use

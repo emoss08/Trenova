@@ -2,10 +2,7 @@
 
 package airetrieval
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/airetrievalcol"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-)
+import "github.com/emoss08/trenova/pkg/buncolgen/airetrievalcol"
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CatalogEmbedding].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
