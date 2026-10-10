@@ -41,7 +41,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateWorkerChecklistTemplate(ctx, fc.Args["input"].(gqlmodel.WorkerChecklistTemplateInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklistTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklistTemplate),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklistTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklistTemplate),
 			},
 			{
 				Name:       "updateWorkerChecklistTemplate",
@@ -54,7 +54,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateWorkerChecklistTemplate(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.WorkerChecklistTemplateInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklistTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklistTemplate),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklistTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklistTemplate),
 			},
 			{
 				Name:       "archiveWorkerChecklistTemplate",
@@ -67,7 +67,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ArchiveWorkerChecklistTemplate(ctx, fc.Args["id"].(string), fc.Args["version"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklistTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklistTemplate),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklistTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklistTemplate),
 			},
 			{
 				Name:       "restoreWorkerChecklistTemplate",
@@ -80,7 +80,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RestoreWorkerChecklistTemplate(ctx, fc.Args["id"].(string), fc.Args["version"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklistTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklistTemplate),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklistTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklistTemplate),
 			},
 			{
 				Name:       "startWorkerChecklist",
@@ -93,7 +93,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").StartWorkerChecklist(ctx, fc.Args["input"].(gqlmodel.StartWorkerChecklistInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklist),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklist),
 			},
 			{
 				Name:       "completeWorkerChecklistItem",
@@ -106,7 +106,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CompleteWorkerChecklistItem(ctx, fc.Args["input"].(gqlmodel.WorkerChecklistItemActionInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklist),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklist),
 			},
 			{
 				Name:       "skipWorkerChecklistItem",
@@ -119,7 +119,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SkipWorkerChecklistItem(ctx, fc.Args["input"].(gqlmodel.WorkerChecklistItemActionInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklist),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklist),
 			},
 			{
 				Name:       "markWorkerChecklistItemNotApplicable",
@@ -132,7 +132,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").MarkWorkerChecklistItemNotApplicable(ctx, fc.Args["input"].(gqlmodel.WorkerChecklistItemActionInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklist),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklist),
 			},
 			{
 				Name:       "reopenWorkerChecklistItem",
@@ -145,7 +145,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReopenWorkerChecklistItem(ctx, fc.Args["id"].(string), fc.Args["version"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklist),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklist),
 			},
 			{
 				Name:       "cancelWorkerChecklist",
@@ -158,7 +158,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CancelWorkerChecklist(ctx, fc.Args["input"].(gqlmodel.CancelWorkerChecklistInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklist),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklist),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -188,7 +188,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerChecklistTemplate(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklistTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklistTemplate),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklistTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklistTemplate),
 			},
 			{
 				Name:       "activeWorkerChecklistTemplates",
@@ -200,7 +200,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ActiveWorkerChecklistTemplates(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklistTemplate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklistTemplateᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklistTemplate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklistTemplateᚄ),
 			},
 			{
 				Name:       "workerChecklists",
@@ -214,7 +214,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerChecklists(ctx, fc.Args["workerId"].(string), fc.Args["includeClosed"].(*bool))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklist2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklistᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklist2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklistᚄ),
 			},
 			{
 				Name:       "workerChecklist",
@@ -228,7 +228,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerChecklist(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklist),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklist),
 			},
 		}},
 		{Object: "WorkerChecklist", Fields: []*gqlexec.Field{
@@ -281,7 +281,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerChecklist)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklistKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistKind),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklistKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistKind),
 			},
 			{
 				Name:     "status",
@@ -291,7 +291,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerChecklist)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklistStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistStatus),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklistStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistStatus),
 			},
 			{
 				Name:     "startedAt",
@@ -369,7 +369,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerChecklist)
 					return obj.StartedBy, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:       "progress",
@@ -382,7 +382,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerChecklist)
 					return gqlexec.Resolver[resolverWorkerChecklist](ec, "WorkerChecklist").Progress(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklistProgress2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistProgress),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklistProgress2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistProgress),
 			},
 			{
 				Name:      "items",
@@ -393,7 +393,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerChecklist)
 					return obj.Items, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklistItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklistItemᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklistItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklistItemᚄ),
 			},
 			{
 				Name:     "version",
@@ -474,7 +474,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerChecklistItem)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklistItemKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistItemKind),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklistItemKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistItemKind),
 			},
 			{
 				Name:     "required",
@@ -494,7 +494,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerChecklistItem)
 					return obj.Owner, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklistOwner2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistOwner),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklistOwner2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistOwner),
 			},
 			{
 				Name:     "dueAt",
@@ -536,7 +536,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerChecklistItem)
 					return obj.CredentialType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerCredentialType),
+				Marshal: gqlexec.Marshal(marshalOWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialType),
 			},
 			{
 				Name:       "documentTypeId",
@@ -557,7 +557,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerChecklistItem)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklistItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistItemStatus),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklistItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistItemStatus),
 			},
 			{
 				Name:       "completedById",
@@ -578,7 +578,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerChecklistItem)
 					return obj.CompletedBy, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:     "completedAt",
@@ -627,7 +627,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerChecklistItem)
 					return obj.EvidenceDocument, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWorkerCredentialDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumentᚐDocument),
+				Marshal: gqlexec.Marshal(marshalOWorkerCredentialDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentᚐDocument),
 			},
 			{
 				Name:       "evidenceCredentialId",
@@ -648,7 +648,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerChecklistItem)
 					return obj.EvidenceCredential, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerCredential),
+				Marshal: gqlexec.Marshal(marshalOWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredential),
 			},
 			{
 				Name:     "sortOrder",
@@ -813,7 +813,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerChecklistTemplate)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklistKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistKind),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklistKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistKind),
 			},
 			{
 				Name:     "trigger",
@@ -823,7 +823,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerChecklistTemplate)
 					return obj.Trigger, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklistTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistTrigger),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklistTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistTrigger),
 			},
 			{
 				Name:     "status",
@@ -854,7 +854,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerChecklistTemplate)
 					return obj.Items, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklistTemplateItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklistTemplateItemᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklistTemplateItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklistTemplateItemᚄ),
 			},
 			{
 				Name:       "openChecklistCount",
@@ -942,7 +942,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.WorkerChecklistTemplateEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklistTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklistTemplate),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklistTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklistTemplate),
 			},
 			{
 				Name:     "cursor",
@@ -1003,7 +1003,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerChecklistTemplateItem)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklistItemKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistItemKind),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklistItemKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistItemKind),
 			},
 			{
 				Name:     "required",
@@ -1033,7 +1033,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerChecklistTemplateItem)
 					return obj.Owner, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerChecklistOwner2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistOwner),
+				Marshal: gqlexec.Marshal(marshalNWorkerChecklistOwner2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistOwner),
 			},
 			{
 				Name:       "credentialTypeId",
@@ -1054,7 +1054,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.WorkerChecklistTemplateItem)
 					return obj.CredentialType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerCredentialType),
+				Marshal: gqlexec.Marshal(marshalOWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialType),
 			},
 			{
 				Name:       "documentTypeId",
@@ -1577,14 +1577,14 @@ func unmarshalInputWorkerChecklistTemplateInput(ctx context.Context, ec *gqlexec
 			it.Description = data
 		case "kind":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			data, err := unmarshalNWorkerChecklistKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistKind(ctx, ec, v)
+			data, err := unmarshalNWorkerChecklistKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistKind(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.Kind = data
 		case "trigger":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trigger"))
-			data, err := unmarshalNWorkerChecklistTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistTrigger(ctx, ec, v)
+			data, err := unmarshalNWorkerChecklistTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistTrigger(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1656,7 +1656,7 @@ func unmarshalInputWorkerChecklistTemplateItemInput(ctx context.Context, ec *gql
 			it.Description = data
 		case "kind":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			data, err := unmarshalNWorkerChecklistItemKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistItemKind(ctx, ec, v)
+			data, err := unmarshalNWorkerChecklistItemKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistItemKind(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1677,7 +1677,7 @@ func unmarshalInputWorkerChecklistTemplateItemInput(ctx context.Context, ec *gql
 			it.DueOffsetDays = data
 		case "owner":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("owner"))
-			data, err := unmarshalNWorkerChecklistOwner2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistOwner(ctx, ec, v)
+			data, err := unmarshalNWorkerChecklistOwner2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistOwner(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1773,14 +1773,14 @@ func unmarshalInputWorkerChecklistTemplatesInput(ctx context.Context, ec *gqlexe
 			it.Status = data
 		case "kind":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			data, err := unmarshalOWorkerChecklistKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistKind(ctx, ec, v)
+			data, err := unmarshalOWorkerChecklistKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistKind(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.Kind = data
 		case "trigger":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trigger"))
-			data, err := unmarshalOWorkerChecklistTrigger2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistTrigger(ctx, ec, v)
+			data, err := unmarshalOWorkerChecklistTrigger2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistTrigger(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1858,19 +1858,19 @@ func unmarshalNWorkerChecklistItemActionInput2githubᚗcomᚋemoss08ᚋtrenova�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNWorkerChecklistItemKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistItemKind(ctx context.Context, ec *gqlexec.Exec, v any) (worker.ChecklistItemKind, error) {
+func unmarshalNWorkerChecklistItemKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistItemKind(ctx context.Context, ec *gqlexec.Exec, v any) (worker.ChecklistItemKind, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := worker.ChecklistItemKind(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNWorkerChecklistKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistKind(ctx context.Context, ec *gqlexec.Exec, v any) (worker.ChecklistKind, error) {
+func unmarshalNWorkerChecklistKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistKind(ctx context.Context, ec *gqlexec.Exec, v any) (worker.ChecklistKind, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := worker.ChecklistKind(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNWorkerChecklistOwner2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistOwner(ctx context.Context, ec *gqlexec.Exec, v any) (worker.ChecklistOwner, error) {
+func unmarshalNWorkerChecklistOwner2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistOwner(ctx context.Context, ec *gqlexec.Exec, v any) (worker.ChecklistOwner, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := worker.ChecklistOwner(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -1895,7 +1895,7 @@ func unmarshalNWorkerChecklistTemplatesInput2githubᚗcomᚋemoss08ᚋtrenovaᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNWorkerChecklistTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistTrigger(ctx context.Context, ec *gqlexec.Exec, v any) (worker.ChecklistTrigger, error) {
+func unmarshalNWorkerChecklistTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistTrigger(ctx context.Context, ec *gqlexec.Exec, v any) (worker.ChecklistTrigger, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := worker.ChecklistTrigger(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -1971,7 +1971,7 @@ func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOWorkerChecklistKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistKind(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.ChecklistKind, error) {
+func unmarshalOWorkerChecklistKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistKind(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.ChecklistKind, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -1980,7 +1980,7 @@ func unmarshalOWorkerChecklistKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOWorkerChecklistTrigger2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistTrigger(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.ChecklistTrigger, error) {
+func unmarshalOWorkerChecklistTrigger2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistTrigger(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.ChecklistTrigger, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -2061,15 +2061,15 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalNWorkerChecklist2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklistᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.WorkerChecklist) graphql.Marshaler {
+func marshalNWorkerChecklist2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklistᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.WorkerChecklist) graphql.Marshaler {
 	return gqlexec.List[*worker.WorkerChecklist]{
-		Elem:        marshalNWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklist,
+		Elem:        marshalNWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklist,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklist(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerChecklist) graphql.Marshaler {
+func marshalNWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklist(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerChecklist) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2077,15 +2077,15 @@ func marshalNWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋco
 	return ec.MarshalType(ctx, sel, "WorkerChecklist", v)
 }
 
-func marshalNWorkerChecklistItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklistItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.WorkerChecklistItem) graphql.Marshaler {
+func marshalNWorkerChecklistItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklistItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.WorkerChecklistItem) graphql.Marshaler {
 	return gqlexec.List[*worker.WorkerChecklistItem]{
-		Elem:        marshalNWorkerChecklistItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklistItem,
+		Elem:        marshalNWorkerChecklistItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklistItem,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerChecklistItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklistItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerChecklistItem) graphql.Marshaler {
+func marshalNWorkerChecklistItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklistItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerChecklistItem) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2093,7 +2093,7 @@ func marshalNWorkerChecklistItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "WorkerChecklistItem", v)
 }
 
-func marshalNWorkerChecklistItemKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistItemKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ChecklistItemKind) graphql.Marshaler {
+func marshalNWorkerChecklistItemKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistItemKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ChecklistItemKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2101,7 +2101,7 @@ func marshalNWorkerChecklistItemKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return res
 }
 
-func marshalNWorkerChecklistItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistItemStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ChecklistItemStatus) graphql.Marshaler {
+func marshalNWorkerChecklistItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistItemStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ChecklistItemStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2109,7 +2109,7 @@ func marshalNWorkerChecklistItemStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return res
 }
 
-func marshalNWorkerChecklistKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ChecklistKind) graphql.Marshaler {
+func marshalNWorkerChecklistKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ChecklistKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2117,7 +2117,7 @@ func marshalNWorkerChecklistKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return res
 }
 
-func marshalNWorkerChecklistOwner2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistOwner(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ChecklistOwner) graphql.Marshaler {
+func marshalNWorkerChecklistOwner2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistOwner(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ChecklistOwner) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2125,7 +2125,7 @@ func marshalNWorkerChecklistOwner2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalNWorkerChecklistProgress2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistProgress(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.ChecklistProgress) graphql.Marshaler {
+func marshalNWorkerChecklistProgress2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistProgress(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.ChecklistProgress) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2133,7 +2133,7 @@ func marshalNWorkerChecklistProgress2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "WorkerChecklistProgress", v)
 }
 
-func marshalNWorkerChecklistStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ChecklistStatus) graphql.Marshaler {
+func marshalNWorkerChecklistStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ChecklistStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2141,15 +2141,15 @@ func marshalNWorkerChecklistStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNWorkerChecklistTemplate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklistTemplateᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.WorkerChecklistTemplate) graphql.Marshaler {
+func marshalNWorkerChecklistTemplate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklistTemplateᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.WorkerChecklistTemplate) graphql.Marshaler {
 	return gqlexec.List[*worker.WorkerChecklistTemplate]{
-		Elem:        marshalNWorkerChecklistTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklistTemplate,
+		Elem:        marshalNWorkerChecklistTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklistTemplate,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerChecklistTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklistTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerChecklistTemplate) graphql.Marshaler {
+func marshalNWorkerChecklistTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklistTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerChecklistTemplate) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2181,15 +2181,15 @@ func marshalNWorkerChecklistTemplateEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return ec.MarshalType(ctx, sel, "WorkerChecklistTemplateEdge", v)
 }
 
-func marshalNWorkerChecklistTemplateItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklistTemplateItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.WorkerChecklistTemplateItem) graphql.Marshaler {
+func marshalNWorkerChecklistTemplateItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklistTemplateItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.WorkerChecklistTemplateItem) graphql.Marshaler {
 	return gqlexec.List[*worker.WorkerChecklistTemplateItem]{
-		Elem:        marshalNWorkerChecklistTemplateItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklistTemplateItem,
+		Elem:        marshalNWorkerChecklistTemplateItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklistTemplateItem,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerChecklistTemplateItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklistTemplateItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerChecklistTemplateItem) graphql.Marshaler {
+func marshalNWorkerChecklistTemplateItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklistTemplateItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerChecklistTemplateItem) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2197,7 +2197,7 @@ func marshalNWorkerChecklistTemplateItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return ec.MarshalType(ctx, sel, "WorkerChecklistTemplateItem", v)
 }
 
-func marshalNWorkerChecklistTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐChecklistTrigger(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ChecklistTrigger) graphql.Marshaler {
+func marshalNWorkerChecklistTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐChecklistTrigger(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ChecklistTrigger) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2242,28 +2242,28 @@ func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.S
 	return res
 }
 
-func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
+func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "User", v)
 }
 
-func marshalOWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerCredential(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerCredential) graphql.Marshaler {
+func marshalOWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredential(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerCredential) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WorkerCredential", v)
 }
 
-func marshalOWorkerCredentialDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumentᚐDocument(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *document.Document) graphql.Marshaler {
+func marshalOWorkerCredentialDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentᚐDocument(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *document.Document) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WorkerCredentialDocument", v)
 }
 
-func marshalOWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerCredentialType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerCredentialType) graphql.Marshaler {
+func marshalOWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerCredentialType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

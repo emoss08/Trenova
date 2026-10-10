@@ -9,8 +9,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -35,7 +35,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateTableConfiguration(ctx, fc.Args["input"].(gqlmodel.TableConfigurationInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtableconfigurationᚐTableConfiguration),
+				Marshal: gqlexec.Marshal(marshalNTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtableconfigurationᚐTableConfiguration),
 			},
 			{
 				Name:       "updateTableConfiguration",
@@ -48,7 +48,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateTableConfiguration(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.TableConfigurationInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtableconfigurationᚐTableConfiguration),
+				Marshal: gqlexec.Marshal(marshalNTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtableconfigurationᚐTableConfiguration),
 			},
 			{
 				Name:       "patchTableConfiguration",
@@ -61,7 +61,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PatchTableConfiguration(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.TableConfigurationPatchInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtableconfigurationᚐTableConfiguration),
+				Marshal: gqlexec.Marshal(marshalNTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtableconfigurationᚐTableConfiguration),
 			},
 			{
 				Name:       "deleteTableConfiguration",
@@ -86,7 +86,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetDefaultTableConfiguration(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtableconfigurationᚐTableConfiguration),
+				Marshal: gqlexec.Marshal(marshalNTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtableconfigurationᚐTableConfiguration),
 			},
 			{
 				Name:       "setOrgDefaultTableConfiguration",
@@ -99,7 +99,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetOrgDefaultTableConfiguration(ctx, fc.Args["id"].(string), fc.Args["enabled"].(bool))
 				},
-				Marshal: gqlexec.Marshal(marshalNTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtableconfigurationᚐTableConfiguration),
+				Marshal: gqlexec.Marshal(marshalNTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtableconfigurationᚐTableConfiguration),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -128,7 +128,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").TableConfiguration(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtableconfigurationᚐTableConfiguration),
+				Marshal: gqlexec.Marshal(marshalOTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtableconfigurationᚐTableConfiguration),
 			},
 			{
 				Name:       "defaultTableConfiguration",
@@ -141,7 +141,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").DefaultTableConfiguration(ctx, fc.Args["resource"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtableconfigurationᚐTableConfiguration),
+				Marshal: gqlexec.Marshal(marshalOTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtableconfigurationᚐTableConfiguration),
 			},
 		}},
 		{Object: "TableConfiguration", Fields: []*gqlexec.Field{
@@ -235,7 +235,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*tableconfiguration.TableConfiguration)
 					return obj.Visibility, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNConfigurationVisibility2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtableconfigurationᚐVisibility),
+				Marshal: gqlexec.Marshal(marshalNConfigurationVisibility2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtableconfigurationᚐVisibility),
 			},
 			{
 				Name:     "isDefault",
@@ -295,7 +295,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*tableconfiguration.TableConfiguration)
 					return obj.Organization, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization),
+				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization),
 			},
 			{
 				Name:      "businessUnit",
@@ -305,7 +305,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*tableconfiguration.TableConfiguration)
 					return obj.BusinessUnit, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit),
+				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit),
 			},
 			{
 				Name:      "user",
@@ -315,7 +315,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*tableconfiguration.TableConfiguration)
 					return obj.User, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 		}},
 		{Object: "TableConfigurationConnection", Fields: []*gqlexec.Field{
@@ -361,7 +361,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.TableConfigurationEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtableconfigurationᚐTableConfiguration),
+				Marshal: gqlexec.Marshal(marshalNTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtableconfigurationᚐTableConfiguration),
 			},
 			{
 				Name:     "cursor",
@@ -537,7 +537,7 @@ func field_Query_tableConfigurations_args(ctx context.Context, ec *gqlexec.Exec,
 	args["resource"] = arg1
 	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "visibility",
 		func(ctx context.Context, v any) (*tableconfiguration.Visibility, error) {
-			return unmarshalOConfigurationVisibility2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtableconfigurationᚐVisibility(ctx, ec, v)
+			return unmarshalOConfigurationVisibility2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtableconfigurationᚐVisibility(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -623,7 +623,7 @@ func unmarshalInputTableConfigurationInput(ctx context.Context, ec *gqlexec.Exec
 			it.TableConfig = data
 		case "visibility":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("visibility"))
-			data, err := unmarshalOConfigurationVisibility2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtableconfigurationᚐVisibility(ctx, ec, v)
+			data, err := unmarshalOConfigurationVisibility2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtableconfigurationᚐVisibility(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -688,7 +688,7 @@ func unmarshalInputTableConfigurationPatchInput(ctx context.Context, ec *gqlexec
 			it.TableConfig = graphql.OmittableOf(data)
 		case "visibility":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("visibility"))
-			data, err := unmarshalOConfigurationVisibility2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtableconfigurationᚐVisibility(ctx, ec, v)
+			data, err := unmarshalOConfigurationVisibility2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtableconfigurationᚐVisibility(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -752,7 +752,7 @@ func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*b
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOConfigurationVisibility2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtableconfigurationᚐVisibility(ctx context.Context, ec *gqlexec.Exec, v any) (*tableconfiguration.Visibility, error) {
+func unmarshalOConfigurationVisibility2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtableconfigurationᚐVisibility(ctx context.Context, ec *gqlexec.Exec, v any) (*tableconfiguration.Visibility, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -785,7 +785,7 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNConfigurationVisibility2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtableconfigurationᚐVisibility(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tableconfiguration.Visibility) graphql.Marshaler {
+func marshalNConfigurationVisibility2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtableconfigurationᚐVisibility(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tableconfiguration.Visibility) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -837,7 +837,7 @@ func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
-func marshalNTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtableconfigurationᚐTableConfiguration(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tableconfiguration.TableConfiguration) graphql.Marshaler {
+func marshalNTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtableconfigurationᚐTableConfiguration(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tableconfiguration.TableConfiguration) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -877,7 +877,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
+func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -892,21 +892,21 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
+func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Organization", v)
 }
 
-func marshalOTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtableconfigurationᚐTableConfiguration(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tableconfiguration.TableConfiguration) graphql.Marshaler {
+func marshalOTableConfiguration2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtableconfigurationᚐTableConfiguration(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tableconfiguration.TableConfiguration) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "TableConfiguration", v)
 }
 
-func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
+func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

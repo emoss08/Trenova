@@ -4,8 +4,8 @@ package agentqualityresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	agentqualityports "github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 )
 
 type Deps struct {

@@ -4,8 +4,8 @@ package telematicsresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	shipmentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	telematicsservice "github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 )
 
 type Deps struct {

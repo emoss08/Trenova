@@ -4,7 +4,7 @@ package billingqueueresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	billingqueueports "github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 )
 
 type Deps struct {

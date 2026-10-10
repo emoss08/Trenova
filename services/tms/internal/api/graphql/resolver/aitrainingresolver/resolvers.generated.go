@@ -4,7 +4,7 @@ package aitrainingresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aitrainingports"
+	aitrainingports "github.com/emoss08/trenova/internal/modules/agent/ports/aitrainingports"
 )
 
 type Deps struct {

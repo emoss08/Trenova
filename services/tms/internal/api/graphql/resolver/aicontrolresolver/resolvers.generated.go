@@ -4,9 +4,9 @@ package aicontrolresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
+	agentrosterports "github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
+	aicontrolsummaryports "github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
+	aituneupports "github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 )
 
 type Deps struct {

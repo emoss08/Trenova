@@ -4,9 +4,9 @@ package shipmentresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	kernelports "github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	shipmenteventports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	shipmentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 )
 
 type Deps struct {

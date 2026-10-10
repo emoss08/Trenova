@@ -4,8 +4,8 @@ package jurisdictionruleresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/places/ports/jurisdictionruleports"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
+	jurisdictionruleports "github.com/emoss08/trenova/internal/modules/places/ports/jurisdictionruleports"
+	permitports "github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 )
 
 type Deps struct {

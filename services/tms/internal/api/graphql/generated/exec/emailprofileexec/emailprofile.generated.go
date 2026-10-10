@@ -9,8 +9,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -112,7 +112,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*email.Profile)
 					return obj.Provider, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEmailProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋemailᚐProvider),
+				Marshal: gqlexec.Marshal(marshalNEmailProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProvider),
 			},
 			{
 				Name:     "status",
@@ -122,7 +122,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*email.Profile)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEmailProfileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋemailᚐProfileStatus),
+				Marshal: gqlexec.Marshal(marshalNEmailProfileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProfileStatus),
 			},
 			{
 				Name:     "version",
@@ -162,7 +162,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*email.Profile)
 					return obj.BusinessUnit, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit),
+				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit),
 			},
 			{
 				Name:      "organization",
@@ -172,7 +172,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*email.Profile)
 					return obj.Organization, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization),
+				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization),
 			},
 		}},
 		{Object: "EmailProfileConnection", Fields: []*gqlexec.Field{
@@ -218,7 +218,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EmailProfileEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEmailProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋemailᚐProfile),
+				Marshal: gqlexec.Marshal(marshalNEmailProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProfile),
 			},
 			{
 				Name:     "cursor",
@@ -257,7 +257,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").EmailProfile(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOEmailProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋemailᚐProfile),
+				Marshal: gqlexec.Marshal(marshalOEmailProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProfile),
 			},
 		}},
 	},
@@ -320,7 +320,7 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNEmailProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋemailᚐProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *email.Profile) graphql.Marshaler {
+func marshalNEmailProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *email.Profile) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -352,7 +352,7 @@ func marshalNEmailProfileEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋa
 	return ec.MarshalType(ctx, sel, "EmailProfileEdge", v)
 }
 
-func marshalNEmailProfileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋemailᚐProfileStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v email.ProfileStatus) graphql.Marshaler {
+func marshalNEmailProfileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProfileStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v email.ProfileStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -360,7 +360,7 @@ func marshalNEmailProfileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋco
 	return res
 }
 
-func marshalNEmailProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋemailᚐProvider(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v email.Provider) graphql.Marshaler {
+func marshalNEmailProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProvider(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v email.Provider) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -408,14 +408,14 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
+func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "BusinessUnit", v)
 }
 
-func marshalOEmailProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋemailᚐProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *email.Profile) graphql.Marshaler {
+func marshalOEmailProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋemailᚐProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *email.Profile) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -430,7 +430,7 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
+func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

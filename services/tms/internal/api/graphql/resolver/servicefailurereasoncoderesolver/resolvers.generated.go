@@ -4,7 +4,7 @@ package servicefailurereasoncoderesolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	servicefailureports "github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 )
 
 type Deps struct {

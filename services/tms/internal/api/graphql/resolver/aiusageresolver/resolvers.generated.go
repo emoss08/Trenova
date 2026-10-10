@@ -4,7 +4,7 @@ package aiusageresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	aiusageports "github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 )
 
 type Deps struct {

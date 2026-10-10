@@ -4,8 +4,8 @@ package invoiceresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	invoiceports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	customerservice "github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 )
 
 type Deps struct {

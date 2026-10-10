@@ -9,8 +9,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -85,7 +85,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.Type, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFormulaTemplateType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋformulatemplateᚐTemplateType),
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplateType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐTemplateType),
 			},
 			{
 				Name:     "expression",
@@ -105,7 +105,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFormulaTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋformulatemplateᚐStatus),
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐStatus),
 			},
 			{
 				Name:     "schemaId",
@@ -330,7 +330,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.BusinessUnit, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit),
+				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit),
 			},
 			{
 				Name:      "organization",
@@ -340,7 +340,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*formulatemplate.FormulaTemplate)
 					return obj.Organization, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization),
+				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization),
 			},
 		}},
 		{Object: "FormulaTemplateBreakdownDefinition", Fields: []*gqlexec.Field{
@@ -418,7 +418,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.FormulaTemplateEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFormulaTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋformulatemplateᚐFormulaTemplate),
+				Marshal: gqlexec.Marshal(marshalNFormulaTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplate),
 			},
 			{
 				Name:     "cursor",
@@ -517,7 +517,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").FormulaTemplate(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOFormulaTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋformulatemplateᚐFormulaTemplate),
+				Marshal: gqlexec.Marshal(marshalOFormulaTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplate),
 			},
 		}},
 	},
@@ -603,7 +603,7 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNFormulaTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋformulatemplateᚐFormulaTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *formulatemplate.FormulaTemplate) graphql.Marshaler {
+func marshalNFormulaTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *formulatemplate.FormulaTemplate) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -651,7 +651,7 @@ func marshalNFormulaTemplateEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "FormulaTemplateEdge", v)
 }
 
-func marshalNFormulaTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋformulatemplateᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v formulatemplate.Status) graphql.Marshaler {
+func marshalNFormulaTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v formulatemplate.Status) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -659,7 +659,7 @@ func marshalNFormulaTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNFormulaTemplateType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋformulatemplateᚐTemplateType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v formulatemplate.TemplateType) graphql.Marshaler {
+func marshalNFormulaTemplateType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐTemplateType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v formulatemplate.TemplateType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -755,7 +755,7 @@ func marshalOAny2interface(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
-func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
+func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -770,7 +770,7 @@ func marshalODecimal2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Se
 	return res
 }
 
-func marshalOFormulaTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋformulatemplateᚐFormulaTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *formulatemplate.FormulaTemplate) graphql.Marshaler {
+func marshalOFormulaTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋratingᚋdomainᚋformulatemplateᚐFormulaTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *formulatemplate.FormulaTemplate) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -809,7 +809,7 @@ func marshalOJSON2map(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSe
 	return res
 }
 
-func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
+func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

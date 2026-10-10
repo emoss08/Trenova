@@ -48,7 +48,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").TcaSubscription(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOTCASubscription2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtablechangealertᚐTCASubscription),
+				Marshal: gqlexec.Marshal(marshalOTCASubscription2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtablechangealertᚐTCASubscription),
 			},
 		}},
 		{Object: "TCASubscription", Fields: []*gqlexec.Field{
@@ -289,7 +289,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.TCASubscriptionEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNTCASubscription2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtablechangealertᚐTCASubscription),
+				Marshal: gqlexec.Marshal(marshalNTCASubscription2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtablechangealertᚐTCASubscription),
 			},
 			{
 				Name:     "cursor",
@@ -429,7 +429,7 @@ func marshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNTCASubscription2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtablechangealertᚐTCASubscription(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tablechangealert.TCASubscription) graphql.Marshaler {
+func marshalNTCASubscription2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtablechangealertᚐTCASubscription(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tablechangealert.TCASubscription) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -485,7 +485,7 @@ func marshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Sel
 	return res
 }
 
-func marshalOTCASubscription2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtablechangealertᚐTCASubscription(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tablechangealert.TCASubscription) graphql.Marshaler {
+func marshalOTCASubscription2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋtablechangealertᚐTCASubscription(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tablechangealert.TCASubscription) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

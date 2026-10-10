@@ -9,8 +9,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -216,7 +216,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*audit.Entry)
 					return obj.Category, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAuditCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋauditᚐCategory),
+				Marshal: gqlexec.Marshal(marshalNAuditCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋauditᚐCategory),
 			},
 			{
 				Name:     "sensitiveData",
@@ -257,7 +257,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*audit.Entry)
 					return obj.User, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 		}},
 		{Object: "AuditEntryConnection", Fields: []*gqlexec.Field{
@@ -303,7 +303,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AuditEntryEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAuditEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋauditᚐEntry),
+				Marshal: gqlexec.Marshal(marshalNAuditEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋauditᚐEntry),
 			},
 			{
 				Name:     "cursor",
@@ -356,7 +356,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AuditEntry(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOAuditEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋauditᚐEntry),
+				Marshal: gqlexec.Marshal(marshalOAuditEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋauditᚐEntry),
 			},
 		}},
 	},
@@ -449,7 +449,7 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNAuditCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋauditᚐCategory(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v audit.Category) graphql.Marshaler {
+func marshalNAuditCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋauditᚐCategory(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v audit.Category) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -457,7 +457,7 @@ func marshalNAuditCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋ
 	return res
 }
 
-func marshalNAuditEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋauditᚐEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *audit.Entry) graphql.Marshaler {
+func marshalNAuditEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋauditᚐEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *audit.Entry) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -529,7 +529,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOAuditEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋauditᚐEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *audit.Entry) graphql.Marshaler {
+func marshalOAuditEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋauditᚐEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *audit.Entry) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -570,7 +570,7 @@ func marshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Sel
 	return res
 }
 
-func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
+func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

@@ -4,7 +4,7 @@ package aiauditresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	aiauditports "github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 )
 
 type Deps struct {

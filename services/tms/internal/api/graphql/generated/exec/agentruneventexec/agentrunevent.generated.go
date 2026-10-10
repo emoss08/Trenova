@@ -209,7 +209,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AgentRunEventEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentRunEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐAgentRunEvent),
+				Marshal: gqlexec.Marshal(marshalNAgentRunEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentRunEvent),
 			},
 			{
 				Name:     "cursor",
@@ -285,7 +285,7 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNAgentRunEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐAgentRunEvent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.AgentRunEvent) graphql.Marshaler {
+func marshalNAgentRunEvent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentRunEvent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.AgentRunEvent) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

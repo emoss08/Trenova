@@ -4,7 +4,7 @@ package latechargeresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	latechargeports "github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
 )
 
 type Deps struct {

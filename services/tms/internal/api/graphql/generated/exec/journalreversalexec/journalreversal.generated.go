@@ -89,7 +89,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*journalreversal.Reversal)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNJournalReversalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalreversalᚐStatus),
+				Marshal: gqlexec.Marshal(marshalNJournalReversalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalreversalᚐStatus),
 			},
 			{
 				Name:     "requestedAccountingDate",
@@ -315,7 +315,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.JournalReversalEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNJournalReversal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalreversalᚐReversal),
+				Marshal: gqlexec.Marshal(marshalNJournalReversal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalreversalᚐReversal),
 			},
 			{
 				Name:     "cursor",
@@ -354,7 +354,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").JournalReversal(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOJournalReversal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalreversalᚐReversal),
+				Marshal: gqlexec.Marshal(marshalOJournalReversal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalreversalᚐReversal),
 			},
 		}},
 	},
@@ -432,7 +432,7 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNJournalReversal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalreversalᚐReversal(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalreversal.Reversal) graphql.Marshaler {
+func marshalNJournalReversal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalreversalᚐReversal(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalreversal.Reversal) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -464,7 +464,7 @@ func marshalNJournalReversalEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "JournalReversalEdge", v)
 }
 
-func marshalNJournalReversalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalreversalᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v journalreversal.Status) graphql.Marshaler {
+func marshalNJournalReversalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalreversalᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v journalreversal.Status) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -509,7 +509,7 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalOJournalReversal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjournalreversalᚐReversal(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalreversal.Reversal) graphql.Marshaler {
+func marshalOJournalReversal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋjournalreversalᚐReversal(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *journalreversal.Reversal) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

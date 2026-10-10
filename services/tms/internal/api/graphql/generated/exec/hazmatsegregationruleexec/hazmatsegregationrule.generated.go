@@ -9,9 +9,9 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -134,7 +134,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*hazmatsegregationrule.HazmatSegregationRule)
 					return obj.ClassA, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNHazardousClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋhazardousmaterialᚐHazardousClass),
+				Marshal: gqlexec.Marshal(marshalNHazardousClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐHazardousClass),
 			},
 			{
 				Name:     "classB",
@@ -144,7 +144,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*hazmatsegregationrule.HazmatSegregationRule)
 					return obj.ClassB, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNHazardousClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋhazardousmaterialᚐHazardousClass),
+				Marshal: gqlexec.Marshal(marshalNHazardousClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐHazardousClass),
 			},
 			{
 				Name:     "segregationType",
@@ -154,7 +154,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*hazmatsegregationrule.HazmatSegregationRule)
 					return obj.SegregationType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNSegregationType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋhazmatsegregationruleᚐSegregationType),
+				Marshal: gqlexec.Marshal(marshalNSegregationType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazmatsegregationruleᚐSegregationType),
 			},
 			{
 				Name:     "hasExceptions",
@@ -231,7 +231,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*hazmatsegregationrule.HazmatSegregationRule)
 					return obj.BusinessUnit, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit),
+				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit),
 			},
 			{
 				Name:      "organization",
@@ -241,7 +241,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*hazmatsegregationrule.HazmatSegregationRule)
 					return obj.Organization, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization),
+				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization),
 			},
 		}},
 		{Object: "HazmatSegregationRuleConnection", Fields: []*gqlexec.Field{
@@ -287,7 +287,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.HazmatSegregationRuleEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNHazmatSegregationRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋhazmatsegregationruleᚐHazmatSegregationRule),
+				Marshal: gqlexec.Marshal(marshalNHazmatSegregationRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazmatsegregationruleᚐHazmatSegregationRule),
 			},
 			{
 				Name:     "cursor",
@@ -326,7 +326,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").HazmatSegregationRule(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOHazmatSegregationRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋhazmatsegregationruleᚐHazmatSegregationRule),
+				Marshal: gqlexec.Marshal(marshalOHazmatSegregationRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazmatsegregationruleᚐHazmatSegregationRule),
 			},
 		}},
 	},
@@ -408,7 +408,7 @@ func marshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypes�
 	return res
 }
 
-func marshalNHazardousClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋhazardousmaterialᚐHazardousClass(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v hazardousmaterial.HazardousClass) graphql.Marshaler {
+func marshalNHazardousClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazardousmaterialᚐHazardousClass(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v hazardousmaterial.HazardousClass) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -416,7 +416,7 @@ func marshalNHazardousClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return res
 }
 
-func marshalNHazmatSegregationRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋhazmatsegregationruleᚐHazmatSegregationRule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *hazmatsegregationrule.HazmatSegregationRule) graphql.Marshaler {
+func marshalNHazmatSegregationRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazmatsegregationruleᚐHazmatSegregationRule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *hazmatsegregationrule.HazmatSegregationRule) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -472,7 +472,7 @@ func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgra
 	return ec.MarshalType(ctx, sel, "PageInfo", v)
 }
 
-func marshalNSegregationType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋhazmatsegregationruleᚐSegregationType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v hazmatsegregationrule.SegregationType) graphql.Marshaler {
+func marshalNSegregationType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazmatsegregationruleᚐSegregationType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v hazmatsegregationrule.SegregationType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -496,7 +496,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
+func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -511,7 +511,7 @@ func marshalOFloat2ᚖfloat64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sel
 	return graphql.WrapContextMarshaler(ctx, res)
 }
 
-func marshalOHazmatSegregationRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋhazmatsegregationruleᚐHazmatSegregationRule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *hazmatsegregationrule.HazmatSegregationRule) graphql.Marshaler {
+func marshalOHazmatSegregationRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋhazmatsegregationruleᚐHazmatSegregationRule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *hazmatsegregationrule.HazmatSegregationRule) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -534,7 +534,7 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
+func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

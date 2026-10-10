@@ -5,9 +5,9 @@ package shipmentboardresolver
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	customerupdateservice "github.com/emoss08/trenova/internal/core/services/customerupdateservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
+	shipmentbriefports "github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
+	shipmentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	shipmentsuggestionports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 )
 
 type Deps struct {

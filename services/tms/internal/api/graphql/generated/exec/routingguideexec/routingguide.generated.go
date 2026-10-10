@@ -9,9 +9,9 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -52,7 +52,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").RoutingGuide(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalORoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐRoutingGuide),
+				Marshal: gqlexec.Marshal(marshalORoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐRoutingGuide),
 			},
 			{
 				Name:       "matchRoutingGuide",
@@ -65,7 +65,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MatchRoutingGuide(ctx, fc.Args["input"].(gqlmodel.MatchRoutingGuideInput))
 				},
-				Marshal: gqlexec.Marshal(marshalORoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐRoutingGuide),
+				Marshal: gqlexec.Marshal(marshalORoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐRoutingGuide),
 			},
 		}},
 		{Object: "RoutingGuide", Fields: []*gqlexec.Field{
@@ -235,7 +235,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*tender.RoutingGuide)
 					return obj.Entries, nil
 				},
-				Marshal: gqlexec.Marshal(marshalORoutingGuideEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐRoutingGuideEntryᚄ),
+				Marshal: gqlexec.Marshal(marshalORoutingGuideEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐRoutingGuideEntryᚄ),
 			},
 		}},
 		{Object: "RoutingGuideConnection", Fields: []*gqlexec.Field{
@@ -281,7 +281,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.RoutingGuideEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNRoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐRoutingGuide),
+				Marshal: gqlexec.Marshal(marshalNRoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐRoutingGuide),
 			},
 			{
 				Name:     "cursor",
@@ -363,7 +363,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*tender.RoutingGuideEntry)
 					return obj.RateMethod, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐCarrierRateMethod),
+				Marshal: gqlexec.Marshal(marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐCarrierRateMethod),
 			},
 			{
 				Name:       "rate",
@@ -405,7 +405,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*tender.RoutingGuideEntry)
 					return obj.Channel, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNTenderChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐChannel),
+				Marshal: gqlexec.Marshal(marshalNTenderChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐChannel),
 			},
 			{
 				Name:     "version",
@@ -445,7 +445,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*tender.RoutingGuideEntry)
 					return obj.Carrier, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐCarrier),
+				Marshal: gqlexec.Marshal(marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐCarrier),
 			},
 		}},
 	},
@@ -627,7 +627,7 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐCarrierRateMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.CarrierRateMethod) graphql.Marshaler {
+func marshalNCarrierRateMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐCarrierRateMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v shipment.CarrierRateMethod) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -691,7 +691,7 @@ func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgra
 	return ec.MarshalType(ctx, sel, "PageInfo", v)
 }
 
-func marshalNRoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐRoutingGuide(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tender.RoutingGuide) graphql.Marshaler {
+func marshalNRoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐRoutingGuide(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tender.RoutingGuide) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -723,7 +723,7 @@ func marshalNRoutingGuideEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋa
 	return ec.MarshalType(ctx, sel, "RoutingGuideEdge", v)
 }
 
-func marshalNRoutingGuideEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐRoutingGuideEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tender.RoutingGuideEntry) graphql.Marshaler {
+func marshalNRoutingGuideEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐRoutingGuideEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tender.RoutingGuideEntry) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -739,7 +739,7 @@ func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
-func marshalNTenderChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐChannel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tender.Channel) graphql.Marshaler {
+func marshalNTenderChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐChannel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tender.Channel) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -755,7 +755,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcarrierᚐCarrier(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrier.Carrier) graphql.Marshaler {
+func marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐCarrier(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carrier.Carrier) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -778,16 +778,16 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalORoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐRoutingGuide(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tender.RoutingGuide) graphql.Marshaler {
+func marshalORoutingGuide2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐRoutingGuide(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tender.RoutingGuide) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "RoutingGuide", v)
 }
 
-func marshalORoutingGuideEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐRoutingGuideEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*tender.RoutingGuideEntry) graphql.Marshaler {
+func marshalORoutingGuideEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐRoutingGuideEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*tender.RoutingGuideEntry) graphql.Marshaler {
 	return gqlexec.List[*tender.RoutingGuideEntry]{
-		Elem:        marshalNRoutingGuideEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenderᚐRoutingGuideEntry,
+		Elem:        marshalNRoutingGuideEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋtenderᚐRoutingGuideEntry,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }

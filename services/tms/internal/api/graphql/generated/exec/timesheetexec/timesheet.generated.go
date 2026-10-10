@@ -9,8 +9,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/core/services/timesheetservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -36,7 +36,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ClockIn(ctx, fc.Args["input"].(gqlmodel.ClockInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimeClockEntry),
+				Marshal: gqlexec.Marshal(marshalNTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntry),
 			},
 			{
 				Name:       "clockOut",
@@ -49,7 +49,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ClockOut(ctx, fc.Args["input"].(gqlmodel.ClockInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimeClockEntry),
+				Marshal: gqlexec.Marshal(marshalNTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntry),
 			},
 			{
 				Name:       "recordTimeEntry",
@@ -62,7 +62,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordTimeEntry(ctx, fc.Args["input"].(gqlmodel.RecordTimeEntryInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimeClockEntry),
+				Marshal: gqlexec.Marshal(marshalNTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntry),
 			},
 			{
 				Name:       "deleteTimeEntry",
@@ -87,7 +87,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").TransitionTimesheet(ctx, fc.Args["input"].(gqlmodel.TransitionTimesheetInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNTimesheet2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimesheet),
+				Marshal: gqlexec.Marshal(marshalNTimesheet2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheet),
 			},
 			{
 				Name:       "generatePayrollExport",
@@ -100,7 +100,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").GeneratePayrollExport(ctx, fc.Args["input"].(gqlmodel.GeneratePayrollExportInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNPayrollExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPayrollExport),
+				Marshal: gqlexec.Marshal(marshalNPayrollExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPayrollExport),
 			},
 			{
 				Name:       "voidPayrollExport",
@@ -113,7 +113,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").VoidPayrollExport(ctx, fc.Args["input"].(gqlmodel.VoidPayrollExportInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNPayrollExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPayrollExport),
+				Marshal: gqlexec.Marshal(marshalNPayrollExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPayrollExport),
 			},
 		}},
 		{Object: "PayrollExport", Fields: []*gqlexec.Field{
@@ -155,7 +155,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.PayrollExport)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNPayrollExportStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPayrollExportStatus),
+				Marshal: gqlexec.Marshal(marshalNPayrollExportStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPayrollExportStatus),
 			},
 			{
 				Name:     "periodStart",
@@ -358,7 +358,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").Timesheets(ctx, fc.Args["filter"].(*gqlmodel.TimesheetFilterInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNTimesheet2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimesheetᚄ),
+				Marshal: gqlexec.Marshal(marshalNTimesheet2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheetᚄ),
 			},
 			{
 				Name:       "timesheet",
@@ -372,7 +372,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").Timesheet(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNTimesheet2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimesheet),
+				Marshal: gqlexec.Marshal(marshalNTimesheet2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheet),
 			},
 			{
 				Name:       "timeClockEntries",
@@ -386,7 +386,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").TimeClockEntries(ctx, fc.Args["workerId"].(string), fc.Args["from"].(*int), fc.Args["to"].(*int), fc.Args["limit"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNTimeClockEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimeClockEntryᚄ),
+				Marshal: gqlexec.Marshal(marshalNTimeClockEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntryᚄ),
 			},
 			{
 				Name:       "openTimeClockEntry",
@@ -399,7 +399,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").OpenTimeClockEntry(ctx, fc.Args["workerId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimeClockEntry),
+				Marshal: gqlexec.Marshal(marshalOTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntry),
 			},
 			{
 				Name:       "openTimeClockEntries",
@@ -413,7 +413,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").OpenTimeClockEntries(ctx, fc.Args["teamOnly"].(*bool), fc.Args["limit"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNTimeClockEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimeClockEntryᚄ),
+				Marshal: gqlexec.Marshal(marshalNTimeClockEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntryᚄ),
 			},
 			{
 				Name:       "payrollExports",
@@ -427,7 +427,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").PayrollExports(ctx, fc.Args["limit"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNPayrollExport2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPayrollExportᚄ),
+				Marshal: gqlexec.Marshal(marshalNPayrollExport2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPayrollExportᚄ),
 			},
 			{
 				Name:       "payrollExport",
@@ -441,7 +441,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").PayrollExport(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNPayrollExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPayrollExport),
+				Marshal: gqlexec.Marshal(marshalNPayrollExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPayrollExport),
 			},
 			{
 				Name:       "payrollExportRows",
@@ -516,7 +516,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.TimeClockEntry)
 					return obj.Source, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNTimeEntrySource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimeEntrySource),
+				Marshal: gqlexec.Marshal(marshalNTimeEntrySource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeEntrySource),
 			},
 			{
 				Name:     "clockedInAt",
@@ -612,7 +612,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.TimeClockEntry)
 					return obj.Worker, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorker),
+				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
 			},
 		}},
 		{Object: "Timesheet", Fields: []*gqlexec.Field{
@@ -664,7 +664,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.Timesheet)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNTimesheetStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimesheetStatus),
+				Marshal: gqlexec.Marshal(marshalNTimesheetStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheetStatus),
 			},
 			{
 				Name:     "periodStart",
@@ -819,7 +819,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.Timesheet)
 					return obj.Worker, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorker),
+				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
 			},
 			{
 				Name:      "entries",
@@ -829,7 +829,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.Timesheet)
 					return obj.Entries, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOTimeClockEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimeClockEntryᚄ),
+				Marshal: gqlexec.Marshal(marshalOTimeClockEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntryᚄ),
 			},
 		}},
 	},
@@ -1352,7 +1352,7 @@ func unmarshalInputTimesheetFilterInput(ctx context.Context, ec *gqlexec.Exec, o
 			it.WorkerID = data
 		case "statuses":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statuses"))
-			data, err := unmarshalOTimesheetStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimesheetStatusᚄ(ctx, ec, v)
+			data, err := unmarshalOTimesheetStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheetStatusᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1424,7 +1424,7 @@ func unmarshalInputTransitionTimesheetInput(ctx context.Context, ec *gqlexec.Exe
 			it.ID = data
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := unmarshalNTimesheetStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimesheetStatus(ctx, ec, v)
+			data, err := unmarshalNTimesheetStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheetStatus(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1508,7 +1508,7 @@ func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (stri
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNTimesheetStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimesheetStatus(ctx context.Context, ec *gqlexec.Exec, v any) (worker.TimesheetStatus, error) {
+func unmarshalNTimesheetStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheetStatus(ctx context.Context, ec *gqlexec.Exec, v any) (worker.TimesheetStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := worker.TimesheetStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -1569,11 +1569,11 @@ func unmarshalOTimesheetFilterInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOTimesheetStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimesheetStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]worker.TimesheetStatus, error) {
+func unmarshalOTimesheetStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheetStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]worker.TimesheetStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNTimesheetStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimesheetStatus)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNTimesheetStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheetStatus)
 }
 
 func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
@@ -1616,15 +1616,15 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNPayrollExport2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPayrollExportᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.PayrollExport) graphql.Marshaler {
+func marshalNPayrollExport2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPayrollExportᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.PayrollExport) graphql.Marshaler {
 	return gqlexec.List[*worker.PayrollExport]{
-		Elem:        marshalNPayrollExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPayrollExport,
+		Elem:        marshalNPayrollExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPayrollExport,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNPayrollExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPayrollExport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.PayrollExport) graphql.Marshaler {
+func marshalNPayrollExport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPayrollExport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.PayrollExport) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1648,7 +1648,7 @@ func marshalNPayrollExportRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return ec.MarshalType(ctx, sel, "PayrollExportRow", v)
 }
 
-func marshalNPayrollExportStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPayrollExportStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.PayrollExportStatus) graphql.Marshaler {
+func marshalNPayrollExportStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPayrollExportStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.PayrollExportStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1664,15 +1664,15 @@ func marshalNString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
-func marshalNTimeClockEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimeClockEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.TimeClockEntry) graphql.Marshaler {
+func marshalNTimeClockEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.TimeClockEntry) graphql.Marshaler {
 	return gqlexec.List[*worker.TimeClockEntry]{
-		Elem:        marshalNTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimeClockEntry,
+		Elem:        marshalNTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntry,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimeClockEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.TimeClockEntry) graphql.Marshaler {
+func marshalNTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.TimeClockEntry) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1680,7 +1680,7 @@ func marshalNTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcor
 	return ec.MarshalType(ctx, sel, "TimeClockEntry", v)
 }
 
-func marshalNTimeEntrySource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimeEntrySource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.TimeEntrySource) graphql.Marshaler {
+func marshalNTimeEntrySource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeEntrySource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.TimeEntrySource) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1688,15 +1688,15 @@ func marshalNTimeEntrySource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return res
 }
 
-func marshalNTimesheet2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimesheetᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.Timesheet) graphql.Marshaler {
+func marshalNTimesheet2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheetᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.Timesheet) graphql.Marshaler {
 	return gqlexec.List[*worker.Timesheet]{
-		Elem:        marshalNTimesheet2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimesheet,
+		Elem:        marshalNTimesheet2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheet,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNTimesheet2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimesheet(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.Timesheet) graphql.Marshaler {
+func marshalNTimesheet2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheet(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.Timesheet) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1704,7 +1704,7 @@ func marshalNTimesheet2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋd
 	return ec.MarshalType(ctx, sel, "Timesheet", v)
 }
 
-func marshalNTimesheetStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimesheetStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.TimesheetStatus) graphql.Marshaler {
+func marshalNTimesheetStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimesheetStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.TimesheetStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1730,14 +1730,14 @@ func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
-func marshalOTimeClockEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimeClockEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.TimeClockEntry) graphql.Marshaler {
+func marshalOTimeClockEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.TimeClockEntry) graphql.Marshaler {
 	return gqlexec.List[*worker.TimeClockEntry]{
-		Elem:        marshalNTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimeClockEntry,
+		Elem:        marshalNTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntry,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalOTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐTimeClockEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.TimeClockEntry) graphql.Marshaler {
+func marshalOTimeClockEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐTimeClockEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.TimeClockEntry) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -1752,7 +1752,7 @@ func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.S
 	return res
 }
 
-func marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorker(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.Worker) graphql.Marshaler {
+func marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.Worker) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

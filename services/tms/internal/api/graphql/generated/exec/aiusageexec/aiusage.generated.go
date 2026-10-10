@@ -234,7 +234,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AIUsageFeatureEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIUsageFeatureSlice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFeatureSlice),
+				Marshal: gqlexec.Marshal(marshalNAIUsageFeatureSlice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageFeatureSlice),
 			},
 			{
 				Name:     "cursor",
@@ -255,7 +255,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*aiusageports.AIUsageFeatureSlice)
 					return obj.Feature, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAIUsageFeature2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiusageᚐFeature),
+				Marshal: gqlexec.Marshal(marshalOAIUsageFeature2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiusageᚐFeature),
 			},
 			{
 				Name:     "calls",
@@ -580,7 +580,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*aiusageports.AIUsageSummary)
 					return obj.ByProvider, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIUsageProviderSlice2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageProviderSliceᚄ),
+				Marshal: gqlexec.Marshal(marshalNAIUsageProviderSlice2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageProviderSliceᚄ),
 			},
 			{
 				Name:      "byFeature",
@@ -591,7 +591,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*aiusageports.AIUsageSummary)
 					return obj.ByFeature, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIUsageFeatureSlice2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFeatureSliceᚄ),
+				Marshal: gqlexec.Marshal(marshalNAIUsageFeatureSlice2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageFeatureSliceᚄ),
 			},
 			{
 				Name:      "recentFailures",
@@ -602,7 +602,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*aiusageports.AIUsageSummary)
 					return obj.RecentFailures, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAIUsageFailure2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFailureᚄ),
+				Marshal: gqlexec.Marshal(marshalNAIUsageFailure2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageFailureᚄ),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -632,7 +632,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AiUsageSummary(ctx, fc.Args["since"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNAIUsageSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageSummary),
+				Marshal: gqlexec.Marshal(marshalNAIUsageSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageSummary),
 			},
 			{
 				Name:       "aiUsageDaily",
@@ -646,7 +646,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AiUsageDaily(ctx, fc.Args["days"].(*int), fc.Args["timezone"].(*string), fc.Args["providerId"].(*string))
 				},
-				Marshal: gqlexec.Marshal(marshalNAIUsageDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageDayᚄ),
+				Marshal: gqlexec.Marshal(marshalNAIUsageDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageDayᚄ),
 			},
 		}},
 	},
@@ -774,15 +774,15 @@ func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNAIUsageDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageDayᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*aiusageports.AIUsageDay) graphql.Marshaler {
+func marshalNAIUsageDay2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageDayᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*aiusageports.AIUsageDay) graphql.Marshaler {
 	return gqlexec.List[*aiusageports.AIUsageDay]{
-		Elem:        marshalNAIUsageDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageDay,
+		Elem:        marshalNAIUsageDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageDay,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAIUsageDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageDay(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiusageports.AIUsageDay) graphql.Marshaler {
+func marshalNAIUsageDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageDay(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiusageports.AIUsageDay) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -790,13 +790,13 @@ func marshalNAIUsageDay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋ
 	return ec.MarshalType(ctx, sel, "AIUsageDay", v)
 }
 
-func marshalNAIUsageFailure2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFailure(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiusageports.AIUsageFailure) graphql.Marshaler {
+func marshalNAIUsageFailure2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageFailure(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiusageports.AIUsageFailure) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AIUsageFailure", &v)
 }
 
-func marshalNAIUsageFailure2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFailureᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aiusageports.AIUsageFailure) graphql.Marshaler {
+func marshalNAIUsageFailure2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageFailureᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aiusageports.AIUsageFailure) graphql.Marshaler {
 	return gqlexec.List[aiusageports.AIUsageFailure]{
-		Elem:        marshalNAIUsageFailure2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFailure,
+		Elem:        marshalNAIUsageFailure2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageFailure,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
@@ -826,19 +826,19 @@ func marshalNAIUsageFeatureEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "AIUsageFeatureEdge", v)
 }
 
-func marshalNAIUsageFeatureSlice2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFeatureSlice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiusageports.AIUsageFeatureSlice) graphql.Marshaler {
+func marshalNAIUsageFeatureSlice2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageFeatureSlice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiusageports.AIUsageFeatureSlice) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AIUsageFeatureSlice", &v)
 }
 
-func marshalNAIUsageFeatureSlice2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFeatureSliceᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aiusageports.AIUsageFeatureSlice) graphql.Marshaler {
+func marshalNAIUsageFeatureSlice2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageFeatureSliceᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aiusageports.AIUsageFeatureSlice) graphql.Marshaler {
 	return gqlexec.List[aiusageports.AIUsageFeatureSlice]{
-		Elem:        marshalNAIUsageFeatureSlice2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFeatureSlice,
+		Elem:        marshalNAIUsageFeatureSlice2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageFeatureSlice,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAIUsageFeatureSlice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFeatureSlice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiusageports.AIUsageFeatureSlice) graphql.Marshaler {
+func marshalNAIUsageFeatureSlice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageFeatureSlice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiusageports.AIUsageFeatureSlice) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -846,19 +846,19 @@ func marshalNAIUsageFeatureSlice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "AIUsageFeatureSlice", v)
 }
 
-func marshalNAIUsageProviderSlice2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageProviderSlice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiusageports.AIUsageProviderSlice) graphql.Marshaler {
+func marshalNAIUsageProviderSlice2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageProviderSlice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aiusageports.AIUsageProviderSlice) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AIUsageProviderSlice", &v)
 }
 
-func marshalNAIUsageProviderSlice2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageProviderSliceᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aiusageports.AIUsageProviderSlice) graphql.Marshaler {
+func marshalNAIUsageProviderSlice2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageProviderSliceᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aiusageports.AIUsageProviderSlice) graphql.Marshaler {
 	return gqlexec.List[aiusageports.AIUsageProviderSlice]{
-		Elem:        marshalNAIUsageProviderSlice2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageProviderSlice,
+		Elem:        marshalNAIUsageProviderSlice2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageProviderSlice,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAIUsageSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiusageports.AIUsageSummary) graphql.Marshaler {
+func marshalNAIUsageSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋaiusageportsᚐAIUsageSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiusageports.AIUsageSummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -922,7 +922,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOAIUsageFeature2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiusageᚐFeature(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiusage.Feature) graphql.Marshaler {
+func marshalOAIUsageFeature2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaiusageᚐFeature(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aiusage.Feature) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

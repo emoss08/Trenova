@@ -249,7 +249,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*extractionshadowports.ExtractionShadowReport)
 					return obj.Candidate, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNExtractionShadowSide2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionShadowSide),
+				Marshal: gqlexec.Marshal(marshalNExtractionShadowSide2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionshadowportsᚐExtractionShadowSide),
 			},
 			{
 				Name:      "production",
@@ -260,7 +260,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*extractionshadowports.ExtractionShadowReport)
 					return obj.Production, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNExtractionShadowSide2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionShadowSide),
+				Marshal: gqlexec.Marshal(marshalNExtractionShadowSide2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionshadowportsᚐExtractionShadowSide),
 			},
 			{
 				Name:      "fields",
@@ -271,7 +271,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*extractionshadowports.ExtractionShadowReport)
 					return obj.Fields, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNExtractionShadowFieldComparison2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐFieldComparisonᚄ),
+				Marshal: gqlexec.Marshal(marshalNExtractionShadowFieldComparison2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaicorrectionᚐFieldComparisonᚄ),
 			},
 			{
 				Name:       "costUsd",
@@ -355,7 +355,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*extractionshadow.ShadowResult)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNExtractionShadowResultStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋextractionshadowᚐResultStatus),
+				Marshal: gqlexec.Marshal(marshalNExtractionShadowResultStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionshadowᚐResultStatus),
 			},
 			{
 				Name:     "statusReason",
@@ -444,7 +444,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*extractionshadow.ShadowResult)
 					return obj.Predicted, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOExtractionSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐSnapshot),
+				Marshal: gqlexec.Marshal(marshalOExtractionSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaicorrectionᚐSnapshot),
 			},
 			{
 				Name:     "correctionId",
@@ -473,7 +473,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*extractionshadow.ShadowResult)
 					return gqlexec.Resolver[resolverExtractionShadowResult](ec, "ExtractionShadowResult").Verdict(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOExtractionShadowVerdict2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋextractionshadowᚐVerdict),
+				Marshal: gqlexec.Marshal(marshalOExtractionShadowVerdict2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionshadowᚐVerdict),
 			},
 			{
 				Name:      "fieldResults",
@@ -484,7 +484,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*extractionshadow.ShadowResult)
 					return obj.FieldResults, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAICorrectionFieldResult2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐFieldResultᚄ),
+				Marshal: gqlexec.Marshal(marshalNAICorrectionFieldResult2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaicorrectionᚐFieldResultᚄ),
 			},
 			{
 				Name:     "scoredCount",
@@ -545,7 +545,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*extractionshadow.ShadowResult)
 					return obj.BaselineFieldResults, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAICorrectionFieldResult2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐFieldResultᚄ),
+				Marshal: gqlexec.Marshal(marshalNAICorrectionFieldResult2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaicorrectionᚐFieldResultᚄ),
 			},
 			{
 				Name:     "baselineScoredCount",
@@ -741,7 +741,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ExtractionShadowResultEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNExtractionShadowResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋextractionshadowᚐShadowResult),
+				Marshal: gqlexec.Marshal(marshalNExtractionShadowResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionshadowᚐShadowResult),
 			},
 			{
 				Name:     "cursor",
@@ -888,7 +888,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateExtractionShadowSettings(ctx, fc.Args["input"].(gqlmodel.UpdateExtractionShadowSettingsInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNExtractionShadowSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋextractionshadowᚐShadowSettings),
+				Marshal: gqlexec.Marshal(marshalNExtractionShadowSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionshadowᚐShadowSettings),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -902,7 +902,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ExtractionShadowSettings(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNExtractionShadowSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋextractionshadowᚐShadowSettings),
+				Marshal: gqlexec.Marshal(marshalNExtractionShadowSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionshadowᚐShadowSettings),
 			},
 			{
 				Name:       "extractionShadowReport",
@@ -916,7 +916,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ExtractionShadowReport(ctx, fc.Args["windowDays"].(*int), fc.Args["providerId"].(*string))
 				},
-				Marshal: gqlexec.Marshal(marshalNExtractionShadowReport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionShadowReport),
+				Marshal: gqlexec.Marshal(marshalNExtractionShadowReport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionshadowportsᚐExtractionShadowReport),
 			},
 			{
 				Name:       "extractionShadowResults",
@@ -943,7 +943,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ExtractionShadowResult(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOExtractionShadowResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋextractionshadowᚐShadowResult),
+				Marshal: gqlexec.Marshal(marshalOExtractionShadowResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionshadowᚐShadowResult),
 			},
 		}},
 	},
@@ -1153,13 +1153,13 @@ func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, e
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNAICorrectionFieldResult2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐFieldResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aicorrection.FieldResult) graphql.Marshaler {
+func marshalNAICorrectionFieldResult2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaicorrectionᚐFieldResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aicorrection.FieldResult) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AICorrectionFieldResult", &v)
 }
 
-func marshalNAICorrectionFieldResult2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐFieldResultᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aicorrection.FieldResult) graphql.Marshaler {
+func marshalNAICorrectionFieldResult2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaicorrectionᚐFieldResultᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aicorrection.FieldResult) graphql.Marshaler {
 	return gqlexec.List[aicorrection.FieldResult]{
-		Elem:        marshalNAICorrectionFieldResult2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐFieldResult,
+		Elem:        marshalNAICorrectionFieldResult2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaicorrectionᚐFieldResult,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
@@ -1181,19 +1181,19 @@ func marshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Selec
 	return res
 }
 
-func marshalNExtractionShadowFieldComparison2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐFieldComparison(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aicorrection.FieldComparison) graphql.Marshaler {
+func marshalNExtractionShadowFieldComparison2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaicorrectionᚐFieldComparison(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v aicorrection.FieldComparison) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "ExtractionShadowFieldComparison", &v)
 }
 
-func marshalNExtractionShadowFieldComparison2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐFieldComparisonᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aicorrection.FieldComparison) graphql.Marshaler {
+func marshalNExtractionShadowFieldComparison2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaicorrectionᚐFieldComparisonᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []aicorrection.FieldComparison) graphql.Marshaler {
 	return gqlexec.List[aicorrection.FieldComparison]{
-		Elem:        marshalNExtractionShadowFieldComparison2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐFieldComparison,
+		Elem:        marshalNExtractionShadowFieldComparison2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaicorrectionᚐFieldComparison,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNExtractionShadowReport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionShadowReport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *extractionshadowports.ExtractionShadowReport) graphql.Marshaler {
+func marshalNExtractionShadowReport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionshadowportsᚐExtractionShadowReport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *extractionshadowports.ExtractionShadowReport) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1201,7 +1201,7 @@ func marshalNExtractionShadowReport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return ec.MarshalType(ctx, sel, "ExtractionShadowReport", v)
 }
 
-func marshalNExtractionShadowResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋextractionshadowᚐShadowResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *extractionshadow.ShadowResult) graphql.Marshaler {
+func marshalNExtractionShadowResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionshadowᚐShadowResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *extractionshadow.ShadowResult) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1233,7 +1233,7 @@ func marshalNExtractionShadowResultEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return ec.MarshalType(ctx, sel, "ExtractionShadowResultEdge", v)
 }
 
-func marshalNExtractionShadowResultStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋextractionshadowᚐResultStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v extractionshadow.ResultStatus) graphql.Marshaler {
+func marshalNExtractionShadowResultStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionshadowᚐResultStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v extractionshadow.ResultStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1241,7 +1241,7 @@ func marshalNExtractionShadowResultStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return res
 }
 
-func marshalNExtractionShadowSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋextractionshadowᚐShadowSettings(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *extractionshadow.ShadowSettings) graphql.Marshaler {
+func marshalNExtractionShadowSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionshadowᚐShadowSettings(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *extractionshadow.ShadowSettings) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1249,7 +1249,7 @@ func marshalNExtractionShadowSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "ExtractionShadowSettings", v)
 }
 
-func marshalNExtractionShadowSide2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐExtractionShadowSide(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v extractionshadowports.ExtractionShadowSide) graphql.Marshaler {
+func marshalNExtractionShadowSide2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋportsᚋextractionshadowportsᚐExtractionShadowSide(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v extractionshadowports.ExtractionShadowSide) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "ExtractionShadowSide", &v)
 }
 
@@ -1309,14 +1309,14 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOExtractionShadowResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋextractionshadowᚐShadowResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *extractionshadow.ShadowResult) graphql.Marshaler {
+func marshalOExtractionShadowResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionshadowᚐShadowResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *extractionshadow.ShadowResult) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "ExtractionShadowResult", v)
 }
 
-func marshalOExtractionShadowVerdict2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋextractionshadowᚐVerdict(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *extractionshadow.Verdict) graphql.Marshaler {
+func marshalOExtractionShadowVerdict2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋextractionshadowᚐVerdict(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *extractionshadow.Verdict) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -1324,7 +1324,7 @@ func marshalOExtractionShadowVerdict2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res
 }
 
-func marshalOExtractionSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaicorrectionᚐSnapshot(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aicorrection.Snapshot) graphql.Marshaler {
+func marshalOExtractionSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋaicorrectionᚐSnapshot(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *aicorrection.Snapshot) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

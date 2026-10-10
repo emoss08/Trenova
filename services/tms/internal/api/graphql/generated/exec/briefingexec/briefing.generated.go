@@ -61,7 +61,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*briefing.Briefing)
 					return obj.RoleKey, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBriefingRoleKey2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐRoleKey),
+				Marshal: gqlexec.Marshal(marshalNBriefingRoleKey2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐRoleKey),
 			},
 			{
 				Name:     "briefingDate",
@@ -81,7 +81,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*briefing.Briefing)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBriefingStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐStatus),
+				Marshal: gqlexec.Marshal(marshalNBriefingStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐStatus),
 			},
 			{
 				Name:     "headline",
@@ -102,7 +102,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*briefing.Briefing)
 					return obj.Sections, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBriefingSection2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐSectionᚄ),
+				Marshal: gqlexec.Marshal(marshalNBriefingSection2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐSectionᚄ),
 			},
 			{
 				Name:     "narrated",
@@ -203,7 +203,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*briefing.Section)
 					return obj.Key, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBriefingSectionKey2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐSectionKey),
+				Marshal: gqlexec.Marshal(marshalNBriefingSectionKey2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐSectionKey),
 			},
 			{
 				Name:     "title",
@@ -255,7 +255,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*briefing.Section)
 					return obj.Items, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBriefingItem2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐItemᚄ),
+				Marshal: gqlexec.Marshal(marshalNBriefingItem2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐItemᚄ),
 			},
 			{
 				Name:     "path",
@@ -279,7 +279,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").MarkBriefingRead(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐBriefing),
+				Marshal: gqlexec.Marshal(marshalNBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐBriefing),
 			},
 			{
 				Name:       "regenerateBriefing",
@@ -292,7 +292,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RegenerateBriefing(ctx, fc.Args["input"].(gqlmodel.TodaysBriefingInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐBriefing),
+				Marshal: gqlexec.Marshal(marshalNBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐBriefing),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -307,7 +307,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").TodaysBriefing(ctx, fc.Args["input"].(gqlmodel.TodaysBriefingInput))
 				},
-				Marshal: gqlexec.Marshal(marshalOBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐBriefing),
+				Marshal: gqlexec.Marshal(marshalOBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐBriefing),
 			},
 			{
 				Name:       "briefing",
@@ -321,7 +321,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").Briefing(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐBriefing),
+				Marshal: gqlexec.Marshal(marshalNBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐBriefing),
 			},
 			{
 				Name:       "briefings",
@@ -335,7 +335,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").Briefings(ctx, fc.Args["input"].(gqlmodel.ListBriefingsInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNBriefing2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐBriefingᚄ),
+				Marshal: gqlexec.Marshal(marshalNBriefing2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐBriefingᚄ),
 			},
 		}},
 	},
@@ -464,7 +464,7 @@ func unmarshalInputListBriefingsInput(ctx context.Context, ec *gqlexec.Exec, obj
 		switch k {
 		case "roleKey":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roleKey"))
-			data, err := unmarshalOBriefingRoleKey2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐRoleKey(ctx, ec, v)
+			data, err := unmarshalOBriefingRoleKey2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐRoleKey(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -501,7 +501,7 @@ func unmarshalInputTodaysBriefingInput(ctx context.Context, ec *gqlexec.Exec, ob
 		switch k {
 		case "roleKey":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roleKey"))
-			data, err := unmarshalOBriefingRoleKey2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐRoleKey(ctx, ec, v)
+			data, err := unmarshalOBriefingRoleKey2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐRoleKey(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -533,7 +533,7 @@ func unmarshalNTodaysBriefingInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOBriefingRoleKey2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐRoleKey(ctx context.Context, ec *gqlexec.Exec, v any) (*briefing.RoleKey, error) {
+func unmarshalOBriefingRoleKey2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐRoleKey(ctx context.Context, ec *gqlexec.Exec, v any) (*briefing.RoleKey, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -566,15 +566,15 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNBriefing2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐBriefingᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*briefing.Briefing) graphql.Marshaler {
+func marshalNBriefing2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐBriefingᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*briefing.Briefing) graphql.Marshaler {
 	return gqlexec.List[*briefing.Briefing]{
-		Elem:        marshalNBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐBriefing,
+		Elem:        marshalNBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐBriefing,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐBriefing(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *briefing.Briefing) graphql.Marshaler {
+func marshalNBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐBriefing(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *briefing.Briefing) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -582,19 +582,19 @@ func marshalNBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdo
 	return ec.MarshalType(ctx, sel, "Briefing", v)
 }
 
-func marshalNBriefingItem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v briefing.Item) graphql.Marshaler {
+func marshalNBriefingItem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v briefing.Item) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "BriefingItem", &v)
 }
 
-func marshalNBriefingItem2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []briefing.Item) graphql.Marshaler {
+func marshalNBriefingItem2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []briefing.Item) graphql.Marshaler {
 	return gqlexec.List[briefing.Item]{
-		Elem:        marshalNBriefingItem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐItem,
+		Elem:        marshalNBriefingItem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐItem,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNBriefingRoleKey2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐRoleKey(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v briefing.RoleKey) graphql.Marshaler {
+func marshalNBriefingRoleKey2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐRoleKey(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v briefing.RoleKey) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -602,19 +602,19 @@ func marshalNBriefingRoleKey2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return res
 }
 
-func marshalNBriefingSection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐSection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v briefing.Section) graphql.Marshaler {
+func marshalNBriefingSection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐSection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v briefing.Section) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "BriefingSection", &v)
 }
 
-func marshalNBriefingSection2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐSectionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []briefing.Section) graphql.Marshaler {
+func marshalNBriefingSection2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐSectionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []briefing.Section) graphql.Marshaler {
 	return gqlexec.List[briefing.Section]{
-		Elem:        marshalNBriefingSection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐSection,
+		Elem:        marshalNBriefingSection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐSection,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNBriefingSectionKey2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐSectionKey(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v briefing.SectionKey) graphql.Marshaler {
+func marshalNBriefingSectionKey2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐSectionKey(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v briefing.SectionKey) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -622,7 +622,7 @@ func marshalNBriefingSectionKey2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋco
 	return res
 }
 
-func marshalNBriefingStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v briefing.Status) graphql.Marshaler {
+func marshalNBriefingStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v briefing.Status) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -662,7 +662,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋbriefingᚐBriefing(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *briefing.Briefing) graphql.Marshaler {
+func marshalOBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐBriefing(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *briefing.Briefing) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

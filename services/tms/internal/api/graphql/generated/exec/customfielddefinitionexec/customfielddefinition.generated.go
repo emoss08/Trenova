@@ -103,7 +103,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customfield.CustomFieldDefinition)
 					return obj.FieldType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFieldType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomfieldᚐFieldType),
+				Marshal: gqlexec.Marshal(marshalNFieldType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐFieldType),
 			},
 			{
 				Name:     "isRequired",
@@ -153,7 +153,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customfield.CustomFieldDefinition)
 					return obj.Options, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCustomFieldSelectOption2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomfieldᚐSelectOptionᚄ),
+				Marshal: gqlexec.Marshal(marshalNCustomFieldSelectOption2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐSelectOptionᚄ),
 			},
 			{
 				Name:      "validationRules",
@@ -163,7 +163,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customfield.CustomFieldDefinition)
 					return obj.ValidationRules, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOCustomFieldValidationRules2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomfieldᚐValidationRules),
+				Marshal: gqlexec.Marshal(marshalOCustomFieldValidationRules2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐValidationRules),
 			},
 			{
 				Name:     "defaultValue",
@@ -182,7 +182,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customfield.CustomFieldDefinition)
 					return obj.UIAttributes, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOCustomFieldUIAttributes2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomfieldᚐUIAttributes),
+				Marshal: gqlexec.Marshal(marshalOCustomFieldUIAttributes2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐUIAttributes),
 			},
 			{
 				Name:     "version",
@@ -258,7 +258,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.CustomFieldDefinitionEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNCustomFieldDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomfieldᚐCustomFieldDefinition),
+				Marshal: gqlexec.Marshal(marshalNCustomFieldDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐCustomFieldDefinition),
 			},
 			{
 				Name:     "cursor",
@@ -418,7 +418,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CustomFieldDefinition(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOCustomFieldDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomfieldᚐCustomFieldDefinition),
+				Marshal: gqlexec.Marshal(marshalOCustomFieldDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐCustomFieldDefinition),
 			},
 		}},
 	},
@@ -490,7 +490,7 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNCustomFieldDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomfieldᚐCustomFieldDefinition(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customfield.CustomFieldDefinition) graphql.Marshaler {
+func marshalNCustomFieldDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐCustomFieldDefinition(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customfield.CustomFieldDefinition) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -522,19 +522,19 @@ func marshalNCustomFieldDefinitionEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return ec.MarshalType(ctx, sel, "CustomFieldDefinitionEdge", v)
 }
 
-func marshalNCustomFieldSelectOption2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomfieldᚐSelectOption(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customfield.SelectOption) graphql.Marshaler {
+func marshalNCustomFieldSelectOption2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐSelectOption(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customfield.SelectOption) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "CustomFieldSelectOption", &v)
 }
 
-func marshalNCustomFieldSelectOption2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomfieldᚐSelectOptionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []customfield.SelectOption) graphql.Marshaler {
+func marshalNCustomFieldSelectOption2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐSelectOptionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []customfield.SelectOption) graphql.Marshaler {
 	return gqlexec.List[customfield.SelectOption]{
-		Elem:        marshalNCustomFieldSelectOption2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomfieldᚐSelectOption,
+		Elem:        marshalNCustomFieldSelectOption2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐSelectOption,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNFieldType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomfieldᚐFieldType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customfield.FieldType) graphql.Marshaler {
+func marshalNFieldType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐFieldType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customfield.FieldType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -598,21 +598,21 @@ func marshalOAny2interface(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	return res
 }
 
-func marshalOCustomFieldDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomfieldᚐCustomFieldDefinition(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customfield.CustomFieldDefinition) graphql.Marshaler {
+func marshalOCustomFieldDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐCustomFieldDefinition(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customfield.CustomFieldDefinition) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "CustomFieldDefinition", v)
 }
 
-func marshalOCustomFieldUIAttributes2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomfieldᚐUIAttributes(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customfield.UIAttributes) graphql.Marshaler {
+func marshalOCustomFieldUIAttributes2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐUIAttributes(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customfield.UIAttributes) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "CustomFieldUIAttributes", v)
 }
 
-func marshalOCustomFieldValidationRules2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomfieldᚐValidationRules(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customfield.ValidationRules) graphql.Marshaler {
+func marshalOCustomFieldValidationRules2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋcustomfieldᚐValidationRules(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customfield.ValidationRules) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

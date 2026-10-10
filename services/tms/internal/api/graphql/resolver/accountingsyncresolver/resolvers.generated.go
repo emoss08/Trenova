@@ -4,7 +4,7 @@ package accountingsyncresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	accountingsyncports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 )
 
 type Deps struct {

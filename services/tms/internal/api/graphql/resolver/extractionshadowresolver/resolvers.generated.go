@@ -4,7 +4,7 @@ package extractionshadowresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	extractionshadowports "github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 )
 
 type Deps struct {

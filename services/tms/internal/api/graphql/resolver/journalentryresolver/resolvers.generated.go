@@ -5,8 +5,8 @@ package journalentryresolver
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	journalentryservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	glaccountports "github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
+	journalentryports "github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 )
 
 type Deps struct {

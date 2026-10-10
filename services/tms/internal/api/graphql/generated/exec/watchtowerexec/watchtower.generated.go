@@ -52,7 +52,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DismissWatchtowerItem(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWatchtowerItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋwatchtowerᚐItem),
+				Marshal: gqlexec.Marshal(marshalNWatchtowerItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐItem),
 			},
 			{
 				Name:       "handOffWatchtowerItem",
@@ -169,7 +169,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.WatchtowerHandOffResult)
 					return obj.Item, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWatchtowerItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋwatchtowerᚐItem),
+				Marshal: gqlexec.Marshal(marshalNWatchtowerItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐItem),
 			},
 			{
 				Name:      "run",
@@ -179,7 +179,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.WatchtowerHandOffResult)
 					return obj.Run, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐAgentRun),
+				Marshal: gqlexec.Marshal(marshalOAgentRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentRun),
 			},
 			{
 				Name:      "subscribers",
@@ -190,7 +190,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.WatchtowerHandOffResult)
 					return obj.Subscribers, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐDefinitionᚄ),
+				Marshal: gqlexec.Marshal(marshalNAgentDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinitionᚄ),
 			},
 			{
 				Name:      "candidates",
@@ -201,7 +201,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.WatchtowerHandOffResult)
 					return obj.Candidates, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐDefinitionᚄ),
+				Marshal: gqlexec.Marshal(marshalNAgentDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinitionᚄ),
 			},
 			{
 				Name:     "templates",
@@ -253,7 +253,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*watchtower.Item)
 					return obj.SourceKind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWatchtowerSourceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋwatchtowerᚐSourceKind),
+				Marshal: gqlexec.Marshal(marshalNWatchtowerSourceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSourceKind),
 			},
 			{
 				Name:     "sourceId",
@@ -273,7 +273,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*watchtower.Item)
 					return obj.Severity, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWatchtowerSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋwatchtowerᚐSeverity),
+				Marshal: gqlexec.Marshal(marshalNWatchtowerSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSeverity),
 			},
 			{
 				Name:     "title",
@@ -304,7 +304,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*watchtower.Item)
 					return gqlexec.Resolver[resolverWatchtowerItem](ec, "WatchtowerItem").SubjectType(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentSubjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐSubjectType),
+				Marshal: gqlexec.Marshal(marshalOAgentSubjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐSubjectType),
 			},
 			{
 				Name:       "subjectId",
@@ -454,7 +454,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.WatchtowerItemEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWatchtowerItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋwatchtowerᚐItem),
+				Marshal: gqlexec.Marshal(marshalNWatchtowerItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐItem),
 			},
 			{
 				Name:     "cursor",
@@ -476,7 +476,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.WatchtowerKindSummary)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWatchtowerSourceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋwatchtowerᚐSourceKind),
+				Marshal: gqlexec.Marshal(marshalNWatchtowerSourceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSourceKind),
 			},
 			{
 				Name:     "label",
@@ -670,14 +670,14 @@ func unmarshalInputWatchtowerItemsInput(ctx context.Context, ec *gqlexec.Exec, o
 			it.After = data
 		case "kinds":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kinds"))
-			data, err := unmarshalOWatchtowerSourceKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋwatchtowerᚐSourceKindᚄ(ctx, ec, v)
+			data, err := unmarshalOWatchtowerSourceKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSourceKindᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.Kinds = data
 		case "severities":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("severities"))
-			data, err := unmarshalOWatchtowerSeverity2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋwatchtowerᚐSeverityᚄ(ctx, ec, v)
+			data, err := unmarshalOWatchtowerSeverity2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSeverityᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -716,13 +716,13 @@ func unmarshalNWatchtowerItemsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNWatchtowerSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋwatchtowerᚐSeverity(ctx context.Context, ec *gqlexec.Exec, v any) (watchtower.Severity, error) {
+func unmarshalNWatchtowerSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSeverity(ctx context.Context, ec *gqlexec.Exec, v any) (watchtower.Severity, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := watchtower.Severity(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNWatchtowerSourceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋwatchtowerᚐSourceKind(ctx context.Context, ec *gqlexec.Exec, v any) (watchtower.SourceKind, error) {
+func unmarshalNWatchtowerSourceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSourceKind(ctx context.Context, ec *gqlexec.Exec, v any) (watchtower.SourceKind, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := watchtower.SourceKind(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -768,29 +768,29 @@ func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOWatchtowerSeverity2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋwatchtowerᚐSeverityᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]watchtower.Severity, error) {
+func unmarshalOWatchtowerSeverity2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSeverityᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]watchtower.Severity, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNWatchtowerSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋwatchtowerᚐSeverity)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNWatchtowerSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSeverity)
 }
 
-func unmarshalOWatchtowerSourceKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋwatchtowerᚐSourceKindᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]watchtower.SourceKind, error) {
+func unmarshalOWatchtowerSourceKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSourceKindᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]watchtower.SourceKind, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNWatchtowerSourceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋwatchtowerᚐSourceKind)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNWatchtowerSourceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSourceKind)
 }
 
-func marshalNAgentDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐDefinitionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*agentdefinition.Definition) graphql.Marshaler {
+func marshalNAgentDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinitionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*agentdefinition.Definition) graphql.Marshaler {
 	return gqlexec.List[*agentdefinition.Definition]{
-		Elem:        marshalNAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐDefinition,
+		Elem:        marshalNAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinition,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐDefinition(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentdefinition.Definition) graphql.Marshaler {
+func marshalNAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinition(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentdefinition.Definition) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -887,7 +887,7 @@ func marshalNWatchtowerHandOffResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "WatchtowerHandOffResult", v)
 }
 
-func marshalNWatchtowerItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋwatchtowerᚐItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtower.Item) graphql.Marshaler {
+func marshalNWatchtowerItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtower.Item) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -935,7 +935,7 @@ func marshalNWatchtowerKindSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "WatchtowerKindSummary", v)
 }
 
-func marshalNWatchtowerSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋwatchtowerᚐSeverity(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtower.Severity) graphql.Marshaler {
+func marshalNWatchtowerSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSeverity(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtower.Severity) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -943,7 +943,7 @@ func marshalNWatchtowerSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋco
 	return res
 }
 
-func marshalNWatchtowerSourceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋwatchtowerᚐSourceKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtower.SourceKind) graphql.Marshaler {
+func marshalNWatchtowerSourceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSourceKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtower.SourceKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -951,14 +951,14 @@ func marshalNWatchtowerSourceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalOAgentRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐAgentRun(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.AgentRun) graphql.Marshaler {
+func marshalOAgentRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentRun(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.AgentRun) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AgentRun", v)
 }
 
-func marshalOAgentSubjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐSubjectType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.SubjectType) graphql.Marshaler {
+func marshalOAgentSubjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐSubjectType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.SubjectType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

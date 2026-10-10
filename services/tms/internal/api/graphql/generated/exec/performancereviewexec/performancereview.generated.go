@@ -40,7 +40,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreatePerformanceReviewTemplate(ctx, fc.Args["input"].(gqlmodel.PerformanceReviewTemplateInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReviewTemplate),
+				Marshal: gqlexec.Marshal(marshalNPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReviewTemplate),
 			},
 			{
 				Name:       "updatePerformanceReviewTemplate",
@@ -53,7 +53,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdatePerformanceReviewTemplate(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.PerformanceReviewTemplateInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReviewTemplate),
+				Marshal: gqlexec.Marshal(marshalNPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReviewTemplate),
 			},
 			{
 				Name:       "archivePerformanceReviewTemplate",
@@ -66,7 +66,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ArchivePerformanceReviewTemplate(ctx, fc.Args["id"].(string), fc.Args["version"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReviewTemplate),
+				Marshal: gqlexec.Marshal(marshalNPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReviewTemplate),
 			},
 			{
 				Name:       "restorePerformanceReviewTemplate",
@@ -79,7 +79,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RestorePerformanceReviewTemplate(ctx, fc.Args["id"].(string), fc.Args["version"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReviewTemplate),
+				Marshal: gqlexec.Marshal(marshalNPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReviewTemplate),
 			},
 			{
 				Name:       "createPerformanceReview",
@@ -92,7 +92,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreatePerformanceReview(ctx, fc.Args["input"].(gqlmodel.CreatePerformanceReviewInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReview),
+				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReview),
 			},
 			{
 				Name:       "updatePerformanceReview",
@@ -105,7 +105,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdatePerformanceReview(ctx, fc.Args["input"].(gqlmodel.UpdatePerformanceReviewInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReview),
+				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReview),
 			},
 			{
 				Name:       "submitPerformanceReview",
@@ -118,7 +118,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SubmitPerformanceReview(ctx, fc.Args["input"].(gqlmodel.PerformanceReviewStatusInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReview),
+				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReview),
 			},
 			{
 				Name:       "reopenPerformanceReview",
@@ -131,7 +131,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReopenPerformanceReview(ctx, fc.Args["input"].(gqlmodel.PerformanceReviewStatusInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReview),
+				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReview),
 			},
 			{
 				Name:       "closePerformanceReview",
@@ -144,7 +144,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ClosePerformanceReview(ctx, fc.Args["input"].(gqlmodel.PerformanceReviewStatusInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReview),
+				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReview),
 			},
 			{
 				Name:       "deletePerformanceReview",
@@ -169,7 +169,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AcknowledgeMyReview(ctx, fc.Args["id"].(string), fc.Args["comment"].(*string))
 				},
-				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReview),
+				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReview),
 			},
 		}},
 		{Object: "PerformanceReview", Fields: []*gqlexec.Field{
@@ -231,7 +231,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.PerformanceReview)
 					return obj.Template, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReviewTemplate),
+				Marshal: gqlexec.Marshal(marshalOPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReviewTemplate),
 			},
 			{
 				Name:       "reviewerId",
@@ -252,7 +252,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.PerformanceReview)
 					return obj.Reviewer, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 			{
 				Name:     "status",
@@ -262,7 +262,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.PerformanceReview)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNPerformanceReviewStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐReviewStatus),
+				Marshal: gqlexec.Marshal(marshalNPerformanceReviewStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐReviewStatus),
 			},
 			{
 				Name:     "title",
@@ -303,7 +303,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.PerformanceReview)
 					return obj.Ratings, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNReviewRating2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐReviewRatingᚄ),
+				Marshal: gqlexec.Marshal(marshalNReviewRating2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐReviewRatingᚄ),
 			},
 			{
 				Name:       "overallScore",
@@ -352,7 +352,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.PerformanceReview)
 					return obj.Goals, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNReviewGoal2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐReviewGoalᚄ),
+				Marshal: gqlexec.Marshal(marshalNReviewGoal2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐReviewGoalᚄ),
 			},
 			{
 				Name:     "submittedAt",
@@ -448,7 +448,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.PerformanceReview)
 					return obj.Worker, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorker),
+				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
 			},
 		}},
 		{Object: "PerformanceReviewTemplate", Fields: []*gqlexec.Field{
@@ -551,7 +551,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.PerformanceReviewTemplate)
 					return obj.Items, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNReviewItem2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐReviewItemᚄ),
+				Marshal: gqlexec.Marshal(marshalNReviewItem2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐReviewItemᚄ),
 			},
 			{
 				Name:       "openReviewCount",
@@ -639,7 +639,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.PerformanceReviewTemplateEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReviewTemplate),
+				Marshal: gqlexec.Marshal(marshalNPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReviewTemplate),
 			},
 			{
 				Name:     "cursor",
@@ -679,7 +679,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").PerformanceReviewTemplate(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReviewTemplate),
+				Marshal: gqlexec.Marshal(marshalNPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReviewTemplate),
 			},
 			{
 				Name:       "activePerformanceReviewTemplates",
@@ -691,7 +691,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ActivePerformanceReviewTemplates(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNPerformanceReviewTemplate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReviewTemplateᚄ),
+				Marshal: gqlexec.Marshal(marshalNPerformanceReviewTemplate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReviewTemplateᚄ),
 			},
 			{
 				Name:       "workerPerformanceReviews",
@@ -705,7 +705,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerPerformanceReviews(ctx, fc.Args["workerId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReviewᚄ),
+				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReviewᚄ),
 			},
 			{
 				Name:       "performanceReview",
@@ -719,7 +719,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").PerformanceReview(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReview),
+				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReview),
 			},
 			{
 				Name:       "myReviews",
@@ -731,7 +731,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").MyReviews(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReviewᚄ),
+				Marshal: gqlexec.Marshal(marshalNPerformanceReview2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReviewᚄ),
 			},
 		}},
 		{Object: "ReviewGoal", Fields: []*gqlexec.Field{
@@ -772,7 +772,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.ReviewGoal)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNReviewGoalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐReviewGoalStatus),
+				Marshal: gqlexec.Marshal(marshalNReviewGoalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐReviewGoalStatus),
 			},
 		}},
 		{Object: "ReviewItem", Fields: []*gqlexec.Field{
@@ -1455,7 +1455,7 @@ func unmarshalInputReviewGoalInput(ctx context.Context, ec *gqlexec.Exec, obj an
 			it.DueAt = data
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := unmarshalOReviewGoalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐReviewGoalStatus(ctx, ec, v)
+			data, err := unmarshalOReviewGoalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐReviewGoalStatus(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1797,7 +1797,7 @@ func unmarshalOReviewGoalInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNReviewGoalInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReviewGoalInput)
 }
 
-func unmarshalOReviewGoalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐReviewGoalStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.ReviewGoalStatus, error) {
+func unmarshalOReviewGoalStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐReviewGoalStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.ReviewGoalStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -1885,15 +1885,15 @@ func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgra
 	return ec.MarshalType(ctx, sel, "PageInfo", v)
 }
 
-func marshalNPerformanceReview2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReviewᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.PerformanceReview) graphql.Marshaler {
+func marshalNPerformanceReview2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReviewᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.PerformanceReview) graphql.Marshaler {
 	return gqlexec.List[*worker.PerformanceReview]{
-		Elem:        marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReview,
+		Elem:        marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReview,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.PerformanceReview) graphql.Marshaler {
+func marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.PerformanceReview) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1901,7 +1901,7 @@ func marshalNPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "PerformanceReview", v)
 }
 
-func marshalNPerformanceReviewStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐReviewStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ReviewStatus) graphql.Marshaler {
+func marshalNPerformanceReviewStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐReviewStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ReviewStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1909,15 +1909,15 @@ func marshalNPerformanceReviewStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return res
 }
 
-func marshalNPerformanceReviewTemplate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReviewTemplateᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.PerformanceReviewTemplate) graphql.Marshaler {
+func marshalNPerformanceReviewTemplate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReviewTemplateᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.PerformanceReviewTemplate) graphql.Marshaler {
 	return gqlexec.List[*worker.PerformanceReviewTemplate]{
-		Elem:        marshalNPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReviewTemplate,
+		Elem:        marshalNPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReviewTemplate,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReviewTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.PerformanceReviewTemplate) graphql.Marshaler {
+func marshalNPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReviewTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.PerformanceReviewTemplate) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1949,19 +1949,19 @@ func marshalNPerformanceReviewTemplateEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenova�
 	return ec.MarshalType(ctx, sel, "PerformanceReviewTemplateEdge", v)
 }
 
-func marshalNReviewGoal2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐReviewGoal(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ReviewGoal) graphql.Marshaler {
+func marshalNReviewGoal2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐReviewGoal(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ReviewGoal) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "ReviewGoal", &v)
 }
 
-func marshalNReviewGoal2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐReviewGoalᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []worker.ReviewGoal) graphql.Marshaler {
+func marshalNReviewGoal2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐReviewGoalᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []worker.ReviewGoal) graphql.Marshaler {
 	return gqlexec.List[worker.ReviewGoal]{
-		Elem:        marshalNReviewGoal2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐReviewGoal,
+		Elem:        marshalNReviewGoal2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐReviewGoal,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNReviewGoalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐReviewGoalStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ReviewGoalStatus) graphql.Marshaler {
+func marshalNReviewGoalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐReviewGoalStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ReviewGoalStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1969,25 +1969,25 @@ func marshalNReviewGoalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore
 	return res
 }
 
-func marshalNReviewItem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐReviewItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ReviewItem) graphql.Marshaler {
+func marshalNReviewItem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐReviewItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ReviewItem) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "ReviewItem", &v)
 }
 
-func marshalNReviewItem2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐReviewItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []worker.ReviewItem) graphql.Marshaler {
+func marshalNReviewItem2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐReviewItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []worker.ReviewItem) graphql.Marshaler {
 	return gqlexec.List[worker.ReviewItem]{
-		Elem:        marshalNReviewItem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐReviewItem,
+		Elem:        marshalNReviewItem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐReviewItem,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNReviewRating2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐReviewRating(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ReviewRating) graphql.Marshaler {
+func marshalNReviewRating2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐReviewRating(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ReviewRating) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "ReviewRating", &v)
 }
 
-func marshalNReviewRating2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐReviewRatingᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []worker.ReviewRating) graphql.Marshaler {
+func marshalNReviewRating2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐReviewRatingᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []worker.ReviewRating) graphql.Marshaler {
 	return gqlexec.List[worker.ReviewRating]{
-		Elem:        marshalNReviewRating2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐReviewRating,
+		Elem:        marshalNReviewRating2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐReviewRating,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
@@ -2033,7 +2033,7 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalOPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReviewTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.PerformanceReviewTemplate) graphql.Marshaler {
+func marshalOPerformanceReviewTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReviewTemplate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.PerformanceReviewTemplate) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -2053,14 +2053,14 @@ func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.S
 	return res
 }
 
-func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
+func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "User", v)
 }
 
-func marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorker(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.Worker) graphql.Marshaler {
+func marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.Worker) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

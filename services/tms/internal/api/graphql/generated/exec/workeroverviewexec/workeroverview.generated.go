@@ -8,9 +8,9 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -35,7 +35,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerOverview(ctx, fc.Args["workerId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkeroverviewserviceᚐOverview),
+				Marshal: gqlexec.Marshal(marshalNWorkerOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐOverview),
 			},
 			{
 				Name:       "workerRosterAttention",
@@ -47,7 +47,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerRosterAttention(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerRosterAttention2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkeroverviewserviceᚐRosterAttention),
+				Marshal: gqlexec.Marshal(marshalNWorkerRosterAttention2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐRosterAttention),
 			},
 		}},
 		{Object: "WorkerConcern", Fields: []*gqlexec.Field{
@@ -59,7 +59,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*worker.Concern)
 					return obj.Severity, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerConcernSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐConcernSeverity),
+				Marshal: gqlexec.Marshal(marshalNWorkerConcernSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐConcernSeverity),
 			},
 			{
 				Name:     "code",
@@ -112,7 +112,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workeroverviewservice.Overview)
 					return obj.Worker, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorker),
+				Marshal: gqlexec.Marshal(marshalNWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
 			},
 			{
 				Name:     "asOf",
@@ -132,7 +132,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workeroverviewservice.Overview)
 					return obj.Standing, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerStanding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐStanding),
+				Marshal: gqlexec.Marshal(marshalNWorkerStanding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐStanding),
 			},
 			{
 				Name:      "concerns",
@@ -143,7 +143,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workeroverviewservice.Overview)
 					return obj.Concerns, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerConcern2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐConcernᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerConcern2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐConcernᚄ),
 			},
 			{
 				Name:      "credentials",
@@ -153,7 +153,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workeroverviewservice.Overview)
 					return obj.Credentials, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWorkerCredentialSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerCredentialSummary),
+				Marshal: gqlexec.Marshal(marshalOWorkerCredentialSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialSummary),
 			},
 			{
 				Name:      "training",
@@ -163,7 +163,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workeroverviewservice.Overview)
 					return obj.Training, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWorkerTrainingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerTrainingSummary),
+				Marshal: gqlexec.Marshal(marshalOWorkerTrainingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerTrainingSummary),
 			},
 			{
 				Name:      "safety",
@@ -173,7 +173,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workeroverviewservice.Overview)
 					return obj.Safety, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOSafetyScorecard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐSafetyScorecard),
+				Marshal: gqlexec.Marshal(marshalOSafetyScorecard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐSafetyScorecard),
 			},
 			{
 				Name:      "checklist",
@@ -183,7 +183,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workeroverviewservice.Overview)
 					return obj.Checklist, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklist),
+				Marshal: gqlexec.Marshal(marshalOWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklist),
 			},
 			{
 				Name:      "pto",
@@ -193,7 +193,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workeroverviewservice.Overview)
 					return obj.PTO, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWorkerPTOBalance2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋptoledgerserviceᚐBalanceViewᚄ),
+				Marshal: gqlexec.Marshal(marshalOWorkerPTOBalance2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋptoledgerserviceᚐBalanceViewᚄ),
 			},
 			{
 				Name:      "openReview",
@@ -203,7 +203,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workeroverviewservice.Overview)
 					return obj.OpenReview, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReview),
+				Marshal: gqlexec.Marshal(marshalOPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReview),
 			},
 			{
 				Name:      "lastReview",
@@ -213,7 +213,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workeroverviewservice.Overview)
 					return obj.LastReview, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReview),
+				Marshal: gqlexec.Marshal(marshalOPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReview),
 			},
 			{
 				Name:     "nextReviewAt",
@@ -384,7 +384,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalNWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorker(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.Worker) graphql.Marshaler {
+func marshalNWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.Worker) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -392,19 +392,19 @@ func marshalNWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdoma
 	return ec.MarshalType(ctx, sel, "Worker", v)
 }
 
-func marshalNWorkerConcern2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐConcern(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.Concern) graphql.Marshaler {
+func marshalNWorkerConcern2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐConcern(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.Concern) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "WorkerConcern", &v)
 }
 
-func marshalNWorkerConcern2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐConcernᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []worker.Concern) graphql.Marshaler {
+func marshalNWorkerConcern2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐConcernᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []worker.Concern) graphql.Marshaler {
 	return gqlexec.List[worker.Concern]{
-		Elem:        marshalNWorkerConcern2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐConcern,
+		Elem:        marshalNWorkerConcern2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐConcern,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerConcernSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐConcernSeverity(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ConcernSeverity) graphql.Marshaler {
+func marshalNWorkerConcernSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐConcernSeverity(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ConcernSeverity) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -412,7 +412,7 @@ func marshalNWorkerConcernSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNWorkerOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkeroverviewserviceᚐOverview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workeroverviewservice.Overview) graphql.Marshaler {
+func marshalNWorkerOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐOverview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workeroverviewservice.Overview) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -420,7 +420,7 @@ func marshalNWorkerOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcor
 	return ec.MarshalType(ctx, sel, "WorkerOverview", v)
 }
 
-func marshalNWorkerPTOBalance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋptoledgerserviceᚐBalanceView(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ptoledgerservice.BalanceView) graphql.Marshaler {
+func marshalNWorkerPTOBalance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋptoledgerserviceᚐBalanceView(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ptoledgerservice.BalanceView) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -428,7 +428,7 @@ func marshalNWorkerPTOBalance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋc
 	return ec.MarshalType(ctx, sel, "WorkerPTOBalance", v)
 }
 
-func marshalNWorkerRosterAttention2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋworkeroverviewserviceᚐRosterAttention(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workeroverviewservice.RosterAttention) graphql.Marshaler {
+func marshalNWorkerRosterAttention2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋappᚋworkeroverviewserviceᚐRosterAttention(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workeroverviewservice.RosterAttention) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -436,7 +436,7 @@ func marshalNWorkerRosterAttention2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "WorkerRosterAttention", v)
 }
 
-func marshalNWorkerStanding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐStanding(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.Standing) graphql.Marshaler {
+func marshalNWorkerStanding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐStanding(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.Standing) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -444,14 +444,14 @@ func marshalNWorkerStanding2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return res
 }
 
-func marshalOPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐPerformanceReview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.PerformanceReview) graphql.Marshaler {
+func marshalOPerformanceReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPerformanceReview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.PerformanceReview) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "PerformanceReview", v)
 }
 
-func marshalOSafetyScorecard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐSafetyScorecard(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.SafetyScorecard) graphql.Marshaler {
+func marshalOSafetyScorecard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐSafetyScorecard(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.SafetyScorecard) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -466,28 +466,28 @@ func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.S
 	return res
 }
 
-func marshalOWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerChecklist(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerChecklist) graphql.Marshaler {
+func marshalOWorkerChecklist2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerChecklist(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerChecklist) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WorkerChecklist", v)
 }
 
-func marshalOWorkerCredentialSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerCredentialSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerCredentialSummary) graphql.Marshaler {
+func marshalOWorkerCredentialSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerCredentialSummary) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WorkerCredentialSummary", v)
 }
 
-func marshalOWorkerPTOBalance2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋptoledgerserviceᚐBalanceViewᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*ptoledgerservice.BalanceView) graphql.Marshaler {
+func marshalOWorkerPTOBalance2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋptoledgerserviceᚐBalanceViewᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*ptoledgerservice.BalanceView) graphql.Marshaler {
 	return gqlexec.List[*ptoledgerservice.BalanceView]{
-		Elem:        marshalNWorkerPTOBalance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋptoledgerserviceᚐBalanceView,
+		Elem:        marshalNWorkerPTOBalance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋappᚋptoledgerserviceᚐBalanceView,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalOWorkerTrainingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐWorkerTrainingSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerTrainingSummary) graphql.Marshaler {
+func marshalOWorkerTrainingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerTrainingSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerTrainingSummary) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

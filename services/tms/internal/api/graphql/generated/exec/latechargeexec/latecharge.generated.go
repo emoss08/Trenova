@@ -11,8 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -38,7 +38,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoice.Invoice)
 					return gqlexec.Resolver[resolverInvoice](ec, "Invoice").LateChargeAssessments(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNLateChargeAssessment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋlatechargeᚐLateChargeAssessmentᚄ),
+				Marshal: gqlexec.Marshal(marshalNLateChargeAssessment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋlatechargeᚐLateChargeAssessmentᚄ),
 			},
 		}},
 		{Object: "LateChargeAssessment", Fields: []*gqlexec.Field{
@@ -220,7 +220,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*latecharge.LateChargeAssessment)
 					return obj.SourceInvoice, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceᚐInvoice),
+				Marshal: gqlexec.Marshal(marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoice),
 			},
 			{
 				Name:      "debitMemo",
@@ -230,7 +230,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*latecharge.LateChargeAssessment)
 					return obj.DebitMemo, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceᚐInvoice),
+				Marshal: gqlexec.Marshal(marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoice),
 			},
 		}},
 		{Object: "LateChargeAssessmentResult", Fields: []*gqlexec.Field{
@@ -262,7 +262,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*latechargeports.LateChargeAssessmentResult)
 					return obj.Mode, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNLateChargeAssessmentMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐLateChargeAssessmentMode),
+				Marshal: gqlexec.Marshal(marshalNLateChargeAssessmentMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐLateChargeAssessmentMode),
 			},
 			{
 				Name:      "customers",
@@ -273,7 +273,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*latechargeports.LateChargeAssessmentResult)
 					return obj.Customers, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNLateChargeCustomerResult2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐLateChargeCustomerResultᚄ),
+				Marshal: gqlexec.Marshal(marshalNLateChargeCustomerResult2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋlatechargeportsᚐLateChargeCustomerResultᚄ),
 			},
 			{
 				Name:     "memosCreated",
@@ -356,7 +356,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*latechargeports.LateChargeCustomerResult)
 					return obj.Lines, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNLateChargeLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐLateChargeLineᚄ),
+				Marshal: gqlexec.Marshal(marshalNLateChargeLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋlatechargeportsᚐLateChargeLineᚄ),
 			},
 			{
 				Name:     "totalChargeMinor",
@@ -514,7 +514,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AssessLateCharges(ctx, fc.Args["input"].(*gqlmodel.LateChargeAssessmentInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNLateChargeAssessmentResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐLateChargeAssessmentResult),
+				Marshal: gqlexec.Marshal(marshalNLateChargeAssessmentResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋlatechargeportsᚐLateChargeAssessmentResult),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -530,7 +530,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").LateChargePreview(ctx, fc.Args["input"].(*gqlmodel.LateChargeAssessmentInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNLateChargeAssessmentResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐLateChargeAssessmentResult),
+				Marshal: gqlexec.Marshal(marshalNLateChargeAssessmentResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋlatechargeportsᚐLateChargeAssessmentResult),
 			},
 		}},
 	},
@@ -707,15 +707,15 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNLateChargeAssessment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋlatechargeᚐLateChargeAssessmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*latecharge.LateChargeAssessment) graphql.Marshaler {
+func marshalNLateChargeAssessment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋlatechargeᚐLateChargeAssessmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*latecharge.LateChargeAssessment) graphql.Marshaler {
 	return gqlexec.List[*latecharge.LateChargeAssessment]{
-		Elem:        marshalNLateChargeAssessment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋlatechargeᚐLateChargeAssessment,
+		Elem:        marshalNLateChargeAssessment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋlatechargeᚐLateChargeAssessment,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNLateChargeAssessment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋlatechargeᚐLateChargeAssessment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *latecharge.LateChargeAssessment) graphql.Marshaler {
+func marshalNLateChargeAssessment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋlatechargeᚐLateChargeAssessment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *latecharge.LateChargeAssessment) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -723,7 +723,7 @@ func marshalNLateChargeAssessment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "LateChargeAssessment", v)
 }
 
-func marshalNLateChargeAssessmentMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐLateChargeAssessmentMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tenant.LateChargeAssessmentMode) graphql.Marshaler {
+func marshalNLateChargeAssessmentMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐLateChargeAssessmentMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tenant.LateChargeAssessmentMode) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -731,7 +731,7 @@ func marshalNLateChargeAssessmentMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return res
 }
 
-func marshalNLateChargeAssessmentResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐLateChargeAssessmentResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *latechargeports.LateChargeAssessmentResult) graphql.Marshaler {
+func marshalNLateChargeAssessmentResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋlatechargeportsᚐLateChargeAssessmentResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *latechargeports.LateChargeAssessmentResult) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -739,15 +739,15 @@ func marshalNLateChargeAssessmentResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return ec.MarshalType(ctx, sel, "LateChargeAssessmentResult", v)
 }
 
-func marshalNLateChargeCustomerResult2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐLateChargeCustomerResultᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*latechargeports.LateChargeCustomerResult) graphql.Marshaler {
+func marshalNLateChargeCustomerResult2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋlatechargeportsᚐLateChargeCustomerResultᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*latechargeports.LateChargeCustomerResult) graphql.Marshaler {
 	return gqlexec.List[*latechargeports.LateChargeCustomerResult]{
-		Elem:        marshalNLateChargeCustomerResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐLateChargeCustomerResult,
+		Elem:        marshalNLateChargeCustomerResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋlatechargeportsᚐLateChargeCustomerResult,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNLateChargeCustomerResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐLateChargeCustomerResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *latechargeports.LateChargeCustomerResult) graphql.Marshaler {
+func marshalNLateChargeCustomerResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋlatechargeportsᚐLateChargeCustomerResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *latechargeports.LateChargeCustomerResult) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -755,15 +755,15 @@ func marshalNLateChargeCustomerResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "LateChargeCustomerResult", v)
 }
 
-func marshalNLateChargeLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐLateChargeLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*latechargeports.LateChargeLine) graphql.Marshaler {
+func marshalNLateChargeLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋlatechargeportsᚐLateChargeLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*latechargeports.LateChargeLine) graphql.Marshaler {
 	return gqlexec.List[*latechargeports.LateChargeLine]{
-		Elem:        marshalNLateChargeLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐLateChargeLine,
+		Elem:        marshalNLateChargeLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋlatechargeportsᚐLateChargeLine,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNLateChargeLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐLateChargeLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *latechargeports.LateChargeLine) graphql.Marshaler {
+func marshalNLateChargeLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋlatechargeportsᚐLateChargeLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *latechargeports.LateChargeLine) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -792,7 +792,7 @@ func marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx conte
 	return res
 }
 
-func marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceᚐInvoice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoice.Invoice) graphql.Marshaler {
+func marshalOInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceᚐInvoice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoice.Invoice) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

@@ -123,7 +123,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoiceadjustment.InvoiceAdjustment)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐKind),
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐKind),
 			},
 			{
 				Name:     "status",
@@ -133,7 +133,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoiceadjustment.InvoiceAdjustment)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐStatus),
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐStatus),
 			},
 			{
 				Name:     "approvalStatus",
@@ -143,7 +143,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoiceadjustment.InvoiceAdjustment)
 					return obj.ApprovalStatus, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentApprovalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐApprovalStatus),
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentApprovalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐApprovalStatus),
 			},
 			{
 				Name:     "replacementReviewStatus",
@@ -153,7 +153,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoiceadjustment.InvoiceAdjustment)
 					return obj.ReplacementReviewStatus, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentReplacementReviewStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐReplacementReviewStatus),
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentReplacementReviewStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐReplacementReviewStatus),
 			},
 			{
 				Name:       "rebillStrategy",
@@ -164,7 +164,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoiceadjustment.InvoiceAdjustment)
 					return gqlexec.Resolver[resolverInvoiceAdjustment](ec, "InvoiceAdjustment").RebillStrategy(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOInvoiceAdjustmentRebillStrategy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐRebillStrategy),
+				Marshal: gqlexec.Marshal(marshalOInvoiceAdjustmentRebillStrategy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐRebillStrategy),
 			},
 			{
 				Name:     "reason",
@@ -387,7 +387,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoiceadjustment.InvoiceAdjustment)
 					return obj.Lines, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentLineᚄ),
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentLineᚄ),
 			},
 		}},
 		{Object: "InvoiceAdjustmentApprovalQueueConnection", Fields: []*gqlexec.Field{
@@ -433,7 +433,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.InvoiceAdjustmentApprovalQueueEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentApprovalQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentApprovalQueueItem),
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentApprovalQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentApprovalQueueItem),
 			},
 			{
 				Name:     "cursor",
@@ -515,7 +515,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐKind),
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐKind),
 			},
 			{
 				Name:     "status",
@@ -525,7 +525,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐStatus),
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐStatus),
 			},
 			{
 				Name:     "approvalStatus",
@@ -535,7 +535,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return obj.ApprovalStatus, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentApprovalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐApprovalStatus),
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentApprovalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐApprovalStatus),
 			},
 			{
 				Name:       "rebillStrategy",
@@ -546,7 +546,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem)
 					return gqlexec.Resolver[resolverInvoiceAdjustmentApprovalQueueItem](ec, "InvoiceAdjustmentApprovalQueueItem").RebillStrategy(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOInvoiceAdjustmentRebillStrategy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐRebillStrategy),
+				Marshal: gqlexec.Marshal(marshalOInvoiceAdjustmentRebillStrategy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐRebillStrategy),
 			},
 			{
 				Name:     "reason",
@@ -1007,7 +1007,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary)
 					return obj.AdjustmentsByStatus, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentSummaryCount2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentSummaryCountᚄ),
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentSummaryCount2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentSummaryCountᚄ),
 			},
 			{
 				Name:     "approvalsPending",
@@ -1068,7 +1068,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary)
 					return obj.ReasonDistribution, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentSummaryCount2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentSummaryCountᚄ),
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentSummaryCount2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentSummaryCountᚄ),
 			},
 			{
 				Name:      "repeatedAdjustments",
@@ -1079,7 +1079,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary)
 					return obj.RepeatedAdjustments, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentRepeatedSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentRepeatedSummaryᚄ),
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentRepeatedSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentRepeatedSummaryᚄ),
 			},
 			{
 				Name:      "repeatedCustomerAdjustments",
@@ -1090,7 +1090,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary)
 					return obj.RepeatedCustomerAdjustments, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentRepeatedSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentRepeatedSummaryᚄ),
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentRepeatedSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentRepeatedSummaryᚄ),
 			},
 		}},
 		{Object: "InvoiceAdjustmentRepeatedSummary", Fields: []*gqlexec.Field{
@@ -1169,7 +1169,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApproveInvoiceAdjustment(ctx, fc.Args["adjustmentId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustment),
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustment),
 			},
 			{
 				Name:       "rejectInvoiceAdjustment",
@@ -1182,7 +1182,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RejectInvoiceAdjustment(ctx, fc.Args["input"].(gqlmodel.RejectInvoiceAdjustmentInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustment),
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustment),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -1197,7 +1197,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").InvoiceAdjustment(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOInvoiceAdjustment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustment),
+				Marshal: gqlexec.Marshal(marshalOInvoiceAdjustment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustment),
 			},
 			{
 				Name:       "invoiceAdjustmentApprovals",
@@ -1223,7 +1223,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").InvoiceAdjustmentOperationsSummary(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentOperationsSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentOperationsSummary),
+				Marshal: gqlexec.Marshal(marshalNInvoiceAdjustmentOperationsSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentOperationsSummary),
 			},
 		}},
 	},
@@ -1385,7 +1385,7 @@ func unmarshalInputInvoiceAdjustmentApprovalsInput(ctx context.Context, ec *gqle
 			it.Query = data
 		case "kind":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			data, err := unmarshalOInvoiceAdjustmentKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐKind(ctx, ec, v)
+			data, err := unmarshalOInvoiceAdjustmentKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐKind(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1470,7 +1470,7 @@ func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, e
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOInvoiceAdjustmentKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐKind(ctx context.Context, ec *gqlexec.Exec, v any) (*invoiceadjustment.Kind, error) {
+func unmarshalOInvoiceAdjustmentKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐKind(ctx context.Context, ec *gqlexec.Exec, v any) (*invoiceadjustment.Kind, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -1527,7 +1527,7 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNInvoiceAdjustment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustment.InvoiceAdjustment) graphql.Marshaler {
+func marshalNInvoiceAdjustment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustment.InvoiceAdjustment) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1559,7 +1559,7 @@ func marshalNInvoiceAdjustmentApprovalQueueEdge2ᚖgithubᚗcomᚋemoss08ᚋtren
 	return ec.MarshalType(ctx, sel, "InvoiceAdjustmentApprovalQueueEdge", v)
 }
 
-func marshalNInvoiceAdjustmentApprovalQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentApprovalQueueItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) graphql.Marshaler {
+func marshalNInvoiceAdjustmentApprovalQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentApprovalQueueItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1567,7 +1567,7 @@ func marshalNInvoiceAdjustmentApprovalQueueItem2ᚖgithubᚗcomᚋemoss08ᚋtren
 	return ec.MarshalType(ctx, sel, "InvoiceAdjustmentApprovalQueueItem", v)
 }
 
-func marshalNInvoiceAdjustmentApprovalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐApprovalStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v invoiceadjustment.ApprovalStatus) graphql.Marshaler {
+func marshalNInvoiceAdjustmentApprovalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐApprovalStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v invoiceadjustment.ApprovalStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1575,7 +1575,7 @@ func marshalNInvoiceAdjustmentApprovalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋ
 	return res
 }
 
-func marshalNInvoiceAdjustmentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v invoiceadjustment.Kind) graphql.Marshaler {
+func marshalNInvoiceAdjustmentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v invoiceadjustment.Kind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1583,15 +1583,15 @@ func marshalNInvoiceAdjustmentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNInvoiceAdjustmentLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*invoiceadjustment.InvoiceAdjustmentLine) graphql.Marshaler {
+func marshalNInvoiceAdjustmentLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*invoiceadjustment.InvoiceAdjustmentLine) graphql.Marshaler {
 	return gqlexec.List[*invoiceadjustment.InvoiceAdjustmentLine]{
-		Elem:        marshalNInvoiceAdjustmentLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentLine,
+		Elem:        marshalNInvoiceAdjustmentLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentLine,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNInvoiceAdjustmentLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustment.InvoiceAdjustmentLine) graphql.Marshaler {
+func marshalNInvoiceAdjustmentLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustmentLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustment.InvoiceAdjustmentLine) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1599,7 +1599,7 @@ func marshalNInvoiceAdjustmentLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "InvoiceAdjustmentLine", v)
 }
 
-func marshalNInvoiceAdjustmentOperationsSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentOperationsSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustmentports.InvoiceAdjustmentOperationsSummary) graphql.Marshaler {
+func marshalNInvoiceAdjustmentOperationsSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentOperationsSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustmentports.InvoiceAdjustmentOperationsSummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1607,15 +1607,15 @@ func marshalNInvoiceAdjustmentOperationsSummary2ᚖgithubᚗcomᚋemoss08ᚋtren
 	return ec.MarshalType(ctx, sel, "InvoiceAdjustmentOperationsSummary", v)
 }
 
-func marshalNInvoiceAdjustmentRepeatedSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentRepeatedSummaryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*invoiceadjustmentports.InvoiceAdjustmentRepeatedSummary) graphql.Marshaler {
+func marshalNInvoiceAdjustmentRepeatedSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentRepeatedSummaryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*invoiceadjustmentports.InvoiceAdjustmentRepeatedSummary) graphql.Marshaler {
 	return gqlexec.List[*invoiceadjustmentports.InvoiceAdjustmentRepeatedSummary]{
-		Elem:        marshalNInvoiceAdjustmentRepeatedSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentRepeatedSummary,
+		Elem:        marshalNInvoiceAdjustmentRepeatedSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentRepeatedSummary,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNInvoiceAdjustmentRepeatedSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentRepeatedSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustmentports.InvoiceAdjustmentRepeatedSummary) graphql.Marshaler {
+func marshalNInvoiceAdjustmentRepeatedSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentRepeatedSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustmentports.InvoiceAdjustmentRepeatedSummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1623,7 +1623,7 @@ func marshalNInvoiceAdjustmentRepeatedSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenov
 	return ec.MarshalType(ctx, sel, "InvoiceAdjustmentRepeatedSummary", v)
 }
 
-func marshalNInvoiceAdjustmentReplacementReviewStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐReplacementReviewStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v invoiceadjustment.ReplacementReviewStatus) graphql.Marshaler {
+func marshalNInvoiceAdjustmentReplacementReviewStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐReplacementReviewStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v invoiceadjustment.ReplacementReviewStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1631,7 +1631,7 @@ func marshalNInvoiceAdjustmentReplacementReviewStatus2githubᚗcomᚋemoss08ᚋt
 	return res
 }
 
-func marshalNInvoiceAdjustmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v invoiceadjustment.Status) graphql.Marshaler {
+func marshalNInvoiceAdjustmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v invoiceadjustment.Status) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1639,15 +1639,15 @@ func marshalNInvoiceAdjustmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return res
 }
 
-func marshalNInvoiceAdjustmentSummaryCount2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentSummaryCountᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*invoiceadjustmentports.InvoiceAdjustmentSummaryCount) graphql.Marshaler {
+func marshalNInvoiceAdjustmentSummaryCount2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentSummaryCountᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*invoiceadjustmentports.InvoiceAdjustmentSummaryCount) graphql.Marshaler {
 	return gqlexec.List[*invoiceadjustmentports.InvoiceAdjustmentSummaryCount]{
-		Elem:        marshalNInvoiceAdjustmentSummaryCount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentSummaryCount,
+		Elem:        marshalNInvoiceAdjustmentSummaryCount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentSummaryCount,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNInvoiceAdjustmentSummaryCount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐInvoiceAdjustmentSummaryCount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustmentports.InvoiceAdjustmentSummaryCount) graphql.Marshaler {
+func marshalNInvoiceAdjustmentSummaryCount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋinvoiceadjustmentportsᚐInvoiceAdjustmentSummaryCount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustmentports.InvoiceAdjustmentSummaryCount) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1692,14 +1692,14 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalOInvoiceAdjustment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustment.InvoiceAdjustment) graphql.Marshaler {
+func marshalOInvoiceAdjustment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐInvoiceAdjustment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustment.InvoiceAdjustment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "InvoiceAdjustment", v)
 }
 
-func marshalOInvoiceAdjustmentRebillStrategy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinvoiceadjustmentᚐRebillStrategy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustment.RebillStrategy) graphql.Marshaler {
+func marshalOInvoiceAdjustmentRebillStrategy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋdomainᚋinvoiceadjustmentᚐRebillStrategy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *invoiceadjustment.RebillStrategy) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

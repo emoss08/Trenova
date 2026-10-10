@@ -9,10 +9,10 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -51,7 +51,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").RecurringShipment(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalORecurringShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋrecurringshipmentᚐRecurringShipment),
+				Marshal: gqlexec.Marshal(marshalORecurringShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐRecurringShipment),
 			},
 		}},
 		{Object: "RecurringShipment", Fields: []*gqlexec.Field{
@@ -168,7 +168,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*recurringshipment.RecurringShipment)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNRecurringShipmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋrecurringshipmentᚐStatus),
+				Marshal: gqlexec.Marshal(marshalNRecurringShipmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐStatus),
 			},
 			{
 				Name:     "cronExpression",
@@ -245,7 +245,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*recurringshipment.RecurringShipment)
 					return obj.ExceptionPolicy, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNRecurringShipmentExceptionPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋrecurringshipmentᚐExceptionPolicy),
+				Marshal: gqlexec.Marshal(marshalNRecurringShipmentExceptionPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐExceptionPolicy),
 			},
 			{
 				Name:     "blackoutDates",
@@ -360,7 +360,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*recurringshipment.RecurringShipment)
 					return obj.Customer, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐCustomer),
+				Marshal: gqlexec.Marshal(marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer),
 			},
 			{
 				Name:      "originLocation",
@@ -370,7 +370,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*recurringshipment.RecurringShipment)
 					return obj.OriginLocation, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋlocationᚐLocation),
+				Marshal: gqlexec.Marshal(marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationᚐLocation),
 			},
 			{
 				Name:      "destinationLocation",
@@ -380,7 +380,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*recurringshipment.RecurringShipment)
 					return obj.DestinationLocation, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋlocationᚐLocation),
+				Marshal: gqlexec.Marshal(marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationᚐLocation),
 			},
 			{
 				Name:      "enteredBy",
@@ -390,7 +390,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*recurringshipment.RecurringShipment)
 					return obj.EnteredBy, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser),
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
 			},
 		}},
 		{Object: "RecurringShipmentConnection", Fields: []*gqlexec.Field{
@@ -436,7 +436,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.RecurringShipmentEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNRecurringShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋrecurringshipmentᚐRecurringShipment),
+				Marshal: gqlexec.Marshal(marshalNRecurringShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐRecurringShipment),
 			},
 			{
 				Name:     "cursor",
@@ -558,7 +558,7 @@ func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgra
 	return ec.MarshalType(ctx, sel, "PageInfo", v)
 }
 
-func marshalNRecurringShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋrecurringshipmentᚐRecurringShipment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *recurringshipment.RecurringShipment) graphql.Marshaler {
+func marshalNRecurringShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐRecurringShipment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *recurringshipment.RecurringShipment) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -590,7 +590,7 @@ func marshalNRecurringShipmentEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "RecurringShipmentEdge", v)
 }
 
-func marshalNRecurringShipmentExceptionPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋrecurringshipmentᚐExceptionPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v recurringshipment.ExceptionPolicy) graphql.Marshaler {
+func marshalNRecurringShipmentExceptionPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐExceptionPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v recurringshipment.ExceptionPolicy) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -598,7 +598,7 @@ func marshalNRecurringShipmentExceptionPolicy2githubᚗcomᚋemoss08ᚋtrenova�
 	return res
 }
 
-func marshalNRecurringShipmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋrecurringshipmentᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v recurringshipment.Status) graphql.Marshaler {
+func marshalNRecurringShipmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v recurringshipment.Status) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -622,7 +622,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐCustomer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customer.Customer) graphql.Marshaler {
+func marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customer.Customer) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -650,14 +650,14 @@ func marshalOInt2ᚖint32(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋlocationᚐLocation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *location.Location) graphql.Marshaler {
+func marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationᚐLocation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *location.Location) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Location", v)
 }
 
-func marshalORecurringShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋrecurringshipmentᚐRecurringShipment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *recurringshipment.RecurringShipment) graphql.Marshaler {
+func marshalORecurringShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋrecurringshipmentᚐRecurringShipment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *recurringshipment.RecurringShipment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -685,7 +685,7 @@ func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.S
 	return res
 }
 
-func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
+func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

@@ -9,10 +9,10 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -39,7 +39,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateOrder(ctx, fc.Args["input"].(gqlmodel.OrderInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋorderᚐOrder),
+				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder),
 			},
 			{
 				Name:       "updateOrder",
@@ -52,7 +52,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateOrder(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.OrderInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋorderᚐOrder),
+				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder),
 			},
 			{
 				Name:       "attachOrderShipments",
@@ -65,7 +65,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AttachOrderShipments(ctx, fc.Args["orderId"].(string), fc.Args["shipmentIds"].([]string))
 				},
-				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋorderᚐOrder),
+				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder),
 			},
 			{
 				Name:       "detachOrderShipment",
@@ -78,7 +78,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DetachOrderShipment(ctx, fc.Args["orderId"].(string), fc.Args["shipmentId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋorderᚐOrder),
+				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder),
 			},
 			{
 				Name:       "addOrderCharge",
@@ -91,7 +91,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AddOrderCharge(ctx, fc.Args["orderId"].(string), fc.Args["description"].(string), fc.Args["amount"].(string), fc.Args["allocations"].([]*gqlmodel.ChargeAllocationInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋorderᚐOrder),
+				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder),
 			},
 			{
 				Name:       "updateOrderCharge",
@@ -104,7 +104,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateOrderCharge(ctx, fc.Args["input"].(gqlmodel.UpdateOrderChargeInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋorderᚐOrder),
+				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder),
 			},
 			{
 				Name:       "setOrderChargeAllocations",
@@ -117,7 +117,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetOrderChargeAllocations(ctx, fc.Args["input"].(gqlmodel.SetOrderChargeAllocationsInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋorderᚐOrder),
+				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder),
 			},
 			{
 				Name:       "removeOrderCharge",
@@ -130,7 +130,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RemoveOrderCharge(ctx, fc.Args["input"].(gqlmodel.RemoveOrderChargeInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋorderᚐOrder),
+				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder),
 			},
 			{
 				Name:       "closeOrder",
@@ -143,7 +143,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CloseOrder(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋorderᚐOrder),
+				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder),
 			},
 			{
 				Name:       "cancelOrder",
@@ -156,7 +156,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CancelOrder(ctx, fc.Args["id"].(string), fc.Args["cancelReason"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋorderᚐOrder),
+				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder),
 			},
 		}},
 		{Object: "Order", Fields: []*gqlexec.Field{
@@ -226,7 +226,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*order.Order)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNOrderStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋorderᚐStatus),
+				Marshal: gqlexec.Marshal(marshalNOrderStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐStatus),
 			},
 			{
 				Name:     "orderNumber",
@@ -337,7 +337,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*order.Order)
 					return obj.BusinessUnit, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit),
+				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit),
 			},
 			{
 				Name:      "organization",
@@ -347,7 +347,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*order.Order)
 					return obj.Organization, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization),
+				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization),
 			},
 			{
 				Name:      "customer",
@@ -357,7 +357,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*order.Order)
 					return obj.Customer, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐCustomer),
+				Marshal: gqlexec.Marshal(marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer),
 			},
 			{
 				Name:       "legs",
@@ -474,7 +474,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.OrderCharge)
 					return obj.Allocations, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNChargeAllocation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐChargeAllocationᚄ),
+				Marshal: gqlexec.Marshal(marshalNChargeAllocation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐChargeAllocationᚄ),
 			},
 		}},
 		{Object: "OrderConnection", Fields: []*gqlexec.Field{
@@ -520,7 +520,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.OrderEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋorderᚐOrder),
+				Marshal: gqlexec.Marshal(marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder),
 			},
 			{
 				Name:     "cursor",
@@ -620,7 +620,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").Order(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋorderᚐOrder),
+				Marshal: gqlexec.Marshal(marshalOOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder),
 			},
 		}},
 	},
@@ -1215,15 +1215,15 @@ func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNChargeAllocation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐChargeAllocationᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*shipment.ChargeAllocation) graphql.Marshaler {
+func marshalNChargeAllocation2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐChargeAllocationᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*shipment.ChargeAllocation) graphql.Marshaler {
 	return gqlexec.List[*shipment.ChargeAllocation]{
-		Elem:        marshalNChargeAllocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐChargeAllocation,
+		Elem:        marshalNChargeAllocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐChargeAllocation,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNChargeAllocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋshipmentᚐChargeAllocation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *shipment.ChargeAllocation) graphql.Marshaler {
+func marshalNChargeAllocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋshipmentᚐChargeAllocation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *shipment.ChargeAllocation) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1271,7 +1271,7 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋorderᚐOrder(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *order.Order) graphql.Marshaler {
+func marshalNOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *order.Order) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1335,7 +1335,7 @@ func marshalNOrderLeg2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgra
 	return ec.MarshalType(ctx, sel, "OrderLeg", v)
 }
 
-func marshalNOrderStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋorderᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v order.Status) graphql.Marshaler {
+func marshalNOrderStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v order.Status) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1379,14 +1379,14 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
+func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "BusinessUnit", v)
 }
 
-func marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐCustomer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customer.Customer) graphql.Marshaler {
+func marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customer.Customer) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -1422,14 +1422,14 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalOOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋorderᚐOrder(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *order.Order) graphql.Marshaler {
+func marshalOOrder2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋorderᚐOrder(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *order.Order) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Order", v)
 }
 
-func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
+func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

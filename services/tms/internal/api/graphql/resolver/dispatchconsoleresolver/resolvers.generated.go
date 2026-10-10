@@ -4,9 +4,9 @@ package dispatchconsoleresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	shipmentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	carrierassignmentservice "github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 )
 
 type Deps struct {

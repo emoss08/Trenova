@@ -148,7 +148,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*iam.SCIMGroupRoleMapping)
 					return obj.Role, nil
 				},
-				Marshal: gqlexec.Marshal(marshalORole2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋpermissionᚐRole),
+				Marshal: gqlexec.Marshal(marshalORole2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋpermissionᚐRole),
 			},
 		}},
 		{Object: "SCIMGroupRoleMappingConnection", Fields: []*gqlexec.Field{
@@ -194,7 +194,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.SCIMGroupRoleMappingEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNSCIMGroupRoleMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiamᚐSCIMGroupRoleMapping),
+				Marshal: gqlexec.Marshal(marshalNSCIMGroupRoleMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋiamᚐSCIMGroupRoleMapping),
 			},
 			{
 				Name:     "cursor",
@@ -283,7 +283,7 @@ func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgra
 	return ec.MarshalType(ctx, sel, "PageInfo", v)
 }
 
-func marshalNSCIMGroupRoleMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋiamᚐSCIMGroupRoleMapping(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *iam.SCIMGroupRoleMapping) graphql.Marshaler {
+func marshalNSCIMGroupRoleMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋiamᚐSCIMGroupRoleMapping(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *iam.SCIMGroupRoleMapping) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -339,7 +339,7 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalORole2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋpermissionᚐRole(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *permission.Role) graphql.Marshaler {
+func marshalORole2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋpermissionᚐRole(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *permission.Role) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

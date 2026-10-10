@@ -5,7 +5,7 @@ package carriersettlementresolver
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	carriersettlementservice "github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
+	carriersettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 )
 
 type Deps struct {

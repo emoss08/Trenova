@@ -4,11 +4,11 @@ package driversettlementresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	settlementcontrolservice "github.com/emoss08/trenova/internal/modules/identity/app/settlementcontrolservice"
 	driverpayservice "github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
 	driversettlementservice "github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
-	settlementcontrolservice "github.com/emoss08/trenova/internal/modules/identity/app/settlementcontrolservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
-	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
+	driverpayports "github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	driversettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 )
 
 type Deps struct {

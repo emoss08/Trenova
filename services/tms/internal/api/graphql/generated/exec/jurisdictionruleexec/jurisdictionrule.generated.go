@@ -9,8 +9,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -55,7 +55,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*jurisdictionrule.JurisdictionRule)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNJurisdictionRuleStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjurisdictionruleᚐStatus),
+				Marshal: gqlexec.Marshal(marshalNJurisdictionRuleStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋjurisdictionruleᚐStatus),
 			},
 			{
 				Name:     "maxWidthFeet",
@@ -223,7 +223,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*jurisdictionrule.JurisdictionRule)
 					return obj.VerificationState, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNJurisdictionVerificationState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjurisdictionruleᚐVerificationState),
+				Marshal: gqlexec.Marshal(marshalNJurisdictionVerificationState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋjurisdictionruleᚐVerificationState),
 			},
 			{
 				Name:     "verifiedAt",
@@ -290,7 +290,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*jurisdictionrule.JurisdictionRule)
 					return obj.State, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋusstateᚐUsState),
+				Marshal: gqlexec.Marshal(marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋusstateᚐUsState),
 			},
 		}},
 		{Object: "JurisdictionRuleConnection", Fields: []*gqlexec.Field{
@@ -336,7 +336,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.JurisdictionRuleEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNJurisdictionRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjurisdictionruleᚐJurisdictionRule),
+				Marshal: gqlexec.Marshal(marshalNJurisdictionRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋjurisdictionruleᚐJurisdictionRule),
 			},
 			{
 				Name:     "cursor",
@@ -501,7 +501,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*jurisdictionrule.Override)
 					return obj.State, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋusstateᚐUsState),
+				Marshal: gqlexec.Marshal(marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋusstateᚐUsState),
 			},
 		}},
 		{Object: "JurisdictionRuleOverrideConnection", Fields: []*gqlexec.Field{
@@ -547,7 +547,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.JurisdictionRuleOverrideEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNJurisdictionRuleOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjurisdictionruleᚐOverride),
+				Marshal: gqlexec.Marshal(marshalNJurisdictionRuleOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋjurisdictionruleᚐOverride),
 			},
 			{
 				Name:     "cursor",
@@ -586,7 +586,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").JurisdictionRule(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOJurisdictionRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjurisdictionruleᚐJurisdictionRule),
+				Marshal: gqlexec.Marshal(marshalOJurisdictionRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋjurisdictionruleᚐJurisdictionRule),
 			},
 			{
 				Name:       "jurisdictionRuleOverrides",
@@ -726,7 +726,7 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNJurisdictionRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjurisdictionruleᚐJurisdictionRule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *jurisdictionrule.JurisdictionRule) graphql.Marshaler {
+func marshalNJurisdictionRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋjurisdictionruleᚐJurisdictionRule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *jurisdictionrule.JurisdictionRule) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -758,7 +758,7 @@ func marshalNJurisdictionRuleEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "JurisdictionRuleEdge", v)
 }
 
-func marshalNJurisdictionRuleOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjurisdictionruleᚐOverride(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *jurisdictionrule.Override) graphql.Marshaler {
+func marshalNJurisdictionRuleOverride2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋjurisdictionruleᚐOverride(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *jurisdictionrule.Override) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -790,7 +790,7 @@ func marshalNJurisdictionRuleOverrideEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋ
 	return ec.MarshalType(ctx, sel, "JurisdictionRuleOverrideEdge", v)
 }
 
-func marshalNJurisdictionRuleStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjurisdictionruleᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v jurisdictionrule.Status) graphql.Marshaler {
+func marshalNJurisdictionRuleStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋjurisdictionruleᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v jurisdictionrule.Status) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -798,7 +798,7 @@ func marshalNJurisdictionRuleStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNJurisdictionVerificationState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjurisdictionruleᚐVerificationState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v jurisdictionrule.VerificationState) graphql.Marshaler {
+func marshalNJurisdictionVerificationState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋjurisdictionruleᚐVerificationState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v jurisdictionrule.VerificationState) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -878,7 +878,7 @@ func marshalOInt2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalOJurisdictionRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋjurisdictionruleᚐJurisdictionRule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *jurisdictionrule.JurisdictionRule) graphql.Marshaler {
+func marshalOJurisdictionRule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋjurisdictionruleᚐJurisdictionRule(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *jurisdictionrule.JurisdictionRule) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -898,7 +898,7 @@ func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.S
 	return res
 }
 
-func marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋusstateᚐUsState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *usstate.UsState) graphql.Marshaler {
+func marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋusstateᚐUsState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *usstate.UsState) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

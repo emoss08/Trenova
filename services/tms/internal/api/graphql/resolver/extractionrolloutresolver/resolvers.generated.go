@@ -4,7 +4,7 @@ package extractionrolloutresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
+	extractionrolloutports "github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 )
 
 type Deps struct {

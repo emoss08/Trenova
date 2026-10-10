@@ -71,7 +71,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*manualjournal.Request)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNManualJournalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋmanualjournalᚐStatus),
+				Marshal: gqlexec.Marshal(marshalNManualJournalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐStatus),
 			},
 			{
 				Name:     "description",
@@ -325,7 +325,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ManualJournalEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNManualJournal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋmanualjournalᚐRequest),
+				Marshal: gqlexec.Marshal(marshalNManualJournal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐRequest),
 			},
 			{
 				Name:     "cursor",
@@ -364,7 +364,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ManualJournal(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOManualJournal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋmanualjournalᚐRequest),
+				Marshal: gqlexec.Marshal(marshalOManualJournal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐRequest),
 			},
 		}},
 	},
@@ -442,7 +442,7 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNManualJournal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋmanualjournalᚐRequest(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *manualjournal.Request) graphql.Marshaler {
+func marshalNManualJournal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐRequest(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *manualjournal.Request) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -474,7 +474,7 @@ func marshalNManualJournalEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "ManualJournalEdge", v)
 }
 
-func marshalNManualJournalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋmanualjournalᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v manualjournal.Status) graphql.Marshaler {
+func marshalNManualJournalStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v manualjournal.Status) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -519,7 +519,7 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalOManualJournal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋmanualjournalᚐRequest(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *manualjournal.Request) graphql.Marshaler {
+func marshalOManualJournal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋmanualjournalᚐRequest(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *manualjournal.Request) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

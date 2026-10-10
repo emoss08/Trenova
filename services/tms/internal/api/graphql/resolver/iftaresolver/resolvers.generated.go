@@ -4,8 +4,8 @@ package iftaresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	shipmentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	iftaservice "github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 )
 
 type Deps struct {

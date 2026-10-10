@@ -9,8 +9,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -102,7 +102,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*documenttype.DocumentType)
 					return obj.DocumentClassification, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDocumentClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttypeᚐDocumentClassification),
+				Marshal: gqlexec.Marshal(marshalNDocumentClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋdocumenttypeᚐDocumentClassification),
 			},
 			{
 				Name:     "documentCategory",
@@ -112,7 +112,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*documenttype.DocumentType)
 					return obj.DocumentCategory, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDocumentCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttypeᚐDocumentCategory),
+				Marshal: gqlexec.Marshal(marshalNDocumentCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋdocumenttypeᚐDocumentCategory),
 			},
 			{
 				Name:     "isSystem",
@@ -162,7 +162,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*documenttype.DocumentType)
 					return obj.BusinessUnit, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit),
+				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit),
 			},
 			{
 				Name:      "organization",
@@ -172,7 +172,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*documenttype.DocumentType)
 					return obj.Organization, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization),
+				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization),
 			},
 		}},
 		{Object: "DocumentTypeConnection", Fields: []*gqlexec.Field{
@@ -218,7 +218,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DocumentTypeEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDocumentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttypeᚐDocumentType),
+				Marshal: gqlexec.Marshal(marshalNDocumentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋdocumenttypeᚐDocumentType),
 			},
 			{
 				Name:     "cursor",
@@ -257,7 +257,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").DocumentType(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalODocumentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttypeᚐDocumentType),
+				Marshal: gqlexec.Marshal(marshalODocumentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋdocumenttypeᚐDocumentType),
 			},
 		}},
 	},
@@ -329,7 +329,7 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNDocumentCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttypeᚐDocumentCategory(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v documenttype.DocumentCategory) graphql.Marshaler {
+func marshalNDocumentCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋdocumenttypeᚐDocumentCategory(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v documenttype.DocumentCategory) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -337,7 +337,7 @@ func marshalNDocumentCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore
 	return res
 }
 
-func marshalNDocumentClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttypeᚐDocumentClassification(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v documenttype.DocumentClassification) graphql.Marshaler {
+func marshalNDocumentClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋdocumenttypeᚐDocumentClassification(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v documenttype.DocumentClassification) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -345,7 +345,7 @@ func marshalNDocumentClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNDocumentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttypeᚐDocumentType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *documenttype.DocumentType) graphql.Marshaler {
+func marshalNDocumentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋdocumenttypeᚐDocumentType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *documenttype.DocumentType) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -417,14 +417,14 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
+func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "BusinessUnit", v)
 }
 
-func marshalODocumentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋdocumenttypeᚐDocumentType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *documenttype.DocumentType) graphql.Marshaler {
+func marshalODocumentType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋdocumenttypeᚐDocumentType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *documenttype.DocumentType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -439,7 +439,7 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
+func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

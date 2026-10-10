@@ -9,10 +9,10 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -81,7 +81,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*inboundmessage.InboundAttachment)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundAttachmentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐAttachmentKind),
+				Marshal: gqlexec.Marshal(marshalNInboundAttachmentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐAttachmentKind),
 			},
 			{
 				Name:       "documentId",
@@ -124,7 +124,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*inboundmessageservice.ClassificationCount)
 					return obj.Classification, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐClassification),
+				Marshal: gqlexec.Marshal(marshalNInboundClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐClassification),
 			},
 			{
 				Name:     "total",
@@ -206,7 +206,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*inboundmessage.Mailbox)
 					return obj.Provider, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐProvider),
+				Marshal: gqlexec.Marshal(marshalNInboundProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐProvider),
 			},
 			{
 				Name:     "purpose",
@@ -226,7 +226,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*inboundmessage.Mailbox)
 					return obj.ReviewPolicy, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundReviewPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐReviewPolicy),
+				Marshal: gqlexec.Marshal(marshalNInboundReviewPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐReviewPolicy),
 			},
 			{
 				Name:     "minConfidence",
@@ -246,7 +246,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*inboundmessage.Mailbox)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundMailboxStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐMailboxStatus),
+				Marshal: gqlexec.Marshal(marshalNInboundMailboxStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐMailboxStatus),
 			},
 			{
 				Name:       "hasSigningSecret",
@@ -345,7 +345,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*inboundmessageservice.MailboxCredentials)
 					return obj.Mailbox, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐMailbox),
+				Marshal: gqlexec.Marshal(marshalNInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐMailbox),
 			},
 			{
 				Name:     "token",
@@ -421,7 +421,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*inboundmessage.InboundMessage)
 					return gqlexec.Resolver[resolverInboundMessage](ec, "InboundMessage").Mailbox(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐMailbox),
+				Marshal: gqlexec.Marshal(marshalOInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐMailbox),
 			},
 			{
 				Name:     "fromAddress",
@@ -512,7 +512,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*inboundmessage.InboundMessage)
 					return gqlexec.Resolver[resolverInboundMessage](ec, "InboundMessage").Classification(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOInboundClassification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐClassification),
+				Marshal: gqlexec.Marshal(marshalOInboundClassification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐClassification),
 			},
 			{
 				Name:     "confidence",
@@ -532,7 +532,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*inboundmessage.InboundMessage)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐStatus),
+				Marshal: gqlexec.Marshal(marshalNInboundMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐStatus),
 			},
 			{
 				Name:       "matchedCustomerId",
@@ -651,7 +651,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*inboundmessage.InboundMessage)
 					return gqlexec.Resolver[resolverInboundMessage](ec, "InboundMessage").Attachments(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundAttachment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐInboundAttachmentᚄ),
+				Marshal: gqlexec.Marshal(marshalNInboundAttachment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐInboundAttachmentᚄ),
 			},
 			{
 				Name:       "attachmentCount",
@@ -687,7 +687,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*inboundmessage.InboundMessage)
 					return gqlexec.Resolver[resolverInboundMessage](ec, "InboundMessage").MatchedShipment(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOInboundShipmentRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐShipmentSummary),
+				Marshal: gqlexec.Marshal(marshalOInboundShipmentRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋshipmentportsᚐShipmentSummary),
 			},
 			{
 				Name:       "matchedCustomer",
@@ -699,7 +699,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*inboundmessage.InboundMessage)
 					return gqlexec.Resolver[resolverInboundMessage](ec, "InboundMessage").MatchedCustomer(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐCustomer),
+				Marshal: gqlexec.Marshal(marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer),
 			},
 			{
 				Name:       "needsReview",
@@ -837,7 +837,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*inboundmessageservice.Counts)
 					return obj.ByClassification, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundClassificationCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐClassificationCountᚄ),
+				Marshal: gqlexec.Marshal(marshalNInboundClassificationCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐClassificationCountᚄ),
 			},
 			{
 				Name:      "byMailbox",
@@ -848,7 +848,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*inboundmessageservice.Counts)
 					return obj.ByMailbox, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundMailboxCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐMailboxCountᚄ),
+				Marshal: gqlexec.Marshal(marshalNInboundMailboxCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐMailboxCountᚄ),
 			},
 		}},
 		{Object: "InboundMessageEdge", Fields: []*gqlexec.Field{
@@ -861,7 +861,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.InboundMessageEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐInboundMessage),
+				Marshal: gqlexec.Marshal(marshalNInboundMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐInboundMessage),
 			},
 			{
 				Name:     "cursor",
@@ -968,7 +968,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReviewInboundMessage(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.ReviewInboundMessageInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐInboundMessage),
+				Marshal: gqlexec.Marshal(marshalNInboundMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐInboundMessage),
 			},
 			{
 				Name:       "linkInboundMessage",
@@ -981,7 +981,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").LinkInboundMessage(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.LinkInboundMessageInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐInboundMessage),
+				Marshal: gqlexec.Marshal(marshalNInboundMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐInboundMessage),
 			},
 			{
 				Name:       "createInboundMailbox",
@@ -994,7 +994,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateInboundMailbox(ctx, fc.Args["input"].(gqlmodel.InboundMailboxInput), fc.Args["signingSecret"].(*string), fc.Args["apiKey"].(*string))
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundMailboxCredentials2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐMailboxCredentials),
+				Marshal: gqlexec.Marshal(marshalNInboundMailboxCredentials2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐMailboxCredentials),
 			},
 			{
 				Name:       "updateInboundMailbox",
@@ -1007,7 +1007,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateInboundMailbox(ctx, fc.Args["id"].(string), fc.Args["version"].(int), fc.Args["input"].(gqlmodel.InboundMailboxInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐMailbox),
+				Marshal: gqlexec.Marshal(marshalNInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐMailbox),
 			},
 			{
 				Name:       "rotateInboundMailboxToken",
@@ -1020,7 +1020,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RotateInboundMailboxToken(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundMailboxCredentials2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐMailboxCredentials),
+				Marshal: gqlexec.Marshal(marshalNInboundMailboxCredentials2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐMailboxCredentials),
 			},
 			{
 				Name:       "setInboundMailboxSigningSecret",
@@ -1033,7 +1033,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetInboundMailboxSigningSecret(ctx, fc.Args["id"].(string), fc.Args["secret"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐMailbox),
+				Marshal: gqlexec.Marshal(marshalNInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐMailbox),
 			},
 			{
 				Name:       "setInboundMailboxApiKey",
@@ -1046,7 +1046,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetInboundMailboxAPIKey(ctx, fc.Args["id"].(string), fc.Args["apiKey"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐMailbox),
+				Marshal: gqlexec.Marshal(marshalNInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐMailbox),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -1076,7 +1076,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").InboundMessage(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐInboundMessage),
+				Marshal: gqlexec.Marshal(marshalNInboundMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐInboundMessage),
 			},
 			{
 				Name:       "inboundMessageCounts",
@@ -1088,7 +1088,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").InboundMessageCounts(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundMessageCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐCounts),
+				Marshal: gqlexec.Marshal(marshalNInboundMessageCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐCounts),
 			},
 			{
 				Name:       "inboundMailboxes",
@@ -1100,7 +1100,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").InboundMailboxes(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundMailbox2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐMailboxᚄ),
+				Marshal: gqlexec.Marshal(marshalNInboundMailbox2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐMailboxᚄ),
 			},
 		}},
 	},
@@ -1397,7 +1397,7 @@ func unmarshalInputInboundMailboxInput(ctx context.Context, ec *gqlexec.Exec, ob
 			it.Address = data
 		case "provider":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
-			data, err := unmarshalNInboundProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐProvider(ctx, ec, v)
+			data, err := unmarshalNInboundProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐProvider(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1411,7 +1411,7 @@ func unmarshalInputInboundMailboxInput(ctx context.Context, ec *gqlexec.Exec, ob
 			it.Purpose = data
 		case "reviewPolicy":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reviewPolicy"))
-			data, err := unmarshalNInboundReviewPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐReviewPolicy(ctx, ec, v)
+			data, err := unmarshalNInboundReviewPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐReviewPolicy(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1425,7 +1425,7 @@ func unmarshalInputInboundMailboxInput(ctx context.Context, ec *gqlexec.Exec, ob
 			it.MinConfidence = data
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := unmarshalNInboundMailboxStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐMailboxStatus(ctx, ec, v)
+			data, err := unmarshalNInboundMailboxStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐMailboxStatus(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1472,14 +1472,14 @@ func unmarshalInputInboundMessagesInput(ctx context.Context, ec *gqlexec.Exec, o
 			it.After = data
 		case "statuses":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statuses"))
-			data, err := unmarshalOInboundMessageStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐStatusᚄ(ctx, ec, v)
+			data, err := unmarshalOInboundMessageStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐStatusᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.Statuses = data
 		case "classification":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("classification"))
-			data, err := unmarshalOInboundClassification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐClassification(ctx, ec, v)
+			data, err := unmarshalOInboundClassification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐClassification(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1588,7 +1588,7 @@ func unmarshalInputReviewInboundMessageInput(ctx context.Context, ec *gqlexec.Ex
 		switch k {
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := unmarshalNInboundMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐStatus(ctx, ec, v)
+			data, err := unmarshalNInboundMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐStatus(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1620,13 +1620,13 @@ func unmarshalNInboundMailboxInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNInboundMailboxStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐMailboxStatus(ctx context.Context, ec *gqlexec.Exec, v any) (inboundmessage.MailboxStatus, error) {
+func unmarshalNInboundMailboxStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐMailboxStatus(ctx context.Context, ec *gqlexec.Exec, v any) (inboundmessage.MailboxStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := inboundmessage.MailboxStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNInboundMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐStatus(ctx context.Context, ec *gqlexec.Exec, v any) (inboundmessage.Status, error) {
+func unmarshalNInboundMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐStatus(ctx context.Context, ec *gqlexec.Exec, v any) (inboundmessage.Status, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := inboundmessage.Status(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -1637,13 +1637,13 @@ func unmarshalNInboundMessagesInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNInboundProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐProvider(ctx context.Context, ec *gqlexec.Exec, v any) (inboundmessage.Provider, error) {
+func unmarshalNInboundProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐProvider(ctx context.Context, ec *gqlexec.Exec, v any) (inboundmessage.Provider, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := inboundmessage.Provider(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNInboundReviewPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐReviewPolicy(ctx context.Context, ec *gqlexec.Exec, v any) (inboundmessage.ReviewPolicy, error) {
+func unmarshalNInboundReviewPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐReviewPolicy(ctx context.Context, ec *gqlexec.Exec, v any) (inboundmessage.ReviewPolicy, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := inboundmessage.ReviewPolicy(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -1677,7 +1677,7 @@ func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*stri
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOInboundClassification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐClassification(ctx context.Context, ec *gqlexec.Exec, v any) (*inboundmessage.Classification, error) {
+func unmarshalOInboundClassification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐClassification(ctx context.Context, ec *gqlexec.Exec, v any) (*inboundmessage.Classification, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -1686,11 +1686,11 @@ func unmarshalOInboundClassification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOInboundMessageStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]inboundmessage.Status, error) {
+func unmarshalOInboundMessageStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]inboundmessage.Status, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNInboundMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐStatus)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNInboundMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐStatus)
 }
 
 func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, error) {
@@ -1741,15 +1741,15 @@ func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx conte
 	return res
 }
 
-func marshalNInboundAttachment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐInboundAttachmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*inboundmessage.InboundAttachment) graphql.Marshaler {
+func marshalNInboundAttachment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐInboundAttachmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*inboundmessage.InboundAttachment) graphql.Marshaler {
 	return gqlexec.List[*inboundmessage.InboundAttachment]{
-		Elem:        marshalNInboundAttachment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐInboundAttachment,
+		Elem:        marshalNInboundAttachment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐInboundAttachment,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNInboundAttachment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐInboundAttachment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *inboundmessage.InboundAttachment) graphql.Marshaler {
+func marshalNInboundAttachment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐInboundAttachment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *inboundmessage.InboundAttachment) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1757,7 +1757,7 @@ func marshalNInboundAttachment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "InboundAttachment", v)
 }
 
-func marshalNInboundAttachmentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐAttachmentKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v inboundmessage.AttachmentKind) graphql.Marshaler {
+func marshalNInboundAttachmentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐAttachmentKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v inboundmessage.AttachmentKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1765,7 +1765,7 @@ func marshalNInboundAttachmentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNInboundClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐClassification(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v inboundmessage.Classification) graphql.Marshaler {
+func marshalNInboundClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐClassification(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v inboundmessage.Classification) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1773,27 +1773,27 @@ func marshalNInboundClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNInboundClassificationCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐClassificationCount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v inboundmessageservice.ClassificationCount) graphql.Marshaler {
+func marshalNInboundClassificationCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐClassificationCount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v inboundmessageservice.ClassificationCount) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "InboundClassificationCount", &v)
 }
 
-func marshalNInboundClassificationCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐClassificationCountᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []inboundmessageservice.ClassificationCount) graphql.Marshaler {
+func marshalNInboundClassificationCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐClassificationCountᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []inboundmessageservice.ClassificationCount) graphql.Marshaler {
 	return gqlexec.List[inboundmessageservice.ClassificationCount]{
-		Elem:        marshalNInboundClassificationCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐClassificationCount,
+		Elem:        marshalNInboundClassificationCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐClassificationCount,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNInboundMailbox2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐMailboxᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*inboundmessage.Mailbox) graphql.Marshaler {
+func marshalNInboundMailbox2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐMailboxᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*inboundmessage.Mailbox) graphql.Marshaler {
 	return gqlexec.List[*inboundmessage.Mailbox]{
-		Elem:        marshalNInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐMailbox,
+		Elem:        marshalNInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐMailbox,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐMailbox(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *inboundmessage.Mailbox) graphql.Marshaler {
+func marshalNInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐMailbox(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *inboundmessage.Mailbox) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1801,19 +1801,19 @@ func marshalNInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcor
 	return ec.MarshalType(ctx, sel, "InboundMailbox", v)
 }
 
-func marshalNInboundMailboxCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐMailboxCount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v inboundmessageservice.MailboxCount) graphql.Marshaler {
+func marshalNInboundMailboxCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐMailboxCount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v inboundmessageservice.MailboxCount) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "InboundMailboxCount", &v)
 }
 
-func marshalNInboundMailboxCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐMailboxCountᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []inboundmessageservice.MailboxCount) graphql.Marshaler {
+func marshalNInboundMailboxCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐMailboxCountᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []inboundmessageservice.MailboxCount) graphql.Marshaler {
 	return gqlexec.List[inboundmessageservice.MailboxCount]{
-		Elem:        marshalNInboundMailboxCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐMailboxCount,
+		Elem:        marshalNInboundMailboxCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐMailboxCount,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNInboundMailboxCredentials2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐMailboxCredentials(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *inboundmessageservice.MailboxCredentials) graphql.Marshaler {
+func marshalNInboundMailboxCredentials2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐMailboxCredentials(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *inboundmessageservice.MailboxCredentials) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1821,7 +1821,7 @@ func marshalNInboundMailboxCredentials2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return ec.MarshalType(ctx, sel, "InboundMailboxCredentials", v)
 }
 
-func marshalNInboundMailboxStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐMailboxStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v inboundmessage.MailboxStatus) graphql.Marshaler {
+func marshalNInboundMailboxStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐMailboxStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v inboundmessage.MailboxStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1829,7 +1829,7 @@ func marshalNInboundMailboxStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalNInboundMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐInboundMessage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *inboundmessage.InboundMessage) graphql.Marshaler {
+func marshalNInboundMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐInboundMessage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *inboundmessage.InboundMessage) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1845,7 +1845,7 @@ func marshalNInboundMessageConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "InboundMessageConnection", v)
 }
 
-func marshalNInboundMessageCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋinboundmessageserviceᚐCounts(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *inboundmessageservice.Counts) graphql.Marshaler {
+func marshalNInboundMessageCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐCounts(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *inboundmessageservice.Counts) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1869,7 +1869,7 @@ func marshalNInboundMessageEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "InboundMessageEdge", v)
 }
 
-func marshalNInboundMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v inboundmessage.Status) graphql.Marshaler {
+func marshalNInboundMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v inboundmessage.Status) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1877,7 +1877,7 @@ func marshalNInboundMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalNInboundProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐProvider(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v inboundmessage.Provider) graphql.Marshaler {
+func marshalNInboundProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐProvider(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v inboundmessage.Provider) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1885,7 +1885,7 @@ func marshalNInboundProvider2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore�
 	return res
 }
 
-func marshalNInboundReviewPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐReviewPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v inboundmessage.ReviewPolicy) graphql.Marshaler {
+func marshalNInboundReviewPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐReviewPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v inboundmessage.ReviewPolicy) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1942,7 +1942,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcustomerᚐCustomer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customer.Customer) graphql.Marshaler {
+func marshalOCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcustomerᚐCustomer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customer.Customer) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -1957,7 +1957,7 @@ func marshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalOInboundClassification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐClassification(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *inboundmessage.Classification) graphql.Marshaler {
+func marshalOInboundClassification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐClassification(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *inboundmessage.Classification) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -1965,14 +1965,14 @@ func marshalOInboundClassification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return res
 }
 
-func marshalOInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋinboundmessageᚐMailbox(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *inboundmessage.Mailbox) graphql.Marshaler {
+func marshalOInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐMailbox(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *inboundmessage.Mailbox) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "InboundMailbox", v)
 }
 
-func marshalOInboundShipmentRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐShipmentSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *shipmentports.ShipmentSummary) graphql.Marshaler {
+func marshalOInboundShipmentRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋportsᚋshipmentportsᚐShipmentSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *shipmentports.ShipmentSummary) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

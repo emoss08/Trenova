@@ -9,8 +9,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -49,7 +49,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ServiceFailureReasonCode(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOServiceFailureReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋservicefailureᚐReasonCode),
+				Marshal: gqlexec.Marshal(marshalOServiceFailureReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐReasonCode),
 			},
 		}},
 		{Object: "ServiceFailureReasonCode", Fields: []*gqlexec.Field{
@@ -121,7 +121,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*servicefailure.ReasonCode)
 					return obj.Category, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNServiceFailureReasonCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋservicefailureᚐReasonCategory),
+				Marshal: gqlexec.Marshal(marshalNServiceFailureReasonCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐReasonCategory),
 			},
 			{
 				Name:     "appliesTo",
@@ -131,7 +131,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*servicefailure.ReasonCode)
 					return obj.AppliesTo, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNServiceFailureReasonCodeAppliesTo2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋservicefailureᚐReasonCodeAppliesTo),
+				Marshal: gqlexec.Marshal(marshalNServiceFailureReasonCodeAppliesTo2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐReasonCodeAppliesTo),
 			},
 			{
 				Name:     "defaultStatusCode",
@@ -240,7 +240,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*servicefailure.ReasonCode)
 					return obj.BusinessUnit, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit),
+				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit),
 			},
 			{
 				Name:      "organization",
@@ -250,7 +250,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*servicefailure.ReasonCode)
 					return obj.Organization, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization),
+				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization),
 			},
 		}},
 		{Object: "ServiceFailureReasonCodeConnection", Fields: []*gqlexec.Field{
@@ -296,7 +296,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ServiceFailureReasonCodeEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNServiceFailureReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋservicefailureᚐReasonCode),
+				Marshal: gqlexec.Marshal(marshalNServiceFailureReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐReasonCode),
 			},
 			{
 				Name:     "cursor",
@@ -411,7 +411,7 @@ func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgra
 	return ec.MarshalType(ctx, sel, "PageInfo", v)
 }
 
-func marshalNServiceFailureReasonCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋservicefailureᚐReasonCategory(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v servicefailure.ReasonCategory) graphql.Marshaler {
+func marshalNServiceFailureReasonCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐReasonCategory(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v servicefailure.ReasonCategory) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -419,7 +419,7 @@ func marshalNServiceFailureReasonCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return res
 }
 
-func marshalNServiceFailureReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋservicefailureᚐReasonCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *servicefailure.ReasonCode) graphql.Marshaler {
+func marshalNServiceFailureReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐReasonCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *servicefailure.ReasonCode) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -427,7 +427,7 @@ func marshalNServiceFailureReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "ServiceFailureReasonCode", v)
 }
 
-func marshalNServiceFailureReasonCodeAppliesTo2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋservicefailureᚐReasonCodeAppliesTo(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v servicefailure.ReasonCodeAppliesTo) graphql.Marshaler {
+func marshalNServiceFailureReasonCodeAppliesTo2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐReasonCodeAppliesTo(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v servicefailure.ReasonCodeAppliesTo) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -475,7 +475,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
+func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -498,14 +498,14 @@ func marshalOJSON2map(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSe
 	return res
 }
 
-func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
+func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Organization", v)
 }
 
-func marshalOServiceFailureReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋservicefailureᚐReasonCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *servicefailure.ReasonCode) graphql.Marshaler {
+func marshalOServiceFailureReasonCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋoperationsᚋdomainᚋservicefailureᚐReasonCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *servicefailure.ReasonCode) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

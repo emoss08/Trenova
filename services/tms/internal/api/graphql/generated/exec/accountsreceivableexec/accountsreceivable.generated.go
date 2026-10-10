@@ -120,7 +120,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customerledgerports.ARAgingSummary)
 					return obj.Totals, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNARAgingBucketTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingBucketTotals),
+				Marshal: gqlexec.Marshal(marshalNARAgingBucketTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARAgingBucketTotals),
 			},
 			{
 				Name:      "rows",
@@ -131,7 +131,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customerledgerports.ARAgingSummary)
 					return obj.Rows, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNARCustomerAgingRow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCustomerAgingRowᚄ),
+				Marshal: gqlexec.Marshal(marshalNARCustomerAgingRow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCustomerAgingRowᚄ),
 			},
 		}},
 		{Object: "ARAgingTrendPoint", Fields: []*gqlexec.Field{
@@ -154,7 +154,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customerledgerports.ARAgingTrendPoint)
 					return obj.Buckets, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNARAgingBucketTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingBucketTotals),
+				Marshal: gqlexec.Marshal(marshalNARAgingBucketTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARAgingBucketTotals),
 			},
 		}},
 		{Object: "ARBalanceOverview", Fields: []*gqlexec.Field{
@@ -247,7 +247,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customerledgerports.ARBalanceOverview)
 					return obj.Buckets, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNARAgingBucketTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingBucketTotals),
+				Marshal: gqlexec.Marshal(marshalNARAgingBucketTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARAgingBucketTotals),
 			},
 		}},
 		{Object: "ARCashFlowPoint", Fields: []*gqlexec.Field{
@@ -312,7 +312,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customerledgerports.ARCollectionPerformance)
 					return obj.Totals, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNARCollectionTotals2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCollectionTotals),
+				Marshal: gqlexec.Marshal(marshalNARCollectionTotals2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCollectionTotals),
 			},
 			{
 				Name:     "cei",
@@ -648,7 +648,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customerledgerports.ARCustomerAgingRow)
 					return obj.Buckets, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNARAgingBucketTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingBucketTotals),
+				Marshal: gqlexec.Marshal(marshalNARAgingBucketTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARAgingBucketTotals),
 			},
 		}},
 		{Object: "ARCustomerProfile", Fields: []*gqlexec.Field{
@@ -661,7 +661,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customerledgerports.ARCustomerProfile)
 					return obj.Snapshot, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNARCustomerSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCustomerSnapshot),
+				Marshal: gqlexec.Marshal(marshalNARCustomerSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCustomerSnapshot),
 			},
 			{
 				Name:     "dsoDays",
@@ -844,7 +844,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customerledgerports.ARCustomerSnapshot)
 					return obj.Buckets, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNARAgingBucketTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingBucketTotals),
+				Marshal: gqlexec.Marshal(marshalNARAgingBucketTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARAgingBucketTotals),
 			},
 			{
 				Name:      "monthlyCollections",
@@ -855,7 +855,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customerledgerports.ARCustomerSnapshot)
 					return obj.MonthlyCollections, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNARMonthlyCollectionPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARMonthlyCollectionPointᚄ),
+				Marshal: gqlexec.Marshal(marshalNARMonthlyCollectionPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARMonthlyCollectionPointᚄ),
 			},
 		}},
 		{Object: "ARCustomerStatement", Fields: []*gqlexec.Field{
@@ -948,7 +948,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customerledgerports.ARCustomerStatement)
 					return obj.Aging, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNARAgingBucketTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingBucketTotals),
+				Marshal: gqlexec.Marshal(marshalNARAgingBucketTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARAgingBucketTotals),
 			},
 			{
 				Name:      "transactions",
@@ -959,7 +959,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customerledgerports.ARCustomerStatement)
 					return obj.Transactions, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNARStatementTransaction2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARStatementTransactionᚄ),
+				Marshal: gqlexec.Marshal(marshalNARStatementTransaction2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARStatementTransactionᚄ),
 			},
 			{
 				Name:      "openItems",
@@ -970,7 +970,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customerledgerports.ARCustomerStatement)
 					return obj.OpenItems, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAROpenItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐAROpenItemᚄ),
+				Marshal: gqlexec.Marshal(marshalNAROpenItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐAROpenItemᚄ),
 			},
 		}},
 		{Object: "ARDSOTrendPoint", Fields: []*gqlexec.Field{
@@ -1035,7 +1035,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*customerledgerports.ARDashboardKPIs)
 					return obj.Overview, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNARBalanceOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARBalanceOverview),
+				Marshal: gqlexec.Marshal(marshalNARBalanceOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARBalanceOverview),
 			},
 			{
 				Name:     "currentDsoDays",
@@ -1612,7 +1612,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ArAgingSummary(ctx, fc.Args["asOfDate"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNARAgingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARAgingSummary),
+				Marshal: gqlexec.Marshal(marshalNARAgingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARAgingSummary),
 			},
 			{
 				Name:       "arOpenItems",
@@ -1626,7 +1626,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ArOpenItems(ctx, fc.Args["customerId"].(*string), fc.Args["asOfDate"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNAROpenItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐAROpenItemᚄ),
+				Marshal: gqlexec.Marshal(marshalNAROpenItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐAROpenItemᚄ),
 			},
 			{
 				Name:       "arCustomerLedger",
@@ -1640,7 +1640,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ArCustomerLedger(ctx, fc.Args["customerId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNARLedgerEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARLedgerEntryᚄ),
+				Marshal: gqlexec.Marshal(marshalNARLedgerEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARLedgerEntryᚄ),
 			},
 			{
 				Name:       "arCustomerStatement",
@@ -1654,7 +1654,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ArCustomerStatement(ctx, fc.Args["customerId"].(string), fc.Args["startDate"].(*int), fc.Args["asOfDate"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNARCustomerStatement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARCustomerStatement),
+				Marshal: gqlexec.Marshal(marshalNARCustomerStatement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCustomerStatement),
 			},
 			{
 				Name:       "arDashboardKpis",
@@ -1666,7 +1666,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ArDashboardKpis(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNARDashboardKPIs2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARDashboardKPIs),
+				Marshal: gqlexec.Marshal(marshalNARDashboardKPIs2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARDashboardKPIs),
 			},
 			{
 				Name:       "arDsoTrend",
@@ -1680,7 +1680,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ArDsoTrend(ctx, fc.Args["weeks"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNARDSOTrendPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARDSOTrendPointᚄ),
+				Marshal: gqlexec.Marshal(marshalNARDSOTrendPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARDSOTrendPointᚄ),
 			},
 			{
 				Name:       "arAgingTrend",
@@ -1694,7 +1694,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ArAgingTrend(ctx, fc.Args["weeks"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNARAgingTrendPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingTrendPointᚄ),
+				Marshal: gqlexec.Marshal(marshalNARAgingTrendPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARAgingTrendPointᚄ),
 			},
 			{
 				Name:       "arCashFlowForecast",
@@ -1708,7 +1708,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ArCashFlowForecast(ctx, fc.Args["pastWeeks"].(*int), fc.Args["futureWeeks"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNARCashFlowPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCashFlowPointᚄ),
+				Marshal: gqlexec.Marshal(marshalNARCashFlowPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCashFlowPointᚄ),
 			},
 			{
 				Name:       "arCollectionPerformance",
@@ -1722,7 +1722,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ArCollectionPerformance(ctx, fc.Args["periodDays"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNARCollectionPerformance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARCollectionPerformance),
+				Marshal: gqlexec.Marshal(marshalNARCollectionPerformance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCollectionPerformance),
 			},
 			{
 				Name:       "arTopOverdueCustomers",
@@ -1736,7 +1736,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ArTopOverdueCustomers(ctx, fc.Args["limit"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNARTopOverdueCustomer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARTopOverdueCustomerᚄ),
+				Marshal: gqlexec.Marshal(marshalNARTopOverdueCustomer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARTopOverdueCustomerᚄ),
 			},
 			{
 				Name:       "arCollectionsWorklist",
@@ -1750,7 +1750,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ArCollectionsWorklist(ctx, fc.Args["limit"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNARCollectionsWorklistItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCollectionsWorklistItemᚄ),
+				Marshal: gqlexec.Marshal(marshalNARCollectionsWorklistItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCollectionsWorklistItemᚄ),
 			},
 			{
 				Name:       "arCustomerProfile",
@@ -1764,7 +1764,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ArCustomerProfile(ctx, fc.Args["customerId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNARCustomerProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARCustomerProfile),
+				Marshal: gqlexec.Marshal(marshalNARCustomerProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCustomerProfile),
 			},
 			{
 				Name:       "arPaymentStats",
@@ -1776,7 +1776,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ArPaymentStats(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNARPaymentStats2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARPaymentStats),
+				Marshal: gqlexec.Marshal(marshalNARPaymentStats2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARPaymentStats),
 			},
 		}},
 	},
@@ -2014,11 +2014,11 @@ func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNARAgingBucketTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingBucketTotals(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customerledgerports.ARAgingBucketTotals) graphql.Marshaler {
+func marshalNARAgingBucketTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARAgingBucketTotals(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v customerledgerports.ARAgingBucketTotals) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "ARAgingBucketTotals", &v)
 }
 
-func marshalNARAgingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARAgingSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARAgingSummary) graphql.Marshaler {
+func marshalNARAgingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARAgingSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARAgingSummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2026,15 +2026,15 @@ func marshalNARAgingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcor
 	return ec.MarshalType(ctx, sel, "ARAgingSummary", v)
 }
 
-func marshalNARAgingTrendPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingTrendPointᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARAgingTrendPoint) graphql.Marshaler {
+func marshalNARAgingTrendPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARAgingTrendPointᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARAgingTrendPoint) graphql.Marshaler {
 	return gqlexec.List[*customerledgerports.ARAgingTrendPoint]{
-		Elem:        marshalNARAgingTrendPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingTrendPoint,
+		Elem:        marshalNARAgingTrendPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARAgingTrendPoint,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNARAgingTrendPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARAgingTrendPoint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARAgingTrendPoint) graphql.Marshaler {
+func marshalNARAgingTrendPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARAgingTrendPoint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARAgingTrendPoint) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2042,7 +2042,7 @@ func marshalNARAgingTrendPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "ARAgingTrendPoint", v)
 }
 
-func marshalNARBalanceOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARBalanceOverview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARBalanceOverview) graphql.Marshaler {
+func marshalNARBalanceOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARBalanceOverview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARBalanceOverview) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2050,15 +2050,15 @@ func marshalNARBalanceOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "ARBalanceOverview", v)
 }
 
-func marshalNARCashFlowPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCashFlowPointᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARCashFlowPoint) graphql.Marshaler {
+func marshalNARCashFlowPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCashFlowPointᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARCashFlowPoint) graphql.Marshaler {
 	return gqlexec.List[*customerledgerports.ARCashFlowPoint]{
-		Elem:        marshalNARCashFlowPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCashFlowPoint,
+		Elem:        marshalNARCashFlowPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCashFlowPoint,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNARCashFlowPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCashFlowPoint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCashFlowPoint) graphql.Marshaler {
+func marshalNARCashFlowPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCashFlowPoint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCashFlowPoint) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2066,7 +2066,7 @@ func marshalNARCashFlowPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋco
 	return ec.MarshalType(ctx, sel, "ARCashFlowPoint", v)
 }
 
-func marshalNARCollectionPerformance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARCollectionPerformance(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCollectionPerformance) graphql.Marshaler {
+func marshalNARCollectionPerformance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCollectionPerformance(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCollectionPerformance) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2074,7 +2074,7 @@ func marshalNARCollectionPerformance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "ARCollectionPerformance", v)
 }
 
-func marshalNARCollectionTotals2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCollectionTotals(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCollectionTotals) graphql.Marshaler {
+func marshalNARCollectionTotals2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCollectionTotals(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCollectionTotals) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2082,15 +2082,15 @@ func marshalNARCollectionTotals2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "ARCollectionTotals", v)
 }
 
-func marshalNARCollectionsWorklistItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCollectionsWorklistItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARCollectionsWorklistItem) graphql.Marshaler {
+func marshalNARCollectionsWorklistItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCollectionsWorklistItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARCollectionsWorklistItem) graphql.Marshaler {
 	return gqlexec.List[*customerledgerports.ARCollectionsWorklistItem]{
-		Elem:        marshalNARCollectionsWorklistItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCollectionsWorklistItem,
+		Elem:        marshalNARCollectionsWorklistItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCollectionsWorklistItem,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNARCollectionsWorklistItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCollectionsWorklistItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCollectionsWorklistItem) graphql.Marshaler {
+func marshalNARCollectionsWorklistItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCollectionsWorklistItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCollectionsWorklistItem) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2098,15 +2098,15 @@ func marshalNARCollectionsWorklistItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return ec.MarshalType(ctx, sel, "ARCollectionsWorklistItem", v)
 }
 
-func marshalNARCustomerAgingRow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCustomerAgingRowᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARCustomerAgingRow) graphql.Marshaler {
+func marshalNARCustomerAgingRow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCustomerAgingRowᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARCustomerAgingRow) graphql.Marshaler {
 	return gqlexec.List[*customerledgerports.ARCustomerAgingRow]{
-		Elem:        marshalNARCustomerAgingRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCustomerAgingRow,
+		Elem:        marshalNARCustomerAgingRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCustomerAgingRow,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNARCustomerAgingRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCustomerAgingRow(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCustomerAgingRow) graphql.Marshaler {
+func marshalNARCustomerAgingRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCustomerAgingRow(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCustomerAgingRow) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2114,7 +2114,7 @@ func marshalNARCustomerAgingRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "ARCustomerAgingRow", v)
 }
 
-func marshalNARCustomerProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARCustomerProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCustomerProfile) graphql.Marshaler {
+func marshalNARCustomerProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCustomerProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCustomerProfile) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2122,7 +2122,7 @@ func marshalNARCustomerProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "ARCustomerProfile", v)
 }
 
-func marshalNARCustomerSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARCustomerSnapshot(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCustomerSnapshot) graphql.Marshaler {
+func marshalNARCustomerSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCustomerSnapshot(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCustomerSnapshot) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2130,7 +2130,7 @@ func marshalNARCustomerSnapshot2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "ARCustomerSnapshot", v)
 }
 
-func marshalNARCustomerStatement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARCustomerStatement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCustomerStatement) graphql.Marshaler {
+func marshalNARCustomerStatement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARCustomerStatement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARCustomerStatement) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2138,15 +2138,15 @@ func marshalNARCustomerStatement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "ARCustomerStatement", v)
 }
 
-func marshalNARDSOTrendPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARDSOTrendPointᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARDSOTrendPoint) graphql.Marshaler {
+func marshalNARDSOTrendPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARDSOTrendPointᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARDSOTrendPoint) graphql.Marshaler {
 	return gqlexec.List[*customerledgerports.ARDSOTrendPoint]{
-		Elem:        marshalNARDSOTrendPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARDSOTrendPoint,
+		Elem:        marshalNARDSOTrendPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARDSOTrendPoint,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNARDSOTrendPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARDSOTrendPoint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARDSOTrendPoint) graphql.Marshaler {
+func marshalNARDSOTrendPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARDSOTrendPoint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARDSOTrendPoint) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2154,7 +2154,7 @@ func marshalNARDSOTrendPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋco
 	return ec.MarshalType(ctx, sel, "ARDSOTrendPoint", v)
 }
 
-func marshalNARDashboardKPIs2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARDashboardKPIs(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARDashboardKPIs) graphql.Marshaler {
+func marshalNARDashboardKPIs2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARDashboardKPIs(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARDashboardKPIs) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2162,15 +2162,15 @@ func marshalNARDashboardKPIs2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋco
 	return ec.MarshalType(ctx, sel, "ARDashboardKPIs", v)
 }
 
-func marshalNARLedgerEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARLedgerEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARLedgerEntry) graphql.Marshaler {
+func marshalNARLedgerEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARLedgerEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARLedgerEntry) graphql.Marshaler {
 	return gqlexec.List[*customerledgerports.ARLedgerEntry]{
-		Elem:        marshalNARLedgerEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARLedgerEntry,
+		Elem:        marshalNARLedgerEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARLedgerEntry,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNARLedgerEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARLedgerEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARLedgerEntry) graphql.Marshaler {
+func marshalNARLedgerEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARLedgerEntry(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARLedgerEntry) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2178,15 +2178,15 @@ func marshalNARLedgerEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcore
 	return ec.MarshalType(ctx, sel, "ARLedgerEntry", v)
 }
 
-func marshalNARMonthlyCollectionPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARMonthlyCollectionPointᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARMonthlyCollectionPoint) graphql.Marshaler {
+func marshalNARMonthlyCollectionPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARMonthlyCollectionPointᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARMonthlyCollectionPoint) graphql.Marshaler {
 	return gqlexec.List[*customerledgerports.ARMonthlyCollectionPoint]{
-		Elem:        marshalNARMonthlyCollectionPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARMonthlyCollectionPoint,
+		Elem:        marshalNARMonthlyCollectionPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARMonthlyCollectionPoint,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNARMonthlyCollectionPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARMonthlyCollectionPoint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARMonthlyCollectionPoint) graphql.Marshaler {
+func marshalNARMonthlyCollectionPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARMonthlyCollectionPoint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARMonthlyCollectionPoint) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2194,15 +2194,15 @@ func marshalNARMonthlyCollectionPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "ARMonthlyCollectionPoint", v)
 }
 
-func marshalNAROpenItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐAROpenItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.AROpenItem) graphql.Marshaler {
+func marshalNAROpenItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐAROpenItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.AROpenItem) graphql.Marshaler {
 	return gqlexec.List[*customerledgerports.AROpenItem]{
-		Elem:        marshalNAROpenItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐAROpenItem,
+		Elem:        marshalNAROpenItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐAROpenItem,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAROpenItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐAROpenItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.AROpenItem) graphql.Marshaler {
+func marshalNAROpenItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐAROpenItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.AROpenItem) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2210,7 +2210,7 @@ func marshalNAROpenItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋ
 	return ec.MarshalType(ctx, sel, "AROpenItem", v)
 }
 
-func marshalNARPaymentStats2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARPaymentStats(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARPaymentStats) graphql.Marshaler {
+func marshalNARPaymentStats2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARPaymentStats(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARPaymentStats) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2218,15 +2218,15 @@ func marshalNARPaymentStats2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcor
 	return ec.MarshalType(ctx, sel, "ARPaymentStats", v)
 }
 
-func marshalNARStatementTransaction2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARStatementTransactionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARStatementTransaction) graphql.Marshaler {
+func marshalNARStatementTransaction2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARStatementTransactionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARStatementTransaction) graphql.Marshaler {
 	return gqlexec.List[*customerledgerports.ARStatementTransaction]{
-		Elem:        marshalNARStatementTransaction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARStatementTransaction,
+		Elem:        marshalNARStatementTransaction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARStatementTransaction,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNARStatementTransaction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐARStatementTransaction(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARStatementTransaction) graphql.Marshaler {
+func marshalNARStatementTransaction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARStatementTransaction(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARStatementTransaction) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2234,15 +2234,15 @@ func marshalNARStatementTransaction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return ec.MarshalType(ctx, sel, "ARStatementTransaction", v)
 }
 
-func marshalNARTopOverdueCustomer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARTopOverdueCustomerᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARTopOverdueCustomer) graphql.Marshaler {
+func marshalNARTopOverdueCustomer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARTopOverdueCustomerᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*customerledgerports.ARTopOverdueCustomer) graphql.Marshaler {
 	return gqlexec.List[*customerledgerports.ARTopOverdueCustomer]{
-		Elem:        marshalNARTopOverdueCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARTopOverdueCustomer,
+		Elem:        marshalNARTopOverdueCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARTopOverdueCustomer,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNARTopOverdueCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐARTopOverdueCustomer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARTopOverdueCustomer) graphql.Marshaler {
+func marshalNARTopOverdueCustomer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋbillingᚋportsᚋcustomerledgerportsᚐARTopOverdueCustomer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *customerledgerports.ARTopOverdueCustomer) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

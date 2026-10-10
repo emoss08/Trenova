@@ -9,11 +9,11 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -239,7 +239,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*location.Location)
 					return obj.GeofenceType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNLocationGeofenceType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋgeofenceᚐType),
+				Marshal: gqlexec.Marshal(marshalNLocationGeofenceType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋgeofenceᚐType),
 			},
 			{
 				Name:     "geofenceRadiusMeters",
@@ -299,7 +299,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*location.Location)
 					return obj.BusinessUnit, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit),
+				Marshal: gqlexec.Marshal(marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit),
 			},
 			{
 				Name:      "organization",
@@ -309,7 +309,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*location.Location)
 					return obj.Organization, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization),
+				Marshal: gqlexec.Marshal(marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization),
 			},
 			{
 				Name:      "state",
@@ -319,7 +319,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*location.Location)
 					return obj.State, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋusstateᚐUsState),
+				Marshal: gqlexec.Marshal(marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋusstateᚐUsState),
 			},
 			{
 				Name:      "locationCategory",
@@ -329,7 +329,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*location.Location)
 					return obj.LocationCategory, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOLocationCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋlocationcategoryᚐLocationCategory),
+				Marshal: gqlexec.Marshal(marshalOLocationCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationcategoryᚐLocationCategory),
 			},
 		}},
 		{Object: "LocationConnection", Fields: []*gqlexec.Field{
@@ -375,7 +375,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.LocationEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋlocationᚐLocation),
+				Marshal: gqlexec.Marshal(marshalNLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationᚐLocation),
 			},
 			{
 				Name:     "cursor",
@@ -436,7 +436,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").Location(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋlocationᚐLocation),
+				Marshal: gqlexec.Marshal(marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationᚐLocation),
 			},
 		}},
 	},
@@ -561,7 +561,7 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋlocationᚐLocation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *location.Location) graphql.Marshaler {
+func marshalNLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationᚐLocation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *location.Location) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -593,7 +593,7 @@ func marshalNLocationEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi�
 	return ec.MarshalType(ctx, sel, "LocationEdge", v)
 }
 
-func marshalNLocationGeofenceType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋgeofenceᚐType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v geofence.Type) graphql.Marshaler {
+func marshalNLocationGeofenceType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋgeofenceᚐType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v geofence.Type) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -625,7 +625,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
+func marshalOBusinessUnit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐBusinessUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.BusinessUnit) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -648,28 +648,28 @@ func marshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.Selection
 	return res
 }
 
-func marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋlocationᚐLocation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *location.Location) graphql.Marshaler {
+func marshalOLocation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationᚐLocation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *location.Location) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Location", v)
 }
 
-func marshalOLocationCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋlocationcategoryᚐLocationCategory(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *locationcategory.LocationCategory) graphql.Marshaler {
+func marshalOLocationCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋplacesᚋdomainᚋlocationcategoryᚐLocationCategory(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *locationcategory.LocationCategory) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "LocationCategory", v)
 }
 
-func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
+func marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐOrganization(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Organization", v)
 }
 
-func marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋusstateᚐUsState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *usstate.UsState) graphql.Marshaler {
+func marshalOUsState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋkernelᚋdomainᚋusstateᚐUsState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *usstate.UsState) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

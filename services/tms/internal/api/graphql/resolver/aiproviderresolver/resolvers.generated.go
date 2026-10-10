@@ -4,7 +4,7 @@ package aiproviderresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 type Deps struct {
