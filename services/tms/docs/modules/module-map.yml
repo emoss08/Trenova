@@ -1,0 +1,1539 @@
+# Gate G2: proposed module map
+
+Generated from `go list` (non-test imports) and the rules in the build-architecture plan.
+
+modules:
+  kernel:
+    level: 0
+    domain:
+      - configspec
+      - editchange
+      - platformcatalog
+      - settingversion
+      - usstate
+    service:
+      - editconflict
+      - entitlementservice
+      - platformbillingservice
+      - secretconfig
+      - usageservice
+      - usstateservice
+    repository:
+      - settingversionrepository
+      - usstaterepository
+  identity:
+    level: 1
+    domain:
+      - apikey
+      - iam
+      - instancebootstrap
+      - onboarding
+      - permission
+      - platformplan
+      - session
+      - subscription
+      - tenant
+    service:
+      - accountingcontrolpolicyservice
+      - accountingcontrolservice
+      - apikeyservice
+      - autheventservice
+      - authservice
+      - billingcontrolservice
+      - dashcontrolservice
+      - dataretentionservice
+      - documentcontrolservice
+      - exchangeratestamp
+      - fieldsensitivity
+      - iamservice
+      - instancebootstrapservice
+      - invoiceadjustmentcontrolservice
+      - journalreviewservice
+      - locationcodegenerator
+      - mfaservice
+      - onboardingservice
+      - organizationservice
+      - orgzone
+      - passwordresetservice
+      - permission
+      - planservice
+      - ptoledgerservice
+      - quotaservice
+      - roleassignmentservice
+      - roleservice
+      - sequenceconfigservice
+      - settlementcontrolservice
+      - shipmentcontrolservice
+      - tableinsightservice
+      - tenanttimezone
+      - userservice
+      - workerptoservice
+    job:
+      - billingjobs
+      - smsjobs
+    repository:
+      - accountingcontrolrepository
+      - agentcontrolrepository
+      - apikeyrepository
+      - billingcontrolrepository
+      - carriersettlementcontrolrepository
+      - dashcontrolrepository
+      - datarententionrepository
+      - documentcontrolrepository
+      - driverportalrepository
+      - iamrepository
+      - instancebootstraprepository
+      - invoiceadjustmentcontrolrepository
+      - onboardingrepository
+      - passwordresetrepository
+      - rbacrepository
+      - roleassignmentrepository
+      - rolerepository
+      - sequenceconfigrepository
+      - settlementcontrolrepository
+      - shipmentcontrolrepository
+      - ssoconfigrepository
+      - ssoidentitylinkrepository
+      - tenantsyncrepository
+  workspace:
+    level: 2
+    domain:
+      - audit
+      - bulkedit
+      - customfield
+      - dataentrycontrol
+      - email
+      - homelayout
+      - integration
+      - notification
+      - pagedraft
+      - pagefavorite
+      - report
+      - sidebarpreference
+      - tablechangealert
+      - tableconfiguration
+      - tablelayout
+    service:
+      - auditservice
+      - bulkeditservice
+      - customfieldservice
+      - dataentrycontrolservice
+      - emailservice
+      - formulaassistantservice
+      - googlemapsservice
+      - homelayoutservice
+      - integrationservice
+      - notificationservice
+      - pagefavoriteservice
+      - reporting
+      - sidebarpreferenceservice
+      - tablechangealertservice
+      - tableconfigurationservice
+      - tablelayoutservice
+      - webpushservice
+    job:
+      - auditjobs
+      - bulkeditjobs
+      - emailjobs
+      - fuelcardjobs
+      - reportjobs
+    repository:
+      - auditdlqrepository
+      - auditrepository
+      - bulkeditrepository
+      - customfieldrepository
+      - customfieldvaluerepository
+      - dataentrycontrolrepository
+      - emailrepository
+      - homelayoutrepository
+      - integrationrepository
+      - notificationrepository
+      - pagefavoriterepository
+      - pushsubscriptionrepository
+      - reportrepository
+      - sidebarpreferencerepository
+      - tableconfigurationrepository
+      - tablelayoutrepository
+      - tcaallowlistrepository
+      - tcasubscriptionrepository
+  reference:
+    level: 3
+    domain:
+      - accessorialcharge
+      - commodity
+      - documenttype
+      - dothazmatreference
+      - exchangerate
+      - hazardousmaterial
+      - hazmatsegregationrule
+      - holdreason
+      - modeprofile
+      - servicetype
+      - shipmenttype
+    service:
+      - accessorialchargeservice
+      - commodityservice
+      - datatransformer
+      - documenttypeservice
+      - dothazmatreferenceservice
+      - exchangerateservice
+      - hazardousmaterialservice
+      - hazmatsegregationruleservice
+      - holdreasonservice
+      - modeprofileservice
+      - servicetypeservice
+      - shipmenttypeservice
+    job:
+      - exchangeratejobs
+    repository:
+      - accessorialchargerepository
+      - commodityrepository
+      - documenttyperepository
+      - dothazmatreferencerepository
+      - exchangeraterepository
+      - hazardousmaterialrepository
+      - hazmatsegregationrulerepository
+      - holdreasonrepository
+      - modeprofilerepository
+      - servicetyperepository
+      - shipmenttyperepository
+  places:
+    level: 4
+    domain:
+      - distancecalculation
+      - distancecontrol
+      - distanceoverride
+      - distanceprofile
+      - geofence
+      - jurisdictionrule
+      - location
+      - locationcategory
+      - rategeo
+      - storedmileage
+    service:
+      - distancecalculationservice
+      - distancecontrolservice
+      - distanceoverrideservice
+      - distanceprofileservice
+      - jurisdictionruleservice
+      - locationcategoryservice
+      - locationservice
+      - storedmileageservice
+    job:
+      - distancemileagejobs
+    repository:
+      - distancecalculationrepository
+      - distancecontrolrepository
+      - distanceoverriderepository
+      - distanceprofilerepository
+      - locationcategoryrepository
+      - locationrepository
+      - storedmileagerepository
+  equipment:
+    level: 4
+    domain:
+      - equipmentcontinuity
+      - equipmentmanufacturer
+      - equipmenttype
+      - fleetcode
+      - tractor
+      - trailer
+    service:
+      - equipmentmanufacturerservice
+      - equipmenttypeservice
+      - fleetcodeservice
+      - tractorservice
+      - trailerservice
+    repository:
+      - equipmentcontinuityrepository
+      - equipmentmanufacturerrepository
+      - equipmenttyperepository
+      - fleetcoderepository
+      - recordlabelrepository
+      - tractorrepository
+      - trailerrepository
+  parties:
+    level: 4
+    domain:
+      - carrier
+      - carriercapacity
+      - carrierintel
+      - customer
+    service:
+      - carriercapacityservice
+      - carrierintelservice
+      - carrierservice
+      - customerservice
+    repository:
+      - carriercapacityrepository
+      - carrierintelrepository
+      - carrierrepository
+      - customerrepository
+  workforce:
+    level: 5
+    domain:
+      - permit
+      - telematics
+      - worker
+    service:
+      - hosprojection
+      - permitservice
+      - samsarasyncservice
+      - telematicsservice
+      - workeroverviewservice
+      - workerservice
+    job:
+      - telematicsjobs
+    repository:
+      - orgholidayrepository
+      - performancereviewrepository
+      - permitrepository
+      - ptoledgerrepository
+      - ptopolicyrepository
+      - selfservicerepository
+      - telematicsrepository
+      - timesheetrepository
+      - workerchecklistrepository
+      - workercredentialrepository
+      - workerdqfrepository
+      - workerdrugalcoholrepository
+      - workeremploymenteventrepository
+      - workerinjuryrepository
+      - workerleaverepository
+      - workerptorepository
+      - workerrepository
+      - workersafetyrepository
+      - workertrainingrepository
+  documents:
+    level: 5
+    domain:
+      - capture
+      - document
+      - documentaiextraction
+      - documentcontent
+      - documentpacketrule
+      - documentparsingrule
+      - documentsearchprojection
+      - documenttemplate
+      - documentupload
+      - extractioneval
+      - extractionrollout
+      - extractionshadow
+      - inboundmessage
+    service:
+      - captureservice
+      - documentintelligenceservice
+      - documentoperationsservice
+      - documentpacketruleservice
+      - documentparsingruleservice
+      - documentsearchprojectionservice
+      - documentservice
+      - documenttemplateservice
+      - documentuploadservice
+      - extractionevalservice
+      - extractionrolloutservice
+      - extractionshadowservice
+      - inboundmessageservice
+    job:
+      - capturejobs
+      - documentintelligencejobs
+      - documentuploadjobs
+      - extractionevaljobs
+      - extractionshadowjobs
+      - inboundjobs
+      - thumbnailjobs
+    repository:
+      - capturerepository
+      - documentaiextractionrepository
+      - documentcontentrepository
+      - documentpacketrulerepository
+      - documentparsingrulerepository
+      - documentrepository
+      - documentsearchprojectionrepository
+      - documenttemplaterepository
+      - documentuploadrepository
+      - extractionevalrepository
+      - extractionrolloutrepository
+      - extractionshadowrepository
+      - inboundmessagerepository
+      - retrievalsourcerepository
+  rating:
+    level: 6
+    domain:
+      - dedicatedlane
+      - formulatemplate
+      - fuelsurcharge
+      - rateagreement
+      - rateconfirmation
+      - rateimport
+      - ratematrix
+      - ratequote
+      - ratesimulation
+      - ratezone
+    service:
+      - carrierassignmentservice
+      - formula
+      - formulatemplateservice
+      - fuelsurchargeservice
+      - rateagreementservice
+      - rateconfirmationservice
+      - rateengine
+      - rateimportservice
+      - ratematrixservice
+      - ratequoteservice
+      - ratesimulationservice
+      - ratezoneservice
+    job:
+      - formulatemplatejobs
+    repository:
+      - formulatemplaterepository
+      - formulatemplatereviewrepository
+      - formulatemplatetestcaserepository
+      - formulatemplateversionrepository
+      - fuelsurchargerepository
+      - rateagreementrepository
+      - rateconfirmationrepository
+      - rateimportrepository
+      - ratematrixrepository
+      - ratequoterepository
+      - ratesimulationrepository
+      - ratezonerepository
+  operations:
+    level: 7
+    domain:
+      - detention
+      - dispatchcontrol
+      - documentshipmentdraft
+      - order
+      - recurringshipment
+      - servicefailure
+      - shipment
+      - shipmentevent
+      - shipmentstate
+      - shipmentsuggestion
+      - tender
+      - weatheralert
+    service:
+      - assignmentservice
+      - detentionservice
+      - dispatchconsoleservice
+      - dispatchcontrolservice
+      - equipmentavailabilityhelper
+      - internaledilifecycle
+      - internaledistatussync
+      - orderderivation
+      - orderservice
+      - recurringshipmentservice
+      - servicefailureservice
+      - shipmentetaservice
+      - shipmenteventservice
+      - shipmentmoveservice
+      - shipmentquickfilterservice
+      - shipmentservice
+      - shipmentsuggestionservice
+      - shipmentwatchlistservice
+      - tenderservice
+      - weatheralertservice
+    job:
+      - detentionjobs
+      - recurringshipmentjobs
+      - shipmentjobs
+      - tenderjobs
+      - weatheralertjobs
+    repository:
+      - assignmentrepository
+      - carrierassignmentrepository
+      - detentionrepository
+      - dispatchcontrolrepository
+      - documentshipmentdraftrepository
+      - orderrepository
+      - recurringshipmentrepository
+      - routingguiderepository
+      - servicefailurereasoncoderepository
+      - servicefailurerepository
+      - shipmentadditionalchargerepository
+      - shipmentboardrepository
+      - shipmentcommentrepository
+      - shipmentcommodityrepository
+      - shipmenteventrepository
+      - shipmentholdrepository
+      - shipmentmovejurisdictionmilerepository
+      - shipmentmoverepository
+      - shipmentrepository
+      - shipmentsuggestionrepository
+      - shipmenttrackingrepository
+      - tenderrepository
+      - weatheralertrepository
+  edi:
+    level: 8
+    domain:
+      - edi
+    service:
+      - ediservice
+      - edistarlark
+      - editransport
+      - edix12
+      - edix12inspect
+    job:
+      - edijobs
+    repository:
+      - edicarrierinvoicerepository
+      - edicommunicationprofilerepository
+      - ediconnectionrepository
+      - edicontrolnumberrepository
+      - edidocumenttyperepository
+      - ediinboundfilerepository
+      - edimappingprofilerepository
+      - edimessagerepository
+      - edipartnerdocumentprofilerepository
+      - edipartnerrepository
+      - edipartnersettingrepository
+      - edishipmentlinkrepository
+      - edisourcecontextrepository
+      - editemplaterepository
+      - editenderchangerepository
+      - editenderrecipientrepository
+      - editestcaserepository
+      - editransactionsetrepository
+      - editransferchangerepository
+      - editransferrepository
+  accounting:
+    level: 8
+    domain:
+      - accountingsync
+      - accounttype
+      - fiscalclose
+      - fiscalperiod
+      - fiscalyear
+      - glaccount
+      - glbalance
+      - journalentry
+      - journalreversal
+      - journalsource
+      - manualjournal
+    service:
+      - accountingsyncservice
+      - accounttypeservice
+      - fiscalcloseblockers
+      - fiscalcloseservice
+      - fiscalperiodservice
+      - fiscalyearservice
+      - glaccountservice
+      - glbalanceservice
+      - journalentryservice
+      - journalreversalservice
+      - ledgersync
+      - manualjournalservice
+    job:
+      - accountingsyncjobs
+      - fiscaljobs
+    repository:
+      - accountingsyncrepository
+      - accounttyperepository
+      - fiscalperiodrepository
+      - fiscalyearrepository
+      - glaccountrepository
+      - glbalancerepository
+      - journalentryrepository
+      - journalpostingrepository
+      - journalreversalrepository
+      - journalsourcerepository
+      - manualjournalrepository
+  billing:
+    level: 9
+    domain:
+      - bankreceipt
+      - bankreceiptbatch
+      - bankreceiptworkitem
+      - billingqueue
+      - billingqueuefilterpreset
+      - billingtransfer
+      - costingcontrol
+      - customerledger
+      - customerpayment
+      - invoice
+      - invoiceadjustment
+      - invoicerun
+      - latecharge
+    service:
+      - accountingdriftservice
+      - bankreceiptbatchservice
+      - bankreceiptservice
+      - bankreceiptworkitemservice
+      - billingqueueapprovalservice
+      - billingqueueservice
+      - billingtransferservice
+      - customerpaymentservice
+      - invoiceadjustmentservice
+      - invoicedisputeservice
+      - invoiceledger
+      - invoicelines
+      - invoicerunservice
+      - invoiceservice
+      - invoicevoid
+      - latechargeservice
+    job:
+      - billingqueuejobs
+      - billingtransferjobs
+      - invoiceadjustmentjobs
+    repository:
+      - bankreceiptbatchrepository
+      - bankreceiptrepository
+      - bankreceiptworkitemrepository
+      - billingqueuefilterpresetrepository
+      - billingqueuerepository
+      - billingqueuereviewrepository
+      - billingtransferrepository
+      - chargeallocationrepository
+      - customerledgerrepository
+      - customerpaymentrepository
+      - invoiceadjustmentrepository
+      - invoicedisputerepository
+      - invoicerepository
+      - invoicerunrepository
+      - invoicesharerepository
+      - journalrepairrepository
+      - latechargerepository
+      - recordversionrepository
+  settlement:
+    level: 9
+    domain:
+      - carriersettlement
+      - driverpay
+      - driversettlement
+      - fuelpurchase
+      - ifta
+    service:
+      - carriersettlementservice
+      - driverpayservice
+      - driversettlementservice
+      - fuelpurchaseservice
+      - iftaservice
+    job:
+      - carriersettlementjobs
+      - iftajobs
+    repository:
+      - benefitrepository
+      - carrierledgerrepository
+      - carriersettlementrepository
+      - driverpayrepository
+      - driversettlementrepository
+      - fuelpurchaserepository
+      - iftarepository
+  agent:
+    level: 10
+    domain:
+      - agent
+      - agentdefinition
+      - agentdryrun
+      - agentextension
+      - agentlint
+      - agentquality
+      - agentroster
+      - agentshadow
+      - agentwait
+      - aiaudit
+      - aicontrolsummary
+      - aicorrection
+      - aifeedback
+      - aiprovider
+      - airetrieval
+      - aitraining
+      - aituneup
+      - aiusage
+      - assistantartifact
+      - briefing
+      - conversation
+      - conversationschedule
+      - deskcase
+      - insight
+      - shipmentbrief
+      - shipmentimportchat
+      - watchtower
+    service:
+      - agentaccessservice
+      - agentactivityservice
+      - agentactivitysummaryservice
+      - agentbudgetservice
+      - agentcapabilityservice
+      - agentcontrolservice
+      - agentdecisionqueueservice
+      - agentdecisionservice
+      - agentdefinitionservice
+      - agentdraftservice
+      - agentevalcaseservice
+      - agentevalgate
+      - agentevaluationservice
+      - agentevents
+      - agentexceptionservice
+      - agentextensionservice
+      - agentguard
+      - agentmemoryservice
+      - agentplanservice
+      - agentproposalnotifier
+      - agentproposalservice
+      - agentqualityservice
+      - agentquerytoolservice
+      - agentredteam
+      - agentreflectionservice
+      - agentrosterservice
+      - agentruneventservice
+      - agentrunservice
+      - agentruntime
+      - agentsafetyservice
+      - agentscorecardservice
+      - agentscoring
+      - agentsearch
+      - agentshadow
+      - agentshadowservice
+      - agentsubjectservice
+      - agenttestpromptservice
+      - agenttoolcatalog
+      - agenttoolpolicy
+      - agenttoolruleservice
+      - agenttoolschema
+      - agenttoolservice
+      - agenttrustservice
+      - agentwaitservice
+      - aiauditservice
+      - aicontrolsummaryservice
+      - aicorrectionretention
+      - aicorrectionservice
+      - aidocumentservice
+      - aifeedbackservice
+      - aiproviderservice
+      - aiproviderspendservice
+      - airetrievalstatusservice
+      - aitraininghistoryservice
+      - aituneupservice
+      - aiusageservice
+      - assistantcaseservice
+      - assistantfollowupservice
+      - assistanthandoffservice
+      - assistantqueueservice
+      - assistantservice
+      - assistantturnservice
+      - briefingservice
+      - conversationscheduleservice
+      - dispatchautoassignservice
+      - insightservice
+      - productguideservice
+      - proposalexecutor
+      - proposalpreviewservice
+      - proposalrecorder
+      - recordanchorservice
+      - retrievalquery
+      - retrievalservice
+      - runstepledger
+      - shipmentboardbrief
+      - shipmentbriefingservice
+      - shipmentimportassistantservice
+      - tablequeryservice
+      - toolpreview
+      - toolsimulation
+      - watchtowerservice
+      - watchtowersources
+    job:
+      - agentflow
+      - agentjobs
+      - agentqualityjobs
+      - agentwaitjobs
+      - aiauditjobs
+      - aicorrectionjobs
+      - aifeedbackjobs
+      - aituneupjobs
+      - assistantjobs
+      - briefingjobs
+      - completionjobs
+      - conversationschedulejobs
+      - decisioncommitjobs
+      - dispatchjobs
+      - importassistantjobs
+      - insightjobs
+      - modelcall
+      - reflectionjobs
+      - retrievaljobs
+      - watchtowerjobs
+    repository:
+      - agentactivityrepository
+      - agentdecisionqueuerepository
+      - agentdecisionrepository
+      - agentdefinitionrepository
+      - agentevalcaserepository
+      - agentevaluationrepository
+      - agentexceptionrepository
+      - agentextensionrepository
+      - agentmemoryrepository
+      - agentplanrepository
+      - agentproposalbaselinerepository
+      - agentproposalrepository
+      - agentqualityrepository
+      - agentreflectionrepository
+      - agentruneventrepository
+      - agentrunrepository
+      - agentrunsteprepository
+      - agentscorecardrepository
+      - agentshadowrepository
+      - agenttoolrulerepository
+      - agenttooltrustrepository
+      - agentwaitrepository
+      - aiauditrepository
+      - aicontrolfactsrepository
+      - aicorrectionrepository
+      - aifeedbackrepository
+      - aiproviderrepository
+      - airetrievalrepository
+      - aituneuprepository
+      - aiusagerepository
+      - assistantartifactrepository
+      - assistantqueuerepository
+      - assistantturnrepository
+      - briefingrepository
+      - conversationrepository
+      - conversationschedulerepository
+      - insightrepository
+      - shipmentbriefrepository
+      - shipmentimportchatrepository
+      - watchtowerrepository
+unassigned:
+  - package: job:carrierintelligencejobs
+    reason: "imports no domain package"
+  - package: job:compliancejobs
+    reason: "tie: agent 1, documents 1, workspace 1, identity 1"
+  - package: job:connection
+    reason: "imports no domain package"
+  - package: job:fuelpricejobs
+    reason: "tie: workspace 1, identity 1"
+  - package: job:health
+    reason: "imports no domain package"
+  - package: job:interceptors
+    reason: "imports no domain package"
+  - package: job:ptojobs
+    reason: "imports no domain package"
+  - package: job:ratesimjobs
+    reason: "imports no domain package"
+  - package: job:registry
+    reason: "imports no domain package"
+  - package: job:replaytest
+    reason: "imports no domain package"
+  - package: job:samsarajobs
+    reason: "imports no domain package"
+  - package: job:schedule
+    reason: "imports no domain package"
+  - package: job:settlementjobs
+    reason: "imports no domain package"
+  - package: repository:accountsreceivablerepository
+    reason: "imports no domain package"
+  - package: repository:agentmemorysubjectrepository
+    reason: "tie: billing 2, documents 2, agent 1, operations 1"
+  - package: repository:agentsubjectrepository
+    reason: "tie: agent 3, billing 3, operations 2, documents 2"
+  - package: repository:assistantcaserepository
+    reason: "tie: agent 2, billing 2, parties 2, operations 2"
+  - package: repository:carrierinvoicematchrepository
+    reason: "tie: settlement 1, edi 1"
+  - package: repository:casechecklistrepository
+    reason: "tie: agent 1, reference 1"
+  - package: repository:costingrepository
+    reason: "tie: billing 1, operations 1"
+  - package: repository:dispatchconsolerepository
+    reason: "tie: operations 2, equipment 2, workforce 1"
+  - package: repository:m2msync
+    reason: "imports no domain package"
+  - package: repository:organizationrepository
+    reason: "tie: settlement 2, operations 2, rating 1, identity 1"
+  - package: repository:orgstructurerepository
+    reason: "tie: identity 1, workforce 1"
+  - package: repository:roleagentgrantrepository
+    reason: "tie: agent 1, identity 1"
+  - package: repository:schedulingrepository
+    reason: "tie: equipment 1, workforce 1"
+  - package: repository:tenantbootstraprepository
+    reason: "tie: identity 1, kernel 1"
+  - package: repository:userrepository
+    reason: "tie: kernel 1, identity 1"
+  - package: service:accountingconnectionservice
+    reason: "tie: agent 2, identity 2, accounting 1, workspace 1"
+  - package: service:accountingconnlookup
+    reason: "tie: accounting 1, workspace 1"
+  - package: service:accountinginboundservice
+    reason: "tie: accounting 2, agent 2, billing 2, workspace 1"
+  - package: service:accountingmappingservice
+    reason: "tie: accounting 2, agent 2, parties 2, billing 2"
+  - package: service:accountsreceivableservice
+    reason: "imports no domain package"
+  - package: service:allocationcheck
+    reason: "tie: parties 1, operations 1"
+  - package: service:analyticsservice
+    reason: "tie: identity 1, billing 1, operations 1, kernel 1"
+  - package: service:approvalwindow
+    reason: "imports no domain package"
+  - package: service:benefitsservice
+    reason: "tie: settlement 1, identity 1"
+  - package: service:billingcontrolpolicyservice
+    reason: "tie: parties 1, identity 1"
+  - package: service:billingtransfercriteria
+    reason: "tie: identity 1, operations 1"
+  - package: service:capabilityguard
+    reason: "imports no domain package"
+  - package: service:capturereleaseservice
+    reason: "imports no domain package"
+  - package: service:casechecklistservice
+    reason: "tie: agent 1, identity 1"
+  - package: service:costingservice
+    reason: "tie: billing 1, rating 1, identity 1, operations 1"
+  - package: service:customerupdateservice
+    reason: "tie: documents 1, workspace 1, operations 1"
+  - package: service:detentionbillingservice
+    reason: "tie: operations 1, identity 1, agent 1"
+  - package: service:detentionpolicyservice
+    reason: "tie: operations 1, identity 1"
+  - package: service:dispatchcandidateservice
+    reason: "tie: workforce 2, equipment 2, operations 1, workspace 1"
+  - package: service:dispatcheligibility
+    reason: "tie: workforce 2, equipment 2, operations 1"
+  - package: service:dispatchguard
+    reason: "imports no domain package"
+  - package: service:drivernotificationservice
+    reason: "tie: documents 1, workspace 1, workforce 1"
+  - package: service:driverportalservice
+    reason: "tie: documents 2, settlement 2, workspace 2, identity 2"
+  - package: service:ediinboundservice
+    reason: "tie: agent 1, edi 1, operations 1"
+  - package: service:editioninfo
+    reason: "imports no domain package"
+  - package: service:encryptionservice
+    reason: "imports no domain package"
+  - package: service:equipmentcontinuityhelper
+    reason: "tie: equipment 1, operations 1"
+  - package: service:extractionfailure
+    reason: "imports no domain package"
+  - package: service:globalsearchservice
+    reason: "tie: identity 1, operations 1"
+  - package: service:invoiceshareservice
+    reason: "tie: workspace 2, identity 2, documents 1, billing 1"
+  - package: service:journalposting
+    reason: "tie: accounting 1, identity 1"
+  - package: service:journalrepairservice
+    reason: "tie: settlement 1, identity 1"
+  - package: service:orgholidayservice
+    reason: "tie: identity 1, workforce 1"
+  - package: service:orgstructureservice
+    reason: "tie: identity 1, workforce 1"
+  - package: service:performancereviewservice
+    reason: "tie: documents 1, workspace 1, identity 1, workforce 1"
+  - package: service:ptopolicyservice
+    reason: "tie: identity 1, workforce 1"
+  - package: service:realtimeservice
+    reason: "imports no domain package"
+  - package: service:referencedataguard
+    reason: "imports no domain package"
+  - package: service:routingguideservice
+    reason: "tie: identity 1, operations 1"
+  - package: service:schedulingservice
+    reason: "tie: identity 1, workforce 1"
+  - package: service:selfserviceservice
+    reason: "tie: documents 1, workspace 1, identity 1, workforce 1"
+  - package: service:servicefailurereasoncodeservice
+    reason: "tie: identity 1, operations 1"
+  - package: service:servicefailuretrigger
+    reason: "imports no domain package"
+  - package: service:settlementshared
+    reason: "tie: operations 1, identity 1"
+  - package: service:shipmentboardcache
+    reason: "imports no domain package"
+  - package: service:shipmentboardservice
+    reason: "tie: agent 1, workspace 1, operations 1, identity 1"
+  - package: service:shipmentcapacityservice
+    reason: "tie: parties 2, operations 2"
+  - package: service:shipmentcommentservice
+    reason: "tie: documents 2, identity 2, workspace 1, operations 1"
+  - package: service:shipmentcommercial
+    reason: "tie: operations 3, rating 3, reference 1, identity 1"
+  - package: service:shipmentholdservice
+    reason: "tie: reference 1, identity 1, operations 1"
+  - package: service:shipmentinvalidation
+    reason: "imports no domain package"
+  - package: service:shipmentnarration
+    reason: "imports no domain package"
+  - package: service:shipmenttracking
+    reason: "tie: operations 1, workforce 1"
+  - package: service:statuschange
+    reason: "imports no domain package"
+  - package: service:subjectaccess
+    reason: "tie: agent 1, identity 1"
+  - package: service:tableexportservice
+    reason: "tie: identity 1, workspace 1"
+  - package: service:teamscope
+    reason: "tie: identity 1, workforce 1"
+  - package: service:thumbnailservice
+    reason: "imports no domain package"
+  - package: service:timesheetservice
+    reason: "tie: identity 1, workforce 1"
+  - package: service:versionservice
+    reason: "imports no domain package"
+  - package: service:workerchecklistservice
+    reason: "tie: documents 1, identity 1, workforce 1"
+  - package: service:workercredentialservice
+    reason: "tie: documents 1, workspace 1, identity 1, workforce 1"
+  - package: service:workerdqfservice
+    reason: "tie: documents 1, identity 1, workforce 1"
+  - package: service:workerdrugalcoholservice
+    reason: "tie: identity 1, workforce 1"
+  - package: service:workeremploymentservice
+    reason: "tie: settlement 1, identity 1, workforce 1"
+  - package: service:workerinjuryservice
+    reason: "tie: identity 1, workforce 1"
+  - package: service:workerleaveservice
+    reason: "tie: identity 1, workforce 1"
+  - package: service:workersafetyservice
+    reason: "tie: documents 1, workspace 1, identity 1, workforce 1"
+  - package: service:workertrainingservice
+    reason: "tie: identity 1, workforce 1"
+  - package: service:workflowstarter
+    reason: "imports no domain package"
+assignment_reasons:
+  job:accountingsyncjobs: "rule 1 (accountingsync)"
+  job:agentflow: "rule 3"
+  job:agentjobs: "rule 3"
+  job:agentqualityjobs: "rule 3"
+  job:agentwaitjobs: "rule 3"
+  job:aiauditjobs: "rule 3"
+  job:aicorrectionjobs: "rule 3"
+  job:aifeedbackjobs: "rule 3"
+  job:aituneupjobs: "rule 3"
+  job:assistantjobs: "rule 3"
+  job:auditjobs: "rule 1 (audit)"
+  job:billingjobs: "rule 2 (identity 2, documents 1, edi 1)"
+  job:billingqueuejobs: "rule 1 (billingqueue)"
+  job:billingtransferjobs: "rule 1 (billingtransfer)"
+  job:briefingjobs: "rule 1 (briefing)"
+  job:bulkeditjobs: "rule 1 (bulkedit)"
+  job:capturejobs: "rule 1 (capture)"
+  job:carriersettlementjobs: "rule 1 (carriersettlement)"
+  job:completionjobs: "rule 3"
+  job:conversationschedulejobs: "rule 3"
+  job:decisioncommitjobs: "rule 3"
+  job:detentionjobs: "rule 1 (detention)"
+  job:dispatchjobs: "rule 2 (agent 1)"
+  job:distancemileagejobs: "rule 2 (places 1)"
+  job:documentintelligencejobs: "rule 2 (documents 5, agent 1, operations 1)"
+  job:documentuploadjobs: "rule 1 (documentupload)"
+  job:edijobs: "rule 1 (edi)"
+  job:emailjobs: "rule 1 (email)"
+  job:exchangeratejobs: "rule 1 (exchangerate)"
+  job:extractionevaljobs: "rule 1 (extractioneval)"
+  job:extractionshadowjobs: "rule 1 (extractionshadow)"
+  job:fiscaljobs: "rule 2 (accounting 2, workspace 1)"
+  job:formulatemplatejobs: "rule 1 (formulatemplate)"
+  job:fuelcardjobs: "rule 2 (workspace 1)"
+  job:iftajobs: "rule 1 (ifta)"
+  job:importassistantjobs: "rule 2 (agent 1)"
+  job:inboundjobs: "rule 2 (documents 1)"
+  job:insightjobs: "rule 1 (insight)"
+  job:invoiceadjustmentjobs: "rule 1 (invoiceadjustment)"
+  job:modelcall: "rule 3"
+  job:recurringshipmentjobs: "rule 1 (recurringshipment)"
+  job:reflectionjobs: "rule 3"
+  job:reportjobs: "rule 1 (report)"
+  job:retrievaljobs: "rule 3"
+  job:shipmentjobs: "rule 1 (shipment)"
+  job:smsjobs: "rule 2 (identity 1)"
+  job:telematicsjobs: "rule 1 (telematics)"
+  job:tenderjobs: "rule 1 (tender)"
+  job:thumbnailjobs: "rule 2 (documents 1)"
+  job:watchtowerjobs: "rule 1 (watchtower)"
+  job:weatheralertjobs: "rule 1 (weatheralert)"
+  repository:accessorialchargerepository: "rule 1 (accessorialcharge)"
+  repository:accountingcontrolrepository: "rule 2 (identity 1)"
+  repository:accountingsyncrepository: "rule 1 (accountingsync)"
+  repository:accounttyperepository: "rule 1 (accounttype)"
+  repository:agentactivityrepository: "rule 2 (agent 1)"
+  repository:agentcontrolrepository: "rule 2 (identity 1)"
+  repository:agentdecisionqueuerepository: "rule 2 (agent 2)"
+  repository:agentdecisionrepository: "rule 2 (agent 1)"
+  repository:agentdefinitionrepository: "rule 1 (agentdefinition)"
+  repository:agentevalcaserepository: "rule 2 (agent 3)"
+  repository:agentevaluationrepository: "rule 2 (agent 1)"
+  repository:agentexceptionrepository: "rule 2 (agent 1)"
+  repository:agentextensionrepository: "rule 1 (agentextension)"
+  repository:agentmemoryrepository: "rule 2 (agent 1)"
+  repository:agentplanrepository: "rule 2 (agent 1)"
+  repository:agentproposalbaselinerepository: "rule 2 (agent 1)"
+  repository:agentproposalrepository: "rule 2 (agent 1)"
+  repository:agentqualityrepository: "rule 1 (agentquality)"
+  repository:agentreflectionrepository: "rule 2 (agent 1)"
+  repository:agentruneventrepository: "rule 2 (agent 1)"
+  repository:agentrunrepository: "rule 2 (agent 1)"
+  repository:agentrunsteprepository: "rule 2 (agent 1)"
+  repository:agentscorecardrepository: "rule 2 (agent 2)"
+  repository:agentshadowrepository: "rule 1 (agentshadow)"
+  repository:agenttoolrulerepository: "rule 2 (agent 1)"
+  repository:agenttooltrustrepository: "rule 2 (agent 1)"
+  repository:agentwaitrepository: "rule 1 (agentwait)"
+  repository:aiauditrepository: "rule 1 (aiaudit)"
+  repository:aicontrolfactsrepository: "rule 2 (agent 5)"
+  repository:aicorrectionrepository: "rule 1 (aicorrection)"
+  repository:aifeedbackrepository: "rule 1 (aifeedback)"
+  repository:aiproviderrepository: "rule 1 (aiprovider)"
+  repository:airetrievalrepository: "rule 1 (airetrieval)"
+  repository:aituneuprepository: "rule 1 (aituneup)"
+  repository:aiusagerepository: "rule 1 (aiusage)"
+  repository:apikeyrepository: "rule 1 (apikey)"
+  repository:assignmentrepository: "rule 2 (operations 1)"
+  repository:assistantartifactrepository: "rule 1 (assistantartifact)"
+  repository:assistantqueuerepository: "rule 2 (agent 1)"
+  repository:assistantturnrepository: "rule 2 (agent 1)"
+  repository:auditdlqrepository: "rule 2 (workspace 1)"
+  repository:auditrepository: "rule 1 (audit)"
+  repository:bankreceiptbatchrepository: "rule 1 (bankreceiptbatch)"
+  repository:bankreceiptrepository: "rule 1 (bankreceipt)"
+  repository:bankreceiptworkitemrepository: "rule 1 (bankreceiptworkitem)"
+  repository:benefitrepository: "rule 2 (settlement 1)"
+  repository:billingcontrolrepository: "rule 2 (identity 1)"
+  repository:billingqueuefilterpresetrepository: "rule 1 (billingqueuefilterpreset)"
+  repository:billingqueuerepository: "rule 1 (billingqueue)"
+  repository:billingqueuereviewrepository: "rule 2 (billing 1)"
+  repository:billingtransferrepository: "rule 1 (billingtransfer)"
+  repository:briefingrepository: "rule 1 (briefing)"
+  repository:bulkeditrepository: "rule 1 (bulkedit)"
+  repository:capturerepository: "rule 1 (capture)"
+  repository:carrierassignmentrepository: "rule 2 (operations 1)"
+  repository:carriercapacityrepository: "rule 1 (carriercapacity)"
+  repository:carrierintelrepository: "rule 1 (carrierintel)"
+  repository:carrierledgerrepository: "rule 2 (settlement 1)"
+  repository:carrierrepository: "rule 1 (carrier)"
+  repository:carriersettlementcontrolrepository: "rule 2 (identity 1)"
+  repository:carriersettlementrepository: "rule 1 (carriersettlement)"
+  repository:chargeallocationrepository: "rule 2 (billing 2, operations 1)"
+  repository:commodityrepository: "rule 1 (commodity)"
+  repository:conversationrepository: "rule 1 (conversation)"
+  repository:conversationschedulerepository: "rule 1 (conversationschedule)"
+  repository:customerledgerrepository: "rule 1 (customerledger)"
+  repository:customerpaymentrepository: "rule 1 (customerpayment)"
+  repository:customerrepository: "rule 1 (customer)"
+  repository:customfieldrepository: "rule 1 (customfield)"
+  repository:customfieldvaluerepository: "rule 2 (workspace 1)"
+  repository:dashcontrolrepository: "rule 2 (identity 1)"
+  repository:dataentrycontrolrepository: "rule 1 (dataentrycontrol)"
+  repository:datarententionrepository: "rule 2 (identity 1)"
+  repository:detentionrepository: "rule 1 (detention)"
+  repository:dispatchcontrolrepository: "rule 1 (dispatchcontrol)"
+  repository:distancecalculationrepository: "rule 1 (distancecalculation)"
+  repository:distancecontrolrepository: "rule 1 (distancecontrol)"
+  repository:distanceoverriderepository: "rule 1 (distanceoverride)"
+  repository:distanceprofilerepository: "rule 1 (distanceprofile)"
+  repository:documentaiextractionrepository: "rule 1 (documentaiextraction)"
+  repository:documentcontentrepository: "rule 1 (documentcontent)"
+  repository:documentcontrolrepository: "rule 2 (identity 1)"
+  repository:documentpacketrulerepository: "rule 1 (documentpacketrule)"
+  repository:documentparsingrulerepository: "rule 1 (documentparsingrule)"
+  repository:documentrepository: "rule 1 (document)"
+  repository:documentsearchprojectionrepository: "rule 1 (documentsearchprojection)"
+  repository:documentshipmentdraftrepository: "rule 1 (documentshipmentdraft)"
+  repository:documenttemplaterepository: "rule 1 (documenttemplate)"
+  repository:documenttyperepository: "rule 1 (documenttype)"
+  repository:documentuploadrepository: "rule 1 (documentupload)"
+  repository:dothazmatreferencerepository: "rule 1 (dothazmatreference)"
+  repository:driverpayrepository: "rule 1 (driverpay)"
+  repository:driverportalrepository: "rule 2 (identity 2, kernel 1, operations 1)"
+  repository:driversettlementrepository: "rule 1 (driversettlement)"
+  repository:edicarrierinvoicerepository: "rule 2 (edi 1)"
+  repository:edicommunicationprofilerepository: "rule 2 (edi 1)"
+  repository:ediconnectionrepository: "rule 2 (edi 1)"
+  repository:edicontrolnumberrepository: "rule 2 (edi 1)"
+  repository:edidocumenttyperepository: "rule 2 (edi 1)"
+  repository:ediinboundfilerepository: "rule 2 (edi 1)"
+  repository:edimappingprofilerepository: "rule 2 (edi 1)"
+  repository:edimessagerepository: "rule 2 (edi 1)"
+  repository:edipartnerdocumentprofilerepository: "rule 2 (edi 1)"
+  repository:edipartnerrepository: "rule 2 (edi 1)"
+  repository:edipartnersettingrepository: "rule 2 (edi 1)"
+  repository:edishipmentlinkrepository: "rule 2 (edi 1)"
+  repository:edisourcecontextrepository: "rule 2 (edi 1)"
+  repository:editemplaterepository: "rule 2 (edi 2)"
+  repository:editenderchangerepository: "rule 2 (edi 1)"
+  repository:editenderrecipientrepository: "rule 2 (edi 1)"
+  repository:editestcaserepository: "rule 2 (edi 1)"
+  repository:editransactionsetrepository: "rule 2 (edi 1)"
+  repository:editransferchangerepository: "rule 2 (edi 1)"
+  repository:editransferrepository: "rule 2 (edi 1)"
+  repository:emailrepository: "rule 1 (email)"
+  repository:equipmentcontinuityrepository: "rule 1 (equipmentcontinuity)"
+  repository:equipmentmanufacturerrepository: "rule 1 (equipmentmanufacturer)"
+  repository:equipmenttyperepository: "rule 1 (equipmenttype)"
+  repository:exchangeraterepository: "rule 1 (exchangerate)"
+  repository:extractionevalrepository: "rule 1 (extractioneval)"
+  repository:extractionrolloutrepository: "rule 1 (extractionrollout)"
+  repository:extractionshadowrepository: "rule 1 (extractionshadow)"
+  repository:fiscalperiodrepository: "rule 1 (fiscalperiod)"
+  repository:fiscalyearrepository: "rule 1 (fiscalyear)"
+  repository:fleetcoderepository: "rule 1 (fleetcode)"
+  repository:formulatemplaterepository: "rule 1 (formulatemplate)"
+  repository:formulatemplatereviewrepository: "rule 2 (rating 1)"
+  repository:formulatemplatetestcaserepository: "rule 2 (rating 1)"
+  repository:formulatemplateversionrepository: "rule 2 (rating 1)"
+  repository:fuelpurchaserepository: "rule 1 (fuelpurchase)"
+  repository:fuelsurchargerepository: "rule 1 (fuelsurcharge)"
+  repository:glaccountrepository: "rule 1 (glaccount)"
+  repository:glbalancerepository: "rule 1 (glbalance)"
+  repository:hazardousmaterialrepository: "rule 1 (hazardousmaterial)"
+  repository:hazmatsegregationrulerepository: "rule 1 (hazmatsegregationrule)"
+  repository:holdreasonrepository: "rule 1 (holdreason)"
+  repository:homelayoutrepository: "rule 1 (homelayout)"
+  repository:iamrepository: "rule 1 (iam)"
+  repository:iftarepository: "rule 1 (ifta)"
+  repository:inboundmessagerepository: "rule 1 (inboundmessage)"
+  repository:insightrepository: "rule 1 (insight)"
+  repository:instancebootstraprepository: "rule 1 (instancebootstrap)"
+  repository:integrationrepository: "rule 1 (integration)"
+  repository:invoiceadjustmentcontrolrepository: "rule 2 (identity 1)"
+  repository:invoiceadjustmentrepository: "rule 1 (invoiceadjustment)"
+  repository:invoicedisputerepository: "rule 2 (billing 1)"
+  repository:invoicerepository: "rule 1 (invoice)"
+  repository:invoicerunrepository: "rule 1 (invoicerun)"
+  repository:invoicesharerepository: "rule 2 (billing 1)"
+  repository:journalentryrepository: "rule 1 (journalentry)"
+  repository:journalpostingrepository: "rule 2 (accounting 2)"
+  repository:journalrepairrepository: "rule 2 (billing 4, settlement 1, accounting 1)"
+  repository:journalreversalrepository: "rule 1 (journalreversal)"
+  repository:journalsourcerepository: "rule 1 (journalsource)"
+  repository:latechargerepository: "rule 1 (latecharge)"
+  repository:locationcategoryrepository: "rule 1 (locationcategory)"
+  repository:locationrepository: "rule 1 (location)"
+  repository:manualjournalrepository: "rule 1 (manualjournal)"
+  repository:modeprofilerepository: "rule 1 (modeprofile)"
+  repository:notificationrepository: "rule 1 (notification)"
+  repository:onboardingrepository: "rule 1 (onboarding)"
+  repository:orderrepository: "rule 1 (order)"
+  repository:orgholidayrepository: "rule 2 (workforce 1)"
+  repository:pagefavoriterepository: "rule 1 (pagefavorite)"
+  repository:passwordresetrepository: "rule 2 (identity 1)"
+  repository:performancereviewrepository: "rule 2 (workforce 1)"
+  repository:permitrepository: "rule 1 (permit)"
+  repository:ptoledgerrepository: "rule 2 (workforce 1)"
+  repository:ptopolicyrepository: "rule 2 (workforce 1)"
+  repository:pushsubscriptionrepository: "rule 2 (workspace 1)"
+  repository:rateagreementrepository: "rule 1 (rateagreement)"
+  repository:rateconfirmationrepository: "rule 1 (rateconfirmation)"
+  repository:rateimportrepository: "rule 1 (rateimport)"
+  repository:ratematrixrepository: "rule 1 (ratematrix)"
+  repository:ratequoterepository: "rule 1 (ratequote)"
+  repository:ratesimulationrepository: "rule 1 (ratesimulation)"
+  repository:ratezonerepository: "rule 1 (ratezone)"
+  repository:rbacrepository: "rule 2 (identity 1)"
+  repository:recordlabelrepository: "rule 2 (equipment 4, reference 3, billing 3)"
+  repository:recordversionrepository: "rule 2 (billing 7, operations 6, accounting 5)"
+  repository:recurringshipmentrepository: "rule 1 (recurringshipment)"
+  repository:reportrepository: "rule 1 (report)"
+  repository:retrievalsourcerepository: "rule 2 (documents 3, agent 2)"
+  repository:roleassignmentrepository: "rule 2 (identity 1)"
+  repository:rolerepository: "rule 2 (identity 1)"
+  repository:routingguiderepository: "rule 2 (operations 1)"
+  repository:selfservicerepository: "rule 2 (workforce 1)"
+  repository:sequenceconfigrepository: "rule 2 (identity 1)"
+  repository:servicefailurereasoncoderepository: "rule 2 (operations 1)"
+  repository:servicefailurerepository: "rule 1 (servicefailure)"
+  repository:servicetyperepository: "rule 1 (servicetype)"
+  repository:settingversionrepository: "rule 1 (settingversion)"
+  repository:settlementcontrolrepository: "rule 2 (identity 1)"
+  repository:shipmentadditionalchargerepository: "rule 2 (operations 1)"
+  repository:shipmentboardrepository: "rule 2 (operations 3)"
+  repository:shipmentbriefrepository: "rule 1 (shipmentbrief)"
+  repository:shipmentcommentrepository: "rule 2 (operations 1)"
+  repository:shipmentcommodityrepository: "rule 2 (operations 1)"
+  repository:shipmentcontrolrepository: "rule 2 (identity 1)"
+  repository:shipmenteventrepository: "rule 1 (shipmentevent)"
+  repository:shipmentholdrepository: "rule 2 (operations 1)"
+  repository:shipmentimportchatrepository: "rule 1 (shipmentimportchat)"
+  repository:shipmentmovejurisdictionmilerepository: "rule 2 (operations 1)"
+  repository:shipmentmoverepository: "rule 2 (operations 1)"
+  repository:shipmentrepository: "rule 1 (shipment)"
+  repository:shipmentsuggestionrepository: "rule 1 (shipmentsuggestion)"
+  repository:shipmenttrackingrepository: "rule 2 (operations 1)"
+  repository:shipmenttyperepository: "rule 1 (shipmenttype)"
+  repository:sidebarpreferencerepository: "rule 1 (sidebarpreference)"
+  repository:ssoconfigrepository: "rule 2 (identity 2)"
+  repository:ssoidentitylinkrepository: "rule 2 (identity 1)"
+  repository:storedmileagerepository: "rule 1 (storedmileage)"
+  repository:tableconfigurationrepository: "rule 1 (tableconfiguration)"
+  repository:tablelayoutrepository: "rule 1 (tablelayout)"
+  repository:tcaallowlistrepository: "rule 2 (workspace 1)"
+  repository:tcasubscriptionrepository: "rule 2 (workspace 1)"
+  repository:telematicsrepository: "rule 1 (telematics)"
+  repository:tenantsyncrepository: "rule 2 (identity 1)"
+  repository:tenderrepository: "rule 1 (tender)"
+  repository:timesheetrepository: "rule 2 (workforce 1)"
+  repository:tractorrepository: "rule 1 (tractor)"
+  repository:trailerrepository: "rule 1 (trailer)"
+  repository:usstaterepository: "rule 1 (usstate)"
+  repository:watchtowerrepository: "rule 1 (watchtower)"
+  repository:weatheralertrepository: "rule 1 (weatheralert)"
+  repository:workerchecklistrepository: "rule 2 (workforce 1)"
+  repository:workercredentialrepository: "rule 2 (workforce 1)"
+  repository:workerdqfrepository: "rule 2 (workforce 1)"
+  repository:workerdrugalcoholrepository: "rule 2 (workforce 1)"
+  repository:workeremploymenteventrepository: "rule 2 (workforce 1)"
+  repository:workerinjuryrepository: "rule 2 (workforce 1)"
+  repository:workerleaverepository: "rule 2 (workforce 1)"
+  repository:workerptorepository: "rule 2 (workforce 1)"
+  repository:workerrepository: "rule 1 (worker)"
+  repository:workersafetyrepository: "rule 2 (workforce 1)"
+  repository:workertrainingrepository: "rule 2 (workforce 1)"
+  service:accessorialchargeservice: "rule 1 (accessorialcharge)"
+  service:accountingcontrolpolicyservice: "rule 2 (identity 1)"
+  service:accountingcontrolservice: "rule 2 (identity 2, workspace 1)"
+  service:accountingdriftservice: "rule 2 (billing 3, accounting 2, agent 2)"
+  service:accountingsyncservice: "rule 1 (accountingsync)"
+  service:accounttypeservice: "rule 1 (accounttype)"
+  service:agentaccessservice: "rule 3"
+  service:agentactivityservice: "rule 3"
+  service:agentactivitysummaryservice: "rule 3"
+  service:agentbudgetservice: "rule 3"
+  service:agentcapabilityservice: "rule 3"
+  service:agentcontrolservice: "rule 3"
+  service:agentdecisionqueueservice: "rule 3"
+  service:agentdecisionservice: "rule 3"
+  service:agentdefinitionservice: "rule 3"
+  service:agentdraftservice: "rule 3"
+  service:agentevalcaseservice: "rule 3"
+  service:agentevalgate: "rule 3"
+  service:agentevaluationservice: "rule 3"
+  service:agentevents: "rule 3"
+  service:agentexceptionservice: "rule 3"
+  service:agentextensionservice: "rule 3"
+  service:agentguard: "rule 3"
+  service:agentmemoryservice: "rule 3"
+  service:agentplanservice: "rule 3"
+  service:agentproposalnotifier: "rule 3"
+  service:agentproposalservice: "rule 3"
+  service:agentqualityservice: "rule 3"
+  service:agentquerytoolservice: "rule 3"
+  service:agentredteam: "rule 3"
+  service:agentreflectionservice: "rule 3"
+  service:agentrosterservice: "rule 3"
+  service:agentruneventservice: "rule 3"
+  service:agentrunservice: "rule 3"
+  service:agentruntime: "rule 3"
+  service:agentsafetyservice: "rule 3"
+  service:agentscorecardservice: "rule 3"
+  service:agentscoring: "rule 3"
+  service:agentsearch: "rule 3"
+  service:agentshadow: "rule 3"
+  service:agentshadowservice: "rule 3"
+  service:agentsubjectservice: "rule 3"
+  service:agenttestpromptservice: "rule 3"
+  service:agenttoolcatalog: "rule 3"
+  service:agenttoolpolicy: "rule 3"
+  service:agenttoolruleservice: "rule 3"
+  service:agenttoolschema: "rule 3"
+  service:agenttoolservice: "rule 3"
+  service:agenttrustservice: "rule 3"
+  service:agentwaitservice: "rule 3"
+  service:aiauditservice: "rule 3"
+  service:aicontrolsummaryservice: "rule 3"
+  service:aicorrectionretention: "rule 3"
+  service:aicorrectionservice: "rule 3"
+  service:aidocumentservice: "rule 3"
+  service:aifeedbackservice: "rule 3"
+  service:aiproviderservice: "rule 3"
+  service:aiproviderspendservice: "rule 3"
+  service:airetrievalstatusservice: "rule 3"
+  service:aitraininghistoryservice: "rule 3"
+  service:aituneupservice: "rule 3"
+  service:aiusageservice: "rule 3"
+  service:apikeyservice: "rule 1 (apikey)"
+  service:assignmentservice: "rule 2 (operations 3, equipment 2, workspace 2)"
+  service:assistantcaseservice: "rule 3"
+  service:assistantfollowupservice: "rule 3"
+  service:assistanthandoffservice: "rule 3"
+  service:assistantqueueservice: "rule 3"
+  service:assistantservice: "rule 3"
+  service:assistantturnservice: "rule 3"
+  service:auditservice: "rule 1 (audit)"
+  service:autheventservice: "rule 2 (identity 1)"
+  service:authservice: "rule 2 (identity 4)"
+  service:bankreceiptbatchservice: "rule 1 (bankreceiptbatch)"
+  service:bankreceiptservice: "rule 1 (bankreceipt)"
+  service:bankreceiptworkitemservice: "rule 1 (bankreceiptworkitem)"
+  service:billingcontrolservice: "rule 2 (identity 2)"
+  service:billingqueueapprovalservice: "rule 2 (billing 1)"
+  service:billingqueueservice: "rule 1 (billingqueue)"
+  service:billingtransferservice: "rule 1 (billingtransfer)"
+  service:briefingservice: "rule 1 (briefing)"
+  service:bulkeditservice: "rule 1 (bulkedit)"
+  service:captureservice: "rule 1 (capture)"
+  service:carrierassignmentservice: "rule 2 (rating 3, identity 2, operations 2)"
+  service:carriercapacityservice: "rule 1 (carriercapacity)"
+  service:carrierintelservice: "rule 1 (carrierintel)"
+  service:carrierservice: "rule 1 (carrier)"
+  service:carriersettlementservice: "rule 1 (carriersettlement)"
+  service:commodityservice: "rule 1 (commodity)"
+  service:conversationscheduleservice: "rule 3"
+  service:customerpaymentservice: "rule 1 (customerpayment)"
+  service:customerservice: "rule 1 (customer)"
+  service:customfieldservice: "rule 1 (customfield)"
+  service:dashcontrolservice: "rule 2 (identity 2)"
+  service:dataentrycontrolservice: "rule 1 (dataentrycontrol)"
+  service:dataretentionservice: "rule 2 (identity 1)"
+  service:datatransformer: "rule 2 (reference 6, accounting 3, equipment 2)"
+  service:detentionservice: "rule 1 (detention)"
+  service:dispatchautoassignservice: "rule 2 (agent 2, operations 1)"
+  service:dispatchconsoleservice: "rule 2 (operations 2, workforce 1)"
+  service:dispatchcontrolservice: "rule 1 (dispatchcontrol)"
+  service:distancecalculationservice: "rule 1 (distancecalculation)"
+  service:distancecontrolservice: "rule 1 (distancecontrol)"
+  service:distanceoverrideservice: "rule 1 (distanceoverride)"
+  service:distanceprofileservice: "rule 1 (distanceprofile)"
+  service:documentcontrolservice: "rule 2 (identity 2)"
+  service:documentintelligenceservice: "rule 2 (documents 2, operations 1, identity 1)"
+  service:documentoperationsservice: "rule 2 (documents 3, operations 1)"
+  service:documentpacketruleservice: "rule 1 (documentpacketrule)"
+  service:documentparsingruleservice: "rule 1 (documentparsingrule)"
+  service:documentsearchprojectionservice: "rule 1 (documentsearchprojection)"
+  service:documentservice: "rule 1 (document)"
+  service:documenttemplateservice: "rule 1 (documenttemplate)"
+  service:documenttypeservice: "rule 1 (documenttype)"
+  service:documentuploadservice: "rule 1 (documentupload)"
+  service:dothazmatreferenceservice: "rule 1 (dothazmatreference)"
+  service:driverpayservice: "rule 1 (driverpay)"
+  service:driversettlementservice: "rule 1 (driversettlement)"
+  service:ediservice: "rule 1 (edi)"
+  service:edistarlark: "rule 2 (edi 1)"
+  service:editconflict: "rule 2 (kernel 2, identity 1)"
+  service:editransport: "rule 2 (edi 1)"
+  service:edix12: "rule 2 (edi 1)"
+  service:edix12inspect: "rule 2 (edi 1)"
+  service:emailservice: "rule 1 (email)"
+  service:entitlementservice: "rule 2 (kernel 1)"
+  service:equipmentavailabilityhelper: "rule 2 (operations 1)"
+  service:equipmentmanufacturerservice: "rule 1 (equipmentmanufacturer)"
+  service:equipmenttypeservice: "rule 1 (equipmenttype)"
+  service:exchangerateservice: "rule 1 (exchangerate)"
+  service:exchangeratestamp: "rule 2 (identity 2)"
+  service:extractionevalservice: "rule 1 (extractioneval)"
+  service:extractionrolloutservice: "rule 1 (extractionrollout)"
+  service:extractionshadowservice: "rule 1 (extractionshadow)"
+  service:fieldsensitivity: "rule 2 (identity 1)"
+  service:fiscalcloseblockers: "rule 2 (accounting 1)"
+  service:fiscalcloseservice: "rule 1 (fiscalclose)"
+  service:fiscalperiodservice: "rule 1 (fiscalperiod)"
+  service:fiscalyearservice: "rule 1 (fiscalyear)"
+  service:fleetcodeservice: "rule 1 (fleetcode)"
+  service:formula: "rule 2 (rating 4, reference 1, operations 1)"
+  service:formulaassistantservice: "rule 2 (workspace 1)"
+  service:formulatemplateservice: "rule 1 (formulatemplate)"
+  service:fuelpurchaseservice: "rule 1 (fuelpurchase)"
+  service:fuelsurchargeservice: "rule 1 (fuelsurcharge)"
+  service:glaccountservice: "rule 1 (glaccount)"
+  service:glbalanceservice: "rule 1 (glbalance)"
+  service:googlemapsservice: "rule 2 (workspace 1)"
+  service:hazardousmaterialservice: "rule 1 (hazardousmaterial)"
+  service:hazmatsegregationruleservice: "rule 1 (hazmatsegregationrule)"
+  service:holdreasonservice: "rule 1 (holdreason)"
+  service:homelayoutservice: "rule 1 (homelayout)"
+  service:hosprojection: "rule 2 (workforce 1)"
+  service:iamservice: "rule 1 (iam)"
+  service:iftaservice: "rule 1 (ifta)"
+  service:inboundmessageservice: "rule 1 (inboundmessage)"
+  service:insightservice: "rule 1 (insight)"
+  service:instancebootstrapservice: "rule 1 (instancebootstrap)"
+  service:integrationservice: "rule 1 (integration)"
+  service:internaledilifecycle: "rule 2 (operations 2, edi 1)"
+  service:internaledistatussync: "rule 2 (operations 3, edi 1)"
+  service:invoiceadjustmentcontrolservice: "rule 2 (identity 2)"
+  service:invoiceadjustmentservice: "rule 1 (invoiceadjustment)"
+  service:invoicedisputeservice: "rule 2 (billing 3, identity 1)"
+  service:invoiceledger: "rule 2 (billing 4, identity 1)"
+  service:invoicelines: "rule 2 (billing 2, reference 1, operations 1)"
+  service:invoicerunservice: "rule 1 (invoicerun)"
+  service:invoiceservice: "rule 1 (invoice)"
+  service:invoicevoid: "rule 2 (billing 2, operations 1)"
+  service:journalentryservice: "rule 1 (journalentry)"
+  service:journalreversalservice: "rule 1 (journalreversal)"
+  service:journalreviewservice: "rule 2 (identity 2, accounting 1)"
+  service:jurisdictionruleservice: "rule 1 (jurisdictionrule)"
+  service:latechargeservice: "rule 1 (latecharge)"
+  service:ledgersync: "rule 2 (accounting 1)"
+  service:locationcategoryservice: "rule 1 (locationcategory)"
+  service:locationcodegenerator: "rule 2 (identity 1)"
+  service:locationservice: "rule 1 (location)"
+  service:manualjournalservice: "rule 1 (manualjournal)"
+  service:mfaservice: "rule 2 (identity 3)"
+  service:modeprofileservice: "rule 1 (modeprofile)"
+  service:notificationservice: "rule 1 (notification)"
+  service:onboardingservice: "rule 1 (onboarding)"
+  service:orderderivation: "rule 2 (operations 3)"
+  service:orderservice: "rule 1 (order)"
+  service:organizationservice: "rule 2 (identity 3)"
+  service:orgzone: "rule 2 (identity 1)"
+  service:pagefavoriteservice: "rule 1 (pagefavorite)"
+  service:passwordresetservice: "rule 2 (identity 3, workspace 2, documents 1)"
+  service:permission: "rule 1 (permission)"
+  service:permitservice: "rule 1 (permit)"
+  service:planservice: "rule 2 (identity 1)"
+  service:platformbillingservice: "rule 2 (kernel 1)"
+  service:productguideservice: "rule 3"
+  service:proposalexecutor: "rule 3"
+  service:proposalpreviewservice: "rule 3"
+  service:proposalrecorder: "rule 3"
+  service:ptoledgerservice: "rule 2 (identity 2, workforce 1)"
+  service:quotaservice: "rule 2 (identity 1)"
+  service:rateagreementservice: "rule 1 (rateagreement)"
+  service:rateconfirmationservice: "rule 1 (rateconfirmation)"
+  service:rateengine: "rule 2 (rating 4, reference 2, places 2)"
+  service:rateimportservice: "rule 1 (rateimport)"
+  service:ratematrixservice: "rule 1 (ratematrix)"
+  service:ratequoteservice: "rule 1 (ratequote)"
+  service:ratesimulationservice: "rule 1 (ratesimulation)"
+  service:ratezoneservice: "rule 1 (ratezone)"
+  service:recordanchorservice: "rule 2 (agent 2, operations 1, billing 1)"
+  service:recurringshipmentservice: "rule 1 (recurringshipment)"
+  service:reporting: "rule 2 (workspace 3, identity 2, accounting 1)"
+  service:retrievalquery: "rule 3"
+  service:retrievalservice: "rule 3"
+  service:roleassignmentservice: "rule 2 (identity 1)"
+  service:roleservice: "rule 2 (identity 1)"
+  service:runstepledger: "rule 3"
+  service:samsarasyncservice: "rule 2 (workforce 1)"
+  service:secretconfig: "rule 2 (kernel 1)"
+  service:sequenceconfigservice: "rule 2 (identity 2)"
+  service:servicefailureservice: "rule 1 (servicefailure)"
+  service:servicetypeservice: "rule 1 (servicetype)"
+  service:settlementcontrolservice: "rule 2 (identity 2)"
+  service:shipmentboardbrief: "rule 2 (agent 1)"
+  service:shipmentbriefingservice: "rule 2 (agent 2, operations 1, identity 1)"
+  service:shipmentcontrolservice: "rule 2 (identity 2)"
+  service:shipmentetaservice: "rule 2 (operations 2, workforce 1)"
+  service:shipmenteventservice: "rule 1 (shipmentevent)"
+  service:shipmentimportassistantservice: "rule 2 (agent 4, places 1, identity 1)"
+  service:shipmentmoveservice: "rule 2 (operations 2, agent 1, workspace 1)"
+  service:shipmentquickfilterservice: "rule 2 (operations 2, billing 1)"
+  service:shipmentservice: "rule 1 (shipment)"
+  service:shipmentsuggestionservice: "rule 1 (shipmentsuggestion)"
+  service:shipmenttypeservice: "rule 1 (shipmenttype)"
+  service:shipmentwatchlistservice: "rule 2 (operations 2, reference 1, identity 1)"
+  service:sidebarpreferenceservice: "rule 1 (sidebarpreference)"
+  service:storedmileageservice: "rule 1 (storedmileage)"
+  service:tablechangealertservice: "rule 1 (tablechangealert)"
+  service:tableconfigurationservice: "rule 1 (tableconfiguration)"
+  service:tableinsightservice: "rule 2 (identity 1)"
+  service:tablelayoutservice: "rule 1 (tablelayout)"
+  service:tablequeryservice: "rule 2 (agent 2, identity 1)"
+  service:telematicsservice: "rule 1 (telematics)"
+  service:tenanttimezone: "rule 2 (identity 1)"
+  service:tenderservice: "rule 1 (tender)"
+  service:toolpreview: "rule 3"
+  service:toolsimulation: "rule 3"
+  service:tractorservice: "rule 1 (tractor)"
+  service:trailerservice: "rule 1 (trailer)"
+  service:usageservice: "rule 2 (kernel 1)"
+  service:userservice: "rule 2 (identity 2, workspace 1)"
+  service:usstateservice: "rule 1 (usstate)"
+  service:watchtowerservice: "rule 1 (watchtower)"
+  service:watchtowersources: "rule 3"
+  service:weatheralertservice: "rule 1 (weatheralert)"
+  service:webpushservice: "rule 2 (workspace 1)"
+  service:workeroverviewservice: "rule 2 (workforce 1)"
+  service:workerptoservice: "rule 2 (identity 2, documents 1, workspace 1)"
+  service:workerservice: "rule 1 (worker)"
