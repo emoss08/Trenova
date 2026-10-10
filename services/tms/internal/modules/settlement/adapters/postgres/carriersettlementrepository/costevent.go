@@ -1,6 +1,7 @@
 package carriersettlementrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
 	"context"
 	"fmt"
 
@@ -36,15 +37,15 @@ func (r *costEventRepository) List(
 	req *carriersettlementports.ListCarrierCostEventsRequest,
 ) (*pagination.ListResult[*carriersettlement.CostEvent], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*carriersettlement.CostEvent], error) {
-		cols := buncolgen.CostEventColumns
+		cols := carriersettlementcol.CostEventColumns
 		limit := req.Filter.Pagination.SafeLimit()
 		items := make([]*carriersettlement.CostEvent, 0, limit)
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&items).
-			Apply(buncolgen.CostEventApplyTenant(req.Filter.TenantInfo)).
-			Relation(buncolgen.CostEventRelations.Carrier).
+			Apply(carriersettlementcol.CostEventApplyTenant(req.Filter.TenantInfo)).
+			Relation(carriersettlementcol.CostEventRelations.Carrier).
 			Order(cols.EventDate.OrderDesc()).
 			Limit(limit).
 			Offset(req.Filter.Pagination.SafeOffset())
@@ -87,7 +88,7 @@ func (r *costEventRepository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.CostEventTable.Alias,
+						carriersettlementcol.CostEventTable.Alias,
 						req.Filter,
 						(*carriersettlement.CostEvent)(nil),
 					)
@@ -109,13 +110,13 @@ func (r *costEventRepository) ListConnection(
 				Query: func(entities *[]*carriersettlement.CostEvent) *bun.SelectQuery {
 					return dba.NewSelect().
 						Model(entities).
-						ColumnExpr(buncolgen.CostEventTable.All()).
-						Relation(buncolgen.CostEventRelations.Carrier)
+						ColumnExpr(carriersettlementcol.CostEventTable.All()).
+						Relation(carriersettlementcol.CostEventRelations.Carrier)
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					return querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.CostEventTable.Alias,
+						carriersettlementcol.CostEventTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*carriersettlement.CostEvent)(nil),
@@ -137,16 +138,16 @@ func (r *costEventRepository) GetByID(
 	req carriersettlementports.GetCarrierCostEventByIDRequest,
 ) (*carriersettlement.CostEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.CostEvent, error) {
-		cols := buncolgen.CostEventColumns
+		cols := carriersettlementcol.CostEventColumns
 		entity := new(carriersettlement.CostEvent)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CostEventScopeTenant(sq, req.TenantInfo).
+				return carriersettlementcol.CostEventScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
-			Relation(buncolgen.CostEventRelations.Carrier).
+			Relation(carriersettlementcol.CostEventRelations.Carrier).
 			Scan(ctx)
 		if err != nil {
 			return nil, dberror.HandleNotFoundError(err, "CarrierCostEvent")
@@ -161,13 +162,13 @@ func (r *costEventRepository) GetByIdempotencyKey(
 	key string,
 ) (*carriersettlement.CostEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.CostEvent, error) {
-		cols := buncolgen.CostEventColumns
+		cols := carriersettlementcol.CostEventColumns
 		entity := new(carriersettlement.CostEvent)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CostEventScopeTenant(sq, tenantInfo).
+				return carriersettlementcol.CostEventScopeTenant(sq, tenantInfo).
 					Where(cols.IdempotencyKey.Eq(), key)
 			}).
 			Scan(ctx)
@@ -187,13 +188,13 @@ func (r *costEventRepository) ListPendingByCarrier(
 	req *carriersettlementports.ListPendingCostEventsRequest,
 ) ([]*carriersettlement.CostEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carriersettlement.CostEvent, error) {
-		cols := buncolgen.CostEventColumns
+		cols := carriersettlementcol.CostEventColumns
 		items := make([]*carriersettlement.CostEvent, 0)
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&items).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.CostEventScopeTenant(sq, req.TenantInfo).
+				sq = carriersettlementcol.CostEventScopeTenant(sq, req.TenantInfo).
 					Where(cols.CarrierID.Eq(), req.CarrierID).
 					WhereGroup(" AND ", func(status *bun.SelectQuery) *bun.SelectQuery {
 						status = status.WhereGroup(
@@ -241,8 +242,8 @@ func (r *costEventRepository) ListPendingByCarrier(
 }
 
 func (r *costEventRepository) resolvedInvoiceMatch(ctx context.Context) *bun.SelectQuery {
-	cols := buncolgen.CostEventColumns
-	matchCols := buncolgen.InvoiceMatchColumns
+	cols := carriersettlementcol.CostEventColumns
+	matchCols := carriersettlementcol.InvoiceMatchColumns
 	return r.db.DBForContext(ctx).
 		NewSelect().
 		Model((*carriersettlement.InvoiceMatch)(nil)).
@@ -257,7 +258,7 @@ func (r *costEventRepository) whereInvoiceMatched(
 	ctx context.Context,
 	sq *bun.SelectQuery,
 ) *bun.SelectQuery {
-	cols := buncolgen.CostEventColumns
+	cols := carriersettlementcol.CostEventColumns
 	return sq.WhereGroup(" AND ", func(held *bun.SelectQuery) *bun.SelectQuery {
 		return held.
 			Where(cols.CarrierAssignmentID.IsNull()).
@@ -271,14 +272,14 @@ func (r *costEventRepository) CountAwaitingInvoiceMatch(
 	settlementID pulid.ID,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.CostEventColumns
+		cols := carriersettlementcol.CostEventColumns
 		var count int
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*carriersettlement.CostEvent)(nil)).
 			ColumnExpr("COUNT(DISTINCT "+cols.CarrierAssignmentID.Qualified()+")").
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CostEventScopeTenant(sq, tenantInfo).
+				return carriersettlementcol.CostEventScopeTenant(sq, tenantInfo).
 					Where(cols.SettlementID.Eq(), settlementID).
 					Where(cols.Status.NotEq(), carriersettlement.CostEventStatusVoided).
 					Where(cols.CarrierAssignmentID.IsNotNull()).
@@ -297,14 +298,14 @@ func (r *costEventRepository) ListCarrierIDsWithPendingEvents(
 	req carriersettlementports.ListCarriersWithPendingEventsRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		cols := buncolgen.CostEventColumns
+		cols := carriersettlementcol.CostEventColumns
 		ids := make([]pulid.ID, 0)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*carriersettlement.CostEvent)(nil)).
 			ColumnExpr("DISTINCT "+cols.CarrierID.Qualified()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.CostEventScopeTenant(sq, req.TenantInfo).
+				sq = carriersettlementcol.CostEventScopeTenant(sq, req.TenantInfo).
 					Where(cols.Status.Eq(), carriersettlement.CostEventStatusPending).
 					Where(cols.EventDate.Lt(), req.PeriodEnd)
 				if req.HoldUntilInvoiceMatched {
@@ -326,13 +327,13 @@ func (r *costEventRepository) ListByShipment(
 	shipmentID pulid.ID,
 ) ([]*carriersettlement.CostEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carriersettlement.CostEvent, error) {
-		cols := buncolgen.CostEventColumns
+		cols := carriersettlementcol.CostEventColumns
 		items := make([]*carriersettlement.CostEvent, 0)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&items).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CostEventScopeTenant(sq, tenantInfo).
+				return carriersettlementcol.CostEventScopeTenant(sq, tenantInfo).
 					Where(cols.ShipmentID.Eq(), shipmentID)
 			}).
 			Order(cols.CreatedAt.OrderAsc()).
@@ -350,13 +351,13 @@ func (r *costEventRepository) ListByMove(
 	moveID pulid.ID,
 ) ([]*carriersettlement.CostEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carriersettlement.CostEvent, error) {
-		cols := buncolgen.CostEventColumns
+		cols := carriersettlementcol.CostEventColumns
 		items := make([]*carriersettlement.CostEvent, 0)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&items).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CostEventScopeTenant(sq, tenantInfo).
+				return carriersettlementcol.CostEventScopeTenant(sq, tenantInfo).
 					Where(cols.MoveID.Eq(), moveID)
 			}).
 			Order(cols.CreatedAt.OrderAsc()).
@@ -411,12 +412,12 @@ func (r *costEventRepository) Update(
 	entity *carriersettlement.CostEvent,
 ) (*carriersettlement.CostEvent, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*carriersettlement.CostEvent, error) {
-		cols := buncolgen.CostEventColumns
+		cols := carriersettlementcol.CostEventColumns
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.CostEventScopeTenantUpdate(uq, pagination.TenantInfo{
+				return carriersettlementcol.CostEventScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
 				}).
@@ -453,12 +454,12 @@ func (r *costEventRepository) MarkAttached(
 		if len(eventIDs) == 0 {
 			return nil
 		}
-		cols := buncolgen.CostEventColumns
+		cols := carriersettlementcol.CostEventColumns
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*carriersettlement.CostEvent)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.CostEventScopeTenantUpdate(uq, tenantInfo).
+				return carriersettlementcol.CostEventScopeTenantUpdate(uq, tenantInfo).
 					Where(cols.ID.In(), bun.List(eventIDs)).
 					Where(cols.Status.Eq(), carriersettlement.CostEventStatusPending)
 			}).
@@ -493,12 +494,12 @@ func (r *costEventRepository) MarkSettled(
 	settlementID pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.CostEventColumns
+		cols := carriersettlementcol.CostEventColumns
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*carriersettlement.CostEvent)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.CostEventScopeTenantUpdate(uq, tenantInfo).
+				return carriersettlementcol.CostEventScopeTenantUpdate(uq, tenantInfo).
 					Where(cols.SettlementID.Eq(), settlementID).
 					Where(cols.Status.Eq(), carriersettlement.CostEventStatusAttached)
 			}).
@@ -518,12 +519,12 @@ func (r *costEventRepository) ReleaseSettled(
 	settlementID pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.CostEventColumns
+		cols := carriersettlementcol.CostEventColumns
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*carriersettlement.CostEvent)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.CostEventScopeTenantUpdate(uq, tenantInfo).
+				return carriersettlementcol.CostEventScopeTenantUpdate(uq, tenantInfo).
 					Where(cols.SettlementID.Eq(), settlementID).
 					Where(cols.Status.In(), bun.List([]carriersettlement.CostEventStatus{
 						carriersettlement.CostEventStatusAttached,

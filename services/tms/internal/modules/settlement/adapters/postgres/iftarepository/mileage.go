@@ -1,6 +1,7 @@
 package iftarepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/iftacol"
 	"context"
 	"fmt"
 
@@ -21,7 +22,7 @@ func (r *repository) applyMileageEntryFilters(
 	q *bun.SelectQuery,
 	req *iftaports.ListMileageEntriesRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.JurisdictionMileageEntryColumns
+	cols := iftacol.JurisdictionMileageEntryColumns
 	if !req.TractorID.IsNil() {
 		q = q.Where(cols.TractorID.Eq(), req.TractorID)
 	}
@@ -47,20 +48,20 @@ func (r *repository) ListMileageEntries(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*ifta.JurisdictionMileageEntry], error) {
 		dba := r.db.DBForContext(ctx)
 		filter := filterOrEmpty(req.Filter)
-		cols := buncolgen.JurisdictionMileageEntryColumns
-		rel := buncolgen.JurisdictionMileageEntryRelations
+		cols := iftacol.JurisdictionMileageEntryColumns
+		rel := iftacol.JurisdictionMileageEntryRelations
 
 		var totalCount *int
 		if req.Cursor.IncludeTotalCount {
 			total, err := dba.NewSelect().
 				Model((*ifta.JurisdictionMileageEntry)(nil)).
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return buncolgen.JurisdictionMileageEntryScopeTenant(sq, filter.TenantInfo)
+					return iftacol.JurisdictionMileageEntryScopeTenant(sq, filter.TenantInfo)
 				}).
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.JurisdictionMileageEntryTable.Alias,
+						iftacol.JurisdictionMileageEntryTable.Alias,
 						filter,
 						(*ifta.JurisdictionMileageEntry)(nil),
 					)
@@ -83,9 +84,9 @@ func (r *repository) ListMileageEntries(
 				Query: func(items *[]*ifta.JurisdictionMileageEntry) *bun.SelectQuery {
 					q := dba.NewSelect().
 						Model(items).
-						ColumnExpr(buncolgen.JurisdictionMileageEntryTable.All()).
+						ColumnExpr(iftacol.JurisdictionMileageEntryTable.All()).
 						WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-							return buncolgen.JurisdictionMileageEntryScopeTenant(sq, filter.TenantInfo)
+							return iftacol.JurisdictionMileageEntryScopeTenant(sq, filter.TenantInfo)
 						})
 					if req.IncludeTractor {
 						q = q.Relation(rel.Tractor)
@@ -98,7 +99,7 @@ func (r *repository) ListMileageEntries(
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.JurisdictionMileageEntryTable.Alias,
+						iftacol.JurisdictionMileageEntryTable.Alias,
 						filter,
 						req.Cursor,
 						(*ifta.JurisdictionMileageEntry)(nil),
@@ -128,14 +129,14 @@ func (r *repository) GetMileageEntryByID(
 	req *iftaports.GetMileageEntryByIDRequest,
 ) (*ifta.JurisdictionMileageEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ifta.JurisdictionMileageEntry, error) {
-		rel := buncolgen.JurisdictionMileageEntryRelations
+		rel := iftacol.JurisdictionMileageEntryRelations
 		entity := new(ifta.JurisdictionMileageEntry)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.JurisdictionMileageEntryScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.JurisdictionMileageEntryColumns.ID.Eq(), req.ID)
+				return iftacol.JurisdictionMileageEntryScopeTenant(sq, req.TenantInfo).
+					Where(iftacol.JurisdictionMileageEntryColumns.ID.Eq(), req.ID)
 			})
 		if req.IncludeTractor {
 			q = q.Relation(rel.Tractor)
@@ -189,7 +190,7 @@ func (r *repository) UpdateMileageEntry(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.JurisdictionMileageEntryColumns.Version.Eq(), ov).
+			Where(iftacol.JurisdictionMileageEntryColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -216,12 +217,12 @@ func (r *repository) DeleteMileageEntry(
 	req *iftaports.DeleteMileageEntryRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.JurisdictionMileageEntryColumns
+		cols := iftacol.JurisdictionMileageEntryColumns
 		result, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*ifta.JurisdictionMileageEntry)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.JurisdictionMileageEntryScopeTenantDelete(dq, req.TenantInfo).
+				return iftacol.JurisdictionMileageEntryScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID).
 					Where(cols.Version.Eq(), req.Version)
 			}).

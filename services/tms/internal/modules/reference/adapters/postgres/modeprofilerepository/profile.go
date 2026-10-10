@@ -1,6 +1,7 @@
 package modeprofilerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/modeprofilecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
@@ -53,7 +54,7 @@ func (r *profileRepository) invalidate(ctx context.Context, entity *modeprofile.
 }
 
 func orderRules(sq *bun.SelectQuery) *bun.SelectQuery {
-	return sq.Order(buncolgen.CapabilityRuleColumns.RuleKey.OrderAsc())
+	return sq.Order(modeprofilecol.CapabilityRuleColumns.RuleKey.OrderAsc())
 }
 
 func (r *profileRepository) filterQuery(
@@ -62,13 +63,13 @@ func (r *profileRepository) filterQuery(
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.ProfileTable.Alias,
+		modeprofilecol.ProfileTable.Alias,
 		req.Filter,
 		(*modeprofile.Profile)(nil),
 	)
 
 	if req.Status != "" {
-		q = q.Where(buncolgen.ProfileColumns.Status.Eq(), req.Status)
+		q = q.Where(modeprofilecol.ProfileColumns.Status.Eq(), req.Status)
 	}
 
 	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
@@ -85,7 +86,7 @@ func (r *profileRepository) List(
 		total, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Relation(buncolgen.ProfileRelations.Rules, orderRules).
+			Relation(modeprofilecol.ProfileRelations.Rules, orderRules).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return r.filterQuery(sq, req)
 			}).ScanAndCount(ctx)
@@ -116,12 +117,12 @@ func (r *profileRepository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ProfileScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.ProfileColumns.ID.Eq(), req.ModeProfileID)
+				return modeprofilecol.ProfileScopeTenant(sq, req.TenantInfo).
+					Where(modeprofilecol.ProfileColumns.ID.Eq(), req.ModeProfileID)
 			})
 
 		if req.IncludeRules {
-			q = q.Relation(buncolgen.ProfileRelations.Rules, orderRules)
+			q = q.Relation(modeprofilecol.ProfileRelations.Rules, orderRules)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -140,15 +141,15 @@ func (r *profileRepository) GetActiveProfiles(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*modeprofile.Profile, error) {
 		log := r.l.With(zap.String("operation", "GetActiveProfiles"))
 
-		cols := buncolgen.ProfileColumns
+		cols := modeprofilecol.ProfileColumns
 		entities := make([]*modeprofile.Profile, 0, 8)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Relation(buncolgen.ProfileRelations.Rules, orderRules).
+			Relation(modeprofilecol.ProfileRelations.Rules, orderRules).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ProfileScopeTenant(sq, tenantInfo).
+				return modeprofilecol.ProfileScopeTenant(sq, tenantInfo).
 					Where(cols.Status.Eq(), modeprofile.ProfileStatusActive)
 			}).
 			Order(cols.Priority.OrderDesc()).
@@ -242,7 +243,7 @@ func (r *profileRepository) Update(
 		ov := entity.Version
 		entity.Version++
 
-		ruleCols := buncolgen.CapabilityRuleColumns
+		ruleCols := modeprofilecol.CapabilityRuleColumns
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			results, uErr := r.db.DBForContext(c).
 				NewUpdate().
@@ -266,7 +267,7 @@ func (r *profileRepository) Update(
 				NewDelete().
 				Model((*modeprofile.CapabilityRule)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return buncolgen.CapabilityRuleScopeTenantDelete(dq, pagination.TenantInfo{
+					return modeprofilecol.CapabilityRuleScopeTenantDelete(dq, pagination.TenantInfo{
 						OrgID: entity.OrganizationID,
 						BuID:  entity.BusinessUnitID,
 					}).Where(ruleCols.ModeProfileID.Eq(), entity.ID)

@@ -1,6 +1,8 @@
 package shipmentmoverepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 	"fmt"
 
@@ -44,7 +46,7 @@ func (r *repository) SyncForShipment(
 	tx bun.IDB,
 	entity *shipment.Shipment,
 ) error {
-	sm := buncolgen.ShipmentMoveColumns
+	sm := shipmentcol.ShipmentMoveColumns
 
 	existingMoves, err := r.getExistingMoves(ctx, tx, entity)
 	if err != nil {
@@ -139,8 +141,8 @@ func (r *repository) GetByID(
 	req *shipmentports.GetMoveByIDRequest,
 ) (*shipment.ShipmentMove, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentMove, error) {
-		sm := buncolgen.ShipmentMoveColumns
-		stp := buncolgen.StopColumns
+		sm := shipmentcol.ShipmentMoveColumns
+		stp := shipmentcol.StopColumns
 		entity := new(shipment.ShipmentMove)
 
 		query := r.db.DBForContext(ctx).
@@ -156,11 +158,11 @@ func (r *repository) GetByID(
 
 		if req.ExpandMoveDetails {
 			query = query.
-				RelationWithOpts(buncolgen.ShipmentMoveRelations.Stops, bun.RelationOpts{
+				RelationWithOpts(shipmentcol.ShipmentMoveRelations.Stops, bun.RelationOpts{
 					Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
 						return sq.Order(stp.Sequence.OrderAsc()).
-							Relation(buncolgen.StopRelations.Location).
-							Relation(buncolgen.Rel(buncolgen.StopRelations.Location, buncolgen.LocationRelations.State))
+							Relation(shipmentcol.StopRelations.Location).
+							Relation(buncolgen.Rel(shipmentcol.StopRelations.Location, locationcol.LocationRelations.State))
 					},
 				})
 		}
@@ -188,8 +190,8 @@ func (r *repository) GetMovesByShipmentID(
 	req *shipmentports.GetMovesByShipmentIDRequest,
 ) ([]*shipment.ShipmentMove, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.ShipmentMove, error) {
-		sm := buncolgen.ShipmentMoveColumns
-		stp := buncolgen.StopColumns
+		sm := shipmentcol.ShipmentMoveColumns
+		stp := shipmentcol.StopColumns
 		entities := make([]*shipment.ShipmentMove, 0)
 
 		query := r.db.DBForContext(ctx).
@@ -202,11 +204,11 @@ func (r *repository) GetMovesByShipmentID(
 
 		if req.ExpandMoveDetails {
 			query = query.
-				RelationWithOpts(buncolgen.ShipmentMoveRelations.Stops, bun.RelationOpts{
+				RelationWithOpts(shipmentcol.ShipmentMoveRelations.Stops, bun.RelationOpts{
 					Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
 						return sq.Order(stp.Sequence.OrderAsc()).
-							Relation(buncolgen.StopRelations.Location).
-							Relation(buncolgen.Rel(buncolgen.StopRelations.Location, buncolgen.LocationRelations.State))
+							Relation(shipmentcol.StopRelations.Location).
+							Relation(buncolgen.Rel(shipmentcol.StopRelations.Location, locationcol.LocationRelations.State))
 					},
 				})
 		}
@@ -231,7 +233,7 @@ func (r *repository) hydrateActiveAssignments(
 	moves []*shipment.ShipmentMove,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		a := buncolgen.AssignmentColumns
+		a := shipmentcol.AssignmentColumns
 		moveIDs := make([]pulid.ID, 0, len(moves))
 		moveByID := make(map[pulid.ID]*shipment.ShipmentMove, len(moves))
 
@@ -257,10 +259,10 @@ func (r *repository) hydrateActiveAssignments(
 			Where(a.OrganizationID.Eq(), tenantInfo.OrgID).
 			Where(a.BusinessUnitID.Eq(), tenantInfo.BuID).
 			Where(a.ArchivedAt.IsNull()).
-			Relation(buncolgen.AssignmentRelations.Tractor).
-			Relation(buncolgen.AssignmentRelations.Trailer).
-			Relation(buncolgen.AssignmentRelations.PrimaryWorker).
-			Relation(buncolgen.AssignmentRelations.SecondaryWorker).
+			Relation(shipmentcol.AssignmentRelations.Tractor).
+			Relation(shipmentcol.AssignmentRelations.Trailer).
+			Relation(shipmentcol.AssignmentRelations.PrimaryWorker).
+			Relation(shipmentcol.AssignmentRelations.SecondaryWorker).
 			Scan(ctx); err != nil {
 			if dberror.IsNotFoundError(err) {
 				return nil
@@ -290,7 +292,7 @@ func (r *repository) hydrateActiveCarrierAssignments(
 	moveByID map[pulid.ID]*shipment.ShipmentMove,
 ) error {
 	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
-		casn := buncolgen.CarrierAssignmentColumns
+		casn := shipmentcol.CarrierAssignmentColumns
 
 		for _, move := range moveByID {
 			move.CarrierAssignment = nil
@@ -304,8 +306,8 @@ func (r *repository) hydrateActiveCarrierAssignments(
 			Where(casn.OrganizationID.Eq(), tenantInfo.OrgID).
 			Where(casn.BusinessUnitID.Eq(), tenantInfo.BuID).
 			Where(casn.Status.Ne(), shipment.CarrierAssignmentStatusCanceled).
-			Relation(buncolgen.CarrierAssignmentRelations.Carrier).
-			Relation(buncolgen.CarrierAssignmentRelations.Accessorials).
+			Relation(shipmentcol.CarrierAssignmentRelations.Carrier).
+			Relation(shipmentcol.CarrierAssignmentRelations.Accessorials).
 			Scan(ctx); err != nil {
 			if dberror.IsNotFoundError(err) {
 				return nil
@@ -333,7 +335,7 @@ func (r *repository) UpdateStatus(
 	req *shipmentports.UpdateMoveStatusRequest,
 ) (*shipment.ShipmentMove, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentMove, error) {
-		sm := buncolgen.ShipmentMoveColumns
+		sm := shipmentcol.ShipmentMoveColumns
 
 		move, err := r.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
 			MoveID:            req.MoveID,
@@ -378,7 +380,7 @@ func (r *repository) UpdateStopActuals(
 	stop *shipment.Stop,
 ) (*shipment.Stop, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Stop, error) {
-		cols := buncolgen.StopColumns
+		cols := shipmentcol.StopColumns
 
 		ov := stop.Version
 		stop.Version++
@@ -415,7 +417,7 @@ func (r *repository) BulkUpdateStatus(
 	req *shipmentports.BulkUpdateMoveStatusRequest,
 ) ([]*shipment.ShipmentMove, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.ShipmentMove, error) {
-		sm := buncolgen.ShipmentMoveColumns
+		sm := shipmentcol.ShipmentMoveColumns
 
 		if len(req.MoveIDs) == 0 {
 			return []*shipment.ShipmentMove{}, nil
@@ -530,7 +532,7 @@ func (r *repository) getExistingMoves(
 	tx bun.IDB,
 	entity *shipment.Shipment,
 ) (map[pulid.ID]*shipment.ShipmentMove, error) {
-	sm := buncolgen.ShipmentMoveColumns
+	sm := shipmentcol.ShipmentMoveColumns
 	moves := make([]*shipment.ShipmentMove, 0, len(entity.Moves))
 	if err := tx.NewSelect().
 		Model(&moves).
@@ -555,7 +557,7 @@ func (r *repository) getExistingStops(
 	entity *shipment.Shipment,
 	existingMoves map[pulid.ID]*shipment.ShipmentMove,
 ) (map[pulid.ID]map[pulid.ID]*shipment.Stop, error) {
-	stp := buncolgen.StopColumns
+	stp := shipmentcol.StopColumns
 	result := make(map[pulid.ID]map[pulid.ID]*shipment.Stop, len(existingMoves))
 	if len(existingMoves) == 0 {
 		return result, nil
@@ -602,7 +604,7 @@ func (r *repository) insertMove(
 	tx bun.IDB,
 	move *shipment.ShipmentMove,
 ) error {
-	sm := buncolgen.ShipmentMoveColumns
+	sm := shipmentcol.ShipmentMoveColumns
 	if _, err := tx.NewInsert().
 		Model(move).
 		Column(
@@ -632,7 +634,7 @@ func (r *repository) updateMove(
 	move *shipment.ShipmentMove,
 	existingMove *shipment.ShipmentMove,
 ) error {
-	sm := buncolgen.ShipmentMoveColumns
+	sm := shipmentcol.ShipmentMoveColumns
 	move.Version = existingMove.Version + 1
 
 	// A payload that never carried coverage must not reset a brokered move to
@@ -674,7 +676,7 @@ func (r *repository) syncStopsForMove(
 	move *shipment.ShipmentMove,
 	existingStops map[pulid.ID]*shipment.Stop,
 ) error {
-	stp := buncolgen.StopColumns
+	stp := shipmentcol.StopColumns
 
 	if existingStops == nil {
 		existingStops = make(map[pulid.ID]*shipment.Stop)
@@ -746,7 +748,7 @@ func (r *repository) replaceJurisdictionMilesForMove(
 	tx bun.IDB,
 	move *shipment.ShipmentMove,
 ) error {
-	cols := buncolgen.ShipmentMoveJurisdictionMileColumns
+	cols := shipmentcol.ShipmentMoveJurisdictionMileColumns
 	tenantInfo := pagination.TenantInfo{
 		OrgID: move.OrganizationID,
 		BuID:  move.BusinessUnitID,
@@ -755,7 +757,7 @@ func (r *repository) replaceJurisdictionMilesForMove(
 	if _, err := tx.NewDelete().
 		Model((*shipment.ShipmentMoveJurisdictionMile)(nil)).
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return buncolgen.ShipmentMoveJurisdictionMileScopeTenantDelete(dq, tenantInfo).
+			return shipmentcol.ShipmentMoveJurisdictionMileScopeTenantDelete(dq, tenantInfo).
 				Where(cols.ShipmentMoveID.Eq(), move.ID)
 		}).
 		Exec(ctx); err != nil {
@@ -813,7 +815,7 @@ func (r *repository) updateStop(
 	stop *shipment.Stop,
 	existingStop *shipment.Stop,
 ) error {
-	stp := buncolgen.StopColumns
+	stp := shipmentcol.StopColumns
 	stop.Version = existingStop.Version + 1
 
 	results, err := tx.NewUpdate().
@@ -858,7 +860,7 @@ func (r *repository) ensureMovesAreUnassigned(
 	tx bun.IDB,
 	moves []*shipment.ShipmentMove,
 ) error {
-	a := buncolgen.AssignmentColumns
+	a := shipmentcol.AssignmentColumns
 	moveIDs := make([]pulid.ID, 0, len(moves))
 	for _, move := range moves {
 		moveIDs = append(moveIDs, move.ID)
@@ -921,7 +923,7 @@ func (r *repository) shiftSubsequentMoveSequences(
 	tx bun.IDB,
 	originalMove *shipment.ShipmentMove,
 ) error {
-	sm := buncolgen.ShipmentMoveColumns
+	sm := shipmentcol.ShipmentMoveColumns
 	now := timeutils.NowUnix()
 
 	_, err := tx.NewUpdate().
@@ -943,7 +945,7 @@ func (r *repository) updateOriginalMoveForSplit(
 	originalMove *shipment.ShipmentMove,
 	relay *shipment.Stop,
 ) error {
-	stp := buncolgen.StopColumns
+	stp := shipmentcol.StopColumns
 	deliveryStop := *relay
 	deliveryStop.Version++
 
@@ -1010,19 +1012,19 @@ func (r *repository) loadMoveWithDetails(
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
 ) (*shipment.ShipmentMove, error) {
-	sm := buncolgen.ShipmentMoveColumns
-	stp := buncolgen.StopColumns
+	sm := shipmentcol.ShipmentMoveColumns
+	stp := shipmentcol.StopColumns
 	entity := new(shipment.ShipmentMove)
 	err := tx.NewSelect().
 		Model(entity).
 		Where(sm.ID.Eq(), moveID).
 		Where(sm.OrganizationID.Eq(), tenantInfo.OrgID).
 		Where(sm.BusinessUnitID.Eq(), tenantInfo.BuID).
-		RelationWithOpts(buncolgen.ShipmentMoveRelations.Stops, bun.RelationOpts{
+		RelationWithOpts(shipmentcol.ShipmentMoveRelations.Stops, bun.RelationOpts{
 			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return sq.Order(stp.Sequence.OrderAsc()).
-					Relation(buncolgen.StopRelations.Location).
-					Relation(buncolgen.Rel(buncolgen.StopRelations.Location, buncolgen.LocationRelations.State))
+					Relation(shipmentcol.StopRelations.Location).
+					Relation(buncolgen.Rel(shipmentcol.StopRelations.Location, locationcol.LocationRelations.State))
 			},
 		}).
 		Scan(ctx)

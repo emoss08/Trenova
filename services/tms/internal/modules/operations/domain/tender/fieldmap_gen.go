@@ -2,39 +2,42 @@
 
 package tender
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tendercol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RoutingGuide].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RoutingGuideFieldMap] instead of parsing struct tags via reflection.
+// the generated [tendercol.RoutingGuideFieldMap] instead of parsing struct tags via reflection.
 func (e *RoutingGuide) GetStaticFieldMap() map[string]string {
-	return buncolgen.RoutingGuideFieldMap
+	return tendercol.RoutingGuideFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RoutingGuideEntry].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RoutingGuideEntryFieldMap] instead of parsing struct tags via reflection.
+// the generated [tendercol.RoutingGuideEntryFieldMap] instead of parsing struct tags via reflection.
 func (e *RoutingGuideEntry) GetStaticFieldMap() map[string]string {
-	return buncolgen.RoutingGuideEntryFieldMap
+	return tendercol.RoutingGuideEntryFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Tender].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.TenderFieldMap] instead of parsing struct tags via reflection.
+// the generated [tendercol.TenderFieldMap] instead of parsing struct tags via reflection.
 func (e *Tender) GetStaticFieldMap() map[string]string {
-	return buncolgen.TenderFieldMap
+	return tendercol.TenderFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TenderOffer].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.TenderOfferFieldMap] instead of parsing struct tags via reflection.
+// the generated [tendercol.TenderOfferFieldMap] instead of parsing struct tags via reflection.
 func (e *TenderOffer) GetStaticFieldMap() map[string]string {
-	return buncolgen.TenderOfferFieldMap
+	return tendercol.TenderOfferFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TenderOfferToken].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.TenderOfferTokenFieldMap] instead of parsing struct tags via reflection.
+// the generated [tendercol.TenderOfferTokenFieldMap] instead of parsing struct tags via reflection.
 func (e *TenderOfferToken) GetStaticFieldMap() map[string]string {
-	return buncolgen.TenderOfferTokenFieldMap
+	return tendercol.TenderOfferTokenFieldMap
 }

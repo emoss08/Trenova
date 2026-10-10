@@ -1,6 +1,8 @@
 package billingqueuerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/billingqueuecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 	"fmt"
 
@@ -43,11 +45,11 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *billingqueueports.ListBillingQueueItemsRequest,
 ) *bun.SelectQuery {
-	bqi := buncolgen.BillingQueueItemColumns
+	bqi := billingqueuecol.BillingQueueItemColumns
 
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.BillingQueueItemTable.Alias,
+		billingqueuecol.BillingQueueItemTable.Alias,
 		req.Filter,
 		(*billingqueue.BillingQueueItem)(nil),
 	)
@@ -56,11 +58,11 @@ func (r *repository) filterQuery(
 		q = q.Where(bqi.Status.Ne(), billingqueue.StatusPosted)
 	}
 
-	q = q.Relation(buncolgen.BillingQueueItemRelations.Shipment).
-		Relation(buncolgen.Rel(buncolgen.BillingQueueItemRelations.Shipment, buncolgen.ShipmentRelations.Customer)).
-		Relation(buncolgen.BillingQueueItemRelations.BillToCustomer).
-		Relation(buncolgen.BillingQueueItemRelations.AssignedBiller).
-		Relation(buncolgen.BillingQueueItemRelations.CanceledBy)
+	q = q.Relation(billingqueuecol.BillingQueueItemRelations.Shipment).
+		Relation(buncolgen.Rel(billingqueuecol.BillingQueueItemRelations.Shipment, shipmentcol.ShipmentRelations.Customer)).
+		Relation(billingqueuecol.BillingQueueItemRelations.BillToCustomer).
+		Relation(billingqueuecol.BillingQueueItemRelations.AssignedBiller).
+		Relation(billingqueuecol.BillingQueueItemRelations.CanceledBy)
 
 	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }
@@ -101,7 +103,7 @@ func (r *repository) GetByID(
 	req *billingqueueports.GetBillingQueueItemByIDRequest,
 ) (*billingqueue.BillingQueueItem, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*billingqueue.BillingQueueItem, error) {
-		bqi := buncolgen.BillingQueueItemColumns
+		bqi := billingqueuecol.BillingQueueItemColumns
 		db := r.db.DBForContext(ctx)
 		entity := new(billingqueue.BillingQueueItem)
 
@@ -120,14 +122,14 @@ func (r *repository) GetByID(
 			ColumnExpr("bqi.*").
 			ColumnExpr("(?) AS po_number", po).
 			Where(bqi.ID.Eq(), req.ItemID).
-			Apply(buncolgen.BillingQueueItemApplyTenant(req.TenantInfo)).
-			Relation(buncolgen.BillingQueueItemRelations.Shipment).
-			Relation(buncolgen.Rel(buncolgen.BillingQueueItemRelations.Shipment, buncolgen.ShipmentRelations.Customer)).
-			Relation(buncolgen.Rel(buncolgen.BillingQueueItemRelations.Shipment, buncolgen.ShipmentRelations.AdditionalCharges)).
-			Relation(buncolgen.Rel(buncolgen.BillingQueueItemRelations.Shipment, buncolgen.ShipmentRelations.ChargeAllocations)).
-			Relation(buncolgen.BillingQueueItemRelations.BillToCustomer).
-			Relation(buncolgen.BillingQueueItemRelations.AssignedBiller).
-			Relation(buncolgen.BillingQueueItemRelations.CanceledBy).
+			Apply(billingqueuecol.BillingQueueItemApplyTenant(req.TenantInfo)).
+			Relation(billingqueuecol.BillingQueueItemRelations.Shipment).
+			Relation(buncolgen.Rel(billingqueuecol.BillingQueueItemRelations.Shipment, shipmentcol.ShipmentRelations.Customer)).
+			Relation(buncolgen.Rel(billingqueuecol.BillingQueueItemRelations.Shipment, shipmentcol.ShipmentRelations.AdditionalCharges)).
+			Relation(buncolgen.Rel(billingqueuecol.BillingQueueItemRelations.Shipment, shipmentcol.ShipmentRelations.ChargeAllocations)).
+			Relation(billingqueuecol.BillingQueueItemRelations.BillToCustomer).
+			Relation(billingqueuecol.BillingQueueItemRelations.AssignedBiller).
+			Relation(billingqueuecol.BillingQueueItemRelations.CanceledBy).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Billing queue item")
 		}
@@ -167,7 +169,7 @@ func (r *repository) Update(
 	entity *billingqueue.BillingQueueItem,
 ) (*billingqueue.BillingQueueItem, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingqueue.BillingQueueItem, error) {
-		bqi := buncolgen.BillingQueueItemColumns
+		bqi := billingqueuecol.BillingQueueItemColumns
 		db := r.db.DBForContext(ctx)
 
 		result, err := db.NewUpdate().
@@ -231,7 +233,7 @@ func (r *repository) AttachInvoice(
 			return 0, nil
 		}
 
-		bqi := buncolgen.BillingQueueItemColumns
+		bqi := billingqueuecol.BillingQueueItemColumns
 		result, err := r.db.DBForContext(ctx).NewUpdate().
 			Model((*billingqueue.BillingQueueItem)(nil)).
 			Where(bqi.ID.In(), bun.List(req.ItemIDs)).
@@ -267,7 +269,7 @@ func (r *repository) MarkPostedForInvoice(
 		return 0, nil
 	}
 
-	bqi := buncolgen.BillingQueueItemColumns
+	bqi := billingqueuecol.BillingQueueItemColumns
 	affected, err := r.markPosted(ctx, req.TenantInfo, func(q *bun.UpdateQuery) *bun.UpdateQuery {
 		return q.Where(bqi.InvoiceID.Eq(), req.InvoiceID)
 	})
@@ -296,7 +298,7 @@ func (r *repository) markPosted(
 	scope func(*bun.UpdateQuery) *bun.UpdateQuery,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		bqi := buncolgen.BillingQueueItemColumns
+		bqi := billingqueuecol.BillingQueueItemColumns
 		q := r.db.DBForContext(ctx).NewUpdate().
 			Model((*billingqueue.BillingQueueItem)(nil)).
 			Where(bqi.OrganizationID.Eq(), tenantInfo.OrgID).
@@ -338,15 +340,15 @@ func (r *repository) syncShipmentTransferState(
 			return nil
 		}
 
-		bqi := buncolgen.BillingQueueItemColumns
-		sp := buncolgen.ShipmentColumns
+		bqi := billingqueuecol.BillingQueueItemColumns
+		sp := shipmentcol.ShipmentColumns
 		db := r.db.DBForContext(ctx)
 
 		latest := db.NewSelect().
 			Model((*billingqueue.BillingQueueItem)(nil)).
 			DistinctOn(bqi.ShipmentID.Qualified()).
 			Column(bqi.ShipmentID.Bare(), bqi.Status.Bare(), bqi.CreatedAt.Bare()).
-			Apply(buncolgen.BillingQueueItemApplyTenant(ti)).
+			Apply(billingqueuecol.BillingQueueItemApplyTenant(ti)).
 			Where(bqi.ShipmentID.In(), bun.List(shipmentIDs)).
 			Where(bqi.BillType.Eq(), billingqueue.BillTypeInvoice).
 			OrderExpr(bqi.ShipmentID.OrderAsc()).
@@ -359,7 +361,7 @@ func (r *repository) syncShipmentTransferState(
 			Set(sp.BillingTransferStatus.SetExpr("latest.status::text")).
 			Set(sp.TransferredToBillingAt.SetExpr("latest.created_at")).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ShipmentScopeTenantUpdate(uq, ti).
+				return shipmentcol.ShipmentScopeTenantUpdate(uq, ti).
 					Where(sp.ID.Expr("{} = latest.shipment_id"))
 			}).
 			Exec(ctx); err != nil {
@@ -382,13 +384,13 @@ func (r *repository) ReleaseForInvoice(
 			return nil, nil
 		}
 
-		bqi := buncolgen.BillingQueueItemColumns
+		bqi := billingqueuecol.BillingQueueItemColumns
 		db := r.db.DBForContext(ctx)
 
 		items := make([]*billingqueue.BillingQueueItem, 0, 1)
 		if err := db.NewSelect().
 			Model(&items).
-			Apply(buncolgen.BillingQueueItemApplyTenant(req.TenantInfo)).
+			Apply(billingqueuecol.BillingQueueItemApplyTenant(req.TenantInfo)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return sq.WhereGroup(" OR ", func(inner *bun.SelectQuery) *bun.SelectQuery {
 					inner = inner.Where(bqi.InvoiceID.Eq(), req.InvoiceID)
@@ -425,7 +427,7 @@ func (r *repository) ReleaseForInvoice(
 				Model((*billingqueue.BillingQueueItem)(nil)).
 				Where(bqi.ID.Eq(), item.ID).
 				Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return buncolgen.BillingQueueItemScopeTenantUpdate(uq, req.TenantInfo)
+					return billingqueuecol.BillingQueueItemScopeTenantUpdate(uq, req.TenantInfo)
 				}).
 				Set(bqi.Status.Set(), target).
 				Set(bqi.InvoiceID.SetNull()).
@@ -477,7 +479,7 @@ func (r *repository) ExistsByShipmentPayerAndType(
 	billType billingqueue.BillType,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		bqi := buncolgen.BillingQueueItemColumns
+		bqi := billingqueuecol.BillingQueueItemColumns
 		db := r.db.DBForContext(ctx)
 
 		return db.NewSelect().
@@ -486,7 +488,7 @@ func (r *repository) ExistsByShipmentPayerAndType(
 			Where(bqi.BillToCustomerID.Eq(), payerID).
 			Where(bqi.BillType.Eq(), billType).
 			Where(bqi.Status.Ne(), billingqueue.StatusCanceled).
-			Apply(buncolgen.BillingQueueItemApplyTenant(ti)).
+			Apply(billingqueuecol.BillingQueueItemApplyTenant(ti)).
 			Exists(ctx)
 	})
 }
@@ -504,7 +506,7 @@ func (r *repository) ListActiveInvoiceItemsByShipmentIDs(
 			return result, nil
 		}
 
-		bqi := buncolgen.BillingQueueItemColumns
+		bqi := billingqueuecol.BillingQueueItemColumns
 		items := make([]*billingqueue.BillingQueueItem, 0, len(req.ShipmentIDs))
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model(&items).
@@ -514,7 +516,7 @@ func (r *repository) ListActiveInvoiceItemsByShipmentIDs(
 				billingqueue.StatusPosted,
 				billingqueue.StatusCanceled,
 			})).
-			Apply(buncolgen.BillingQueueItemApplyTenant(req.TenantInfo)).
+			Apply(billingqueuecol.BillingQueueItemApplyTenant(req.TenantInfo)).
 			Order(bqi.ShipmentID.OrderAsc(), bqi.CreatedAt.OrderAsc()).
 			Scan(ctx); err != nil {
 			return nil, fmt.Errorf("list active billing queue items: %w", err)
@@ -533,7 +535,7 @@ func (r *repository) GetStatusCounts(
 	req *billingqueueports.GetBillingQueueStatsRequest,
 ) (map[billingqueue.Status]int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[billingqueue.Status]int, error) {
-		bqi := buncolgen.BillingQueueItemColumns
+		bqi := billingqueuecol.BillingQueueItemColumns
 		db := r.db.DBForContext(ctx)
 
 		var rows []struct {
@@ -545,7 +547,7 @@ func (r *repository) GetStatusCounts(
 			Model((*billingqueue.BillingQueueItem)(nil)).
 			ColumnExpr(bqi.Status.Qualified()).
 			ColumnExpr("COUNT(*) AS count").
-			Apply(buncolgen.BillingQueueItemApplyTenant(req.TenantInfo)).
+			Apply(billingqueuecol.BillingQueueItemApplyTenant(req.TenantInfo)).
 			GroupExpr(bqi.Status.Qualified()).
 			Scan(ctx, &rows); err != nil {
 			return nil, err

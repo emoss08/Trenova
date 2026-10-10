@@ -1,6 +1,8 @@
 package aiusagerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/aiusagecol"
 	"context"
 	"fmt"
 
@@ -101,7 +103,7 @@ func (r *repository) Summary(
 	req aiusageports.AIUsageSummaryRequest,
 ) (*aiusageports.AIUsageSummaryRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aiusageports.AIUsageSummaryRow, error) {
-		cols := buncolgen.AIUsageRecordColumns
+		cols := aiusagecol.AIUsageRecordColumns
 		db := r.db.DBForContext(ctx)
 
 		var total totalsRow
@@ -182,7 +184,7 @@ func (r *repository) Daily(
 	req aiusageports.AIUsageDailyQuery,
 ) ([]aiusageports.AIUsageDayTotals, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]aiusageports.AIUsageDayTotals, error) {
-		cols := buncolgen.AIUsageRecordColumns
+		cols := aiusagecol.AIUsageRecordColumns
 
 		var rows []dayRow
 		q := r.db.DBForContext(ctx).NewSelect().
@@ -225,7 +227,7 @@ func (r *repository) RecentFailures(
 	req aiusageports.AIUsageFailuresRequest,
 ) ([]aiusageports.AIUsageFailureRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]aiusageports.AIUsageFailureRow, error) {
-		cols := buncolgen.AIUsageRecordColumns
+		cols := aiusagecol.AIUsageRecordColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = 5
@@ -293,7 +295,7 @@ func (r *repository) CostByDefinition(
 	req aiusageports.AIUsageCostRequest,
 ) (*aiusageports.AIUsageCost, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aiusageports.AIUsageCost, error) {
-		cols := buncolgen.AIUsageRecordColumns
+		cols := aiusagecol.AIUsageRecordColumns
 
 		q := costSums(r.db.DBForContext(ctx).NewSelect()).
 			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
@@ -313,7 +315,7 @@ type costRow struct {
 }
 
 func costSums(q *bun.SelectQuery) *bun.SelectQuery {
-	cost := buncolgen.AIUsageRecordColumns.CostUSD.Qualified()
+	cost := aiusagecol.AIUsageRecordColumns.CostUSD.Qualified()
 
 	return q.Model((*aiusage.AIUsageRecord)(nil)).
 		ColumnExpr("COALESCE(SUM(" + cost + "), 0)::text AS cost_usd").
@@ -348,7 +350,7 @@ func (r *repository) SurfaceCost(
 	req aiusageports.AIUsageSurfaceCostRequest,
 ) (*aiusageports.AIUsageCost, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aiusageports.AIUsageCost, error) {
-		cols := buncolgen.AIUsageRecordColumns
+		cols := aiusagecol.AIUsageRecordColumns
 
 		q := costSums(r.db.DBForContext(ctx).NewSelect()).
 			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
@@ -367,8 +369,8 @@ func (r *repository) EvaluationCost(
 	req aiusageports.AIUsageEvaluationCostRequest,
 ) (*aiusageports.AIUsageCost, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aiusageports.AIUsageCost, error) {
-		cols := buncolgen.AIUsageRecordColumns
-		evals := buncolgen.EvaluationColumns
+		cols := aiusagecol.AIUsageRecordColumns
+		evals := agentcol.EvaluationColumns
 		dba := r.db.DBForContext(ctx)
 
 		q := costSums(dba.NewSelect()).
@@ -405,7 +407,7 @@ func (r *repository) ProviderTaskTotals(
 	req aiusageports.AIUsageProviderTaskRequest,
 ) ([]aiusageports.AIUsageProviderTaskTotals, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]aiusageports.AIUsageProviderTaskTotals, error) {
-		cols := buncolgen.AIUsageRecordColumns
+		cols := aiusagecol.AIUsageRecordColumns
 		var rows []providerTaskRow
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model((*aiusage.AIUsageRecord)(nil)).
@@ -454,7 +456,7 @@ func (r *repository) SpendByProvider(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]decimal.Decimal, error) {
-		cols := buncolgen.AIUsageRecordColumns
+		cols := aiusagecol.AIUsageRecordColumns
 
 		rows := make([]providerSpendRow, 0, len(req.ProviderIDs))
 		if err := r.db.DBForContext(ctx).NewSelect().

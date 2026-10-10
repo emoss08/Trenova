@@ -2,11 +2,14 @@
 
 package documenttype
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/documenttypecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DocumentType].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DocumentTypeFieldMap] instead of parsing struct tags via reflection.
+// the generated [documenttypecol.DocumentTypeFieldMap] instead of parsing struct tags via reflection.
 func (e *DocumentType) GetStaticFieldMap() map[string]string {
-	return buncolgen.DocumentTypeFieldMap
+	return documenttypecol.DocumentTypeFieldMap
 }

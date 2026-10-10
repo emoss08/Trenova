@@ -2,74 +2,77 @@
 
 package carrierintel
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CarrierEquipmentVerification].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CarrierEquipmentVerificationFieldMap] instead of parsing struct tags via reflection.
+// the generated [carrierintelcol.CarrierEquipmentVerificationFieldMap] instead of parsing struct tags via reflection.
 func (e *CarrierEquipmentVerification) GetStaticFieldMap() map[string]string {
-	return buncolgen.CarrierEquipmentVerificationFieldMap
+	return carrierintelcol.CarrierEquipmentVerificationFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CarrierIntelControl].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CarrierIntelControlFieldMap] instead of parsing struct tags via reflection.
+// the generated [carrierintelcol.CarrierIntelControlFieldMap] instead of parsing struct tags via reflection.
 func (e *CarrierIntelControl) GetStaticFieldMap() map[string]string {
-	return buncolgen.CarrierIntelControlFieldMap
+	return carrierintelcol.CarrierIntelControlFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CarrierIntelEvent].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CarrierIntelEventFieldMap] instead of parsing struct tags via reflection.
+// the generated [carrierintelcol.CarrierIntelEventFieldMap] instead of parsing struct tags via reflection.
 func (e *CarrierIntelEvent) GetStaticFieldMap() map[string]string {
-	return buncolgen.CarrierIntelEventFieldMap
+	return carrierintelcol.CarrierIntelEventFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CarrierIntelFeedState].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CarrierIntelFeedStateFieldMap] instead of parsing struct tags via reflection.
+// the generated [carrierintelcol.CarrierIntelFeedStateFieldMap] instead of parsing struct tags via reflection.
 func (e *CarrierIntelFeedState) GetStaticFieldMap() map[string]string {
-	return buncolgen.CarrierIntelFeedStateFieldMap
+	return carrierintelcol.CarrierIntelFeedStateFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CarrierIntelOverride].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CarrierIntelOverrideFieldMap] instead of parsing struct tags via reflection.
+// the generated [carrierintelcol.CarrierIntelOverrideFieldMap] instead of parsing struct tags via reflection.
 func (e *CarrierIntelOverride) GetStaticFieldMap() map[string]string {
-	return buncolgen.CarrierIntelOverrideFieldMap
+	return carrierintelcol.CarrierIntelOverrideFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CarrierIntelRawPayload].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CarrierIntelRawPayloadFieldMap] instead of parsing struct tags via reflection.
+// the generated [carrierintelcol.CarrierIntelRawPayloadFieldMap] instead of parsing struct tags via reflection.
 func (e *CarrierIntelRawPayload) GetStaticFieldMap() map[string]string {
-	return buncolgen.CarrierIntelRawPayloadFieldMap
+	return carrierintelcol.CarrierIntelRawPayloadFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CarrierIntelSnapshot].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CarrierIntelSnapshotFieldMap] instead of parsing struct tags via reflection.
+// the generated [carrierintelcol.CarrierIntelSnapshotFieldMap] instead of parsing struct tags via reflection.
 func (e *CarrierIntelSnapshot) GetStaticFieldMap() map[string]string {
-	return buncolgen.CarrierIntelSnapshotFieldMap
+	return carrierintelcol.CarrierIntelSnapshotFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CarrierIntelUsageDaily].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CarrierIntelUsageDailyFieldMap] instead of parsing struct tags via reflection.
+// the generated [carrierintelcol.CarrierIntelUsageDailyFieldMap] instead of parsing struct tags via reflection.
 func (e *CarrierIntelUsageDaily) GetStaticFieldMap() map[string]string {
-	return buncolgen.CarrierIntelUsageDailyFieldMap
+	return carrierintelcol.CarrierIntelUsageDailyFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CarrierIntelUsageRecord].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CarrierIntelUsageRecordFieldMap] instead of parsing struct tags via reflection.
+// the generated [carrierintelcol.CarrierIntelUsageRecordFieldMap] instead of parsing struct tags via reflection.
 func (e *CarrierIntelUsageRecord) GetStaticFieldMap() map[string]string {
-	return buncolgen.CarrierIntelUsageRecordFieldMap
+	return carrierintelcol.CarrierIntelUsageRecordFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CarrierMonitoringEnrollment].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CarrierMonitoringEnrollmentFieldMap] instead of parsing struct tags via reflection.
+// the generated [carrierintelcol.CarrierMonitoringEnrollmentFieldMap] instead of parsing struct tags via reflection.
 func (e *CarrierMonitoringEnrollment) GetStaticFieldMap() map[string]string {
-	return buncolgen.CarrierMonitoringEnrollmentFieldMap
+	return carrierintelcol.CarrierMonitoringEnrollmentFieldMap
 }

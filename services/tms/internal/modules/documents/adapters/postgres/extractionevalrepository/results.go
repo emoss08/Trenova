@@ -1,6 +1,7 @@
 package extractionevalrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/extractionevalcol"
 	"context"
 	"fmt"
 
@@ -47,8 +48,8 @@ func (r *resultRepository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ExtractionResultScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.ExtractionResultColumns.ID.Eq(), req.ID)
+				return extractionevalcol.ExtractionResultScopeTenant(sq, req.TenantInfo).
+					Where(extractionevalcol.ExtractionResultColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -64,14 +65,14 @@ func (r *resultRepository) Save(
 	entity *extractioneval.ExtractionResult,
 ) (*extractioneval.ExtractionResult, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*extractioneval.ExtractionResult, error) {
-		cols := buncolgen.ExtractionResultColumns
+		cols := extractionevalcol.ExtractionResultColumns
 		previous := entity.Version
 
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ExtractionResultScopeTenantUpdate(uq, pagination.TenantInfo{
+				return extractionevalcol.ExtractionResultScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
 				}).
@@ -109,7 +110,7 @@ func (r *resultRepository) ListPending(
 	req extractionevalports.ListPendingExtractionEvalResultsRequest,
 ) ([]*extractioneval.ExtractionResult, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*extractioneval.ExtractionResult, error) {
-		cols := buncolgen.ExtractionResultColumns
+		cols := extractionevalcol.ExtractionResultColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultPendingLimit
@@ -130,7 +131,7 @@ func (r *resultRepository) ListPending(
 				cols.Status.Bare(),
 			).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ExtractionResultScopeTenant(sq, req.TenantInfo).
+				return extractionevalcol.ExtractionResultScopeTenant(sq, req.TenantInfo).
 					Where(cols.RunID.Eq(), req.RunID).
 					Where(cols.Status.Eq(), extractioneval.ResultStatusPending).
 					Where(cols.Ordinal.Gt(), req.AfterOrdinal)
@@ -154,13 +155,13 @@ func (r *resultRepository) ListByRun(
 	runID pulid.ID,
 ) ([]*extractioneval.ExtractionResult, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*extractioneval.ExtractionResult, error) {
-		cols := buncolgen.ExtractionResultColumns
+		cols := extractionevalcol.ExtractionResultColumns
 		entities := make([]*extractioneval.ExtractionResult, 0, extractioneval.DefaultCaseLimit)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ExtractionResultScopeTenant(sq, tenant).
+				return extractionevalcol.ExtractionResultScopeTenant(sq, tenant).
 					Where(cols.RunID.Eq(), runID)
 			}).
 			Order(cols.Ordinal.OrderAsc()).
@@ -182,12 +183,12 @@ func (r *resultRepository) SkipPending(
 	runID pulid.ID,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := buncolgen.ExtractionResultColumns
+		cols := extractionevalcol.ExtractionResultColumns
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*extractioneval.ExtractionResult)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ExtractionResultScopeTenantUpdate(uq, tenant).
+				return extractionevalcol.ExtractionResultScopeTenantUpdate(uq, tenant).
 					Where(cols.RunID.Eq(), runID).
 					Where(cols.Status.Eq(), extractioneval.ResultStatusPending)
 			}).
@@ -216,7 +217,7 @@ func (r *resultRepository) ListConnection(
 ) (*pagination.CursorListResult[*extractioneval.ExtractionResult], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*extractioneval.ExtractionResult], error) {
 		dba := r.db.DBForContext(ctx)
-		cols := buncolgen.ExtractionResultColumns
+		cols := extractionevalcol.ExtractionResultColumns
 		scope := func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Where(cols.RunID.Eq(), req.RunID)
 		}
@@ -228,12 +229,12 @@ func (r *resultRepository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.ExtractionResultTable.Alias,
+						extractionevalcol.ExtractionResultTable.Alias,
 						req.Filter,
 						(*extractioneval.ExtractionResult)(nil),
 					)
 
-					return scope(sq.Apply(buncolgen.ExtractionResultApplyTenant(req.Filter.TenantInfo)))
+					return scope(sq.Apply(extractionevalcol.ExtractionResultApplyTenant(req.Filter.TenantInfo)))
 				}).
 				Count(ctx)
 			if err != nil {
@@ -259,7 +260,7 @@ func (r *resultRepository) ListConnection(
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 				return querybuilder.ApplyCursorFilters(
 					sq,
-					buncolgen.ExtractionResultTable.Alias,
+					extractionevalcol.ExtractionResultTable.Alias,
 					req.Filter,
 					req.Cursor,
 					(*extractioneval.ExtractionResult)(nil),

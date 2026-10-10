@@ -1,6 +1,9 @@
 package shipmentboardrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 	"errors"
 
@@ -65,18 +68,18 @@ func groupSummaryQuery(
 	groupBy shipment.BoardGrouping,
 	timezone string,
 ) (*bun.SelectQuery, error) {
-	sp := buncolgen.ShipmentColumns
+	sp := shipmentcol.ShipmentColumns
 	q = q.
 		ColumnExpr(buncolgen.Count(countAlias)).
 		ColumnExpr(sp.TotalChargeAmount.Expr("COALESCE(SUM({}), 0) AS " + stageRevenueAlias))
 
 	switch groupBy {
 	case shipment.BoardGroupingShipDate:
-		return dayGroups(q, shipment.ShipperStopIDSQL(buncolgen.ShipmentTable.Alias), timezone), nil
+		return dayGroups(q, shipment.ShipperStopIDSQL(shipmentcol.ShipmentTable.Alias), timezone), nil
 	case shipment.BoardGroupingDeliveryDate:
 		return dayGroups(
 			q,
-			shipment.ConsigneeStopIDSQL(buncolgen.ShipmentTable.Alias),
+			shipment.ConsigneeStopIDSQL(shipmentcol.ShipmentTable.Alias),
 			timezone,
 		), nil
 	case shipment.BoardGroupingCustomer:
@@ -89,11 +92,11 @@ func groupSummaryQuery(
 }
 
 func dayGroups(q *bun.SelectQuery, stopIDSQL, timezone string) *bun.SelectQuery {
-	start := buncolgen.StopColumns.ScheduledWindowStart.WithAlias(groupStopAlias)
+	start := shipmentcol.StopColumns.ScheduledWindowStart.WithAlias(groupStopAlias)
 
 	return q.
 		Join("LEFT JOIN stops AS "+groupStopAlias).
-		JoinOn(buncolgen.StopColumns.ID.WithAlias(groupStopAlias).Qualified()+" = "+stopIDSQL).
+		JoinOn(shipmentcol.StopColumns.ID.WithAlias(groupStopAlias).Qualified()+" = "+stopIDSQL).
 		ColumnExpr(
 			"COALESCE(to_char(to_timestamp("+start.Qualified()+") AT TIME ZONE ?, ?), '') AS ?",
 			timezone,
@@ -106,8 +109,8 @@ func dayGroups(q *bun.SelectQuery, stopIDSQL, timezone string) *bun.SelectQuery 
 }
 
 func customerGroups(q *bun.SelectQuery) *bun.SelectQuery {
-	sp := buncolgen.ShipmentColumns
-	cus := buncolgen.CustomerColumns
+	sp := shipmentcol.ShipmentColumns
+	cus := customercol.CustomerColumns
 	id := cus.ID.WithAlias(groupCusAlias)
 	name := cus.Name.WithAlias(groupCusAlias)
 
@@ -125,8 +128,8 @@ func customerGroups(q *bun.SelectQuery) *bun.SelectQuery {
 }
 
 func ownerGroups(q *bun.SelectQuery) *bun.SelectQuery {
-	sp := buncolgen.ShipmentColumns
-	usr := buncolgen.UserColumns
+	sp := shipmentcol.ShipmentColumns
+	usr := tenantcol.UserColumns
 	name := usr.Name.WithAlias(groupOwnerAlias)
 
 	return q.

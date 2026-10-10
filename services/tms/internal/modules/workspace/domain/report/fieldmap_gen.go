@@ -2,46 +2,49 @@
 
 package report
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/reportcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Dashboard].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DashboardFieldMap] instead of parsing struct tags via reflection.
+// the generated [reportcol.DashboardFieldMap] instead of parsing struct tags via reflection.
 func (e *Dashboard) GetStaticFieldMap() map[string]string {
-	return buncolgen.DashboardFieldMap
+	return reportcol.DashboardFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ReportDefinition].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ReportDefinitionFieldMap] instead of parsing struct tags via reflection.
+// the generated [reportcol.ReportDefinitionFieldMap] instead of parsing struct tags via reflection.
 func (e *ReportDefinition) GetStaticFieldMap() map[string]string {
-	return buncolgen.ReportDefinitionFieldMap
+	return reportcol.ReportDefinitionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ReportDefinitionRevision].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ReportDefinitionRevisionFieldMap] instead of parsing struct tags via reflection.
+// the generated [reportcol.ReportDefinitionRevisionFieldMap] instead of parsing struct tags via reflection.
 func (e *ReportDefinitionRevision) GetStaticFieldMap() map[string]string {
-	return buncolgen.ReportDefinitionRevisionFieldMap
+	return reportcol.ReportDefinitionRevisionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ReportRun].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ReportRunFieldMap] instead of parsing struct tags via reflection.
+// the generated [reportcol.ReportRunFieldMap] instead of parsing struct tags via reflection.
 func (e *ReportRun) GetStaticFieldMap() map[string]string {
-	return buncolgen.ReportRunFieldMap
+	return reportcol.ReportRunFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ReportSchedule].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ReportScheduleFieldMap] instead of parsing struct tags via reflection.
+// the generated [reportcol.ReportScheduleFieldMap] instead of parsing struct tags via reflection.
 func (e *ReportSchedule) GetStaticFieldMap() map[string]string {
-	return buncolgen.ReportScheduleFieldMap
+	return reportcol.ReportScheduleFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ReportView].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ReportViewFieldMap] instead of parsing struct tags via reflection.
+// the generated [reportcol.ReportViewFieldMap] instead of parsing struct tags via reflection.
 func (e *ReportView) GetStaticFieldMap() map[string]string {
-	return buncolgen.ReportViewFieldMap
+	return reportcol.ReportViewFieldMap
 }

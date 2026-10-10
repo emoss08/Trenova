@@ -1,6 +1,7 @@
 package servicetyperepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/servicetypecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
@@ -41,15 +42,15 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *servicetypeports.ListServiceTypesRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.ServiceTypeColumns
+	cols := servicetypecol.ServiceTypeColumns
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.ServiceTypeTable.Alias,
+		servicetypecol.ServiceTypeTable.Alias,
 		req.Filter,
 		(*servicetype.ServiceType)(nil),
 	)
 
-	return q.Apply(buncolgen.ServiceTypeApplyTenant(req.Filter.TenantInfo)).
+	return q.Apply(servicetypecol.ServiceTypeApplyTenant(req.Filter.TenantInfo)).
 		Limit(req.Filter.Pagination.SafeLimit()).
 		Offset(req.Filter.Pagination.SafeOffset()).
 		Order(cols.CreatedAt.OrderDesc())
@@ -90,7 +91,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.ServiceTypeTable.Alias,
+		servicetypecol.ServiceTypeTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*servicetype.ServiceType)(nil),
@@ -103,7 +104,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.ServiceTypeTable.Alias,
+		servicetypecol.ServiceTypeTable.Alias,
 		req.Filter,
 		(*servicetype.ServiceType)(nil),
 	)
@@ -111,7 +112,7 @@ func (r *repository) applyTotalCountFilters(
 
 func applyServiceTypeColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.ServiceTypeTable.All())
+		return q.ColumnExpr(servicetypecol.ServiceTypeTable.All())
 	}
 
 	return q.Column(columns...)
@@ -202,7 +203,7 @@ func (r *repository) Update(
 
 		ov := entity.Version
 		entity.Version++
-		cols := buncolgen.ServiceTypeColumns
+		cols := servicetypecol.ServiceTypeColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -236,12 +237,12 @@ func (r *repository) GetByID(
 		)
 
 		entity := new(servicetype.ServiceType)
-		cols := buncolgen.ServiceTypeColumns
+		cols := servicetypecol.ServiceTypeColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ServiceTypeScopeTenant(sq, req.TenantInfo).
+				return servicetypecol.ServiceTypeScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
@@ -259,7 +260,7 @@ func (r *repository) SelectOptions(
 	req *servicetypeports.ServiceTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*servicetype.ServiceType], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*servicetype.ServiceType], error) {
-		cols := buncolgen.ServiceTypeColumns
+		cols := servicetypecol.ServiceTypeColumns
 
 		return dbhelper.SelectOptions[*servicetype.ServiceType](
 			ctx,
@@ -295,12 +296,12 @@ func (r *repository) BulkUpdateStatus(
 		)
 
 		entities := make([]*servicetype.ServiceType, 0, len(req.ServiceTypeIDs))
-		cols := buncolgen.ServiceTypeColumns
+		cols := servicetypecol.ServiceTypeColumns
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(&entities).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ServiceTypeScopeTenantUpdate(uq, req.TenantInfo).
+				return servicetypecol.ServiceTypeScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.In(), bun.List(req.ServiceTypeIDs))
 			}).
 			Set(cols.Status.Set(), req.Status).
@@ -330,12 +331,12 @@ func (r *repository) GetByIDs(
 		)
 
 		entities := make([]*servicetype.ServiceType, 0, len(req.ServiceTypeIDs))
-		cols := buncolgen.ServiceTypeColumns
+		cols := servicetypecol.ServiceTypeColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ServiceTypeScopeTenant(sq, req.TenantInfo).
+				return servicetypecol.ServiceTypeScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.In(), bun.List(req.ServiceTypeIDs))
 			}).
 			Scan(ctx)

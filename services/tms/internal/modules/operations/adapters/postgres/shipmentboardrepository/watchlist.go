@@ -1,6 +1,9 @@
 package shipmentboardrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 	"database/sql"
 	"errors"
@@ -36,30 +39,30 @@ var (
 )
 
 func withStopLocation(q *bun.SelectQuery) *bun.SelectQuery {
-	stp := buncolgen.StopColumns
-	loc := buncolgen.LocationColumns
+	stp := shipmentcol.StopColumns
+	loc := locationcol.LocationColumns
 
 	return q.
-		Join("LEFT JOIN " + buncolgen.LocationTable.As(buncolgen.LocationTable.Alias)).
+		Join("LEFT JOIN " + locationcol.LocationTable.As(locationcol.LocationTable.Alias)).
 		JoinOn(loc.ID.EqColumn(stp.LocationID)).
 		JoinOn(loc.OrganizationID.EqColumn(stp.OrganizationID)).
 		JoinOn(loc.BusinessUnitID.EqColumn(stp.BusinessUnitID))
 }
 
 func withCustomer(q *bun.SelectQuery) *bun.SelectQuery {
-	sp := buncolgen.ShipmentColumns
-	cus := buncolgen.CustomerColumns
+	sp := shipmentcol.ShipmentColumns
+	cus := customercol.CustomerColumns
 
 	return q.
-		Join("JOIN " + buncolgen.CustomerTable.As(buncolgen.CustomerTable.Alias)).
+		Join("JOIN " + customercol.CustomerTable.As(customercol.CustomerTable.Alias)).
 		JoinOn(cus.ID.EqColumn(sp.CustomerID)).
 		JoinOn(cus.OrganizationID.EqColumn(sp.OrganizationID)).
 		JoinOn(cus.BusinessUnitID.EqColumn(sp.BusinessUnitID))
 }
 
 func lastDeliveryLateral(dba bun.IDB) *bun.SelectQuery {
-	stp := buncolgen.StopColumns
-	loc := buncolgen.LocationColumns
+	stp := shipmentcol.StopColumns
+	loc := locationcol.LocationColumns
 
 	return withStopLocation(shipmentrepository.LastDeliveryStopQuery(dba)).
 		ColumnExpr(shipmentrepository.DeliveryAtExpr() + " AS " + ldDeliveryAt.Name).
@@ -81,8 +84,8 @@ func (r *Repository) ListDeliveriesToday(
 		r.db,
 		func(ctx context.Context) ([]*shipmentports.ShipmentDeliveryRow, error) {
 			dba := r.db.DBForContext(ctx)
-			sp := buncolgen.ShipmentColumns
-			cus := buncolgen.CustomerColumns
+			sp := shipmentcol.ShipmentColumns
+			cus := customercol.CustomerColumns
 
 			today, err := shipmentrepository.QuickFilterCondition(
 				dba,
@@ -106,7 +109,7 @@ func (r *Repository) ListDeliveriesToday(
 				ColumnExpr(ldCity.Expr("COALESCE({}, '') AS "+ldCity.Name)).
 				Apply(withCustomer).
 				Join("JOIN LATERAL (?) AS ? ON TRUE", lastDeliveryLateral(dba), bun.Ident(deliveryAlias)).
-				Apply(buncolgen.ShipmentApplyTenant(req.TenantInfo)).
+				Apply(shipmentcol.ShipmentApplyTenant(req.TenantInfo)).
 				Where("?", today).
 				Order(ldDeliveryAt.OrderAsc())
 
@@ -126,9 +129,9 @@ func (r *Repository) NextUncoveredPickup(
 ) (*shipmentports.ShipmentPickupRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipmentports.ShipmentPickupRow, error) {
 		dba := r.db.DBForContext(ctx)
-		sp := buncolgen.ShipmentColumns
-		stp := buncolgen.StopColumns
-		loc := buncolgen.LocationColumns
+		sp := shipmentcol.ShipmentColumns
+		stp := shipmentcol.StopColumns
+		loc := locationcol.LocationColumns
 
 		pickup := withStopLocation(shipmentrepository.FirstPickupStopQuery(dba)).
 			ColumnExpr(stp.ScheduledWindowStart.As(fpPickupAt.Name)).
@@ -143,7 +146,7 @@ func (r *Repository) NextUncoveredPickup(
 			ColumnExpr(ldCity.Expr("COALESCE({}, '') AS destination_city")).
 			Join("JOIN LATERAL (?) AS ? ON TRUE", pickup, bun.Ident(pickupAlias)).
 			Join("LEFT JOIN LATERAL (?) AS ? ON TRUE", lastDeliveryLateral(dba), bun.Ident(deliveryAlias)).
-			Apply(buncolgen.ShipmentApplyTenant(req.TenantInfo)).
+			Apply(shipmentcol.ShipmentApplyTenant(req.TenantInfo)).
 			Where("?", shipmentrepository.StageCondition(shipment.StageNeedsCoverage)).
 			Where(fpPickupAt.Gte(), req.Basis.Now.Unix()).
 			Order(fpPickupAt.OrderAsc(), sp.ID.OrderAsc()).
@@ -174,10 +177,10 @@ func (r *Repository) ListDwellingStops(
 			}
 
 			dba := r.db.DBForContext(ctx)
-			sp := buncolgen.ShipmentColumns
-			stp := buncolgen.StopColumns
-			sm := buncolgen.ShipmentMoveColumns
-			loc := buncolgen.LocationColumns
+			sp := shipmentcol.ShipmentColumns
+			stp := shipmentcol.StopColumns
+			sm := shipmentcol.ShipmentMoveColumns
+			loc := locationcol.LocationColumns
 
 			dwelling := withStopLocation(shipmentrepository.DwellingStopsQuery(
 				dba,
@@ -198,7 +201,7 @@ func (r *Repository) ListDwellingStops(
 				ColumnExpr(dwFacility.As(dwFacility.Name)).
 				ColumnExpr(dwArrival.As(dwArrival.Name)).
 				Join("JOIN LATERAL (?) AS ? ON TRUE", dwelling, bun.Ident(dwellAlias)).
-				Apply(buncolgen.ShipmentApplyTenant(req.TenantInfo)).
+				Apply(shipmentcol.ShipmentApplyTenant(req.TenantInfo)).
 				Order(dwArrival.OrderAsc(), dwStopID.OrderAsc()).
 				Limit(maxDwellingStops).
 				Scan(ctx, &rows)
@@ -220,8 +223,8 @@ func (r *Repository) ListReadyToBillCustomers(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*shipmentports.ShipmentBillingCustomerRow, error) {
-			sp := buncolgen.ShipmentColumns
-			cus := buncolgen.CustomerColumns
+			sp := shipmentcol.ShipmentColumns
+			cus := customercol.CustomerColumns
 
 			limit := req.Limit
 			if limit <= 0 || limit > maxBillingCustomer {
@@ -237,7 +240,7 @@ func (r *Repository) ListReadyToBillCustomers(
 				ColumnExpr(sp.TotalChargeAmount.Expr("COALESCE(SUM({}), 0) AS total")).
 				ColumnExpr("COUNT(*) OVER () AS total_customers").
 				Apply(withCustomer).
-				Apply(buncolgen.ShipmentApplyTenant(req.TenantInfo)).
+				Apply(shipmentcol.ShipmentApplyTenant(req.TenantInfo)).
 				Where("?", shipmentrepository.BillingTransferCandidateCondition()).
 				GroupExpr(sp.CustomerID.Qualified()).
 				GroupExpr(cus.Name.Qualified()).

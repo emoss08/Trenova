@@ -2,18 +2,21 @@
 
 package ratezone
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/ratezonecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateZone].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RateZoneFieldMap] instead of parsing struct tags via reflection.
+// the generated [ratezonecol.RateZoneFieldMap] instead of parsing struct tags via reflection.
 func (e *RateZone) GetStaticFieldMap() map[string]string {
-	return buncolgen.RateZoneFieldMap
+	return ratezonecol.RateZoneFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateZoneMember].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RateZoneMemberFieldMap] instead of parsing struct tags via reflection.
+// the generated [ratezonecol.RateZoneMemberFieldMap] instead of parsing struct tags via reflection.
 func (e *RateZoneMember) GetStaticFieldMap() map[string]string {
-	return buncolgen.RateZoneMemberFieldMap
+	return ratezonecol.RateZoneMemberFieldMap
 }

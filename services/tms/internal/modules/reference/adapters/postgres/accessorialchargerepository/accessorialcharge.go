@@ -1,6 +1,7 @@
 package accessorialchargerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/accessorialchargecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
@@ -41,15 +42,15 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *accessorialchargeports.ListAccessorialChargeRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.AccessorialChargeColumns
+	cols := accessorialchargecol.AccessorialChargeColumns
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.AccessorialChargeTable.Alias,
+		accessorialchargecol.AccessorialChargeTable.Alias,
 		req.Filter,
 		(*accessorialcharge.AccessorialCharge)(nil),
 	)
 
-	return q.Apply(buncolgen.AccessorialChargeApplyTenant(req.Filter.TenantInfo)).
+	return q.Apply(accessorialchargecol.AccessorialChargeApplyTenant(req.Filter.TenantInfo)).
 		Limit(req.Filter.Pagination.SafeLimit()).
 		Offset(req.Filter.Pagination.SafeOffset()).
 		Order(cols.CreatedAt.OrderDesc())
@@ -90,7 +91,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.AccessorialChargeTable.Alias,
+		accessorialchargecol.AccessorialChargeTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*accessorialcharge.AccessorialCharge)(nil),
@@ -103,7 +104,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.AccessorialChargeTable.Alias,
+		accessorialchargecol.AccessorialChargeTable.Alias,
 		req.Filter,
 		(*accessorialcharge.AccessorialCharge)(nil),
 	)
@@ -111,7 +112,7 @@ func (r *repository) applyTotalCountFilters(
 
 func applyAccessorialChargeColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.AccessorialChargeTable.All())
+		return q.ColumnExpr(accessorialchargecol.AccessorialChargeTable.All())
 	}
 
 	return q.Column(columns...)
@@ -202,7 +203,7 @@ func (r *repository) Update(
 
 		ov := entity.Version
 		entity.Version++
-		cols := buncolgen.AccessorialChargeColumns
+		cols := accessorialchargecol.AccessorialChargeColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -239,12 +240,12 @@ func (r *repository) GetByID(
 		)
 
 		entity := new(accessorialcharge.AccessorialCharge)
-		cols := buncolgen.AccessorialChargeColumns
+		cols := accessorialchargecol.AccessorialChargeColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AccessorialChargeScopeTenant(sq, *req.TenantInfo).
+				return accessorialchargecol.AccessorialChargeScopeTenant(sq, *req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
@@ -262,7 +263,7 @@ func (r *repository) SelectOptions(
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*accessorialcharge.AccessorialCharge], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*accessorialcharge.AccessorialCharge], error) {
-		cols := buncolgen.AccessorialChargeColumns
+		cols := accessorialchargecol.AccessorialChargeColumns
 
 		return dbhelper.SelectOptions[*accessorialcharge.AccessorialCharge](
 			ctx,

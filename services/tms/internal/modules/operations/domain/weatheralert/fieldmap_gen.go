@@ -2,18 +2,21 @@
 
 package weatheralert
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/weatheralertcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Activity].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ActivityFieldMap] instead of parsing struct tags via reflection.
+// the generated [weatheralertcol.ActivityFieldMap] instead of parsing struct tags via reflection.
 func (e *Activity) GetStaticFieldMap() map[string]string {
-	return buncolgen.ActivityFieldMap
+	return weatheralertcol.ActivityFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WeatherAlert].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.WeatherAlertFieldMap] instead of parsing struct tags via reflection.
+// the generated [weatheralertcol.WeatherAlertFieldMap] instead of parsing struct tags via reflection.
 func (e *WeatherAlert) GetStaticFieldMap() map[string]string {
-	return buncolgen.WeatherAlertFieldMap
+	return weatheralertcol.WeatherAlertFieldMap
 }

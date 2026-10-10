@@ -1,6 +1,7 @@
 package accountingsyncrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
 	"context"
 	"fmt"
 	"strings"
@@ -58,7 +59,7 @@ func (r *referenceRepository) Upsert(
 			obj.RemovedAt = nil
 		}
 
-		cols := buncolgen.AccountingReferenceObjectColumns
+		cols := accountingsynccol.AccountingReferenceObjectColumns
 		for start := 0; start < len(req.Objects); start += referenceUpsertBatch {
 			batch := req.Objects[start:min(start+referenceUpsertBatch, len(req.Objects))]
 			if _, err := r.db.DBForContext(ctx).
@@ -110,12 +111,12 @@ func (r *referenceRepository) MarkRemoved(
 			return 0, nil
 		}
 
-		cols := buncolgen.AccountingReferenceObjectColumns
+		cols := accountingsynccol.AccountingReferenceObjectColumns
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*accountingsync.AccountingReferenceObject)(nil)).
 			WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.AccountingReferenceObjectScopeTenantUpdate(q, req.TenantInfo).
+				return accountingsynccol.AccountingReferenceObjectScopeTenantUpdate(q, req.TenantInfo).
 					Where(cols.ConnectionID.Eq(), req.ConnectionID).
 					Where(cols.Kind.Eq(), req.Kind).
 					Where(cols.ExternalID.In(), bun.List(req.ExternalIDs)).
@@ -137,12 +138,12 @@ func (r *referenceRepository) MarkRemovedUnseen(
 	req *accountingsyncports.MarkAccountingReferenceRemovedRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := buncolgen.AccountingReferenceObjectColumns
+		cols := accountingsynccol.AccountingReferenceObjectColumns
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*accountingsync.AccountingReferenceObject)(nil)).
 			WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.AccountingReferenceObjectScopeTenantUpdate(q, req.TenantInfo).
+				return accountingsynccol.AccountingReferenceObjectScopeTenantUpdate(q, req.TenantInfo).
 					Where(cols.ConnectionID.Eq(), req.ConnectionID).
 					Where(cols.Kind.Eq(), req.Kind).
 					Where(cols.LastSeenAt.Lt(), req.SeenBefore).
@@ -165,12 +166,12 @@ func (r *referenceRepository) ListByKind(
 ) ([]*accountingsync.AccountingReferenceObject, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingReferenceObject, error) {
 		entities := make([]*accountingsync.AccountingReferenceObject, 0)
-		cols := buncolgen.AccountingReferenceObjectColumns
+		cols := accountingsynccol.AccountingReferenceObjectColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.AccountingReferenceObjectApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingReferenceObjectApplyTenant(req.TenantInfo)).
 			Where(cols.ConnectionID.Eq(), req.ConnectionID).
 			Where(cols.Kind.Eq(), req.Kind).
 			Order(cols.SearchName.OrderAsc(), cols.ExternalID.OrderAsc())
@@ -197,12 +198,12 @@ func (r *referenceRepository) Search(
 		limit = min(limit, maxReferenceSearch)
 
 		entities := make([]*accountingsync.AccountingReferenceObject, 0, limit)
-		cols := buncolgen.AccountingReferenceObjectColumns
+		cols := accountingsynccol.AccountingReferenceObjectColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.AccountingReferenceObjectApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingReferenceObjectApplyTenant(req.TenantInfo)).
 			Where(cols.ConnectionID.Eq(), req.ConnectionID).
 			Where(cols.Kind.Eq(), req.Kind).
 			Limit(limit)
@@ -241,12 +242,12 @@ func (r *referenceRepository) GetByExternalIDs(
 		}
 
 		entities := make([]*accountingsync.AccountingReferenceObject, 0, len(req.ExternalIDs))
-		cols := buncolgen.AccountingReferenceObjectColumns
+		cols := accountingsynccol.AccountingReferenceObjectColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.AccountingReferenceObjectApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingReferenceObjectApplyTenant(req.TenantInfo)).
 			Where(cols.ConnectionID.Eq(), req.ConnectionID).
 			Where(cols.ExternalID.In(), bun.List(req.ExternalIDs))
 		if req.Kind != "" {
@@ -261,7 +262,7 @@ func (r *referenceRepository) GetByExternalIDs(
 }
 
 func applyUsable(q *bun.SelectQuery) *bun.SelectQuery {
-	cols := buncolgen.AccountingReferenceObjectColumns
+	cols := accountingsynccol.AccountingReferenceObjectColumns
 	return q.
 		Where(cols.Active.IsTrue()).
 		Where(cols.RemovedAt.IsNull()).

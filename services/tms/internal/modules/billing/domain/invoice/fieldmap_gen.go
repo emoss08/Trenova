@@ -2,60 +2,63 @@
 
 package invoice
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Attachment].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.AttachmentFieldMap] instead of parsing struct tags via reflection.
+// the generated [invoicecol.AttachmentFieldMap] instead of parsing struct tags via reflection.
 func (e *Attachment) GetStaticFieldMap() map[string]string {
-	return buncolgen.AttachmentFieldMap
+	return invoicecol.AttachmentFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DocumentShareToken].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DocumentShareTokenFieldMap] instead of parsing struct tags via reflection.
+// the generated [invoicecol.DocumentShareTokenFieldMap] instead of parsing struct tags via reflection.
 func (e *DocumentShareToken) GetStaticFieldMap() map[string]string {
-	return buncolgen.DocumentShareTokenFieldMap
+	return invoicecol.DocumentShareTokenFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EmailAttempt].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.EmailAttemptFieldMap] instead of parsing struct tags via reflection.
+// the generated [invoicecol.EmailAttemptFieldMap] instead of parsing struct tags via reflection.
 func (e *EmailAttempt) GetStaticFieldMap() map[string]string {
-	return buncolgen.EmailAttemptFieldMap
+	return invoicecol.EmailAttemptFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EmailAttemptAttachment].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.EmailAttemptAttachmentFieldMap] instead of parsing struct tags via reflection.
+// the generated [invoicecol.EmailAttemptAttachmentFieldMap] instead of parsing struct tags via reflection.
 func (e *EmailAttemptAttachment) GetStaticFieldMap() map[string]string {
-	return buncolgen.EmailAttemptAttachmentFieldMap
+	return invoicecol.EmailAttemptAttachmentFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Invoice].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.InvoiceFieldMap] instead of parsing struct tags via reflection.
+// the generated [invoicecol.InvoiceFieldMap] instead of parsing struct tags via reflection.
 func (e *Invoice) GetStaticFieldMap() map[string]string {
-	return buncolgen.InvoiceFieldMap
+	return invoicecol.InvoiceFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InvoiceDispute].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.InvoiceDisputeFieldMap] instead of parsing struct tags via reflection.
+// the generated [invoicecol.InvoiceDisputeFieldMap] instead of parsing struct tags via reflection.
 func (e *InvoiceDispute) GetStaticFieldMap() map[string]string {
-	return buncolgen.InvoiceDisputeFieldMap
+	return invoicecol.InvoiceDisputeFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InvoiceLine].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.InvoiceLineFieldMap] instead of parsing struct tags via reflection.
+// the generated [invoicecol.InvoiceLineFieldMap] instead of parsing struct tags via reflection.
 func (e *InvoiceLine) GetStaticFieldMap() map[string]string {
-	return buncolgen.InvoiceLineFieldMap
+	return invoicecol.InvoiceLineFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InvoiceShare].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.InvoiceShareFieldMap] instead of parsing struct tags via reflection.
+// the generated [invoicecol.InvoiceShareFieldMap] instead of parsing struct tags via reflection.
 func (e *InvoiceShare) GetStaticFieldMap() map[string]string {
-	return buncolgen.InvoiceShareFieldMap
+	return invoicecol.InvoiceShareFieldMap
 }

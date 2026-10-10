@@ -2,18 +2,21 @@
 
 package order
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/ordercol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Order].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.OrderFieldMap] instead of parsing struct tags via reflection.
+// the generated [ordercol.OrderFieldMap] instead of parsing struct tags via reflection.
 func (e *Order) GetStaticFieldMap() map[string]string {
-	return buncolgen.OrderFieldMap
+	return ordercol.OrderFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [OrderCharge].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.OrderChargeFieldMap] instead of parsing struct tags via reflection.
+// the generated [ordercol.OrderChargeFieldMap] instead of parsing struct tags via reflection.
 func (e *OrderCharge) GetStaticFieldMap() map[string]string {
-	return buncolgen.OrderChargeFieldMap
+	return ordercol.OrderChargeFieldMap
 }

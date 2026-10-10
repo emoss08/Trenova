@@ -1,6 +1,8 @@
 package development
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/documenttypecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 
@@ -98,7 +100,7 @@ func (s *WorkerChecklistSeed) loadLookups(
 	refs *checklistSeedRefs,
 ) error {
 	types := make([]*worker.WorkerCredentialType, 0, 16)
-	cols := buncolgen.WorkerCredentialTypeColumns
+	cols := workercol.WorkerCredentialTypeColumns
 	if err := tx.NewSelect().
 		Model(&types).
 		Where(cols.OrganizationID.Eq(), refs.orgID).
@@ -112,7 +114,7 @@ func (s *WorkerChecklistSeed) loadLookups(
 	}
 
 	docTypes := make([]*documenttype.DocumentType, 0, 8)
-	dcols := buncolgen.DocumentTypeColumns
+	dcols := documenttypecol.DocumentTypeColumns
 	if err := tx.NewSelect().
 		Model(&docTypes).
 		Where(dcols.OrganizationID.Eq(), refs.orgID).
@@ -250,10 +252,10 @@ func (s *WorkerChecklistSeed) ensureTemplate(
 	template *worker.WorkerChecklistTemplate,
 ) (*worker.WorkerChecklistTemplate, error) {
 	existing := new(worker.WorkerChecklistTemplate)
-	cols := buncolgen.WorkerChecklistTemplateColumns
+	cols := workercol.WorkerChecklistTemplateColumns
 	err := tx.NewSelect().
 		Model(existing).
-		Relation(buncolgen.WorkerChecklistTemplateRelations.Items).
+		Relation(workercol.WorkerChecklistTemplateRelations.Items).
 		Where(cols.OrganizationID.Eq(), template.OrganizationID).
 		Where(cols.BusinessUnitID.Eq(), template.BusinessUnitID).
 		Where(cols.Code.Eq(), template.Code).
@@ -288,10 +290,10 @@ func (s *WorkerChecklistSeed) openForRecentHires(
 	template *worker.WorkerChecklistTemplate,
 ) error {
 	workers := make([]*worker.Worker, 0, 8)
-	cols := buncolgen.WorkerColumns
+	cols := workercol.WorkerColumns
 	if err := tx.NewSelect().
 		Model(&workers).
-		Relation(buncolgen.WorkerRelations.Profile).
+		Relation(workercol.WorkerRelations.Profile).
 		Where(cols.OrganizationID.Eq(), refs.orgID).
 		Where(cols.BusinessUnitID.Eq(), refs.buID).
 		Order(cols.CreatedAt.OrderAsc()).
@@ -303,8 +305,8 @@ func (s *WorkerChecklistSeed) openForRecentHires(
 	for index, wrk := range workers {
 		open, err := tx.NewSelect().
 			Model((*worker.WorkerChecklist)(nil)).
-			Where(buncolgen.WorkerChecklistColumns.WorkerID.Eq(), wrk.ID).
-			Where(buncolgen.WorkerChecklistColumns.TemplateID.Eq(), template.ID).
+			Where(workercol.WorkerChecklistColumns.WorkerID.Eq(), wrk.ID).
+			Where(workercol.WorkerChecklistColumns.TemplateID.Eq(), template.ID).
 			Exists(ctx)
 		if err != nil {
 			return err

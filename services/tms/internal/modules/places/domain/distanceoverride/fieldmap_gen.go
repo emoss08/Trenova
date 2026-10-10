@@ -2,18 +2,21 @@
 
 package distanceoverride
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/distanceoverridecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DistanceOverride].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DistanceOverrideFieldMap] instead of parsing struct tags via reflection.
+// the generated [distanceoverridecol.DistanceOverrideFieldMap] instead of parsing struct tags via reflection.
 func (e *DistanceOverride) GetStaticFieldMap() map[string]string {
-	return buncolgen.DistanceOverrideFieldMap
+	return distanceoverridecol.DistanceOverrideFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DistanceOverrideStop].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DistanceOverrideStopFieldMap] instead of parsing struct tags via reflection.
+// the generated [distanceoverridecol.DistanceOverrideStopFieldMap] instead of parsing struct tags via reflection.
 func (e *DistanceOverrideStop) GetStaticFieldMap() map[string]string {
-	return buncolgen.DistanceOverrideStopFieldMap
+	return distanceoverridecol.DistanceOverrideStopFieldMap
 }

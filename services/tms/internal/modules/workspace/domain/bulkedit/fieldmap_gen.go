@@ -2,11 +2,14 @@
 
 package bulkedit
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/bulkeditcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [BulkEdit].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.BulkEditFieldMap] instead of parsing struct tags via reflection.
+// the generated [bulkeditcol.BulkEditFieldMap] instead of parsing struct tags via reflection.
 func (e *BulkEdit) GetStaticFieldMap() map[string]string {
-	return buncolgen.BulkEditFieldMap
+	return bulkeditcol.BulkEditFieldMap
 }

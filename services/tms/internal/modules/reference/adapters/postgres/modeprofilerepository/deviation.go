@@ -1,6 +1,7 @@
 package modeprofilerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/modeprofilecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
@@ -69,12 +70,12 @@ func (r *deviationRepository) filterQuery(
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.DeviationTable.Alias,
+		modeprofilecol.DeviationTable.Alias,
 		req.Filter,
 		(*modeprofile.Deviation)(nil),
 	)
 
-	cols := buncolgen.DeviationColumns
+	cols := modeprofilecol.DeviationColumns
 
 	if req.ResourceType != "" {
 		q = q.Where(cols.ResourceType.Eq(), req.ResourceType)
@@ -103,12 +104,12 @@ func (r *deviationRepository) List(
 		total, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Relation(buncolgen.DeviationRelations.Profile).
-			Relation(buncolgen.DeviationRelations.AcknowledgedBy).
+			Relation(modeprofilecol.DeviationRelations.Profile).
+			Relation(modeprofilecol.DeviationRelations.AcknowledgedBy).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return r.filterQuery(sq, req)
 			}).
-			Order(buncolgen.DeviationColumns.OccurredAt.OrderDesc()).
+			Order(modeprofilecol.DeviationColumns.OccurredAt.OrderDesc()).
 			ScanAndCount(ctx)
 		if err != nil {
 			log.Error("failed to scan and count deviations", zap.Error(err))
@@ -136,10 +137,10 @@ func (r *deviationRepository) GetByID(
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Relation(buncolgen.DeviationRelations.Profile).
+			Relation(modeprofilecol.DeviationRelations.Profile).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DeviationScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.DeviationColumns.ID.Eq(), req.DeviationID)
+				return modeprofilecol.DeviationScopeTenant(sq, req.TenantInfo).
+					Where(modeprofilecol.DeviationColumns.ID.Eq(), req.DeviationID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -213,13 +214,13 @@ func (r *deviationRepository) SupersedeOpenForResource(
 			zap.String("resourceId", req.ResourceID.String()),
 		)
 
-		cols := buncolgen.DeviationColumns
+		cols := modeprofilecol.DeviationColumns
 
 		q := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*modeprofile.Deviation)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.DeviationScopeTenantUpdate(uq, req.TenantInfo).
+				return modeprofilecol.DeviationScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ResourceType.Eq(), req.ResourceType).
 					Where(cols.ResourceID.Eq(), req.ResourceID).
 					Where(cols.State.Eq(), modeprofile.DeviationStateOpen)
@@ -250,10 +251,10 @@ func (r *deviationRepository) LiveRuleKeysForResource(
 			zap.String("resourceId", req.ResourceID.String()),
 		)
 
-		cols := buncolgen.DeviationColumns
+		cols := modeprofilecol.DeviationColumns
 		keys := make([]string, 0, 8)
 
-		if err := buncolgen.DeviationScopeTenant(
+		if err := modeprofilecol.DeviationScopeTenant(
 			r.db.DBForContext(ctx).NewSelect().Model((*modeprofile.Deviation)(nil)),
 			req.TenantInfo,
 		).
@@ -281,7 +282,7 @@ func (r *deviationRepository) Ledger(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*modeprofileports.DeviationLedgerEntry, error) {
 		log := r.l.With(zap.String("operation", "Ledger"))
 
-		cols := buncolgen.DeviationColumns
+		cols := modeprofilecol.DeviationColumns
 		entries := make([]*modeprofileports.DeviationLedgerEntry, 0, 16)
 
 		q := r.db.DBForContext(ctx).
@@ -296,7 +297,7 @@ func (r *deviationRepository) Ledger(
 			).
 			ColumnExpr(buncolgen.Max(cols.OccurredAt, "last_occurred_at")).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DeviationScopeTenant(sq, req.TenantInfo)
+				return modeprofilecol.DeviationScopeTenant(sq, req.TenantInfo)
 			}).
 			GroupExpr(cols.RuleKey.Qualified()).
 			GroupExpr(cols.Capability.Qualified()).

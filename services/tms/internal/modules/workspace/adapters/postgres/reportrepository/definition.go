@@ -1,6 +1,7 @@
 package reportrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/reportcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -83,7 +84,7 @@ func (r *definitionRepository) Update(
 			result, uErr := tx.NewUpdate().
 				Model(entity).
 				WherePK().
-				Where(buncolgen.ReportDefinitionColumns.Version.Eq(), ov).
+				Where(reportcol.ReportDefinitionColumns.Version.Eq(), ov).
 				Returning("*").
 				Exec(txCtx)
 			if uErr != nil {
@@ -134,7 +135,7 @@ func (r *definitionRepository) UpdateStatus(
 			zap.String("id", req.DefinitionID.String()),
 		)
 
-		cols := buncolgen.ReportDefinitionColumns
+		cols := reportcol.ReportDefinitionColumns
 		result, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*report.ReportDefinition)(nil)).
@@ -142,7 +143,7 @@ func (r *definitionRepository) UpdateStatus(
 			Set(cols.Diagnostics.Set(), dbhelper.TextArray(diagnostics)).
 			Set(cols.Version.Inc(1)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ReportDefinitionScopeTenantUpdate(uq, req.TenantInfo).
+				return reportcol.ReportDefinitionScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.DefinitionID)
 			}).
 			Exec(ctx)
@@ -165,8 +166,8 @@ func (r *definitionRepository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ReportDefinitionScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.ReportDefinitionColumns.ID.Eq(), req.DefinitionID)
+				return reportcol.ReportDefinitionScopeTenant(sq, req.TenantInfo).
+					Where(reportcol.ReportDefinitionColumns.ID.Eq(), req.DefinitionID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -182,13 +183,13 @@ func (r *definitionRepository) List(
 	req *reportports.ListReportDefinitionsRequest,
 ) ([]*report.ReportDefinition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportDefinition, error) {
-		cols := buncolgen.ReportDefinitionColumns
+		cols := reportcol.ReportDefinitionColumns
 
 		entities := make([]*report.ReportDefinition, 0)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.ReportDefinitionApplyTenant(req.TenantInfo))
+			Apply(reportcol.ReportDefinitionApplyTenant(req.TenantInfo))
 
 		if len(req.Statuses) > 0 {
 			q = q.Where(cols.Status.In(), bun.List(req.Statuses))
@@ -221,8 +222,8 @@ func (r *definitionRepository) Delete(
 			NewDelete().
 			Model((*report.ReportDefinition)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.ReportDefinitionScopeTenantDelete(dq, req.TenantInfo).
-					Where(buncolgen.ReportDefinitionColumns.ID.Eq(), req.DefinitionID)
+				return reportcol.ReportDefinitionScopeTenantDelete(dq, req.TenantInfo).
+					Where(reportcol.ReportDefinitionColumns.ID.Eq(), req.DefinitionID)
 			}).
 			Exec(ctx)
 		if err != nil {
@@ -244,8 +245,8 @@ func (r *definitionRepository) GetRevision(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ReportDefinitionRevisionScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.ReportDefinitionRevisionColumns.ID.Eq(), req.RevisionID)
+				return reportcol.ReportDefinitionRevisionScopeTenant(sq, req.TenantInfo).
+					Where(reportcol.ReportDefinitionRevisionColumns.ID.Eq(), req.RevisionID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -261,13 +262,13 @@ func (r *definitionRepository) ListRevisions(
 	req *reportports.ListReportRevisionsRequest,
 ) ([]*report.ReportDefinitionRevision, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportDefinitionRevision, error) {
-		cols := buncolgen.ReportDefinitionRevisionColumns
+		cols := reportcol.ReportDefinitionRevisionColumns
 
 		entities := make([]*report.ReportDefinitionRevision, 0)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.ReportDefinitionRevisionApplyTenant(req.TenantInfo)).
+			Apply(reportcol.ReportDefinitionRevisionApplyTenant(req.TenantInfo)).
 			Where(cols.DefinitionID.Eq(), req.DefinitionID).
 			Order(cols.RevisionNumber.OrderDesc())
 

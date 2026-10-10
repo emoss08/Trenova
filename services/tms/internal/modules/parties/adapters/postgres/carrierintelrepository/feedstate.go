@@ -1,6 +1,7 @@
 package carrierintelrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
 	"context"
 	"fmt"
 
@@ -31,13 +32,13 @@ func (r *feedStateRepository) Get(
 	key carrierintelports.CarrierIntelFeedStateKey,
 ) (*carrierintel.CarrierIntelFeedState, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carrierintel.CarrierIntelFeedState, error) {
-		cols := buncolgen.CarrierIntelFeedStateColumns
+		cols := carrierintelcol.CarrierIntelFeedStateColumns
 		entity := new(carrierintel.CarrierIntelFeedState)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierIntelFeedStateScopeTenant(sq, key.TenantInfo).
+				return carrierintelcol.CarrierIntelFeedStateScopeTenant(sq, key.TenantInfo).
 					Where(cols.Provider.Eq(), key.Provider).
 					Where(cols.FeedType.Eq(), key.FeedType)
 			}).
@@ -59,7 +60,7 @@ func (r *feedStateRepository) Upsert(
 	entity *carrierintel.CarrierIntelFeedState,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.CarrierIntelFeedStateColumns
+		cols := carrierintelcol.CarrierIntelFeedStateColumns
 		_, err := r.db.DBForContext(ctx).
 			NewInsert().
 			Model(entity).

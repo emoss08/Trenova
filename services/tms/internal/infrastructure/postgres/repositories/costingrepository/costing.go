@@ -1,6 +1,7 @@
 package costingrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/costingcontrolcol"
 	"context"
 	"database/sql"
 	"errors"
@@ -74,8 +75,8 @@ func (r *repository) selectControl(
 ) (*costingcontrol.CostingControl, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*costingcontrol.CostingControl, error) {
 		entity := new(costingcontrol.CostingControl)
-		rels := buncolgen.CostingControlRelations
-		costCategoryCols := buncolgen.CostCategoryColumns
+		rels := costingcontrolcol.CostingControlRelations
+		costCategoryCols := costingcontrolcol.CostCategoryColumns
 
 		err := r.db.DBForContext(ctx).NewSelect().
 			Model(entity).
@@ -91,7 +92,7 @@ func (r *repository) selectControl(
 			Relation("Categories.GLAccounts").
 			Relation("Categories.GLAccounts.GLAccount").
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CostingControlScopeTenant(sq, req.TenantInfo)
+				return costingcontrolcol.CostingControlScopeTenant(sq, req.TenantInfo)
 			}).
 			Scan(ctx)
 		if err != nil {

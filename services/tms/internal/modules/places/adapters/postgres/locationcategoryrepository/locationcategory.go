@@ -1,6 +1,7 @@
 package locationcategoryrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/locationcategorycol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
@@ -87,7 +88,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.LocationCategoryTable.Alias,
+		locationcategorycol.LocationCategoryTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*locationcategory.LocationCategory)(nil),
@@ -100,7 +101,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.LocationCategoryTable.Alias,
+		locationcategorycol.LocationCategoryTable.Alias,
 		req.Filter,
 		(*locationcategory.LocationCategory)(nil),
 	)
@@ -108,7 +109,7 @@ func (r *repository) applyTotalCountFilters(
 
 func applyLocationCategoryColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.LocationCategoryTable.All())
+		return q.ColumnExpr(locationcategorycol.LocationCategoryTable.All())
 	}
 
 	return q.Column(columns...)

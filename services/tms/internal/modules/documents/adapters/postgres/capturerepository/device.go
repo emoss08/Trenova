@@ -2,6 +2,7 @@
 package capturerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/capturecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
@@ -66,7 +67,7 @@ func (r *deviceRepository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.CaptureDeviceColumns.Version.Eq(), ov).
+			Where(capturecol.CaptureDeviceColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -94,8 +95,8 @@ func (r *deviceRepository) GetByID(
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Where(buncolgen.CaptureDeviceColumns.ID.Eq(), req.ID).
-			Apply(buncolgen.CaptureDeviceApplyTenant(req.TenantInfo)).
+			Where(capturecol.CaptureDeviceColumns.ID.Eq(), req.ID).
+			Apply(capturecol.CaptureDeviceApplyTenant(req.TenantInfo)).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Device")
 		}
@@ -110,7 +111,7 @@ func (r *deviceRepository) List(
 ) (*pagination.ListResult[*capture.CaptureDevice], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*capture.CaptureDevice], error) {
 		entities := make([]*capture.CaptureDevice, 0, req.Filter.Pagination.SafeLimit())
-		cols := buncolgen.CaptureDeviceColumns
+		cols := capturecol.CaptureDeviceColumns
 
 		query := r.db.DBForContext(ctx).NewSelect().Model(&entities)
 		if req.UserID.IsNotNil() {
@@ -122,7 +123,7 @@ func (r *deviceRepository) List(
 
 		total, err := querybuilder.ApplyFilters(
 			query,
-			buncolgen.CaptureDeviceTable.Alias,
+			capturecol.CaptureDeviceTable.Alias,
 			req.Filter,
 			(*capture.CaptureDevice)(nil),
 		).
@@ -143,7 +144,7 @@ func (r *deviceRepository) GetByAccessTokenHash(
 	hash string,
 ) (*capture.CaptureDevice, error) {
 	ctx = dbscope.WithSystem(ctx, "resolve a capture device access token before its tenant is known")
-	return r.getByTokenColumn(ctx, buncolgen.CaptureDeviceColumns.AccessTokenHash, hash)
+	return r.getByTokenColumn(ctx, capturecol.CaptureDeviceColumns.AccessTokenHash, hash)
 }
 
 func (r *deviceRepository) GetByRefreshTokenHash(
@@ -151,7 +152,7 @@ func (r *deviceRepository) GetByRefreshTokenHash(
 	hash string,
 ) (*capture.CaptureDevice, error) {
 	ctx = dbscope.WithSystem(ctx, "resolve a capture device refresh token before its tenant is known")
-	return r.getByTokenColumn(ctx, buncolgen.CaptureDeviceColumns.RefreshTokenHash, hash)
+	return r.getByTokenColumn(ctx, capturecol.CaptureDeviceColumns.RefreshTokenHash, hash)
 }
 
 func (r *deviceRepository) GetByPreviousRefreshHash(
@@ -159,7 +160,7 @@ func (r *deviceRepository) GetByPreviousRefreshHash(
 	hash string,
 ) (*capture.CaptureDevice, error) {
 	ctx = dbscope.WithSystem(ctx, "detect reuse of a rotated capture device refresh token before its tenant is known")
-	return r.getByTokenColumn(ctx, buncolgen.CaptureDeviceColumns.PreviousRefreshHash, hash)
+	return r.getByTokenColumn(ctx, capturecol.CaptureDeviceColumns.PreviousRefreshHash, hash)
 }
 
 func (r *deviceRepository) getByTokenColumn(
@@ -187,13 +188,13 @@ func (r *deviceRepository) Touch(
 	req captureports.TouchCaptureDeviceRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.CaptureDeviceColumns
+		cols := capturecol.CaptureDeviceColumns
 
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*capture.CaptureDevice)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.CaptureDeviceScopeTenantUpdate(uq, req.TenantInfo).
+				return capturecol.CaptureDeviceScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Set(cols.LastSeenAt.Set(), req.SeenAt).

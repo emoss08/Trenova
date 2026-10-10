@@ -2,6 +2,7 @@
 package editestcaserepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -43,14 +44,14 @@ func (r *repository) ListTestCases(
 ) (*pagination.ListResult[*edi.EDITestCase], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDITestCase], error) {
 		entities := make([]*edi.EDITestCase, 0, req.Filter.Pagination.SafeLimit())
-		cols := buncolgen.EDITestCaseColumns
+		cols := edicol.EDITestCaseColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			Relation("DocumentProfile").
 			Relation("DocumentProfile.Partner").
-			Apply(buncolgen.EDITestCaseApplyTenant(req.Filter.TenantInfo))
+			Apply(edicol.EDITestCaseApplyTenant(req.Filter.TenantInfo))
 		if !req.PartnerDocumentProfileID.IsNil() {
 			query = query.Where(cols.PartnerDocumentProfileID.Eq(), req.PartnerDocumentProfileID)
 		}
@@ -72,13 +73,13 @@ func (r *repository) GetTestCaseByID(
 ) (*edi.EDITestCase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDITestCase, error) {
 		entity := new(edi.EDITestCase)
-		cols := buncolgen.EDITestCaseColumns
+		cols := edicol.EDITestCaseColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			Where(cols.ID.Eq(), req.ID).
-			Apply(buncolgen.EDITestCaseApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDITestCaseApplyTenant(req.TenantInfo)).
 			Scan(ctx)
 		if err != nil {
 			return nil, dberror.HandleNotFoundError(err, "EDITestCase")
@@ -133,7 +134,7 @@ func (r *repository) RecordTestCaseRun(
 	req *ediports.RecordEDITestCaseRunRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.EDITestCaseColumns
+		cols := edicol.EDITestCaseColumns
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*edi.EDITestCase)(nil)).
@@ -154,7 +155,7 @@ func (r *repository) DeleteTestCase(
 	req ediports.DeleteEDITestCaseRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.EDITestCaseColumns
+		cols := edicol.EDITestCaseColumns
 		results, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*edi.EDITestCase)(nil)).
@@ -175,7 +176,7 @@ func (r *repository) ListTestCasesCursor(
 ) (*pagination.CursorListResult[*edi.EDITestCase], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*edi.EDITestCase], error) {
 		dba := r.db.DBForContext(ctx)
-		cols := buncolgen.EDITestCaseColumns
+		cols := edicol.EDITestCaseColumns
 		extraFilters := func(sq *bun.SelectQuery) *bun.SelectQuery {
 			if !req.PartnerDocumentProfileID.IsNil() {
 				sq = sq.Where(cols.PartnerDocumentProfileID.Eq(), req.PartnerDocumentProfileID)

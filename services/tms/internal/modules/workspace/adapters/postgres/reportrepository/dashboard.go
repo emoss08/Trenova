@@ -1,6 +1,7 @@
 package reportrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/reportcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -66,7 +67,7 @@ func (r *dashboardRepository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.DashboardColumns.Version.Eq(), ov).
+			Where(reportcol.DashboardColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -91,8 +92,8 @@ func (r *dashboardRepository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DashboardScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.DashboardColumns.ID.Eq(), req.DashboardID)
+				return reportcol.DashboardScopeTenant(sq, req.TenantInfo).
+					Where(reportcol.DashboardColumns.ID.Eq(), req.DashboardID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -108,13 +109,13 @@ func (r *dashboardRepository) List(
 	req *reportports.ListReportDashboardsRequest,
 ) ([]*report.Dashboard, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.Dashboard, error) {
-		cols := buncolgen.DashboardColumns
+		cols := reportcol.DashboardColumns
 
 		entities := make([]*report.Dashboard, 0)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.DashboardApplyTenant(req.TenantInfo))
+			Apply(reportcol.DashboardApplyTenant(req.TenantInfo))
 
 		if !req.ViewerID.IsNil() {
 			q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -148,8 +149,8 @@ func (r *dashboardRepository) Delete(
 			NewDelete().
 			Model((*report.Dashboard)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.DashboardScopeTenantDelete(dq, req.TenantInfo).
-					Where(buncolgen.DashboardColumns.ID.Eq(), req.DashboardID)
+				return reportcol.DashboardScopeTenantDelete(dq, req.TenantInfo).
+					Where(reportcol.DashboardColumns.ID.Eq(), req.DashboardID)
 			}).
 			Exec(ctx)
 		if err != nil {

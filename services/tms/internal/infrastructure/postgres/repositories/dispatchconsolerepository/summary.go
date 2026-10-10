@@ -1,6 +1,9 @@
 package dispatchconsolerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/telematicscol"
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 
@@ -20,15 +23,15 @@ const positionFreshnessSeconds = int64(4 * 3600)
 
 const metersPerMile = 1609.344
 
-var vehiclePositionJoin = "LEFT JOIN " + buncolgen.VehiclePositionTable.As(
-	buncolgen.VehiclePositionTable.Alias) +
-	" ON " + buncolgen.VehiclePositionColumns.TractorID.EqColumn(
-	buncolgen.AssignmentColumns.TractorID) +
-	" AND " + buncolgen.VehiclePositionColumns.OrganizationID.EqColumn(
-	buncolgen.AssignmentColumns.OrganizationID) +
-	" AND " + buncolgen.VehiclePositionColumns.BusinessUnitID.EqColumn(
-	buncolgen.AssignmentColumns.BusinessUnitID) +
-	" AND " + buncolgen.VehiclePositionColumns.RecordedAt.Gte()
+var vehiclePositionJoin = "LEFT JOIN " + telematicscol.VehiclePositionTable.As(
+	telematicscol.VehiclePositionTable.Alias) +
+	" ON " + telematicscol.VehiclePositionColumns.TractorID.EqColumn(
+	shipmentcol.AssignmentColumns.TractorID) +
+	" AND " + telematicscol.VehiclePositionColumns.OrganizationID.EqColumn(
+	shipmentcol.AssignmentColumns.OrganizationID) +
+	" AND " + telematicscol.VehiclePositionColumns.BusinessUnitID.EqColumn(
+	shipmentcol.AssignmentColumns.BusinessUnitID) +
+	" AND " + telematicscol.VehiclePositionColumns.RecordedAt.Gte()
 
 func (r *repository) GetBoardSummary(
 	ctx context.Context,
@@ -59,7 +62,7 @@ func (r *repository) scanMoveSummary(
 	summary *shipmentports.BoardSummary,
 ) error {
 	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
-		asnCols := buncolgen.AssignmentColumns
+		asnCols := shipmentcol.AssignmentColumns
 
 		dayStart := filter.DayStartUnix
 		if dayStart <= 0 {
@@ -70,7 +73,7 @@ func (r *repository) scanMoveSummary(
 			}
 		}
 
-		casnCols := buncolgen.CarrierAssignmentColumns
+		casnCols := shipmentcol.CarrierAssignmentColumns
 		uncoveredCond := "(" + asnCols.ID.IsNull() + " AND " + casnCols.ID.IsNull() + ")"
 		coveredCond := "(" + asnCols.ID.IsNotNull() + " OR " + casnCols.ID.IsNotNull() + ")"
 
@@ -102,7 +105,7 @@ func (r *repository) scanMoveSummary(
 			Join(vehiclePositionJoin, now-positionFreshnessSeconds).
 			Apply(joinMoveStopEdges).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.ShipmentMoveScopeTenant(sq, filter.TenantInfo)
+				sq = shipmentcol.ShipmentMoveScopeTenant(sq, filter.TenantInfo)
 				return applyMoveFilters(sq, filter)
 			}).
 			Scan(ctx, summary)
@@ -120,7 +123,7 @@ func (r *repository) scanDriverSummary(
 	summary *shipmentports.BoardSummary,
 ) error {
 	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.WorkerColumns
+		cols := workercol.WorkerColumns
 
 		counts := new(struct {
 			AvailableDrivers int `bun:"available_drivers"`
@@ -134,7 +137,7 @@ func (r *repository) scanDriverSummary(
 				"COALESCE(oa.open_assignments, 0) = 0")).
 			Join(openAssignmentLateral, bun.List(openMoveStatuses)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerScopeTenant(sq, filter.TenantInfo)
+				sq = workercol.WorkerScopeTenant(sq, filter.TenantInfo)
 				sq = applyDriverFilters(sq, filter)
 				return sq.Where(cols.AvailableForDispatch.IsTrue())
 			}).
@@ -151,8 +154,8 @@ func (r *repository) scanDriverSummary(
 }
 
 func averageDeadheadColumn() func(*bun.SelectQuery) *bun.SelectQuery {
-	posCols := buncolgen.VehiclePositionColumns
-	asnCols := buncolgen.AssignmentColumns
+	posCols := telematicscol.VehiclePositionColumns
+	asnCols := shipmentcol.AssignmentColumns
 
 	return func(q *bun.SelectQuery) *bun.SelectQuery {
 		if !dbdialect.FromBun(q.DB()).Supports(dbdialect.CapPostGIS) {

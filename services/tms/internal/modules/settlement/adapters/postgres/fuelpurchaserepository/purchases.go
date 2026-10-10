@@ -1,6 +1,7 @@
 package fuelpurchaserepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/fuelpurchasecol"
 	"context"
 	"fmt"
 	"strings"
@@ -23,7 +24,7 @@ func (r *repository) applyPurchaseFilters(
 	q *bun.SelectQuery,
 	req *fuelpurchaseports.ListFuelPurchasesRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.FuelPurchaseColumns
+	cols := fuelpurchasecol.FuelPurchaseColumns
 
 	if !req.TractorID.IsNil() {
 		q = q.Where(cols.TractorID.Eq(), req.TractorID)
@@ -63,7 +64,7 @@ func applyPurchaseRelations(
 	q *bun.SelectQuery,
 	includeTractor, includeWorker, includeJurisdiction, includeFuelCard bool,
 ) *bun.SelectQuery {
-	rel := buncolgen.FuelPurchaseRelations
+	rel := fuelpurchasecol.FuelPurchaseRelations
 
 	if includeTractor {
 		q = q.Relation(rel.Tractor)
@@ -96,7 +97,7 @@ func (r *repository) ListPurchases(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.FuelPurchaseTable.Alias,
+						fuelpurchasecol.FuelPurchaseTable.Alias,
 						req.Filter,
 						(*fuelpurchase.FuelPurchase)(nil),
 					)
@@ -119,7 +120,7 @@ func (r *repository) ListPurchases(
 				Query: func(items *[]*fuelpurchase.FuelPurchase) *bun.SelectQuery {
 					q := dba.NewSelect().
 						Model(items).
-						ColumnExpr(buncolgen.FuelPurchaseTable.All())
+						ColumnExpr(fuelpurchasecol.FuelPurchaseTable.All())
 					return applyPurchaseRelations(
 						q,
 						req.IncludeTractor,
@@ -131,7 +132,7 @@ func (r *repository) ListPurchases(
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.FuelPurchaseTable.Alias,
+						fuelpurchasecol.FuelPurchaseTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*fuelpurchase.FuelPurchase)(nil),
@@ -162,8 +163,8 @@ func (r *repository) GetPurchaseByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FuelPurchaseScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.FuelPurchaseColumns.ID.Eq(), req.ID)
+				return fuelpurchasecol.FuelPurchaseScopeTenant(sq, req.TenantInfo).
+					Where(fuelpurchasecol.FuelPurchaseColumns.ID.Eq(), req.ID)
 			})
 		q = applyPurchaseRelations(
 			q,
@@ -195,8 +196,8 @@ func (r *repository) GetPurchasesByIDs(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FuelPurchaseScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.FuelPurchaseColumns.ID.In(), bun.List(req.IDs))
+				return fuelpurchasecol.FuelPurchaseScopeTenant(sq, req.TenantInfo).
+					Where(fuelpurchasecol.FuelPurchaseColumns.ID.In(), bun.List(req.IDs))
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -230,14 +231,14 @@ func (r *repository) FindReferences(
 			return found, nil
 		}
 
-		cols := buncolgen.FuelPurchaseColumns
+		cols := fuelpurchasecol.FuelPurchaseColumns
 		rows := make([]referenceRow, 0, len(refs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*fuelpurchase.FuelPurchase)(nil)).
 			Column(cols.ID.String(), cols.TransactionReference.String()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FuelPurchaseScopeTenant(sq, req.TenantInfo).
+				return fuelpurchasecol.FuelPurchaseScopeTenant(sq, req.TenantInfo).
 					Where(cols.TransactionReference.In(), bun.In(refs))
 			}).
 			Scan(ctx, &rows)
@@ -287,7 +288,7 @@ func (r *repository) UpdatePurchase(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.FuelPurchaseColumns.Version.Eq(), ov).
+			Where(fuelpurchasecol.FuelPurchaseColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -314,8 +315,8 @@ func (r *repository) DeletePurchase(
 			NewDelete().
 			Model((*fuelpurchase.FuelPurchase)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.FuelPurchaseScopeTenantDelete(dq, req.TenantInfo).
-					Where(buncolgen.FuelPurchaseColumns.ID.Eq(), req.ID)
+				return fuelpurchasecol.FuelPurchaseScopeTenantDelete(dq, req.TenantInfo).
+					Where(fuelpurchasecol.FuelPurchaseColumns.ID.Eq(), req.ID)
 			}).
 			Exec(ctx)
 		if err != nil {
@@ -332,7 +333,7 @@ func (r *repository) AccumulateFuel(
 	req *fuelpurchaseports.AccumulateFuelRequest,
 ) ([]*fuelpurchaseports.FuelAccumulationRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fuelpurchaseports.FuelAccumulationRow, error) {
-		cols := buncolgen.FuelPurchaseColumns
+		cols := fuelpurchasecol.FuelPurchaseColumns
 		rows := make([]*fuelpurchaseports.FuelAccumulationRow, 0, 64)
 
 		err := r.db.DBForContext(ctx).
@@ -349,7 +350,7 @@ func (r *repository) AccumulateFuel(
 			)).
 			ColumnExpr(buncolgen.Count("purchase_count")).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FuelPurchaseScopeTenant(sq, req.TenantInfo).
+				return fuelpurchasecol.FuelPurchaseScopeTenant(sq, req.TenantInfo).
 					Where(cols.PurchasedAt.Gte(), req.Start).
 					Where(cols.PurchasedAt.Lt(), req.End).
 					Where(cols.FuelType.In(), bun.In(domaintypes.IFTAFuelTypes()))

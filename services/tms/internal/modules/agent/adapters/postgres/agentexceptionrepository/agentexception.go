@@ -1,6 +1,7 @@
 package agentexceptionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 	"context"
 	"fmt"
 
@@ -42,15 +43,15 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *agentports.ListAgentExceptionRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.AgentExceptionColumns
+	cols := agentcol.AgentExceptionColumns
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.AgentExceptionTable.Alias,
+		agentcol.AgentExceptionTable.Alias,
 		req.Filter,
 		(*agent.AgentException)(nil),
 	)
 
-	return q.Apply(buncolgen.AgentExceptionApplyTenant(req.Filter.TenantInfo)).
+	return q.Apply(agentcol.AgentExceptionApplyTenant(req.Filter.TenantInfo)).
 		Limit(req.Filter.Pagination.SafeLimit()).
 		Offset(req.Filter.Pagination.SafeOffset()).
 		Order(cols.CreatedAt.OrderDesc())
@@ -88,13 +89,13 @@ func (r *repository) ListByIDs(
 			return []*agent.AgentException{}, nil
 		}
 
-		cols := buncolgen.AgentExceptionColumns
+		cols := agentcol.AgentExceptionColumns
 		entities := make([]*agent.AgentException, 0, len(req.IDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentExceptionScopeTenant(sq, req.TenantInfo).
+				return agentcol.AgentExceptionScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.In(), bun.List(req.IDs))
 			}).
 			Scan(ctx)
@@ -114,12 +115,12 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.AgentExceptionTable.Alias,
+		agentcol.AgentExceptionTable.Alias,
 		req.Filter,
 		(*agent.AgentException)(nil),
 	)
 
-	return q.Apply(buncolgen.AgentExceptionApplyTenant(req.Filter.TenantInfo))
+	return q.Apply(agentcol.AgentExceptionApplyTenant(req.Filter.TenantInfo))
 }
 
 func (r *repository) applyCursorPageFilters(
@@ -128,7 +129,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.AgentExceptionTable.Alias,
+		agentcol.AgentExceptionTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*agent.AgentException)(nil),
@@ -137,7 +138,7 @@ func (r *repository) applyCursorPageFilters(
 
 func applyAgentExceptionColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.AgentExceptionTable.All())
+		return q.ColumnExpr(agentcol.AgentExceptionTable.All())
 	}
 
 	return q.Column(columns...)
@@ -202,12 +203,12 @@ func (r *repository) GetByID(
 		log := r.l.With(zap.String("operation", "GetByID"), zap.String("id", req.ID.String()))
 
 		entity := new(agent.AgentException)
-		cols := buncolgen.AgentExceptionColumns
+		cols := agentcol.AgentExceptionColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentExceptionScopeTenant(sq, *req.TenantInfo).
+				return agentcol.AgentExceptionScopeTenant(sq, *req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
@@ -244,12 +245,12 @@ func (r *repository) UpdateResolution(
 		log := r.l.With(zap.String("operation", "UpdateResolution"), zap.String("id", req.ID.String()))
 
 		entity := new(agent.AgentException)
-		cols := buncolgen.AgentExceptionColumns
+		cols := agentcol.AgentExceptionColumns
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.AgentExceptionScopeTenantUpdate(uq, req.TenantInfo).
+				return agentcol.AgentExceptionScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Set(cols.ResolutionState.Set(), req.ResolutionState).

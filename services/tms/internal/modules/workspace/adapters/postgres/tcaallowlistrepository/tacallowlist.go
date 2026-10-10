@@ -1,6 +1,7 @@
 package tcaallowlistrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tablechangealertcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
@@ -38,13 +39,13 @@ func (r *repository) List(
 ) ([]*tablechangealert.TCAAllowlistedTable, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tablechangealert.TCAAllowlistedTable, error) {
 		log := r.l.With(zap.String("operation", "List"))
-		cols := buncolgen.TCAAllowlistedTableColumns
+		cols := tablechangealertcol.TCAAllowlistedTableColumns
 
 		entities := make([]*tablechangealert.TCAAllowlistedTable, 0)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.TCAAllowlistedTableApplyTenant(tenantInfo)).
+			Apply(tablechangealertcol.TCAAllowlistedTableApplyTenant(tenantInfo)).
 			Where(cols.Enabled.Eq(), true).
 			Order(cols.DisplayName.OrderAsc()).
 			Scan(ctx)
@@ -67,12 +68,12 @@ func (r *repository) IsTableAllowed(
 			zap.String("operation", "IsTableAllowed"),
 			zap.String("tableName", tableName),
 		)
-		cols := buncolgen.TCAAllowlistedTableColumns
+		cols := tablechangealertcol.TCAAllowlistedTableColumns
 
 		exists, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*tablechangealert.TCAAllowlistedTable)(nil)).
-			Apply(buncolgen.TCAAllowlistedTableApplyTenant(tenantInfo)).
+			Apply(tablechangealertcol.TCAAllowlistedTableApplyTenant(tenantInfo)).
 			Where(cols.TableName.Eq(), tableName).
 			Where(cols.Enabled.Eq(), true).
 			Exists(ctx)

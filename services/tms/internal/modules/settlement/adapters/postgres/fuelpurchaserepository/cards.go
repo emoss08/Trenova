@@ -1,6 +1,7 @@
 package fuelpurchaserepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/fuelpurchasecol"
 	"context"
 	"database/sql"
 	"errors"
@@ -23,7 +24,7 @@ func (r *repository) applyCardFilters(
 	q *bun.SelectQuery,
 	req *fuelpurchaseports.ListFuelCardsRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.FuelCardColumns
+	cols := fuelpurchasecol.FuelCardColumns
 
 	if len(req.Statuses) > 0 {
 		q = q.Where(cols.Status.In(), bun.In(req.Statuses))
@@ -63,7 +64,7 @@ func (r *repository) ListCards(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.FuelCardTable.Alias,
+						fuelpurchasecol.FuelCardTable.Alias,
 						req.Filter,
 						(*fuelpurchase.FuelCard)(nil),
 					)
@@ -84,17 +85,17 @@ func (r *repository) ListCards(
 			Query: func(items *[]*fuelpurchase.FuelCard) *bun.SelectQuery {
 				q := dba.NewSelect().
 					Model(items).
-					ColumnExpr(buncolgen.FuelCardTable.All())
+					ColumnExpr(fuelpurchasecol.FuelCardTable.All())
 				if req.IncludeAssignments {
-					q = q.Relation(buncolgen.FuelCardRelations.AssignedWorker).
-						Relation(buncolgen.FuelCardRelations.AssignedTractor)
+					q = q.Relation(fuelpurchasecol.FuelCardRelations.AssignedWorker).
+						Relation(fuelpurchasecol.FuelCardRelations.AssignedTractor)
 				}
 				return q
 			},
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 				sq, applyErr := querybuilder.ApplyCursorFilters(
 					sq,
-					buncolgen.FuelCardTable.Alias,
+					fuelpurchasecol.FuelCardTable.Alias,
 					req.Filter,
 					req.Cursor,
 					(*fuelpurchase.FuelCard)(nil),
@@ -124,13 +125,13 @@ func (r *repository) GetCardByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FuelCardScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.FuelCardColumns.ID.Eq(), req.ID)
+				return fuelpurchasecol.FuelCardScopeTenant(sq, req.TenantInfo).
+					Where(fuelpurchasecol.FuelCardColumns.ID.Eq(), req.ID)
 			})
 
 		if req.IncludeAssignments {
-			q = q.Relation(buncolgen.FuelCardRelations.AssignedWorker).
-				Relation(buncolgen.FuelCardRelations.AssignedTractor)
+			q = q.Relation(fuelpurchasecol.FuelCardRelations.AssignedWorker).
+				Relation(fuelpurchasecol.FuelCardRelations.AssignedTractor)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -155,8 +156,8 @@ func (r *repository) GetCardsByIDs(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FuelCardScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.FuelCardColumns.ID.In(), bun.List(req.IDs))
+				return fuelpurchasecol.FuelCardScopeTenant(sq, req.TenantInfo).
+					Where(fuelpurchasecol.FuelCardColumns.ID.In(), bun.List(req.IDs))
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -177,7 +178,7 @@ func (r *repository) FindCardsByLastFour(
 	req *fuelpurchaseports.FindFuelCardsByLastFourRequest,
 ) (map[string]*fuelpurchase.FuelCard, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[string]*fuelpurchase.FuelCard, error) {
-		cols := buncolgen.FuelCardColumns
+		cols := fuelpurchasecol.FuelCardColumns
 
 		wanted := make([]string, 0, len(req.LastFours))
 		seen := make(map[string]struct{}, len(req.LastFours))
@@ -203,7 +204,7 @@ func (r *repository) FindCardsByLastFour(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.FuelCardScopeTenant(sq, req.TenantInfo).
+				sq = fuelpurchasecol.FuelCardScopeTenant(sq, req.TenantInfo).
 					Where(cols.LastFour.In(), bun.List(wanted)).
 					Where(cols.Status.Ne(), fuelpurchase.CardStatusCancelled)
 				if req.Provider != "" {
@@ -237,7 +238,7 @@ func (r *repository) FindCardByLastFour(
 	req *fuelpurchaseports.FindFuelCardByLastFourRequest,
 ) (*fuelpurchase.FuelCard, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fuelpurchase.FuelCard, error) {
-		cols := buncolgen.FuelCardColumns
+		cols := fuelpurchasecol.FuelCardColumns
 		lastFour := strings.TrimSpace(req.LastFour)
 		if lastFour == "" {
 			return nil, nil
@@ -248,7 +249,7 @@ func (r *repository) FindCardByLastFour(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.FuelCardScopeTenant(sq, req.TenantInfo).
+				sq = fuelpurchasecol.FuelCardScopeTenant(sq, req.TenantInfo).
 					Where(cols.LastFour.Eq(), lastFour).
 					Where(cols.Status.Ne(), fuelpurchase.CardStatusCancelled)
 				if req.Provider != "" {
@@ -276,7 +277,7 @@ func (r *repository) ListActiveCards(
 	req *fuelpurchaseports.ListActiveFuelCardsRequest,
 ) ([]*fuelpurchase.FuelCard, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fuelpurchase.FuelCard, error) {
-		cols := buncolgen.FuelCardColumns
+		cols := fuelpurchasecol.FuelCardColumns
 		limit := limitOr(req.Limit, defaultActiveCardLimit, maxActiveCardLimit)
 		entities := make([]*fuelpurchase.FuelCard, 0, limit)
 		term := strings.TrimSpace(req.Query)
@@ -285,7 +286,7 @@ func (r *repository) ListActiveCards(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.FuelCardScopeTenant(sq, req.TenantInfo).
+				sq = fuelpurchasecol.FuelCardScopeTenant(sq, req.TenantInfo).
 					Where(cols.Status.Eq(), fuelpurchase.CardStatusActive)
 				if term != "" {
 					pattern := "%" + term + "%"
@@ -342,7 +343,7 @@ func (r *repository) UpdateCard(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.FuelCardColumns.Version.Eq(), ov).
+			Where(fuelpurchasecol.FuelCardColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {

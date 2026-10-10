@@ -2,11 +2,14 @@
 
 package distancecontrol
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/distancecontrolcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DistanceControl].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DistanceControlFieldMap] instead of parsing struct tags via reflection.
+// the generated [distancecontrolcol.DistanceControlFieldMap] instead of parsing struct tags via reflection.
 func (e *DistanceControl) GetStaticFieldMap() map[string]string {
-	return buncolgen.DistanceControlFieldMap
+	return distancecontrolcol.DistanceControlFieldMap
 }

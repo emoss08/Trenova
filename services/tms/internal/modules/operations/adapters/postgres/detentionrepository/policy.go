@@ -1,6 +1,7 @@
 package detentionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/detentioncol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
@@ -39,7 +40,7 @@ func NewPolicyRepository(p PolicyParams) detentionports.DetentionPolicyRepositor
 }
 
 func orderTiers(sq *bun.SelectQuery) *bun.SelectQuery {
-	cols := buncolgen.DetentionPolicyTierColumns
+	cols := detentioncol.DetentionPolicyTierColumns
 	return sq.Order(cols.FromMinute.OrderAsc()).Order(cols.SortOrder.OrderAsc())
 }
 
@@ -49,12 +50,12 @@ func (r *policyRepository) filterQuery(
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.DetentionPolicyTable.Alias,
+		detentioncol.DetentionPolicyTable.Alias,
 		req.Filter,
 		(*detention.DetentionPolicy)(nil),
 	)
 
-	cols := buncolgen.DetentionPolicyColumns
+	cols := detentioncol.DetentionPolicyColumns
 
 	if req.Status != "" {
 		q = q.Where(cols.Status.Eq(), req.Status)
@@ -82,7 +83,7 @@ func (r *policyRepository) List(
 		total, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Relation(buncolgen.DetentionPolicyRelations.Tiers, orderTiers).
+			Relation(detentioncol.DetentionPolicyRelations.Tiers, orderTiers).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return r.filterQuery(sq, req)
 			}).ScanAndCount(ctx)
@@ -114,7 +115,7 @@ func (r *policyRepository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.DetentionPolicyTable.Alias,
+						detentioncol.DetentionPolicyTable.Alias,
 						req.Filter,
 						(*detention.DetentionPolicy)(nil),
 					)
@@ -136,7 +137,7 @@ func (r *policyRepository) ListConnection(
 				Query: func(entities *[]*detention.DetentionPolicy) *bun.SelectQuery {
 					q := dba.NewSelect().Model(entities)
 					if len(req.DetentionPolicyColumns) == 0 {
-						q = q.ColumnExpr(buncolgen.DetentionPolicyTable.All())
+						q = q.ColumnExpr(detentioncol.DetentionPolicyTable.All())
 					} else {
 						q = q.Column(req.DetentionPolicyColumns...)
 					}
@@ -145,7 +146,7 @@ func (r *policyRepository) ListConnection(
 				Apply: func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
 					return querybuilder.ApplyCursorFilters(
 						q,
-						buncolgen.DetentionPolicyTable.Alias,
+						detentioncol.DetentionPolicyTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*detention.DetentionPolicy)(nil),
@@ -172,19 +173,19 @@ func (r *policyRepository) GetByID(
 			zap.String("id", req.DetentionPolicyID.String()),
 		)
 
-		cols := buncolgen.DetentionPolicyColumns
+		cols := detentioncol.DetentionPolicyColumns
 		entity := new(detention.DetentionPolicy)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DetentionPolicyScopeTenant(sq, req.TenantInfo).
+				return detentioncol.DetentionPolicyScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.DetentionPolicyID)
 			})
 
 		if req.IncludeTiers {
-			q = q.Relation(buncolgen.DetentionPolicyRelations.Tiers, orderTiers)
+			q = q.Relation(detentioncol.DetentionPolicyRelations.Tiers, orderTiers)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -207,15 +208,15 @@ func (r *policyRepository) GetResolutionCandidates(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionPolicy, error) {
 		log := r.l.With(zap.String("operation", "GetResolutionCandidates"))
 
-		cols := buncolgen.DetentionPolicyColumns
+		cols := detentioncol.DetentionPolicyColumns
 		entities := make([]*detention.DetentionPolicy, 0, 8)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Relation(buncolgen.DetentionPolicyRelations.Tiers, orderTiers).
+			Relation(detentioncol.DetentionPolicyRelations.Tiers, orderTiers).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DetentionPolicyScopeTenant(sq, req.TenantInfo).
+				return detentioncol.DetentionPolicyScopeTenant(sq, req.TenantInfo).
 					Where(cols.Status.Eq(), detention.PolicyStatusActive)
 			}).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -322,7 +323,7 @@ func (r *policyRepository) Update(
 		ov := entity.Version
 		entity.Version++
 
-		tierCols := buncolgen.DetentionPolicyTierColumns
+		tierCols := detentioncol.DetentionPolicyTierColumns
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			results, uErr := r.db.DBForContext(c).
 				NewUpdate().
@@ -346,7 +347,7 @@ func (r *policyRepository) Update(
 				NewDelete().
 				Model((*detention.DetentionPolicyTier)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return buncolgen.DetentionPolicyTierScopeTenantDelete(dq, pagination.TenantInfo{
+					return detentioncol.DetentionPolicyTierScopeTenantDelete(dq, pagination.TenantInfo{
 						OrgID: entity.OrganizationID,
 						BuID:  entity.BusinessUnitID,
 					}).Where(tierCols.DetentionPolicyID.Eq(), entity.ID)
@@ -381,12 +382,12 @@ func (r *policyRepository) Delete(
 			zap.String("id", req.DetentionPolicyID.String()),
 		)
 
-		cols := buncolgen.DetentionPolicyColumns
+		cols := detentioncol.DetentionPolicyColumns
 		results, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*detention.DetentionPolicy)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.DetentionPolicyScopeTenantDelete(dq, req.TenantInfo).
+				return detentioncol.DetentionPolicyScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.DetentionPolicyID)
 			}).
 			Exec(ctx)
@@ -406,13 +407,13 @@ func (r *policyRepository) CodeExists(
 	req *detentionports.DetentionPolicyCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := buncolgen.DetentionPolicyColumns
+		cols := detentioncol.DetentionPolicyColumns
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*detention.DetentionPolicy)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DetentionPolicyScopeTenant(sq, req.TenantInfo).
+				return detentioncol.DetentionPolicyScopeTenant(sq, req.TenantInfo).
 					Where(cols.Code.Expr("LOWER({}) = LOWER(?)"), req.Code)
 			})
 
@@ -437,14 +438,14 @@ func (r *policyRepository) FindOverlapping(
 	req *detentionports.FindOverlappingDetentionPoliciesRequest,
 ) ([]*detention.DetentionPolicy, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionPolicy, error) {
-		cols := buncolgen.DetentionPolicyColumns
+		cols := detentioncol.DetentionPolicyColumns
 		entities := make([]*detention.DetentionPolicy, 0, 4)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DetentionPolicyScopeTenant(sq, req.TenantInfo).
+				return detentioncol.DetentionPolicyScopeTenant(sq, req.TenantInfo).
 					Where(cols.Status.Eq(), detention.PolicyStatusActive).
 					Where(cols.IsOrgDefault.Eq(), req.IsOrgDefault)
 			})
@@ -495,7 +496,7 @@ func (r *policyRepository) SelectOptions(
 	req *detentionports.DetentionPolicySelectOptionsRequest,
 ) (*pagination.ListResult[*detention.DetentionPolicy], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*detention.DetentionPolicy], error) {
-		cols := buncolgen.DetentionPolicyColumns
+		cols := detentioncol.DetentionPolicyColumns
 		return dbhelper.SelectOptions[*detention.DetentionPolicy](
 			ctx,
 			r.db.DBForContext(ctx),

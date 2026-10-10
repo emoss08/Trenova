@@ -1,6 +1,7 @@
 package development
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/holdreasoncol"
 	"context"
 	"database/sql"
 	"errors"
@@ -121,7 +122,7 @@ func seededHoldReasons() []*holdreason.HoldReason {
 }
 
 func (s *HoldReasonSeed) ensure(ctx context.Context, tx bun.Tx, reason *holdreason.HoldReason) error {
-	cols := buncolgen.HoldReasonColumns
+	cols := holdreasoncol.HoldReasonColumns
 	exists, err := tx.NewSelect().
 		Model((*holdreason.HoldReason)(nil)).
 		Where(cols.OrganizationID.Eq(), reason.OrganizationID).

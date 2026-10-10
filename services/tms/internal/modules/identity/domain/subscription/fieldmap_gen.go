@@ -2,11 +2,14 @@
 
 package subscription
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/subscriptioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Subscription].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.SubscriptionFieldMap] instead of parsing struct tags via reflection.
+// the generated [subscriptioncol.SubscriptionFieldMap] instead of parsing struct tags via reflection.
 func (e *Subscription) GetStaticFieldMap() map[string]string {
-	return buncolgen.SubscriptionFieldMap
+	return subscriptioncol.SubscriptionFieldMap
 }

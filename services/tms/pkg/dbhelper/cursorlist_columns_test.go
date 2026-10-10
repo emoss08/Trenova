@@ -1,6 +1,7 @@
 package dbhelper
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
 	"database/sql"
 	"strings"
 	"testing"
@@ -20,7 +21,7 @@ func TestTemplateCursorSQLIncludesBaseColumns(t *testing.T) {
 
 	q := db.NewSelect().
 		Model(&entities).
-		ColumnExpr(buncolgen.EDITemplateTable.All())
+		ColumnExpr(edicol.EDITemplateTable.All())
 	q, err := querybuilder.ApplyCursorFilters(
 		q,
 		"et",

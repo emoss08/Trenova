@@ -2,25 +2,28 @@
 
 package extractioneval
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/extractionevalcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ExtractionCase].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ExtractionCaseFieldMap] instead of parsing struct tags via reflection.
+// the generated [extractionevalcol.ExtractionCaseFieldMap] instead of parsing struct tags via reflection.
 func (e *ExtractionCase) GetStaticFieldMap() map[string]string {
-	return buncolgen.ExtractionCaseFieldMap
+	return extractionevalcol.ExtractionCaseFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ExtractionResult].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ExtractionResultFieldMap] instead of parsing struct tags via reflection.
+// the generated [extractionevalcol.ExtractionResultFieldMap] instead of parsing struct tags via reflection.
 func (e *ExtractionResult) GetStaticFieldMap() map[string]string {
-	return buncolgen.ExtractionResultFieldMap
+	return extractionevalcol.ExtractionResultFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ExtractionRun].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ExtractionRunFieldMap] instead of parsing struct tags via reflection.
+// the generated [extractionevalcol.ExtractionRunFieldMap] instead of parsing struct tags via reflection.
 func (e *ExtractionRun) GetStaticFieldMap() map[string]string {
-	return buncolgen.ExtractionRunFieldMap
+	return extractionevalcol.ExtractionRunFieldMap
 }

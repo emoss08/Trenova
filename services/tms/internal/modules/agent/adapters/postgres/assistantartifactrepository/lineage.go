@@ -1,6 +1,7 @@
 package assistantartifactrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/assistantartifactcol"
 	"context"
 	"encoding/base64"
 	"errors"
@@ -117,10 +118,10 @@ func escapeLike(text string) string {
 // matching restricts a read to the thread's artifacts that match the search.
 // A lineage matches when any of its versions does.
 func matching(q *bun.SelectQuery, req *assistantartifactports.ListArtifactsRequest) *bun.SelectQuery {
-	cols := buncolgen.ArtifactColumns
+	cols := assistantartifactcol.ArtifactColumns
 
 	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return buncolgen.ArtifactScopeTenant(sq, req.TenantInfo).
+		return assistantartifactcol.ArtifactScopeTenant(sq, req.TenantInfo).
 			Where(cols.ThreadID.Eq(), req.ThreadID)
 	})
 	if needle := strings.TrimSpace(req.Query); needle != "" {
@@ -305,7 +306,7 @@ func versionsQuery(
 	dest *[]*assistantartifact.Artifact,
 	req *versionsRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.ArtifactColumns
+	cols := assistantartifactcol.ArtifactColumns
 	query := db.NewSelect().Model(dest)
 	if req.summary {
 		query = query.
@@ -320,7 +321,7 @@ func versionsQuery(
 
 	return query.
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ArtifactScopeTenant(sq, req.tenant).
+			return assistantartifactcol.ArtifactScopeTenant(sq, req.tenant).
 				Where(cols.ThreadID.Eq(), req.threadID).
 				Where(rootExpr+" IN (?)", bun.List(req.roots))
 		}).
@@ -333,14 +334,14 @@ func (r *repository) rootOf(
 	tenant pagination.TenantInfo,
 	threadID, id pulid.ID,
 ) (string, error) {
-	cols := buncolgen.ArtifactColumns
+	cols := assistantartifactcol.ArtifactColumns
 	var root string
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model((*assistantartifact.Artifact)(nil)).
 		ColumnExpr(rootExpr).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ArtifactScopeTenant(sq, tenant).
+			return assistantartifactcol.ArtifactScopeTenant(sq, tenant).
 				Where(cols.ThreadID.Eq(), threadID).
 				Where(cols.ID.Eq(), id)
 		}).
@@ -375,13 +376,13 @@ func (r *repository) FindBySlug(
 	req assistantartifactports.SlugRequest,
 ) (*assistantartifact.Artifact, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*assistantartifact.Artifact, error) {
-		cols := buncolgen.ArtifactColumns
+		cols := assistantartifactcol.ArtifactColumns
 		entity := new(assistantartifact.Artifact)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ArtifactScopeTenant(sq, req.TenantInfo).
+				return assistantartifactcol.ArtifactScopeTenant(sq, req.TenantInfo).
 					Where(cols.ThreadID.Eq(), req.ThreadID).
 					Where(cols.Slug.Eq(), req.Slug)
 			}).
@@ -403,14 +404,14 @@ func (r *repository) TakenSlugs(
 	base string,
 ) (map[string]bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[string]bool, error) {
-		cols := buncolgen.ArtifactColumns
+		cols := assistantartifactcol.ArtifactColumns
 		var slugs []string
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*assistantartifact.Artifact)(nil)).
 			ColumnExpr(cols.Slug.Qualified()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ArtifactScopeTenant(sq, tenant).
+				return assistantartifactcol.ArtifactScopeTenant(sq, tenant).
 					Where(cols.ThreadID.Eq(), threadID).
 					Where(cols.LineageID.IsNull()).
 					Where(cols.Slug.Qualified()+" LIKE ?", escapeLike(base)+"%")

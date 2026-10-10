@@ -1,6 +1,7 @@
 package shipmentrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 	"fmt"
 	"strings"
@@ -208,30 +209,30 @@ func LoadShipmentGraphSource(
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) (*shipment.Shipment, error) {
-	sp := buncolgen.ShipmentColumns
-	sm := buncolgen.ShipmentMoveColumns
-	stp := buncolgen.StopColumns
+	sp := shipmentcol.ShipmentColumns
+	sm := shipmentcol.ShipmentMoveColumns
+	stp := shipmentcol.StopColumns
 	entity := new(shipment.Shipment)
 	err := db.
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ShipmentScopeTenant(sq, tenantInfo).
+			return shipmentcol.ShipmentScopeTenant(sq, tenantInfo).
 				Where(sp.ID.Eq(), shipmentID)
 		}).
-		RelationWithOpts(buncolgen.ShipmentRelations.Moves, bun.RelationOpts{
+		RelationWithOpts(shipmentcol.ShipmentRelations.Moves, bun.RelationOpts{
 			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return sq.Order(sm.Sequence.OrderAsc())
 			},
 		}).
-		RelationWithOpts(buncolgen.Rel(buncolgen.ShipmentRelations.Moves, buncolgen.ShipmentMoveRelations.Stops), bun.RelationOpts{
+		RelationWithOpts(buncolgen.Rel(shipmentcol.ShipmentRelations.Moves, shipmentcol.ShipmentMoveRelations.Stops), bun.RelationOpts{
 			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return sq.Order(stp.Sequence.OrderAsc())
 			},
 		}).
-		Relation(buncolgen.ShipmentRelations.AdditionalCharges).
-		Relation(buncolgen.ShipmentRelations.ChargeAllocations).
-		Relation(buncolgen.ShipmentRelations.Commodities).
+		Relation(shipmentcol.ShipmentRelations.AdditionalCharges).
+		Relation(shipmentcol.ShipmentRelations.ChargeAllocations).
+		Relation(shipmentcol.ShipmentRelations.Commodities).
 		Scan(ctx)
 	if err != nil {
 		return nil, dberror.HandleNotFoundError(err, "Shipment")

@@ -1,6 +1,7 @@
 package agentwaitrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentwaitcol"
 	"context"
 	"fmt"
 
@@ -51,7 +52,7 @@ func (r *repository) Insert(
 ) (*agentwait.Wait, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentwait.Wait, error) {
 		db := r.db.DBForContext(ctx)
-		cols := buncolgen.WaitColumns
+		cols := agentwaitcol.WaitColumns
 		owner := ownerKey(entity)
 		if _, err := db.NewRaw(
 			"SELECT pg_advisory_xact_lock(hashtextextended(?, 0))", "agent-wait:"+owner,
@@ -62,7 +63,7 @@ func (r *repository) Insert(
 		open, err := db.NewSelect().
 			Model((*agentwait.Wait)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WaitScopeTenant(sq, tenantOf(entity)).
+				sq = agentwaitcol.WaitScopeTenant(sq, tenantOf(entity)).
 					Where(cols.Status.Eq(), agentwait.StatusWaiting)
 				if entity.Conversational() {
 					return sq.Where(cols.ThreadID.Eq(), entity.ThreadID)
@@ -105,13 +106,13 @@ func (r *repository) Get(
 	req *agentwaitports.GetAgentWaitRequest,
 ) (*agentwait.Wait, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentwait.Wait, error) {
-		cols := buncolgen.WaitColumns
+		cols := agentwaitcol.WaitColumns
 		entity := new(agentwait.Wait)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WaitScopeTenant(sq, req.TenantInfo).
+				sq = agentwaitcol.WaitScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 				if req.ThreadID.IsNotNil() {
 					sq = sq.Where(cols.ThreadID.Eq(), req.ThreadID)
@@ -135,7 +136,7 @@ func (r *repository) ListByThread(
 	req *agentwaitports.ListThreadWaitsRequest,
 ) ([]*agentwait.Wait, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentwait.Wait, error) {
-		cols := buncolgen.WaitColumns
+		cols := agentwaitcol.WaitColumns
 		limit := req.Limit
 		if limit <= 0 || limit > maxListLimit {
 			limit = defaultListLimit
@@ -145,7 +146,7 @@ func (r *repository) ListByThread(
 			NewSelect().
 			Model(&items).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WaitScopeTenant(sq, req.TenantInfo).
+				return agentwaitcol.WaitScopeTenant(sq, req.TenantInfo).
 					Where(cols.ThreadID.Eq(), req.ThreadID).
 					Where(cols.UserID.Eq(), req.UserID)
 			}).
@@ -171,13 +172,13 @@ func (r *repository) ListOpenWatching(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentwait.Wait, error) {
-		cols := buncolgen.WaitColumns
+		cols := agentwaitcol.WaitColumns
 		items := make([]*agentwait.Wait, 0, len(req.WatchIDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&items).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WaitScopeTenant(sq, req.TenantInfo).
+				return agentwaitcol.WaitScopeTenant(sq, req.TenantInfo).
 					Where(cols.Status.Eq(), agentwait.StatusWaiting).
 					Where(cols.Kind.In(), bun.List(req.Kinds)).
 					Where(cols.WatchID.In(), bun.List(req.WatchIDs))
@@ -200,7 +201,7 @@ func (r *repository) ListOpenOfKinds(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentwait.Wait, error) {
-		cols := buncolgen.WaitColumns
+		cols := agentwaitcol.WaitColumns
 		limit := req.Limit
 		if limit <= 0 || limit > maxOpenScan {
 			limit = maxOpenScan
@@ -210,7 +211,7 @@ func (r *repository) ListOpenOfKinds(
 			NewSelect().
 			Model(&items).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WaitScopeTenant(sq, req.TenantInfo).
+				return agentwaitcol.WaitScopeTenant(sq, req.TenantInfo).
 					Where(cols.Status.Eq(), agentwait.StatusWaiting).
 					Where(cols.Kind.In(), bun.List(req.Kinds))
 			}).
@@ -235,7 +236,7 @@ func (r *repository) ListOpenByThreads(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*agentwait.Wait, error) {
-		cols := buncolgen.WaitColumns
+		cols := agentwaitcol.WaitColumns
 		items := make([]*agentwait.Wait, 0, len(req.ThreadIDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -248,7 +249,7 @@ func (r *repository) ListOpenByThreads(
 				cols.DueAt.Bare(),
 			).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WaitScopeTenant(sq, req.TenantInfo).
+				return agentwaitcol.WaitScopeTenant(sq, req.TenantInfo).
 					Where(cols.Status.Eq(), agentwait.StatusWaiting).
 					Where(cols.UserID.Eq(), req.UserID).
 					Where(cols.ThreadID.In(), bun.List(req.ThreadIDs))
@@ -275,7 +276,7 @@ func (r *repository) ListOverdueAcrossTenants(
 	ctx = dbscope.WithSystem(ctx, "list open agent waits past their expiry in every organization")
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentwait.Wait, error) {
-		cols := buncolgen.WaitColumns
+		cols := agentwaitcol.WaitColumns
 		limit := req.Limit
 		if limit <= 0 || limit > maxOpenScan {
 			limit = maxOpenScan
@@ -302,14 +303,14 @@ func (r *repository) UpdateCondition(
 	req *agentwaitports.UpdateAgentWaitConditionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.WaitColumns
+		cols := agentwaitcol.WaitColumns
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*agentwait.Wait)(nil)).
 			Set(cols.Condition.Set(), req.Condition).
 			Set(cols.Version.Inc(1)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.WaitScopeTenantUpdate(uq, req.TenantInfo).
+				return agentwaitcol.WaitScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID).
 					Where(cols.Status.Eq(), agentwait.StatusWaiting)
 			}).
@@ -321,7 +322,7 @@ func (r *repository) UpdateCondition(
 
 func (r *repository) SetDue(ctx context.Context, req *agentwaitports.SetAgentWaitDueRequest) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.WaitColumns
+		cols := agentwaitcol.WaitColumns
 		q := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*agentwait.Wait)(nil)).
@@ -332,7 +333,7 @@ func (r *repository) SetDue(ctx context.Context, req *agentwaitports.SetAgentWai
 		}
 		_, err := q.
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.WaitScopeTenantUpdate(uq, req.TenantInfo).
+				return agentwaitcol.WaitScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Exec(ctx)
@@ -346,7 +347,7 @@ func (r *repository) Resolve(
 	req *agentwaitports.ResolveAgentWaitRequest,
 ) (*agentwait.Wait, bool, error) {
 	return dbtx.Write2(ctx, r.db, func(ctx context.Context) (*agentwait.Wait, bool, error) {
-		cols := buncolgen.WaitColumns
+		cols := agentwaitcol.WaitColumns
 		entity := new(agentwait.Wait)
 		result, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -357,7 +358,7 @@ func (r *repository) Resolve(
 			Set(cols.DueAt.SetNull()).
 			Set(cols.Version.Inc(1)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.WaitScopeTenantUpdate(uq, req.TenantInfo).
+				return agentwaitcol.WaitScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID).
 					Where(cols.Status.Eq(), agentwait.StatusWaiting)
 			}).
@@ -388,7 +389,7 @@ func (r *repository) MarkResumed(
 	req *agentwaitports.MarkAgentWaitResumedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.WaitColumns
+		cols := agentwaitcol.WaitColumns
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*agentwait.Wait)(nil)).
@@ -396,7 +397,7 @@ func (r *repository) MarkResumed(
 			Set(cols.ResumedRunID.Set(), req.RunID).
 			Set(cols.Version.Inc(1)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.WaitScopeTenantUpdate(uq, req.TenantInfo).
+				return agentwaitcol.WaitScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Exec(ctx)

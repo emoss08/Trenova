@@ -1,6 +1,17 @@
 package accountingsyncrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customerpaymentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/glaccountcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/invoiceadjustmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/journalentrycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/journalsourcecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"cmp"
 	"context"
 	"fmt"
@@ -112,13 +123,13 @@ func carriedEntryTypes() []journalentry.EntryType {
 func withoutEntryTypes(
 	excluded []journalentry.EntryType,
 ) func(*bun.SelectQuery) *bun.SelectQuery {
-	entries := buncolgen.JournalEntryColumns
+	entries := journalentrycol.JournalEntryColumns
 	reversedID := entries.ID.WithAlias(reversedEntryAlias)
 	reversedType := entries.EntryType.WithAlias(reversedEntryAlias)
 	return func(q *bun.SelectQuery) *bun.SelectQuery {
 		return q.
 			Join("LEFT "+joinOn(
-				buncolgen.JournalEntryTable,
+				journalentrycol.JournalEntryTable,
 				reversedEntryAlias,
 				reversedID.EqColumn(entries.ReversalOfID),
 				entries.OrganizationID.WithAlias(reversedEntryAlias).
@@ -140,13 +151,13 @@ func (s *ledgerSource) GetEntryType(
 	req *journalentryports.GetLedgerJournalRequest,
 ) (journalentry.EntryType, error) {
 	return dbtx.Read(ctx, s.db, func(ctx context.Context) (journalentry.EntryType, error) {
-		cols := buncolgen.JournalEntryColumns
+		cols := journalentrycol.JournalEntryColumns
 		entry := new(journalentry.JournalEntry)
 		if err := s.db.DBForContext(ctx).
 			NewSelect().
 			Model(entry).
 			Column(cols.EntryType.Bare()).
-			Apply(buncolgen.JournalEntryApplyTenant(req.TenantInfo)).
+			Apply(journalentrycol.JournalEntryApplyTenant(req.TenantInfo)).
 			Where(cols.ID.Eq(), req.ID).
 			Scan(ctx); err != nil {
 			return "", dberror.HandleNotFoundError(err, journalEntryEntity)
@@ -160,12 +171,12 @@ func (s *ledgerSource) GetJournal(
 	req *journalentryports.GetLedgerJournalRequest,
 ) (*journalentryports.LedgerJournal, error) {
 	return dbtx.Write(ctx, s.db, func(ctx context.Context) (*journalentryports.LedgerJournal, error) {
-		cols := buncolgen.JournalEntryColumns
+		cols := journalentrycol.JournalEntryColumns
 		entry := new(journalentry.JournalEntry)
 		if err := s.db.DBForContext(ctx).
 			NewSelect().
 			Model(entry).
-			Apply(buncolgen.JournalEntryApplyTenant(req.TenantInfo)).
+			Apply(journalentrycol.JournalEntryApplyTenant(req.TenantInfo)).
 			Where(cols.ID.Eq(), req.ID).
 			Where(cols.IsPosted.IsTrue()).
 			Scan(ctx); err != nil {
@@ -185,12 +196,12 @@ func (s *ledgerSource) ListJournals(
 	req *journalentryports.ListLedgerJournalsRequest,
 ) ([]*journalentryports.LedgerJournal, error) {
 	return dbtx.Write(ctx, s.db, func(ctx context.Context) ([]*journalentryports.LedgerJournal, error) {
-		cols := buncolgen.JournalEntryColumns
+		cols := journalentrycol.JournalEntryColumns
 		entries := make([]*journalentry.JournalEntry, 0, 16)
 		if err := s.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entries).
-			Apply(buncolgen.JournalEntryApplyTenant(req.TenantInfo)).
+			Apply(journalentrycol.JournalEntryApplyTenant(req.TenantInfo)).
 			Where(cols.IsPosted.IsTrue()).
 			Apply(withoutEntryTypes(unsentEntryTypes())).
 			Where(cols.AccountingDate.Gte(), req.From).
@@ -212,8 +223,8 @@ func (s *ledgerSource) SumLines(
 	req *journalentryports.SumLedgerRequest,
 ) ([]journalentryports.LedgerAccountBalance, error) {
 	return dbtx.Read(ctx, s.db, func(ctx context.Context) ([]journalentryports.LedgerAccountBalance, error) {
-		lines := buncolgen.JournalEntryLineColumns
-		entries := buncolgen.JournalEntryColumns
+		lines := journalentrycol.JournalEntryLineColumns
+		entries := journalentrycol.JournalEntryColumns
 		query := s.postedLines(ctx, &postedLinesFilter{
 			tenantInfo:     req.TenantInfo,
 			from:           req.From,
@@ -330,7 +341,7 @@ func (s *ledgerSource) ListActiveAccounts(
 	req *journalentryports.ListLedgerAccountsRequest,
 ) ([]journalentryports.LedgerAccount, error) {
 	return dbtx.Read(ctx, s.db, func(ctx context.Context) ([]journalentryports.LedgerAccount, error) {
-		lines := buncolgen.JournalEntryLineColumns
+		lines := journalentrycol.JournalEntryLineColumns
 		ids := make([]pulid.ID, 0, 64)
 		if err := s.postedLines(ctx, &postedLinesFilter{tenantInfo: req.TenantInfo, from: req.Since}).
 			Distinct().
@@ -369,19 +380,19 @@ func (s *ledgerSource) postedLines(
 	ctx context.Context,
 	filter *postedLinesFilter,
 ) *bun.SelectQuery {
-	lines := buncolgen.JournalEntryLineColumns
-	entries := buncolgen.JournalEntryColumns
+	lines := journalentrycol.JournalEntryLineColumns
+	entries := journalentrycol.JournalEntryColumns
 	query := s.db.DBForContext(ctx).
 		NewSelect().
 		Model((*journalentry.JournalEntryLine)(nil)).
 		Join(joinOn(
-			buncolgen.JournalEntryTable,
-			buncolgen.JournalEntryTable.Alias,
+			journalentrycol.JournalEntryTable,
+			journalentrycol.JournalEntryTable.Alias,
 			entries.ID.EqColumn(lines.JournalEntryID),
 			entries.OrganizationID.EqColumn(lines.OrganizationID),
 			entries.BusinessUnitID.EqColumn(lines.BusinessUnitID),
 		)).
-		Apply(buncolgen.JournalEntryLineApplyTenant(filter.tenantInfo)).
+		Apply(journalentrycol.JournalEntryLineApplyTenant(filter.tenantInfo)).
 		Where(entries.IsPosted.IsTrue())
 	excluded := unsentEntryTypes()
 	if filter.includeClosing {
@@ -501,13 +512,13 @@ func (s *ledgerSource) loadLines(
 	entryIDs []pulid.ID,
 ) (map[pulid.ID][]*journalentry.JournalEntryLine, error) {
 	return dbtx.Read(ctx, s.db, func(ctx context.Context) (map[pulid.ID][]*journalentry.JournalEntryLine, error) {
-		cols := buncolgen.JournalEntryLineColumns
+		cols := journalentrycol.JournalEntryLineColumns
 		lines := make([]*journalentry.JournalEntryLine, 0, len(entryIDs)*4)
 		if err := s.db.DBForContext(ctx).
 			NewSelect().
 			Model(&lines).
-			Relation(buncolgen.JournalEntryLineRelations.GLAccount).
-			Apply(buncolgen.JournalEntryLineApplyTenant(tenantInfo)).
+			Relation(journalentrycol.JournalEntryLineRelations.GLAccount).
+			Apply(journalentrycol.JournalEntryLineApplyTenant(tenantInfo)).
 			Where(cols.JournalEntryID.In(), bun.List(entryIDs)).
 			Order(cols.JournalEntryID.OrderAsc(), cols.LineNumber.OrderAsc()).
 			Scan(ctx); err != nil {
@@ -532,13 +543,13 @@ func (s *ledgerSource) reversedEntries(
 		if len(ids) == 0 {
 			return map[pulid.ID]*journalentry.JournalEntry{}, nil
 		}
-		cols := buncolgen.JournalEntryColumns
+		cols := journalentrycol.JournalEntryColumns
 		entries := make([]*journalentry.JournalEntry, 0, len(ids))
 		if err := s.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entries).
 			Column(cols.ID.Bare(), cols.EntryNumber.Bare(), cols.EntryType.Bare()).
-			Apply(buncolgen.JournalEntryApplyTenant(tenantInfo)).
+			Apply(journalentrycol.JournalEntryApplyTenant(tenantInfo)).
 			Where(cols.ID.In(), bun.List(ids)).
 			Scan(ctx); err != nil {
 			s.l.Error("failed to load reversed journal numbers", zap.Error(err))
@@ -562,12 +573,12 @@ func (s *ledgerSource) resolveOrigins(
 		if len(entryIDs) == 0 {
 			return map[pulid.ID]ledgerOrigin{}, nil
 		}
-		cols := buncolgen.SourceColumns
+		cols := journalsourcecol.SourceColumns
 		sources := make([]*journalsource.Source, 0, len(entryIDs))
 		if err := s.db.DBForContext(ctx).
 			NewSelect().
 			Model(&sources).
-			Apply(buncolgen.SourceApplyTenant(tenantInfo)).
+			Apply(journalsourcecol.SourceApplyTenant(tenantInfo)).
 			Where(cols.JournalEntryID.In(), bun.List(slices.Compact(slices.Sorted(slices.Values(entryIDs))))).
 			Order(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
 			Scan(ctx); err != nil {
@@ -613,9 +624,9 @@ func (s *ledgerSource) originParties(
 
 	adjustments, err := s.lookupParties(ctx, &partyLookup{
 		model:   (*invoiceadjustment.InvoiceAdjustment)(nil),
-		id:      buncolgen.InvoiceAdjustmentColumns.ID,
-		party:   buncolgen.InvoiceAdjustmentColumns.OriginalInvoiceID,
-		tenant:  buncolgen.InvoiceAdjustmentApplyTenant(tenantInfo),
+		id:      invoiceadjustmentcol.InvoiceAdjustmentColumns.ID,
+		party:   invoiceadjustmentcol.InvoiceAdjustmentColumns.OriginalInvoiceID,
+		tenant:  invoiceadjustmentcol.InvoiceAdjustmentApplyTenant(tenantInfo),
 		objects: objects[journalsource.ObjectInvoiceAdjustment],
 	})
 	if err != nil {
@@ -627,9 +638,9 @@ func (s *ledgerSource) originParties(
 	}
 	invoices, err := s.lookupParties(ctx, &partyLookup{
 		model:   (*invoice.Invoice)(nil),
-		id:      buncolgen.InvoiceColumns.ID,
-		party:   buncolgen.InvoiceColumns.CustomerID,
-		tenant:  buncolgen.InvoiceApplyTenant(tenantInfo),
+		id:      invoicecol.InvoiceColumns.ID,
+		party:   invoicecol.InvoiceColumns.CustomerID,
+		tenant:  invoicecol.InvoiceApplyTenant(tenantInfo),
 		objects: invoiceIDs,
 	})
 	if err != nil {
@@ -657,9 +668,9 @@ func (s *ledgerSource) originParties(
 			kind:       journalentryports.LedgerPartyCustomer,
 			lookup: partyLookup{
 				model:  (*customerpayment.Payment)(nil),
-				id:     buncolgen.PaymentColumns.ID,
-				party:  buncolgen.PaymentColumns.CustomerID,
-				tenant: buncolgen.PaymentApplyTenant(tenantInfo),
+				id:     customerpaymentcol.PaymentColumns.ID,
+				party:  customerpaymentcol.PaymentColumns.CustomerID,
+				tenant: customerpaymentcol.PaymentApplyTenant(tenantInfo),
 			},
 		},
 		{
@@ -667,9 +678,9 @@ func (s *ledgerSource) originParties(
 			kind:       journalentryports.LedgerPartyCarrier,
 			lookup: partyLookup{
 				model:  (*carriersettlement.CarrierSettlement)(nil),
-				id:     buncolgen.CarrierSettlementColumns.ID,
-				party:  buncolgen.CarrierSettlementColumns.CarrierID,
-				tenant: buncolgen.CarrierSettlementApplyTenant(tenantInfo),
+				id:     carriersettlementcol.CarrierSettlementColumns.ID,
+				party:  carriersettlementcol.CarrierSettlementColumns.CarrierID,
+				tenant: carriersettlementcol.CarrierSettlementApplyTenant(tenantInfo),
 			},
 		},
 		{
@@ -677,9 +688,9 @@ func (s *ledgerSource) originParties(
 			kind:       journalentryports.LedgerPartyDriver,
 			lookup: partyLookup{
 				model:  (*driversettlement.Settlement)(nil),
-				id:     buncolgen.SettlementColumns.ID,
-				party:  buncolgen.SettlementColumns.WorkerID,
-				tenant: buncolgen.SettlementApplyTenant(tenantInfo),
+				id:     driversettlementcol.SettlementColumns.ID,
+				party:  driversettlementcol.SettlementColumns.WorkerID,
+				tenant: driversettlementcol.SettlementApplyTenant(tenantInfo),
 			},
 		},
 	}
@@ -770,7 +781,7 @@ func (s *ledgerSource) nameParties(
 	names partyNames,
 ) error {
 	return dbtx.ReadErr(ctx, s.db, func(ctx context.Context) error {
-		workers := buncolgen.WorkerColumns
+		workers := workercol.WorkerColumns
 		lookups := []struct {
 			kind   journalentryports.LedgerPartyKind
 			model  any
@@ -781,16 +792,16 @@ func (s *ledgerSource) nameParties(
 			{
 				kind:   journalentryports.LedgerPartyCustomer,
 				model:  (*customer.Customer)(nil),
-				id:     buncolgen.CustomerColumns.ID,
-				name:   buncolgen.CustomerColumns.Name.As(ledgerNameLabel),
-				tenant: buncolgen.CustomerApplyTenant(tenantInfo),
+				id:     customercol.CustomerColumns.ID,
+				name:   customercol.CustomerColumns.Name.As(ledgerNameLabel),
+				tenant: customercol.CustomerApplyTenant(tenantInfo),
 			},
 			{
 				kind:   journalentryports.LedgerPartyCarrier,
 				model:  (*carrier.Carrier)(nil),
-				id:     buncolgen.CarrierColumns.ID,
-				name:   buncolgen.CarrierColumns.Name.As(ledgerNameLabel),
-				tenant: buncolgen.CarrierApplyTenant(tenantInfo),
+				id:     carriercol.CarrierColumns.ID,
+				name:   carriercol.CarrierColumns.Name.As(ledgerNameLabel),
+				tenant: carriercol.CarrierApplyTenant(tenantInfo),
 			},
 			{
 				kind:  journalentryports.LedgerPartyDriver,
@@ -798,7 +809,7 @@ func (s *ledgerSource) nameParties(
 				id:    workers.ID,
 				name: buncolgen.Expr("CONCAT_WS(' ', {0}, {1}) AS "+ledgerNameLabel,
 					workers.FirstName, workers.LastName),
-				tenant: buncolgen.WorkerApplyTenant(tenantInfo),
+				tenant: workercol.WorkerApplyTenant(tenantInfo),
 			},
 		}
 
@@ -834,13 +845,13 @@ func (s *ledgerSource) loadAccounts(
 	ids []pulid.ID,
 ) (map[pulid.ID]journalentryports.LedgerAccount, error) {
 	return dbtx.Read(ctx, s.db, func(ctx context.Context) (map[pulid.ID]journalentryports.LedgerAccount, error) {
-		cols := buncolgen.GLAccountColumns
+		cols := glaccountcol.GLAccountColumns
 		accounts := make([]*glaccount.GLAccount, 0, len(ids))
 		if err := s.db.DBForContext(ctx).
 			NewSelect().
 			Model(&accounts).
-			Relation(buncolgen.GLAccountRelations.AccountType).
-			Apply(buncolgen.GLAccountApplyTenant(tenantInfo)).
+			Relation(glaccountcol.GLAccountRelations.AccountType).
+			Apply(glaccountcol.GLAccountApplyTenant(tenantInfo)).
 			Where(cols.ID.In(), bun.List(slices.Compact(slices.Sorted(slices.Values(ids))))).
 			Scan(ctx); err != nil {
 			s.l.Error("failed to load ledger accounts", zap.Error(err))

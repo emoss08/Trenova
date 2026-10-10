@@ -1,6 +1,7 @@
 package aituneuprepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/aituneupcol"
 	"context"
 	"fmt"
 
@@ -38,13 +39,13 @@ func (r *repository) List(
 	tenantInfo pagination.TenantInfo,
 ) ([]*aituneup.TuneUp, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aituneup.TuneUp, error) {
-		cols := buncolgen.TuneUpColumns
+		cols := aituneupcol.TuneUpColumns
 		tuneUps := make([]*aituneup.TuneUp, 0)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&tuneUps).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TuneUpScopeTenant(sq, tenantInfo)
+				return aituneupcol.TuneUpScopeTenant(sq, tenantInfo)
 			}).
 			Order(cols.CreatedAt.OrderAsc()).
 			Order(cols.ID.OrderAsc()).
@@ -66,8 +67,8 @@ func (r *repository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TuneUpScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.TuneUpColumns.ID.Eq(), req.ID)
+				return aituneupcol.TuneUpScopeTenant(sq, req.TenantInfo).
+					Where(aituneupcol.TuneUpColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -122,8 +123,8 @@ func (r *repository) delete(
 	_, err := db.NewDelete().
 		Model((*aituneup.TuneUp)(nil)).
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return buncolgen.TuneUpScopeTenantDelete(dq, tenantInfo).
-				Where(buncolgen.TuneUpColumns.ID.In(), bun.In(ids))
+			return aituneupcol.TuneUpScopeTenantDelete(dq, tenantInfo).
+				Where(aituneupcol.TuneUpColumns.ID.In(), bun.In(ids))
 		}).
 		Exec(ctx)
 	if err != nil {
@@ -138,11 +139,11 @@ func (r *repository) refresh(
 	tenantInfo pagination.TenantInfo,
 	tuneUp *aituneup.TuneUp,
 ) error {
-	cols := buncolgen.TuneUpColumns
+	cols := aituneupcol.TuneUpColumns
 	_, err := db.NewUpdate().
 		Model(tuneUp).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.TuneUpScopeTenantUpdate(uq, tenantInfo).
+			return aituneupcol.TuneUpScopeTenantUpdate(uq, tenantInfo).
 				Where(cols.ID.Eq(), tuneUp.ID).
 				Where(cols.Version.Eq(), tuneUp.Version)
 		}).
@@ -171,14 +172,14 @@ func (r *repository) Decide(
 	req *aituneupports.DecideAITuneUpRequest,
 ) (*aituneup.TuneUp, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aituneup.TuneUp, error) {
-		cols := buncolgen.TuneUpColumns
+		cols := aituneupcol.TuneUpColumns
 		entity := new(aituneup.TuneUp)
 		decidedAt := req.DecidedAt
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.TuneUpScopeTenantUpdate(uq, req.TenantInfo).
+				return aituneupcol.TuneUpScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID).
 					Where(cols.Version.Eq(), req.Version)
 			}).
@@ -205,13 +206,13 @@ func (r *repository) Reopen(
 	req *aituneupports.ReopenAITuneUpRequest,
 ) (*aituneup.TuneUp, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aituneup.TuneUp, error) {
-		cols := buncolgen.TuneUpColumns
+		cols := aituneupcol.TuneUpColumns
 		entity := new(aituneup.TuneUp)
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.TuneUpScopeTenantUpdate(uq, req.TenantInfo).
+				return aituneupcol.TuneUpScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID).
 					Where(cols.Version.Eq(), req.Version).
 					Where(cols.Status.Eq(), aituneup.StatusDismissed)

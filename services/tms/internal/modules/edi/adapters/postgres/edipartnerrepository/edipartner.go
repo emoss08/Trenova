@@ -1,6 +1,8 @@
 package edipartnerrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -43,8 +45,8 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *ediports.ListEDIPartnersRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.EDIPartnerColumns
-	rel := buncolgen.EDIPartnerRelations
+	cols := edicol.EDIPartnerColumns
+	rel := edicol.EDIPartnerRelations
 
 	q = querybuilder.ApplyFilters(
 		q,
@@ -101,7 +103,7 @@ func (r *repository) SelectOptions(
 	req *ediports.EDIPartnerSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIPartner], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartner], error) {
-		col := buncolgen.EDIPartnerColumns
+		col := edicol.EDIPartnerColumns
 
 		return dbhelper.SelectOptions[*edi.EDIPartner](
 			ctx,
@@ -147,13 +149,13 @@ func (r *repository) GetByID(
 ) (*edi.EDIPartner, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIPartner, error) {
 		entity := new(edi.EDIPartner)
-		cols := buncolgen.EDIPartnerColumns
+		cols := edicol.EDIPartnerColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			Where(cols.ID.Eq(), req.ID).
-			Apply(buncolgen.EDIPartnerApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDIPartnerApplyTenant(req.TenantInfo)).
 			Scan(ctx)
 		if err != nil {
 			return nil, dberror.HandleNotFoundError(err, "EDIPartner")
@@ -190,12 +192,12 @@ func (r *repository) ensureMappingProfile(
 ) (*edi.EDIMappingProfile, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIMappingProfile, error) {
 		profile := new(edi.EDIMappingProfile)
-		cols := buncolgen.EDIMappingProfileColumns
+		cols := edicol.EDIMappingProfileColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(profile).
-			Relation(buncolgen.EDIMappingProfileRelations.Entries).
+			Relation(edicol.EDIMappingProfileRelations.Entries).
 			Where(cols.OrganizationID.Eq(), partner.OrganizationID).
 			Where(cols.BusinessUnitID.Eq(), partner.BusinessUnitID).
 			Where(cols.EDIPartnerID.Eq(), partner.ID).
@@ -234,7 +236,7 @@ func (r *repository) GetReadiness(
 		if len(req.PartnerIDs) == 0 {
 			return []*ediports.EDIPartnerReadinessRow{}, nil
 		}
-		cols := buncolgen.EDIPartnerColumns
+		cols := edicol.EDIPartnerColumns
 		rows := make([]*ediports.EDIPartnerReadinessRow, 0, len(req.PartnerIDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -275,7 +277,7 @@ func (r *repository) Update(ctx context.Context, entity *edi.EDIPartner) (*edi.E
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIPartner, error) {
 		ov := entity.Version
 		entity.Version++
-		cols := buncolgen.EDIPartnerColumns
+		cols := edicol.EDIPartnerColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -325,15 +327,15 @@ func (r *repository) GetReciprocalInternalPartner(
 	ctx = dbscope.WithSystem(ctx, "read the receiving organization's internal partner record for an internal tender")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIPartner, error) {
 		entity := new(edi.EDIPartner)
-		cols := buncolgen.EDIPartnerColumns
+		cols := edicol.EDIPartnerColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			Join(`JOIN "organizations" AS "target_org"`).
-			JoinOn(buncolgen.OrganizationColumns.ID.WithAlias("target_org").EqColumn(cols.OrganizationID)).
+			JoinOn(tenantcol.OrganizationColumns.ID.WithAlias("target_org").EqColumn(cols.OrganizationID)).
 			JoinOn(
-				buncolgen.OrganizationColumns.BusinessUnitID.WithAlias("target_org").
+				tenantcol.OrganizationColumns.BusinessUnitID.WithAlias("target_org").
 					EqColumn(cols.BusinessUnitID),
 			).
 			Where(cols.OrganizationID.Eq(), req.TargetOrganizationID).
@@ -362,7 +364,7 @@ func (r *repository) ListOutboundPartnersByCustomerIDs(
 			return []*edi.EDIPartner{}, nil
 		}
 
-		cols := buncolgen.EDIPartnerColumns
+		cols := edicol.EDIPartnerColumns
 		entities := make([]*edi.EDIPartner, 0, len(req.CustomerIDs))
 
 		err := r.db.DBForContext(ctx).
@@ -371,7 +373,7 @@ func (r *repository) ListOutboundPartnersByCustomerIDs(
 			Where(cols.CustomerID.In(), bun.List(req.CustomerIDs)).
 			Where(cols.Status.Eq(), domaintypes.StatusActive).
 			Where(cols.EnabledForOutbound.IsTrue()).
-			Apply(buncolgen.EDIPartnerApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDIPartnerApplyTenant(req.TenantInfo)).
 			Order(cols.CreatedAt.OrderAsc()).
 			Scan(ctx)
 		if err != nil {
@@ -391,7 +393,7 @@ func (r *repository) ListInternalOutboundPartnersByCustomerIDs(
 			return []*edi.EDIPartner{}, nil
 		}
 
-		cols := buncolgen.EDIPartnerColumns
+		cols := edicol.EDIPartnerColumns
 		entities := make([]*edi.EDIPartner, 0, len(req.CustomerIDs))
 
 		err := r.db.DBForContext(ctx).
@@ -401,7 +403,7 @@ func (r *repository) ListInternalOutboundPartnersByCustomerIDs(
 			Where(cols.Kind.Eq(), edi.PartnerKindInternal).
 			Where(cols.Status.Eq(), domaintypes.StatusActive).
 			Where(cols.EnabledForOutbound.IsTrue()).
-			Apply(buncolgen.EDIPartnerApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDIPartnerApplyTenant(req.TenantInfo)).
 			Order(cols.CreatedAt.OrderAsc()).
 			Scan(ctx)
 		if err != nil {
@@ -444,11 +446,11 @@ func (r *repository) ListCursor(
 			Cursor:     req.Cursor,
 			TotalCount: totalCount,
 			Query: func(entities *[]*edi.EDIPartner) *bun.SelectQuery {
-				rel := buncolgen.EDIPartnerRelations
+				rel := edicol.EDIPartnerRelations
 				return dba.
 					NewSelect().
 					Model(entities).
-					ColumnExpr(buncolgen.EDIPartnerTable.All()).
+					ColumnExpr(edicol.EDIPartnerTable.All()).
 					Relation(rel.InternalOrganization).
 					Relation(rel.Connection).
 					Relation(rel.DefaultTransport)
@@ -474,7 +476,7 @@ func applyPartnerListFilters(
 	q *bun.SelectQuery,
 	req *ediports.ListEDIPartnersRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.EDIPartnerColumns
+	cols := edicol.EDIPartnerColumns
 	if req.CustomerID.IsNotNil() {
 		q = q.Where(cols.CustomerID.Eq(), req.CustomerID)
 	}

@@ -1,6 +1,10 @@
 package organizationrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/rateconfirmationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tendercol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
@@ -60,8 +64,8 @@ func brokerageDependencyCounts(
 			model:  (*tender.Tender)(nil),
 			target: &counts.ActiveTenders,
 			scope: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TenderScopeTenant(sq, tenantInfo).
-					Where(buncolgen.TenderColumns.Status.In(), bun.List(activeTenderStatuses))
+				return tendercol.TenderScopeTenant(sq, tenantInfo).
+					Where(tendercol.TenderColumns.Status.In(), bun.List(activeTenderStatuses))
 			},
 		},
 		{
@@ -69,9 +73,9 @@ func brokerageDependencyCounts(
 			model:  (*rateconfirmation.RateConfirmation)(nil),
 			target: &counts.ActiveRateConfirmations,
 			scope: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RateConfirmationScopeTenant(sq, tenantInfo).
+				return rateconfirmationcol.RateConfirmationScopeTenant(sq, tenantInfo).
 					Where(
-						buncolgen.RateConfirmationColumns.Status.NotEq(),
+						rateconfirmationcol.RateConfirmationColumns.Status.NotEq(),
 						rateconfirmation.StatusVoided,
 					)
 			},
@@ -81,9 +85,9 @@ func brokerageDependencyCounts(
 			model:  (*carriersettlement.CarrierSettlement)(nil),
 			target: &counts.UnpaidCarrierSettlements,
 			scope: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierSettlementScopeTenant(sq, tenantInfo).
+				return carriersettlementcol.CarrierSettlementScopeTenant(sq, tenantInfo).
 					Where(
-						buncolgen.CarrierSettlementColumns.Status.In(),
+						carriersettlementcol.CarrierSettlementColumns.Status.In(),
 						bun.List(unpaidCarrierSettlementStatuses),
 					)
 			},
@@ -93,9 +97,9 @@ func brokerageDependencyCounts(
 			model:  (*carriersettlement.InvoiceMatch)(nil),
 			target: &counts.OpenCarrierInvoiceMatches,
 			scope: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.InvoiceMatchScopeTenant(sq, tenantInfo).
+				return carriersettlementcol.InvoiceMatchScopeTenant(sq, tenantInfo).
 					Where(
-						buncolgen.InvoiceMatchColumns.Status.In(),
+						carriersettlementcol.InvoiceMatchColumns.Status.In(),
 						bun.List(openInvoiceMatchStatuses),
 					)
 			},
@@ -105,9 +109,9 @@ func brokerageDependencyCounts(
 			model:  (*shipment.CarrierAssignment)(nil),
 			target: &counts.ActiveCarrierAssignments,
 			scope: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierAssignmentScopeTenant(sq, tenantInfo).
+				return shipmentcol.CarrierAssignmentScopeTenant(sq, tenantInfo).
 					Where(
-						buncolgen.CarrierAssignmentColumns.Status.NotEq(),
+						shipmentcol.CarrierAssignmentColumns.Status.NotEq(),
 						shipment.CarrierAssignmentStatusCanceled,
 					)
 			},

@@ -1,6 +1,7 @@
 package driverpayrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/driverpaycol"
 	"context"
 	"fmt"
 
@@ -115,7 +116,7 @@ func (r *payProfileRepository) ListConnection(
 			Query: func(entities *[]*driverpay.PayProfile) *bun.SelectQuery {
 				return dba.NewSelect().
 					Model(entities).
-					ColumnExpr(buncolgen.PayProfileTable.All()).
+					ColumnExpr(driverpaycol.PayProfileTable.All()).
 					Relation("Components", func(q *bun.SelectQuery) *bun.SelectQuery {
 						return q.Order("dppc.sequence ASC")
 					})
@@ -144,7 +145,7 @@ func (r *payProfileRepository) SelectOptions(
 	req *driverpayports.PayProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*driverpay.PayProfile], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driverpay.PayProfile], error) {
-		cols := buncolgen.PayProfileColumns
+		cols := driverpaycol.PayProfileColumns
 		return dbhelper.SelectOptions[*driverpay.PayProfile](
 			ctx,
 			r.db.DBForContext(ctx),
@@ -321,12 +322,12 @@ func (r *payProfileRepository) CountActiveAssignmentsByIDs(
 			return map[pulid.ID]int{}, nil
 		}
 
-		cols := buncolgen.WorkerPayAssignmentColumns
+		cols := driverpaycol.WorkerPayAssignmentColumns
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*driverpay.WorkerPayAssignment)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerPayAssignmentScopeTenant(sq, req.TenantInfo).
+				return driverpaycol.WorkerPayAssignmentScopeTenant(sq, req.TenantInfo).
 					Where(cols.PayProfileID.In(), bun.In(req.ProfileIDs)).
 					WhereGroup(" OR ", func(og *bun.SelectQuery) *bun.SelectQuery {
 						return og.Where(cols.EffectiveTo.IsNull()).

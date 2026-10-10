@@ -1,6 +1,50 @@
 package recordversionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
+	"github.com/emoss08/trenova/pkg/buncolgen/bankreceiptcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/bankreceiptworkitemcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/billingqueuecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/carriercapacitycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/commoditycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customerpaymentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/detentioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/driverpaycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
+	"github.com/emoss08/trenova/pkg/buncolgen/fiscalperiodcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/fuelpurchasecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/hazardousmaterialcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/iftacol"
+	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/insightcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/invoiceadjustmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/invoiceruncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/journalentrycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/journalreversalcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/manualjournalcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/ordercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/permitcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/rateconfirmationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/rateimportcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/recurringshipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/reportcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/servicefailurecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tablechangealertcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tendercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/trailercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/watchtowercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 
@@ -98,8 +142,8 @@ type versioned any
 
 var fuelImportLookup = lookup{
 	model: func() versioned { return new(fuelpurchase.ImportBatch) },
-	scope: buncolgen.ImportBatchScopeTenant,
-	idEq:  buncolgen.ImportBatchColumns.ID.Eq(),
+	scope: fuelpurchasecol.ImportBatchScopeTenant,
+	idEq:  fuelpurchasecol.ImportBatchColumns.ID.Eq(),
 	version: versionOf(
 		func(entity *fuelpurchase.ImportBatch) int64 { return entity.Version },
 	),
@@ -108,126 +152,126 @@ var fuelImportLookup = lookup{
 var lookups = map[permission.Resource]lookup{
 	permission.ResourceOrder: {
 		model:   func() versioned { return new(order.Order) },
-		scope:   buncolgen.OrderScopeTenant,
-		idEq:    buncolgen.OrderColumns.ID.Eq(),
+		scope:   ordercol.OrderScopeTenant,
+		idEq:    ordercol.OrderColumns.ID.Eq(),
 		version: versionOf(func(entity *order.Order) int64 { return entity.Version }),
 	},
 	permission.ResourceShipmentComment: {
 		model:   func() versioned { return new(shipment.ShipmentComment) },
-		scope:   buncolgen.ShipmentCommentScopeTenant,
-		idEq:    buncolgen.ShipmentCommentColumns.ID.Eq(),
+		scope:   shipmentcol.ShipmentCommentScopeTenant,
+		idEq:    shipmentcol.ShipmentCommentColumns.ID.Eq(),
 		version: versionOf(func(entity *shipment.ShipmentComment) int64 { return entity.Version }),
 	},
 	permission.ResourceRecurringShipment: {
 		model: func() versioned { return new(recurringshipment.RecurringShipment) },
-		scope: buncolgen.RecurringShipmentScopeTenant,
-		idEq:  buncolgen.RecurringShipmentColumns.ID.Eq(),
+		scope: recurringshipmentcol.RecurringShipmentScopeTenant,
+		idEq:  recurringshipmentcol.RecurringShipmentColumns.ID.Eq(),
 		version: versionOf(
 			func(entity *recurringshipment.RecurringShipment) int64 { return entity.Version },
 		),
 	},
 	permission.ResourceWorkerSchedule: {
 		model: func() versioned { return new(worker.WorkerShiftAssignment) },
-		scope: buncolgen.WorkerShiftAssignmentScopeTenant,
-		idEq:  buncolgen.WorkerShiftAssignmentColumns.ID.Eq(),
+		scope: workercol.WorkerShiftAssignmentScopeTenant,
+		idEq:  workercol.WorkerShiftAssignmentColumns.ID.Eq(),
 		version: versionOf(
 			func(entity *worker.WorkerShiftAssignment) int64 { return entity.Version },
 		),
 	},
 	permission.ResourceShiftSwap: {
 		model:   func() versioned { return new(worker.ShiftSwapRequest) },
-		scope:   buncolgen.ShiftSwapRequestScopeTenant,
-		idEq:    buncolgen.ShiftSwapRequestColumns.ID.Eq(),
+		scope:   workercol.ShiftSwapRequestScopeTenant,
+		idEq:    workercol.ShiftSwapRequestColumns.ID.Eq(),
 		version: versionOf(func(entity *worker.ShiftSwapRequest) int64 { return entity.Version }),
 	},
 	permission.ResourceCarrier: {
 		model:   func() versioned { return new(carrier.Carrier) },
-		scope:   buncolgen.CarrierScopeTenant,
-		idEq:    buncolgen.CarrierColumns.ID.Eq(),
+		scope:   carriercol.CarrierScopeTenant,
+		idEq:    carriercol.CarrierColumns.ID.Eq(),
 		version: versionOf(func(entity *carrier.Carrier) int64 { return entity.Version }),
 	},
 	permission.ResourceCustomer: {
 		model:   func() versioned { return new(customer.Customer) },
-		scope:   buncolgen.CustomerScopeTenant,
-		idEq:    buncolgen.CustomerColumns.ID.Eq(),
+		scope:   customercol.CustomerScopeTenant,
+		idEq:    customercol.CustomerColumns.ID.Eq(),
 		version: versionOf(func(entity *customer.Customer) int64 { return entity.Version }),
 	},
 	permission.ResourceShipment: {
 		model:   func() versioned { return new(shipment.Shipment) },
-		scope:   buncolgen.ShipmentScopeTenant,
-		idEq:    buncolgen.ShipmentColumns.ID.Eq(),
+		scope:   shipmentcol.ShipmentScopeTenant,
+		idEq:    shipmentcol.ShipmentColumns.ID.Eq(),
 		version: versionOf(func(entity *shipment.Shipment) int64 { return entity.Version }),
 	},
 	permission.ResourceShipmentMove: {
 		model:   func() versioned { return new(shipment.ShipmentMove) },
-		scope:   buncolgen.ShipmentMoveScopeTenant,
-		idEq:    buncolgen.ShipmentMoveColumns.ID.Eq(),
+		scope:   shipmentcol.ShipmentMoveScopeTenant,
+		idEq:    shipmentcol.ShipmentMoveColumns.ID.Eq(),
 		version: versionOf(func(entity *shipment.ShipmentMove) int64 { return entity.Version }),
 	},
 	permission.ResourceDocument: {
 		model:   func() versioned { return new(document.Document) },
-		scope:   buncolgen.DocumentScopeTenant,
-		idEq:    buncolgen.DocumentColumns.ID.Eq(),
+		scope:   documentcol.DocumentScopeTenant,
+		idEq:    documentcol.DocumentColumns.ID.Eq(),
 		version: versionOf(func(entity *document.Document) int64 { return entity.Version }),
 	},
 	permission.ResourceDashboard: {
 		model:   func() versioned { return new(report.Dashboard) },
-		scope:   buncolgen.DashboardScopeTenant,
-		idEq:    buncolgen.DashboardColumns.ID.Eq(),
+		scope:   reportcol.DashboardScopeTenant,
+		idEq:    reportcol.DashboardColumns.ID.Eq(),
 		version: versionOf(func(entity *report.Dashboard) int64 { return entity.Version }),
 	},
 	permission.ResourceWorkerPTO: {
 		model:   func() versioned { return new(worker.WorkerPTO) },
-		scope:   buncolgen.WorkerPTOScopeTenant,
-		idEq:    buncolgen.WorkerPTOColumns.ID.Eq(),
+		scope:   workercol.WorkerPTOScopeTenant,
+		idEq:    workercol.WorkerPTOColumns.ID.Eq(),
 		version: versionOf(func(entity *worker.WorkerPTO) int64 { return entity.Version }),
 	},
 	permission.ResourceBillingQueue: {
 		model: func() versioned { return new(billingqueue.BillingQueueItem) },
-		scope: buncolgen.BillingQueueItemScopeTenant,
-		idEq:  buncolgen.BillingQueueItemColumns.ID.Eq(),
+		scope: billingqueuecol.BillingQueueItemScopeTenant,
+		idEq:  billingqueuecol.BillingQueueItemColumns.ID.Eq(),
 		version: versionOf(
 			func(entity *billingqueue.BillingQueueItem) int64 { return entity.Version },
 		),
 	},
 	permission.ResourceBankReceipt: {
 		model:   func() versioned { return new(bankreceipt.BankReceipt) },
-		scope:   buncolgen.BankReceiptScopeTenant,
-		idEq:    buncolgen.BankReceiptColumns.ID.Eq(),
+		scope:   bankreceiptcol.BankReceiptScopeTenant,
+		idEq:    bankreceiptcol.BankReceiptColumns.ID.Eq(),
 		version: versionOf(func(entity *bankreceipt.BankReceipt) int64 { return entity.Version }),
 	},
 	permission.ResourceBankReceiptWorkItem: {
 		model: func() versioned { return new(bankreceiptworkitem.WorkItem) },
-		scope: buncolgen.WorkItemScopeTenant,
-		idEq:  buncolgen.WorkItemColumns.ID.Eq(),
+		scope: bankreceiptworkitemcol.WorkItemScopeTenant,
+		idEq:  bankreceiptworkitemcol.WorkItemColumns.ID.Eq(),
 		version: versionOf(
 			func(entity *bankreceiptworkitem.WorkItem) int64 { return entity.Version },
 		),
 	},
 	permission.ResourceInsight: {
 		model:   func() versioned { return new(insight.Insight) },
-		scope:   buncolgen.InsightScopeTenant,
-		idEq:    buncolgen.InsightColumns.ID.Eq(),
+		scope:   insightcol.InsightScopeTenant,
+		idEq:    insightcol.InsightColumns.ID.Eq(),
 		version: versionOf(func(entity *insight.Insight) int64 { return entity.Version }),
 	},
 	permission.ResourceInboundMessage: {
 		model: func() versioned { return new(inboundmessage.InboundMessage) },
-		scope: buncolgen.InboundMessageScopeTenant,
-		idEq:  buncolgen.InboundMessageColumns.ID.Eq(),
+		scope: inboundmessagecol.InboundMessageScopeTenant,
+		idEq:  inboundmessagecol.InboundMessageColumns.ID.Eq(),
 		version: versionOf(
 			func(entity *inboundmessage.InboundMessage) int64 { return entity.Version },
 		),
 	},
 	permission.ResourceWorker: {
 		model:   func() versioned { return new(worker.Worker) },
-		scope:   buncolgen.WorkerScopeTenant,
-		idEq:    buncolgen.WorkerColumns.ID.Eq(),
+		scope:   workercol.WorkerScopeTenant,
+		idEq:    workercol.WorkerColumns.ID.Eq(),
 		version: versionOf(func(entity *worker.Worker) int64 { return entity.Version }),
 	},
 	permission.ResourceServiceFailure: {
 		model: func() versioned { return new(servicefailure.ServiceFailure) },
-		scope: buncolgen.ServiceFailureScopeTenant,
-		idEq:  buncolgen.ServiceFailureColumns.ID.Eq(),
+		scope: servicefailurecol.ServiceFailureScopeTenant,
+		idEq:  servicefailurecol.ServiceFailureColumns.ID.Eq(),
 		version: versionOf(
 			func(entity *servicefailure.ServiceFailure) int64 { return entity.Version },
 		),
@@ -235,24 +279,24 @@ var lookups = map[permission.Resource]lookup{
 	permission.ResourceReport: {kinds: map[string]lookup{
 		"rd_": {
 			model: func() versioned { return new(report.ReportDefinition) },
-			scope: buncolgen.ReportDefinitionScopeTenant,
-			idEq:  buncolgen.ReportDefinitionColumns.ID.Eq(),
+			scope: reportcol.ReportDefinitionScopeTenant,
+			idEq:  reportcol.ReportDefinitionColumns.ID.Eq(),
 			version: versionOf(
 				func(entity *report.ReportDefinition) int64 { return entity.Version },
 			),
 		},
 		"rsch_": {
 			model: func() versioned { return new(report.ReportSchedule) },
-			scope: buncolgen.ReportScheduleScopeTenant,
-			idEq:  buncolgen.ReportScheduleColumns.ID.Eq(),
+			scope: reportcol.ReportScheduleScopeTenant,
+			idEq:  reportcol.ReportScheduleColumns.ID.Eq(),
 			version: versionOf(
 				func(entity *report.ReportSchedule) int64 { return entity.Version },
 			),
 		},
 		"rrun_": {
 			model:   func() versioned { return new(report.ReportRun) },
-			scope:   buncolgen.ReportRunScopeTenant,
-			idEq:    buncolgen.ReportRunColumns.ID.Eq(),
+			scope:   reportcol.ReportRunScopeTenant,
+			idEq:    reportcol.ReportRunColumns.ID.Eq(),
 			version: versionOf(func(entity *report.ReportRun) int64 { return entity.Version }),
 		},
 	}},
@@ -260,8 +304,8 @@ var lookups = map[permission.Resource]lookup{
 	// resource, which is the permission a person needs to act on one.
 	permission.ResourceDetentionPolicy: {
 		model: func() versioned { return new(detention.DetentionOccurrence) },
-		scope: buncolgen.DetentionOccurrenceScopeTenant,
-		idEq:  buncolgen.DetentionOccurrenceColumns.ID.Eq(),
+		scope: detentioncol.DetentionOccurrenceScopeTenant,
+		idEq:  detentioncol.DetentionOccurrenceColumns.ID.Eq(),
 		version: versionOf(
 			func(entity *detention.DetentionOccurrence) int64 { return entity.Version },
 		),
@@ -270,8 +314,8 @@ var lookups = map[permission.Resource]lookup{
 	// resource; its version moves each time it is claimed, sent or failed.
 	permission.ResourceAccountingSync: {
 		model: func() versioned { return new(accountingsync.AccountingSyncRecord) },
-		scope: buncolgen.AccountingSyncRecordScopeTenant,
-		idEq:  buncolgen.AccountingSyncRecordColumns.ID.Eq(),
+		scope: accountingsynccol.AccountingSyncRecordScopeTenant,
+		idEq:  accountingsynccol.AccountingSyncRecordColumns.ID.Eq(),
 		version: func(v versioned) int64 {
 			record, ok := v.(*accountingsync.AccountingSyncRecord)
 			if !ok {
@@ -284,8 +328,8 @@ var lookups = map[permission.Resource]lookup{
 	// advances or ends.
 	permission.ResourceTender: {
 		model: func() versioned { return new(tender.Tender) },
-		scope: buncolgen.TenderScopeTenant,
-		idEq:  buncolgen.TenderColumns.ID.Eq(),
+		scope: tendercol.TenderScopeTenant,
+		idEq:  tendercol.TenderColumns.ID.Eq(),
 		version: func(v versioned) int64 {
 			entity, ok := v.(*tender.Tender)
 			if !ok {
@@ -296,8 +340,8 @@ var lookups = map[permission.Resource]lookup{
 	},
 	permission.ResourceRateConfirmation: {
 		model: func() versioned { return new(rateconfirmation.RateConfirmation) },
-		scope: buncolgen.RateConfirmationScopeTenant,
-		idEq:  buncolgen.RateConfirmationColumns.ID.Eq(),
+		scope: rateconfirmationcol.RateConfirmationScopeTenant,
+		idEq:  rateconfirmationcol.RateConfirmationColumns.ID.Eq(),
 		version: func(v versioned) int64 {
 			entity, ok := v.(*rateconfirmation.RateConfirmation)
 			if !ok {
@@ -310,8 +354,8 @@ var lookups = map[permission.Resource]lookup{
 	// change to it, so an approval refuses one edited since it was proposed.
 	permission.ResourceInvoice: {
 		model: func() versioned { return new(invoice.Invoice) },
-		scope: buncolgen.InvoiceScopeTenant,
-		idEq:  buncolgen.InvoiceColumns.ID.Eq(),
+		scope: invoicecol.InvoiceScopeTenant,
+		idEq:  invoicecol.InvoiceColumns.ID.Eq(),
 		version: func(v versioned) int64 {
 			entity, ok := v.(*invoice.Invoice)
 			if !ok {
@@ -324,39 +368,39 @@ var lookups = map[permission.Resource]lookup{
 		"edilt_": {
 			model:   func() versioned { return new(edi.EDITransfer) },
 			scope:   editransferrepository.ScopeTenant,
-			idEq:    buncolgen.EDITransferColumns.ID.Eq(),
+			idEq:    edicol.EDITransferColumns.ID.Eq(),
 			version: versionOf(func(entity *edi.EDITransfer) int64 { return entity.Version }),
 		},
 		"editcg_": {
 			model:   func() versioned { return new(edi.TenderChange) },
 			scope:   editenderchangerepository.ScopeTenant,
-			idEq:    buncolgen.TenderChangeColumns.ID.Eq(),
+			idEq:    edicol.TenderChangeColumns.ID.Eq(),
 			version: versionOf(func(entity *edi.TenderChange) int64 { return entity.Version }),
 		},
 		"editc_": {
 			model:   func() versioned { return new(edi.TransferChange) },
 			scope:   editransferchangerepository.ScopeTenant,
-			idEq:    buncolgen.TransferChangeColumns.ID.Eq(),
+			idEq:    edicol.TransferChangeColumns.ID.Eq(),
 			version: versionOf(func(entity *edi.TransferChange) int64 { return entity.Version }),
 		},
 		"edimsg_": {
 			model:   func() versioned { return new(edi.EDIMessage) },
-			scope:   buncolgen.EDIMessageScopeTenant,
-			idEq:    buncolgen.EDIMessageColumns.ID.Eq(),
+			scope:   edicol.EDIMessageScopeTenant,
+			idEq:    edicol.EDIMessageColumns.ID.Eq(),
 			version: versionOf(func(entity *edi.EDIMessage) int64 { return entity.Version }),
 		},
 		"ediinf_": {
 			model:   func() versioned { return new(edi.EDIInboundFile) },
-			scope:   buncolgen.EDIInboundFileScopeTenant,
-			idEq:    buncolgen.EDIInboundFileColumns.ID.Eq(),
+			scope:   edicol.EDIInboundFileScopeTenant,
+			idEq:    edicol.EDIInboundFileColumns.ID.Eq(),
 			version: versionOf(func(entity *edi.EDIInboundFile) int64 { return entity.Version }),
 		},
 	}},
 	permission.ResourceFuelPurchase: {kinds: map[string]lookup{
 		"fpur_": {
 			model: func() versioned { return new(fuelpurchase.FuelPurchase) },
-			scope: buncolgen.FuelPurchaseScopeTenant,
-			idEq:  buncolgen.FuelPurchaseColumns.ID.Eq(),
+			scope: fuelpurchasecol.FuelPurchaseScopeTenant,
+			idEq:  fuelpurchasecol.FuelPurchaseColumns.ID.Eq(),
 			version: versionOf(
 				func(entity *fuelpurchase.FuelPurchase) int64 { return entity.Version },
 			),
@@ -366,20 +410,20 @@ var lookups = map[permission.Resource]lookup{
 	permission.ResourceFuelPurchaseImport: fuelImportLookup,
 	permission.ResourceFuelCard: {
 		model:   func() versioned { return new(fuelpurchase.FuelCard) },
-		scope:   buncolgen.FuelCardScopeTenant,
-		idEq:    buncolgen.FuelCardColumns.ID.Eq(),
+		scope:   fuelpurchasecol.FuelCardScopeTenant,
+		idEq:    fuelpurchasecol.FuelCardColumns.ID.Eq(),
 		version: versionOf(func(entity *fuelpurchase.FuelCard) int64 { return entity.Version }),
 	},
 	permission.ResourceIFTAReturn: {
 		model:   func() versioned { return new(ifta.Return) },
-		scope:   buncolgen.ReturnScopeTenant,
-		idEq:    buncolgen.ReturnColumns.ID.Eq(),
+		scope:   iftacol.ReturnScopeTenant,
+		idEq:    iftacol.ReturnColumns.ID.Eq(),
 		version: versionOf(func(entity *ifta.Return) int64 { return entity.Version }),
 	},
 	permission.ResourceIFTAJurisdictionMileage: {
 		model: func() versioned { return new(ifta.JurisdictionMileageEntry) },
-		scope: buncolgen.JurisdictionMileageEntryScopeTenant,
-		idEq:  buncolgen.JurisdictionMileageEntryColumns.ID.Eq(),
+		scope: iftacol.JurisdictionMileageEntryScopeTenant,
+		idEq:  iftacol.JurisdictionMileageEntryColumns.ID.Eq(),
 		version: versionOf(
 			func(entity *ifta.JurisdictionMileageEntry) int64 { return entity.Version },
 		),
@@ -387,16 +431,16 @@ var lookups = map[permission.Resource]lookup{
 	permission.ResourceRateAgreement: {kinds: map[string]lookup{
 		"rag_": {
 			model: func() versioned { return new(rateagreement.RateAgreement) },
-			scope: buncolgen.RateAgreementScopeTenant,
-			idEq:  buncolgen.RateAgreementColumns.ID.Eq(),
+			scope: rateagreementcol.RateAgreementScopeTenant,
+			idEq:  rateagreementcol.RateAgreementColumns.ID.Eq(),
 			version: versionOf(
 				func(entity *rateagreement.RateAgreement) int64 { return entity.Version },
 			),
 		},
 		"rib_": {
 			model: func() versioned { return new(rateimport.RateImportBatch) },
-			scope: buncolgen.RateImportBatchScopeTenant,
-			idEq:  buncolgen.RateImportBatchColumns.ID.Eq(),
+			scope: rateimportcol.RateImportBatchScopeTenant,
+			idEq:  rateimportcol.RateImportBatchColumns.ID.Eq(),
 			version: versionOf(
 				func(entity *rateimport.RateImportBatch) int64 { return entity.Version },
 			),
@@ -404,34 +448,34 @@ var lookups = map[permission.Resource]lookup{
 	}},
 	permission.ResourceInvoiceDispute: {
 		model:   func() versioned { return new(invoice.InvoiceDispute) },
-		scope:   buncolgen.InvoiceDisputeScopeTenant,
-		idEq:    buncolgen.InvoiceDisputeColumns.ID.Eq(),
+		scope:   invoicecol.InvoiceDisputeScopeTenant,
+		idEq:    invoicecol.InvoiceDisputeColumns.ID.Eq(),
 		version: versionOf(func(entity *invoice.InvoiceDispute) int64 { return entity.Version }),
 	},
 	permission.ResourceInvoiceRun: {
 		model:   func() versioned { return new(invoicerun.InvoiceRun) },
-		scope:   buncolgen.InvoiceRunScopeTenant,
-		idEq:    buncolgen.InvoiceRunColumns.ID.Eq(),
+		scope:   invoiceruncol.InvoiceRunScopeTenant,
+		idEq:    invoiceruncol.InvoiceRunColumns.ID.Eq(),
 		version: versionOf(func(entity *invoicerun.InvoiceRun) int64 { return entity.Version }),
 	},
 	permission.ResourceCustomerPayment: {
 		model:   func() versioned { return new(customerpayment.Payment) },
-		scope:   buncolgen.PaymentScopeTenant,
-		idEq:    buncolgen.PaymentColumns.ID.Eq(),
+		scope:   customerpaymentcol.PaymentScopeTenant,
+		idEq:    customerpaymentcol.PaymentColumns.ID.Eq(),
 		version: versionOf(func(entity *customerpayment.Payment) int64 { return entity.Version }),
 	},
 	agentports.RecordInvoiceAdjustment: {
 		model: func() versioned { return new(invoiceadjustment.InvoiceAdjustment) },
-		scope: buncolgen.InvoiceAdjustmentScopeTenant,
-		idEq:  buncolgen.InvoiceAdjustmentColumns.ID.Eq(),
+		scope: invoiceadjustmentcol.InvoiceAdjustmentScopeTenant,
+		idEq:  invoiceadjustmentcol.InvoiceAdjustmentColumns.ID.Eq(),
 		version: versionOf(
 			func(entity *invoiceadjustment.InvoiceAdjustment) int64 { return entity.Version },
 		),
 	},
 	agentports.RecordCreditMemoApplication: {
 		model: func() versioned { return new(customerpayment.CreditMemoApplication) },
-		scope: buncolgen.CreditMemoApplicationScopeTenant,
-		idEq:  buncolgen.CreditMemoApplicationColumns.ID.Eq(),
+		scope: customerpaymentcol.CreditMemoApplicationScopeTenant,
+		idEq:  customerpaymentcol.CreditMemoApplicationColumns.ID.Eq(),
 		version: versionOf(
 			func(entity *customerpayment.CreditMemoApplication) int64 { return entity.UpdatedAt },
 		),
@@ -439,16 +483,16 @@ var lookups = map[permission.Resource]lookup{
 	// Likewise the carrier intelligence tools act on one event.
 	permission.ResourceCarrierIntelligence: {
 		model: func() versioned { return new(carrierintel.CarrierIntelEvent) },
-		scope: buncolgen.CarrierIntelEventScopeTenant,
-		idEq:  buncolgen.CarrierIntelEventColumns.ID.Eq(),
+		scope: carrierintelcol.CarrierIntelEventScopeTenant,
+		idEq:  carrierintelcol.CarrierIntelEventColumns.ID.Eq(),
 		version: versionOf(
 			func(entity *carrierintel.CarrierIntelEvent) int64 { return entity.Version },
 		),
 	},
 	permission.ResourceDriverSettlement: {
 		model: func() versioned { return new(driversettlement.Settlement) },
-		scope: buncolgen.SettlementScopeTenant,
-		idEq:  buncolgen.SettlementColumns.ID.Eq(),
+		scope: driversettlementcol.SettlementScopeTenant,
+		idEq:  driversettlementcol.SettlementColumns.ID.Eq(),
 		version: func(v versioned) int64 {
 			entity, ok := v.(*driversettlement.Settlement)
 			if !ok {
@@ -459,8 +503,8 @@ var lookups = map[permission.Resource]lookup{
 	},
 	permission.ResourceCarrierSettlement: {
 		model: func() versioned { return new(carriersettlement.CarrierSettlement) },
-		scope: buncolgen.CarrierSettlementScopeTenant,
-		idEq:  buncolgen.CarrierSettlementColumns.ID.Eq(),
+		scope: carriersettlementcol.CarrierSettlementScopeTenant,
+		idEq:  carriersettlementcol.CarrierSettlementColumns.ID.Eq(),
 		version: func(v versioned) int64 {
 			entity, ok := v.(*carriersettlement.CarrierSettlement)
 			if !ok {
@@ -471,8 +515,8 @@ var lookups = map[permission.Resource]lookup{
 	},
 	permission.ResourceCarrierInvoiceMatch: {
 		model: func() versioned { return new(carriersettlement.InvoiceMatch) },
-		scope: buncolgen.InvoiceMatchScopeTenant,
-		idEq:  buncolgen.InvoiceMatchColumns.ID.Eq(),
+		scope: carriersettlementcol.InvoiceMatchScopeTenant,
+		idEq:  carriersettlementcol.InvoiceMatchColumns.ID.Eq(),
 		version: func(v versioned) int64 {
 			entity, ok := v.(*carriersettlement.InvoiceMatch)
 			if !ok {
@@ -483,8 +527,8 @@ var lookups = map[permission.Resource]lookup{
 	},
 	permission.ResourceEscrowAccount: {
 		model: func() versioned { return new(driverpay.EscrowAccount) },
-		scope: buncolgen.EscrowAccountScopeTenant,
-		idEq:  buncolgen.EscrowAccountColumns.ID.Eq(),
+		scope: driverpaycol.EscrowAccountScopeTenant,
+		idEq:  driverpaycol.EscrowAccountColumns.ID.Eq(),
 		version: func(v versioned) int64 {
 			entity, ok := v.(*driverpay.EscrowAccount)
 			if !ok {
@@ -495,8 +539,8 @@ var lookups = map[permission.Resource]lookup{
 	},
 	permission.ResourcePayAdvance: {
 		model: func() versioned { return new(driverpay.PayAdvance) },
-		scope: buncolgen.PayAdvanceScopeTenant,
-		idEq:  buncolgen.PayAdvanceColumns.ID.Eq(),
+		scope: driverpaycol.PayAdvanceScopeTenant,
+		idEq:  driverpaycol.PayAdvanceColumns.ID.Eq(),
 		version: func(v versioned) int64 {
 			entity, ok := v.(*driverpay.PayAdvance)
 			if !ok {
@@ -507,8 +551,8 @@ var lookups = map[permission.Resource]lookup{
 	},
 	permission.ResourceRecurringDeduction: {
 		model: func() versioned { return new(driverpay.RecurringDeduction) },
-		scope: buncolgen.RecurringDeductionScopeTenant,
-		idEq:  buncolgen.RecurringDeductionColumns.ID.Eq(),
+		scope: driverpaycol.RecurringDeductionScopeTenant,
+		idEq:  driverpaycol.RecurringDeductionColumns.ID.Eq(),
 		version: func(v versioned) int64 {
 			entity, ok := v.(*driverpay.RecurringDeduction)
 			if !ok {
@@ -519,32 +563,32 @@ var lookups = map[permission.Resource]lookup{
 	},
 	permission.ResourceManualJournal: {
 		model:   func() versioned { return new(manualjournal.Request) },
-		scope:   buncolgen.RequestScopeTenant,
-		idEq:    buncolgen.RequestColumns.ID.Eq(),
+		scope:   manualjournalcol.RequestScopeTenant,
+		idEq:    manualjournalcol.RequestColumns.ID.Eq(),
 		version: versionOf(func(entity *manualjournal.Request) int64 { return entity.Version }),
 	},
 	permission.ResourceJournalReversal: {
 		model:   func() versioned { return new(journalreversal.Reversal) },
-		scope:   buncolgen.ReversalScopeTenant,
-		idEq:    buncolgen.ReversalColumns.ID.Eq(),
+		scope:   journalreversalcol.ReversalScopeTenant,
+		idEq:    journalreversalcol.ReversalColumns.ID.Eq(),
 		version: versionOf(func(entity *journalreversal.Reversal) int64 { return entity.Version }),
 	},
 	permission.ResourceJournalEntry: {
 		model:   func() versioned { return new(journalentry.JournalEntry) },
-		scope:   buncolgen.JournalEntryScopeTenant,
-		idEq:    buncolgen.JournalEntryColumns.ID.Eq(),
+		scope:   journalentrycol.JournalEntryScopeTenant,
+		idEq:    journalentrycol.JournalEntryColumns.ID.Eq(),
 		version: versionOf(func(entity *journalentry.JournalEntry) int64 { return entity.Version }),
 	},
 	permission.ResourceFiscalPeriod: {
 		model:   func() versioned { return new(fiscalperiod.FiscalPeriod) },
-		scope:   buncolgen.FiscalPeriodScopeTenant,
-		idEq:    buncolgen.FiscalPeriodColumns.ID.Eq(),
+		scope:   fiscalperiodcol.FiscalPeriodScopeTenant,
+		idEq:    fiscalperiodcol.FiscalPeriodColumns.ID.Eq(),
 		version: versionOf(func(entity *fiscalperiod.FiscalPeriod) int64 { return entity.Version }),
 	},
 	permission.ResourceRecurringEarning: {
 		model: func() versioned { return new(driverpay.RecurringEarning) },
-		scope: buncolgen.RecurringEarningScopeTenant,
-		idEq:  buncolgen.RecurringEarningColumns.ID.Eq(),
+		scope: driverpaycol.RecurringEarningScopeTenant,
+		idEq:  driverpaycol.RecurringEarningColumns.ID.Eq(),
 		version: func(v versioned) int64 {
 			entity, ok := v.(*driverpay.RecurringEarning)
 			if !ok {
@@ -555,21 +599,21 @@ var lookups = map[permission.Resource]lookup{
 	},
 	permission.ResourceWorkerDOTTest: {
 		model:   func() versioned { return new(worker.WorkerDOTTest) },
-		scope:   buncolgen.WorkerDOTTestScopeTenant,
-		idEq:    buncolgen.WorkerDOTTestColumns.ID.Eq(),
+		scope:   workercol.WorkerDOTTestScopeTenant,
+		idEq:    workercol.WorkerDOTTestColumns.ID.Eq(),
 		version: versionOf(func(entity *worker.WorkerDOTTest) int64 { return entity.Version }),
 	},
 	permission.ResourceDOTRandomPool: {kinds: map[string]lookup{
 		"drdraw_": {
 			model:   func() versioned { return new(worker.DOTRandomDraw) },
-			scope:   buncolgen.DOTRandomDrawScopeTenant,
-			idEq:    buncolgen.DOTRandomDrawColumns.ID.Eq(),
+			scope:   workercol.DOTRandomDrawScopeTenant,
+			idEq:    workercol.DOTRandomDrawColumns.ID.Eq(),
 			version: versionOf(func(entity *worker.DOTRandomDraw) int64 { return entity.Version }),
 		},
 		"drde_": {
 			model: func() versioned { return new(worker.DOTRandomDrawEntry) },
-			scope: buncolgen.DOTRandomDrawEntryScopeTenant,
-			idEq:  buncolgen.DOTRandomDrawEntryColumns.ID.Eq(),
+			scope: workercol.DOTRandomDrawEntryScopeTenant,
+			idEq:  workercol.DOTRandomDrawEntryColumns.ID.Eq(),
 			version: versionOf(
 				func(entity *worker.DOTRandomDrawEntry) int64 { return entity.Version },
 			),
@@ -578,16 +622,16 @@ var lookups = map[permission.Resource]lookup{
 	permission.ResourceWorkerSafetyEvent: {kinds: map[string]lookup{
 		"wsev_": {
 			model: func() versioned { return new(worker.WorkerSafetyEvent) },
-			scope: buncolgen.WorkerSafetyEventScopeTenant,
-			idEq:  buncolgen.WorkerSafetyEventColumns.ID.Eq(),
+			scope: workercol.WorkerSafetyEventScopeTenant,
+			idEq:  workercol.WorkerSafetyEventColumns.ID.Eq(),
 			version: versionOf(
 				func(entity *worker.WorkerSafetyEvent) int64 { return entity.Version },
 			),
 		},
 		"wsvi_": {
 			model: func() versioned { return new(worker.WorkerSafetyViolation) },
-			scope: buncolgen.WorkerSafetyViolationScopeTenant,
-			idEq:  buncolgen.WorkerSafetyViolationColumns.ID.Eq(),
+			scope: workercol.WorkerSafetyViolationScopeTenant,
+			idEq:  workercol.WorkerSafetyViolationColumns.ID.Eq(),
 			version: versionOf(
 				func(entity *worker.WorkerSafetyViolation) int64 { return entity.Version },
 			),
@@ -595,23 +639,23 @@ var lookups = map[permission.Resource]lookup{
 	}},
 	permission.ResourceWorkerRecognition: {
 		model:   func() versioned { return new(worker.WorkerRecognition) },
-		scope:   buncolgen.WorkerRecognitionScopeTenant,
-		idEq:    buncolgen.WorkerRecognitionColumns.ID.Eq(),
+		scope:   workercol.WorkerRecognitionScopeTenant,
+		idEq:    workercol.WorkerRecognitionColumns.ID.Eq(),
 		version: versionOf(func(entity *worker.WorkerRecognition) int64 { return entity.Version }),
 	},
 	permission.ResourceWorkerLeave: {kinds: map[string]lookup{
 		"wlc_": {
 			model: func() versioned { return new(worker.WorkerLeaveCase) },
-			scope: buncolgen.WorkerLeaveCaseScopeTenant,
-			idEq:  buncolgen.WorkerLeaveCaseColumns.ID.Eq(),
+			scope: workercol.WorkerLeaveCaseScopeTenant,
+			idEq:  workercol.WorkerLeaveCaseColumns.ID.Eq(),
 			version: versionOf(
 				func(entity *worker.WorkerLeaveCase) int64 { return entity.Version },
 			),
 		},
 		"wle_": {
 			model: func() versioned { return new(worker.WorkerLeaveEntry) },
-			scope: buncolgen.WorkerLeaveEntryScopeTenant,
-			idEq:  buncolgen.WorkerLeaveEntryColumns.ID.Eq(),
+			scope: workercol.WorkerLeaveEntryScopeTenant,
+			idEq:  workercol.WorkerLeaveEntryColumns.ID.Eq(),
 			version: versionOf(
 				func(entity *worker.WorkerLeaveEntry) int64 { return entity.Version },
 			),
@@ -619,8 +663,8 @@ var lookups = map[permission.Resource]lookup{
 	}},
 	permission.ResourceWorkerTraining: {
 		model: func() versioned { return new(worker.WorkerTrainingRecord) },
-		scope: buncolgen.WorkerTrainingRecordScopeTenant,
-		idEq:  buncolgen.WorkerTrainingRecordColumns.ID.Eq(),
+		scope: workercol.WorkerTrainingRecordScopeTenant,
+		idEq:  workercol.WorkerTrainingRecordColumns.ID.Eq(),
 		version: versionOf(
 			func(entity *worker.WorkerTrainingRecord) int64 { return entity.Version },
 		),
@@ -628,16 +672,16 @@ var lookups = map[permission.Resource]lookup{
 	permission.ResourceWorkerChecklist: {kinds: map[string]lookup{
 		"wcl_": {
 			model: func() versioned { return new(worker.WorkerChecklist) },
-			scope: buncolgen.WorkerChecklistScopeTenant,
-			idEq:  buncolgen.WorkerChecklistColumns.ID.Eq(),
+			scope: workercol.WorkerChecklistScopeTenant,
+			idEq:  workercol.WorkerChecklistColumns.ID.Eq(),
 			version: versionOf(
 				func(entity *worker.WorkerChecklist) int64 { return entity.Version },
 			),
 		},
 		"wcli_": {
 			model: func() versioned { return new(worker.WorkerChecklistItem) },
-			scope: buncolgen.WorkerChecklistItemScopeTenant,
-			idEq:  buncolgen.WorkerChecklistItemColumns.ID.Eq(),
+			scope: workercol.WorkerChecklistItemScopeTenant,
+			idEq:  workercol.WorkerChecklistItemColumns.ID.Eq(),
 			version: versionOf(
 				func(entity *worker.WorkerChecklistItem) int64 { return entity.Version },
 			),
@@ -645,105 +689,105 @@ var lookups = map[permission.Resource]lookup{
 	}},
 	permission.ResourcePerformanceReview: {
 		model:   func() versioned { return new(worker.PerformanceReview) },
-		scope:   buncolgen.PerformanceReviewScopeTenant,
-		idEq:    buncolgen.PerformanceReviewColumns.ID.Eq(),
+		scope:   workercol.PerformanceReviewScopeTenant,
+		idEq:    workercol.PerformanceReviewColumns.ID.Eq(),
 		version: versionOf(func(entity *worker.PerformanceReview) int64 { return entity.Version }),
 	},
 	permission.ResourceQualification: {
 		model: func() versioned { return new(worker.WorkerEmploymentVerification) },
-		scope: buncolgen.WorkerEmploymentVerificationScopeTenant,
-		idEq:  buncolgen.WorkerEmploymentVerificationColumns.ID.Eq(),
+		scope: workercol.WorkerEmploymentVerificationScopeTenant,
+		idEq:  workercol.WorkerEmploymentVerificationColumns.ID.Eq(),
 		version: versionOf(
 			func(entity *worker.WorkerEmploymentVerification) int64 { return entity.Version },
 		),
 	},
 	permission.ResourceWorkerCredential: {
 		model:   func() versioned { return new(worker.WorkerCredential) },
-		scope:   buncolgen.WorkerCredentialScopeTenant,
-		idEq:    buncolgen.WorkerCredentialColumns.ID.Eq(),
+		scope:   workercol.WorkerCredentialScopeTenant,
+		idEq:    workercol.WorkerCredentialColumns.ID.Eq(),
 		version: versionOf(func(entity *worker.WorkerCredential) int64 { return entity.Version }),
 	},
 	permission.ResourceWorkerInjury: {
 		model:   func() versioned { return new(worker.WorkerInjury) },
-		scope:   buncolgen.WorkerInjuryScopeTenant,
-		idEq:    buncolgen.WorkerInjuryColumns.ID.Eq(),
+		scope:   workercol.WorkerInjuryScopeTenant,
+		idEq:    workercol.WorkerInjuryColumns.ID.Eq(),
 		version: versionOf(func(entity *worker.WorkerInjury) int64 { return entity.Version }),
 	},
 	permission.ResourceTimesheet: {kinds: map[string]lookup{
 		"pxb_": {
 			model:   func() versioned { return new(worker.PayrollExport) },
-			scope:   buncolgen.PayrollExportScopeTenant,
-			idEq:    buncolgen.PayrollExportColumns.ID.Eq(),
+			scope:   workercol.PayrollExportScopeTenant,
+			idEq:    workercol.PayrollExportColumns.ID.Eq(),
 			version: versionOf(func(entity *worker.PayrollExport) int64 { return entity.Version }),
 		},
 	}},
 	permission.ResourcePermit: {
 		model:   func() versioned { return new(permit.Permit) },
-		scope:   buncolgen.PermitScopeTenant,
-		idEq:    buncolgen.PermitColumns.ID.Eq(),
+		scope:   permitcol.PermitScopeTenant,
+		idEq:    permitcol.PermitColumns.ID.Eq(),
 		version: versionOf(func(entity *permit.Permit) int64 { return entity.Version }),
 	},
 	permission.ResourceSettlementDispute: {
 		model:   func() versioned { return new(driversettlement.Dispute) },
-		scope:   buncolgen.DisputeScopeTenant,
-		idEq:    buncolgen.DisputeColumns.ID.Eq(),
+		scope:   driversettlementcol.DisputeScopeTenant,
+		idEq:    driversettlementcol.DisputeColumns.ID.Eq(),
 		version: versionOf(func(entity *driversettlement.Dispute) int64 { return entity.Version }),
 	},
 	permission.ResourceDriverExpense: {
 		model:   func() versioned { return new(driverpay.Expense) },
-		scope:   buncolgen.ExpenseScopeTenant,
-		idEq:    buncolgen.ExpenseColumns.ID.Eq(),
+		scope:   driverpaycol.ExpenseScopeTenant,
+		idEq:    driverpaycol.ExpenseColumns.ID.Eq(),
 		version: versionOf(func(entity *driverpay.Expense) int64 { return entity.Version }),
 	}, permission.ResourceCommodity: {
 		model:   func() versioned { return new(commodity.Commodity) },
-		scope:   buncolgen.CommodityScopeTenant,
-		idEq:    buncolgen.CommodityColumns.ID.Eq(),
+		scope:   commoditycol.CommodityScopeTenant,
+		idEq:    commoditycol.CommodityColumns.ID.Eq(),
 		version: versionOf(func(entity *commodity.Commodity) int64 { return entity.Version }),
 	},
 	permission.ResourceCarrierCapacityPosting: {
 		model:   func() versioned { return new(carriercapacity.Posting) },
-		scope:   buncolgen.PostingScopeTenant,
-		idEq:    buncolgen.PostingColumns.ID.Eq(),
+		scope:   carriercapacitycol.PostingScopeTenant,
+		idEq:    carriercapacitycol.PostingColumns.ID.Eq(),
 		version: versionOf(func(entity *carriercapacity.Posting) int64 { return entity.Version }),
 	},
 	permission.ResourceHazardousMaterial: {
 		model: func() versioned { return new(hazardousmaterial.HazardousMaterial) },
-		scope: buncolgen.HazardousMaterialScopeTenant,
-		idEq:  buncolgen.HazardousMaterialColumns.ID.Eq(),
+		scope: hazardousmaterialcol.HazardousMaterialScopeTenant,
+		idEq:  hazardousmaterialcol.HazardousMaterialColumns.ID.Eq(),
 		version: versionOf(
 			func(entity *hazardousmaterial.HazardousMaterial) int64 { return entity.Version },
 		),
 	},
 	permission.ResourceLocation: {
 		model:   func() versioned { return new(location.Location) },
-		scope:   buncolgen.LocationScopeTenant,
-		idEq:    buncolgen.LocationColumns.ID.Eq(),
+		scope:   locationcol.LocationScopeTenant,
+		idEq:    locationcol.LocationColumns.ID.Eq(),
 		version: versionOf(func(entity *location.Location) int64 { return entity.Version }),
 	},
 	permission.ResourceTractor: {
 		model:   func() versioned { return new(tractor.Tractor) },
-		scope:   buncolgen.TractorScopeTenant,
-		idEq:    buncolgen.TractorColumns.ID.Eq(),
+		scope:   tractorcol.TractorScopeTenant,
+		idEq:    tractorcol.TractorColumns.ID.Eq(),
 		version: versionOf(func(entity *tractor.Tractor) int64 { return entity.Version }),
 	},
 	permission.ResourceTrailer: {
 		model:   func() versioned { return new(trailer.Trailer) },
-		scope:   buncolgen.TrailerScopeTenant,
-		idEq:    buncolgen.TrailerColumns.ID.Eq(),
+		scope:   trailercol.TrailerScopeTenant,
+		idEq:    trailercol.TrailerColumns.ID.Eq(),
 		version: versionOf(func(entity *trailer.Trailer) int64 { return entity.Version }),
 	},
 	permission.ResourceTableChangeAlert: {
 		model: func() versioned { return new(tablechangealert.TCASubscription) },
-		scope: buncolgen.TCASubscriptionScopeTenant,
-		idEq:  buncolgen.TCASubscriptionColumns.ID.Eq(),
+		scope: tablechangealertcol.TCASubscriptionScopeTenant,
+		idEq:  tablechangealertcol.TCASubscriptionColumns.ID.Eq(),
 		version: versionOf(
 			func(entity *tablechangealert.TCASubscription) int64 { return entity.Version },
 		),
 	},
 	permission.ResourceWatchtower: {
 		model:   func() versioned { return new(watchtower.Item) },
-		scope:   buncolgen.ItemScopeTenant,
-		idEq:    buncolgen.ItemColumns.ID.Eq(),
+		scope:   watchtowercol.ItemScopeTenant,
+		idEq:    watchtowercol.ItemColumns.ID.Eq(),
 		version: versionOf(func(entity *watchtower.Item) int64 { return entity.Version }),
 	},
 }

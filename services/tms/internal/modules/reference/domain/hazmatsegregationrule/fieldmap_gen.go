@@ -2,11 +2,14 @@
 
 package hazmatsegregationrule
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/hazmatsegregationrulecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [HazmatSegregationRule].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.HazmatSegregationRuleFieldMap] instead of parsing struct tags via reflection.
+// the generated [hazmatsegregationrulecol.HazmatSegregationRuleFieldMap] instead of parsing struct tags via reflection.
 func (e *HazmatSegregationRule) GetStaticFieldMap() map[string]string {
-	return buncolgen.HazmatSegregationRuleFieldMap
+	return hazmatsegregationrulecol.HazmatSegregationRuleFieldMap
 }

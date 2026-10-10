@@ -1,6 +1,7 @@
 package development
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/fiscalyearcol"
 	"context"
 	"database/sql"
 	"errors"
@@ -67,7 +68,7 @@ func (s *FiscalYearSeed) Run(ctx context.Context, tx bun.Tx) error {
 }
 
 func (s *FiscalYearSeed) ensure(ctx context.Context, tx bun.Tx, fy *fiscalyear.FiscalYear) error {
-	cols := buncolgen.FiscalYearColumns
+	cols := fiscalyearcol.FiscalYearColumns
 	exists, err := tx.NewSelect().
 		Model((*fiscalyear.FiscalYear)(nil)).
 		Where(cols.OrganizationID.Eq(), fy.OrganizationID).

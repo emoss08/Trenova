@@ -1,6 +1,7 @@
 package fuelsurchargerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/fuelsurchargecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
@@ -40,14 +41,14 @@ func NewProgramRepository(p ProgramParams) fuelsurchargeports.FuelSurchargeProgr
 }
 
 func orderTableRows(sq *bun.SelectQuery) *bun.SelectQuery {
-	cols := buncolgen.FuelSurchargeTableRowColumns
+	cols := fuelsurchargecol.FuelSurchargeTableRowColumns
 	return sq.Order(cols.SortOrder.OrderAsc()).
 		Order(cols.PriceMin.OrderAsc())
 }
 
 func applyProgramColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.FuelSurchargeProgramTable.All())
+		return q.ColumnExpr(fuelsurchargecol.FuelSurchargeProgramTable.All())
 	}
 
 	return q.Column(columns...)
@@ -72,7 +73,7 @@ func (r *programRepository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.FuelSurchargeProgramTable.Alias,
+						fuelsurchargecol.FuelSurchargeProgramTable.Alias,
 						req.Filter,
 						(*fuelsurcharge.FuelSurchargeProgram)(nil),
 					)
@@ -102,7 +103,7 @@ func (r *programRepository) ListConnection(
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					return querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.FuelSurchargeProgramTable.Alias,
+						fuelsurchargecol.FuelSurchargeProgramTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*fuelsurcharge.FuelSurchargeProgram)(nil),
@@ -123,15 +124,15 @@ func (r *programRepository) ListActive(
 	tenantInfo pagination.TenantInfo,
 ) ([]*fuelsurcharge.FuelSurchargeProgram, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fuelsurcharge.FuelSurchargeProgram, error) {
-		cols := buncolgen.FuelSurchargeProgramColumns
+		cols := fuelsurchargecol.FuelSurchargeProgramColumns
 		entities := make([]*fuelsurcharge.FuelSurchargeProgram, 0)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Relation(buncolgen.FuelSurchargeProgramRelations.FuelIndex).
-			Relation(buncolgen.FuelSurchargeProgramRelations.TableRows, orderTableRows).
+			Relation(fuelsurchargecol.FuelSurchargeProgramRelations.FuelIndex).
+			Relation(fuelsurchargecol.FuelSurchargeProgramRelations.TableRows, orderTableRows).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FuelSurchargeProgramScopeTenant(sq, tenantInfo).
+				return fuelsurchargecol.FuelSurchargeProgramScopeTenant(sq, tenantInfo).
 					Where(cols.Status.Eq(), fuelsurcharge.ProgramStatusActive)
 			}).
 			Order(cols.Name.OrderAsc()).
@@ -155,24 +156,24 @@ func (r *programRepository) GetByID(
 			zap.String("id", req.ProgramID.String()),
 		)
 
-		cols := buncolgen.FuelSurchargeProgramColumns
+		cols := fuelsurchargecol.FuelSurchargeProgramColumns
 		entity := new(fuelsurcharge.FuelSurchargeProgram)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FuelSurchargeProgramScopeTenant(sq, req.TenantInfo).
+				return fuelsurchargecol.FuelSurchargeProgramScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ProgramID)
 			})
 
 		if req.IncludeRows {
-			q = q.Relation(buncolgen.FuelSurchargeProgramRelations.TableRows, orderTableRows)
+			q = q.Relation(fuelsurchargecol.FuelSurchargeProgramRelations.TableRows, orderTableRows)
 		}
 		if req.IncludeIndex {
-			q = q.Relation(buncolgen.FuelSurchargeProgramRelations.FuelIndex)
+			q = q.Relation(fuelsurchargecol.FuelSurchargeProgramRelations.FuelIndex)
 		}
 		if req.IncludeCharge {
-			q = q.Relation(buncolgen.FuelSurchargeProgramRelations.AccessorialCharge)
+			q = q.Relation(fuelsurchargecol.FuelSurchargeProgramRelations.AccessorialCharge)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -264,7 +265,7 @@ func (r *programRepository) Update(
 		ov := entity.Version
 		entity.Version++
 
-		cols := buncolgen.FuelSurchargeTableRowColumns
+		cols := fuelsurchargecol.FuelSurchargeTableRowColumns
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			results, uErr := r.db.DBForContext(c).
 				NewUpdate().
@@ -290,7 +291,7 @@ func (r *programRepository) Update(
 				NewDelete().
 				Model((*fuelsurcharge.FuelSurchargeTableRow)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return buncolgen.FuelSurchargeTableRowScopeTenantDelete(dq, pagination.TenantInfo{
+					return fuelsurchargecol.FuelSurchargeTableRowScopeTenantDelete(dq, pagination.TenantInfo{
 						OrgID: entity.OrganizationID,
 						BuID:  entity.BusinessUnitID,
 					}).Where(cols.FuelSurchargeProgramID.Eq(), entity.ID)
@@ -325,12 +326,12 @@ func (r *programRepository) Delete(
 			zap.String("id", req.ProgramID.String()),
 		)
 
-		cols := buncolgen.FuelSurchargeProgramColumns
+		cols := fuelsurchargecol.FuelSurchargeProgramColumns
 		results, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*fuelsurcharge.FuelSurchargeProgram)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.FuelSurchargeProgramScopeTenantDelete(dq, req.TenantInfo).
+				return fuelsurchargecol.FuelSurchargeProgramScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ProgramID)
 			}).
 			Exec(ctx)
@@ -384,7 +385,7 @@ func (r *programRepository) SelectOptions(
 	req *fuelsurchargeports.FuelSurchargeProgramSelectOptionsRequest,
 ) (*pagination.ListResult[*fuelsurcharge.FuelSurchargeProgram], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*fuelsurcharge.FuelSurchargeProgram], error) {
-		cols := buncolgen.FuelSurchargeProgramColumns
+		cols := fuelsurchargecol.FuelSurchargeProgramColumns
 		return dbhelper.SelectOptions[*fuelsurcharge.FuelSurchargeProgram](
 			ctx,
 			r.db.DBForContext(ctx),

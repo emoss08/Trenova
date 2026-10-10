@@ -1,6 +1,7 @@
 package instancebootstraprepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 	"fmt"
 
@@ -63,7 +64,7 @@ func (r *repository) GetState(ctx context.Context) (*instancebootstrapports.Inst
 				return nil, fmt.Errorf("read instance bootstrap: %w", err)
 			}
 
-			userCols := buncolgen.UserColumns
+			userCols := tenantcol.UserColumns
 			count, err := db.NewSelect().
 				Model((*tenant.User)(nil)).
 				Where("lower("+userCols.Username.Qualified()+") <> ?", tenant.SystemUsername).

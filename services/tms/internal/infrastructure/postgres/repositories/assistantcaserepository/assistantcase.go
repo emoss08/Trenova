@@ -1,6 +1,9 @@
 package assistantcaserepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
 	"context"
 	"database/sql"
 	"fmt"
@@ -194,7 +197,7 @@ func (r *repository) invoiceRecords(
 	ids []pulid.ID,
 	out map[pulid.ID]*deskcase.Record,
 ) error {
-	cols := buncolgen.InvoiceColumns
+	cols := invoicecol.InvoiceColumns
 	rows := make([]*invoice.Invoice, 0, len(ids))
 	if err := r.db.DBForContext(ctx).
 		NewSelect().
@@ -206,7 +209,7 @@ func (r *repository) invoiceRecords(
 			cols.SettlementStatus.Bare(),
 			cols.CustomerID.Bare(),
 		).
-		Apply(buncolgen.InvoiceApplyTenant(tenant)).
+		Apply(invoicecol.InvoiceApplyTenant(tenant)).
 		Where(cols.ID.In(), bun.List(ids)).
 		Scan(ctx); err != nil {
 		return fmt.Errorf("read the cases' invoices: %w", err)
@@ -251,8 +254,8 @@ func (r *repository) disputeRecords(
 	ids []pulid.ID,
 	out map[pulid.ID]*deskcase.Record,
 ) error {
-	cols := buncolgen.InvoiceDisputeColumns
-	inv := buncolgen.InvoiceColumns
+	cols := invoicecol.InvoiceDisputeColumns
+	inv := invoicecol.InvoiceColumns
 	rows := make([]disputeRecordRow, 0, len(ids))
 	if err := r.db.DBForContext(ctx).
 		NewSelect().
@@ -263,11 +266,11 @@ func (r *repository) disputeRecords(
 		ColumnExpr(cols.CustomerID.Qualified()).
 		ColumnExpr(cols.InvoiceID.Qualified()).
 		ColumnExpr("COALESCE("+inv.Number.Qualified()+", '') AS invoice_number").
-		Join("LEFT JOIN "+buncolgen.InvoiceTable.Name+" AS "+buncolgen.InvoiceTable.Alias).
+		Join("LEFT JOIN "+invoicecol.InvoiceTable.Name+" AS "+invoicecol.InvoiceTable.Alias).
 		JoinOn(inv.ID.EqColumn(cols.InvoiceID)).
 		JoinOn(inv.OrganizationID.EqColumn(cols.OrganizationID)).
 		JoinOn(inv.BusinessUnitID.EqColumn(cols.BusinessUnitID)).
-		Apply(buncolgen.InvoiceDisputeApplyTenant(tenant)).
+		Apply(invoicecol.InvoiceDisputeApplyTenant(tenant)).
 		Where(cols.ID.In(), bun.List(ids)).
 		Scan(ctx, &rows); err != nil {
 		return fmt.Errorf("read the cases' disputes: %w", err)
@@ -500,7 +503,7 @@ func (r *repository) InvoiceFacts(
 	req *deskcaseports.GetInvoiceCaseFactsRequest,
 ) (*deskcase.InvoiceFacts, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*deskcase.InvoiceFacts, error) {
-		cols := buncolgen.InvoiceColumns
+		cols := invoicecol.InvoiceColumns
 		entity := new(invoice.Invoice)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -512,7 +515,7 @@ func (r *repository) InvoiceFacts(
 				cols.SettlementStatus.Bare(),
 				cols.DueDate.Bare(),
 			).
-			Apply(buncolgen.InvoiceApplyTenant(req.TenantInfo)).
+			Apply(invoicecol.InvoiceApplyTenant(req.TenantInfo)).
 			Where(cols.ID.Eq(), req.InvoiceID).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Invoice")
@@ -537,12 +540,12 @@ func (r *repository) Parties(
 		out := make([]deskcase.Party, 0, len(req.CarrierIDs)+1)
 
 		if req.CustomerID.IsNotNil() {
-			cols := buncolgen.CustomerColumns
+			cols := customercol.CustomerColumns
 			entity := new(customer.Customer)
 			err := db.NewSelect().
 				Model(entity).
 				Column(cols.ID.Bare(), cols.Name.Bare()).
-				Apply(buncolgen.CustomerApplyTenant(req.TenantInfo)).
+				Apply(customercol.CustomerApplyTenant(req.TenantInfo)).
 				Where(cols.ID.Eq(), req.CustomerID).
 				Scan(ctx)
 			if err != nil && !dberror.IsNotFoundError(err) {
@@ -558,12 +561,12 @@ func (r *repository) Parties(
 		}
 
 		if len(req.CarrierIDs) > 0 {
-			cols := buncolgen.CarrierColumns
+			cols := carriercol.CarrierColumns
 			carriers := make([]*carrier.Carrier, 0, len(req.CarrierIDs))
 			if err := db.NewSelect().
 				Model(&carriers).
 				Column(cols.ID.Bare(), cols.Name.Bare()).
-				Apply(buncolgen.CarrierApplyTenant(req.TenantInfo)).
+				Apply(carriercol.CarrierApplyTenant(req.TenantInfo)).
 				Where(cols.ID.In(), bun.List(req.CarrierIDs)).
 				Order(cols.Name.OrderAsc()).
 				Scan(ctx); err != nil {

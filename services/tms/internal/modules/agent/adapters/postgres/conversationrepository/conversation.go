@@ -1,6 +1,7 @@
 package conversationrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
 	"context"
 	"fmt"
 
@@ -68,14 +69,14 @@ func (r *repository) GetThread(
 	req agentports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.Thread, error) {
-		cols := buncolgen.ThreadColumns
+		cols := conversationcol.ThreadColumns
 		entity := new(conversation.Thread)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ThreadScopeTenant(sq, req.TenantInfo).
+				return conversationcol.ThreadScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID).
 					Where(cols.UserID.Eq(), req.UserID)
 			}).
@@ -93,14 +94,14 @@ func (r *repository) GetThreadOwned(
 	req agentports.GetThreadOwnedRequest,
 ) (*conversation.Thread, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.Thread, error) {
-		cols := buncolgen.ThreadColumns
+		cols := conversationcol.ThreadColumns
 		entity := new(conversation.Thread)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ThreadScopeTenant(sq, req.TenantInfo).
+				return conversationcol.ThreadScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
@@ -121,7 +122,7 @@ func (r *repository) ListThreadAgentsByIDs(
 			return []*conversation.Thread{}, nil
 		}
 
-		cols := buncolgen.ThreadColumns
+		cols := conversationcol.ThreadColumns
 		threads := make([]*conversation.Thread, 0, len(req.IDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -133,7 +134,7 @@ func (r *repository) ListThreadAgentsByIDs(
 				cols.AgentDefinitionID.Bare(),
 			).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ThreadScopeTenant(sq, req.TenantInfo).
+				return conversationcol.ThreadScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.In(), bun.List(req.IDs))
 			}).
 			Scan(ctx)
@@ -213,7 +214,7 @@ func threadPageQuery(
 	req *agentports.ListThreadsRequest,
 	window threadWindow,
 ) *bun.SelectQuery {
-	cols := buncolgen.ThreadColumns
+	cols := conversationcol.ThreadColumns
 	order := buncolgen.Expr(
 		"({0}, {1}, {2}, {3})",
 		cols.Pinned,
@@ -225,7 +226,7 @@ func threadPageQuery(
 	return db.NewSelect().
 		Model(dest).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = buncolgen.ThreadScopeTenant(sq, req.TenantInfo).
+			sq = conversationcol.ThreadScopeTenant(sq, req.TenantInfo).
 				Where(cols.UserID.Eq(), req.UserID)
 			if !req.IncludeUnlisted {
 				sq = sq.Where(cols.Origin.NotIn(), bun.In(conversation.UnlistedOrigins()))
@@ -265,7 +266,7 @@ func (r *repository) UpdateThread(
 	thread *conversation.Thread,
 ) (*conversation.Thread, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversation.Thread, error) {
-		cols := buncolgen.ThreadColumns
+		cols := conversationcol.ThreadColumns
 		ov := thread.Version
 		thread.Version++
 
@@ -273,7 +274,7 @@ func (r *repository) UpdateThread(
 			NewUpdate().
 			Model(thread).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ThreadScopeTenantUpdate(uq, pagination.TenantInfo{
+				return conversationcol.ThreadScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: thread.OrganizationID,
 					BuID:  thread.BusinessUnitID,
 				}).Where(cols.ID.Eq(), thread.ID).
@@ -316,12 +317,12 @@ func (r *repository) MarkThreadTainted(
 			return nil
 		}
 
-		cols := buncolgen.ThreadColumns
+		cols := conversationcol.ThreadColumns
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*conversation.Thread)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ThreadScopeTenantUpdate(uq, req.TenantInfo).
+				return conversationcol.ThreadScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ThreadID)
 			}).
 			Set(cols.Taint.Set(), req.Taint).
@@ -344,12 +345,12 @@ func (r *repository) UpdateThreadContext(
 			return nil
 		}
 
-		cols := buncolgen.ThreadColumns
+		cols := conversationcol.ThreadColumns
 		query := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*conversation.Thread)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ThreadScopeTenantUpdate(uq, req.TenantInfo).
+				return conversationcol.ThreadScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ThreadID)
 			})
 		if req.Usage != nil {
@@ -380,14 +381,14 @@ func (r *repository) AddSavedMemories(
 			return nil
 		}
 
-		cols := buncolgen.MessageColumns
+		cols := conversationcol.MessageColumns
 		message := new(conversation.Message)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(message).
 			Column(cols.ID.Bare(), cols.SavedMemories.Bare()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.MessageScopeTenant(sq, req.TenantInfo).
+				return conversationcol.MessageScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.MessageID).
 					Where(cols.ThreadID.Eq(), req.ThreadID)
 			}).
@@ -405,7 +406,7 @@ func (r *repository) AddSavedMemories(
 			NewUpdate().
 			Model((*conversation.Message)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.MessageScopeTenantUpdate(uq, req.TenantInfo).
+				return conversationcol.MessageScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.MessageID)
 			}).
 			Set(cols.SavedMemories.Set(), saved).
@@ -428,14 +429,14 @@ func (r *repository) DeleteThread(
 		// foreign key to the thread, since a thread's primary key is composite and a
 		// per-message reference to all three columns would buy nothing.
 		Context) error {
-		cols := buncolgen.ThreadColumns
+		cols := conversationcol.ThreadColumns
 
 		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
 			if _, txErr := tx.NewDelete().
 				Model((*conversation.Message)(nil)).
-				Where(buncolgen.MessageColumns.ThreadID.Eq(), req.ID).
-				Where(buncolgen.MessageColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
-				Where(buncolgen.MessageColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+				Where(conversationcol.MessageColumns.ThreadID.Eq(), req.ID).
+				Where(conversationcol.MessageColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
+				Where(conversationcol.MessageColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
 				Exec(txCtx); txErr != nil {
 				return txErr
 			}
@@ -466,14 +467,14 @@ func (r *repository) ListMessages(
 	req agentports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]conversation.Message, error) {
-		cols := buncolgen.MessageColumns
+		cols := conversationcol.MessageColumns
 
 		messages := make([]conversation.Message, 0, 32)
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&messages).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.MessageScopeTenant(sq, req.TenantInfo).
+				return conversationcol.MessageScopeTenant(sq, req.TenantInfo).
 					Where(cols.ThreadID.Eq(), req.ThreadID)
 			})
 
@@ -541,13 +542,13 @@ func (r *repository) CountMessages(
 	req agentports.CountMessagesRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.MessageColumns
+		cols := conversationcol.MessageColumns
 
 		count, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*conversation.Message)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.MessageScopeTenant(sq, req.TenantInfo).
+				return conversationcol.MessageScopeTenant(sq, req.TenantInfo).
 					Where(cols.ThreadID.Eq(), req.ThreadID)
 			}).
 			Count(ctx)
@@ -585,7 +586,7 @@ func (r *repository) AppendTurn(
 		saved := make([]conversation.Message, 0, len(req.Messages))
 
 		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
-			cols := buncolgen.MessageColumns
+			cols := conversationcol.MessageColumns
 
 			var maxSequence int
 			err := tx.NewSelect().
@@ -615,7 +616,7 @@ func (r *repository) AppendTurn(
 				return fmt.Errorf("insert turn: %w", err)
 			}
 
-			threadCols := buncolgen.ThreadColumns
+			threadCols := conversationcol.ThreadColumns
 			if _, err = tx.NewUpdate().
 				Model((*conversation.Thread)(nil)).
 				Where(threadCols.ID.Eq(), req.ThreadID).
@@ -657,7 +658,7 @@ func (r *repository) DeleteStaleThreads(
 			limit = defaultThreadLimit * 10
 		}
 
-		cols := buncolgen.ThreadColumns
+		cols := conversationcol.ThreadColumns
 
 		deleted := 0
 		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
@@ -684,9 +685,9 @@ func (r *repository) DeleteStaleThreads(
 				thread := &stale[i]
 				if _, err := tx.NewDelete().
 					Model((*conversation.Message)(nil)).
-					Where(buncolgen.MessageColumns.ThreadID.Eq(), thread.ID).
-					Where(buncolgen.MessageColumns.OrganizationID.Eq(), thread.OrganizationID).
-					Where(buncolgen.MessageColumns.BusinessUnitID.Eq(), thread.BusinessUnitID).
+					Where(conversationcol.MessageColumns.ThreadID.Eq(), thread.ID).
+					Where(conversationcol.MessageColumns.OrganizationID.Eq(), thread.OrganizationID).
+					Where(conversationcol.MessageColumns.BusinessUnitID.Eq(), thread.BusinessUnitID).
 					Exec(txCtx); err != nil {
 					return err
 				}

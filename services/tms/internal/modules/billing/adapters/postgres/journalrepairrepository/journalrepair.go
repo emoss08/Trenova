@@ -1,6 +1,11 @@
 package journalrepairrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/customerledgercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/invoiceadjustmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/journalsourcecol"
 	"context"
 	"fmt"
 
@@ -53,8 +58,8 @@ func (r *repository) ListUnjournaledAdjustmentMemos(
 ) ([]*driversettlementports.AdjustmentMemoRepair, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*driversettlementports.AdjustmentMemoRepair, error) {
 		dba := r.db.DBForContext(ctx)
-		cols := buncolgen.InvoiceColumns
-		ledgerCols := buncolgen.CustomerLedgerEntryColumns
+		cols := invoicecol.InvoiceColumns
+		ledgerCols := customerledgercol.CustomerLedgerEntryColumns
 
 		ledgerLine := dba.NewSelect().
 			Model((*customerledger.CustomerLedgerEntry)(nil)).
@@ -91,7 +96,7 @@ func (r *repository) ListUnjournaledAdjustmentMemos(
 			adjustmentIDs = append(adjustmentIDs, memo.SourceInvoiceAdjustmentID)
 		}
 		adjustments := make([]*invoiceadjustment.InvoiceAdjustment, 0, len(adjustmentIDs))
-		adjCols := buncolgen.InvoiceAdjustmentColumns
+		adjCols := invoiceadjustmentcol.InvoiceAdjustmentColumns
 		if err := dba.NewSelect().
 			Model(&adjustments).
 			Column(adjCols.ID.String(), adjCols.OrganizationID.String(), adjCols.BusinessUnitID.String(),
@@ -146,7 +151,7 @@ func (r *repository) ListUnjournaledDriverPayments(
 ) ([]*driversettlementports.DriverPaymentRepair, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*driversettlementports.DriverPaymentRepair, error) {
 		dba := r.db.DBForContext(ctx)
-		cols := buncolgen.SettlementColumns
+		cols := driversettlementcol.SettlementColumns
 		settlements := make([]*driversettlement.Settlement, 0, limitOf(req))
 		q := dba.NewSelect().
 			Model(&settlements).
@@ -227,7 +232,7 @@ func existingJournalBatches(
 		objectIDs = append(objectIDs, id.String())
 	}
 
-	cols := buncolgen.SourceColumns
+	cols := journalsourcecol.SourceColumns
 	sources := make([]*journalsource.Source, 0, len(objectIDs))
 	if err := dba.NewSelect().
 		Model(&sources).
@@ -260,12 +265,12 @@ func (r *repository) SetDriverSettlementPaidBatch(
 	params *driversettlementports.SetDriverSettlementPaidBatchParams,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.SettlementColumns
+		cols := driversettlementcol.SettlementColumns
 		result, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*driversettlement.Settlement)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.SettlementScopeTenantUpdate(uq, params.TenantInfo).
+				return driversettlementcol.SettlementScopeTenantUpdate(uq, params.TenantInfo).
 					Where(cols.ID.Eq(), params.SettlementID).
 					Where(cols.PaidJournalBatchID.IsNull())
 			}).

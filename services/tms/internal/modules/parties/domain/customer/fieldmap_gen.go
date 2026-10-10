@@ -2,32 +2,35 @@
 
 package customer
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Customer].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CustomerFieldMap] instead of parsing struct tags via reflection.
+// the generated [customercol.CustomerFieldMap] instead of parsing struct tags via reflection.
 func (e *Customer) GetStaticFieldMap() map[string]string {
-	return buncolgen.CustomerFieldMap
+	return customercol.CustomerFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CustomerBillingProfile].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CustomerBillingProfileFieldMap] instead of parsing struct tags via reflection.
+// the generated [customercol.CustomerBillingProfileFieldMap] instead of parsing struct tags via reflection.
 func (e *CustomerBillingProfile) GetStaticFieldMap() map[string]string {
-	return buncolgen.CustomerBillingProfileFieldMap
+	return customercol.CustomerBillingProfileFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CustomerBillingProfileDocumentType].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CustomerBillingProfileDocumentTypeFieldMap] instead of parsing struct tags via reflection.
+// the generated [customercol.CustomerBillingProfileDocumentTypeFieldMap] instead of parsing struct tags via reflection.
 func (e *CustomerBillingProfileDocumentType) GetStaticFieldMap() map[string]string {
-	return buncolgen.CustomerBillingProfileDocumentTypeFieldMap
+	return customercol.CustomerBillingProfileDocumentTypeFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CustomerEmailProfile].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CustomerEmailProfileFieldMap] instead of parsing struct tags via reflection.
+// the generated [customercol.CustomerEmailProfileFieldMap] instead of parsing struct tags via reflection.
 func (e *CustomerEmailProfile) GetStaticFieldMap() map[string]string {
-	return buncolgen.CustomerEmailProfileFieldMap
+	return customercol.CustomerEmailProfileFieldMap
 }

@@ -1,6 +1,8 @@
 package agentproposalrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
 	"context"
 	"fmt"
 
@@ -43,15 +45,15 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *agentports.ListAgentProposalRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.AgentProposalColumns
+	cols := agentcol.AgentProposalColumns
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.AgentProposalTable.Alias,
+		agentcol.AgentProposalTable.Alias,
 		req.Filter,
 		(*agent.AgentProposal)(nil),
 	)
 
-	q = q.Apply(buncolgen.AgentProposalApplyTenant(req.Filter.TenantInfo))
+	q = q.Apply(agentcol.AgentProposalApplyTenant(req.Filter.TenantInfo))
 	if req.ExcludeShadowDefinitions {
 		q = excludeShadowDefinitions(q)
 	}
@@ -90,12 +92,12 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.AgentProposalTable.Alias,
+		agentcol.AgentProposalTable.Alias,
 		req.Filter,
 		(*agent.AgentProposal)(nil),
 	)
 
-	q = q.Apply(buncolgen.AgentProposalApplyTenant(req.Filter.TenantInfo))
+	q = q.Apply(agentcol.AgentProposalApplyTenant(req.Filter.TenantInfo))
 	if req.ExcludeShadowDefinitions {
 		q = excludeShadowDefinitions(q)
 	}
@@ -109,7 +111,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	q, err := querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.AgentProposalTable.Alias,
+		agentcol.AgentProposalTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*agent.AgentProposal)(nil),
@@ -125,17 +127,17 @@ func (r *repository) applyCursorPageFilters(
 }
 
 func excludeShadowDefinitions(q *bun.SelectQuery) *bun.SelectQuery {
-	proposals := buncolgen.AgentProposalColumns
-	runs := buncolgen.AgentRunColumns
-	definitions := buncolgen.DefinitionColumns
+	proposals := agentcol.AgentProposalColumns
+	runs := agentcol.AgentRunColumns
+	definitions := agentdefinitioncol.DefinitionColumns
 
 	return q.Where(
 		"NOT EXISTS (SELECT 1 FROM ? AS ? JOIN ? AS ? ON ? = ? AND ? = ? AND ? = ? "+
 			"WHERE ? = ? AND ? = ? AND ? = ? AND ? = TRUE)",
-		bun.Ident(buncolgen.AgentRunTable.Name),
-		bun.Ident(buncolgen.AgentRunTable.Alias),
-		bun.Ident(buncolgen.DefinitionTable.Name),
-		bun.Ident(buncolgen.DefinitionTable.Alias),
+		bun.Ident(agentcol.AgentRunTable.Name),
+		bun.Ident(agentcol.AgentRunTable.Alias),
+		bun.Ident(agentdefinitioncol.DefinitionTable.Name),
+		bun.Ident(agentdefinitioncol.DefinitionTable.Alias),
 		bun.Safe(definitions.ID.Qualified()),
 		bun.Safe(runs.AgentDefinitionID.Qualified()),
 		bun.Safe(definitions.OrganizationID.Qualified()),
@@ -154,7 +156,7 @@ func excludeShadowDefinitions(q *bun.SelectQuery) *bun.SelectQuery {
 
 func applyAgentProposalColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.AgentProposalTable.All())
+		return q.ColumnExpr(agentcol.AgentProposalTable.All())
 	}
 
 	return q.Column(columns...)
@@ -219,12 +221,12 @@ func (r *repository) GetByID(
 		log := r.l.With(zap.String("operation", "GetByID"), zap.String("id", req.ID.String()))
 
 		entity := new(agent.AgentProposal)
-		cols := buncolgen.AgentProposalColumns
+		cols := agentcol.AgentProposalColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentProposalScopeTenant(sq, *req.TenantInfo).
+				return agentcol.AgentProposalScopeTenant(sq, *req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
@@ -261,12 +263,12 @@ func (r *repository) UpdateStatus(
 		log := r.l.With(zap.String("operation", "UpdateStatus"), zap.String("id", req.ID.String()))
 
 		entity := new(agent.AgentProposal)
-		cols := buncolgen.AgentProposalColumns
+		cols := agentcol.AgentProposalColumns
 		query := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				scoped := buncolgen.AgentProposalScopeTenantUpdate(uq, req.TenantInfo).
+				scoped := agentcol.AgentProposalScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 				if req.FromStatus != "" {
 					scoped = scoped.Where(cols.Status.Eq(), req.FromStatus)
@@ -306,12 +308,12 @@ func (r *repository) ExpirePendingByRun(
 			zap.String("runId", req.RunID.String()),
 		)
 
-		cols := buncolgen.AgentProposalColumns
+		cols := agentcol.AgentProposalColumns
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*agent.AgentProposal)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.AgentProposalScopeTenantUpdate(uq, req.TenantInfo).
+				return agentcol.AgentProposalScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.RunID.Eq(), req.RunID).
 					Where(cols.Status.Eq(), agent.ProposalStatusPending)
 			}).
@@ -339,10 +341,10 @@ func (r *repository) ExpirePendingByDefinition(
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		db := r.db.DBForContext(ctx)
-		cols := buncolgen.AgentProposalColumns
-		runCols := buncolgen.AgentRunColumns
+		cols := agentcol.AgentProposalColumns
+		runCols := agentcol.AgentRunColumns
 
-		runs := buncolgen.AgentRunScopeTenant(
+		runs := agentcol.AgentRunScopeTenant(
 			db.NewSelect().Model((*agent.AgentRun)(nil)).Column(runCols.ID.Bare()),
 			req.TenantInfo,
 		).Where(runCols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
@@ -350,7 +352,7 @@ func (r *repository) ExpirePendingByDefinition(
 		results, err := db.NewUpdate().
 			Model((*agent.AgentProposal)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.AgentProposalScopeTenantUpdate(uq, req.TenantInfo).
+				return agentcol.AgentProposalScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.Status.Eq(), agent.ProposalStatusPending).
 					Where(cols.RunID.In(), runs)
 			}).
@@ -384,10 +386,10 @@ func (r *repository) ExpirePendingByThread(
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		db := r.db.DBForContext(ctx)
-		cols := buncolgen.AgentProposalColumns
-		runCols := buncolgen.AgentRunColumns
+		cols := agentcol.AgentProposalColumns
+		runCols := agentcol.AgentRunColumns
 
-		runs := buncolgen.AgentRunScopeTenant(
+		runs := agentcol.AgentRunScopeTenant(
 			db.NewSelect().Model((*agent.AgentRun)(nil)).Column(runCols.ID.Bare()),
 			req.TenantInfo,
 		).
@@ -397,7 +399,7 @@ func (r *repository) ExpirePendingByThread(
 		results, err := db.NewUpdate().
 			Model((*agent.AgentProposal)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.AgentProposalScopeTenantUpdate(uq, req.TenantInfo).
+				return agentcol.AgentProposalScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.Status.Eq(), agent.ProposalStatusPending).
 					Where(cols.RunID.In(), runs)
 			}).
@@ -434,7 +436,7 @@ func (r *repository) ExpirePending(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		log := r.l.With(zap.String("operation", "ExpirePending"), zap.Int64("before", req.Before))
 
-		cols := buncolgen.AgentProposalColumns
+		cols := agentcol.AgentProposalColumns
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*agent.AgentProposal)(nil)).
@@ -480,8 +482,8 @@ func (r *repository) ListPendingForReminder(
 			zap.Int64("before", req.Before),
 		)
 
-		cols := buncolgen.AgentProposalColumns
-		runCols := buncolgen.AgentRunColumns
+		cols := agentcol.AgentProposalColumns
+		runCols := agentcol.AgentRunColumns
 		proposals := make([]*agent.AgentProposal, 0, req.Limit)
 
 		err := r.db.DBForContext(ctx).
@@ -519,7 +521,7 @@ func (r *repository) MarkReminded(
 			return 0, nil
 		}
 
-		cols := buncolgen.AgentProposalColumns
+		cols := agentcol.AgentProposalColumns
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*agent.AgentProposal)(nil)).
@@ -552,13 +554,13 @@ func (r *repository) ListByIDs(
 			return []*agent.AgentProposal{}, nil
 		}
 
-		cols := buncolgen.AgentProposalColumns
+		cols := agentcol.AgentProposalColumns
 		proposals := make([]*agent.AgentProposal, 0, len(req.IDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&proposals).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentProposalScopeTenant(sq, req.TenantInfo).
+				return agentcol.AgentProposalScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.In(), bun.In(req.IDs))
 			}).
 			Scan(ctx)
@@ -577,14 +579,14 @@ func (r *repository) ListByPlan(
 	req agentports.ListAgentProposalsByPlanRequest,
 ) ([]*agent.AgentProposal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentProposal, error) {
-		cols := buncolgen.AgentProposalColumns
+		cols := agentcol.AgentProposalColumns
 		proposals := make([]*agent.AgentProposal, 0)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&proposals).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentProposalScopeTenant(sq, req.TenantInfo).
+				return agentcol.AgentProposalScopeTenant(sq, req.TenantInfo).
 					Where(cols.PlanID.Eq(), req.PlanID)
 			}).
 			OrderExpr(cols.PlanStep.OrderAsc()).
@@ -608,12 +610,12 @@ func (r *repository) SkipPendingByPlan(
 	req agentports.SkipPendingByPlanRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.AgentProposalColumns
+		cols := agentcol.AgentProposalColumns
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*agent.AgentProposal)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.AgentProposalScopeTenantUpdate(uq, req.TenantInfo).
+				return agentcol.AgentProposalScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.PlanID.Eq(), req.PlanID).
 					Where(cols.Status.Eq(), agent.ProposalStatusPending)
 			}).
@@ -641,14 +643,14 @@ func (r *repository) ListByRun(
 	req agentports.ListAgentProposalsByRunRequest,
 ) ([]*agent.AgentProposal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentProposal, error) {
-		cols := buncolgen.AgentProposalColumns
+		cols := agentcol.AgentProposalColumns
 		rows := make([]*agent.AgentProposal, 0, 8)
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&rows).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentProposalScopeTenant(sq, req.TenantInfo).
+				return agentcol.AgentProposalScopeTenant(sq, req.TenantInfo).
 					Where(cols.RunID.Eq(), req.RunID)
 			}).
 			Order(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).

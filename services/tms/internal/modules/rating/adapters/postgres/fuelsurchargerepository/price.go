@@ -1,6 +1,7 @@
 package fuelsurchargerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/fuelsurchargecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
@@ -89,13 +90,13 @@ func (r *priceRepository) ListByIndex(
 			zap.String("fuelIndexId", req.FuelIndexID.String()),
 		)
 
-		cols := buncolgen.FuelIndexPriceColumns
+		cols := fuelsurchargecol.FuelIndexPriceColumns
 		entities := make([]*fuelsurcharge.FuelIndexPrice, 0)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.FuelIndexPriceScopeTenant(sq, req.TenantInfo).
+				sq = fuelsurchargecol.FuelIndexPriceScopeTenant(sq, req.TenantInfo).
 					Where(cols.FuelIndexID.Eq(), req.FuelIndexID)
 				if req.From != "" {
 					sq = sq.Where(cols.PriceDate.Gte(), req.From)
@@ -136,13 +137,13 @@ func (r *priceRepository) GetLatestOnOrBefore(
 			limit = 3
 		}
 
-		cols := buncolgen.FuelIndexPriceColumns
+		cols := fuelsurchargecol.FuelIndexPriceColumns
 		entities := make([]*fuelsurcharge.FuelIndexPrice, 0, limit)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FuelIndexPriceScopeTenant(sq, req.TenantInfo).
+				return fuelsurchargecol.FuelIndexPriceScopeTenant(sq, req.TenantInfo).
 					Where(cols.FuelIndexID.Eq(), req.FuelIndexID).
 					Where(cols.PriceDate.Lte(), req.Date)
 			}).
@@ -206,12 +207,12 @@ func (r *priceRepository) HasPriceForDate(
 	req *fuelsurchargeports.HasFuelPriceForDateRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := buncolgen.FuelIndexPriceColumns
+		cols := fuelsurchargecol.FuelIndexPriceColumns
 		exists, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*fuelsurcharge.FuelIndexPrice)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FuelIndexPriceScopeTenant(sq, req.TenantInfo).
+				return fuelsurchargecol.FuelIndexPriceScopeTenant(sq, req.TenantInfo).
 					Where(cols.FuelIndexID.Eq(), req.FuelIndexID).
 					Where(cols.PriceDate.Eq(), req.Date)
 			}).
@@ -285,12 +286,12 @@ func (r *priceRepository) Delete(
 			zap.String("id", req.PriceID.String()),
 		)
 
-		cols := buncolgen.FuelIndexPriceColumns
+		cols := fuelsurchargecol.FuelIndexPriceColumns
 		results, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*fuelsurcharge.FuelIndexPrice)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.FuelIndexPriceScopeTenantDelete(dq, req.TenantInfo).
+				return fuelsurchargecol.FuelIndexPriceScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.PriceID)
 			}).
 			Exec(ctx)
@@ -308,13 +309,13 @@ func (r *priceRepository) GetByID(
 	req *fuelsurchargeports.GetFuelIndexPriceByIDRequest,
 ) (*fuelsurcharge.FuelIndexPrice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fuelsurcharge.FuelIndexPrice, error) {
-		cols := buncolgen.FuelIndexPriceColumns
+		cols := fuelsurchargecol.FuelIndexPriceColumns
 		entity := new(fuelsurcharge.FuelIndexPrice)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FuelIndexPriceScopeTenant(sq, req.TenantInfo).
+				return fuelsurchargecol.FuelIndexPriceScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.PriceID)
 			}).
 			Scan(ctx)

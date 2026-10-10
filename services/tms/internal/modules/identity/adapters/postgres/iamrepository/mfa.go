@@ -1,6 +1,7 @@
 package iamrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/iamcol"
 	"context"
 	"database/sql"
 	"errors"
@@ -18,8 +19,8 @@ import (
 )
 
 var (
-	mfaCols      = buncolgen.MFAAuthenticatorColumns
-	recoveryCols = buncolgen.MFARecoveryCodeColumns
+	mfaCols      = iamcol.MFAAuthenticatorColumns
+	recoveryCols = iamcol.MFARecoveryCodeColumns
 )
 
 type MFARepositoryParams struct {

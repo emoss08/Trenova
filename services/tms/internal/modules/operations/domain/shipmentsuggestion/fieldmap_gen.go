@@ -2,11 +2,14 @@
 
 package shipmentsuggestion
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentsuggestioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DecisionRecord].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DecisionRecordFieldMap] instead of parsing struct tags via reflection.
+// the generated [shipmentsuggestioncol.DecisionRecordFieldMap] instead of parsing struct tags via reflection.
 func (e *DecisionRecord) GetStaticFieldMap() map[string]string {
-	return buncolgen.DecisionRecordFieldMap
+	return shipmentsuggestioncol.DecisionRecordFieldMap
 }

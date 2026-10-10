@@ -1,6 +1,7 @@
 package recurringshipmentrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/recurringshipmentcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
@@ -55,7 +56,7 @@ func (r *repository) filterQuery(
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.RecurringShipmentTable.Alias,
+		recurringshipmentcol.RecurringShipmentTable.Alias,
 		req.Filter,
 		(*recurringshipment.RecurringShipment)(nil),
 	)
@@ -78,9 +79,9 @@ func (r *repository) List(
 		total, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Relation(buncolgen.RecurringShipmentRelations.Customer).
-			Relation(buncolgen.RecurringShipmentRelations.OriginLocation).
-			Relation(buncolgen.RecurringShipmentRelations.DestinationLocation).
+			Relation(recurringshipmentcol.RecurringShipmentRelations.Customer).
+			Relation(recurringshipmentcol.RecurringShipmentRelations.OriginLocation).
+			Relation(recurringshipmentcol.RecurringShipmentRelations.DestinationLocation).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return r.filterQuery(sq, req)
 			}).ScanAndCount(ctx)
@@ -102,7 +103,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.RecurringShipmentTable.Alias,
+		recurringshipmentcol.RecurringShipmentTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*recurringshipment.RecurringShipment)(nil),
@@ -115,7 +116,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.RecurringShipmentTable.Alias,
+		recurringshipmentcol.RecurringShipmentTable.Alias,
 		req.Filter,
 		(*recurringshipment.RecurringShipment)(nil),
 	)
@@ -123,7 +124,7 @@ func (r *repository) applyTotalCountFilters(
 
 func applyRecurringShipmentColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.RecurringShipmentTable.All())
+		return q.ColumnExpr(recurringshipmentcol.RecurringShipmentTable.All())
 	}
 
 	return q.Column(columns...)
@@ -163,9 +164,9 @@ func (r *repository) ListConnection(
 					return dba.
 						NewSelect().
 						Model(entities).
-						Relation(buncolgen.RecurringShipmentRelations.Customer).
-						Relation(buncolgen.RecurringShipmentRelations.OriginLocation).
-						Relation(buncolgen.RecurringShipmentRelations.DestinationLocation).
+						Relation(recurringshipmentcol.RecurringShipmentRelations.Customer).
+						Relation(recurringshipmentcol.RecurringShipmentRelations.OriginLocation).
+						Relation(recurringshipmentcol.RecurringShipmentRelations.DestinationLocation).
 						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 							return applyRecurringShipmentColumns(sq, req.RecurringShipmentColumns)
 						})
@@ -193,22 +194,22 @@ func (r *repository) GetByID(
 			zap.String("id", req.ID.String()),
 		)
 
-		rsh := buncolgen.RecurringShipmentColumns
+		rsh := recurringshipmentcol.RecurringShipmentColumns
 		entity := new(recurringshipment.RecurringShipment)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RecurringShipmentScopeTenant(sq, req.TenantInfo).
+				return recurringshipmentcol.RecurringShipmentScopeTenant(sq, req.TenantInfo).
 					Where(rsh.ID.Eq(), req.ID)
 			}).
-			Relation(buncolgen.RecurringShipmentRelations.Customer).
-			Relation(buncolgen.RecurringShipmentRelations.OriginLocation).
-			Relation(buncolgen.RecurringShipmentRelations.DestinationLocation).
-			Relation(buncolgen.RecurringShipmentRelations.EnteredBy)
+			Relation(recurringshipmentcol.RecurringShipmentRelations.Customer).
+			Relation(recurringshipmentcol.RecurringShipmentRelations.OriginLocation).
+			Relation(recurringshipmentcol.RecurringShipmentRelations.DestinationLocation).
+			Relation(recurringshipmentcol.RecurringShipmentRelations.EnteredBy)
 
 		if req.ExpandDetails {
-			q = q.Relation(buncolgen.RecurringShipmentRelations.SourceShipment)
+			q = q.Relation(recurringshipmentcol.RecurringShipmentRelations.SourceShipment)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -327,7 +328,7 @@ func (r *repository) UpdateStatus(
 			return nil, err
 		}
 
-		rsh := buncolgen.RecurringShipmentColumns
+		rsh := recurringshipmentcol.RecurringShipmentColumns
 		ov := req.Version
 		entity.Version = ov + 1
 
@@ -396,21 +397,21 @@ func (r *repository) Match(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*recurringshipment.RecurringShipment, error) {
 		log := r.l.With(zap.String("operation", "Match"))
 
-		rsh := buncolgen.RecurringShipmentColumns
+		rsh := recurringshipmentcol.RecurringShipmentColumns
 		entities := make([]*recurringshipment.RecurringShipment, 0)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RecurringShipmentScopeTenant(sq, req.TenantInfo).
+				return recurringshipmentcol.RecurringShipmentScopeTenant(sq, req.TenantInfo).
 					Where(rsh.Status.Eq(), recurringshipment.StatusActive).
 					Where(rsh.CustomerID.Eq(), req.CustomerID).
 					Where(rsh.OriginLocationID.Eq(), req.OriginLocationID).
 					Where(rsh.DestinationLocationID.Eq(), req.DestinationLocationID)
 			}).
-			Relation(buncolgen.RecurringShipmentRelations.Customer).
-			Relation(buncolgen.RecurringShipmentRelations.OriginLocation).
-			Relation(buncolgen.RecurringShipmentRelations.DestinationLocation).
+			Relation(recurringshipmentcol.RecurringShipmentRelations.Customer).
+			Relation(recurringshipmentcol.RecurringShipmentRelations.OriginLocation).
+			Relation(recurringshipmentcol.RecurringShipmentRelations.DestinationLocation).
 			Order(rsh.CreatedAt.OrderAsc()).
 			Scan(ctx)
 		if err != nil {
@@ -487,7 +488,7 @@ func (r *repository) ListDue(
 ) ([]*recurringshipment.RecurringShipment, error) {
 	ctx = dbscope.WithSystem(ctx, "list recurring shipments due across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*recurringshipment.RecurringShipment, error) {
-		rsh := buncolgen.RecurringShipmentColumns
+		rsh := recurringshipmentcol.RecurringShipmentColumns
 
 		entities := make([]*recurringshipment.RecurringShipment, 0)
 		q := r.db.DBForContext(ctx).
@@ -522,17 +523,17 @@ func (r *repository) ListRuns(
 			zap.String("recurringShipmentId", req.RecurringShipmentID.String()),
 		)
 
-		rsr := buncolgen.RecurringShipmentRunColumns
+		rsr := recurringshipmentcol.RecurringShipmentRunColumns
 		entities := make([]*recurringshipment.RecurringShipmentRun, 0)
 		total, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RecurringShipmentRunScopeTenant(sq, req.TenantInfo).
+				return recurringshipmentcol.RecurringShipmentRunScopeTenant(sq, req.TenantInfo).
 					Where(rsr.RecurringShipmentID.Eq(), req.RecurringShipmentID)
 			}).
-			Relation(buncolgen.RecurringShipmentRunRelations.GeneratedShipment).
-			Relation(buncolgen.RecurringShipmentRunRelations.TriggeredBy).
+			Relation(recurringshipmentcol.RecurringShipmentRunRelations.GeneratedShipment).
+			Relation(recurringshipmentcol.RecurringShipmentRunRelations.TriggeredBy).
 			Order(rsr.OccurrenceAt.OrderDesc()).
 			Limit(req.Filter.Pagination.SafeLimit()).
 			Offset(req.Filter.Pagination.SafeOffset()).

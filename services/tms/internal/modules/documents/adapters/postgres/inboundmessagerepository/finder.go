@@ -1,6 +1,9 @@
 package inboundmessagerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 	"strings"
 
@@ -46,7 +49,7 @@ func (f *RecordFinder) FindByReference(
 			return pulid.Nil, false, nil
 		}
 
-		cols := buncolgen.ShipmentColumns
+		cols := shipmentcol.ShipmentColumns
 		forms := bun.In(referenceForms(reference))
 
 		ids := make([]pulid.ID, 0, 2)
@@ -54,7 +57,7 @@ func (f *RecordFinder) FindByReference(
 			NewSelect().
 			Model((*shipment.Shipment)(nil)).
 			ColumnExpr(cols.ID.Qualified()).
-			Apply(buncolgen.ShipmentApplyTenant(tenantInfo)).
+			Apply(shipmentcol.ShipmentApplyTenant(tenantInfo)).
 			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 				return q.
 					Where(cols.ProNumber.In(), forms).
@@ -101,14 +104,14 @@ func (f *RecordFinder) FindCustomerByEmail(
 			Recipients string   `bun:"recipients"`
 		}
 
-		customerCols := buncolgen.CustomerColumns
+		customerCols := customercol.CustomerColumns
 		var customers []customerRecipients
 		if err := f.db.DBForContext(ctx).
 			NewSelect().
 			Model((*customer.Customer)(nil)).
 			ColumnExpr(customerCols.ID.As("id")).
 			ColumnExpr(customerCols.StatusUpdateRecipients.As("recipients")).
-			Apply(buncolgen.CustomerApplyTenant(tenantInfo)).
+			Apply(customercol.CustomerApplyTenant(tenantInfo)).
 			Where(customerCols.StatusUpdateRecipients.LowerLike(), pattern).
 			Limit(maxPartyCandidates).
 			Scan(ctx, &customers); err != nil {
@@ -126,7 +129,7 @@ func (f *RecordFinder) FindCustomerByEmail(
 			CC         string   `bun:"cc_recipients"`
 		}
 
-		profileCols := buncolgen.CustomerEmailProfileColumns
+		profileCols := customercol.CustomerEmailProfileColumns
 		var profiles []profileRecipients
 		if err := f.db.DBForContext(ctx).
 			NewSelect().
@@ -134,7 +137,7 @@ func (f *RecordFinder) FindCustomerByEmail(
 			ColumnExpr(profileCols.CustomerID.As("customer_id")).
 			ColumnExpr(profileCols.ToRecipients.As("to_recipients")).
 			ColumnExpr(profileCols.CCRecipients.As("cc_recipients")).
-			Apply(buncolgen.CustomerEmailProfileApplyTenant(tenantInfo)).
+			Apply(customercol.CustomerEmailProfileApplyTenant(tenantInfo)).
 			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 				return q.
 					Where(profileCols.ToRecipients.LowerLike(), pattern).
@@ -178,13 +181,13 @@ func (f *RecordFinder) FindCarrierByEmail(
 		}
 		found := make(map[pulid.ID]struct{}, 2)
 
-		carrierCols := buncolgen.CarrierColumns
+		carrierCols := carriercol.CarrierColumns
 		carriers := make([]pulid.ID, 0, 2)
 		if err := f.db.DBForContext(ctx).
 			NewSelect().
 			Model((*carrier.Carrier)(nil)).
 			ColumnExpr(carrierCols.ID.Qualified()).
-			Apply(buncolgen.CarrierApplyTenant(tenantInfo)).
+			Apply(carriercol.CarrierApplyTenant(tenantInfo)).
 			Where(carrierCols.Email.LowerLike(), stringutils.EscapeLikePattern(address)).
 			Limit(maxPartyCandidates).
 			Scan(ctx, &carriers); err != nil {
@@ -194,13 +197,13 @@ func (f *RecordFinder) FindCarrierByEmail(
 			found[id] = struct{}{}
 		}
 
-		contactCols := buncolgen.CarrierContactColumns
+		contactCols := carriercol.CarrierContactColumns
 		contacts := make([]pulid.ID, 0, 2)
 		if err := f.db.DBForContext(ctx).
 			NewSelect().
 			Model((*carrier.CarrierContact)(nil)).
 			ColumnExpr(contactCols.CarrierID.Qualified()).
-			Apply(buncolgen.CarrierContactApplyTenant(tenantInfo)).
+			Apply(carriercol.CarrierContactApplyTenant(tenantInfo)).
 			Where(contactCols.Email.LowerLike(), stringutils.EscapeLikePattern(address)).
 			Limit(maxPartyCandidates).
 			Scan(ctx, &contacts); err != nil {
@@ -223,8 +226,8 @@ func (f *RecordFinder) ShipmentExists(
 		return f.db.DBForContext(ctx).
 			NewSelect().
 			Model((*shipment.Shipment)(nil)).
-			Where(buncolgen.ShipmentColumns.ID.Eq(), id).
-			Apply(buncolgen.ShipmentApplyTenant(tenantInfo)).
+			Where(shipmentcol.ShipmentColumns.ID.Eq(), id).
+			Apply(shipmentcol.ShipmentApplyTenant(tenantInfo)).
 			Exists(ctx)
 	})
 }
@@ -238,8 +241,8 @@ func (f *RecordFinder) CustomerExists(
 		return f.db.DBForContext(ctx).
 			NewSelect().
 			Model((*customer.Customer)(nil)).
-			Where(buncolgen.CustomerColumns.ID.Eq(), id).
-			Apply(buncolgen.CustomerApplyTenant(tenantInfo)).
+			Where(customercol.CustomerColumns.ID.Eq(), id).
+			Apply(customercol.CustomerApplyTenant(tenantInfo)).
 			Exists(ctx)
 	})
 }
@@ -253,8 +256,8 @@ func (f *RecordFinder) CarrierExists(
 		return f.db.DBForContext(ctx).
 			NewSelect().
 			Model((*carrier.Carrier)(nil)).
-			Where(buncolgen.CarrierColumns.ID.Eq(), id).
-			Apply(buncolgen.CarrierApplyTenant(tenantInfo)).
+			Where(carriercol.CarrierColumns.ID.Eq(), id).
+			Apply(carriercol.CarrierApplyTenant(tenantInfo)).
 			Exists(ctx)
 	})
 }

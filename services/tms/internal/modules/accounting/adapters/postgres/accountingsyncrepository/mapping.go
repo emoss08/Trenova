@@ -1,6 +1,9 @@
 package accountingsyncrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
+	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 
@@ -56,12 +59,12 @@ func (r *mappingRepository) ListByConnection(
 ) ([]*accountingsync.AccountingMapping, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingMapping, error) {
 		entities := make([]*accountingsync.AccountingMapping, 0)
-		cols := buncolgen.AccountingMappingColumns
+		cols := accountingsynccol.AccountingMappingColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.AccountingMappingApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingMappingApplyTenant(req.TenantInfo)).
 			Where(cols.ConnectionID.Eq(), req.ConnectionID).
 			Order(cols.TargetType.OrderAsc(), cols.ID.OrderAsc())
 		if len(req.TargetTypes) > 0 {
@@ -79,7 +82,7 @@ func (r *mappingRepository) applyMappingFilters(
 	q *bun.SelectQuery,
 	req *accountingsyncports.ListAccountingMappingsConnectionRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.AccountingMappingColumns
+	cols := accountingsynccol.AccountingMappingColumns
 	q = q.Where(cols.ConnectionID.Qualified()+" = ?", req.ConnectionID)
 	if len(req.TargetTypes) > 0 {
 		q = q.Where(cols.TargetType.Qualified()+" IN (?)", bun.List(req.TargetTypes))
@@ -100,7 +103,7 @@ func (r *mappingRepository) applyMappingFilters(
 }
 
 func requiredTargetsGroup(q *bun.SelectQuery) *bun.SelectQuery {
-	cols := buncolgen.AccountingMappingColumns
+	cols := accountingsynccol.AccountingMappingColumns
 	for _, target := range accountingsync.AllMappingTargetTypes() {
 		for _, key := range target.Keys() {
 			if !accountingsync.IsRequiredTarget(target, key) {
@@ -138,7 +141,7 @@ func (r *mappingRepository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.AccountingMappingTable.Alias,
+						accountingsynccol.AccountingMappingTable.Alias,
 						req.Filter,
 						(*accountingsync.AccountingMapping)(nil),
 					)
@@ -161,12 +164,12 @@ func (r *mappingRepository) ListConnection(
 				Query: func(items *[]*accountingsync.AccountingMapping) *bun.SelectQuery {
 					return dba.NewSelect().
 						Model(items).
-						ColumnExpr(buncolgen.AccountingMappingTable.All())
+						ColumnExpr(accountingsynccol.AccountingMappingTable.All())
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.AccountingMappingTable.Alias,
+						accountingsynccol.AccountingMappingTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*accountingsync.AccountingMapping)(nil),
@@ -193,13 +196,13 @@ func (r *mappingRepository) GetByID(
 ) (*accountingsync.AccountingMapping, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingMapping, error) {
 		entity := new(accountingsync.AccountingMapping)
-		cols := buncolgen.AccountingMappingColumns
+		cols := accountingsynccol.AccountingMappingColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			Where(cols.ID.Eq(), req.ID).
-			Apply(buncolgen.AccountingMappingApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingMappingApplyTenant(req.TenantInfo)).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, mappingEntity)
 		}
@@ -218,13 +221,13 @@ func (r *mappingRepository) GetByIDs(
 		}
 
 		entities := make([]*accountingsync.AccountingMapping, 0, len(req.IDs))
-		cols := buncolgen.AccountingMappingColumns
+		cols := accountingsynccol.AccountingMappingColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			Where(cols.ID.In(), bun.List(req.IDs)).
-			Apply(buncolgen.AccountingMappingApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingMappingApplyTenant(req.TenantInfo)).
 			Scan(ctx); err != nil {
 			return nil, err
 		}
@@ -239,12 +242,12 @@ func (r *mappingRepository) GetByTarget(
 ) (*accountingsync.AccountingMapping, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingMapping, error) {
 		entity := new(accountingsync.AccountingMapping)
-		cols := buncolgen.AccountingMappingColumns
+		cols := accountingsynccol.AccountingMappingColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Apply(buncolgen.AccountingMappingApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingMappingApplyTenant(req.TenantInfo)).
 			Where(cols.ConnectionID.Eq(), req.ConnectionID).
 			Where(cols.TargetType.Eq(), req.TargetType)
 		if req.TargetType.KeyedByObject() {
@@ -293,7 +296,7 @@ func (r *mappingRepository) ApplyScoring(
 	entities []*accountingsync.AccountingMapping,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := buncolgen.AccountingMappingColumns
+		cols := accountingsynccol.AccountingMappingColumns
 		var applied int64
 
 		for _, entity := range entities {
@@ -344,7 +347,7 @@ func (r *mappingRepository) UpdateLabels(
 	entities []*accountingsync.AccountingMapping,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.AccountingMappingColumns
+		cols := accountingsynccol.AccountingMappingColumns
 		for _, entity := range entities {
 			if _, err := r.db.DBForContext(ctx).
 				NewUpdate().
@@ -364,7 +367,7 @@ func (r *mappingRepository) Update(
 	entity *accountingsync.AccountingMapping,
 ) (*accountingsync.AccountingMapping, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingMapping, error) {
-		cols := buncolgen.AccountingMappingColumns
+		cols := accountingsynccol.AccountingMappingColumns
 		ov := entity.Version
 		entity.Version++
 
@@ -393,7 +396,7 @@ func (r *mappingRepository) CountByState(
 	connectionID pulid.ID,
 ) ([]accountingsyncports.AccountingMappingCount, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]accountingsyncports.AccountingMappingCount, error) {
-		cols := buncolgen.AccountingMappingColumns
+		cols := accountingsynccol.AccountingMappingColumns
 		counts := make(
 			[]accountingsyncports.AccountingMappingCount,
 			0,
@@ -406,7 +409,7 @@ func (r *mappingRepository) CountByState(
 			ColumnExpr(cols.TargetType.As("target_type")).
 			ColumnExpr(cols.State.As("state")).
 			ColumnExpr("COUNT(*) AS count").
-			Apply(buncolgen.AccountingMappingApplyTenant(tenantInfo)).
+			Apply(accountingsynccol.AccountingMappingApplyTenant(tenantInfo)).
 			Where(cols.ConnectionID.Eq(), connectionID).
 			GroupExpr(cols.TargetType.Qualified()).
 			GroupExpr(cols.State.Qualified()).
@@ -426,14 +429,14 @@ func (r *mappingRepository) ListOwnerOperators(
 		db := r.db.DBForContext(ctx)
 		settled := db.NewSelect().
 			Model((*driversettlement.Settlement)(nil)).
-			ColumnExpr(buncolgen.SettlementColumns.WorkerID.Qualified()).
-			Apply(buncolgen.SettlementApplyTenant(tenantInfo)).
+			ColumnExpr(driversettlementcol.SettlementColumns.WorkerID.Qualified()).
+			Apply(driversettlementcol.SettlementApplyTenant(tenantInfo)).
 			Where(
-				buncolgen.SettlementColumns.Classification.Eq(),
+				driversettlementcol.SettlementColumns.Classification.Eq(),
 				driverpay.PayeeClassificationOwnerOperator,
 			).
 			Where(
-				buncolgen.SettlementColumns.Status.In(),
+				driversettlementcol.SettlementColumns.Status.In(),
 				bun.List([]driversettlement.Status{
 					driversettlement.StatusPosted,
 					driversettlement.StatusPaid,
@@ -443,12 +446,12 @@ func (r *mappingRepository) ListOwnerOperators(
 		workers := make([]*worker.Worker, 0)
 		if err := db.NewSelect().
 			Model(&workers).
-			Relation(buncolgen.WorkerRelations.State).
+			Relation(workercol.WorkerRelations.State).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerScopeTenant(sq, tenantInfo).
-					Where(buncolgen.Expr("{0} IN (?)", buncolgen.WorkerColumns.ID), settled)
+				return workercol.WorkerScopeTenant(sq, tenantInfo).
+					Where(buncolgen.Expr("{0} IN (?)", workercol.WorkerColumns.ID), settled)
 			}).
-			Order(buncolgen.WorkerColumns.ID.OrderAsc()).
+			Order(workercol.WorkerColumns.ID.OrderAsc()).
 			Scan(ctx); err != nil {
 			r.l.Error("failed to list owner-operators", zap.Error(err))
 			return nil, fmt.Errorf("list owner-operators: %w", err)

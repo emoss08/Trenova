@@ -1,6 +1,7 @@
 package workerinjuryrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"database/sql"
 	"errors"
@@ -54,14 +55,14 @@ func (r *repository) ListInjuries(
 	req *workerports.ListWorkerInjuriesRequest,
 ) ([]*worker.WorkerInjury, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerInjury, error) {
-		cols := buncolgen.WorkerInjuryColumns
+		cols := workercol.WorkerInjuryColumns
 		entities := make([]*worker.WorkerInjury, 0, 16)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerInjuryScopeTenant(sq, req.TenantInfo)
+				sq = workercol.WorkerInjuryScopeTenant(sq, req.TenantInfo)
 				if !req.WorkerID.IsNil() {
 					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
 				}
@@ -89,13 +90,13 @@ func (r *repository) ListInjuries(
 			Limit(limitOr(req.Limit, defaultInjuryPageSize))
 
 		if req.IncludeWorker {
-			q = q.Relation(buncolgen.WorkerInjuryRelations.Worker)
+			q = q.Relation(workercol.WorkerInjuryRelations.Worker)
 		}
 		if req.IncludeDocument {
-			q = q.Relation(buncolgen.WorkerInjuryRelations.Document)
+			q = q.Relation(workercol.WorkerInjuryRelations.Document)
 		}
 		if req.IncludeEvent {
-			q = q.Relation(buncolgen.WorkerInjuryRelations.SafetyEvent)
+			q = q.Relation(workercol.WorkerInjuryRelations.SafetyEvent)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -117,18 +118,18 @@ func (r *repository) GetInjuryByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerInjuryScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerInjuryColumns.ID.Eq(), req.ID)
+				return workercol.WorkerInjuryScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerInjuryColumns.ID.Eq(), req.ID)
 			})
 
 		if req.IncludeWorker {
-			q = q.Relation(buncolgen.WorkerInjuryRelations.Worker)
+			q = q.Relation(workercol.WorkerInjuryRelations.Worker)
 		}
 		if req.IncludeDocument {
-			q = q.Relation(buncolgen.WorkerInjuryRelations.Document)
+			q = q.Relation(workercol.WorkerInjuryRelations.Document)
 		}
 		if req.IncludeEvent {
-			q = q.Relation(buncolgen.WorkerInjuryRelations.SafetyEvent)
+			q = q.Relation(workercol.WorkerInjuryRelations.SafetyEvent)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -178,7 +179,7 @@ func (r *repository) UpdateInjury(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.WorkerInjuryColumns.Version.Eq(), ov).
+			Where(workercol.WorkerInjuryColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -202,8 +203,8 @@ func (r *repository) DeleteInjury(
 			NewDelete().
 			Model((*worker.WorkerInjury)(nil)).
 			Apply(func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.WorkerInjuryScopeTenantDelete(dq, req.TenantInfo).
-					Where(buncolgen.WorkerInjuryColumns.ID.Eq(), req.ID)
+				return workercol.WorkerInjuryScopeTenantDelete(dq, req.TenantInfo).
+					Where(workercol.WorkerInjuryColumns.ID.Eq(), req.ID)
 			}).
 			Exec(ctx)
 		if err != nil {
@@ -224,7 +225,7 @@ func (r *repository) NextCaseNumber(
 	req *workerports.NextCaseNumberRequest,
 ) (int32, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int32, error) {
-		cols := buncolgen.WorkerInjuryColumns
+		cols := workercol.WorkerInjuryColumns
 
 		var highest int32
 		err := r.db.DBForContext(ctx).
@@ -232,7 +233,7 @@ func (r *repository) NextCaseNumber(
 			Model((*worker.WorkerInjury)(nil)).
 			ColumnExpr("COALESCE(MAX("+cols.CaseNumber.Qualified()+"), 0)").
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerInjuryScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerInjuryScopeTenant(sq, req.TenantInfo).
 					Where(cols.CaseYear.Eq(), req.CaseYear)
 			}).
 			Scan(ctx, &highest)
@@ -255,10 +256,10 @@ func (r *repository) GetSummary(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.OSHAAnnualSummaryScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.OSHAAnnualSummaryColumns.Year.Eq(), req.Year)
+				return workercol.OSHAAnnualSummaryScopeTenant(sq, req.TenantInfo).
+					Where(workercol.OSHAAnnualSummaryColumns.Year.Eq(), req.Year)
 			}).
-			Relation(buncolgen.OSHAAnnualSummaryRelations.CertifiedBy).
+			Relation(workercol.OSHAAnnualSummaryRelations.CertifiedBy).
 			Limit(1).
 			Scan(ctx)
 		if err != nil {
@@ -283,9 +284,9 @@ func (r *repository) ListSummaries(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.OSHAAnnualSummaryScopeTenant(sq, req.TenantInfo)
+				return workercol.OSHAAnnualSummaryScopeTenant(sq, req.TenantInfo)
 			}).
-			Order(buncolgen.OSHAAnnualSummaryColumns.Year.OrderDesc()).
+			Order(workercol.OSHAAnnualSummaryColumns.Year.OrderDesc()).
 			Limit(limitOr(req.Limit, defaultSummaryPageSize)).
 			Scan(ctx)
 		if err != nil {
@@ -334,7 +335,7 @@ func (r *repository) UpdateSummary(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.OSHAAnnualSummaryColumns.Version.Eq(), ov).
+			Where(workercol.OSHAAnnualSummaryColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {

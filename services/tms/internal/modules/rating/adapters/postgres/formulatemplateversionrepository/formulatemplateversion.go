@@ -1,6 +1,7 @@
 package formulatemplateversionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -75,10 +76,10 @@ func (r *repository) GetByTemplateAndVersion(
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return sq.
-					Where(buncolgen.FormulaTemplateVersionColumns.TemplateID.Eq(), req.TemplateID).
-					Where(buncolgen.FormulaTemplateVersionColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
-					Where(buncolgen.FormulaTemplateVersionColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-					Where(buncolgen.FormulaTemplateVersionColumns.VersionNumber.Eq(), req.VersionNumber)
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.TemplateID.Eq(), req.TemplateID).
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.VersionNumber.Eq(), req.VersionNumber)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -104,7 +105,7 @@ func (r *repository) filterQuery(
 		(*formulatemplate.FormulaTemplateVersion)(nil),
 	)
 
-	q = q.Where(buncolgen.FormulaTemplateVersionColumns.TemplateID.Eq(), req.TemplateID).
+	q = q.Where(formulatemplatecol.FormulaTemplateVersionColumns.TemplateID.Eq(), req.TemplateID).
 		Relation("CreatedBy")
 
 	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
@@ -131,7 +132,7 @@ func (r *repository) List(
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return r.filterQuery(sq, req)
 			}).
-			Order(buncolgen.FormulaTemplateVersionColumns.VersionNumber.OrderDesc()).
+			Order(formulatemplatecol.FormulaTemplateVersionColumns.VersionNumber.OrderDesc()).
 			ScanAndCount(ctx)
 		if err != nil {
 			log.Error("failed to list formula template versions", zap.Error(err))
@@ -163,12 +164,12 @@ func (r *repository) GetVersionRange(
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return sq.
-					Where(buncolgen.FormulaTemplateVersionColumns.TemplateID.Eq(), req.TemplateID).
-					Where(buncolgen.FormulaTemplateVersionColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
-					Where(buncolgen.FormulaTemplateVersionColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-					Where(buncolgen.FormulaTemplateVersionColumns.VersionNumber.In(), bun.List([]int64{req.FromVersion, req.ToVersion}))
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.TemplateID.Eq(), req.TemplateID).
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.VersionNumber.In(), bun.List([]int64{req.FromVersion, req.ToVersion}))
 			}).
-			Order(buncolgen.FormulaTemplateVersionColumns.VersionNumber.OrderAsc()).
+			Order(formulatemplatecol.FormulaTemplateVersionColumns.VersionNumber.OrderAsc()).
 			Scan(ctx)
 		if err != nil {
 			log.Error("failed to get version range", zap.Error(err))
@@ -196,11 +197,11 @@ func (r *repository) GetLatestVersion(
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return sq.
-					Where(buncolgen.FormulaTemplateVersionColumns.TemplateID.Eq(), templateID).
-					Where(buncolgen.FormulaTemplateVersionColumns.OrganizationID.Eq(), tenantInfo.OrgID).
-					Where(buncolgen.FormulaTemplateVersionColumns.BusinessUnitID.Eq(), tenantInfo.BuID)
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.TemplateID.Eq(), templateID).
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.OrganizationID.Eq(), tenantInfo.OrgID).
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.BusinessUnitID.Eq(), tenantInfo.BuID)
 			}).
-			Order(buncolgen.FormulaTemplateVersionColumns.VersionNumber.OrderDesc()).
+			Order(formulatemplatecol.FormulaTemplateVersionColumns.VersionNumber.OrderDesc()).
 			Limit(1).
 			Scan(ctx)
 		if err != nil {
@@ -227,8 +228,8 @@ func (r *repository) GetForkedTemplates(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FormulaTemplateScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.FormulaTemplateColumns.SourceTemplateID.Eq(), req.SourceTemplateID)
+				return formulatemplatecol.FormulaTemplateScopeTenant(sq, req.TenantInfo).
+					Where(formulatemplatecol.FormulaTemplateColumns.SourceTemplateID.Eq(), req.SourceTemplateID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -263,10 +264,10 @@ func (r *repository) UpdateTags(
 			Set("tags = ?", pgdialect.Array(tags)).
 			WhereGroup(" AND ", func(sq *bun.UpdateQuery) *bun.UpdateQuery {
 				return sq.
-					Where(buncolgen.FormulaTemplateVersionColumns.TemplateID.Eq(), req.TemplateID).
-					Where(buncolgen.FormulaTemplateVersionColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
-					Where(buncolgen.FormulaTemplateVersionColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-					Where(buncolgen.FormulaTemplateVersionColumns.VersionNumber.Eq(), req.VersionNumber)
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.TemplateID.Eq(), req.TemplateID).
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.VersionNumber.Eq(), req.VersionNumber)
 			}).
 			Returning("*").
 			Scan(ctx)
@@ -299,11 +300,11 @@ func (r *repository) GetEffectiveVersion(
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return sq.
-					Where(buncolgen.FormulaTemplateVersionColumns.TemplateID.Eq(), req.TemplateID).
-					Where(buncolgen.FormulaTemplateVersionColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
-					Where(buncolgen.FormulaTemplateVersionColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-					Where(buncolgen.FormulaTemplateVersionColumns.EffectiveFrom.IsNotNull()).
-					Where(buncolgen.FormulaTemplateVersionColumns.EffectiveFrom.Lte(), req.AsOf)
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.TemplateID.Eq(), req.TemplateID).
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.EffectiveFrom.IsNotNull()).
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.EffectiveFrom.Lte(), req.AsOf)
 			}).
 			OrderExpr("ftv.effective_from DESC").
 			OrderExpr("ftv.version_number DESC").
@@ -339,10 +340,10 @@ func (r *repository) UpdateEffectiveDate(
 			Set("effective_from = ?", req.EffectiveFrom).
 			WhereGroup(" AND ", func(sq *bun.UpdateQuery) *bun.UpdateQuery {
 				return sq.
-					Where(buncolgen.FormulaTemplateVersionColumns.TemplateID.Eq(), req.TemplateID).
-					Where(buncolgen.FormulaTemplateVersionColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
-					Where(buncolgen.FormulaTemplateVersionColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-					Where(buncolgen.FormulaTemplateVersionColumns.VersionNumber.Eq(), req.VersionNumber)
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.TemplateID.Eq(), req.TemplateID).
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.VersionNumber.Eq(), req.VersionNumber)
 			}).
 			Returning("*").
 			Scan(ctx)
@@ -374,10 +375,10 @@ func (r *repository) ListScheduled(
 			Model(&versions).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return sq.
-					Where(buncolgen.FormulaTemplateVersionColumns.TemplateID.Eq(), req.TemplateID).
-					Where(buncolgen.FormulaTemplateVersionColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
-					Where(buncolgen.FormulaTemplateVersionColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-					Where(buncolgen.FormulaTemplateVersionColumns.EffectiveFrom.IsNotNull())
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.TemplateID.Eq(), req.TemplateID).
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+					Where(formulatemplatecol.FormulaTemplateVersionColumns.EffectiveFrom.IsNotNull())
 			}).
 			OrderExpr("ftv.effective_from ASC").
 			Scan(ctx)
@@ -401,14 +402,14 @@ func (r *repository) GetLatestByStatus(
 			zap.String("status", req.Status.String()),
 		)
 
-		ftv := buncolgen.FormulaTemplateVersionColumns
+		ftv := formulatemplatecol.FormulaTemplateVersionColumns
 
 		entity := new(formulatemplate.FormulaTemplateVersion)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FormulaTemplateVersionScopeTenant(sq, req.TenantInfo).
+				return formulatemplatecol.FormulaTemplateVersionScopeTenant(sq, req.TenantInfo).
 					Where(ftv.TemplateID.Eq(), req.TemplateID).
 					Where(ftv.Status.Eq(), req.Status)
 			}).
@@ -437,14 +438,14 @@ func (r *repository) ClearScheduled(
 			zap.String("templateID", req.TemplateID.String()),
 		)
 
-		ftv := buncolgen.FormulaTemplateVersionColumns
+		ftv := formulatemplatecol.FormulaTemplateVersionColumns
 
 		result, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*formulatemplate.FormulaTemplateVersion)(nil)).
 			Set(ftv.EffectiveFrom.String()+" = NULL").
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.FormulaTemplateVersionScopeTenantUpdate(uq, req.TenantInfo).
+				return formulatemplatecol.FormulaTemplateVersionScopeTenantUpdate(uq, req.TenantInfo).
 					Where(ftv.TemplateID.Eq(), req.TemplateID).
 					Where(ftv.EffectiveFrom.IsNotNull())
 			}).

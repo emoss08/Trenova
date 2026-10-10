@@ -2,18 +2,21 @@
 
 package billingtransfer
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/billingtransfercol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [BillingTransferRun].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.BillingTransferRunFieldMap] instead of parsing struct tags via reflection.
+// the generated [billingtransfercol.BillingTransferRunFieldMap] instead of parsing struct tags via reflection.
 func (e *BillingTransferRun) GetStaticFieldMap() map[string]string {
-	return buncolgen.BillingTransferRunFieldMap
+	return billingtransfercol.BillingTransferRunFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [BillingTransferRunItem].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.BillingTransferRunItemFieldMap] instead of parsing struct tags via reflection.
+// the generated [billingtransfercol.BillingTransferRunItemFieldMap] instead of parsing struct tags via reflection.
 func (e *BillingTransferRunItem) GetStaticFieldMap() map[string]string {
-	return buncolgen.BillingTransferRunItemFieldMap
+	return billingtransfercol.BillingTransferRunItemFieldMap
 }

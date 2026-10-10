@@ -2,11 +2,14 @@
 
 package equipmentcontinuity
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/equipmentcontinuitycol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EquipmentContinuity].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.EquipmentContinuityFieldMap] instead of parsing struct tags via reflection.
+// the generated [equipmentcontinuitycol.EquipmentContinuityFieldMap] instead of parsing struct tags via reflection.
 func (e *EquipmentContinuity) GetStaticFieldMap() map[string]string {
-	return buncolgen.EquipmentContinuityFieldMap
+	return equipmentcontinuitycol.EquipmentContinuityFieldMap
 }

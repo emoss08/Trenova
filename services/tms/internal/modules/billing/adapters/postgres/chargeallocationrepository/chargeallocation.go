@@ -1,6 +1,9 @@
 package chargeallocationrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/billingqueuecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 	"fmt"
 
@@ -73,7 +76,7 @@ func (r *repository) syncShipmentRows(
 	tx bun.IDB,
 	entity *shipment.Shipment,
 ) error {
-	cols := buncolgen.ChargeAllocationColumns
+	cols := shipmentcol.ChargeAllocationColumns
 	ti := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 
 	existing, err := r.existingForShipment(ctx, tx, ti, entity.ID)
@@ -128,7 +131,7 @@ func (r *repository) syncShipmentRows(
 	if _, err = tx.NewDelete().
 		Model((*shipment.ChargeAllocation)(nil)).
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return buncolgen.ChargeAllocationScopeTenantDelete(dq, ti).
+			return shipmentcol.ChargeAllocationScopeTenantDelete(dq, ti).
 				Where(cols.ID.In(), bun.List(deleteIDs))
 		}).
 		Exec(ctx); err != nil {
@@ -232,7 +235,7 @@ func (r *repository) update(
 	allocation.InvoiceID = existing.InvoiceID
 	allocation.InvoicedAt = existing.InvoicedAt
 
-	cols := buncolgen.ChargeAllocationColumns
+	cols := shipmentcol.ChargeAllocationColumns
 	result, err := tx.NewUpdate().
 		Model(allocation).
 		Column(
@@ -260,12 +263,12 @@ func (r *repository) existingForShipment(
 	ti pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) (map[pulid.ID]*shipment.ChargeAllocation, error) {
-	cols := buncolgen.ChargeAllocationColumns
+	cols := shipmentcol.ChargeAllocationColumns
 	rows := make([]*shipment.ChargeAllocation, 0)
 	if err := tx.NewSelect().
 		Model(&rows).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ChargeAllocationScopeTenant(sq, ti).
+			return shipmentcol.ChargeAllocationScopeTenant(sq, ti).
 				Where(cols.ShipmentID.Eq(), shipmentID)
 		}).
 		Scan(ctx); err != nil {
@@ -292,14 +295,14 @@ func (r *repository) followCustomerChange(
 		return nil
 	}
 
-	cols := buncolgen.ChargeAllocationColumns
+	cols := shipmentcol.ChargeAllocationColumns
 	ti := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 	if _, err := tx.NewUpdate().
 		Model((*shipment.ChargeAllocation)(nil)).
 		Set(cols.BillToCustomerID.Set(), entity.CustomerID).
 		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.ChargeAllocationScopeTenantUpdate(uq, ti).
+			return shipmentcol.ChargeAllocationScopeTenantUpdate(uq, ti).
 				Where(cols.ShipmentID.Eq(), entity.ID).
 				Where(cols.BillToCustomerID.Eq(), entity.PreviousCustomerID).
 				Where(cols.InvoiceID.IsNull())
@@ -319,13 +322,13 @@ func (r *repository) dropOrphans(
 	tx bun.IDB,
 	entity *shipment.Shipment,
 ) error {
-	cols := buncolgen.ChargeAllocationColumns
-	ac := buncolgen.AdditionalChargeColumns
+	cols := shipmentcol.ChargeAllocationColumns
+	ac := shipmentcol.AdditionalChargeColumns
 	ti := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 	if _, err := tx.NewDelete().
 		Model((*shipment.ChargeAllocation)(nil)).
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return buncolgen.ChargeAllocationScopeTenantDelete(dq, ti).
+			return shipmentcol.ChargeAllocationScopeTenantDelete(dq, ti).
 				Where(cols.ShipmentID.Eq(), entity.ID).
 				Where(cols.ChargeKind.Eq(), shipment.ChargeAllocationKindAccessorial).
 				Where(cols.InvoiceID.IsNull()).
@@ -347,13 +350,13 @@ func (r *repository) SyncForOrderCharge(
 	if req == nil || req.Allocations == nil {
 		return nil
 	}
-	cols := buncolgen.ChargeAllocationColumns
+	cols := shipmentcol.ChargeAllocationColumns
 
 	existingRows := make([]*shipment.ChargeAllocation, 0)
 	if err := tx.NewSelect().
 		Model(&existingRows).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ChargeAllocationScopeTenant(sq, req.TenantInfo).
+			return shipmentcol.ChargeAllocationScopeTenant(sq, req.TenantInfo).
 				Where(cols.OrderChargeID.Eq(), req.OrderChargeID)
 		}).
 		Scan(ctx); err != nil {
@@ -416,7 +419,7 @@ func (r *repository) SyncForOrderCharge(
 	if _, err := tx.NewDelete().
 		Model((*shipment.ChargeAllocation)(nil)).
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return buncolgen.ChargeAllocationScopeTenantDelete(dq, req.TenantInfo).
+			return shipmentcol.ChargeAllocationScopeTenantDelete(dq, req.TenantInfo).
 				Where(cols.ID.In(), bun.List(deleteIDs))
 		}).
 		Exec(ctx); err != nil {
@@ -436,13 +439,13 @@ func (r *repository) ListByShipmentIDs(
 			return result, nil
 		}
 
-		cols := buncolgen.ChargeAllocationColumns
+		cols := shipmentcol.ChargeAllocationColumns
 		rows := make([]*shipment.ChargeAllocation, 0, len(req.ShipmentIDs))
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model(&rows).
-			Relation(buncolgen.ChargeAllocationRelations.BillToCustomer).
+			Relation(shipmentcol.ChargeAllocationRelations.BillToCustomer).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ChargeAllocationScopeTenant(sq, req.TenantInfo).
+				return shipmentcol.ChargeAllocationScopeTenant(sq, req.TenantInfo).
 					Where(cols.ShipmentID.In(), bun.List(req.ShipmentIDs))
 			}).
 			Order(cols.ShipmentID.OrderAsc(), cols.Sequence.OrderAsc(), cols.ID.OrderAsc()).
@@ -472,13 +475,13 @@ func (r *repository) ListByOrderChargeIDs(
 			return result, nil
 		}
 
-		cols := buncolgen.ChargeAllocationColumns
+		cols := shipmentcol.ChargeAllocationColumns
 		rows := make([]*shipment.ChargeAllocation, 0, len(req.OrderChargeIDs))
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model(&rows).
-			Relation(buncolgen.ChargeAllocationRelations.BillToCustomer).
+			Relation(shipmentcol.ChargeAllocationRelations.BillToCustomer).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ChargeAllocationScopeTenant(sq, req.TenantInfo).
+				return shipmentcol.ChargeAllocationScopeTenant(sq, req.TenantInfo).
 					Where(cols.OrderChargeID.In(), bun.List(req.OrderChargeIDs))
 			}).
 			Order(cols.OrderChargeID.OrderAsc(), cols.Sequence.OrderAsc(), cols.ID.OrderAsc()).
@@ -507,14 +510,14 @@ func (r *repository) MarkInvoiced(
 			return 0, nil
 		}
 
-		cols := buncolgen.ChargeAllocationColumns
+		cols := shipmentcol.ChargeAllocationColumns
 		result, err := r.db.DBForContext(ctx).NewUpdate().
 			Model((*shipment.ChargeAllocation)(nil)).
 			Set(cols.InvoiceID.Set(), req.InvoiceID).
 			Set(cols.InvoicedAt.Set(), req.InvoicedAt).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ChargeAllocationScopeTenantUpdate(uq, req.TenantInfo).
+				return shipmentcol.ChargeAllocationScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.In(), bun.List(req.AllocationIDs)).
 					Where(cols.InvoiceID.IsNull())
 			}).
@@ -536,14 +539,14 @@ func (r *repository) ClearInvoice(
 			return 0, nil
 		}
 
-		cols := buncolgen.ChargeAllocationColumns
+		cols := shipmentcol.ChargeAllocationColumns
 		result, err := r.db.DBForContext(ctx).NewUpdate().
 			Model((*shipment.ChargeAllocation)(nil)).
 			Set(cols.InvoiceID.SetNull()).
 			Set(cols.InvoicedAt.SetNull()).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ChargeAllocationScopeTenantUpdate(uq, req.TenantInfo).
+				return shipmentcol.ChargeAllocationScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.InvoiceID.Eq(), req.InvoiceID)
 			}).
 			Exec(ctx)
@@ -566,8 +569,8 @@ func (r *repository) LockedIDs(
 			return locked, nil
 		}
 
-		cols := buncolgen.ChargeAllocationColumns
-		inv := buncolgen.InvoiceColumns
+		cols := shipmentcol.ChargeAllocationColumns
+		inv := invoicecol.InvoiceColumns
 		ids := make([]pulid.ID, 0, len(allocationIDs))
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model((*shipment.ChargeAllocation)(nil)).
@@ -577,7 +580,7 @@ func (r *repository) LockedIDs(
 			JoinOn(inv.OrganizationID.Qualified()+" = "+cols.OrganizationID.Qualified()).
 			JoinOn(inv.BusinessUnitID.Qualified()+" = "+cols.BusinessUnitID.Qualified()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ChargeAllocationScopeTenant(sq, ti).
+				return shipmentcol.ChargeAllocationScopeTenant(sq, ti).
 					Where(cols.ID.In(), bun.List(allocationIDs)).
 					Where(inv.Status.Eq(), invoice.StatusPosted)
 			}).
@@ -606,14 +609,14 @@ func (r *repository) RefreshQueueSnapshots(
 		return nil
 	}
 
-	sp := buncolgen.ShipmentColumns
+	sp := shipmentcol.ShipmentColumns
 	shp := new(shipment.Shipment)
 	if err := tx.NewSelect().
 		Model(shp).
-		Relation(buncolgen.ShipmentRelations.AdditionalCharges).
-		Relation(buncolgen.ShipmentRelations.ChargeAllocations).
+		Relation(shipmentcol.ShipmentRelations.AdditionalCharges).
+		Relation(shipmentcol.ShipmentRelations.ChargeAllocations).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ShipmentScopeTenant(sq, ti).Where(sp.ID.Eq(), shipmentID)
+			return shipmentcol.ShipmentScopeTenant(sq, ti).Where(sp.ID.Eq(), shipmentID)
 		}).
 		Scan(ctx); err != nil {
 		return fmt.Errorf("load shipment for allocation snapshot: %w", err)
@@ -624,14 +627,14 @@ func (r *repository) RefreshQueueSnapshots(
 		return err
 	}
 
-	bqi := buncolgen.BillingQueueItemColumns
+	bqi := billingqueuecol.BillingQueueItemColumns
 	for _, share := range resolution.Shares {
 		if _, err = tx.NewUpdate().
 			Model((*billingqueue.BillingQueueItem)(nil)).
 			Set(bqi.AllocatedTotalAmount.Set(), share.TotalAmount).
 			Set(bqi.AllocatedTotalAmountMinor.Set(), money.MinorUnits(share.TotalAmount)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.BillingQueueItemScopeTenantUpdate(uq, ti).
+				return billingqueuecol.BillingQueueItemScopeTenantUpdate(uq, ti).
 					Where(bqi.ShipmentID.Eq(), shipmentID).
 					Where(bqi.BillToCustomerID.Eq(), share.PayerID).
 					Where(bqi.BillType.Eq(), billingqueue.BillTypeInvoice).

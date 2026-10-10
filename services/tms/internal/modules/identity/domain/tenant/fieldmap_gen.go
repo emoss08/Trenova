@@ -2,137 +2,140 @@
 
 package tenant
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingControl].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.AccountingControlFieldMap] instead of parsing struct tags via reflection.
+// the generated [tenantcol.AccountingControlFieldMap] instead of parsing struct tags via reflection.
 func (e *AccountingControl) GetStaticFieldMap() map[string]string {
-	return buncolgen.AccountingControlFieldMap
+	return tenantcol.AccountingControlFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AgentControl].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.AgentControlFieldMap] instead of parsing struct tags via reflection.
+// the generated [tenantcol.AgentControlFieldMap] instead of parsing struct tags via reflection.
 func (e *AgentControl) GetStaticFieldMap() map[string]string {
-	return buncolgen.AgentControlFieldMap
+	return tenantcol.AgentControlFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [BillingControl].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.BillingControlFieldMap] instead of parsing struct tags via reflection.
+// the generated [tenantcol.BillingControlFieldMap] instead of parsing struct tags via reflection.
 func (e *BillingControl) GetStaticFieldMap() map[string]string {
-	return buncolgen.BillingControlFieldMap
+	return tenantcol.BillingControlFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [BusinessUnit].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.BusinessUnitFieldMap] instead of parsing struct tags via reflection.
+// the generated [tenantcol.BusinessUnitFieldMap] instead of parsing struct tags via reflection.
 func (e *BusinessUnit) GetStaticFieldMap() map[string]string {
-	return buncolgen.BusinessUnitFieldMap
+	return tenantcol.BusinessUnitFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CarrierSettlementControl].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CarrierSettlementControlFieldMap] instead of parsing struct tags via reflection.
+// the generated [tenantcol.CarrierSettlementControlFieldMap] instead of parsing struct tags via reflection.
 func (e *CarrierSettlementControl) GetStaticFieldMap() map[string]string {
-	return buncolgen.CarrierSettlementControlFieldMap
+	return tenantcol.CarrierSettlementControlFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DashControl].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DashControlFieldMap] instead of parsing struct tags via reflection.
+// the generated [tenantcol.DashControlFieldMap] instead of parsing struct tags via reflection.
 func (e *DashControl) GetStaticFieldMap() map[string]string {
-	return buncolgen.DashControlFieldMap
+	return tenantcol.DashControlFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DataRetention].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DataRetentionFieldMap] instead of parsing struct tags via reflection.
+// the generated [tenantcol.DataRetentionFieldMap] instead of parsing struct tags via reflection.
 func (e *DataRetention) GetStaticFieldMap() map[string]string {
-	return buncolgen.DataRetentionFieldMap
+	return tenantcol.DataRetentionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DocumentControl].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DocumentControlFieldMap] instead of parsing struct tags via reflection.
+// the generated [tenantcol.DocumentControlFieldMap] instead of parsing struct tags via reflection.
 func (e *DocumentControl) GetStaticFieldMap() map[string]string {
-	return buncolgen.DocumentControlFieldMap
+	return tenantcol.DocumentControlFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InvoiceAdjustmentControl].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.InvoiceAdjustmentControlFieldMap] instead of parsing struct tags via reflection.
+// the generated [tenantcol.InvoiceAdjustmentControlFieldMap] instead of parsing struct tags via reflection.
 func (e *InvoiceAdjustmentControl) GetStaticFieldMap() map[string]string {
-	return buncolgen.InvoiceAdjustmentControlFieldMap
+	return tenantcol.InvoiceAdjustmentControlFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Organization].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.OrganizationFieldMap] instead of parsing struct tags via reflection.
+// the generated [tenantcol.OrganizationFieldMap] instead of parsing struct tags via reflection.
 func (e *Organization) GetStaticFieldMap() map[string]string {
-	return buncolgen.OrganizationFieldMap
+	return tenantcol.OrganizationFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [OrganizationMembership].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.OrganizationMembershipFieldMap] instead of parsing struct tags via reflection.
+// the generated [tenantcol.OrganizationMembershipFieldMap] instead of parsing struct tags via reflection.
 func (e *OrganizationMembership) GetStaticFieldMap() map[string]string {
-	return buncolgen.OrganizationMembershipFieldMap
+	return tenantcol.OrganizationMembershipFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [PasswordResetToken].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.PasswordResetTokenFieldMap] instead of parsing struct tags via reflection.
+// the generated [tenantcol.PasswordResetTokenFieldMap] instead of parsing struct tags via reflection.
 func (e *PasswordResetToken) GetStaticFieldMap() map[string]string {
-	return buncolgen.PasswordResetTokenFieldMap
+	return tenantcol.PasswordResetTokenFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [SSOConfig].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.SSOConfigFieldMap] instead of parsing struct tags via reflection.
+// the generated [tenantcol.SSOConfigFieldMap] instead of parsing struct tags via reflection.
 func (e *SSOConfig) GetStaticFieldMap() map[string]string {
-	return buncolgen.SSOConfigFieldMap
+	return tenantcol.SSOConfigFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [SSOIdentityLink].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.SSOIdentityLinkFieldMap] instead of parsing struct tags via reflection.
+// the generated [tenantcol.SSOIdentityLinkFieldMap] instead of parsing struct tags via reflection.
 func (e *SSOIdentityLink) GetStaticFieldMap() map[string]string {
-	return buncolgen.SSOIdentityLinkFieldMap
+	return tenantcol.SSOIdentityLinkFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Sequence].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.SequenceFieldMap] instead of parsing struct tags via reflection.
+// the generated [tenantcol.SequenceFieldMap] instead of parsing struct tags via reflection.
 func (e *Sequence) GetStaticFieldMap() map[string]string {
-	return buncolgen.SequenceFieldMap
+	return tenantcol.SequenceFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [SequenceConfig].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.SequenceConfigFieldMap] instead of parsing struct tags via reflection.
+// the generated [tenantcol.SequenceConfigFieldMap] instead of parsing struct tags via reflection.
 func (e *SequenceConfig) GetStaticFieldMap() map[string]string {
-	return buncolgen.SequenceConfigFieldMap
+	return tenantcol.SequenceConfigFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [SettlementControl].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.SettlementControlFieldMap] instead of parsing struct tags via reflection.
+// the generated [tenantcol.SettlementControlFieldMap] instead of parsing struct tags via reflection.
 func (e *SettlementControl) GetStaticFieldMap() map[string]string {
-	return buncolgen.SettlementControlFieldMap
+	return tenantcol.SettlementControlFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ShipmentControl].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ShipmentControlFieldMap] instead of parsing struct tags via reflection.
+// the generated [tenantcol.ShipmentControlFieldMap] instead of parsing struct tags via reflection.
 func (e *ShipmentControl) GetStaticFieldMap() map[string]string {
-	return buncolgen.ShipmentControlFieldMap
+	return tenantcol.ShipmentControlFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [User].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.UserFieldMap] instead of parsing struct tags via reflection.
+// the generated [tenantcol.UserFieldMap] instead of parsing struct tags via reflection.
 func (e *User) GetStaticFieldMap() map[string]string {
-	return buncolgen.UserFieldMap
+	return tenantcol.UserFieldMap
 }

@@ -1,6 +1,7 @@
 package extractionshadowrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/extractionshadowcol"
 	"context"
 	"fmt"
 
@@ -48,7 +49,7 @@ func (r *settingsRepository) Get(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ShadowSettingsScopeTenant(sq, tenant)
+				return extractionshadowcol.ShadowSettingsScopeTenant(sq, tenant)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -68,13 +69,13 @@ func (r *settingsRepository) Save(
 			return r.insert(ctx, entity)
 		}
 
-		cols := buncolgen.ShadowSettingsColumns
+		cols := extractionshadowcol.ShadowSettingsColumns
 		previous := entity.Version
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ShadowSettingsScopeTenantUpdate(uq, pagination.TenantInfo{
+				return extractionshadowcol.ShadowSettingsScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
 				}).

@@ -2,6 +2,7 @@
 package edicommunicationprofilerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
 	"context"
 	"strings"
 
@@ -46,12 +47,12 @@ func (r *repository) ListProfiles(
 ) (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
 		entities := make([]*edi.EDICommunicationProfile, 0, req.Filter.Pagination.SafeLimit())
-		cols := buncolgen.EDICommunicationProfileColumns
+		cols := edicol.EDICommunicationProfileColumns
 
 		total, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Relation(buncolgen.EDICommunicationProfileRelations.Partner).
+			Relation(edicol.EDICommunicationProfileRelations.Partner).
 			Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
 				return querybuilder.ApplyFilters(
 					query,
@@ -60,7 +61,7 @@ func (r *repository) ListProfiles(
 					(*edi.EDICommunicationProfile)(nil),
 				)
 			}).
-			Apply(buncolgen.EDICommunicationProfileApplyTenant(req.Filter.TenantInfo)).
+			Apply(edicol.EDICommunicationProfileApplyTenant(req.Filter.TenantInfo)).
 			Order(cols.CreatedAt.OrderDesc()).
 			Limit(req.Filter.Pagination.SafeLimit()).
 			Offset(req.Filter.Pagination.SafeOffset()).
@@ -86,7 +87,7 @@ func (r *repository) SelectProfileOptions(
 			0,
 			req.SelectQueryRequest.Pagination.SafeLimit(),
 		)
-		cols := buncolgen.EDICommunicationProfileColumns
+		cols := edicol.EDICommunicationProfileColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
@@ -102,7 +103,7 @@ func (r *repository) SelectProfileOptions(
 				cols.Name.Bare(),
 				cols.Description.Bare(),
 			).
-			Apply(buncolgen.EDICommunicationProfileApplyTenant(req.SelectQueryRequest.TenantInfo))
+			Apply(edicol.EDICommunicationProfileApplyTenant(req.SelectQueryRequest.TenantInfo))
 
 		if req.Status != "" {
 			query = query.Where(cols.Status.Eq(), req.Status)
@@ -137,14 +138,14 @@ func (r *repository) GetProfileByID(
 ) (*edi.EDICommunicationProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDICommunicationProfile, error) {
 		entity := new(edi.EDICommunicationProfile)
-		cols := buncolgen.EDICommunicationProfileColumns
+		cols := edicol.EDICommunicationProfileColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Relation(buncolgen.EDICommunicationProfileRelations.Partner).
+			Relation(edicol.EDICommunicationProfileRelations.Partner).
 			Where(cols.ID.Eq(), req.ID).
-			Apply(buncolgen.EDICommunicationProfileApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDICommunicationProfileApplyTenant(req.TenantInfo)).
 			Scan(ctx)
 		if err != nil {
 			return nil, dberror.HandleNotFoundError(err, "EDICommunicationProfile")
@@ -161,7 +162,7 @@ func applyCommunicationProfileSearch(query *bun.SelectQuery, search string) *bun
 	}
 
 	term := "%" + strings.ToLower(search) + "%"
-	cols := buncolgen.EDICommunicationProfileColumns
+	cols := edicol.EDICommunicationProfileColumns
 
 	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 		return sq.WhereOr(cols.Name.LowerLike(), term).
@@ -176,13 +177,13 @@ func (r *repository) GetActiveProfileByPartner(
 ) (*edi.EDICommunicationProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDICommunicationProfile, error) {
 		entity := new(edi.EDICommunicationProfile)
-		cols := buncolgen.EDICommunicationProfileColumns
+		cols := edicol.EDICommunicationProfileColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			Where(cols.EDIPartnerID.Eq(), req.PartnerID).
-			Apply(buncolgen.EDICommunicationProfileApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDICommunicationProfileApplyTenant(req.TenantInfo)).
 			Where(cols.Status.Eq(), domaintypes.StatusActive).
 			Limit(1)
 		if len(req.Methods) > 0 {
@@ -204,7 +205,7 @@ func (r *repository) ListInboundPollingProfiles(
 	ctx = dbscope.WithSystem(ctx, "list inbound EDI polling profiles across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDICommunicationProfile, error) {
 		entities := make([]*edi.EDICommunicationProfile, 0)
-		cols := buncolgen.EDICommunicationProfileColumns
+		cols := edicol.EDICommunicationProfileColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -230,7 +231,7 @@ func (r *repository) RecordInboundPollOutcome(
 	req ediports.RecordEDIProfilePollOutcomeRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.EDICommunicationProfileColumns
+		cols := edicol.EDICommunicationProfileColumns
 		update := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*edi.EDICommunicationProfile)(nil)).
@@ -256,7 +257,7 @@ func (r *repository) CountStaleInboundPollingProfiles(
 ) (int64, error) {
 	ctx = dbscope.WithSystem(ctx, "count stale inbound polling profiles instance-wide for the health check")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := buncolgen.EDICommunicationProfileColumns
+		cols := edicol.EDICommunicationProfileColumns
 		count, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*edi.EDICommunicationProfile)(nil)).
@@ -283,7 +284,7 @@ func (r *repository) GetActiveAS2ProfileByIdentifiers(
 	ctx = dbscope.WithSystem(ctx, "resolve an inbound AS2 message's identifier pair before its tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDICommunicationProfile, error) {
 		entity := new(edi.EDICommunicationProfile)
-		cols := buncolgen.EDICommunicationProfileColumns
+		cols := edicol.EDICommunicationProfileColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -327,7 +328,7 @@ func (r *repository) UpdateProfile(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDICommunicationProfile, error) {
 		ov := entity.Version
 		entity.Version++
-		cols := buncolgen.EDICommunicationProfileColumns
+		cols := edicol.EDICommunicationProfileColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -397,8 +398,8 @@ func (r *repository) ListProfilesCursor(
 				return dba.
 					NewSelect().
 					Model(entities).
-					ColumnExpr(buncolgen.EDICommunicationProfileTable.All()).
-					Relation(buncolgen.EDICommunicationProfileRelations.Partner)
+					ColumnExpr(edicol.EDICommunicationProfileTable.All()).
+					Relation(edicol.EDICommunicationProfileRelations.Partner)
 			},
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 				return querybuilder.ApplyCursorFilters(

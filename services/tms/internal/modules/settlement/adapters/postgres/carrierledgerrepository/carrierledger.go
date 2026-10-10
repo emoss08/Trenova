@@ -1,6 +1,7 @@
 package carrierledgerrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
 	"context"
 	"fmt"
 
@@ -57,7 +58,7 @@ func (r *repository) ListByCarrier(
 	req *carriersettlementports.ListCarrierLedgerEntriesRequest,
 ) ([]*carriersettlement.LedgerEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carriersettlement.LedgerEntry, error) {
-		cols := buncolgen.LedgerEntryColumns
+		cols := carriersettlementcol.LedgerEntryColumns
 		limit := req.Limit
 		if limit <= 0 || limit > 500 {
 			limit = 100
@@ -67,7 +68,7 @@ func (r *repository) ListByCarrier(
 			NewSelect().
 			Model(&items).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.LedgerEntryScopeTenant(sq, req.TenantInfo).
+				return carriersettlementcol.LedgerEntryScopeTenant(sq, req.TenantInfo).
 					Where(cols.CarrierID.Eq(), req.CarrierID)
 			}).
 			Order(cols.TransactionDate.OrderDesc()).

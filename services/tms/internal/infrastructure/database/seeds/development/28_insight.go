@@ -1,6 +1,10 @@
 package development
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/aiprovidercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/insightcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
 	"context"
 	"fmt"
 
@@ -84,7 +88,7 @@ func (s *InsightSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return err
 			}
 
-			cols := buncolgen.InsightColumns
+			cols := insightcol.InsightColumns
 			count, err := tx.NewSelect().
 				Model((*insight.Insight)(nil)).
 				Where(cols.OrganizationID.Eq(), refs.org.ID).
@@ -124,7 +128,7 @@ func (s *InsightSeed) loadRefs(
 
 	refs := &insightSeedRefs{org: org, admin: admin, now: timeutils.NowUnix()}
 
-	customerCols := buncolgen.CustomerColumns
+	customerCols := customercol.CustomerColumns
 	refs.customers = make([]*customer.Customer, 0, 3)
 	if err = tx.NewSelect().
 		Model(&refs.customers).
@@ -139,7 +143,7 @@ func (s *InsightSeed) loadRefs(
 		return nil, fmt.Errorf("need three seeded customers: %w", seedhelpers.ErrEntityNotFound)
 	}
 
-	locationCols := buncolgen.LocationColumns
+	locationCols := locationcol.LocationColumns
 	refs.locations = make([]*location.Location, 0, 2)
 	if err = tx.NewSelect().
 		Model(&refs.locations).
@@ -154,7 +158,7 @@ func (s *InsightSeed) loadRefs(
 		return nil, fmt.Errorf("need two seeded locations: %w", seedhelpers.ErrEntityNotFound)
 	}
 
-	providerCols := buncolgen.ProviderColumns
+	providerCols := aiprovidercol.ProviderColumns
 	refs.provider = new(aiprovider.Provider)
 	if err = tx.NewSelect().
 		Model(refs.provider).

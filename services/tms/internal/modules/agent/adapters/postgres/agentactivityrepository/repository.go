@@ -1,6 +1,7 @@
 package agentactivityrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 	"context"
 	"fmt"
 
@@ -47,7 +48,7 @@ func (r *repository) Totals(
 		totals := new(agentports.AgentActivityTotals)
 		dba := r.db.DBForContext(ctx)
 
-		runs := buncolgen.AgentRunColumns
+		runs := agentcol.AgentRunColumns
 		if err := dba.NewSelect().
 			Model((*agent.AgentRun)(nil)).
 			ColumnExpr(buncolgen.CountFilter("runs", runs.CreatedAt.Gte()), req.RunsSince).
@@ -62,38 +63,38 @@ func (r *repository) Totals(
 				agent.RunStatusAwaitingDecision,
 			).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentRunScopeTenant(sq, req.TenantInfo)
+				return agentcol.AgentRunScopeTenant(sq, req.TenantInfo)
 			}).
 			Scan(ctx, totals); err != nil {
 			return nil, fmt.Errorf("count agent runs: %w", err)
 		}
 
-		proposals := buncolgen.AgentProposalColumns
+		proposals := agentcol.AgentProposalColumns
 		if err := dba.NewSelect().
 			Model((*agent.AgentProposal)(nil)).
 			ColumnExpr("COUNT(*) AS pending_proposals").
 			ColumnExpr(buncolgen.Min(proposals.CreatedAt, "oldest_pending_at")).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentProposalScopeTenant(sq, req.TenantInfo).
+				return agentcol.AgentProposalScopeTenant(sq, req.TenantInfo).
 					Where(proposals.Status.Eq(), agent.ProposalStatusPending)
 			}).
 			Scan(ctx, totals); err != nil {
 			return nil, fmt.Errorf("count pending agent proposals: %w", err)
 		}
 
-		exceptions := buncolgen.AgentExceptionColumns
+		exceptions := agentcol.AgentExceptionColumns
 		if err := dba.NewSelect().
 			Model((*agent.AgentException)(nil)).
 			ColumnExpr("COUNT(*) AS open_exceptions").
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentExceptionScopeTenant(sq, req.TenantInfo).
+				return agentcol.AgentExceptionScopeTenant(sq, req.TenantInfo).
 					Where(exceptions.ResolutionState.In(), bun.List(openResolutionStates()))
 			}).
 			Scan(ctx, totals); err != nil {
 			return nil, fmt.Errorf("count open agent exceptions: %w", err)
 		}
 
-		decisions := buncolgen.AgentDecisionColumns
+		decisions := agentcol.AgentDecisionColumns
 		if err := dba.NewSelect().
 			Model((*agent.AgentDecision)(nil)).
 			ColumnExpr(
@@ -109,7 +110,7 @@ func (r *repository) Totals(
 				agent.DecisionRejected,
 			).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentDecisionScopeTenant(sq, req.TenantInfo).
+				return agentcol.AgentDecisionScopeTenant(sq, req.TenantInfo).
 					Where(decisions.ProposalID.IsNotNull()).
 					Where(decisions.UndoneAt.IsNull()).
 					Where(decisions.CreatedAt.Gte(), req.DecisionsSince)

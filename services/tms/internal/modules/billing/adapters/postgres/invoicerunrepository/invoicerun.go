@@ -1,6 +1,7 @@
 package invoicerunrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/invoiceruncol"
 	"context"
 	"fmt"
 
@@ -50,7 +51,7 @@ func (r *repository) List(
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return querybuilder.ApplyFilters(
 					sq,
-					buncolgen.InvoiceRunTable.Alias,
+					invoiceruncol.InvoiceRunTable.Alias,
 					req.Filter,
 					(*invoicerun.InvoiceRun)(nil),
 				).
@@ -85,7 +86,7 @@ func (r *repository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return querybuilder.ApplyFilters(
 						sq,
-						buncolgen.InvoiceRunTable.Alias,
+						invoiceruncol.InvoiceRunTable.Alias,
 						req.Filter,
 						(*invoicerun.InvoiceRun)(nil),
 					)
@@ -108,12 +109,12 @@ func (r *repository) ListConnection(
 					return dba.
 						NewSelect().
 						Model(entities).
-						ColumnExpr(buncolgen.InvoiceRunTable.All())
+						ColumnExpr(invoiceruncol.InvoiceRunTable.All())
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					return querybuilder.ApplyFilters(
 						sq,
-						buncolgen.InvoiceRunTable.Alias,
+						invoiceruncol.InvoiceRunTable.Alias,
 						req.Filter,
 						(*invoicerun.InvoiceRun)(nil),
 					), nil
@@ -133,7 +134,7 @@ func (r *repository) GetByID(
 	req invoicerunports.GetInvoiceRunByIDRequest,
 ) (*invoicerun.InvoiceRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoicerun.InvoiceRun, error) {
-		run := buncolgen.InvoiceRunColumns
+		run := invoiceruncol.InvoiceRunColumns
 
 		entity := new(invoicerun.InvoiceRun)
 		q := r.db.DBForContext(ctx).
@@ -143,16 +144,16 @@ func (r *repository) GetByID(
 
 		if req.IncludeGroups {
 			q = q.Relation("Groups", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order(buncolgen.InvoiceRunGroupColumns.GroupLabel.OrderAsc())
+				return sq.Order(invoiceruncol.InvoiceRunGroupColumns.GroupLabel.OrderAsc())
 			}).Relation("Groups.Customer")
 		}
 		if req.IncludeItems {
 			q = q.Relation("Groups.Items", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order(buncolgen.InvoiceRunGroupItemColumns.SortKey.OrderAsc())
+				return sq.Order(invoiceruncol.InvoiceRunGroupItemColumns.SortKey.OrderAsc())
 			})
 		}
 
-		if err := buncolgen.InvoiceRunScopeTenant(q, req.TenantInfo).Scan(ctx); err != nil {
+		if err := invoiceruncol.InvoiceRunScopeTenant(q, req.TenantInfo).Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Invoice run")
 		}
 
@@ -165,7 +166,7 @@ func (r *repository) GetOpenScheduledRun(
 	req invoicerunports.GetOpenScheduledRunRequest,
 ) (*invoicerun.InvoiceRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoicerun.InvoiceRun, error) {
-		run := buncolgen.InvoiceRunColumns
+		run := invoiceruncol.InvoiceRunColumns
 
 		entity := new(invoicerun.InvoiceRun)
 		q := r.db.DBForContext(ctx).
@@ -176,7 +177,7 @@ func (r *repository) GetOpenScheduledRun(
 			Where(run.PeriodEnd.Eq(), req.PeriodEnd).
 			Where(run.Status.Ne(), invoicerun.StatusCanceled)
 
-		if err := buncolgen.InvoiceRunScopeTenant(q, req.TenantInfo).Scan(ctx); err != nil {
+		if err := invoiceruncol.InvoiceRunScopeTenant(q, req.TenantInfo).Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Invoice run")
 		}
 
@@ -207,11 +208,11 @@ func (r *repository) Update(
 	entity *invoicerun.InvoiceRun,
 ) (*invoicerun.InvoiceRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoicerun.InvoiceRun, error) {
-		run := buncolgen.InvoiceRunColumns
+		run := invoiceruncol.InvoiceRunColumns
 		version := entity.Version
 		entity.Version++
 
-		result, err := buncolgen.InvoiceRunScopeTenantUpdate(
+		result, err := invoiceruncol.InvoiceRunScopeTenantUpdate(
 			r.db.DBForContext(ctx).
 				NewUpdate().
 				Model(entity).
@@ -244,7 +245,7 @@ func (r *repository) ReplaceGroups(
 	req *invoicerunports.ReplaceGroupsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		grp := buncolgen.InvoiceRunGroupColumns
+		grp := invoiceruncol.InvoiceRunGroupColumns
 
 		return r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 			// The item rows cascade from the group delete.
@@ -297,7 +298,7 @@ func (r *repository) UpdateGroup(
 	entity *invoicerun.InvoiceRunGroup,
 ) (*invoicerun.InvoiceRunGroup, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoicerun.InvoiceRunGroup, error) {
-		grp := buncolgen.InvoiceRunGroupColumns
+		grp := invoiceruncol.InvoiceRunGroupColumns
 		version := entity.Version
 		entity.Version++
 
@@ -336,7 +337,7 @@ func (r *repository) UpdateItems(
 			return nil
 		}
 
-		itm := buncolgen.InvoiceRunGroupItemColumns
+		itm := invoiceruncol.InvoiceRunGroupItemColumns
 		for _, item := range items {
 			item.SyncMinorAmount()
 		}

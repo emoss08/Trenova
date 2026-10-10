@@ -1,6 +1,7 @@
 package capturerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/capturecol"
 	"context"
 
 	"github.com/bytedance/sonic"
@@ -97,7 +98,7 @@ func (r *pageRepository) RecordInspection(
 	entity *capture.CapturePage,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := buncolgen.CapturePageColumns
+		cols := capturecol.CapturePageColumns
 		ti := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 		markers, err := sonic.Marshal(entity.Markers)
 		if err != nil {
@@ -108,7 +109,7 @@ func (r *pageRepository) RecordInspection(
 			NewUpdate().
 			Model((*capture.CapturePage)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.CapturePageScopeTenantUpdate(uq, ti).
+				return capturecol.CapturePageScopeTenantUpdate(uq, ti).
 					Where(cols.ID.Eq(), entity.ID).
 					Where(cols.Status.Eq(), capture.PageReceived)
 			}).
@@ -144,8 +145,8 @@ func (r *pageRepository) GetByID(
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Apply(buncolgen.CapturePageApplyTenant(req.TenantInfo)).
-			Where(buncolgen.CapturePageColumns.ID.Eq(), req.ID).
+			Apply(capturecol.CapturePageApplyTenant(req.TenantInfo)).
+			Where(capturecol.CapturePageColumns.ID.Eq(), req.ID).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Capture page")
 		}
@@ -160,12 +161,12 @@ func (r *pageRepository) GetBySequence(
 ) (*capture.CapturePage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CapturePage, error) {
 		entity := new(capture.CapturePage)
-		cols := buncolgen.CapturePageColumns
+		cols := capturecol.CapturePageColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Apply(buncolgen.CapturePageApplyTenant(req.TenantInfo)).
+			Apply(capturecol.CapturePageApplyTenant(req.TenantInfo)).
 			Where(cols.BatchID.Eq(), req.BatchID).
 			Where(cols.Sequence.Eq(), req.Sequence).
 			Scan(ctx); err != nil {
@@ -182,12 +183,12 @@ func (r *pageRepository) ListByBatch(
 ) ([]*capture.CapturePage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CapturePage, error) {
 		entities := make([]*capture.CapturePage, 0)
-		cols := buncolgen.CapturePageColumns
+		cols := capturecol.CapturePageColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.CapturePageApplyTenant(req.TenantInfo)).
+			Apply(capturecol.CapturePageApplyTenant(req.TenantInfo)).
 			Where(cols.BatchID.Eq(), req.BatchID).
 			Order(cols.Sequence.OrderAsc()).
 			Scan(ctx); err != nil {

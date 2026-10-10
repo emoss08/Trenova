@@ -1,6 +1,11 @@
 package aiauditrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/aiusagecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 	"fmt"
 
@@ -60,7 +65,7 @@ func (r *sourceRepository) ListRuns(
 ) ([]*agent.AgentRun, error) {
 	ctx = dbscope.WithSystem(ctx, "project agent runs into the AI audit chain across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRun, error) {
-		cols := buncolgen.AgentRunColumns
+		cols := agentcol.AgentRunColumns
 		rows := make([]*agent.AgentRun, 0, page.Limit)
 
 		if err := keyset(
@@ -82,7 +87,7 @@ func (r *sourceRepository) ListTurns(
 ) ([]*conversation.AssistantTurn, error) {
 	ctx = dbscope.WithSystem(ctx, "project assistant turns into the AI audit chain across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*conversation.AssistantTurn, error) {
-		cols := buncolgen.AssistantTurnColumns
+		cols := conversationcol.AssistantTurnColumns
 		rows := make([]*conversation.AssistantTurn, 0, page.Limit)
 
 		if err := keyset(
@@ -102,7 +107,7 @@ func (r *sourceRepository) ListUsage(
 ) ([]*aiusage.AIUsageRecord, error) {
 	ctx = dbscope.WithSystem(ctx, "project AI usage into the AI audit chain across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiusage.AIUsageRecord, error) {
-		cols := buncolgen.AIUsageRecordColumns
+		cols := aiusagecol.AIUsageRecordColumns
 		rows := make([]*aiusage.AIUsageRecord, 0, page.Limit)
 
 		if err := keyset(
@@ -122,7 +127,7 @@ func (r *sourceRepository) ListSteps(
 ) ([]*agent.AgentRunStep, error) {
 	ctx = dbscope.WithSystem(ctx, "project agent steps into the AI audit chain across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunStep, error) {
-		cols := buncolgen.AgentRunStepColumns
+		cols := agentcol.AgentRunStepColumns
 		rows := make([]*agent.AgentRunStep, 0, page.Limit)
 
 		q := r.db.DBForContext(ctx).NewSelect().
@@ -142,7 +147,7 @@ func (r *sourceRepository) ListEvents(
 ) ([]*agent.AgentRunEvent, error) {
 	ctx = dbscope.WithSystem(ctx, "project agent events into the AI audit chain across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunEvent, error) {
-		cols := buncolgen.AgentRunEventColumns
+		cols := agentcol.AgentRunEventColumns
 		rows := make([]*agent.AgentRunEvent, 0, page.Limit)
 
 		q := r.db.DBForContext(ctx).NewSelect().
@@ -162,7 +167,7 @@ func (r *sourceRepository) ListProposals(
 ) ([]*agent.AgentProposal, error) {
 	ctx = dbscope.WithSystem(ctx, "project proposals into the AI audit chain across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentProposal, error) {
-		cols := buncolgen.AgentProposalColumns
+		cols := agentcol.AgentProposalColumns
 		rows := make([]*agent.AgentProposal, 0, page.Limit)
 
 		if err := keyset(
@@ -182,7 +187,7 @@ func (r *sourceRepository) ListDecisions(
 ) ([]*agent.AgentDecision, error) {
 	ctx = dbscope.WithSystem(ctx, "project proposal decisions into the AI audit chain across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentDecision, error) {
-		cols := buncolgen.AgentDecisionColumns
+		cols := agentcol.AgentDecisionColumns
 		rows := make([]*agent.AgentDecision, 0, page.Limit)
 
 		q := r.db.DBForContext(ctx).NewSelect().
@@ -210,8 +215,8 @@ func (r *sourceRepository) RunsByIDs(
 
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model(&rows).
-			Apply(buncolgen.AgentRunApplyTenant(tenantInfo)).
-			Where(buncolgen.AgentRunColumns.ID.In(), bun.List(ids)).
+			Apply(agentcol.AgentRunApplyTenant(tenantInfo)).
+			Where(agentcol.AgentRunColumns.ID.In(), bun.List(ids)).
 			Scan(ctx); err != nil {
 			return nil, fmt.Errorf("read agent runs by id: %w", err)
 		}
@@ -233,8 +238,8 @@ func (r *sourceRepository) TurnsByIDs(
 
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model(&rows).
-			Apply(buncolgen.AssistantTurnApplyTenant(tenantInfo)).
-			Where(buncolgen.AssistantTurnColumns.ID.In(), bun.List(ids)).
+			Apply(conversationcol.AssistantTurnApplyTenant(tenantInfo)).
+			Where(conversationcol.AssistantTurnColumns.ID.In(), bun.List(ids)).
 			Scan(ctx); err != nil {
 			return nil, fmt.Errorf("read assistant turns by id: %w", err)
 		}
@@ -256,8 +261,8 @@ func (r *sourceRepository) TurnsByRunIDs(
 
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model(&rows).
-			Apply(buncolgen.AssistantTurnApplyTenant(tenantInfo)).
-			Where(buncolgen.AssistantTurnColumns.RunID.In(), bun.List(runIDs)).
+			Apply(conversationcol.AssistantTurnApplyTenant(tenantInfo)).
+			Where(conversationcol.AssistantTurnColumns.RunID.In(), bun.List(runIDs)).
 			Scan(ctx); err != nil {
 			return nil, fmt.Errorf("read assistant turns by run: %w", err)
 		}
@@ -276,10 +281,10 @@ func (r *sourceRepository) TurnsInWindow(
 		}
 
 		rows := make([]*conversation.AssistantTurn, 0, len(req.ThreadIDs))
-		cols := buncolgen.AssistantTurnColumns
+		cols := conversationcol.AssistantTurnColumns
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model(&rows).
-			Apply(buncolgen.AssistantTurnApplyTenant(req.TenantInfo)).
+			Apply(conversationcol.AssistantTurnApplyTenant(req.TenantInfo)).
 			Where(cols.ThreadID.In(), bun.List(req.ThreadIDs)).
 			Where(cols.StartedAt.Lte(), req.To).
 			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
@@ -306,7 +311,7 @@ func (r *sourceRepository) ThreadsByIDs(
 			return rows, nil
 		}
 
-		cols := buncolgen.ThreadColumns
+		cols := conversationcol.ThreadColumns
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model(&rows).
 			Column(
@@ -316,7 +321,7 @@ func (r *sourceRepository) ThreadsByIDs(
 				cols.UserID.String(),
 				cols.AgentDefinitionID.String(),
 			).
-			Apply(buncolgen.ThreadApplyTenant(tenantInfo)).
+			Apply(conversationcol.ThreadApplyTenant(tenantInfo)).
 			Where(cols.ID.In(), bun.List(ids)).
 			Scan(ctx); err != nil {
 			return nil, fmt.Errorf("read assistant threads by id: %w", err)
@@ -337,7 +342,7 @@ func (r *sourceRepository) EvaluationsByIDs(
 			return rows, nil
 		}
 
-		cols := buncolgen.EvaluationColumns
+		cols := agentcol.EvaluationColumns
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model(&rows).
 			Column(
@@ -347,7 +352,7 @@ func (r *sourceRepository) EvaluationsByIDs(
 				cols.AgentDefinitionID.String(),
 				cols.DefinitionVersion.String(),
 			).
-			Apply(buncolgen.EvaluationApplyTenant(tenantInfo)).
+			Apply(agentcol.EvaluationApplyTenant(tenantInfo)).
 			Where(cols.ID.In(), bun.List(ids)).
 			Scan(ctx); err != nil {
 			return nil, fmt.Errorf("read agent evaluations by id: %w", err)
@@ -370,8 +375,8 @@ func (r *sourceRepository) ProposalsByIDs(
 
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model(&rows).
-			Apply(buncolgen.AgentProposalApplyTenant(tenantInfo)).
-			Where(buncolgen.AgentProposalColumns.ID.In(), bun.List(ids)).
+			Apply(agentcol.AgentProposalApplyTenant(tenantInfo)).
+			Where(agentcol.AgentProposalColumns.ID.In(), bun.List(ids)).
 			Scan(ctx); err != nil {
 			return nil, fmt.Errorf("read agent proposals by id: %w", err)
 		}
@@ -392,10 +397,10 @@ func (r *sourceRepository) StartedToolSteps(
 			return rows, nil
 		}
 
-		cols := buncolgen.AgentRunStepColumns
+		cols := agentcol.AgentRunStepColumns
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model(&rows).
-			Apply(buncolgen.AgentRunStepApplyTenant(tenantInfo)).
+			Apply(agentcol.AgentRunStepApplyTenant(tenantInfo)).
 			Where(cols.OwnerID.In(), bun.List(ownerIDs)).
 			Where(cols.Kind.Eq(), string(agentports.RunStepTool)).
 			Where(cols.Status.Eq(), string(agentports.RunStepStarted)).
@@ -431,11 +436,11 @@ func (r *sourceRepository) ToolStepCalls(
 		}
 		rows := make([]ownedCall, 0, len(calls))
 
-		cols := buncolgen.AgentRunStepColumns
+		cols := agentcol.AgentRunStepColumns
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model((*agent.AgentRunStep)(nil)).
 			Column(cols.OwnerID.String(), cols.CallID.String()).
-			Apply(buncolgen.AgentRunStepApplyTenant(tenantInfo)).
+			Apply(agentcol.AgentRunStepApplyTenant(tenantInfo)).
 			Where(cols.OwnerID.In(), bun.List(owners)).
 			Where(cols.CallID.In(), bun.List(callIDs)).
 			Where(cols.Kind.Eq(), string(agentports.RunStepTool)).
@@ -477,7 +482,7 @@ func (r *sourceRepository) UserNames(
 			return map[pulid.ID]string{}, nil
 		}
 
-		cols := buncolgen.UserColumns
+		cols := tenantcol.UserColumns
 		rows := make([]namedRow, 0, len(ids))
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model((*tenant.User)(nil)).
@@ -502,12 +507,12 @@ func (r *sourceRepository) AgentNames(
 			return map[pulid.ID]string{}, nil
 		}
 
-		cols := buncolgen.DefinitionColumns
+		cols := agentdefinitioncol.DefinitionColumns
 		rows := make([]namedRow, 0, len(ids))
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model((*agentdefinition.Definition)(nil)).
 			Column(cols.ID.String(), cols.Name.String()).
-			Apply(buncolgen.DefinitionApplyTenant(tenantInfo)).
+			Apply(agentdefinitioncol.DefinitionApplyTenant(tenantInfo)).
 			Where(cols.ID.In(), bun.List(ids)).
 			Scan(ctx, &rows); err != nil {
 			return nil, fmt.Errorf("read agent names for the AI audit trail: %w", err)

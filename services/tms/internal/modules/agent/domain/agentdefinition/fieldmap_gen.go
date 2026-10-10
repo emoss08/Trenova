@@ -2,25 +2,28 @@
 
 package agentdefinition
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Definition].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DefinitionFieldMap] instead of parsing struct tags via reflection.
+// the generated [agentdefinitioncol.DefinitionFieldMap] instead of parsing struct tags via reflection.
 func (e *Definition) GetStaticFieldMap() map[string]string {
-	return buncolgen.DefinitionFieldMap
+	return agentdefinitioncol.DefinitionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DefinitionVersion].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DefinitionVersionFieldMap] instead of parsing struct tags via reflection.
+// the generated [agentdefinitioncol.DefinitionVersionFieldMap] instead of parsing struct tags via reflection.
 func (e *DefinitionVersion) GetStaticFieldMap() map[string]string {
-	return buncolgen.DefinitionVersionFieldMap
+	return agentdefinitioncol.DefinitionVersionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TestPrompt].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.TestPromptFieldMap] instead of parsing struct tags via reflection.
+// the generated [agentdefinitioncol.TestPromptFieldMap] instead of parsing struct tags via reflection.
 func (e *TestPrompt) GetStaticFieldMap() map[string]string {
-	return buncolgen.TestPromptFieldMap
+	return agentdefinitioncol.TestPromptFieldMap
 }

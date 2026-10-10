@@ -1,6 +1,7 @@
 package driverpayrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/driverpaycol"
 	"context"
 	"fmt"
 
@@ -100,7 +101,7 @@ func (r *escrowAccountRepository) ListConnection(
 			Query: func(entities *[]*driverpay.EscrowAccount) *bun.SelectQuery {
 				return dba.NewSelect().
 					Model(entities).
-					ColumnExpr(buncolgen.EscrowAccountTable.All()).
+					ColumnExpr(driverpaycol.EscrowAccountTable.All()).
 					Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q })
 			},
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {

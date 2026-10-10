@@ -1,6 +1,7 @@
 package workercredentialrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 	"strings"
@@ -50,7 +51,7 @@ func New(p Params) workerports.WorkerCredentialRepository {
 }
 
 func orderTypes(sq *bun.SelectQuery) *bun.SelectQuery {
-	cols := buncolgen.WorkerCredentialTypeColumns
+	cols := workercol.WorkerCredentialTypeColumns
 	return sq.Order(cols.SortOrder.OrderAsc()).Order(cols.Name.OrderAsc())
 }
 
@@ -58,7 +59,7 @@ func (r *repository) applyTypeFilters(
 	q *bun.SelectQuery,
 	req *workerports.ListCredentialTypesRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.WorkerCredentialTypeColumns
+	cols := workercol.WorkerCredentialTypeColumns
 	if req.Status != "" {
 		q = q.Where(cols.Status.Eq(), req.Status)
 	}
@@ -84,7 +85,7 @@ func (r *repository) ListTypes(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.WorkerCredentialTypeTable.Alias,
+						workercol.WorkerCredentialTypeTable.Alias,
 						req.Filter,
 						(*worker.WorkerCredentialType)(nil),
 					)
@@ -107,12 +108,12 @@ func (r *repository) ListTypes(
 				Query: func(items *[]*worker.WorkerCredentialType) *bun.SelectQuery {
 					return dba.NewSelect().
 						Model(items).
-						ColumnExpr(buncolgen.WorkerCredentialTypeTable.All())
+						ColumnExpr(workercol.WorkerCredentialTypeTable.All())
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.WorkerCredentialTypeTable.Alias,
+						workercol.WorkerCredentialTypeTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*worker.WorkerCredentialType)(nil),
@@ -138,13 +139,13 @@ func (r *repository) ListActiveTypes(
 	tenantInfo pagination.TenantInfo,
 ) ([]*worker.WorkerCredentialType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerCredentialType, error) {
-		cols := buncolgen.WorkerCredentialTypeColumns
+		cols := workercol.WorkerCredentialTypeColumns
 		entities := make([]*worker.WorkerCredentialType, 0, 16)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerCredentialTypeScopeTenant(sq, tenantInfo).
+				return workercol.WorkerCredentialTypeScopeTenant(sq, tenantInfo).
 					Where(cols.Status.Eq(), domaintypes.StatusActive)
 			}).
 			Apply(orderTypes).
@@ -163,7 +164,7 @@ func (r *repository) TypeSelectOptions(
 	req *workerports.WorkerCredentialTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*worker.WorkerCredentialType], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*worker.WorkerCredentialType], error) {
-		cols := buncolgen.WorkerCredentialTypeColumns
+		cols := workercol.WorkerCredentialTypeColumns
 		return dbhelper.SelectOptions[*worker.WorkerCredentialType](
 			ctx,
 			r.db.DBForContext(ctx),
@@ -209,8 +210,8 @@ func (r *repository) GetTypeByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerCredentialTypeScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerCredentialTypeColumns.ID.Eq(), req.ID)
+				return workercol.WorkerCredentialTypeScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerCredentialTypeColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -226,12 +227,12 @@ func (r *repository) TypeCodeExists(
 	req *workerports.CredentialTypeCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := buncolgen.WorkerCredentialTypeColumns
+		cols := workercol.WorkerCredentialTypeColumns
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.WorkerCredentialType)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerCredentialTypeScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerCredentialTypeScopeTenant(sq, req.TenantInfo).
 					Where("LOWER("+cols.Code.String()+") = ?", strings.ToLower(req.Code))
 			})
 		if !req.ExcludeID.IsNil() {
@@ -285,7 +286,7 @@ func (r *repository) UpdateType(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.WorkerCredentialTypeColumns.Version.Eq(), ov).
+			Where(workercol.WorkerCredentialTypeColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -353,12 +354,12 @@ func (r *repository) CountCredentialsByType(
 	req *workerports.CountCredentialsByTypeRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.WorkerCredentialColumns
+		cols := workercol.WorkerCredentialColumns
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.WorkerCredential)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerCredentialScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerCredentialScopeTenant(sq, req.TenantInfo).
 					Where(cols.CredentialTypeID.Eq(), req.TypeID)
 			})
 		if req.ActiveOnly {
@@ -384,12 +385,12 @@ func (r *repository) CountCredentialsByTypeIDs(
 			return map[pulid.ID]int{}, nil
 		}
 
-		cols := buncolgen.WorkerCredentialColumns
+		cols := workercol.WorkerCredentialColumns
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.WorkerCredential)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerCredentialScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerCredentialScopeTenant(sq, req.TenantInfo).
 					Where(cols.CredentialTypeID.In(), bun.In(req.TypeIDs))
 			})
 		if req.ActiveOnly {
@@ -411,13 +412,13 @@ func (r *repository) ListForWorker(
 	req *workerports.ListWorkerCredentialsRequest,
 ) ([]*worker.WorkerCredential, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerCredential, error) {
-		cols := buncolgen.WorkerCredentialColumns
+		cols := workercol.WorkerCredentialColumns
 		entities := make([]*worker.WorkerCredential, 0, 16)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerCredentialScopeTenant(sq, req.TenantInfo).
+				sq = workercol.WorkerCredentialScopeTenant(sq, req.TenantInfo).
 					Where(cols.WorkerID.Eq(), req.WorkerID)
 				if !req.IncludeArchived {
 					sq = sq.Where(cols.Status.Eq(), worker.CredentialStatusActive)
@@ -427,10 +428,10 @@ func (r *repository) ListForWorker(
 			Order(cols.Status.OrderAsc()).
 			Order(cols.CreatedAt.OrderDesc())
 		if req.IncludeType {
-			q = q.Relation(buncolgen.WorkerCredentialRelations.CredentialType)
+			q = q.Relation(workercol.WorkerCredentialRelations.CredentialType)
 		}
 		if req.IncludeDocument {
-			q = q.Relation(buncolgen.WorkerCredentialRelations.Document)
+			q = q.Relation(workercol.WorkerCredentialRelations.Document)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -452,22 +453,22 @@ func (r *repository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerCredentialScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerCredentialColumns.ID.Eq(), req.ID)
+				return workercol.WorkerCredentialScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerCredentialColumns.ID.Eq(), req.ID)
 			})
 		if req.IncludeType {
-			q = q.Relation(buncolgen.WorkerCredentialRelations.CredentialType)
+			q = q.Relation(workercol.WorkerCredentialRelations.CredentialType)
 		}
 		if req.IncludeWorker {
 			q = q.Relation(
-				buncolgen.WorkerCredentialRelations.Worker,
+				workercol.WorkerCredentialRelations.Worker,
 				func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Relation(buncolgen.WorkerRelations.Profile)
+					return sq.Relation(workercol.WorkerRelations.Profile)
 				},
 			)
 		}
 		if req.IncludeDocument {
-			q = q.Relation(buncolgen.WorkerCredentialRelations.Document)
+			q = q.Relation(workercol.WorkerCredentialRelations.Document)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -484,7 +485,7 @@ func (r *repository) Create(
 ) (*worker.WorkerCredential, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerCredential, error) {
 		entity := req.Entity
-		cols := buncolgen.WorkerCredentialColumns
+		cols := workercol.WorkerCredentialColumns
 		tenant := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
@@ -500,7 +501,7 @@ func (r *repository) Create(
 					Set(cols.UpdatedAt.Set(), now).
 					Set(cols.Version.Set()+" + 1", bun.Safe(cols.Version.String())).
 					WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-						return buncolgen.WorkerCredentialScopeTenantUpdate(uq, tenant).
+						return workercol.WorkerCredentialScopeTenantUpdate(uq, tenant).
 							Where(cols.WorkerID.Eq(), entity.WorkerID).
 							Where(cols.CredentialTypeID.Eq(), entity.CredentialTypeID).
 							Where(cols.Status.Eq(), worker.CredentialStatusActive)
@@ -548,7 +549,7 @@ func (r *repository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.WorkerCredentialColumns.Version.Eq(), ov).
+			Where(workercol.WorkerCredentialColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -590,21 +591,21 @@ func (r *repository) ListExpiring(
 			limit = defaultExpiringPageSize
 		}
 
-		cols := buncolgen.WorkerCredentialColumns
+		cols := workercol.WorkerCredentialColumns
 		typeAlias := "credential_type"
 		workerAlias := "worker"
 		entities := make([]*worker.WorkerCredential, 0, limit)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Relation(buncolgen.WorkerCredentialRelations.CredentialType).
-			Relation(buncolgen.WorkerCredentialRelations.Worker, func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Relation(buncolgen.WorkerRelations.Profile)
+			Relation(workercol.WorkerCredentialRelations.CredentialType).
+			Relation(workercol.WorkerCredentialRelations.Worker, func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Relation(workercol.WorkerRelations.Profile)
 			}).
 			Where(cols.Status.Eq(), worker.CredentialStatusActive).
 			Where(cols.ExpiresAt.Between(), grace, horizon).
-			Where(buncolgen.WorkerColumns.Status.WithAlias(workerAlias).Eq(), domaintypes.StatusActive).
-			Where(buncolgen.WorkerCredentialTypeColumns.Status.WithAlias(typeAlias).Eq(), domaintypes.StatusActive).
+			Where(workercol.WorkerColumns.Status.WithAlias(workerAlias).Eq(), domaintypes.StatusActive).
+			Where(workercol.WorkerCredentialTypeColumns.Status.WithAlias(typeAlias).Eq(), domaintypes.StatusActive).
 			Order(cols.ID.OrderAsc()).
 			Limit(limit)
 		if !req.TenantInfo.OrgID.IsNil() {
@@ -618,13 +619,13 @@ func (r *repository) ListExpiring(
 		}
 		if req.RequiredOnly {
 			q = q.Where(
-				buncolgen.WorkerCredentialTypeColumns.IsRequired.WithAlias(typeAlias).Eq(),
+				workercol.WorkerCredentialTypeColumns.IsRequired.WithAlias(typeAlias).Eq(),
 				true,
 			)
 		}
 		if len(req.CredentialTypeCodes) > 0 {
 			q = q.Where(
-				buncolgen.WorkerCredentialTypeColumns.Code.WithAlias(typeAlias).In(),
+				workercol.WorkerCredentialTypeColumns.Code.WithAlias(typeAlias).In(),
 				bun.In(req.CredentialTypeCodes),
 			)
 		}

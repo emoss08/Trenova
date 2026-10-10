@@ -2,11 +2,14 @@
 
 package accessorialcharge
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/accessorialchargecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccessorialCharge].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.AccessorialChargeFieldMap] instead of parsing struct tags via reflection.
+// the generated [accessorialchargecol.AccessorialChargeFieldMap] instead of parsing struct tags via reflection.
 func (e *AccessorialCharge) GetStaticFieldMap() map[string]string {
-	return buncolgen.AccessorialChargeFieldMap
+	return accessorialchargecol.AccessorialChargeFieldMap
 }

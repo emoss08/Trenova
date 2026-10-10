@@ -2,6 +2,7 @@
 package userrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 	"time"
 
@@ -325,7 +326,7 @@ func (ur *repository) FindByIDForLogin(ctx context.Context, userID pulid.ID) (*t
 		if err := ur.db.DBForContext(ctx).
 			NewSelect().
 			Model(user).
-			Where(buncolgen.UserColumns.ID.Eq(), userID).
+			Where(tenantcol.UserColumns.ID.Eq(), userID).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "User")
 		}
@@ -805,8 +806,8 @@ func (ur *repository) GetTenantMember(
 	req tenantports.GetTenantMemberRequest,
 ) (*tenant.User, error) {
 	return dbtx.Read(ctx, ur.db, func(ctx context.Context) (*tenant.User, error) {
-		user := buncolgen.UserColumns
-		membership := buncolgen.OrganizationMembershipColumns
+		user := tenantcol.UserColumns
+		membership := tenantcol.OrganizationMembershipColumns
 		db := ur.db.DBForContext(ctx)
 
 		member := db.NewSelect().

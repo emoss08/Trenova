@@ -3,6 +3,7 @@
 package airetrievalrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/airetrievalcol"
 	"context"
 	"os"
 	"testing"
@@ -156,7 +157,7 @@ func (h *harness) insertDocument(t *testing.T) *document.Document {
 func (h *harness) countEmbeddings(t *testing.T, sourceID pulid.ID, modelKey string) int {
 	t.Helper()
 
-	cols := buncolgen.EmbeddingColumns
+	cols := airetrievalcol.EmbeddingColumns
 	q := h.db.NewSelect().
 		Model((*airetrieval.Embedding)(nil)).
 		Where(cols.SourceID.Eq(), sourceID)
@@ -173,7 +174,7 @@ func (h *harness) countEmbeddings(t *testing.T, sourceID pulid.ID, modelKey stri
 func (h *harness) countIndexEntries(t *testing.T, sourceID pulid.ID, modelKey string) int {
 	t.Helper()
 
-	cols := buncolgen.IndexEntryColumns
+	cols := airetrievalcol.IndexEntryColumns
 	q := h.db.NewSelect().
 		Model((*airetrieval.IndexEntry)(nil)).
 		Where(cols.SourceID.Eq(), sourceID)

@@ -1,6 +1,7 @@
 package datarententionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -141,10 +142,10 @@ func (r *repository) Upsert(
 			Set("audit_retention_period = EXCLUDED.audit_retention_period").
 			Set("edi_inbound_file_retention_period = EXCLUDED.edi_inbound_file_retention_period").
 			Set("edi_message_retention_period = EXCLUDED.edi_message_retention_period").
-			Set(buncolgen.DataRetentionColumns.AgentEvalCaseRetentionPeriod.SetExcluded()).
-			Set(buncolgen.DataRetentionColumns.AIFeedbackRetentionPeriod.SetExcluded()).
-			Set(buncolgen.DataRetentionColumns.AIAuditRetentionPeriod.SetExcluded()).
-			Set(buncolgen.DataRetentionColumns.AICorrectionRetentionPeriod.SetExcluded()).
+			Set(tenantcol.DataRetentionColumns.AgentEvalCaseRetentionPeriod.SetExcluded()).
+			Set(tenantcol.DataRetentionColumns.AIFeedbackRetentionPeriod.SetExcluded()).
+			Set(tenantcol.DataRetentionColumns.AIAuditRetentionPeriod.SetExcluded()).
+			Set(tenantcol.DataRetentionColumns.AICorrectionRetentionPeriod.SetExcluded()).
 			Returning("*").
 			Exec(ctx); err != nil {
 			log.Error("failed to upsert data retention", zap.Error(err))

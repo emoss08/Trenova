@@ -1,6 +1,11 @@
 package trailerrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/equipmentmanufacturercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/equipmenttypecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/fleetcodecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/trailercol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
@@ -52,7 +57,7 @@ func (r *repository) applyListFilters(
 
 	q, err := querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.TrailerTable.Alias,
+		trailercol.TrailerTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*trailer.Trailer)(nil),
@@ -72,7 +77,7 @@ func (r *repository) applyListCountFilters(
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.TrailerTable.Alias,
+		trailercol.TrailerTable.Alias,
 		req.Filter,
 		(*trailer.Trailer)(nil),
 	)
@@ -91,7 +96,7 @@ func (r *repository) applyStatusFilter(q *bun.SelectQuery, value string) *bun.Se
 		return q
 	}
 
-	return q.Where(buncolgen.TrailerColumns.Status.Eq(), status)
+	return q.Where(trailercol.TrailerColumns.Status.Eq(), status)
 }
 
 func (r *repository) List(
@@ -203,7 +208,7 @@ func (r *repository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.TrailerColumns.Version.Eq(), ov).
+			Where(trailercol.TrailerColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -249,8 +254,8 @@ func (r *repository) GetByID(
 				return applyTrailerRelations(sq, req.TrailerRelationIncludes)
 			}).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TrailerScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.TrailerColumns.ID.Eq(), req.ID)
+				return trailercol.TrailerScopeTenant(sq, req.TenantInfo).
+					Where(trailercol.TrailerColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -267,7 +272,7 @@ func (r *repository) SelectOptions(
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*trailer.Trailer], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*trailer.Trailer], error) {
-		cols := buncolgen.TrailerColumns
+		cols := trailercol.TrailerColumns
 
 		return dbhelper.SelectOptions[*trailer.Trailer](
 			ctx,
@@ -316,8 +321,8 @@ func (r *repository) GetByIDs(
 				return applyTrailerRelations(sq, req.TrailerRelationIncludes)
 			}).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TrailerScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.TrailerColumns.ID.In(), bun.List(req.TrailerIDs))
+				return trailercol.TrailerScopeTenant(sq, req.TenantInfo).
+					Where(trailercol.TrailerColumns.ID.In(), bun.List(req.TrailerIDs))
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -344,10 +349,10 @@ func (r *repository) BulkUpdateStatus(
 			NewUpdate().
 			Model(&entities).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.TrailerScopeTenantUpdate(uq, req.TenantInfo).
-					Where(buncolgen.TrailerColumns.ID.In(), bun.List(req.TrailerIDs))
+				return trailercol.TrailerScopeTenantUpdate(uq, req.TenantInfo).
+					Where(trailercol.TrailerColumns.ID.In(), bun.List(req.TrailerIDs))
 			}).
-			Set(buncolgen.TrailerColumns.Status.Set(), req.Status).
+			Set(trailercol.TrailerColumns.Status.Set(), req.Status).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -367,11 +372,11 @@ func applyTrailerRelations(
 	q *bun.SelectQuery,
 	includes trailerports.TrailerRelationIncludes,
 ) *bun.SelectQuery {
-	rel := buncolgen.TrailerRelations
-	equipmentTypeRel := buncolgen.EquipmentTypeRelations
-	equipmentManufacturerRel := buncolgen.EquipmentManufacturerRelations
-	fleetCodeRel := buncolgen.FleetCodeRelations
-	organizationRel := buncolgen.OrganizationRelations
+	rel := trailercol.TrailerRelations
+	equipmentTypeRel := equipmenttypecol.EquipmentTypeRelations
+	equipmentManufacturerRel := equipmentmanufacturercol.EquipmentManufacturerRelations
+	fleetCodeRel := fleetcodecol.FleetCodeRelations
+	organizationRel := tenantcol.OrganizationRelations
 	includeBusinessUnit := includes.IncludeTenantDetails || includes.IncludeBusinessUnit
 	includeOrganization := includes.IncludeTenantDetails || includes.IncludeOrganization
 	includeRegistrationState := includes.IncludeRegistrationDetails ||
@@ -436,7 +441,7 @@ func applyTrailerColumns(
 	includes trailerports.TrailerRelationIncludes,
 ) *bun.SelectQuery {
 	if len(includes.TrailerColumns) == 0 {
-		return q.ColumnExpr(buncolgen.TrailerTable.All())
+		return q.ColumnExpr(trailercol.TrailerTable.All())
 	}
 
 	return q.Column(includes.TrailerColumns...)

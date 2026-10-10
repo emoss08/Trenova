@@ -2,18 +2,21 @@
 
 package permit
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/permitcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Permit].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.PermitFieldMap] instead of parsing struct tags via reflection.
+// the generated [permitcol.PermitFieldMap] instead of parsing struct tags via reflection.
 func (e *Permit) GetStaticFieldMap() map[string]string {
-	return buncolgen.PermitFieldMap
+	return permitcol.PermitFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Requirement].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RequirementFieldMap] instead of parsing struct tags via reflection.
+// the generated [permitcol.RequirementFieldMap] instead of parsing struct tags via reflection.
 func (e *Requirement) GetStaticFieldMap() map[string]string {
-	return buncolgen.RequirementFieldMap
+	return permitcol.RequirementFieldMap
 }

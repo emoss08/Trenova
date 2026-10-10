@@ -1,6 +1,8 @@
 package shipmentboardrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tendercol"
 	"context"
 	"fmt"
 
@@ -58,7 +60,7 @@ func (r *Repository) offerTotals(
 	dba bun.IDB,
 	req *shipmentports.ListCarrierPerformanceRequest,
 ) ([]offerTotalsRow, error) {
-	cols := buncolgen.TenderOfferColumns
+	cols := tendercol.TenderOfferColumns
 	answered := []tender.OfferStatus{
 		tender.OfferStatusAccepted,
 		tender.OfferStatusDeclined,
@@ -93,7 +95,7 @@ func (r *Repository) perMileRates(
 	dba bun.IDB,
 	req *shipmentports.ListCarrierPerformanceRequest,
 ) ([]rateRow, error) {
-	cols := buncolgen.CarrierAssignmentColumns
+	cols := shipmentcol.CarrierAssignmentColumns
 
 	rows := make([]rateRow, 0)
 	q := dba.NewSelect().

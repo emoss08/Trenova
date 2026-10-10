@@ -1,6 +1,7 @@
 package carrierintelrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
 	"context"
 	"fmt"
 	"strconv"
@@ -47,7 +48,7 @@ var (
 		carrierintel.SeverityLow,
 		carrierintel.SeverityInfo,
 	}
-	eventSeverityRankExpr = buncolgen.CarrierIntelEventColumns.Severity.Expr(
+	eventSeverityRankExpr = carrierintelcol.CarrierIntelEventColumns.Severity.Expr(
 		"CASE {}" + strings.Repeat(" WHEN ? THEN ?", len(eventSeverityOrder)) + " ELSE ? END",
 	)
 )
@@ -101,7 +102,7 @@ func (r *eventRepository) applyEventFilters(
 	q *bun.SelectQuery,
 	req *carrierintelports.ListCarrierIntelEventsRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.CarrierIntelEventColumns
+	cols := carrierintelcol.CarrierIntelEventColumns
 	if len(req.Statuses) > 0 {
 		q = q.Where(cols.Status.In(), bun.List(req.Statuses))
 	}
@@ -149,7 +150,7 @@ func (r *eventRepository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.CarrierIntelEventTable.Alias,
+						carrierintelcol.CarrierIntelEventTable.Alias,
 						req.Filter,
 						(*carrierintel.CarrierIntelEvent)(nil),
 					)
@@ -172,12 +173,12 @@ func (r *eventRepository) ListConnection(
 				Query: func(items *[]*carrierintel.CarrierIntelEvent) *bun.SelectQuery {
 					return dba.NewSelect().
 						Model(items).
-						ColumnExpr(buncolgen.CarrierIntelEventTable.All())
+						ColumnExpr(carrierintelcol.CarrierIntelEventTable.All())
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.CarrierIntelEventTable.Alias,
+						carrierintelcol.CarrierIntelEventTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*carrierintel.CarrierIntelEvent)(nil),
@@ -213,8 +214,8 @@ func (r *eventRepository) GetByIDs(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierIntelEventScopeTenant(sq, tenantInfo).
-					Where(buncolgen.CarrierIntelEventColumns.ID.In(), bun.List(ids))
+				return carrierintelcol.CarrierIntelEventScopeTenant(sq, tenantInfo).
+					Where(carrierintelcol.CarrierIntelEventColumns.ID.In(), bun.List(ids))
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -238,7 +239,7 @@ func (r *eventRepository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.CarrierIntelEventColumns.Version.Eq(), ov).
+			Where(carrierintelcol.CarrierIntelEventColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -262,7 +263,7 @@ func (r *eventRepository) BulkAcknowledge(
 			return 0, nil
 		}
 
-		cols := buncolgen.CarrierIntelEventColumns
+		cols := carrierintelcol.CarrierIntelEventColumns
 		result, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*carrierintel.CarrierIntelEvent)(nil)).
@@ -272,7 +273,7 @@ func (r *eventRepository) BulkAcknowledge(
 			Set(cols.UpdatedAt.Set(), req.AcknowledgedAt).
 			Set(cols.Version.Inc(1)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.CarrierIntelEventScopeTenantUpdate(uq, req.TenantInfo).
+				return carrierintelcol.CarrierIntelEventScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.In(), bun.List(req.EventIDs)).
 					Where(cols.Status.Eq(), carrierintel.EventStatusOpen)
 			}).
@@ -301,12 +302,12 @@ func (r *eventRepository) CountOpenByCarrierIDs(
 			return map[pulid.ID]int{}, nil
 		}
 
-		cols := buncolgen.CarrierIntelEventColumns
+		cols := carrierintelcol.CarrierIntelEventColumns
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*carrierintel.CarrierIntelEvent)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierIntelEventScopeTenant(sq, tenantInfo).
+				return carrierintelcol.CarrierIntelEventScopeTenant(sq, tenantInfo).
 					Where(cols.Status.In(), bun.List(openEventStatuses)).
 					Where(cols.CarrierID.In(), bun.List(carrierIDs))
 			})
@@ -326,7 +327,7 @@ func (r *eventRepository) CountOpen(
 	tenantInfo pagination.TenantInfo,
 ) (*carrierintelports.CarrierIntelEventCounts, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carrierintelports.CarrierIntelEventCounts, error) {
-		cols := buncolgen.CarrierIntelEventColumns
+		cols := carrierintelcol.CarrierIntelEventColumns
 		counts := &carrierintelports.CarrierIntelEventCounts{
 			BySeverity: make(map[carrierintel.Severity]int, len(eventSeverityOrder)),
 		}
@@ -343,7 +344,7 @@ func (r *eventRepository) CountOpen(
 				carrierintel.EventStatusAcknowledged,
 			).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierIntelEventScopeTenant(sq, tenantInfo).
+				return carrierintelcol.CarrierIntelEventScopeTenant(sq, tenantInfo).
 					Where(cols.Status.In(), bun.List(openEventStatuses))
 			})
 		for i, severity := range eventSeverityOrder {
@@ -372,7 +373,7 @@ func (r *eventRepository) ListForDigest(
 	req *carrierintelports.ListCarrierIntelDigestEventsRequest,
 ) ([]*carrierintel.CarrierIntelEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrierintel.CarrierIntelEvent, error) {
-		cols := buncolgen.CarrierIntelEventColumns
+		cols := carrierintelcol.CarrierIntelEventColumns
 		limit := intutils.Clamp(
 			intutils.WithDefault(max(req.Limit, 0), defaultDigestLimit),
 			1,
@@ -390,7 +391,7 @@ func (r *eventRepository) ListForDigest(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierIntelEventScopeTenant(sq, req.TenantInfo).
+				return carrierintelcol.CarrierIntelEventScopeTenant(sq, req.TenantInfo).
 					Where(cols.Status.Eq(), carrierintel.EventStatusOpen).
 					Where(cols.DetectedAt.Gte(), req.Since).
 					Where(cols.Action.In(), bun.List(digestEventActions))
@@ -419,13 +420,13 @@ func (r *eventRepository) MarkNotified(
 			return nil
 		}
 
-		cols := buncolgen.CarrierIntelEventColumns
+		cols := carrierintelcol.CarrierIntelEventColumns
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*carrierintel.CarrierIntelEvent)(nil)).
 			Set(cols.NotifiedAt.Set(), notifiedAt).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.CarrierIntelEventScopeTenantUpdate(uq, tenantInfo).
+				return carrierintelcol.CarrierIntelEventScopeTenantUpdate(uq, tenantInfo).
 					Where(cols.ID.In(), bun.List(ids))
 			}).
 			Exec(ctx)

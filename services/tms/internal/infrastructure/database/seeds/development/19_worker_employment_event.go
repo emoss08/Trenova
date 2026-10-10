@@ -1,6 +1,7 @@
 package development
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 
@@ -54,10 +55,10 @@ func (s *WorkerEmploymentEventSeed) Run(ctx context.Context, tx bun.Tx) error {
 			}
 
 			workers := make([]*worker.Worker, 0, 32)
-			cols := buncolgen.WorkerColumns
+			cols := workercol.WorkerColumns
 			if err = tx.NewSelect().
 				Model(&workers).
-				Relation(buncolgen.WorkerRelations.Profile).
+				Relation(workercol.WorkerRelations.Profile).
 				Where(cols.OrganizationID.Eq(), org.ID).
 				Where(cols.BusinessUnitID.Eq(), org.BusinessUnitID).
 				Order(cols.CreatedAt.OrderAsc()).

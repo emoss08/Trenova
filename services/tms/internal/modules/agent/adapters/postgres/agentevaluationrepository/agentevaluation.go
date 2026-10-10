@@ -1,6 +1,7 @@
 package agentevaluationrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 	"context"
 	"fmt"
 
@@ -63,7 +64,7 @@ func (r *repository) Update(
 	entity *agent.Evaluation,
 ) (*agent.Evaluation, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Evaluation, error) {
-		cols := buncolgen.EvaluationColumns
+		cols := agentcol.EvaluationColumns
 		ov := entity.Version
 		entity.Version++
 
@@ -71,7 +72,7 @@ func (r *repository) Update(
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.EvaluationScopeTenantUpdate(uq, pagination.TenantInfo{
+				return agentcol.EvaluationScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
 				}).Where(cols.ID.Eq(), entity.ID).
@@ -121,12 +122,12 @@ func (r *repository) GetByID(
 ) (*agent.Evaluation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.Evaluation, error) {
 		entity := new(agent.Evaluation)
-		cols := buncolgen.EvaluationColumns
+		cols := agentcol.EvaluationColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.EvaluationScopeTenant(sq, req.TenantInfo).
+				return agentcol.EvaluationScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
@@ -154,13 +155,13 @@ func (r *repository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.EvaluationTable.Alias,
+						agentcol.EvaluationTable.Alias,
 						req.Filter,
 						(*agent.Evaluation)(nil),
 					)
 
 					return suiteScope(sq, req.SuiteRunID).
-						Apply(buncolgen.EvaluationApplyTenant(req.Filter.TenantInfo))
+						Apply(agentcol.EvaluationApplyTenant(req.Filter.TenantInfo))
 				}).
 				Count(ctx)
 			if err != nil {
@@ -188,7 +189,7 @@ func (r *repository) ListConnection(
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					return querybuilder.ApplyCursorFilters(
 						suiteScope(sq, req.SuiteRunID),
-						buncolgen.EvaluationTable.Alias,
+						agentcol.EvaluationTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*agent.Evaluation)(nil),
@@ -210,7 +211,7 @@ func suiteScope(sq *bun.SelectQuery, suiteRunID pulid.ID) *bun.SelectQuery {
 		return sq
 	}
 
-	return sq.Where(buncolgen.EvaluationColumns.SuiteRunID.Eq(), suiteRunID)
+	return sq.Where(agentcol.EvaluationColumns.SuiteRunID.Eq(), suiteRunID)
 }
 
 func (r *repository) CreateMany(ctx context.Context, entities []*agent.Evaluation) error {
@@ -234,7 +235,7 @@ func (r *repository) ListBySuiteRun(
 	req agentports.ListSuiteEvaluationsRequest,
 ) ([]*agent.Evaluation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.Evaluation, error) {
-		cols := buncolgen.EvaluationColumns
+		cols := agentcol.EvaluationColumns
 		limit := req.Limit
 		if limit <= 0 || limit > maxSuitePage {
 			limit = maxSuitePage
@@ -245,7 +246,7 @@ func (r *repository) ListBySuiteRun(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.EvaluationScopeTenant(sq, req.TenantInfo).
+				return agentcol.EvaluationScopeTenant(sq, req.TenantInfo).
 					Where(cols.SuiteRunID.Eq(), req.SuiteRunID).
 					Where(cols.SuiteOrdinal.Gt(), req.AfterOrdinal)
 			}).
@@ -264,13 +265,13 @@ func (r *repository) SkipPendingBySuiteRun(
 	req agentports.SkipPendingSuiteEvaluationsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.EvaluationColumns
+		cols := agentcol.EvaluationColumns
 
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*agent.Evaluation)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.EvaluationScopeTenantUpdate(uq, req.TenantInfo).
+				return agentcol.EvaluationScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.SuiteRunID.Eq(), req.SuiteRunID).
 					Where(cols.Status.In(), bun.List([]agent.EvaluationStatus{
 						agent.EvaluationStatusPending,

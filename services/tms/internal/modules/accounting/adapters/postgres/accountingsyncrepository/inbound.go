@@ -1,6 +1,7 @@
 package accountingsyncrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
 	"context"
 	"fmt"
 	"strings"
@@ -73,7 +74,7 @@ func (r *inboundChangeRepository) Update(
 	entity *accountingsync.AccountingInboundChange,
 ) (*accountingsync.AccountingInboundChange, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingInboundChange, error) {
-		cols := buncolgen.AccountingInboundChangeColumns
+		cols := accountingsynccol.AccountingInboundChangeColumns
 		ov := entity.Version
 		entity.Version++
 
@@ -107,12 +108,12 @@ func (r *inboundChangeRepository) GetByID(
 ) (*accountingsync.AccountingInboundChange, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingInboundChange, error) {
 		entity := new(accountingsync.AccountingInboundChange)
-		cols := buncolgen.AccountingInboundChangeColumns
+		cols := accountingsynccol.AccountingInboundChangeColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Apply(buncolgen.AccountingInboundChangeApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.TenantInfo)).
 			Where(cols.ID.Eq(), req.ID)
 		if req.ForUpdate {
 			query = query.For("UPDATE")
@@ -135,11 +136,11 @@ func (r *inboundChangeRepository) ListByExternalIDs(
 			return entities, nil
 		}
 
-		cols := buncolgen.AccountingInboundChangeColumns
+		cols := accountingsynccol.AccountingInboundChangeColumns
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.AccountingInboundChangeApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.TenantInfo)).
 			Where(cols.ConnectionID.Eq(), req.ConnectionID).
 			Where(cols.Kind.Eq(), req.Kind).
 			Where(cols.ExternalID.In(), bun.List(req.ExternalIDs)).
@@ -162,12 +163,12 @@ func (r *inboundChangeRepository) ListDetected(
 		}
 		limit = intutils.Clamp(limit, 1, maxInboundBatch)
 
-		cols := buncolgen.AccountingInboundChangeColumns
+		cols := accountingsynccol.AccountingInboundChangeColumns
 		entities := make([]*accountingsync.AccountingInboundChange, 0, limit)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.AccountingInboundChangeApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.TenantInfo)).
 			Where(cols.ConnectionID.Eq(), req.ConnectionID).
 			Where(cols.Status.Eq(), accountingsync.InboundStatusDetected).
 			Where(cols.DetectedAt.Lte(), req.DetectedBefore).
@@ -185,9 +186,9 @@ func (r *inboundChangeRepository) applyListFilters(
 	q *bun.SelectQuery,
 	req *accountingsyncports.ListAccountingInboundChangesConnectionRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.AccountingInboundChangeColumns
+	cols := accountingsynccol.AccountingInboundChangeColumns
 	if req.Filter != nil {
-		q = q.Apply(buncolgen.AccountingInboundChangeApplyTenant(req.Filter.TenantInfo))
+		q = q.Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.Filter.TenantInfo))
 	}
 	q = q.Where(cols.ConnectionID.Eq(), req.ConnectionID)
 	if len(req.Statuses) > 0 {
@@ -232,7 +233,7 @@ func (r *inboundChangeRepository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.AccountingInboundChangeTable.Alias,
+						accountingsynccol.AccountingInboundChangeTable.Alias,
 						req.Filter,
 						(*accountingsync.AccountingInboundChange)(nil),
 					)
@@ -255,12 +256,12 @@ func (r *inboundChangeRepository) ListConnection(
 				Query: func(items *[]*accountingsync.AccountingInboundChange) *bun.SelectQuery {
 					return dba.NewSelect().
 						Model(items).
-						ColumnExpr(buncolgen.AccountingInboundChangeTable.All())
+						ColumnExpr(accountingsynccol.AccountingInboundChangeTable.All())
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.AccountingInboundChangeTable.Alias,
+						accountingsynccol.AccountingInboundChangeTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*accountingsync.AccountingInboundChange)(nil),
@@ -286,7 +287,7 @@ func (r *inboundChangeRepository) Summarize(
 	req *accountingsyncports.SummarizeAccountingInboundChangesRequest,
 ) (*accountingsyncports.AccountingInboundSummary, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsyncports.AccountingInboundSummary, error) {
-		cols := buncolgen.AccountingInboundChangeColumns
+		cols := accountingsynccol.AccountingInboundChangeColumns
 		summary := new(accountingsyncports.AccountingInboundSummary)
 
 		if err := r.db.DBForContext(ctx).
@@ -304,7 +305,7 @@ func (r *inboundChangeRepository) Summarize(
 				accountingsync.InboundStatusIgnored,
 				req.DecidedSince,
 			).
-			Apply(buncolgen.AccountingInboundChangeApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.TenantInfo)).
 			Where(cols.ConnectionID.Eq(), req.ConnectionID).
 			Scan(ctx, summary); err != nil {
 			return nil, err
@@ -319,7 +320,7 @@ func (r *inboundChangeRepository) ListAttention(
 	req *accountingsyncports.ListAccountingInboundAttentionRequest,
 ) ([]accountingsyncports.AccountingInboundAttentionGroup, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]accountingsyncports.AccountingInboundAttentionGroup, error) {
-		cols := buncolgen.AccountingInboundChangeColumns
+		cols := accountingsynccol.AccountingInboundChangeColumns
 		groups := make(
 			[]accountingsyncports.AccountingInboundAttentionGroup,
 			0,
@@ -333,7 +334,7 @@ func (r *inboundChangeRepository) ListAttention(
 			ColumnExpr(buncolgen.Count("count")).
 			ColumnExpr(buncolgen.Min(cols.DetectedAt, "oldest_detected_at")).
 			ColumnExpr(buncolgen.Min(cols.ID, "sample_id")).
-			Apply(buncolgen.AccountingInboundChangeApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.TenantInfo)).
 			Where(cols.ConnectionID.Eq(), req.ConnectionID).
 			Where(cols.Status.Eq(), accountingsync.InboundStatusProposed).
 			Where(cols.DetectedAt.Lte(), req.DetectedBefore).

@@ -2,11 +2,14 @@
 
 package onboarding
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/onboardingcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Onboarding].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.OnboardingFieldMap] instead of parsing struct tags via reflection.
+// the generated [onboardingcol.OnboardingFieldMap] instead of parsing struct tags via reflection.
 func (e *Onboarding) GetStaticFieldMap() map[string]string {
-	return buncolgen.OnboardingFieldMap
+	return onboardingcol.OnboardingFieldMap
 }

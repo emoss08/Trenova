@@ -1,6 +1,9 @@
 package shipmentrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/commoditycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -18,30 +21,30 @@ func standardShipmentFilter(
 	opts shipmentports.ShipmentOptions,
 ) *bun.SelectQuery {
 	if opts.ExpandShipmentDetails {
-		q = q.Relation(buncolgen.ShipmentRelations.Customer).
-			Relation(buncolgen.ShipmentRelations.BillToCustomer)
+		q = q.Relation(shipmentcol.ShipmentRelations.Customer).
+			Relation(shipmentcol.ShipmentRelations.BillToCustomer)
 
 		q = withCharges(q)
 
-		q = q.RelationWithOpts(buncolgen.ShipmentRelations.Commodities, bun.RelationOpts{
+		q = q.RelationWithOpts(shipmentcol.ShipmentRelations.Commodities, bun.RelationOpts{
 			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Relation(buncolgen.ShipmentCommodityRelations.Commodity).
+				return sq.Relation(shipmentcol.ShipmentCommodityRelations.Commodity).
 					Relation(buncolgen.Rel(
-						buncolgen.ShipmentCommodityRelations.Commodity,
-						buncolgen.CommodityRelations.HazardousMaterial))
+						shipmentcol.ShipmentCommodityRelations.Commodity,
+						commoditycol.CommodityRelations.HazardousMaterial))
 			},
 		})
 
-		q = q.Relation(buncolgen.ShipmentRelations.ServiceType).
-			Relation(buncolgen.ShipmentRelations.ShipmentType).
-			Relation(buncolgen.ShipmentRelations.FormulaTemplate).
-			Relation(buncolgen.ShipmentRelations.TractorType).
-			Relation(buncolgen.ShipmentRelations.TrailerType).
-			Relation(buncolgen.ShipmentRelations.CanceledBy).
-			Relation(buncolgen.ShipmentRelations.Owner)
+		q = q.Relation(shipmentcol.ShipmentRelations.ServiceType).
+			Relation(shipmentcol.ShipmentRelations.ShipmentType).
+			Relation(shipmentcol.ShipmentRelations.FormulaTemplate).
+			Relation(shipmentcol.ShipmentRelations.TractorType).
+			Relation(shipmentcol.ShipmentRelations.TrailerType).
+			Relation(shipmentcol.ShipmentRelations.CanceledBy).
+			Relation(shipmentcol.ShipmentRelations.Owner)
 	} else if opts.IncludeCustomer {
-		q = q.Relation(buncolgen.ShipmentRelations.Customer).
-			Relation(buncolgen.ShipmentRelations.BillToCustomer)
+		q = q.Relation(shipmentcol.ShipmentRelations.Customer).
+			Relation(shipmentcol.ShipmentRelations.BillToCustomer)
 	}
 	if opts.IncludeRoute && !opts.ExpandShipmentDetails {
 		q = withRoute(q)
@@ -51,31 +54,31 @@ func standardShipmentFilter(
 }
 
 func withRoute(q *bun.SelectQuery) *bun.SelectQuery {
-	moves := buncolgen.ShipmentRelations.Moves
-	stops := buncolgen.Rel(moves, buncolgen.ShipmentMoveRelations.Stops)
+	moves := shipmentcol.ShipmentRelations.Moves
+	stops := buncolgen.Rel(moves, shipmentcol.ShipmentMoveRelations.Stops)
 
 	return q.
 		RelationWithOpts(moves, bun.RelationOpts{
 			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order(buncolgen.ShipmentMoveColumns.Sequence.OrderAsc())
+				return sq.Order(shipmentcol.ShipmentMoveColumns.Sequence.OrderAsc())
 			},
 		}).
 		RelationWithOpts(stops, bun.RelationOpts{
 			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order(buncolgen.StopColumns.Sequence.OrderAsc())
+				return sq.Order(shipmentcol.StopColumns.Sequence.OrderAsc())
 			},
 		}).
-		Relation(buncolgen.Rel(stops, buncolgen.StopRelations.Location)).
-		Relation(buncolgen.Rel(stops, buncolgen.StopRelations.Location, buncolgen.LocationRelations.State)).
-		RelationWithOpts(buncolgen.Rel(moves, buncolgen.ShipmentMoveRelations.Assignment),
+		Relation(buncolgen.Rel(stops, shipmentcol.StopRelations.Location)).
+		Relation(buncolgen.Rel(stops, shipmentcol.StopRelations.Location, locationcol.LocationRelations.State)).
+		RelationWithOpts(buncolgen.Rel(moves, shipmentcol.ShipmentMoveRelations.Assignment),
 			bun.RelationOpts{AdditionalJoinOnConditions: activeAssignmentJoin()}).
 		Relation(buncolgen.Rel(
-			moves, buncolgen.ShipmentMoveRelations.Assignment, buncolgen.AssignmentRelations.PrimaryWorker,
+			moves, shipmentcol.ShipmentMoveRelations.Assignment, shipmentcol.AssignmentRelations.PrimaryWorker,
 		)).
 		Relation(buncolgen.Rel(
-			moves, buncolgen.ShipmentMoveRelations.Assignment, buncolgen.AssignmentRelations.Tractor,
+			moves, shipmentcol.ShipmentMoveRelations.Assignment, shipmentcol.AssignmentRelations.Tractor,
 		)).
-		RelationWithOpts(buncolgen.Rel(moves, buncolgen.ShipmentMoveRelations.CarrierAssignment),
+		RelationWithOpts(buncolgen.Rel(moves, shipmentcol.ShipmentMoveRelations.CarrierAssignment),
 			bun.RelationOpts{AdditionalJoinOnConditions: activeCarrierAssignmentJoin()})
 }
 
@@ -87,13 +90,13 @@ func withRoute(q *bun.SelectQuery) *bun.SelectQuery {
 // under the has-many moves: the relation's field name.
 func activeAssignmentJoin() []schema.QueryWithArgs {
 	return []schema.QueryWithArgs{schema.SafeQuery("?.? IS NULL", []any{
-		bun.Ident("assignment"), bun.Ident(buncolgen.AssignmentColumns.ArchivedAt.Name),
+		bun.Ident("assignment"), bun.Ident(shipmentcol.AssignmentColumns.ArchivedAt.Name),
 	})}
 }
 
 func activeCarrierAssignmentJoin() []schema.QueryWithArgs {
 	return []schema.QueryWithArgs{schema.SafeQuery("?.? != ?", []any{
-		bun.Ident("carrier_assignment"), bun.Ident(buncolgen.CarrierAssignmentColumns.Status.Name),
+		bun.Ident("carrier_assignment"), bun.Ident(shipmentcol.CarrierAssignmentColumns.Status.Name),
 		shipment.CarrierAssignmentStatusCanceled,
 	})}
 }
@@ -109,7 +112,7 @@ func cursorFilterQuery(
 
 	q, err := querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.ShipmentTable.Alias,
+		shipmentcol.ShipmentTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*shipment.Shipment)(nil),
@@ -142,7 +145,7 @@ func baseShipmentListQuery(
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.ShipmentTable.Alias,
+		shipmentcol.ShipmentTable.Alias,
 		req.Filter,
 		(*shipment.Shipment)(nil),
 	)
@@ -160,10 +163,10 @@ func applyShipmentOptionFilters(
 	opts shipmentports.ShipmentOptions,
 ) *bun.SelectQuery {
 	if opts.Status != "" {
-		q = q.Where(buncolgen.ShipmentColumns.Status.Eq(), shipment.Status(opts.Status))
+		q = q.Where(shipmentcol.ShipmentColumns.Status.Eq(), shipment.Status(opts.Status))
 	}
 	if len(opts.Statuses) > 0 {
-		q = q.Where(buncolgen.ShipmentColumns.Status.In(), bun.In(opts.Statuses))
+		q = q.Where(shipmentcol.ShipmentColumns.Status.In(), bun.In(opts.Statuses))
 	}
 	if opts.HasActivityWindow() {
 		q = q.Where("EXISTS (?)", activityWindowPredicate(dba, opts))
@@ -172,7 +175,7 @@ func applyShipmentOptionFilters(
 		q = billingTransferCandidatePredicate(q)
 	}
 	if len(opts.CustomerIDs) > 0 {
-		q = q.Where(buncolgen.ShipmentColumns.CustomerID.In(), bun.In(opts.CustomerIDs))
+		q = q.Where(shipmentcol.ShipmentColumns.CustomerID.In(), bun.In(opts.CustomerIDs))
 	}
 	if len(opts.StopLocationIDs) > 0 {
 		q = q.Where("EXISTS (?)", stopLocationPredicate(dba, opts.StopLocationIDs))
@@ -189,17 +192,17 @@ func applyShipmentOptionFilters(
 		q = q.Where("EXISTS (?)", commodityPredicate(dba, opts.CommodityIDs))
 	}
 	if len(opts.ShipmentTypeIDs) > 0 {
-		q = q.Where(buncolgen.ShipmentColumns.ShipmentTypeID.In(), bun.In(opts.ShipmentTypeIDs))
+		q = q.Where(shipmentcol.ShipmentColumns.ShipmentTypeID.In(), bun.In(opts.ShipmentTypeIDs))
 	}
 
 	return q
 }
 
 func commodityPredicate(dba bun.IDB, commodityIDs []pulid.ID) *bun.SelectQuery {
-	cols := buncolgen.ShipmentCommodityColumns
+	cols := shipmentcol.ShipmentCommodityColumns
 
 	return dba.NewSelect().
-		TableExpr(buncolgen.ShipmentCommodityTable.As("sc_com")).
+		TableExpr(shipmentcol.ShipmentCommodityTable.As("sc_com")).
 		ColumnExpr("1").
 		Where("sc_com."+cols.ShipmentID.Name+" = sp.id").
 		Where("sc_com."+cols.OrganizationID.Name+" = sp.organization_id").
@@ -272,13 +275,13 @@ func unassignedShipmentListQuery(
 	dba bun.IDB,
 	req *shipmentports.GetUnassignedShipmentsRequest,
 ) (*bun.SelectQuery, error) {
-	q = q.Relation(buncolgen.ShipmentRelations.Customer).
-		Where(buncolgen.ShipmentColumns.Status.Eq(), shipment.StatusNew).
+	q = q.Relation(shipmentcol.ShipmentRelations.Customer).
+		Where(shipmentcol.ShipmentColumns.Status.Eq(), shipment.StatusNew).
 		Where("NOT EXISTS (?)", unassignedShipmentPredicate(dba))
 
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.ShipmentTable.Alias,
+		shipmentcol.ShipmentTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*shipment.Shipment)(nil),
@@ -334,16 +337,16 @@ func (r *repository) hydrateMoves(
 // withCharges loads the additional charges and the charge allocations that
 // divide a shipment among its payers.
 func withCharges(q *bun.SelectQuery) *bun.SelectQuery {
-	q = q.RelationWithOpts(buncolgen.ShipmentRelations.AdditionalCharges, bun.RelationOpts{
+	q = q.RelationWithOpts(shipmentcol.ShipmentRelations.AdditionalCharges, bun.RelationOpts{
 		Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Relation(buncolgen.AdditionalChargeRelations.AccessorialCharge)
+			return sq.Relation(shipmentcol.AdditionalChargeRelations.AccessorialCharge)
 		},
 	})
 
-	return q.RelationWithOpts(buncolgen.ShipmentRelations.ChargeAllocations, bun.RelationOpts{
+	return q.RelationWithOpts(shipmentcol.ShipmentRelations.ChargeAllocations, bun.RelationOpts{
 		Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-			cols := buncolgen.ChargeAllocationColumns
-			return sq.Relation(buncolgen.ChargeAllocationRelations.BillToCustomer).
+			cols := shipmentcol.ChargeAllocationColumns
+			return sq.Relation(shipmentcol.ChargeAllocationRelations.BillToCustomer).
 				Order(cols.Sequence.OrderAsc(), cols.ID.OrderAsc())
 		},
 	})

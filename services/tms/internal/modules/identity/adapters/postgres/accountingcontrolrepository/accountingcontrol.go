@@ -1,6 +1,7 @@
 package accountingcontrolrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 
 	accountingcontrol "github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -45,7 +46,7 @@ func (r *repository) GetByOrgID(
 			zap.String("orgID", orgID.String()),
 		)
 
-		cols := buncolgen.AccountingControlColumns
+		cols := tenantcol.AccountingControlColumns
 
 		entity := new(accountingcontrol.AccountingControl)
 		if err := r.db.DBForContext(ctx).
@@ -88,7 +89,7 @@ func (r *repository) ListWithScheduledPeriodClose(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingcontrol.AccountingControl, error) {
 		log := r.l.With(zap.String("operation", "ListWithScheduledPeriodClose"))
 
-		cols := buncolgen.AccountingControlColumns
+		cols := tenantcol.AccountingControlColumns
 
 		entities := make([]*accountingcontrol.AccountingControl, 0)
 		if err := r.db.DBForContext(ctx).
@@ -120,7 +121,7 @@ func (r *repository) Update(
 		ov := entity.Version
 		entity.Version++
 
-		cols := buncolgen.AccountingControlColumns
+		cols := tenantcol.AccountingControlColumns
 		result, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).

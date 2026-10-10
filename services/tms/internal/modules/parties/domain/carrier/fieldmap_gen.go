@@ -2,32 +2,35 @@
 
 package carrier
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Carrier].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CarrierFieldMap] instead of parsing struct tags via reflection.
+// the generated [carriercol.CarrierFieldMap] instead of parsing struct tags via reflection.
 func (e *Carrier) GetStaticFieldMap() map[string]string {
-	return buncolgen.CarrierFieldMap
+	return carriercol.CarrierFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CarrierContact].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CarrierContactFieldMap] instead of parsing struct tags via reflection.
+// the generated [carriercol.CarrierContactFieldMap] instead of parsing struct tags via reflection.
 func (e *CarrierContact) GetStaticFieldMap() map[string]string {
-	return buncolgen.CarrierContactFieldMap
+	return carriercol.CarrierContactFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CarrierEDIChannel].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CarrierEDIChannelFieldMap] instead of parsing struct tags via reflection.
+// the generated [carriercol.CarrierEDIChannelFieldMap] instead of parsing struct tags via reflection.
 func (e *CarrierEDIChannel) GetStaticFieldMap() map[string]string {
-	return buncolgen.CarrierEDIChannelFieldMap
+	return carriercol.CarrierEDIChannelFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CarrierInsurancePolicy].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CarrierInsurancePolicyFieldMap] instead of parsing struct tags via reflection.
+// the generated [carriercol.CarrierInsurancePolicyFieldMap] instead of parsing struct tags via reflection.
 func (e *CarrierInsurancePolicy) GetStaticFieldMap() map[string]string {
-	return buncolgen.CarrierInsurancePolicyFieldMap
+	return carriercol.CarrierInsurancePolicyFieldMap
 }

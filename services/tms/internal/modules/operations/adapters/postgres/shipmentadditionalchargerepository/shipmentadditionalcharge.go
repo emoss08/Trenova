@@ -1,6 +1,7 @@
 package shipmentadditionalchargerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 	"fmt"
 
@@ -167,7 +168,7 @@ func (r *repository) reconcileHeaderTotals(
 	entity.OtherChargeAmount = decimal.NewNullDecimal(other)
 	entity.TotalChargeAmount = decimal.NewNullDecimal(total)
 
-	sp := buncolgen.ShipmentColumns
+	sp := shipmentcol.ShipmentColumns
 	if _, err := tx.NewUpdate().
 		Model((*shipment.Shipment)(nil)).
 		Set(sp.OtherChargeAmount.Set(), other).
@@ -234,7 +235,7 @@ func (r *repository) updateCharge(
 	charge.Version = ov + 1
 	charge.UpdatedAt = timeutils.NowUnix()
 
-	cols := buncolgen.AdditionalChargeColumns
+	cols := shipmentcol.AdditionalChargeColumns
 	results, err := tx.NewUpdate().
 		Model(charge).
 		Column(

@@ -2,11 +2,14 @@
 
 package latecharge
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/latechargecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [LateChargeAssessment].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.LateChargeAssessmentFieldMap] instead of parsing struct tags via reflection.
+// the generated [latechargecol.LateChargeAssessmentFieldMap] instead of parsing struct tags via reflection.
 func (e *LateChargeAssessment) GetStaticFieldMap() map[string]string {
-	return buncolgen.LateChargeAssessmentFieldMap
+	return latechargecol.LateChargeAssessmentFieldMap
 }

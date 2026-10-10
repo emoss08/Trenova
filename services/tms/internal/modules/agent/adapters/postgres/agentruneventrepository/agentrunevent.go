@@ -1,6 +1,7 @@
 package agentruneventrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 	"context"
 	"fmt"
 
@@ -79,13 +80,13 @@ func (r *repository) NextSequence(
 	ownerID pulid.ID,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.AgentRunEventColumns
+		cols := agentcol.AgentRunEventColumns
 
 		var highest int
 		err := r.db.DBForContext(ctx).NewSelect().
 			Model((*agent.AgentRunEvent)(nil)).
 			ColumnExpr("COALESCE(MAX(?), 0)", bun.Ident(cols.Sequence.String())).
-			Apply(buncolgen.AgentRunEventApplyTenant(tenantInfo)).
+			Apply(agentcol.AgentRunEventApplyTenant(tenantInfo)).
 			Where(cols.OwnerKind.Eq(), ownerKind).
 			Where(cols.OwnerID.Eq(), ownerID).
 			Scan(ctx, &highest)
@@ -107,12 +108,12 @@ func (r *repository) List(
 	req agentports.ListAgentRunEventsRequest,
 ) ([]*agent.AgentRunEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunEvent, error) {
-		cols := buncolgen.AgentRunEventColumns
+		cols := agentcol.AgentRunEventColumns
 		events := make([]*agent.AgentRunEvent, 0, 32)
 
 		q := r.db.DBForContext(ctx).NewSelect().
 			Model(&events).
-			Apply(buncolgen.AgentRunEventApplyTenant(req.TenantInfo)).
+			Apply(agentcol.AgentRunEventApplyTenant(req.TenantInfo)).
 			Where(cols.OwnerKind.Eq(), req.OwnerKind).
 			Where(cols.OwnerID.Eq(), req.OwnerID).
 			Order(cols.Sequence.OrderAsc())
@@ -154,13 +155,13 @@ func (r *repository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.AgentRunEventTable.Alias,
+						agentcol.AgentRunEventTable.Alias,
 						req.Filter,
 						(*agent.AgentRunEvent)(nil),
 					)
 
 					return ownedBy(sq, req.OwnerKind).
-						Apply(buncolgen.AgentRunEventApplyTenant(req.Filter.TenantInfo))
+						Apply(agentcol.AgentRunEventApplyTenant(req.Filter.TenantInfo))
 				}).
 				Count(ctx)
 			if err != nil {
@@ -187,7 +188,7 @@ func (r *repository) ListConnection(
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 				return querybuilder.ApplyCursorFilters(
 					ownedBy(sq, req.OwnerKind),
-					buncolgen.AgentRunEventTable.Alias,
+					agentcol.AgentRunEventTable.Alias,
 					req.Filter,
 					req.Cursor,
 					(*agent.AgentRunEvent)(nil),
@@ -210,7 +211,7 @@ func ownedBy(sq *bun.SelectQuery, ownerKind string) *bun.SelectQuery {
 		return sq
 	}
 
-	return sq.Where(buncolgen.AgentRunEventColumns.OwnerKind.Eq(), ownerKind)
+	return sq.Where(agentcol.AgentRunEventColumns.OwnerKind.Eq(), ownerKind)
 }
 
 // Prune drops a batch of old events. Deliberately not tenant-scoped: the sweep
@@ -220,7 +221,7 @@ func (r *repository) Prune(
 	req agentports.PruneAgentRunEventsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.AgentRunEventColumns
+		cols := agentcol.AgentRunEventColumns
 
 		dba := r.db.DBForContext(ctx)
 		doomed := dba.NewSelect().

@@ -2,6 +2,7 @@
 package accountingsyncrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
 	"context"
 	"fmt"
 
@@ -40,12 +41,12 @@ func NewConnectionRepository(p ConnectionParams) accountingsyncports.AccountingC
 }
 
 func tokenColumns() []string {
-	cols := buncolgen.AccountingConnectionColumns
+	cols := accountingsynccol.AccountingConnectionColumns
 	return []string{cols.AccessTokenCiphertext.String(), cols.RefreshTokenCiphertext.String()}
 }
 
 func refreshColumns() []string {
-	cols := buncolgen.AccountingConnectionColumns
+	cols := accountingsynccol.AccountingConnectionColumns
 	return []string{
 		cols.ReferenceRefreshStartedAt.String(),
 		cols.ReferenceRefreshedAt.String(),
@@ -67,14 +68,14 @@ func (r *connectionRepository) GetByType(
 ) (*accountingsync.AccountingConnection, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingConnection, error) {
 		entity := new(accountingsync.AccountingConnection)
-		cols := buncolgen.AccountingConnectionColumns
+		cols := accountingsynccol.AccountingConnectionColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			ExcludeColumn(tokenColumns()...).
 			Where(cols.IntegrationType.Eq(), req.IntegrationType).
-			Apply(buncolgen.AccountingConnectionApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingConnectionApplyTenant(req.TenantInfo)).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, connectionEntity)
 		}
@@ -89,14 +90,14 @@ func (r *connectionRepository) GetByID(
 ) (*accountingsync.AccountingConnection, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingConnection, error) {
 		entity := new(accountingsync.AccountingConnection)
-		cols := buncolgen.AccountingConnectionColumns
+		cols := accountingsynccol.AccountingConnectionColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			ExcludeColumn(tokenColumns()...).
 			Where(cols.ID.Eq(), req.ID).
-			Apply(buncolgen.AccountingConnectionApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingConnectionApplyTenant(req.TenantInfo)).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, connectionEntity)
 		}
@@ -111,13 +112,13 @@ func (r *connectionRepository) ListByTenant(
 ) ([]*accountingsync.AccountingConnection, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accountingsync.AccountingConnection, error) {
 		entities := make([]*accountingsync.AccountingConnection, 0, 1)
-		cols := buncolgen.AccountingConnectionColumns
+		cols := accountingsynccol.AccountingConnectionColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			ExcludeColumn(tokenColumns()...).
-			Apply(buncolgen.AccountingConnectionApplyTenant(tenantInfo)).
+			Apply(accountingsynccol.AccountingConnectionApplyTenant(tenantInfo)).
 			Order(cols.IntegrationType.OrderAsc()).
 			Scan(ctx); err != nil {
 			return nil, err
@@ -138,7 +139,7 @@ func (r *connectionRepository) ListHoldingRealm(
 		}
 
 		entities := make([]*accountingsync.AccountingConnection, 0, len(req.RealmIDs))
-		cols := buncolgen.AccountingConnectionColumns
+		cols := accountingsynccol.AccountingConnectionColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -167,7 +168,7 @@ func (r *connectionRepository) ListDueForHealthCheck(
 		}
 
 		entities := make([]*accountingsync.AccountingConnection, 0, limit)
-		cols := buncolgen.AccountingConnectionColumns
+		cols := accountingsynccol.AccountingConnectionColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -195,13 +196,13 @@ func (r *connectionRepository) LockByTypeWithTokens(
 ) (*accountingsync.AccountingConnection, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingConnection, error) {
 		entity := new(accountingsync.AccountingConnection)
-		cols := buncolgen.AccountingConnectionColumns
+		cols := accountingsynccol.AccountingConnectionColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			Where(cols.IntegrationType.Eq(), req.IntegrationType).
-			Apply(buncolgen.AccountingConnectionApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingConnectionApplyTenant(req.TenantInfo)).
 			For("UPDATE").
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, connectionEntity)
@@ -217,13 +218,13 @@ func (r *connectionRepository) LockWithTokens(
 ) (*accountingsync.AccountingConnection, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingConnection, error) {
 		entity := new(accountingsync.AccountingConnection)
-		cols := buncolgen.AccountingConnectionColumns
+		cols := accountingsynccol.AccountingConnectionColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			Where(cols.ID.Eq(), req.ID).
-			Apply(buncolgen.AccountingConnectionApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingConnectionApplyTenant(req.TenantInfo)).
 			For("UPDATE").
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, connectionEntity)
@@ -255,7 +256,7 @@ func (r *connectionRepository) Update(
 	entity *accountingsync.AccountingConnection,
 ) (*accountingsync.AccountingConnection, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingConnection, error) {
-		cols := buncolgen.AccountingConnectionColumns
+		cols := accountingsynccol.AccountingConnectionColumns
 		ov := entity.Version
 		entity.Version++
 
@@ -284,13 +285,13 @@ func (r *connectionRepository) StoreTokens(
 	req accountingsyncports.StoreAccountingTokensRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.AccountingConnectionColumns
+		cols := accountingsynccol.AccountingConnectionColumns
 
 		query := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*accountingsync.AccountingConnection)(nil)).
 			WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.AccountingConnectionScopeTenantUpdate(q, req.TenantInfo).
+				return accountingsynccol.AccountingConnectionScopeTenantUpdate(q, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Set(cols.AccessTokenExpiresAt.Set(), req.AccessTokenExpiresAt).
@@ -320,7 +321,7 @@ func (r *connectionRepository) MarkWebhookReceived(
 			return 0, nil
 		}
 
-		cols := buncolgen.AccountingConnectionColumns
+		cols := accountingsynccol.AccountingConnectionColumns
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*accountingsync.AccountingConnection)(nil)).
@@ -346,12 +347,12 @@ func (r *connectionRepository) MarkReferenceRefresh(
 			return nil
 		}
 
-		cols := buncolgen.AccountingConnectionColumns
+		cols := accountingsynccol.AccountingConnectionColumns
 		query := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*accountingsync.AccountingConnection)(nil)).
 			WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.AccountingConnectionScopeTenantUpdate(q, req.TenantInfo).
+				return accountingsynccol.AccountingConnectionScopeTenantUpdate(q, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			})
 		switch {
@@ -384,12 +385,12 @@ func (r *connectionRepository) SaveChangeFeed(
 	req *accountingsyncports.SaveAccountingChangeFeedRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := buncolgen.AccountingConnectionColumns
+		cols := accountingsynccol.AccountingConnectionColumns
 		query := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*accountingsync.AccountingConnection)(nil)).
 			WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.AccountingConnectionScopeTenantUpdate(q, req.TenantInfo).
+				return accountingsynccol.AccountingConnectionScopeTenantUpdate(q, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			})
 		if req.OnlyIfEmpty {
@@ -422,12 +423,12 @@ func (r *connectionRepository) SaveDriftCheck(
 	req *accountingsyncports.SaveAccountingDriftCheckRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.AccountingConnectionColumns
+		cols := accountingsynccol.AccountingConnectionColumns
 		query := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*accountingsync.AccountingConnection)(nil)).
 			WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.AccountingConnectionScopeTenantUpdate(q, req.TenantInfo).
+				return accountingsynccol.AccountingConnectionScopeTenantUpdate(q, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			})
 		if req.CheckedAt != nil {
@@ -454,7 +455,7 @@ func (r *connectionRepository) ListActive(
 		}
 
 		entities := make([]*accountingsync.AccountingConnection, 0, limit)
-		cols := buncolgen.AccountingConnectionColumns
+		cols := accountingsynccol.AccountingConnectionColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().

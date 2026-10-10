@@ -1,6 +1,7 @@
 package rateagreementrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
 	"context"
 	"sort"
 
@@ -30,10 +31,10 @@ const DefaultCandidateLimit = 200
 // alias the ORM chose would silently stop working if that field were ever
 // renamed. Which rule wins is not something to leave resting on that.
 func agreementJoin() string {
-	agreementCols := buncolgen.RateAgreementColumns
-	ruleCols := buncolgen.RateAgreementRuleColumns
+	agreementCols := rateagreementcol.RateAgreementColumns
+	ruleCols := rateagreementcol.RateAgreementRuleColumns
 
-	return "JOIN " + buncolgen.RateAgreementTable.As(buncolgen.RateAgreementTable.Alias) +
+	return "JOIN " + rateagreementcol.RateAgreementTable.As(rateagreementcol.RateAgreementTable.Alias) +
 		" ON " + agreementCols.ID.Qualified() + " = " + ruleCols.RateAgreementID.Qualified() +
 		" AND " + agreementCols.OrganizationID.Qualified() + " = " +
 		ruleCols.OrganizationID.Qualified() +
@@ -117,8 +118,8 @@ func (r *repository) ResolveRules(
 // order the database happened to return, and the same shipment could rate two
 // ways.
 func candidateOrder(q *bun.SelectQuery) *bun.SelectQuery {
-	cols := buncolgen.RateAgreementRuleColumns
-	agreementCols := buncolgen.RateAgreementColumns
+	cols := rateagreementcol.RateAgreementRuleColumns
+	agreementCols := rateagreementcol.RateAgreementColumns
 
 	return q.
 		OrderExpr(cols.Priority.Qualified() + " DESC").
@@ -133,16 +134,16 @@ func (r *repository) baseCandidateQuery(
 	req *rateagreementports.ResolveRateRulesRequest,
 	entities *[]*rateagreement.RateAgreementRule,
 ) *bun.SelectQuery {
-	cols := buncolgen.RateAgreementRuleColumns
-	agreementCols := buncolgen.RateAgreementColumns
+	cols := rateagreementcol.RateAgreementRuleColumns
+	agreementCols := rateagreementcol.RateAgreementColumns
 
 	return r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entities).
-		ColumnExpr(buncolgen.RateAgreementRuleTable.All()).
+		ColumnExpr(rateagreementcol.RateAgreementRuleTable.All()).
 		Join(agreementJoin()).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = buncolgen.RateAgreementRuleScopeTenant(sq, req.TenantInfo).
+			sq = rateagreementcol.RateAgreementRuleScopeTenant(sq, req.TenantInfo).
 				Where(cols.PartyType.Eq(), req.PartyType).
 				Where(cols.EffectiveFrom.Lte(), req.AsOf).
 				WhereGroup(" AND ", func(wq *bun.SelectQuery) *bun.SelectQuery {
@@ -197,7 +198,7 @@ func (r *repository) resolveKeyedRules(
 		return nil, nil
 	}
 
-	cols := buncolgen.RateAgreementRuleColumns
+	cols := rateagreementcol.RateAgreementRuleColumns
 	entities := make([]*rateagreement.RateAgreementRule, 0, limit)
 
 	// One row over the limit, so the caller can tell a full page from a capped
@@ -230,7 +231,7 @@ func (r *repository) resolveRadiusRules(
 		return nil, nil
 	}
 
-	cols := buncolgen.RateAgreementRuleColumns
+	cols := rateagreementcol.RateAgreementRuleColumns
 	entities := make([]*rateagreement.RateAgreementRule, 0, limit)
 
 	err := r.baseCandidateQuery(ctx, req, &entities).
@@ -287,14 +288,14 @@ func (r *repository) attachAgreements(
 			ids = append(ids, rule.RateAgreementID)
 		}
 
-		cols := buncolgen.RateAgreementColumns
+		cols := rateagreementcol.RateAgreementColumns
 		agreements := make([]*rateagreement.RateAgreement, 0, len(ids))
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&agreements).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RateAgreementScopeTenant(sq, tenantInfo).
+				return rateagreementcol.RateAgreementScopeTenant(sq, tenantInfo).
 					Where(cols.ID.In(), bun.List(ids))
 			}).
 			Scan(ctx)

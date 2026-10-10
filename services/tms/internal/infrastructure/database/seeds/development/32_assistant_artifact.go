@@ -1,6 +1,10 @@
 package development
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/assistantartifactcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 	"fmt"
 
@@ -84,7 +88,7 @@ func (s *AssistantArtifactSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return err
 			}
 
-			cols := buncolgen.ArtifactColumns
+			cols := assistantartifactcol.ArtifactColumns
 			count, err := tx.NewSelect().
 				Model((*assistantartifact.Artifact)(nil)).
 				Where(cols.OrganizationID.Eq(), refs.org.ID).
@@ -119,7 +123,7 @@ func (s *AssistantArtifactSeed) backfillRunDiff(
 		return nil
 	}
 
-	cols := buncolgen.ArtifactColumns
+	cols := assistantartifactcol.ArtifactColumns
 	exists, err := tx.NewSelect().
 		Model((*assistantartifact.Artifact)(nil)).
 		Where(cols.OrganizationID.Eq(), refs.org.ID).
@@ -161,7 +165,7 @@ func (s *AssistantArtifactSeed) loadRefs(
 		includeRunDiff: tx.Dialect().Name() == dialect.PG,
 	}
 
-	threadCols := buncolgen.ThreadColumns
+	threadCols := conversationcol.ThreadColumns
 	refs.threads = make([]*conversation.Thread, 0, 2)
 	if err = tx.NewSelect().
 		Model(&refs.threads).
@@ -176,7 +180,7 @@ func (s *AssistantArtifactSeed) loadRefs(
 		return nil, fmt.Errorf("need a seeded thread: %w", seedhelpers.ErrEntityNotFound)
 	}
 
-	shipmentCols := buncolgen.ShipmentColumns
+	shipmentCols := shipmentcol.ShipmentColumns
 	refs.shipments = make([]*shipment.Shipment, 0, 3)
 	if err = tx.NewSelect().
 		Model(&refs.shipments).
@@ -191,7 +195,7 @@ func (s *AssistantArtifactSeed) loadRefs(
 		return nil, fmt.Errorf("need three seeded shipments: %w", seedhelpers.ErrEntityNotFound)
 	}
 
-	planCols := buncolgen.AgentPlanColumns
+	planCols := agentcol.AgentPlanColumns
 	refs.plan = new(agent.AgentPlan)
 	if err = tx.NewSelect().
 		Model(refs.plan).
@@ -202,7 +206,7 @@ func (s *AssistantArtifactSeed) loadRefs(
 		return nil, fmt.Errorf("load plan: %w", err)
 	}
 
-	proposalCols := buncolgen.AgentProposalColumns
+	proposalCols := agentcol.AgentProposalColumns
 	refs.steps = make([]*agent.AgentProposal, 0, 3)
 	if err = tx.NewSelect().
 		Model(&refs.steps).

@@ -1,6 +1,8 @@
 package shipmenttrackingrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -45,19 +47,19 @@ func (r *repository) ListTrackingShipments(
 			ids = ids[:MaxTrackingShipments]
 		}
 
-		sm := buncolgen.ShipmentMoveColumns
-		stp := buncolgen.StopColumns
-		rel := buncolgen.ShipmentRelations
-		moves := buncolgen.ShipmentMoveRelations
-		stops := buncolgen.StopRelations
+		sm := shipmentcol.ShipmentMoveColumns
+		stp := shipmentcol.StopColumns
+		rel := shipmentcol.ShipmentRelations
+		moves := shipmentcol.ShipmentMoveRelations
+		stops := shipmentcol.StopRelations
 
 		entities := make([]*shipment.Shipment, 0, len(ids))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ShipmentScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.ShipmentColumns.ID.In(), bun.List(ids))
+				return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
+					Where(shipmentcol.ShipmentColumns.ID.In(), bun.List(ids))
 			}).
 			Relation(rel.Customer).
 			RelationWithOpts(rel.Moves, bun.RelationOpts{
@@ -75,7 +77,7 @@ func (r *repository) ListTrackingShipments(
 				rel.Moves,
 				moves.Stops,
 				stops.Location,
-				buncolgen.LocationRelations.State,
+				locationcol.LocationRelations.State,
 			)).
 			Scan(ctx)
 		if err != nil {

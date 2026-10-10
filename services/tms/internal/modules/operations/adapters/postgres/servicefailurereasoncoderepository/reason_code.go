@@ -1,6 +1,7 @@
 package servicefailurereasoncoderepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/servicefailurecol"
 	"context"
 	"fmt"
 
@@ -78,7 +79,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.ReasonCodeTable.Alias,
+		servicefailurecol.ReasonCodeTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*servicefailure.ReasonCode)(nil),
@@ -91,7 +92,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.ReasonCodeTable.Alias,
+		servicefailurecol.ReasonCodeTable.Alias,
 		req.Filter,
 		(*servicefailure.ReasonCode)(nil),
 	)
@@ -99,7 +100,7 @@ func (r *repository) applyTotalCountFilters(
 
 func applyServiceFailureReasonCodeColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.ReasonCodeTable.All())
+		return q.ColumnExpr(servicefailurecol.ReasonCodeTable.All())
 	}
 
 	return q.Column(columns...)

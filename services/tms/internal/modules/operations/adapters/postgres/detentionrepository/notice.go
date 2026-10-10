@@ -1,6 +1,7 @@
 package detentionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/detentioncol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
@@ -93,13 +94,13 @@ func (r *noticeRepository) AttachPDFDocument(
 	req *detentionports.AttachNoticePDFDocumentRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.DetentionNoticeColumns
+		cols := detentioncol.DetentionNoticeColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*detention.DetentionNotice)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.DetentionNoticeScopeTenantUpdate(uq, req.TenantInfo).
+				return detentioncol.DetentionNoticeScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.NoticeID)
 			}).
 			Set(cols.PDFDocumentID.Set(), req.DocumentID).
@@ -119,14 +120,14 @@ func (r *noticeRepository) List(
 	req *detentionports.ListDetentionNoticesRequest,
 ) ([]*detention.DetentionNotice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionNotice, error) {
-		cols := buncolgen.DetentionNoticeColumns
+		cols := detentioncol.DetentionNoticeColumns
 		entities := make([]*detention.DetentionNotice, 0, 8)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DetentionNoticeScopeTenant(sq, req.TenantInfo).
+				return detentioncol.DetentionNoticeScopeTenant(sq, req.TenantInfo).
 					Where(cols.DetentionOccurrenceID.Eq(), req.OccurrenceID)
 			}).
 			Order(cols.CreatedAt.OrderAsc()).
@@ -147,14 +148,14 @@ func (r *noticeRepository) ListQueued(
 	req *detentionports.ListNoticesDueRequest,
 ) ([]*detention.DetentionNotice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionNotice, error) {
-		cols := buncolgen.DetentionNoticeColumns
+		cols := detentioncol.DetentionNoticeColumns
 		entities := make([]*detention.DetentionNotice, 0, 32)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DetentionNoticeScopeTenant(sq, req.TenantInfo).
+				return detentioncol.DetentionNoticeScopeTenant(sq, req.TenantInfo).
 					Where(cols.DeliveryStatus.Eq(), detention.NoticeDeliveryStatusQueued).
 					Where(cols.ScheduledFor.Lte(), req.Before)
 			}).

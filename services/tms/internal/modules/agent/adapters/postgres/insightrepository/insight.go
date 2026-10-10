@@ -3,6 +3,7 @@
 package insightrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/insightcol"
 	"context"
 	"fmt"
 
@@ -70,7 +71,7 @@ func (r *repository) ListActive(
 			limit = defaultActiveLimit
 		}
 
-		cols := buncolgen.InsightColumns
+		cols := insightcol.InsightColumns
 		entities := make([]*insight.Insight, 0, limit)
 
 		if len(req.AllowedDetectorKeys) == 0 {
@@ -83,7 +84,7 @@ func (r *repository) ListActive(
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.InsightApplyTenant(req.TenantInfo)).
+			Apply(insightcol.InsightApplyTenant(req.TenantInfo)).
 			Where(cols.Status.Eq(), insight.StatusActive).
 			Where(cols.DetectorKey.In(), bun.In([]string(req.AllowedDetectorKeys)))
 
@@ -118,7 +119,7 @@ func (r *repository) List(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*insight.Insight], error) {
 		log := r.l.With(zap.String("operation", "List"))
 
-		cols := buncolgen.InsightColumns
+		cols := insightcol.InsightColumns
 		limit, offset := pageBounds(req.Limit, req.Offset)
 		entities := make([]*insight.Insight, 0, limit)
 
@@ -129,7 +130,7 @@ func (r *repository) List(
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.InsightApplyTenant(req.TenantInfo)).
+			Apply(insightcol.InsightApplyTenant(req.TenantInfo)).
 			Where(cols.DetectorKey.In(), bun.In([]string(req.AllowedDetectorKeys)))
 
 		if len(req.Statuses) > 0 {
@@ -185,13 +186,13 @@ func (r *repository) GetByID(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*insight.Insight, error) {
 		log := r.l.With(zap.String("operation", "GetByID"), zap.String("id", req.ID.String()))
 
-		cols := buncolgen.InsightColumns
+		cols := insightcol.InsightColumns
 		entity := new(insight.Insight)
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Apply(buncolgen.InsightApplyTenant(req.TenantInfo)).
+			Apply(insightcol.InsightApplyTenant(req.TenantInfo)).
 			Where(cols.ID.Eq(), req.ID).
 			Scan(ctx); err != nil {
 			log.Error("failed to get insight", zap.Error(err))
@@ -222,13 +223,13 @@ func (r *repository) ListHistory(
 			limit = maxHistoryLimit
 		}
 
-		cols := buncolgen.InsightColumns
+		cols := insightcol.InsightColumns
 		entities := make([]*insight.Insight, 0, limit)
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.InsightApplyTenant(req.TenantInfo)).
+			Apply(insightcol.InsightApplyTenant(req.TenantInfo)).
 			Where(cols.DedupeKey.Eq(), req.DedupeKey)
 
 		if !req.ExcludeID.IsNil() {
@@ -260,7 +261,7 @@ func (r *repository) Dismiss(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*insight.Insight, error) {
 		log := r.l.With(zap.String("operation", "Dismiss"), zap.String("id", req.ID.String()))
 
-		cols := buncolgen.InsightColumns
+		cols := insightcol.InsightColumns
 		entity := new(insight.Insight)
 		now := timeutils.NowUnix()
 
@@ -268,7 +269,7 @@ func (r *repository) Dismiss(
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.InsightScopeTenantUpdate(uq, req.TenantInfo).
+				return insightcol.InsightScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID).
 					Where(cols.Status.Eq(), insight.StatusActive)
 			}).
@@ -307,14 +308,14 @@ func (r *repository) Restore(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*insight.Insight, error) {
 		log := r.l.With(zap.String("operation", "Restore"), zap.String("id", req.ID.String()))
 
-		cols := buncolgen.InsightColumns
+		cols := insightcol.InsightColumns
 		entity := new(insight.Insight)
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.InsightScopeTenantUpdate(uq, req.TenantInfo).
+				return insightcol.InsightScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID).
 					Where(cols.Status.Eq(), insight.StatusDismissed)
 			}).
@@ -403,13 +404,13 @@ func (r *repository) suppressedKeys(
 	tx bun.Tx,
 	req insightports.ReplaceDetectorFindingsRequest,
 ) (map[string]struct{}, error) {
-	cols := buncolgen.InsightColumns
+	cols := insightcol.InsightColumns
 	keys := make([]string, 0)
 
 	if err := tx.NewSelect().
 		Model((*insight.Insight)(nil)).
 		Column(cols.DedupeKey.String()).
-		Apply(buncolgen.InsightApplyTenant(req.TenantInfo)).
+		Apply(insightcol.InsightApplyTenant(req.TenantInfo)).
 		Where(cols.DetectorKey.Eq(), req.DetectorKey).
 		Where(cols.Status.Eq(), insight.StatusDismissed).
 		Where(cols.DismissedAt.Gte(), req.SuppressedBefore).
@@ -509,13 +510,13 @@ func (r *repository) closeActive(
 	tx bun.Tx,
 	params closeParams,
 ) ([]string, error) {
-	cols := buncolgen.InsightColumns
+	cols := insightcol.InsightColumns
 	now := timeutils.NowUnix()
 
 	query := tx.NewUpdate().
 		Model((*insight.Insight)(nil)).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.InsightScopeTenantUpdate(uq, params.req.TenantInfo).
+			return insightcol.InsightScopeTenantUpdate(uq, params.req.TenantInfo).
 				Where(cols.DetectorKey.Eq(), params.req.DetectorKey).
 				Where(cols.Status.Eq(), insight.StatusActive)
 		}).

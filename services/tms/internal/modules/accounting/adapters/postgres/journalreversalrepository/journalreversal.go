@@ -1,6 +1,7 @@
 package journalreversalrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/journalreversalcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
@@ -77,7 +78,7 @@ func (r *repository) List(
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return querybuilder.ApplyFilters(
 					sq,
-					buncolgen.ReversalTable.Alias,
+					journalreversalcol.ReversalTable.Alias,
 					req.Filter,
 					(*journalreversal.Reversal)(nil),
 				)
@@ -85,7 +86,7 @@ func (r *repository) List(
 			Limit(req.Filter.Pagination.SafeLimit()).
 			Offset(req.Filter.Pagination.SafeOffset())
 		if len(req.Filter.Sort) == 0 {
-			query = query.Order(buncolgen.ReversalColumns.CreatedAt.OrderDesc())
+			query = query.Order(journalreversalcol.ReversalColumns.CreatedAt.OrderDesc())
 		}
 		total, err := query.ScanAndCount(ctx)
 		if err != nil {

@@ -1,6 +1,7 @@
 package extractionevalrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/extractionevalcol"
 	"context"
 	"fmt"
 
@@ -89,8 +90,8 @@ func (r *runRepository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ExtractionRunScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.ExtractionRunColumns.ID.Eq(), req.ID)
+				return extractionevalcol.ExtractionRunScopeTenant(sq, req.TenantInfo).
+					Where(extractionevalcol.ExtractionRunColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -106,14 +107,14 @@ func (r *runRepository) Update(
 	entity *extractioneval.ExtractionRun,
 ) (*extractioneval.ExtractionRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*extractioneval.ExtractionRun, error) {
-		cols := buncolgen.ExtractionRunColumns
+		cols := extractionevalcol.ExtractionRunColumns
 		previous := entity.Version
 
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ExtractionRunScopeTenantUpdate(uq, pagination.TenantInfo{
+				return extractionevalcol.ExtractionRunScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
 				}).
@@ -157,12 +158,12 @@ func (r *runRepository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.ExtractionRunTable.Alias,
+						extractionevalcol.ExtractionRunTable.Alias,
 						req.Filter,
 						(*extractioneval.ExtractionRun)(nil),
 					)
 
-					return sq.Apply(buncolgen.ExtractionRunApplyTenant(req.Filter.TenantInfo))
+					return sq.Apply(extractionevalcol.ExtractionRunApplyTenant(req.Filter.TenantInfo))
 				}).
 				Count(ctx)
 			if err != nil {
@@ -188,7 +189,7 @@ func (r *runRepository) ListConnection(
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 				return querybuilder.ApplyCursorFilters(
 					sq,
-					buncolgen.ExtractionRunTable.Alias,
+					extractionevalcol.ExtractionRunTable.Alias,
 					req.Filter,
 					req.Cursor,
 					(*extractioneval.ExtractionRun)(nil),
@@ -212,7 +213,7 @@ func (r *runRepository) ListRecentFinished(
 	limit int,
 ) ([]*extractioneval.ExtractionRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*extractioneval.ExtractionRun, error) {
-		cols := buncolgen.ExtractionRunColumns
+		cols := extractionevalcol.ExtractionRunColumns
 		if limit <= 0 || limit > maxRecentRuns {
 			limit = maxRecentRuns
 		}
@@ -222,7 +223,7 @@ func (r *runRepository) ListRecentFinished(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ExtractionRunScopeTenant(sq, tenant).
+				return extractionevalcol.ExtractionRunScopeTenant(sq, tenant).
 					Where(cols.Task.Eq(), task).
 					Where(cols.Status.In(), bun.List([]extractioneval.RunStatus{
 						extractioneval.RunStatusCompleted,
@@ -249,7 +250,7 @@ func (r *runRepository) PurgeBefore(
 	req extractionevalports.PurgeExtractionEvalRunsRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := buncolgen.ExtractionRunColumns
+		cols := extractionevalcol.ExtractionRunColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultPurgeLimit
@@ -261,7 +262,7 @@ func (r *runRepository) PurgeBefore(
 			Model((*extractioneval.ExtractionRun)(nil)).
 			Column(cols.ID.Bare()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ExtractionRunScopeTenant(sq, req.TenantInfo).
+				return extractionevalcol.ExtractionRunScopeTenant(sq, req.TenantInfo).
 					Where(cols.CreatedAt.Lt(), req.Before).
 					Where(cols.Status.NotIn(), bun.List([]extractioneval.RunStatus{
 						extractioneval.RunStatusQueued,
@@ -274,7 +275,7 @@ func (r *runRepository) PurgeBefore(
 		res, err := dba.NewDelete().
 			Model((*extractioneval.ExtractionRun)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.ExtractionRunScopeTenantDelete(dq, req.TenantInfo).
+				return extractionevalcol.ExtractionRunScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.ID.In(), expired)
 			}).
 			Exec(ctx)

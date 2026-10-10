@@ -1,6 +1,7 @@
 package airetrievalrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/airetrievalcol"
 	"context"
 	"fmt"
 
@@ -37,7 +38,7 @@ func (r *repository) findSettings(
 	entity := new(airetrieval.Settings)
 	q := dba.NewSelect().
 		Model(entity).
-		Apply(buncolgen.SettingsApplyTenant(tenantInfo)).
+		Apply(airetrievalcol.SettingsApplyTenant(tenantInfo)).
 		Limit(1)
 	if forUpdate {
 		q = q.For("UPDATE")
@@ -128,7 +129,7 @@ func (r *repository) updateSettings(
 	entity *airetrieval.Settings,
 	existing *airetrieval.Settings,
 ) (*airetrieval.Settings, error) {
-	cols := buncolgen.SettingsColumns
+	cols := airetrievalcol.SettingsColumns
 	ov := entity.Version
 	entity.ID = existing.ID
 	entity.CreatedAt = existing.CreatedAt
@@ -138,7 +139,7 @@ func (r *repository) updateSettings(
 	res, err := dba.NewUpdate().
 		Model(entity).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.SettingsScopeTenantUpdate(uq, pagination.TenantInfo{
+			return airetrievalcol.SettingsScopeTenantUpdate(uq, pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
 				BuID:  entity.BusinessUnitID,
 			}).
@@ -252,14 +253,14 @@ func (r *repository) writePause(
 	tx bun.Tx,
 	settings *airetrieval.Settings,
 ) (*airetrieval.Settings, error) {
-	cols := buncolgen.SettingsColumns
+	cols := airetrievalcol.SettingsColumns
 	settings.Version++
 	settings.UpdatedAt = timeutils.NowUnix()
 
 	if _, err := tx.NewUpdate().
 		Model(settings).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.SettingsScopeTenantUpdate(uq, pagination.TenantInfo{
+			return airetrievalcol.SettingsScopeTenantUpdate(uq, pagination.TenantInfo{
 				OrgID: settings.OrganizationID,
 				BuID:  settings.BusinessUnitID,
 			}).Where(cols.ID.Eq(), settings.ID)
@@ -313,11 +314,11 @@ func (r *repository) SwapModel(
 			current.Version++
 			current.UpdatedAt = timeutils.NowUnix()
 
-			cols := buncolgen.SettingsColumns
+			cols := airetrievalcol.SettingsColumns
 			if _, err = tx.NewUpdate().
 				Model(current).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return buncolgen.SettingsScopeTenantUpdate(uq, req.TenantInfo).
+					return airetrievalcol.SettingsScopeTenantUpdate(uq, req.TenantInfo).
 						Where(cols.ID.Eq(), current.ID)
 				}).
 				Set(cols.ActiveModelKey.Set(), current.ActiveModelKey).
@@ -404,18 +405,18 @@ func purgeIndexEntries(
 	req agentports.PurgeAIRetrievalModelRequest,
 	batch int,
 ) (int, error) {
-	cols := buncolgen.IndexEntryColumns
+	cols := airetrievalcol.IndexEntryColumns
 	victims := tx.NewSelect().
 		Model((*airetrieval.IndexEntry)(nil)).
-		Column(buncolgen.IndexEntryTable.PrimaryKey...).
-		Apply(buncolgen.IndexEntryApplyTenant(req.TenantInfo)).
+		Column(airetrievalcol.IndexEntryTable.PrimaryKey...).
+		Apply(airetrievalcol.IndexEntryApplyTenant(req.TenantInfo)).
 		Where(cols.ModelKey.Eq(), req.ModelKey).
 		Limit(batch)
 
 	res, err := tx.NewDelete().
 		Model((*airetrieval.IndexEntry)(nil)).
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return buncolgen.IndexEntryScopeTenantDelete(dq, req.TenantInfo).
+			return airetrievalcol.IndexEntryScopeTenantDelete(dq, req.TenantInfo).
 				Where(indexEntryKeyTuple()+" IN (?)", victims)
 		}).
 		Exec(ctx)
@@ -432,18 +433,18 @@ func purgeEmbeddings(
 	req agentports.PurgeAIRetrievalModelRequest,
 	batch int,
 ) (int, error) {
-	cols := buncolgen.EmbeddingColumns
+	cols := airetrievalcol.EmbeddingColumns
 	victims := tx.NewSelect().
 		Model((*airetrieval.Embedding)(nil)).
-		Column(buncolgen.EmbeddingTable.PrimaryKey...).
-		Apply(buncolgen.EmbeddingApplyTenant(req.TenantInfo)).
+		Column(airetrievalcol.EmbeddingTable.PrimaryKey...).
+		Apply(airetrievalcol.EmbeddingApplyTenant(req.TenantInfo)).
 		Where(cols.ModelKey.Eq(), req.ModelKey).
 		Limit(batch)
 
 	res, err := tx.NewDelete().
 		Model((*airetrieval.Embedding)(nil)).
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return buncolgen.EmbeddingScopeTenantDelete(dq, req.TenantInfo).
+			return airetrievalcol.EmbeddingScopeTenantDelete(dq, req.TenantInfo).
 				Where(embeddingKeyTuple()+" IN (?)", victims)
 		}).
 		Exec(ctx)
@@ -455,7 +456,7 @@ func purgeEmbeddings(
 }
 
 func embeddingKeyTuple() string {
-	cols := buncolgen.EmbeddingColumns
+	cols := airetrievalcol.EmbeddingColumns
 
 	return buncolgen.Expr("({0}, {1}, {2}, {3}, {4}, {5})",
 		cols.OrganizationID,
@@ -478,7 +479,7 @@ func (r *repository) ListIndexedTenants(
 ) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations that index sources for retrieval")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
-		cols := buncolgen.SettingsColumns
+		cols := airetrievalcol.SettingsColumns
 		limit := intutils.Clamp(req.Limit, 1, maxIndexedTenantPage)
 
 		q := r.db.DBForContext(ctx).

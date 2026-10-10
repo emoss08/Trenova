@@ -1,6 +1,7 @@
 package editransactionsetrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
 	"context"
 	"strings"
 
@@ -40,7 +41,7 @@ func (r *repository) SelectTransactionSetOptions(
 ) (*pagination.ListResult[*edi.EDITransactionSet], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDITransactionSet], error) {
 		entities := make([]*edi.EDITransactionSet, 0, req.SelectQueryRequest.Pagination.SafeLimit())
-		cols := buncolgen.EDITransactionSetColumns
+		cols := edicol.EDITransactionSetColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
@@ -79,7 +80,7 @@ func filterTransactionSetsQuery(
 	query *bun.SelectQuery,
 	req *ediports.EDITransactionSetSelectOptionsRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.EDITransactionSetColumns
+	cols := edicol.EDITransactionSetColumns
 	if len(req.IDs) > 0 {
 		query = query.Where(cols.ID.In(), bun.List(req.IDs))
 	}
@@ -99,7 +100,7 @@ func applyTransactionSetSearch(query *bun.SelectQuery, search string) *bun.Selec
 	}
 
 	term := "%" + strings.ToLower(search) + "%"
-	cols := buncolgen.EDITransactionSetColumns
+	cols := edicol.EDITransactionSetColumns
 
 	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 		return sq.WhereOr(cols.Code.LowerLike(), term).

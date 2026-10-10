@@ -2,11 +2,14 @@
 
 package fiscalperiod
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/fiscalperiodcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [FiscalPeriod].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.FiscalPeriodFieldMap] instead of parsing struct tags via reflection.
+// the generated [fiscalperiodcol.FiscalPeriodFieldMap] instead of parsing struct tags via reflection.
 func (e *FiscalPeriod) GetStaticFieldMap() map[string]string {
-	return buncolgen.FiscalPeriodFieldMap
+	return fiscalperiodcol.FiscalPeriodFieldMap
 }

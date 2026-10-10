@@ -1,6 +1,9 @@
 package agentdecisionqueuerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 	"fmt"
 	"strings"
@@ -57,19 +60,19 @@ func (u *unionQuery) write(fragment string, args ...any) {
 // pendingUnion writes the subquery; the caller selects from it as "q" with
 // the columns kind, id, created_at, agent_definition_id and agent_name.
 func pendingUnion(req agentports.ListPendingDecisionsQuery) *unionQuery {
-	proposals := buncolgen.AgentProposalColumns
-	plans := buncolgen.AgentPlanColumns
-	runs := buncolgen.AgentRunColumns
-	definitions := buncolgen.DefinitionColumns
+	proposals := agentcol.AgentProposalColumns
+	plans := agentcol.AgentPlanColumns
+	runs := agentcol.AgentRunColumns
+	definitions := agentdefinitioncol.DefinitionColumns
 
 	u := &unionQuery{}
 	joinRunAndDefinition := func(ownerOrg, ownerBU, ownerRun string) {
-		u.write(" JOIN " + buncolgen.AgentRunTable.Name + " AS " + buncolgen.AgentRunTable.Alias +
+		u.write(" JOIN " + agentcol.AgentRunTable.Name + " AS " + agentcol.AgentRunTable.Alias +
 			" ON " + runs.ID.Qualified() + " = " + ownerRun +
 			" AND " + runs.OrganizationID.Qualified() + " = " + ownerOrg +
 			" AND " + runs.BusinessUnitID.Qualified() + " = " + ownerBU)
 		u.write(
-			" LEFT JOIN " + buncolgen.DefinitionTable.Name + " AS " + buncolgen.DefinitionTable.Alias +
+			" LEFT JOIN " + agentdefinitioncol.DefinitionTable.Name + " AS " + agentdefinitioncol.DefinitionTable.Alias +
 				" ON " + definitions.ID.Qualified() + " = " + runs.AgentDefinitionID.Qualified() +
 				" AND " + definitions.OrganizationID.Qualified() + " = " + runs.OrganizationID.Qualified() +
 				" AND " + definitions.BusinessUnitID.Qualified() + " = " + runs.BusinessUnitID.Qualified(),
@@ -97,7 +100,7 @@ func pendingUnion(req agentports.ListPendingDecisionsQuery) *unionQuery {
 		runs.AgentDefinitionID.Qualified()+" AS agent_definition_id, "+
 		"COALESCE("+definitions.Name.Qualified()+", '') AS agent_name, "+
 		proposals.ToolName.Qualified()+" AS tool_name"+
-		" FROM "+buncolgen.AgentProposalTable.Name+" AS "+buncolgen.AgentProposalTable.Alias,
+		" FROM "+agentcol.AgentProposalTable.Name+" AS "+agentcol.AgentProposalTable.Alias,
 		string(agentports.PendingDecisionProposal))
 	joinRunAndDefinition(
 		proposals.OrganizationID.Qualified(),
@@ -122,7 +125,7 @@ func pendingUnion(req agentports.ListPendingDecisionsQuery) *unionQuery {
 		runs.AgentDefinitionID.Qualified()+" AS agent_definition_id, "+
 		"COALESCE("+definitions.Name.Qualified()+", '') AS agent_name, "+
 		"? AS tool_name"+
-		" FROM "+buncolgen.AgentPlanTable.Name+" AS "+buncolgen.AgentPlanTable.Alias,
+		" FROM "+agentcol.AgentPlanTable.Name+" AS "+agentcol.AgentPlanTable.Alias,
 		string(agentports.PendingDecisionPlan), agent.PlanToolName)
 	joinRunAndDefinition(
 		plans.OrganizationID.Qualified(),
@@ -136,7 +139,7 @@ func pendingUnion(req agentports.ListPendingDecisionsQuery) *unionQuery {
 		plans.ExpiresAt.Qualified(),
 	)
 	if req.ToolName != "" {
-		u.write(" AND EXISTS (SELECT 1 FROM "+buncolgen.AgentProposalTable.Name+" AS step"+
+		u.write(" AND EXISTS (SELECT 1 FROM "+agentcol.AgentProposalTable.Name+" AS step"+
 			" WHERE step."+proposals.PlanID.Name+" = "+plans.ID.Qualified()+
 			" AND step."+proposals.OrganizationID.Name+" = "+plans.OrganizationID.Qualified()+
 			" AND step."+proposals.BusinessUnitID.Name+" = "+plans.BusinessUnitID.Qualified()+
@@ -154,7 +157,7 @@ func writeAudience(u *unionQuery, audience *kernelports.AgentAudience) {
 		return
 	}
 
-	definitions := buncolgen.DefinitionColumns
+	definitions := agentdefinitioncol.DefinitionColumns
 	u.write(" AND ("+definitions.ID.Qualified()+" IS NULL OR "+
 		definitions.AccessMode.Qualified()+" = ? OR "+
 		definitions.SystemKey.Qualified()+" IS NOT NULL",
@@ -312,11 +315,11 @@ func (r *repository) ListRecent(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]agentports.RecentDecisionEntry, error) {
-			decisions := buncolgen.AgentDecisionColumns
-			proposals := buncolgen.AgentProposalColumns
-			runs := buncolgen.AgentRunColumns
-			definitions := buncolgen.DefinitionColumns
-			users := buncolgen.UserColumns
+			decisions := agentcol.AgentDecisionColumns
+			proposals := agentcol.AgentProposalColumns
+			runs := agentcol.AgentRunColumns
+			definitions := agentdefinitioncol.DefinitionColumns
+			users := tenantcol.UserColumns
 
 			q := &unionQuery{}
 			q.write("SELECT " + decisions.ID.Qualified() + " AS decision_id, " +
@@ -327,20 +330,20 @@ func (r *repository) ListRecent(
 				decisions.DecidedByUserID.Qualified() + " AS decided_by_user_id, " +
 				"COALESCE(" + users.Name.Qualified() + ", '') AS decided_by_name, " +
 				decisions.CreatedAt.Qualified() + " AS decided_at" +
-				" FROM " + buncolgen.AgentDecisionTable.Name + " AS " + buncolgen.AgentDecisionTable.Alias +
-				" JOIN " + buncolgen.AgentProposalTable.Name + " AS " + buncolgen.AgentProposalTable.Alias +
+				" FROM " + agentcol.AgentDecisionTable.Name + " AS " + agentcol.AgentDecisionTable.Alias +
+				" JOIN " + agentcol.AgentProposalTable.Name + " AS " + agentcol.AgentProposalTable.Alias +
 				" ON " + proposals.ID.Qualified() + " = " + decisions.ProposalID.Qualified() +
 				" AND " + proposals.OrganizationID.Qualified() + " = " + decisions.OrganizationID.Qualified() +
 				" AND " + proposals.BusinessUnitID.Qualified() + " = " + decisions.BusinessUnitID.Qualified() +
-				" JOIN " + buncolgen.AgentRunTable.Name + " AS " + buncolgen.AgentRunTable.Alias +
+				" JOIN " + agentcol.AgentRunTable.Name + " AS " + agentcol.AgentRunTable.Alias +
 				" ON " + runs.ID.Qualified() + " = " + proposals.RunID.Qualified() +
 				" AND " + runs.OrganizationID.Qualified() + " = " + proposals.OrganizationID.Qualified() +
 				" AND " + runs.BusinessUnitID.Qualified() + " = " + proposals.BusinessUnitID.Qualified() +
-				" LEFT JOIN " + buncolgen.DefinitionTable.Name + " AS " + buncolgen.DefinitionTable.Alias +
+				" LEFT JOIN " + agentdefinitioncol.DefinitionTable.Name + " AS " + agentdefinitioncol.DefinitionTable.Alias +
 				" ON " + definitions.ID.Qualified() + " = " + runs.AgentDefinitionID.Qualified() +
 				" AND " + definitions.OrganizationID.Qualified() + " = " + runs.OrganizationID.Qualified() +
 				" AND " + definitions.BusinessUnitID.Qualified() + " = " + runs.BusinessUnitID.Qualified() +
-				" LEFT JOIN " + buncolgen.UserTable.Name + " AS " + buncolgen.UserTable.Alias +
+				" LEFT JOIN " + tenantcol.UserTable.Name + " AS " + tenantcol.UserTable.Alias +
 				" ON " + users.ID.Qualified() + " = " + decisions.DecidedByUserID.Qualified())
 			q.write(" WHERE "+decisions.OrganizationID.Qualified()+" = ? AND "+
 				decisions.BusinessUnitID.Qualified()+" = ? AND "+

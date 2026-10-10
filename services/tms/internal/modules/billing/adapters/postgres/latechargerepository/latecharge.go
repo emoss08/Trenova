@@ -1,6 +1,7 @@
 package latechargerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/latechargecol"
 	"context"
 	"fmt"
 
@@ -171,12 +172,12 @@ func (r *repository) listByRunKey(
 	runKey string,
 ) ([]*latecharge.LateChargeAssessment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*latecharge.LateChargeAssessment, error) {
-		cols := buncolgen.LateChargeAssessmentColumns
+		cols := latechargecol.LateChargeAssessmentColumns
 		rows := make([]*latecharge.LateChargeAssessment, 0)
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model(&rows).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.LateChargeAssessmentScopeTenant(sq, tenantInfo).
+				return latechargecol.LateChargeAssessmentScopeTenant(sq, tenantInfo).
 					Where(cols.RunKey.Eq(), runKey)
 			}).
 			Order(cols.SourceInvoiceID.OrderAsc(), cols.PeriodIndex.OrderAsc()).
@@ -193,7 +194,7 @@ func (r *repository) SetDebitMemoLines(
 	assessments []*latecharge.LateChargeAssessment,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.LateChargeAssessmentColumns
+		cols := latechargecol.LateChargeAssessmentColumns
 		for _, assessment := range assessments {
 			if assessment == nil || assessment.DebitMemoLineID.IsNil() {
 				continue
@@ -217,7 +218,7 @@ func (r *repository) DeleteByRunKey(
 	runKey string,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := buncolgen.LateChargeAssessmentColumns
+		cols := latechargecol.LateChargeAssessmentColumns
 		res, err := r.db.DBForContext(ctx).NewDelete().
 			Model((*latecharge.LateChargeAssessment)(nil)).
 			Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
@@ -236,7 +237,7 @@ func (r *repository) ListBySourceInvoiceIDs(
 	ctx context.Context,
 	req *latechargeports.ListLateChargeAssessmentsByInvoiceIDsRequest,
 ) (map[pulid.ID][]*latecharge.LateChargeAssessment, error) {
-	cols := buncolgen.LateChargeAssessmentColumns
+	cols := latechargecol.LateChargeAssessmentColumns
 	return r.listGrouped(
 		ctx,
 		req,
@@ -251,7 +252,7 @@ func (r *repository) ListByDebitMemoIDs(
 	ctx context.Context,
 	req *latechargeports.ListLateChargeAssessmentsByInvoiceIDsRequest,
 ) (map[pulid.ID][]*latecharge.LateChargeAssessment, error) {
-	cols := buncolgen.LateChargeAssessmentColumns
+	cols := latechargecol.LateChargeAssessmentColumns
 	return r.listGrouped(
 		ctx,
 		req,
@@ -274,12 +275,12 @@ func (r *repository) listGrouped(
 			return result, nil
 		}
 
-		cols := buncolgen.LateChargeAssessmentColumns
+		cols := latechargecol.LateChargeAssessmentColumns
 		rows := make([]*latecharge.LateChargeAssessment, 0, len(req.InvoiceIDs))
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model(&rows).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.LateChargeAssessmentScopeTenant(sq, req.TenantInfo).
+				return latechargecol.LateChargeAssessmentScopeTenant(sq, req.TenantInfo).
 					Where(column.In(), bun.List(req.InvoiceIDs))
 			}).
 			Order(cols.AsOfDate.OrderDesc(), cols.PeriodIndex.OrderAsc()).
@@ -302,11 +303,11 @@ func (r *repository) CountBySourceInvoiceID(
 	invoiceID pulid.ID,
 ) (int64, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := buncolgen.LateChargeAssessmentColumns
+		cols := latechargecol.LateChargeAssessmentColumns
 		count, err := r.db.DBForContext(ctx).NewSelect().
 			Model((*latecharge.LateChargeAssessment)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.LateChargeAssessmentScopeTenant(sq, tenantInfo).
+				return latechargecol.LateChargeAssessmentScopeTenant(sq, tenantInfo).
 					Where(cols.SourceInvoiceID.Eq(), invoiceID)
 			}).
 			Count(ctx)

@@ -1,6 +1,7 @@
 package workersafetyrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -39,13 +40,13 @@ func (r *repository) ListEvents(
 	req *workerports.ListWorkerSafetyEventsRequest,
 ) ([]*worker.WorkerSafetyEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerSafetyEvent, error) {
-		cols := buncolgen.WorkerSafetyEventColumns
+		cols := workercol.WorkerSafetyEventColumns
 		entities := make([]*worker.WorkerSafetyEvent, 0, 16)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerSafetyEventScopeTenant(sq, req.TenantInfo)
+				sq = workercol.WorkerSafetyEventScopeTenant(sq, req.TenantInfo)
 				if req.WorkerID.IsNotNil() {
 					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
 				}
@@ -62,14 +63,14 @@ func (r *repository) ListEvents(
 			Order(cols.OccurredAt.OrderDesc()).
 			Order(cols.CreatedAt.OrderDesc())
 		if req.IncludeDocument {
-			q = q.Relation(buncolgen.WorkerSafetyEventRelations.Document)
+			q = q.Relation(workercol.WorkerSafetyEventRelations.Document)
 		}
 		if req.IncludeActors {
-			q = q.Relation(buncolgen.WorkerSafetyEventRelations.RecordedBy).
-				Relation(buncolgen.WorkerSafetyEventRelations.ClosedBy)
+			q = q.Relation(workercol.WorkerSafetyEventRelations.RecordedBy).
+				Relation(workercol.WorkerSafetyEventRelations.ClosedBy)
 		}
 		if req.IncludeWorker {
-			q = q.Relation(buncolgen.WorkerSafetyEventRelations.Worker)
+			q = q.Relation(workercol.WorkerSafetyEventRelations.Worker)
 		}
 		if req.Limit > 0 {
 			q = q.Limit(req.Limit)
@@ -94,14 +95,14 @@ func (r *repository) GetEventByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerSafetyEventScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerSafetyEventColumns.ID.Eq(), req.ID)
+				return workercol.WorkerSafetyEventScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerSafetyEventColumns.ID.Eq(), req.ID)
 			})
 		if req.IncludeWorker {
-			q = q.Relation(buncolgen.WorkerSafetyEventRelations.Worker)
+			q = q.Relation(workercol.WorkerSafetyEventRelations.Worker)
 		}
 		if req.IncludeDocument {
-			q = q.Relation(buncolgen.WorkerSafetyEventRelations.Document)
+			q = q.Relation(workercol.WorkerSafetyEventRelations.Document)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -142,7 +143,7 @@ func (r *repository) UpdateEvent(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.WorkerSafetyEventColumns.Version.Eq(), ov).
+			Where(workercol.WorkerSafetyEventColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -166,8 +167,8 @@ func (r *repository) DeleteEvent(
 			NewDelete().
 			Model((*worker.WorkerSafetyEvent)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.WorkerSafetyEventScopeTenantDelete(dq, req.TenantInfo).
-					Where(buncolgen.WorkerSafetyEventColumns.ID.Eq(), req.ID)
+				return workercol.WorkerSafetyEventScopeTenantDelete(dq, req.TenantInfo).
+					Where(workercol.WorkerSafetyEventColumns.ID.Eq(), req.ID)
 			}).
 			Exec(ctx)
 		if err != nil {
@@ -183,22 +184,22 @@ func (r *repository) ListActions(
 	req *workerports.ListWorkerDisciplinaryActionsRequest,
 ) ([]*worker.WorkerDisciplinaryAction, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerDisciplinaryAction, error) {
-		cols := buncolgen.WorkerDisciplinaryActionColumns
+		cols := workercol.WorkerDisciplinaryActionColumns
 		entities := make([]*worker.WorkerDisciplinaryAction, 0, 8)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerDisciplinaryActionScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerDisciplinaryActionScopeTenant(sq, req.TenantInfo).
 					Where(cols.WorkerID.Eq(), req.WorkerID)
 			}).
 			Order(cols.IssuedAt.OrderDesc()).
 			Order(cols.CreatedAt.OrderDesc())
 		if req.IncludeEvent {
-			q = q.Relation(buncolgen.WorkerDisciplinaryActionRelations.SafetyEvent)
+			q = q.Relation(workercol.WorkerDisciplinaryActionRelations.SafetyEvent)
 		}
 		if req.IncludeActors {
-			q = q.Relation(buncolgen.WorkerDisciplinaryActionRelations.IssuedBy)
+			q = q.Relation(workercol.WorkerDisciplinaryActionRelations.IssuedBy)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -220,11 +221,11 @@ func (r *repository) GetActionByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerDisciplinaryActionScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerDisciplinaryActionColumns.ID.Eq(), req.ID)
+				return workercol.WorkerDisciplinaryActionScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerDisciplinaryActionColumns.ID.Eq(), req.ID)
 			})
 		if req.IncludeEvent {
-			q = q.Relation(buncolgen.WorkerDisciplinaryActionRelations.SafetyEvent)
+			q = q.Relation(workercol.WorkerDisciplinaryActionRelations.SafetyEvent)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -265,7 +266,7 @@ func (r *repository) UpdateAction(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.WorkerDisciplinaryActionColumns.Version.Eq(), ov).
+			Where(workercol.WorkerDisciplinaryActionColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -285,13 +286,13 @@ func (r *repository) ListRecognitions(
 	req *workerports.ListWorkerRecognitionsRequest,
 ) ([]*worker.WorkerRecognition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerRecognition, error) {
-		cols := buncolgen.WorkerRecognitionColumns
+		cols := workercol.WorkerRecognitionColumns
 		entities := make([]*worker.WorkerRecognition, 0, 8)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerRecognitionScopeTenant(sq, req.TenantInfo).
+				sq = workercol.WorkerRecognitionScopeTenant(sq, req.TenantInfo).
 					Where(cols.WorkerID.Eq(), req.WorkerID)
 				if req.VisibleOnly {
 					sq = sq.Where(cols.VisibleToWorker.Eq(), true)
@@ -300,7 +301,7 @@ func (r *repository) ListRecognitions(
 			}).
 			Order(cols.OccurredAt.OrderDesc())
 		if req.IncludeActors {
-			q = q.Relation(buncolgen.WorkerRecognitionRelations.AwardedBy)
+			q = q.Relation(workercol.WorkerRecognitionRelations.AwardedBy)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -322,8 +323,8 @@ func (r *repository) GetRecognitionByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerRecognitionScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerRecognitionColumns.ID.Eq(), req.ID)
+				return workercol.WorkerRecognitionScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerRecognitionColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -361,8 +362,8 @@ func (r *repository) DeleteRecognition(
 			NewDelete().
 			Model((*worker.WorkerRecognition)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.WorkerRecognitionScopeTenantDelete(dq, req.TenantInfo).
-					Where(buncolgen.WorkerRecognitionColumns.ID.Eq(), req.ID)
+				return workercol.WorkerRecognitionScopeTenantDelete(dq, req.TenantInfo).
+					Where(workercol.WorkerRecognitionColumns.ID.Eq(), req.ID)
 			}).
 			Exec(ctx)
 		if err != nil {
@@ -383,8 +384,8 @@ func (r *repository) ListWorkersWithLapsedPoints(
 ) ([]workerports.WorkerTenantRef, error) {
 	ctx = dbscope.WithSystem(ctx, "list workers with lapsed safety points across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.WorkerTenantRef, error) {
-		ecols := buncolgen.WorkerSafetyEventColumns
-		acols := buncolgen.WorkerDisciplinaryActionColumns
+		ecols := workercol.WorkerSafetyEventColumns
+		acols := workercol.WorkerDisciplinaryActionColumns
 
 		events := r.db.DBForContext(ctx).
 			NewSelect().

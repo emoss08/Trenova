@@ -2,18 +2,21 @@
 
 package agentextension
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentextensioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Extension].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ExtensionFieldMap] instead of parsing struct tags via reflection.
+// the generated [agentextensioncol.ExtensionFieldMap] instead of parsing struct tags via reflection.
 func (e *Extension) GetStaticFieldMap() map[string]string {
-	return buncolgen.ExtensionFieldMap
+	return agentextensioncol.ExtensionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ExtensionUsageDaily].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ExtensionUsageDailyFieldMap] instead of parsing struct tags via reflection.
+// the generated [agentextensioncol.ExtensionUsageDailyFieldMap] instead of parsing struct tags via reflection.
 func (e *ExtensionUsageDaily) GetStaticFieldMap() map[string]string {
-	return buncolgen.ExtensionUsageDailyFieldMap
+	return agentextensioncol.ExtensionUsageDailyFieldMap
 }

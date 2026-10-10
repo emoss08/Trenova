@@ -2,11 +2,14 @@
 
 package insight
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/insightcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Insight].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.InsightFieldMap] instead of parsing struct tags via reflection.
+// the generated [insightcol.InsightFieldMap] instead of parsing struct tags via reflection.
 func (e *Insight) GetStaticFieldMap() map[string]string {
-	return buncolgen.InsightFieldMap
+	return insightcol.InsightFieldMap
 }

@@ -2,60 +2,63 @@
 
 package invoiceadjustment
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/invoiceadjustmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InvoiceAdjustment].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.InvoiceAdjustmentFieldMap] instead of parsing struct tags via reflection.
+// the generated [invoiceadjustmentcol.InvoiceAdjustmentFieldMap] instead of parsing struct tags via reflection.
 func (e *InvoiceAdjustment) GetStaticFieldMap() map[string]string {
-	return buncolgen.InvoiceAdjustmentFieldMap
+	return invoiceadjustmentcol.InvoiceAdjustmentFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InvoiceAdjustmentBatch].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.InvoiceAdjustmentBatchFieldMap] instead of parsing struct tags via reflection.
+// the generated [invoiceadjustmentcol.InvoiceAdjustmentBatchFieldMap] instead of parsing struct tags via reflection.
 func (e *InvoiceAdjustmentBatch) GetStaticFieldMap() map[string]string {
-	return buncolgen.InvoiceAdjustmentBatchFieldMap
+	return invoiceadjustmentcol.InvoiceAdjustmentBatchFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InvoiceAdjustmentBatchItem].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.InvoiceAdjustmentBatchItemFieldMap] instead of parsing struct tags via reflection.
+// the generated [invoiceadjustmentcol.InvoiceAdjustmentBatchItemFieldMap] instead of parsing struct tags via reflection.
 func (e *InvoiceAdjustmentBatchItem) GetStaticFieldMap() map[string]string {
-	return buncolgen.InvoiceAdjustmentBatchItemFieldMap
+	return invoiceadjustmentcol.InvoiceAdjustmentBatchItemFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InvoiceAdjustmentCorrectionGroup].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.InvoiceAdjustmentCorrectionGroupFieldMap] instead of parsing struct tags via reflection.
+// the generated [invoiceadjustmentcol.InvoiceAdjustmentCorrectionGroupFieldMap] instead of parsing struct tags via reflection.
 func (e *InvoiceAdjustmentCorrectionGroup) GetStaticFieldMap() map[string]string {
-	return buncolgen.InvoiceAdjustmentCorrectionGroupFieldMap
+	return invoiceadjustmentcol.InvoiceAdjustmentCorrectionGroupFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InvoiceAdjustmentDocumentReference].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.InvoiceAdjustmentDocumentReferenceFieldMap] instead of parsing struct tags via reflection.
+// the generated [invoiceadjustmentcol.InvoiceAdjustmentDocumentReferenceFieldMap] instead of parsing struct tags via reflection.
 func (e *InvoiceAdjustmentDocumentReference) GetStaticFieldMap() map[string]string {
-	return buncolgen.InvoiceAdjustmentDocumentReferenceFieldMap
+	return invoiceadjustmentcol.InvoiceAdjustmentDocumentReferenceFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InvoiceAdjustmentLine].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.InvoiceAdjustmentLineFieldMap] instead of parsing struct tags via reflection.
+// the generated [invoiceadjustmentcol.InvoiceAdjustmentLineFieldMap] instead of parsing struct tags via reflection.
 func (e *InvoiceAdjustmentLine) GetStaticFieldMap() map[string]string {
-	return buncolgen.InvoiceAdjustmentLineFieldMap
+	return invoiceadjustmentcol.InvoiceAdjustmentLineFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InvoiceAdjustmentReconciliationException].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.InvoiceAdjustmentReconciliationExceptionFieldMap] instead of parsing struct tags via reflection.
+// the generated [invoiceadjustmentcol.InvoiceAdjustmentReconciliationExceptionFieldMap] instead of parsing struct tags via reflection.
 func (e *InvoiceAdjustmentReconciliationException) GetStaticFieldMap() map[string]string {
-	return buncolgen.InvoiceAdjustmentReconciliationExceptionFieldMap
+	return invoiceadjustmentcol.InvoiceAdjustmentReconciliationExceptionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InvoiceAdjustmentSnapshot].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.InvoiceAdjustmentSnapshotFieldMap] instead of parsing struct tags via reflection.
+// the generated [invoiceadjustmentcol.InvoiceAdjustmentSnapshotFieldMap] instead of parsing struct tags via reflection.
 func (e *InvoiceAdjustmentSnapshot) GetStaticFieldMap() map[string]string {
-	return buncolgen.InvoiceAdjustmentSnapshotFieldMap
+	return invoiceadjustmentcol.InvoiceAdjustmentSnapshotFieldMap
 }

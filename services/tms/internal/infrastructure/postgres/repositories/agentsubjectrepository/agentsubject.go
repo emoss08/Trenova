@@ -1,6 +1,21 @@
 package agentsubjectrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
+	"github.com/emoss08/trenova/pkg/buncolgen/bankreceiptcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/billingqueuecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/detentioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
+	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/insightcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/reportcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 
@@ -58,108 +73,108 @@ type subjectTable struct {
 var subjectTables = map[agent.SubjectType]subjectTable{
 	agent.SubjectBillingQueueItem: {
 		model:  func() any { return (*billingqueue.BillingQueueItem)(nil) },
-		tenant: buncolgen.BillingQueueItemApplyTenant,
-		id:     buncolgen.BillingQueueItemColumns.ID,
+		tenant: billingqueuecol.BillingQueueItemApplyTenant,
+		id:     billingqueuecol.BillingQueueItemColumns.ID,
 	},
 	agent.SubjectShipmentMove: {
 		model:  func() any { return (*shipment.ShipmentMove)(nil) },
-		tenant: buncolgen.ShipmentMoveApplyTenant,
-		id:     buncolgen.ShipmentMoveColumns.ID,
+		tenant: shipmentcol.ShipmentMoveApplyTenant,
+		id:     shipmentcol.ShipmentMoveColumns.ID,
 	},
 	agent.SubjectAssistantThread: {
 		model:  func() any { return (*conversation.Thread)(nil) },
-		tenant: buncolgen.ThreadApplyTenant,
-		id:     buncolgen.ThreadColumns.ID,
+		tenant: conversationcol.ThreadApplyTenant,
+		id:     conversationcol.ThreadColumns.ID,
 	},
 	agent.SubjectShipment: {
 		model:  func() any { return (*shipment.Shipment)(nil) },
-		tenant: buncolgen.ShipmentApplyTenant,
-		id:     buncolgen.ShipmentColumns.ID,
+		tenant: shipmentcol.ShipmentApplyTenant,
+		id:     shipmentcol.ShipmentColumns.ID,
 	},
 	agent.SubjectDocument: {
 		model:  func() any { return (*document.Document)(nil) },
-		tenant: buncolgen.DocumentApplyTenant,
-		id:     buncolgen.DocumentColumns.ID,
+		tenant: documentcol.DocumentApplyTenant,
+		id:     documentcol.DocumentColumns.ID,
 	},
 	agent.SubjectInsight: {
 		model:  func() any { return (*insight.Insight)(nil) },
-		tenant: buncolgen.InsightApplyTenant,
-		id:     buncolgen.InsightColumns.ID,
+		tenant: insightcol.InsightApplyTenant,
+		id:     insightcol.InsightColumns.ID,
 	},
 	agent.SubjectBankReceipt: {
 		model:  func() any { return (*bankreceipt.BankReceipt)(nil) },
-		tenant: buncolgen.BankReceiptApplyTenant,
-		id:     buncolgen.BankReceiptColumns.ID,
+		tenant: bankreceiptcol.BankReceiptApplyTenant,
+		id:     bankreceiptcol.BankReceiptColumns.ID,
 	},
 	agent.SubjectDetentionOccurrence: {
 		model:  func() any { return (*detention.DetentionOccurrence)(nil) },
-		tenant: buncolgen.DetentionOccurrenceApplyTenant,
-		id:     buncolgen.DetentionOccurrenceColumns.ID,
+		tenant: detentioncol.DetentionOccurrenceApplyTenant,
+		id:     detentioncol.DetentionOccurrenceColumns.ID,
 	},
 	agent.SubjectWorker: {
 		model:  func() any { return (*worker.Worker)(nil) },
-		tenant: buncolgen.WorkerApplyTenant,
-		id:     buncolgen.WorkerColumns.ID,
+		tenant: workercol.WorkerApplyTenant,
+		id:     workercol.WorkerColumns.ID,
 	},
 	agent.SubjectCarrierIntelEvent: {
 		model:  func() any { return (*carrierintel.CarrierIntelEvent)(nil) },
-		tenant: buncolgen.CarrierIntelEventApplyTenant,
-		id:     buncolgen.CarrierIntelEventColumns.ID,
+		tenant: carrierintelcol.CarrierIntelEventApplyTenant,
+		id:     carrierintelcol.CarrierIntelEventColumns.ID,
 	},
 	agent.SubjectEDIInboundFile: {
 		model:  func() any { return (*edi.EDIInboundFile)(nil) },
-		tenant: buncolgen.EDIInboundFileApplyTenant,
-		id:     buncolgen.EDIInboundFileColumns.ID,
+		tenant: edicol.EDIInboundFileApplyTenant,
+		id:     edicol.EDIInboundFileColumns.ID,
 	},
 	agent.SubjectInboundMessage: {
 		model:  func() any { return (*inboundmessage.InboundMessage)(nil) },
-		tenant: buncolgen.InboundMessageApplyTenant,
-		id:     buncolgen.InboundMessageColumns.ID,
+		tenant: inboundmessagecol.InboundMessageApplyTenant,
+		id:     inboundmessagecol.InboundMessageColumns.ID,
 	},
 	agent.SubjectReport: {
 		model:  func() any { return (*report.ReportDefinition)(nil) },
-		tenant: buncolgen.ReportDefinitionApplyTenant,
-		id:     buncolgen.ReportDefinitionColumns.ID,
+		tenant: reportcol.ReportDefinitionApplyTenant,
+		id:     reportcol.ReportDefinitionColumns.ID,
 	},
 	agent.SubjectDashboard: {
 		model:  func() any { return (*report.Dashboard)(nil) },
-		tenant: buncolgen.DashboardApplyTenant,
-		id:     buncolgen.DashboardColumns.ID,
+		tenant: reportcol.DashboardApplyTenant,
+		id:     reportcol.DashboardColumns.ID,
 	},
 	agent.SubjectAccountingConnection: {
 		model:  func() any { return (*accountingsync.AccountingConnection)(nil) },
-		tenant: buncolgen.AccountingConnectionApplyTenant,
-		id:     buncolgen.AccountingConnectionColumns.ID,
+		tenant: accountingsynccol.AccountingConnectionApplyTenant,
+		id:     accountingsynccol.AccountingConnectionColumns.ID,
 	},
 	agent.SubjectAccountingSyncRecord: {
 		model:  func() any { return (*accountingsync.AccountingSyncRecord)(nil) },
-		tenant: buncolgen.AccountingSyncRecordApplyTenant,
-		id:     buncolgen.AccountingSyncRecordColumns.ID,
+		tenant: accountingsynccol.AccountingSyncRecordApplyTenant,
+		id:     accountingsynccol.AccountingSyncRecordColumns.ID,
 	},
 	agent.SubjectAccountingInbound: {
 		model:  func() any { return (*accountingsync.AccountingInboundChange)(nil) },
-		tenant: buncolgen.AccountingInboundChangeApplyTenant,
-		id:     buncolgen.AccountingInboundChangeColumns.ID,
+		tenant: accountingsynccol.AccountingInboundChangeApplyTenant,
+		id:     accountingsynccol.AccountingInboundChangeColumns.ID,
 	},
 	agent.SubjectAccountingDrift: {
 		model:  func() any { return (*accountingsync.AccountingDriftFinding)(nil) },
-		tenant: buncolgen.AccountingDriftFindingApplyTenant,
-		id:     buncolgen.AccountingDriftFindingColumns.ID,
+		tenant: accountingsynccol.AccountingDriftFindingApplyTenant,
+		id:     accountingsynccol.AccountingDriftFindingColumns.ID,
 	},
 	agent.SubjectFormulaTemplate: {
 		model:  func() any { return (*formulatemplate.FormulaTemplate)(nil) },
-		tenant: buncolgen.FormulaTemplateApplyTenant,
-		id:     buncolgen.FormulaTemplateColumns.ID,
+		tenant: formulatemplatecol.FormulaTemplateApplyTenant,
+		id:     formulatemplatecol.FormulaTemplateColumns.ID,
 	},
 	agent.SubjectInvoice: {
 		model:  func() any { return (*invoice.Invoice)(nil) },
-		tenant: buncolgen.InvoiceApplyTenant,
-		id:     buncolgen.InvoiceColumns.ID,
+		tenant: invoicecol.InvoiceApplyTenant,
+		id:     invoicecol.InvoiceColumns.ID,
 	},
 	agent.SubjectInvoiceDispute: {
 		model:  func() any { return (*invoice.InvoiceDispute)(nil) },
-		tenant: buncolgen.InvoiceDisputeApplyTenant,
-		id:     buncolgen.InvoiceDisputeColumns.ID,
+		tenant: invoicecol.InvoiceDisputeApplyTenant,
+		id:     invoicecol.InvoiceDisputeColumns.ID,
 	},
 }
 

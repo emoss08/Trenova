@@ -1,6 +1,8 @@
 package homelayoutrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/homelayoutcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/permissioncol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
@@ -31,10 +33,10 @@ func (r *repository) ListPresets(
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&presets).
-			Apply(buncolgen.PresetApplyTenant(req.TenantInfo)).
+			Apply(homelayoutcol.PresetApplyTenant(req.TenantInfo)).
 			Order(
-				buncolgen.PresetColumns.Priority.OrderDesc(),
-				buncolgen.PresetColumns.CreatedAt.OrderDesc(),
+				homelayoutcol.PresetColumns.Priority.OrderDesc(),
+				homelayoutcol.PresetColumns.CreatedAt.OrderDesc(),
 			).
 			Scan(ctx)
 		if err != nil {
@@ -61,8 +63,8 @@ func (r *repository) GetPreset(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.PresetScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.PresetColumns.ID.Eq(), req.PresetID)
+				return homelayoutcol.PresetScopeTenant(sq, req.TenantInfo).
+					Where(homelayoutcol.PresetColumns.ID.Eq(), req.PresetID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -155,7 +157,7 @@ func (r *repository) UpdatePreset(
 			result, err := tx.NewUpdate().
 				Model(entity).
 				WherePK().
-				Where(buncolgen.PresetColumns.Version.Eq(), ov).
+				Where(homelayoutcol.PresetColumns.Version.Eq(), ov).
 				Returning("*").
 				Exec(c)
 			if err != nil {
@@ -194,8 +196,8 @@ func (r *repository) DeletePreset(
 			NewDelete().
 			Model((*homelayout.Preset)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.PresetScopeTenantDelete(dq, req.TenantInfo).
-					Where(buncolgen.PresetColumns.ID.Eq(), req.PresetID)
+				return homelayoutcol.PresetScopeTenantDelete(dq, req.TenantInfo).
+					Where(homelayoutcol.PresetColumns.ID.Eq(), req.PresetID)
 			}).
 			Exec(ctx)
 		if err != nil {
@@ -226,17 +228,17 @@ func clearOrgDefault(
 ) error {
 	_, err := idb.NewUpdate().
 		Model((*homelayout.Preset)(nil)).
-		Set(buncolgen.PresetColumns.IsOrgDefault.Bare()+" = FALSE").
-		Set(buncolgen.PresetColumns.Version.Bare()+" = "+buncolgen.PresetColumns.Version.Bare()+" + 1").
-		Set(buncolgen.PresetColumns.UpdatedAt.Bare()+" = ?", timeutils.NowUnix()).
+		Set(homelayoutcol.PresetColumns.IsOrgDefault.Bare()+" = FALSE").
+		Set(homelayoutcol.PresetColumns.Version.Bare()+" = "+homelayoutcol.PresetColumns.Version.Bare()+" + 1").
+		Set(homelayoutcol.PresetColumns.UpdatedAt.Bare()+" = ?", timeutils.NowUnix()).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			uq = uq.Where(buncolgen.PresetColumns.OrganizationID.Eq(), orgID).
-				Where(buncolgen.PresetColumns.BusinessUnitID.Eq(), buID).
-				Where(buncolgen.PresetColumns.IsOrgDefault.IsTrue())
+			uq = uq.Where(homelayoutcol.PresetColumns.OrganizationID.Eq(), orgID).
+				Where(homelayoutcol.PresetColumns.BusinessUnitID.Eq(), buID).
+				Where(homelayoutcol.PresetColumns.IsOrgDefault.IsTrue())
 			if exceptID.IsNil() {
 				return uq
 			}
-			return uq.Where(buncolgen.PresetColumns.ID.Ne(), exceptID)
+			return uq.Where(homelayoutcol.PresetColumns.ID.Ne(), exceptID)
 		}).
 		Exec(ctx)
 
@@ -260,17 +262,17 @@ func (r *repository) ListRoleUserAssignments(
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*permission.UserRoleAssignment)(nil)).
-			ColumnExpr(buncolgen.UserRoleAssignmentColumns.RoleID.Qualified()+" AS role_id").
-			ColumnExpr(buncolgen.UserRoleAssignmentColumns.UserID.Qualified()+" AS user_id").
+			ColumnExpr(permissioncol.UserRoleAssignmentColumns.RoleID.Qualified()+" AS role_id").
+			ColumnExpr(permissioncol.UserRoleAssignmentColumns.UserID.Qualified()+" AS user_id").
 			ColumnExpr(
-				buncolgen.RoleColumns.CoreResponsibility.Qualified()+" AS core_responsibility",
+				permissioncol.RoleColumns.CoreResponsibility.Qualified()+" AS core_responsibility",
 			).
-			Join("JOIN roles AS r ON "+buncolgen.RoleColumns.ID.Qualified()+" = "+
-				buncolgen.UserRoleAssignmentColumns.RoleID.Qualified()).
-			Where(buncolgen.UserRoleAssignmentColumns.OrganizationID.Eq(), tenantInfo.OrgID).
+			Join("JOIN roles AS r ON "+permissioncol.RoleColumns.ID.Qualified()+" = "+
+				permissioncol.UserRoleAssignmentColumns.RoleID.Qualified()).
+			Where(permissioncol.UserRoleAssignmentColumns.OrganizationID.Eq(), tenantInfo.OrgID).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where(buncolgen.UserRoleAssignmentColumns.ExpiresAt.IsNull()).
-					WhereOr(buncolgen.UserRoleAssignmentColumns.ExpiresAt.Gt(), now)
+				return sq.Where(permissioncol.UserRoleAssignmentColumns.ExpiresAt.IsNull()).
+					WhereOr(permissioncol.UserRoleAssignmentColumns.ExpiresAt.Gt(), now)
 			}).
 			Scan(ctx, &assignments)
 		if err != nil {

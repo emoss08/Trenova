@@ -1,6 +1,7 @@
 package agentreflectionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 	"context"
 	"fmt"
 
@@ -69,7 +70,7 @@ func (r *repository) claimed(
 	ctx context.Context,
 	entity *agent.Reflection,
 ) (*agent.Reflection, error) {
-	cols := buncolgen.ReflectionColumns
+	cols := agentcol.ReflectionColumns
 	held := new(agent.Reflection)
 	tenant := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 
@@ -77,7 +78,7 @@ func (r *repository) claimed(
 		NewSelect().
 		Model(held).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = buncolgen.ReflectionScopeTenant(sq, tenant).
+			sq = agentcol.ReflectionScopeTenant(sq, tenant).
 				Where(cols.SubjectType.Eq(), entity.SubjectType)
 			if entity.SubjectType == agent.ReflectionSubjectRun {
 				return sq.Where(cols.RunID.Eq(), entity.RunID)
@@ -100,13 +101,13 @@ func (r *repository) GetByID(
 	req agentports.GetAgentReflectionRequest,
 ) (*agent.Reflection, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.Reflection, error) {
-		cols := buncolgen.ReflectionColumns
+		cols := agentcol.ReflectionColumns
 		entity := new(agent.Reflection)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ReflectionScopeTenant(sq, req.TenantInfo).
+				return agentcol.ReflectionScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
@@ -123,7 +124,7 @@ func (r *repository) Update(
 	entity *agent.Reflection,
 ) (*agent.Reflection, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Reflection, error) {
-		cols := buncolgen.ReflectionColumns
+		cols := agentcol.ReflectionColumns
 		ov := entity.Version
 		entity.Version++
 
@@ -131,7 +132,7 @@ func (r *repository) Update(
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ReflectionScopeTenantUpdate(uq, pagination.TenantInfo{
+				return agentcol.ReflectionScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
 				}).Where(cols.ID.Eq(), entity.ID).
@@ -173,14 +174,14 @@ func (r *repository) ThreadReflectedThrough(
 	req agentports.ThreadReflectedThroughRequest,
 ) (int, bool, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (int, bool, error) {
-		cols := buncolgen.ReflectionColumns
+		cols := agentcol.ReflectionColumns
 		latest := new(agent.Reflection)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(latest).
 			Column(cols.ThroughSequence.Bare()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ReflectionScopeTenant(sq, req.TenantInfo).
+				return agentcol.ReflectionScopeTenant(sq, req.TenantInfo).
 					Where(cols.SubjectType.Eq(), agent.ReflectionSubjectThread).
 					Where(cols.ThreadID.Eq(), req.ThreadID).
 					Where(cols.Status.NotEq(), agent.ReflectionStatusFailed)
@@ -217,12 +218,12 @@ func (r *repository) ListConnection(
 					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 						sq = querybuilder.ApplyFiltersWithoutSort(
 							sq,
-							buncolgen.ReflectionTable.Alias,
+							agentcol.ReflectionTable.Alias,
 							req.Filter,
 							(*agent.Reflection)(nil),
 						)
 
-						return sq.Apply(buncolgen.ReflectionApplyTenant(req.Filter.TenantInfo))
+						return sq.Apply(agentcol.ReflectionApplyTenant(req.Filter.TenantInfo))
 					}).
 					Count(ctx)
 				if err != nil {
@@ -248,7 +249,7 @@ func (r *repository) ListConnection(
 					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 						return querybuilder.ApplyCursorFilters(
 							sq,
-							buncolgen.ReflectionTable.Alias,
+							agentcol.ReflectionTable.Alias,
 							req.Filter,
 							req.Cursor,
 							(*agent.Reflection)(nil),

@@ -1,6 +1,7 @@
 package agentproposalbaselinerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 	"context"
 	"fmt"
 	"strings"
@@ -35,7 +36,7 @@ func New(p Params) agentports.AgentProposalBaselineRepository {
 }
 
 var conflictTarget = "CONFLICT (" +
-	strings.Join(buncolgen.ProposalBaselineTable.PrimaryKey, ", ") + ") DO NOTHING"
+	strings.Join(agentcol.ProposalBaselineTable.PrimaryKey, ", ") + ") DO NOTHING"
 
 func (r *repository) Create(ctx context.Context, baseline *agent.ProposalBaseline) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
@@ -60,7 +61,7 @@ func (r *repository) GetByProposal(
 			Model(baseline).
 			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 				return scope(q, req.TenantInfo).
-					Where(buncolgen.ProposalBaselineColumns.ProposalID.Eq(), req.ProposalID)
+					Where(agentcol.ProposalBaselineColumns.ProposalID.Eq(), req.ProposalID)
 			}).
 			Limit(1).
 			Scan(ctx); err != nil {
@@ -85,7 +86,7 @@ func (r *repository) ListByProposals(
 			Model(&rows).
 			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 				return scope(q, req.TenantInfo).
-					Where(buncolgen.ProposalBaselineColumns.ProposalID.In(), bun.List(req.ProposalIDs))
+					Where(agentcol.ProposalBaselineColumns.ProposalID.In(), bun.List(req.ProposalIDs))
 			}).
 			Scan(ctx); err != nil {
 			return nil, fmt.Errorf("list proposal baselines: %w", err)
@@ -125,8 +126,8 @@ func (r *repository) PurgeOrphans(
 // can be known to be an orphan: its filing was retried under another id, or
 // never happened.
 func purgeQuery(db bun.IDB, before int64, limit int) *bun.DeleteQuery {
-	cols := buncolgen.ProposalBaselineColumns
-	proposal := buncolgen.AgentProposalColumns
+	cols := agentcol.ProposalBaselineColumns
+	proposal := agentcol.AgentProposalColumns
 
 	filed := db.NewSelect().
 		Model((*agent.AgentProposal)(nil)).
@@ -153,5 +154,5 @@ func purgeQuery(db bun.IDB, before int64, limit int) *bun.DeleteQuery {
 }
 
 func scope(q *bun.SelectQuery, tenant pagination.TenantInfo) *bun.SelectQuery {
-	return buncolgen.ProposalBaselineScopeTenant(q, tenant)
+	return agentcol.ProposalBaselineScopeTenant(q, tenant)
 }

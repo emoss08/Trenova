@@ -1,6 +1,7 @@
 package documentpacketrulerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/documentpacketrulecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
@@ -42,7 +43,7 @@ func (r *repository) filterQuery(
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.DocumentPacketRuleTable.Alias,
+		documentpacketrulecol.DocumentPacketRuleTable.Alias,
 		req.Filter,
 		(*documentpacketrule.DocumentPacketRule)(nil),
 	)
@@ -78,7 +79,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.DocumentPacketRuleTable.Alias,
+		documentpacketrulecol.DocumentPacketRuleTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*documentpacketrule.DocumentPacketRule)(nil),
@@ -91,7 +92,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.DocumentPacketRuleTable.Alias,
+		documentpacketrulecol.DocumentPacketRuleTable.Alias,
 		req.Filter,
 		(*documentpacketrule.DocumentPacketRule)(nil),
 	)
@@ -174,8 +175,8 @@ func (r *repository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DocumentPacketRuleScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.DocumentPacketRuleColumns.ID.Eq(), req.ID)
+				return documentpacketrulecol.DocumentPacketRuleScopeTenant(sq, req.TenantInfo).
+					Where(documentpacketrulecol.DocumentPacketRuleColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -193,13 +194,13 @@ func (r *repository) ListByResourceType(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*documentpacketrule.DocumentPacketRule, error) {
 		items := make([]*documentpacketrule.DocumentPacketRule, 0)
 
-		cols := buncolgen.DocumentPacketRuleColumns
+		cols := documentpacketrulecol.DocumentPacketRuleColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&items).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DocumentPacketRuleScopeTenant(sq, req.TenantInfo).
+				return documentpacketrulecol.DocumentPacketRuleScopeTenant(sq, req.TenantInfo).
 					Where(cols.ResourceType.Eq(), req.ResourceType)
 			}).
 			Order(cols.DisplayOrder.OrderAsc(), cols.CreatedAt.OrderAsc()).
@@ -246,7 +247,7 @@ func (r *repository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.DocumentPacketRuleColumns.Version.Eq(), ov).
+			Where(documentpacketrulecol.DocumentPacketRuleColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -280,8 +281,8 @@ func (r *repository) Delete(
 			NewDelete().
 			Model((*documentpacketrule.DocumentPacketRule)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.DocumentPacketRuleScopeTenantDelete(dq, req.TenantInfo).
-					Where(buncolgen.DocumentPacketRuleColumns.ID.Eq(), req.ID)
+				return documentpacketrulecol.DocumentPacketRuleScopeTenantDelete(dq, req.TenantInfo).
+					Where(documentpacketrulecol.DocumentPacketRuleColumns.ID.Eq(), req.ID)
 			}).
 			Exec(ctx)
 		if err != nil {

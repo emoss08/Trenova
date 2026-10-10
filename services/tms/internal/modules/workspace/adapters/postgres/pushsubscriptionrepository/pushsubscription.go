@@ -1,6 +1,7 @@
 package pushsubscriptionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/notificationcol"
 	"context"
 	"fmt"
 
@@ -38,7 +39,7 @@ func (r *pushSubscriptionRepository) Save(
 	req *notificationports.SavePushSubscriptionRequest,
 ) (*notification.PushSubscription, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*notification.PushSubscription, error) {
-		cols := buncolgen.PushSubscriptionColumns
+		cols := notificationcol.PushSubscriptionColumns
 		entity := &notification.PushSubscription{
 			BusinessUnitID: req.TenantInfo.BuID,
 			OrganizationID: req.TenantInfo.OrgID,
@@ -72,7 +73,7 @@ func (r *pushSubscriptionRepository) ListByUser(
 	userID pulid.ID,
 ) ([]*notification.PushSubscription, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*notification.PushSubscription, error) {
-		cols := buncolgen.PushSubscriptionColumns
+		cols := notificationcol.PushSubscriptionColumns
 		items := make([]*notification.PushSubscription, 0, 4)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -93,7 +94,7 @@ func (r *pushSubscriptionRepository) DeleteByEndpoint(
 	endpoint string,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.PushSubscriptionColumns
+		cols := notificationcol.PushSubscriptionColumns
 		_, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*notification.PushSubscription)(nil)).
@@ -112,7 +113,7 @@ func (r *pushSubscriptionRepository) DeleteByID(
 	id pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.PushSubscriptionColumns
+		cols := notificationcol.PushSubscriptionColumns
 		_, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*notification.PushSubscription)(nil)).

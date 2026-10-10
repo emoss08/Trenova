@@ -1,6 +1,7 @@
 package carrierintelrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
 	"context"
 	"fmt"
 
@@ -79,7 +80,7 @@ func (r *controlRepository) selectControl(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierIntelControlScopeTenant(sq, tenantInfo)
+				return carrierintelcol.CarrierIntelControlScopeTenant(sq, tenantInfo)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -102,7 +103,7 @@ func (r *controlRepository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.CarrierIntelControlColumns.Version.Eq(), ov).
+			Where(carrierintelcol.CarrierIntelControlColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -123,7 +124,7 @@ func (r *controlRepository) ListConfigured(
 ) ([]*carrierintel.CarrierIntelControl, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations with carrier intelligence configured")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrierintel.CarrierIntelControl, error) {
-		cols := buncolgen.CarrierIntelControlColumns
+		cols := carrierintelcol.CarrierIntelControlColumns
 		limit := intutils.Clamp(
 			intutils.WithDefault(max(req.Limit, 0), defaultConfiguredTenantLimit),
 			1,

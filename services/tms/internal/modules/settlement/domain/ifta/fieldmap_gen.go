@@ -2,39 +2,42 @@
 
 package ifta
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/iftacol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Jurisdiction].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.JurisdictionFieldMap] instead of parsing struct tags via reflection.
+// the generated [iftacol.JurisdictionFieldMap] instead of parsing struct tags via reflection.
 func (e *Jurisdiction) GetStaticFieldMap() map[string]string {
-	return buncolgen.JurisdictionFieldMap
+	return iftacol.JurisdictionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [JurisdictionMileageEntry].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.JurisdictionMileageEntryFieldMap] instead of parsing struct tags via reflection.
+// the generated [iftacol.JurisdictionMileageEntryFieldMap] instead of parsing struct tags via reflection.
 func (e *JurisdictionMileageEntry) GetStaticFieldMap() map[string]string {
-	return buncolgen.JurisdictionMileageEntryFieldMap
+	return iftacol.JurisdictionMileageEntryFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Return].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ReturnFieldMap] instead of parsing struct tags via reflection.
+// the generated [iftacol.ReturnFieldMap] instead of parsing struct tags via reflection.
 func (e *Return) GetStaticFieldMap() map[string]string {
-	return buncolgen.ReturnFieldMap
+	return iftacol.ReturnFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ReturnLine].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ReturnLineFieldMap] instead of parsing struct tags via reflection.
+// the generated [iftacol.ReturnLineFieldMap] instead of parsing struct tags via reflection.
 func (e *ReturnLine) GetStaticFieldMap() map[string]string {
-	return buncolgen.ReturnLineFieldMap
+	return iftacol.ReturnLineFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TaxRate].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.TaxRateFieldMap] instead of parsing struct tags via reflection.
+// the generated [iftacol.TaxRateFieldMap] instead of parsing struct tags via reflection.
 func (e *TaxRate) GetStaticFieldMap() map[string]string {
-	return buncolgen.TaxRateFieldMap
+	return iftacol.TaxRateFieldMap
 }

@@ -3,6 +3,7 @@
 package agentevalcaserepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
 	"context"
 	"testing"
 
@@ -57,10 +58,10 @@ func setup(t *testing.T) *fixture {
 	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
 	require.NoError(t, err)
 
-	cols := buncolgen.DefinitionColumns
+	cols := agentdefinitioncol.DefinitionColumns
 	var row definitionRow
 	require.NoError(t, db.NewSelect().
-		TableExpr(buncolgen.DefinitionTable.As(buncolgen.DefinitionTable.Alias)).
+		TableExpr(agentdefinitioncol.DefinitionTable.As(agentdefinitioncol.DefinitionTable.Alias)).
 		Column(cols.ID.Bare(), cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
 		Limit(1).
 		Scan(ctx, &row))

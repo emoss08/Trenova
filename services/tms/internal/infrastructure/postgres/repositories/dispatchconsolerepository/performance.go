@@ -1,6 +1,8 @@
 package dispatchconsolerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/servicefailurecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 	"fmt"
 
@@ -13,31 +15,31 @@ import (
 )
 
 var (
-	stopFromMoveJoin = "JOIN " + buncolgen.StopTable.As(buncolgen.StopTable.Alias) +
-		" ON " + buncolgen.StopColumns.ShipmentMoveID.EqColumn(
-		buncolgen.ShipmentMoveColumns.ID) +
-		" AND " + buncolgen.StopColumns.OrganizationID.EqColumn(
-		buncolgen.ShipmentMoveColumns.OrganizationID) +
-		" AND " + buncolgen.StopColumns.BusinessUnitID.EqColumn(
-		buncolgen.ShipmentMoveColumns.BusinessUnitID)
+	stopFromMoveJoin = "JOIN " + shipmentcol.StopTable.As(shipmentcol.StopTable.Alias) +
+		" ON " + shipmentcol.StopColumns.ShipmentMoveID.EqColumn(
+		shipmentcol.ShipmentMoveColumns.ID) +
+		" AND " + shipmentcol.StopColumns.OrganizationID.EqColumn(
+		shipmentcol.ShipmentMoveColumns.OrganizationID) +
+		" AND " + shipmentcol.StopColumns.BusinessUnitID.EqColumn(
+		shipmentcol.ShipmentMoveColumns.BusinessUnitID)
 
-	assignmentFromFailureJoin = "JOIN " + buncolgen.AssignmentTable.As(
-		buncolgen.AssignmentTable.Alias) +
-		" ON " + buncolgen.AssignmentColumns.ShipmentMoveID.EqColumn(
-		buncolgen.ServiceFailureColumns.ShipmentMoveID) +
-		" AND " + buncolgen.AssignmentColumns.OrganizationID.EqColumn(
-		buncolgen.ServiceFailureColumns.OrganizationID) +
-		" AND " + buncolgen.AssignmentColumns.BusinessUnitID.EqColumn(
-		buncolgen.ServiceFailureColumns.BusinessUnitID)
+	assignmentFromFailureJoin = "JOIN " + shipmentcol.AssignmentTable.As(
+		shipmentcol.AssignmentTable.Alias) +
+		" ON " + shipmentcol.AssignmentColumns.ShipmentMoveID.EqColumn(
+		servicefailurecol.ServiceFailureColumns.ShipmentMoveID) +
+		" AND " + shipmentcol.AssignmentColumns.OrganizationID.EqColumn(
+		servicefailurecol.ServiceFailureColumns.OrganizationID) +
+		" AND " + shipmentcol.AssignmentColumns.BusinessUnitID.EqColumn(
+		servicefailurecol.ServiceFailureColumns.BusinessUnitID)
 
-	reasonCodeFromFailureJoin = "JOIN " + buncolgen.ReasonCodeTable.As(
-		buncolgen.ReasonCodeTable.Alias) +
-		" ON " + buncolgen.ReasonCodeColumns.ID.EqColumn(
-		buncolgen.ServiceFailureColumns.ReasonCodeID) +
-		" AND " + buncolgen.ReasonCodeColumns.OrganizationID.EqColumn(
-		buncolgen.ServiceFailureColumns.OrganizationID) +
-		" AND " + buncolgen.ReasonCodeColumns.BusinessUnitID.EqColumn(
-		buncolgen.ServiceFailureColumns.BusinessUnitID)
+	reasonCodeFromFailureJoin = "JOIN " + servicefailurecol.ReasonCodeTable.As(
+		servicefailurecol.ReasonCodeTable.Alias) +
+		" ON " + servicefailurecol.ReasonCodeColumns.ID.EqColumn(
+		servicefailurecol.ServiceFailureColumns.ReasonCodeID) +
+		" AND " + servicefailurecol.ReasonCodeColumns.OrganizationID.EqColumn(
+		servicefailurecol.ServiceFailureColumns.OrganizationID) +
+		" AND " + servicefailurecol.ReasonCodeColumns.BusinessUnitID.EqColumn(
+		servicefailurecol.ServiceFailureColumns.BusinessUnitID)
 )
 
 func (r *repository) ListWorkerOnTimeStats(
@@ -49,8 +51,8 @@ func (r *repository) ListWorkerOnTimeStats(
 			return []*shipmentports.WorkerOnTimeStats{}, nil
 		}
 
-		asnCols := buncolgen.AssignmentColumns
-		stopCols := buncolgen.StopColumns
+		asnCols := shipmentcol.AssignmentColumns
+		stopCols := shipmentcol.StopColumns
 
 		arrivals := make([]*shipmentports.WorkerOnTimeStats, 0, len(req.WorkerIDs))
 		arrivalsQuery := r.db.DBForContext(ctx).NewSelect().
@@ -66,7 +68,7 @@ func (r *repository) ListWorkerOnTimeStats(
 			Join(moveFromAssignmentJoin).
 			Join(stopFromMoveJoin).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.AssignmentScopeTenant(sq, req.TenantInfo).
+				sq = shipmentcol.AssignmentScopeTenant(sq, req.TenantInfo).
 					Where(asnCols.PrimaryWorkerID.In(), bun.List(req.WorkerIDs)).
 					Where(stopCols.Status.Eq(), shipment.StopStatusCompleted).
 					Where(stopCols.Type.In(),
@@ -87,7 +89,7 @@ func (r *repository) ListWorkerOnTimeStats(
 			return nil, fmt.Errorf("list worker on-time arrivals: %w", err)
 		}
 
-		sfCols := buncolgen.ServiceFailureColumns
+		sfCols := servicefailurecol.ServiceFailureColumns
 
 		failures := make([]*shipmentports.WorkerOnTimeStats, 0, len(req.WorkerIDs))
 		failuresQuery := r.db.DBForContext(ctx).NewSelect().
@@ -97,10 +99,10 @@ func (r *repository) ListWorkerOnTimeStats(
 			Join(assignmentFromFailureJoin).
 			Join(reasonCodeFromFailureJoin).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.ServiceFailureScopeTenant(sq, req.TenantInfo).
+				sq = servicefailurecol.ServiceFailureScopeTenant(sq, req.TenantInfo).
 					Where(asnCols.PrimaryWorkerID.In(), bun.List(req.WorkerIDs)).
 					Where(sfCols.Status.NotEq(), servicefailure.StatusVoided).
-					Where(buncolgen.ReasonCodeColumns.Category.Eq(),
+					Where(servicefailurecol.ReasonCodeColumns.Category.Eq(),
 						servicefailure.ReasonCategoryDriver)
 				if req.Since > 0 {
 					sq = sq.Where(sfCols.DetectedAt.Gte(), req.Since)
@@ -142,7 +144,7 @@ func (r *repository) ListWorkerAcceptanceStats(
 			return []*shipmentports.WorkerAcceptanceStats{}, nil
 		}
 
-		cols := buncolgen.AssignmentColumns
+		cols := shipmentcol.AssignmentColumns
 
 		entities := make([]*shipmentports.WorkerAcceptanceStats, 0, len(req.WorkerIDs))
 		q := r.db.DBForContext(ctx).NewSelect().
@@ -159,7 +161,7 @@ func (r *repository) ListWorkerAcceptanceStats(
 				cols.AckStatus,
 			), shipment.AssignmentAckAccepted, shipment.AssignmentAckDeclined).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.AssignmentScopeTenant(sq, req.TenantInfo).
+				sq = shipmentcol.AssignmentScopeTenant(sq, req.TenantInfo).
 					Where(cols.PrimaryWorkerID.In(), bun.List(req.WorkerIDs))
 				if req.Since > 0 {
 					sq = sq.Where(cols.CreatedAt.Gte(), req.Since)

@@ -1,6 +1,8 @@
 package agentdefinitionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
 	"context"
 	"errors"
 	"fmt"
@@ -52,7 +54,7 @@ func (r *repository) List(
 	req *agentdefinitionports.ListAgentDefinitionRequest,
 ) (*pagination.ListResult[*agentdefinition.Definition], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*agentdefinition.Definition], error) {
-		cols := buncolgen.DefinitionColumns
+		cols := agentdefinitioncol.DefinitionColumns
 
 		entities := make([]*agentdefinition.Definition, 0, req.Filter.Pagination.SafeLimit())
 		total, err := r.db.DBForContext(ctx).
@@ -61,12 +63,12 @@ func (r *repository) List(
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 				sq = querybuilder.ApplyFilters(
 					sq,
-					buncolgen.DefinitionTable.Alias,
+					agentdefinitioncol.DefinitionTable.Alias,
 					req.Filter,
 					(*agentdefinition.Definition)(nil),
 				)
 				sq = applyUsability(
-					sq.Apply(buncolgen.DefinitionApplyTenant(req.Filter.TenantInfo)),
+					sq.Apply(agentdefinitioncol.DefinitionApplyTenant(req.Filter.TenantInfo)),
 					usability{
 						enabledOnly: req.EnabledOnly,
 						chatOnly:    req.ChatOnly,
@@ -103,13 +105,13 @@ func (r *repository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.DefinitionTable.Alias,
+						agentdefinitioncol.DefinitionTable.Alias,
 						req.Filter,
 						(*agentdefinition.Definition)(nil),
 					)
 
 					return applyUsability(
-						sq.Apply(buncolgen.DefinitionApplyTenant(req.Filter.TenantInfo)),
+						sq.Apply(agentdefinitioncol.DefinitionApplyTenant(req.Filter.TenantInfo)),
 						connectionUsability(req),
 					)
 				}).
@@ -130,7 +132,7 @@ func (r *repository) ListConnection(
 				Query: func(entities *[]*agentdefinition.Definition) *bun.SelectQuery {
 					sq := dba.NewSelect().Model(entities)
 					if len(req.Columns) == 0 {
-						return sq.ColumnExpr(buncolgen.DefinitionTable.All())
+						return sq.ColumnExpr(agentdefinitioncol.DefinitionTable.All())
 					}
 
 					return sq.Column(req.Columns...)
@@ -138,7 +140,7 @@ func (r *repository) ListConnection(
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					return querybuilder.ApplyCursorFilters(
 						applyUsability(sq, connectionUsability(req)),
-						buncolgen.DefinitionTable.Alias,
+						agentdefinitioncol.DefinitionTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*agentdefinition.Definition)(nil),
@@ -169,7 +171,7 @@ func connectionUsability(req *agentdefinitionports.ListAgentDefinitionConnection
 }
 
 func applyUsability(sq *bun.SelectQuery, u usability) *bun.SelectQuery {
-	cols := buncolgen.DefinitionColumns
+	cols := agentdefinitioncol.DefinitionColumns
 	if u.enabledOnly {
 		sq = sq.Where(cols.Enabled.IsTrue())
 	}
@@ -209,8 +211,8 @@ func (r *repository) ListByIDs(
 			NewSelect().
 			Model(&definitions).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DefinitionScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.DefinitionColumns.ID.In(), bun.In(req.IDs))
+				return agentdefinitioncol.DefinitionScopeTenant(sq, req.TenantInfo).
+					Where(agentdefinitioncol.DefinitionColumns.ID.In(), bun.In(req.IDs))
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -232,8 +234,8 @@ func (r *repository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DefinitionScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.DefinitionColumns.ID.Eq(), req.ID)
+				return agentdefinitioncol.DefinitionScopeTenant(sq, req.TenantInfo).
+					Where(agentdefinitioncol.DefinitionColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -255,8 +257,8 @@ func (r *repository) GetBySystemKey(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DefinitionScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.DefinitionColumns.SystemKey.Eq(), req.SystemKey)
+				return agentdefinitioncol.DefinitionScopeTenant(sq, req.TenantInfo).
+					Where(agentdefinitioncol.DefinitionColumns.SystemKey.Eq(), req.SystemKey)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -272,14 +274,14 @@ func (r *repository) ListEnabledByTrigger(
 	req agentdefinitionports.ListAgentDefinitionsByTriggerRequest,
 ) ([]*agentdefinition.Definition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdefinition.Definition, error) {
-		cols := buncolgen.DefinitionColumns
+		cols := agentdefinitioncol.DefinitionColumns
 		entities := make([]*agentdefinition.Definition, 0, 8)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.DefinitionScopeTenant(sq, req.TenantInfo).
+				sq = agentdefinitioncol.DefinitionScopeTenant(sq, req.TenantInfo).
 					Where(cols.Enabled.IsTrue()).
 					Where(cols.TriggerMode.Eq(), req.Mode)
 				if req.EventKind != "" {
@@ -304,7 +306,7 @@ func (r *repository) ListScheduledAcrossTenants(
 ) ([]*agentdefinition.Definition, error) {
 	ctx = dbscope.WithSystem(ctx, "list scheduled agent definitions across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdefinition.Definition, error) {
-		cols := buncolgen.DefinitionColumns
+		cols := agentdefinitioncol.DefinitionColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultDueLimit
@@ -335,7 +337,7 @@ func (r *repository) ListDue(
 	req agentdefinitionports.ListDueAgentDefinitionsRequest,
 ) ([]*agentdefinition.Definition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdefinition.Definition, error) {
-		cols := buncolgen.DefinitionColumns
+		cols := agentdefinitioncol.DefinitionColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultDueLimit
@@ -346,7 +348,7 @@ func (r *repository) ListDue(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DefinitionScopeTenant(sq, req.TenantInfo).
+				return agentdefinitioncol.DefinitionScopeTenant(sq, req.TenantInfo).
 					Where(cols.Enabled.IsTrue()).
 					Where(cols.TriggerMode.In(), bun.In([]agentdefinition.TriggerMode{
 						agentdefinition.TriggerScheduled,
@@ -429,7 +431,7 @@ func (r *repository) Update(
 	entity *agentdefinition.Definition,
 ) (*agentdefinition.Definition, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentdefinition.Definition, error) {
-		cols := buncolgen.DefinitionColumns
+		cols := agentdefinitioncol.DefinitionColumns
 		ov := entity.Version
 		entity.Version++
 
@@ -437,7 +439,7 @@ func (r *repository) Update(
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.DefinitionScopeTenantUpdate(uq, pagination.TenantInfo{
+				return agentdefinitioncol.DefinitionScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
 				}).Where(cols.ID.Eq(), entity.ID).
@@ -503,13 +505,13 @@ func (r *repository) MarkRun(
 	req agentdefinitionports.MarkAgentDefinitionRunRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := buncolgen.DefinitionColumns
+		cols := agentdefinitioncol.DefinitionColumns
 
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*agentdefinition.Definition)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				uq = buncolgen.DefinitionScopeTenantUpdate(uq, req.TenantInfo).
+				uq = agentdefinitioncol.DefinitionScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 				if req.ExpectedNextRunAt == nil {
 					return uq.Where(cols.NextRunAt.IsNull())
@@ -547,13 +549,13 @@ func (r *repository) SetToolTier(
 	req agentdefinitionports.SetAgentDefinitionToolTierRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.DefinitionColumns
+		cols := agentdefinitioncol.DefinitionColumns
 
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*agentdefinition.Definition)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				uq = buncolgen.DefinitionScopeTenantUpdate(uq, req.TenantInfo).
+				uq = agentdefinitioncol.DefinitionScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 				if agentdefinition.IsCoreTool(req.ToolName) {
 					return uq
@@ -586,13 +588,13 @@ func (r *repository) SetAccessMode(
 	req agentdefinitionports.SetAgentDefinitionAccessModeRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.DefinitionColumns
+		cols := agentdefinitioncol.DefinitionColumns
 
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*agentdefinition.Definition)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.DefinitionScopeTenantUpdate(uq, req.TenantInfo).
+				return agentdefinitioncol.DefinitionScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Set(cols.AccessMode.Set(), req.Mode).
@@ -623,8 +625,8 @@ func (r *repository) Delete(
 			NewDelete().
 			Model((*agentdefinition.Definition)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.DefinitionScopeTenantDelete(dq, req.TenantInfo).
-					Where(buncolgen.DefinitionColumns.ID.Eq(), req.ID)
+				return agentdefinitioncol.DefinitionScopeTenantDelete(dq, req.TenantInfo).
+					Where(agentdefinitioncol.DefinitionColumns.ID.Eq(), req.ID)
 			}).
 			Exec(txCtx)
 		if err != nil {
@@ -644,13 +646,13 @@ func (r *repository) removeDelegate(
 	req agentdefinitionports.DeleteAgentDefinitionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.DefinitionColumns
+		cols := agentdefinitioncol.DefinitionColumns
 
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*agentdefinition.Definition)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.DefinitionScopeTenantUpdate(uq, req.TenantInfo).
+				return agentdefinitioncol.DefinitionScopeTenantUpdate(uq, req.TenantInfo).
 					Where("?::text = ANY("+cols.DelegateIDs.Qualified()+")", req.ID.String())
 			}).
 			Set(
@@ -679,7 +681,7 @@ func (r *repository) StatsByIDs(
 			return stats, nil
 		}
 
-		runCols := buncolgen.AgentRunColumns
+		runCols := agentcol.AgentRunColumns
 		var runRows []agentdefinitionports.AgentDefinitionStats
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -694,7 +696,7 @@ func (r *repository) StatsByIDs(
 				})).
 			ColumnExpr("MAX("+runCols.StartedAt.Qualified()+") AS last_run_at").
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentRunScopeTenant(sq, tenant).
+				return agentcol.AgentRunScopeTenant(sq, tenant).
 					Where(runCols.AgentDefinitionID.In(), bun.In(ids))
 			}).
 			GroupExpr(runCols.AgentDefinitionID.Qualified()).
@@ -706,7 +708,7 @@ func (r *repository) StatsByIDs(
 			stats[row.DefinitionID] = row
 		}
 
-		proposalCols := buncolgen.AgentProposalColumns
+		proposalCols := agentcol.AgentProposalColumns
 		var proposalRows []struct {
 			DefinitionID     pulid.ID `bun:"definition_id"`
 			PendingProposals int      `bun:"pending_proposals"`
@@ -720,7 +722,7 @@ func (r *repository) StatsByIDs(
 			ColumnExpr("ar.agent_definition_id AS definition_id").
 			ColumnExpr("COUNT(*) AS pending_proposals").
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentProposalScopeTenant(sq, tenant).
+				return agentcol.AgentProposalScopeTenant(sq, tenant).
 					Where(proposalCols.Status.Eq(), agent.ProposalStatusPending).
 					Where("ar.agent_definition_id IN (?)", bun.In(ids))
 			}).

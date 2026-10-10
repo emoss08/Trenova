@@ -1,6 +1,7 @@
 package manualjournalrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/manualjournalcol"
 	"context"
 	"fmt"
 
@@ -49,7 +50,7 @@ func (r *repository) List(
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return querybuilder.ApplyFilters(
 					sq,
-					buncolgen.RequestTable.Alias,
+					manualjournalcol.RequestTable.Alias,
 					req.Filter,
 					(*manualjournal.Request)(nil),
 				)
@@ -57,7 +58,7 @@ func (r *repository) List(
 			Limit(limit).
 			Offset(req.Filter.Pagination.SafeOffset())
 		if len(req.Filter.Sort) == 0 {
-			query = query.Order(buncolgen.RequestColumns.CreatedAt.OrderDesc())
+			query = query.Order(manualjournalcol.RequestColumns.CreatedAt.OrderDesc())
 		}
 
 		total, err := query.ScanAndCount(ctx)
@@ -75,7 +76,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.RequestTable.Alias,
+		manualjournalcol.RequestTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*manualjournal.Request)(nil),
@@ -88,7 +89,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.RequestTable.Alias,
+		manualjournalcol.RequestTable.Alias,
 		req.Filter,
 		(*manualjournal.Request)(nil),
 	)
@@ -96,7 +97,7 @@ func (r *repository) applyTotalCountFilters(
 
 func applyManualJournalColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.RequestTable.All())
+		return q.ColumnExpr(manualjournalcol.RequestTable.All())
 	}
 
 	return q.Column(columns...)

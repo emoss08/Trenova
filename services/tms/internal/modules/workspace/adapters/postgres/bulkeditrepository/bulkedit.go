@@ -1,6 +1,7 @@
 package bulkeditrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/bulkeditcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/bulkedit"
@@ -55,8 +56,8 @@ func (r *repository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.BulkEditScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.BulkEditColumns.ID.Eq(), req.ID)
+				return bulkeditcol.BulkEditScopeTenant(sq, req.TenantInfo).
+					Where(bulkeditcol.BulkEditColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -78,7 +79,7 @@ func (r *repository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.BulkEditColumns.Version.Eq(), previous).
+			Where(bulkeditcol.BulkEditColumns.Version.Eq(), previous).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -99,7 +100,7 @@ func (r *repository) ListForUser(
 	req *bulkeditports.ListBulkEditsRequest,
 ) ([]*bulkedit.BulkEdit, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*bulkedit.BulkEdit, error) {
-		cols := buncolgen.BulkEditColumns
+		cols := bulkeditcol.BulkEditColumns
 		limit := req.Limit
 		if limit <= 0 || limit > maxListed {
 			limit = maxListed
@@ -111,7 +112,7 @@ func (r *repository) ListForUser(
 			Model(&entities).
 			ExcludeColumn(cols.Targets.Bare()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.BulkEditScopeTenant(sq, req.TenantInfo).
+				sq = bulkeditcol.BulkEditScopeTenant(sq, req.TenantInfo).
 					Where(cols.UserID.Eq(), req.TenantInfo.UserID)
 				if req.Resource != "" {
 					sq = sq.Where(cols.Resource.Eq(), req.Resource)

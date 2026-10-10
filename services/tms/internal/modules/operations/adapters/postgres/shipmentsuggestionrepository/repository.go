@@ -1,6 +1,7 @@
 package shipmentsuggestionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentsuggestioncol"
 	"context"
 	"fmt"
 
@@ -42,7 +43,7 @@ func scoped(
 	tenant pagination.TenantInfo,
 	userID pulid.ID,
 ) *bun.SelectQuery {
-	cols := buncolgen.DecisionRecordColumns
+	cols := shipmentsuggestioncol.DecisionRecordColumns
 
 	return q.
 		Where(cols.OrganizationID.Eq(), tenant.OrgID).
@@ -58,7 +59,7 @@ func (r *repository) ListSince(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*shipmentsuggestion.DecisionRecord, error) {
-			cols := buncolgen.DecisionRecordColumns
+			cols := shipmentsuggestioncol.DecisionRecordColumns
 			records := make([]*shipmentsuggestion.DecisionRecord, 0)
 			err := scoped(
 				r.db.DBForContext(ctx).NewSelect().Model(&records),
@@ -86,7 +87,7 @@ func (r *repository) Upsert(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*shipmentsuggestion.DecisionRecord, error) {
-			cols := buncolgen.DecisionRecordColumns
+			cols := shipmentsuggestioncol.DecisionRecordColumns
 			_, err := r.db.DBForContext(ctx).
 				NewInsert().
 				Model(record).
@@ -119,7 +120,7 @@ func (r *repository) Delete(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*shipmentsuggestion.DecisionRecord, error) {
-			cols := buncolgen.DecisionRecordColumns
+			cols := shipmentsuggestioncol.DecisionRecordColumns
 			removed := make([]*shipmentsuggestion.DecisionRecord, 0, 1)
 			_, err := r.db.DBForContext(ctx).
 				NewDelete().
@@ -147,7 +148,7 @@ func (r *repository) Prune(
 	req *shipmentsuggestionports.PruneSuggestionDecisionsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.DecisionRecordColumns
+		cols := shipmentsuggestioncol.DecisionRecordColumns
 		_, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*shipmentsuggestion.DecisionRecord)(nil)).

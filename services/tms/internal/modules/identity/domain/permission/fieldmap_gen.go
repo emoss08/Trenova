@@ -2,53 +2,56 @@
 
 package permission
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/permissioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ResourcePermission].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ResourcePermissionFieldMap] instead of parsing struct tags via reflection.
+// the generated [permissioncol.ResourcePermissionFieldMap] instead of parsing struct tags via reflection.
 func (e *ResourcePermission) GetStaticFieldMap() map[string]string {
-	return buncolgen.ResourcePermissionFieldMap
+	return permissioncol.ResourcePermissionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Role].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RoleFieldMap] instead of parsing struct tags via reflection.
+// the generated [permissioncol.RoleFieldMap] instead of parsing struct tags via reflection.
 func (e *Role) GetStaticFieldMap() map[string]string {
-	return buncolgen.RoleFieldMap
+	return permissioncol.RoleFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RoleAgentGrant].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RoleAgentGrantFieldMap] instead of parsing struct tags via reflection.
+// the generated [permissioncol.RoleAgentGrantFieldMap] instead of parsing struct tags via reflection.
 func (e *RoleAgentGrant) GetStaticFieldMap() map[string]string {
-	return buncolgen.RoleAgentGrantFieldMap
+	return permissioncol.RoleAgentGrantFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RoleConstraint].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RoleConstraintFieldMap] instead of parsing struct tags via reflection.
+// the generated [permissioncol.RoleConstraintFieldMap] instead of parsing struct tags via reflection.
 func (e *RoleConstraint) GetStaticFieldMap() map[string]string {
-	return buncolgen.RoleConstraintFieldMap
+	return permissioncol.RoleConstraintFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RoleConstraintRole].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RoleConstraintRoleFieldMap] instead of parsing struct tags via reflection.
+// the generated [permissioncol.RoleConstraintRoleFieldMap] instead of parsing struct tags via reflection.
 func (e *RoleConstraintRole) GetStaticFieldMap() map[string]string {
-	return buncolgen.RoleConstraintRoleFieldMap
+	return permissioncol.RoleConstraintRoleFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RoleHierarchyEdge].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RoleHierarchyEdgeFieldMap] instead of parsing struct tags via reflection.
+// the generated [permissioncol.RoleHierarchyEdgeFieldMap] instead of parsing struct tags via reflection.
 func (e *RoleHierarchyEdge) GetStaticFieldMap() map[string]string {
-	return buncolgen.RoleHierarchyEdgeFieldMap
+	return permissioncol.RoleHierarchyEdgeFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [UserRoleAssignment].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.UserRoleAssignmentFieldMap] instead of parsing struct tags via reflection.
+// the generated [permissioncol.UserRoleAssignmentFieldMap] instead of parsing struct tags via reflection.
 func (e *UserRoleAssignment) GetStaticFieldMap() map[string]string {
-	return buncolgen.UserRoleAssignmentFieldMap
+	return permissioncol.UserRoleAssignmentFieldMap
 }

@@ -1,6 +1,10 @@
 package retrievalsourcerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/documentcontentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
 	"context"
 	"fmt"
 
@@ -22,22 +26,22 @@ const (
 var sourceChars = map[airetrieval.SourceType]func(*bun.SelectQuery) *bun.SelectQuery{
 	airetrieval.SourceTypeMemory: func(q *bun.SelectQuery) *bun.SelectQuery {
 		return q.ColumnExpr(
-			buncolgen.MemoryColumns.Content.Expr("LENGTH(COALESCE({}, '')) AS " + charsColumn),
+			agentcol.MemoryColumns.Content.Expr("LENGTH(COALESCE({}, '')) AS " + charsColumn),
 		)
 	},
 	airetrieval.SourceTypeDocument: func(q *bun.SelectQuery) *bun.SelectQuery {
-		content := buncolgen.ContentColumns
-		doc := buncolgen.DocumentColumns
+		content := documentcontentcol.ContentColumns
+		doc := documentcol.DocumentColumns
 
 		return q.
 			ColumnExpr(content.ContentText.Expr("LENGTH(COALESCE({}, '')) AS " + charsColumn)).
-			Join("LEFT JOIN " + buncolgen.ContentTable.As(buncolgen.ContentTable.Alias)).
+			Join("LEFT JOIN " + documentcontentcol.ContentTable.As(documentcontentcol.ContentTable.Alias)).
 			JoinOn(content.DocumentID.EqColumn(doc.ID)).
 			JoinOn(content.OrganizationID.EqColumn(doc.OrganizationID)).
 			JoinOn(content.BusinessUnitID.EqColumn(doc.BusinessUnitID))
 	},
 	airetrieval.SourceTypeInboundMessage: func(q *bun.SelectQuery) *bun.SelectQuery {
-		msg := buncolgen.InboundMessageColumns
+		msg := inboundmessagecol.InboundMessageColumns
 
 		return q.ColumnExpr(buncolgen.Expr(
 			"LENGTH(COALESCE({0}, '')) + LENGTH(COALESCE({1}, '')) AS "+charsColumn,

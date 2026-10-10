@@ -1,6 +1,7 @@
 package ptopolicyrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -18,7 +19,7 @@ import (
 const defaultOpenAssignmentPageSize = 100
 
 func policyWithRules(sq *bun.SelectQuery) *bun.SelectQuery {
-	return sq.Relation(buncolgen.PTOPolicyRelations.Rules, orderRules)
+	return sq.Relation(workercol.PTOPolicyRelations.Rules, orderRules)
 }
 
 func (r *repository) ListAssignments(
@@ -26,18 +27,18 @@ func (r *repository) ListAssignments(
 	req *workerports.ListPTOAssignmentsRequest,
 ) ([]*worker.WorkerPTOPolicyAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerPTOPolicyAssignment, error) {
-		cols := buncolgen.WorkerPTOPolicyAssignmentColumns
+		cols := workercol.WorkerPTOPolicyAssignmentColumns
 		entities := make([]*worker.WorkerPTOPolicyAssignment, 0, 4)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerPTOPolicyAssignmentScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerPTOPolicyAssignmentScopeTenant(sq, req.TenantInfo).
 					Where(cols.WorkerID.Eq(), req.WorkerID)
 			}).
 			Order(cols.EffectiveFrom.OrderDesc())
 		if req.IncludePolicy {
-			q = q.Relation(buncolgen.WorkerPTOPolicyAssignmentRelations.Policy, policyWithRules)
+			q = q.Relation(workercol.WorkerPTOPolicyAssignmentRelations.Policy, policyWithRules)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -58,10 +59,10 @@ func (r *repository) GetAssignmentByID(
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Relation(buncolgen.WorkerPTOPolicyAssignmentRelations.Policy, policyWithRules).
+			Relation(workercol.WorkerPTOPolicyAssignmentRelations.Policy, policyWithRules).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerPTOPolicyAssignmentScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerPTOPolicyAssignmentColumns.ID.Eq(), req.ID)
+				return workercol.WorkerPTOPolicyAssignmentScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerPTOPolicyAssignmentColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -77,13 +78,13 @@ func (r *repository) GetActiveAssignment(
 	req *workerports.GetPTOAssignmentRequest,
 ) (*worker.WorkerPTOPolicyAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerPTOPolicyAssignment, error) {
-		cols := buncolgen.WorkerPTOPolicyAssignmentColumns
+		cols := workercol.WorkerPTOPolicyAssignmentColumns
 		entity := new(worker.WorkerPTOPolicyAssignment)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerPTOPolicyAssignmentScopeTenant(sq, req.TenantInfo).
+				sq = workercol.WorkerPTOPolicyAssignmentScopeTenant(sq, req.TenantInfo).
 					Where(cols.WorkerID.Eq(), req.WorkerID)
 				if req.AsOf > 0 {
 					sq = sq.Where(cols.EffectiveFrom.Lte(), req.AsOf).
@@ -99,7 +100,7 @@ func (r *repository) GetActiveAssignment(
 			Order(cols.EffectiveFrom.OrderDesc()).
 			Limit(1)
 		if req.IncludePolicy {
-			q = q.Relation(buncolgen.WorkerPTOPolicyAssignmentRelations.Policy, policyWithRules)
+			q = q.Relation(workercol.WorkerPTOPolicyAssignmentRelations.Policy, policyWithRules)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -140,7 +141,7 @@ func (r *repository) UpdateAssignment(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.WorkerPTOPolicyAssignmentColumns.Version.Eq(), ov).
+			Where(workercol.WorkerPTOPolicyAssignmentColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -165,13 +166,13 @@ func (r *repository) ListOpenAssignments(
 			limit = defaultOpenAssignmentPageSize
 		}
 
-		cols := buncolgen.WorkerPTOPolicyAssignmentColumns
+		cols := workercol.WorkerPTOPolicyAssignmentColumns
 		entities := make([]*worker.WorkerPTOPolicyAssignment, 0, limit)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerPTOPolicyAssignmentScopeTenant(sq, req.TenantInfo).
+				sq = workercol.WorkerPTOPolicyAssignmentScopeTenant(sq, req.TenantInfo).
 					Where(cols.EffectiveTo.IsNull())
 				if !req.PolicyID.IsNil() {
 					sq = sq.Where(cols.PTOPolicyID.Eq(), req.PolicyID)
@@ -187,7 +188,7 @@ func (r *repository) ListOpenAssignments(
 			Order(cols.ID.OrderAsc()).
 			Limit(limit)
 		if req.IncludePolicy {
-			q = q.Relation(buncolgen.WorkerPTOPolicyAssignmentRelations.Policy, policyWithRules)
+			q = q.Relation(workercol.WorkerPTOPolicyAssignmentRelations.Policy, policyWithRules)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -209,7 +210,7 @@ func (r *repository) ListTenantsWithOpenAssignments(
 ) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations with open PTO assignments to accrue")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
-		cols := buncolgen.WorkerPTOPolicyAssignmentColumns
+		cols := workercol.WorkerPTOPolicyAssignmentColumns
 		rows := make([]tenantRow, 0, 16)
 		err := r.db.DBForContext(ctx).
 			NewSelect().

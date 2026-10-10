@@ -1,6 +1,8 @@
 package agentshadowrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/auditcol"
 	"context"
 	"fmt"
 
@@ -42,8 +44,8 @@ func (r *repository) ListShadowProposals(
 	req *agentshadowports.ListShadowProposalsRequest,
 ) ([]agentshadow.Proposal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentshadow.Proposal, error) {
-		cols := buncolgen.AgentProposalColumns
-		runCols := buncolgen.AgentRunColumns
+		cols := agentcol.AgentProposalColumns
+		runCols := agentcol.AgentRunColumns
 		rows := make([]shadowProposalRow, 0, req.Limit)
 
 		err := r.db.DBForContext(ctx).
@@ -107,7 +109,7 @@ func (r *repository) ListPersonChanges(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentshadow.PersonChange, error) {
-		cols := buncolgen.EntryColumns
+		cols := auditcol.EntryColumns
 		rows := make([]personChangeRow, 0, len(req.ResourceIDs))
 
 		err := r.db.DBForContext(ctx).

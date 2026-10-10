@@ -2,7 +2,101 @@
 
 package projection
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/accessorialchargecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
+	"github.com/emoss08/trenova/pkg/buncolgen/accounttypecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/agentqualitycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/aiauditcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/aicorrectioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/aifeedbackcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/aiprovidercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/aituneupcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/apikeycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/auditcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/billingqueuecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/billingtransfercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/briefingcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/capturecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/carriercapacitycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/commoditycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/costingcontrolcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customerpaymentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customfieldcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/detentioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/distanceoverridecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/distanceprofilecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/documentpacketrulecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/documenttemplatecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/documenttypecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/driverpaycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
+	"github.com/emoss08/trenova/pkg/buncolgen/equipmentcontinuitycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/equipmentmanufacturercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/equipmenttypecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/extractionevalcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/extractionrolloutcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/extractionshadowcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/fiscalperiodcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/fiscalyearcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/fleetcodecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/fuelpurchasecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/fuelsurchargecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/glaccountcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/hazardousmaterialcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/hazmatsegregationrulecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/holdreasoncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/homelayoutcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/iamcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/iftacol"
+	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/invoiceadjustmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/journalreversalcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/journalsourcecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/jurisdictionrulecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/latechargecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/locationcategorycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/manualjournalcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/notificationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/ordercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/permissioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/ratematrixcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/ratequotecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/ratezonecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/recurringshipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/reportcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/servicefailurecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/servicetypecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentbriefcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmenteventcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmenttypecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/storedmileagecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tablechangealertcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tableconfigurationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tablelayoutcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/telematicscol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tendercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/trailercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/usstatecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/watchtowercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 var AIAuditEventSpec TypeSpec
 
@@ -606,7 +700,7 @@ var WorkerTrainingRecordSpec TypeSpec
 func init() {
 	AIAuditEventSpec = TypeSpec{
 		TypeName: "AIAuditEvent",
-		FieldMap: buncolgen.AIAuditEventFieldMap,
+		FieldMap: aiauditcol.AIAuditEventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -929,7 +1023,7 @@ func init() {
 
 	AIAuditExportSpec = TypeSpec{
 		TypeName: "AIAuditExport",
-		FieldMap: buncolgen.AIAuditExportFieldMap,
+		FieldMap: aiauditcol.AIAuditExportFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -1040,7 +1134,7 @@ func init() {
 
 	AICorrectionSpec = TypeSpec{
 		TypeName: "AICorrection",
-		FieldMap: buncolgen.CorrectionFieldMap,
+		FieldMap: aicorrectioncol.CorrectionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -1163,7 +1257,7 @@ func init() {
 
 	AIFeedbackSpec = TypeSpec{
 		TypeName: "AIFeedback",
-		FieldMap: buncolgen.FeedbackFieldMap,
+		FieldMap: aifeedbackcol.FeedbackFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -1286,7 +1380,7 @@ func init() {
 
 	AIProviderSpec = TypeSpec{
 		TypeName: "AIProvider",
-		FieldMap: buncolgen.ProviderFieldMap,
+		FieldMap: aiprovidercol.ProviderFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -1429,7 +1523,7 @@ func init() {
 
 	AITuneUpSpec = TypeSpec{
 		TypeName: "AITuneUp",
-		FieldMap: buncolgen.TuneUpFieldMap,
+		FieldMap: aituneupcol.TuneUpFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -1488,7 +1582,7 @@ func init() {
 
 	AccessorialChargeSpec = TypeSpec{
 		TypeName: "AccessorialCharge",
-		FieldMap: buncolgen.AccessorialChargeFieldMap,
+		FieldMap: accessorialchargecol.AccessorialChargeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -1561,7 +1655,7 @@ func init() {
 
 	AccountTypeSpec = TypeSpec{
 		TypeName: "AccountType",
-		FieldMap: buncolgen.AccountTypeFieldMap,
+		FieldMap: accounttypecol.AccountTypeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -1638,7 +1732,7 @@ func init() {
 
 	AccountingAppCredentialSpec = TypeSpec{
 		TypeName: "AccountingAppCredential",
-		FieldMap: buncolgen.AccountingAppCredentialFieldMap,
+		FieldMap: accountingsynccol.AccountingAppCredentialFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -1677,7 +1771,7 @@ func init() {
 
 	AccountingBackfillSpec = TypeSpec{
 		TypeName: "AccountingBackfill",
-		FieldMap: buncolgen.AccountingBackfillFieldMap,
+		FieldMap: accountingsynccol.AccountingBackfillFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -1740,7 +1834,7 @@ func init() {
 
 	AccountingConnectionSpec = TypeSpec{
 		TypeName: "AccountingConnection",
-		FieldMap: buncolgen.AccountingConnectionFieldMap,
+		FieldMap: accountingsynccol.AccountingConnectionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -1922,7 +2016,7 @@ func init() {
 
 	AccountingDriftFindingSpec = TypeSpec{
 		TypeName: "AccountingDriftFinding",
-		FieldMap: buncolgen.AccountingDriftFindingFieldMap,
+		FieldMap: accountingsynccol.AccountingDriftFindingFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -2068,7 +2162,7 @@ func init() {
 
 	AccountingInboundChangeSpec = TypeSpec{
 		TypeName: "AccountingInboundChange",
-		FieldMap: buncolgen.AccountingInboundChangeFieldMap,
+		FieldMap: accountingsynccol.AccountingInboundChangeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -2186,7 +2280,7 @@ func init() {
 
 	AccountingMappingSpec = TypeSpec{
 		TypeName: "AccountingMapping",
-		FieldMap: buncolgen.AccountingMappingFieldMap,
+		FieldMap: accountingsynccol.AccountingMappingFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -2284,7 +2378,7 @@ func init() {
 
 	AccountingReferenceObjectSpec = TypeSpec{
 		TypeName: "AccountingReferenceObject",
-		FieldMap: buncolgen.AccountingReferenceObjectFieldMap,
+		FieldMap: accountingsynccol.AccountingReferenceObjectFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -2379,7 +2473,7 @@ func init() {
 
 	AccountingSyncAttemptSpec = TypeSpec{
 		TypeName: "AccountingSyncAttempt",
-		FieldMap: buncolgen.AccountingSyncAttemptFieldMap,
+		FieldMap: accountingsynccol.AccountingSyncAttemptFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -2426,7 +2520,7 @@ func init() {
 
 	AccountingSyncRecordSpec = TypeSpec{
 		TypeName: "AccountingSyncRecord",
-		FieldMap: buncolgen.AccountingSyncRecordFieldMap,
+		FieldMap: accountingsynccol.AccountingSyncRecordFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -2548,7 +2642,7 @@ func init() {
 
 	AgentControlSpec = TypeSpec{
 		TypeName: "AgentControl",
-		FieldMap: buncolgen.AgentControlFieldMap,
+		FieldMap: tenantcol.AgentControlFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -2623,7 +2717,7 @@ func init() {
 
 	AgentDecisionSpec = TypeSpec{
 		TypeName: "AgentDecision",
-		FieldMap: buncolgen.AgentDecisionFieldMap,
+		FieldMap: agentcol.AgentDecisionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -2718,7 +2812,7 @@ func init() {
 
 	AgentDefinitionSpec = TypeSpec{
 		TypeName: "AgentDefinition",
-		FieldMap: buncolgen.DefinitionFieldMap,
+		FieldMap: agentdefinitioncol.DefinitionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -2921,7 +3015,7 @@ func init() {
 
 	AgentDefinitionVersionSpec = TypeSpec{
 		TypeName: "AgentDefinitionVersion",
-		FieldMap: buncolgen.DefinitionVersionFieldMap,
+		FieldMap: agentdefinitioncol.DefinitionVersionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -2955,7 +3049,7 @@ func init() {
 
 	AgentEvalCaseSpec = TypeSpec{
 		TypeName: "AgentEvalCase",
-		FieldMap: buncolgen.EvalCaseFieldMap,
+		FieldMap: agentqualitycol.EvalCaseFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -3099,7 +3193,7 @@ func init() {
 
 	AgentEvaluationSpec = TypeSpec{
 		TypeName: "AgentEvaluation",
-		FieldMap: buncolgen.EvaluationFieldMap,
+		FieldMap: agentcol.EvaluationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -3242,7 +3336,7 @@ func init() {
 
 	AgentExceptionSpec = TypeSpec{
 		TypeName: "AgentException",
-		FieldMap: buncolgen.AgentExceptionFieldMap,
+		FieldMap: agentcol.AgentExceptionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -3317,7 +3411,7 @@ func init() {
 
 	AgentMemorySpec = TypeSpec{
 		TypeName: "AgentMemory",
-		FieldMap: buncolgen.MemoryFieldMap,
+		FieldMap: agentcol.MemoryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -3465,7 +3559,7 @@ func init() {
 
 	AgentPlanSpec = TypeSpec{
 		TypeName: "AgentPlan",
-		FieldMap: buncolgen.AgentPlanFieldMap,
+		FieldMap: agentcol.AgentPlanFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -3556,7 +3650,7 @@ func init() {
 
 	AgentProposalSpec = TypeSpec{
 		TypeName: "AgentProposal",
-		FieldMap: buncolgen.AgentProposalFieldMap,
+		FieldMap: agentcol.AgentProposalFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -3679,7 +3773,7 @@ func init() {
 
 	AgentQualityControlSpec = TypeSpec{
 		TypeName: "AgentQualityControl",
-		FieldMap: buncolgen.ControlFieldMap,
+		FieldMap: agentqualitycol.ControlFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -3746,7 +3840,7 @@ func init() {
 
 	AgentReflectionSpec = TypeSpec{
 		TypeName: "AgentReflection",
-		FieldMap: buncolgen.ReflectionFieldMap,
+		FieldMap: agentcol.ReflectionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -3853,7 +3947,7 @@ func init() {
 
 	AgentRunSpec = TypeSpec{
 		TypeName: "AgentRun",
-		FieldMap: buncolgen.AgentRunFieldMap,
+		FieldMap: agentcol.AgentRunFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -3988,7 +4082,7 @@ func init() {
 
 	AgentRunEventSpec = TypeSpec{
 		TypeName: "AgentRunEvent",
-		FieldMap: buncolgen.AgentRunEventFieldMap,
+		FieldMap: agentcol.AgentRunEventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -4055,7 +4149,7 @@ func init() {
 
 	AgentSuiteRunSpec = TypeSpec{
 		TypeName: "AgentSuiteRun",
-		FieldMap: buncolgen.SuiteRunFieldMap,
+		FieldMap: agentqualitycol.SuiteRunFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -4194,7 +4288,7 @@ func init() {
 
 	AgentTestPromptSpec = TypeSpec{
 		TypeName: "AgentTestPrompt",
-		FieldMap: buncolgen.TestPromptFieldMap,
+		FieldMap: agentdefinitioncol.TestPromptFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -4217,7 +4311,7 @@ func init() {
 
 	AgentToolRuleSpec = TypeSpec{
 		TypeName: "AgentToolRule",
-		FieldMap: buncolgen.ToolRuleOverrideFieldMap,
+		FieldMap: agentcol.ToolRuleOverrideFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -4248,7 +4342,7 @@ func init() {
 
 	AgentToolTrustSpec = TypeSpec{
 		TypeName: "AgentToolTrust",
-		FieldMap: buncolgen.ToolTrustFieldMap,
+		FieldMap: agentcol.ToolTrustFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -4299,7 +4393,7 @@ func init() {
 
 	ApiKeySpec = TypeSpec{
 		TypeName: "ApiKey",
-		FieldMap: buncolgen.KeyFieldMap,
+		FieldMap: apikeycol.KeyFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -4378,7 +4472,7 @@ func init() {
 
 	ApprovalDelegationSpec = TypeSpec{
 		TypeName: "ApprovalDelegation",
-		FieldMap: buncolgen.ApprovalDelegationFieldMap,
+		FieldMap: workercol.ApprovalDelegationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -4463,7 +4557,7 @@ func init() {
 
 	AuditEntrySpec = TypeSpec{
 		TypeName: "AuditEntry",
-		FieldMap: buncolgen.EntryFieldMap,
+		FieldMap: auditcol.EntryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 		},
@@ -4572,7 +4666,7 @@ func init() {
 
 	BenefitPlanSpec = TypeSpec{
 		TypeName: "BenefitPlan",
-		FieldMap: buncolgen.BenefitPlanFieldMap,
+		FieldMap: driverpaycol.BenefitPlanFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -4666,7 +4760,7 @@ func init() {
 
 	BillingQueueItemSpec = TypeSpec{
 		TypeName: "BillingQueueItem",
-		FieldMap: buncolgen.BillingQueueItemFieldMap,
+		FieldMap: billingqueuecol.BillingQueueItemFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -4826,7 +4920,7 @@ func init() {
 
 	BillingTransferRunSpec = TypeSpec{
 		TypeName: "BillingTransferRun",
-		FieldMap: buncolgen.BillingTransferRunFieldMap,
+		FieldMap: billingtransfercol.BillingTransferRunFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -4937,7 +5031,7 @@ func init() {
 
 	BillingTransferRunItemSpec = TypeSpec{
 		TypeName: "BillingTransferRunItem",
-		FieldMap: buncolgen.BillingTransferRunItemFieldMap,
+		FieldMap: billingtransfercol.BillingTransferRunItemFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -5012,7 +5106,7 @@ func init() {
 
 	BriefingSpec = TypeSpec{
 		TypeName: "Briefing",
-		FieldMap: buncolgen.BriefingFieldMap,
+		FieldMap: briefingcol.BriefingFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -5079,7 +5173,7 @@ func init() {
 
 	BusinessUnitSpec = TypeSpec{
 		TypeName: "BusinessUnit",
-		FieldMap: buncolgen.BusinessUnitFieldMap,
+		FieldMap: tenantcol.BusinessUnitFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -5114,7 +5208,7 @@ func init() {
 
 	CaptureBatchSpec = TypeSpec{
 		TypeName: "CaptureBatch",
-		FieldMap: buncolgen.CaptureBatchFieldMap,
+		FieldMap: capturecol.CaptureBatchFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -5257,7 +5351,7 @@ func init() {
 
 	CaptureCoverSheetSpec = TypeSpec{
 		TypeName: "CaptureCoverSheet",
-		FieldMap: buncolgen.CaptureCoverSheetFieldMap,
+		FieldMap: capturecol.CaptureCoverSheetFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -5304,7 +5398,7 @@ func init() {
 
 	CaptureDeviceSpec = TypeSpec{
 		TypeName: "CaptureDevice",
-		FieldMap: buncolgen.CaptureDeviceFieldMap,
+		FieldMap: capturecol.CaptureDeviceFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -5403,7 +5497,7 @@ func init() {
 
 	CaptureItemSpec = TypeSpec{
 		TypeName: "CaptureItem",
-		FieldMap: buncolgen.CaptureItemFieldMap,
+		FieldMap: capturecol.CaptureItemFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -5522,7 +5616,7 @@ func init() {
 
 	CapturePageSpec = TypeSpec{
 		TypeName: "CapturePage",
-		FieldMap: buncolgen.CapturePageFieldMap,
+		FieldMap: capturecol.CapturePageFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -5609,7 +5703,7 @@ func init() {
 
 	CaptureProfileSpec = TypeSpec{
 		TypeName: "CaptureProfile",
-		FieldMap: buncolgen.CaptureProfileFieldMap,
+		FieldMap: capturecol.CaptureProfileFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -5696,7 +5790,7 @@ func init() {
 
 	CaptureRequestSpec = TypeSpec{
 		TypeName: "CaptureRequest",
-		FieldMap: buncolgen.CaptureRequestFieldMap,
+		FieldMap: capturecol.CaptureRequestFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -5787,7 +5881,7 @@ func init() {
 
 	CarrierSpec = TypeSpec{
 		TypeName: "Carrier",
-		FieldMap: buncolgen.CarrierFieldMap,
+		FieldMap: carriercol.CarrierFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -6018,7 +6112,7 @@ func init() {
 
 	CarrierAssignmentSpec = TypeSpec{
 		TypeName: "CarrierAssignment",
-		FieldMap: buncolgen.CarrierAssignmentFieldMap,
+		FieldMap: shipmentcol.CarrierAssignmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -6142,7 +6236,7 @@ func init() {
 
 	CarrierAssignmentAccessorialSpec = TypeSpec{
 		TypeName: "CarrierAssignmentAccessorial",
-		FieldMap: buncolgen.CarrierAssignmentAccessorialFieldMap,
+		FieldMap: shipmentcol.CarrierAssignmentAccessorialFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -6193,7 +6287,7 @@ func init() {
 
 	CarrierCapacityPostingSpec = TypeSpec{
 		TypeName: "CarrierCapacityPosting",
-		FieldMap: buncolgen.PostingFieldMap,
+		FieldMap: carriercapacitycol.PostingFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -6315,7 +6409,7 @@ func init() {
 
 	CarrierContactSpec = TypeSpec{
 		TypeName: "CarrierContact",
-		FieldMap: buncolgen.CarrierContactFieldMap,
+		FieldMap: carriercol.CarrierContactFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -6378,7 +6472,7 @@ func init() {
 
 	CarrierCostEventSpec = TypeSpec{
 		TypeName: "CarrierCostEvent",
-		FieldMap: buncolgen.CostEventFieldMap,
+		FieldMap: carriersettlementcol.CostEventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -6480,7 +6574,7 @@ func init() {
 
 	CarrierEquipmentVerificationSpec = TypeSpec{
 		TypeName: "CarrierEquipmentVerification",
-		FieldMap: buncolgen.CarrierEquipmentVerificationFieldMap,
+		FieldMap: carrierintelcol.CarrierEquipmentVerificationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -6583,7 +6677,7 @@ func init() {
 
 	CarrierInsurancePolicySpec = TypeSpec{
 		TypeName: "CarrierInsurancePolicy",
-		FieldMap: buncolgen.CarrierInsurancePolicyFieldMap,
+		FieldMap: carriercol.CarrierInsurancePolicyFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -6650,7 +6744,7 @@ func init() {
 
 	CarrierIntelControlSpec = TypeSpec{
 		TypeName: "CarrierIntelControl",
-		FieldMap: buncolgen.CarrierIntelControlFieldMap,
+		FieldMap: carrierintelcol.CarrierIntelControlFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -6781,7 +6875,7 @@ func init() {
 
 	CarrierIntelEventSpec = TypeSpec{
 		TypeName: "CarrierIntelEvent",
-		FieldMap: buncolgen.CarrierIntelEventFieldMap,
+		FieldMap: carrierintelcol.CarrierIntelEventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -6924,7 +7018,7 @@ func init() {
 
 	CarrierIntelFeedStateSpec = TypeSpec{
 		TypeName:      "CarrierIntelFeedState",
-		FieldMap:      buncolgen.CarrierIntelFeedStateFieldMap,
+		FieldMap:      carrierintelcol.CarrierIntelFeedStateFieldMap,
 		AlwaysColumns: []string{},
 		Fields: []FieldSpec{
 			{
@@ -6968,7 +7062,7 @@ func init() {
 
 	CarrierIntelOverrideSpec = TypeSpec{
 		TypeName: "CarrierIntelOverride",
-		FieldMap: buncolgen.CarrierIntelOverrideFieldMap,
+		FieldMap: carrierintelcol.CarrierIntelOverrideFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -7031,7 +7125,7 @@ func init() {
 
 	CarrierIntelSnapshotSpec = TypeSpec{
 		TypeName: "CarrierIntelSnapshot",
-		FieldMap: buncolgen.CarrierIntelSnapshotFieldMap,
+		FieldMap: carrierintelcol.CarrierIntelSnapshotFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -7162,7 +7256,7 @@ func init() {
 
 	CarrierIntelUsageDaySpec = TypeSpec{
 		TypeName:      "CarrierIntelUsageDay",
-		FieldMap:      buncolgen.CarrierIntelUsageDailyFieldMap,
+		FieldMap:      carrierintelcol.CarrierIntelUsageDailyFieldMap,
 		AlwaysColumns: []string{},
 		Fields: []FieldSpec{
 			{
@@ -7190,7 +7284,7 @@ func init() {
 
 	CarrierIntelUsageRowSpec = TypeSpec{
 		TypeName:      "CarrierIntelUsageRow",
-		FieldMap:      buncolgen.CarrierIntelUsageDailyFieldMap,
+		FieldMap:      carrierintelcol.CarrierIntelUsageDailyFieldMap,
 		AlwaysColumns: []string{},
 		Fields: []FieldSpec{
 			{
@@ -7218,7 +7312,7 @@ func init() {
 
 	CarrierInvoiceMatchSpec = TypeSpec{
 		TypeName: "CarrierInvoiceMatch",
-		FieldMap: buncolgen.InvoiceMatchFieldMap,
+		FieldMap: carriersettlementcol.InvoiceMatchFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -7339,7 +7433,7 @@ func init() {
 
 	CarrierInvoiceMatchListSpec = TypeSpec{
 		TypeName: "CarrierInvoiceMatchList",
-		FieldMap: buncolgen.InvoiceAdjustmentBatchFieldMap,
+		FieldMap: invoiceadjustmentcol.InvoiceAdjustmentBatchFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -7360,7 +7454,7 @@ func init() {
 
 	CarrierLedgerEntrySpec = TypeSpec{
 		TypeName: "CarrierLedgerEntry",
-		FieldMap: buncolgen.LedgerEntryFieldMap,
+		FieldMap: carriersettlementcol.LedgerEntryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -7435,7 +7529,7 @@ func init() {
 
 	CarrierMonitoringEnrollmentSpec = TypeSpec{
 		TypeName: "CarrierMonitoringEnrollment",
-		FieldMap: buncolgen.CarrierMonitoringEnrollmentFieldMap,
+		FieldMap: carrierintelcol.CarrierMonitoringEnrollmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -7542,7 +7636,7 @@ func init() {
 
 	CarrierSettlementSpec = TypeSpec{
 		TypeName: "CarrierSettlement",
-		FieldMap: buncolgen.CarrierSettlementFieldMap,
+		FieldMap: carriersettlementcol.CarrierSettlementFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -7722,7 +7816,7 @@ func init() {
 
 	CarrierSettlementBatchSpec = TypeSpec{
 		TypeName: "CarrierSettlementBatch",
-		FieldMap: buncolgen.CarrierSettlementBatchFieldMap,
+		FieldMap: carriersettlementcol.CarrierSettlementBatchFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -7823,7 +7917,7 @@ func init() {
 
 	CarrierSettlementControlSpec = TypeSpec{
 		TypeName: "CarrierSettlementControl",
-		FieldMap: buncolgen.CarrierSettlementControlFieldMap,
+		FieldMap: tenantcol.CarrierSettlementControlFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -7906,7 +8000,7 @@ func init() {
 
 	CarrierSettlementLineSpec = TypeSpec{
 		TypeName: "CarrierSettlementLine",
-		FieldMap: buncolgen.CarrierSettlementLineFieldMap,
+		FieldMap: carriersettlementcol.CarrierSettlementLineFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -7961,7 +8055,7 @@ func init() {
 
 	ChargeAllocationSpec = TypeSpec{
 		TypeName: "ChargeAllocation",
-		FieldMap: buncolgen.ChargeAllocationFieldMap,
+		FieldMap: shipmentcol.ChargeAllocationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -8047,7 +8141,7 @@ func init() {
 
 	CommoditySpec = TypeSpec{
 		TypeName: "Commodity",
-		FieldMap: buncolgen.CommodityFieldMap,
+		FieldMap: commoditycol.CommodityFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -8148,7 +8242,7 @@ func init() {
 
 	CostCategorySpec = TypeSpec{
 		TypeName: "CostCategory",
-		FieldMap: buncolgen.CostCategoryFieldMap,
+		FieldMap: costingcontrolcol.CostCategoryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -8203,7 +8297,7 @@ func init() {
 
 	CostingControlSpec = TypeSpec{
 		TypeName: "CostingControl",
-		FieldMap: buncolgen.CostingControlFieldMap,
+		FieldMap: costingcontrolcol.CostingControlFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -8283,7 +8377,7 @@ func init() {
 
 	CreditMemoApplicationSpec = TypeSpec{
 		TypeName: "CreditMemoApplication",
-		FieldMap: buncolgen.CreditMemoApplicationFieldMap,
+		FieldMap: customerpaymentcol.CreditMemoApplicationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -8362,7 +8456,7 @@ func init() {
 
 	CustomFieldDefinitionSpec = TypeSpec{
 		TypeName: "CustomFieldDefinition",
-		FieldMap: buncolgen.CustomFieldDefinitionFieldMap,
+		FieldMap: customfieldcol.CustomFieldDefinitionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -8449,7 +8543,7 @@ func init() {
 
 	CustomerSpec = TypeSpec{
 		TypeName: "Customer",
-		FieldMap: buncolgen.CustomerFieldMap,
+		FieldMap: customercol.CustomerFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -8605,7 +8699,7 @@ func init() {
 
 	CustomerBillingProfileSpec = TypeSpec{
 		TypeName: "CustomerBillingProfile",
-		FieldMap: buncolgen.CustomerBillingProfileFieldMap,
+		FieldMap: customercol.CustomerBillingProfileFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -8868,7 +8962,7 @@ func init() {
 
 	CustomerEmailProfileSpec = TypeSpec{
 		TypeName: "CustomerEmailProfile",
-		FieldMap: buncolgen.CustomerEmailProfileFieldMap,
+		FieldMap: customercol.CustomerEmailProfileFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -8943,7 +9037,7 @@ func init() {
 
 	CustomerPaymentSpec = TypeSpec{
 		TypeName: "CustomerPayment",
-		FieldMap: buncolgen.PaymentFieldMap,
+		FieldMap: customerpaymentcol.PaymentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -9068,7 +9162,7 @@ func init() {
 
 	CustomerPaymentApplicationSpec = TypeSpec{
 		TypeName: "CustomerPaymentApplication",
-		FieldMap: buncolgen.ApplicationFieldMap,
+		FieldMap: customerpaymentcol.ApplicationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -9127,7 +9221,7 @@ func init() {
 
 	DOTRandomDrawSpec = TypeSpec{
 		TypeName: "DOTRandomDraw",
-		FieldMap: buncolgen.DOTRandomDrawFieldMap,
+		FieldMap: workercol.DOTRandomDrawFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -9246,7 +9340,7 @@ func init() {
 
 	DOTRandomDrawEntrySpec = TypeSpec{
 		TypeName: "DOTRandomDrawEntry",
-		FieldMap: buncolgen.DOTRandomDrawEntryFieldMap,
+		FieldMap: workercol.DOTRandomDrawEntryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -9324,7 +9418,7 @@ func init() {
 
 	DOTRandomPoolSpec = TypeSpec{
 		TypeName: "DOTRandomPool",
-		FieldMap: buncolgen.DOTRandomPoolFieldMap,
+		FieldMap: workercol.DOTRandomPoolFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -9399,7 +9493,7 @@ func init() {
 
 	DashControlSpec = TypeSpec{
 		TypeName: "DashControl",
-		FieldMap: buncolgen.DashControlFieldMap,
+		FieldMap: tenantcol.DashControlFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -9510,7 +9604,7 @@ func init() {
 
 	DetentionEvidenceSpec = TypeSpec{
 		TypeName: "DetentionEvidence",
-		FieldMap: buncolgen.DetentionEvidenceFieldMap,
+		FieldMap: detentioncol.DetentionEvidenceFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -9577,7 +9671,7 @@ func init() {
 
 	DetentionNoticeSpec = TypeSpec{
 		TypeName: "DetentionNotice",
-		FieldMap: buncolgen.DetentionNoticeFieldMap,
+		FieldMap: detentioncol.DetentionNoticeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -9676,7 +9770,7 @@ func init() {
 
 	DetentionOccurrenceSpec = TypeSpec{
 		TypeName: "DetentionOccurrence",
-		FieldMap: buncolgen.DetentionOccurrenceFieldMap,
+		FieldMap: detentioncol.DetentionOccurrenceFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -9919,7 +10013,7 @@ func init() {
 
 	DetentionPolicyTierSpec = TypeSpec{
 		TypeName: "DetentionPolicyTier",
-		FieldMap: buncolgen.DetentionPolicyTierFieldMap,
+		FieldMap: detentioncol.DetentionPolicyTierFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -9958,7 +10052,7 @@ func init() {
 
 	DispatchCarrierEligibilityFindingSpec = TypeSpec{
 		TypeName: "DispatchCarrierEligibilityFinding",
-		FieldMap: buncolgen.EDIMessageValidationErrorFieldMap,
+		FieldMap: edicol.EDIMessageValidationErrorFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -9989,7 +10083,7 @@ func init() {
 
 	DispatchTimeOffSpec = TypeSpec{
 		TypeName: "DispatchTimeOff",
-		FieldMap: buncolgen.WorkerPTOFieldMap,
+		FieldMap: workercol.WorkerPTOFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -10012,7 +10106,7 @@ func init() {
 
 	DistanceOverrideSpec = TypeSpec{
 		TypeName: "DistanceOverride",
-		FieldMap: buncolgen.DistanceOverrideFieldMap,
+		FieldMap: distanceoverridecol.DistanceOverrideFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -10104,7 +10198,7 @@ func init() {
 
 	DistanceOverrideStopSpec = TypeSpec{
 		TypeName:      "DistanceOverrideStop",
-		FieldMap:      buncolgen.DistanceOverrideStopFieldMap,
+		FieldMap:      distanceoverridecol.DistanceOverrideStopFieldMap,
 		AlwaysColumns: []string{},
 		Fields: []FieldSpec{
 			{
@@ -10127,7 +10221,7 @@ func init() {
 
 	DistanceProfileSpec = TypeSpec{
 		TypeName: "DistanceProfile",
-		FieldMap: buncolgen.DistanceProfileFieldMap,
+		FieldMap: distanceprofilecol.DistanceProfileFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -10236,7 +10330,7 @@ func init() {
 
 	DocumentPacketRuleSpec = TypeSpec{
 		TypeName: "DocumentPacketRule",
-		FieldMap: buncolgen.DocumentPacketRuleFieldMap,
+		FieldMap: documentpacketrulecol.DocumentPacketRuleFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -10299,7 +10393,7 @@ func init() {
 
 	DocumentTemplateSpec = TypeSpec{
 		TypeName: "DocumentTemplate",
-		FieldMap: buncolgen.DocumentTemplateFieldMap,
+		FieldMap: documenttemplatecol.DocumentTemplateFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -10385,7 +10479,7 @@ func init() {
 
 	DocumentTemplateAssignmentSpec = TypeSpec{
 		TypeName: "DocumentTemplateAssignment",
-		FieldMap: buncolgen.DocumentTemplateAssignmentFieldMap,
+		FieldMap: documenttemplatecol.DocumentTemplateAssignmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -10446,7 +10540,7 @@ func init() {
 
 	DocumentTemplateVersionSpec = TypeSpec{
 		TypeName: "DocumentTemplateVersion",
-		FieldMap: buncolgen.DocumentTemplateVersionFieldMap,
+		FieldMap: documenttemplatecol.DocumentTemplateVersionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -10577,7 +10671,7 @@ func init() {
 
 	DocumentTypeSpec = TypeSpec{
 		TypeName: "DocumentType",
-		FieldMap: buncolgen.DocumentTypeFieldMap,
+		FieldMap: documenttypecol.DocumentTypeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -10654,7 +10748,7 @@ func init() {
 
 	DriverExpenseSpec = TypeSpec{
 		TypeName: "DriverExpense",
-		FieldMap: buncolgen.ExpenseFieldMap,
+		FieldMap: driverpaycol.ExpenseFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -10762,7 +10856,7 @@ func init() {
 
 	DriverPayEventSpec = TypeSpec{
 		TypeName: "DriverPayEvent",
-		FieldMap: buncolgen.PayEventFieldMap,
+		FieldMap: driversettlementcol.PayEventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -10868,7 +10962,7 @@ func init() {
 
 	DriverSettlementSpec = TypeSpec{
 		TypeName: "DriverSettlement",
-		FieldMap: buncolgen.SettlementFieldMap,
+		FieldMap: driversettlementcol.SettlementFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -11072,7 +11166,7 @@ func init() {
 
 	DriverSettlementLineSpec = TypeSpec{
 		TypeName: "DriverSettlementLine",
-		FieldMap: buncolgen.SettlementLineFieldMap,
+		FieldMap: driversettlementcol.SettlementLineFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -11159,7 +11253,7 @@ func init() {
 
 	EdiCarrierInvoiceSpec = TypeSpec{
 		TypeName: "EdiCarrierInvoice",
-		FieldMap: buncolgen.CarrierInvoiceFieldMap,
+		FieldMap: edicol.CarrierInvoiceFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -11258,7 +11352,7 @@ func init() {
 
 	EdiCarrierInvoiceListSpec = TypeSpec{
 		TypeName: "EdiCarrierInvoiceList",
-		FieldMap: buncolgen.InvoiceAdjustmentBatchFieldMap,
+		FieldMap: invoiceadjustmentcol.InvoiceAdjustmentBatchFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -11279,7 +11373,7 @@ func init() {
 
 	EdiCommunicationProfileSpec = TypeSpec{
 		TypeName: "EdiCommunicationProfile",
-		FieldMap: buncolgen.EDICommunicationProfileFieldMap,
+		FieldMap: edicol.EDICommunicationProfileFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -11353,7 +11447,7 @@ func init() {
 
 	EdiConnectionSpec = TypeSpec{
 		TypeName: "EdiConnection",
-		FieldMap: buncolgen.EDIConnectionFieldMap,
+		FieldMap: edicol.EDIConnectionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -11376,7 +11470,7 @@ func init() {
 
 	EdiInboundFileSpec = TypeSpec{
 		TypeName: "EdiInboundFile",
-		FieldMap: buncolgen.EDIInboundFileFieldMap,
+		FieldMap: edicol.EDIInboundFileFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -11486,7 +11580,7 @@ func init() {
 
 	EdiMappingProfileSpec = TypeSpec{
 		TypeName: "EdiMappingProfile",
-		FieldMap: buncolgen.EDIMappingProfileFieldMap,
+		FieldMap: edicol.EDIMappingProfileFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -11546,7 +11640,7 @@ func init() {
 
 	EdiMappingProfileItemSpec = TypeSpec{
 		TypeName: "EdiMappingProfileItem",
-		FieldMap: buncolgen.EDIMappingProfileItemFieldMap,
+		FieldMap: edicol.EDIMappingProfileItemFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -11609,7 +11703,7 @@ func init() {
 
 	EdiMessageSpec = TypeSpec{
 		TypeName: "EdiMessage",
-		FieldMap: buncolgen.EDIMessageFieldMap,
+		FieldMap: edicol.EDIMessageFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -11759,7 +11853,7 @@ func init() {
 
 	EdiPartnerSpec = TypeSpec{
 		TypeName: "EdiPartner",
-		FieldMap: buncolgen.EDIPartnerFieldMap,
+		FieldMap: edicol.EDIPartnerFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -11879,7 +11973,7 @@ func init() {
 
 	EdiPartnerDocumentProfileSpec = TypeSpec{
 		TypeName: "EdiPartnerDocumentProfile",
-		FieldMap: buncolgen.EDIPartnerDocumentProfileFieldMap,
+		FieldMap: edicol.EDIPartnerDocumentProfileFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -11917,7 +12011,7 @@ func init() {
 
 	EdiTemplateSpec = TypeSpec{
 		TypeName: "EdiTemplate",
-		FieldMap: buncolgen.EDITemplateFieldMap,
+		FieldMap: edicol.EDITemplateFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -11992,7 +12086,7 @@ func init() {
 
 	EdiTemplateVersionSpec = TypeSpec{
 		TypeName: "EdiTemplateVersion",
-		FieldMap: buncolgen.EDITemplateVersionFieldMap,
+		FieldMap: edicol.EDITemplateVersionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -12099,7 +12193,7 @@ func init() {
 
 	EdiTestCaseSpec = TypeSpec{
 		TypeName: "EdiTestCase",
-		FieldMap: buncolgen.EDITestCaseFieldMap,
+		FieldMap: edicol.EDITestCaseFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -12161,7 +12255,7 @@ func init() {
 
 	EdiTransferSpec = TypeSpec{
 		TypeName: "EdiTransfer",
-		FieldMap: buncolgen.EDITransferFieldMap,
+		FieldMap: edicol.EDITransferFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -12343,7 +12437,7 @@ func init() {
 
 	EquipmentContinuitySpec = TypeSpec{
 		TypeName: "EquipmentContinuity",
-		FieldMap: buncolgen.EquipmentContinuityFieldMap,
+		FieldMap: equipmentcontinuitycol.EquipmentContinuityFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -12406,7 +12500,7 @@ func init() {
 
 	EquipmentManufacturerSpec = TypeSpec{
 		TypeName: "EquipmentManufacturer",
-		FieldMap: buncolgen.EquipmentManufacturerFieldMap,
+		FieldMap: equipmentmanufacturercol.EquipmentManufacturerFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -12467,7 +12561,7 @@ func init() {
 
 	EquipmentTypeSpec = TypeSpec{
 		TypeName: "EquipmentType",
-		FieldMap: buncolgen.EquipmentTypeFieldMap,
+		FieldMap: equipmenttypecol.EquipmentTypeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -12540,7 +12634,7 @@ func init() {
 
 	EscrowAccountSpec = TypeSpec{
 		TypeName: "EscrowAccount",
-		FieldMap: buncolgen.EscrowAccountFieldMap,
+		FieldMap: driverpaycol.EscrowAccountFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -12624,7 +12718,7 @@ func init() {
 
 	EscrowTransactionSpec = TypeSpec{
 		TypeName: "EscrowTransaction",
-		FieldMap: buncolgen.EscrowTransactionFieldMap,
+		FieldMap: driverpaycol.EscrowTransactionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -12675,7 +12769,7 @@ func init() {
 
 	ExtractionEvalCaseSpec = TypeSpec{
 		TypeName: "ExtractionEvalCase",
-		FieldMap: buncolgen.ExtractionCaseFieldMap,
+		FieldMap: extractionevalcol.ExtractionCaseFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -12770,7 +12864,7 @@ func init() {
 
 	ExtractionEvalResultSpec = TypeSpec{
 		TypeName: "ExtractionEvalResult",
-		FieldMap: buncolgen.ExtractionResultFieldMap,
+		FieldMap: extractionevalcol.ExtractionResultFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -12897,7 +12991,7 @@ func init() {
 
 	ExtractionEvalRunSpec = TypeSpec{
 		TypeName: "ExtractionEvalRun",
-		FieldMap: buncolgen.ExtractionRunFieldMap,
+		FieldMap: extractionevalcol.ExtractionRunFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -13048,7 +13142,7 @@ func init() {
 
 	ExtractionRolloutSpec = TypeSpec{
 		TypeName: "ExtractionRollout",
-		FieldMap: buncolgen.ExtractionRolloutFieldMap,
+		FieldMap: extractionrolloutcol.ExtractionRolloutFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -13115,7 +13209,7 @@ func init() {
 
 	ExtractionShadowResultSpec = TypeSpec{
 		TypeName: "ExtractionShadowResult",
-		FieldMap: buncolgen.ShadowResultFieldMap,
+		FieldMap: extractionshadowcol.ShadowResultFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -13286,7 +13380,7 @@ func init() {
 
 	ExtractionShadowSettingsSpec = TypeSpec{
 		TypeName: "ExtractionShadowSettings",
-		FieldMap: buncolgen.ShadowSettingsFieldMap,
+		FieldMap: extractionshadowcol.ShadowSettingsFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -13325,7 +13419,7 @@ func init() {
 
 	FiscalPeriodSpec = TypeSpec{
 		TypeName: "FiscalPeriod",
-		FieldMap: buncolgen.FiscalPeriodFieldMap,
+		FieldMap: fiscalperiodcol.FiscalPeriodFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -13408,7 +13502,7 @@ func init() {
 
 	FiscalYearSpec = TypeSpec{
 		TypeName: "FiscalYear",
-		FieldMap: buncolgen.FiscalYearFieldMap,
+		FieldMap: fiscalyearcol.FiscalYearFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -13499,7 +13593,7 @@ func init() {
 
 	FleetCodeSpec = TypeSpec{
 		TypeName: "FleetCode",
-		FieldMap: buncolgen.FleetCodeFieldMap,
+		FieldMap: fleetcodecol.FleetCodeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -13587,7 +13681,7 @@ func init() {
 
 	FormSubmissionFieldSpec = TypeSpec{
 		TypeName: "FormSubmissionField",
-		FieldMap: buncolgen.ItemFieldMap,
+		FieldMap: watchtowercol.ItemFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -13606,7 +13700,7 @@ func init() {
 
 	FormulaTemplateSpec = TypeSpec{
 		TypeName: "FormulaTemplate",
-		FieldMap: buncolgen.FormulaTemplateFieldMap,
+		FieldMap: formulatemplatecol.FormulaTemplateFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -13747,7 +13841,7 @@ func init() {
 
 	FuelCardSpec = TypeSpec{
 		TypeName: "FuelCard",
-		FieldMap: buncolgen.FuelCardFieldMap,
+		FieldMap: fuelpurchasecol.FuelCardFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -13844,7 +13938,7 @@ func init() {
 
 	FuelIndexSpec = TypeSpec{
 		TypeName: "FuelIndex",
-		FieldMap: buncolgen.FuelIndexFieldMap,
+		FieldMap: fuelsurchargecol.FuelIndexFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -13915,7 +14009,7 @@ func init() {
 
 	FuelIndexPriceSpec = TypeSpec{
 		TypeName: "FuelIndexPrice",
-		FieldMap: buncolgen.FuelIndexPriceFieldMap,
+		FieldMap: fuelsurchargecol.FuelIndexPriceFieldMap,
 		AlwaysColumns: []string{
 			"id",
 		},
@@ -13969,7 +14063,7 @@ func init() {
 
 	FuelPurchaseSpec = TypeSpec{
 		TypeName: "FuelPurchase",
-		FieldMap: buncolgen.FuelPurchaseFieldMap,
+		FieldMap: fuelpurchasecol.FuelPurchaseFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -14120,7 +14214,7 @@ func init() {
 
 	FuelPurchaseImportBatchSpec = TypeSpec{
 		TypeName: "FuelPurchaseImportBatch",
-		FieldMap: buncolgen.ImportBatchFieldMap,
+		FieldMap: fuelpurchasecol.ImportBatchFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -14257,7 +14351,7 @@ func init() {
 
 	FuelPurchaseImportRowSpec = TypeSpec{
 		TypeName: "FuelPurchaseImportRow",
-		FieldMap: buncolgen.ImportRowFieldMap,
+		FieldMap: fuelpurchasecol.ImportRowFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -14337,7 +14431,7 @@ func init() {
 
 	FuelSurchargeProgramSpec = TypeSpec{
 		TypeName: "FuelSurchargeProgram",
-		FieldMap: buncolgen.FuelSurchargeProgramFieldMap,
+		FieldMap: fuelsurchargecol.FuelSurchargeProgramFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -14496,7 +14590,7 @@ func init() {
 
 	FuelSurchargeTableRowSpec = TypeSpec{
 		TypeName: "FuelSurchargeTableRow",
-		FieldMap: buncolgen.FuelSurchargeTableRowFieldMap,
+		FieldMap: fuelsurchargecol.FuelSurchargeTableRowFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -14547,7 +14641,7 @@ func init() {
 
 	HazardousMaterialSpec = TypeSpec{
 		TypeName: "HazardousMaterial",
-		FieldMap: buncolgen.HazardousMaterialFieldMap,
+		FieldMap: hazardousmaterialcol.HazardousMaterialFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -14676,7 +14770,7 @@ func init() {
 
 	HazmatSegregationRuleSpec = TypeSpec{
 		TypeName: "HazmatSegregationRule",
-		FieldMap: buncolgen.HazmatSegregationRuleFieldMap,
+		FieldMap: hazmatsegregationrulecol.HazmatSegregationRuleFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -14781,7 +14875,7 @@ func init() {
 
 	HoldReasonSpec = TypeSpec{
 		TypeName: "HoldReason",
-		FieldMap: buncolgen.HoldReasonFieldMap,
+		FieldMap: holdreasoncol.HoldReasonFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -14878,7 +14972,7 @@ func init() {
 
 	HomeLayoutPresetSpec = TypeSpec{
 		TypeName: "HomeLayoutPreset",
-		FieldMap: buncolgen.PresetFieldMap,
+		FieldMap: homelayoutcol.PresetFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -14941,7 +15035,7 @@ func init() {
 
 	IFTAJurisdictionSpec = TypeSpec{
 		TypeName: "IFTAJurisdiction",
-		FieldMap: buncolgen.JurisdictionFieldMap,
+		FieldMap: iftacol.JurisdictionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -15003,7 +15097,7 @@ func init() {
 
 	IFTAJurisdictionMileageEntrySpec = TypeSpec{
 		TypeName: "IFTAJurisdictionMileageEntry",
-		FieldMap: buncolgen.JurisdictionMileageEntryFieldMap,
+		FieldMap: iftacol.JurisdictionMileageEntryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -15096,7 +15190,7 @@ func init() {
 
 	IFTAReturnSpec = TypeSpec{
 		TypeName: "IFTAReturn",
-		FieldMap: buncolgen.ReturnFieldMap,
+		FieldMap: iftacol.ReturnFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -15290,7 +15384,7 @@ func init() {
 
 	IFTAReturnLineSpec = TypeSpec{
 		TypeName: "IFTAReturnLine",
-		FieldMap: buncolgen.ReturnLineFieldMap,
+		FieldMap: iftacol.ReturnLineFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -15416,7 +15510,7 @@ func init() {
 
 	IFTATaxRateSpec = TypeSpec{
 		TypeName: "IFTATaxRate",
-		FieldMap: buncolgen.TaxRateFieldMap,
+		FieldMap: iftacol.TaxRateFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -15482,7 +15576,7 @@ func init() {
 
 	InboundAttachmentSpec = TypeSpec{
 		TypeName: "InboundAttachment",
-		FieldMap: buncolgen.InboundAttachmentFieldMap,
+		FieldMap: inboundmessagecol.InboundAttachmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -15525,7 +15619,7 @@ func init() {
 
 	InboundMailboxSpec = TypeSpec{
 		TypeName: "InboundMailbox",
-		FieldMap: buncolgen.MailboxFieldMap,
+		FieldMap: inboundmessagecol.MailboxFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -15596,7 +15690,7 @@ func init() {
 
 	InboundMessageSpec = TypeSpec{
 		TypeName: "InboundMessage",
-		FieldMap: buncolgen.InboundMessageFieldMap,
+		FieldMap: inboundmessagecol.InboundMessageFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -15747,7 +15841,7 @@ func init() {
 
 	InvoiceSpec = TypeSpec{
 		TypeName: "Invoice",
-		FieldMap: buncolgen.InvoiceFieldMap,
+		FieldMap: invoicecol.InvoiceFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -16078,7 +16172,7 @@ func init() {
 
 	InvoiceAdjustmentSpec = TypeSpec{
 		TypeName: "InvoiceAdjustment",
-		FieldMap: buncolgen.InvoiceAdjustmentFieldMap,
+		FieldMap: invoiceadjustmentcol.InvoiceAdjustmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -16235,7 +16329,7 @@ func init() {
 
 	InvoiceAdjustmentLineSpec = TypeSpec{
 		TypeName: "InvoiceAdjustmentLine",
-		FieldMap: buncolgen.InvoiceAdjustmentLineFieldMap,
+		FieldMap: invoiceadjustmentcol.InvoiceAdjustmentLineFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -16306,7 +16400,7 @@ func init() {
 
 	InvoiceDisputeSpec = TypeSpec{
 		TypeName: "InvoiceDispute",
-		FieldMap: buncolgen.InvoiceDisputeFieldMap,
+		FieldMap: invoicecol.InvoiceDisputeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -16405,7 +16499,7 @@ func init() {
 
 	InvoiceLineSpec = TypeSpec{
 		TypeName: "InvoiceLine",
-		FieldMap: buncolgen.InvoiceLineFieldMap,
+		FieldMap: invoicecol.InvoiceLineFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -16500,7 +16594,7 @@ func init() {
 
 	JobPositionSpec = TypeSpec{
 		TypeName: "JobPosition",
-		FieldMap: buncolgen.JobPositionFieldMap,
+		FieldMap: workercol.JobPositionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -16574,7 +16668,7 @@ func init() {
 
 	JournalEntryLineAccountSpec = TypeSpec{
 		TypeName: "JournalEntryLineAccount",
-		FieldMap: buncolgen.GLAccountFieldMap,
+		FieldMap: glaccountcol.GLAccountFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -16597,7 +16691,7 @@ func init() {
 
 	JournalReversalSpec = TypeSpec{
 		TypeName: "JournalReversal",
-		FieldMap: buncolgen.ReversalFieldMap,
+		FieldMap: journalreversalcol.ReversalFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -16712,7 +16806,7 @@ func init() {
 
 	JournalSourceInfoSpec = TypeSpec{
 		TypeName: "JournalSourceInfo",
-		FieldMap: buncolgen.SourceFieldMap,
+		FieldMap: journalsourcecol.SourceFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -16747,7 +16841,7 @@ func init() {
 
 	JurisdictionRuleSpec = TypeSpec{
 		TypeName: "JurisdictionRule",
-		FieldMap: buncolgen.JurisdictionRuleFieldMap,
+		FieldMap: jurisdictionrulecol.JurisdictionRuleFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -16869,7 +16963,7 @@ func init() {
 
 	JurisdictionRuleOverrideSpec = TypeSpec{
 		TypeName: "JurisdictionRuleOverride",
-		FieldMap: buncolgen.OverrideFieldMap,
+		FieldMap: jurisdictionrulecol.OverrideFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -16947,7 +17041,7 @@ func init() {
 
 	LateChargeAssessmentSpec = TypeSpec{
 		TypeName: "LateChargeAssessment",
-		FieldMap: buncolgen.LateChargeAssessmentFieldMap,
+		FieldMap: latechargecol.LateChargeAssessmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -17034,7 +17128,7 @@ func init() {
 
 	LeaveControlSpec = TypeSpec{
 		TypeName: "LeaveControl",
-		FieldMap: buncolgen.LeaveControlFieldMap,
+		FieldMap: workercol.LeaveControlFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -17081,7 +17175,7 @@ func init() {
 
 	LocationSpec = TypeSpec{
 		TypeName: "Location",
-		FieldMap: buncolgen.LocationFieldMap,
+		FieldMap: locationcol.LocationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -17216,7 +17310,7 @@ func init() {
 
 	LocationCategorySpec = TypeSpec{
 		TypeName: "LocationCategory",
-		FieldMap: buncolgen.LocationCategoryFieldMap,
+		FieldMap: locationcategorycol.LocationCategoryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -17301,7 +17395,7 @@ func init() {
 
 	ManualJournalSpec = TypeSpec{
 		TypeName: "ManualJournal",
-		FieldMap: buncolgen.RequestFieldMap,
+		FieldMap: manualjournalcol.RequestFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -17420,7 +17514,7 @@ func init() {
 
 	MyAgentSpec = TypeSpec{
 		TypeName: "MyAgent",
-		FieldMap: buncolgen.DefinitionFieldMap,
+		FieldMap: agentdefinitioncol.DefinitionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -17471,7 +17565,7 @@ func init() {
 
 	NotificationSpec = TypeSpec{
 		TypeName: "Notification",
-		FieldMap: buncolgen.NotificationFieldMap,
+		FieldMap: notificationcol.NotificationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -17578,7 +17672,7 @@ func init() {
 
 	OSHAAnnualSummarySpec = TypeSpec{
 		TypeName: "OSHAAnnualSummary",
-		FieldMap: buncolgen.OSHAAnnualSummaryFieldMap,
+		FieldMap: workercol.OSHAAnnualSummaryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -17657,7 +17751,7 @@ func init() {
 
 	OrderSpec = TypeSpec{
 		TypeName: "Order",
-		FieldMap: buncolgen.OrderFieldMap,
+		FieldMap: ordercol.OrderFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -17767,7 +17861,7 @@ func init() {
 
 	OrderChargeSpec = TypeSpec{
 		TypeName: "OrderCharge",
-		FieldMap: buncolgen.OrderChargeFieldMap,
+		FieldMap: ordercol.OrderChargeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -17814,7 +17908,7 @@ func init() {
 
 	OrderLegSpec = TypeSpec{
 		TypeName: "OrderLeg",
-		FieldMap: buncolgen.ShipmentFieldMap,
+		FieldMap: shipmentcol.ShipmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -17849,7 +17943,7 @@ func init() {
 
 	OrgHolidaySpec = TypeSpec{
 		TypeName: "OrgHoliday",
-		FieldMap: buncolgen.OrgHolidayFieldMap,
+		FieldMap: workercol.OrgHolidayFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -17904,7 +17998,7 @@ func init() {
 
 	OrganizationSpec = TypeSpec{
 		TypeName: "Organization",
-		FieldMap: buncolgen.OrganizationFieldMap,
+		FieldMap: tenantcol.OrganizationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -18009,7 +18103,7 @@ func init() {
 
 	PTOPolicySpec = TypeSpec{
 		TypeName: "PTOPolicy",
-		FieldMap: buncolgen.PTOPolicyFieldMap,
+		FieldMap: workercol.PTOPolicyFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -18102,7 +18196,7 @@ func init() {
 
 	PTOPolicyRuleSpec = TypeSpec{
 		TypeName: "PTOPolicyRule",
-		FieldMap: buncolgen.PTOPolicyRuleFieldMap,
+		FieldMap: workercol.PTOPolicyRuleFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -18157,7 +18251,7 @@ func init() {
 
 	PayAdvanceSpec = TypeSpec{
 		TypeName: "PayAdvance",
-		FieldMap: buncolgen.PayAdvanceFieldMap,
+		FieldMap: driverpaycol.PayAdvanceFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -18247,7 +18341,7 @@ func init() {
 
 	PayCodeSpec = TypeSpec{
 		TypeName: "PayCode",
-		FieldMap: buncolgen.PayCodeFieldMap,
+		FieldMap: driverpaycol.PayCodeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -18326,7 +18420,7 @@ func init() {
 
 	PayCodeGLAccountSpec = TypeSpec{
 		TypeName: "PayCodeGLAccount",
-		FieldMap: buncolgen.GLAccountFieldMap,
+		FieldMap: glaccountcol.GLAccountFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -18349,7 +18443,7 @@ func init() {
 
 	PayProfileSpec = TypeSpec{
 		TypeName: "PayProfile",
-		FieldMap: buncolgen.PayProfileFieldMap,
+		FieldMap: driverpaycol.PayProfileFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -18426,7 +18520,7 @@ func init() {
 
 	PayProfileComponentSpec = TypeSpec{
 		TypeName: "PayProfileComponent",
-		FieldMap: buncolgen.PayProfileComponentFieldMap,
+		FieldMap: driverpaycol.PayProfileComponentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -18489,7 +18583,7 @@ func init() {
 
 	PayrollExportSpec = TypeSpec{
 		TypeName: "PayrollExport",
-		FieldMap: buncolgen.PayrollExportFieldMap,
+		FieldMap: workercol.PayrollExportFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -18564,7 +18658,7 @@ func init() {
 
 	PerformanceReviewSpec = TypeSpec{
 		TypeName: "PerformanceReview",
-		FieldMap: buncolgen.PerformanceReviewFieldMap,
+		FieldMap: workercol.PerformanceReviewFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -18696,7 +18790,7 @@ func init() {
 
 	PerformanceReviewTemplateSpec = TypeSpec{
 		TypeName: "PerformanceReviewTemplate",
-		FieldMap: buncolgen.PerformanceReviewTemplateFieldMap,
+		FieldMap: workercol.PerformanceReviewTemplateFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -18763,7 +18857,7 @@ func init() {
 
 	PolicyComplianceRowSpec = TypeSpec{
 		TypeName: "PolicyComplianceRow",
-		FieldMap: buncolgen.WorkerPolicyAcknowledgementFieldMap,
+		FieldMap: workercol.WorkerPolicyAcknowledgementFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -18794,7 +18888,7 @@ func init() {
 
 	PortalInvitationSpec = TypeSpec{
 		TypeName: "PortalInvitation",
-		FieldMap: buncolgen.PortalInvitationFieldMap,
+		FieldMap: workercol.PortalInvitationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -18867,7 +18961,7 @@ func init() {
 
 	PortalPtoSpec = TypeSpec{
 		TypeName: "PortalPto",
-		FieldMap: buncolgen.WorkerPTOFieldMap,
+		FieldMap: workercol.WorkerPTOFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -18910,7 +19004,7 @@ func init() {
 
 	RateAgreementSpec = TypeSpec{
 		TypeName: "RateAgreement",
-		FieldMap: buncolgen.RateAgreementFieldMap,
+		FieldMap: rateagreementcol.RateAgreementFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -19045,7 +19139,7 @@ func init() {
 
 	RateMatrixSpec = TypeSpec{
 		TypeName: "RateMatrix",
-		FieldMap: buncolgen.RateMatrixFieldMap,
+		FieldMap: ratematrixcol.RateMatrixFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -19108,7 +19202,7 @@ func init() {
 
 	RateQuoteSpec = TypeSpec{
 		TypeName: "RateQuote",
-		FieldMap: buncolgen.RateQuoteFieldMap,
+		FieldMap: ratequotecol.RateQuoteFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -19215,7 +19309,7 @@ func init() {
 
 	RateZoneSpec = TypeSpec{
 		TypeName: "RateZone",
-		FieldMap: buncolgen.RateZoneFieldMap,
+		FieldMap: ratezonecol.RateZoneFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -19266,7 +19360,7 @@ func init() {
 
 	RecurringDeductionSpec = TypeSpec{
 		TypeName: "RecurringDeduction",
-		FieldMap: buncolgen.RecurringDeductionFieldMap,
+		FieldMap: driverpaycol.RecurringDeductionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -19363,7 +19457,7 @@ func init() {
 
 	RecurringEarningSpec = TypeSpec{
 		TypeName: "RecurringEarning",
-		FieldMap: buncolgen.RecurringEarningFieldMap,
+		FieldMap: driverpaycol.RecurringEarningFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -19456,7 +19550,7 @@ func init() {
 
 	RecurringShipmentSpec = TypeSpec{
 		TypeName: "RecurringShipment",
-		FieldMap: buncolgen.RecurringShipmentFieldMap,
+		FieldMap: recurringshipmentcol.RecurringShipmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -19619,7 +19713,7 @@ func init() {
 
 	ReportDashboardSpec = TypeSpec{
 		TypeName: "ReportDashboard",
-		FieldMap: buncolgen.DashboardFieldMap,
+		FieldMap: reportcol.DashboardFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -19674,7 +19768,7 @@ func init() {
 
 	ReportDefinitionSpec = TypeSpec{
 		TypeName: "ReportDefinition",
-		FieldMap: buncolgen.ReportDefinitionFieldMap,
+		FieldMap: reportcol.ReportDefinitionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -19765,7 +19859,7 @@ func init() {
 
 	ReportDefinitionRevisionSpec = TypeSpec{
 		TypeName: "ReportDefinitionRevision",
-		FieldMap: buncolgen.ReportDefinitionRevisionFieldMap,
+		FieldMap: reportcol.ReportDefinitionRevisionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -19804,7 +19898,7 @@ func init() {
 
 	ReportRunSpec = TypeSpec{
 		TypeName: "ReportRun",
-		FieldMap: buncolgen.ReportRunFieldMap,
+		FieldMap: reportcol.ReportRunFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -19903,7 +19997,7 @@ func init() {
 
 	ReportScheduleSpec = TypeSpec{
 		TypeName: "ReportSchedule",
-		FieldMap: buncolgen.ReportScheduleFieldMap,
+		FieldMap: reportcol.ReportScheduleFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -19990,7 +20084,7 @@ func init() {
 
 	ReportViewSpec = TypeSpec{
 		TypeName: "ReportView",
-		FieldMap: buncolgen.ReportViewFieldMap,
+		FieldMap: reportcol.ReportViewFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -20057,7 +20151,7 @@ func init() {
 
 	RoleSpec = TypeSpec{
 		TypeName: "Role",
-		FieldMap: buncolgen.RoleFieldMap,
+		FieldMap: permissioncol.RoleFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -20120,7 +20214,7 @@ func init() {
 
 	RoutingGuideSpec = TypeSpec{
 		TypeName: "RoutingGuide",
-		FieldMap: buncolgen.RoutingGuideFieldMap,
+		FieldMap: tendercol.RoutingGuideFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -20201,7 +20295,7 @@ func init() {
 
 	RoutingGuideEntrySpec = TypeSpec{
 		TypeName: "RoutingGuideEntry",
-		FieldMap: buncolgen.RoutingGuideEntryFieldMap,
+		FieldMap: tendercol.RoutingGuideEntryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -20275,7 +20369,7 @@ func init() {
 
 	SCIMGroupRoleMappingSpec = TypeSpec{
 		TypeName: "SCIMGroupRoleMapping",
-		FieldMap: buncolgen.SCIMGroupRoleMappingFieldMap,
+		FieldMap: iamcol.SCIMGroupRoleMappingFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -20333,7 +20427,7 @@ func init() {
 
 	ServiceFailureSpec = TypeSpec{
 		TypeName: "ServiceFailure",
-		FieldMap: buncolgen.ServiceFailureFieldMap,
+		FieldMap: servicefailurecol.ServiceFailureFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -20465,7 +20559,7 @@ func init() {
 
 	ServiceFailureReasonCodeSpec = TypeSpec{
 		TypeName: "ServiceFailureReasonCode",
-		FieldMap: buncolgen.ReasonCodeFieldMap,
+		FieldMap: servicefailurecol.ReasonCodeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -20562,7 +20656,7 @@ func init() {
 
 	ServiceFailureShipmentSpec = TypeSpec{
 		TypeName: "ServiceFailureShipment",
-		FieldMap: buncolgen.ShipmentFieldMap,
+		FieldMap: shipmentcol.ShipmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -20585,7 +20679,7 @@ func init() {
 
 	ServiceFailureStopSpec = TypeSpec{
 		TypeName: "ServiceFailureStop",
-		FieldMap: buncolgen.StopFieldMap,
+		FieldMap: shipmentcol.StopFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -20619,7 +20713,7 @@ func init() {
 
 	ServiceTypeSpec = TypeSpec{
 		TypeName: "ServiceType",
-		FieldMap: buncolgen.ServiceTypeFieldMap,
+		FieldMap: servicetypecol.ServiceTypeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -20684,7 +20778,7 @@ func init() {
 
 	SettlementBatchSpec = TypeSpec{
 		TypeName: "SettlementBatch",
-		FieldMap: buncolgen.SettlementBatchFieldMap,
+		FieldMap: driversettlementcol.SettlementBatchFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -20789,7 +20883,7 @@ func init() {
 
 	SettlementControlSpec = TypeSpec{
 		TypeName: "SettlementControl",
-		FieldMap: buncolgen.SettlementControlFieldMap,
+		FieldMap: tenantcol.SettlementControlFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -20876,7 +20970,7 @@ func init() {
 
 	SettlementDisputeSpec = TypeSpec{
 		TypeName: "SettlementDispute",
-		FieldMap: buncolgen.DisputeFieldMap,
+		FieldMap: driversettlementcol.DisputeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -20983,7 +21077,7 @@ func init() {
 
 	ShiftSwapRequestSpec = TypeSpec{
 		TypeName: "ShiftSwapRequest",
-		FieldMap: buncolgen.ShiftSwapRequestFieldMap,
+		FieldMap: workercol.ShiftSwapRequestFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -21072,7 +21166,7 @@ func init() {
 
 	ShiftTemplateSpec = TypeSpec{
 		TypeName: "ShiftTemplate",
-		FieldMap: buncolgen.ShiftTemplateFieldMap,
+		FieldMap: workercol.ShiftTemplateFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -21147,7 +21241,7 @@ func init() {
 
 	ShipmentSpec = TypeSpec{
 		TypeName: "Shipment",
-		FieldMap: buncolgen.ShipmentFieldMap,
+		FieldMap: shipmentcol.ShipmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -21441,7 +21535,7 @@ func init() {
 
 	ShipmentAccessorialChargeSpec = TypeSpec{
 		TypeName: "ShipmentAccessorialCharge",
-		FieldMap: buncolgen.AccessorialChargeFieldMap,
+		FieldMap: accessorialchargecol.AccessorialChargeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -21500,7 +21594,7 @@ func init() {
 
 	ShipmentAdditionalChargeSpec = TypeSpec{
 		TypeName: "ShipmentAdditionalCharge",
-		FieldMap: buncolgen.AdditionalChargeFieldMap,
+		FieldMap: shipmentcol.AdditionalChargeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -21579,7 +21673,7 @@ func init() {
 
 	ShipmentAssignmentSpec = TypeSpec{
 		TypeName: "ShipmentAssignment",
-		FieldMap: buncolgen.AssignmentFieldMap,
+		FieldMap: shipmentcol.AssignmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -21670,7 +21764,7 @@ func init() {
 
 	ShipmentAssignmentEventSpec = TypeSpec{
 		TypeName: "ShipmentAssignmentEvent",
-		FieldMap: buncolgen.EventFieldMap,
+		FieldMap: shipmenteventcol.EventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",
@@ -21772,7 +21866,7 @@ func init() {
 
 	ShipmentBriefingSpec = TypeSpec{
 		TypeName: "ShipmentBriefing",
-		FieldMap: buncolgen.BriefFieldMap,
+		FieldMap: shipmentbriefcol.BriefFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -21799,7 +21893,7 @@ func init() {
 
 	ShipmentCarrierEventSpec = TypeSpec{
 		TypeName: "ShipmentCarrierEvent",
-		FieldMap: buncolgen.EventFieldMap,
+		FieldMap: shipmenteventcol.EventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",
@@ -21897,7 +21991,7 @@ func init() {
 
 	ShipmentCommentSpec = TypeSpec{
 		TypeName: "ShipmentComment",
-		FieldMap: buncolgen.ShipmentCommentFieldMap,
+		FieldMap: shipmentcol.ShipmentCommentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -22045,7 +22139,7 @@ func init() {
 
 	ShipmentCommentAcknowledgmentSpec = TypeSpec{
 		TypeName: "ShipmentCommentAcknowledgment",
-		FieldMap: buncolgen.ShipmentCommentAcknowledgmentFieldMap,
+		FieldMap: shipmentcol.ShipmentCommentAcknowledgmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 		},
@@ -22078,7 +22172,7 @@ func init() {
 
 	ShipmentCommentEventSpec = TypeSpec{
 		TypeName: "ShipmentCommentEvent",
-		FieldMap: buncolgen.EventFieldMap,
+		FieldMap: shipmenteventcol.EventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",
@@ -22176,7 +22270,7 @@ func init() {
 
 	ShipmentCommentMentionSpec = TypeSpec{
 		TypeName: "ShipmentCommentMention",
-		FieldMap: buncolgen.ShipmentCommentMentionFieldMap,
+		FieldMap: shipmentcol.ShipmentCommentMentionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -22222,7 +22316,7 @@ func init() {
 
 	ShipmentCommoditySpec = TypeSpec{
 		TypeName: "ShipmentCommodity",
-		FieldMap: buncolgen.ShipmentCommodityFieldMap,
+		FieldMap: shipmentcol.ShipmentCommodityFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -22289,7 +22383,7 @@ func init() {
 
 	ShipmentCommodityDetailSpec = TypeSpec{
 		TypeName: "ShipmentCommodityDetail",
-		FieldMap: buncolgen.CommodityFieldMap,
+		FieldMap: commoditycol.CommodityFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -22376,7 +22470,7 @@ func init() {
 
 	ShipmentCustomerSpec = TypeSpec{
 		TypeName: "ShipmentCustomer",
-		FieldMap: buncolgen.CustomerFieldMap,
+		FieldMap: customercol.CustomerFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -22479,7 +22573,7 @@ func init() {
 
 	ShipmentFormulaTemplateSpec = TypeSpec{
 		TypeName: "ShipmentFormulaTemplate",
-		FieldMap: buncolgen.FormulaTemplateFieldMap,
+		FieldMap: formulatemplatecol.FormulaTemplateFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -22558,7 +22652,7 @@ func init() {
 
 	ShipmentHoldEventSpec = TypeSpec{
 		TypeName: "ShipmentHoldEvent",
-		FieldMap: buncolgen.EventFieldMap,
+		FieldMap: shipmenteventcol.EventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",
@@ -22648,7 +22742,7 @@ func init() {
 
 	ShipmentLifecycleEventSpec = TypeSpec{
 		TypeName: "ShipmentLifecycleEvent",
-		FieldMap: buncolgen.EventFieldMap,
+		FieldMap: shipmenteventcol.EventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",
@@ -22738,7 +22832,7 @@ func init() {
 
 	ShipmentMoveSpec = TypeSpec{
 		TypeName: "ShipmentMove",
-		FieldMap: buncolgen.ShipmentMoveFieldMap,
+		FieldMap: shipmentcol.ShipmentMoveFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -22853,7 +22947,7 @@ func init() {
 
 	ShipmentMoveEventSpec = TypeSpec{
 		TypeName: "ShipmentMoveEvent",
-		FieldMap: buncolgen.EventFieldMap,
+		FieldMap: shipmenteventcol.EventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",
@@ -22943,7 +23037,7 @@ func init() {
 
 	ShipmentMoveJurisdictionMileSpec = TypeSpec{
 		TypeName: "ShipmentMoveJurisdictionMile",
-		FieldMap: buncolgen.ShipmentMoveJurisdictionMileFieldMap,
+		FieldMap: shipmentcol.ShipmentMoveJurisdictionMileFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -23014,7 +23108,7 @@ func init() {
 
 	ShipmentOwnershipEventSpec = TypeSpec{
 		TypeName: "ShipmentOwnershipEvent",
-		FieldMap: buncolgen.EventFieldMap,
+		FieldMap: shipmenteventcol.EventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",
@@ -23100,7 +23194,7 @@ func init() {
 
 	ShipmentStopSpec = TypeSpec{
 		TypeName: "ShipmentStop",
-		FieldMap: buncolgen.StopFieldMap,
+		FieldMap: shipmentcol.StopFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -23202,7 +23296,7 @@ func init() {
 
 	ShipmentTenderEventSpec = TypeSpec{
 		TypeName: "ShipmentTenderEvent",
-		FieldMap: buncolgen.EventFieldMap,
+		FieldMap: shipmenteventcol.EventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",
@@ -23328,7 +23422,7 @@ func init() {
 
 	ShipmentTypeSpec = TypeSpec{
 		TypeName: "ShipmentType",
-		FieldMap: buncolgen.ShipmentTypeFieldMap,
+		FieldMap: shipmenttypecol.ShipmentTypeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -23393,7 +23487,7 @@ func init() {
 
 	StoredMileageSpec = TypeSpec{
 		TypeName: "StoredMileage",
-		FieldMap: buncolgen.StoredMileageFieldMap,
+		FieldMap: storedmileagecol.StoredMileageFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -23514,7 +23608,7 @@ func init() {
 
 	TCASubscriptionSpec = TypeSpec{
 		TypeName: "TCASubscription",
-		FieldMap: buncolgen.TCASubscriptionFieldMap,
+		FieldMap: tablechangealertcol.TCASubscriptionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -23601,7 +23695,7 @@ func init() {
 
 	TableConfigurationSpec = TypeSpec{
 		TypeName: "TableConfiguration",
-		FieldMap: buncolgen.TableConfigurationFieldMap,
+		FieldMap: tableconfigurationcol.TableConfigurationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -23689,7 +23783,7 @@ func init() {
 
 	TableLayoutSpec = TypeSpec{
 		TypeName: "TableLayout",
-		FieldMap: buncolgen.TableLayoutFieldMap,
+		FieldMap: tablelayoutcol.TableLayoutFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -23716,7 +23810,7 @@ func init() {
 
 	TenderSpec = TypeSpec{
 		TypeName: "Tender",
-		FieldMap: buncolgen.TenderFieldMap,
+		FieldMap: tendercol.TenderFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -23816,7 +23910,7 @@ func init() {
 
 	TenderOfferSpec = TypeSpec{
 		TypeName: "TenderOffer",
-		FieldMap: buncolgen.TenderOfferFieldMap,
+		FieldMap: tendercol.TenderOfferFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -23934,7 +24028,7 @@ func init() {
 
 	TimeClockEntrySpec = TypeSpec{
 		TypeName: "TimeClockEntry",
-		FieldMap: buncolgen.TimeClockEntryFieldMap,
+		FieldMap: workercol.TimeClockEntryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -24012,7 +24106,7 @@ func init() {
 
 	TimesheetSpec = TypeSpec{
 		TypeName: "Timesheet",
-		FieldMap: buncolgen.TimesheetFieldMap,
+		FieldMap: workercol.TimesheetFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -24114,7 +24208,7 @@ func init() {
 
 	TractorSpec = TypeSpec{
 		TypeName: "Tractor",
-		FieldMap: buncolgen.TractorFieldMap,
+		FieldMap: tractorcol.TractorFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -24302,7 +24396,7 @@ func init() {
 
 	TrailerSpec = TypeSpec{
 		TypeName: "Trailer",
-		FieldMap: buncolgen.TrailerFieldMap,
+		FieldMap: trailercol.TrailerFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -24466,7 +24560,7 @@ func init() {
 
 	TrainingCourseSpec = TypeSpec{
 		TypeName: "TrainingCourse",
-		FieldMap: buncolgen.TrainingCourseFieldMap,
+		FieldMap: workercol.TrainingCourseFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -24569,7 +24663,7 @@ func init() {
 
 	UsStateSpec = TypeSpec{
 		TypeName: "UsState",
-		FieldMap: buncolgen.UsStateFieldMap,
+		FieldMap: usstatecol.UsStateFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -24608,7 +24702,7 @@ func init() {
 
 	UserSpec = TypeSpec{
 		TypeName: "User",
-		FieldMap: buncolgen.UserFieldMap,
+		FieldMap: tenantcol.UserFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -24701,7 +24795,7 @@ func init() {
 
 	VehicleInspectionSpec = TypeSpec{
 		TypeName: "VehicleInspection",
-		FieldMap: buncolgen.VehicleInspectionFieldMap,
+		FieldMap: telematicscol.VehicleInspectionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -24772,7 +24866,7 @@ func init() {
 
 	VehiclePositionSpec = TypeSpec{
 		TypeName:      "VehiclePosition",
-		FieldMap:      buncolgen.VehiclePositionFieldMap,
+		FieldMap:      telematicscol.VehiclePositionFieldMap,
 		AlwaysColumns: []string{},
 		Fields: []FieldSpec{
 			{
@@ -24844,7 +24938,7 @@ func init() {
 
 	WatchtowerItemSpec = TypeSpec{
 		TypeName: "WatchtowerItem",
-		FieldMap: buncolgen.ItemFieldMap,
+		FieldMap: watchtowercol.ItemFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -24931,7 +25025,7 @@ func init() {
 
 	WorkerSpec = TypeSpec{
 		TypeName: "Worker",
-		FieldMap: buncolgen.WorkerFieldMap,
+		FieldMap: workercol.WorkerFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -25117,7 +25211,7 @@ func init() {
 
 	WorkerAvailabilityPreferenceSpec = TypeSpec{
 		TypeName: "WorkerAvailabilityPreference",
-		FieldMap: buncolgen.WorkerAvailabilityPreferenceFieldMap,
+		FieldMap: workercol.WorkerAvailabilityPreferenceFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -25168,7 +25262,7 @@ func init() {
 
 	WorkerBenefitEnrollmentSpec = TypeSpec{
 		TypeName: "WorkerBenefitEnrollment",
-		FieldMap: buncolgen.WorkerBenefitEnrollmentFieldMap,
+		FieldMap: driverpaycol.WorkerBenefitEnrollmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -25249,7 +25343,7 @@ func init() {
 
 	WorkerChecklistSpec = TypeSpec{
 		TypeName: "WorkerChecklist",
-		FieldMap: buncolgen.WorkerChecklistFieldMap,
+		FieldMap: workercol.WorkerChecklistFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -25341,7 +25435,7 @@ func init() {
 
 	WorkerChecklistItemSpec = TypeSpec{
 		TypeName: "WorkerChecklistItem",
-		FieldMap: buncolgen.WorkerChecklistItemFieldMap,
+		FieldMap: workercol.WorkerChecklistItemFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -25460,7 +25554,7 @@ func init() {
 
 	WorkerChecklistTemplateSpec = TypeSpec{
 		TypeName: "WorkerChecklistTemplate",
-		FieldMap: buncolgen.WorkerChecklistTemplateFieldMap,
+		FieldMap: workercol.WorkerChecklistTemplateFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -25533,7 +25627,7 @@ func init() {
 
 	WorkerChecklistTemplateItemSpec = TypeSpec{
 		TypeName: "WorkerChecklistTemplateItem",
-		FieldMap: buncolgen.WorkerChecklistTemplateItemFieldMap,
+		FieldMap: workercol.WorkerChecklistTemplateItemFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -25599,7 +25693,7 @@ func init() {
 
 	WorkerClearinghouseQuerySpec = TypeSpec{
 		TypeName: "WorkerClearinghouseQuery",
-		FieldMap: buncolgen.WorkerClearinghouseQueryFieldMap,
+		FieldMap: workercol.WorkerClearinghouseQueryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -25682,7 +25776,7 @@ func init() {
 
 	WorkerCredentialSpec = TypeSpec{
 		TypeName: "WorkerCredential",
-		FieldMap: buncolgen.WorkerCredentialFieldMap,
+		FieldMap: workercol.WorkerCredentialFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -25809,7 +25903,7 @@ func init() {
 
 	WorkerCredentialDocumentSpec = TypeSpec{
 		TypeName: "WorkerCredentialDocument",
-		FieldMap: buncolgen.DocumentFieldMap,
+		FieldMap: documentcol.DocumentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -25844,7 +25938,7 @@ func init() {
 
 	WorkerCredentialTypeSpec = TypeSpec{
 		TypeName: "WorkerCredentialType",
-		FieldMap: buncolgen.WorkerCredentialTypeFieldMap,
+		FieldMap: workercol.WorkerCredentialTypeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -25939,7 +26033,7 @@ func init() {
 
 	WorkerDOTTestSpec = TypeSpec{
 		TypeName: "WorkerDOTTest",
-		FieldMap: buncolgen.WorkerDOTTestFieldMap,
+		FieldMap: workercol.WorkerDOTTestFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -26094,7 +26188,7 @@ func init() {
 
 	WorkerDOTViolationSpec = TypeSpec{
 		TypeName: "WorkerDOTViolation",
-		FieldMap: buncolgen.WorkerDOTViolationFieldMap,
+		FieldMap: workercol.WorkerDOTViolationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -26212,7 +26306,7 @@ func init() {
 
 	WorkerDisciplinaryActionSpec = TypeSpec{
 		TypeName: "WorkerDisciplinaryAction",
-		FieldMap: buncolgen.WorkerDisciplinaryActionFieldMap,
+		FieldMap: workercol.WorkerDisciplinaryActionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -26333,7 +26427,7 @@ func init() {
 
 	WorkerEmploymentEventSpec = TypeSpec{
 		TypeName: "WorkerEmploymentEvent",
-		FieldMap: buncolgen.WorkerEmploymentEventFieldMap,
+		FieldMap: workercol.WorkerEmploymentEventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -26437,7 +26531,7 @@ func init() {
 
 	WorkerEmploymentVerificationSpec = TypeSpec{
 		TypeName: "WorkerEmploymentVerification",
-		FieldMap: buncolgen.WorkerEmploymentVerificationFieldMap,
+		FieldMap: workercol.WorkerEmploymentVerificationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -26571,7 +26665,7 @@ func init() {
 
 	WorkerFormSubmissionSpec = TypeSpec{
 		TypeName: "WorkerFormSubmission",
-		FieldMap: buncolgen.FormSubmissionFieldMap,
+		FieldMap: telematicscol.FormSubmissionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -26602,7 +26696,7 @@ func init() {
 
 	WorkerHosStateSpec = TypeSpec{
 		TypeName:      "WorkerHosState",
-		FieldMap:      buncolgen.WorkerHOSStateFieldMap,
+		FieldMap:      telematicscol.WorkerHOSStateFieldMap,
 		AlwaysColumns: []string{},
 		Fields: []FieldSpec{
 			{
@@ -26702,7 +26796,7 @@ func init() {
 
 	WorkerHosViolationSpec = TypeSpec{
 		TypeName:      "WorkerHosViolation",
-		FieldMap:      buncolgen.WorkerHOSViolationFieldMap,
+		FieldMap:      telematicscol.WorkerHOSViolationFieldMap,
 		AlwaysColumns: []string{},
 		Fields: []FieldSpec{
 			{
@@ -26742,7 +26836,7 @@ func init() {
 
 	WorkerInjurySpec = TypeSpec{
 		TypeName: "WorkerInjury",
-		FieldMap: buncolgen.WorkerInjuryFieldMap,
+		FieldMap: workercol.WorkerInjuryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -26899,7 +26993,7 @@ func init() {
 
 	WorkerLeaveCaseSpec = TypeSpec{
 		TypeName: "WorkerLeaveCase",
-		FieldMap: buncolgen.WorkerLeaveCaseFieldMap,
+		FieldMap: workercol.WorkerLeaveCaseFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -27042,7 +27136,7 @@ func init() {
 
 	WorkerLeaveEntrySpec = TypeSpec{
 		TypeName: "WorkerLeaveEntry",
-		FieldMap: buncolgen.WorkerLeaveEntryFieldMap,
+		FieldMap: workercol.WorkerLeaveEntryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -27089,7 +27183,7 @@ func init() {
 
 	WorkerPTOSpec = TypeSpec{
 		TypeName: "WorkerPTO",
-		FieldMap: buncolgen.WorkerPTOFieldMap,
+		FieldMap: workercol.WorkerPTOFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -27208,7 +27302,7 @@ func init() {
 
 	WorkerPTOLedgerEntrySpec = TypeSpec{
 		TypeName: "WorkerPTOLedgerEntry",
-		FieldMap: buncolgen.WorkerPTOLedgerEntryFieldMap,
+		FieldMap: workercol.WorkerPTOLedgerEntryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -27294,7 +27388,7 @@ func init() {
 
 	WorkerPTOPolicyAssignmentSpec = TypeSpec{
 		TypeName: "WorkerPTOPolicyAssignment",
-		FieldMap: buncolgen.WorkerPTOPolicyAssignmentFieldMap,
+		FieldMap: workercol.WorkerPTOPolicyAssignmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -27349,7 +27443,7 @@ func init() {
 
 	WorkerPayAssignmentSpec = TypeSpec{
 		TypeName: "WorkerPayAssignment",
-		FieldMap: buncolgen.WorkerPayAssignmentFieldMap,
+		FieldMap: driverpaycol.WorkerPayAssignmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -27430,7 +27524,7 @@ func init() {
 
 	WorkerPolicySpec = TypeSpec{
 		TypeName: "WorkerPolicy",
-		FieldMap: buncolgen.WorkerPolicyFieldMap,
+		FieldMap: workercol.WorkerPolicyFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -27509,7 +27603,7 @@ func init() {
 
 	WorkerPolicyAcknowledgementSpec = TypeSpec{
 		TypeName: "WorkerPolicyAcknowledgement",
-		FieldMap: buncolgen.WorkerPolicyAcknowledgementFieldMap,
+		FieldMap: workercol.WorkerPolicyAcknowledgementFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -27582,7 +27676,7 @@ func init() {
 
 	WorkerProfileSpec = TypeSpec{
 		TypeName: "WorkerProfile",
-		FieldMap: buncolgen.WorkerProfileFieldMap,
+		FieldMap: workercol.WorkerProfileFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -27752,7 +27846,7 @@ func init() {
 
 	WorkerProfileChangeRequestSpec = TypeSpec{
 		TypeName: "WorkerProfileChangeRequest",
-		FieldMap: buncolgen.WorkerProfileChangeRequestFieldMap,
+		FieldMap: workercol.WorkerProfileChangeRequestFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -27818,7 +27912,7 @@ func init() {
 
 	WorkerRecognitionSpec = TypeSpec{
 		TypeName: "WorkerRecognition",
-		FieldMap: buncolgen.WorkerRecognitionFieldMap,
+		FieldMap: workercol.WorkerRecognitionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -27888,7 +27982,7 @@ func init() {
 
 	WorkerSafetyEventSpec = TypeSpec{
 		TypeName: "WorkerSafetyEvent",
-		FieldMap: buncolgen.WorkerSafetyEventFieldMap,
+		FieldMap: workercol.WorkerSafetyEventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -28043,7 +28137,7 @@ func init() {
 
 	WorkerSafetyViolationSpec = TypeSpec{
 		TypeName: "WorkerSafetyViolation",
-		FieldMap: buncolgen.WorkerSafetyViolationFieldMap,
+		FieldMap: workercol.WorkerSafetyViolationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -28106,7 +28200,7 @@ func init() {
 
 	WorkerShiftAssignmentSpec = TypeSpec{
 		TypeName: "WorkerShiftAssignment",
-		FieldMap: buncolgen.WorkerShiftAssignmentFieldMap,
+		FieldMap: workercol.WorkerShiftAssignmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -28183,7 +28277,7 @@ func init() {
 
 	WorkerTrainingRecordSpec = TypeSpec{
 		TypeName: "WorkerTrainingRecord",
-		FieldMap: buncolgen.WorkerTrainingRecordFieldMap,
+		FieldMap: workercol.WorkerTrainingRecordFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",

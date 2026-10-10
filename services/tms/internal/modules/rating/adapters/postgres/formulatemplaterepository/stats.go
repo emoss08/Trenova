@@ -1,6 +1,7 @@
 package formulatemplaterepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -24,7 +25,7 @@ func statsQuery(
 	q *bun.SelectQuery,
 	req *formulatemplateports.GetFormulaTemplateStatsRequest,
 ) *bun.SelectQuery {
-	ft := buncolgen.FormulaTemplateColumns
+	ft := formulatemplatecol.FormulaTemplateColumns
 
 	consumer := func(table string) string {
 		return "(SELECT COUNT(*) FROM " + table + " c " +
@@ -49,7 +50,7 @@ func statsQuery(
 				"AND tc.business_unit_id = ft.business_unit_id) AS scenario_count",
 		).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.FormulaTemplateScopeTenant(sq, req.TenantInfo).
+			return formulatemplatecol.FormulaTemplateScopeTenant(sq, req.TenantInfo).
 				Where(ft.ID.In(), bun.In(req.TemplateIDs))
 		})
 }

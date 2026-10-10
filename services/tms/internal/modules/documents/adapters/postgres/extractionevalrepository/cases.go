@@ -1,6 +1,7 @@
 package extractionevalrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/extractionevalcol"
 	"context"
 	"fmt"
 
@@ -76,8 +77,8 @@ func (r *caseRepository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ExtractionCaseScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.ExtractionCaseColumns.ID.Eq(), req.ID)
+				return extractionevalcol.ExtractionCaseScopeTenant(sq, req.TenantInfo).
+					Where(extractionevalcol.ExtractionCaseColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -99,8 +100,8 @@ func (r *caseRepository) GetBySourceCorrection(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ExtractionCaseScopeTenant(sq, tenant).
-					Where(buncolgen.ExtractionCaseColumns.SourceCorrectionID.Eq(), correctionID)
+				return extractionevalcol.ExtractionCaseScopeTenant(sq, tenant).
+					Where(extractionevalcol.ExtractionCaseColumns.SourceCorrectionID.Eq(), correctionID)
 			}).
 			Limit(1).
 			Scan(ctx)
@@ -117,14 +118,14 @@ func (r *caseRepository) Update(
 	entity *extractioneval.ExtractionCase,
 ) (*extractioneval.ExtractionCase, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*extractioneval.ExtractionCase, error) {
-		cols := buncolgen.ExtractionCaseColumns
+		cols := extractionevalcol.ExtractionCaseColumns
 		previous := entity.Version
 
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ExtractionCaseScopeTenantUpdate(uq, pagination.TenantInfo{
+				return extractionevalcol.ExtractionCaseScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
 				}).
@@ -162,8 +163,8 @@ func (r *caseRepository) Delete(
 			NewDelete().
 			Model((*extractioneval.ExtractionCase)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.ExtractionCaseScopeTenantDelete(dq, req.TenantInfo).
-					Where(buncolgen.ExtractionCaseColumns.ID.Eq(), req.ID)
+				return extractionevalcol.ExtractionCaseScopeTenantDelete(dq, req.TenantInfo).
+					Where(extractionevalcol.ExtractionCaseColumns.ID.Eq(), req.ID)
 			}).
 			Exec(ctx)
 		if err != nil {
@@ -190,12 +191,12 @@ func (r *caseRepository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.ExtractionCaseTable.Alias,
+						extractionevalcol.ExtractionCaseTable.Alias,
 						req.Filter,
 						(*extractioneval.ExtractionCase)(nil),
 					)
 
-					return sq.Apply(buncolgen.ExtractionCaseApplyTenant(req.Filter.TenantInfo))
+					return sq.Apply(extractionevalcol.ExtractionCaseApplyTenant(req.Filter.TenantInfo))
 				}).
 				Count(ctx)
 			if err != nil {
@@ -221,7 +222,7 @@ func (r *caseRepository) ListConnection(
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 				return querybuilder.ApplyCursorFilters(
 					sq,
-					buncolgen.ExtractionCaseTable.Alias,
+					extractionevalcol.ExtractionCaseTable.Alias,
 					req.Filter,
 					req.Cursor,
 					(*extractioneval.ExtractionCase)(nil),
@@ -243,7 +244,7 @@ func (r *caseRepository) ListActive(
 	req extractionevalports.ListActiveExtractionEvalCasesRequest,
 ) ([]*extractioneval.ExtractionCase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*extractioneval.ExtractionCase, error) {
-		cols := buncolgen.ExtractionCaseColumns
+		cols := extractionevalcol.ExtractionCaseColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultCaseLimit
@@ -256,7 +257,7 @@ func (r *caseRepository) ListActive(
 			Model(&entities).
 			Column(cols.ID.Bare(), cols.Title.Bare(), cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ExtractionCaseScopeTenant(sq, req.TenantInfo).
+				return extractionevalcol.ExtractionCaseScopeTenant(sq, req.TenantInfo).
 					Where(cols.Task.Eq(), req.Task).
 					Where(cols.Status.Eq(), extractioneval.CaseStatusActive)
 			}).
@@ -278,7 +279,7 @@ func (r *caseRepository) Counts(
 	req extractionevalports.CountExtractionEvalCasesRequest,
 ) (*extractionevalports.ExtractionEvalCaseCounts, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*extractionevalports.ExtractionEvalCaseCounts, error) {
-		cols := buncolgen.ExtractionCaseColumns
+		cols := extractionevalcol.ExtractionCaseColumns
 		var row struct {
 			Candidate int `bun:"candidate"`
 			Active    int `bun:"active"`
@@ -292,7 +293,7 @@ func (r *caseRepository) Counts(
 			ColumnExpr(buncolgen.CountFilter("active", cols.Status.Eq()), extractioneval.CaseStatusActive).
 			ColumnExpr(buncolgen.CountFilter("retired", cols.Status.Eq()), extractioneval.CaseStatusRetired).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ExtractionCaseScopeTenant(sq, req.TenantInfo).
+				return extractionevalcol.ExtractionCaseScopeTenant(sq, req.TenantInfo).
 					Where(cols.Task.Eq(), req.Task)
 			}).
 			Scan(ctx, &row)

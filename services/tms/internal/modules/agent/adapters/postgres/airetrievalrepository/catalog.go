@@ -1,6 +1,7 @@
 package airetrievalrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/airetrievalcol"
 	"context"
 	"database/sql"
 	"fmt"
@@ -48,7 +49,7 @@ func catalogScope(
 	modelKey string,
 	corpus airetrieval.CatalogCorpus,
 ) func(*bun.SelectQuery) *bun.SelectQuery {
-	cols := buncolgen.CatalogEmbeddingColumns
+	cols := airetrievalcol.CatalogEmbeddingColumns
 
 	return func(q *bun.SelectQuery) *bun.SelectQuery {
 		return q.Where(cols.ModelKey.Eq(), modelKey).Where(cols.Corpus.Eq(), corpus)
@@ -78,7 +79,7 @@ func (r *repository) GetCatalogEmbeddings(
 			return []*airetrieval.CatalogEmbedding{}, nil
 		}
 
-		cols := buncolgen.CatalogEmbeddingColumns
+		cols := airetrievalcol.CatalogEmbeddingColumns
 		entities := make([]*airetrieval.CatalogEmbedding, 0, len(req.Items))
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -150,7 +151,7 @@ func (r *repository) PutCatalogEmbeddings(
 		res, err := r.db.DBForContext(ctx).
 			NewInsert().
 			Model(&rows).
-			On(conflictTarget(buncolgen.CatalogEmbeddingTable) + " DO NOTHING").
+			On(conflictTarget(airetrievalcol.CatalogEmbeddingTable) + " DO NOTHING").
 			Exec(ctx)
 		if err != nil {
 			return 0, fmt.Errorf("write catalog embeddings: %w", err)
@@ -177,7 +178,7 @@ func (r *repository) PruneCatalogEmbeddings(
 			return 0, err
 		}
 
-		cols := buncolgen.CatalogEmbeddingColumns
+		cols := airetrievalcol.CatalogEmbeddingColumns
 		q := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*airetrieval.CatalogEmbedding)(nil)).

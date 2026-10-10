@@ -1,6 +1,7 @@
 package aiproviderrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/aiprovidercol"
 	"context"
 	"fmt"
 
@@ -32,13 +33,13 @@ func (r *dismissalRepository) List(
 	req *agentports.ListFailureDismissalsRequest,
 ) ([]*aiprovider.FailureDismissal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiprovider.FailureDismissal, error) {
-		cols := buncolgen.FailureDismissalColumns
+		cols := aiprovidercol.FailureDismissalColumns
 		dismissals := make([]*aiprovider.FailureDismissal, 0)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&dismissals).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FailureDismissalScopeTenant(sq, req.TenantInfo).
+				return aiprovidercol.FailureDismissalScopeTenant(sq, req.TenantInfo).
 					Where(cols.UserID.Eq(), req.UserID)
 			}).
 			Scan(ctx)
@@ -51,7 +52,7 @@ func (r *dismissalRepository) List(
 
 func (r *dismissalRepository) Upsert(ctx context.Context, dismissal *aiprovider.FailureDismissal) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.FailureDismissalColumns
+		cols := aiprovidercol.FailureDismissalColumns
 		_, err := r.db.DBForContext(ctx).
 			NewInsert().
 			Model(dismissal).
@@ -71,12 +72,12 @@ func (r *dismissalRepository) Delete(
 	req *agentports.DeleteFailureDismissalRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.FailureDismissalColumns
+		cols := aiprovidercol.FailureDismissalColumns
 		_, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*aiprovider.FailureDismissal)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.FailureDismissalScopeTenantDelete(dq, req.TenantInfo).
+				return aiprovidercol.FailureDismissalScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.UserID.Eq(), req.UserID).
 					Where(cols.ProviderID.Eq(), req.ProviderID)
 			}).

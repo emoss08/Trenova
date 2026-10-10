@@ -2,6 +2,7 @@
 package editemplaterepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
 	"context"
 	"fmt"
 	"strings"
@@ -54,13 +55,13 @@ func (r *repository) List(
 		)
 
 		entities := make([]*edi.EDITemplate, 0, req.Filter.Pagination.SafeLimit())
-		cols := buncolgen.EDITemplateColumns
+		cols := edicol.EDITemplateColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Relation(buncolgen.EDITemplateRelations.DocumentType).
-			Apply(buncolgen.EDITemplateApplyTenant(req.Filter.TenantInfo))
+			Relation(edicol.EDITemplateRelations.DocumentType).
+			Apply(edicol.EDITemplateApplyTenant(req.Filter.TenantInfo))
 		if req.TransactionSet != "" {
 			query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
 		}
@@ -124,14 +125,14 @@ func (r *repository) ListTemplatesCursor(
 			Cursor:     req.Cursor,
 			TotalCount: totalCount,
 			Query: func(entities *[]*edi.EDITemplate) *bun.SelectQuery {
-				rel := buncolgen.EDITemplateRelations
+				rel := edicol.EDITemplateRelations
 				return dba.
 					NewSelect().
 					Model(entities).
-					ColumnExpr(buncolgen.EDITemplateTable.All()).
+					ColumnExpr(edicol.EDITemplateTable.All()).
 					Relation(rel.DocumentType).
 					Relation(rel.Versions, func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Order(buncolgen.EDITemplateVersionColumns.VersionNumber.OrderDesc())
+						return q.Order(edicol.EDITemplateVersionColumns.VersionNumber.OrderDesc())
 					})
 			},
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
@@ -155,7 +156,7 @@ func applyTemplateListFilters(
 	q *bun.SelectQuery,
 	req *ediports.ListEDITemplatesRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.EDITemplateColumns
+	cols := edicol.EDITemplateColumns
 	if req.TransactionSet != "" {
 		q = q.Where(cols.TransactionSet.Eq(), req.TransactionSet)
 	}
@@ -174,7 +175,7 @@ func (r *repository) listDocumentTypes(
 ) ([]*edi.EDIDocumentType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIDocumentType, error) {
 		entities := make([]*edi.EDIDocumentType, 0, 8)
-		cols := buncolgen.EDIDocumentTypeColumns
+		cols := edicol.EDIDocumentTypeColumns
 		query := r.db.DBForContext(ctx).NewSelect().Model(&entities).Order(cols.Code.OrderAsc())
 		query = filterDocumentTypesQuery(query, req)
 		if err := query.Scan(ctx); err != nil {
@@ -188,7 +189,7 @@ func filterDocumentTypesQuery(
 	query *bun.SelectQuery,
 	req ediports.ListEDIDocumentTypesRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.EDIDocumentTypeColumns
+	cols := edicol.EDIDocumentTypeColumns
 	if req.Standard != "" {
 		query = query.Where(cols.Standard.Eq(), req.Standard)
 	}
@@ -210,7 +211,7 @@ func (r *repository) SelectTemplateOptions(
 ) (*pagination.ListResult[*edi.EDITemplate], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDITemplate], error) {
 		entities := make([]*edi.EDITemplate, 0, req.SelectQueryRequest.Pagination.SafeLimit())
-		cols := buncolgen.EDITemplateColumns
+		cols := edicol.EDITemplateColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
@@ -227,8 +228,8 @@ func (r *repository) SelectTemplateOptions(
 				cols.TransactionSet.Bare(),
 				cols.Status.Bare(),
 			).
-			Relation(buncolgen.EDITemplateRelations.DocumentType).
-			Apply(buncolgen.EDITemplateApplyTenant(req.SelectQueryRequest.TenantInfo))
+			Relation(edicol.EDITemplateRelations.DocumentType).
+			Apply(edicol.EDITemplateApplyTenant(req.SelectQueryRequest.TenantInfo))
 		if req.TransactionSet != "" {
 			query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
 		}
@@ -259,18 +260,18 @@ func (r *repository) GetTemplateByID(
 ) (*edi.EDITemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDITemplate, error) {
 		entity := new(edi.EDITemplate)
-		cols := buncolgen.EDITemplateColumns
-		rel := buncolgen.EDITemplateRelations
+		cols := edicol.EDITemplateColumns
+		rel := edicol.EDITemplateRelations
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			Relation(rel.DocumentType).
 			Relation(rel.Versions, func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Order(buncolgen.EDITemplateVersionColumns.VersionNumber.OrderDesc())
+				return q.Order(edicol.EDITemplateVersionColumns.VersionNumber.OrderDesc())
 			}).
 			Where(cols.ID.Eq(), req.ID).
-			Apply(buncolgen.EDITemplateApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDITemplateApplyTenant(req.TenantInfo)).
 			Scan(ctx)
 		if err != nil {
 			return nil, dberror.HandleNotFoundError(err, "EDITemplate")
@@ -337,7 +338,7 @@ func (r *repository) UpdateTemplate(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDITemplate, error) {
 		ov := entity.Version
 		entity.Version++
-		cols := buncolgen.EDITemplateColumns
+		cols := edicol.EDITemplateColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -369,13 +370,13 @@ func (r *repository) ListTemplateVersions(
 ) ([]*edi.EDITemplateVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDITemplateVersion, error) {
 		entities := make([]*edi.EDITemplateVersion, 0, 8)
-		cols := buncolgen.EDITemplateVersionColumns
+		cols := edicol.EDITemplateVersionColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			Where(cols.TemplateID.Eq(), req.TemplateID).
-			Apply(buncolgen.EDITemplateVersionApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDITemplateVersionApplyTenant(req.TenantInfo)).
 			Order(cols.VersionNumber.OrderDesc()).
 			Scan(ctx)
 		if err != nil {
@@ -391,22 +392,22 @@ func (r *repository) GetTemplateVersionByID(
 ) (*edi.EDITemplateVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDITemplateVersion, error) {
 		entity := new(edi.EDITemplateVersion)
-		cols := buncolgen.EDITemplateVersionColumns
-		rel := buncolgen.EDITemplateVersionRelations
+		cols := edicol.EDITemplateVersionColumns
+		rel := edicol.EDITemplateVersionRelations
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			Relation(rel.Template).
 			Relation(rel.Segments, func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Order(buncolgen.EDITemplateSegmentColumns.Sequence.OrderAsc())
+				return q.Order(edicol.EDITemplateSegmentColumns.Sequence.OrderAsc())
 			}).
 			Relation(rel.ScriptLibraries, func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.OrderExpr(buncolgen.EDITemplateScriptLibraryColumns.Name.Expr("lower({}) ASC"))
+				return q.OrderExpr(edicol.EDITemplateScriptLibraryColumns.Name.Expr("lower({}) ASC"))
 			}).
 			Where(cols.ID.Eq(), req.VersionID).
 			Where(cols.TemplateID.Eq(), req.TemplateID).
-			Apply(buncolgen.EDITemplateVersionApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDITemplateVersionApplyTenant(req.TenantInfo)).
 			Scan(ctx)
 		if err != nil {
 			return nil, dberror.HandleNotFoundError(err, "EDITemplateVersion")
@@ -421,20 +422,20 @@ func (r *repository) GetActiveTemplateVersion(
 ) (*edi.EDITemplateVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDITemplateVersion, error) {
 		entity := new(edi.EDITemplateVersion)
-		cols := buncolgen.EDITemplateVersionColumns
-		rel := buncolgen.EDITemplateVersionRelations
+		cols := edicol.EDITemplateVersionColumns
+		rel := edicol.EDITemplateVersionRelations
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			Relation(rel.Segments, func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Order(buncolgen.EDITemplateSegmentColumns.Sequence.OrderAsc())
+				return q.Order(edicol.EDITemplateSegmentColumns.Sequence.OrderAsc())
 			}).
 			Relation(rel.ScriptLibraries, func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.OrderExpr(buncolgen.EDITemplateScriptLibraryColumns.Name.Expr("lower({}) ASC"))
+				return q.OrderExpr(edicol.EDITemplateScriptLibraryColumns.Name.Expr("lower({}) ASC"))
 			}).
 			Where(cols.TemplateID.Eq(), req.TemplateID).
-			Apply(buncolgen.EDITemplateVersionApplyTenant(req.TenantInfo))
+			Apply(edicol.EDITemplateVersionApplyTenant(req.TenantInfo))
 		if !req.VersionID.IsNil() {
 			query = query.Where(cols.ID.Eq(), req.VersionID)
 		} else {
@@ -498,7 +499,7 @@ func (r *repository) UpdateTemplateVersionMetadata(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDITemplateVersion, error) {
 		ov := version.Version
 		version.Version++
-		cols := buncolgen.EDITemplateVersionColumns
+		cols := edicol.EDITemplateVersionColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -563,8 +564,8 @@ func (r *repository) ReplaceTemplateVersionSegments(
 				NewDelete().
 				Model((*edi.EDITemplateSegment)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					cols := buncolgen.EDITemplateSegmentColumns
-					return buncolgen.EDITemplateSegmentScopeTenantDelete(dq, pagination.TenantInfo{
+					cols := edicol.EDITemplateSegmentColumns
+					return edicol.EDITemplateSegmentScopeTenantDelete(dq, pagination.TenantInfo{
 						OrgID: req.Version.OrganizationID,
 						BuID:  req.Version.BusinessUnitID,
 					}).Where(cols.TemplateVersionID.Eq(), req.Version.ID)
@@ -598,13 +599,13 @@ func (r *repository) ListTemplateScriptLibraries(
 ) ([]*edi.EDITemplateScriptLibrary, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDITemplateScriptLibrary, error) {
 		entities := make([]*edi.EDITemplateScriptLibrary, 0, 4)
-		cols := buncolgen.EDITemplateScriptLibraryColumns
+		cols := edicol.EDITemplateScriptLibraryColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			Where(cols.TemplateVersionID.Eq(), req.VersionID).
-			Apply(buncolgen.EDITemplateScriptLibraryApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDITemplateScriptLibraryApplyTenant(req.TenantInfo)).
 			Where(
 				`EXISTS (
 				SELECT 1 FROM edi_template_versions etv
@@ -636,8 +637,8 @@ func (r *repository) ReplaceTemplateVersionScriptLibraries(
 				NewDelete().
 				Model((*edi.EDITemplateScriptLibrary)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					cols := buncolgen.EDITemplateScriptLibraryColumns
-					return buncolgen.EDITemplateScriptLibraryScopeTenantDelete(
+					cols := edicol.EDITemplateScriptLibraryColumns
+					return edicol.EDITemplateScriptLibraryScopeTenantDelete(
 						dq,
 						pagination.TenantInfo{
 							OrgID: req.Version.OrganizationID,
@@ -675,18 +676,18 @@ func (r *repository) ActivateTemplateVersion(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDITemplateVersion, error) {
 		version := new(edi.EDITemplateVersion)
 		now := timeutils.NowUnix()
-		cols := buncolgen.EDITemplateVersionColumns
+		cols := edicol.EDITemplateVersionColumns
 
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if err := r.db.DBForContext(c).
 				NewSelect().
 				Model(version).
-				Relation(buncolgen.EDITemplateVersionRelations.Segments, func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Order(buncolgen.EDITemplateSegmentColumns.Sequence.OrderAsc())
+				Relation(edicol.EDITemplateVersionRelations.Segments, func(q *bun.SelectQuery) *bun.SelectQuery {
+					return q.Order(edicol.EDITemplateSegmentColumns.Sequence.OrderAsc())
 				}).
 				Where(cols.ID.Eq(), req.VersionID).
 				Where(cols.TemplateID.Eq(), req.TemplateID).
-				Apply(buncolgen.EDITemplateVersionApplyTenant(req.TenantInfo)).
+				Apply(edicol.EDITemplateVersionApplyTenant(req.TenantInfo)).
 				For("UPDATE").
 				Scan(c); err != nil {
 				return dberror.HandleNotFoundError(err, "EDITemplateVersion")
@@ -697,7 +698,7 @@ func (r *repository) ActivateTemplateVersion(
 				NewSelect().
 				Model(&active).
 				Where(cols.TemplateID.Eq(), req.TemplateID).
-				Apply(buncolgen.EDITemplateVersionApplyTenant(req.TenantInfo)).
+				Apply(edicol.EDITemplateVersionApplyTenant(req.TenantInfo)).
 				Where(cols.IsActive.IsTrue()).
 				For("UPDATE").
 				Scan(c); err != nil {
@@ -784,18 +785,18 @@ func (r *repository) ArchiveTemplateVersion(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDITemplateVersion, error) {
 		version := new(edi.EDITemplateVersion)
 		now := timeutils.NowUnix()
-		cols := buncolgen.EDITemplateVersionColumns
+		cols := edicol.EDITemplateVersionColumns
 
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if err := r.db.DBForContext(c).
 				NewSelect().
 				Model(version).
-				Relation(buncolgen.EDITemplateVersionRelations.Segments, func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Order(buncolgen.EDITemplateSegmentColumns.Sequence.OrderAsc())
+				Relation(edicol.EDITemplateVersionRelations.Segments, func(q *bun.SelectQuery) *bun.SelectQuery {
+					return q.Order(edicol.EDITemplateSegmentColumns.Sequence.OrderAsc())
 				}).
 				Where(cols.ID.Eq(), req.VersionID).
 				Where(cols.TemplateID.Eq(), req.TemplateID).
-				Apply(buncolgen.EDITemplateVersionApplyTenant(req.TenantInfo)).
+				Apply(edicol.EDITemplateVersionApplyTenant(req.TenantInfo)).
 				For("UPDATE").
 				Scan(c); err != nil {
 				return dberror.HandleNotFoundError(err, "EDITemplateVersion")
@@ -862,7 +863,7 @@ func (r *repository) updateTemplateScriptLibraryStatus(
 	status edi.TemplateStatus,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.EDITemplateScriptLibraryColumns
+		cols := edicol.EDITemplateScriptLibraryColumns
 
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -895,13 +896,13 @@ func (r *repository) EnsureBaseTemplate(
 		version := new(edi.EDITemplateVersion)
 		templateName := fmt.Sprintf("Base X12 %s Outbound", transactionSet)
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			cols := buncolgen.EDITemplateColumns
+			cols := edicol.EDITemplateColumns
 
 			err := r.db.DBForContext(c).
 				NewSelect().
 				Model(template).
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return buncolgen.EDITemplateScopeTenant(sq, tenantInfo).
+					return edicol.EDITemplateScopeTenant(sq, tenantInfo).
 						Where(cols.Standard.Eq(), edi.EDIStandardX12).
 						Where(cols.TransactionSet.Eq(), transactionSet).
 						Where(cols.Direction.Eq(), edi.DocumentDirectionOutbound).
@@ -1014,7 +1015,7 @@ func applyTemplateSearch(query *bun.SelectQuery, search string) *bun.SelectQuery
 	}
 
 	term := "%" + strings.ToLower(search) + "%"
-	cols := buncolgen.EDITemplateColumns
+	cols := edicol.EDITemplateColumns
 
 	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 		return sq.WhereOr(cols.Name.LowerLike(), term).

@@ -1,6 +1,7 @@
 package ptopolicyrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"strings"
 
@@ -40,7 +41,7 @@ func New(p Params) workerports.PTOPolicyRepository {
 }
 
 func orderRules(sq *bun.SelectQuery) *bun.SelectQuery {
-	cols := buncolgen.PTOPolicyRuleColumns
+	cols := workercol.PTOPolicyRuleColumns
 	return sq.Order(cols.SortOrder.OrderAsc()).Order(cols.PTOType.OrderAsc())
 }
 
@@ -48,12 +49,12 @@ func (r *repository) applyListFilters(
 	q *bun.SelectQuery,
 	req *workerports.ListPTOPoliciesRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.PTOPolicyColumns
+	cols := workercol.PTOPolicyColumns
 	if req.Status != "" {
 		q = q.Where(cols.Status.Eq(), req.Status)
 	}
 	if req.IncludeRules {
-		q = q.Relation(buncolgen.PTOPolicyRelations.Rules, orderRules)
+		q = q.Relation(workercol.PTOPolicyRelations.Rules, orderRules)
 	}
 	return q
 }
@@ -74,11 +75,11 @@ func (r *repository) List(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.PTOPolicyTable.Alias,
+						workercol.PTOPolicyTable.Alias,
 						req.Filter,
 						(*worker.PTOPolicy)(nil),
 					)
-					cols := buncolgen.PTOPolicyColumns
+					cols := workercol.PTOPolicyColumns
 					if req.Status != "" {
 						sq = sq.Where(cols.Status.Eq(), req.Status)
 					}
@@ -97,12 +98,12 @@ func (r *repository) List(
 			Cursor:     req.Cursor,
 			TotalCount: totalCount,
 			Query: func(items *[]*worker.PTOPolicy) *bun.SelectQuery {
-				return dba.NewSelect().Model(items).ColumnExpr(buncolgen.PTOPolicyTable.All())
+				return dba.NewSelect().Model(items).ColumnExpr(workercol.PTOPolicyTable.All())
 			},
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 				sq, applyErr := querybuilder.ApplyCursorFilters(
 					sq,
-					buncolgen.PTOPolicyTable.Alias,
+					workercol.PTOPolicyTable.Alias,
 					req.Filter,
 					req.Cursor,
 					(*worker.PTOPolicy)(nil),
@@ -127,7 +128,7 @@ func (r *repository) SelectOptions(
 	req *workerports.PTOPolicySelectOptionsRequest,
 ) (*pagination.ListResult[*worker.PTOPolicy], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*worker.PTOPolicy], error) {
-		cols := buncolgen.PTOPolicyColumns
+		cols := workercol.PTOPolicyColumns
 		return dbhelper.SelectOptions[*worker.PTOPolicy](
 			ctx,
 			r.db.DBForContext(ctx),
@@ -152,7 +153,7 @@ func (r *repository) SelectOptions(
 				BuColumnRef:  &cols.BusinessUnitID,
 				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
 					return q.Where(cols.Status.Eq(), worker.PTOPolicyStatusActive).
-						Relation(buncolgen.PTOPolicyRelations.Rules, orderRules).
+						Relation(workercol.PTOPolicyRelations.Rules, orderRules).
 						Order(cols.IsDefault.OrderDesc()).
 						Order(cols.Name.OrderAsc())
 				},
@@ -179,11 +180,11 @@ func (r *repository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.PTOPolicyScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.PTOPolicyColumns.ID.Eq(), req.ID)
+				return workercol.PTOPolicyScopeTenant(sq, req.TenantInfo).
+					Where(workercol.PTOPolicyColumns.ID.Eq(), req.ID)
 			})
 		if req.IncludeRules {
-			q = q.Relation(buncolgen.PTOPolicyRelations.Rules, orderRules)
+			q = q.Relation(workercol.PTOPolicyRelations.Rules, orderRules)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -202,14 +203,14 @@ func (r *repository) GetDefault(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PTOPolicy, error) {
 		log := r.l.With(zap.String("operation", "GetDefault"))
 
-		cols := buncolgen.PTOPolicyColumns
+		cols := workercol.PTOPolicyColumns
 		entity := new(worker.PTOPolicy)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Relation(buncolgen.PTOPolicyRelations.Rules, orderRules).
+			Relation(workercol.PTOPolicyRelations.Rules, orderRules).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.PTOPolicyScopeTenant(sq, tenantInfo).
+				return workercol.PTOPolicyScopeTenant(sq, tenantInfo).
 					Where(cols.IsDefault.Eq(), true).
 					Where(cols.Status.Eq(), worker.PTOPolicyStatusActive)
 			}).
@@ -232,12 +233,12 @@ func (r *repository) CodeExists(
 	req *workerports.PTOPolicyCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := buncolgen.PTOPolicyColumns
+		cols := workercol.PTOPolicyColumns
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.PTOPolicy)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.PTOPolicyScopeTenant(sq, req.TenantInfo).
+				return workercol.PTOPolicyScopeTenant(sq, req.TenantInfo).
 					Where("LOWER("+cols.Code.String()+") = ?", strings.ToLower(req.Code))
 			})
 		if !req.ExcludeID.IsNil() {
@@ -336,7 +337,7 @@ func (r *repository) Update(
 
 		ov := entity.Version
 		entity.Version++
-		ruleCols := buncolgen.PTOPolicyRuleColumns
+		ruleCols := workercol.PTOPolicyRuleColumns
 		tenant := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
@@ -353,7 +354,7 @@ func (r *repository) Update(
 				NewUpdate().
 				Model(entity).
 				WherePK().
-				Where(buncolgen.PTOPolicyColumns.Version.Eq(), ov).
+				Where(workercol.PTOPolicyColumns.Version.Eq(), ov).
 				Returning("*").
 				Exec(c)
 			if uErr != nil {
@@ -367,7 +368,7 @@ func (r *repository) Update(
 				NewDelete().
 				Model((*worker.PTOPolicyRule)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return buncolgen.PTOPolicyRuleScopeTenantDelete(dq, tenant).
+					return workercol.PTOPolicyRuleScopeTenantDelete(dq, tenant).
 						Where(ruleCols.PTOPolicyID.Eq(), entity.ID)
 				}).
 				Exec(c); dErr != nil {
@@ -394,13 +395,13 @@ func (r *repository) ClearDefault(
 	req *workerports.ClearDefaultPTOPolicyRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.PTOPolicyColumns
+		cols := workercol.PTOPolicyColumns
 		q := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*worker.PTOPolicy)(nil)).
 			Set(cols.IsDefault.Set(), false).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.PTOPolicyScopeTenantUpdate(uq, req.TenantInfo).
+				return workercol.PTOPolicyScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.IsDefault.Eq(), true)
 			})
 		if !req.ExceptID.IsNil() {
@@ -421,12 +422,12 @@ func (r *repository) CountOpenAssignments(
 	req *workerports.CountOpenPTOAssignmentsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.WorkerPTOPolicyAssignmentColumns
+		cols := workercol.WorkerPTOPolicyAssignmentColumns
 		count, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.WorkerPTOPolicyAssignment)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerPTOPolicyAssignmentScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerPTOPolicyAssignmentScopeTenant(sq, req.TenantInfo).
 					Where(cols.PTOPolicyID.Eq(), req.PolicyID).
 					Where(cols.EffectiveTo.IsNull())
 			}).
@@ -449,12 +450,12 @@ func (r *repository) CountOpenAssignmentsByIDs(
 			return map[pulid.ID]int{}, nil
 		}
 
-		cols := buncolgen.WorkerPTOPolicyAssignmentColumns
+		cols := workercol.WorkerPTOPolicyAssignmentColumns
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.WorkerPTOPolicyAssignment)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerPTOPolicyAssignmentScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerPTOPolicyAssignmentScopeTenant(sq, req.TenantInfo).
 					Where(cols.PTOPolicyID.In(), bun.In(req.PolicyIDs)).
 					Where(cols.EffectiveTo.IsNull())
 			})

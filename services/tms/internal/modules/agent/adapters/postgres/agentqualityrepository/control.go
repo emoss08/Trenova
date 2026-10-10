@@ -1,6 +1,8 @@
 package agentqualityrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentqualitycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 	"database/sql"
 	"errors"
@@ -58,7 +60,7 @@ func (r *controlRepository) Get(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ControlScopeTenant(sq, tenantInfo)
+				return agentqualitycol.ControlScopeTenant(sq, tenantInfo)
 			}).
 			Limit(1).
 			Scan(ctx); err != nil {
@@ -74,7 +76,7 @@ func (r *controlRepository) Upsert(
 	entity *agentquality.Control,
 ) (*agentquality.Control, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentquality.Control, error) {
-		cols := buncolgen.ControlColumns
+		cols := agentqualitycol.ControlColumns
 		dba := r.db.DBForContext(ctx)
 
 		existing, err := r.Get(ctx, pagination.TenantInfo{
@@ -109,7 +111,7 @@ func (r *controlRepository) Upsert(
 		res, err := dba.NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ControlScopeTenantUpdate(uq, pagination.TenantInfo{
+				return agentqualitycol.ControlScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
 				}).
@@ -149,8 +151,8 @@ func (r *controlRepository) Upsert(
 func (r *controlRepository) scheduleTargetQuery(
 	dba bun.IDB,
 ) *bun.SelectQuery {
-	org := buncolgen.OrganizationColumns
-	cases := buncolgen.EvalCaseColumns
+	org := tenantcol.OrganizationColumns
+	cases := agentqualitycol.EvalCaseColumns
 
 	activeCases := dba.NewSelect().
 		Model((*agentquality.EvalCase)(nil)).
@@ -174,7 +176,7 @@ func (r *controlRepository) ScheduleTarget(
 	tenantInfo pagination.TenantInfo,
 ) (*agentqualityports.QualityScheduleTarget, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentqualityports.QualityScheduleTarget, error) {
-		org := buncolgen.OrganizationColumns
+		org := tenantcol.OrganizationColumns
 		dba := r.db.DBForContext(ctx)
 
 		target := new(agentqualityports.QualityScheduleTarget)
@@ -204,7 +206,7 @@ func (r *controlRepository) ListScheduleTargets(
 ) ([]*agentqualityports.QualityScheduleTarget, error) {
 	ctx = dbscope.WithSystem(ctx, "list agent quality schedules across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentqualityports.QualityScheduleTarget, error) {
-		org := buncolgen.OrganizationColumns
+		org := tenantcol.OrganizationColumns
 		limit := clampLimit(req.Limit, defaultScheduleTargetCap, maxScheduleTargetCap)
 		dba := r.db.DBForContext(ctx)
 
@@ -229,7 +231,7 @@ func (r *controlRepository) ListScheduleTargets(
 		controls := make([]*agentquality.Control, 0, len(targets))
 		if err := dba.NewSelect().
 			Model(&controls).
-			Where(buncolgen.ControlColumns.OrganizationID.In(), bun.List(orgIDs)).
+			Where(agentqualitycol.ControlColumns.OrganizationID.In(), bun.List(orgIDs)).
 			Scan(ctx); err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("read quality controls to schedule: %w", err)
 		}

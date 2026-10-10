@@ -1,6 +1,7 @@
 package servicefailurerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/servicefailurecol"
 	"context"
 	"fmt"
 
@@ -91,7 +92,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	q, err := querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.ServiceFailureTable.Alias,
+		servicefailurecol.ServiceFailureTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*servicefailure.ServiceFailure)(nil),
@@ -109,7 +110,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.ServiceFailureTable.Alias,
+		servicefailurecol.ServiceFailureTable.Alias,
 		req.Filter,
 		(*servicefailure.ServiceFailure)(nil),
 	)
@@ -122,7 +123,7 @@ func applyShipmentFilter(q *bun.SelectQuery, shipmentID *pulid.ID) *bun.SelectQu
 		return q
 	}
 
-	return q.Where(buncolgen.ServiceFailureColumns.ShipmentID.Eq(), *shipmentID)
+	return q.Where(servicefailurecol.ServiceFailureColumns.ShipmentID.Eq(), *shipmentID)
 }
 
 func (r *repository) ListConnection(
@@ -162,7 +163,7 @@ func (r *repository) ListConnection(
 					return dba.
 						NewSelect().
 						Model(entities).
-						ColumnExpr(buncolgen.ServiceFailureTable.All()).
+						ColumnExpr(servicefailurecol.ServiceFailureTable.All()).
 						Relation("Shipment").
 						Relation("Stop").
 						Relation("Stop.Location").
@@ -394,16 +395,16 @@ func (r *repository) ListUnresolvedByShipmentIDs(
 			return entities, nil
 		}
 
-		cols := buncolgen.ServiceFailureColumns
+		cols := servicefailurecol.ServiceFailureColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ServiceFailureScopeTenant(sq, req.TenantInfo).
+				return servicefailurecol.ServiceFailureScopeTenant(sq, req.TenantInfo).
 					Where(cols.ShipmentID.In(), bun.List(req.ShipmentIDs)).
 					Where(cols.Status.In(), bun.List(servicefailure.UnresolvedStatuses()))
 			}).
-			Relation(buncolgen.ServiceFailureRelations.ReasonCode).
+			Relation(servicefailurecol.ServiceFailureRelations.ReasonCode).
 			Order(cols.CreatedAt.OrderDesc()).
 			Scan(ctx)
 		if err != nil {

@@ -2,11 +2,14 @@
 
 package tractor
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Tractor].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.TractorFieldMap] instead of parsing struct tags via reflection.
+// the generated [tractorcol.TractorFieldMap] instead of parsing struct tags via reflection.
 func (e *Tractor) GetStaticFieldMap() map[string]string {
-	return buncolgen.TractorFieldMap
+	return tractorcol.TractorFieldMap
 }

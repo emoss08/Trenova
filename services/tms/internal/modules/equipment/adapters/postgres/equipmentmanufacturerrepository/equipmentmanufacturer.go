@@ -1,6 +1,7 @@
 package equipmentmanufacturerrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/equipmentmanufacturercol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
@@ -41,15 +42,15 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *equipmentmanufacturerports.ListEquipmentManufacturersRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.EquipmentManufacturerColumns
+	cols := equipmentmanufacturercol.EquipmentManufacturerColumns
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.EquipmentManufacturerTable.Alias,
+		equipmentmanufacturercol.EquipmentManufacturerTable.Alias,
 		req.Filter,
 		(*equipmentmanufacturer.EquipmentManufacturer)(nil),
 	)
 
-	q = q.Apply(buncolgen.EquipmentManufacturerApplyTenant(req.Filter.TenantInfo)).
+	q = q.Apply(equipmentmanufacturercol.EquipmentManufacturerApplyTenant(req.Filter.TenantInfo)).
 		Order(cols.CreatedAt.OrderDesc())
 
 	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
@@ -94,7 +95,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.EquipmentManufacturerTable.Alias,
+		equipmentmanufacturercol.EquipmentManufacturerTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*equipmentmanufacturer.EquipmentManufacturer)(nil),
@@ -107,7 +108,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.EquipmentManufacturerTable.Alias,
+		equipmentmanufacturercol.EquipmentManufacturerTable.Alias,
 		req.Filter,
 		(*equipmentmanufacturer.EquipmentManufacturer)(nil),
 	)
@@ -118,7 +119,7 @@ func applyEquipmentManufacturerColumns(
 	columns []string,
 ) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.EquipmentManufacturerTable.All())
+		return q.ColumnExpr(equipmentmanufacturercol.EquipmentManufacturerTable.All())
 	}
 
 	return q.Column(columns...)
@@ -212,7 +213,7 @@ func (r *repository) Update(
 
 		ov := entity.Version
 		entity.Version++
-		cols := buncolgen.EquipmentManufacturerColumns
+		cols := equipmentmanufacturercol.EquipmentManufacturerColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -249,12 +250,12 @@ func (r *repository) GetByID(
 		)
 
 		entity := new(equipmentmanufacturer.EquipmentManufacturer)
-		cols := buncolgen.EquipmentManufacturerColumns
+		cols := equipmentmanufacturercol.EquipmentManufacturerColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.EquipmentManufacturerScopeTenant(sq, req.TenantInfo).
+				return equipmentmanufacturercol.EquipmentManufacturerScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
@@ -286,8 +287,8 @@ func (r *repository) GetByIDs(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.EquipmentManufacturerScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.EquipmentManufacturerColumns.ID.In(), bun.List(req.EquipmentManufacturerIDs))
+				return equipmentmanufacturercol.EquipmentManufacturerScopeTenant(sq, req.TenantInfo).
+					Where(equipmentmanufacturercol.EquipmentManufacturerColumns.ID.In(), bun.List(req.EquipmentManufacturerIDs))
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -304,7 +305,7 @@ func (r *repository) SelectOptions(
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
-		cols := buncolgen.EquipmentManufacturerColumns
+		cols := equipmentmanufacturercol.EquipmentManufacturerColumns
 
 		return dbhelper.SelectOptions[*equipmentmanufacturer.EquipmentManufacturer](
 			ctx,
@@ -349,10 +350,10 @@ func (r *repository) BulkUpdateStatus(
 			NewUpdate().
 			Model(&entities).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.EquipmentManufacturerScopeTenantUpdate(uq, req.TenantInfo).
-					Where(buncolgen.EquipmentManufacturerColumns.ID.In(), bun.List(req.EquipmentManufacturerIDs))
+				return equipmentmanufacturercol.EquipmentManufacturerScopeTenantUpdate(uq, req.TenantInfo).
+					Where(equipmentmanufacturercol.EquipmentManufacturerColumns.ID.In(), bun.List(req.EquipmentManufacturerIDs))
 			}).
-			Set(buncolgen.EquipmentManufacturerColumns.Status.Set(), req.Status).
+			Set(equipmentmanufacturercol.EquipmentManufacturerColumns.Status.Set(), req.Status).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {

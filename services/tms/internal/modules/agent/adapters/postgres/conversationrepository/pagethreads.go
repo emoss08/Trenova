@@ -1,6 +1,7 @@
 package conversationrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
 	"context"
 	"errors"
 	"fmt"
@@ -41,13 +42,13 @@ func (r *repository) GetPageThread(
 			return nil, errNotPageThread
 		}
 
-		cols := buncolgen.ThreadColumns
+		cols := conversationcol.ThreadColumns
 		entity := new(conversation.Thread)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ThreadScopeTenant(sq, key.TenantInfo).
+				return conversationcol.ThreadScopeTenant(sq, key.TenantInfo).
 					Where(cols.UserID.Eq(), key.UserID).
 					Where(cols.Origin.Eq(), key.Origin).
 					Where(cols.SubjectType.Eq(), key.SubjectType).
@@ -110,7 +111,7 @@ func (r *repository) ArchiveSubjectThreads(
 			return 0, errNotPageThread
 		}
 
-		cols := buncolgen.ThreadColumns
+		cols := conversationcol.ThreadColumns
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*conversation.Thread)(nil)).
@@ -118,7 +119,7 @@ func (r *repository) ArchiveSubjectThreads(
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 			Set(cols.Version.Inc(1)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ThreadScopeTenantUpdate(uq, req.TenantInfo).
+				return conversationcol.ThreadScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.Origin.Eq(), req.Origin).
 					Where(cols.SubjectType.Eq(), req.SubjectType).
 					Where(cols.SubjectID.Eq(), req.SubjectID).

@@ -2,25 +2,28 @@
 
 package inboundmessage
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InboundAttachment].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.InboundAttachmentFieldMap] instead of parsing struct tags via reflection.
+// the generated [inboundmessagecol.InboundAttachmentFieldMap] instead of parsing struct tags via reflection.
 func (e *InboundAttachment) GetStaticFieldMap() map[string]string {
-	return buncolgen.InboundAttachmentFieldMap
+	return inboundmessagecol.InboundAttachmentFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InboundMessage].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.InboundMessageFieldMap] instead of parsing struct tags via reflection.
+// the generated [inboundmessagecol.InboundMessageFieldMap] instead of parsing struct tags via reflection.
 func (e *InboundMessage) GetStaticFieldMap() map[string]string {
-	return buncolgen.InboundMessageFieldMap
+	return inboundmessagecol.InboundMessageFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Mailbox].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.MailboxFieldMap] instead of parsing struct tags via reflection.
+// the generated [inboundmessagecol.MailboxFieldMap] instead of parsing struct tags via reflection.
 func (e *Mailbox) GetStaticFieldMap() map[string]string {
-	return buncolgen.MailboxFieldMap
+	return inboundmessagecol.MailboxFieldMap
 }

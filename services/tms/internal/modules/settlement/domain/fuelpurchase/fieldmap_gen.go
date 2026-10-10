@@ -2,39 +2,42 @@
 
 package fuelpurchase
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/fuelpurchasecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CardFeedState].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CardFeedStateFieldMap] instead of parsing struct tags via reflection.
+// the generated [fuelpurchasecol.CardFeedStateFieldMap] instead of parsing struct tags via reflection.
 func (e *CardFeedState) GetStaticFieldMap() map[string]string {
-	return buncolgen.CardFeedStateFieldMap
+	return fuelpurchasecol.CardFeedStateFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [FuelCard].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.FuelCardFieldMap] instead of parsing struct tags via reflection.
+// the generated [fuelpurchasecol.FuelCardFieldMap] instead of parsing struct tags via reflection.
 func (e *FuelCard) GetStaticFieldMap() map[string]string {
-	return buncolgen.FuelCardFieldMap
+	return fuelpurchasecol.FuelCardFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [FuelPurchase].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.FuelPurchaseFieldMap] instead of parsing struct tags via reflection.
+// the generated [fuelpurchasecol.FuelPurchaseFieldMap] instead of parsing struct tags via reflection.
 func (e *FuelPurchase) GetStaticFieldMap() map[string]string {
-	return buncolgen.FuelPurchaseFieldMap
+	return fuelpurchasecol.FuelPurchaseFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ImportBatch].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ImportBatchFieldMap] instead of parsing struct tags via reflection.
+// the generated [fuelpurchasecol.ImportBatchFieldMap] instead of parsing struct tags via reflection.
 func (e *ImportBatch) GetStaticFieldMap() map[string]string {
-	return buncolgen.ImportBatchFieldMap
+	return fuelpurchasecol.ImportBatchFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ImportRow].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ImportRowFieldMap] instead of parsing struct tags via reflection.
+// the generated [fuelpurchasecol.ImportRowFieldMap] instead of parsing struct tags via reflection.
 func (e *ImportRow) GetStaticFieldMap() map[string]string {
-	return buncolgen.ImportRowFieldMap
+	return fuelpurchasecol.ImportRowFieldMap
 }

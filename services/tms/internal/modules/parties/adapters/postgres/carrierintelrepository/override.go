@@ -1,6 +1,7 @@
 package carrierintelrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
 	"context"
 	"fmt"
 
@@ -44,13 +45,13 @@ func (r *overrideRepository) ListActiveByCarrierIDs(
 			return []*carrierintel.CarrierIntelOverride{}, nil
 		}
 
-		cols := buncolgen.CarrierIntelOverrideColumns
+		cols := carrierintelcol.CarrierIntelOverrideColumns
 		entities := make([]*carrierintel.CarrierIntelOverride, 0, len(carrierIDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierIntelOverrideScopeTenant(sq, tenantInfo).
+				return carrierintelcol.CarrierIntelOverrideScopeTenant(sq, tenantInfo).
 					Where(cols.CarrierID.In(), bun.List(carrierIDs)).
 					Where(cols.RevokedAt.IsNull()).
 					Where(cols.ExpiresAt.Gt(), now)
@@ -72,13 +73,13 @@ func (r *overrideRepository) ListByCarrier(
 	carrierID pulid.ID,
 ) ([]*carrierintel.CarrierIntelOverride, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrierintel.CarrierIntelOverride, error) {
-		cols := buncolgen.CarrierIntelOverrideColumns
+		cols := carrierintelcol.CarrierIntelOverrideColumns
 		entities := make([]*carrierintel.CarrierIntelOverride, 0, carrierOverrideHistoryLimit)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierIntelOverrideScopeTenant(sq, tenantInfo).
+				return carrierintelcol.CarrierIntelOverrideScopeTenant(sq, tenantInfo).
 					Where(cols.CarrierID.Eq(), carrierID)
 			}).
 			Order(cols.GrantedAt.OrderDesc(), cols.ID.OrderDesc()).
@@ -104,8 +105,8 @@ func (r *overrideRepository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierIntelOverrideScopeTenant(sq, tenantInfo).
-					Where(buncolgen.CarrierIntelOverrideColumns.ID.Eq(), id)
+				return carrierintelcol.CarrierIntelOverrideScopeTenant(sq, tenantInfo).
+					Where(carrierintelcol.CarrierIntelOverrideColumns.ID.Eq(), id)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -146,7 +147,7 @@ func (r *overrideRepository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.CarrierIntelOverrideColumns.Version.Eq(), ov).
+			Where(carrierintelcol.CarrierIntelOverrideColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {

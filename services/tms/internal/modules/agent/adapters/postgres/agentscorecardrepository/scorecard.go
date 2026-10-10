@@ -1,6 +1,8 @@
 package agentscorecardrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/aiusagecol"
 	"context"
 	"fmt"
 
@@ -39,8 +41,8 @@ func New(p Params) agentports.AgentScorecardRepository {
 // runJoin ties a record back to the agent that made it. Proposals and
 // exceptions carry a run, and only the run knows which agent definition it
 // belongs to.
-var runJoin = "JOIN " + buncolgen.AgentRunTable.Name + " AS " + buncolgen.AgentRunTable.Alias +
-	" ON " + buncolgen.AgentRunColumns.ID.EqColumn(buncolgen.AgentProposalColumns.RunID)
+var runJoin = "JOIN " + agentcol.AgentRunTable.Name + " AS " + agentcol.AgentRunTable.Alias +
+	" ON " + agentcol.AgentRunColumns.ID.EqColumn(agentcol.AgentProposalColumns.RunID)
 
 // Aggregate answers the whole scorecard in five counted queries: the runs,
 // the proposals grouped by tool, how each tool's calls ended, the exceptions,
@@ -81,7 +83,7 @@ func (r *repository) runs(
 	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.DBForContext(ctx)
 
-		run := buncolgen.AgentRunColumns
+		run := agentcol.AgentRunColumns
 		var counted struct {
 			Runs   int `bun:"runs"`
 			Failed int `bun:"failed"`
@@ -92,7 +94,7 @@ func (r *repository) runs(
 			ColumnExpr(buncolgen.Count("runs")).
 			ColumnExpr(buncolgen.CountFilter("failed", run.Status.Eq()), agent.RunStatusFailed).
 			Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentRunScopeTenant(q, req.TenantInfo)
+				return agentcol.AgentRunScopeTenant(q, req.TenantInfo)
 			}).
 			Where(run.AgentDefinitionID.Eq(), req.AgentDefinitionID).
 			Where(run.CreatedAt.Gte(), req.Since).
@@ -121,8 +123,8 @@ func (r *repository) proposals(
 	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.DBForContext(ctx)
 
-		prop := buncolgen.AgentProposalColumns
-		run := buncolgen.AgentRunColumns
+		prop := agentcol.AgentProposalColumns
+		run := agentcol.AgentRunColumns
 
 		var rows []struct {
 			ToolName  string `bun:"tool_name"`
@@ -156,7 +158,7 @@ func (r *repository) proposals(
 			).
 			Join(runJoin).
 			Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentProposalScopeTenant(q, req.TenantInfo)
+				return agentcol.AgentProposalScopeTenant(q, req.TenantInfo)
 			}).
 			Where(run.AgentDefinitionID.Eq(), req.AgentDefinitionID).
 			Where(prop.CreatedAt.Gte(), req.Since).
@@ -225,7 +227,7 @@ func (r *repository) toolVerdicts(
 	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.DBForContext(ctx)
 
-		step := buncolgen.AgentRunStepColumns
+		step := agentcol.AgentRunStepColumns
 
 		labelled := db.NewSelect().
 			Model((*agent.AgentRunStep)(nil)).
@@ -247,7 +249,7 @@ func (r *repository) toolVerdicts(
 				bun.Ident(verdictReason),
 			).
 			Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentRunStepScopeTenant(q, req.TenantInfo)
+				return agentcol.AgentRunStepScopeTenant(q, req.TenantInfo)
 			}).
 			Where(step.Kind.Eq(), agentports.RunStepTool).
 			Where(step.AgentDefinitionID.Eq(), req.AgentDefinitionID).
@@ -328,15 +330,15 @@ func (r *repository) exceptions(
 	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.DBForContext(ctx)
 
-		exc := buncolgen.AgentExceptionColumns
-		run := buncolgen.AgentRunColumns
+		exc := agentcol.AgentExceptionColumns
+		run := agentcol.AgentRunColumns
 
 		count, err := db.NewSelect().
 			Model((*agent.AgentException)(nil)).
-			Join("JOIN "+buncolgen.AgentRunTable.Name+" AS "+buncolgen.AgentRunTable.Alias+
+			Join("JOIN "+agentcol.AgentRunTable.Name+" AS "+agentcol.AgentRunTable.Alias+
 				" ON "+run.ID.EqColumn(exc.RunID)).
 			Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentExceptionScopeTenant(q, req.TenantInfo)
+				return agentcol.AgentExceptionScopeTenant(q, req.TenantInfo)
 			}).
 			Where(run.AgentDefinitionID.Eq(), req.AgentDefinitionID).
 			Where(exc.CreatedAt.Gte(), req.Since).
@@ -361,7 +363,7 @@ func (r *repository) usage(
 	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.DBForContext(ctx)
 
-		usage := buncolgen.AIUsageRecordColumns
+		usage := aiusagecol.AIUsageRecordColumns
 		var counted struct {
 			InputTokens  int              `bun:"input_tokens"`
 			OutputTokens int              `bun:"output_tokens"`
@@ -374,7 +376,7 @@ func (r *repository) usage(
 			ColumnExpr(buncolgen.Coalesce(usage.OutputTokens, "0", "output_tokens")).
 			ColumnExpr(buncolgen.Coalesce(usage.CostUSD, "0", "cost_usd")).
 			Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AIUsageRecordScopeTenant(q, req.TenantInfo)
+				return aiusagecol.AIUsageRecordScopeTenant(q, req.TenantInfo)
 			}).
 			Where(usage.AgentDefinitionID.Eq(), req.AgentDefinitionID).
 			Where(usage.CreatedAt.Gte(), req.Since).

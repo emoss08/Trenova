@@ -1,6 +1,7 @@
 package orgstructurerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 
@@ -55,14 +56,14 @@ func (r *repository) ListPositions(
 	req *workerports.ListJobPositionsRequest,
 ) ([]*worker.JobPosition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.JobPosition, error) {
-		cols := buncolgen.JobPositionColumns
+		cols := workercol.JobPositionColumns
 		entities := make([]*worker.JobPosition, 0, 16)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.JobPositionScopeTenant(sq, req.TenantInfo)
+				sq = workercol.JobPositionScopeTenant(sq, req.TenantInfo)
 				if req.ActiveOnly {
 					sq = sq.Where(cols.Status.Eq(), domaintypes.StatusActive)
 				}
@@ -79,7 +80,7 @@ func (r *repository) ListPositions(
 			Limit(limitOr(req.Limit, defaultPositionPageSize))
 
 		if req.IncludeReportsTo {
-			q = q.Relation(buncolgen.JobPositionRelations.ReportsTo)
+			q = q.Relation(workercol.JobPositionRelations.ReportsTo)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -101,11 +102,11 @@ func (r *repository) GetPositionByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.JobPositionScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.JobPositionColumns.ID.Eq(), req.ID)
+				return workercol.JobPositionScopeTenant(sq, req.TenantInfo).
+					Where(workercol.JobPositionColumns.ID.Eq(), req.ID)
 			})
 		if req.IncludeReportsTo {
-			q = q.Relation(buncolgen.JobPositionRelations.ReportsTo)
+			q = q.Relation(workercol.JobPositionRelations.ReportsTo)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -146,7 +147,7 @@ func (r *repository) UpdatePosition(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.JobPositionColumns.Version.Eq(), ov).
+			Where(workercol.JobPositionColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -202,14 +203,14 @@ func (r *repository) ListDelegations(
 	req *workerports.ListApprovalDelegationsRequest,
 ) ([]*worker.ApprovalDelegation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.ApprovalDelegation, error) {
-		cols := buncolgen.ApprovalDelegationColumns
+		cols := workercol.ApprovalDelegationColumns
 		entities := make([]*worker.ApprovalDelegation, 0, 8)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.ApprovalDelegationScopeTenant(sq, req.TenantInfo)
+				sq = workercol.ApprovalDelegationScopeTenant(sq, req.TenantInfo)
 				if !req.DelegatorID.IsNil() {
 					sq = sq.Where(cols.DelegatorID.Eq(), req.DelegatorID)
 				}
@@ -236,8 +237,8 @@ func (r *repository) ListDelegations(
 			Limit(limitOr(req.Limit, defaultDelegationPageSize))
 
 		if req.IncludeUsers {
-			q = q.Relation(buncolgen.ApprovalDelegationRelations.Delegator).
-				Relation(buncolgen.ApprovalDelegationRelations.Delegate)
+			q = q.Relation(workercol.ApprovalDelegationRelations.Delegator).
+				Relation(workercol.ApprovalDelegationRelations.Delegate)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -259,8 +260,8 @@ func (r *repository) GetDelegationByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ApprovalDelegationScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.ApprovalDelegationColumns.ID.Eq(), req.ID)
+				return workercol.ApprovalDelegationScopeTenant(sq, req.TenantInfo).
+					Where(workercol.ApprovalDelegationColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "ApprovalDelegation")
@@ -300,7 +301,7 @@ func (r *repository) UpdateDelegation(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.ApprovalDelegationColumns.Version.Eq(), ov).
+			Where(workercol.ApprovalDelegationColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {

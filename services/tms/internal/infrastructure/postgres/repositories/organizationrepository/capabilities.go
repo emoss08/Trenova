@@ -1,6 +1,7 @@
 package organizationrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -22,7 +23,7 @@ func (r *repository) GetCapabilities(
 			zap.String("lock", string(req.Lock)),
 		)
 
-		org := buncolgen.OrganizationColumns
+		org := tenantcol.OrganizationColumns
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*tenant.Organization)(nil)).

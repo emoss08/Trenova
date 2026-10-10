@@ -1,6 +1,7 @@
 package homelayoutrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/homelayoutcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
@@ -27,8 +28,8 @@ func (r *repository) GetPreference(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.PreferenceScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.PreferenceColumns.UserID.Eq(), req.TenantInfo.UserID)
+				return homelayoutcol.PreferenceScopeTenant(sq, req.TenantInfo).
+					Where(homelayoutcol.PreferenceColumns.UserID.Eq(), req.TenantInfo.UserID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -85,7 +86,7 @@ func (r *repository) UpdatePreference(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.PreferenceColumns.Version.Eq(), ov).
+			Where(homelayoutcol.PreferenceColumns.Version.Eq(), ov).
 			OmitZero().
 			Returning("*").
 			Exec(ctx)

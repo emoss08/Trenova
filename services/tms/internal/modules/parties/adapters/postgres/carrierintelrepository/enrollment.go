@@ -1,6 +1,7 @@
 package carrierintelrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
 	"context"
 	"fmt"
 
@@ -62,13 +63,13 @@ func (r *enrollmentRepository) ListBySubjects(
 			return []*carrierintel.CarrierMonitoringEnrollment{}, nil
 		}
 
-		cols := buncolgen.CarrierMonitoringEnrollmentColumns
+		cols := carrierintelcol.CarrierMonitoringEnrollmentColumns
 		entities := make([]*carrierintel.CarrierMonitoringEnrollment, 0, len(req.SubjectIDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierMonitoringEnrollmentScopeTenant(sq, req.TenantInfo).
+				return carrierintelcol.CarrierMonitoringEnrollmentScopeTenant(sq, req.TenantInfo).
 					Where(cols.Provider.Eq(), req.Provider).
 					Where(cols.SubjectType.Eq(), req.SubjectType).
 					Where(cols.SubjectID.In(), bun.List(req.SubjectIDs))
@@ -93,13 +94,13 @@ func (r *enrollmentRepository) GetByCarrierIDs(
 			return []*carrierintel.CarrierMonitoringEnrollment{}, nil
 		}
 
-		cols := buncolgen.CarrierMonitoringEnrollmentColumns
+		cols := carrierintelcol.CarrierMonitoringEnrollmentColumns
 		entities := make([]*carrierintel.CarrierMonitoringEnrollment, 0, len(carrierIDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierMonitoringEnrollmentScopeTenant(sq, tenantInfo).
+				return carrierintelcol.CarrierMonitoringEnrollmentScopeTenant(sq, tenantInfo).
 					Where(cols.CarrierID.In(), bun.List(carrierIDs))
 			}).
 			OrderExpr(cols.DesiredState.Expr("{} = ? DESC"), carrierintel.DesiredStateEnrolled).
@@ -120,13 +121,13 @@ func (r *enrollmentRepository) ListDesired(
 	provider integration.Type,
 ) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
-		cols := buncolgen.CarrierMonitoringEnrollmentColumns
+		cols := carrierintelcol.CarrierMonitoringEnrollmentColumns
 		entities := make([]*carrierintel.CarrierMonitoringEnrollment, 0, desiredEnrollmentCapacity)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierMonitoringEnrollmentScopeTenant(sq, tenantInfo).
+				return carrierintelcol.CarrierMonitoringEnrollmentScopeTenant(sq, tenantInfo).
 					Where(cols.Provider.Eq(), provider).
 					Where(cols.DesiredState.Eq(), carrierintel.DesiredStateEnrolled)
 			}).
@@ -145,7 +146,7 @@ func buildEnrollmentUpsert(
 	db bun.IDB,
 	rows *[]*carrierintel.CarrierMonitoringEnrollment,
 ) *bun.InsertQuery {
-	cols := buncolgen.CarrierMonitoringEnrollmentColumns
+	cols := carrierintelcol.CarrierMonitoringEnrollmentColumns
 	return db.NewInsert().
 		Model(rows).
 		On(
@@ -193,7 +194,7 @@ func (r *enrollmentRepository) SaveSyncState(
 			return nil
 		}
 
-		cols := buncolgen.CarrierMonitoringEnrollmentColumns
+		cols := carrierintelcol.CarrierMonitoringEnrollmentColumns
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			dba := r.db.DBForContext(c)
 			for _, entity := range entities {
@@ -237,7 +238,7 @@ func (r *enrollmentRepository) ListNeedingSync(
 	req *carrierintelports.ListEnrollmentsNeedingSyncRequest,
 ) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
-		cols := buncolgen.CarrierMonitoringEnrollmentColumns
+		cols := carrierintelcol.CarrierMonitoringEnrollmentColumns
 		limit := intutils.Clamp(
 			intutils.WithDefault(max(req.Limit, 0), defaultNeedingSyncLimit),
 			1,
@@ -249,7 +250,7 @@ func (r *enrollmentRepository) ListNeedingSync(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierMonitoringEnrollmentScopeTenant(sq, req.TenantInfo).
+				return carrierintelcol.CarrierMonitoringEnrollmentScopeTenant(sq, req.TenantInfo).
 					Where(cols.Provider.Eq(), req.Provider).
 					WhereGroup(" AND ", func(outer *bun.SelectQuery) *bun.SelectQuery {
 						return outer.
@@ -282,7 +283,7 @@ func (r *enrollmentRepository) ListActive(
 	req *carrierintelports.ListActiveEnrollmentsRequest,
 ) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
-		cols := buncolgen.CarrierMonitoringEnrollmentColumns
+		cols := carrierintelcol.CarrierMonitoringEnrollmentColumns
 		limit := intutils.Clamp(
 			intutils.WithDefault(max(req.Limit, 0), defaultActiveLimit),
 			1,
@@ -294,7 +295,7 @@ func (r *enrollmentRepository) ListActive(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierMonitoringEnrollmentScopeTenant(sq, req.TenantInfo).
+				return carrierintelcol.CarrierMonitoringEnrollmentScopeTenant(sq, req.TenantInfo).
 					Where(cols.Provider.Eq(), req.Provider).
 					Where(cols.DesiredState.Eq(), carrierintel.DesiredStateEnrolled).
 					Where(cols.VendorState.Eq(), carrierintel.VendorStateActive)
@@ -335,13 +336,13 @@ func (r *enrollmentRepository) ListByProviderRefs(
 			return []*carrierintel.CarrierMonitoringEnrollment{}, nil
 		}
 
-		cols := buncolgen.CarrierMonitoringEnrollmentColumns
+		cols := carrierintelcol.CarrierMonitoringEnrollmentColumns
 		entities := make([]*carrierintel.CarrierMonitoringEnrollment, 0, len(refs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierMonitoringEnrollmentScopeTenant(sq, tenantInfo).
+				return carrierintelcol.CarrierMonitoringEnrollmentScopeTenant(sq, tenantInfo).
 					Where(cols.Provider.Eq(), provider).
 					Where(cols.ProviderRef.In(), bun.List(refs))
 			}).
@@ -359,7 +360,7 @@ func (r *enrollmentRepository) applyConnectionFilters(
 	q *bun.SelectQuery,
 	req *carrierintelports.ListEnrollmentConnectionRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.CarrierMonitoringEnrollmentColumns
+	cols := carrierintelcol.CarrierMonitoringEnrollmentColumns
 	if req.Provider != "" {
 		q = q.Where(cols.Provider.Eq(), req.Provider)
 	}
@@ -389,7 +390,7 @@ func (r *enrollmentRepository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.CarrierMonitoringEnrollmentTable.Alias,
+						carrierintelcol.CarrierMonitoringEnrollmentTable.Alias,
 						req.Filter,
 						(*carrierintel.CarrierMonitoringEnrollment)(nil),
 					)
@@ -412,12 +413,12 @@ func (r *enrollmentRepository) ListConnection(
 				Query: func(items *[]*carrierintel.CarrierMonitoringEnrollment) *bun.SelectQuery {
 					return dba.NewSelect().
 						Model(items).
-						ColumnExpr(buncolgen.CarrierMonitoringEnrollmentTable.All())
+						ColumnExpr(carrierintelcol.CarrierMonitoringEnrollmentTable.All())
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.CarrierMonitoringEnrollmentTable.Alias,
+						carrierintelcol.CarrierMonitoringEnrollmentTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*carrierintel.CarrierMonitoringEnrollment)(nil),
@@ -443,13 +444,13 @@ func (r *enrollmentRepository) TouchConfirmed(
 	req *carrierintelports.TouchEnrollmentsConfirmedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.CarrierMonitoringEnrollmentColumns
+		cols := carrierintelcol.CarrierMonitoringEnrollmentColumns
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*carrierintel.CarrierMonitoringEnrollment)(nil)).
 			Set(cols.LastConfirmedAt.Set(), req.ConfirmedAt).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				uq = buncolgen.CarrierMonitoringEnrollmentScopeTenantUpdate(uq, req.TenantInfo).
+				uq = carrierintelcol.CarrierMonitoringEnrollmentScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.Provider.Eq(), req.Provider).
 					Where(cols.Mode.Eq(), req.Mode).
 					Where(cols.DesiredState.Eq(), carrierintel.DesiredStateEnrolled)
@@ -474,7 +475,7 @@ func (r *enrollmentRepository) Counts(
 	provider integration.Type,
 ) (*carrierintelports.CarrierIntelEnrollmentCounts, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carrierintelports.CarrierIntelEnrollmentCounts, error) {
-		cols := buncolgen.CarrierMonitoringEnrollmentColumns
+		cols := carrierintelcol.CarrierMonitoringEnrollmentColumns
 		counts := new(carrierintelports.CarrierIntelEnrollmentCounts)
 
 		err := r.db.DBForContext(ctx).
@@ -508,7 +509,7 @@ func (r *enrollmentRepository) Counts(
 				carrierintel.VendorStateFailed,
 			).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierMonitoringEnrollmentScopeTenant(sq, tenantInfo).
+				return carrierintelcol.CarrierMonitoringEnrollmentScopeTenant(sq, tenantInfo).
 					Where(cols.Provider.Eq(), provider)
 			}).
 			Scan(ctx, &counts.Desired, &counts.Active, &counts.Pending, &counts.Failed)

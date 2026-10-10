@@ -2,11 +2,14 @@
 
 package fleetcode
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/fleetcodecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [FleetCode].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.FleetCodeFieldMap] instead of parsing struct tags via reflection.
+// the generated [fleetcodecol.FleetCodeFieldMap] instead of parsing struct tags via reflection.
 func (e *FleetCode) GetStaticFieldMap() map[string]string {
-	return buncolgen.FleetCodeFieldMap
+	return fleetcodecol.FleetCodeFieldMap
 }

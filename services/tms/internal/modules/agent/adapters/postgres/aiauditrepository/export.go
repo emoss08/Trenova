@@ -1,6 +1,7 @@
 package aiauditrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/aiauditcol"
 	"context"
 	"fmt"
 
@@ -56,7 +57,7 @@ func (r *exportRepository) Update(
 	export *aiaudit.AIAuditExport,
 ) (*aiaudit.AIAuditExport, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aiaudit.AIAuditExport, error) {
-		cols := buncolgen.AIAuditExportColumns
+		cols := aiauditcol.AIAuditExportColumns
 		previous := export.Version
 		export.Version++
 
@@ -93,8 +94,8 @@ func (r *exportRepository) GetByID(
 		err := r.db.DBForContext(ctx).NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AIAuditExportScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.AIAuditExportColumns.ID.Eq(), req.ID)
+				return aiauditcol.AIAuditExportScopeTenant(sq, req.TenantInfo).
+					Where(aiauditcol.AIAuditExportColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -119,7 +120,7 @@ func (r *exportRepository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.AIAuditExportTable.Alias,
+						aiauditcol.AIAuditExportTable.Alias,
 						req.Filter,
 						(*aiaudit.AIAuditExport)(nil),
 					)
@@ -141,7 +142,7 @@ func (r *exportRepository) ListConnection(
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 				return querybuilder.ApplyCursorFilters(
 					sq,
-					buncolgen.AIAuditExportTable.Alias,
+					aiauditcol.AIAuditExportTable.Alias,
 					req.Filter,
 					req.Cursor,
 					(*aiaudit.AIAuditExport)(nil),
@@ -167,7 +168,7 @@ func (r *exportRepository) ListExpired(
 ) ([]*aiaudit.AIAuditExport, error) {
 	ctx = dbscope.WithSystem(ctx, "list expired AI audit exports across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiaudit.AIAuditExport, error) {
-		cols := buncolgen.AIAuditExportColumns
+		cols := aiauditcol.AIAuditExportColumns
 		rows := make([]*aiaudit.AIAuditExport, 0, limit)
 
 		if err := r.db.DBForContext(ctx).NewSelect().
@@ -194,7 +195,7 @@ func (r *exportRepository) ListStale(
 ) ([]*aiaudit.AIAuditExport, error) {
 	ctx = dbscope.WithSystem(ctx, "list stale AI audit exports across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiaudit.AIAuditExport, error) {
-		cols := buncolgen.AIAuditExportColumns
+		cols := aiauditcol.AIAuditExportColumns
 		rows := make([]*aiaudit.AIAuditExport, 0, limit)
 
 		if err := r.db.DBForContext(ctx).NewSelect().

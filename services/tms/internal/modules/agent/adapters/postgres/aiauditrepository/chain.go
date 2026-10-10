@@ -1,6 +1,7 @@
 package aiauditrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/aiauditcol"
 	"context"
 	"database/sql"
 	"errors"
@@ -32,7 +33,7 @@ func (r *repository) GetChainHead(
 		head := new(aiaudit.AIAuditChainHead)
 		err := r.db.DBForContext(ctx).NewSelect().
 			Model(head).
-			Apply(buncolgen.AIAuditChainHeadApplyTenant(tenantInfo)).
+			Apply(aiauditcol.AIAuditChainHeadApplyTenant(tenantInfo)).
 			Scan(ctx)
 		if errors.Is(err, sql.ErrNoRows) {
 			return &aiaudit.AIAuditChainHead{
@@ -51,7 +52,7 @@ func (r *repository) GetChainHead(
 func (r *repository) ListChainHeads(ctx context.Context) ([]*aiaudit.AIAuditChainHead, error) {
 	ctx = dbscope.WithSystem(ctx, "list every organization's AI audit chain head")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiaudit.AIAuditChainHead, error) {
-		cols := buncolgen.AIAuditChainHeadColumns
+		cols := aiauditcol.AIAuditChainHeadColumns
 		heads := make([]*aiaudit.AIAuditChainHead, 0, 16)
 
 		if err := r.db.DBForContext(ctx).NewSelect().
@@ -74,7 +75,7 @@ func (r *repository) RecordVerification(
 	req *aiauditports.RecordAIAuditVerificationRequest,
 ) (*aiaudit.AIAuditChainHead, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aiaudit.AIAuditChainHead, error) {
-		cols := buncolgen.AIAuditChainHeadColumns
+		cols := aiauditcol.AIAuditChainHeadColumns
 		head := new(aiaudit.AIAuditChainHead)
 
 		q := r.db.DBForContext(ctx).NewUpdate().
@@ -84,7 +85,7 @@ func (r *repository) RecordVerification(
 			Set(cols.LastVerificationDetail.Set(), nullableText(req.Detail)).
 			Set(cols.UpdatedAt.Set(), req.At).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.AIAuditChainHeadScopeTenantUpdate(uq, req.TenantInfo)
+				return aiauditcol.AIAuditChainHeadScopeTenantUpdate(uq, req.TenantInfo)
 			}).
 			Returning("*")
 		if req.Status == aiaudit.VerificationVerified {
@@ -119,12 +120,12 @@ func (r *repository) GetSealEndingAt(
 	toSeq int64,
 ) (*aiaudit.AIAuditSeal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aiaudit.AIAuditSeal, error) {
-		cols := buncolgen.AIAuditSealColumns
+		cols := aiauditcol.AIAuditSealColumns
 		seal := new(aiaudit.AIAuditSeal)
 
 		err := r.db.DBForContext(ctx).NewSelect().
 			Model(seal).
-			Apply(buncolgen.AIAuditSealApplyTenant(tenantInfo)).
+			Apply(aiauditcol.AIAuditSealApplyTenant(tenantInfo)).
 			Where(cols.ToSeq.Eq(), toSeq).
 			Scan(ctx)
 		if errors.Is(err, sql.ErrNoRows) {
@@ -143,12 +144,12 @@ func (r *repository) ListSeals(
 	req aiauditports.ListAIAuditSealsRequest,
 ) ([]*aiaudit.AIAuditSeal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiaudit.AIAuditSeal, error) {
-		cols := buncolgen.AIAuditSealColumns
+		cols := aiauditcol.AIAuditSealColumns
 		seals := make([]*aiaudit.AIAuditSeal, 0, req.Limit)
 
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model(&seals).
-			Apply(buncolgen.AIAuditSealApplyTenant(req.TenantInfo)).
+			Apply(aiauditcol.AIAuditSealApplyTenant(req.TenantInfo)).
 			Where(cols.ToSeq.Gte(), req.FromSeq).
 			Order(cols.ToSeq.OrderAsc()).
 			Limit(req.Limit).
@@ -170,12 +171,12 @@ func (r *repository) LastSealBefore(
 ) (*aiaudit.AIAuditSeal, error) {
 	ctx = dbscope.WithSystem(ctx, "read an organization's last AI audit seal during the retention sweep")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aiaudit.AIAuditSeal, error) {
-		cols := buncolgen.AIAuditSealColumns
+		cols := aiauditcol.AIAuditSealColumns
 		seal := new(aiaudit.AIAuditSeal)
 
 		err := r.db.DBForContext(ctx).NewSelect().
 			Model(seal).
-			Apply(buncolgen.AIAuditSealApplyTenant(tenantInfo)).
+			Apply(aiauditcol.AIAuditSealApplyTenant(tenantInfo)).
 			Where(cols.SealedAt.Lt(), sealedBefore).
 			Order(cols.ToSeq.OrderDesc()).
 			Limit(1).
@@ -203,7 +204,7 @@ func (r *repository) Prune(
 		if batch <= 0 {
 			batch = defaultPruneBatch
 		}
-		cols := buncolgen.AIAuditEventColumns
+		cols := aiauditcol.AIAuditEventColumns
 
 		total := 0
 		for {
@@ -220,7 +221,7 @@ func (r *repository) Prune(
 				doomed := tx.NewSelect().
 					Model((*aiaudit.AIAuditEvent)(nil)).
 					Column(cols.ID.String()).
-					Apply(buncolgen.AIAuditEventApplyTenant(req.TenantInfo)).
+					Apply(aiauditcol.AIAuditEventApplyTenant(req.TenantInfo)).
 					Where(cols.Seq.Lte(), req.ThroughSeq).
 					Order(cols.Seq.OrderAsc()).
 					Limit(batch)
@@ -228,7 +229,7 @@ func (r *repository) Prune(
 				res, err := tx.NewDelete().
 					Model((*aiaudit.AIAuditEvent)(nil)).
 					WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-						return buncolgen.AIAuditEventScopeTenantDelete(dq, req.TenantInfo).
+						return aiauditcol.AIAuditEventScopeTenantDelete(dq, req.TenantInfo).
 							Where(cols.ID.In(), doomed)
 					}).
 					Exec(txCtx)
@@ -288,7 +289,7 @@ func (r *repository) SaveWatermark(
 ) error {
 	ctx = dbscope.WithSystem(ctx, "advance the AI audit projector's watermark")
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.AIAuditProjectorStateColumns
+		cols := aiauditcol.AIAuditProjectorStateColumns
 
 		if _, err := r.db.DBForContext(ctx).NewInsert().
 			Model(state).

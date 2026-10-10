@@ -1,6 +1,7 @@
 package shipmentboardrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 	"errors"
 	"strconv"
@@ -69,7 +70,7 @@ func (r *Repository) StageSummary(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*shipmentports.ShipmentStageSummaryRow, error) {
-			sp := buncolgen.ShipmentColumns
+			sp := shipmentcol.ShipmentColumns
 
 			q, err := r.scoped(r.db.DBForContext(ctx), scope)
 			if err != nil {
@@ -115,7 +116,7 @@ func (r *Repository) QuickFilterTotals(
 				return nil, err
 			}
 
-			revenue := buncolgen.ShipmentColumns.TotalChargeAmount.Qualified()
+			revenue := shipmentcol.ShipmentColumns.TotalChargeAmount.Qualified()
 			dest := make([]any, 0, len(req.Filters)*2)
 			for i, spec := range req.Filters {
 				cond, cErr := shipmentrepository.QuickFilterCondition(

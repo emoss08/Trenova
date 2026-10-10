@@ -1,6 +1,8 @@
 package invoicesharerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 	"fmt"
 	"strings"
@@ -35,10 +37,10 @@ func New(p Params) invoiceports.InvoiceShareRepository {
 }
 
 var recipientConflict = "CONFLICT (" + strings.Join([]string{
-	buncolgen.InvoiceShareColumns.InvoiceID.Bare(),
-	buncolgen.InvoiceShareColumns.OrganizationID.Bare(),
-	buncolgen.InvoiceShareColumns.BusinessUnitID.Bare(),
-	buncolgen.InvoiceShareColumns.SharedWithID.Bare(),
+	invoicecol.InvoiceShareColumns.InvoiceID.Bare(),
+	invoicecol.InvoiceShareColumns.OrganizationID.Bare(),
+	invoicecol.InvoiceShareColumns.BusinessUnitID.Bare(),
+	invoicecol.InvoiceShareColumns.SharedWithID.Bare(),
 }, ", ") + ") DO UPDATE"
 
 func (r *repository) Upsert(ctx context.Context, shares []*invoice.InvoiceShare) error {
@@ -47,7 +49,7 @@ func (r *repository) Upsert(ctx context.Context, shares []*invoice.InvoiceShare)
 			return nil
 		}
 
-		cols := buncolgen.InvoiceShareColumns
+		cols := invoicecol.InvoiceShareColumns
 		if _, err := r.db.DBForContext(ctx).
 			NewInsert().
 			Model(&shares).
@@ -72,14 +74,14 @@ func (r *repository) ListByInvoiceID(
 	req *invoiceports.ListInvoiceSharesRequest,
 ) ([]*invoice.InvoiceShare, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*invoice.InvoiceShare, error) {
-		cols := buncolgen.InvoiceShareColumns
-		rel := buncolgen.InvoiceShareRelations
+		cols := invoicecol.InvoiceShareColumns
+		rel := invoicecol.InvoiceShareRelations
 
 		shares := make([]*invoice.InvoiceShare, 0)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&shares).
-			Apply(buncolgen.InvoiceShareApplyTenant(req.TenantInfo)).
+			Apply(invoicecol.InvoiceShareApplyTenant(req.TenantInfo)).
 			Where(cols.InvoiceID.Eq(), req.InvoiceID).
 			Relation(rel.SharedWith, selectUserSummary).
 			Relation(rel.SharedBy, selectUserSummary).
@@ -94,7 +96,7 @@ func (r *repository) ListByInvoiceID(
 }
 
 func selectUserSummary(q *bun.SelectQuery) *bun.SelectQuery {
-	users := buncolgen.UserColumns
+	users := tenantcol.UserColumns
 	return q.Column(
 		users.ID.Bare(),
 		users.Name.Bare(),

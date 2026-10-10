@@ -2,6 +2,7 @@
 package edipartnerdocumentprofilerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
 	"context"
 	"database/sql"
 	"errors"
@@ -44,8 +45,8 @@ func (r *repository) ListPartnerDocumentProfiles(
 ) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
 		entities := make([]*edi.EDIPartnerDocumentProfile, 0, req.Filter.Pagination.SafeLimit())
-		cols := buncolgen.EDIPartnerDocumentProfileColumns
-		rel := buncolgen.EDIPartnerDocumentProfileRelations
+		cols := edicol.EDIPartnerDocumentProfileColumns
+		rel := edicol.EDIPartnerDocumentProfileRelations
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
@@ -55,7 +56,7 @@ func (r *repository) ListPartnerDocumentProfiles(
 			Relation(rel.Template).
 			Relation(rel.PartnerSettingsSchema).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.EDIPartnerDocumentProfileScopeTenant(sq, req.Filter.TenantInfo)
+				return edicol.EDIPartnerDocumentProfileScopeTenant(sq, req.Filter.TenantInfo)
 			})
 
 		if req.TransactionSet != "" {
@@ -102,8 +103,8 @@ func (r *repository) SelectPartnerDocumentProfileOptions(
 			0,
 			req.SelectQueryRequest.Pagination.SafeLimit(),
 		)
-		cols := buncolgen.EDIPartnerDocumentProfileColumns
-		rel := buncolgen.EDIPartnerDocumentProfileRelations
+		cols := edicol.EDIPartnerDocumentProfileColumns
+		rel := edicol.EDIPartnerDocumentProfileRelations
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
@@ -112,7 +113,7 @@ func (r *repository) SelectPartnerDocumentProfileOptions(
 			Relation(rel.Template).
 			Relation(rel.DocumentType).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.EDIPartnerDocumentProfileScopeTenant(
+				return edicol.EDIPartnerDocumentProfileScopeTenant(
 					sq,
 					req.SelectQueryRequest.TenantInfo,
 				)
@@ -156,8 +157,8 @@ func (r *repository) GetPartnerDocumentProfileByID(
 ) (*edi.EDIPartnerDocumentProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIPartnerDocumentProfile, error) {
 		entity := new(edi.EDIPartnerDocumentProfile)
-		cols := buncolgen.EDIPartnerDocumentProfileColumns
-		rel := buncolgen.EDIPartnerDocumentProfileRelations
+		cols := edicol.EDIPartnerDocumentProfileColumns
+		rel := edicol.EDIPartnerDocumentProfileRelations
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -169,7 +170,7 @@ func (r *repository) GetPartnerDocumentProfileByID(
 			Relation(rel.PartnerSettingsSchema).
 			Where(cols.ID.Eq(), req.ID).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.EDIPartnerDocumentProfileScopeTenant(sq, req.TenantInfo)
+				return edicol.EDIPartnerDocumentProfileScopeTenant(sq, req.TenantInfo)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -185,8 +186,8 @@ func (r *repository) GetActivePartnerDocumentProfile(
 ) (*edi.EDIPartnerDocumentProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIPartnerDocumentProfile, error) {
 		entities := make([]*edi.EDIPartnerDocumentProfile, 0, 2)
-		cols := buncolgen.EDIPartnerDocumentProfileColumns
-		rel := buncolgen.EDIPartnerDocumentProfileRelations
+		cols := edicol.EDIPartnerDocumentProfileColumns
+		rel := edicol.EDIPartnerDocumentProfileRelations
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
@@ -199,7 +200,7 @@ func (r *repository) GetActivePartnerDocumentProfile(
 					Where(cols.Status.Eq(), edi.DocumentStatusActive)
 			}).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.EDIPartnerDocumentProfileApplyTenant(req.TenantInfo)(sq)
+				return edicol.EDIPartnerDocumentProfileApplyTenant(req.TenantInfo)(sq)
 			})
 
 		if req.TransactionSet != "" {
@@ -253,7 +254,7 @@ func (r *repository) UpdatePartnerDocumentProfile(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIPartnerDocumentProfile, error) {
 		ov := entity.Version
 		entity.Version++
-		cols := buncolgen.EDIPartnerDocumentProfileColumns
+		cols := edicol.EDIPartnerDocumentProfileColumns
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
@@ -302,9 +303,9 @@ func applyPartnerDocumentProfileSearch(query *bun.SelectQuery, search string) *b
 	}
 
 	term := "%" + strings.ToLower(search) + "%"
-	cols := buncolgen.EDIPartnerDocumentProfileColumns
-	partnerCols := buncolgen.EDIPartnerColumns
-	documentTypeCols := buncolgen.EDIDocumentTypeColumns
+	cols := edicol.EDIPartnerDocumentProfileColumns
+	partnerCols := edicol.EDIPartnerColumns
+	documentTypeCols := edicol.EDIDocumentTypeColumns
 
 	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 		return sq.WhereOr(cols.Name.LowerLike(), term).

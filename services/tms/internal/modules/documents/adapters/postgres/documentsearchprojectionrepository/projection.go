@@ -1,6 +1,7 @@
 package documentsearchprojectionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/documentsearchprojectioncol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentsearchprojection"
@@ -40,7 +41,7 @@ func (r *repository) Upsert(
 	entity *documentsearchprojection.Projection,
 ) (*documentsearchprojection.Projection, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*documentsearchprojection.Projection, error) {
-		cols := buncolgen.ProjectionColumns
+		cols := documentsearchprojectioncol.ProjectionColumns
 		if _, err := r.db.DBForContext(ctx).
 			NewInsert().
 			Model(entity).
@@ -73,12 +74,12 @@ func (r *repository) Delete(
 	tenantInfo pagination.TenantInfo,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.ProjectionColumns
+		cols := documentsearchprojectioncol.ProjectionColumns
 		_, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*documentsearchprojection.Projection)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.ProjectionScopeTenantDelete(dq, tenantInfo).
+				return documentsearchprojectioncol.ProjectionScopeTenantDelete(dq, tenantInfo).
 					Where(cols.ID.Eq(), documentID)
 			}).
 			Exec(ctx)

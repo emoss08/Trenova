@@ -1,6 +1,7 @@
 package development
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 	"time"
@@ -104,7 +105,7 @@ func (s *OrgHolidaySeed) calendar() []seededHoliday {
 }
 
 func (s *OrgHolidaySeed) ensure(ctx context.Context, tx bun.Tx, entity *worker.OrgHoliday) error {
-	cols := buncolgen.OrgHolidayColumns
+	cols := workercol.OrgHolidayColumns
 	existing := new(worker.OrgHoliday)
 	err := tx.NewSelect().
 		Model(existing).

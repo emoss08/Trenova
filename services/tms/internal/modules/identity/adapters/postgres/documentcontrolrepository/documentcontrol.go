@@ -1,6 +1,7 @@
 package documentcontrolrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -51,7 +52,7 @@ func (r *repository) Get(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DocumentControlScopeTenant(sq, req.TenantInfo)
+				return tenantcol.DocumentControlScopeTenant(sq, req.TenantInfo)
 			}).
 			Scan(ctx); err != nil {
 			log.Error("failed to get document control", zap.Error(err))
@@ -86,7 +87,7 @@ func (r *repository) Update(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.DocumentControl, error) {
 		ov := entity.Version
 		entity.Version++
-		cols := buncolgen.DocumentControlColumns
+		cols := tenantcol.DocumentControlColumns
 
 		result, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -118,7 +119,7 @@ func (r *repository) GetOrCreate(
 				NewSelect().
 				Model(found).
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return buncolgen.DocumentControlScopeTenant(sq, pagination.TenantInfo{
+					return tenantcol.DocumentControlScopeTenant(sq, pagination.TenantInfo{
 						OrgID: orgID,
 						BuID:  buID,
 					})

@@ -2,32 +2,35 @@
 
 package documenttemplate
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/documenttemplatecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DocumentTemplate].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DocumentTemplateFieldMap] instead of parsing struct tags via reflection.
+// the generated [documenttemplatecol.DocumentTemplateFieldMap] instead of parsing struct tags via reflection.
 func (e *DocumentTemplate) GetStaticFieldMap() map[string]string {
-	return buncolgen.DocumentTemplateFieldMap
+	return documenttemplatecol.DocumentTemplateFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DocumentTemplateAssignment].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DocumentTemplateAssignmentFieldMap] instead of parsing struct tags via reflection.
+// the generated [documenttemplatecol.DocumentTemplateAssignmentFieldMap] instead of parsing struct tags via reflection.
 func (e *DocumentTemplateAssignment) GetStaticFieldMap() map[string]string {
-	return buncolgen.DocumentTemplateAssignmentFieldMap
+	return documenttemplatecol.DocumentTemplateAssignmentFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DocumentTemplateVersion].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DocumentTemplateVersionFieldMap] instead of parsing struct tags via reflection.
+// the generated [documenttemplatecol.DocumentTemplateVersionFieldMap] instead of parsing struct tags via reflection.
 func (e *DocumentTemplateVersion) GetStaticFieldMap() map[string]string {
-	return buncolgen.DocumentTemplateVersionFieldMap
+	return documenttemplatecol.DocumentTemplateVersionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [GeneratedDocument].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.GeneratedDocumentFieldMap] instead of parsing struct tags via reflection.
+// the generated [documenttemplatecol.GeneratedDocumentFieldMap] instead of parsing struct tags via reflection.
 func (e *GeneratedDocument) GetStaticFieldMap() map[string]string {
-	return buncolgen.GeneratedDocumentFieldMap
+	return documenttemplatecol.GeneratedDocumentFieldMap
 }

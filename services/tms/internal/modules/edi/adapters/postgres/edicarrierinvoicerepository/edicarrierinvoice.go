@@ -1,6 +1,7 @@
 package edicarrierinvoicerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -40,7 +41,7 @@ func (r *repository) ListCarrierInvoices(
 ) (*pagination.ListResult[*edi.CarrierInvoice], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.CarrierInvoice], error) {
 		entities := make([]*edi.CarrierInvoice, 0, req.Filter.Pagination.SafeLimit())
-		cols := buncolgen.CarrierInvoiceColumns
+		cols := edicol.CarrierInvoiceColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
@@ -74,14 +75,14 @@ func (r *repository) GetCarrierInvoiceByID(
 ) (*edi.CarrierInvoice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.CarrierInvoice, error) {
 		entity := new(edi.CarrierInvoice)
-		cols := buncolgen.CarrierInvoiceColumns
+		cols := edicol.CarrierInvoiceColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			Relation("Partner").
 			Where(cols.ID.Eq(), req.ID).
-			Apply(buncolgen.CarrierInvoiceApplyTenant(req.TenantInfo))
+			Apply(edicol.CarrierInvoiceApplyTenant(req.TenantInfo))
 		if err := query.Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "CarrierInvoice")
 		}
@@ -95,7 +96,7 @@ func (r *repository) GetCarrierInvoiceByNumber(
 ) (*edi.CarrierInvoice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.CarrierInvoice, error) {
 		entity := new(edi.CarrierInvoice)
-		cols := buncolgen.CarrierInvoiceColumns
+		cols := edicol.CarrierInvoiceColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -103,7 +104,7 @@ func (r *repository) GetCarrierInvoiceByNumber(
 			Where(cols.EDIPartnerID.Eq(), req.PartnerID).
 			Where(cols.InvoiceNumberKey.Eq(), edi.InvoiceNumberKey(req.InvoiceNumber)).
 			Where(cols.DuplicateOfID.IsNull()).
-			Apply(buncolgen.CarrierInvoiceApplyTenant(req.TenantInfo)).
+			Apply(edicol.CarrierInvoiceApplyTenant(req.TenantInfo)).
 			Scan(ctx)
 		if err != nil {
 			return nil, dberror.HandleNotFoundError(err, "CarrierInvoice")

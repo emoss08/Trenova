@@ -1,6 +1,7 @@
 package schedulingrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 
@@ -57,14 +58,14 @@ func (r *repository) ListTemplates(
 	req *workerports.ListShiftTemplatesRequest,
 ) ([]*worker.ShiftTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.ShiftTemplate, error) {
-		cols := buncolgen.ShiftTemplateColumns
+		cols := workercol.ShiftTemplateColumns
 		entities := make([]*worker.ShiftTemplate, 0, 8)
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.ShiftTemplateScopeTenant(sq, req.TenantInfo)
+				sq = workercol.ShiftTemplateScopeTenant(sq, req.TenantInfo)
 				if req.ActiveOnly {
 					sq = sq.Where(cols.Status.Eq(), domaintypes.StatusActive)
 				}
@@ -91,8 +92,8 @@ func (r *repository) GetTemplateByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ShiftTemplateScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.ShiftTemplateColumns.ID.Eq(), req.ID)
+				return workercol.ShiftTemplateScopeTenant(sq, req.TenantInfo).
+					Where(workercol.ShiftTemplateColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "ShiftTemplate")
@@ -132,7 +133,7 @@ func (r *repository) UpdateTemplate(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.ShiftTemplateColumns.Version.Eq(), ov).
+			Where(workercol.ShiftTemplateColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -157,12 +158,12 @@ func (r *repository) CountTemplateAssignments(
 	templateID pulid.ID,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.WorkerShiftAssignmentColumns
+		cols := workercol.WorkerShiftAssignmentColumns
 		total, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.WorkerShiftAssignment)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerShiftAssignmentScopeTenant(sq, tenantInfo).
+				return workercol.WorkerShiftAssignmentScopeTenant(sq, tenantInfo).
 					Where(cols.ShiftTemplateID.Eq(), templateID).
 					Where(cols.EffectiveTo.IsNull())
 			}).
@@ -185,12 +186,12 @@ func (r *repository) CountTemplateAssignmentsByIDs(
 			return map[pulid.ID]int{}, nil
 		}
 
-		cols := buncolgen.WorkerShiftAssignmentColumns
+		cols := workercol.WorkerShiftAssignmentColumns
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.WorkerShiftAssignment)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerShiftAssignmentScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerShiftAssignmentScopeTenant(sq, req.TenantInfo).
 					Where(cols.ShiftTemplateID.In(), bun.List(req.TemplateIDs)).
 					Where(cols.EffectiveTo.IsNull())
 			})
@@ -210,14 +211,14 @@ func (r *repository) ListAssignments(
 	req *workerports.ListShiftAssignmentsRequest,
 ) ([]*worker.WorkerShiftAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerShiftAssignment, error) {
-		cols := buncolgen.WorkerShiftAssignmentColumns
+		cols := workercol.WorkerShiftAssignmentColumns
 		entities := make([]*worker.WorkerShiftAssignment, 0, 8)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerShiftAssignmentScopeTenant(sq, req.TenantInfo)
+				sq = workercol.WorkerShiftAssignmentScopeTenant(sq, req.TenantInfo)
 				if !req.WorkerID.IsNil() {
 					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
 				}
@@ -236,7 +237,7 @@ func (r *repository) ListAssignments(
 			Limit(limitOr(req.Limit, defaultAssignmentPageSize))
 
 		if req.IncludeTemplate {
-			q = q.Relation(buncolgen.WorkerShiftAssignmentRelations.ShiftTemplate)
+			q = q.Relation(workercol.WorkerShiftAssignmentRelations.ShiftTemplate)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -258,8 +259,8 @@ func (r *repository) GetAssignmentByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerShiftAssignmentScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerShiftAssignmentColumns.ID.Eq(), req.ID)
+				return workercol.WorkerShiftAssignmentScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerShiftAssignmentColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "WorkerShiftAssignment")
@@ -299,7 +300,7 @@ func (r *repository) UpdateAssignment(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.WorkerShiftAssignmentColumns.Version.Eq(), ov).
+			Where(workercol.WorkerShiftAssignmentColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -326,14 +327,14 @@ func (r *repository) ListPreferences(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*worker.WorkerAvailabilityPreference, error) {
-			cols := buncolgen.WorkerAvailabilityPreferenceColumns
+			cols := workercol.WorkerAvailabilityPreferenceColumns
 			entities := make([]*worker.WorkerAvailabilityPreference, 0, 7)
 
 			if err := r.db.DBForContext(ctx).
 				NewSelect().
 				Model(&entities).
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = buncolgen.WorkerAvailabilityPreferenceScopeTenant(sq, req.TenantInfo)
+					sq = workercol.WorkerAvailabilityPreferenceScopeTenant(sq, req.TenantInfo)
 					// An empty worker reads the whole roster's stated availability,
 					// which is what the rota needs: seven rows a worker at most, so
 					// one read beats one per line on the board.
@@ -388,14 +389,14 @@ func (r *repository) ListSwaps(
 	req *workerports.ListShiftSwapsRequest,
 ) ([]*worker.ShiftSwapRequest, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.ShiftSwapRequest, error) {
-		cols := buncolgen.ShiftSwapRequestColumns
+		cols := workercol.ShiftSwapRequestColumns
 		entities := make([]*worker.ShiftSwapRequest, 0, 8)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.ShiftSwapRequestScopeTenant(sq, req.TenantInfo)
+				sq = workercol.ShiftSwapRequestScopeTenant(sq, req.TenantInfo)
 				if !req.WorkerID.IsNil() {
 					sq = sq.WhereGroup(" AND ", func(wq *bun.SelectQuery) *bun.SelectQuery {
 						return wq.
@@ -418,8 +419,8 @@ func (r *repository) ListSwaps(
 			Limit(limitOr(req.Limit, defaultSwapPageSize))
 
 		if req.IncludeWorkers {
-			q = q.Relation(buncolgen.ShiftSwapRequestRelations.RequestingWorker).
-				Relation(buncolgen.ShiftSwapRequestRelations.CounterpartyWorker)
+			q = q.Relation(workercol.ShiftSwapRequestRelations.RequestingWorker).
+				Relation(workercol.ShiftSwapRequestRelations.CounterpartyWorker)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -441,8 +442,8 @@ func (r *repository) GetSwapByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ShiftSwapRequestScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.ShiftSwapRequestColumns.ID.Eq(), req.ID)
+				return workercol.ShiftSwapRequestScopeTenant(sq, req.TenantInfo).
+					Where(workercol.ShiftSwapRequestColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "ShiftSwapRequest")
@@ -482,7 +483,7 @@ func (r *repository) UpdateSwap(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.ShiftSwapRequestColumns.Version.Eq(), ov).
+			Where(workercol.ShiftSwapRequestColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {

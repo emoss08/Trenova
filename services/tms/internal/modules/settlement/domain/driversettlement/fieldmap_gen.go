@@ -2,39 +2,42 @@
 
 package driversettlement
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Dispute].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DisputeFieldMap] instead of parsing struct tags via reflection.
+// the generated [driversettlementcol.DisputeFieldMap] instead of parsing struct tags via reflection.
 func (e *Dispute) GetStaticFieldMap() map[string]string {
-	return buncolgen.DisputeFieldMap
+	return driversettlementcol.DisputeFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [PayEvent].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.PayEventFieldMap] instead of parsing struct tags via reflection.
+// the generated [driversettlementcol.PayEventFieldMap] instead of parsing struct tags via reflection.
 func (e *PayEvent) GetStaticFieldMap() map[string]string {
-	return buncolgen.PayEventFieldMap
+	return driversettlementcol.PayEventFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Settlement].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.SettlementFieldMap] instead of parsing struct tags via reflection.
+// the generated [driversettlementcol.SettlementFieldMap] instead of parsing struct tags via reflection.
 func (e *Settlement) GetStaticFieldMap() map[string]string {
-	return buncolgen.SettlementFieldMap
+	return driversettlementcol.SettlementFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [SettlementBatch].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.SettlementBatchFieldMap] instead of parsing struct tags via reflection.
+// the generated [driversettlementcol.SettlementBatchFieldMap] instead of parsing struct tags via reflection.
 func (e *SettlementBatch) GetStaticFieldMap() map[string]string {
-	return buncolgen.SettlementBatchFieldMap
+	return driversettlementcol.SettlementBatchFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [SettlementLine].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.SettlementLineFieldMap] instead of parsing struct tags via reflection.
+// the generated [driversettlementcol.SettlementLineFieldMap] instead of parsing struct tags via reflection.
 func (e *SettlementLine) GetStaticFieldMap() map[string]string {
-	return buncolgen.SettlementLineFieldMap
+	return driversettlementcol.SettlementLineFieldMap
 }

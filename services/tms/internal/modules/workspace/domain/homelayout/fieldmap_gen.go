@@ -2,18 +2,21 @@
 
 package homelayout
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/homelayoutcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Preference].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.PreferenceFieldMap] instead of parsing struct tags via reflection.
+// the generated [homelayoutcol.PreferenceFieldMap] instead of parsing struct tags via reflection.
 func (e *Preference) GetStaticFieldMap() map[string]string {
-	return buncolgen.PreferenceFieldMap
+	return homelayoutcol.PreferenceFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Preset].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.PresetFieldMap] instead of parsing struct tags via reflection.
+// the generated [homelayoutcol.PresetFieldMap] instead of parsing struct tags via reflection.
 func (e *Preset) GetStaticFieldMap() map[string]string {
-	return buncolgen.PresetFieldMap
+	return homelayoutcol.PresetFieldMap
 }

@@ -1,6 +1,7 @@
 package shipmentrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -34,7 +35,7 @@ func (r *repository) cancelShipmentComponents(
 		return nil
 	}
 
-	cols := buncolgen.ShipmentMoveColumns
+	cols := shipmentcol.ShipmentMoveColumns
 	if _, err = tx.NewUpdate().
 		Model((*shipment.ShipmentMove)(nil)).
 		Set(cols.Status.Set(), shipment.MoveStatusCanceled).
@@ -45,7 +46,7 @@ func (r *repository) cancelShipmentComponents(
 		return err
 	}
 
-	assignmentCols := buncolgen.AssignmentColumns
+	assignmentCols := shipmentcol.AssignmentColumns
 	if _, err = tx.NewUpdate().
 		Model((*shipment.Assignment)(nil)).
 		Set(assignmentCols.Status.Set(), shipment.AssignmentStatusCanceled).
@@ -60,7 +61,7 @@ func (r *repository) cancelShipmentComponents(
 		return err
 	}
 
-	stopCols := buncolgen.StopColumns
+	stopCols := shipmentcol.StopColumns
 	if _, err = tx.NewUpdate().
 		Model((*shipment.Stop)(nil)).
 		Set(stopCols.Status.Set(), shipment.StopStatusCanceled).
@@ -92,7 +93,7 @@ func (r *repository) uncancelShipmentComponents(
 		return err
 	}
 
-	assignmentCols := buncolgen.AssignmentColumns
+	assignmentCols := shipmentcol.AssignmentColumns
 	if _, err = tx.NewUpdate().
 		Model((*shipment.Assignment)(nil)).
 		Set(assignmentCols.Status.Set(), shipment.AssignmentStatusNew).
@@ -113,7 +114,7 @@ func restoreMoveStatuses(
 	moveIDs []pulid.ID,
 	restores []shipmentports.MoveStatusRestore,
 ) error {
-	cols := buncolgen.ShipmentMoveColumns
+	cols := shipmentcol.ShipmentMoveColumns
 	groups := sliceutils.GroupBy(
 		restores,
 		func(item shipmentports.MoveStatusRestore) shipment.MoveStatus {
@@ -152,7 +153,7 @@ func restoreStopStatuses(
 	moveIDs []pulid.ID,
 	restores []shipmentports.StopStatusRestore,
 ) error {
-	cols := buncolgen.StopColumns
+	cols := shipmentcol.StopColumns
 	groups := sliceutils.GroupBy(
 		restores,
 		func(item shipmentports.StopStatusRestore) shipment.StopStatus {
@@ -191,7 +192,7 @@ func (r *repository) getMoveIDsForShipment(
 	shipmentID pulid.ID,
 ) ([]pulid.ID, error) {
 	moveIDs := make([]pulid.ID, 0)
-	cols := buncolgen.ShipmentMoveColumns
+	cols := shipmentcol.ShipmentMoveColumns
 
 	if err := tx.NewSelect().
 		Model((*shipment.ShipmentMove)(nil)).

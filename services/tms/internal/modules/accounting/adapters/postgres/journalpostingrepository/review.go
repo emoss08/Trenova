@@ -1,6 +1,8 @@
 package journalpostingrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/journalentrycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/journalsourcecol"
 	"context"
 	"database/sql"
 	"fmt"
@@ -36,8 +38,8 @@ func (r *repository) LockEntry(
 			NewSelect().
 			Model(entry).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.JournalEntryScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.JournalEntryColumns.ID.Eq(), req.EntryID)
+				return journalentrycol.JournalEntryScopeTenant(sq, req.TenantInfo).
+					Where(journalentrycol.JournalEntryColumns.ID.Eq(), req.EntryID)
 			}).
 			For("UPDATE").
 			Scan(ctx)
@@ -46,12 +48,12 @@ func (r *repository) LockEntry(
 		}
 
 		lines := make([]*journalentry.JournalEntryLine, 0, 2)
-		lineCols := buncolgen.JournalEntryLineColumns
+		lineCols := journalentrycol.JournalEntryLineColumns
 		if err = r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&lines).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.JournalEntryLineScopeTenant(sq, req.TenantInfo).
+				return journalentrycol.JournalEntryLineScopeTenant(sq, req.TenantInfo).
 					Where(lineCols.JournalEntryID.Eq(), req.EntryID)
 			}).
 			Order(lineCols.LineNumber.OrderAsc()).
@@ -69,12 +71,12 @@ func (r *repository) ApproveEntry(
 	params *journalentryports.ApproveJournalEntryParams,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.JournalEntryColumns
+		cols := journalentrycol.JournalEntryColumns
 		result, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*journalentry.JournalEntry)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.JournalEntryScopeTenantUpdate(uq, params.TenantInfo).
+				return journalentrycol.JournalEntryScopeTenantUpdate(uq, params.TenantInfo).
 					Where(cols.ID.Eq(), params.EntryID).
 					Where(cols.Version.Eq(), params.Version).
 					Where(cols.Status.Eq(), journalentry.StatusPending)
@@ -110,12 +112,12 @@ func (r *repository) PostEntry(
 	params *journalentryports.PostJournalEntryParams,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.JournalEntryColumns
+		cols := journalentrycol.JournalEntryColumns
 		result, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*journalentry.JournalEntry)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.JournalEntryScopeTenantUpdate(uq, params.TenantInfo).
+				return journalentrycol.JournalEntryScopeTenantUpdate(uq, params.TenantInfo).
 					Where(cols.ID.Eq(), params.EntryID).
 					Where(cols.Version.Eq(), params.Version).
 					Where(cols.Status.Eq(), journalentry.StatusApproved).
@@ -184,12 +186,12 @@ type stateChange struct {
 func (r *repository) moveBatchAndSources(ctx context.Context, change *stateChange) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if change.batchID.IsNotNil() {
-			batchCols := buncolgen.JournalBatchColumns
+			batchCols := journalentrycol.JournalBatchColumns
 			update := r.db.DBForContext(ctx).
 				NewUpdate().
 				Model((*journalentry.JournalBatch)(nil)).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return buncolgen.JournalBatchScopeTenantUpdate(uq, change.tenantInfo).
+					return journalentrycol.JournalBatchScopeTenantUpdate(uq, change.tenantInfo).
 						Where(batchCols.ID.Eq(), change.batchID)
 				}).
 				Set(batchCols.Status.Set(), change.status).
@@ -208,12 +210,12 @@ func (r *repository) moveBatchAndSources(ctx context.Context, change *stateChang
 			}
 		}
 
-		sourceCols := buncolgen.SourceColumns
+		sourceCols := journalsourcecol.SourceColumns
 		if _, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*journalsource.Source)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.SourceScopeTenantUpdate(uq, change.tenantInfo).
+				return journalsourcecol.SourceScopeTenantUpdate(uq, change.tenantInfo).
 					Where(sourceCols.JournalEntryID.Eq(), change.entryID)
 			}).
 			Set(sourceCols.Status.Set(), change.status).
@@ -248,9 +250,9 @@ func (r *repository) applyReviewFilters(
 	q *bun.SelectQuery,
 	req *journalentryports.ListJournalReviewQuery,
 ) *bun.SelectQuery {
-	cols := buncolgen.JournalEntryColumns
+	cols := journalentrycol.JournalEntryColumns
 	if req.Filter != nil {
-		q = q.Apply(buncolgen.JournalEntryApplyTenant(req.Filter.TenantInfo))
+		q = q.Apply(journalentrycol.JournalEntryApplyTenant(req.Filter.TenantInfo))
 	}
 	statuses := reviewStatuses
 	if len(req.Statuses) > 0 {
@@ -289,7 +291,7 @@ func (r *repository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.JournalEntryTable.Alias,
+						journalentrycol.JournalEntryTable.Alias,
 						req.Filter,
 						(*journalentry.JournalEntry)(nil),
 					)
@@ -311,12 +313,12 @@ func (r *repository) ListConnection(
 				Query: func(items *[]*journalentry.JournalEntry) *bun.SelectQuery {
 					return dba.NewSelect().
 						Model(items).
-						ColumnExpr(buncolgen.JournalEntryTable.All())
+						ColumnExpr(journalentrycol.JournalEntryTable.All())
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.JournalEntryTable.Alias,
+						journalentrycol.JournalEntryTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*journalentry.JournalEntry)(nil),
@@ -340,7 +342,7 @@ func (r *repository) Summarize(
 	tenantInfo pagination.TenantInfo,
 ) (*journalentryports.JournalReviewSummaryRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*journalentryports.JournalReviewSummaryRow, error) {
-		cols := buncolgen.JournalEntryColumns
+		cols := journalentrycol.JournalEntryColumns
 		summary := new(journalentryports.JournalReviewSummaryRow)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -348,7 +350,7 @@ func (r *repository) Summarize(
 			ColumnExpr(buncolgen.CountFilter("awaiting_approval", cols.Status.Eq()), journalentry.StatusPending).
 			ColumnExpr(buncolgen.CountFilter("ready_to_post", cols.Status.Eq()), journalentry.StatusApproved).
 			ColumnExpr(buncolgen.Min(cols.AccountingDate, "oldest_accounting_date")).
-			Apply(buncolgen.JournalEntryApplyTenant(tenantInfo)).
+			Apply(journalentrycol.JournalEntryApplyTenant(tenantInfo)).
 			Where(cols.Status.In(), bun.List(reviewStatuses)).
 			Where(cols.IsPosted.IsFalse()).
 			Scan(ctx, summary); err != nil {

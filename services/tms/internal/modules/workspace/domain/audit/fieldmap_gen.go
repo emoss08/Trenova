@@ -2,18 +2,21 @@
 
 package audit
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/auditcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DLQEntry].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DLQEntryFieldMap] instead of parsing struct tags via reflection.
+// the generated [auditcol.DLQEntryFieldMap] instead of parsing struct tags via reflection.
 func (e *DLQEntry) GetStaticFieldMap() map[string]string {
-	return buncolgen.DLQEntryFieldMap
+	return auditcol.DLQEntryFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Entry].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.EntryFieldMap] instead of parsing struct tags via reflection.
+// the generated [auditcol.EntryFieldMap] instead of parsing struct tags via reflection.
 func (e *Entry) GetStaticFieldMap() map[string]string {
-	return buncolgen.EntryFieldMap
+	return auditcol.EntryFieldMap
 }

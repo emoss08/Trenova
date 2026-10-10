@@ -2,6 +2,7 @@
 package customerpaymentrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/customerpaymentcol"
 	"context"
 	"fmt"
 
@@ -140,7 +141,7 @@ func (r *repository) ListConnection(
 			Query: func(entities *[]*customerpayment.Payment) *bun.SelectQuery {
 				return dba.NewSelect().
 					Model(entities).
-					ColumnExpr(buncolgen.PaymentTable.All()).
+					ColumnExpr(customerpaymentcol.PaymentTable.All()).
 					Relation("Applications", func(q *bun.SelectQuery) *bun.SelectQuery {
 						return q.Order("cpa.line_number ASC")
 					})
@@ -358,7 +359,7 @@ func (r *repository) SumReceived(
 	req customerpaymentports.SumPaymentsReceivedRequest,
 ) ([]*customerpaymentports.PaymentsReceived, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*customerpaymentports.PaymentsReceived, error) {
-		cols := buncolgen.PaymentColumns
+		cols := customerpaymentcol.PaymentColumns
 		rows := make([]*customerpaymentports.PaymentsReceived, 0, 4)
 
 		err := r.db.DBForContext(ctx).
@@ -368,7 +369,7 @@ func (r *repository) SumReceived(
 			ColumnExpr("COALESCE(SUM("+cols.AmountMinor.Qualified()+"), 0) AS amount_minor").
 			ColumnExpr("COUNT(*) AS count").
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.PaymentScopeTenant(sq, req.TenantInfo).
+				return customerpaymentcol.PaymentScopeTenant(sq, req.TenantInfo).
 					Where(cols.Status.Eq(), customerpayment.StatusPosted).
 					Where(cols.PaymentDate.Gte(), req.From).
 					Where(cols.PaymentDate.Lte(), req.To)
@@ -390,14 +391,14 @@ func (r *repository) StampExchangeRate(
 	req *kernelports.StampExchangeRateRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.PaymentColumns
+		cols := customerpaymentcol.PaymentColumns
 		result, err := r.db.DBForContext(ctx).NewUpdate().
 			Model((*customerpayment.Payment)(nil)).
 			Set(cols.ExchangeRate.Set(), req.Rate).
 			Set(cols.ExchangeRateDate.Set(), req.Date).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.PaymentScopeTenantUpdate(uq, req.TenantInfo).
+				return customerpaymentcol.PaymentScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Exec(ctx)

@@ -1,6 +1,7 @@
 package driverpayrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/driverpaycol"
 	"context"
 	"fmt"
 
@@ -47,7 +48,7 @@ func (r *driverExpenseRepository) Update(
 	entity *driverpay.Expense,
 ) (*driverpay.Expense, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driverpay.Expense, error) {
-		cols := buncolgen.ExpenseColumns
+		cols := driverpaycol.ExpenseColumns
 		ov := entity.Version
 		entity.Version++
 		results, err := r.db.DBForContext(ctx).
@@ -75,18 +76,18 @@ func (r *driverExpenseRepository) GetByID(
 	req driverpayports.GetDriverExpenseByIDRequest,
 ) (*driverpay.Expense, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.Expense, error) {
-		cols := buncolgen.ExpenseColumns
+		cols := driverpaycol.ExpenseColumns
 		entity := new(driverpay.Expense)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ExpenseScopeTenant(sq, req.TenantInfo).
+				return driverpaycol.ExpenseScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
-			Relation(buncolgen.ExpenseRelations.Worker).
-			Relation(buncolgen.ExpenseRelations.PayCode).
-			Relation(buncolgen.ExpenseRelations.ReviewedBy).
+			Relation(driverpaycol.ExpenseRelations.Worker).
+			Relation(driverpaycol.ExpenseRelations.PayCode).
+			Relation(driverpaycol.ExpenseRelations.ReviewedBy).
 			Scan(ctx)
 		if err != nil {
 			return nil, dberror.HandleNotFoundError(err, "DriverExpense")
@@ -101,7 +102,7 @@ func (r *driverExpenseRepository) ListConnection(
 ) (*pagination.CursorListResult[*driverpay.Expense], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*driverpay.Expense], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
-		alias := buncolgen.ExpenseTable.Alias
+		alias := driverpaycol.ExpenseTable.Alias
 
 		dba := r.db.DBForContext(ctx)
 		var totalCount *int
@@ -134,10 +135,10 @@ func (r *driverExpenseRepository) ListConnection(
 				Query: func(entities *[]*driverpay.Expense) *bun.SelectQuery {
 					return dba.NewSelect().
 						Model(entities).
-						ColumnExpr(buncolgen.ExpenseTable.All()).
-						Relation(buncolgen.ExpenseRelations.Worker).
-						Relation(buncolgen.ExpenseRelations.PayCode).
-						Relation(buncolgen.ExpenseRelations.ReviewedBy)
+						ColumnExpr(driverpaycol.ExpenseTable.All()).
+						Relation(driverpaycol.ExpenseRelations.Worker).
+						Relation(driverpaycol.ExpenseRelations.PayCode).
+						Relation(driverpaycol.ExpenseRelations.ReviewedBy)
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					return querybuilder.ApplyCursorFilters(
@@ -163,7 +164,7 @@ func (r *driverExpenseRepository) ListForWorker(
 	req *driverpayports.ListDriverExpensesForWorkerRequest,
 ) ([]*driverpay.Expense, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.Expense, error) {
-		cols := buncolgen.ExpenseColumns
+		cols := driverpaycol.ExpenseColumns
 		limit := req.Limit
 		if limit <= 0 || limit > 100 {
 			limit = 50
@@ -174,14 +175,14 @@ func (r *driverExpenseRepository) ListForWorker(
 			NewSelect().
 			Model(&items).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.ExpenseScopeTenant(sq, req.TenantInfo).
+				sq = driverpaycol.ExpenseScopeTenant(sq, req.TenantInfo).
 					Where(cols.WorkerID.Eq(), req.WorkerID)
 				if len(req.Statuses) > 0 {
 					sq = sq.Where(cols.Status.In(), bun.List(req.Statuses))
 				}
 				return sq
 			}).
-			Relation(buncolgen.ExpenseRelations.PayCode).
+			Relation(driverpaycol.ExpenseRelations.PayCode).
 			Order(cols.CreatedAt.OrderDesc()).
 			Limit(limit)
 		if err := query.Scan(ctx); err != nil {
@@ -197,17 +198,17 @@ func (r *driverExpenseRepository) ListApprovedForWorker(
 	workerID pulid.ID,
 ) ([]*driverpay.Expense, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.Expense, error) {
-		cols := buncolgen.ExpenseColumns
+		cols := driverpaycol.ExpenseColumns
 		items := make([]*driverpay.Expense, 0, 8)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&items).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ExpenseScopeTenant(sq, tenantInfo).
+				return driverpaycol.ExpenseScopeTenant(sq, tenantInfo).
 					Where(cols.WorkerID.Eq(), workerID).
 					Where(cols.Status.Eq(), driverpay.ExpenseStatusApproved)
 			}).
-			Relation(buncolgen.ExpenseRelations.PayCode).
+			Relation(driverpaycol.ExpenseRelations.PayCode).
 			Order(cols.IncurredDate.OrderAsc()).
 			Scan(ctx)
 		if err != nil {
@@ -222,12 +223,12 @@ func (r *driverExpenseRepository) CountPending(
 	tenantInfo pagination.TenantInfo,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.ExpenseColumns
+		cols := driverpaycol.ExpenseColumns
 		count, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*driverpay.Expense)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ExpenseScopeTenant(sq, tenantInfo).
+				return driverpaycol.ExpenseScopeTenant(sq, tenantInfo).
 					Where(cols.Status.Eq(), driverpay.ExpenseStatusPending)
 			}).
 			Count(ctx)

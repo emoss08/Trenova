@@ -1,6 +1,7 @@
 package agentproposalrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 	"context"
 	"fmt"
 
@@ -31,13 +32,13 @@ func (r *repository) RecordExecution(
 		)
 
 		entity := new(agent.AgentProposal)
-		cols := buncolgen.AgentProposalColumns
+		cols := agentcol.AgentProposalColumns
 
 		query := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.AgentProposalScopeTenantUpdate(uq, req.TenantInfo).
+				return agentcol.AgentProposalScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Set(cols.Status.Set(), req.Status).
@@ -84,8 +85,8 @@ func (r *repository) ListByThread(
 		)
 
 		entities := make([]*agent.AgentProposal, 0)
-		cols := buncolgen.AgentProposalColumns
-		runCols := buncolgen.AgentRunColumns
+		cols := agentcol.AgentProposalColumns
+		runCols := agentcol.AgentRunColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -96,7 +97,7 @@ func (r *repository) ListByThread(
 				runCols.BusinessUnitID.EqColumn(cols.BusinessUnitID),
 			).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentProposalScopeTenant(sq, req.TenantInfo).
+				return agentcol.AgentProposalScopeTenant(sq, req.TenantInfo).
 					Where(runCols.SubjectType.Eq(), agent.SubjectAssistantThread).
 					Where(runCols.SubjectID.Eq(), req.ThreadID)
 			}).
@@ -120,13 +121,13 @@ func (r *repository) RecordSimulation(
 ) (*agent.AgentProposal, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentProposal, error) {
 		entity := new(agent.AgentProposal)
-		cols := buncolgen.AgentProposalColumns
+		cols := agentcol.AgentProposalColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.AgentProposalScopeTenantUpdate(uq, req.TenantInfo).
+				return agentcol.AgentProposalScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Set(cols.Status.Set(), agent.ProposalStatusSimulated).
@@ -164,15 +165,15 @@ func (r *repository) CountExecutedTool(
 	req agentports.CountExecutedToolRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		proposals := buncolgen.AgentProposalColumns
-		runs := buncolgen.AgentRunColumns
+		proposals := agentcol.AgentProposalColumns
+		runs := agentcol.AgentRunColumns
 
 		count, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*agent.AgentProposal)(nil)).
 			Join("JOIN ? AS ? ON ? = ? AND ? = ? AND ? = ?",
-				bun.Ident(buncolgen.AgentRunTable.Name),
-				bun.Ident(buncolgen.AgentRunTable.Alias),
+				bun.Ident(agentcol.AgentRunTable.Name),
+				bun.Ident(agentcol.AgentRunTable.Alias),
 				bun.Safe(runs.ID.Qualified()),
 				bun.Safe(proposals.RunID.Qualified()),
 				bun.Safe(runs.OrganizationID.Qualified()),
@@ -181,7 +182,7 @@ func (r *repository) CountExecutedTool(
 				bun.Safe(proposals.BusinessUnitID.Qualified()),
 			).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentProposalScopeTenant(sq, req.TenantInfo).
+				return agentcol.AgentProposalScopeTenant(sq, req.TenantInfo).
 					Where(runs.AgentDefinitionID.Eq(), req.DefinitionID).
 					Where(proposals.ToolName.Eq(), req.ToolName).
 					Where(proposals.ExecutedAt.Gte(), req.Since).

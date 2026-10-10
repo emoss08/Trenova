@@ -2,11 +2,14 @@
 
 package glbalance
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/glbalancecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [GLAccountPeriodBalance].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.GLAccountPeriodBalanceFieldMap] instead of parsing struct tags via reflection.
+// the generated [glbalancecol.GLAccountPeriodBalanceFieldMap] instead of parsing struct tags via reflection.
 func (e *GLAccountPeriodBalance) GetStaticFieldMap() map[string]string {
-	return buncolgen.GLAccountPeriodBalanceFieldMap
+	return glbalancecol.GLAccountPeriodBalanceFieldMap
 }

@@ -2,11 +2,14 @@
 
 package journalsource
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/journalsourcecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Source].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.SourceFieldMap] instead of parsing struct tags via reflection.
+// the generated [journalsourcecol.SourceFieldMap] instead of parsing struct tags via reflection.
 func (e *Source) GetStaticFieldMap() map[string]string {
-	return buncolgen.SourceFieldMap
+	return journalsourcecol.SourceFieldMap
 }

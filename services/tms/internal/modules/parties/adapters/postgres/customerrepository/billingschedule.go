@@ -1,6 +1,7 @@
 package customerrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
 	"context"
 	"fmt"
 
@@ -24,7 +25,7 @@ func (r *repository) AdvanceBilledPeriod(
 	req *customerports.AdvanceBilledPeriodRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cbp := buncolgen.CustomerBillingProfileColumns
+		cbp := customercol.CustomerBillingProfileColumns
 
 		if _, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -64,8 +65,8 @@ func (r *repository) ListDueBillingSchedules(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerports.DueBillingSchedule, error) {
-			cbp := buncolgen.CustomerBillingProfileColumns
-			cus := buncolgen.CustomerColumns
+			cbp := customercol.CustomerBillingProfileColumns
+			cus := customercol.CustomerColumns
 
 			schedules := make([]*customerports.DueBillingSchedule, 0)
 			q := r.db.DBForContext(ctx).

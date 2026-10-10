@@ -1,6 +1,7 @@
 package documenttyperepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/documenttypecol"
 	"context"
 	"strings"
 
@@ -41,10 +42,10 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *documenttypeports.ListDocumentTypesRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.DocumentTypeColumns
+	cols := documenttypecol.DocumentTypeColumns
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.DocumentTypeTable.Alias,
+		documenttypecol.DocumentTypeTable.Alias,
 		req.Filter,
 		(*documenttype.DocumentType)(nil),
 	)
@@ -89,7 +90,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.DocumentTypeTable.Alias,
+		documenttypecol.DocumentTypeTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*documenttype.DocumentType)(nil),
@@ -102,7 +103,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.DocumentTypeTable.Alias,
+		documenttypecol.DocumentTypeTable.Alias,
 		req.Filter,
 		(*documenttype.DocumentType)(nil),
 	)
@@ -110,7 +111,7 @@ func (r *repository) applyTotalCountFilters(
 
 func applyDocumentTypeColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.DocumentTypeTable.All())
+		return q.ColumnExpr(documenttypecol.DocumentTypeTable.All())
 	}
 
 	return q.Column(columns...)
@@ -201,7 +202,7 @@ func (r *repository) Update(
 
 		ov := entity.Version
 		entity.Version++
-		cols := buncolgen.DocumentTypeColumns
+		cols := documenttypecol.DocumentTypeColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -233,12 +234,12 @@ func (r *repository) GetByID(
 		)
 
 		entity := new(documenttype.DocumentType)
-		cols := buncolgen.DocumentTypeColumns
+		cols := documenttypecol.DocumentTypeColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DocumentTypeScopeTenant(sq, req.TenantInfo).
+				return documenttypecol.DocumentTypeScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
@@ -262,12 +263,12 @@ func (r *repository) GetByCode(
 		)
 
 		entity := new(documenttype.DocumentType)
-		cols := buncolgen.DocumentTypeColumns
+		cols := documenttypecol.DocumentTypeColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DocumentTypeScopeTenant(sq, req.TenantInfo).
+				return documenttypecol.DocumentTypeScopeTenant(sq, req.TenantInfo).
 					Where(cols.Code.Eq(), req.Code)
 			}).
 			Scan(ctx)
@@ -292,12 +293,12 @@ func (r *repository) GetByName(
 
 		entity := new(documenttype.DocumentType)
 		normalizedName := strings.TrimSpace(req.Name)
-		cols := buncolgen.DocumentTypeColumns
+		cols := documenttypecol.DocumentTypeColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DocumentTypeScopeTenant(sq, req.TenantInfo).
+				return documenttypecol.DocumentTypeScopeTenant(sq, req.TenantInfo).
 					Where(cols.Name.Expr("lower(btrim({})) = lower(btrim(?))"), normalizedName)
 			}).
 			Scan(ctx)
@@ -315,28 +316,28 @@ func (r *repository) SelectOptions(
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*documenttype.DocumentType], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*documenttype.DocumentType], error) {
-		cols := buncolgen.DocumentTypeColumns
+		cols := documenttypecol.DocumentTypeColumns
 		return dbhelper.SelectOptions[*documenttype.DocumentType](
 			ctx,
 			r.db.DBForContext(ctx),
 			req,
 			&dbhelper.SelectOptionsConfig{
 				Columns: []string{
-					buncolgen.DocumentTypeColumns.ID.Bare(),
-					buncolgen.DocumentTypeColumns.Code.Bare(),
-					buncolgen.DocumentTypeColumns.Name.Bare(),
-					buncolgen.DocumentTypeColumns.Description.Bare(),
-					buncolgen.DocumentTypeColumns.Color.Bare(),
-					buncolgen.DocumentTypeColumns.DocumentClassification.Bare(),
-					buncolgen.DocumentTypeColumns.DocumentCategory.Bare(),
-					buncolgen.DocumentTypeColumns.IsSystem.Bare(),
+					documenttypecol.DocumentTypeColumns.ID.Bare(),
+					documenttypecol.DocumentTypeColumns.Code.Bare(),
+					documenttypecol.DocumentTypeColumns.Name.Bare(),
+					documenttypecol.DocumentTypeColumns.Description.Bare(),
+					documenttypecol.DocumentTypeColumns.Color.Bare(),
+					documenttypecol.DocumentTypeColumns.DocumentClassification.Bare(),
+					documenttypecol.DocumentTypeColumns.DocumentCategory.Bare(),
+					documenttypecol.DocumentTypeColumns.IsSystem.Bare(),
 				},
-				OrgColumn:  buncolgen.DocumentTypeColumns.OrganizationID.Qualified(),
-				BuColumn:   buncolgen.DocumentTypeColumns.BusinessUnitID.Qualified(),
+				OrgColumn:  documenttypecol.DocumentTypeColumns.OrganizationID.Qualified(),
+				BuColumn:   documenttypecol.DocumentTypeColumns.BusinessUnitID.Qualified(),
 				EntityName: "DocumentType",
 				SearchColumns: []string{
-					buncolgen.DocumentTypeColumns.Code.Qualified(),
-					buncolgen.DocumentTypeColumns.Name.Qualified(),
+					documenttypecol.DocumentTypeColumns.Code.Qualified(),
+					documenttypecol.DocumentTypeColumns.Name.Qualified(),
 				},
 				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
 					// exclude INVOICE, CREDITMEMO, DEBITMEMO

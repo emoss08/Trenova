@@ -1,6 +1,7 @@
 package rateagreementrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
@@ -43,15 +44,15 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *rateagreementports.ListRateAgreementRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.RateAgreementColumns
+	cols := rateagreementcol.RateAgreementColumns
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.RateAgreementTable.Alias,
+		rateagreementcol.RateAgreementTable.Alias,
 		req.Filter,
 		(*rateagreement.RateAgreement)(nil),
 	)
 
-	q = q.Apply(buncolgen.RateAgreementApplyTenant(req.Filter.TenantInfo))
+	q = q.Apply(rateagreementcol.RateAgreementApplyTenant(req.Filter.TenantInfo))
 
 	if req.PartyType != "" {
 		q = q.Where(cols.PartyType.Eq(), req.PartyType)
@@ -108,7 +109,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.RateAgreementTable.Alias,
+		rateagreementcol.RateAgreementTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*rateagreement.RateAgreement)(nil),
@@ -121,7 +122,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.RateAgreementTable.Alias,
+		rateagreementcol.RateAgreementTable.Alias,
 		req.Filter,
 		(*rateagreement.RateAgreement)(nil),
 	)
@@ -190,20 +191,20 @@ func (r *repository) GetByID(
 		)
 
 		entity := new(rateagreement.RateAgreement)
-		cols := buncolgen.RateAgreementColumns
+		cols := rateagreementcol.RateAgreementColumns
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RateAgreementScopeTenant(sq, req.TenantInfo).
+				return rateagreementcol.RateAgreementScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.RateAgreementID)
 			})
 
 		if req.IncludeChildren {
 			q = q.
 				Relation(
-					buncolgen.Rel(buncolgen.RateAgreementRelations.Rules),
+					buncolgen.Rel(rateagreementcol.RateAgreementRelations.Rules),
 					func(sq *bun.SelectQuery) *bun.SelectQuery {
 						if req.AsOf > 0 {
 							sq = applyRuleWindow(sq, req.AsOf)
@@ -215,16 +216,16 @@ func (r *repository) GetByID(
 							sq = applyOpenRuleWindow(sq, timeutils.NowUnix())
 						}
 						return sq.Order(
-							buncolgen.RateAgreementRuleColumns.SpecificityScore.OrderDesc(),
+							rateagreementcol.RateAgreementRuleColumns.SpecificityScore.OrderDesc(),
 						)
 					},
 				).
 				Relation(buncolgen.Rel(
-					buncolgen.RateAgreementRelations.Rules,
-					buncolgen.RateAgreementRuleRelations.Breaks,
+					rateagreementcol.RateAgreementRelations.Rules,
+					rateagreementcol.RateAgreementRuleRelations.Breaks,
 				)).
-				Relation(buncolgen.Rel(buncolgen.RateAgreementRelations.Accessorials)).
-				Relation(buncolgen.Rel(buncolgen.RateAgreementRelations.FuelBinding))
+				Relation(buncolgen.Rel(rateagreementcol.RateAgreementRelations.Accessorials)).
+				Relation(buncolgen.Rel(rateagreementcol.RateAgreementRelations.FuelBinding))
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -243,15 +244,15 @@ func (r *repository) ListRules(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*rateagreement.RateAgreementRule, error) {
 		log := r.l.With(zap.String("operation", "ListRules"))
 
-		cols := buncolgen.RateAgreementRuleColumns
+		cols := rateagreementcol.RateAgreementRuleColumns
 		entities := make([]*rateagreement.RateAgreementRule, 0)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Relation(buncolgen.Rel(buncolgen.RateAgreementRuleRelations.Breaks)).
+			Relation(buncolgen.Rel(rateagreementcol.RateAgreementRuleRelations.Breaks)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.RateAgreementRuleScopeTenant(sq, req.TenantInfo).
+				sq = rateagreementcol.RateAgreementRuleScopeTenant(sq, req.TenantInfo).
 					Where(cols.RateAgreementID.Eq(), req.RateAgreementID)
 
 				if !req.IncludeInactive {
@@ -303,15 +304,15 @@ func (r *repository) GetRuleByID(
 		)
 
 		entity := new(rateagreement.RateAgreementRule)
-		cols := buncolgen.RateAgreementRuleColumns
+		cols := rateagreementcol.RateAgreementRuleColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Relation(buncolgen.Rel(buncolgen.RateAgreementRuleRelations.Breaks)).
-			Relation(buncolgen.Rel(buncolgen.RateAgreementRuleRelations.Agreement)).
+			Relation(buncolgen.Rel(rateagreementcol.RateAgreementRuleRelations.Breaks)).
+			Relation(buncolgen.Rel(rateagreementcol.RateAgreementRuleRelations.Agreement)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RateAgreementRuleScopeTenant(sq, req.TenantInfo).
+				return rateagreementcol.RateAgreementRuleScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.RuleID)
 			}).
 			Scan(ctx)
@@ -387,7 +388,7 @@ func (r *repository) Update(
 
 		ov := entity.Version
 		entity.Version++
-		cols := buncolgen.RateAgreementColumns
+		cols := rateagreementcol.RateAgreementColumns
 
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			results, uErr := r.db.DBForContext(c).
@@ -484,24 +485,24 @@ func (r *repository) deleteChildren(
 			BuID:  entity.BusinessUnitID,
 		}
 
-		accessorialCols := buncolgen.RateAgreementAccessorialColumns
+		accessorialCols := rateagreementcol.RateAgreementAccessorialColumns
 		if _, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*rateagreement.RateAgreementAccessorial)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.RateAgreementAccessorialScopeTenantDelete(dq, tenantInfo).
+				return rateagreementcol.RateAgreementAccessorialScopeTenantDelete(dq, tenantInfo).
 					Where(accessorialCols.RateAgreementID.Eq(), entity.ID)
 			}).
 			Exec(ctx); err != nil {
 			return err
 		}
 
-		bindingCols := buncolgen.RateAgreementFuelBindingColumns
+		bindingCols := rateagreementcol.RateAgreementFuelBindingColumns
 		_, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*rateagreement.RateAgreementFuelBinding)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.RateAgreementFuelBindingScopeTenantDelete(dq, tenantInfo).
+				return rateagreementcol.RateAgreementFuelBindingScopeTenantDelete(dq, tenantInfo).
 					Where(bindingCols.RateAgreementID.Eq(), entity.ID)
 			}).
 			Exec(ctx)
@@ -515,7 +516,7 @@ func (r *repository) SelectOptions(
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*rateagreement.RateAgreement], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*rateagreement.RateAgreement], error) {
-		cols := buncolgen.RateAgreementColumns
+		cols := rateagreementcol.RateAgreementColumns
 
 		return dbhelper.SelectOptions[*rateagreement.RateAgreement](
 			ctx,

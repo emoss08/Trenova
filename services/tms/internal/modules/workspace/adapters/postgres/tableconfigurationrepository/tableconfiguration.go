@@ -1,6 +1,7 @@
 package tableconfigurationrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tableconfigurationcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
@@ -163,13 +164,13 @@ func (r *repository) scopeQuery(
 
 func applyTableConfigurationColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		q = q.ColumnExpr(buncolgen.TableConfigurationTable.All())
+		q = q.ColumnExpr(tableconfigurationcol.TableConfigurationTable.All())
 	} else {
 		q = q.Column(columns...)
 	}
 
 	return q.Relation(
-		buncolgen.TableConfigurationRelations.User,
+		tableconfigurationcol.TableConfigurationRelations.User,
 		func(uq *bun.SelectQuery) *bun.SelectQuery {
 			return uq.Column("id", "name", "email_address", "profile_pic_url")
 		},
@@ -182,7 +183,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	q, err := querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.TableConfigurationTable.Alias,
+		tableconfigurationcol.TableConfigurationTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*tableconfiguration.TableConfiguration)(nil),
@@ -200,7 +201,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.TableConfigurationTable.Alias,
+		tableconfigurationcol.TableConfigurationTable.Alias,
 		req.Filter,
 		(*tableconfiguration.TableConfiguration)(nil),
 	)

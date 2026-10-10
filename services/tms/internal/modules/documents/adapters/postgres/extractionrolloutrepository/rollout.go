@@ -1,6 +1,7 @@
 package extractionrolloutrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/extractionrolloutcol"
 	"context"
 	"fmt"
 
@@ -48,7 +49,7 @@ func (r *rolloutRepository) Get(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ExtractionRolloutScopeTenant(sq, tenant)
+				return extractionrolloutcol.ExtractionRolloutScopeTenant(sq, tenant)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -68,13 +69,13 @@ func (r *rolloutRepository) Save(
 			return r.insert(ctx, entity)
 		}
 
-		cols := buncolgen.ExtractionRolloutColumns
+		cols := extractionrolloutcol.ExtractionRolloutColumns
 		previous := entity.Version
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ExtractionRolloutScopeTenantUpdate(uq, pagination.TenantInfo{
+				return extractionrolloutcol.ExtractionRolloutScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
 				}).

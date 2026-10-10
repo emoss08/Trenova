@@ -2,25 +2,28 @@
 
 package apikey
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/apikeycol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Key].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.KeyFieldMap] instead of parsing struct tags via reflection.
+// the generated [apikeycol.KeyFieldMap] instead of parsing struct tags via reflection.
 func (e *Key) GetStaticFieldMap() map[string]string {
-	return buncolgen.KeyFieldMap
+	return apikeycol.KeyFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Permission].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.PermissionFieldMap] instead of parsing struct tags via reflection.
+// the generated [apikeycol.PermissionFieldMap] instead of parsing struct tags via reflection.
 func (e *Permission) GetStaticFieldMap() map[string]string {
-	return buncolgen.PermissionFieldMap
+	return apikeycol.PermissionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [UsageDaily].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.UsageDailyFieldMap] instead of parsing struct tags via reflection.
+// the generated [apikeycol.UsageDailyFieldMap] instead of parsing struct tags via reflection.
 func (e *UsageDaily) GetStaticFieldMap() map[string]string {
-	return buncolgen.UsageDailyFieldMap
+	return apikeycol.UsageDailyFieldMap
 }

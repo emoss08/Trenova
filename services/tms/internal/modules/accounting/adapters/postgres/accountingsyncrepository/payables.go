@@ -1,6 +1,10 @@
 package accountingsyncrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/journalentrycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 	"fmt"
 	"slices"
@@ -66,9 +70,9 @@ func (r *payablesRepository) carrierSettlement(
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Relation(buncolgen.CarrierSettlementRelations.Carrier).
-			Apply(buncolgen.CarrierSettlementApplyTenant(req.TenantInfo)).
-			Where(buncolgen.CarrierSettlementColumns.ID.Eq(), req.ID).
+			Relation(carriersettlementcol.CarrierSettlementRelations.Carrier).
+			Apply(carriersettlementcol.CarrierSettlementApplyTenant(req.TenantInfo)).
+			Where(carriersettlementcol.CarrierSettlementColumns.ID.Eq(), req.ID).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Carrier settlement")
 		}
@@ -133,9 +137,9 @@ func (r *payablesRepository) driverSettlement(
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Relation(buncolgen.SettlementRelations.Worker).
-			Apply(buncolgen.SettlementApplyTenant(req.TenantInfo)).
-			Where(buncolgen.SettlementColumns.ID.Eq(), req.ID).
+			Relation(driversettlementcol.SettlementRelations.Worker).
+			Apply(driversettlementcol.SettlementApplyTenant(req.TenantInfo)).
+			Where(driversettlementcol.SettlementColumns.ID.Eq(), req.ID).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Driver settlement")
 		}
@@ -205,7 +209,7 @@ func (r *payablesRepository) accountingControl(
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(control).
-			Where(buncolgen.AccountingControlColumns.OrganizationID.Eq(), tenantInfo.OrgID).
+			Where(tenantcol.AccountingControlColumns.OrganizationID.Eq(), tenantInfo.OrgID).
 			Limit(1).
 			Scan(ctx); err != nil {
 			if dberror.IsNotFoundError(err) {
@@ -230,18 +234,18 @@ func (r *payablesRepository) journalLines(
 		entries := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*journalentry.JournalEntry)(nil)).
-			ColumnExpr(buncolgen.JournalEntryColumns.ID.Qualified()).
-			Apply(buncolgen.JournalEntryApplyTenant(tenantInfo)).
-			Where(buncolgen.JournalEntryColumns.BatchID.Eq(), *batchID)
+			ColumnExpr(journalentrycol.JournalEntryColumns.ID.Qualified()).
+			Apply(journalentrycol.JournalEntryApplyTenant(tenantInfo)).
+			Where(journalentrycol.JournalEntryColumns.BatchID.Eq(), *batchID)
 
 		lines := make([]*journalentry.JournalEntryLine, 0, 8)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&lines).
-			Relation(buncolgen.JournalEntryLineRelations.GLAccount).
-			Apply(buncolgen.JournalEntryLineApplyTenant(tenantInfo)).
-			Where(buncolgen.Expr("{0} IN (?)", buncolgen.JournalEntryLineColumns.JournalEntryID), entries).
-			Order(buncolgen.JournalEntryLineColumns.LineNumber.OrderAsc()).
+			Relation(journalentrycol.JournalEntryLineRelations.GLAccount).
+			Apply(journalentrycol.JournalEntryLineApplyTenant(tenantInfo)).
+			Where(buncolgen.Expr("{0} IN (?)", journalentrycol.JournalEntryLineColumns.JournalEntryID), entries).
+			Order(journalentrycol.JournalEntryLineColumns.LineNumber.OrderAsc()).
 			Scan(ctx); err != nil {
 			r.l.Error("failed to load settlement journal lines", zap.Error(err))
 			return nil, fmt.Errorf("load settlement journal lines: %w", err)
@@ -302,13 +306,13 @@ func (r *payablesRepository) invoiceNumbers(
 	settlementID pulid.ID,
 ) ([]string, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]string, error) {
-		cols := buncolgen.InvoiceMatchColumns
+		cols := carriersettlementcol.InvoiceMatchColumns
 		numbers := make([]string, 0, 4)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*carriersettlement.InvoiceMatch)(nil)).
 			ColumnExpr(cols.InvoiceNumber.Qualified()).
-			Apply(buncolgen.InvoiceMatchApplyTenant(tenantInfo)).
+			Apply(carriersettlementcol.InvoiceMatchApplyTenant(tenantInfo)).
 			Where(cols.CarrierSettlementID.Eq(), settlementID).
 			Where(cols.Status.In(), bun.List([]carriersettlement.InvoiceMatchStatus{
 				carriersettlement.InvoiceMatchStatusMatched,
@@ -345,7 +349,7 @@ func (r *payablesRepository) StampExchangeRate(
 		)
 		switch req.Kind {
 		case accountingsyncports.PayableCarrier:
-			cols := buncolgen.CarrierSettlementColumns
+			cols := carriersettlementcol.CarrierSettlementColumns
 			rate, date := cols.ExchangeRate, cols.ExchangeRateDate
 			if req.Paid {
 				rate, date = cols.PaidExchangeRate, cols.PaidExchangeRateDate
@@ -357,11 +361,11 @@ func (r *payablesRepository) StampExchangeRate(
 				Set(date.Set(), req.Date).
 				Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return buncolgen.CarrierSettlementScopeTenantUpdate(uq, req.TenantInfo).
+					return carriersettlementcol.CarrierSettlementScopeTenantUpdate(uq, req.TenantInfo).
 						Where(cols.ID.Eq(), req.ID)
 				})
 		case accountingsyncports.PayableDriver:
-			cols := buncolgen.SettlementColumns
+			cols := driversettlementcol.SettlementColumns
 			rate, date := cols.ExchangeRate, cols.ExchangeRateDate
 			if req.Paid {
 				rate, date = cols.PaidExchangeRate, cols.PaidExchangeRateDate
@@ -373,7 +377,7 @@ func (r *payablesRepository) StampExchangeRate(
 				Set(date.Set(), req.Date).
 				Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return buncolgen.SettlementScopeTenantUpdate(uq, req.TenantInfo).
+					return driversettlementcol.SettlementScopeTenantUpdate(uq, req.TenantInfo).
 						Where(cols.ID.Eq(), req.ID)
 				})
 		default:

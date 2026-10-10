@@ -1,6 +1,7 @@
 package equipmenttyperepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/equipmenttypecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
@@ -43,7 +44,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	q, err := querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.EquipmentTypeTable.Alias,
+		equipmenttypecol.EquipmentTypeTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*equipmenttype.EquipmentType)(nil),
@@ -61,7 +62,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.EquipmentTypeTable.Alias,
+		equipmenttypecol.EquipmentTypeTable.Alias,
 		req.Filter,
 		(*equipmenttype.EquipmentType)(nil),
 	)
@@ -75,7 +76,7 @@ func applyClassFilter(q *bun.SelectQuery, classes []string) *bun.SelectQuery {
 		return q
 	}
 
-	return q.Where(buncolgen.EquipmentTypeColumns.Class.In(), bun.List(validClasses))
+	return q.Where(equipmenttypecol.EquipmentTypeColumns.Class.In(), bun.List(validClasses))
 }
 
 func validEquipmentClasses(classes []string) []equipmenttype.Class {
@@ -147,7 +148,7 @@ func (r *repository) List(
 
 func applyEquipmentTypeColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.EquipmentTypeTable.All())
+		return q.ColumnExpr(equipmenttypecol.EquipmentTypeTable.All())
 	}
 
 	return q.Column(columns...)

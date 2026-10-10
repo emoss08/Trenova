@@ -1,6 +1,7 @@
 package workerleaverepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"database/sql"
 	"errors"
@@ -66,7 +67,7 @@ func (r *repository) GetControl(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.LeaveControlScopeTenant(sq, tenantInfo)
+				return workercol.LeaveControlScopeTenant(sq, tenantInfo)
 			}).
 			Limit(1).
 			Scan(ctx)
@@ -106,7 +107,7 @@ func (r *repository) UpdateControl(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.LeaveControlColumns.Version.Eq(), ov).
+			Where(workercol.LeaveControlColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -126,9 +127,9 @@ func (r *repository) UpdateControl(
 func caseFilter(
 	req *workerports.ListLeaveCasesRequest,
 ) func(*bun.SelectQuery) *bun.SelectQuery {
-	cols := buncolgen.WorkerLeaveCaseColumns
+	cols := workercol.WorkerLeaveCaseColumns
 	return func(sq *bun.SelectQuery) *bun.SelectQuery {
-		sq = buncolgen.WorkerLeaveCaseScopeTenant(sq, req.TenantInfo)
+		sq = workercol.WorkerLeaveCaseScopeTenant(sq, req.TenantInfo)
 		if !req.WorkerID.IsNil() {
 			sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
 		}
@@ -157,7 +158,7 @@ func (r *repository) ListCases(
 	req *workerports.ListLeaveCasesRequest,
 ) ([]*worker.WorkerLeaveCase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerLeaveCase, error) {
-		cols := buncolgen.WorkerLeaveCaseColumns
+		cols := workercol.WorkerLeaveCaseColumns
 		entities := make([]*worker.WorkerLeaveCase, 0, 8)
 
 		q := r.db.DBForContext(ctx).
@@ -168,13 +169,13 @@ func (r *repository) ListCases(
 			Limit(limitOr(req.Limit, defaultCasePageSize))
 
 		if req.IncludeWorker {
-			q = q.Relation(buncolgen.WorkerLeaveCaseRelations.Worker)
+			q = q.Relation(workercol.WorkerLeaveCaseRelations.Worker)
 		}
 		if req.IncludeDocument {
-			q = q.Relation(buncolgen.WorkerLeaveCaseRelations.Document)
+			q = q.Relation(workercol.WorkerLeaveCaseRelations.Document)
 		}
 		if req.IncludeEntries {
-			q = q.Relation(buncolgen.WorkerLeaveCaseRelations.Entries)
+			q = q.Relation(workercol.WorkerLeaveCaseRelations.Entries)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -215,14 +216,14 @@ func (r *repository) GetCaseByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerLeaveCaseScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerLeaveCaseColumns.ID.Eq(), req.ID)
+				return workercol.WorkerLeaveCaseScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerLeaveCaseColumns.ID.Eq(), req.ID)
 			})
 		if req.IncludeDocument {
-			q = q.Relation(buncolgen.WorkerLeaveCaseRelations.Document)
+			q = q.Relation(workercol.WorkerLeaveCaseRelations.Document)
 		}
 		if req.IncludeEntries {
-			q = q.Relation(buncolgen.WorkerLeaveCaseRelations.Entries)
+			q = q.Relation(workercol.WorkerLeaveCaseRelations.Entries)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -263,7 +264,7 @@ func (r *repository) UpdateCase(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.WorkerLeaveCaseColumns.Version.Eq(), ov).
+			Where(workercol.WorkerLeaveCaseColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -283,14 +284,14 @@ func (r *repository) ListEntries(
 	req *workerports.ListLeaveEntriesRequest,
 ) ([]*worker.WorkerLeaveEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerLeaveEntry, error) {
-		cols := buncolgen.WorkerLeaveEntryColumns
+		cols := workercol.WorkerLeaveEntryColumns
 		entities := make([]*worker.WorkerLeaveEntry, 0, 32)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerLeaveEntryScopeTenant(sq, req.TenantInfo)
+				sq = workercol.WorkerLeaveEntryScopeTenant(sq, req.TenantInfo)
 				if !req.WorkerID.IsNil() {
 					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
 				}
@@ -319,14 +320,14 @@ func (r *repository) ListEntriesByCaseIDs(
 	req *workerports.ListLeaveEntriesByCaseIDsRequest,
 ) (map[pulid.ID][]*worker.WorkerLeaveEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*worker.WorkerLeaveEntry, error) {
-		cols := buncolgen.WorkerLeaveEntryColumns
+		cols := workercol.WorkerLeaveEntryColumns
 		entities := make([]*worker.WorkerLeaveEntry, 0, len(req.LeaveCaseIDs)*32)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerLeaveEntryScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerLeaveEntryScopeTenant(sq, req.TenantInfo).
 					Where(cols.LeaveCaseID.In(), bun.List(req.LeaveCaseIDs))
 			}).
 			Order(cols.UsedOn.OrderDesc()).
@@ -353,8 +354,8 @@ func (r *repository) GetEntryByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerLeaveEntryScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerLeaveEntryColumns.ID.Eq(), req.ID)
+				return workercol.WorkerLeaveEntryScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerLeaveEntryColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -402,7 +403,7 @@ func (r *repository) UpdateEntry(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.WorkerLeaveEntryColumns.Version.Eq(), ov).
+			Where(workercol.WorkerLeaveEntryColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -430,8 +431,8 @@ func (r *repository) DeleteEntry(
 			NewDelete().
 			Model((*worker.WorkerLeaveEntry)(nil)).
 			Apply(func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.WorkerLeaveEntryScopeTenantDelete(dq, req.TenantInfo).
-					Where(buncolgen.WorkerLeaveEntryColumns.ID.Eq(), req.ID)
+				return workercol.WorkerLeaveEntryScopeTenantDelete(dq, req.TenantInfo).
+					Where(workercol.WorkerLeaveEntryColumns.ID.Eq(), req.ID)
 			}).
 			Exec(ctx)
 		if err != nil {

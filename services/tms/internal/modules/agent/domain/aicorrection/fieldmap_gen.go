@@ -2,11 +2,14 @@
 
 package aicorrection
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/aicorrectioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Correction].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CorrectionFieldMap] instead of parsing struct tags via reflection.
+// the generated [aicorrectioncol.CorrectionFieldMap] instead of parsing struct tags via reflection.
 func (e *Correction) GetStaticFieldMap() map[string]string {
-	return buncolgen.CorrectionFieldMap
+	return aicorrectioncol.CorrectionFieldMap
 }

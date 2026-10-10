@@ -1,6 +1,11 @@
 package agentmemorysubjectrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/billingqueuecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 	"errors"
 	"fmt"
@@ -119,11 +124,11 @@ func (r *repository) shipmentLinks(
 	ids []pulid.ID,
 ) ([]agentports.MemoryRecordLink, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.MemoryRecordLink, error) {
-		sp := buncolgen.ShipmentColumns
-		sm := buncolgen.ShipmentMoveColumns
-		stp := buncolgen.StopColumns
-		asn := buncolgen.AssignmentColumns
-		casn := buncolgen.CarrierAssignmentColumns
+		sp := shipmentcol.ShipmentColumns
+		sm := shipmentcol.ShipmentMoveColumns
+		stp := shipmentcol.StopColumns
+		asn := shipmentcol.AssignmentColumns
+		casn := shipmentcol.CarrierAssignmentColumns
 		dba := r.db.DBForContext(ctx)
 
 		customers := make([]pairRow, 0, len(ids))
@@ -133,7 +138,7 @@ func (r *repository) shipmentLinks(
 			ColumnExpr(sp.CustomerID.As("first_id")).
 			ColumnExpr(sp.BillToCustomerID.As("second_id")).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ShipmentScopeTenant(sq, tenant).Where(sp.ID.In(), bun.List(ids))
+				return shipmentcol.ShipmentScopeTenant(sq, tenant).Where(sp.ID.In(), bun.List(ids))
 			}).
 			Scan(ctx, &customers); err != nil {
 			return nil, fmt.Errorf("shipment customers: %w", err)
@@ -146,7 +151,7 @@ func (r *repository) shipmentLinks(
 			ColumnExpr(stp.LocationID.As("linked_id")).
 			Join(joinMove(&stp.ShipmentMoveID, &stp.OrganizationID, &stp.BusinessUnitID)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.StopScopeTenant(sq, tenant).Where(sm.ShipmentID.In(), bun.List(ids))
+				return shipmentcol.StopScopeTenant(sq, tenant).Where(sm.ShipmentID.In(), bun.List(ids))
 			}).
 			OrderExpr(sm.Sequence.OrderAsc()).
 			OrderExpr(stp.Sequence.OrderAsc()).
@@ -162,7 +167,7 @@ func (r *repository) shipmentLinks(
 			ColumnExpr(asn.SecondaryWorkerID.As("second_id")).
 			Join(joinMove(&asn.ShipmentMoveID, &asn.OrganizationID, &asn.BusinessUnitID)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AssignmentScopeTenant(sq, tenant).
+				return shipmentcol.AssignmentScopeTenant(sq, tenant).
 					Where(sm.ShipmentID.In(), bun.List(ids)).
 					Where(asn.Status.NotEq(), shipment.AssignmentStatusCanceled)
 			}).
@@ -178,7 +183,7 @@ func (r *repository) shipmentLinks(
 			ColumnExpr(casn.CarrierID.As("linked_id")).
 			Join(joinMove(&casn.ShipmentMoveID, &casn.OrganizationID, &casn.BusinessUnitID)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierAssignmentScopeTenant(sq, tenant).
+				return shipmentcol.CarrierAssignmentScopeTenant(sq, tenant).
 					Where(sm.ShipmentID.In(), bun.List(ids)).
 					Where(casn.Status.NotEq(), shipment.CarrierAssignmentStatusCanceled)
 			}).
@@ -206,7 +211,7 @@ func (r *repository) moveLinks(
 	ids []pulid.ID,
 ) ([]agentports.MemoryRecordLink, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.MemoryRecordLink, error) {
-		sm := buncolgen.ShipmentMoveColumns
+		sm := shipmentcol.ShipmentMoveColumns
 
 		rows := make([]linkRow, 0, len(ids))
 		if err := r.db.DBForContext(ctx).NewSelect().
@@ -214,7 +219,7 @@ func (r *repository) moveLinks(
 			ColumnExpr(sm.ID.As("from_id")).
 			ColumnExpr(sm.ShipmentID.As("linked_id")).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ShipmentMoveScopeTenant(sq, tenant).Where(sm.ID.In(), bun.List(ids))
+				return shipmentcol.ShipmentMoveScopeTenant(sq, tenant).Where(sm.ID.In(), bun.List(ids))
 			}).
 			Scan(ctx, &rows); err != nil {
 			return nil, fmt.Errorf("move shipments: %w", err)
@@ -234,7 +239,7 @@ func (r *repository) invoiceLinks(
 	ids []pulid.ID,
 ) ([]agentports.MemoryRecordLink, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.MemoryRecordLink, error) {
-		inv := buncolgen.InvoiceColumns
+		inv := invoicecol.InvoiceColumns
 
 		rows := make([]linkRow, 0, len(ids))
 		if err := r.db.DBForContext(ctx).NewSelect().
@@ -242,7 +247,7 @@ func (r *repository) invoiceLinks(
 			ColumnExpr(inv.ID.As("from_id")).
 			ColumnExpr(inv.CustomerID.As("linked_id")).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.InvoiceScopeTenant(sq, tenant).Where(inv.ID.In(), bun.List(ids))
+				return invoicecol.InvoiceScopeTenant(sq, tenant).Where(inv.ID.In(), bun.List(ids))
 			}).
 			Scan(ctx, &rows); err != nil {
 			return nil, fmt.Errorf("invoice customers: %w", err)
@@ -262,7 +267,7 @@ func (r *repository) billingQueueLinks(
 	ids []pulid.ID,
 ) ([]agentports.MemoryRecordLink, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.MemoryRecordLink, error) {
-		bqi := buncolgen.BillingQueueItemColumns
+		bqi := billingqueuecol.BillingQueueItemColumns
 
 		rows := make([]linkRow, 0, len(ids))
 		if err := r.db.DBForContext(ctx).NewSelect().
@@ -270,7 +275,7 @@ func (r *repository) billingQueueLinks(
 			ColumnExpr(bqi.ID.As("from_id")).
 			ColumnExpr(bqi.BillToCustomerID.As("linked_id")).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.BillingQueueItemScopeTenant(sq, tenant).
+				return billingqueuecol.BillingQueueItemScopeTenant(sq, tenant).
 					Where(bqi.ID.In(), bun.List(ids))
 			}).
 			Scan(ctx, &rows); err != nil {
@@ -291,7 +296,7 @@ func (r *repository) inboundMessageLinks(
 	ids []pulid.ID,
 ) ([]agentports.MemoryRecordLink, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.MemoryRecordLink, error) {
-		imsg := buncolgen.InboundMessageColumns
+		imsg := inboundmessagecol.InboundMessageColumns
 
 		rows := make([]tripleRow, 0, len(ids))
 		if err := r.db.DBForContext(ctx).NewSelect().
@@ -301,7 +306,7 @@ func (r *repository) inboundMessageLinks(
 			ColumnExpr(imsg.MatchedCarrierID.As("second_id")).
 			ColumnExpr(imsg.MatchedShipmentID.As("third_id")).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.InboundMessageScopeTenant(sq, tenant).
+				return inboundmessagecol.InboundMessageScopeTenant(sq, tenant).
 					Where(imsg.ID.In(), bun.List(ids))
 			}).
 			Scan(ctx, &rows); err != nil {
@@ -325,7 +330,7 @@ func (r *repository) documentLinks(
 	ids []pulid.ID,
 ) ([]agentports.MemoryRecordLink, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.MemoryRecordLink, error) {
-		doc := buncolgen.DocumentColumns
+		doc := documentcol.DocumentColumns
 
 		rows := make([]ownerRow, 0, len(ids))
 		if err := r.db.DBForContext(ctx).NewSelect().
@@ -334,7 +339,7 @@ func (r *repository) documentLinks(
 			ColumnExpr(doc.ResourceType.As("resource_type")).
 			ColumnExpr(doc.ResourceID.As("resource_id")).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DocumentScopeTenant(sq, tenant).Where(doc.ID.In(), bun.List(ids))
+				return documentcol.DocumentScopeTenant(sq, tenant).Where(doc.ID.In(), bun.List(ids))
 			}).
 			Scan(ctx, &rows); err != nil {
 			return nil, fmt.Errorf("document owners: %w", err)
@@ -358,9 +363,9 @@ func (r *repository) documentLinks(
 }
 
 func joinMove(moveID, organizationID, businessUnitID *buncolgen.Column) string {
-	sm := buncolgen.ShipmentMoveColumns
+	sm := shipmentcol.ShipmentMoveColumns
 
-	return "JOIN " + buncolgen.ShipmentMoveTable.As(buncolgen.ShipmentMoveTable.Alias) +
+	return "JOIN " + shipmentcol.ShipmentMoveTable.As(shipmentcol.ShipmentMoveTable.Alias) +
 		" ON " + sm.ID.EqColumn(*moveID) +
 		" AND " + sm.OrganizationID.EqColumn(*organizationID) +
 		" AND " + sm.BusinessUnitID.EqColumn(*businessUnitID)

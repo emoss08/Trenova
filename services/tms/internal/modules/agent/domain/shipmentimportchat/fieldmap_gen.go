@@ -2,18 +2,21 @@
 
 package shipmentimportchat
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentimportchatcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Conversation].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ConversationFieldMap] instead of parsing struct tags via reflection.
+// the generated [shipmentimportchatcol.ConversationFieldMap] instead of parsing struct tags via reflection.
 func (e *Conversation) GetStaticFieldMap() map[string]string {
-	return buncolgen.ConversationFieldMap
+	return shipmentimportchatcol.ConversationFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Turn].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.TurnFieldMap] instead of parsing struct tags via reflection.
+// the generated [shipmentimportchatcol.TurnFieldMap] instead of parsing struct tags via reflection.
 func (e *Turn) GetStaticFieldMap() map[string]string {
-	return buncolgen.TurnFieldMap
+	return shipmentimportchatcol.TurnFieldMap
 }

@@ -1,6 +1,7 @@
 package agentcontrolrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 	"fmt"
 
@@ -83,7 +84,7 @@ func (r *repository) selectControl(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentControlScopeTenant(sq, tenantInfo)
+				return tenantcol.AgentControlScopeTenant(sq, tenantInfo)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -99,13 +100,13 @@ func (r *repository) Update(
 	entity *tenant.AgentControl,
 ) (*tenant.AgentControl, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.AgentControl, error) {
-		cols := buncolgen.AgentControlColumns
+		cols := tenantcol.AgentControlColumns
 
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.AgentControlScopeTenantUpdate(uq, pagination.TenantInfo{
+				return tenantcol.AgentControlScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
 				}).Where(cols.ID.Eq(), entity.ID).

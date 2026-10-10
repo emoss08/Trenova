@@ -1,6 +1,10 @@
 package detentionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/detentioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -44,9 +48,9 @@ func (r *analyticsRepository) ListStopFacts(
 	req *detentionports.ListStopFactsRequest,
 ) ([]*detentionports.StopFact, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detentionports.StopFact, error) {
-		stopCols := buncolgen.StopColumns
-		moveCols := buncolgen.ShipmentMoveColumns
-		shipCols := buncolgen.ShipmentColumns
+		stopCols := shipmentcol.StopColumns
+		moveCols := shipmentcol.ShipmentMoveColumns
+		shipCols := shipmentcol.ShipmentColumns
 
 		facts := make([]*detentionports.StopFact, 0, 256)
 
@@ -75,7 +79,7 @@ func (r *analyticsRepository) ListStopFacts(
 					" AND "+shipCols.OrganizationID.EqColumn(moveCols.OrganizationID),
 			)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.StopScopeTenant(sq, req.TenantInfo).
+				return shipmentcol.StopScopeTenant(sq, req.TenantInfo).
 					Where(stopCols.ActualArrival.IsNotNull()).
 					Where(stopCols.ActualDeparture.IsNotNull()).
 					Where(stopCols.Status.Ne(), shipment.StopStatusCanceled)
@@ -114,7 +118,7 @@ func (r *analyticsRepository) BaselineByStop(
 	req *detentionports.DetentionStatsRequest,
 ) ([]*detentionports.StopBaseline, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detentionports.StopBaseline, error) {
-		cols := buncolgen.DetentionOccurrenceColumns
+		cols := detentioncol.DetentionOccurrenceColumns
 		baselines := make([]*detentionports.StopBaseline, 0, 256)
 
 		q := r.db.DBForContext(ctx).
@@ -123,7 +127,7 @@ func (r *analyticsRepository) BaselineByStop(
 			ColumnExpr(cols.StopID.As("stop_id")).
 			ColumnExpr(cols.BillableAmount.As("billable_amount")).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo)
+				return detentioncol.DetentionOccurrenceScopeTenant(sq, req.TenantInfo)
 			})
 
 		if req.From > 0 {
@@ -149,8 +153,8 @@ func (r *analyticsRepository) FacilityStats(
 	req *detentionports.DetentionStatsRequest,
 ) ([]*detentionports.FacilityDetentionStat, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detentionports.FacilityDetentionStat, error) {
-		cols := buncolgen.DetentionOccurrenceColumns
-		locCols := buncolgen.LocationColumns
+		cols := detentioncol.DetentionOccurrenceColumns
+		locCols := locationcol.LocationColumns
 		stats := make([]*detentionports.FacilityDetentionStat, 0, 64)
 
 		q := r.db.DBForContext(ctx).
@@ -189,7 +193,7 @@ func (r *analyticsRepository) FacilityStats(
 			ColumnExpr("COUNT(*) FILTER (WHERE ?) AS suppressed_count",
 				bun.Safe(cols.SuppressedByGate.Qualified())).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
+				return detentioncol.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
 					Where(cols.IsOpen.IsFalse())
 			}).
 			GroupExpr(cols.LocationID.Qualified()).
@@ -222,8 +226,8 @@ func (r *analyticsRepository) CustomerStats(
 	req *detentionports.DetentionStatsRequest,
 ) ([]*detentionports.CustomerDetentionStat, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detentionports.CustomerDetentionStat, error) {
-		cols := buncolgen.DetentionOccurrenceColumns
-		cusCols := buncolgen.CustomerColumns
+		cols := detentioncol.DetentionOccurrenceColumns
+		cusCols := customercol.CustomerColumns
 		stats := make([]*detentionports.CustomerDetentionStat, 0, 64)
 
 		q := r.db.DBForContext(ctx).
@@ -254,7 +258,7 @@ func (r *analyticsRepository) CustomerStats(
 			ColumnExpr("COUNT(*) FILTER (WHERE ?) AS suppressed_count",
 				bun.Safe(cols.SuppressedByGate.Qualified())).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
+				return detentioncol.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
 					Where(cols.IsOpen.IsFalse())
 			}).
 			GroupExpr(cols.CustomerID.Qualified()).
@@ -287,7 +291,7 @@ func (r *analyticsRepository) WaiverStats(
 	req *detentionports.DetentionStatsRequest,
 ) ([]*detentionports.WaiverLeakageStat, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detentionports.WaiverLeakageStat, error) {
-		cols := buncolgen.DetentionOccurrenceColumns
+		cols := detentioncol.DetentionOccurrenceColumns
 		stats := make([]*detentionports.WaiverLeakageStat, 0, 16)
 
 		q := r.db.DBForContext(ctx).
@@ -300,7 +304,7 @@ func (r *analyticsRepository) WaiverStats(
 			ColumnExpr("COALESCE(SUM(?), 0) AS waived_amount",
 				bun.Safe(cols.WaivedAmount.Qualified())).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
+				return detentioncol.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
 					Where(cols.Status.Eq(), detention.OccurrenceStatusWaived)
 			}).
 			GroupExpr(cols.WaiverReason.Qualified()).
@@ -340,7 +344,7 @@ func (r *analyticsRepository) EntityNames(
 		}
 
 		if len(req.LocationIDs) > 0 {
-			locCols := buncolgen.LocationColumns
+			locCols := locationcol.LocationColumns
 			rows := make([]entityNameRow, 0, len(req.LocationIDs))
 
 			err := r.db.DBForContext(ctx).
@@ -349,7 +353,7 @@ func (r *analyticsRepository) EntityNames(
 				ColumnExpr(locCols.ID.As("id")).
 				ColumnExpr(locCols.Name.As("name")).
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return buncolgen.LocationScopeTenant(sq, req.TenantInfo).
+					return locationcol.LocationScopeTenant(sq, req.TenantInfo).
 						Where(locCols.ID.In(), bun.List(req.LocationIDs))
 				}).
 				Scan(ctx, &rows)
@@ -364,7 +368,7 @@ func (r *analyticsRepository) EntityNames(
 		}
 
 		if len(req.CustomerIDs) > 0 {
-			cusCols := buncolgen.CustomerColumns
+			cusCols := customercol.CustomerColumns
 			rows := make([]entityNameRow, 0, len(req.CustomerIDs))
 
 			err := r.db.DBForContext(ctx).
@@ -373,7 +377,7 @@ func (r *analyticsRepository) EntityNames(
 				ColumnExpr(cusCols.ID.As("id")).
 				ColumnExpr(cusCols.Name.As("name")).
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return buncolgen.CustomerScopeTenant(sq, req.TenantInfo).
+					return customercol.CustomerScopeTenant(sq, req.TenantInfo).
 						Where(cusCols.ID.In(), bun.List(req.CustomerIDs))
 				}).
 				Scan(ctx, &rows)

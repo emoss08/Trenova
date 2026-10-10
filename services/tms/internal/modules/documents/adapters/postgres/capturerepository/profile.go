@@ -1,6 +1,7 @@
 package capturerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/capturecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
@@ -34,7 +35,7 @@ func (r *profileRepository) List(
 ) (*pagination.ListResult[*capture.CaptureProfile], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*capture.CaptureProfile], error) {
 		entities := make([]*capture.CaptureProfile, 0, req.Filter.Pagination.SafeLimit())
-		cols := buncolgen.CaptureProfileColumns
+		cols := capturecol.CaptureProfileColumns
 
 		query := r.db.DBForContext(ctx).NewSelect().Model(&entities)
 		if req.Status != "" {
@@ -43,7 +44,7 @@ func (r *profileRepository) List(
 
 		total, err := querybuilder.ApplyFilters(
 			query,
-			buncolgen.CaptureProfileTable.Alias,
+			capturecol.CaptureProfileTable.Alias,
 			req.Filter,
 			(*capture.CaptureProfile)(nil),
 		).
@@ -69,8 +70,8 @@ func (r *profileRepository) GetByID(
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Where(buncolgen.CaptureProfileColumns.ID.Eq(), req.ID).
-			Apply(buncolgen.CaptureProfileApplyTenant(req.TenantInfo)).
+			Where(capturecol.CaptureProfileColumns.ID.Eq(), req.ID).
+			Apply(capturecol.CaptureProfileApplyTenant(req.TenantInfo)).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Capture profile")
 		}
@@ -85,12 +86,12 @@ func (r *profileRepository) GetDefault(
 ) (*capture.CaptureProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureProfile, error) {
 		entity := new(capture.CaptureProfile)
-		cols := buncolgen.CaptureProfileColumns
+		cols := capturecol.CaptureProfileColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Apply(buncolgen.CaptureProfileApplyTenant(tenantInfo)).
+			Apply(capturecol.CaptureProfileApplyTenant(tenantInfo)).
 			Where(cols.IsDefault.IsTrue()).
 			Where(cols.Status.Eq(), capture.ProfileActive).
 			Scan(ctx); err != nil {
@@ -143,7 +144,7 @@ func (r *profileRepository) Update(
 			results, err := tx.NewUpdate().
 				Model(entity).
 				WherePK().
-				Where(buncolgen.CaptureProfileColumns.Version.Eq(), ov).
+				Where(capturecol.CaptureProfileColumns.Version.Eq(), ov).
 				Returning("*").
 				Exec(txCtx)
 			if err != nil {
@@ -171,13 +172,13 @@ func (r *profileRepository) clearDefault(
 	tx bun.Tx,
 	entity *capture.CaptureProfile,
 ) error {
-	cols := buncolgen.CaptureProfileColumns
+	cols := capturecol.CaptureProfileColumns
 	tenantInfo := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 
 	_, err := tx.NewUpdate().
 		Model((*capture.CaptureProfile)(nil)).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			q := buncolgen.CaptureProfileScopeTenantUpdate(uq, tenantInfo).
+			q := capturecol.CaptureProfileScopeTenantUpdate(uq, tenantInfo).
 				Where(cols.IsDefault.IsTrue())
 			if entity.ID.IsNotNil() {
 				q = q.Where(cols.ID.NotEq(), entity.ID)
@@ -201,8 +202,8 @@ func (r *profileRepository) Delete(
 			NewDelete().
 			Model((*capture.CaptureProfile)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.CaptureProfileScopeTenantDelete(dq, req.TenantInfo).
-					Where(buncolgen.CaptureProfileColumns.ID.Eq(), req.ID)
+				return capturecol.CaptureProfileScopeTenantDelete(dq, req.TenantInfo).
+					Where(capturecol.CaptureProfileColumns.ID.Eq(), req.ID)
 			}).
 			Exec(ctx)
 		if err != nil {

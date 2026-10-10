@@ -1,6 +1,7 @@
 package distanceoverriderepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/distanceoverridecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride"
@@ -95,7 +96,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.DistanceOverrideTable.Alias,
+		distanceoverridecol.DistanceOverrideTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*distanceoverride.DistanceOverride)(nil),
@@ -108,7 +109,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.DistanceOverrideTable.Alias,
+		distanceoverridecol.DistanceOverrideTable.Alias,
 		req.Filter,
 		(*distanceoverride.DistanceOverride)(nil),
 	)
@@ -151,7 +152,7 @@ func (r *repository) ListConnection(
 					return dba.
 						NewSelect().
 						Model(entities).
-						ColumnExpr(buncolgen.DistanceOverrideTable.All()).
+						ColumnExpr(distanceoverridecol.DistanceOverrideTable.All()).
 						Relation("Customer").
 						Relation("OriginLocation").
 						Relation("OriginLocation.State").

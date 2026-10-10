@@ -2,74 +2,77 @@
 
 package telematics
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/telematicscol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [FeedState].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.FeedStateFieldMap] instead of parsing struct tags via reflection.
+// the generated [telematicscol.FeedStateFieldMap] instead of parsing struct tags via reflection.
 func (e *FeedState) GetStaticFieldMap() map[string]string {
-	return buncolgen.FeedStateFieldMap
+	return telematicscol.FeedStateFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [FormMapping].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.FormMappingFieldMap] instead of parsing struct tags via reflection.
+// the generated [telematicscol.FormMappingFieldMap] instead of parsing struct tags via reflection.
 func (e *FormMapping) GetStaticFieldMap() map[string]string {
-	return buncolgen.FormMappingFieldMap
+	return telematicscol.FormMappingFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [FormMappingItem].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.FormMappingItemFieldMap] instead of parsing struct tags via reflection.
+// the generated [telematicscol.FormMappingItemFieldMap] instead of parsing struct tags via reflection.
 func (e *FormMappingItem) GetStaticFieldMap() map[string]string {
-	return buncolgen.FormMappingItemFieldMap
+	return telematicscol.FormMappingItemFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [FormSubmission].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.FormSubmissionFieldMap] instead of parsing struct tags via reflection.
+// the generated [telematicscol.FormSubmissionFieldMap] instead of parsing struct tags via reflection.
 func (e *FormSubmission) GetStaticFieldMap() map[string]string {
-	return buncolgen.FormSubmissionFieldMap
+	return telematicscol.FormSubmissionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TelematicsEvent].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.TelematicsEventFieldMap] instead of parsing struct tags via reflection.
+// the generated [telematicscol.TelematicsEventFieldMap] instead of parsing struct tags via reflection.
 func (e *TelematicsEvent) GetStaticFieldMap() map[string]string {
-	return buncolgen.TelematicsEventFieldMap
+	return telematicscol.TelematicsEventFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [VehicleInspection].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.VehicleInspectionFieldMap] instead of parsing struct tags via reflection.
+// the generated [telematicscol.VehicleInspectionFieldMap] instead of parsing struct tags via reflection.
 func (e *VehicleInspection) GetStaticFieldMap() map[string]string {
-	return buncolgen.VehicleInspectionFieldMap
+	return telematicscol.VehicleInspectionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [VehiclePosition].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.VehiclePositionFieldMap] instead of parsing struct tags via reflection.
+// the generated [telematicscol.VehiclePositionFieldMap] instead of parsing struct tags via reflection.
 func (e *VehiclePosition) GetStaticFieldMap() map[string]string {
-	return buncolgen.VehiclePositionFieldMap
+	return telematicscol.VehiclePositionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerHOSLog].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.WorkerHOSLogFieldMap] instead of parsing struct tags via reflection.
+// the generated [telematicscol.WorkerHOSLogFieldMap] instead of parsing struct tags via reflection.
 func (e *WorkerHOSLog) GetStaticFieldMap() map[string]string {
-	return buncolgen.WorkerHOSLogFieldMap
+	return telematicscol.WorkerHOSLogFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerHOSState].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.WorkerHOSStateFieldMap] instead of parsing struct tags via reflection.
+// the generated [telematicscol.WorkerHOSStateFieldMap] instead of parsing struct tags via reflection.
 func (e *WorkerHOSState) GetStaticFieldMap() map[string]string {
-	return buncolgen.WorkerHOSStateFieldMap
+	return telematicscol.WorkerHOSStateFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerHOSViolation].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.WorkerHOSViolationFieldMap] instead of parsing struct tags via reflection.
+// the generated [telematicscol.WorkerHOSViolationFieldMap] instead of parsing struct tags via reflection.
 func (e *WorkerHOSViolation) GetStaticFieldMap() map[string]string {
-	return buncolgen.WorkerHOSViolationFieldMap
+	return telematicscol.WorkerHOSViolationFieldMap
 }

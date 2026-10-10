@@ -1,6 +1,7 @@
 package agentquerytoolservice
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
 	"context"
 	"fmt"
 	"slices"
@@ -543,7 +544,7 @@ func (t *listEDIMessagesTool) Query(
 	}
 	if delivery != "" {
 		req.Filter.FieldFilters = []domaintypes.FieldFilter{
-			buncolgen.EDIMessageFilter.DeliveryStatus(dbtype.OpEqual, delivery),
+			edicol.EDIMessageFilter.DeliveryStatus(dbtype.OpEqual, delivery),
 		}
 	}
 	if partnerID.IsNotNil() {
@@ -828,7 +829,7 @@ func (t *listEDITransferChangesTool) Query(
 	criteria := filtercatalog.NewCriteria("EDI transfer changes").At(clockFor(params))
 	if status != "" {
 		req.Filter.FieldFilters = []domaintypes.FieldFilter{
-			buncolgen.TransferChangeFilter.Status(dbtype.OpEqual, status),
+			edicol.TransferChangeFilter.Status(dbtype.OpEqual, status),
 		}
 		criteria.Field(paramStatus, status)
 	}

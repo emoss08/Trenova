@@ -1,6 +1,9 @@
 package agentevalcaserepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/agentqualitycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
 	"context"
 	"fmt"
 
@@ -74,7 +77,7 @@ func (r *repository) Update(
 	entity *agentquality.EvalCase,
 ) (*agentquality.EvalCase, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentquality.EvalCase, error) {
-		cols := buncolgen.EvalCaseColumns
+		cols := agentqualitycol.EvalCaseColumns
 		ov := entity.Version
 		entity.Version++
 		entity.UpdatedAt = timeutils.NowUnix()
@@ -83,7 +86,7 @@ func (r *repository) Update(
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.EvalCaseScopeTenantUpdate(uq, pagination.TenantInfo{
+				return agentqualitycol.EvalCaseScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
 				}).
@@ -135,8 +138,8 @@ func (r *repository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.EvalCaseScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.EvalCaseColumns.ID.Eq(), req.ID)
+				return agentqualitycol.EvalCaseScopeTenant(sq, req.TenantInfo).
+					Where(agentqualitycol.EvalCaseColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, entityName)
@@ -151,13 +154,13 @@ func (r *repository) GetByContent(
 	req agentqualityports.GetAgentEvalCaseByContentRequest,
 ) (*agentquality.EvalCase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentquality.EvalCase, error) {
-		cols := buncolgen.EvalCaseColumns
+		cols := agentqualitycol.EvalCaseColumns
 		entity := new(agentquality.EvalCase)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.EvalCaseScopeTenant(sq, req.TenantInfo).
+				return agentqualitycol.EvalCaseScopeTenant(sq, req.TenantInfo).
 					Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID).
 					Where(cols.ContentHash.Eq(), req.ContentHash)
 			}).
@@ -179,8 +182,8 @@ func (r *repository) GetByProposal(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.EvalCaseScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.EvalCaseColumns.SourceProposalID.Eq(), req.ProposalID)
+				return agentqualitycol.EvalCaseScopeTenant(sq, req.TenantInfo).
+					Where(agentqualitycol.EvalCaseColumns.SourceProposalID.Eq(), req.ProposalID)
 			}).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, entityName)
@@ -206,12 +209,12 @@ func (r *repository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.EvalCaseTable.Alias,
+						agentqualitycol.EvalCaseTable.Alias,
 						req.Filter,
 						(*agentquality.EvalCase)(nil),
 					)
 
-					scoped := sq.Apply(buncolgen.EvalCaseApplyTenant(req.Filter.TenantInfo))
+					scoped := sq.Apply(agentqualitycol.EvalCaseApplyTenant(req.Filter.TenantInfo))
 
 					return applyScope(scoped, req)
 				}).
@@ -241,7 +244,7 @@ func (r *repository) ListConnection(
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					filtered, err := querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.EvalCaseTable.Alias,
+						agentqualitycol.EvalCaseTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*agentquality.EvalCase)(nil),
@@ -267,7 +270,7 @@ func applyScope(
 	sq *bun.SelectQuery,
 	req *agentqualityports.ListAgentEvalCaseConnectionRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.EvalCaseColumns
+	cols := agentqualitycol.EvalCaseColumns
 	if req.AgentDefinitionID.IsNotNil() {
 		sq = sq.Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
 	}
@@ -286,7 +289,7 @@ func (r *repository) ListByAgent(
 	req agentqualityports.ListAgentEvalCasesRequest,
 ) ([]*agentquality.EvalCase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentquality.EvalCase, error) {
-		cols := buncolgen.EvalCaseColumns
+		cols := agentqualitycol.EvalCaseColumns
 		limit := clamp(req.Limit, defaultListLimit, maxListLimit)
 
 		entities := make([]*agentquality.EvalCase, 0, min(limit, defaultBatchLimit))
@@ -294,7 +297,7 @@ func (r *repository) ListByAgent(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.EvalCaseScopeTenant(sq, req.TenantInfo).
+				sq = agentqualitycol.EvalCaseScopeTenant(sq, req.TenantInfo).
 					Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
 				if len(req.Statuses) > 0 {
 					sq = sq.Where(cols.Status.In(), bun.List(req.Statuses))
@@ -318,10 +321,10 @@ func (r *repository) ListCaptureCandidates(
 ) ([]agentqualityports.EvalCaseCaptureCandidate, error) {
 	ctx = dbscope.WithSystem(ctx, "list evaluation case candidates across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentqualityports.EvalCaseCaptureCandidate, error) {
-		decision := buncolgen.AgentDecisionColumns
-		proposal := buncolgen.AgentProposalColumns
-		run := buncolgen.AgentRunColumns
-		evalCase := buncolgen.EvalCaseColumns
+		decision := agentcol.AgentDecisionColumns
+		proposal := agentcol.AgentProposalColumns
+		run := agentcol.AgentRunColumns
+		evalCase := agentqualitycol.EvalCaseColumns
 		limit := clamp(req.Limit, defaultBatchLimit, maxBatchLimit)
 
 		db := r.db.DBForContext(ctx)
@@ -342,11 +345,11 @@ func (r *repository) ListCaptureCandidates(
 			ColumnExpr(decision.DecidedByUserID.As("decided_by_user_id")).
 			ColumnExpr(run.AgentDefinitionID.As("agent_definition_id")).
 			ColumnExpr(decision.CreatedAt.As("decided_at")).
-			Join("JOIN "+buncolgen.AgentProposalTable.As(buncolgen.AgentProposalTable.Alias)+
+			Join("JOIN "+agentcol.AgentProposalTable.As(agentcol.AgentProposalTable.Alias)+
 				" ON "+proposal.ID.EqColumn(decision.ProposalID)+
 				" AND "+proposal.OrganizationID.EqColumn(decision.OrganizationID)+
 				" AND "+proposal.BusinessUnitID.EqColumn(decision.BusinessUnitID)).
-			Join("JOIN "+buncolgen.AgentRunTable.As(buncolgen.AgentRunTable.Alias)+
+			Join("JOIN "+agentcol.AgentRunTable.As(agentcol.AgentRunTable.Alias)+
 				" ON "+run.ID.EqColumn(proposal.RunID)+
 				" AND "+run.OrganizationID.EqColumn(proposal.OrganizationID)+
 				" AND "+run.BusinessUnitID.EqColumn(proposal.BusinessUnitID)).
@@ -377,7 +380,7 @@ func (r *repository) PurgeExpired(
 		ctx = dbscope.WithSystem(ctx, "purge expired evaluation cases across every organization")
 	}
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.EvalCaseColumns
+		cols := agentqualitycol.EvalCaseColumns
 		limit := clamp(req.Limit, defaultBatchLimit, maxBatchLimit)
 		db := r.db.DBForContext(ctx)
 
@@ -386,7 +389,7 @@ func (r *repository) PurgeExpired(
 			Column(cols.ID.Bare(), cols.BusinessUnitID.Bare(), cols.OrganizationID.Bare()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				if !req.AllTenants {
-					sq = buncolgen.EvalCaseScopeTenant(sq, req.TenantInfo)
+					sq = agentqualitycol.EvalCaseScopeTenant(sq, req.TenantInfo)
 				}
 
 				return sq.WhereGroup(" AND ", func(inner *bun.SelectQuery) *bun.SelectQuery {
@@ -414,8 +417,8 @@ func (r *repository) PurgeOrphaned(
 ) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "purge orphaned evaluation cases across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.EvalCaseColumns
-		thread := buncolgen.ThreadColumns
+		cols := agentqualitycol.EvalCaseColumns
+		thread := conversationcol.ThreadColumns
 		limit := clamp(req.Limit, defaultBatchLimit, maxBatchLimit)
 		db := r.db.DBForContext(ctx)
 
@@ -440,7 +443,7 @@ func (r *repository) PurgeOrphaned(
 
 func (r *repository) deleteKeys(ctx context.Context, keys *bun.SelectQuery) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.EvalCaseColumns
+		cols := agentqualitycol.EvalCaseColumns
 		res, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*agentquality.EvalCase)(nil)).
@@ -484,7 +487,7 @@ func (r *repository) ListAgentsWithActiveCases(
 	req agentqualityports.ListAgentsWithActiveEvalCasesRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		cols := buncolgen.EvalCaseColumns
+		cols := agentqualitycol.EvalCaseColumns
 
 		ids := make([]pulid.ID, 0, defaultBatchLimit)
 		if err := r.db.DBForContext(ctx).
@@ -492,7 +495,7 @@ func (r *repository) ListAgentsWithActiveCases(
 			Model((*agentquality.EvalCase)(nil)).
 			ColumnExpr(cols.AgentDefinitionID.Qualified()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.EvalCaseScopeTenant(sq, req.TenantInfo).
+				return agentqualitycol.EvalCaseScopeTenant(sq, req.TenantInfo).
 					Where(cols.Status.Eq(), agentquality.CaseStatusActive)
 			}).
 			GroupExpr(cols.AgentDefinitionID.Qualified()).
@@ -511,8 +514,8 @@ func (r *repository) ListSamplingCases(
 	req agentqualityports.ListEvalCaseSamplingRequest,
 ) ([]agentquality.SamplingCase, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentquality.SamplingCase, error) {
-		cols := buncolgen.EvalCaseColumns
-		evals := buncolgen.EvaluationColumns
+		cols := agentqualitycol.EvalCaseColumns
+		evals := agentcol.EvaluationColumns
 		dba := r.db.DBForContext(ctx)
 
 		lastFailure := dba.NewSelect().
@@ -546,7 +549,7 @@ func (r *repository) ListSamplingCases(
 			ColumnExpr(cols.SubjectID.As("subject_id")).
 			ColumnExpr("COALESCE((?), 0) AS last_failed_at", lastFailure).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.EvalCaseScopeTenant(sq, req.TenantInfo).
+				return agentqualitycol.EvalCaseScopeTenant(sq, req.TenantInfo).
 					Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID).
 					Where(cols.Status.Eq(), agentquality.CaseStatusActive)
 			}).

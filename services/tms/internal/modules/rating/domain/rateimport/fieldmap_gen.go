@@ -2,18 +2,21 @@
 
 package rateimport
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/rateimportcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateImportBatch].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RateImportBatchFieldMap] instead of parsing struct tags via reflection.
+// the generated [rateimportcol.RateImportBatchFieldMap] instead of parsing struct tags via reflection.
 func (e *RateImportBatch) GetStaticFieldMap() map[string]string {
-	return buncolgen.RateImportBatchFieldMap
+	return rateimportcol.RateImportBatchFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateImportRow].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RateImportRowFieldMap] instead of parsing struct tags via reflection.
+// the generated [rateimportcol.RateImportRowFieldMap] instead of parsing struct tags via reflection.
 func (e *RateImportRow) GetStaticFieldMap() map[string]string {
-	return buncolgen.RateImportRowFieldMap
+	return rateimportcol.RateImportRowFieldMap
 }

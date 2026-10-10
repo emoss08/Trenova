@@ -2,18 +2,21 @@
 
 package aiprovider
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/aiprovidercol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [FailureDismissal].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.FailureDismissalFieldMap] instead of parsing struct tags via reflection.
+// the generated [aiprovidercol.FailureDismissalFieldMap] instead of parsing struct tags via reflection.
 func (e *FailureDismissal) GetStaticFieldMap() map[string]string {
-	return buncolgen.FailureDismissalFieldMap
+	return aiprovidercol.FailureDismissalFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Provider].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ProviderFieldMap] instead of parsing struct tags via reflection.
+// the generated [aiprovidercol.ProviderFieldMap] instead of parsing struct tags via reflection.
 func (e *Provider) GetStaticFieldMap() map[string]string {
-	return buncolgen.ProviderFieldMap
+	return aiprovidercol.ProviderFieldMap
 }

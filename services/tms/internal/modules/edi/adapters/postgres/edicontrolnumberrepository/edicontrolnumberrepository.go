@@ -2,6 +2,7 @@
 package edicontrolnumberrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -41,7 +42,7 @@ func (r *repository) AllocateControlNumbers(
 ) (map[edi.ControlNumberKind]int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (map[edi.ControlNumberKind]int64, error) {
 		allocated := make(map[edi.ControlNumberKind]int64, len(req.Kinds))
-		cols := buncolgen.EDIControlNumberSequenceColumns
+		cols := edicol.EDIControlNumberSequenceColumns
 
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			for _, kind := range req.Kinds {
@@ -102,7 +103,7 @@ func (r *repository) ResetControlNumber(
 	req *ediports.ResetEDIControlNumberRequest,
 ) (*edi.EDIControlNumberSequence, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIControlNumberSequence, error) {
-		cols := buncolgen.EDIControlNumberSequenceColumns
+		cols := edicol.EDIControlNumberSequenceColumns
 		sequence := new(edi.EDIControlNumberSequence)
 		err := r.db.DBForContext(ctx).
 			NewUpdate().

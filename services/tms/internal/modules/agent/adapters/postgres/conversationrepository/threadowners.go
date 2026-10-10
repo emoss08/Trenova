@@ -1,6 +1,7 @@
 package conversationrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
 	"context"
 	"errors"
 	"fmt"
@@ -49,13 +50,13 @@ func (r *repository) ThreadOwners(
 			return owners, nil
 		}
 
-		cols := buncolgen.ThreadColumns
+		cols := conversationcol.ThreadColumns
 		rows := make([]threadOwnerRow, 0, len(ids))
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*conversation.Thread)(nil)).
 			Column(cols.ID.String(), cols.UserID.String()).
-			Apply(buncolgen.ThreadApplyTenant(req.TenantInfo)).
+			Apply(conversationcol.ThreadApplyTenant(req.TenantInfo)).
 			Where(cols.ID.In(), bun.List(ids)).
 			Scan(ctx, &rows); err != nil {
 			return nil, fmt.Errorf("read thread owners: %w", err)

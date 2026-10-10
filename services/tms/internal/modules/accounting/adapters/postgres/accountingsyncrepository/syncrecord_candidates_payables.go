@@ -1,6 +1,8 @@
 package accountingsyncrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -28,7 +30,7 @@ type settlementTable struct {
 }
 
 func carrierSettlementTable() *settlementTable {
-	cols := buncolgen.CarrierSettlementColumns
+	cols := carriersettlementcol.CarrierSettlementColumns
 	return &settlementTable{
 		model:    (*carriersettlement.CarrierSettlement)(nil),
 		org:      cols.OrganizationID,
@@ -50,7 +52,7 @@ func carrierSettlementTable() *settlementTable {
 }
 
 func driverSettlementTable() *settlementTable {
-	cols := buncolgen.SettlementColumns
+	cols := driversettlementcol.SettlementColumns
 	return &settlementTable{
 		model:    (*driversettlement.Settlement)(nil),
 		org:      cols.OrganizationID,

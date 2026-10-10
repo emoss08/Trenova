@@ -1,6 +1,7 @@
 package aiauditservice
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/aiauditcol"
 	"context"
 	"fmt"
 
@@ -100,8 +101,8 @@ func NormalizePersonFilters(
 			operator = dbtype.OpEqual
 		}
 		groups = append(groups, domaintypes.FilterGroup{Filters: []domaintypes.FieldFilter{
-			buncolgen.AIAuditEventFilter.OnBehalfOfUserID(operator, filter.Value),
-			buncolgen.AIAuditEventFilter.DecidedByUserID(operator, filter.Value),
+			aiauditcol.AIAuditEventFilter.OnBehalfOfUserID(operator, filter.Value),
+			aiauditcol.AIAuditEventFilter.DecidedByUserID(operator, filter.Value),
 		}})
 	}
 

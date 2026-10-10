@@ -1,6 +1,7 @@
 package tenantbootstrap
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 	"errors"
 	"fmt"
@@ -34,7 +35,7 @@ func EnsureSystemUser(
 	db bun.IDB,
 	params SystemUserParams,
 ) (pulid.ID, bool, error) {
-	cols := buncolgen.UserColumns
+	cols := tenantcol.UserColumns
 	existing := new(tenant.User)
 	err := db.NewSelect().
 		Model(existing).

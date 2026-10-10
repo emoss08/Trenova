@@ -2,81 +2,84 @@
 
 package iam
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/iamcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccessPolicy].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.AccessPolicyFieldMap] instead of parsing struct tags via reflection.
+// the generated [iamcol.AccessPolicyFieldMap] instead of parsing struct tags via reflection.
 func (e *AccessPolicy) GetStaticFieldMap() map[string]string {
-	return buncolgen.AccessPolicyFieldMap
+	return iamcol.AccessPolicyFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AuthEvent].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.AuthEventFieldMap] instead of parsing struct tags via reflection.
+// the generated [iamcol.AuthEventFieldMap] instead of parsing struct tags via reflection.
 func (e *AuthEvent) GetStaticFieldMap() map[string]string {
-	return buncolgen.AuthEventFieldMap
+	return iamcol.AuthEventFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ExternalIdentity].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ExternalIdentityFieldMap] instead of parsing struct tags via reflection.
+// the generated [iamcol.ExternalIdentityFieldMap] instead of parsing struct tags via reflection.
 func (e *ExternalIdentity) GetStaticFieldMap() map[string]string {
-	return buncolgen.ExternalIdentityFieldMap
+	return iamcol.ExternalIdentityFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [IdentityProvider].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.IdentityProviderFieldMap] instead of parsing struct tags via reflection.
+// the generated [iamcol.IdentityProviderFieldMap] instead of parsing struct tags via reflection.
 func (e *IdentityProvider) GetStaticFieldMap() map[string]string {
-	return buncolgen.IdentityProviderFieldMap
+	return iamcol.IdentityProviderFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [MFAAuthenticator].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.MFAAuthenticatorFieldMap] instead of parsing struct tags via reflection.
+// the generated [iamcol.MFAAuthenticatorFieldMap] instead of parsing struct tags via reflection.
 func (e *MFAAuthenticator) GetStaticFieldMap() map[string]string {
-	return buncolgen.MFAAuthenticatorFieldMap
+	return iamcol.MFAAuthenticatorFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [MFARecoveryCode].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.MFARecoveryCodeFieldMap] instead of parsing struct tags via reflection.
+// the generated [iamcol.MFARecoveryCodeFieldMap] instead of parsing struct tags via reflection.
 func (e *MFARecoveryCode) GetStaticFieldMap() map[string]string {
-	return buncolgen.MFARecoveryCodeFieldMap
+	return iamcol.MFARecoveryCodeFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ProvisioningAuditRecord].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ProvisioningAuditRecordFieldMap] instead of parsing struct tags via reflection.
+// the generated [iamcol.ProvisioningAuditRecordFieldMap] instead of parsing struct tags via reflection.
 func (e *ProvisioningAuditRecord) GetStaticFieldMap() map[string]string {
-	return buncolgen.ProvisioningAuditRecordFieldMap
+	return iamcol.ProvisioningAuditRecordFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RiskDecision].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RiskDecisionFieldMap] instead of parsing struct tags via reflection.
+// the generated [iamcol.RiskDecisionFieldMap] instead of parsing struct tags via reflection.
 func (e *RiskDecision) GetStaticFieldMap() map[string]string {
-	return buncolgen.RiskDecisionFieldMap
+	return iamcol.RiskDecisionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [SCIMDirectory].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.SCIMDirectoryFieldMap] instead of parsing struct tags via reflection.
+// the generated [iamcol.SCIMDirectoryFieldMap] instead of parsing struct tags via reflection.
 func (e *SCIMDirectory) GetStaticFieldMap() map[string]string {
-	return buncolgen.SCIMDirectoryFieldMap
+	return iamcol.SCIMDirectoryFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [SCIMGroupRoleMapping].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.SCIMGroupRoleMappingFieldMap] instead of parsing struct tags via reflection.
+// the generated [iamcol.SCIMGroupRoleMappingFieldMap] instead of parsing struct tags via reflection.
 func (e *SCIMGroupRoleMapping) GetStaticFieldMap() map[string]string {
-	return buncolgen.SCIMGroupRoleMappingFieldMap
+	return iamcol.SCIMGroupRoleMappingFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [SCIMToken].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.SCIMTokenFieldMap] instead of parsing struct tags via reflection.
+// the generated [iamcol.SCIMTokenFieldMap] instead of parsing struct tags via reflection.
 func (e *SCIMToken) GetStaticFieldMap() map[string]string {
-	return buncolgen.SCIMTokenFieldMap
+	return iamcol.SCIMTokenFieldMap
 }

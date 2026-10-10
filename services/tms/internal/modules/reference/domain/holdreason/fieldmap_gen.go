@@ -2,11 +2,14 @@
 
 package holdreason
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/holdreasoncol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [HoldReason].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.HoldReasonFieldMap] instead of parsing struct tags via reflection.
+// the generated [holdreasoncol.HoldReasonFieldMap] instead of parsing struct tags via reflection.
 func (e *HoldReason) GetStaticFieldMap() map[string]string {
-	return buncolgen.HoldReasonFieldMap
+	return holdreasoncol.HoldReasonFieldMap
 }

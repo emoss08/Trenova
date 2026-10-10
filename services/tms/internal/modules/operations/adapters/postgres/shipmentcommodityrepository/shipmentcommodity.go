@@ -1,6 +1,7 @@
 package shipmentcommodityrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 	"fmt"
 
@@ -160,7 +161,7 @@ func (r *repository) updateCommodity(
 	shipmentCommodity.Version = ov + 1
 	shipmentCommodity.UpdatedAt = timeutils.NowUnix()
 
-	cols := buncolgen.ShipmentCommodityColumns
+	cols := shipmentcol.ShipmentCommodityColumns
 	results, err := tx.NewUpdate().
 		Model((*shipment.ShipmentCommodity)(nil)).
 		Set(cols.CommodityID.Set(), shipmentCommodity.CommodityID).

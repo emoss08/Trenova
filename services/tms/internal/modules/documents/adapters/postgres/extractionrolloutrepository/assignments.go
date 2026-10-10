@@ -1,6 +1,7 @@
 package extractionrolloutrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/extractionrolloutcol"
 	"context"
 	"fmt"
 	"strings"
@@ -35,7 +36,7 @@ func NewAssignments(p Params) extractionrolloutports.RolloutAssignmentRepository
 }
 
 func uniqueExtraction() string {
-	cols := buncolgen.RolloutAssignmentColumns
+	cols := extractionrolloutcol.RolloutAssignmentColumns
 	return "CONFLICT (" + strings.Join([]string{
 		cols.OrganizationID.Bare(),
 		cols.BusinessUnitID.Bare(),
@@ -93,13 +94,13 @@ func (r *assignmentRepository) GetByExtraction(
 	req extractionrolloutports.GetRolloutAssignmentRequest,
 ) (*extractionrollout.RolloutAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*extractionrollout.RolloutAssignment, error) {
-		cols := buncolgen.RolloutAssignmentColumns
+		cols := extractionrolloutcol.RolloutAssignmentColumns
 		entity := new(extractionrollout.RolloutAssignment)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RolloutAssignmentScopeTenant(sq, req.TenantInfo).
+				return extractionrolloutcol.RolloutAssignmentScopeTenant(sq, req.TenantInfo).
 					Where(cols.DocumentID.Eq(), req.DocumentID).
 					Where(cols.ExtractedAt.Eq(), req.ExtractedAt)
 			}).
@@ -117,14 +118,14 @@ func (r *assignmentRepository) Save(
 	entity *extractionrollout.RolloutAssignment,
 ) (*extractionrollout.RolloutAssignment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*extractionrollout.RolloutAssignment, error) {
-		cols := buncolgen.RolloutAssignmentColumns
+		cols := extractionrolloutcol.RolloutAssignmentColumns
 		previous := entity.Version
 
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.RolloutAssignmentScopeTenantUpdate(uq, pagination.TenantInfo{
+				return extractionrolloutcol.RolloutAssignmentScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
 				}).
@@ -163,7 +164,7 @@ func (r *assignmentRepository) Totals(
 	req extractionrolloutports.TotalRolloutAssignmentsRequest,
 ) ([]extractionrolloutports.RolloutAssignmentTotal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]extractionrolloutports.RolloutAssignmentTotal, error) {
-		cols := buncolgen.RolloutAssignmentColumns
+		cols := extractionrolloutcol.RolloutAssignmentColumns
 		totals := make(
 			[]extractionrolloutports.RolloutAssignmentTotal,
 			0,
@@ -185,7 +186,7 @@ func (r *assignmentRepository) Totals(
 			).
 			ColumnExpr(buncolgen.Count("count")).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RolloutAssignmentScopeTenant(sq, req.TenantInfo).
+				return extractionrolloutcol.RolloutAssignmentScopeTenant(sq, req.TenantInfo).
 					Where(cols.CandidateProviderID.Eq(), req.CandidateProviderID).
 					Where(cols.CreatedAt.Gte(), req.Since)
 			}).
@@ -207,7 +208,7 @@ func (r *assignmentRepository) PurgeBefore(
 	req extractionrolloutports.PurgeRolloutAssignmentsRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := buncolgen.RolloutAssignmentColumns
+		cols := extractionrolloutcol.RolloutAssignmentColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultPurgeLimit
@@ -219,7 +220,7 @@ func (r *assignmentRepository) PurgeBefore(
 			Model((*extractionrollout.RolloutAssignment)(nil)).
 			Column(cols.ID.Bare()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RolloutAssignmentScopeTenant(sq, req.TenantInfo).
+				return extractionrolloutcol.RolloutAssignmentScopeTenant(sq, req.TenantInfo).
 					Where(cols.CreatedAt.Lt(), req.Before)
 			}).
 			OrderExpr(cols.CreatedAt.OrderAsc()).
@@ -228,7 +229,7 @@ func (r *assignmentRepository) PurgeBefore(
 		res, err := dba.NewDelete().
 			Model((*extractionrollout.RolloutAssignment)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.RolloutAssignmentScopeTenantDelete(dq, req.TenantInfo).
+				return extractionrolloutcol.RolloutAssignmentScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.ID.In(), expired)
 			}).
 			Exec(ctx)

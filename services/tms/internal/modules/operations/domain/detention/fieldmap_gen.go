@@ -2,39 +2,42 @@
 
 package detention
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/detentioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DetentionEvidence].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DetentionEvidenceFieldMap] instead of parsing struct tags via reflection.
+// the generated [detentioncol.DetentionEvidenceFieldMap] instead of parsing struct tags via reflection.
 func (e *DetentionEvidence) GetStaticFieldMap() map[string]string {
-	return buncolgen.DetentionEvidenceFieldMap
+	return detentioncol.DetentionEvidenceFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DetentionNotice].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DetentionNoticeFieldMap] instead of parsing struct tags via reflection.
+// the generated [detentioncol.DetentionNoticeFieldMap] instead of parsing struct tags via reflection.
 func (e *DetentionNotice) GetStaticFieldMap() map[string]string {
-	return buncolgen.DetentionNoticeFieldMap
+	return detentioncol.DetentionNoticeFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DetentionOccurrence].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DetentionOccurrenceFieldMap] instead of parsing struct tags via reflection.
+// the generated [detentioncol.DetentionOccurrenceFieldMap] instead of parsing struct tags via reflection.
 func (e *DetentionOccurrence) GetStaticFieldMap() map[string]string {
-	return buncolgen.DetentionOccurrenceFieldMap
+	return detentioncol.DetentionOccurrenceFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DetentionPolicy].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DetentionPolicyFieldMap] instead of parsing struct tags via reflection.
+// the generated [detentioncol.DetentionPolicyFieldMap] instead of parsing struct tags via reflection.
 func (e *DetentionPolicy) GetStaticFieldMap() map[string]string {
-	return buncolgen.DetentionPolicyFieldMap
+	return detentioncol.DetentionPolicyFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DetentionPolicyTier].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DetentionPolicyTierFieldMap] instead of parsing struct tags via reflection.
+// the generated [detentioncol.DetentionPolicyTierFieldMap] instead of parsing struct tags via reflection.
 func (e *DetentionPolicyTier) GetStaticFieldMap() map[string]string {
-	return buncolgen.DetentionPolicyTierFieldMap
+	return detentioncol.DetentionPolicyTierFieldMap
 }

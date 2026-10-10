@@ -2,6 +2,8 @@
 package ediconnectionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -46,7 +48,7 @@ func (r *repository) ListConnections(
 ) (*pagination.ListResult[*edi.EDIConnection], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIConnection], error) {
 		entities := make([]*edi.EDIConnection, 0, req.Filter.Pagination.SafeLimit())
-		rel := buncolgen.EDIConnectionRelations
+		rel := edicol.EDIConnectionRelations
 
 		total, err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -58,7 +60,7 @@ func (r *repository) ListConnections(
 			Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
 				return filterConnectionsQuery(query, req)
 			}).
-			Order(buncolgen.EDIConnectionColumns.CreatedAt.OrderDesc()).
+			Order(edicol.EDIConnectionColumns.CreatedAt.OrderDesc()).
 			Limit(req.Filter.Pagination.SafeLimit()).
 			Offset(req.Filter.Pagination.SafeOffset()).
 			ScanAndCount(ctx)
@@ -83,8 +85,8 @@ func filterConnectionsQuery(
 	}
 
 	term := "%" + req.Filter.Query + "%"
-	cols := buncolgen.EDIConnectionColumns
-	orgCols := buncolgen.OrganizationColumns
+	cols := edicol.EDIConnectionColumns
+	orgCols := tenantcol.OrganizationColumns
 
 	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 		return sq.WhereOr(cols.Method.TextILike(), term).
@@ -99,9 +101,9 @@ func (r *repository) SelectOptions(
 	req *ediports.EDIConnectionSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIConnection], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIConnection], error) {
-		cols := buncolgen.EDIConnectionColumns
-		orgCols := buncolgen.OrganizationColumns
-		rel := buncolgen.EDIConnectionRelations
+		cols := edicol.EDIConnectionColumns
+		orgCols := tenantcol.OrganizationColumns
+		rel := edicol.EDIConnectionRelations
 
 		return dbhelper.SelectOptions[*edi.EDIConnection](
 			ctx,
@@ -149,8 +151,8 @@ func (r *repository) GetConnectionsByIDs(
 ) ([]*edi.EDIConnection, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIConnection, error) {
 		entities := make([]*edi.EDIConnection, 0, len(req.ConnectionIDs))
-		cols := buncolgen.EDIConnectionColumns
-		rel := buncolgen.EDIConnectionRelations
+		cols := edicol.EDIConnectionColumns
+		rel := edicol.EDIConnectionRelations
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -178,8 +180,8 @@ func (r *repository) GetConnectionByID(
 ) (*edi.EDIConnection, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIConnection, error) {
 		entity := new(edi.EDIConnection)
-		cols := buncolgen.EDIConnectionColumns
-		rel := buncolgen.EDIConnectionRelations
+		cols := edicol.EDIConnectionColumns
+		rel := edicol.EDIConnectionRelations
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -207,7 +209,7 @@ func (r *repository) GetConnectionForUpdate(
 ) (*edi.EDIConnection, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIConnection, error) {
 		entity := new(edi.EDIConnection)
-		cols := buncolgen.EDIConnectionColumns
+		cols := edicol.EDIConnectionColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -232,7 +234,7 @@ func (r *repository) GetActiveConnectionForPartner(
 ) (*edi.EDIConnection, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIConnection, error) {
 		entity := new(edi.EDIConnection)
-		cols := buncolgen.EDIConnectionColumns
+		cols := edicol.EDIConnectionColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
@@ -293,7 +295,7 @@ func (r *repository) UpdateConnection(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIConnection, error) {
 		ov := entity.Version
 		entity.Version++
-		cols := buncolgen.EDIConnectionColumns
+		cols := edicol.EDIConnectionColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -319,12 +321,12 @@ func (r *repository) ensureMappingProfile(
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		profile := new(edi.EDIMappingProfile)
-		cols := buncolgen.EDIMappingProfileColumns
+		cols := edicol.EDIMappingProfileColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(profile).
-			Relation(buncolgen.EDIMappingProfileRelations.Entries).
+			Relation(edicol.EDIMappingProfileRelations.Entries).
 			Where(cols.OrganizationID.Eq(), partner.OrganizationID).
 			Where(cols.BusinessUnitID.Eq(), partner.BusinessUnitID).
 			Where(cols.EDIPartnerID.Eq(), partner.ID).
@@ -364,9 +366,9 @@ func (r *repository) ensureTargetOrganizationInBusinessUnit(
 	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
 		exists, err := r.db.DBForContext(ctx).
 			NewSelect().
-			TableExpr(buncolgen.OrganizationTable.As(buncolgen.OrganizationTable.Alias)).
-			Where(buncolgen.OrganizationColumns.ID.Eq(), targetOrganizationID).
-			Where(buncolgen.OrganizationColumns.BusinessUnitID.Eq(), businessUnitID).
+			TableExpr(tenantcol.OrganizationTable.As(tenantcol.OrganizationTable.Alias)).
+			Where(tenantcol.OrganizationColumns.ID.Eq(), targetOrganizationID).
+			Where(tenantcol.OrganizationColumns.BusinessUnitID.Eq(), businessUnitID).
 			Exists(ctx)
 		if err != nil {
 			return err
@@ -435,7 +437,7 @@ func (r *repository) AcceptInternalConnection(
 				NewUpdate().
 				Model(req.SourcePartner).
 				WherePK().
-				Column(buncolgen.EDIPartnerColumns.DefaultTransportID.Bare()).
+				Column(edicol.EDIPartnerColumns.DefaultTransportID.Bare()).
 				Exec(txCtx); err != nil {
 				return err
 			}
@@ -443,7 +445,7 @@ func (r *repository) AcceptInternalConnection(
 				NewUpdate().
 				Model(req.TargetPartner).
 				WherePK().
-				Column(buncolgen.EDIPartnerColumns.DefaultTransportID.Bare()).
+				Column(edicol.EDIPartnerColumns.DefaultTransportID.Bare()).
 				Exec(txCtx); err != nil {
 				return err
 			}
@@ -471,7 +473,7 @@ func applyConnectionTenantFilter(
 	query *bun.SelectQuery,
 	tenantInfo pagination.TenantInfo,
 ) *bun.SelectQuery {
-	cols := buncolgen.EDIConnectionColumns
+	cols := edicol.EDIConnectionColumns
 
 	return query.
 		Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).

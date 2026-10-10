@@ -2,11 +2,14 @@
 
 package documentpacketrule
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/documentpacketrulecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DocumentPacketRule].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DocumentPacketRuleFieldMap] instead of parsing struct tags via reflection.
+// the generated [documentpacketrulecol.DocumentPacketRuleFieldMap] instead of parsing struct tags via reflection.
 func (e *DocumentPacketRule) GetStaticFieldMap() map[string]string {
-	return buncolgen.DocumentPacketRuleFieldMap
+	return documentpacketrulecol.DocumentPacketRuleFieldMap
 }

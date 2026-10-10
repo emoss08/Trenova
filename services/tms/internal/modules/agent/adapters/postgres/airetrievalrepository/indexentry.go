@@ -1,6 +1,10 @@
 package airetrievalrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/airetrievalcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
 	"context"
 	"fmt"
 	"slices"
@@ -104,11 +108,11 @@ func (r *repository) MarkStale(
 			}
 		}
 
-		cols := buncolgen.IndexEntryColumns
+		cols := airetrievalcol.IndexEntryColumns
 		res, err := r.db.DBForContext(ctx).
 			NewInsert().
 			Model(&entries).
-			On(conflictTarget(buncolgen.IndexEntryTable)+" DO UPDATE").
+			On(conflictTarget(airetrievalcol.IndexEntryTable)+" DO UPDATE").
 			Set(cols.Status.Set(), airetrieval.IndexStatusPending).
 			Set(cols.Generation.IncConflict(1)).
 			Set(cols.Attempts.Set(), 0).
@@ -159,13 +163,13 @@ func (r *repository) ClaimIndexEntries(
 			now = timeutils.NowUnix()
 		}
 
-		cols := buncolgen.IndexEntryColumns
+		cols := airetrievalcol.IndexEntryColumns
 		dba := r.db.DBForContext(ctx)
 
 		picked := dba.NewSelect().
 			Model((*airetrieval.IndexEntry)(nil)).
-			Column(buncolgen.IndexEntryTable.PrimaryKey...).
-			Apply(buncolgen.IndexEntryApplyTenant(req.TenantInfo)).
+			Column(airetrievalcol.IndexEntryTable.PrimaryKey...).
+			Apply(airetrievalcol.IndexEntryApplyTenant(req.TenantInfo)).
 			Where(cols.ModelKey.Eq(), req.ModelKey).
 			Where(cols.Status.Eq(), airetrieval.IndexStatusPending).
 			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
@@ -190,7 +194,7 @@ func (r *repository) ClaimIndexEntries(
 			Set(cols.LastAttemptAt.Set(), now).
 			Set(cols.UpdatedAt.Set(), now).
 			Where(indexEntryKeyTuple()+" IN (?)", picked).
-			Returning(buncolgen.IndexEntryTable.All()).
+			Returning(airetrievalcol.IndexEntryTable.All()).
 			Scan(ctx, &entries); err != nil {
 			return nil, fmt.Errorf("claim index entries: %w", err)
 		}
@@ -207,7 +211,7 @@ func (r *repository) ClaimIndexEntries(
 }
 
 func indexEntryKeyTuple() string {
-	cols := buncolgen.IndexEntryColumns
+	cols := airetrievalcol.IndexEntryColumns
 
 	return buncolgen.Expr("({0}, {1}, {2}, {3}, {4})",
 		cols.OrganizationID,
@@ -241,19 +245,19 @@ var outcomeColumns = struct {
 	LastError      buncolgen.Column
 	NextAttemptAt  buncolgen.Column
 }{
-	OrganizationID: buncolgen.IndexEntryColumns.OrganizationID.WithAlias(outcomeAlias),
-	BusinessUnitID: buncolgen.IndexEntryColumns.BusinessUnitID.WithAlias(outcomeAlias),
-	SourceType:     buncolgen.IndexEntryColumns.SourceType.WithAlias(outcomeAlias),
-	SourceID:       buncolgen.IndexEntryColumns.SourceID.WithAlias(outcomeAlias),
-	ModelKey:       buncolgen.IndexEntryColumns.ModelKey.WithAlias(outcomeAlias),
-	Generation:     buncolgen.IndexEntryColumns.Generation.WithAlias(outcomeAlias),
-	ChunkCount:     buncolgen.IndexEntryColumns.ChunkCount.WithAlias(outcomeAlias),
-	LastError:      buncolgen.IndexEntryColumns.LastError.WithAlias(outcomeAlias),
-	NextAttemptAt:  buncolgen.IndexEntryColumns.NextAttemptAt.WithAlias(outcomeAlias),
+	OrganizationID: airetrievalcol.IndexEntryColumns.OrganizationID.WithAlias(outcomeAlias),
+	BusinessUnitID: airetrievalcol.IndexEntryColumns.BusinessUnitID.WithAlias(outcomeAlias),
+	SourceType:     airetrievalcol.IndexEntryColumns.SourceType.WithAlias(outcomeAlias),
+	SourceID:       airetrievalcol.IndexEntryColumns.SourceID.WithAlias(outcomeAlias),
+	ModelKey:       airetrievalcol.IndexEntryColumns.ModelKey.WithAlias(outcomeAlias),
+	Generation:     airetrievalcol.IndexEntryColumns.Generation.WithAlias(outcomeAlias),
+	ChunkCount:     airetrievalcol.IndexEntryColumns.ChunkCount.WithAlias(outcomeAlias),
+	LastError:      airetrievalcol.IndexEntryColumns.LastError.WithAlias(outcomeAlias),
+	NextAttemptAt:  airetrievalcol.IndexEntryColumns.NextAttemptAt.WithAlias(outcomeAlias),
 }
 
 func matchOutcomeKey(q *bun.UpdateQuery) *bun.UpdateQuery {
-	cols := buncolgen.IndexEntryColumns
+	cols := airetrievalcol.IndexEntryColumns
 	o := outcomeColumns
 
 	return q.
@@ -399,7 +403,7 @@ func applyOutcome(
 	status airetrieval.IndexStatus,
 	now int64,
 ) *bun.UpdateQuery {
-	cols := buncolgen.IndexEntryColumns
+	cols := airetrievalcol.IndexEntryColumns
 	o := outcomeColumns
 
 	q := tx.NewUpdate().
@@ -434,7 +438,7 @@ func applyOutcome(
 }
 
 func releaseSuperseded(tx bun.Tx, rows []outcomeRow, now int64) *bun.UpdateQuery {
-	cols := buncolgen.IndexEntryColumns
+	cols := airetrievalcol.IndexEntryColumns
 
 	return tx.NewUpdate().
 		With(outcomeAlias, tx.NewValues(&rows)).
@@ -459,7 +463,7 @@ func (r *repository) CountIndexEntries(
 			return nil, err
 		}
 
-		cols := buncolgen.IndexEntryColumns
+		cols := airetrievalcol.IndexEntryColumns
 		counts := make(
 			[]agentports.IndexEntryCount,
 			0,
@@ -472,7 +476,7 @@ func (r *repository) CountIndexEntries(
 			ColumnExpr(buncolgen.Count("count")).
 			ColumnExpr(buncolgen.Max(cols.IndexedAt, "last_indexed_at")).
 			ColumnExpr(buncolgen.Max(cols.LastAttemptAt, "last_attempt_at")).
-			Apply(buncolgen.IndexEntryApplyTenant(req.TenantInfo)).
+			Apply(airetrievalcol.IndexEntryApplyTenant(req.TenantInfo)).
 			Where(cols.ModelKey.Eq(), req.ModelKey).
 			GroupExpr(cols.SourceType.Qualified()).
 			GroupExpr(cols.Status.Qualified()).
@@ -498,27 +502,27 @@ type sourceTable struct {
 var sourceTables = map[airetrieval.SourceType]sourceTable{
 	airetrieval.SourceTypeMemory: {
 		model:          (*agent.Memory)(nil),
-		id:             buncolgen.MemoryColumns.ID,
-		organizationID: buncolgen.MemoryColumns.OrganizationID,
-		businessUnitID: buncolgen.MemoryColumns.BusinessUnitID,
-		updatedAt:      buncolgen.MemoryColumns.UpdatedAt,
-		applyTenant:    buncolgen.MemoryApplyTenant,
+		id:             agentcol.MemoryColumns.ID,
+		organizationID: agentcol.MemoryColumns.OrganizationID,
+		businessUnitID: agentcol.MemoryColumns.BusinessUnitID,
+		updatedAt:      agentcol.MemoryColumns.UpdatedAt,
+		applyTenant:    agentcol.MemoryApplyTenant,
 	},
 	airetrieval.SourceTypeDocument: {
 		model:          (*document.Document)(nil),
-		id:             buncolgen.DocumentColumns.ID,
-		organizationID: buncolgen.DocumentColumns.OrganizationID,
-		businessUnitID: buncolgen.DocumentColumns.BusinessUnitID,
-		updatedAt:      buncolgen.DocumentColumns.UpdatedAt,
-		applyTenant:    buncolgen.DocumentApplyTenant,
+		id:             documentcol.DocumentColumns.ID,
+		organizationID: documentcol.DocumentColumns.OrganizationID,
+		businessUnitID: documentcol.DocumentColumns.BusinessUnitID,
+		updatedAt:      documentcol.DocumentColumns.UpdatedAt,
+		applyTenant:    documentcol.DocumentApplyTenant,
 	},
 	airetrieval.SourceTypeInboundMessage: {
 		model:          (*inboundmessage.InboundMessage)(nil),
-		id:             buncolgen.InboundMessageColumns.ID,
-		organizationID: buncolgen.InboundMessageColumns.OrganizationID,
-		businessUnitID: buncolgen.InboundMessageColumns.BusinessUnitID,
-		updatedAt:      buncolgen.InboundMessageColumns.UpdatedAt,
-		applyTenant:    buncolgen.InboundMessageApplyTenant,
+		id:             inboundmessagecol.InboundMessageColumns.ID,
+		organizationID: inboundmessagecol.InboundMessageColumns.OrganizationID,
+		businessUnitID: inboundmessagecol.InboundMessageColumns.BusinessUnitID,
+		updatedAt:      inboundmessagecol.InboundMessageColumns.UpdatedAt,
+		applyTenant:    inboundmessagecol.InboundMessageApplyTenant,
 	},
 }
 
@@ -548,13 +552,13 @@ func (r *repository) FindStaleSources(
 		}
 		limit = intutils.Clamp(limit, 1, maxStaleLimit)
 
-		entry := buncolgen.IndexEntryColumns
+		entry := airetrievalcol.IndexEntryColumns
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(table.model).
 			ColumnExpr(table.id.Qualified()).
 			Apply(table.applyTenant(req.TenantInfo)).
-			Join("LEFT JOIN "+buncolgen.IndexEntryTable.As(buncolgen.IndexEntryTable.Alias)).
+			Join("LEFT JOIN "+airetrievalcol.IndexEntryTable.As(airetrievalcol.IndexEntryTable.Alias)).
 			JoinOn(entry.OrganizationID.EqColumn(table.organizationID)).
 			JoinOn(entry.BusinessUnitID.EqColumn(table.businessUnitID)).
 			JoinOn(entry.SourceID.EqColumn(table.id)).
@@ -616,13 +620,13 @@ func (r *repository) AverageIndexChunks(
 			return average, invalid("source type %q is not one retrieval indexes", req.SourceType)
 		}
 
-		cols := buncolgen.IndexEntryColumns
+		cols := airetrievalcol.IndexEntryColumns
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*airetrieval.IndexEntry)(nil)).
 			ColumnExpr(buncolgen.Count("entries")).
 			ColumnExpr(cols.ChunkCount.Expr("COALESCE(AVG({}), 0) AS average_chunks")).
-			Apply(buncolgen.IndexEntryApplyTenant(req.TenantInfo)).
+			Apply(airetrievalcol.IndexEntryApplyTenant(req.TenantInfo)).
 			Where(cols.SourceType.Eq(), req.SourceType).
 			Where(cols.ModelKey.Eq(), req.ModelKey).
 			Where(cols.Status.Eq(), airetrieval.IndexStatusIndexed).
@@ -673,12 +677,12 @@ func (r *repository) ListErroredIndexEntries(
 		}
 		limit = intutils.Clamp(limit, 1, maxErroredLimit)
 
-		cols := buncolgen.IndexEntryColumns
+		cols := airetrievalcol.IndexEntryColumns
 		entries := make([]*airetrieval.IndexEntry, 0, limit)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entries).
-			Apply(buncolgen.IndexEntryApplyTenant(req.TenantInfo)).
+			Apply(airetrievalcol.IndexEntryApplyTenant(req.TenantInfo)).
 			Where(cols.ModelKey.In(), bun.List(modelKeys)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return sq.

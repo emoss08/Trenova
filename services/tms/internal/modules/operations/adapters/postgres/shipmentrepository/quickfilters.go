@@ -1,6 +1,9 @@
 package shipmentrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/detentioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/modeprofilecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"errors"
 	"time"
 
@@ -37,7 +40,7 @@ const (
 )
 
 func DeliveryAtExpr() string {
-	stp := buncolgen.StopColumns
+	stp := shipmentcol.StopColumns
 	return buncolgen.Expr("COALESCE({0}, {1})", stp.ActualArrival, stp.ScheduledWindowStart)
 }
 
@@ -50,13 +53,13 @@ func LastDeliveryStopQuery(dba bun.IDB) *bun.SelectQuery {
 }
 
 func shipmentStopQuery(dba bun.IDB, pick stopPick) *bun.SelectQuery {
-	sp := buncolgen.ShipmentColumns
-	sm := buncolgen.ShipmentMoveColumns
-	stp := buncolgen.StopColumns
+	sp := shipmentcol.ShipmentColumns
+	sm := shipmentcol.ShipmentMoveColumns
+	stp := shipmentcol.StopColumns
 
 	q := dba.NewSelect().
 		Model((*shipment.Stop)(nil)).
-		Join("JOIN "+buncolgen.ShipmentMoveTable.As(buncolgen.ShipmentMoveTable.Alias)).
+		Join("JOIN "+shipmentcol.ShipmentMoveTable.As(shipmentcol.ShipmentMoveTable.Alias)).
 		JoinOn(sm.ID.EqColumn(stp.ShipmentMoveID)).
 		JoinOn(sm.OrganizationID.EqColumn(stp.OrganizationID)).
 		JoinOn(sm.BusinessUnitID.EqColumn(stp.BusinessUnitID)).
@@ -80,7 +83,7 @@ func shipmentStopQuery(dba bun.IDB, pick stopPick) *bun.SelectQuery {
 }
 
 func BillingTransferCandidateCondition() schema.QueryAppender {
-	sp := buncolgen.ShipmentColumns
+	sp := shipmentcol.ShipmentColumns
 
 	return bun.SafeQuery(
 		"("+sp.Status.In()+" AND "+sp.BillingTransferStatus.Expr("COALESCE({}, '') IN (?)")+")",
@@ -93,7 +96,7 @@ func BillingTransferCandidateCondition() schema.QueryAppender {
 }
 
 func StageCondition(stage shipment.Stage) schema.QueryAppender {
-	return bun.SafeQuery(buncolgen.ShipmentColumns.StageRank.Eq(), stage.Rank())
+	return bun.SafeQuery(shipmentcol.ShipmentColumns.StageRank.Eq(), stage.Rank())
 }
 
 type LocalDay struct {
@@ -182,7 +185,7 @@ func QuickFilterCondition(
 }
 
 func deliveryWithin(dba bun.IDB, start, end int64) schema.QueryAppender {
-	sp := buncolgen.ShipmentColumns
+	sp := shipmentcol.ShipmentColumns
 	delivery := LastDeliveryStopQuery(dba).ColumnExpr(DeliveryAtExpr())
 
 	return bun.SafeQuery(
@@ -200,7 +203,7 @@ func pickupWindowCondition(
 	spec shipment.QuickFilterSpec,
 ) schema.QueryAppender {
 	pickup := FirstPickupStopQuery(dba).
-		ColumnExpr(buncolgen.StopColumns.ScheduledWindowStart.Qualified())
+		ColumnExpr(shipmentcol.StopColumns.ScheduledWindowStart.Qualified())
 
 	var lower, upper *int64
 	if start := int64(*spec.WindowStartMinutes); start > 0 {
@@ -222,8 +225,8 @@ func pickupWindowCondition(
 }
 
 func reeferCondition(dba bun.IDB) schema.QueryAppender {
-	sp := buncolgen.ShipmentColumns
-	mpf := buncolgen.ProfileColumns
+	sp := shipmentcol.ShipmentColumns
+	mpf := modeprofilecol.ProfileColumns
 
 	profiles := dba.NewSelect().
 		Model((*modeprofile.Profile)(nil)).
@@ -246,8 +249,8 @@ func reeferCondition(dba bun.IDB) schema.QueryAppender {
 }
 
 func shipmentMilesQuery(dba bun.IDB) *bun.SelectQuery {
-	sp := buncolgen.ShipmentColumns
-	sm := buncolgen.ShipmentMoveColumns
+	sp := shipmentcol.ShipmentColumns
+	sm := shipmentcol.ShipmentMoveColumns
 
 	return dba.NewSelect().
 		Model((*shipment.ShipmentMove)(nil)).
@@ -258,7 +261,7 @@ func shipmentMilesQuery(dba bun.IDB) *bun.SelectQuery {
 }
 
 func costMilesExpr(includeDeadhead bool) string {
-	sm := buncolgen.ShipmentMoveColumns
+	sm := shipmentcol.ShipmentMoveColumns
 	if includeDeadhead {
 		return sm.Distance.Expr("COALESCE(SUM({}), 0)")
 	}
@@ -269,8 +272,8 @@ func lowMarginCondition(
 	dba bun.IDB,
 	margin *shipmentports.ShipmentMarginBasis,
 ) schema.QueryAppender {
-	sp := buncolgen.ShipmentColumns
-	sm := buncolgen.ShipmentMoveColumns
+	sp := shipmentcol.ShipmentColumns
+	sm := shipmentcol.ShipmentMoveColumns
 	revenue := sp.TotalChargeAmount.Qualified()
 
 	miles := shipmentMilesQuery(dba).
@@ -292,10 +295,10 @@ func DetentionCondition(
 	now int64,
 	basis *shipmentports.ShipmentDetentionBasis,
 ) schema.QueryAppender {
-	sp := buncolgen.ShipmentColumns
+	sp := shipmentcol.ShipmentColumns
 
 	if basis.UsePolicyEngine {
-		dto := buncolgen.DetentionOccurrenceColumns
+		dto := detentioncol.DetentionOccurrenceColumns
 		occurrences := dba.NewSelect().
 			Model((*detention.DetentionOccurrence)(nil)).
 			ColumnExpr("1").
@@ -314,13 +317,13 @@ func DetentionCondition(
 }
 
 func DwellingStopsQuery(dba bun.IDB, now, thresholdMinutes int64) *bun.SelectQuery {
-	sp := buncolgen.ShipmentColumns
-	sm := buncolgen.ShipmentMoveColumns
-	stp := buncolgen.StopColumns
+	sp := shipmentcol.ShipmentColumns
+	sm := shipmentcol.ShipmentMoveColumns
+	stp := shipmentcol.StopColumns
 
 	return dba.NewSelect().
 		Model((*shipment.Stop)(nil)).
-		Join("JOIN "+buncolgen.ShipmentMoveTable.As(buncolgen.ShipmentMoveTable.Alias)).
+		Join("JOIN "+shipmentcol.ShipmentMoveTable.As(shipmentcol.ShipmentMoveTable.Alias)).
 		JoinOn(sm.ID.EqColumn(stp.ShipmentMoveID)).
 		JoinOn(sm.OrganizationID.EqColumn(stp.OrganizationID)).
 		JoinOn(sm.BusinessUnitID.EqColumn(stp.BusinessUnitID)).
@@ -361,7 +364,7 @@ func ApplyAggregateScope(
 
 	q = querybuilder.ApplyFilterPredicates(
 		q,
-		buncolgen.ShipmentTable.Alias,
+		shipmentcol.ShipmentTable.Alias,
 		filter,
 		(*shipment.Shipment)(nil),
 	)

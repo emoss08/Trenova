@@ -2,6 +2,7 @@
 package fiscalperiodrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/fiscalperiodcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
@@ -88,7 +89,7 @@ func (r *repository) SelectOptions(
 	req *fiscalperiodports.FiscalPeriodSelectOptionsRequest,
 ) (*pagination.ListResult[*fiscalperiod.FiscalPeriod], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*fiscalperiod.FiscalPeriod], error) {
-		cols := buncolgen.FiscalPeriodColumns
+		cols := fiscalperiodcol.FiscalPeriodColumns
 		return dbhelper.SelectOptions[*fiscalperiod.FiscalPeriod](
 			ctx,
 			r.db.DBForContext(ctx),
@@ -227,7 +228,7 @@ func (r *repository) Update(
 			zap.String("id", entity.ID.String()),
 		)
 
-		cols := buncolgen.FiscalPeriodColumns
+		cols := fiscalperiodcol.FiscalPeriodColumns
 		ov := entity.Version
 		entity.Version++
 
@@ -308,7 +309,7 @@ func (r *repository) applyTransition(
 			zap.String("id", t.id.String()),
 		)
 
-		cols := buncolgen.FiscalPeriodColumns
+		cols := fiscalperiodcol.FiscalPeriodColumns
 		entity := new(fiscalperiod.FiscalPeriod)
 		query := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -316,7 +317,7 @@ func (r *repository) applyTransition(
 			Set(cols.Version.Inc(1)).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.FiscalPeriodScopeTenantUpdate(uq, t.tenantInfo).
+				return fiscalperiodcol.FiscalPeriodScopeTenantUpdate(uq, t.tenantInfo).
 					Where(cols.ID.Eq(), t.id)
 			}).
 			Returning("*")
@@ -339,7 +340,7 @@ func (r *repository) Close(
 	ctx context.Context,
 	req fiscalperiodports.CloseFiscalPeriodRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
-	cols := buncolgen.FiscalPeriodColumns
+	cols := fiscalperiodcol.FiscalPeriodColumns
 
 	return r.applyTransition(ctx, statusTransition{
 		operation:  "Close",
@@ -358,7 +359,7 @@ func (r *repository) Reopen(
 	ctx context.Context,
 	req fiscalperiodports.ReopenFiscalPeriodRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
-	cols := buncolgen.FiscalPeriodColumns
+	cols := fiscalperiodcol.FiscalPeriodColumns
 
 	return r.applyTransition(ctx, statusTransition{
 		operation:  "Reopen",
@@ -382,7 +383,7 @@ func (r *repository) Lock(
 	ctx context.Context,
 	req fiscalperiodports.LockFiscalPeriodRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
-	cols := buncolgen.FiscalPeriodColumns
+	cols := fiscalperiodcol.FiscalPeriodColumns
 
 	return r.applyTransition(ctx, statusTransition{
 		operation:  "Lock",
@@ -401,7 +402,7 @@ func (r *repository) Unlock(
 	ctx context.Context,
 	req fiscalperiodports.UnlockFiscalPeriodRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
-	cols := buncolgen.FiscalPeriodColumns
+	cols := fiscalperiodcol.FiscalPeriodColumns
 
 	return r.applyTransition(ctx, statusTransition{
 		operation:  "Unlock",
@@ -420,7 +421,7 @@ func (r *repository) Activate(
 	ctx context.Context,
 	req fiscalperiodports.ActivateFiscalPeriodRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
-	cols := buncolgen.FiscalPeriodColumns
+	cols := fiscalperiodcol.FiscalPeriodColumns
 
 	return r.applyTransition(ctx, statusTransition{
 		operation:  "Activate",
@@ -442,7 +443,7 @@ func (r *repository) CountUnclosedPeriodsByFiscalYear(
 			zap.String("fiscalYearId", req.FiscalYearID.String()),
 		)
 
-		cols := buncolgen.FiscalPeriodColumns
+		cols := fiscalperiodcol.FiscalPeriodColumns
 		count, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*fiscalperiod.FiscalPeriod)(nil)).
@@ -522,13 +523,13 @@ func (r *repository) ListByFiscalYearIDs(
 	req fiscalperiodports.ListByFiscalYearIDsRequest,
 ) (map[pulid.ID][]*fiscalperiod.FiscalPeriod, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*fiscalperiod.FiscalPeriod, error) {
-		cols := buncolgen.FiscalPeriodColumns
+		cols := fiscalperiodcol.FiscalPeriodColumns
 		entities := make([]*fiscalperiod.FiscalPeriod, 0, len(req.FiscalYearIDs)*12)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FiscalPeriodScopeTenant(sq, req.TenantInfo).
+				return fiscalperiodcol.FiscalPeriodScopeTenant(sq, req.TenantInfo).
 					Where(cols.FiscalYearID.In(), bun.List(req.FiscalYearIDs))
 			}).
 			Order(cols.PeriodNumber.OrderAsc()).
@@ -626,7 +627,7 @@ func (r *repository) GetExpiredUnclosedPeriods(
 				return sq.Where("fp.organization_id = ?", req.OrgID).
 					Where("fp.business_unit_id = ?", req.BuID).
 					Where(
-						buncolgen.FiscalPeriodColumns.Status.In(),
+						fiscalperiodcol.FiscalPeriodColumns.Status.In(),
 						bun.List(fiscalperiod.UnclosedStatuses()),
 					).
 					Where("fp.end_date < ?", req.BeforeDate)

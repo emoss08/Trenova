@@ -1,6 +1,7 @@
 package shipmentrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 	"fmt"
 
@@ -30,7 +31,7 @@ func (r *repository) ListSummariesByIDs(
 			return nil, nil
 		}
 
-		sp := buncolgen.ShipmentColumns
+		sp := shipmentcol.ShipmentColumns
 
 		summaries := make([]*shipmentports.ShipmentSummary, 0, len(req.ShipmentIDs))
 		err := r.db.DBForContext(ctx).
@@ -74,7 +75,7 @@ func (r *repository) ListSummariesByIDs(
 			LIMIT 1
 		) AS dest ON TRUE`).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ShipmentScopeTenant(sq, req.TenantInfo).
+				return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
 					Where(sp.ID.In(), bun.List(req.ShipmentIDs))
 			}).
 			OrderExpr("sp.actual_delivery_date ASC NULLS LAST, sp.pro_number ASC").

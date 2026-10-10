@@ -1,6 +1,7 @@
 package capturerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/capturecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
@@ -57,7 +58,7 @@ func (r *itemRepository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.CaptureItemColumns.Version.Eq(), ov).
+			Where(capturecol.CaptureItemColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -85,8 +86,8 @@ func (r *itemRepository) GetByID(
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Apply(buncolgen.CaptureItemApplyTenant(req.TenantInfo)).
-			Where(buncolgen.CaptureItemColumns.ID.Eq(), req.ID).
+			Apply(capturecol.CaptureItemApplyTenant(req.TenantInfo)).
+			Where(capturecol.CaptureItemColumns.ID.Eq(), req.ID).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Capture item")
 		}
@@ -101,12 +102,12 @@ func (r *itemRepository) ListByBatch(
 ) ([]*capture.CaptureItem, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureItem, error) {
 		entities := make([]*capture.CaptureItem, 0)
-		cols := buncolgen.CaptureItemColumns
+		cols := capturecol.CaptureItemColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.CaptureItemApplyTenant(req.TenantInfo)).
+			Apply(capturecol.CaptureItemApplyTenant(req.TenantInfo)).
 			Where(cols.BatchID.Eq(), req.BatchID).
 			Order(cols.Position.OrderAsc()).
 			Scan(ctx); err != nil {
@@ -122,13 +123,13 @@ func (r *itemRepository) ReplaceOpen(
 	req *captureports.ReplaceOpenCaptureItemsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.CaptureItemColumns
+		cols := capturecol.CaptureItemColumns
 
 		return r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 			if _, err := tx.NewDelete().
 				Model((*capture.CaptureItem)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return buncolgen.CaptureItemScopeTenantDelete(dq, req.TenantInfo).
+					return capturecol.CaptureItemScopeTenantDelete(dq, req.TenantInfo).
 						Where(cols.BatchID.Eq(), req.BatchID).
 						Where(cols.Status.In(), bun.List(openItemStatuses))
 				}).

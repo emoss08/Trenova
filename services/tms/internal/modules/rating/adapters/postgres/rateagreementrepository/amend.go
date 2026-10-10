@@ -1,6 +1,8 @@
 package rateagreementrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/accessorialchargecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
 	"context"
 	"strings"
 
@@ -72,7 +74,7 @@ func (r *repository) AmendRules(
 // applyRuleWindow it does not require a rule to have started, so future-dated
 // lanes survive the filter.
 func applyOpenRuleWindow(q *bun.SelectQuery, asOf int64) *bun.SelectQuery {
-	cols := buncolgen.RateAgreementRuleColumns
+	cols := rateagreementcol.RateAgreementRuleColumns
 
 	return q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 		return sq.
@@ -95,7 +97,7 @@ func (r *repository) closeOutRules(
 			return nil
 		}
 
-		cols := buncolgen.RateAgreementRuleColumns
+		cols := rateagreementcol.RateAgreementRuleColumns
 
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -103,7 +105,7 @@ func (r *repository) closeOutRules(
 			Set(cols.EffectiveTo.Set(), req.EffectiveFrom).
 			Set(cols.UpdatedAt.SetExpr(r.db.NowEpoch())).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.RateAgreementRuleScopeTenantUpdate(uq, req.TenantInfo).
+				return rateagreementcol.RateAgreementRuleScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.RateAgreementID.Eq(), req.RateAgreementID).
 					Where(cols.ID.In(), bun.List(req.SupersededIDs)).
 					WhereGroup(" AND ", func(wq *bun.UpdateQuery) *bun.UpdateQuery {
@@ -199,15 +201,15 @@ func (r *repository) ListVersions(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*rateagreement.RateAgreementVersion], error) {
 		log := r.l.With(zap.String("operation", "ListVersions"))
 
-		cols := buncolgen.RateAgreementVersionColumns
+		cols := rateagreementcol.RateAgreementVersionColumns
 		entities := make([]*rateagreement.RateAgreementVersion, 0)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Relation(buncolgen.Rel(buncolgen.RateAgreementVersionRelations.CreatedBy)).
+			Relation(buncolgen.Rel(rateagreementcol.RateAgreementVersionRelations.CreatedBy)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RateAgreementVersionScopeTenant(sq, req.TenantInfo).
+				return rateagreementcol.RateAgreementVersionScopeTenant(sq, req.TenantInfo).
 					Where(cols.RateAgreementID.Eq(), req.RateAgreementID)
 			}).
 			Order(cols.VersionNumber.OrderDesc())
@@ -250,7 +252,7 @@ func (r *repository) resolveAccessorialNames(
 			return nil
 		}
 
-		cols := buncolgen.AccessorialChargeColumns
+		cols := accessorialchargecol.AccessorialChargeColumns
 		charges := make([]*accessorialcharge.AccessorialCharge, 0, len(chargeIDs))
 
 		err := r.db.DBForContext(ctx).
@@ -258,7 +260,7 @@ func (r *repository) resolveAccessorialNames(
 			Model(&charges).
 			Column(cols.ID.String(), cols.Code.String()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AccessorialChargeScopeTenant(sq, tenantInfo).
+				return accessorialchargecol.AccessorialChargeScopeTenant(sq, tenantInfo).
 					Where(cols.ID.In(), bun.List(chargeIDs))
 			}).
 			Scan(ctx)
@@ -348,14 +350,14 @@ func (r *repository) GetEffectiveVersion(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*rateagreement.RateAgreementVersion, error) {
 		log := r.l.With(zap.String("operation", "GetEffectiveVersion"))
 
-		cols := buncolgen.RateAgreementVersionColumns
+		cols := rateagreementcol.RateAgreementVersionColumns
 		entity := new(rateagreement.RateAgreementVersion)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RateAgreementVersionScopeTenant(sq, req.TenantInfo).
+				return rateagreementcol.RateAgreementVersionScopeTenant(sq, req.TenantInfo).
 					Where(cols.RateAgreementID.Eq(), req.RateAgreementID).
 					Where(cols.EffectiveFrom.Lte(), req.AsOf).
 					WhereGroup(" AND ", func(wq *bun.SelectQuery) *bun.SelectQuery {
@@ -391,7 +393,7 @@ func (r *repository) CreateVersion(
 			zap.String("agreementId", version.RateAgreementID.String()),
 		)
 
-		cols := buncolgen.RateAgreementVersionColumns
+		cols := rateagreementcol.RateAgreementVersionColumns
 		tenantInfo := pagination.TenantInfo{
 			OrgID: version.OrganizationID,
 			BuID:  version.BusinessUnitID,
@@ -403,7 +405,7 @@ func (r *repository) CreateVersion(
 				Model((*rateagreement.RateAgreementVersion)(nil)).
 				Set(cols.EffectiveTo.Set(), version.EffectiveFrom).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return buncolgen.RateAgreementVersionScopeTenantUpdate(uq, tenantInfo).
+					return rateagreementcol.RateAgreementVersionScopeTenantUpdate(uq, tenantInfo).
 						Where(cols.RateAgreementID.Eq(), version.RateAgreementID).
 						Where(cols.EffectiveTo.IsNull())
 				}).

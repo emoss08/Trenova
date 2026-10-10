@@ -2,11 +2,14 @@
 
 package hazardousmaterial
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/hazardousmaterialcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [HazardousMaterial].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.HazardousMaterialFieldMap] instead of parsing struct tags via reflection.
+// the generated [hazardousmaterialcol.HazardousMaterialFieldMap] instead of parsing struct tags via reflection.
 func (e *HazardousMaterial) GetStaticFieldMap() map[string]string {
-	return buncolgen.HazardousMaterialFieldMap
+	return hazardousmaterialcol.HazardousMaterialFieldMap
 }

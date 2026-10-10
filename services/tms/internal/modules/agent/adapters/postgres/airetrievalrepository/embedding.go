@@ -1,6 +1,7 @@
 package airetrievalrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/airetrievalcol"
 	"context"
 	"fmt"
 	"strconv"
@@ -43,10 +44,10 @@ func embeddingSourceScope(
 	source *agentports.AIRetrievalSourceRef,
 	modelKey string,
 ) func(*bun.SelectQuery) *bun.SelectQuery {
-	cols := buncolgen.EmbeddingColumns
+	cols := airetrievalcol.EmbeddingColumns
 
 	return func(q *bun.SelectQuery) *bun.SelectQuery {
-		return buncolgen.EmbeddingScopeTenant(q, source.TenantInfo).
+		return airetrievalcol.EmbeddingScopeTenant(q, source.TenantInfo).
 			Where(cols.SourceType.Eq(), source.SourceType).
 			Where(cols.SourceID.Eq(), source.SourceID).
 			Where(cols.ModelKey.Eq(), modelKey)
@@ -71,7 +72,7 @@ func (r *repository) ListChunkHashes(
 			return nil, err
 		}
 
-		cols := buncolgen.EmbeddingColumns
+		cols := airetrievalcol.EmbeddingColumns
 		hashes := make([]agentports.EmbeddingChunkHash, 0)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -177,7 +178,7 @@ func (r *repository) storedChunks(
 	tx bun.Tx,
 	req *agentports.ReplaceEmbeddingChunksRequest,
 ) (map[int]storedChunk, error) {
-	cols := buncolgen.EmbeddingColumns
+	cols := airetrievalcol.EmbeddingColumns
 	rows := make([]storedChunk, 0, len(req.Chunks))
 	if err := tx.NewSelect().
 		Model((*airetrieval.Embedding)(nil)).
@@ -246,7 +247,7 @@ func (r *repository) removeChunksNotIn(
 	tx bun.Tx,
 	req *agentports.ReplaceEmbeddingChunksRequest,
 ) (int, error) {
-	cols := buncolgen.EmbeddingColumns
+	cols := airetrievalcol.EmbeddingColumns
 	indexes := make([]int, 0, len(req.Chunks))
 	for _, chunk := range req.Chunks {
 		indexes = append(indexes, chunk.ChunkIndex)
@@ -255,7 +256,7 @@ func (r *repository) removeChunksNotIn(
 	q := tx.NewDelete().
 		Model((*airetrieval.Embedding)(nil)).
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return buncolgen.EmbeddingScopeTenantDelete(dq, req.Source.TenantInfo).
+			return airetrievalcol.EmbeddingScopeTenantDelete(dq, req.Source.TenantInfo).
 				Where(cols.SourceType.Eq(), req.Source.SourceType).
 				Where(cols.SourceID.Eq(), req.Source.SourceID).
 				Where(cols.ModelKey.Eq(), req.ModelKey)
@@ -277,12 +278,12 @@ func (r *repository) upsertChunks(
 	tx bun.Tx,
 	rows []*airetrieval.Embedding,
 ) (int, error) {
-	cols := buncolgen.EmbeddingColumns
+	cols := airetrievalcol.EmbeddingColumns
 	excluded := excludedEmbeddingColumns
 
 	res, err := tx.NewInsert().
 		Model(&rows).
-		On(conflictTarget(buncolgen.EmbeddingTable) + " DO UPDATE").
+		On(conflictTarget(airetrievalcol.EmbeddingTable) + " DO UPDATE").
 		Set(cols.ContentHash.SetExcluded()).
 		Set(cols.Dimensions.SetExcluded()).
 		Set(cols.Embedding.SetExcluded()).
@@ -303,8 +304,8 @@ var excludedEmbeddingColumns = struct {
 	ContentHash buncolgen.Column
 	Dimensions  buncolgen.Column
 }{
-	ContentHash: buncolgen.EmbeddingColumns.ContentHash.WithAlias("excluded"),
-	Dimensions:  buncolgen.EmbeddingColumns.Dimensions.WithAlias("excluded"),
+	ContentHash: airetrievalcol.EmbeddingColumns.ContentHash.WithAlias("excluded"),
+	Dimensions:  airetrievalcol.EmbeddingColumns.Dimensions.WithAlias("excluded"),
 }
 
 func (r *repository) DeleteSource(
@@ -324,11 +325,11 @@ func (r *repository) DeleteSource(
 		}
 
 		err = r.db.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-			entries := buncolgen.IndexEntryColumns
+			entries := airetrievalcol.IndexEntryColumns
 			res, txErr := tx.NewDelete().
 				Model((*airetrieval.IndexEntry)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return buncolgen.IndexEntryScopeTenantDelete(dq, source.TenantInfo).
+					return airetrievalcol.IndexEntryScopeTenantDelete(dq, source.TenantInfo).
 						Where(entries.SourceType.Eq(), source.SourceType).
 						Where(entries.SourceID.Eq(), source.SourceID)
 				}).
@@ -344,11 +345,11 @@ func (r *repository) DeleteSource(
 				return nil
 			}
 
-			embeddings := buncolgen.EmbeddingColumns
+			embeddings := airetrievalcol.EmbeddingColumns
 			res, txErr = tx.NewDelete().
 				Model((*airetrieval.Embedding)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return buncolgen.EmbeddingScopeTenantDelete(dq, source.TenantInfo).
+					return airetrievalcol.EmbeddingScopeTenantDelete(dq, source.TenantInfo).
 						Where(embeddings.SourceType.Eq(), source.SourceType).
 						Where(embeddings.SourceID.Eq(), source.SourceID)
 				}).
@@ -470,7 +471,7 @@ func searchQuery(
 	req *agentports.VectorSearchRequest,
 	plan searchPlan,
 ) *bun.SelectQuery {
-	cols := buncolgen.EmbeddingColumns
+	cols := airetrievalcol.EmbeddingColumns
 	query := pgvector.NewHalfVector(req.Query)
 	cast := halfvecCastPrefix + plan.dimensions + ")"
 	distance := cols.Embedding.Expr("{}"+cast) + cosineDistanceOperand + cast
@@ -479,7 +480,7 @@ func searchQuery(
 		Model((*airetrieval.Embedding)(nil)).
 		Column(cols.SourceType.String(), cols.SourceID.String(), cols.ChunkIndex.String()).
 		ColumnExpr(distance+" AS "+distanceColumn, query).
-		Apply(buncolgen.EmbeddingApplyTenant(req.TenantInfo)).
+		Apply(airetrievalcol.EmbeddingApplyTenant(req.TenantInfo)).
 		Where(cols.SourceType.In(), bun.List(plan.sourceTypes)).
 		Where(cols.ModelKey.Eq(), req.ModelKey).
 		Where(cols.Dimensions.Expr("{} = "+plan.dimensions)).
@@ -525,7 +526,7 @@ type rankedColumns struct {
 }
 
 func newRankedColumns(alias string) rankedColumns {
-	cols := buncolgen.EmbeddingColumns
+	cols := airetrievalcol.EmbeddingColumns
 
 	return rankedColumns{
 		SourceType: cols.SourceType.WithAlias(alias),

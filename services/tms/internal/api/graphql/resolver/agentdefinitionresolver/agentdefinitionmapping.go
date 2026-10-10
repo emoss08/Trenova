@@ -1,6 +1,7 @@
 package agentdefinitionresolver
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
 	"context"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -41,10 +42,10 @@ func definitionColumns(
 
 	columns := sliceutils.AppendIfMissing(
 		selection.Columns,
-		buncolgen.DefinitionColumns.Template.Bare(),
+		agentdefinitioncol.DefinitionColumns.Template.Bare(),
 	)
 
-	return sliceutils.AppendIfMissing(columns, buncolgen.DefinitionColumns.ToolNames.Bare())
+	return sliceutils.AppendIfMissing(columns, agentdefinitioncol.DefinitionColumns.ToolNames.Bare())
 }
 
 func agentDefinitionConnectionToModel(

@@ -1,6 +1,7 @@
 package iftarepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/iftacol"
 	"context"
 	"fmt"
 
@@ -45,7 +46,7 @@ func (r *repository) applyTaxRateFilters(
 	q *bun.SelectQuery,
 	req *iftaports.ListTaxRatesRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.TaxRateColumns
+	cols := iftacol.TaxRateColumns
 	if req.Year > 0 {
 		q = q.Where(cols.Year.Eq(), req.Year)
 	}
@@ -68,7 +69,7 @@ func (r *repository) ListTaxRates(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*ifta.TaxRate], error) {
 		dba := r.db.DBForContext(ctx)
 		filter := filterOrEmpty(req.Filter)
-		cols := buncolgen.TaxRateColumns
+		cols := iftacol.TaxRateColumns
 
 		var totalCount *int
 		if req.Cursor.IncludeTotalCount {
@@ -77,7 +78,7 @@ func (r *repository) ListTaxRates(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutTenantScope(
 						sq,
-						buncolgen.TaxRateTable.Alias,
+						iftacol.TaxRateTable.Alias,
 						withoutSort(filter),
 						(*ifta.TaxRate)(nil),
 					)
@@ -98,16 +99,16 @@ func (r *repository) ListTaxRates(
 			Query: func(items *[]*ifta.TaxRate) *bun.SelectQuery {
 				q := dba.NewSelect().
 					Model(items).
-					ColumnExpr(buncolgen.TaxRateTable.All())
+					ColumnExpr(iftacol.TaxRateTable.All())
 				if req.IncludeJurisdiction {
-					q = q.Relation(buncolgen.TaxRateRelations.Jurisdiction)
+					q = q.Relation(iftacol.TaxRateRelations.Jurisdiction)
 				}
 				return q
 			},
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 				sq, applyErr := querybuilder.ApplyCursorFiltersWithoutTenantScope(
 					sq,
-					buncolgen.TaxRateTable.Alias,
+					iftacol.TaxRateTable.Alias,
 					filter,
 					req.Cursor,
 					(*ifta.TaxRate)(nil),
@@ -139,8 +140,8 @@ func (r *repository) GetTaxRateByID(ctx context.Context, id pulid.ID) (*ifta.Tax
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Relation(buncolgen.TaxRateRelations.Jurisdiction).
-			Where(buncolgen.TaxRateColumns.ID.Eq(), id).
+			Relation(iftacol.TaxRateRelations.Jurisdiction).
+			Where(iftacol.TaxRateColumns.ID.Eq(), id).
 			Scan(ctx)
 		if err != nil {
 			return nil, dberror.HandleNotFoundError(err, "IFTA tax rate")
@@ -159,7 +160,7 @@ func (r *repository) UpsertTaxRates(
 			return []*ifta.TaxRate{}, nil
 		}
 
-		cols := buncolgen.TaxRateColumns
+		cols := iftacol.TaxRateColumns
 		_, err := r.db.DBForContext(ctx).
 			NewInsert().
 			Model(&rates).
@@ -190,7 +191,7 @@ func (r *repository) UpsertTaxRates(
 
 func (r *repository) DeleteTaxRate(ctx context.Context, id pulid.ID, version int64) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.TaxRateColumns
+		cols := iftacol.TaxRateColumns
 		result, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*ifta.TaxRate)(nil)).
@@ -211,7 +212,7 @@ func (r *repository) ResolveRates(
 	req *iftaports.ResolveRatesRequest,
 ) (map[ifta.RateKey]*ifta.TaxRate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[ifta.RateKey]*ifta.TaxRate, error) {
-		cols := buncolgen.TaxRateColumns
+		cols := iftacol.TaxRateColumns
 		entities := make([]*ifta.TaxRate, 0, defaultRateCount)
 		err := r.db.DBForContext(ctx).
 			NewSelect().

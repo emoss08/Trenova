@@ -2,18 +2,21 @@
 
 package dedicatedlane
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/dedicatedlanecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [PatternConfig].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.PatternConfigFieldMap] instead of parsing struct tags via reflection.
+// the generated [dedicatedlanecol.PatternConfigFieldMap] instead of parsing struct tags via reflection.
 func (e *PatternConfig) GetStaticFieldMap() map[string]string {
-	return buncolgen.PatternConfigFieldMap
+	return dedicatedlanecol.PatternConfigFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Suggestion].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.SuggestionFieldMap] instead of parsing struct tags via reflection.
+// the generated [dedicatedlanecol.SuggestionFieldMap] instead of parsing struct tags via reflection.
 func (e *Suggestion) GetStaticFieldMap() map[string]string {
-	return buncolgen.SuggestionFieldMap
+	return dedicatedlanecol.SuggestionFieldMap
 }

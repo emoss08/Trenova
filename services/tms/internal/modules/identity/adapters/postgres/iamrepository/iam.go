@@ -1,6 +1,7 @@
 package iamrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/iamcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
@@ -165,12 +166,12 @@ func (r *repository) ListSCIMDirectories(
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*iam.SCIMDirectory], error) {
 			entities := make([]*iam.SCIMDirectory, 0, req.Filter.Pagination.SafeLimit())
-			cols := buncolgen.SCIMDirectoryColumns
+			cols := iamcol.SCIMDirectoryColumns
 
 			total, err := r.db.DBForContext(ctx).NewSelect().
 				Model(&entities).
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return buncolgen.SCIMDirectoryApplyTenant(req.Filter.TenantInfo)(sq)
+					return iamcol.SCIMDirectoryApplyTenant(req.Filter.TenantInfo)(sq)
 				}).
 				Order(cols.CreatedAt.OrderDesc()).
 				Limit(req.Filter.Pagination.SafeLimit()).
@@ -191,12 +192,12 @@ func (r *repository) GetSCIMDirectory(
 ) (*iam.SCIMDirectory, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*iam.SCIMDirectory, error) {
 		entity := new(iam.SCIMDirectory)
-		cols := buncolgen.SCIMDirectoryColumns
+		cols := iamcol.SCIMDirectoryColumns
 
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.SCIMDirectoryScopeTenant(sq, req.TenantInfo).
+				return iamcol.SCIMDirectoryScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx); err != nil {

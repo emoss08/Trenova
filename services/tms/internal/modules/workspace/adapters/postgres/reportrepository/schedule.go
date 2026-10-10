@@ -1,6 +1,7 @@
 package reportrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/reportcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -62,7 +63,7 @@ func (r *scheduleRepository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.ReportScheduleColumns.Version.Eq(), ov).
+			Where(reportcol.ReportScheduleColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -88,8 +89,8 @@ func (r *scheduleRepository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ReportScheduleScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.ReportScheduleColumns.ID.Eq(), req.ScheduleID)
+				return reportcol.ReportScheduleScopeTenant(sq, req.TenantInfo).
+					Where(reportcol.ReportScheduleColumns.ID.Eq(), req.ScheduleID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -105,13 +106,13 @@ func (r *scheduleRepository) List(
 	req *reportports.ListReportSchedulesRequest,
 ) ([]*report.ReportSchedule, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportSchedule, error) {
-		cols := buncolgen.ReportScheduleColumns
+		cols := reportcol.ReportScheduleColumns
 
 		entities := make([]*report.ReportSchedule, 0)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.ReportScheduleApplyTenant(req.TenantInfo))
+			Apply(reportcol.ReportScheduleApplyTenant(req.TenantInfo))
 
 		if !req.DefinitionID.IsNil() {
 			q = q.Where(cols.DefinitionID.Eq(), req.DefinitionID)
@@ -143,8 +144,8 @@ func (r *scheduleRepository) ListAllEnabled(
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Where(buncolgen.ReportScheduleColumns.Enabled.IsTrue()).
-			Order(buncolgen.ReportScheduleColumns.CreatedAt.OrderAsc()).
+			Where(reportcol.ReportScheduleColumns.Enabled.IsTrue()).
+			Order(reportcol.ReportScheduleColumns.CreatedAt.OrderAsc()).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list enabled report schedules", zap.Error(err))
@@ -164,8 +165,8 @@ func (r *scheduleRepository) Delete(
 			NewDelete().
 			Model((*report.ReportSchedule)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.ReportScheduleScopeTenantDelete(dq, req.TenantInfo).
-					Where(buncolgen.ReportScheduleColumns.ID.Eq(), req.ScheduleID)
+				return reportcol.ReportScheduleScopeTenantDelete(dq, req.TenantInfo).
+					Where(reportcol.ReportScheduleColumns.ID.Eq(), req.ScheduleID)
 			}).
 			Exec(ctx)
 		if err != nil {
@@ -184,7 +185,7 @@ func (r *scheduleRepository) ListDue(
 ) ([]*report.ReportSchedule, error) {
 	ctx = dbscope.WithSystem(ctx, "list report schedules due across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportSchedule, error) {
-		cols := buncolgen.ReportScheduleColumns
+		cols := reportcol.ReportScheduleColumns
 
 		entities := make([]*report.ReportSchedule, 0)
 		q := r.db.DBForContext(ctx).

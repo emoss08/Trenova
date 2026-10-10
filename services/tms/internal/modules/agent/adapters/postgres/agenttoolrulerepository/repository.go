@@ -1,6 +1,7 @@
 package agenttoolrulerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 	"context"
 	"database/sql"
 	"errors"
@@ -43,9 +44,9 @@ func (r *repository) List(
 			NewSelect().
 			Model(&overrides).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ToolRuleOverrideScopeTenant(sq, tenantInfo)
+				return agentcol.ToolRuleOverrideScopeTenant(sq, tenantInfo)
 			}).
-			OrderExpr(buncolgen.ToolRuleOverrideColumns.ToolName.OrderAsc()).
+			OrderExpr(agentcol.ToolRuleOverrideColumns.ToolName.OrderAsc()).
 			Scan(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("list tool rule overrides: %w", err)
@@ -65,8 +66,8 @@ func (r *repository) Get(
 			NewSelect().
 			Model(override).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ToolRuleOverrideScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.ToolRuleOverrideColumns.ToolName.Eq(), req.ToolName)
+				return agentcol.ToolRuleOverrideScopeTenant(sq, req.TenantInfo).
+					Where(agentcol.ToolRuleOverrideColumns.ToolName.Eq(), req.ToolName)
 			}).
 			Scan(ctx)
 		if errors.Is(err, sql.ErrNoRows) {
@@ -106,14 +107,14 @@ func (r *repository) Update(
 	override *agent.ToolRuleOverride,
 ) (*agent.ToolRuleOverride, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.ToolRuleOverride, error) {
-		cols := buncolgen.ToolRuleOverrideColumns
+		cols := agentcol.ToolRuleOverrideColumns
 		loaded := override.Version
 		override.Version++
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(override).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ToolRuleOverrideScopeTenantUpdate(uq, pagination.TenantInfo{
+				return agentcol.ToolRuleOverrideScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: override.OrganizationID,
 					BuID:  override.BusinessUnitID,
 				}).

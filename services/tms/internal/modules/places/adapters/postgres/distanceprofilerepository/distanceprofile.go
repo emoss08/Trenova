@@ -1,6 +1,7 @@
 package distanceprofilerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/distanceprofilecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
@@ -75,7 +76,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.DistanceProfileTable.Alias,
+		distanceprofilecol.DistanceProfileTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*distanceprofile.DistanceProfile)(nil),
@@ -88,7 +89,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.DistanceProfileTable.Alias,
+		distanceprofilecol.DistanceProfileTable.Alias,
 		req.Filter,
 		(*distanceprofile.DistanceProfile)(nil),
 	)
@@ -96,7 +97,7 @@ func (r *repository) applyTotalCountFilters(
 
 func applyDistanceProfileColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.DistanceProfileTable.All())
+		return q.ColumnExpr(distanceprofilecol.DistanceProfileTable.All())
 	}
 
 	return q.Column(columns...)
@@ -259,14 +260,14 @@ func (r *repository) Update(
 		previousVersion := entity.Version
 		entity.Version++
 
-		cols := buncolgen.DistanceProfileColumns
+		cols := distanceprofilecol.DistanceProfileColumns
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			if entity.IsDefault {
 				if _, err := r.db.DBForContext(c).NewUpdate().
 					Model((*distanceprofile.DistanceProfile)(nil)).
 					Set(cols.IsDefault.Set(), false).
 					WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-						return buncolgen.DistanceProfileScopeTenantUpdate(uq, pagination.TenantInfo{
+						return distanceprofilecol.DistanceProfileScopeTenantUpdate(uq, pagination.TenantInfo{
 							OrgID: entity.OrganizationID,
 							BuID:  entity.BusinessUnitID,
 						}).Where(cols.ID.NotEq(), entity.ID)
@@ -301,11 +302,11 @@ func (r *repository) Delete(
 	req distanceprofileports.DeleteDistanceProfileRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.DistanceProfileColumns
+		cols := distanceprofilecol.DistanceProfileColumns
 		result, err := r.db.DBForContext(ctx).NewDelete().
 			Model((*distanceprofile.DistanceProfile)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.DistanceProfileScopeTenantDelete(dq, req.TenantInfo).
+				return distanceprofilecol.DistanceProfileScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Exec(ctx)
@@ -370,7 +371,7 @@ func (r *repository) SelectOptions(
 	req *distanceprofileports.DistanceProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*distanceprofile.DistanceProfile], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*distanceprofile.DistanceProfile], error) {
-		cols := buncolgen.DistanceProfileColumns
+		cols := distanceprofilecol.DistanceProfileColumns
 		return dbhelper.SelectOptions[*distanceprofile.DistanceProfile](
 			ctx,
 			r.db.DBForContext(ctx),

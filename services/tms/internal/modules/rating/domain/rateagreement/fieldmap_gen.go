@@ -2,46 +2,49 @@
 
 package rateagreement
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateAgreement].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RateAgreementFieldMap] instead of parsing struct tags via reflection.
+// the generated [rateagreementcol.RateAgreementFieldMap] instead of parsing struct tags via reflection.
 func (e *RateAgreement) GetStaticFieldMap() map[string]string {
-	return buncolgen.RateAgreementFieldMap
+	return rateagreementcol.RateAgreementFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateAgreementAccessorial].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RateAgreementAccessorialFieldMap] instead of parsing struct tags via reflection.
+// the generated [rateagreementcol.RateAgreementAccessorialFieldMap] instead of parsing struct tags via reflection.
 func (e *RateAgreementAccessorial) GetStaticFieldMap() map[string]string {
-	return buncolgen.RateAgreementAccessorialFieldMap
+	return rateagreementcol.RateAgreementAccessorialFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateAgreementFuelBinding].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RateAgreementFuelBindingFieldMap] instead of parsing struct tags via reflection.
+// the generated [rateagreementcol.RateAgreementFuelBindingFieldMap] instead of parsing struct tags via reflection.
 func (e *RateAgreementFuelBinding) GetStaticFieldMap() map[string]string {
-	return buncolgen.RateAgreementFuelBindingFieldMap
+	return rateagreementcol.RateAgreementFuelBindingFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateAgreementRule].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RateAgreementRuleFieldMap] instead of parsing struct tags via reflection.
+// the generated [rateagreementcol.RateAgreementRuleFieldMap] instead of parsing struct tags via reflection.
 func (e *RateAgreementRule) GetStaticFieldMap() map[string]string {
-	return buncolgen.RateAgreementRuleFieldMap
+	return rateagreementcol.RateAgreementRuleFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateAgreementRuleBreak].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RateAgreementRuleBreakFieldMap] instead of parsing struct tags via reflection.
+// the generated [rateagreementcol.RateAgreementRuleBreakFieldMap] instead of parsing struct tags via reflection.
 func (e *RateAgreementRuleBreak) GetStaticFieldMap() map[string]string {
-	return buncolgen.RateAgreementRuleBreakFieldMap
+	return rateagreementcol.RateAgreementRuleBreakFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateAgreementVersion].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RateAgreementVersionFieldMap] instead of parsing struct tags via reflection.
+// the generated [rateagreementcol.RateAgreementVersionFieldMap] instead of parsing struct tags via reflection.
 func (e *RateAgreementVersion) GetStaticFieldMap() map[string]string {
-	return buncolgen.RateAgreementVersionFieldMap
+	return rateagreementcol.RateAgreementVersionFieldMap
 }

@@ -1,6 +1,7 @@
 package carrierintelrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
 	"context"
 	"fmt"
 
@@ -65,8 +66,8 @@ func (r *rawPayloadRepository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierIntelRawPayloadScopeTenant(sq, tenantInfo).
-					Where(buncolgen.CarrierIntelRawPayloadColumns.ID.Eq(), id)
+				return carrierintelcol.CarrierIntelRawPayloadScopeTenant(sq, tenantInfo).
+					Where(carrierintelcol.CarrierIntelRawPayloadColumns.ID.Eq(), id)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -84,7 +85,7 @@ func (r *rawPayloadRepository) PurgeExpired(
 ) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "purge expired carrier intelligence payloads across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.CarrierIntelRawPayloadColumns
+		cols := carrierintelcol.CarrierIntelRawPayloadColumns
 		batch := intutils.Clamp(
 			intutils.WithDefault(max(limit, 0), defaultPurgeBatchSize),
 			1,

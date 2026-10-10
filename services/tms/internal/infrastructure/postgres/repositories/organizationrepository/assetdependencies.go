@@ -1,6 +1,9 @@
 package organizationrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
@@ -47,8 +50,8 @@ func assetDependencyCounts(
 			model:  (*shipment.Assignment)(nil),
 			target: &counts.ActiveDriverAssignments,
 			scope: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AssignmentScopeTenant(sq, tenantInfo).
-					Where(buncolgen.AssignmentColumns.Status.In(), bun.List(activeAssignmentStatuses))
+				return shipmentcol.AssignmentScopeTenant(sq, tenantInfo).
+					Where(shipmentcol.AssignmentColumns.Status.In(), bun.List(activeAssignmentStatuses))
 			},
 		},
 		{
@@ -56,9 +59,9 @@ func assetDependencyCounts(
 			model:  (*driversettlement.Settlement)(nil),
 			target: &counts.UnpaidDriverSettlements,
 			scope: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.SettlementScopeTenant(sq, tenantInfo).
+				return driversettlementcol.SettlementScopeTenant(sq, tenantInfo).
 					Where(
-						buncolgen.SettlementColumns.Status.In(),
+						driversettlementcol.SettlementColumns.Status.In(),
 						bun.List(unpaidDriverSettlementStatuses),
 					)
 			},
@@ -68,8 +71,8 @@ func assetDependencyCounts(
 			model:  (*worker.Worker)(nil),
 			target: &counts.LinkedPortalUsers,
 			scope: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerScopeTenant(sq, tenantInfo).
-					Where(buncolgen.WorkerColumns.UserID.IsNotNull())
+				return workercol.WorkerScopeTenant(sq, tenantInfo).
+					Where(workercol.WorkerColumns.UserID.IsNotNull())
 			},
 		},
 	}

@@ -1,6 +1,7 @@
 package fleetcoderepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/fleetcodecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
@@ -90,7 +91,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.FleetCodeTable.Alias,
+		fleetcodecol.FleetCodeTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*fleetcode.FleetCode)(nil),
@@ -103,7 +104,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.FleetCodeTable.Alias,
+		fleetcodecol.FleetCodeTable.Alias,
 		req.Filter,
 		(*fleetcode.FleetCode)(nil),
 	)
@@ -111,7 +112,7 @@ func (r *repository) applyTotalCountFilters(
 
 func applyFleetCodeColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.FleetCodeTable.All())
+		return q.ColumnExpr(fleetcodecol.FleetCodeTable.All())
 	}
 
 	return q.Column(columns...)

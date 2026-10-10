@@ -1,6 +1,7 @@
 package customerrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -121,7 +122,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.CustomerTable.Alias,
+		customercol.CustomerTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*customer.Customer)(nil),
@@ -134,7 +135,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.CustomerTable.Alias,
+		customercol.CustomerTable.Alias,
 		req.Filter,
 		(*customer.Customer)(nil),
 	)
@@ -142,7 +143,7 @@ func (r *repository) applyTotalCountFilters(
 
 func applyCustomerColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.CustomerTable.All())
+		return q.ColumnExpr(customercol.CustomerTable.All())
 	}
 
 	return q.Column(columns...)
@@ -254,8 +255,8 @@ func (r *repository) GetBillingProfile(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CustomerBillingProfileScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.CustomerBillingProfileColumns.CustomerID.Eq(), req.CustomerID)
+				return customercol.CustomerBillingProfileScopeTenant(sq, req.TenantInfo).
+					Where(customercol.CustomerBillingProfileColumns.CustomerID.Eq(), req.CustomerID)
 			}).
 			Relation("DocumentTypes").
 			Scan(ctx)
@@ -283,8 +284,8 @@ func (r *repository) GetByIDs(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CustomerScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.CustomerColumns.ID.In(), bun.List(req.CustomerIDs))
+				return customercol.CustomerScopeTenant(sq, req.TenantInfo).
+					Where(customercol.CustomerColumns.ID.In(), bun.List(req.CustomerIDs))
 			}).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return r.addOptions(sq, req.CustomerFilterOptions)
@@ -448,7 +449,7 @@ func (r *repository) saveBillingProfile(
 	billingProfile.OrganizationID = cus.OrganizationID
 	billingProfile.BusinessUnitID = cus.BusinessUnitID
 
-	cbp := buncolgen.CustomerBillingProfileColumns
+	cbp := customercol.CustomerBillingProfileColumns
 
 	// Every column the profile owns is listed below except last_billed_period_end,
 	// and that omission is deliberate: the billing watermark is advanced only by

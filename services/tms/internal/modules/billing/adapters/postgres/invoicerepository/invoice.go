@@ -1,6 +1,9 @@
 package invoicerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/invoiceadjustmentcol"
 	"context"
 	"fmt"
 	"strings"
@@ -94,7 +97,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.InvoiceTable.Alias,
+		invoicecol.InvoiceTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*invoice.Invoice)(nil),
@@ -107,7 +110,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.InvoiceTable.Alias,
+		invoicecol.InvoiceTable.Alias,
 		req.Filter,
 		(*invoice.Invoice)(nil),
 	)
@@ -150,7 +153,7 @@ func (r *repository) ListConnection(
 					return dba.
 						NewSelect().
 						Model(entities).
-						ColumnExpr(buncolgen.InvoiceTable.All()).
+						ColumnExpr(invoicecol.InvoiceTable.All()).
 						Relation("Customer")
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
@@ -201,23 +204,23 @@ func (r *repository) GetByIDs(
 	req invoiceports.GetInvoicesByIDsRequest,
 ) ([]*invoice.Invoice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*invoice.Invoice, error) {
-		rel := buncolgen.InvoiceRelations
+		rel := invoicecol.InvoiceRelations
 		entities := make([]*invoice.Invoice, 0, len(req.InvoiceIDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.InvoiceScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.InvoiceColumns.ID.In(), bun.List(req.InvoiceIDs))
+				return invoicecol.InvoiceScopeTenant(sq, req.TenantInfo).
+					Where(invoicecol.InvoiceColumns.ID.In(), bun.List(req.InvoiceIDs))
 			}).
 			Relation(rel.Customer).
 			Relation(rel.ShipperCustomer).
 			Relation(rel.Shipment).
 			Relation(rel.BillingQueueItem).
 			Relation(rel.PDFDocument).
-			Relation(buncolgen.Rel(rel.PDFDocument, buncolgen.DocumentRelations.DocumentType)).
+			Relation(buncolgen.Rel(rel.PDFDocument, documentcol.DocumentRelations.DocumentType)).
 			Relation(rel.Lines, func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Order(buncolgen.InvoiceLineColumns.LineNumber.OrderAsc())
+				return q.Order(invoicecol.InvoiceLineColumns.LineNumber.OrderAsc())
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -241,14 +244,14 @@ func (r *repository) ListLineCharges(
 			return []invoiceports.InvoiceLineCharge{}, nil
 		}
 
-		invl := buncolgen.InvoiceLineColumns
+		invl := invoicecol.InvoiceLineColumns
 		charges := make([]invoiceports.InvoiceLineCharge, 0, len(req.InvoiceIDs))
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model((*invoice.InvoiceLine)(nil)).
 			Distinct().
 			Column(invl.AdditionalChargeID.Bare(), invl.ShipmentID.Bare()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.InvoiceLineScopeTenant(sq, req.TenantInfo).
+				return invoicecol.InvoiceLineScopeTenant(sq, req.TenantInfo).
 					Where(invl.InvoiceID.In(), bun.List(req.InvoiceIDs)).
 					Where(invl.AdditionalChargeID.IsNotNull()).
 					Where(invl.ShipmentID.IsNotNull())
@@ -271,9 +274,9 @@ func (r *repository) NetBilledByCharge(
 			return map[pulid.ID]decimal.Decimal{}, nil
 		}
 
-		invl := buncolgen.InvoiceLineColumns
-		inv := buncolgen.InvoiceColumns
-		adj := buncolgen.InvoiceAdjustmentColumns
+		invl := invoicecol.InvoiceLineColumns
+		inv := invoicecol.InvoiceColumns
+		adj := invoiceadjustmentcol.InvoiceAdjustmentColumns
 
 		var rows []struct {
 			ChargeID pulid.ID        `bun:"charge_id"`
@@ -284,21 +287,21 @@ func (r *repository) NetBilledByCharge(
 			ColumnExpr(invl.AdditionalChargeID.As("charge_id")).
 			ColumnExpr(buncolgen.Sum(invl.Amount, "net")).
 			Join(
-				"JOIN "+buncolgen.InvoiceTable.As(buncolgen.InvoiceTable.Alias)+" ON ?",
+				"JOIN "+invoicecol.InvoiceTable.As(invoicecol.InvoiceTable.Alias)+" ON ?",
 				bun.Safe(inv.ID.EqColumn(invl.InvoiceID)+
 					" AND "+inv.OrganizationID.EqColumn(invl.OrganizationID)+
 					" AND "+inv.BusinessUnitID.EqColumn(invl.BusinessUnitID)),
 			).
 			Join(
-				"LEFT JOIN "+buncolgen.InvoiceAdjustmentTable.As(
-					buncolgen.InvoiceAdjustmentTable.Alias,
+				"LEFT JOIN "+invoiceadjustmentcol.InvoiceAdjustmentTable.As(
+					invoiceadjustmentcol.InvoiceAdjustmentTable.Alias,
 				)+" ON ?",
 				bun.Safe(adj.ID.EqColumn(inv.SourceInvoiceAdjustmentID)+
 					" AND "+adj.OrganizationID.EqColumn(inv.OrganizationID)+
 					" AND "+adj.BusinessUnitID.EqColumn(inv.BusinessUnitID)),
 			).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.InvoiceLineScopeTenant(sq, req.TenantInfo).
+				return invoicecol.InvoiceLineScopeTenant(sq, req.TenantInfo).
 					Where(invl.AdditionalChargeID.In(), bun.List(req.ChargeIDs)).
 					Where(inv.Status.Ne(), invoice.StatusVoided)
 			}).
@@ -335,8 +338,8 @@ func (r *repository) ListByShipmentIDs(
 			return result, nil
 		}
 
-		inv := buncolgen.InvoiceColumns
-		invl := buncolgen.InvoiceLineColumns
+		inv := invoicecol.InvoiceColumns
+		invl := invoicecol.InvoiceLineColumns
 		var pairs []struct {
 			ShipmentID pulid.ID `bun:"shipment_id"`
 			InvoiceID  pulid.ID `bun:"invoice_id"`
@@ -346,7 +349,7 @@ func (r *repository) ListByShipmentIDs(
 			DistinctOn(invl.ShipmentID.Qualified()+", "+invl.InvoiceID.Qualified()).
 			Column(invl.ShipmentID.Bare(), invl.InvoiceID.Bare()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.InvoiceLineScopeTenant(sq, req.TenantInfo).
+				return invoicecol.InvoiceLineScopeTenant(sq, req.TenantInfo).
 					Where(invl.ShipmentID.In(), bun.List(req.ShipmentIDs))
 			}).
 			UnionAll(r.db.DBForContext(ctx).NewSelect().
@@ -354,7 +357,7 @@ func (r *repository) ListByShipmentIDs(
 				Column(inv.ShipmentID.Bare()).
 				ColumnExpr(inv.ID.As("invoice_id")).
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return buncolgen.InvoiceScopeTenant(sq, req.TenantInfo).
+					return invoicecol.InvoiceScopeTenant(sq, req.TenantInfo).
 						Where(inv.ShipmentID.In(), bun.List(req.ShipmentIDs))
 				})).
 			Scan(ctx, &pairs); err != nil {
@@ -441,14 +444,14 @@ func (r *repository) UpdateEDISendStatus(
 	req invoiceports.UpdateInvoiceEDISendStatusRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		inv := buncolgen.InvoiceColumns
+		inv := invoicecol.InvoiceColumns
 		q := r.db.DBForContext(ctx).NewUpdate().
 			Model((*invoice.Invoice)(nil)).
 			Set(inv.EDISendStatus.Set(), req.Status).
 			Set(inv.LastEDIError.Set(), req.Error).
 			Set(inv.UpdatedAt.Set(), timeutils.NowUnix()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.InvoiceScopeTenantUpdate(uq, req.TenantInfo).
+				return invoicecol.InvoiceScopeTenantUpdate(uq, req.TenantInfo).
 					Where(inv.ID.Eq(), req.InvoiceID)
 			})
 		if req.MessageID.IsNotNil() {
@@ -470,10 +473,10 @@ func (r *repository) GetByBillingQueueItemID(
 	req invoiceports.GetInvoiceByBillingQueueItemIDRequest,
 ) (*invoice.Invoice, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoice.Invoice, error) {
-		inv := buncolgen.InvoiceColumns
+		inv := invoicecol.InvoiceColumns
 
 		var entity invoice.Invoice
-		err := buncolgen.InvoiceScopeTenant(
+		err := invoicecol.InvoiceScopeTenant(
 			r.db.DBForContext(ctx).
 				NewSelect().
 				Model(&entity).
@@ -1090,14 +1093,14 @@ func (r *repository) StampExchangeRate(
 	req *kernelports.StampExchangeRateRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		inv := buncolgen.InvoiceColumns
+		inv := invoicecol.InvoiceColumns
 		result, err := r.db.DBForContext(ctx).NewUpdate().
 			Model((*invoice.Invoice)(nil)).
 			Set(inv.ExchangeRate.Set(), req.Rate).
 			Set(inv.ExchangeRateDate.Set(), req.Date).
 			Set(inv.UpdatedAt.Set(), timeutils.NowUnix()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.InvoiceScopeTenantUpdate(uq, req.TenantInfo).
+				return invoicecol.InvoiceScopeTenantUpdate(uq, req.TenantInfo).
 					Where(inv.ID.Eq(), req.ID)
 			}).
 			Exec(ctx)

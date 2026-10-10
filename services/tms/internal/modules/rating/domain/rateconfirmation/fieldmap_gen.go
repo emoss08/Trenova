@@ -2,18 +2,21 @@
 
 package rateconfirmation
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/rateconfirmationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateConfirmation].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RateConfirmationFieldMap] instead of parsing struct tags via reflection.
+// the generated [rateconfirmationcol.RateConfirmationFieldMap] instead of parsing struct tags via reflection.
 func (e *RateConfirmation) GetStaticFieldMap() map[string]string {
-	return buncolgen.RateConfirmationFieldMap
+	return rateconfirmationcol.RateConfirmationFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateConfirmationToken].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RateConfirmationTokenFieldMap] instead of parsing struct tags via reflection.
+// the generated [rateconfirmationcol.RateConfirmationTokenFieldMap] instead of parsing struct tags via reflection.
 func (e *RateConfirmationToken) GetStaticFieldMap() map[string]string {
-	return buncolgen.RateConfirmationTokenFieldMap
+	return rateconfirmationcol.RateConfirmationTokenFieldMap
 }

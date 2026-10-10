@@ -2,11 +2,14 @@
 
 package bankreceiptworkitem
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/bankreceiptworkitemcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkItem].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.WorkItemFieldMap] instead of parsing struct tags via reflection.
+// the generated [bankreceiptworkitemcol.WorkItemFieldMap] instead of parsing struct tags via reflection.
 func (e *WorkItem) GetStaticFieldMap() map[string]string {
-	return buncolgen.WorkItemFieldMap
+	return bankreceiptworkitemcol.WorkItemFieldMap
 }

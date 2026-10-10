@@ -2,6 +2,7 @@
 package edisourcecontextrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
 	"context"
 	"strings"
 
@@ -43,7 +44,7 @@ func (r *repository) ListSourceContextSchemas(
 ) (*pagination.ListResult[*edi.EDISourceContextSchema], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDISourceContextSchema], error) {
 		entities := make([]*edi.EDISourceContextSchema, 0, req.Filter.Pagination.SafeLimit())
-		cols := buncolgen.EDISourceContextSchemaColumns
+		cols := edicol.EDISourceContextSchemaColumns
 
 		total, err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -75,7 +76,7 @@ func (r *repository) GetSourceContextSchema(
 ) (*edi.EDISourceContextSchema, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDISourceContextSchema, error) {
 		entity := new(edi.EDISourceContextSchema)
-		cols := buncolgen.EDISourceContextSchemaColumns
+		cols := edicol.EDISourceContextSchemaColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -99,7 +100,7 @@ func (r *repository) GetActiveSourceContextSchema(
 ) (*edi.EDISourceContextSchema, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDISourceContextSchema, error) {
 		entity := new(edi.EDISourceContextSchema)
-		cols := buncolgen.EDISourceContextSchemaColumns
+		cols := edicol.EDISourceContextSchemaColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
@@ -152,7 +153,7 @@ func (r *repository) searchSourceContextFields(
 ) (*pagination.ListResult[*edi.EDISourceContextField], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDISourceContextField], error) {
 		entities := make([]*edi.EDISourceContextField, 0, req.Filter.Pagination.SafeLimit())
-		fieldCols := buncolgen.EDISourceContextFieldColumns
+		fieldCols := edicol.EDISourceContextFieldColumns
 
 		total, err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -180,7 +181,7 @@ func filterSourceContextSchemasQuery(
 	req *ediports.ListEDISourceContextSchemasRequest,
 ) *bun.SelectQuery {
 	query = sourceContextSchemaTenantScope(query, req.Filter.TenantInfo)
-	cols := buncolgen.EDISourceContextSchemaColumns
+	cols := edicol.EDISourceContextSchemaColumns
 
 	if req.Standard != "" {
 		query = query.Where(cols.Standard.Eq(), req.Standard)
@@ -220,8 +221,8 @@ func filterSourceContextFieldsQuery(
 	req *ediports.ListEDISourceContextFieldsRequest,
 ) *bun.SelectQuery {
 	query = sourceContextSchemaTenantScope(query, req.Filter.TenantInfo)
-	fieldCols := buncolgen.EDISourceContextFieldColumns
-	schemaCols := buncolgen.EDISourceContextSchemaColumns
+	fieldCols := edicol.EDISourceContextFieldColumns
+	schemaCols := edicol.EDISourceContextSchemaColumns
 
 	if req.SchemaID.IsNotNil() {
 		query = query.Where(fieldCols.SchemaID.Eq(), req.SchemaID)
@@ -264,7 +265,7 @@ func sourceContextSchemaTenantScope(
 	query *bun.SelectQuery,
 	tenantInfo pagination.TenantInfo,
 ) *bun.SelectQuery {
-	cols := buncolgen.EDISourceContextSchemaColumns
+	cols := edicol.EDISourceContextSchemaColumns
 
 	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 		return sq.WhereOr(
@@ -276,11 +277,11 @@ func sourceContextSchemaTenantScope(
 }
 
 func sourceContextSchemaJoin() string {
-	schemaCols := buncolgen.EDISourceContextSchemaColumns
-	fieldCols := buncolgen.EDISourceContextFieldColumns
+	schemaCols := edicol.EDISourceContextSchemaColumns
+	fieldCols := edicol.EDISourceContextFieldColumns
 
-	return "JOIN " + buncolgen.EDISourceContextSchemaTable.As(
-		buncolgen.EDISourceContextSchemaTable.Alias,
+	return "JOIN " + edicol.EDISourceContextSchemaTable.As(
+		edicol.EDISourceContextSchemaTable.Alias,
 	) +
 		" ON " + schemaCols.ID.EqColumn(
 		fieldCols.SchemaID,

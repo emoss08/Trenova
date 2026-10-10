@@ -1,6 +1,7 @@
 package edimessagerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
 	"context"
 	"errors"
 	"strings"
@@ -51,13 +52,13 @@ func (r *repository) ListMessages(
 ) (*pagination.ListResult[*edi.EDIMessage], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIMessage], error) {
 		entities := make([]*edi.EDIMessage, 0, req.Filter.Pagination.SafeLimit())
-		cols := buncolgen.EDIMessageColumns
-		rel := buncolgen.EDIMessageRelations
+		cols := edicol.EDIMessageColumns
+		rel := edicol.EDIMessageRelations
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			ColumnExpr(buncolgen.EDIMessageTable.All()).
+			ColumnExpr(edicol.EDIMessageTable.All()).
 			ColumnExpr(`(
 			SELECT COUNT(*)
 			FROM edi_message_validation_errors AS emve
@@ -68,7 +69,7 @@ func (r *repository) ListMessages(
 			Relation(rel.Partner).
 			Relation(rel.PartnerDocumentProfile).
 			Relation(rel.Template).
-			Apply(buncolgen.EDIMessageApplyTenant(req.Filter.TenantInfo))
+			Apply(edicol.EDIMessageApplyTenant(req.Filter.TenantInfo))
 		if req.TransactionSet != "" {
 			query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
 		}
@@ -106,8 +107,8 @@ func (r *repository) GetMessageByID(
 ) (*edi.EDIMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
 		entity := new(edi.EDIMessage)
-		cols := buncolgen.EDIMessageColumns
-		rel := buncolgen.EDIMessageRelations
+		cols := edicol.EDIMessageColumns
+		rel := edicol.EDIMessageRelations
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -117,15 +118,15 @@ func (r *repository) GetMessageByID(
 			Relation(rel.PartnerDocumentProfile).
 			Relation(rel.Template).
 			Relation(rel.TemplateVersion).
-			Relation(buncolgen.Rel(rel.TemplateVersion, buncolgen.EDITemplateVersionRelations.ScriptLibraries), func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.OrderExpr(buncolgen.EDITemplateScriptLibraryColumns.Name.Expr("lower({}) ASC"))
+			Relation(buncolgen.Rel(rel.TemplateVersion, edicol.EDITemplateVersionRelations.ScriptLibraries), func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.OrderExpr(edicol.EDITemplateScriptLibraryColumns.Name.Expr("lower({}) ASC"))
 			}).
 			Relation(rel.ValidationErrors, func(q *bun.SelectQuery) *bun.SelectQuery {
-				errCols := buncolgen.EDIMessageValidationErrorColumns
+				errCols := edicol.EDIMessageValidationErrorColumns
 				return q.Order(errCols.CreatedAt.OrderAsc(), errCols.ID.OrderAsc())
 			}).
 			Where(cols.ID.Eq(), req.ID).
-			Apply(buncolgen.EDIMessageApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)).
 			Scan(ctx)
 		if err != nil {
 			return nil, dberror.HandleNotFoundError(err, "EDIMessage")
@@ -143,8 +144,8 @@ func (r *repository) GetMessageByIdempotencyKey(
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Where(buncolgen.EDIMessageColumns.IdempotencyKey.Eq(), req.IdempotencyKey).
-			Apply(buncolgen.EDIMessageApplyTenant(req.TenantInfo)).
+			Where(edicol.EDIMessageColumns.IdempotencyKey.Eq(), req.IdempotencyKey).
+			Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)).
 			Scan(ctx)
 		if err != nil {
 			return nil, dberror.HandleNotFoundError(err, "EDIMessage")
@@ -195,8 +196,8 @@ func (r *repository) GetServiceFailure214LifecycleMessage(
 ) (*edi.EDIMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
 		entity := new(edi.EDIMessage)
-		cols := buncolgen.EDIMessageColumns
-		rel := buncolgen.EDIMessageRelations
+		cols := edicol.EDIMessageColumns
+		rel := edicol.EDIMessageRelations
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -214,7 +215,7 @@ func (r *repository) GetServiceFailure214LifecycleMessage(
 				"payload_snapshot->'shipmentStatus'->'references'->>'serviceFailure214Trigger' = ?",
 				req.Trigger,
 			).
-			Apply(buncolgen.EDIMessageApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)).
 			Order(cols.GeneratedAt.OrderDesc()).
 			Limit(1).
 			Scan(ctx)
@@ -354,7 +355,7 @@ func (r *repository) GetOutboundMessageByAS2MessageID(
 	ctx = dbscope.WithSystem(ctx, "resolve the outbound message an inbound AS2 receipt names before its tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
 		entity := new(edi.EDIMessage)
-		cols := buncolgen.EDIMessageColumns
+		cols := edicol.EDIMessageColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
@@ -374,7 +375,7 @@ func (r *repository) GetDeliveryStatusCounts(
 	req ediports.GetEDIMessageStatusCountsRequest,
 ) (map[edi.MessageDeliveryStatus]int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[edi.MessageDeliveryStatus]int, error) {
-		cols := buncolgen.EDIMessageColumns
+		cols := edicol.EDIMessageColumns
 		var rows []struct {
 			DeliveryStatus edi.MessageDeliveryStatus `bun:"delivery_status"`
 			Count          int                       `bun:"count"`
@@ -385,7 +386,7 @@ func (r *repository) GetDeliveryStatusCounts(
 			ColumnExpr(cols.DeliveryStatus.Qualified()).
 			ColumnExpr("COUNT(*) AS count").
 			Where(cols.DeliveryStatus.IsNotNull()).
-			Apply(buncolgen.EDIMessageApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)).
 			GroupExpr(cols.DeliveryStatus.Qualified())
 		if req.Since > 0 {
 			query = query.Where(cols.GeneratedAt.Gte(), req.Since)
@@ -406,7 +407,7 @@ func (r *repository) GetAckStatusCounts(
 	req ediports.GetEDIMessageStatusCountsRequest,
 ) (map[edi.MessageAcknowledgmentStatus]int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[edi.MessageAcknowledgmentStatus]int, error) {
-		cols := buncolgen.EDIMessageColumns
+		cols := edicol.EDIMessageColumns
 		var rows []struct {
 			AckStatus edi.MessageAcknowledgmentStatus `bun:"ack_status"`
 			Count     int                             `bun:"count"`
@@ -417,7 +418,7 @@ func (r *repository) GetAckStatusCounts(
 			ColumnExpr(cols.AckStatus.Qualified()).
 			ColumnExpr("COUNT(*) AS count").
 			Where(cols.AckStatus.IsNotNull()).
-			Apply(buncolgen.EDIMessageApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)).
 			GroupExpr(cols.AckStatus.Qualified())
 		if req.Since > 0 {
 			query = query.Where(cols.GeneratedAt.Gte(), req.Since)
@@ -485,11 +486,11 @@ func (r *repository) GetPartnerScorecards(
 			JoinOn("ep.organization_id = emsg.organization_id").
 			JoinOn("ep.business_unit_id = emsg.business_unit_id").
 			Where("emsg.edi_partner_id IS NOT NULL").
-			Apply(buncolgen.EDIMessageApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)).
 			GroupExpr("emsg.edi_partner_id").
 			OrderExpr("MAX(ep.name) ASC")
 		if req.Since > 0 {
-			query = query.Where(buncolgen.EDIMessageColumns.GeneratedAt.Gte(), req.Since)
+			query = query.Where(edicol.EDIMessageColumns.GeneratedAt.Gte(), req.Since)
 		}
 		if err := query.Scan(ctx, &rows); err != nil {
 			return nil, err
@@ -520,11 +521,11 @@ func (r *repository) GetVolumeSeries(
 				"COUNT(*) FILTER (WHERE emsg.direction = 'Outbound' AND emsg.delivery_status IN ('Failed', 'DeadLettered')) AS failed_count",
 			).
 			ColumnExpr("COUNT(*) FILTER (WHERE emsg.direction = 'Inbound') AS received_count").
-			Apply(buncolgen.EDIMessageApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)).
 			GroupExpr("1").
 			OrderExpr("1 ASC")
 		if req.Since > 0 {
-			query = query.Where(buncolgen.EDIMessageColumns.GeneratedAt.Gte(), req.Since)
+			query = query.Where(edicol.EDIMessageColumns.GeneratedAt.Gte(), req.Since)
 		}
 		if err := query.Scan(ctx, &points); err != nil {
 			return nil, err
@@ -538,13 +539,13 @@ func (r *repository) GetOverdueAckCount(
 	req ediports.GetEDIOverdueAckCountRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.EDIMessageColumns
+		cols := edicol.EDIMessageColumns
 		return r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*edi.EDIMessage)(nil)).
 			Where(cols.AckStatus.Eq(), edi.MessageAcknowledgmentStatusPending).
 			Where(cols.GeneratedAt.Lt(), req.PendingSince).
-			Apply(buncolgen.EDIMessageApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)).
 			Count(ctx)
 	})
 }
@@ -554,7 +555,7 @@ func (r *repository) ListRecentDeadLettered(
 	req *ediports.ListRecentEDIMessageFailuresRequest,
 ) ([]*edi.EDIMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIMessage, error) {
-		cols := buncolgen.EDIMessageColumns
+		cols := edicol.EDIMessageColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = 10
@@ -566,7 +567,7 @@ func (r *repository) ListRecentDeadLettered(
 			ExcludeColumn("raw_x12", "payload_snapshot").
 			Relation("Partner").
 			Where(cols.DeliveryStatus.Eq(), edi.MessageDeliveryStatusDeadLettered).
-			Apply(buncolgen.EDIMessageApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDIMessageApplyTenant(req.TenantInfo)).
 			Order(cols.UpdatedAt.OrderDesc()).
 			Limit(limit).
 			Scan(ctx); err != nil {
@@ -581,7 +582,7 @@ func (r *repository) PurgeRawX12Before(
 	req ediports.PurgeEDIRawPayloadsRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := buncolgen.EDIMessageColumns
+		cols := edicol.EDIMessageColumns
 		subquery := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*edi.EDIMessage)(nil)).
@@ -617,7 +618,7 @@ func (r *repository) PurgeRawX12Before(
 func (r *repository) CountDeadLetteredSince(ctx context.Context, since int64) (int64, error) {
 	ctx = dbscope.WithSystem(ctx, "count dead-lettered EDI messages instance-wide for the health check")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := buncolgen.EDIMessageColumns
+		cols := edicol.EDIMessageColumns
 		count, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*edi.EDIMessage)(nil)).
@@ -637,7 +638,7 @@ func (r *repository) GetOutboundMessageForAck(
 ) (*edi.EDIMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
 		entity := new(edi.EDIMessage)
-		cols := buncolgen.EDIMessageColumns
+		cols := edicol.EDIMessageColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
@@ -707,7 +708,7 @@ func applyMessageArchiveSearch(query *bun.SelectQuery, search string) *bun.Selec
 	}
 
 	term := "%" + strings.ToLower(search) + "%"
-	cols := buncolgen.EDIMessageColumns
+	cols := edicol.EDIMessageColumns
 
 	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 		return sq.WhereOr(cols.ID.LowerLike(), term).
@@ -755,7 +756,7 @@ func (r *repository) ListMessagesCursor(
 					NewSelect().
 					Model(entities).
 					ExcludeColumn("raw_x12", "payload_snapshot").
-					Relation(buncolgen.EDIMessageRelations.Partner)
+					Relation(edicol.EDIMessageRelations.Partner)
 			},
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 				sq, applyErr := querybuilder.ApplyCursorFilters(
@@ -778,7 +779,7 @@ func applyMessageListFilters(
 	q *bun.SelectQuery,
 	req *ediports.ListEDIMessagesRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.EDIMessageColumns
+	cols := edicol.EDIMessageColumns
 	if req.TransactionSet != "" {
 		q = q.Where(cols.TransactionSet.Eq(), req.TransactionSet)
 	}

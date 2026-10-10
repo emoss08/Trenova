@@ -2,11 +2,14 @@
 
 package tablelayout
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tablelayoutcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TableLayout].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.TableLayoutFieldMap] instead of parsing struct tags via reflection.
+// the generated [tablelayoutcol.TableLayoutFieldMap] instead of parsing struct tags via reflection.
 func (e *TableLayout) GetStaticFieldMap() map[string]string {
-	return buncolgen.TableLayoutFieldMap
+	return tablelayoutcol.TableLayoutFieldMap
 }

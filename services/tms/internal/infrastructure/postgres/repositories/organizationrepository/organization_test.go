@@ -1,6 +1,7 @@
 package organizationrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"database/sql"
 	"slices"
 	"testing"
@@ -40,9 +41,9 @@ func TestUpdateWritesDisabledCapabilityFlags(t *testing.T) {
 		WherePK().
 		Where("version = ?", 1).
 		OmitZero().
-		Value(buncolgen.OrganizationColumns.BrokerageEnabled.String(), "?", org.BrokerageEnabled).
+		Value(tenantcol.OrganizationColumns.BrokerageEnabled.String(), "?", org.BrokerageEnabled).
 		Value(
-			buncolgen.OrganizationColumns.AssetOperationsEnabled.String(),
+			tenantcol.OrganizationColumns.AssetOperationsEnabled.String(),
 			"?",
 			org.AssetOperationsEnabled,
 		).

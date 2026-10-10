@@ -1,6 +1,8 @@
 package schedulingrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/fleetcodecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 
@@ -38,8 +40,8 @@ func (r *repository) rosterScope(
 	ctx context.Context,
 	req *workerports.RotaQuery,
 ) *bun.SelectQuery {
-	cols := buncolgen.WorkerColumns
-	q := buncolgen.WorkerScopeTenant(
+	cols := workercol.WorkerColumns
+	q := workercol.WorkerScopeTenant(
 		r.db.DBForContext(ctx).NewSelect().Model((*worker.Worker)(nil)),
 		req.TenantInfo,
 	).Where(cols.Status.Eq(), domaintypes.StatusActive)
@@ -47,7 +49,7 @@ func (r *repository) rosterScope(
 		q = q.Where(cols.FleetCodeID.Eq(), req.FleetCodeID)
 	}
 	if len(req.ManagerIDs) > 0 {
-		fleet := buncolgen.FleetCodeColumns
+		fleet := fleetcodecol.FleetCodeColumns
 		q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.
 				Where(cols.ManagerID.In(), bun.List(req.ManagerIDs)).

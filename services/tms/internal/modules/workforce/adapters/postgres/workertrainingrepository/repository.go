@@ -1,6 +1,7 @@
 package workertrainingrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 	"strings"
@@ -65,7 +66,7 @@ func duplicateOpenRecord() error {
 }
 
 func orderCourses(sq *bun.SelectQuery) *bun.SelectQuery {
-	cols := buncolgen.TrainingCourseColumns
+	cols := workercol.TrainingCourseColumns
 	return sq.Order(cols.SortOrder.OrderAsc()).Order(cols.Name.OrderAsc())
 }
 
@@ -73,7 +74,7 @@ func (r *repository) applyCourseFilters(
 	q *bun.SelectQuery,
 	req *workerports.ListTrainingCoursesRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.TrainingCourseColumns
+	cols := workercol.TrainingCourseColumns
 	if req.Status != "" {
 		q = q.Where(cols.Status.Eq(), req.Status)
 	}
@@ -99,7 +100,7 @@ func (r *repository) ListCourses(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.TrainingCourseTable.Alias,
+						workercol.TrainingCourseTable.Alias,
 						req.Filter,
 						(*worker.TrainingCourse)(nil),
 					)
@@ -122,12 +123,12 @@ func (r *repository) ListCourses(
 				Query: func(items *[]*worker.TrainingCourse) *bun.SelectQuery {
 					return dba.NewSelect().
 						Model(items).
-						ColumnExpr(buncolgen.TrainingCourseTable.All())
+						ColumnExpr(workercol.TrainingCourseTable.All())
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.TrainingCourseTable.Alias,
+						workercol.TrainingCourseTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*worker.TrainingCourse)(nil),
@@ -153,13 +154,13 @@ func (r *repository) ListActiveCourses(
 	tenantInfo pagination.TenantInfo,
 ) ([]*worker.TrainingCourse, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.TrainingCourse, error) {
-		cols := buncolgen.TrainingCourseColumns
+		cols := workercol.TrainingCourseColumns
 		entities := make([]*worker.TrainingCourse, 0, 16)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TrainingCourseScopeTenant(sq, tenantInfo).
+				return workercol.TrainingCourseScopeTenant(sq, tenantInfo).
 					Where(cols.Status.Eq(), domaintypes.StatusActive)
 			}).
 			Apply(orderCourses).
@@ -178,7 +179,7 @@ func (r *repository) CourseSelectOptions(
 	req *workerports.TrainingCourseSelectOptionsRequest,
 ) (*pagination.ListResult[*worker.TrainingCourse], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*worker.TrainingCourse], error) {
-		cols := buncolgen.TrainingCourseColumns
+		cols := workercol.TrainingCourseColumns
 		return dbhelper.SelectOptions[*worker.TrainingCourse](
 			ctx,
 			r.db.DBForContext(ctx),
@@ -224,8 +225,8 @@ func (r *repository) GetCourseByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TrainingCourseScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.TrainingCourseColumns.ID.Eq(), req.ID)
+				return workercol.TrainingCourseScopeTenant(sq, req.TenantInfo).
+					Where(workercol.TrainingCourseColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -241,12 +242,12 @@ func (r *repository) CourseCodeExists(
 	req *workerports.TrainingCourseCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := buncolgen.TrainingCourseColumns
+		cols := workercol.TrainingCourseColumns
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.TrainingCourse)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TrainingCourseScopeTenant(sq, req.TenantInfo).
+				return workercol.TrainingCourseScopeTenant(sq, req.TenantInfo).
 					Where("LOWER("+cols.Code.String()+") = ?", strings.ToLower(req.Code))
 			})
 		if !req.ExcludeID.IsNil() {
@@ -296,7 +297,7 @@ func (r *repository) UpdateCourse(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.TrainingCourseColumns.Version.Eq(), ov).
+			Where(workercol.TrainingCourseColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -319,12 +320,12 @@ func (r *repository) CountRecordsByCourse(
 	req *workerports.CountTrainingRecordsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.WorkerTrainingRecordColumns
+		cols := workercol.WorkerTrainingRecordColumns
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.WorkerTrainingRecord)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerTrainingRecordScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerTrainingRecordScopeTenant(sq, req.TenantInfo).
 					Where(cols.CourseID.Eq(), req.CourseID)
 			})
 		if req.OpenOnly {
@@ -353,12 +354,12 @@ func (r *repository) CountRecordsByCourseIDs(
 			return map[pulid.ID]int{}, nil
 		}
 
-		cols := buncolgen.WorkerTrainingRecordColumns
+		cols := workercol.WorkerTrainingRecordColumns
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.WorkerTrainingRecord)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerTrainingRecordScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerTrainingRecordScopeTenant(sq, req.TenantInfo).
 					Where(cols.CourseID.In(), bun.In(req.CourseIDs))
 			})
 		if req.OpenOnly {
@@ -383,13 +384,13 @@ func (r *repository) ListForWorker(
 	req *workerports.ListWorkerTrainingRequest,
 ) ([]*worker.WorkerTrainingRecord, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerTrainingRecord, error) {
-		cols := buncolgen.WorkerTrainingRecordColumns
+		cols := workercol.WorkerTrainingRecordColumns
 		entities := make([]*worker.WorkerTrainingRecord, 0, 16)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerTrainingRecordScopeTenant(sq, req.TenantInfo).
+				sq = workercol.WorkerTrainingRecordScopeTenant(sq, req.TenantInfo).
 					Where(cols.WorkerID.Eq(), req.WorkerID)
 				if !req.IncludeClosed {
 					sq = sq.Where(cols.Status.In(), bun.In([]worker.TrainingStatus{
@@ -402,14 +403,14 @@ func (r *repository) ListForWorker(
 			Order(cols.AssignedAt.OrderDesc()).
 			Order(cols.CreatedAt.OrderDesc())
 		if req.IncludeCourse {
-			q = q.Relation(buncolgen.WorkerTrainingRecordRelations.Course)
+			q = q.Relation(workercol.WorkerTrainingRecordRelations.Course)
 		}
 		if req.IncludeDocument {
-			q = q.Relation(buncolgen.WorkerTrainingRecordRelations.Document)
+			q = q.Relation(workercol.WorkerTrainingRecordRelations.Document)
 		}
 		if req.IncludeActors {
-			q = q.Relation(buncolgen.WorkerTrainingRecordRelations.AssignedBy).
-				Relation(buncolgen.WorkerTrainingRecordRelations.RecordedBy)
+			q = q.Relation(workercol.WorkerTrainingRecordRelations.AssignedBy).
+				Relation(workercol.WorkerTrainingRecordRelations.RecordedBy)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -431,22 +432,22 @@ func (r *repository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerTrainingRecordScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerTrainingRecordColumns.ID.Eq(), req.ID)
+				return workercol.WorkerTrainingRecordScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerTrainingRecordColumns.ID.Eq(), req.ID)
 			})
 		if req.IncludeCourse {
-			q = q.Relation(buncolgen.WorkerTrainingRecordRelations.Course)
+			q = q.Relation(workercol.WorkerTrainingRecordRelations.Course)
 		}
 		if req.IncludeWorker {
 			q = q.Relation(
-				buncolgen.WorkerTrainingRecordRelations.Worker,
+				workercol.WorkerTrainingRecordRelations.Worker,
 				func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Relation(buncolgen.WorkerRelations.Profile)
+					return sq.Relation(workercol.WorkerRelations.Profile)
 				},
 			)
 		}
 		if req.IncludeDocument {
-			q = q.Relation(buncolgen.WorkerTrainingRecordRelations.Document)
+			q = q.Relation(workercol.WorkerTrainingRecordRelations.Document)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -490,7 +491,7 @@ func (r *repository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.WorkerTrainingRecordColumns.Version.Eq(), ov).
+			Where(workercol.WorkerTrainingRecordColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -513,7 +514,7 @@ func (r *repository) reminderQuery(
 	req *workerports.ListTrainingRemindersRequest,
 	entities *[]*worker.WorkerTrainingRecord,
 ) *bun.SelectQuery {
-	cols := buncolgen.WorkerTrainingRecordColumns
+	cols := workercol.WorkerTrainingRecordColumns
 	limit := req.Limit
 	if limit <= 0 {
 		limit = defaultReminderPageSize
@@ -521,12 +522,12 @@ func (r *repository) reminderQuery(
 	q := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entities).
-		Relation(buncolgen.WorkerTrainingRecordRelations.Course).
-		Relation(buncolgen.WorkerTrainingRecordRelations.Worker, func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Relation(buncolgen.WorkerRelations.Profile)
+		Relation(workercol.WorkerTrainingRecordRelations.Course).
+		Relation(workercol.WorkerTrainingRecordRelations.Worker, func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Relation(workercol.WorkerRelations.Profile)
 		}).
-		Where(buncolgen.WorkerColumns.Status.WithAlias("worker").Eq(), domaintypes.StatusActive).
-		Where(buncolgen.TrainingCourseColumns.Status.WithAlias("course").Eq(), domaintypes.StatusActive).
+		Where(workercol.WorkerColumns.Status.WithAlias("worker").Eq(), domaintypes.StatusActive).
+		Where(workercol.TrainingCourseColumns.Status.WithAlias("course").Eq(), domaintypes.StatusActive).
 		Order(cols.ID.OrderAsc()).
 		Limit(limit)
 	if !req.TenantInfo.OrgID.IsNil() {
@@ -554,7 +555,7 @@ func (r *repository) ListDue(
 		ctx = dbscope.WithSystem(ctx, "list training due across every organization for the reminder sweep")
 	}
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerTrainingRecord, error) {
-		cols := buncolgen.WorkerTrainingRecordColumns
+		cols := workercol.WorkerTrainingRecordColumns
 		grace, horizon := reminderWindow(req)
 		entities := make([]*worker.WorkerTrainingRecord, 0, defaultReminderPageSize)
 		q := r.reminderQuery(ctx, req, &entities).
@@ -581,7 +582,7 @@ func (r *repository) ListExpiring(
 		ctx = dbscope.WithSystem(ctx, "list expiring training across every organization for the reminder sweep")
 	}
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerTrainingRecord, error) {
-		cols := buncolgen.WorkerTrainingRecordColumns
+		cols := workercol.WorkerTrainingRecordColumns
 		grace, horizon := reminderWindow(req)
 		entities := make([]*worker.WorkerTrainingRecord, 0, defaultReminderPageSize)
 		q := r.reminderQuery(ctx, req, &entities).

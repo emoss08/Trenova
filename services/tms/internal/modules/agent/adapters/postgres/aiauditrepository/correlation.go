@@ -1,6 +1,7 @@
 package aiauditrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/auditcol"
 	"context"
 	"fmt"
 
@@ -41,7 +42,7 @@ func (r *repository) ListCorrelatedAuditEntries(
 			limit = defaultCorrelationLimit
 		}
 
-		cols := buncolgen.EntryColumns
+		cols := auditcol.EntryColumns
 		condition := buncolgen.Expr(
 			"{0} = ? AND ({1} = ? OR {2} = ?) AND {3} BETWEEN ? AND ?",
 			cols.ResourceID, cols.PrincipalID, cols.UserID, cols.Timestamp,
@@ -50,7 +51,7 @@ func (r *repository) ListCorrelatedAuditEntries(
 		entries := make([]*audit.Entry, 0, len(matches))
 		err := r.db.DBForContext(ctx).NewSelect().
 			Model(&entries).
-			Apply(buncolgen.EntryApplyTenant(req.TenantInfo)).
+			Apply(auditcol.EntryApplyTenant(req.TenantInfo)).
 			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 				for _, match := range matches {
 					end := match.WindowEnd

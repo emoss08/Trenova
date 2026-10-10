@@ -1,6 +1,7 @@
 package ratequoterepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/ratequotecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
@@ -47,15 +48,15 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *ratequoteports.ListRateQuotesRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.RateQuoteColumns
+	cols := ratequotecol.RateQuoteColumns
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.RateQuoteTable.Alias,
+		ratequotecol.RateQuoteTable.Alias,
 		req.Filter,
 		(*ratequote.RateQuote)(nil),
 	)
 
-	return q.Apply(buncolgen.RateQuoteApplyTenant(req.Filter.TenantInfo)).
+	return q.Apply(ratequotecol.RateQuoteApplyTenant(req.Filter.TenantInfo)).
 		Limit(req.Filter.Pagination.SafeLimit()).
 		Offset(req.Filter.Pagination.SafeOffset()).
 		Order(cols.RatedAt.OrderDesc())
@@ -91,7 +92,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.RateQuoteTable.Alias,
+		ratequotecol.RateQuoteTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*ratequote.RateQuote)(nil),
@@ -104,7 +105,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.RateQuoteTable.Alias,
+		ratequotecol.RateQuoteTable.Alias,
 		req.Filter,
 		(*ratequote.RateQuote)(nil),
 	)
@@ -170,14 +171,14 @@ func (r *repository) GetByID(
 		)
 
 		entity := new(ratequote.RateQuote)
-		cols := buncolgen.RateQuoteColumns
+		cols := ratequotecol.RateQuoteColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Relation(buncolgen.Rel(buncolgen.RateQuoteRelations.Agreement)).
+			Relation(buncolgen.Rel(ratequotecol.RateQuoteRelations.Agreement)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RateQuoteScopeTenant(sq, req.TenantInfo).
+				return ratequotecol.RateQuoteScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.RateQuoteID)
 			}).
 			Scan(ctx)
@@ -201,13 +202,13 @@ func (r *repository) GetAppliedForShipment(
 		)
 
 		entity := new(ratequote.RateQuote)
-		cols := buncolgen.RateQuoteColumns
+		cols := ratequotecol.RateQuoteColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RateQuoteScopeTenant(sq, req.TenantInfo).
+				return ratequotecol.RateQuoteScopeTenant(sq, req.TenantInfo).
 					Where(cols.ShipmentID.Eq(), req.ShipmentID).
 					Where(cols.PartyType.Eq(), req.PartyType).
 					Where(cols.Status.Eq(), ratequote.StatusApplied)
@@ -240,14 +241,14 @@ func (r *repository) ListForShipment(
 			limit = defaultHistoryLimit
 		}
 
-		cols := buncolgen.RateQuoteColumns
+		cols := ratequotecol.RateQuoteColumns
 		entities := make([]*ratequote.RateQuote, 0, limit)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RateQuoteScopeTenant(sq, req.TenantInfo).
+				return ratequotecol.RateQuoteScopeTenant(sq, req.TenantInfo).
 					Where(cols.ShipmentID.Eq(), req.ShipmentID)
 			}).
 			Order(cols.RatedAt.OrderDesc()).
@@ -299,7 +300,7 @@ func (r *repository) Record(
 			return entity, nil
 		}
 
-		cols := buncolgen.RateQuoteColumns
+		cols := ratequotecol.RateQuoteColumns
 		tenantInfo := pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -311,7 +312,7 @@ func (r *repository) Record(
 				Model((*ratequote.RateQuote)(nil)).
 				Set(cols.Status.Set(), ratequote.StatusSuperseded).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return buncolgen.RateQuoteScopeTenantUpdate(uq, tenantInfo).
+					return ratequotecol.RateQuoteScopeTenantUpdate(uq, tenantInfo).
 						Where(cols.ShipmentID.Eq(), *entity.ShipmentID).
 						Where(cols.PartyType.Eq(), entity.PartyType).
 						Where(cols.Status.Eq(), ratequote.StatusApplied)

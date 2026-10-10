@@ -2,18 +2,21 @@
 
 package notification
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/notificationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Notification].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.NotificationFieldMap] instead of parsing struct tags via reflection.
+// the generated [notificationcol.NotificationFieldMap] instead of parsing struct tags via reflection.
 func (e *Notification) GetStaticFieldMap() map[string]string {
-	return buncolgen.NotificationFieldMap
+	return notificationcol.NotificationFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [PushSubscription].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.PushSubscriptionFieldMap] instead of parsing struct tags via reflection.
+// the generated [notificationcol.PushSubscriptionFieldMap] instead of parsing struct tags via reflection.
 func (e *PushSubscription) GetStaticFieldMap() map[string]string {
-	return buncolgen.PushSubscriptionFieldMap
+	return notificationcol.PushSubscriptionFieldMap
 }

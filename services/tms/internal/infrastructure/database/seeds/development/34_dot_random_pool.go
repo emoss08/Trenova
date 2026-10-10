@@ -1,6 +1,7 @@
 package development
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 
@@ -47,7 +48,7 @@ func (s *DOTRandomPoolSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return err
 			}
 
-			cols := buncolgen.DOTRandomPoolColumns
+			cols := workercol.DOTRandomPoolColumns
 			exists, err := tx.NewSelect().
 				Model((*worker.DOTRandomPool)(nil)).
 				Where(cols.OrganizationID.Eq(), org.ID).

@@ -1,6 +1,7 @@
 package agentmemoryrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 	"context"
 	"fmt"
 
@@ -43,12 +44,12 @@ func (r deskRow) row() *agentports.DeskMemoryRow {
 // name. The conversation is joined within the tenant, so a title is only ever
 // read from the memory's own organization.
 func (r *repository) deskSelect(ctx context.Context, rows *[]deskRow) *bun.SelectQuery {
-	cols := buncolgen.MemoryColumns
+	cols := agentcol.MemoryColumns
 
 	return r.db.DBForContext(ctx).
 		NewSelect().
 		Model(rows).
-		ColumnExpr(buncolgen.MemoryTable.Alias + ".*").
+		ColumnExpr(agentcol.MemoryTable.Alias + ".*").
 		ColumnExpr("athr.title AS source_title").
 		ColumnExpr("dmr.name AS role_name").
 		Join("LEFT JOIN assistant_threads AS athr ON athr.id = " + cols.SourceThreadID.Qualified() +
@@ -61,8 +62,8 @@ func (r *repository) deskSelect(ctx context.Context, rows *[]deskRow) *bun.Selec
 // own, and their roles', active or paused. What is kept for one agent is
 // administered in AI Control, and a suggestion waits in its conversation.
 func deskVisible(sq *bun.SelectQuery, filter *agentports.DeskMemoryFilter) *bun.SelectQuery {
-	cols := buncolgen.MemoryColumns
-	sq = buncolgen.MemoryScopeTenant(sq, filter.TenantInfo).
+	cols := agentcol.MemoryColumns
+	sq = agentcol.MemoryScopeTenant(sq, filter.TenantInfo).
 		Where(cols.Status.In(), bun.List([]agent.MemoryStatus{
 			agent.MemoryStatusActive,
 			agent.MemoryStatusPaused,
@@ -87,7 +88,7 @@ func (r *repository) ListDesk(
 	req agentports.ListDeskMemoriesQuery,
 ) ([]*agentports.DeskMemoryRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentports.DeskMemoryRow, error) {
-		cols := buncolgen.MemoryColumns
+		cols := agentcol.MemoryColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultDeskPage
@@ -135,7 +136,7 @@ func (r *repository) CountDesk(
 	filter agentports.DeskMemoryFilter,
 ) ([]agentports.DeskMemoryCountRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.DeskMemoryCountRow, error) {
-		cols := buncolgen.MemoryColumns
+		cols := agentcol.MemoryColumns
 		var rows []struct {
 			Scope  agent.MemoryScope `bun:"scope"`
 			RoleID *pulid.ID         `bun:"role_id"`
@@ -184,11 +185,11 @@ func (r *repository) GetDesk(
 			ids = ids[:maxDeskIDs]
 		}
 
-		cols := buncolgen.MemoryColumns
+		cols := agentcol.MemoryColumns
 		rows := make([]deskRow, 0, len(ids))
 		err := r.deskSelect(ctx, &rows).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.MemoryScopeTenant(sq, req.TenantInfo).
+				return agentcol.MemoryScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.In(), bun.List(ids))
 			}).
 			Scan(ctx)
@@ -212,7 +213,7 @@ func (r *repository) Revise(
 	req agentports.ReviseAgentMemoryRequest,
 ) (*agent.Memory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Memory, error) {
-		cols := buncolgen.MemoryColumns
+		cols := agentcol.MemoryColumns
 		owner, role := pulid.Nil, pulid.Nil
 		switch req.Scope {
 		case agent.MemoryScopeUser:
@@ -225,7 +226,7 @@ func (r *repository) Revise(
 			NewUpdate().
 			Model((*agent.Memory)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.MemoryScopeTenantUpdate(uq, req.TenantInfo).
+				return agentcol.MemoryScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID).
 					Where(cols.Version.Eq(), req.Version)
 			}).
@@ -265,8 +266,8 @@ func (r *repository) GetPreference(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.MemoryPreferenceScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.MemoryPreferenceColumns.UserID.Eq(), req.UserID)
+				return agentcol.MemoryPreferenceScopeTenant(sq, req.TenantInfo).
+					Where(agentcol.MemoryPreferenceColumns.UserID.Eq(), req.UserID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -289,7 +290,7 @@ func (r *repository) SavePreference(
 	entity *agent.MemoryPreference,
 ) (*agent.MemoryPreference, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.MemoryPreference, error) {
-		cols := buncolgen.MemoryPreferenceColumns
+		cols := agentcol.MemoryPreferenceColumns
 		_, err := r.db.DBForContext(ctx).
 			NewInsert().
 			Model(entity).

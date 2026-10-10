@@ -1,6 +1,7 @@
 package carrierintelrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
 	"context"
 	"fmt"
 
@@ -70,12 +71,12 @@ func (r *usageRepository) ExistsDedupeKey(
 	dedupeKey string,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := buncolgen.CarrierIntelUsageRecordColumns
+		cols := carrierintelcol.CarrierIntelUsageRecordColumns
 		exists, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*carrierintel.CarrierIntelUsageRecord)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierIntelUsageRecordScopeTenant(sq, tenantInfo).
+				return carrierintelcol.CarrierIntelUsageRecordScopeTenant(sq, tenantInfo).
 					Where(cols.Provider.Eq(), provider).
 					Where(cols.Billable.IsTrue()).
 					Where(cols.DedupeKey.Eq(), dedupeKey)
@@ -96,14 +97,14 @@ func (r *usageRepository) CostSince(
 	since int64,
 ) (decimal.Decimal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (decimal.Decimal, error) {
-		cols := buncolgen.CarrierIntelUsageRecordColumns
+		cols := carrierintelcol.CarrierIntelUsageRecordColumns
 		var total decimal.Decimal
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*carrierintel.CarrierIntelUsageRecord)(nil)).
 			ColumnExpr(cols.EstimatedCost.Expr("COALESCE(SUM({}), 0) AS ?"), bun.Ident(cols.EstimatedCost.Bare())).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierIntelUsageRecordScopeTenant(sq, tenantInfo).
+				return carrierintelcol.CarrierIntelUsageRecordScopeTenant(sq, tenantInfo).
 					Where(cols.CreatedAt.Gte(), since)
 			}).
 			Scan(ctx, &total)
@@ -121,12 +122,12 @@ func (r *usageRepository) CountBillableSince(
 	req *carrierintelports.CountBillableUsageRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.CarrierIntelUsageRecordColumns
+		cols := carrierintelcol.CarrierIntelUsageRecordColumns
 		count, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*carrierintel.CarrierIntelUsageRecord)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierIntelUsageRecordScopeTenant(sq, req.TenantInfo).
+				return carrierintelcol.CarrierIntelUsageRecordScopeTenant(sq, req.TenantInfo).
 					Where(cols.Provider.Eq(), req.Provider).
 					Where(cols.Endpoint.Eq(), req.Endpoint).
 					Where(cols.Billable.IsTrue()).
@@ -147,8 +148,8 @@ func (r *usageRepository) Summary(
 	req *carrierintelports.ListCarrierIntelUsageRequest,
 ) ([]carrierintelports.CarrierIntelUsageSummaryRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]carrierintelports.CarrierIntelUsageSummaryRow, error) {
-		cols := buncolgen.CarrierIntelUsageRecordColumns
-		daily := buncolgen.CarrierIntelUsageDailyColumns
+		cols := carrierintelcol.CarrierIntelUsageRecordColumns
+		daily := carrierintelcol.CarrierIntelUsageDailyColumns
 		rows := make([]carrierintelports.CarrierIntelUsageSummaryRow, 0, usageSummaryCapacity)
 
 		q := r.db.DBForContext(ctx).
@@ -159,7 +160,7 @@ func (r *usageRepository) Summary(
 			ColumnExpr(buncolgen.Sum(cols.BillableUnits, daily.BillableUnits.Bare())).
 			ColumnExpr(buncolgen.Sum(cols.EstimatedCost, daily.EstimatedCost.Bare())).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierIntelUsageRecordScopeTenant(sq, req.TenantInfo).
+				return carrierintelcol.CarrierIntelUsageRecordScopeTenant(sq, req.TenantInfo).
 					Where(cols.CreatedAt.Gte(), req.Since)
 			}).
 			Group(cols.Provider.Qualified(), cols.Endpoint.Qualified()).
@@ -182,13 +183,13 @@ func (r *usageRepository) ListDaily(
 	req *carrierintelports.ListCarrierIntelUsageDailyRequest,
 ) ([]*carrierintel.CarrierIntelUsageDaily, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrierintel.CarrierIntelUsageDaily, error) {
-		cols := buncolgen.CarrierIntelUsageDailyColumns
+		cols := carrierintelcol.CarrierIntelUsageDailyColumns
 		entities := make([]*carrierintel.CarrierIntelUsageDaily, 0, usageDailyCapacity)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierIntelUsageDailyScopeTenant(sq, req.TenantInfo).
+				return carrierintelcol.CarrierIntelUsageDailyScopeTenant(sq, req.TenantInfo).
 					Where(cols.Day.Between(), req.FromDay, req.ToDay)
 			}).
 			Order(cols.Day.OrderAsc(), cols.Provider.OrderAsc(), cols.Endpoint.OrderAsc()).
@@ -203,8 +204,8 @@ func (r *usageRepository) ListDaily(
 }
 
 func buildUsageRollup(db bun.IDB, dayStart int64) *bun.RawQuery {
-	cols := buncolgen.CarrierIntelUsageRecordColumns
-	daily := buncolgen.CarrierIntelUsageDailyColumns
+	cols := carrierintelcol.CarrierIntelUsageRecordColumns
+	daily := carrierintelcol.CarrierIntelUsageDailyColumns
 
 	aggregate := db.NewSelect().
 		Model((*carrierintel.CarrierIntelUsageRecord)(nil)).
@@ -229,7 +230,7 @@ func buildUsageRollup(db bun.IDB, dayStart int64) *bun.RawQuery {
 
 	return db.NewRaw(
 		"INSERT INTO ? (?, ?, ?, ?, ?, ?, ?, ?) ? "+usageDailyConflictClause+" ?, ?, ?",
-		bun.Ident(buncolgen.CarrierIntelUsageDailyTable.Name),
+		bun.Ident(carrierintelcol.CarrierIntelUsageDailyTable.Name),
 		bun.Ident(daily.OrganizationID.Bare()),
 		bun.Ident(daily.BusinessUnitID.Bare()),
 		bun.Ident(daily.Provider.Bare()),
@@ -271,7 +272,7 @@ func (r *usageRepository) DeleteOlderThan(
 ) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "delete carrier intelligence usage past retention across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.CarrierIntelUsageRecordColumns
+		cols := carrierintelcol.CarrierIntelUsageRecordColumns
 		batch := intutils.Clamp(
 			intutils.WithDefault(max(limit, 0), defaultUsageDeleteBatchSize),
 			1,

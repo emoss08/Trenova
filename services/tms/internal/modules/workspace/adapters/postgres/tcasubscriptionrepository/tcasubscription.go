@@ -2,6 +2,7 @@
 package tcasubscriptionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tablechangealertcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
@@ -42,15 +43,15 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *tablechangealertports.ListTCASubscriptionsRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.TCASubscriptionColumns
+	cols := tablechangealertcol.TCASubscriptionColumns
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.TCASubscriptionTable.Alias,
+		tablechangealertcol.TCASubscriptionTable.Alias,
 		req.Filter,
 		(*tablechangealert.TCASubscription)(nil),
 	)
 
-	q = q.Apply(buncolgen.TCASubscriptionApplyTenant(req.Filter.TenantInfo)).
+	q = q.Apply(tablechangealertcol.TCASubscriptionApplyTenant(req.Filter.TenantInfo)).
 		Where(cols.UserID.Eq(), req.Filter.TenantInfo.UserID)
 
 	q = q.Order(cols.CreatedAt.OrderDesc())
@@ -90,7 +91,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	q, err := querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.TCASubscriptionTable.Alias,
+		tablechangealertcol.TCASubscriptionTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*tablechangealert.TCASubscription)(nil),
@@ -99,7 +100,7 @@ func (r *repository) applyCursorPageFilters(
 		return nil, err
 	}
 
-	return q.Where(buncolgen.TCASubscriptionColumns.UserID.Eq(), req.Filter.TenantInfo.UserID), nil
+	return q.Where(tablechangealertcol.TCASubscriptionColumns.UserID.Eq(), req.Filter.TenantInfo.UserID), nil
 }
 
 func (r *repository) applyTotalCountFilters(
@@ -108,12 +109,12 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.TCASubscriptionTable.Alias,
+		tablechangealertcol.TCASubscriptionTable.Alias,
 		req.Filter,
 		(*tablechangealert.TCASubscription)(nil),
 	)
 
-	return q.Where(buncolgen.TCASubscriptionColumns.UserID.Eq(), req.Filter.TenantInfo.UserID)
+	return q.Where(tablechangealertcol.TCASubscriptionColumns.UserID.Eq(), req.Filter.TenantInfo.UserID)
 }
 
 func (r *repository) ListConnection(
@@ -150,7 +151,7 @@ func (r *repository) ListConnection(
 					return dba.
 						NewSelect().
 						Model(entities).
-						ColumnExpr(buncolgen.TCASubscriptionTable.All())
+						ColumnExpr(tablechangealertcol.TCASubscriptionTable.All())
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					return r.applyCursorPageFilters(sq, req)
@@ -194,7 +195,7 @@ func (r *repository) Update(
 
 		ov := entity.Version
 		entity.Version++
-		cols := buncolgen.TCASubscriptionColumns
+		cols := tablechangealertcol.TCASubscriptionColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -229,12 +230,12 @@ func (r *repository) GetByID(
 		)
 
 		entity := new(tablechangealert.TCASubscription)
-		cols := buncolgen.TCASubscriptionColumns
+		cols := tablechangealertcol.TCASubscriptionColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TCASubscriptionScopeTenant(sq, req.TenantInfo).
+				return tablechangealertcol.TCASubscriptionScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.SubscriptionID).
 					Where(cols.UserID.Eq(), req.TenantInfo.UserID)
 			}).
@@ -263,9 +264,9 @@ func (r *repository) Delete(
 			NewDelete().
 			Model((*tablechangealert.TCASubscription)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.TCASubscriptionScopeTenantDelete(dq, tenantInfo).
-					Where(buncolgen.TCASubscriptionColumns.ID.Eq(), id).
-					Where(buncolgen.TCASubscriptionColumns.UserID.Eq(), tenantInfo.UserID)
+				return tablechangealertcol.TCASubscriptionScopeTenantDelete(dq, tenantInfo).
+					Where(tablechangealertcol.TCASubscriptionColumns.ID.Eq(), id).
+					Where(tablechangealertcol.TCASubscriptionColumns.UserID.Eq(), tenantInfo.UserID)
 			}).
 			Exec(ctx)
 		if err != nil {
@@ -293,7 +294,7 @@ func (r *repository) FindMatchingSubscriptions(
 		}
 
 		entities := make([]*tablechangealert.TCASubscription, 0)
-		cols := buncolgen.TCASubscriptionColumns
+		cols := tablechangealertcol.TCASubscriptionColumns
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).

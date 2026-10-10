@@ -2,6 +2,7 @@
 package edimappingprofilerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -58,8 +59,8 @@ func (r *repository) getPartnerByID(
 ) (*edi.EDIPartner, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIPartner, error) {
 		entity := new(edi.EDIPartner)
-		cols := buncolgen.EDIPartnerColumns
-		rel := buncolgen.EDIPartnerRelations
+		cols := edicol.EDIPartnerColumns
+		rel := edicol.EDIPartnerRelations
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -68,7 +69,7 @@ func (r *repository) getPartnerByID(
 			Relation(rel.Connection).
 			Relation(rel.DefaultTransport).
 			Where(cols.ID.Eq(), req.ID).
-			Apply(buncolgen.EDIPartnerApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDIPartnerApplyTenant(req.TenantInfo)).
 			Scan(ctx)
 		if err != nil {
 			return nil, dberror.HandleNotFoundError(err, "EDIPartner")
@@ -84,15 +85,15 @@ func (r *repository) ListMappingProfiles(
 ) (*pagination.ListResult[*edi.EDIMappingProfile], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIMappingProfile], error) {
 		entities := make([]*edi.EDIMappingProfile, 0, req.Filter.Pagination.SafeLimit())
-		cols := buncolgen.EDIMappingProfileColumns
-		rel := buncolgen.EDIMappingProfileRelations
+		cols := edicol.EDIMappingProfileColumns
+		rel := edicol.EDIMappingProfileRelations
 
 		total, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			Relation(rel.Partner).
 			Relation(rel.Entries).
-			Apply(buncolgen.EDIMappingProfileApplyTenant(req.Filter.TenantInfo)).
+			Apply(edicol.EDIMappingProfileApplyTenant(req.Filter.TenantInfo)).
 			Limit(req.Filter.Pagination.SafeLimit()).
 			Offset(req.Filter.Pagination.SafeOffset()).
 			Order(cols.CreatedAt.OrderDesc()).
@@ -140,11 +141,11 @@ func (r *repository) ListMappingProfilesCursor(
 			Cursor:     req.Cursor,
 			TotalCount: totalCount,
 			Query: func(entities *[]*edi.EDIMappingProfile) *bun.SelectQuery {
-				rel := buncolgen.EDIMappingProfileRelations
+				rel := edicol.EDIMappingProfileRelations
 				return dba.
 					NewSelect().
 					Model(entities).
-					ColumnExpr(buncolgen.EDIMappingProfileTable.All()).
+					ColumnExpr(edicol.EDIMappingProfileTable.All()).
 					Relation(rel.Partner).
 					Relation(rel.Entries)
 			},
@@ -170,7 +171,7 @@ func applyMappingProfileListFilters(
 	req *ediports.ListEDIMappingProfilesRequest,
 ) *bun.SelectQuery {
 	if !req.PartnerID.IsNil() {
-		q = q.Where(buncolgen.EDIMappingProfileColumns.EDIPartnerID.Eq(), req.PartnerID)
+		q = q.Where(edicol.EDIMappingProfileColumns.EDIPartnerID.Eq(), req.PartnerID)
 	}
 	return q
 }
@@ -180,7 +181,7 @@ func (r *repository) SelectMappingProfileOptions(
 	req *ediports.EDIMappingProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIMappingProfile], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIMappingProfile], error) {
-		col := buncolgen.EDIMappingProfileColumns
+		col := edicol.EDIMappingProfileColumns
 
 		return dbhelper.SelectOptions[*edi.EDIMappingProfile](
 			ctx,
@@ -203,7 +204,7 @@ func (r *repository) SelectMappingProfileOptions(
 						q = q.Where(col.EDIPartnerID.Eq(), req.PartnerID)
 					}
 
-					q = q.Relation(buncolgen.EDIMappingProfileRelations.Partner)
+					q = q.Relation(edicol.EDIMappingProfileRelations.Partner)
 
 					return q
 				},
@@ -218,16 +219,16 @@ func (r *repository) GetMappingProfileByID(
 ) (*edi.EDIMappingProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIMappingProfile, error) {
 		profile := new(edi.EDIMappingProfile)
-		rel := buncolgen.EDIMappingProfileRelations
+		rel := edicol.EDIMappingProfileRelations
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(profile).
 			Relation(rel.Partner).
 			Relation(rel.Entries).
-			Where(buncolgen.EDIMappingProfileColumns.ID.Eq(), req.ProfileID).
+			Where(edicol.EDIMappingProfileColumns.ID.Eq(), req.ProfileID).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.EDIMappingProfileScopeTenant(sq, req.TenantInfo)
+				return edicol.EDIMappingProfileScopeTenant(sq, req.TenantInfo)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -275,7 +276,7 @@ func (r *repository) SaveMappingItems(
 		if len(items) == 0 {
 			return []*edi.EDIMappingProfileItem{}, nil
 		}
-		itemCols := buncolgen.EDIMappingProfileItemColumns
+		itemCols := edicol.EDIMappingProfileItemColumns
 
 		_, err = r.db.DBForContext(ctx).
 			NewInsert().
@@ -326,8 +327,8 @@ func (r *repository) DeleteMappingItem(
 			NewDelete().
 			Model((*edi.EDIMappingProfileItem)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				cols := buncolgen.EDIMappingProfileItemColumns
-				return buncolgen.EDIMappingProfileItemScopeTenantDelete(dq, req.TenantInfo).
+				cols := edicol.EDIMappingProfileItemColumns
+				return edicol.EDIMappingProfileItemScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.MappingItemID).
 					Where(cols.EDIPartnerID.Eq(), req.PartnerID)
 			}).
@@ -349,8 +350,8 @@ func (r *repository) DeleteMappingProfileItem(
 			NewDelete().
 			Model((*edi.EDIMappingProfileItem)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				cols := buncolgen.EDIMappingProfileItemColumns
-				return buncolgen.EDIMappingProfileItemScopeTenantDelete(dq, req.TenantInfo).
+				cols := edicol.EDIMappingProfileItemColumns
+				return edicol.EDIMappingProfileItemScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.MappingItemID).
 					Where(cols.MappingProfileID.Eq(), req.ProfileID)
 			}).
@@ -372,12 +373,12 @@ func (r *repository) GetMappingItems(
 		if len(req.SourceIDs) == 0 {
 			return items, nil
 		}
-		cols := buncolgen.EDIMappingProfileItemColumns
+		cols := edicol.EDIMappingProfileItemColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&items).
-			Apply(buncolgen.EDIMappingProfileItemApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDIMappingProfileItemApplyTenant(req.TenantInfo)).
 			Where(cols.EDIPartnerID.Eq(), req.PartnerID).
 			Where(cols.SourceID.In(), bun.List(req.SourceIDs))
 
@@ -399,12 +400,12 @@ func (r *repository) ensureMappingProfile(
 ) (*edi.EDIMappingProfile, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIMappingProfile, error) {
 		profile := new(edi.EDIMappingProfile)
-		cols := buncolgen.EDIMappingProfileColumns
+		cols := edicol.EDIMappingProfileColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(profile).
-			Relation(buncolgen.EDIMappingProfileRelations.Entries).
+			Relation(edicol.EDIMappingProfileRelations.Entries).
 			Where(cols.OrganizationID.Eq(), partner.OrganizationID).
 			Where(cols.BusinessUnitID.Eq(), partner.BusinessUnitID).
 			Where(cols.EDIPartnerID.Eq(), partner.ID).

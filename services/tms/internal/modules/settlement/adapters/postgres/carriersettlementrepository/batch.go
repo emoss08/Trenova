@@ -1,6 +1,7 @@
 package carriersettlementrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
 	"context"
 	"database/sql"
 	"errors"
@@ -37,14 +38,14 @@ func (r *batchRepository) List(
 	req *carriersettlementports.ListCarrierSettlementBatchesRequest,
 ) (*pagination.ListResult[*carriersettlement.CarrierSettlementBatch], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*carriersettlement.CarrierSettlementBatch], error) {
-		cols := buncolgen.CarrierSettlementBatchColumns
+		cols := carriersettlementcol.CarrierSettlementBatchColumns
 		limit := req.Filter.Pagination.SafeLimit()
 		items := make([]*carriersettlement.CarrierSettlementBatch, 0, limit)
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&items).
-			Apply(buncolgen.CarrierSettlementBatchApplyTenant(req.Filter.TenantInfo)).
+			Apply(carriersettlementcol.CarrierSettlementBatchApplyTenant(req.Filter.TenantInfo)).
 			Order(cols.PeriodEnd.OrderDesc()).
 			Limit(limit).
 			Offset(req.Filter.Pagination.SafeOffset())
@@ -84,7 +85,7 @@ func (r *batchRepository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.CarrierSettlementBatchTable.Alias,
+						carriersettlementcol.CarrierSettlementBatchTable.Alias,
 						req.Filter,
 						(*carriersettlement.CarrierSettlementBatch)(nil),
 					)
@@ -106,12 +107,12 @@ func (r *batchRepository) ListConnection(
 				Query: func(entities *[]*carriersettlement.CarrierSettlementBatch) *bun.SelectQuery {
 					return dba.NewSelect().
 						Model(entities).
-						ColumnExpr(buncolgen.CarrierSettlementBatchTable.All())
+						ColumnExpr(carriersettlementcol.CarrierSettlementBatchTable.All())
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					return querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.CarrierSettlementBatchTable.Alias,
+						carriersettlementcol.CarrierSettlementBatchTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*carriersettlement.CarrierSettlementBatch)(nil),
@@ -133,24 +134,24 @@ func (r *batchRepository) GetByID(
 	req carriersettlementports.GetCarrierSettlementBatchByIDRequest,
 ) (*carriersettlement.CarrierSettlementBatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.CarrierSettlementBatch, error) {
-		cols := buncolgen.CarrierSettlementBatchColumns
+		cols := carriersettlementcol.CarrierSettlementBatchColumns
 		entity := new(carriersettlement.CarrierSettlementBatch)
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierSettlementBatchScopeTenant(sq, req.TenantInfo).
+				return carriersettlementcol.CarrierSettlementBatchScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			})
 		if req.IncludeSettlements {
 			query = query.Relation(
-				buncolgen.CarrierSettlementBatchRelations.Settlements,
+				carriersettlementcol.CarrierSettlementBatchRelations.Settlements,
 				func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Order(buncolgen.CarrierSettlementColumns.SettlementNumber.OrderAsc())
+					return q.Order(carriersettlementcol.CarrierSettlementColumns.SettlementNumber.OrderAsc())
 				},
 			).Relation(buncolgen.Rel(
-				buncolgen.CarrierSettlementBatchRelations.Settlements,
-				buncolgen.CarrierSettlementRelations.Carrier,
+				carriersettlementcol.CarrierSettlementBatchRelations.Settlements,
+				carriersettlementcol.CarrierSettlementRelations.Carrier,
 			))
 		}
 		if err := query.Scan(ctx); err != nil {
@@ -166,13 +167,13 @@ func (r *batchRepository) GetForPeriod(
 	periodStart, periodEnd int64,
 ) (*carriersettlement.CarrierSettlementBatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.CarrierSettlementBatch, error) {
-		cols := buncolgen.CarrierSettlementBatchColumns
+		cols := carriersettlementcol.CarrierSettlementBatchColumns
 		entity := new(carriersettlement.CarrierSettlementBatch)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierSettlementBatchScopeTenant(sq, tenantInfo).
+				return carriersettlementcol.CarrierSettlementBatchScopeTenant(sq, tenantInfo).
 					Where(cols.PeriodStart.Eq(), periodStart).
 					Where(cols.PeriodEnd.Eq(), periodEnd).
 					Where(cols.Status.NotEq(), carriersettlement.BatchStatusCanceled)
@@ -249,12 +250,12 @@ func (r *batchRepository) Update(
 	entity *carriersettlement.CarrierSettlementBatch,
 ) (*carriersettlement.CarrierSettlementBatch, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*carriersettlement.CarrierSettlementBatch, error) {
-		cols := buncolgen.CarrierSettlementBatchColumns
+		cols := carriersettlementcol.CarrierSettlementBatchColumns
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.CarrierSettlementBatchScopeTenantUpdate(uq, pagination.TenantInfo{
+				return carriersettlementcol.CarrierSettlementBatchScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
 				}).

@@ -1,6 +1,7 @@
 package telematicsrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/telematicscol"
 	"context"
 	"fmt"
 
@@ -19,7 +20,7 @@ func (r *repository) UpsertFormSubmission(
 	submission *telematics.FormSubmission,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := buncolgen.FormSubmissionColumns
+		cols := telematicscol.FormSubmissionColumns
 		result, err := r.db.DBForContext(ctx).NewInsert().
 			Model(submission).
 			On("CONFLICT (organization_id, business_unit_id, provider, provider_submission_id) DO UPDATE").
@@ -50,13 +51,13 @@ func (r *repository) ListFormSubmissions(
 	req *telematicsports.ListFormSubmissionsRequest,
 ) ([]*telematics.FormSubmission, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*telematics.FormSubmission, error) {
-		cols := buncolgen.FormSubmissionColumns
+		cols := telematicscol.FormSubmissionColumns
 
 		entities := make([]*telematics.FormSubmission, 0)
 		q := r.db.DBForContext(ctx).NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.FormSubmissionScopeTenant(sq, req.TenantInfo)
+				sq = telematicscol.FormSubmissionScopeTenant(sq, req.TenantInfo)
 				if !req.ShipmentID.IsNil() {
 					sq = sq.Where(cols.ShipmentID.Eq(), req.ShipmentID)
 				}
@@ -86,14 +87,14 @@ func (r *repository) ListFormMappings(
 	req *telematicsports.ListFormMappingsRequest,
 ) ([]*telematics.FormMapping, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*telematics.FormMapping, error) {
-		cols := buncolgen.FormMappingColumns
+		cols := telematicscol.FormMappingColumns
 
 		entities := make([]*telematics.FormMapping, 0)
 		q := r.db.DBForContext(ctx).NewSelect().
 			Model(&entities).
-			Relation(buncolgen.FormMappingRelations.Items).
+			Relation(telematicscol.FormMappingRelations.Items).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.FormMappingScopeTenant(sq, req.TenantInfo)
+				sq = telematicscol.FormMappingScopeTenant(sq, req.TenantInfo)
 				if req.Provider != "" {
 					sq = sq.Where(cols.Provider.Eq(), req.Provider)
 				}
@@ -120,10 +121,10 @@ func (r *repository) GetFormMapping(
 		entity := new(telematics.FormMapping)
 		err := r.db.DBForContext(ctx).NewSelect().
 			Model(entity).
-			Relation(buncolgen.FormMappingRelations.Items).
+			Relation(telematicscol.FormMappingRelations.Items).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FormMappingScopeTenant(sq, tenantInfo).
-					Where(buncolgen.FormMappingColumns.ID.Eq(), id)
+				return telematicscol.FormMappingScopeTenant(sq, tenantInfo).
+					Where(telematicscol.FormMappingColumns.ID.Eq(), id)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -152,7 +153,7 @@ func (r *repository) SaveFormMapping(
 				result, updErr := tx.NewUpdate().
 					Model(mapping).
 					WherePK().
-					Where(buncolgen.FormMappingColumns.Version.Eq(), ov).
+					Where(telematicscol.FormMappingColumns.Version.Eq(), ov).
 					OmitZero().
 					Returning("*").
 					Exec(ctx)
@@ -168,9 +169,9 @@ func (r *repository) SaveFormMapping(
 				}
 				if _, delErr := tx.NewDelete().
 					Model((*telematics.FormMappingItem)(nil)).
-					Where(buncolgen.FormMappingItemColumns.MappingID.Eq(), mapping.ID).
-					Where(buncolgen.FormMappingItemColumns.OrganizationID.Eq(), mapping.OrganizationID).
-					Where(buncolgen.FormMappingItemColumns.BusinessUnitID.Eq(), mapping.BusinessUnitID).
+					Where(telematicscol.FormMappingItemColumns.MappingID.Eq(), mapping.ID).
+					Where(telematicscol.FormMappingItemColumns.OrganizationID.Eq(), mapping.OrganizationID).
+					Where(telematicscol.FormMappingItemColumns.BusinessUnitID.Eq(), mapping.BusinessUnitID).
 					Exec(ctx); delErr != nil {
 					return delErr
 				}
@@ -207,17 +208,17 @@ func (r *repository) DeleteFormMapping(
 		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			if _, delErr := tx.NewDelete().
 				Model((*telematics.FormMappingItem)(nil)).
-				Where(buncolgen.FormMappingItemColumns.MappingID.Eq(), id).
-				Where(buncolgen.FormMappingItemColumns.OrganizationID.Eq(), tenantInfo.OrgID).
-				Where(buncolgen.FormMappingItemColumns.BusinessUnitID.Eq(), tenantInfo.BuID).
+				Where(telematicscol.FormMappingItemColumns.MappingID.Eq(), id).
+				Where(telematicscol.FormMappingItemColumns.OrganizationID.Eq(), tenantInfo.OrgID).
+				Where(telematicscol.FormMappingItemColumns.BusinessUnitID.Eq(), tenantInfo.BuID).
 				Exec(ctx); delErr != nil {
 				return delErr
 			}
 			_, delErr := tx.NewDelete().
 				Model((*telematics.FormMapping)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return buncolgen.FormMappingScopeTenantDelete(dq, tenantInfo).
-						Where(buncolgen.FormMappingColumns.ID.Eq(), id)
+					return telematicscol.FormMappingScopeTenantDelete(dq, tenantInfo).
+						Where(telematicscol.FormMappingColumns.ID.Eq(), id)
 				}).
 				Exec(ctx)
 			return delErr

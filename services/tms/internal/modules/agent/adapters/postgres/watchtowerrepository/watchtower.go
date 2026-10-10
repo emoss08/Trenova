@@ -1,6 +1,7 @@
 package watchtowerrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/watchtowercol"
 	"context"
 	"fmt"
 
@@ -65,7 +66,7 @@ func (r *repository) Upsert(
 }
 
 func buildUpsert(db bun.IDB, item *watchtower.Item) *bun.InsertQuery {
-	cols := buncolgen.ItemColumns
+	cols := watchtowercol.ItemColumns
 	target := "CONFLICT (" + cols.OrganizationID.Name + ", " + cols.BusinessUnitID.Name + ", " +
 		cols.SourceKind.Name + ", " + cols.SourceID.Name + ") DO UPDATE"
 
@@ -91,7 +92,7 @@ func (r *repository) Resolve(
 	req watchtowerports.ResolveWatchtowerItemRequest,
 ) (*watchtower.Item, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*watchtower.Item, error) {
-		cols := buncolgen.ItemColumns
+		cols := watchtowercol.ItemColumns
 		item := new(watchtower.Item)
 
 		res, err := r.db.DBForContext(ctx).
@@ -101,7 +102,7 @@ func (r *repository) Resolve(
 			Set(cols.Version.SetExpr("{} + 1")).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ItemScopeTenantUpdate(uq, req.TenantInfo).
+				return watchtowercol.ItemScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.SourceKind.Eq(), req.SourceKind).
 					Where(cols.SourceID.Eq(), req.SourceID).
 					Where(cols.ResolvedAt.IsNull())
@@ -125,7 +126,7 @@ func (r *repository) ResolveByID(
 	resolvedAt int64,
 ) (*watchtower.Item, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*watchtower.Item, error) {
-		cols := buncolgen.ItemColumns
+		cols := watchtowercol.ItemColumns
 		item := new(watchtower.Item)
 
 		res, err := r.db.DBForContext(ctx).
@@ -135,7 +136,7 @@ func (r *repository) ResolveByID(
 			Set(cols.Version.SetExpr("{} + 1")).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ItemScopeTenantUpdate(uq, req.TenantInfo).
+				return watchtowercol.ItemScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Returning("*").
@@ -159,7 +160,7 @@ func (r *repository) ResolveMissing(
 	req watchtowerports.ResolveMissingWatchtowerItemsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.ItemColumns
+		cols := watchtowercol.ItemColumns
 
 		query := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -168,7 +169,7 @@ func (r *repository) ResolveMissing(
 			Set(cols.Version.SetExpr("{} + 1")).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				uq = buncolgen.ItemScopeTenantUpdate(uq, req.TenantInfo).
+				uq = watchtowercol.ItemScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.SourceKind.Eq(), req.SourceKind).
 					Where(cols.ResolvedAt.IsNull())
 				if len(req.OpenSourceIDs) > 0 {
@@ -193,14 +194,14 @@ func (r *repository) GetByID(
 	req watchtowerports.GetWatchtowerItemRequest,
 ) (*watchtower.Item, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*watchtower.Item, error) {
-		cols := buncolgen.ItemColumns
+		cols := watchtowercol.ItemColumns
 		item := new(watchtower.Item)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(item).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ItemScopeTenant(sq, req.TenantInfo).Where(cols.ID.Eq(), req.ID)
+				return watchtowercol.ItemScopeTenant(sq, req.TenantInfo).Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -220,7 +221,7 @@ func (r *repository) List(
 	req watchtowerports.ListWatchtowerItemsQuery,
 ) ([]*watchtower.Item, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*watchtower.Item, error) {
-		cols := buncolgen.ItemColumns
+		cols := watchtowercol.ItemColumns
 
 		limit := req.Limit
 		if limit <= 0 {
@@ -235,7 +236,7 @@ func (r *repository) List(
 			NewSelect().
 			Model(&items).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.ItemScopeTenant(sq, req.TenantInfo)
+				sq = watchtowercol.ItemScopeTenant(sq, req.TenantInfo)
 				if len(req.Kinds) > 0 {
 					sq = sq.Where(cols.SourceKind.In(), bun.In(req.Kinds))
 				}
@@ -275,14 +276,14 @@ func (r *repository) Counts(
 	req watchtowerports.CountWatchtowerItemsRequest,
 ) (*watchtowerports.WatchtowerCountsRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*watchtowerports.WatchtowerCountsRow, error) {
-		cols := buncolgen.ItemColumns
+		cols := watchtowercol.ItemColumns
 		db := r.db.DBForContext(ctx)
 
 		open := func() *bun.SelectQuery {
 			return db.NewSelect().
 				Model((*watchtower.Item)(nil)).
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = buncolgen.ItemScopeTenant(sq, req.TenantInfo).Where(cols.ResolvedAt.IsNull())
+					sq = watchtowercol.ItemScopeTenant(sq, req.TenantInfo).Where(cols.ResolvedAt.IsNull())
 					if len(req.Kinds) > 0 {
 						sq = sq.Where(cols.SourceKind.In(), bun.In(req.Kinds))
 					}
@@ -332,14 +333,14 @@ func (r *repository) GetCursor(
 	req watchtowerports.GetWatchtowerCursorRequest,
 ) (*watchtower.Cursor, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*watchtower.Cursor, error) {
-		cols := buncolgen.CursorColumns
+		cols := watchtowercol.CursorColumns
 		cursor := new(watchtower.Cursor)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(cursor).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CursorScopeTenant(sq, req.TenantInfo).
+				return watchtowercol.CursorScopeTenant(sq, req.TenantInfo).
 					Where(cols.UserID.Eq(), req.UserID)
 			}).
 			Scan(ctx)
@@ -366,7 +367,7 @@ func (r *repository) SetCursor(
 	cursor *watchtower.Cursor,
 ) (*watchtower.Cursor, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*watchtower.Cursor, error) {
-		cols := buncolgen.CursorColumns
+		cols := watchtowercol.CursorColumns
 		target := "CONFLICT (" + cols.UserID.Name + ", " + cols.BusinessUnitID.Name + ", " +
 			cols.OrganizationID.Name + ") DO UPDATE"
 
@@ -391,7 +392,7 @@ func (r *repository) DeleteResolvedBefore(
 ) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "delete resolved watchtower items past retention across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.ItemColumns
+		cols := watchtowercol.ItemColumns
 		limit := req.Limit
 		if limit <= 0 || limit > maxDeleteBatch {
 			limit = maxDeleteBatch

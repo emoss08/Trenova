@@ -1,6 +1,11 @@
 package dispatchconsolerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/servicetypecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
@@ -31,58 +36,58 @@ var openMoveStatuses = []shipment.MoveStatus{
 }
 
 var (
-	shipmentJoin = "JOIN " + buncolgen.ShipmentTable.As(buncolgen.ShipmentTable.Alias) + " ON " +
-		buncolgen.ShipmentColumns.ID.EqColumn(buncolgen.ShipmentMoveColumns.ShipmentID) +
-		" AND " + buncolgen.ShipmentColumns.OrganizationID.EqColumn(
-		buncolgen.ShipmentMoveColumns.OrganizationID) +
-		" AND " + buncolgen.ShipmentColumns.BusinessUnitID.EqColumn(
-		buncolgen.ShipmentMoveColumns.BusinessUnitID)
+	shipmentJoin = "JOIN " + shipmentcol.ShipmentTable.As(shipmentcol.ShipmentTable.Alias) + " ON " +
+		shipmentcol.ShipmentColumns.ID.EqColumn(shipmentcol.ShipmentMoveColumns.ShipmentID) +
+		" AND " + shipmentcol.ShipmentColumns.OrganizationID.EqColumn(
+		shipmentcol.ShipmentMoveColumns.OrganizationID) +
+		" AND " + shipmentcol.ShipmentColumns.BusinessUnitID.EqColumn(
+		shipmentcol.ShipmentMoveColumns.BusinessUnitID)
 
-	customerJoin = "LEFT JOIN " + buncolgen.CustomerTable.As(buncolgen.CustomerTable.Alias) +
-		" ON " + buncolgen.CustomerColumns.ID.EqColumn(buncolgen.ShipmentColumns.CustomerID) +
-		" AND " + buncolgen.CustomerColumns.OrganizationID.EqColumn(
-		buncolgen.ShipmentColumns.OrganizationID) +
-		" AND " + buncolgen.CustomerColumns.BusinessUnitID.EqColumn(
-		buncolgen.ShipmentColumns.BusinessUnitID)
+	customerJoin = "LEFT JOIN " + customercol.CustomerTable.As(customercol.CustomerTable.Alias) +
+		" ON " + customercol.CustomerColumns.ID.EqColumn(shipmentcol.ShipmentColumns.CustomerID) +
+		" AND " + customercol.CustomerColumns.OrganizationID.EqColumn(
+		shipmentcol.ShipmentColumns.OrganizationID) +
+		" AND " + customercol.CustomerColumns.BusinessUnitID.EqColumn(
+		shipmentcol.ShipmentColumns.BusinessUnitID)
 
-	serviceTypeJoin = "LEFT JOIN " + buncolgen.ServiceTypeTable.As(
-		buncolgen.ServiceTypeTable.Alias) +
-		" ON " + buncolgen.ServiceTypeColumns.ID.EqColumn(
-		buncolgen.ShipmentColumns.ServiceTypeID) +
-		" AND " + buncolgen.ServiceTypeColumns.OrganizationID.EqColumn(
-		buncolgen.ShipmentColumns.OrganizationID) +
-		" AND " + buncolgen.ServiceTypeColumns.BusinessUnitID.EqColumn(
-		buncolgen.ShipmentColumns.BusinessUnitID)
+	serviceTypeJoin = "LEFT JOIN " + servicetypecol.ServiceTypeTable.As(
+		servicetypecol.ServiceTypeTable.Alias) +
+		" ON " + servicetypecol.ServiceTypeColumns.ID.EqColumn(
+		shipmentcol.ShipmentColumns.ServiceTypeID) +
+		" AND " + servicetypecol.ServiceTypeColumns.OrganizationID.EqColumn(
+		shipmentcol.ShipmentColumns.OrganizationID) +
+		" AND " + servicetypecol.ServiceTypeColumns.BusinessUnitID.EqColumn(
+		shipmentcol.ShipmentColumns.BusinessUnitID)
 
-	assignmentJoin = "LEFT JOIN " + buncolgen.AssignmentTable.As(
-		buncolgen.AssignmentTable.Alias) +
-		" ON " + buncolgen.AssignmentColumns.ShipmentMoveID.EqColumn(
-		buncolgen.ShipmentMoveColumns.ID) +
-		" AND " + buncolgen.AssignmentColumns.OrganizationID.EqColumn(
-		buncolgen.ShipmentMoveColumns.OrganizationID) +
-		" AND " + buncolgen.AssignmentColumns.BusinessUnitID.EqColumn(
-		buncolgen.ShipmentMoveColumns.BusinessUnitID) +
-		" AND " + buncolgen.AssignmentColumns.ArchivedAt.IsNull()
+	assignmentJoin = "LEFT JOIN " + shipmentcol.AssignmentTable.As(
+		shipmentcol.AssignmentTable.Alias) +
+		" ON " + shipmentcol.AssignmentColumns.ShipmentMoveID.EqColumn(
+		shipmentcol.ShipmentMoveColumns.ID) +
+		" AND " + shipmentcol.AssignmentColumns.OrganizationID.EqColumn(
+		shipmentcol.ShipmentMoveColumns.OrganizationID) +
+		" AND " + shipmentcol.AssignmentColumns.BusinessUnitID.EqColumn(
+		shipmentcol.ShipmentMoveColumns.BusinessUnitID) +
+		" AND " + shipmentcol.AssignmentColumns.ArchivedAt.IsNull()
 
-	carrierAssignmentJoin = "LEFT JOIN " + buncolgen.CarrierAssignmentTable.As(
-		buncolgen.CarrierAssignmentTable.Alias) +
-		" ON " + buncolgen.CarrierAssignmentColumns.ShipmentMoveID.EqColumn(
-		buncolgen.ShipmentMoveColumns.ID) +
-		" AND " + buncolgen.CarrierAssignmentColumns.OrganizationID.EqColumn(
-		buncolgen.ShipmentMoveColumns.OrganizationID) +
-		" AND " + buncolgen.CarrierAssignmentColumns.BusinessUnitID.EqColumn(
-		buncolgen.ShipmentMoveColumns.BusinessUnitID) +
-		" AND " + buncolgen.CarrierAssignmentColumns.Status.Qualified() +
+	carrierAssignmentJoin = "LEFT JOIN " + shipmentcol.CarrierAssignmentTable.As(
+		shipmentcol.CarrierAssignmentTable.Alias) +
+		" ON " + shipmentcol.CarrierAssignmentColumns.ShipmentMoveID.EqColumn(
+		shipmentcol.ShipmentMoveColumns.ID) +
+		" AND " + shipmentcol.CarrierAssignmentColumns.OrganizationID.EqColumn(
+		shipmentcol.ShipmentMoveColumns.OrganizationID) +
+		" AND " + shipmentcol.CarrierAssignmentColumns.BusinessUnitID.EqColumn(
+		shipmentcol.ShipmentMoveColumns.BusinessUnitID) +
+		" AND " + shipmentcol.CarrierAssignmentColumns.Status.Qualified() +
 		" <> '" + shipment.CarrierAssignmentStatusCanceled.String() + "'"
 
-	assignedCarrierJoin = "LEFT JOIN " + buncolgen.CarrierTable.As(
-		buncolgen.CarrierTable.Alias) +
-		" ON " + buncolgen.CarrierColumns.ID.EqColumn(
-		buncolgen.CarrierAssignmentColumns.CarrierID) +
-		" AND " + buncolgen.CarrierColumns.OrganizationID.EqColumn(
-		buncolgen.CarrierAssignmentColumns.OrganizationID) +
-		" AND " + buncolgen.CarrierColumns.BusinessUnitID.EqColumn(
-		buncolgen.CarrierAssignmentColumns.BusinessUnitID)
+	assignedCarrierJoin = "LEFT JOIN " + carriercol.CarrierTable.As(
+		carriercol.CarrierTable.Alias) +
+		" ON " + carriercol.CarrierColumns.ID.EqColumn(
+		shipmentcol.CarrierAssignmentColumns.CarrierID) +
+		" AND " + carriercol.CarrierColumns.OrganizationID.EqColumn(
+		shipmentcol.CarrierAssignmentColumns.OrganizationID) +
+		" AND " + carriercol.CarrierColumns.BusinessUnitID.EqColumn(
+		shipmentcol.CarrierAssignmentColumns.BusinessUnitID)
 )
 
 const openAssignmentLateral = `LEFT JOIN LATERAL (
@@ -132,8 +137,8 @@ func applyMoveFilters(
 	sq *bun.SelectQuery,
 	filter *shipmentports.DispatchBoardFilter,
 ) *bun.SelectQuery {
-	moveCols := buncolgen.ShipmentMoveColumns
-	shipCols := buncolgen.ShipmentColumns
+	moveCols := shipmentcol.ShipmentMoveColumns
+	shipCols := shipmentcol.ShipmentColumns
 
 	if len(filter.MoveStatuses) > 0 {
 		sq = sq.Where(moveCols.Status.In(), bun.List(filter.MoveStatuses))
@@ -169,7 +174,7 @@ func applyMoveFilters(
 		sq = sq.WhereGroup(" AND ", func(g *bun.SelectQuery) *bun.SelectQuery {
 			return g.Where(shipCols.ProNumber.ILike(), pattern).
 				WhereOr(shipCols.BOL.ILike(), pattern).
-				WhereOr(buncolgen.CustomerColumns.Name.ILike(), pattern).
+				WhereOr(customercol.CustomerColumns.Name.ILike(), pattern).
 				WhereOr("orig.city ILIKE ?", pattern).
 				WhereOr("dest.city ILIKE ?", pattern)
 		})
@@ -182,7 +187,7 @@ func applyDriverFilters(
 	sq *bun.SelectQuery,
 	filter *shipmentports.DispatchBoardFilter,
 ) *bun.SelectQuery {
-	cols := buncolgen.WorkerColumns
+	cols := workercol.WorkerColumns
 
 	sq = sq.Where(cols.Status.Eq(), domaintypes.StatusActive).
 		Where(cols.CanBeAssigned.IsTrue())

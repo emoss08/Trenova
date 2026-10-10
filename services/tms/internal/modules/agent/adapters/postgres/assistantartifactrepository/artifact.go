@@ -1,6 +1,7 @@
 package assistantartifactrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/assistantartifactcol"
 	"context"
 	"database/sql"
 	"errors"
@@ -52,7 +53,7 @@ func New(p Params) assistantartifactports.AssistantArtifactRepository {
 // proposal or plan artifact is one per thread however many tool calls
 // mention it; anything else is one per tool call and kind.
 func conflictTarget(a *assistantartifact.Artifact) (string, error) {
-	cols := buncolgen.ArtifactColumns
+	cols := assistantartifactcol.ArtifactColumns
 	switch {
 	case !a.ProposalID.IsNil():
 		return "CONFLICT (" + cols.ThreadID.Name + ", " + cols.ProposalID.Name + ") WHERE " +
@@ -92,7 +93,7 @@ func (r *repository) Upsert(
 }
 
 func buildUpsert(db bun.IDB, artifact *assistantartifact.Artifact, target string) *bun.InsertQuery {
-	cols := buncolgen.ArtifactColumns
+	cols := assistantartifactcol.ArtifactColumns
 
 	return db.NewInsert().
 		Model(artifact).
@@ -117,12 +118,12 @@ func (r *repository) GetByID(
 ) (*assistantartifact.Artifact, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*assistantartifact.Artifact, error) {
 		entity := new(assistantartifact.Artifact)
-		cols := buncolgen.ArtifactColumns
+		cols := assistantartifactcol.ArtifactColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ArtifactScopeTenant(sq, req.TenantInfo).
+				return assistantartifactcol.ArtifactScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
@@ -143,13 +144,13 @@ func (r *repository) LatestInLineage(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*assistantartifact.Artifact, error) {
-		cols := buncolgen.ArtifactColumns
+		cols := assistantartifactcol.ArtifactColumns
 		entities := make([]*assistantartifact.Artifact, 0, 1)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ArtifactScopeTenant(sq, req.TenantInfo).
+				return assistantartifactcol.ArtifactScopeTenant(sq, req.TenantInfo).
 					Where(cols.ThreadID.Eq(), req.ThreadID).
 					Where(cols.LineageKey.Eq(), req.LineageKey).
 					Where(cols.SourceToolCallID.Ne(), req.ExceptToolCall)
@@ -177,13 +178,13 @@ func (r *repository) ListByToolCalls(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*assistantartifact.Artifact, error) {
-		cols := buncolgen.ArtifactColumns
+		cols := assistantartifactcol.ArtifactColumns
 		entities := make([]*assistantartifact.Artifact, 0, len(req.CallIDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ArtifactScopeTenant(sq, req.TenantInfo).
+				return assistantartifactcol.ArtifactScopeTenant(sq, req.TenantInfo).
 					Where(cols.ThreadID.Eq(), req.ThreadID).
 					Where(cols.SourceToolCallID.In(), bun.List(req.CallIDs))
 			}).
@@ -207,12 +208,12 @@ func (r *repository) Delete(ctx context.Context, req *assistantartifactports.Del
 	}
 
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.ArtifactColumns
+		cols := assistantartifactcol.ArtifactColumns
 		_, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*assistantartifact.Artifact)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.ArtifactScopeTenantDelete(dq, req.TenantInfo).
+				return assistantartifactcol.ArtifactScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.ThreadID.Eq(), req.ThreadID).
 					Where(cols.ID.In(), bun.List(req.IDs))
 			}).
@@ -234,7 +235,7 @@ func (r *repository) SetPinned(
 	req assistantartifactports.SetArtifactPinnedRequest,
 ) (*assistantartifact.Artifact, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*assistantartifact.Artifact, error) {
-		cols := buncolgen.ArtifactColumns
+		cols := assistantartifactcol.ArtifactColumns
 		root, err := r.rootOf(ctx, req.TenantInfo, req.ThreadID, req.ID)
 		if err != nil {
 			return nil, err
@@ -245,7 +246,7 @@ func (r *repository) SetPinned(
 			NewUpdate().
 			Model(&updated).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ArtifactScopeTenantUpdate(uq, req.TenantInfo).
+				return assistantartifactcol.ArtifactScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ThreadID.Eq(), req.ThreadID).
 					Where(rootExpr+" = ?", root)
 			}).
@@ -277,14 +278,14 @@ func (r *repository) UpdateStatus(
 	req assistantartifactports.UpdateArtifactStatusRequest,
 ) (*assistantartifact.Artifact, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*assistantartifact.Artifact, error) {
-		cols := buncolgen.ArtifactColumns
+		cols := assistantartifactcol.ArtifactColumns
 		entity := new(assistantartifact.Artifact)
 
 		q := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ArtifactScopeTenantUpdate(uq, req.TenantInfo).
+				return assistantartifactcol.ArtifactScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Set(cols.Status.Set(), req.Status).
@@ -314,12 +315,12 @@ func (r *repository) FindByProposal(
 ) (*assistantartifact.Artifact, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*assistantartifact.Artifact, error) {
 		entity := new(assistantartifact.Artifact)
-		cols := buncolgen.ArtifactColumns
+		cols := assistantartifactcol.ArtifactColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ArtifactScopeTenant(sq, tenant).
+				return assistantartifactcol.ArtifactScopeTenant(sq, tenant).
 					Where(cols.ProposalID.Eq(), proposalID)
 			}).
 			Limit(1).

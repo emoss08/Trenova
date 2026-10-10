@@ -4,6 +4,28 @@
 package recordlabelrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/accessorialchargecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/bankreceiptcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/billingqueuecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/commoditycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/equipmenttypecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/fleetcodecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/holdreasoncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/insightcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/reportcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/servicefailurecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/trailercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 	"slices"
@@ -82,149 +104,149 @@ type source struct {
 var sources = map[permission.Resource]source{
 	permission.ResourceShipment: {
 		model: func() any { return (*shipment.Shipment)(nil) },
-		scope: buncolgen.ShipmentScopeTenant,
-		id:    buncolgen.ShipmentColumns.ID,
-		label: buncolgen.ShipmentColumns.ProNumber.Qualified(),
+		scope: shipmentcol.ShipmentScopeTenant,
+		id:    shipmentcol.ShipmentColumns.ID,
+		label: shipmentcol.ShipmentColumns.ProNumber.Qualified(),
 	},
 	permission.ResourceCustomer: {
 		model: func() any { return (*customer.Customer)(nil) },
-		scope: buncolgen.CustomerScopeTenant,
-		id:    buncolgen.CustomerColumns.ID,
-		label: buncolgen.CustomerColumns.Name.Qualified(),
+		scope: customercol.CustomerScopeTenant,
+		id:    customercol.CustomerColumns.ID,
+		label: customercol.CustomerColumns.Name.Qualified(),
 	},
 	permission.ResourceLocation: {
 		model: func() any { return (*location.Location)(nil) },
-		scope: buncolgen.LocationScopeTenant,
-		id:    buncolgen.LocationColumns.ID,
-		label: buncolgen.LocationColumns.Name.Qualified(),
+		scope: locationcol.LocationScopeTenant,
+		id:    locationcol.LocationColumns.ID,
+		label: locationcol.LocationColumns.Name.Qualified(),
 	},
 	permission.ResourceWorker: {
 		model: func() any { return (*worker.Worker)(nil) },
-		scope: buncolgen.WorkerScopeTenant,
-		id:    buncolgen.WorkerColumns.ID,
+		scope: workercol.WorkerScopeTenant,
+		id:    workercol.WorkerColumns.ID,
 		label: buncolgen.Expr(
 			"CONCAT_WS(' ', {0}, {1})",
-			buncolgen.WorkerColumns.FirstName,
-			buncolgen.WorkerColumns.LastName,
+			workercol.WorkerColumns.FirstName,
+			workercol.WorkerColumns.LastName,
 		),
 	},
 	permission.ResourceTractor: {
 		model: func() any { return (*tractor.Tractor)(nil) },
-		scope: buncolgen.TractorScopeTenant,
-		id:    buncolgen.TractorColumns.ID,
-		label: buncolgen.TractorColumns.Code.Qualified(),
+		scope: tractorcol.TractorScopeTenant,
+		id:    tractorcol.TractorColumns.ID,
+		label: tractorcol.TractorColumns.Code.Qualified(),
 	},
 	permission.ResourceTrailer: {
 		model: func() any { return (*trailer.Trailer)(nil) },
-		scope: buncolgen.TrailerScopeTenant,
-		id:    buncolgen.TrailerColumns.ID,
-		label: buncolgen.TrailerColumns.Code.Qualified(),
+		scope: trailercol.TrailerScopeTenant,
+		id:    trailercol.TrailerColumns.ID,
+		label: trailercol.TrailerColumns.Code.Qualified(),
 	},
 	permission.ResourceCarrier: {
 		model: func() any { return (*carrier.Carrier)(nil) },
-		scope: buncolgen.CarrierScopeTenant,
-		id:    buncolgen.CarrierColumns.ID,
-		label: buncolgen.CarrierColumns.Name.Qualified(),
+		scope: carriercol.CarrierScopeTenant,
+		id:    carriercol.CarrierColumns.ID,
+		label: carriercol.CarrierColumns.Name.Qualified(),
 	},
 	permission.ResourceCommodity: {
 		model: func() any { return (*commodity.Commodity)(nil) },
-		scope: buncolgen.CommodityScopeTenant,
-		id:    buncolgen.CommodityColumns.ID,
-		label: buncolgen.CommodityColumns.Name.Qualified(),
+		scope: commoditycol.CommodityScopeTenant,
+		id:    commoditycol.CommodityColumns.ID,
+		label: commoditycol.CommodityColumns.Name.Qualified(),
 	},
 	permission.ResourceEquipmentType: {
 		model: func() any { return (*equipmenttype.EquipmentType)(nil) },
-		scope: buncolgen.EquipmentTypeScopeTenant,
-		id:    buncolgen.EquipmentTypeColumns.ID,
-		label: buncolgen.EquipmentTypeColumns.Code.Qualified(),
+		scope: equipmenttypecol.EquipmentTypeScopeTenant,
+		id:    equipmenttypecol.EquipmentTypeColumns.ID,
+		label: equipmenttypecol.EquipmentTypeColumns.Code.Qualified(),
 	},
 	permission.ResourceFleetCode: {
 		model: func() any { return (*fleetcode.FleetCode)(nil) },
-		scope: buncolgen.FleetCodeScopeTenant,
-		id:    buncolgen.FleetCodeColumns.ID,
-		label: buncolgen.FleetCodeColumns.Code.Qualified(),
+		scope: fleetcodecol.FleetCodeScopeTenant,
+		id:    fleetcodecol.FleetCodeColumns.ID,
+		label: fleetcodecol.FleetCodeColumns.Code.Qualified(),
 	},
 	permission.ResourceAccessorialCharge: {
 		model: func() any { return (*accessorialcharge.AccessorialCharge)(nil) },
-		scope: buncolgen.AccessorialChargeScopeTenant,
-		id:    buncolgen.AccessorialChargeColumns.ID,
-		label: buncolgen.AccessorialChargeColumns.Code.Qualified(),
+		scope: accessorialchargecol.AccessorialChargeScopeTenant,
+		id:    accessorialchargecol.AccessorialChargeColumns.ID,
+		label: accessorialchargecol.AccessorialChargeColumns.Code.Qualified(),
 	},
 	permission.ResourceInvoice: {
 		model: func() any { return (*invoice.Invoice)(nil) },
-		scope: buncolgen.InvoiceScopeTenant,
-		id:    buncolgen.InvoiceColumns.ID,
-		label: buncolgen.InvoiceColumns.Number.Qualified(),
+		scope: invoicecol.InvoiceScopeTenant,
+		id:    invoicecol.InvoiceColumns.ID,
+		label: invoicecol.InvoiceColumns.Number.Qualified(),
 	},
 	permission.ResourceDocument: {
 		model: func() any { return (*document.Document)(nil) },
-		scope: buncolgen.DocumentScopeTenant,
-		id:    buncolgen.DocumentColumns.ID,
+		scope: documentcol.DocumentScopeTenant,
+		id:    documentcol.DocumentColumns.ID,
 		label: buncolgen.Expr(
 			"COALESCE(NULLIF({0}, ''), {1})",
-			buncolgen.DocumentColumns.OriginalName,
-			buncolgen.DocumentColumns.FileName,
+			documentcol.DocumentColumns.OriginalName,
+			documentcol.DocumentColumns.FileName,
 		),
 	},
 	permission.ResourceDashboard: {
 		model: func() any { return (*report.Dashboard)(nil) },
-		scope: buncolgen.DashboardScopeTenant,
-		id:    buncolgen.DashboardColumns.ID,
-		label: buncolgen.DashboardColumns.Name.Qualified(),
+		scope: reportcol.DashboardScopeTenant,
+		id:    reportcol.DashboardColumns.ID,
+		label: reportcol.DashboardColumns.Name.Qualified(),
 	},
 	permission.ResourceReport: {
 		model: func() any { return (*report.ReportDefinition)(nil) },
-		scope: buncolgen.ReportDefinitionScopeTenant,
-		id:    buncolgen.ReportDefinitionColumns.ID,
-		label: buncolgen.ReportDefinitionColumns.Name.Qualified(),
+		scope: reportcol.ReportDefinitionScopeTenant,
+		id:    reportcol.ReportDefinitionColumns.ID,
+		label: reportcol.ReportDefinitionColumns.Name.Qualified(),
 	},
 	permission.ResourceBillingQueue: {
 		model: func() any { return (*billingqueue.BillingQueueItem)(nil) },
-		scope: buncolgen.BillingQueueItemScopeTenant,
-		id:    buncolgen.BillingQueueItemColumns.ID,
-		label: buncolgen.BillingQueueItemColumns.Number.Qualified(),
+		scope: billingqueuecol.BillingQueueItemScopeTenant,
+		id:    billingqueuecol.BillingQueueItemColumns.ID,
+		label: billingqueuecol.BillingQueueItemColumns.Number.Qualified(),
 	},
 	permission.ResourceDriverSettlement: {
 		model: func() any { return (*driversettlement.Settlement)(nil) },
-		scope: buncolgen.SettlementScopeTenant,
-		id:    buncolgen.SettlementColumns.ID,
-		label: buncolgen.SettlementColumns.SettlementNumber.Qualified(),
+		scope: driversettlementcol.SettlementScopeTenant,
+		id:    driversettlementcol.SettlementColumns.ID,
+		label: driversettlementcol.SettlementColumns.SettlementNumber.Qualified(),
 	},
 	permission.ResourceCarrierSettlement: {
 		model: func() any { return (*carriersettlement.CarrierSettlement)(nil) },
-		scope: buncolgen.CarrierSettlementScopeTenant,
-		id:    buncolgen.CarrierSettlementColumns.ID,
-		label: buncolgen.CarrierSettlementColumns.SettlementNumber.Qualified(),
+		scope: carriersettlementcol.CarrierSettlementScopeTenant,
+		id:    carriersettlementcol.CarrierSettlementColumns.ID,
+		label: carriersettlementcol.CarrierSettlementColumns.SettlementNumber.Qualified(),
 	},
 	permission.ResourceBankReceipt: {
 		model: func() any { return (*bankreceipt.BankReceipt)(nil) },
-		scope: buncolgen.BankReceiptScopeTenant,
-		id:    buncolgen.BankReceiptColumns.ID,
-		label: buncolgen.BankReceiptColumns.ReferenceNumber.Qualified(),
+		scope: bankreceiptcol.BankReceiptScopeTenant,
+		id:    bankreceiptcol.BankReceiptColumns.ID,
+		label: bankreceiptcol.BankReceiptColumns.ReferenceNumber.Qualified(),
 	},
 	permission.ResourceInsight: {
 		model: func() any { return (*insight.Insight)(nil) },
-		scope: buncolgen.InsightScopeTenant,
-		id:    buncolgen.InsightColumns.ID,
-		label: buncolgen.InsightColumns.Headline.Qualified(),
+		scope: insightcol.InsightScopeTenant,
+		id:    insightcol.InsightColumns.ID,
+		label: insightcol.InsightColumns.Headline.Qualified(),
 	},
 	permission.ResourceInboundMessage: {
 		model: func() any { return (*inboundmessage.InboundMessage)(nil) },
-		scope: buncolgen.InboundMessageScopeTenant,
-		id:    buncolgen.InboundMessageColumns.ID,
-		label: buncolgen.InboundMessageColumns.Subject.Qualified(),
+		scope: inboundmessagecol.InboundMessageScopeTenant,
+		id:    inboundmessagecol.InboundMessageColumns.ID,
+		label: inboundmessagecol.InboundMessageColumns.Subject.Qualified(),
 	},
 	permission.ResourceServiceFailure: {
 		model: func() any { return (*servicefailure.ServiceFailure)(nil) },
-		scope: buncolgen.ServiceFailureScopeTenant,
-		id:    buncolgen.ServiceFailureColumns.ID,
-		label: buncolgen.ServiceFailureColumns.Number.Qualified(),
+		scope: servicefailurecol.ServiceFailureScopeTenant,
+		id:    servicefailurecol.ServiceFailureColumns.ID,
+		label: servicefailurecol.ServiceFailureColumns.Number.Qualified(),
 	},
 	permission.ResourceHoldReason: {
 		model: func() any { return (*holdreason.HoldReason)(nil) },
-		scope: buncolgen.HoldReasonScopeTenant,
-		id:    buncolgen.HoldReasonColumns.ID,
-		label: buncolgen.HoldReasonColumns.Label.Qualified(),
+		scope: holdreasoncol.HoldReasonScopeTenant,
+		id:    holdreasoncol.HoldReasonColumns.ID,
+		label: holdreasoncol.HoldReasonColumns.Label.Qualified(),
 	},
 }
 
@@ -309,12 +331,12 @@ func (l *Labeler) moveLabels(
 ) (map[pulid.ID]string, error) {
 	return dbtx.Write(ctx, l.db, func(ctx context.Context) (map[pulid.ID]string, error) {
 		moves := make([]*shipment.ShipmentMove, 0, len(ids))
-		cols := buncolgen.ShipmentMoveColumns
+		cols := shipmentcol.ShipmentMoveColumns
 		if err := l.db.DBForContext(ctx).NewSelect().
 			Model(&moves).
 			Column(cols.ID.String(), cols.ShipmentID.String(), cols.Sequence.String()).
 			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ShipmentMoveScopeTenant(q, tenant).
+				return shipmentcol.ShipmentMoveScopeTenant(q, tenant).
 					Where(cols.ID.In(), bun.List(ids))
 			}).
 			Scan(ctx); err != nil {

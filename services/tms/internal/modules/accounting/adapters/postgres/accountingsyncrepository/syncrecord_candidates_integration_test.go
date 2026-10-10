@@ -3,6 +3,7 @@
 package accountingsyncrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/customerpaymentcol"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -237,7 +238,7 @@ func TestSyncRecordRepository_ListCandidatesFindsPostedDocumentsWithoutARecord(t
 	}
 	_, err = db.NewInsert().Model(&[]*customerpayment.Payment{undone, kept}).Exec(ctx)
 	require.NoError(t, err)
-	paymentCols := buncolgen.PaymentColumns
+	paymentCols := customerpaymentcol.PaymentColumns
 	for _, payment := range []*customerpayment.Payment{undone, kept} {
 		_, err = db.NewUpdate().
 			Model((*customerpayment.Payment)(nil)).

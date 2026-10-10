@@ -1,6 +1,7 @@
 package development
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/aiprovidercol"
 	"context"
 	"fmt"
 
@@ -57,7 +58,7 @@ func (s *AIProviderSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return err
 			}
 
-			cols := buncolgen.ProviderColumns
+			cols := aiprovidercol.ProviderColumns
 			count, err := tx.NewSelect().
 				Model((*aiprovider.Provider)(nil)).
 				Where(cols.OrganizationID.Eq(), org.ID).

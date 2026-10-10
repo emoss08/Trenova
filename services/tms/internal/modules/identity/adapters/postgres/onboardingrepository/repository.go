@@ -1,6 +1,7 @@
 package onboardingrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/onboardingcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/onboarding"
@@ -46,7 +47,7 @@ func (r *repository) Get(
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Apply(buncolgen.OnboardingApplyTenant(req.TenantInfo)).
+			Apply(onboardingcol.OnboardingApplyTenant(req.TenantInfo)).
 			Limit(1).
 			Scan(ctx)
 		if err != nil {
@@ -79,7 +80,7 @@ func (r *repository) Complete(
 	entity *onboarding.Onboarding,
 ) (*onboarding.Onboarding, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*onboarding.Onboarding, error) {
-		cols := buncolgen.OnboardingColumns
+		cols := onboardingcol.OnboardingColumns
 		tenantInfo := pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -90,7 +91,7 @@ func (r *repository) Complete(
 			NewUpdate().
 			Model(updated).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.OnboardingScopeTenantUpdate(uq, tenantInfo).
+				return onboardingcol.OnboardingScopeTenantUpdate(uq, tenantInfo).
 					Where(cols.ID.Eq(), entity.ID).
 					Where(cols.Version.Eq(), entity.Version).
 					Where(cols.Status.Eq(), onboarding.StatusPending)

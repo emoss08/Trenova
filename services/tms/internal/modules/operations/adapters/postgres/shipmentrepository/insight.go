@@ -1,6 +1,7 @@
 package shipmentrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -38,7 +39,7 @@ type insightOptions struct {
 }
 
 func NewInsightSource(p InsightParams) tableinsight.Result {
-	cols := buncolgen.ShipmentColumns
+	cols := shipmentcol.ShipmentColumns
 	facet := func(column buncolgen.Column) dbhelper.InsightColumn {
 		return dbhelper.InsightColumn{Column: column, Facetable: true}
 	}

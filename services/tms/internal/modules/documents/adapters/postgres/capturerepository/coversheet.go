@@ -1,6 +1,7 @@
 package capturerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/capturecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
@@ -54,8 +55,8 @@ func (r *coverSheetRepository) GetByID(
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Apply(buncolgen.CaptureCoverSheetApplyTenant(req.TenantInfo)).
-			Where(buncolgen.CaptureCoverSheetColumns.ID.Eq(), req.ID).
+			Apply(capturecol.CaptureCoverSheetApplyTenant(req.TenantInfo)).
+			Where(capturecol.CaptureCoverSheetColumns.ID.Eq(), req.ID).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Cover sheet")
 		}
@@ -74,8 +75,8 @@ func (r *coverSheetRepository) GetByTokenHash(
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Apply(buncolgen.CaptureCoverSheetApplyTenant(req.TenantInfo)).
-			Where(buncolgen.CaptureCoverSheetColumns.TokenHash.Eq(), req.TokenHash).
+			Apply(capturecol.CaptureCoverSheetApplyTenant(req.TenantInfo)).
+			Where(capturecol.CaptureCoverSheetColumns.TokenHash.Eq(), req.TokenHash).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Cover sheet")
 		}
@@ -89,13 +90,13 @@ func (r *coverSheetRepository) MarkUsed(
 	req captureports.MarkCaptureCoverSheetUsedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.CaptureCoverSheetColumns
+		cols := capturecol.CaptureCoverSheetColumns
 
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*capture.CaptureCoverSheet)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.CaptureCoverSheetScopeTenantUpdate(uq, req.TenantInfo).
+				return capturecol.CaptureCoverSheetScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Set(cols.LastUsedAt.Set(), req.UsedAt).

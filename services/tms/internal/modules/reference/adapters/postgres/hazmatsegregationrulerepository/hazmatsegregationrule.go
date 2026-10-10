@@ -1,6 +1,7 @@
 package hazmatsegregationrulerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/hazmatsegregationrulecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
@@ -140,7 +141,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.HazmatSegregationRuleTable.Alias,
+		hazmatsegregationrulecol.HazmatSegregationRuleTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*hazmatsegregationrule.HazmatSegregationRule)(nil),
@@ -153,7 +154,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.HazmatSegregationRuleTable.Alias,
+		hazmatsegregationrulecol.HazmatSegregationRuleTable.Alias,
 		req.Filter,
 		(*hazmatsegregationrule.HazmatSegregationRule)(nil),
 	)
@@ -164,7 +165,7 @@ func applyHazmatSegregationRuleColumns(
 	columns []string,
 ) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.HazmatSegregationRuleTable.All())
+		return q.ColumnExpr(hazmatsegregationrulecol.HazmatSegregationRuleTable.All())
 	}
 
 	return q.Column(columns...)

@@ -1,6 +1,7 @@
 package routingguiderepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tendercol"
 	"context"
 	"fmt"
 	"strings"
@@ -48,7 +49,7 @@ func (r *repository) addOptions(
 ) *bun.SelectQuery {
 	if opts.IncludeEntries {
 		q = q.Relation("Entries", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Order(buncolgen.RoutingGuideEntryColumns.Rank.OrderAsc())
+			return sq.Order(tendercol.RoutingGuideEntryColumns.Rank.OrderAsc())
 		})
 		q = q.Relation("Entries.Carrier")
 	}
@@ -73,7 +74,7 @@ func (r *repository) List(
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 				sq = querybuilder.ApplyFilters(
 					sq,
-					buncolgen.RoutingGuideTable.Alias,
+					tendercol.RoutingGuideTable.Alias,
 					req.Filter,
 					(*tender.RoutingGuide)(nil),
 				)
@@ -100,7 +101,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.RoutingGuideTable.Alias,
+		tendercol.RoutingGuideTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*tender.RoutingGuide)(nil),
@@ -113,7 +114,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.RoutingGuideTable.Alias,
+		tendercol.RoutingGuideTable.Alias,
 		req.Filter,
 		(*tender.RoutingGuide)(nil),
 	)
@@ -121,7 +122,7 @@ func (r *repository) applyTotalCountFilters(
 
 func applyRoutingGuideColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.RoutingGuideTable.All())
+		return q.ColumnExpr(tendercol.RoutingGuideTable.All())
 	}
 
 	return q.Column(columns...)
@@ -189,7 +190,7 @@ func (r *repository) GetByID(
 	req tenderports.GetRoutingGuideByIDRequest,
 ) (*tender.RoutingGuide, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tender.RoutingGuide, error) {
-		cols := buncolgen.RoutingGuideColumns
+		cols := tendercol.RoutingGuideColumns
 		entity := new(tender.RoutingGuide)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -198,7 +199,7 @@ func (r *repository) GetByID(
 				return r.addOptions(sq, req.RoutingGuideFilterOptions)
 			}).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RoutingGuideScopeTenant(sq, req.TenantInfo).
+				return tendercol.RoutingGuideScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
@@ -224,8 +225,8 @@ func (r *repository) GetByIDs(
 				return r.addOptions(sq, req.RoutingGuideFilterOptions)
 			}).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RoutingGuideScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.RoutingGuideColumns.ID.In(), bun.List(req.RoutingGuideIDs))
+				return tendercol.RoutingGuideScopeTenant(sq, req.TenantInfo).
+					Where(tendercol.RoutingGuideColumns.ID.In(), bun.List(req.RoutingGuideIDs))
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -280,12 +281,12 @@ func (r *repository) deleteMissingEntries(ctx context.Context, entity *tender.Ro
 			NewDelete().
 			Model((*tender.RoutingGuideEntry)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				dq = buncolgen.RoutingGuideEntryScopeTenantDelete(dq, pagination.TenantInfo{
+				dq = tendercol.RoutingGuideEntryScopeTenantDelete(dq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
-				}).Where(buncolgen.RoutingGuideEntryColumns.RoutingGuideID.Eq(), entity.ID)
+				}).Where(tendercol.RoutingGuideEntryColumns.RoutingGuideID.Eq(), entity.ID)
 				if len(kept) > 0 {
-					dq = dq.Where(buncolgen.RoutingGuideEntryColumns.ID.NotIn(), bun.List(kept))
+					dq = dq.Where(tendercol.RoutingGuideEntryColumns.ID.NotIn(), bun.List(kept))
 				}
 				return dq
 			}).
@@ -305,13 +306,13 @@ func (r *repository) shiftKeptEntryRanks(ctx context.Context, entity *tender.Rou
 			return nil
 		}
 
-		cols := buncolgen.RoutingGuideEntryColumns
+		cols := tendercol.RoutingGuideEntryColumns
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*tender.RoutingGuideEntry)(nil)).
 			Set("rank = rank + 10000").
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.RoutingGuideEntryScopeTenantUpdate(uq, pagination.TenantInfo{
+				return tendercol.RoutingGuideEntryScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
 				}).Where(cols.RoutingGuideID.Eq(), entity.ID).
@@ -442,12 +443,12 @@ func (r *repository) Delete(
 	req tenderports.DeleteRoutingGuideRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.RoutingGuideColumns
+		cols := tendercol.RoutingGuideColumns
 		results, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*tender.RoutingGuide)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.RoutingGuideScopeTenantDelete(dq, req.TenantInfo).
+				return tendercol.RoutingGuideScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Exec(ctx)
@@ -467,17 +468,17 @@ func (r *repository) matchTier(
 	apply func(*bun.SelectQuery) *bun.SelectQuery,
 ) (*tender.RoutingGuide, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tender.RoutingGuide, error) {
-		cols := buncolgen.RoutingGuideColumns
+		cols := tendercol.RoutingGuideColumns
 		entity := new(tender.RoutingGuide)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			Relation("Entries", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order(buncolgen.RoutingGuideEntryColumns.Rank.OrderAsc())
+				return sq.Order(tendercol.RoutingGuideEntryColumns.Rank.OrderAsc())
 			}).
 			Relation("Entries.Carrier").
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.RoutingGuideScopeTenant(sq, req.TenantInfo).
+				sq = tendercol.RoutingGuideScopeTenant(sq, req.TenantInfo).
 					Where(cols.Status.Eq(), domaintypes.StatusActive).
 					Where(cols.Specificity.Eq(), specificity)
 				return apply(sq)
@@ -501,7 +502,7 @@ func (r *repository) MatchLane(
 	ctx context.Context,
 	req *tenderports.MatchLaneRequest,
 ) (*tender.RoutingGuide, error) {
-	cols := buncolgen.RoutingGuideColumns
+	cols := tendercol.RoutingGuideColumns
 
 	if !req.OriginLocationID.IsNil() && !req.DestinationLocationID.IsNil() {
 		guide, err := r.matchTier(ctx, req, tender.SpecificityLocationPair,

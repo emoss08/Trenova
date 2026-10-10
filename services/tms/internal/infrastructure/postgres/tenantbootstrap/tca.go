@@ -1,6 +1,7 @@
 package tenantbootstrap
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tablechangealertcol"
 	"context"
 	"fmt"
 
@@ -36,7 +37,7 @@ var defaultTCAAllowlist = []tcaAllowlistEntry{
 }
 
 func CreateTCAAllowlist(ctx context.Context, db bun.IDB, scope Scope) (int, error) {
-	cols := buncolgen.TCAAllowlistedTableColumns
+	cols := tablechangealertcol.TCAAllowlistedTableColumns
 	exists, err := db.NewSelect().
 		Model((*tablechangealert.TCAAllowlistedTable)(nil)).
 		Where(cols.OrganizationID.Eq(), scope.OrganizationID).

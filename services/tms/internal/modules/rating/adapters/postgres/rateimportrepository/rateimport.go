@@ -1,6 +1,7 @@
 package rateimportrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/rateimportcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateimport"
@@ -46,21 +47,21 @@ func (r *repository) GetByID(
 ) (*rateimport.RateImportBatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*rateimport.RateImportBatch, error) {
 		entity := new(rateimport.RateImportBatch)
-		cols := buncolgen.RateImportBatchColumns
+		cols := rateimportcol.RateImportBatchColumns
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RateImportBatchScopeTenant(sq, req.TenantInfo).
+				return rateimportcol.RateImportBatchScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.RateImportBatchID)
 			})
 
 		if req.IncludeRows {
 			q = q.Relation(
-				buncolgen.Rel(buncolgen.RateImportBatchRelations.Rows),
+				buncolgen.Rel(rateimportcol.RateImportBatchRelations.Rows),
 				func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Order(buncolgen.RateImportRowColumns.RowNumber.OrderAsc())
+					return sq.Order(rateimportcol.RateImportRowColumns.RowNumber.OrderAsc())
 				},
 			)
 		}
@@ -79,13 +80,13 @@ func (r *repository) List(
 	req *rateimportports.ListRateImportBatchesRequest,
 ) (*pagination.ListResult[*rateimport.RateImportBatch], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*rateimport.RateImportBatch], error) {
-		cols := buncolgen.RateImportBatchColumns
+		cols := rateimportcol.RateImportBatchColumns
 		entities := make([]*rateimport.RateImportBatch, 0, req.Filter.Pagination.SafeLimit())
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.RateImportBatchApplyTenant(req.Filter.TenantInfo))
+			Apply(rateimportcol.RateImportBatchApplyTenant(req.Filter.TenantInfo))
 
 		if req.RateAgreementID != nil && !req.RateAgreementID.IsNil() {
 			q = q.Where(cols.RateAgreementID.Eq(), *req.RateAgreementID)
@@ -111,14 +112,14 @@ func (r *repository) ListRows(
 	req *rateimportports.ListRateImportRowsRequest,
 ) (*pagination.ListResult[*rateimport.RateImportRow], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*rateimport.RateImportRow], error) {
-		cols := buncolgen.RateImportRowColumns
+		cols := rateimportcol.RateImportRowColumns
 		entities := make([]*rateimport.RateImportRow, 0)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RateImportRowScopeTenant(sq, req.TenantInfo).
+				return rateimportcol.RateImportRowScopeTenant(sq, req.TenantInfo).
 					Where(cols.RateImportBatchID.Eq(), req.RateImportBatchID)
 			})
 
@@ -199,7 +200,7 @@ func (r *repository) Update(
 		ov := entity.Version
 		entity.Version++
 
-		cols := buncolgen.RateImportBatchColumns
+		cols := rateimportcol.RateImportBatchColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().

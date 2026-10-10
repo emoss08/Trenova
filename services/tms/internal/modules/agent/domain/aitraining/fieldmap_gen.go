@@ -2,25 +2,28 @@
 
 package aitraining
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/aitrainingcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RetrainingCycle].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RetrainingCycleFieldMap] instead of parsing struct tags via reflection.
+// the generated [aitrainingcol.RetrainingCycleFieldMap] instead of parsing struct tags via reflection.
 func (e *RetrainingCycle) GetStaticFieldMap() map[string]string {
-	return buncolgen.RetrainingCycleFieldMap
+	return aitrainingcol.RetrainingCycleFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TrainingExport].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.TrainingExportFieldMap] instead of parsing struct tags via reflection.
+// the generated [aitrainingcol.TrainingExportFieldMap] instead of parsing struct tags via reflection.
 func (e *TrainingExport) GetStaticFieldMap() map[string]string {
-	return buncolgen.TrainingExportFieldMap
+	return aitrainingcol.TrainingExportFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TrainingExportRecord].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.TrainingExportRecordFieldMap] instead of parsing struct tags via reflection.
+// the generated [aitrainingcol.TrainingExportRecordFieldMap] instead of parsing struct tags via reflection.
 func (e *TrainingExportRecord) GetStaticFieldMap() map[string]string {
-	return buncolgen.TrainingExportRecordFieldMap
+	return aitrainingcol.TrainingExportRecordFieldMap
 }

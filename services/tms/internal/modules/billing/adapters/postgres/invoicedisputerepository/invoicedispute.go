@@ -1,6 +1,7 @@
 package invoicedisputerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
 	"context"
 	"fmt"
 
@@ -61,7 +62,7 @@ func (r *repository) Update(
 		res, err := r.db.DBForContext(ctx).NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.InvoiceDisputeColumns.Version.Eq(), previousVersion).
+			Where(invoicecol.InvoiceDisputeColumns.Version.Eq(), previousVersion).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -82,12 +83,12 @@ func (r *repository) GetByID(
 	req invoiceports.GetInvoiceDisputeByIDRequest,
 ) (*invoice.InvoiceDispute, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoice.InvoiceDispute, error) {
-		cols := buncolgen.InvoiceDisputeColumns
+		cols := invoicecol.InvoiceDisputeColumns
 		entity := new(invoice.InvoiceDispute)
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.InvoiceDisputeScopeTenant(sq, req.TenantInfo).
+				return invoicecol.InvoiceDisputeScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx); err != nil {
@@ -103,12 +104,12 @@ func (r *repository) GetOpenByInvoiceID(
 	req invoiceports.GetOpenInvoiceDisputeRequest,
 ) (*invoice.InvoiceDispute, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoice.InvoiceDispute, error) {
-		cols := buncolgen.InvoiceDisputeColumns
+		cols := invoicecol.InvoiceDisputeColumns
 		entity := new(invoice.InvoiceDispute)
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.InvoiceDisputeScopeTenant(sq, req.TenantInfo).
+				return invoicecol.InvoiceDisputeScopeTenant(sq, req.TenantInfo).
 					Where(cols.InvoiceID.Eq(), req.InvoiceID).
 					Where(cols.Status.Eq(), invoice.DisputeCaseStatusOpen)
 			}).
@@ -131,12 +132,12 @@ func (r *repository) ListByInvoiceIDs(
 			return result, nil
 		}
 
-		cols := buncolgen.InvoiceDisputeColumns
+		cols := invoicecol.InvoiceDisputeColumns
 		rows := make([]*invoice.InvoiceDispute, 0, len(req.InvoiceIDs))
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model(&rows).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.InvoiceDisputeScopeTenant(sq, req.TenantInfo).
+				return invoicecol.InvoiceDisputeScopeTenant(sq, req.TenantInfo).
 					Where(cols.InvoiceID.In(), bun.List(req.InvoiceIDs))
 			}).
 			Order(cols.OpenedAt.OrderDesc(), cols.ID.OrderDesc()).

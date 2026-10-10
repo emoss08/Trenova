@@ -1,6 +1,7 @@
 package aiproviderresolver
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/aiprovidercol"
 	"context"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -29,7 +30,7 @@ func aiProviderColumns(ctx context.Context, nodePathPrefix string) []string {
 	if len(columns) == 0 {
 		return columns
 	}
-	cols := buncolgen.ProviderColumns
+	cols := aiprovidercol.ProviderColumns
 	if graphql.FieldRequested(ctx, nodePathPrefix+".apiKey") {
 		return append(columns,
 			cols.APIKey.Name,

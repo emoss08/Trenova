@@ -1,6 +1,7 @@
 package shipmentcommentrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 	"fmt"
 
@@ -46,7 +47,7 @@ func (r *repository) ListByShipmentID(
 	req *shipmentports.ListShipmentCommentsRequest,
 ) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
-		sc := buncolgen.ShipmentCommentColumns
+		sc := shipmentcol.ShipmentCommentColumns
 		replyMode := req.ParentCommentID != nil && !req.ParentCommentID.IsNil()
 
 		direction := "desc"
@@ -92,7 +93,7 @@ func (r *repository) ListByShipmentID(
 			Query: func(items *[]*shipment.ShipmentComment) *bun.SelectQuery {
 				q := db.NewSelect().
 					Model(items).
-					ColumnExpr(buncolgen.ShipmentCommentTable.All()).
+					ColumnExpr(shipmentcol.ShipmentCommentTable.All()).
 					Apply(r.applyListConditions(req)).
 					Apply(applyCommentRelations)
 				if !replyMode {
@@ -144,15 +145,15 @@ func (r *repository) ListByShipmentID(
 func (r *repository) applyListConditions(
 	req *shipmentports.ListShipmentCommentsRequest,
 ) func(*bun.SelectQuery) *bun.SelectQuery {
-	sc := buncolgen.ShipmentCommentColumns
-	scm := buncolgen.ShipmentCommentMentionColumns
+	sc := shipmentcol.ShipmentCommentColumns
+	scm := shipmentcol.ShipmentCommentMentionColumns
 	f := req.Filters
 	replyMode := req.ParentCommentID != nil && !req.ParentCommentID.IsNil()
 
 	return func(q *bun.SelectQuery) *bun.SelectQuery {
 		q = q.
 			Where(sc.ShipmentID.Eq(), req.ShipmentID).
-			Apply(buncolgen.ShipmentCommentApplyTenant(req.Filter.TenantInfo))
+			Apply(shipmentcol.ShipmentCommentApplyTenant(req.Filter.TenantInfo))
 
 		if replyMode {
 			q = q.Where(sc.ParentCommentID.Eq(), *req.ParentCommentID)
@@ -175,8 +176,8 @@ func (r *repository) applyListConditions(
 		if f.MentionsUserID != nil && !f.MentionsUserID.IsNil() {
 			mentionExists := fmt.Sprintf(
 				"EXISTS (SELECT 1 FROM %s %s WHERE %s AND %s)",
-				buncolgen.ShipmentCommentMentionTable.Name,
-				buncolgen.ShipmentCommentMentionTable.Alias,
+				shipmentcol.ShipmentCommentMentionTable.Name,
+				shipmentcol.ShipmentCommentMentionTable.Alias,
 				scm.CommentID.EqColumn(sc.ID),
 				scm.MentionedUserID.Eq(),
 			)
@@ -204,7 +205,7 @@ func (r *repository) applyListConditions(
 }
 
 func replyCountExpr() string {
-	sc := buncolgen.ShipmentCommentColumns
+	sc := shipmentcol.ShipmentCommentColumns
 	scr := struct {
 		ParentCommentID buncolgen.Column
 		OrganizationID  buncolgen.Column
@@ -219,7 +220,7 @@ func replyCountExpr() string {
 
 	return fmt.Sprintf(
 		"(SELECT count(*) FROM %s scr WHERE %s AND %s AND %s AND %s) AS reply_count",
-		buncolgen.ShipmentCommentTable.Name,
+		shipmentcol.ShipmentCommentTable.Name,
 		scr.ParentCommentID.EqColumn(sc.ID),
 		scr.OrganizationID.EqColumn(sc.OrganizationID),
 		scr.BusinessUnitID.EqColumn(sc.BusinessUnitID),
@@ -228,9 +229,9 @@ func replyCountExpr() string {
 }
 
 func applyCommentRelations(q *bun.SelectQuery) *bun.SelectQuery {
-	scm := buncolgen.ShipmentCommentMentionColumns
-	sca := buncolgen.ShipmentCommentAcknowledgmentColumns
-	rel := buncolgen.ShipmentCommentRelations
+	scm := shipmentcol.ShipmentCommentMentionColumns
+	sca := shipmentcol.ShipmentCommentAcknowledgmentColumns
+	rel := shipmentcol.ShipmentCommentRelations
 
 	return q.
 		Relation(rel.User).
@@ -241,14 +242,14 @@ func applyCommentRelations(q *bun.SelectQuery) *bun.SelectQuery {
 		}).
 		Relation(buncolgen.Rel(
 			rel.MentionedUsers,
-			buncolgen.ShipmentCommentMentionRelations.MentionedUser,
+			shipmentcol.ShipmentCommentMentionRelations.MentionedUser,
 		)).
 		Relation(rel.Acknowledgments, func(aq *bun.SelectQuery) *bun.SelectQuery {
 			return aq.Order(sca.AcknowledgedAt.OrderAsc())
 		}).
 		Relation(buncolgen.Rel(
 			rel.Acknowledgments,
-			buncolgen.ShipmentCommentAcknowledgmentRelations.User,
+			shipmentcol.ShipmentCommentAcknowledgmentRelations.User,
 		))
 }
 
@@ -257,7 +258,7 @@ func (r *repository) GetCountByShipmentID(
 	req *shipmentports.GetShipmentCommentCountRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		sc := buncolgen.ShipmentCommentColumns
+		sc := shipmentcol.ShipmentCommentColumns
 		db := r.db.DBForContext(ctx)
 
 		return db.NewSelect().
@@ -275,17 +276,17 @@ func (r *repository) GetByID(
 	req *shipmentports.GetShipmentCommentByIDRequest,
 ) (*shipment.ShipmentComment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentComment, error) {
-		sc := buncolgen.ShipmentCommentColumns
+		sc := shipmentcol.ShipmentCommentColumns
 		db := r.db.DBForContext(ctx)
 		entity := new(shipment.ShipmentComment)
 
 		if err := db.NewSelect().
 			Model(entity).
-			ColumnExpr(buncolgen.ShipmentCommentTable.All()).
+			ColumnExpr(shipmentcol.ShipmentCommentTable.All()).
 			ColumnExpr(replyCountExpr()).
 			Where(sc.ID.Eq(), req.CommentID).
 			Where(sc.ShipmentID.Eq(), req.ShipmentID).
-			Apply(buncolgen.ShipmentCommentApplyTenant(req.TenantInfo)).
+			Apply(shipmentcol.ShipmentCommentApplyTenant(req.TenantInfo)).
 			Apply(applyCommentRelations).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Shipment comment")
@@ -328,7 +329,7 @@ func (r *repository) Update(
 	entity *shipment.ShipmentComment,
 ) (*shipment.ShipmentComment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentComment, error) {
-		sc := buncolgen.ShipmentCommentColumns
+		sc := shipmentcol.ShipmentCommentColumns
 		if err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 			result, err := tx.NewUpdate().
 				Model(entity).
@@ -392,13 +393,13 @@ func (r *repository) Delete(
 	req *shipmentports.DeleteShipmentCommentQuery,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		sc := buncolgen.ShipmentCommentColumns
+		sc := shipmentcol.ShipmentCommentColumns
 
 		db := r.db.DBForContext(ctx)
 		result, err := db.NewDelete().
 			Model((*shipment.ShipmentComment)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.ShipmentCommentScopeTenantDelete(dq, req.TenantInfo).
+				return shipmentcol.ShipmentCommentScopeTenantDelete(dq, req.TenantInfo).
 					Where(sc.ID.Eq(), req.CommentID).
 					Where(sc.ShipmentID.Eq(), req.ShipmentID)
 			}).
@@ -416,14 +417,14 @@ func (r *repository) SoftDelete(
 	req *shipmentports.SoftDeleteShipmentCommentRequest,
 ) (*shipment.ShipmentComment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentComment, error) {
-		sc := buncolgen.ShipmentCommentColumns
+		sc := shipmentcol.ShipmentCommentColumns
 		now := timeutils.NowUnix()
 
 		if err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 			result, err := tx.NewUpdate().
 				Model((*shipment.ShipmentComment)(nil)).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return buncolgen.ShipmentCommentScopeTenantUpdate(uq, req.TenantInfo).
+					return shipmentcol.ShipmentCommentScopeTenantUpdate(uq, req.TenantInfo).
 						Where(sc.ID.Eq(), req.CommentID).
 						Where(sc.ShipmentID.Eq(), req.ShipmentID).
 						Where(sc.DeletedAt.IsNull())
@@ -474,14 +475,14 @@ func (r *repository) SetPinned(
 	req *shipmentports.SetShipmentCommentPinnedRequest,
 ) (*shipment.ShipmentComment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentComment, error) {
-		sc := buncolgen.ShipmentCommentColumns
+		sc := shipmentcol.ShipmentCommentColumns
 		now := timeutils.NowUnix()
 		db := r.db.DBForContext(ctx)
 
 		q := db.NewUpdate().
 			Model((*shipment.ShipmentComment)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ShipmentCommentScopeTenantUpdate(uq, req.TenantInfo).
+				return shipmentcol.ShipmentCommentScopeTenantUpdate(uq, req.TenantInfo).
 					Where(sc.ID.Eq(), req.CommentID).
 					Where(sc.ShipmentID.Eq(), req.ShipmentID).
 					Where(sc.DeletedAt.IsNull()).
@@ -525,14 +526,14 @@ func (r *repository) SetResolved(
 	req *shipmentports.SetShipmentCommentResolvedRequest,
 ) (*shipment.ShipmentComment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentComment, error) {
-		sc := buncolgen.ShipmentCommentColumns
+		sc := shipmentcol.ShipmentCommentColumns
 		now := timeutils.NowUnix()
 		db := r.db.DBForContext(ctx)
 
 		q := db.NewUpdate().
 			Model((*shipment.ShipmentComment)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ShipmentCommentScopeTenantUpdate(uq, req.TenantInfo).
+				return shipmentcol.ShipmentCommentScopeTenantUpdate(uq, req.TenantInfo).
 					Where(sc.ID.Eq(), req.CommentID).
 					Where(sc.ShipmentID.Eq(), req.ShipmentID).
 					Where(sc.DeletedAt.IsNull())
@@ -607,14 +608,14 @@ func (r *repository) CountReplies(
 	req *shipmentports.GetShipmentCommentByIDRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		sc := buncolgen.ShipmentCommentColumns
+		sc := shipmentcol.ShipmentCommentColumns
 		db := r.db.DBForContext(ctx)
 
 		return db.NewSelect().
 			Model((*shipment.ShipmentComment)(nil)).
 			Where(sc.ParentCommentID.Eq(), req.CommentID).
 			Where(sc.ShipmentID.Eq(), req.ShipmentID).
-			Apply(buncolgen.ShipmentCommentApplyTenant(req.TenantInfo)).
+			Apply(shipmentcol.ShipmentCommentApplyTenant(req.TenantInfo)).
 			Count(ctx)
 	})
 }
@@ -624,7 +625,7 @@ func (r *repository) CountPinnedByShipmentID(
 	req *shipmentports.GetShipmentCommentCountRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		sc := buncolgen.ShipmentCommentColumns
+		sc := shipmentcol.ShipmentCommentColumns
 		db := r.db.DBForContext(ctx)
 
 		return db.NewSelect().
@@ -632,7 +633,7 @@ func (r *repository) CountPinnedByShipmentID(
 			Where(sc.ShipmentID.Eq(), req.ShipmentID).
 			Where(sc.PinnedAt.IsNotNull()).
 			Where(sc.DeletedAt.IsNull()).
-			Apply(buncolgen.ShipmentCommentApplyTenant(req.TenantInfo)).
+			Apply(shipmentcol.ShipmentCommentApplyTenant(req.TenantInfo)).
 			Count(ctx)
 	})
 }
@@ -665,7 +666,7 @@ func (r *repository) deleteMentions(
 	tx bun.IDB,
 	commentID, shipmentID, orgID, buID pulid.ID,
 ) error {
-	scm := buncolgen.ShipmentCommentMentionColumns
+	scm := shipmentcol.ShipmentCommentMentionColumns
 	if _, err := tx.NewDelete().
 		Model((*shipment.ShipmentCommentMention)(nil)).
 		Where(scm.CommentID.Eq(), commentID).

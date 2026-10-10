@@ -1,6 +1,7 @@
 package documenttemplaterepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/documenttemplatecol"
 	"context"
 	"database/sql"
 	"errors"
@@ -19,45 +20,45 @@ import (
 // have to be weighed against each other inside one statement. Resolving in steps
 // would mean a render could observe a template mid-publish.
 var (
-	resolveTemplateJoin = "JOIN " + buncolgen.DocumentTemplateTable.As(
-		buncolgen.DocumentTemplateTable.Alias,
+	resolveTemplateJoin = "JOIN " + documenttemplatecol.DocumentTemplateTable.As(
+		documenttemplatecol.DocumentTemplateTable.Alias,
 	) +
-		" ON " + buncolgen.DocumentTemplateColumns.ID.EqColumn(
-		buncolgen.DocumentTemplateVersionColumns.TemplateID,
+		" ON " + documenttemplatecol.DocumentTemplateColumns.ID.EqColumn(
+		documenttemplatecol.DocumentTemplateVersionColumns.TemplateID,
 	) +
-		" AND " + buncolgen.DocumentTemplateColumns.OrganizationID.EqColumn(
-		buncolgen.DocumentTemplateVersionColumns.OrganizationID,
+		" AND " + documenttemplatecol.DocumentTemplateColumns.OrganizationID.EqColumn(
+		documenttemplatecol.DocumentTemplateVersionColumns.OrganizationID,
 	) +
-		" AND " + buncolgen.DocumentTemplateColumns.BusinessUnitID.EqColumn(
-		buncolgen.DocumentTemplateVersionColumns.BusinessUnitID,
+		" AND " + documenttemplatecol.DocumentTemplateColumns.BusinessUnitID.EqColumn(
+		documenttemplatecol.DocumentTemplateVersionColumns.BusinessUnitID,
 	) +
 		// Only the template's own live version resolves. A draft or an archived
 		// version matching on template_id alone would render something nobody
 		// published.
-		" AND " + buncolgen.DocumentTemplateColumns.ActiveVersionID.EqColumn(
-		buncolgen.DocumentTemplateVersionColumns.ID,
+		" AND " + documenttemplatecol.DocumentTemplateColumns.ActiveVersionID.EqColumn(
+		documenttemplatecol.DocumentTemplateVersionColumns.ID,
 	)
 
-	resolveAssignmentJoin = "LEFT JOIN " + buncolgen.DocumentTemplateAssignmentTable.As(
-		buncolgen.DocumentTemplateAssignmentTable.Alias,
+	resolveAssignmentJoin = "LEFT JOIN " + documenttemplatecol.DocumentTemplateAssignmentTable.As(
+		documenttemplatecol.DocumentTemplateAssignmentTable.Alias,
 	) +
-		" ON " + buncolgen.DocumentTemplateAssignmentColumns.TemplateID.EqColumn(
-		buncolgen.DocumentTemplateColumns.ID,
+		" ON " + documenttemplatecol.DocumentTemplateAssignmentColumns.TemplateID.EqColumn(
+		documenttemplatecol.DocumentTemplateColumns.ID,
 	) +
-		" AND " + buncolgen.DocumentTemplateAssignmentColumns.Kind.EqColumn(
-		buncolgen.DocumentTemplateColumns.Kind,
+		" AND " + documenttemplatecol.DocumentTemplateAssignmentColumns.Kind.EqColumn(
+		documenttemplatecol.DocumentTemplateColumns.Kind,
 	) +
-		" AND " + buncolgen.DocumentTemplateAssignmentColumns.OrganizationID.EqColumn(
-		buncolgen.DocumentTemplateColumns.OrganizationID,
+		" AND " + documenttemplatecol.DocumentTemplateAssignmentColumns.OrganizationID.EqColumn(
+		documenttemplatecol.DocumentTemplateColumns.OrganizationID,
 	) +
-		" AND " + buncolgen.DocumentTemplateAssignmentColumns.BusinessUnitID.EqColumn(
-		buncolgen.DocumentTemplateColumns.BusinessUnitID,
+		" AND " + documenttemplatecol.DocumentTemplateAssignmentColumns.BusinessUnitID.EqColumn(
+		documenttemplatecol.DocumentTemplateColumns.BusinessUnitID,
 	) +
-		" AND " + buncolgen.DocumentTemplateAssignmentColumns.CustomerID.Eq()
+		" AND " + documenttemplatecol.DocumentTemplateAssignmentColumns.CustomerID.Eq()
 
 	// An assignment beats the organization default. Ordering rather than two
 	// queries keeps the tie-break in the same statement that found both.
-	resolveOrder = buncolgen.DocumentTemplateAssignmentColumns.ID.Expr("({} IS NOT NULL) DESC")
+	resolveOrder = documenttemplatecol.DocumentTemplateAssignmentColumns.ID.Expr("({} IS NOT NULL) DESC")
 )
 
 // resolvedScan is the projection of the resolution query.
@@ -184,9 +185,9 @@ func (r *templateRepository) Resolve(
 			zap.String("kind", string(req.Kind)),
 		)
 
-		vCols := buncolgen.DocumentTemplateVersionColumns
-		tCols := buncolgen.DocumentTemplateColumns
-		aCols := buncolgen.DocumentTemplateAssignmentColumns
+		vCols := documenttemplatecol.DocumentTemplateVersionColumns
+		tCols := documenttemplatecol.DocumentTemplateColumns
+		aCols := documenttemplatecol.DocumentTemplateAssignmentColumns
 
 		scoped := req.CustomerID != nil && !req.CustomerID.IsNil()
 
@@ -242,7 +243,7 @@ func (r *templateRepository) Resolve(
 		}
 
 		q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = buncolgen.DocumentTemplateVersionScopeTenant(sq, req.TenantInfo).
+			sq = documenttemplatecol.DocumentTemplateVersionScopeTenant(sq, req.TenantInfo).
 				Where(vCols.Status.Eq(), documenttemplate.VersionStatusActive).
 				Where(tCols.Kind.Eq(), req.Kind)
 

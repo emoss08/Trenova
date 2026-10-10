@@ -2,18 +2,21 @@
 
 package customfield
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/customfieldcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CustomFieldDefinition].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CustomFieldDefinitionFieldMap] instead of parsing struct tags via reflection.
+// the generated [customfieldcol.CustomFieldDefinitionFieldMap] instead of parsing struct tags via reflection.
 func (e *CustomFieldDefinition) GetStaticFieldMap() map[string]string {
-	return buncolgen.CustomFieldDefinitionFieldMap
+	return customfieldcol.CustomFieldDefinitionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CustomFieldValue].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CustomFieldValueFieldMap] instead of parsing struct tags via reflection.
+// the generated [customfieldcol.CustomFieldValueFieldMap] instead of parsing struct tags via reflection.
 func (e *CustomFieldValue) GetStaticFieldMap() map[string]string {
-	return buncolgen.CustomFieldValueFieldMap
+	return customfieldcol.CustomFieldValueFieldMap
 }

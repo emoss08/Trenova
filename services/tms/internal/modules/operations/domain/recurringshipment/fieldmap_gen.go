@@ -2,18 +2,21 @@
 
 package recurringshipment
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/recurringshipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RecurringShipment].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RecurringShipmentFieldMap] instead of parsing struct tags via reflection.
+// the generated [recurringshipmentcol.RecurringShipmentFieldMap] instead of parsing struct tags via reflection.
 func (e *RecurringShipment) GetStaticFieldMap() map[string]string {
-	return buncolgen.RecurringShipmentFieldMap
+	return recurringshipmentcol.RecurringShipmentFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RecurringShipmentRun].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RecurringShipmentRunFieldMap] instead of parsing struct tags via reflection.
+// the generated [recurringshipmentcol.RecurringShipmentRunFieldMap] instead of parsing struct tags via reflection.
 func (e *RecurringShipmentRun) GetStaticFieldMap() map[string]string {
-	return buncolgen.RecurringShipmentRunFieldMap
+	return recurringshipmentcol.RecurringShipmentRunFieldMap
 }

@@ -1,6 +1,7 @@
 package accountingsyncrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -46,13 +47,13 @@ func (r *appCredentialRepository) GetByType(
 ) (*accountingsync.AccountingAppCredential, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingAppCredential, error) {
 		entity := new(accountingsync.AccountingAppCredential)
-		cols := buncolgen.AccountingAppCredentialColumns
+		cols := accountingsynccol.AccountingAppCredentialColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			Where(cols.IntegrationType.Eq(), req.IntegrationType).
-			Apply(buncolgen.AccountingAppCredentialApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingAppCredentialApplyTenant(req.TenantInfo)).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, appCredentialEntity)
 		}
@@ -69,7 +70,7 @@ func (r *appCredentialRepository) GetForWebhook(
 	ctx = dbscope.WithSystem(ctx, "load the accounting app whose webhook was called before its tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingAppCredential, error) {
 		entity := new(accountingsync.AccountingAppCredential)
-		cols := buncolgen.AccountingAppCredentialColumns
+		cols := accountingsynccol.AccountingAppCredentialColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -107,7 +108,7 @@ func (r *appCredentialRepository) Update(
 	entity *accountingsync.AccountingAppCredential,
 ) (*accountingsync.AccountingAppCredential, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingAppCredential, error) {
-		cols := buncolgen.AccountingAppCredentialColumns
+		cols := accountingsynccol.AccountingAppCredentialColumns
 		ov := entity.Version
 		entity.Version++
 
@@ -139,13 +140,13 @@ func (r *appCredentialRepository) Delete(
 	req accountingsyncports.GetAccountingAppCredentialRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.AccountingAppCredentialColumns
+		cols := accountingsynccol.AccountingAppCredentialColumns
 
 		_, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*accountingsync.AccountingAppCredential)(nil)).
 			WhereGroup(" AND ", func(q *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.AccountingAppCredentialScopeTenantDelete(q, req.TenantInfo).
+				return accountingsynccol.AccountingAppCredentialScopeTenantDelete(q, req.TenantInfo).
 					Where(cols.IntegrationType.Eq(), req.IntegrationType)
 			}).
 			Exec(ctx)

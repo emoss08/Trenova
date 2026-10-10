@@ -1,6 +1,8 @@
 package agentplanrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
 	"context"
 	"fmt"
 
@@ -63,13 +65,13 @@ func (r *repository) ListByIDs(
 			return []*agent.AgentPlan{}, nil
 		}
 
-		cols := buncolgen.AgentPlanColumns
+		cols := agentcol.AgentPlanColumns
 		plans := make([]*agent.AgentPlan, 0, len(req.IDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&plans).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentPlanScopeTenant(sq, req.TenantInfo).
+				return agentcol.AgentPlanScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.In(), bun.In(req.IDs))
 			}).
 			Scan(ctx)
@@ -87,12 +89,12 @@ func (r *repository) GetByID(
 ) (*agent.AgentPlan, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.AgentPlan, error) {
 		entity := new(agent.AgentPlan)
-		cols := buncolgen.AgentPlanColumns
+		cols := agentcol.AgentPlanColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentPlanScopeTenant(sq, req.TenantInfo).
+				return agentcol.AgentPlanScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
@@ -111,8 +113,8 @@ func (r *repository) ListByThread(
 	req agentports.ListAgentPlansByThreadRequest,
 ) ([]*agent.AgentPlan, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentPlan, error) {
-		cols := buncolgen.AgentPlanColumns
-		runs := buncolgen.AgentRunColumns
+		cols := agentcol.AgentPlanColumns
+		runs := agentcol.AgentRunColumns
 		plans := make([]*agent.AgentPlan, 0)
 
 		err := r.db.DBForContext(ctx).
@@ -122,7 +124,7 @@ func (r *repository) ListByThread(
 				" AND "+runs.OrganizationID.Qualified()+" = "+cols.OrganizationID.Qualified()+
 				" AND "+runs.BusinessUnitID.Qualified()+" = "+cols.BusinessUnitID.Qualified()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentPlanScopeTenant(sq, req.TenantInfo).
+				return agentcol.AgentPlanScopeTenant(sq, req.TenantInfo).
 					Where(runs.SubjectType.Qualified()+" = ?", agent.SubjectAssistantThread).
 					Where(runs.SubjectID.Qualified()+" = ?", req.ThreadID)
 			}).
@@ -154,11 +156,11 @@ func (r *repository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.AgentPlanTable.Alias,
+						agentcol.AgentPlanTable.Alias,
 						req.Filter,
 						(*agent.AgentPlan)(nil),
 					)
-					sq = sq.Apply(buncolgen.AgentPlanApplyTenant(req.Filter.TenantInfo))
+					sq = sq.Apply(agentcol.AgentPlanApplyTenant(req.Filter.TenantInfo))
 					if req.ExcludeShadowDefinitions {
 						sq = excludeShadowDefinitions(sq)
 					}
@@ -191,7 +193,7 @@ func (r *repository) ListConnection(
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.AgentPlanTable.Alias,
+						agentcol.AgentPlanTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*agent.AgentPlan)(nil),
@@ -219,17 +221,17 @@ func (r *repository) ListConnection(
 // excludeShadowDefinitions hides plans whose agent is in shadow, with the
 // same subquery the proposal list uses.
 func excludeShadowDefinitions(q *bun.SelectQuery) *bun.SelectQuery {
-	plans := buncolgen.AgentPlanColumns
-	runs := buncolgen.AgentRunColumns
-	definitions := buncolgen.DefinitionColumns
+	plans := agentcol.AgentPlanColumns
+	runs := agentcol.AgentRunColumns
+	definitions := agentdefinitioncol.DefinitionColumns
 
 	return q.Where(
 		"NOT EXISTS (SELECT 1 FROM ? AS ? JOIN ? AS ? ON ? = ? AND ? = ? AND ? = ? "+
 			"WHERE ? = ? AND ? = ? AND ? = ? AND ? = TRUE)",
-		bun.Ident(buncolgen.AgentRunTable.Name),
-		bun.Ident(buncolgen.AgentRunTable.Alias),
-		bun.Ident(buncolgen.DefinitionTable.Name),
-		bun.Ident(buncolgen.DefinitionTable.Alias),
+		bun.Ident(agentcol.AgentRunTable.Name),
+		bun.Ident(agentcol.AgentRunTable.Alias),
+		bun.Ident(agentdefinitioncol.DefinitionTable.Name),
+		bun.Ident(agentdefinitioncol.DefinitionTable.Alias),
 		bun.Safe(definitions.ID.Qualified()),
 		bun.Safe(runs.AgentDefinitionID.Qualified()),
 		bun.Safe(definitions.OrganizationID.Qualified()),
@@ -252,12 +254,12 @@ func (r *repository) UpdateStatus(
 ) (*agent.AgentPlan, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentPlan, error) {
 		entity := new(agent.AgentPlan)
-		cols := buncolgen.AgentPlanColumns
+		cols := agentcol.AgentPlanColumns
 		query := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				scoped := buncolgen.AgentPlanScopeTenantUpdate(uq, req.TenantInfo).
+				scoped := agentcol.AgentPlanScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 				if req.FromStatus != "" {
 					scoped = scoped.Where(cols.Status.Eq(), req.FromStatus)
@@ -309,12 +311,12 @@ func (r *repository) RecordProgress(
 ) (*agent.AgentPlan, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentPlan, error) {
 		entity := new(agent.AgentPlan)
-		cols := buncolgen.AgentPlanColumns
+		cols := agentcol.AgentPlanColumns
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.AgentPlanScopeTenantUpdate(uq, req.TenantInfo).
+				return agentcol.AgentPlanScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Set(cols.Status.Set(), req.Status).
@@ -342,7 +344,7 @@ func (r *repository) ExpirePending(
 ) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "expire stale agent plans across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.AgentPlanColumns
+		cols := agentcol.AgentPlanColumns
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*agent.AgentPlan)(nil)).
@@ -373,10 +375,10 @@ func (r *repository) ExpirePendingByThread(
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		db := r.db.DBForContext(ctx)
-		cols := buncolgen.AgentPlanColumns
-		runCols := buncolgen.AgentRunColumns
+		cols := agentcol.AgentPlanColumns
+		runCols := agentcol.AgentRunColumns
 
-		runs := buncolgen.AgentRunScopeTenant(
+		runs := agentcol.AgentRunScopeTenant(
 			db.NewSelect().Model((*agent.AgentRun)(nil)).Column(runCols.ID.Bare()),
 			req.TenantInfo,
 		).
@@ -386,7 +388,7 @@ func (r *repository) ExpirePendingByThread(
 		results, err := db.NewUpdate().
 			Model((*agent.AgentPlan)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.AgentPlanScopeTenantUpdate(uq, req.TenantInfo).
+				return agentcol.AgentPlanScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.Status.Eq(), agent.PlanStatusPending).
 					Where(cols.RunID.In(), runs)
 			}).
@@ -417,10 +419,10 @@ func (r *repository) ExpirePendingByDefinition(
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		db := r.db.DBForContext(ctx)
-		cols := buncolgen.AgentPlanColumns
-		runCols := buncolgen.AgentRunColumns
+		cols := agentcol.AgentPlanColumns
+		runCols := agentcol.AgentRunColumns
 
-		runs := buncolgen.AgentRunScopeTenant(
+		runs := agentcol.AgentRunScopeTenant(
 			db.NewSelect().Model((*agent.AgentRun)(nil)).Column(runCols.ID.Bare()),
 			req.TenantInfo,
 		).Where(runCols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
@@ -428,7 +430,7 @@ func (r *repository) ExpirePendingByDefinition(
 		results, err := db.NewUpdate().
 			Model((*agent.AgentPlan)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.AgentPlanScopeTenantUpdate(uq, req.TenantInfo).
+				return agentcol.AgentPlanScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.Status.Eq(), agent.PlanStatusPending).
 					Where(cols.RunID.In(), runs)
 			}).

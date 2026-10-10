@@ -1,6 +1,7 @@
 package billingtransferrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/billingtransfercol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
@@ -101,13 +102,13 @@ func (r *repository) SeedRetryItems(
 	req *billingtransferports.SeedBillingTransferRetryItemsRequest,
 ) (*billingtransferports.SeedBillingTransferRetryItemsResult, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingtransferports.SeedBillingTransferRetryItemsResult, error) {
-		cols := buncolgen.BillingTransferRunItemColumns
+		cols := billingtransfercol.BillingTransferRunItemColumns
 
 		source := make([]*billingtransfer.BillingTransferRunItem, 0)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&source).
-			Apply(buncolgen.BillingTransferRunItemApplyTenant(req.TenantInfo)).
+			Apply(billingtransfercol.BillingTransferRunItemApplyTenant(req.TenantInfo)).
 			Where(cols.RunID.Eq(), req.SourceRunID).
 			Order(cols.Sequence.OrderAsc()).
 			Scan(ctx)
@@ -213,14 +214,14 @@ func (r *repository) NextPendingShipmentIDs(
 	req *billingtransferports.NextPendingBillingTransferItemsRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		cols := buncolgen.BillingTransferRunItemColumns
+		cols := billingtransfercol.BillingTransferRunItemColumns
 
 		ids := make([]pulid.ID, 0, req.Limit)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*billingtransfer.BillingTransferRunItem)(nil)).
 			Column(cols.ShipmentID.Bare()).
-			Apply(buncolgen.BillingTransferRunItemApplyTenant(req.TenantInfo)).
+			Apply(billingtransfercol.BillingTransferRunItemApplyTenant(req.TenantInfo)).
 			Where(cols.RunID.Eq(), req.RunID).
 			Where(cols.Status.Eq(), billingtransfer.ItemStatusPending).
 			Order(cols.Sequence.OrderAsc()).
@@ -241,18 +242,18 @@ func (r *repository) NextPendingShipmentIDs(
 // as NULL, because "" is neither a valid enum label nor allowed by the row's
 // check constraint.
 var outcomeColumns = []string{
-	buncolgen.BillingTransferRunItemColumns.Status.Bare(),
-	buncolgen.BillingTransferRunItemColumns.ProNumber.Bare(),
-	buncolgen.BillingTransferRunItemColumns.FailureCode.Bare(),
-	buncolgen.BillingTransferRunItemColumns.ErrorMessage.Bare(),
-	buncolgen.BillingTransferRunItemColumns.MarkedReadyToInvoice.Bare(),
-	buncolgen.BillingTransferRunItemColumns.BillingQueueItemID.Bare(),
-	buncolgen.BillingTransferRunItemColumns.BillingQueueNumber.Bare(),
-	buncolgen.BillingTransferRunItemColumns.BillingQueueStatus.Bare(),
-	buncolgen.BillingTransferRunItemColumns.MissingRequirements.Bare(),
-	buncolgen.BillingTransferRunItemColumns.ValidationFailures.Bare(),
-	buncolgen.BillingTransferRunItemColumns.ProcessedAt.Bare(),
-	buncolgen.BillingTransferRunItemColumns.UpdatedAt.Bare(),
+	billingtransfercol.BillingTransferRunItemColumns.Status.Bare(),
+	billingtransfercol.BillingTransferRunItemColumns.ProNumber.Bare(),
+	billingtransfercol.BillingTransferRunItemColumns.FailureCode.Bare(),
+	billingtransfercol.BillingTransferRunItemColumns.ErrorMessage.Bare(),
+	billingtransfercol.BillingTransferRunItemColumns.MarkedReadyToInvoice.Bare(),
+	billingtransfercol.BillingTransferRunItemColumns.BillingQueueItemID.Bare(),
+	billingtransfercol.BillingTransferRunItemColumns.BillingQueueNumber.Bare(),
+	billingtransfercol.BillingTransferRunItemColumns.BillingQueueStatus.Bare(),
+	billingtransfercol.BillingTransferRunItemColumns.MissingRequirements.Bare(),
+	billingtransfercol.BillingTransferRunItemColumns.ValidationFailures.Bare(),
+	billingtransfercol.BillingTransferRunItemColumns.ProcessedAt.Bare(),
+	billingtransfercol.BillingTransferRunItemColumns.UpdatedAt.Bare(),
 }
 
 func outcomeRow(
@@ -305,7 +306,7 @@ func (r *repository) RecordItemOutcomes(
 	req *billingtransferports.RecordBillingTransferOutcomesRequest,
 ) (*billingtransferports.BillingTransferRunProgress, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingtransferports.BillingTransferRunProgress, error) {
-		cols := buncolgen.BillingTransferRunItemColumns
+		cols := billingtransfercol.BillingTransferRunItemColumns
 		now := timeutils.NowUnix()
 
 		progress := new(billingtransferports.BillingTransferRunProgress)
@@ -317,7 +318,7 @@ func (r *repository) RecordItemOutcomes(
 					Model(row).
 					Column(outcomeColumns...).
 					Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-						return buncolgen.BillingTransferRunItemScopeTenantUpdate(uq, req.TenantInfo)
+						return billingtransfercol.BillingTransferRunItemScopeTenantUpdate(uq, req.TenantInfo)
 					}).
 					Where(cols.RunID.Eq(), req.RunID).
 					Where(cols.ShipmentID.Eq(), outcome.ShipmentID).
@@ -345,8 +346,8 @@ func (r *repository) Finalize(
 	req *billingtransferports.FinalizeBillingTransferRunRequest,
 ) (*billingtransfer.BillingTransferRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingtransfer.BillingTransferRun, error) {
-		itemCols := buncolgen.BillingTransferRunItemColumns
-		runCols := buncolgen.BillingTransferRunColumns
+		itemCols := billingtransfercol.BillingTransferRunItemColumns
+		runCols := billingtransfercol.BillingTransferRunColumns
 		now := timeutils.NowUnix()
 
 		entity := new(billingtransfer.BillingTransferRun)
@@ -357,7 +358,7 @@ func (r *repository) Finalize(
 				Set(itemCols.ProcessedAt.Set(), now).
 				Set(itemCols.UpdatedAt.Set(), now).
 				Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return buncolgen.BillingTransferRunItemScopeTenantUpdate(uq, req.TenantInfo)
+					return billingtransfercol.BillingTransferRunItemScopeTenantUpdate(uq, req.TenantInfo)
 				}).
 				Where(itemCols.RunID.Eq(), req.RunID).
 				Where(itemCols.Status.Eq(), billingtransfer.ItemStatusPending).
@@ -380,7 +381,7 @@ func (r *repository) Finalize(
 				Set(runCols.UpdatedAt.Set(), now).
 				Set(runCols.Version.Inc(1)).
 				Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return buncolgen.BillingTransferRunScopeTenantUpdate(uq, req.TenantInfo)
+					return billingtransfercol.BillingTransferRunScopeTenantUpdate(uq, req.TenantInfo)
 				}).
 				Where(runCols.ID.Eq(), req.RunID).
 				Returning("*").
@@ -411,8 +412,8 @@ func (r *repository) refreshRunCounters(
 	now int64,
 	out *billingtransferports.BillingTransferRunProgress,
 ) error {
-	itemCols := buncolgen.BillingTransferRunItemColumns
-	runCols := buncolgen.BillingTransferRunColumns
+	itemCols := billingtransfercol.BillingTransferRunItemColumns
+	runCols := billingtransfercol.BillingTransferRunColumns
 
 	var counts itemCounts
 	err := tx.NewSelect().
@@ -443,7 +444,7 @@ func (r *repository) refreshRunCounters(
 			billingtransfer.ItemStatusNotTransferred,
 			bun.List(nonRetryableFailureCodes),
 		).
-		Apply(buncolgen.BillingTransferRunItemApplyTenant(tenant)).
+		Apply(billingtransfercol.BillingTransferRunItemApplyTenant(tenant)).
 		Where(itemCols.RunID.Eq(), runID).
 		Scan(ctx, &counts)
 	if err != nil {
@@ -462,7 +463,7 @@ func (r *repository) refreshRunCounters(
 		Set(runCols.UpdatedAt.Set(), now).
 		Set(runCols.Version.Inc(1)).
 		Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.BillingTransferRunScopeTenantUpdate(uq, tenant)
+			return billingtransfercol.BillingTransferRunScopeTenantUpdate(uq, tenant)
 		}).
 		Where(runCols.ID.Eq(), runID).
 		Returning("*").

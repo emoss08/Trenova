@@ -1,6 +1,7 @@
 package development
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 
@@ -110,7 +111,7 @@ func (s *WorkerSafetySeed) ensureTemplate(ctx context.Context, tx bun.Tx, refs *
 		return err
 	}
 	existing := new(worker.PerformanceReviewTemplate)
-	cols := buncolgen.PerformanceReviewTemplateColumns
+	cols := workercol.PerformanceReviewTemplateColumns
 	if err := tx.NewSelect().
 		Model(existing).
 		Where(cols.OrganizationID.Eq(), refs.orgID).
@@ -129,7 +130,7 @@ func (s *WorkerSafetySeed) loadWorkers(
 	refs *safetySeedRefs,
 ) ([]*worker.Worker, error) {
 	workers := make([]*worker.Worker, 0, 32)
-	cols := buncolgen.WorkerColumns
+	cols := workercol.WorkerColumns
 	err := tx.NewSelect().
 		Model(&workers).
 		Where(cols.OrganizationID.Eq(), refs.orgID).
@@ -150,7 +151,7 @@ func (s *WorkerSafetySeed) seedWorker(
 ) error {
 	exists, err := tx.NewSelect().
 		Model((*worker.WorkerSafetyEvent)(nil)).
-		Where(buncolgen.WorkerSafetyEventColumns.WorkerID.Eq(), wrk.ID).
+		Where(workercol.WorkerSafetyEventColumns.WorkerID.Eq(), wrk.ID).
 		Exists(ctx)
 	if err != nil || exists {
 		return err

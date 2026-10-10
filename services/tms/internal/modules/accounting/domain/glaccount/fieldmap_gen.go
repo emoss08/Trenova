@@ -2,11 +2,14 @@
 
 package glaccount
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/glaccountcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [GLAccount].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.GLAccountFieldMap] instead of parsing struct tags via reflection.
+// the generated [glaccountcol.GLAccountFieldMap] instead of parsing struct tags via reflection.
 func (e *GLAccount) GetStaticFieldMap() map[string]string {
-	return buncolgen.GLAccountFieldMap
+	return glaccountcol.GLAccountFieldMap
 }

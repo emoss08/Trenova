@@ -1,6 +1,7 @@
 package documentuploadrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/documentuploadcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
@@ -43,7 +44,7 @@ func (r *repository) Create(
 	entity *documentupload.DocumentUploadSession,
 ) (*documentupload.DocumentUploadSession, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*documentupload.DocumentUploadSession, error) {
-		cols := buncolgen.DocumentUploadSessionColumns
+		cols := documentuploadcol.DocumentUploadSessionColumns
 		err := r.db.WithTx(
 			ctx,
 			kernelports.TxOptions{Isolation: 0},
@@ -57,7 +58,7 @@ func (r *repository) Create(
 				}
 
 				_, err := tx.NewUpdate().
-					Table(buncolgen.DocumentUploadSessionTable.Name).
+					Table(documentuploadcol.DocumentUploadSessionTable.Name).
 					Set(cols.Status.Set(), documentupload.StatusCanceled).
 					Set(cols.FailureCode.Set(), documentupload.FailureCodeSuspendedByNewerSession).
 					Set(cols.FailureMessage.Set(), "Superseded by a newer upload session").
@@ -95,7 +96,7 @@ func (r *repository) Update(
 		ov := entity.Version
 		entity.Version++
 
-		cols := buncolgen.DocumentUploadSessionColumns
+		cols := documentuploadcol.DocumentUploadSessionColumns
 		result, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
@@ -125,12 +126,12 @@ func (r *repository) GetByID(
 ) (*documentupload.DocumentUploadSession, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documentupload.DocumentUploadSession, error) {
 		entity := new(documentupload.DocumentUploadSession)
-		cols := buncolgen.DocumentUploadSessionColumns
+		cols := documentuploadcol.DocumentUploadSessionColumns
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DocumentUploadSessionScopeTenant(
+				return documentuploadcol.DocumentUploadSessionScopeTenant(
 					sq,
 					req.TenantInfo,
 				).Where(cols.ID.Eq(), req.ID)
@@ -154,7 +155,7 @@ func (r *repository) ListForReconciliation(
 		}
 		sessions := make([]*documentupload.DocumentUploadSession, 0, limit)
 
-		cols := buncolgen.DocumentUploadSessionColumns
+		cols := documentuploadcol.DocumentUploadSessionColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -211,7 +212,7 @@ func (r *repository) ListReconciliationTenants(
 		}
 
 		rows := make([]tenantRow, 0, limit)
-		cols := buncolgen.DocumentUploadSessionColumns
+		cols := documentuploadcol.DocumentUploadSessionColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*documentupload.DocumentUploadSession)(nil)).
@@ -265,10 +266,10 @@ func (r *repository) ClearDocumentReference(
 	tenantInfo pagination.TenantInfo,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.DocumentUploadSessionColumns
+		cols := documentuploadcol.DocumentUploadSessionColumns
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
-			Table(buncolgen.DocumentUploadSessionTable.Name).
+			Table(documentuploadcol.DocumentUploadSessionTable.Name).
 			Set(cols.DocumentID.Set(), nil).
 			Where("? = ?", bun.Ident(cols.DocumentID.Name), documentID).
 			Where("? = ?", bun.Ident(cols.OrganizationID.Name), tenantInfo.OrgID).
@@ -288,10 +289,10 @@ func (r *repository) ClearDocumentReferences(
 			return nil
 		}
 
-		cols := buncolgen.DocumentUploadSessionColumns
+		cols := documentuploadcol.DocumentUploadSessionColumns
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
-			Table(buncolgen.DocumentUploadSessionTable.Name).
+			Table(documentuploadcol.DocumentUploadSessionTable.Name).
 			Set(cols.DocumentID.Set(), nil).
 			Where("? IN (?)", bun.Ident(cols.DocumentID.Name), bun.List(documentIDs)).
 			Where("? = ?", bun.Ident(cols.OrganizationID.Name), tenantInfo.OrgID).
@@ -307,12 +308,12 @@ func (r *repository) ListActive(
 ) ([]*documentupload.DocumentUploadSession, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*documentupload.DocumentUploadSession, error) {
 		sessions := make([]*documentupload.DocumentUploadSession, 0)
-		cols := buncolgen.DocumentUploadSessionColumns
+		cols := documentuploadcol.DocumentUploadSessionColumns
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&sessions).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DocumentUploadSessionScopeTenant(sq, req.TenantInfo).
+				return documentuploadcol.DocumentUploadSessionScopeTenant(sq, req.TenantInfo).
 					Where(cols.Status.NotIn(), bun.List([]documentupload.Status{
 						documentupload.StatusCompleted,
 						documentupload.StatusAvailable,
@@ -345,10 +346,10 @@ func (r *repository) ListRelated(
 ) ([]*documentupload.DocumentUploadSession, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*documentupload.DocumentUploadSession, error) {
 		sessions := make([]*documentupload.DocumentUploadSession, 0)
-		cols := buncolgen.DocumentUploadSessionColumns
+		cols := documentuploadcol.DocumentUploadSessionColumns
 		q := r.db.DBForContext(ctx).
 			NewSelect().
-			Model(&sessions).Apply(buncolgen.DocumentUploadSessionApplyTenant(req.TenantInfo))
+			Model(&sessions).Apply(documentuploadcol.DocumentUploadSessionApplyTenant(req.TenantInfo))
 
 		switch {
 		case !req.DocumentID.IsNil() && !req.LineageID.IsNil():

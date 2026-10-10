@@ -1,6 +1,8 @@
 package carrierintelrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
 	"context"
 	"fmt"
 
@@ -52,13 +54,13 @@ func (r *snapshotRepository) GetCurrent(
 	subject carrierintelports.CarrierIntelSubjectRef,
 ) (*carrierintel.CarrierIntelSnapshot, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carrierintel.CarrierIntelSnapshot, error) {
-		cols := buncolgen.CarrierIntelSnapshotColumns
+		cols := carrierintelcol.CarrierIntelSnapshotColumns
 		entity := new(carrierintel.CarrierIntelSnapshot)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierIntelSnapshotScopeTenant(sq, tenantInfo).
+				return carrierintelcol.CarrierIntelSnapshotScopeTenant(sq, tenantInfo).
 					Where(cols.SubjectType.Eq(), subject.SubjectType).
 					Where(cols.SubjectID.Eq(), subject.SubjectID).
 					Where(cols.IsCurrent.IsTrue())
@@ -86,13 +88,13 @@ func (r *snapshotRepository) GetCurrentByCarrierIDs(
 			return []*carrierintel.CarrierIntelSnapshot{}, nil
 		}
 
-		cols := buncolgen.CarrierIntelSnapshotColumns
+		cols := carrierintelcol.CarrierIntelSnapshotColumns
 		entities := make([]*carrierintel.CarrierIntelSnapshot, 0, len(carrierIDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierIntelSnapshotScopeTenant(sq, tenantInfo).
+				return carrierintelcol.CarrierIntelSnapshotScopeTenant(sq, tenantInfo).
 					Where(cols.IsCurrent.IsTrue()).
 					Where(cols.CarrierID.In(), bun.List(carrierIDs))
 			}).
@@ -117,13 +119,13 @@ func (r *snapshotRepository) GetCurrentBySubjectIDs(
 			return []*carrierintel.CarrierIntelSnapshot{}, nil
 		}
 
-		cols := buncolgen.CarrierIntelSnapshotColumns
+		cols := carrierintelcol.CarrierIntelSnapshotColumns
 		entities := make([]*carrierintel.CarrierIntelSnapshot, 0, len(subjectIDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierIntelSnapshotScopeTenant(sq, tenantInfo).
+				return carrierintelcol.CarrierIntelSnapshotScopeTenant(sq, tenantInfo).
 					Where(cols.IsCurrent.IsTrue()).
 					Where(cols.SubjectType.Eq(), subjectType).
 					Where(cols.SubjectID.In(), bun.List(subjectIDs))
@@ -145,13 +147,13 @@ func (r *snapshotRepository) GetLatestFullByDOT(
 	since int64,
 ) (*carrierintel.CarrierIntelSnapshot, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carrierintel.CarrierIntelSnapshot, error) {
-		cols := buncolgen.CarrierIntelSnapshotColumns
+		cols := carrierintelcol.CarrierIntelSnapshotColumns
 		entity := new(carrierintel.CarrierIntelSnapshot)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierIntelSnapshotScopeTenant(sq, tenantInfo).
+				return carrierintelcol.CarrierIntelSnapshotScopeTenant(sq, tenantInfo).
 					Where(cols.DOTNumber.Eq(), dotNumber).
 					Where(cols.Depth.Eq(), carrierintel.LookupDepthFull).
 					Where(cols.DepthFetchedAt.Gte(), since)
@@ -176,7 +178,7 @@ func (r *snapshotRepository) ListHistory(
 	req *carrierintelports.ListCarrierIntelSnapshotHistoryRequest,
 ) ([]*carrierintel.CarrierIntelSnapshot, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrierintel.CarrierIntelSnapshot, error) {
-		cols := buncolgen.CarrierIntelSnapshotColumns
+		cols := carrierintelcol.CarrierIntelSnapshotColumns
 		limit := intutils.Clamp(
 			intutils.WithDefault(max(req.Limit, 0), defaultSnapshotHistoryLimit),
 			1,
@@ -188,7 +190,7 @@ func (r *snapshotRepository) ListHistory(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierIntelSnapshotScopeTenant(sq, req.TenantInfo).
+				return carrierintelcol.CarrierIntelSnapshotScopeTenant(sq, req.TenantInfo).
 					Where(cols.SubjectType.Eq(), req.SubjectType).
 					Where(cols.SubjectID.Eq(), req.SubjectID)
 			}).
@@ -209,7 +211,7 @@ func (r *snapshotRepository) InsertCurrent(
 	entity *carrierintel.CarrierIntelSnapshot,
 ) (*carrierintel.CarrierIntelSnapshot, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*carrierintel.CarrierIntelSnapshot, error) {
-		cols := buncolgen.CarrierIntelSnapshotColumns
+		cols := carrierintelcol.CarrierIntelSnapshotColumns
 		tenantInfo := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
@@ -219,7 +221,7 @@ func (r *snapshotRepository) InsertCurrent(
 				Set(cols.IsCurrent.Set(), false).
 				Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return buncolgen.CarrierIntelSnapshotScopeTenantUpdate(uq, tenantInfo).
+					return carrierintelcol.CarrierIntelSnapshotScopeTenantUpdate(uq, tenantInfo).
 						Where(cols.SubjectType.Eq(), entity.SubjectType).
 						Where(cols.SubjectID.Eq(), entity.SubjectID).
 						Where(cols.IsCurrent.IsTrue())
@@ -255,7 +257,7 @@ func (r *snapshotRepository) UpdateEvaluation(
 	entity *carrierintel.CarrierIntelSnapshot,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.CarrierIntelSnapshotColumns
+		cols := carrierintelcol.CarrierIntelSnapshotColumns
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
@@ -293,13 +295,13 @@ func (r *snapshotRepository) TouchConfirmed(
 			return nil
 		}
 
-		cols := buncolgen.CarrierIntelSnapshotColumns
+		cols := carrierintelcol.CarrierIntelSnapshotColumns
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*carrierintel.CarrierIntelSnapshot)(nil)).
 			Set(cols.ConfirmedAt.Set(), confirmedAt).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.CarrierIntelSnapshotScopeTenantUpdate(uq, tenantInfo).
+				return carrierintelcol.CarrierIntelSnapshotScopeTenantUpdate(uq, tenantInfo).
 					Where(cols.ID.In(), bun.List(snapshotIDs))
 			}).
 			Exec(ctx)
@@ -317,7 +319,7 @@ func (r *snapshotRepository) MarkReviewed(
 	req *carrierintelports.MarkSnapshotReviewedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.CarrierIntelSnapshotColumns
+		cols := carrierintelcol.CarrierIntelSnapshotColumns
 		var note any
 		if req.Note != "" {
 			note = req.Note
@@ -332,7 +334,7 @@ func (r *snapshotRepository) MarkReviewed(
 			Set(cols.ReviewNote.Set(), note).
 			Set(cols.UpdatedAt.Set(), req.ReviewedAt).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.CarrierIntelSnapshotScopeTenantUpdate(uq, req.TenantInfo).
+				return carrierintelcol.CarrierIntelSnapshotScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.SubjectType.Eq(), req.SubjectType).
 					Where(cols.SubjectID.Eq(), req.SubjectID).
 					Where(cols.IsCurrent.IsTrue())
@@ -356,7 +358,7 @@ func (r *snapshotRepository) ListForRecompute(
 	req *carrierintelports.ListSnapshotsForRecomputeRequest,
 ) ([]*carrierintel.CarrierIntelSnapshot, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrierintel.CarrierIntelSnapshot, error) {
-		cols := buncolgen.CarrierIntelSnapshotColumns
+		cols := carrierintelcol.CarrierIntelSnapshotColumns
 		limit := intutils.Clamp(
 			intutils.WithDefault(max(req.Limit, 0), defaultRecomputeLimit),
 			1,
@@ -372,7 +374,7 @@ func (r *snapshotRepository) ListForRecompute(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierIntelSnapshotScopeTenant(sq, req.TenantInfo).
+				return carrierintelcol.CarrierIntelSnapshotScopeTenant(sq, req.TenantInfo).
 					Where(cols.IsCurrent.IsTrue()).
 					Where(versionPredicate, req.BelowVersion)
 			}).
@@ -396,7 +398,7 @@ func (r *snapshotRepository) ListReviewQueue(
 	req *carrierintelports.ListCarrierIntelReviewQueueRequest,
 ) ([]*carrierintel.CarrierIntelSnapshot, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrierintel.CarrierIntelSnapshot, error) {
-		cols := buncolgen.CarrierIntelSnapshotColumns
+		cols := carrierintelcol.CarrierIntelSnapshotColumns
 		limit := intutils.Clamp(
 			intutils.WithDefault(max(req.Limit, 0), defaultReviewQueueLimit),
 			1,
@@ -408,7 +410,7 @@ func (r *snapshotRepository) ListReviewQueue(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierIntelSnapshotScopeTenant(sq, req.TenantInfo).
+				return carrierintelcol.CarrierIntelSnapshotScopeTenant(sq, req.TenantInfo).
 					Where(cols.IsCurrent.IsTrue()).
 					Where(cols.ReviewState.Eq(), carrierintel.ReviewStateNeedsReview)
 			}).
@@ -429,7 +431,7 @@ func buildPruneHistoryDelete(
 	tenantInfo pagination.TenantInfo,
 	keep int,
 ) *bun.DeleteQuery {
-	cols := buncolgen.CarrierIntelSnapshotColumns
+	cols := carrierintelcol.CarrierIntelSnapshotColumns
 
 	ranked := db.NewSelect().
 		Model((*carrierintel.CarrierIntelSnapshot)(nil)).
@@ -445,7 +447,7 @@ func buildPruneHistoryDelete(
 			bun.Ident(rankedSnapshotRankName),
 		).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.CarrierIntelSnapshotScopeTenant(sq, tenantInfo).
+			return carrierintelcol.CarrierIntelSnapshotScopeTenant(sq, tenantInfo).
 				Where(cols.IsCurrent.IsFalse())
 		})
 
@@ -457,7 +459,7 @@ func buildPruneHistoryDelete(
 	return db.NewDelete().
 		Model((*carrierintel.CarrierIntelSnapshot)(nil)).
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return buncolgen.CarrierIntelSnapshotScopeTenantDelete(dq, tenantInfo).
+			return carrierintelcol.CarrierIntelSnapshotScopeTenantDelete(dq, tenantInfo).
 				Where(cols.IsCurrent.IsFalse()).
 				Where(cols.ID.In(), stale)
 		})
@@ -489,7 +491,7 @@ func buildCarrierSummaryUpdate(
 	db bun.IDB,
 	req *carrierintelports.UpdateCarrierIntelSummaryRequest,
 ) *bun.UpdateQuery {
-	cols := buncolgen.CarrierColumns
+	cols := carriercol.CarrierColumns
 	var riskLevel any
 	if req.RiskLevel != "" {
 		riskLevel = req.RiskLevel
@@ -501,7 +503,7 @@ func buildCarrierSummaryUpdate(
 		Set(cols.IntelReviewRequired.Set(), req.ReviewRequired).
 		Set(cols.IntelBlockingCount.Set(), req.BlockingCount).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.CarrierScopeTenantUpdate(uq, req.TenantInfo).
+			return carriercol.CarrierScopeTenantUpdate(uq, req.TenantInfo).
 				Where(cols.ID.Eq(), req.CarrierID).
 				WhereGroup(" AND ", func(inner *bun.UpdateQuery) *bun.UpdateQuery {
 					return inner.

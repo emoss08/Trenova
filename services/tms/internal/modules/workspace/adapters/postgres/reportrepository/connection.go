@@ -1,6 +1,7 @@
 package reportrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/reportcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -21,7 +22,7 @@ func definitionVisibilityScope(
 	if req.ViewerID.IsNil() {
 		return q
 	}
-	cols := buncolgen.ReportDefinitionColumns
+	cols := reportcol.ReportDefinitionColumns
 	return q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 		return sq.
 			Where(cols.Visibility.Eq(), report.VisibilityShared).
@@ -45,7 +46,7 @@ func (r *definitionRepository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.ReportDefinitionTable.Alias,
+						reportcol.ReportDefinitionTable.Alias,
 						req.Filter,
 						(*report.ReportDefinition)(nil),
 					)
@@ -69,12 +70,12 @@ func (r *definitionRepository) ListConnection(
 					return dba.
 						NewSelect().
 						Model(entities).
-						ColumnExpr(buncolgen.ReportDefinitionTable.All())
+						ColumnExpr(reportcol.ReportDefinitionTable.All())
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.ReportDefinitionTable.Alias,
+						reportcol.ReportDefinitionTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*report.ReportDefinition)(nil),
@@ -98,7 +99,7 @@ func runConnectionScope(
 	q *bun.SelectQuery,
 	req *reportports.ListReportRunConnectionRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.ReportRunColumns
+	cols := reportcol.ReportRunColumns
 
 	if !req.DefinitionID.IsNil() {
 		q = q.Where(cols.DefinitionID.Eq(), req.DefinitionID)
@@ -128,7 +129,7 @@ func (r *runRepository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.ReportRunTable.Alias,
+						reportcol.ReportRunTable.Alias,
 						req.Filter,
 						(*report.ReportRun)(nil),
 					)
@@ -152,12 +153,12 @@ func (r *runRepository) ListConnection(
 					return dba.
 						NewSelect().
 						Model(entities).
-						ColumnExpr(buncolgen.ReportRunTable.All())
+						ColumnExpr(reportcol.ReportRunTable.All())
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.ReportRunTable.Alias,
+						reportcol.ReportRunTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*report.ReportRun)(nil),

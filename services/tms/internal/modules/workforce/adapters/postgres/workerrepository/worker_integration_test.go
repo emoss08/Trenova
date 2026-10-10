@@ -3,6 +3,7 @@
 package workerrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -215,9 +216,9 @@ func TestBuncolgenColumnsMatchDatabase(t *testing.T) {
 		err := repo.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Where(buncolgen.WorkerColumns.ID.Eq(), created.ID).
-			Where(buncolgen.WorkerColumns.OrganizationID.Eq(), tenantInfo.OrgID).
-			Where(buncolgen.WorkerColumns.BusinessUnitID.Eq(), tenantInfo.BuID).
+			Where(workercol.WorkerColumns.ID.Eq(), created.ID).
+			Where(workercol.WorkerColumns.OrganizationID.Eq(), tenantInfo.OrgID).
+			Where(workercol.WorkerColumns.BusinessUnitID.Eq(), tenantInfo.BuID).
 			Scan(ctx)
 		require.NoError(t, err)
 		assert.Equal(t, created.ID, entity.ID)
@@ -229,9 +230,9 @@ func TestBuncolgenColumnsMatchDatabase(t *testing.T) {
 		err := repo.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Where(buncolgen.WorkerColumns.OrganizationID.Eq(), tenantInfo.OrgID).
-			Where(buncolgen.WorkerColumns.BusinessUnitID.Eq(), tenantInfo.BuID).
-			Order(buncolgen.WorkerColumns.CreatedAt.OrderDesc()).
+			Where(workercol.WorkerColumns.OrganizationID.Eq(), tenantInfo.OrgID).
+			Where(workercol.WorkerColumns.BusinessUnitID.Eq(), tenantInfo.BuID).
+			Order(workercol.WorkerColumns.CreatedAt.OrderDesc()).
 			Scan(ctx)
 		require.NoError(t, err)
 		assert.NotEmpty(t, entities)
@@ -243,14 +244,14 @@ func TestBuncolgenColumnsMatchDatabase(t *testing.T) {
 			NewSelect().
 			Model(entity).
 			Column(
-				buncolgen.WorkerColumns.ID.String(),
-				buncolgen.WorkerColumns.FirstName.String(),
-				buncolgen.WorkerColumns.LastName.String(),
-				buncolgen.WorkerColumns.Status.String(),
+				workercol.WorkerColumns.ID.String(),
+				workercol.WorkerColumns.FirstName.String(),
+				workercol.WorkerColumns.LastName.String(),
+				workercol.WorkerColumns.Status.String(),
 			).
-			Where(buncolgen.WorkerColumns.ID.Eq(), created.ID).
-			Where(buncolgen.WorkerColumns.OrganizationID.Eq(), tenantInfo.OrgID).
-			Where(buncolgen.WorkerColumns.BusinessUnitID.Eq(), tenantInfo.BuID).
+			Where(workercol.WorkerColumns.ID.Eq(), created.ID).
+			Where(workercol.WorkerColumns.OrganizationID.Eq(), tenantInfo.OrgID).
+			Where(workercol.WorkerColumns.BusinessUnitID.Eq(), tenantInfo.BuID).
 			Scan(ctx)
 		require.NoError(t, err)
 		assert.Equal(t, "John", entity.FirstName)
@@ -263,9 +264,9 @@ func TestBuncolgenColumnsMatchDatabase(t *testing.T) {
 		err := repo.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Where(buncolgen.WorkerColumns.OrganizationID.Eq(), tenantInfo.OrgID).
-			Where(buncolgen.WorkerColumns.BusinessUnitID.Eq(), tenantInfo.BuID).
-			Where(buncolgen.WorkerColumns.FleetCodeID.IsNull()).
+			Where(workercol.WorkerColumns.OrganizationID.Eq(), tenantInfo.OrgID).
+			Where(workercol.WorkerColumns.BusinessUnitID.Eq(), tenantInfo.BuID).
+			Where(workercol.WorkerColumns.FleetCodeID.IsNull()).
 			Scan(ctx)
 		require.NoError(t, err)
 		assert.NotEmpty(t, entities)
@@ -276,24 +277,24 @@ func TestBuncolgenColumnsMatchDatabase(t *testing.T) {
 		err := repo.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Where(buncolgen.WorkerColumns.OrganizationID.Eq(), tenantInfo.OrgID).
-			Where(buncolgen.WorkerColumns.BusinessUnitID.Eq(), tenantInfo.BuID).
-			Where(buncolgen.WorkerColumns.Status.Eq(), domaintypes.StatusActive).
+			Where(workercol.WorkerColumns.OrganizationID.Eq(), tenantInfo.OrgID).
+			Where(workercol.WorkerColumns.BusinessUnitID.Eq(), tenantInfo.BuID).
+			Where(workercol.WorkerColumns.Status.Eq(), domaintypes.StatusActive).
 			Scan(ctx)
 		require.NoError(t, err)
 		assert.NotEmpty(t, entities)
 	})
 
 	t.Run("table info matches database", func(t *testing.T) {
-		assert.Equal(t, "workers", buncolgen.WorkerTable.Name)
-		assert.Equal(t, "wrk", buncolgen.WorkerTable.Alias)
-		assert.Contains(t, buncolgen.WorkerTable.PrimaryKey, "id")
-		assert.Contains(t, buncolgen.WorkerTable.PrimaryKey, "business_unit_id")
-		assert.Contains(t, buncolgen.WorkerTable.PrimaryKey, "organization_id")
+		assert.Equal(t, "workers", workercol.WorkerTable.Name)
+		assert.Equal(t, "wrk", workercol.WorkerTable.Alias)
+		assert.Contains(t, workercol.WorkerTable.PrimaryKey, "id")
+		assert.Contains(t, workercol.WorkerTable.PrimaryKey, "business_unit_id")
+		assert.Contains(t, workercol.WorkerTable.PrimaryKey, "organization_id")
 	})
 
 	t.Run("field map matches entity json tags", func(t *testing.T) {
-		fm := buncolgen.WorkerFieldMap
+		fm := workercol.WorkerFieldMap
 		assert.Equal(t, "id", fm["id"])
 		assert.Equal(t, "first_name", fm["firstName"])
 		assert.Equal(t, "last_name", fm["lastName"])
@@ -316,12 +317,12 @@ func TestRelationAndNestedRelationLoading(t *testing.T) {
 		err := repo.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Relation(buncolgen.WorkerRelations.Profile).
+			Relation(workercol.WorkerRelations.Profile).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerScopeTenant(sq, pagination.TenantInfo{
+				return workercol.WorkerScopeTenant(sq, pagination.TenantInfo{
 					OrgID: data.Organization.ID,
 					BuID:  data.BusinessUnit.ID,
-				}).Where(buncolgen.WorkerColumns.ID.Eq(), created.ID)
+				}).Where(workercol.WorkerColumns.ID.Eq(), created.ID)
 			}).
 			Scan(ctx)
 		require.NoError(t, err)
@@ -333,13 +334,13 @@ func TestRelationAndNestedRelationLoading(t *testing.T) {
 		err := repo.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Relation(buncolgen.WorkerRelations.Profile).
-			Relation(buncolgen.Rel(buncolgen.WorkerRelations.Profile, "LicenseState")).
+			Relation(workercol.WorkerRelations.Profile).
+			Relation(buncolgen.Rel(workercol.WorkerRelations.Profile, "LicenseState")).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerScopeTenant(sq, pagination.TenantInfo{
+				return workercol.WorkerScopeTenant(sq, pagination.TenantInfo{
 					OrgID: data.Organization.ID,
 					BuID:  data.BusinessUnit.ID,
-				}).Where(buncolgen.WorkerColumns.ID.Eq(), created.ID)
+				}).Where(workercol.WorkerColumns.ID.Eq(), created.ID)
 			}).
 			Scan(ctx)
 		require.NoError(t, err)

@@ -1,6 +1,7 @@
 package auditrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/auditcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
@@ -97,7 +98,7 @@ func (r *repository) applyCursorPageFilters(
 
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.EntryTable.Alias,
+		auditcol.EntryTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*audit.Entry)(nil),
@@ -114,7 +115,7 @@ func (r *repository) applyTotalCountFilters(
 
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.EntryTable.Alias,
+		auditcol.EntryTable.Alias,
 		req.Filter,
 		(*audit.Entry)(nil),
 	)
@@ -164,7 +165,7 @@ func (r *repository) ListConnection(
 					return dba.
 						NewSelect().
 						Model(entities).
-						ColumnExpr(buncolgen.EntryTable.All()).
+						ColumnExpr(auditcol.EntryTable.All()).
 						Relation("User").
 						Relation("APIKey")
 				},
@@ -342,7 +343,7 @@ func (r *repository) DeleteAuditEntries(
 		ctx,
 		"delete audit entries past an organization's retention during the retention sweep",
 	)
-	cols := buncolgen.EntryColumns
+	cols := auditcol.EntryColumns
 	return postgres.DeleteUnderAuditRetention(ctx, r.db, func(tx bun.Tx) *bun.DeleteQuery {
 		return tx.NewDelete().Model((*audit.Entry)(nil)).
 			Where(cols.OrganizationID.Eq(), req.OrgID).

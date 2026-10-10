@@ -2,102 +2,105 @@
 
 package agent
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AgentDecision].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.AgentDecisionFieldMap] instead of parsing struct tags via reflection.
+// the generated [agentcol.AgentDecisionFieldMap] instead of parsing struct tags via reflection.
 func (e *AgentDecision) GetStaticFieldMap() map[string]string {
-	return buncolgen.AgentDecisionFieldMap
+	return agentcol.AgentDecisionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AgentException].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.AgentExceptionFieldMap] instead of parsing struct tags via reflection.
+// the generated [agentcol.AgentExceptionFieldMap] instead of parsing struct tags via reflection.
 func (e *AgentException) GetStaticFieldMap() map[string]string {
-	return buncolgen.AgentExceptionFieldMap
+	return agentcol.AgentExceptionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AgentPlan].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.AgentPlanFieldMap] instead of parsing struct tags via reflection.
+// the generated [agentcol.AgentPlanFieldMap] instead of parsing struct tags via reflection.
 func (e *AgentPlan) GetStaticFieldMap() map[string]string {
-	return buncolgen.AgentPlanFieldMap
+	return agentcol.AgentPlanFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AgentProposal].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.AgentProposalFieldMap] instead of parsing struct tags via reflection.
+// the generated [agentcol.AgentProposalFieldMap] instead of parsing struct tags via reflection.
 func (e *AgentProposal) GetStaticFieldMap() map[string]string {
-	return buncolgen.AgentProposalFieldMap
+	return agentcol.AgentProposalFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AgentRun].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.AgentRunFieldMap] instead of parsing struct tags via reflection.
+// the generated [agentcol.AgentRunFieldMap] instead of parsing struct tags via reflection.
 func (e *AgentRun) GetStaticFieldMap() map[string]string {
-	return buncolgen.AgentRunFieldMap
+	return agentcol.AgentRunFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AgentRunEvent].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.AgentRunEventFieldMap] instead of parsing struct tags via reflection.
+// the generated [agentcol.AgentRunEventFieldMap] instead of parsing struct tags via reflection.
 func (e *AgentRunEvent) GetStaticFieldMap() map[string]string {
-	return buncolgen.AgentRunEventFieldMap
+	return agentcol.AgentRunEventFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AgentRunStep].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.AgentRunStepFieldMap] instead of parsing struct tags via reflection.
+// the generated [agentcol.AgentRunStepFieldMap] instead of parsing struct tags via reflection.
 func (e *AgentRunStep) GetStaticFieldMap() map[string]string {
-	return buncolgen.AgentRunStepFieldMap
+	return agentcol.AgentRunStepFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Evaluation].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.EvaluationFieldMap] instead of parsing struct tags via reflection.
+// the generated [agentcol.EvaluationFieldMap] instead of parsing struct tags via reflection.
 func (e *Evaluation) GetStaticFieldMap() map[string]string {
-	return buncolgen.EvaluationFieldMap
+	return agentcol.EvaluationFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Memory].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.MemoryFieldMap] instead of parsing struct tags via reflection.
+// the generated [agentcol.MemoryFieldMap] instead of parsing struct tags via reflection.
 func (e *Memory) GetStaticFieldMap() map[string]string {
-	return buncolgen.MemoryFieldMap
+	return agentcol.MemoryFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [MemoryPreference].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.MemoryPreferenceFieldMap] instead of parsing struct tags via reflection.
+// the generated [agentcol.MemoryPreferenceFieldMap] instead of parsing struct tags via reflection.
 func (e *MemoryPreference) GetStaticFieldMap() map[string]string {
-	return buncolgen.MemoryPreferenceFieldMap
+	return agentcol.MemoryPreferenceFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ProposalBaseline].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ProposalBaselineFieldMap] instead of parsing struct tags via reflection.
+// the generated [agentcol.ProposalBaselineFieldMap] instead of parsing struct tags via reflection.
 func (e *ProposalBaseline) GetStaticFieldMap() map[string]string {
-	return buncolgen.ProposalBaselineFieldMap
+	return agentcol.ProposalBaselineFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Reflection].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ReflectionFieldMap] instead of parsing struct tags via reflection.
+// the generated [agentcol.ReflectionFieldMap] instead of parsing struct tags via reflection.
 func (e *Reflection) GetStaticFieldMap() map[string]string {
-	return buncolgen.ReflectionFieldMap
+	return agentcol.ReflectionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ToolRuleOverride].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ToolRuleOverrideFieldMap] instead of parsing struct tags via reflection.
+// the generated [agentcol.ToolRuleOverrideFieldMap] instead of parsing struct tags via reflection.
 func (e *ToolRuleOverride) GetStaticFieldMap() map[string]string {
-	return buncolgen.ToolRuleOverrideFieldMap
+	return agentcol.ToolRuleOverrideFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ToolTrust].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ToolTrustFieldMap] instead of parsing struct tags via reflection.
+// the generated [agentcol.ToolTrustFieldMap] instead of parsing struct tags via reflection.
 func (e *ToolTrust) GetStaticFieldMap() map[string]string {
-	return buncolgen.ToolTrustFieldMap
+	return agentcol.ToolTrustFieldMap
 }

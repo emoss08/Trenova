@@ -1,6 +1,13 @@
 package dispatchconsolerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/servicetypecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/trailercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 
@@ -25,36 +32,36 @@ const (
 )
 
 var (
-	asnWorkerID        = buncolgen.WorkerColumns.ID.WithAlias(assignedWorkerAlias)
-	asnWorkerFirstName = buncolgen.WorkerColumns.FirstName.WithAlias(assignedWorkerAlias)
-	asnWorkerLastName  = buncolgen.WorkerColumns.LastName.WithAlias(assignedWorkerAlias)
-	asnWorkerOrgID     = buncolgen.WorkerColumns.OrganizationID.WithAlias(assignedWorkerAlias)
-	asnWorkerBuID      = buncolgen.WorkerColumns.BusinessUnitID.WithAlias(assignedWorkerAlias)
+	asnWorkerID        = workercol.WorkerColumns.ID.WithAlias(assignedWorkerAlias)
+	asnWorkerFirstName = workercol.WorkerColumns.FirstName.WithAlias(assignedWorkerAlias)
+	asnWorkerLastName  = workercol.WorkerColumns.LastName.WithAlias(assignedWorkerAlias)
+	asnWorkerOrgID     = workercol.WorkerColumns.OrganizationID.WithAlias(assignedWorkerAlias)
+	asnWorkerBuID      = workercol.WorkerColumns.BusinessUnitID.WithAlias(assignedWorkerAlias)
 
-	asnTractorID    = buncolgen.TractorColumns.ID.WithAlias(assignedTractorAlias)
-	asnTractorCode  = buncolgen.TractorColumns.Code.WithAlias(assignedTractorAlias)
-	asnTractorOrgID = buncolgen.TractorColumns.OrganizationID.WithAlias(assignedTractorAlias)
-	asnTractorBuID  = buncolgen.TractorColumns.BusinessUnitID.WithAlias(assignedTractorAlias)
+	asnTractorID    = tractorcol.TractorColumns.ID.WithAlias(assignedTractorAlias)
+	asnTractorCode  = tractorcol.TractorColumns.Code.WithAlias(assignedTractorAlias)
+	asnTractorOrgID = tractorcol.TractorColumns.OrganizationID.WithAlias(assignedTractorAlias)
+	asnTractorBuID  = tractorcol.TractorColumns.BusinessUnitID.WithAlias(assignedTractorAlias)
 
-	asnTrailerID    = buncolgen.TrailerColumns.ID.WithAlias(assignedTrailerAlias)
-	asnTrailerCode  = buncolgen.TrailerColumns.Code.WithAlias(assignedTrailerAlias)
-	asnTrailerOrgID = buncolgen.TrailerColumns.OrganizationID.WithAlias(assignedTrailerAlias)
-	asnTrailerBuID  = buncolgen.TrailerColumns.BusinessUnitID.WithAlias(assignedTrailerAlias)
+	asnTrailerID    = trailercol.TrailerColumns.ID.WithAlias(assignedTrailerAlias)
+	asnTrailerCode  = trailercol.TrailerColumns.Code.WithAlias(assignedTrailerAlias)
+	asnTrailerOrgID = trailercol.TrailerColumns.OrganizationID.WithAlias(assignedTrailerAlias)
+	asnTrailerBuID  = trailercol.TrailerColumns.BusinessUnitID.WithAlias(assignedTrailerAlias)
 
-	assignedWorkerJoin = "LEFT JOIN " + buncolgen.WorkerTable.As(assignedWorkerAlias) +
-		" ON " + asnWorkerID.EqColumn(buncolgen.AssignmentColumns.PrimaryWorkerID) +
-		" AND " + asnWorkerOrgID.EqColumn(buncolgen.AssignmentColumns.OrganizationID) +
-		" AND " + asnWorkerBuID.EqColumn(buncolgen.AssignmentColumns.BusinessUnitID)
+	assignedWorkerJoin = "LEFT JOIN " + workercol.WorkerTable.As(assignedWorkerAlias) +
+		" ON " + asnWorkerID.EqColumn(shipmentcol.AssignmentColumns.PrimaryWorkerID) +
+		" AND " + asnWorkerOrgID.EqColumn(shipmentcol.AssignmentColumns.OrganizationID) +
+		" AND " + asnWorkerBuID.EqColumn(shipmentcol.AssignmentColumns.BusinessUnitID)
 
-	assignedTractorJoin = "LEFT JOIN " + buncolgen.TractorTable.As(assignedTractorAlias) +
-		" ON " + asnTractorID.EqColumn(buncolgen.AssignmentColumns.TractorID) +
-		" AND " + asnTractorOrgID.EqColumn(buncolgen.AssignmentColumns.OrganizationID) +
-		" AND " + asnTractorBuID.EqColumn(buncolgen.AssignmentColumns.BusinessUnitID)
+	assignedTractorJoin = "LEFT JOIN " + tractorcol.TractorTable.As(assignedTractorAlias) +
+		" ON " + asnTractorID.EqColumn(shipmentcol.AssignmentColumns.TractorID) +
+		" AND " + asnTractorOrgID.EqColumn(shipmentcol.AssignmentColumns.OrganizationID) +
+		" AND " + asnTractorBuID.EqColumn(shipmentcol.AssignmentColumns.BusinessUnitID)
 
-	assignedTrailerJoin = "LEFT JOIN " + buncolgen.TrailerTable.As(assignedTrailerAlias) +
-		" ON " + asnTrailerID.EqColumn(buncolgen.AssignmentColumns.TrailerID) +
-		" AND " + asnTrailerOrgID.EqColumn(buncolgen.AssignmentColumns.OrganizationID) +
-		" AND " + asnTrailerBuID.EqColumn(buncolgen.AssignmentColumns.BusinessUnitID)
+	assignedTrailerJoin = "LEFT JOIN " + trailercol.TrailerTable.As(assignedTrailerAlias) +
+		" ON " + asnTrailerID.EqColumn(shipmentcol.AssignmentColumns.TrailerID) +
+		" AND " + asnTrailerOrgID.EqColumn(shipmentcol.AssignmentColumns.OrganizationID) +
+		" AND " + asnTrailerBuID.EqColumn(shipmentcol.AssignmentColumns.BusinessUnitID)
 )
 
 type Params struct {
@@ -92,10 +99,10 @@ func (r *repository) ListBoardMoves(
 	filter *shipmentports.DispatchBoardFilter,
 ) ([]*shipmentports.BoardMove, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipmentports.BoardMove, error) {
-		moveCols := buncolgen.ShipmentMoveColumns
-		shipCols := buncolgen.ShipmentColumns
-		asnCols := buncolgen.AssignmentColumns
-		casnCols := buncolgen.CarrierAssignmentColumns
+		moveCols := shipmentcol.ShipmentMoveColumns
+		shipCols := shipmentcol.ShipmentColumns
+		asnCols := shipmentcol.AssignmentColumns
+		casnCols := shipmentcol.CarrierAssignmentColumns
 
 		entities := make([]*shipmentports.BoardMove, 0, boardLimit(filter.Limit))
 
@@ -117,8 +124,8 @@ func (r *repository) ListBoardMoves(
 			ColumnExpr(shipCols.TemperatureMin.As("temperature_min")).
 			ColumnExpr(shipCols.TemperatureMax.As("temperature_max")).
 			ColumnExpr(shipCols.TotalChargeAmount.Expr("{}::float8 AS revenue")).
-			ColumnExpr(buncolgen.CustomerColumns.Name.As("customer_name")).
-			ColumnExpr(buncolgen.ServiceTypeColumns.Code.As("service_type_code")).
+			ColumnExpr(customercol.CustomerColumns.Name.As("customer_name")).
+			ColumnExpr(servicetypecol.ServiceTypeColumns.Code.As("service_type_code")).
 			ColumnExpr(asnCols.ID.As("assignment_id")).
 			ColumnExpr(asnCols.PrimaryWorkerID.As("assigned_worker_id")).
 			ColumnExpr(asnCols.TractorID.As("assigned_tractor_id")).
@@ -157,7 +164,7 @@ func (r *repository) ListBoardMoves(
 			ColumnExpr(casnCols.ID.As("carrier_assignment_id")).
 			ColumnExpr(casnCols.CarrierID.As("assigned_carrier_id")).
 			ColumnExpr(casnCols.TotalCost.Expr("{}::float8 AS carrier_total_cost")).
-			ColumnExpr(buncolgen.CarrierColumns.Name.Expr(
+			ColumnExpr(carriercol.CarrierColumns.Name.Expr(
 				"COALESCE({}, '') AS assigned_carrier_name")).
 			Join(shipmentJoin).
 			Join(customerJoin).
@@ -173,7 +180,7 @@ func (r *repository) ListBoardMoves(
 		q = joinMoveAggregates(q)
 
 		q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = buncolgen.ShipmentMoveScopeTenant(sq, filter.TenantInfo)
+			sq = shipmentcol.ShipmentMoveScopeTenant(sq, filter.TenantInfo)
 			sq = applyMoveFilters(sq, filter)
 			if !filter.IncludeCovered {
 				sq = sq.Where(asnCols.ID.IsNull()).

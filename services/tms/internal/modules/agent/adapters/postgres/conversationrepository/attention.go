@@ -1,6 +1,7 @@
 package conversationrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
 	"context"
 	"fmt"
 
@@ -142,12 +143,12 @@ func (r *repository) MarkThreadRead(
 	req agentports.MarkThreadReadRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.ThreadColumns
+		cols := conversationcol.ThreadColumns
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*conversation.Thread)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ThreadScopeTenantUpdate(uq, req.TenantInfo).
+				return conversationcol.ThreadScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ThreadID).
 					Where(cols.UserID.Eq(), req.UserID)
 			}).
@@ -166,12 +167,12 @@ func (r *repository) WakeThread(
 	req *agentports.WakeThreadRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := buncolgen.ThreadColumns
+		cols := conversationcol.ThreadColumns
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*conversation.Thread)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ThreadScopeTenantUpdate(uq, req.TenantInfo).
+				return conversationcol.ThreadScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ThreadID).
 					Where(cols.UserID.Eq(), req.UserID).
 					Where(cols.SnoozedUntil.IsNotNull())

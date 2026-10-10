@@ -2,11 +2,14 @@
 
 package documentaiextraction
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/documentaiextractioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Extraction].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ExtractionFieldMap] instead of parsing struct tags via reflection.
+// the generated [documentaiextractioncol.ExtractionFieldMap] instead of parsing struct tags via reflection.
 func (e *Extraction) GetStaticFieldMap() map[string]string {
-	return buncolgen.ExtractionFieldMap
+	return documentaiextractioncol.ExtractionFieldMap
 }

@@ -1,6 +1,7 @@
 package ptoledgerrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -41,8 +42,8 @@ func balanceScope(
 	sq *bun.SelectQuery,
 	key *workerports.PTOBalanceKey,
 ) *bun.SelectQuery {
-	cols := buncolgen.WorkerPTOBalanceColumns
-	return buncolgen.WorkerPTOBalanceScopeTenant(sq, key.TenantInfo).
+	cols := workercol.WorkerPTOBalanceColumns
+	return workercol.WorkerPTOBalanceScopeTenant(sq, key.TenantInfo).
 		Where(cols.WorkerID.Eq(), key.WorkerID).
 		Where(cols.PTOType.Eq(), key.PTOType)
 }
@@ -117,13 +118,13 @@ func (r *repository) ListBalances(
 	req *workerports.ListPTOBalancesRequest,
 ) ([]*worker.WorkerPTOBalance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerPTOBalance, error) {
-		cols := buncolgen.WorkerPTOBalanceColumns
+		cols := workercol.WorkerPTOBalanceColumns
 		entities := make([]*worker.WorkerPTOBalance, 0, 4)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerPTOBalanceScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerPTOBalanceScopeTenant(sq, req.TenantInfo).
 					Where(cols.WorkerID.Eq(), req.WorkerID)
 			}).
 			Order(cols.PTOType.OrderAsc()).
@@ -142,14 +143,14 @@ func (r *repository) ListOrgBalances(
 	tenantInfo pagination.TenantInfo,
 ) ([]*worker.WorkerPTOBalance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerPTOBalance, error) {
-		cols := buncolgen.WorkerPTOBalanceColumns
+		cols := workercol.WorkerPTOBalanceColumns
 		entities := make([]*worker.WorkerPTOBalance, 0, 64)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Relation(buncolgen.WorkerPTOBalanceRelations.Worker).
+			Relation(workercol.WorkerPTOBalanceRelations.Worker).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerPTOBalanceScopeTenant(sq, tenantInfo)
+				return workercol.WorkerPTOBalanceScopeTenant(sq, tenantInfo)
 			}).
 			Order(cols.WorkerID.OrderAsc()).
 			Order(cols.PTOType.OrderAsc()).
@@ -175,7 +176,7 @@ func (r *repository) UpdateBalance(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.WorkerPTOBalanceColumns.Version.Eq(), ov).
+			Where(workercol.WorkerPTOBalanceColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -215,7 +216,7 @@ func (r *repository) applyEntryFilters(
 	q *bun.SelectQuery,
 	req *workerports.ListPTOLedgerRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.WorkerPTOLedgerEntryColumns
+	cols := workercol.WorkerPTOLedgerEntryColumns
 	if !req.WorkerID.IsNil() {
 		q = q.Where(cols.WorkerID.Eq(), req.WorkerID)
 	}
@@ -250,7 +251,7 @@ func (r *repository) ListEntries(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.WorkerPTOLedgerEntryTable.Alias,
+						workercol.WorkerPTOLedgerEntryTable.Alias,
 						req.Filter,
 						(*worker.WorkerPTOLedgerEntry)(nil),
 					)
@@ -272,16 +273,16 @@ func (r *repository) ListEntries(
 				TotalCount: totalCount,
 				Query: func(items *[]*worker.WorkerPTOLedgerEntry) *bun.SelectQuery {
 					q := dba.NewSelect().Model(items).
-						ColumnExpr(buncolgen.WorkerPTOLedgerEntryTable.All())
+						ColumnExpr(workercol.WorkerPTOLedgerEntryTable.All())
 					if req.IncludeWorker {
-						q = q.Relation(buncolgen.WorkerPTOLedgerEntryRelations.Worker)
+						q = q.Relation(workercol.WorkerPTOLedgerEntryRelations.Worker)
 					}
 					return q
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.WorkerPTOLedgerEntryTable.Alias,
+						workercol.WorkerPTOLedgerEntryTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*worker.WorkerPTOLedgerEntry)(nil),
@@ -312,7 +313,7 @@ func (r *repository) SumEntries(
 	key *workerports.PTOBalanceKey,
 ) (decimal.Decimal, int64, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (decimal.Decimal, int64, error) {
-		cols := buncolgen.WorkerPTOLedgerEntryColumns
+		cols := workercol.WorkerPTOLedgerEntryColumns
 		row := new(sumRow)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -320,7 +321,7 @@ func (r *repository) SumEntries(
 			ColumnExpr("COALESCE(SUM("+cols.AmountDays.String()+"), 0) AS total").
 			ColumnExpr("COUNT(*) AS entry_count").
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerPTOLedgerEntryScopeTenant(sq, key.TenantInfo).
+				return workercol.WorkerPTOLedgerEntryScopeTenant(sq, key.TenantInfo).
 					Where(cols.WorkerID.Eq(), key.WorkerID).
 					Where(cols.PTOType.Eq(), key.PTOType)
 			}).
@@ -343,14 +344,14 @@ func (r *repository) PendingDays(
 	req *workerports.PendingPTODaysRequest,
 ) (decimal.Decimal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (decimal.Decimal, error) {
-		cols := buncolgen.WorkerPTOColumns
+		cols := workercol.WorkerPTOColumns
 		row := new(pendingRow)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.WorkerPTO)(nil)).
 			ColumnExpr("COALESCE(SUM("+cols.Days.String()+"), 0) AS total").
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerPTOScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerPTOScopeTenant(sq, req.TenantInfo).
 					Where(cols.WorkerID.Eq(), req.WorkerID).
 					Where(cols.Type.Eq(), req.PTOType).
 					Where(cols.Status.Eq(), worker.PTOStatusRequested)
@@ -373,12 +374,12 @@ func (r *repository) HasEntry(
 	req *workerports.HasPTOLedgerEntryRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := buncolgen.WorkerPTOLedgerEntryColumns
+		cols := workercol.WorkerPTOLedgerEntryColumns
 		exists, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.WorkerPTOLedgerEntry)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerPTOLedgerEntryScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerPTOLedgerEntryScopeTenant(sq, req.TenantInfo).
 					Where(cols.SourcePTOID.Eq(), req.SourcePTOID).
 					Where(cols.EntryType.Eq(), req.EntryType)
 			}).
@@ -409,7 +410,7 @@ func (r *repository) Summary(
 ) (*workerports.PTOBalanceSummary, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerports.PTOBalanceSummary, error) {
 		dba := r.db.DBForContext(ctx)
-		bal := buncolgen.WorkerPTOBalanceColumns
+		bal := workercol.WorkerPTOBalanceColumns
 
 		balances := new(summaryRow)
 		if err := dba.NewSelect().
@@ -419,20 +420,20 @@ func (r *repository) Summary(
 			ColumnExpr("COALESCE(SUM("+bal.AccruedYTDDays.String()+"), 0) AS accrued_ytd").
 			ColumnExpr("COALESCE(SUM("+bal.UsedYTDDays.String()+"), 0) AS used_ytd").
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerPTOBalanceScopeTenant(sq, tenantInfo)
+				return workercol.WorkerPTOBalanceScopeTenant(sq, tenantInfo)
 			}).
 			Scan(ctx, balances); err != nil {
 			r.l.Error("failed to summarise PTO balances", zap.Error(err))
 			return nil, err
 		}
 
-		pto := buncolgen.WorkerPTOColumns
+		pto := workercol.WorkerPTOColumns
 		pending := new(pendingRow)
 		if err := dba.NewSelect().
 			Model((*worker.WorkerPTO)(nil)).
 			ColumnExpr("COALESCE(SUM("+pto.Days.String()+"), 0) AS total").
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerPTOScopeTenant(sq, tenantInfo).
+				return workercol.WorkerPTOScopeTenant(sq, tenantInfo).
 					Where(pto.Status.Eq(), worker.PTOStatusRequested)
 			}).
 			Scan(ctx, pending); err != nil {
@@ -440,17 +441,17 @@ func (r *repository) Summary(
 			return nil, err
 		}
 
-		wrk := buncolgen.WorkerColumns
-		asg := buncolgen.WorkerPTOPolicyAssignmentColumns
+		wrk := workercol.WorkerColumns
+		asg := workercol.WorkerPTOPolicyAssignmentColumns
 		unassigned := new(countRow)
 		if err := dba.NewSelect().
 			Model((*worker.Worker)(nil)).
 			ColumnExpr("COUNT(*) AS count").
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerScopeTenant(sq, tenantInfo).
+				return workercol.WorkerScopeTenant(sq, tenantInfo).
 					Where(wrk.Status.Eq(), "Active").
-					Where("NOT EXISTS (SELECT 1 FROM " + buncolgen.WorkerPTOPolicyAssignmentTable.Name +
-						" AS " + buncolgen.WorkerPTOPolicyAssignmentTable.Alias +
+					Where("NOT EXISTS (SELECT 1 FROM " + workercol.WorkerPTOPolicyAssignmentTable.Name +
+						" AS " + workercol.WorkerPTOPolicyAssignmentTable.Alias +
 						" WHERE " + asg.WorkerID.String() + " = " + wrk.ID.String() +
 						" AND " + asg.OrganizationID.String() + " = " + wrk.OrganizationID.String() +
 						" AND " + asg.BusinessUnitID.String() + " = " + wrk.BusinessUnitID.String() +

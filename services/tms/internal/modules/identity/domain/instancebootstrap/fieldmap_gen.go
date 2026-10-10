@@ -2,11 +2,14 @@
 
 package instancebootstrap
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/instancebootstrapcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InstanceBootstrap].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.InstanceBootstrapFieldMap] instead of parsing struct tags via reflection.
+// the generated [instancebootstrapcol.InstanceBootstrapFieldMap] instead of parsing struct tags via reflection.
 func (e *InstanceBootstrap) GetStaticFieldMap() map[string]string {
-	return buncolgen.InstanceBootstrapFieldMap
+	return instancebootstrapcol.InstanceBootstrapFieldMap
 }

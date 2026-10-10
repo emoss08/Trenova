@@ -1,6 +1,8 @@
 package shipmentboardrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/servicefailurecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 	"database/sql"
 	"errors"
@@ -26,24 +28,24 @@ func (r *Repository) LeadingLateReason(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*shipmentports.ShipmentLateReason, error) {
-			sp := buncolgen.ShipmentColumns
-			sf := buncolgen.ServiceFailureColumns
-			rc := buncolgen.ReasonCodeColumns
+			sp := shipmentcol.ShipmentColumns
+			sf := servicefailurecol.ServiceFailureColumns
+			rc := servicefailurecol.ReasonCodeColumns
 
 			reason := new(shipmentports.ShipmentLateReason)
 			err := r.db.DBForContext(ctx).NewSelect().
 				Model((*servicefailure.ServiceFailure)(nil)).
 				ColumnExpr(rc.Label.As("label")).
 				ColumnExpr(sf.ShipmentID.Expr("COUNT(DISTINCT {}) AS count")).
-				Join("JOIN "+buncolgen.ShipmentTable.As(buncolgen.ShipmentTable.Alias)).
+				Join("JOIN "+shipmentcol.ShipmentTable.As(shipmentcol.ShipmentTable.Alias)).
 				JoinOn(sp.ID.EqColumn(sf.ShipmentID)).
 				JoinOn(sp.OrganizationID.EqColumn(sf.OrganizationID)).
 				JoinOn(sp.BusinessUnitID.EqColumn(sf.BusinessUnitID)).
-				Join("JOIN "+buncolgen.ReasonCodeTable.As(buncolgen.ReasonCodeTable.Alias)).
+				Join("JOIN "+servicefailurecol.ReasonCodeTable.As(servicefailurecol.ReasonCodeTable.Alias)).
 				JoinOn(rc.ID.EqColumn(sf.ReasonCodeID)).
 				JoinOn(rc.OrganizationID.EqColumn(sf.OrganizationID)).
 				JoinOn(rc.BusinessUnitID.EqColumn(sf.BusinessUnitID)).
-				Apply(buncolgen.ServiceFailureApplyTenant(tenantInfo)).
+				Apply(servicefailurecol.ServiceFailureApplyTenant(tenantInfo)).
 				Where(sf.Status.In(), bun.List(servicefailure.UnresolvedStatuses())).
 				Where("?", shipmentrepository.StageCondition(shipment.StageLate)).
 				GroupExpr(rc.Label.Qualified()).

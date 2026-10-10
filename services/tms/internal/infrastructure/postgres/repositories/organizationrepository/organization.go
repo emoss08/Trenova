@@ -1,6 +1,7 @@
 package organizationrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 	"strings"
 
@@ -235,16 +236,16 @@ func (r *repository) Update(
 			NewUpdate().
 			Model(org).
 			WherePK().
-			Where(buncolgen.OrganizationColumns.BusinessUnitID.Eq(), org.BusinessUnitID).
+			Where(tenantcol.OrganizationColumns.BusinessUnitID.Eq(), org.BusinessUnitID).
 			Where("version = ?", ov).
 			OmitZero().
 			Value(
-				buncolgen.OrganizationColumns.BrokerageEnabled.String(),
+				tenantcol.OrganizationColumns.BrokerageEnabled.String(),
 				"?",
 				org.BrokerageEnabled,
 			).
 			Value(
-				buncolgen.OrganizationColumns.AssetOperationsEnabled.String(),
+				tenantcol.OrganizationColumns.AssetOperationsEnabled.String(),
 				"?",
 				org.AssetOperationsEnabled,
 			).

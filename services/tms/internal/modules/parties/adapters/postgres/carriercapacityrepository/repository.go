@@ -1,6 +1,7 @@
 package carriercapacityrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carriercapacitycol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
@@ -40,7 +41,7 @@ func New(p Params) carriercapacityports.CarrierCapacityPostingRepository {
 }
 
 func withPostingRelations(q *bun.SelectQuery) *bun.SelectQuery {
-	rel := buncolgen.PostingRelations
+	rel := carriercapacitycol.PostingRelations
 
 	return q.
 		Relation(rel.Carrier).
@@ -54,7 +55,7 @@ func applyListOptions(
 	q *bun.SelectQuery,
 	req *carriercapacityports.ListCarrierCapacityPostingsRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.PostingColumns
+	cols := carriercapacitycol.PostingColumns
 	if req.CarrierID.IsNotNil() {
 		q = q.Where(cols.CarrierID.Eq(), req.CarrierID)
 	}
@@ -72,7 +73,7 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*carriercapacity.Posting], error) {
-			cols := buncolgen.PostingColumns
+			cols := carriercapacitycol.PostingColumns
 			entities := make([]*carriercapacity.Posting, 0, req.Filter.Pagination.SafeLimit())
 			total, err := r.db.DBForContext(ctx).NewSelect().
 				Model(&entities).
@@ -80,7 +81,7 @@ func (r *repository) List(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFilters(
 						sq,
-						buncolgen.PostingTable.Alias,
+						carriercapacitycol.PostingTable.Alias,
 						req.Filter,
 						(*carriercapacity.Posting)(nil),
 					)
@@ -120,7 +121,7 @@ func (r *repository) ListConnection(
 					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 						return applyListOptions(querybuilder.ApplyFiltersWithoutSort(
 							sq,
-							buncolgen.PostingTable.Alias,
+							carriercapacitycol.PostingTable.Alias,
 							req.Filter,
 							(*carriercapacity.Posting)(nil),
 						), req)
@@ -142,13 +143,13 @@ func (r *repository) ListConnection(
 					Query: func(entities *[]*carriercapacity.Posting) *bun.SelectQuery {
 						return dba.NewSelect().
 							Model(entities).
-							ColumnExpr(buncolgen.PostingTable.All()).
+							ColumnExpr(carriercapacitycol.PostingTable.All()).
 							Apply(withPostingRelations)
 					},
 					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 						sq, aErr := querybuilder.ApplyCursorFilters(
 							sq,
-							buncolgen.PostingTable.Alias,
+							carriercapacitycol.PostingTable.Alias,
 							req.Filter,
 							req.Cursor,
 							(*carriercapacity.Posting)(nil),
@@ -180,8 +181,8 @@ func (r *repository) GetByID(
 			Model(entity).
 			Apply(withPostingRelations).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.PostingScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.PostingColumns.ID.Eq(), req.ID)
+				return carriercapacitycol.PostingScopeTenant(sq, req.TenantInfo).
+					Where(carriercapacitycol.PostingColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -214,7 +215,7 @@ func (r *repository) Update(
 	entity *carriercapacity.Posting,
 ) (*carriercapacity.Posting, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*carriercapacity.Posting, error) {
-		cols := buncolgen.PostingColumns
+		cols := carriercapacitycol.PostingColumns
 		previous := entity.Version
 		entity.Version++
 
@@ -243,11 +244,11 @@ func (r *repository) Delete(
 	req *carriercapacityports.DeleteCarrierCapacityPostingRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.PostingColumns
+		cols := carriercapacitycol.PostingColumns
 		result, err := r.db.DBForContext(ctx).NewDelete().
 			Model((*carriercapacity.Posting)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.PostingScopeTenantDelete(dq, req.TenantInfo).
+				return carriercapacitycol.PostingScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID).
 					Where(cols.Version.Eq(), req.Version)
 			}).
@@ -266,7 +267,7 @@ func (r *repository) ListOpen(
 	req *carriercapacityports.ListOpenCarrierCapacityRequest,
 ) ([]*carriercapacity.Posting, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carriercapacity.Posting, error) {
-		cols := buncolgen.PostingColumns
+		cols := carriercapacitycol.PostingColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultOpenList
@@ -282,7 +283,7 @@ func (r *repository) ListOpen(
 		q := r.db.DBForContext(ctx).NewSelect().
 			Model(&entities).
 			Apply(withPostingRelations).
-			Apply(buncolgen.PostingApplyTenant(req.TenantInfo)).
+			Apply(carriercapacitycol.PostingApplyTenant(req.TenantInfo)).
 			Where(cols.AvailableTo.Gte(), req.OpenAt).
 			Where(cols.AvailableFrom.Lte(), through).
 			Order(cols.AvailableFrom.OrderAsc(), cols.ID.OrderAsc()).

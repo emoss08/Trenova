@@ -1,6 +1,7 @@
 package iamrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/iamcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
@@ -44,8 +45,8 @@ func (r *repository) ListSCIMGroupRoleMappings(
 			)
 
 			entities := make([]*iam.SCIMGroupRoleMapping, 0, req.Filter.Pagination.SafeLimit())
-			cols := buncolgen.SCIMGroupRoleMappingColumns
-			rel := buncolgen.SCIMGroupRoleMappingRelations
+			cols := iamcol.SCIMGroupRoleMappingColumns
+			rel := iamcol.SCIMGroupRoleMappingRelations
 
 			total, err := r.db.DBForContext(ctx).
 				NewSelect().
@@ -76,7 +77,7 @@ func (r *repository) applyGroupRoleMappingCursorFilters(
 ) (*bun.SelectQuery, error) {
 	q, err := querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.SCIMGroupRoleMappingTable.Alias,
+		iamcol.SCIMGroupRoleMappingTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*iam.SCIMGroupRoleMapping)(nil),
@@ -84,7 +85,7 @@ func (r *repository) applyGroupRoleMappingCursorFilters(
 	if err != nil {
 		return nil, err
 	}
-	return q.Where(buncolgen.SCIMGroupRoleMappingColumns.DirectoryID.Eq(), req.DirectoryID), nil
+	return q.Where(iamcol.SCIMGroupRoleMappingColumns.DirectoryID.Eq(), req.DirectoryID), nil
 }
 
 func (r *repository) applyGroupRoleMappingCountFilters(
@@ -93,11 +94,11 @@ func (r *repository) applyGroupRoleMappingCountFilters(
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.SCIMGroupRoleMappingTable.Alias,
+		iamcol.SCIMGroupRoleMappingTable.Alias,
 		req.Filter,
 		(*iam.SCIMGroupRoleMapping)(nil),
 	)
-	return q.Where(buncolgen.SCIMGroupRoleMappingColumns.DirectoryID.Eq(), req.DirectoryID)
+	return q.Where(iamcol.SCIMGroupRoleMappingColumns.DirectoryID.Eq(), req.DirectoryID)
 }
 
 func (r *repository) ListSCIMGroupRoleMappingsConnection(
@@ -140,8 +141,8 @@ func (r *repository) ListSCIMGroupRoleMappingsConnection(
 						return dba.
 							NewSelect().
 							Model(entities).
-							ColumnExpr(buncolgen.SCIMGroupRoleMappingTable.All()).
-							Relation(buncolgen.SCIMGroupRoleMappingRelations.Role)
+							ColumnExpr(iamcol.SCIMGroupRoleMappingTable.All()).
+							Relation(iamcol.SCIMGroupRoleMappingRelations.Role)
 					},
 					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 						return r.applyGroupRoleMappingCursorFilters(sq, req)
@@ -188,7 +189,7 @@ func (r *repository) UpdateSCIMGroupRoleMapping(
 
 		ov := entity.Version
 		entity.Version++
-		cols := buncolgen.SCIMGroupRoleMappingColumns
+		cols := iamcol.SCIMGroupRoleMappingColumns
 
 		results, err := r.db.DBForContext(ctx).NewUpdate().
 			Model(entity).
@@ -220,11 +221,11 @@ func (r *repository) DeleteSCIMGroupRoleMapping(
 	sgrmID pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.SCIMGroupRoleMappingColumns
+		cols := iamcol.SCIMGroupRoleMappingColumns
 		res, err := r.db.DBForContext(ctx).NewDelete().
 			Model((*iam.SCIMGroupRoleMapping)(nil)).
 			Apply(func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.SCIMGroupRoleMappingScopeTenantDelete(dq, tenantInfo).
+				return iamcol.SCIMGroupRoleMappingScopeTenantDelete(dq, tenantInfo).
 					Where(cols.ID.Eq(), sgrmID)
 			}).
 			Exec(ctx)

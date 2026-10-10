@@ -2,11 +2,14 @@
 
 package carriercapacity
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carriercapacitycol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Posting].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.PostingFieldMap] instead of parsing struct tags via reflection.
+// the generated [carriercapacitycol.PostingFieldMap] instead of parsing struct tags via reflection.
 func (e *Posting) GetStaticFieldMap() map[string]string {
-	return buncolgen.PostingFieldMap
+	return carriercapacitycol.PostingFieldMap
 }

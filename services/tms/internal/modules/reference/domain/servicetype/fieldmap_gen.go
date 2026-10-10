@@ -2,11 +2,14 @@
 
 package servicetype
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/servicetypecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ServiceType].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ServiceTypeFieldMap] instead of parsing struct tags via reflection.
+// the generated [servicetypecol.ServiceTypeFieldMap] instead of parsing struct tags via reflection.
 func (e *ServiceType) GetStaticFieldMap() map[string]string {
-	return buncolgen.ServiceTypeFieldMap
+	return servicetypecol.ServiceTypeFieldMap
 }

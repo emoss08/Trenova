@@ -1,6 +1,7 @@
 package tenantbootstrap
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 	"errors"
 	"fmt"
@@ -219,7 +220,7 @@ func AvailableLoginSlug(ctx context.Context, db bun.IDB, base string) (string, e
 	}
 
 	return firstAvailable(ctx, base, maxLoginSlugLength, func(candidate string) (bool, error) {
-		cols := buncolgen.OrganizationColumns
+		cols := tenantcol.OrganizationColumns
 		return db.NewSelect().
 			Model((*tenant.Organization)(nil)).
 			Where(cols.LoginSlug.Eq(), candidate).
@@ -234,7 +235,7 @@ func AvailableUsername(ctx context.Context, db bun.IDB, base string) (string, er
 	}
 
 	return firstAvailable(ctx, base, maxUsernameLength, func(candidate string) (bool, error) {
-		cols := buncolgen.UserColumns
+		cols := tenantcol.UserColumns
 		return db.NewSelect().
 			Model((*tenant.User)(nil)).
 			Where("lower("+cols.Username.Qualified()+") = ?", strings.ToLower(candidate)).
@@ -250,7 +251,7 @@ func AvailableBusinessUnitCode(ctx context.Context, db bun.IDB) (string, error) 
 		}
 		code := businessUnitCodeHead + strings.ToUpper(suffix)
 
-		cols := buncolgen.BusinessUnitColumns
+		cols := tenantcol.BusinessUnitColumns
 		taken, err := db.NewSelect().
 			Model((*tenant.BusinessUnit)(nil)).
 			Where("lower("+cols.Code.Qualified()+") = ?", strings.ToLower(code)).

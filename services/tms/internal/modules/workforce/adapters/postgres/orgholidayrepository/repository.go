@@ -1,6 +1,7 @@
 package orgholidayrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -39,13 +40,13 @@ func (r *repository) List(
 	req *workerports.ListOrgHolidaysRequest,
 ) ([]*worker.OrgHoliday, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.OrgHoliday, error) {
-		cols := buncolgen.OrgHolidayColumns
+		cols := workercol.OrgHolidayColumns
 		entities := make([]*worker.OrgHoliday, 0, 16)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.OrgHolidayScopeTenant(sq, req.TenantInfo)
+				sq = workercol.OrgHolidayScopeTenant(sq, req.TenantInfo)
 				if req.From > 0 || req.To > 0 {
 					sq = sq.WhereGroup(" AND ", func(inner *bun.SelectQuery) *bun.SelectQuery {
 						inner = inner.Where(cols.RecursAnnually.Eq(), true)
@@ -85,8 +86,8 @@ func (r *repository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.OrgHolidayScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.OrgHolidayColumns.ID.Eq(), req.ID)
+				return workercol.OrgHolidayScopeTenant(sq, req.TenantInfo).
+					Where(workercol.OrgHolidayColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -138,7 +139,7 @@ func (r *repository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.OrgHolidayColumns.Version.Eq(), ov).
+			Where(workercol.OrgHolidayColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -162,8 +163,8 @@ func (r *repository) Delete(ctx context.Context, req *workerports.GetOrgHolidayB
 			NewDelete().
 			Model((*worker.OrgHoliday)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.OrgHolidayScopeTenantDelete(dq, req.TenantInfo).
-					Where(buncolgen.OrgHolidayColumns.ID.Eq(), req.ID)
+				return workercol.OrgHolidayScopeTenantDelete(dq, req.TenantInfo).
+					Where(workercol.OrgHolidayColumns.ID.Eq(), req.ID)
 			}).
 			Exec(ctx)
 		if err != nil {

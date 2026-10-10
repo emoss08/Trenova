@@ -1,6 +1,7 @@
 package fuelpurchaserepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/fuelpurchasecol"
 	"context"
 	"database/sql"
 	"errors"
@@ -22,13 +23,13 @@ func (r *repository) GetFeedState(
 	req *fuelpurchaseports.GetFuelFeedStateRequest,
 ) (*fuelpurchase.CardFeedState, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fuelpurchase.CardFeedState, error) {
-		cols := buncolgen.CardFeedStateColumns
+		cols := fuelpurchasecol.CardFeedStateColumns
 
 		state := new(fuelpurchase.CardFeedState)
 		err := r.db.DBForContext(ctx).NewSelect().
 			Model(state).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CardFeedStateScopeTenant(sq, req.TenantInfo).
+				return fuelpurchasecol.CardFeedStateScopeTenant(sq, req.TenantInfo).
 					Where(cols.Provider.Eq(), req.Provider).
 					Where(cols.FeedType.Eq(), req.FeedType)
 			}).
@@ -56,7 +57,7 @@ func (r *repository) GetFeedState(
 // first run of a feed and every run after it take the same path.
 func (r *repository) SaveFeedState(ctx context.Context, state *fuelpurchase.CardFeedState) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.CardFeedStateColumns
+		cols := fuelpurchasecol.CardFeedStateColumns
 		conflict := "CONFLICT (" + cols.OrganizationID.Name + ", " + cols.BusinessUnitID.Name +
 			", " + cols.Provider.Name + ", " + cols.FeedType.Name + ") DO UPDATE"
 

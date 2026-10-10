@@ -1,6 +1,7 @@
 package lanequery_test
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"strings"
 	"testing"
 
@@ -34,7 +35,7 @@ func TestNew_TenantScopedLanes(t *testing.T) {
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	orgLiteral := "'" + tenant.OrgID.String() + "'"
 	buLiteral := "'" + tenant.BuID.String() + "'"
-	cols := buncolgen.ShipmentColumns
+	cols := shipmentcol.ShipmentColumns
 
 	sql := lanequery.New(db, lanequery.Options{
 		Tenant: &tenant,
@@ -103,7 +104,7 @@ func TestNew_InstanceWideLanesByStatus(t *testing.T) {
 	t.Parallel()
 
 	db := newTestDB(t)
-	cols := buncolgen.ShipmentColumns
+	cols := shipmentcol.ShipmentColumns
 	statuses := []shipment.Status{shipment.StatusNew, shipment.StatusInTransit}
 
 	sql := lanequery.New(db, lanequery.Options{

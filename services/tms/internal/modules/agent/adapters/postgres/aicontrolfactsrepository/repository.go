@@ -1,6 +1,9 @@
 package aicontrolfactsrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/aiusagecol"
 	"context"
 	"fmt"
 
@@ -45,16 +48,16 @@ func (r *repository) AgentCounts(
 ) (aicontrolsummary.AgentCounts, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (aicontrolsummary.AgentCounts, error) {
 		db := r.db.DBForContext(ctx)
-		defCols := buncolgen.DefinitionColumns
-		runCols := buncolgen.AgentRunColumns
-		propCols := buncolgen.AgentProposalColumns
+		defCols := agentdefinitioncol.DefinitionColumns
+		runCols := agentcol.AgentRunColumns
+		propCols := agentcol.AgentProposalColumns
 		var counts aicontrolsummary.AgentCounts
 
 		definitions := func() *bun.SelectQuery {
 			return db.NewSelect().
 				Model((*agentdefinition.Definition)(nil)).
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return buncolgen.DefinitionScopeTenant(sq, req.TenantInfo)
+					return agentdefinitioncol.DefinitionScopeTenant(sq, req.TenantInfo)
 				})
 		}
 
@@ -74,7 +77,7 @@ func (r *repository) AgentCounts(
 		if counts.Working, err = db.NewSelect().
 			Model((*agent.AgentRun)(nil)).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentRunScopeTenant(sq, req.TenantInfo)
+				return agentcol.AgentRunScopeTenant(sq, req.TenantInfo)
 			}).
 			Where(runCols.Status.In(), bun.List(workingStatuses)).
 			Count(ctx); err != nil {
@@ -83,7 +86,7 @@ func (r *repository) AgentCounts(
 		if counts.Waiting, err = db.NewSelect().
 			Model((*agent.AgentProposal)(nil)).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentProposalScopeTenant(sq, req.TenantInfo)
+				return agentcol.AgentProposalScopeTenant(sq, req.TenantInfo)
 			}).
 			Where(propCols.Status.Eq(), agent.ProposalStatusPending).
 			Count(ctx); err != nil {
@@ -95,7 +98,7 @@ func (r *repository) AgentCounts(
 				" AND "+runCols.OrganizationID.Qualified()+" = "+propCols.OrganizationID.Qualified()+
 				" AND "+runCols.BusinessUnitID.Qualified()+" = "+propCols.BusinessUnitID.Qualified()).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentProposalScopeTenant(sq, req.TenantInfo)
+				return agentcol.AgentProposalScopeTenant(sq, req.TenantInfo)
 			}).
 			Where(runCols.Status.Eq(), agent.RunStatusShadowCompleted).
 			Where(runCols.CreatedAt.Gte(), req.ShadowSince).
@@ -118,7 +121,7 @@ func (r *repository) ProviderFailures(
 	req *agentrosterports.ProviderFailuresRequest,
 ) ([]agentrosterports.ProviderFailureCount, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentrosterports.ProviderFailureCount, error) {
-		cols := buncolgen.AIUsageRecordColumns
+		cols := aiusagecol.AIUsageRecordColumns
 		var rows []failureRow
 		err := r.db.DBForContext(ctx).NewSelect().
 			Model((*aiusage.AIUsageRecord)(nil)).
@@ -127,7 +130,7 @@ func (r *repository) ProviderFailures(
 			ColumnExpr("COALESCE(MAX("+cols.CreatedAt.Qualified()+") FILTER (WHERE NOT "+
 				cols.Succeeded.Qualified()+"), 0) AS last_failure_at").
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AIUsageRecordScopeTenant(sq, req.TenantInfo)
+				return aiusagecol.AIUsageRecordScopeTenant(sq, req.TenantInfo)
 			}).
 			Where(cols.CreatedAt.Gte(), req.Since).
 			Where(cols.ProviderID.IsNotNull()).
@@ -176,8 +179,8 @@ func (r *repository) AgentRoster(
 ) ([]*agentroster.Stat, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentroster.Stat, error) {
 		db := r.db.DBForContext(ctx)
-		runCols := buncolgen.AgentRunColumns
-		propCols := buncolgen.AgentProposalColumns
+		runCols := agentcol.AgentRunColumns
+		propCols := agentcol.AgentProposalColumns
 
 		var runs []rosterRunRow
 		err := db.NewSelect().
@@ -186,7 +189,7 @@ func (r *repository) AgentRoster(
 			ColumnExpr("FLOOR(("+runCols.CreatedAt.Qualified()+" - ?) / 86400)::int AS day", req.RunsSince).
 			ColumnExpr(buncolgen.Count("runs")).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentRunScopeTenant(sq, req.TenantInfo)
+				return agentcol.AgentRunScopeTenant(sq, req.TenantInfo)
 			}).
 			Where(runCols.AgentDefinitionID.IsNotNull()).
 			Where(runCols.CreatedAt.Gte(), req.RunsSince).
@@ -212,7 +215,7 @@ func (r *repository) AgentRoster(
 			).
 			ColumnExpr(buncolgen.CountFilter("shadow", runCols.Status.Eq()), agent.RunStatusShadowCompleted).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentProposalScopeTenant(sq, req.TenantInfo)
+				return agentcol.AgentProposalScopeTenant(sq, req.TenantInfo)
 			}).
 			Where(runCols.AgentDefinitionID.IsNotNull()).
 			Where(propCols.CreatedAt.Gte(), req.DecisionsSince).

@@ -1,6 +1,7 @@
 package agentextensionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentextensioncol"
 	"context"
 	"fmt"
 
@@ -32,7 +33,7 @@ func buildReserve(
 	db bun.IDB,
 	params agentextensionports.ReserveExtensionRequestParams,
 ) *bun.InsertQuery {
-	cols := buncolgen.ExtensionUsageDailyColumns
+	cols := agentextensioncol.ExtensionUsageDailyColumns
 
 	return db.NewInsert().
 		Model(&agentextension.ExtensionUsageDaily{
@@ -74,7 +75,7 @@ func buildRecordOutcome(
 	db bun.IDB,
 	params agentextensionports.RecordExtensionOutcomeParams,
 ) *bun.UpdateQuery {
-	cols := buncolgen.ExtensionUsageDailyColumns
+	cols := agentextensioncol.ExtensionUsageDailyColumns
 	failures := 0
 	if params.Failed {
 		failures = 1
@@ -87,7 +88,7 @@ func buildRecordOutcome(
 	return db.NewUpdate().
 		Model((*agentextension.ExtensionUsageDaily)(nil)).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return buncolgen.ExtensionUsageDailyScopeTenantUpdate(uq, params.TenantInfo).
+			return agentextensioncol.ExtensionUsageDailyScopeTenantUpdate(uq, params.TenantInfo).
 				Where(cols.ExtensionType.Eq(), params.Type).
 				Where(cols.Day.Eq(), params.Day)
 		}).
@@ -122,7 +123,7 @@ func buildSummarize(
 	db bun.IDB,
 	params agentextensionports.SummarizeExtensionUsageParams,
 ) *bun.SelectQuery {
-	cols := buncolgen.ExtensionUsageDailyColumns
+	cols := agentextensioncol.ExtensionUsageDailyColumns
 
 	return db.NewSelect().
 		Model((*agentextension.ExtensionUsageDaily)(nil)).
@@ -136,7 +137,7 @@ func buildSummarize(
 		ColumnExpr(cols.Failures.Expr("COALESCE(SUM({}), 0)")+" AS failures_month").
 		ColumnExpr(cols.CostUSD.Expr("COALESCE(SUM({}), 0)")+" AS cost_month").
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ExtensionUsageDailyScopeTenant(sq, params.TenantInfo).
+			return agentextensioncol.ExtensionUsageDailyScopeTenant(sq, params.TenantInfo).
 				Where(cols.Day.Gte(), params.FromDay).
 				Where(cols.Day.Lte(), params.Today)
 		}).

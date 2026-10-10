@@ -1,6 +1,7 @@
 package settingversionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/settingversioncol"
 	"context"
 	"database/sql"
 	"errors"
@@ -46,14 +47,14 @@ func (r *repository) LatestAt(
 	req *settingversionports.GetSettingVersionAtRequest,
 ) (*settingversion.SettingVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*settingversion.SettingVersion, error) {
-		cols := buncolgen.SettingVersionColumns
+		cols := settingversioncol.SettingVersionColumns
 		version := new(settingversion.SettingVersion)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(version).
-			Relation(buncolgen.SettingVersionRelations.Author).
+			Relation(settingversioncol.SettingVersionRelations.Author).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.SettingVersionScopeTenant(sq, req.TenantInfo).
+				return settingversioncol.SettingVersionScopeTenant(sq, req.TenantInfo).
 					Where(cols.Kind.Eq(), req.Kind).
 					Where(cols.SubjectID.Eq(), req.SubjectID).
 					Where(cols.Version.Lte(), req.Version)

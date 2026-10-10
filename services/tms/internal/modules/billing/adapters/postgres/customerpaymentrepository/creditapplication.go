@@ -1,6 +1,7 @@
 package customerpaymentrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/customerpaymentcol"
 	"context"
 	"fmt"
 
@@ -24,13 +25,13 @@ func (r *repository) ListApplicationsByInvoiceIDs(
 			return result, nil
 		}
 
-		cols := buncolgen.ApplicationColumns
+		cols := customerpaymentcol.ApplicationColumns
 		rows := make([]*customerpayment.Application, 0, len(req.InvoiceIDs))
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model(&rows).
-			Relation(buncolgen.ApplicationRelations.Payment).
+			Relation(customerpaymentcol.ApplicationRelations.Payment).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ApplicationScopeTenant(sq, req.TenantInfo).
+				return customerpaymentcol.ApplicationScopeTenant(sq, req.TenantInfo).
 					Where(cols.InvoiceID.In(), bun.List(req.InvoiceIDs))
 			}).
 			Order(cols.CreatedAt.OrderDesc(), cols.LineNumber.OrderAsc()).
@@ -67,7 +68,7 @@ func (r *repository) UpdateCreditMemoApplication(
 	application *customerpayment.CreditMemoApplication,
 ) (*customerpayment.CreditMemoApplication, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*customerpayment.CreditMemoApplication, error) {
-		cols := buncolgen.CreditMemoApplicationColumns
+		cols := customerpaymentcol.CreditMemoApplicationColumns
 		application.UpdatedAt = timeutils.NowUnix()
 		res, err := r.db.DBForContext(ctx).NewUpdate().
 			Model(application).
@@ -96,12 +97,12 @@ func (r *repository) GetCreditMemoApplicationByID(
 	req customerpaymentports.GetCreditMemoApplicationRequest,
 ) (*customerpayment.CreditMemoApplication, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*customerpayment.CreditMemoApplication, error) {
-		cols := buncolgen.CreditMemoApplicationColumns
+		cols := customerpaymentcol.CreditMemoApplicationColumns
 		entity := new(customerpayment.CreditMemoApplication)
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CreditMemoApplicationScopeTenant(sq, req.TenantInfo).
+				return customerpaymentcol.CreditMemoApplicationScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx); err != nil {
@@ -122,14 +123,14 @@ func (r *repository) ListCreditMemoApplicationsByInvoiceIDs(
 			return result, nil
 		}
 
-		cols := buncolgen.CreditMemoApplicationColumns
+		cols := customerpaymentcol.CreditMemoApplicationColumns
 		rows := make([]*customerpayment.CreditMemoApplication, 0, len(req.InvoiceIDs))
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model(&rows).
-			Relation(buncolgen.CreditMemoApplicationRelations.CreditMemo).
-			Relation(buncolgen.CreditMemoApplicationRelations.Invoice).
+			Relation(customerpaymentcol.CreditMemoApplicationRelations.CreditMemo).
+			Relation(customerpaymentcol.CreditMemoApplicationRelations.Invoice).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CreditMemoApplicationScopeTenant(sq, req.TenantInfo).
+				return customerpaymentcol.CreditMemoApplicationScopeTenant(sq, req.TenantInfo).
 					WhereGroup(" OR ", func(inner *bun.SelectQuery) *bun.SelectQuery {
 						return inner.
 							Where(cols.InvoiceID.In(), bun.List(req.InvoiceIDs)).

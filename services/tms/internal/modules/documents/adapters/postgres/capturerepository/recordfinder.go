@@ -1,6 +1,13 @@
 package capturerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/trailercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 
@@ -36,63 +43,63 @@ type recordKind struct {
 var recordKinds = map[string]recordKind{
 	permission.ResourceShipment.String(): {
 		model:    func() any { return (*shipment.Shipment)(nil) },
-		tenant:   buncolgen.ShipmentApplyTenant,
-		id:       buncolgen.ShipmentColumns.ID,
-		title:    buncolgen.ShipmentColumns.ProNumber.Expr("COALESCE({}, '')"),
-		subtitle: buncolgen.ShipmentColumns.BOL.Expr("COALESCE({}, '')"),
+		tenant:   shipmentcol.ShipmentApplyTenant,
+		id:       shipmentcol.ShipmentColumns.ID,
+		title:    shipmentcol.ShipmentColumns.ProNumber.Expr("COALESCE({}, '')"),
+		subtitle: shipmentcol.ShipmentColumns.BOL.Expr("COALESCE({}, '')"),
 	},
 	permission.ResourceWorker.String(): {
 		model:  func() any { return (*worker.Worker)(nil) },
-		tenant: buncolgen.WorkerApplyTenant,
-		id:     buncolgen.WorkerColumns.ID,
+		tenant: workercol.WorkerApplyTenant,
+		id:     workercol.WorkerColumns.ID,
 		title: buncolgen.Expr(
 			"CONCAT_WS(' ', {0}, {1})",
-			buncolgen.WorkerColumns.FirstName,
-			buncolgen.WorkerColumns.LastName,
+			workercol.WorkerColumns.FirstName,
+			workercol.WorkerColumns.LastName,
 		),
 		subtitle: "''",
 	},
 	permission.ResourceTractor.String(): {
 		model:    func() any { return (*tractor.Tractor)(nil) },
-		tenant:   buncolgen.TractorApplyTenant,
-		id:       buncolgen.TractorColumns.ID,
-		title:    buncolgen.TractorColumns.Code.Expr("COALESCE({}, '')"),
-		subtitle: buncolgen.TractorColumns.LicensePlateNumber.Expr("COALESCE({}, '')"),
+		tenant:   tractorcol.TractorApplyTenant,
+		id:       tractorcol.TractorColumns.ID,
+		title:    tractorcol.TractorColumns.Code.Expr("COALESCE({}, '')"),
+		subtitle: tractorcol.TractorColumns.LicensePlateNumber.Expr("COALESCE({}, '')"),
 	},
 	permission.ResourceTrailer.String(): {
 		model:    func() any { return (*trailer.Trailer)(nil) },
-		tenant:   buncolgen.TrailerApplyTenant,
-		id:       buncolgen.TrailerColumns.ID,
-		title:    buncolgen.TrailerColumns.Code.Expr("COALESCE({}, '')"),
-		subtitle: buncolgen.TrailerColumns.LicensePlateNumber.Expr("COALESCE({}, '')"),
+		tenant:   trailercol.TrailerApplyTenant,
+		id:       trailercol.TrailerColumns.ID,
+		title:    trailercol.TrailerColumns.Code.Expr("COALESCE({}, '')"),
+		subtitle: trailercol.TrailerColumns.LicensePlateNumber.Expr("COALESCE({}, '')"),
 	},
 	permission.ResourceCustomer.String(): {
 		model:    func() any { return (*customer.Customer)(nil) },
-		tenant:   buncolgen.CustomerApplyTenant,
-		id:       buncolgen.CustomerColumns.ID,
-		title:    buncolgen.CustomerColumns.Name.Expr("COALESCE({}, '')"),
-		subtitle: buncolgen.CustomerColumns.Code.Expr("COALESCE({}, '')"),
+		tenant:   customercol.CustomerApplyTenant,
+		id:       customercol.CustomerColumns.ID,
+		title:    customercol.CustomerColumns.Name.Expr("COALESCE({}, '')"),
+		subtitle: customercol.CustomerColumns.Code.Expr("COALESCE({}, '')"),
 	},
 	capture.ResourceAssistantThread: {
 		model:    func() any { return (*conversation.Thread)(nil) },
 		tenant:   ownThread,
-		id:       buncolgen.ThreadColumns.ID,
-		title:    buncolgen.ThreadColumns.Title.Expr("COALESCE({}, '')"),
+		id:       conversationcol.ThreadColumns.ID,
+		title:    conversationcol.ThreadColumns.Title.Expr("COALESCE({}, '')"),
 		subtitle: "''",
 	},
 	permission.ResourceCarrier.String(): {
 		model:    func() any { return (*carrier.Carrier)(nil) },
-		tenant:   buncolgen.CarrierApplyTenant,
-		id:       buncolgen.CarrierColumns.ID,
-		title:    buncolgen.CarrierColumns.Name.Expr("COALESCE({}, '')"),
-		subtitle: buncolgen.CarrierColumns.Code.Expr("COALESCE({}, '')"),
+		tenant:   carriercol.CarrierApplyTenant,
+		id:       carriercol.CarrierColumns.ID,
+		title:    carriercol.CarrierColumns.Name.Expr("COALESCE({}, '')"),
+		subtitle: carriercol.CarrierColumns.Code.Expr("COALESCE({}, '')"),
 	},
 }
 
 func ownThread(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
 	return func(q *bun.SelectQuery) *bun.SelectQuery {
-		return q.Apply(buncolgen.ThreadApplyTenant(ti)).
-			Where(buncolgen.ThreadColumns.UserID.Eq(), ti.UserID)
+		return q.Apply(conversationcol.ThreadApplyTenant(ti)).
+			Where(conversationcol.ThreadColumns.UserID.Eq(), ti.UserID)
 	}
 }
 

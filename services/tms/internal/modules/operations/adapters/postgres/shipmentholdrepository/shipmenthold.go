@@ -1,6 +1,7 @@
 package shipmentholdrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 	"fmt"
 
@@ -45,17 +46,17 @@ func (r *repository) ListByShipmentID(
 			req.Filter.Pagination.Limit = 50
 		}
 
-		shh := buncolgen.ShipmentHoldColumns
+		shh := shipmentcol.ShipmentHoldColumns
 		db := r.db.DBForContext(ctx)
 		holds := make([]*shipment.ShipmentHold, 0, req.Filter.Pagination.SafeLimit())
 
 		total, err := db.NewSelect().
 			Model(&holds).
 			Where(shh.ShipmentID.Eq(), req.ShipmentID).
-			Apply(buncolgen.ShipmentHoldApplyTenant(req.Filter.TenantInfo)).
-			Relation(buncolgen.ShipmentHoldRelations.HoldReason).
-			Relation(buncolgen.ShipmentHoldRelations.CreatedBy).
-			Relation(buncolgen.ShipmentHoldRelations.ReleasedBy).
+			Apply(shipmentcol.ShipmentHoldApplyTenant(req.Filter.TenantInfo)).
+			Relation(shipmentcol.ShipmentHoldRelations.HoldReason).
+			Relation(shipmentcol.ShipmentHoldRelations.CreatedBy).
+			Relation(shipmentcol.ShipmentHoldRelations.ReleasedBy).
 			OrderExpr(shh.ReleasedAt.Expr("{} IS NULL DESC")).
 			Order(shh.StartedAt.OrderDesc()).
 			OrderExpr(shh.ReleasedAt.Expr("COALESCE({}, 0) DESC")).
@@ -78,7 +79,7 @@ func (r *repository) GetByID(
 	req *shipmentports.GetShipmentHoldByIDRequest,
 ) (*shipment.ShipmentHold, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentHold, error) {
-		shh := buncolgen.ShipmentHoldColumns
+		shh := shipmentcol.ShipmentHoldColumns
 		db := r.db.DBForContext(ctx)
 		entity := new(shipment.ShipmentHold)
 
@@ -86,10 +87,10 @@ func (r *repository) GetByID(
 			Model(entity).
 			Where(shh.ID.Eq(), req.HoldID).
 			Where(shh.ShipmentID.Eq(), req.ShipmentID).
-			Apply(buncolgen.ShipmentHoldApplyTenant(req.TenantInfo)).
-			Relation(buncolgen.ShipmentHoldRelations.HoldReason).
-			Relation(buncolgen.ShipmentHoldRelations.CreatedBy).
-			Relation(buncolgen.ShipmentHoldRelations.ReleasedBy).
+			Apply(shipmentcol.ShipmentHoldApplyTenant(req.TenantInfo)).
+			Relation(shipmentcol.ShipmentHoldRelations.HoldReason).
+			Relation(shipmentcol.ShipmentHoldRelations.CreatedBy).
+			Relation(shipmentcol.ShipmentHoldRelations.ReleasedBy).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Shipment hold")
 		}
@@ -126,7 +127,7 @@ func (r *repository) Update(
 	entity *shipment.ShipmentHold,
 ) (*shipment.ShipmentHold, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentHold, error) {
-		shh := buncolgen.ShipmentHoldColumns
+		shh := shipmentcol.ShipmentHoldColumns
 		db := r.db.DBForContext(ctx)
 		result, err := db.NewUpdate().
 			Model(entity).
@@ -165,7 +166,7 @@ func (r *repository) Release(
 	entity *shipment.ShipmentHold,
 ) (*shipment.ShipmentHold, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentHold, error) {
-		shh := buncolgen.ShipmentHoldColumns
+		shh := shipmentcol.ShipmentHoldColumns
 		db := r.db.DBForContext(ctx)
 		result, err := db.NewUpdate().
 			Model((*shipment.ShipmentHold)(nil)).
@@ -213,7 +214,7 @@ func (r *repository) hasActiveBlockingHold(
 	column string,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		shh := buncolgen.ShipmentHoldColumns
+		shh := shipmentcol.ShipmentHoldColumns
 		db := r.db.DBForContext(ctx)
 		count, err := db.NewSelect().
 			Model((*shipment.ShipmentHold)(nil)).

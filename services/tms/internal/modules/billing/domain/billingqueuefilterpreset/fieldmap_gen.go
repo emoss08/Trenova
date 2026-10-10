@@ -2,11 +2,14 @@
 
 package billingqueuefilterpreset
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/billingqueuefilterpresetcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [BillingQueueFilterPreset].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.BillingQueueFilterPresetFieldMap] instead of parsing struct tags via reflection.
+// the generated [billingqueuefilterpresetcol.BillingQueueFilterPresetFieldMap] instead of parsing struct tags via reflection.
 func (e *BillingQueueFilterPreset) GetStaticFieldMap() map[string]string {
-	return buncolgen.BillingQueueFilterPresetFieldMap
+	return billingqueuefilterpresetcol.BillingQueueFilterPresetFieldMap
 }

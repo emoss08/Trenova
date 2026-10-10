@@ -1,6 +1,7 @@
 package shipmentrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -27,12 +28,12 @@ func (r *repository) ListBillingTransferCandidateIDs(
 		r.db,
 		func(ctx context.Context) (*shipmentports.BillingTransferCandidateIDsResult, error) {
 			dba := r.db.DBForContext(ctx)
-			sp := buncolgen.ShipmentColumns
+			sp := shipmentcol.ShipmentColumns
 
 			scope := func(q *bun.SelectQuery) *bun.SelectQuery {
 				q = querybuilder.ApplyFiltersWithoutSort(
 					q,
-					buncolgen.ShipmentTable.Alias,
+					shipmentcol.ShipmentTable.Alias,
 					req.Filter,
 					(*shipment.Shipment)(nil),
 				)

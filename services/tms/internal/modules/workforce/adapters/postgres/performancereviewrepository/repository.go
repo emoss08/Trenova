@@ -1,6 +1,7 @@
 package performancereviewrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 	"strings"
@@ -62,7 +63,7 @@ func (r *repository) applyTemplateFilters(
 	req *workerports.ListReviewTemplatesRequest,
 ) *bun.SelectQuery {
 	if req.Status != "" {
-		q = q.Where(buncolgen.PerformanceReviewTemplateColumns.Status.Eq(), req.Status)
+		q = q.Where(workercol.PerformanceReviewTemplateColumns.Status.Eq(), req.Status)
 	}
 	return q
 }
@@ -83,7 +84,7 @@ func (r *repository) ListTemplates(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.PerformanceReviewTemplateTable.Alias,
+						workercol.PerformanceReviewTemplateTable.Alias,
 						req.Filter,
 						(*worker.PerformanceReviewTemplate)(nil),
 					)
@@ -106,12 +107,12 @@ func (r *repository) ListTemplates(
 				Query: func(items *[]*worker.PerformanceReviewTemplate) *bun.SelectQuery {
 					return dba.NewSelect().
 						Model(items).
-						ColumnExpr(buncolgen.PerformanceReviewTemplateTable.All())
+						ColumnExpr(workercol.PerformanceReviewTemplateTable.All())
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.PerformanceReviewTemplateTable.Alias,
+						workercol.PerformanceReviewTemplateTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*worker.PerformanceReviewTemplate)(nil),
@@ -137,13 +138,13 @@ func (r *repository) ListActiveTemplates(
 	tenantInfo pagination.TenantInfo,
 ) ([]*worker.PerformanceReviewTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.PerformanceReviewTemplate, error) {
-		cols := buncolgen.PerformanceReviewTemplateColumns
+		cols := workercol.PerformanceReviewTemplateColumns
 		entities := make([]*worker.PerformanceReviewTemplate, 0, 8)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.PerformanceReviewTemplateScopeTenant(sq, tenantInfo).
+				return workercol.PerformanceReviewTemplateScopeTenant(sq, tenantInfo).
 					Where(cols.Status.Eq(), domaintypes.StatusActive)
 			}).
 			Order(cols.IsDefault.OrderDesc()).
@@ -163,7 +164,7 @@ func (r *repository) TemplateSelectOptions(
 	req *workerports.ReviewTemplateSelectOptionsRequest,
 ) (*pagination.ListResult[*worker.PerformanceReviewTemplate], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*worker.PerformanceReviewTemplate], error) {
-		cols := buncolgen.PerformanceReviewTemplateColumns
+		cols := workercol.PerformanceReviewTemplateColumns
 		return dbhelper.SelectOptions[*worker.PerformanceReviewTemplate](
 			ctx,
 			r.db.DBForContext(ctx),
@@ -207,8 +208,8 @@ func (r *repository) GetTemplateByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.PerformanceReviewTemplateScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.PerformanceReviewTemplateColumns.ID.Eq(), req.ID)
+				return workercol.PerformanceReviewTemplateScopeTenant(sq, req.TenantInfo).
+					Where(workercol.PerformanceReviewTemplateColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -224,12 +225,12 @@ func (r *repository) TemplateCodeExists(
 	req *workerports.ReviewTemplateCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := buncolgen.PerformanceReviewTemplateColumns
+		cols := workercol.PerformanceReviewTemplateColumns
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.PerformanceReviewTemplate)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.PerformanceReviewTemplateScopeTenant(sq, req.TenantInfo).
+				return workercol.PerformanceReviewTemplateScopeTenant(sq, req.TenantInfo).
 					Where("LOWER("+cols.Code.String()+") = ?", strings.ToLower(req.Code))
 			})
 		if !req.ExcludeID.IsNil() {
@@ -279,7 +280,7 @@ func (r *repository) UpdateTemplate(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.PerformanceReviewTemplateColumns.Version.Eq(), ov).
+			Where(workercol.PerformanceReviewTemplateColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -303,13 +304,13 @@ func (r *repository) ClearDefaultTemplate(
 	exceptID pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.PerformanceReviewTemplateColumns
+		cols := workercol.PerformanceReviewTemplateColumns
 		q := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*worker.PerformanceReviewTemplate)(nil)).
 			Set(cols.IsDefault.Set(), false).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.PerformanceReviewTemplateScopeTenantUpdate(uq, tenantInfo).
+				return workercol.PerformanceReviewTemplateScopeTenantUpdate(uq, tenantInfo).
 					Where(cols.IsDefault.Eq(), true)
 			})
 		if !exceptID.IsNil() {
@@ -328,12 +329,12 @@ func (r *repository) CountReviewsByTemplate(
 	req *workerports.CountReviewsByTemplateRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.PerformanceReviewColumns
+		cols := workercol.PerformanceReviewColumns
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.PerformanceReview)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.PerformanceReviewScopeTenant(sq, req.TenantInfo).
+				return workercol.PerformanceReviewScopeTenant(sq, req.TenantInfo).
 					Where(cols.TemplateID.Eq(), req.TemplateID)
 			})
 		if req.OpenOnly {
@@ -362,12 +363,12 @@ func (r *repository) CountReviewsByTemplateIDs(
 			return map[pulid.ID]int{}, nil
 		}
 
-		cols := buncolgen.PerformanceReviewColumns
+		cols := workercol.PerformanceReviewColumns
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.PerformanceReview)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.PerformanceReviewScopeTenant(sq, req.TenantInfo).
+				return workercol.PerformanceReviewScopeTenant(sq, req.TenantInfo).
 					Where(cols.TemplateID.In(), bun.In(req.TemplateIDs))
 			})
 		if req.OpenOnly {
@@ -394,12 +395,12 @@ func (r *repository) CountReviews(
 	req *workerports.CountPerformanceReviewsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.PerformanceReviewColumns
+		cols := workercol.PerformanceReviewColumns
 		count, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.PerformanceReview)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.PerformanceReviewScopeTenant(sq, req.TenantInfo)
+				sq = workercol.PerformanceReviewScopeTenant(sq, req.TenantInfo)
 				if len(req.Statuses) > 0 {
 					sq = sq.Where(cols.Status.In(), bun.In(req.Statuses))
 				}
@@ -419,13 +420,13 @@ func (r *repository) ListReviews(
 	req *workerports.ListPerformanceReviewsRequest,
 ) ([]*worker.PerformanceReview, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.PerformanceReview, error) {
-		cols := buncolgen.PerformanceReviewColumns
+		cols := workercol.PerformanceReviewColumns
 		entities := make([]*worker.PerformanceReview, 0, 8)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.PerformanceReviewScopeTenant(sq, req.TenantInfo).
+				sq = workercol.PerformanceReviewScopeTenant(sq, req.TenantInfo).
 					Where(cols.WorkerID.Eq(), req.WorkerID)
 				if len(req.Statuses) > 0 {
 					sq = sq.Where(cols.Status.In(), bun.In(req.Statuses))
@@ -435,10 +436,10 @@ func (r *repository) ListReviews(
 			Order(cols.PeriodEnd.OrderDesc()).
 			Order(cols.CreatedAt.OrderDesc())
 		if req.IncludeTemplate {
-			q = q.Relation(buncolgen.PerformanceReviewRelations.Template)
+			q = q.Relation(workercol.PerformanceReviewRelations.Template)
 		}
 		if req.IncludeReviewer {
-			q = q.Relation(buncolgen.PerformanceReviewRelations.Reviewer)
+			q = q.Relation(workercol.PerformanceReviewRelations.Reviewer)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -460,17 +461,17 @@ func (r *repository) GetReviewByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.PerformanceReviewScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.PerformanceReviewColumns.ID.Eq(), req.ID)
+				return workercol.PerformanceReviewScopeTenant(sq, req.TenantInfo).
+					Where(workercol.PerformanceReviewColumns.ID.Eq(), req.ID)
 			})
 		if req.IncludeTemplate {
-			q = q.Relation(buncolgen.PerformanceReviewRelations.Template)
+			q = q.Relation(workercol.PerformanceReviewRelations.Template)
 		}
 		if req.IncludeWorker {
-			q = q.Relation(buncolgen.PerformanceReviewRelations.Worker)
+			q = q.Relation(workercol.PerformanceReviewRelations.Worker)
 		}
 		if req.IncludeReviewer {
-			q = q.Relation(buncolgen.PerformanceReviewRelations.Reviewer)
+			q = q.Relation(workercol.PerformanceReviewRelations.Reviewer)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -514,7 +515,7 @@ func (r *repository) UpdateReview(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.PerformanceReviewColumns.Version.Eq(), ov).
+			Where(workercol.PerformanceReviewColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -541,8 +542,8 @@ func (r *repository) DeleteReview(
 			NewDelete().
 			Model((*worker.PerformanceReview)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.PerformanceReviewScopeTenantDelete(dq, req.TenantInfo).
-					Where(buncolgen.PerformanceReviewColumns.ID.Eq(), req.ID)
+				return workercol.PerformanceReviewScopeTenantDelete(dq, req.TenantInfo).
+					Where(workercol.PerformanceReviewColumns.ID.Eq(), req.ID)
 			}).
 			Exec(ctx)
 		if err != nil {

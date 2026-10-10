@@ -1,6 +1,7 @@
 package workerchecklistrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"strings"
 
@@ -42,26 +43,26 @@ func New(p Params) workerports.WorkerChecklistRepository {
 }
 
 func orderTemplateItems(sq *bun.SelectQuery) *bun.SelectQuery {
-	cols := buncolgen.WorkerChecklistTemplateItemColumns
+	cols := workercol.WorkerChecklistTemplateItemColumns
 	return sq.Order(cols.SortOrder.OrderAsc()).
-		Relation(buncolgen.WorkerChecklistTemplateItemRelations.CredentialType).
-		Relation(buncolgen.WorkerChecklistTemplateItemRelations.DocumentType)
+		Relation(workercol.WorkerChecklistTemplateItemRelations.CredentialType).
+		Relation(workercol.WorkerChecklistTemplateItemRelations.DocumentType)
 }
 
 func orderChecklistItems(sq *bun.SelectQuery) *bun.SelectQuery {
-	cols := buncolgen.WorkerChecklistItemColumns
+	cols := workercol.WorkerChecklistItemColumns
 	return sq.Order(cols.SortOrder.OrderAsc()).
-		Relation(buncolgen.WorkerChecklistItemRelations.CompletedBy).
-		Relation(buncolgen.WorkerChecklistItemRelations.EvidenceDocument).
-		Relation(buncolgen.WorkerChecklistItemRelations.EvidenceCredential).
-		Relation(buncolgen.WorkerChecklistItemRelations.CredentialType)
+		Relation(workercol.WorkerChecklistItemRelations.CompletedBy).
+		Relation(workercol.WorkerChecklistItemRelations.EvidenceDocument).
+		Relation(workercol.WorkerChecklistItemRelations.EvidenceCredential).
+		Relation(workercol.WorkerChecklistItemRelations.CredentialType)
 }
 
 func (r *repository) applyTemplateFilters(
 	q *bun.SelectQuery,
 	req *workerports.ListChecklistTemplatesRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.WorkerChecklistTemplateColumns
+	cols := workercol.WorkerChecklistTemplateColumns
 	if req.Status != "" {
 		q = q.Where(cols.Status.Eq(), req.Status)
 	}
@@ -90,7 +91,7 @@ func (r *repository) ListTemplates(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.WorkerChecklistTemplateTable.Alias,
+						workercol.WorkerChecklistTemplateTable.Alias,
 						req.Filter,
 						(*worker.WorkerChecklistTemplate)(nil),
 					)
@@ -113,12 +114,12 @@ func (r *repository) ListTemplates(
 				Query: func(items *[]*worker.WorkerChecklistTemplate) *bun.SelectQuery {
 					return dba.NewSelect().
 						Model(items).
-						ColumnExpr(buncolgen.WorkerChecklistTemplateTable.All())
+						ColumnExpr(workercol.WorkerChecklistTemplateTable.All())
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.WorkerChecklistTemplateTable.Alias,
+						workercol.WorkerChecklistTemplateTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*worker.WorkerChecklistTemplate)(nil),
@@ -129,7 +130,7 @@ func (r *repository) ListTemplates(
 					sq = r.applyTemplateFilters(sq, req)
 					if req.IncludeItems {
 						sq = sq.Relation(
-							buncolgen.WorkerChecklistTemplateRelations.Items,
+							workercol.WorkerChecklistTemplateRelations.Items,
 							orderTemplateItems,
 						)
 					}
@@ -151,14 +152,14 @@ func (r *repository) ListActiveTemplates(
 	tenantInfo pagination.TenantInfo,
 ) ([]*worker.WorkerChecklistTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerChecklistTemplate, error) {
-		cols := buncolgen.WorkerChecklistTemplateColumns
+		cols := workercol.WorkerChecklistTemplateColumns
 		entities := make([]*worker.WorkerChecklistTemplate, 0, 8)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Relation(buncolgen.WorkerChecklistTemplateRelations.Items, orderTemplateItems).
+			Relation(workercol.WorkerChecklistTemplateRelations.Items, orderTemplateItems).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerChecklistTemplateScopeTenant(sq, tenantInfo).
+				return workercol.WorkerChecklistTemplateScopeTenant(sq, tenantInfo).
 					Where(cols.Status.Eq(), domaintypes.StatusActive)
 			}).
 			Order(cols.Name.OrderAsc()).
@@ -182,11 +183,11 @@ func (r *repository) GetTemplateByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerChecklistTemplateScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerChecklistTemplateColumns.ID.Eq(), req.ID)
+				return workercol.WorkerChecklistTemplateScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerChecklistTemplateColumns.ID.Eq(), req.ID)
 			})
 		if req.IncludeItems {
-			q = q.Relation(buncolgen.WorkerChecklistTemplateRelations.Items, orderTemplateItems)
+			q = q.Relation(workercol.WorkerChecklistTemplateRelations.Items, orderTemplateItems)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -202,14 +203,14 @@ func (r *repository) GetDefaultTemplate(
 	req *workerports.GetDefaultChecklistTemplateRequest,
 ) (*worker.WorkerChecklistTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerChecklistTemplate, error) {
-		cols := buncolgen.WorkerChecklistTemplateColumns
+		cols := workercol.WorkerChecklistTemplateColumns
 		entity := new(worker.WorkerChecklistTemplate)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Relation(buncolgen.WorkerChecklistTemplateRelations.Items, orderTemplateItems).
+			Relation(workercol.WorkerChecklistTemplateRelations.Items, orderTemplateItems).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerChecklistTemplateScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerChecklistTemplateScopeTenant(sq, req.TenantInfo).
 					Where(cols.Trigger.Eq(), req.Trigger).
 					Where(cols.IsDefault.Eq(), true).
 					Where(cols.Status.Eq(), domaintypes.StatusActive)
@@ -229,12 +230,12 @@ func (r *repository) TemplateCodeExists(
 	req *workerports.ChecklistTemplateCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := buncolgen.WorkerChecklistTemplateColumns
+		cols := workercol.WorkerChecklistTemplateColumns
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.WorkerChecklistTemplate)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerChecklistTemplateScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerChecklistTemplateScopeTenant(sq, req.TenantInfo).
 					Where("LOWER("+cols.Code.String()+") = ?", strings.ToLower(req.Code))
 			})
 		if !req.ExcludeID.IsNil() {
@@ -336,7 +337,7 @@ func (r *repository) UpdateTemplate(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerChecklistTemplate, error) {
 		ov := entity.Version
 		entity.Version++
-		itemCols := buncolgen.WorkerChecklistTemplateItemColumns
+		itemCols := workercol.WorkerChecklistTemplateItemColumns
 		tenant := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
@@ -354,7 +355,7 @@ func (r *repository) UpdateTemplate(
 				NewUpdate().
 				Model(entity).
 				WherePK().
-				Where(buncolgen.WorkerChecklistTemplateColumns.Version.Eq(), ov).
+				Where(workercol.WorkerChecklistTemplateColumns.Version.Eq(), ov).
 				Returning("*").
 				Exec(c)
 			if uErr != nil {
@@ -368,7 +369,7 @@ func (r *repository) UpdateTemplate(
 				NewDelete().
 				Model((*worker.WorkerChecklistTemplateItem)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return buncolgen.WorkerChecklistTemplateItemScopeTenantDelete(dq, tenant).
+					return workercol.WorkerChecklistTemplateItemScopeTenantDelete(dq, tenant).
 						Where(itemCols.TemplateID.Eq(), entity.ID)
 				}).
 				Exec(c); dErr != nil {
@@ -402,13 +403,13 @@ func (r *repository) ClearDefaultTemplate(
 	req *workerports.ClearDefaultChecklistTemplateRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.WorkerChecklistTemplateColumns
+		cols := workercol.WorkerChecklistTemplateColumns
 		q := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*worker.WorkerChecklistTemplate)(nil)).
 			Set(cols.IsDefault.Set(), false).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.WorkerChecklistTemplateScopeTenantUpdate(uq, req.TenantInfo).
+				return workercol.WorkerChecklistTemplateScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.Trigger.Eq(), req.Trigger).
 					Where(cols.IsDefault.Eq(), true)
 			})
@@ -430,12 +431,12 @@ func (r *repository) CountOpenChecklists(
 	req *workerports.CountOpenChecklistsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.WorkerChecklistColumns
+		cols := workercol.WorkerChecklistColumns
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.WorkerChecklist)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerChecklistScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerChecklistScopeTenant(sq, req.TenantInfo).
 					Where(cols.Status.Eq(), worker.ChecklistStatusOpen)
 			})
 		if !req.WorkerID.IsNil() {
@@ -464,12 +465,12 @@ func (r *repository) CountOpenChecklistsByTemplateIDs(
 			return map[pulid.ID]int{}, nil
 		}
 
-		cols := buncolgen.WorkerChecklistColumns
+		cols := workercol.WorkerChecklistColumns
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.WorkerChecklist)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerChecklistScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerChecklistScopeTenant(sq, req.TenantInfo).
 					Where(cols.Status.Eq(), worker.ChecklistStatusOpen).
 					Where(cols.TemplateID.In(), bun.In(req.TemplateIDs))
 			})
@@ -489,14 +490,14 @@ func (r *repository) ListForWorker(
 	req *workerports.ListWorkerChecklistsRequest,
 ) ([]*worker.WorkerChecklist, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerChecklist, error) {
-		cols := buncolgen.WorkerChecklistColumns
+		cols := workercol.WorkerChecklistColumns
 		entities := make([]*worker.WorkerChecklist, 0, 4)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Relation(buncolgen.WorkerChecklistRelations.StartedBy).
+			Relation(workercol.WorkerChecklistRelations.StartedBy).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerChecklistScopeTenant(sq, req.TenantInfo).
+				sq = workercol.WorkerChecklistScopeTenant(sq, req.TenantInfo).
 					Where(cols.WorkerID.Eq(), req.WorkerID)
 				if !req.IncludeClosed {
 					sq = sq.Where(cols.Status.Eq(), worker.ChecklistStatusOpen)
@@ -506,7 +507,7 @@ func (r *repository) ListForWorker(
 			Order(cols.Status.OrderAsc()).
 			Order(cols.StartedAt.OrderDesc())
 		if req.IncludeItems {
-			q = q.Relation(buncolgen.WorkerChecklistRelations.Items, orderChecklistItems)
+			q = q.Relation(workercol.WorkerChecklistRelations.Items, orderChecklistItems)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -527,13 +528,13 @@ func (r *repository) GetByID(
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Relation(buncolgen.WorkerChecklistRelations.StartedBy).
+			Relation(workercol.WorkerChecklistRelations.StartedBy).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerChecklistScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerChecklistColumns.ID.Eq(), req.ID)
+				return workercol.WorkerChecklistScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerChecklistColumns.ID.Eq(), req.ID)
 			})
 		if req.IncludeItems {
-			q = q.Relation(buncolgen.WorkerChecklistRelations.Items, orderChecklistItems)
+			q = q.Relation(workercol.WorkerChecklistRelations.Items, orderChecklistItems)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -554,8 +555,8 @@ func (r *repository) GetItemByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerChecklistItemScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerChecklistItemColumns.ID.Eq(), req.ID)
+				return workercol.WorkerChecklistItemScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerChecklistItemColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -619,7 +620,7 @@ func (r *repository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.WorkerChecklistColumns.Version.Eq(), ov).
+			Where(workercol.WorkerChecklistColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -647,7 +648,7 @@ func (r *repository) UpdateItems(ctx context.Context, items []*worker.WorkerChec
 					NewUpdate().
 					Model(item).
 					WherePK().
-					Where(buncolgen.WorkerChecklistItemColumns.Version.Eq(), ov).
+					Where(workercol.WorkerChecklistItemColumns.Version.Eq(), ov).
 					Returning("*").
 					Exec(c)
 				if err != nil {

@@ -1,6 +1,7 @@
 package reportrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/reportcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -62,7 +63,7 @@ func (r *runRepository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.ReportRunColumns.Version.Eq(), ov).
+			Where(reportcol.ReportRunColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -88,8 +89,8 @@ func (r *runRepository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ReportRunScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.ReportRunColumns.ID.Eq(), req.RunID)
+				return reportcol.ReportRunScopeTenant(sq, req.TenantInfo).
+					Where(reportcol.ReportRunColumns.ID.Eq(), req.RunID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -105,13 +106,13 @@ func (r *runRepository) List(
 	req *reportports.ListReportRunsRequest,
 ) ([]*report.ReportRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportRun, error) {
-		cols := buncolgen.ReportRunColumns
+		cols := reportcol.ReportRunColumns
 
 		entities := make([]*report.ReportRun, 0)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.ReportRunApplyTenant(req.TenantInfo))
+			Apply(reportcol.ReportRunApplyTenant(req.TenantInfo))
 
 		if !req.DefinitionID.IsNil() {
 			q = q.Where(cols.DefinitionID.Eq(), req.DefinitionID)
@@ -143,7 +144,7 @@ func (r *runRepository) CountActive(
 	req *reportports.CountActiveReportRunsRequest,
 ) (*reportports.ActiveReportRunCounts, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*reportports.ActiveReportRunCounts, error) {
-		cols := buncolgen.ReportRunColumns
+		cols := reportcol.ReportRunColumns
 
 		var counts reportports.ActiveReportRunCounts
 		err := r.db.DBForContext(ctx).
@@ -157,7 +158,7 @@ func (r *runRepository) CountActive(
 				buncolgen.CountFilter("queued", cols.Status.Eq()),
 				report.RunStatusQueued,
 			).
-			Apply(buncolgen.ReportRunApplyTenant(req.TenantInfo)).
+			Apply(reportcol.ReportRunApplyTenant(req.TenantInfo)).
 			Scan(ctx, &counts.Running, &counts.Queued)
 		if err != nil {
 			r.l.Error("failed to count active report runs", zap.Error(err))
@@ -174,7 +175,7 @@ func (r *runRepository) ListStale(
 ) ([]*report.ReportRun, error) {
 	ctx = dbscope.WithSystem(ctx, "list stalled report runs across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportRun, error) {
-		cols := buncolgen.ReportRunColumns
+		cols := reportcol.ReportRunColumns
 
 		entities := make([]*report.ReportRun, 0)
 		q := r.db.DBForContext(ctx).
@@ -203,7 +204,7 @@ func (r *runRepository) ListExpired(
 ) ([]*report.ReportRun, error) {
 	ctx = dbscope.WithSystem(ctx, "list expired report artifacts across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportRun, error) {
-		cols := buncolgen.ReportRunColumns
+		cols := reportcol.ReportRunColumns
 
 		entities := make([]*report.ReportRun, 0)
 		q := r.db.DBForContext(ctx).

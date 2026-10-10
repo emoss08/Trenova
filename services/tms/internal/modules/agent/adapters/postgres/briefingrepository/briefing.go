@@ -1,6 +1,7 @@
 package briefingrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/briefingcol"
 	"context"
 	"fmt"
 
@@ -68,7 +69,7 @@ func (r *repository) Upsert(
 }
 
 func buildUpsert(db bun.IDB, entity *briefing.Briefing) *bun.InsertQuery {
-	cols := buncolgen.BriefingColumns
+	cols := briefingcol.BriefingColumns
 	target := "CONFLICT (" + cols.OrganizationID.Name + ", " + cols.BusinessUnitID.Name + ", " +
 		cols.RoleKey.Name + ", " + cols.BriefingDate.Name + ", COALESCE(" + cols.UserID.Name +
 		", '')) DO UPDATE"
@@ -95,14 +96,14 @@ func (r *repository) GetByID(
 	req briefingports.GetBriefingByIDRequest,
 ) (*briefing.Briefing, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*briefing.Briefing, error) {
-		cols := buncolgen.BriefingColumns
+		cols := briefingcol.BriefingColumns
 		entity := new(briefing.Briefing)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.BriefingScopeTenant(sq, req.TenantInfo).Where(cols.ID.Eq(), req.ID)
+				return briefingcol.BriefingScopeTenant(sq, req.TenantInfo).Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -125,14 +126,14 @@ func (r *repository) GetForDay(
 	req briefingports.GetBriefingForDayRequest,
 ) (*briefing.Briefing, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*briefing.Briefing, error) {
-		cols := buncolgen.BriefingColumns
+		cols := briefingcol.BriefingColumns
 		entity := new(briefing.Briefing)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.BriefingScopeTenant(sq, req.TenantInfo).
+				sq = briefingcol.BriefingScopeTenant(sq, req.TenantInfo).
 					Where(cols.RoleKey.Eq(), req.RoleKey).
 					Where(cols.BriefingDate.Eq(), req.BriefingDate)
 
@@ -156,7 +157,7 @@ func (r *repository) List(
 	req briefingports.ListBriefingsQuery,
 ) ([]*briefing.Briefing, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*briefing.Briefing, error) {
-		cols := buncolgen.BriefingColumns
+		cols := briefingcol.BriefingColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultListLimit
@@ -170,7 +171,7 @@ func (r *repository) List(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.BriefingScopeTenant(sq, req.TenantInfo)
+				sq = briefingcol.BriefingScopeTenant(sq, req.TenantInfo)
 				if req.RoleKey != "" {
 					sq = sq.Where(cols.RoleKey.Eq(), req.RoleKey)
 				}
@@ -193,7 +194,7 @@ func (r *repository) MarkRead(
 	req briefingports.GetBriefingByIDRequest,
 	readAt int64,
 ) (*briefing.Briefing, error) {
-	return r.stamp(ctx, req, buncolgen.BriefingColumns.ReadAt, readAt)
+	return r.stamp(ctx, req, briefingcol.BriefingColumns.ReadAt, readAt)
 }
 
 func (r *repository) MarkEmailed(
@@ -201,7 +202,7 @@ func (r *repository) MarkEmailed(
 	req briefingports.GetBriefingByIDRequest,
 	emailedAt int64,
 ) (*briefing.Briefing, error) {
-	return r.stamp(ctx, req, buncolgen.BriefingColumns.EmailedAt, emailedAt)
+	return r.stamp(ctx, req, briefingcol.BriefingColumns.EmailedAt, emailedAt)
 }
 
 // DeleteBefore removes briefings for days before a cut-off. The day is a
@@ -229,12 +230,12 @@ func (r *repository) DeleteBefore(
 }
 
 func buildDeleteBefore(db bun.IDB, beforeDate string, limit int) *bun.DeleteQuery {
-	cols := buncolgen.BriefingColumns
+	cols := briefingcol.BriefingColumns
 	return db.NewDelete().
 		Model((*briefing.Briefing)(nil)).
 		Where(
 			cols.ID.Qualified()+" IN (SELECT "+cols.ID.Qualified()+" FROM "+
-				buncolgen.BriefingTable.Name+" AS "+buncolgen.BriefingTable.Alias+
+				briefingcol.BriefingTable.Name+" AS "+briefingcol.BriefingTable.Alias+
 				" WHERE "+cols.BriefingDate.Qualified()+" < ? ORDER BY "+
 				cols.BriefingDate.Qualified()+" LIMIT ?)",
 			beforeDate,
@@ -249,7 +250,7 @@ func (r *repository) stamp(
 	at int64,
 ) (*briefing.Briefing, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*briefing.Briefing, error) {
-		cols := buncolgen.BriefingColumns
+		cols := briefingcol.BriefingColumns
 		entity := new(briefing.Briefing)
 
 		res, err := r.db.DBForContext(ctx).
@@ -259,7 +260,7 @@ func (r *repository) stamp(
 			Set(cols.Version.SetExpr("{} + 1")).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.BriefingScopeTenantUpdate(uq, req.TenantInfo).
+				return briefingcol.BriefingScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Returning("*").
@@ -279,7 +280,7 @@ func (r *repository) stamp(
 // reader must match IS NULL rather than an empty string, so the two never
 // read each other's row.
 func scopeReader(q *bun.SelectQuery, userID *pulid.ID) *bun.SelectQuery {
-	cols := buncolgen.BriefingColumns
+	cols := briefingcol.BriefingColumns
 	if userID == nil || userID.IsNil() {
 		return q.Where(cols.UserID.IsNull())
 	}

@@ -3,6 +3,8 @@
 package airetrievalrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
 	"os"
 	"testing"
 	"time"
@@ -65,12 +67,12 @@ func TestDeletingASourceRemovesItsRetrievalRows(t *testing.T) {
 
 	_, err = h.db.NewDelete().
 		Model((*agent.Memory)(nil)).
-		Where(buncolgen.MemoryColumns.ID.Eq(), memory.ID).
+		Where(agentcol.MemoryColumns.ID.Eq(), memory.ID).
 		Exec(h.ctx)
 	require.NoError(t, err)
 	_, err = h.db.NewDelete().
 		Model((*document.Document)(nil)).
-		Where(buncolgen.DocumentColumns.ID.Eq(), doc.ID).
+		Where(documentcol.DocumentColumns.ID.Eq(), doc.ID).
 		Exec(h.ctx)
 	require.NoError(t, err)
 
@@ -240,8 +242,8 @@ func TestIndexOutbox_ClaimsOnceAndKeepsLateWritesPending(t *testing.T) {
 	third := h.insertMemory(t, "Receiver needs appointments a day ahead")
 	_, err = h.db.NewUpdate().
 		Model((*agent.Memory)(nil)).
-		Set(buncolgen.MemoryColumns.UpdatedAt.Set(), now+100).
-		Where(buncolgen.MemoryColumns.ID.Eq(), first.ID).
+		Set(agentcol.MemoryColumns.UpdatedAt.Set(), now+100).
+		Where(agentcol.MemoryColumns.ID.Eq(), first.ID).
 		Exec(h.ctx)
 	require.NoError(t, err)
 
@@ -342,7 +344,7 @@ func TestFallback_ReportsUnavailableWithoutTheExtension(t *testing.T) {
 
 	_, err = h.db.NewDelete().
 		Model((*agent.Memory)(nil)).
-		Where(buncolgen.MemoryColumns.ID.Eq(), memory.ID).
+		Where(agentcol.MemoryColumns.ID.Eq(), memory.ID).
 		Exec(h.ctx)
 	require.NoError(t, err, "deleting a source works without the vector triggers")
 }
@@ -388,7 +390,7 @@ func TestEnableVector_InstallsTheSchemaAMigrationSkipped(t *testing.T) {
 			Vector: axisVector(768, map[int]float32{0: 1})})
 	_, err = h.db.NewDelete().
 		Model((*agent.Memory)(nil)).
-		Where(buncolgen.MemoryColumns.ID.Eq(), memory.ID).
+		Where(agentcol.MemoryColumns.ID.Eq(), memory.ID).
 		Exec(h.ctx)
 	require.NoError(t, err)
 	assert.Zero(t, h.countEmbeddings(t, memory.ID, ""), "the re-created trigger removes rows")

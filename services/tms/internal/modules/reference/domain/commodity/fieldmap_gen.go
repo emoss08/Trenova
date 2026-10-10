@@ -2,11 +2,14 @@
 
 package commodity
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/commoditycol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Commodity].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CommodityFieldMap] instead of parsing struct tags via reflection.
+// the generated [commoditycol.CommodityFieldMap] instead of parsing struct tags via reflection.
 func (e *Commodity) GetStaticFieldMap() map[string]string {
-	return buncolgen.CommodityFieldMap
+	return commoditycol.CommodityFieldMap
 }

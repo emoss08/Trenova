@@ -2,18 +2,21 @@
 
 package tablechangealert
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tablechangealertcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TCAAllowlistedTable].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.TCAAllowlistedTableFieldMap] instead of parsing struct tags via reflection.
+// the generated [tablechangealertcol.TCAAllowlistedTableFieldMap] instead of parsing struct tags via reflection.
 func (e *TCAAllowlistedTable) GetStaticFieldMap() map[string]string {
-	return buncolgen.TCAAllowlistedTableFieldMap
+	return tablechangealertcol.TCAAllowlistedTableFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TCASubscription].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.TCASubscriptionFieldMap] instead of parsing struct tags via reflection.
+// the generated [tablechangealertcol.TCASubscriptionFieldMap] instead of parsing struct tags via reflection.
 func (e *TCASubscription) GetStaticFieldMap() map[string]string {
-	return buncolgen.TCASubscriptionFieldMap
+	return tablechangealertcol.TCASubscriptionFieldMap
 }

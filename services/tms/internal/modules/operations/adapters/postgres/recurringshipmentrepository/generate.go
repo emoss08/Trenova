@@ -1,6 +1,7 @@
 package recurringshipmentrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/recurringshipmentcol"
 	"context"
 	"fmt"
 	"strings"
@@ -404,12 +405,12 @@ func (r *repository) lockSeries(
 	tenantInfo pagination.TenantInfo,
 	seriesID pulid.ID,
 ) (*recurringshipment.RecurringShipment, error) {
-	rsh := buncolgen.RecurringShipmentColumns
+	rsh := recurringshipmentcol.RecurringShipmentColumns
 	series := new(recurringshipment.RecurringShipment)
 	err := tx.NewSelect().
 		Model(series).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.RecurringShipmentScopeTenant(sq, tenantInfo).
+			return recurringshipmentcol.RecurringShipmentScopeTenant(sq, tenantInfo).
 				Where(rsh.ID.Eq(), seriesID)
 		}).
 		For("UPDATE").
@@ -612,12 +613,12 @@ func (r *repository) occurrenceAlreadyGenerated(
 	series *recurringshipment.RecurringShipment,
 	occurrenceAt int64,
 ) (bool, error) {
-	rsr := buncolgen.RecurringShipmentRunColumns
+	rsr := recurringshipmentcol.RecurringShipmentRunColumns
 
 	return tx.NewSelect().
 		Model((*recurringshipment.RecurringShipmentRun)(nil)).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.RecurringShipmentRunScopeTenant(sq, pagination.TenantInfo{
+			return recurringshipmentcol.RecurringShipmentRunScopeTenant(sq, pagination.TenantInfo{
 				OrgID: series.OrganizationID,
 				BuID:  series.BusinessUnitID,
 			}).

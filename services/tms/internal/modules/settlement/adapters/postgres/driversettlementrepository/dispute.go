@@ -1,6 +1,7 @@
 package driversettlementrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
 	"context"
 	"fmt"
 
@@ -46,7 +47,7 @@ func (r *disputeRepository) Update(
 	entity *driversettlement.Dispute,
 ) (*driversettlement.Dispute, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driversettlement.Dispute, error) {
-		cols := buncolgen.DisputeColumns
+		cols := driversettlementcol.DisputeColumns
 		ov := entity.Version
 		entity.Version++
 		results, err := r.db.DBForContext(ctx).
@@ -74,14 +75,14 @@ func (r *disputeRepository) GetByID(
 	req driversettlementports.GetSettlementDisputeByIDRequest,
 ) (*driversettlement.Dispute, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driversettlement.Dispute, error) {
-		cols := buncolgen.DisputeColumns
-		rel := buncolgen.DisputeRelations
+		cols := driversettlementcol.DisputeColumns
+		rel := driversettlementcol.DisputeRelations
 		entity := new(driversettlement.Dispute)
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DisputeScopeTenant(sq, req.TenantInfo).
+				return driversettlementcol.DisputeScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			})
 		if req.IncludeRelations {
@@ -104,7 +105,7 @@ func (r *disputeRepository) ListConnection(
 ) (*pagination.CursorListResult[*driversettlement.Dispute], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*driversettlement.Dispute], error) {
 		log := r.l.With(zap.String("operation", "ListConnection"))
-		alias := buncolgen.DisputeTable.Alias
+		alias := driversettlementcol.DisputeTable.Alias
 
 		dba := r.db.DBForContext(ctx)
 		var totalCount *int
@@ -137,10 +138,10 @@ func (r *disputeRepository) ListConnection(
 				Query: func(entities *[]*driversettlement.Dispute) *bun.SelectQuery {
 					return dba.NewSelect().
 						Model(entities).
-						ColumnExpr(buncolgen.DisputeTable.All()).
-						Relation(buncolgen.DisputeRelations.Worker).
-						Relation(buncolgen.DisputeRelations.Settlement).
-						Relation(buncolgen.DisputeRelations.ResolvedBy)
+						ColumnExpr(driversettlementcol.DisputeTable.All()).
+						Relation(driversettlementcol.DisputeRelations.Worker).
+						Relation(driversettlementcol.DisputeRelations.Settlement).
+						Relation(driversettlementcol.DisputeRelations.ResolvedBy)
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					return querybuilder.ApplyCursorFilters(
@@ -167,7 +168,7 @@ func (r *disputeRepository) ListForWorker(
 	req *driversettlementports.ListSettlementDisputesForWorkerRequest,
 ) ([]*driversettlement.Dispute, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driversettlement.Dispute, error) {
-		cols := buncolgen.DisputeColumns
+		cols := driversettlementcol.DisputeColumns
 		limit := req.Limit
 		if limit <= 0 || limit > 100 {
 			limit = 50
@@ -178,15 +179,15 @@ func (r *disputeRepository) ListForWorker(
 			NewSelect().
 			Model(&items).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.DisputeScopeTenant(sq, req.TenantInfo).
+				sq = driversettlementcol.DisputeScopeTenant(sq, req.TenantInfo).
 					Where(cols.WorkerID.Eq(), req.WorkerID)
 				if len(req.Statuses) > 0 {
 					sq = sq.Where(cols.Status.In(), bun.List(req.Statuses))
 				}
 				return sq
 			}).
-			Relation(buncolgen.DisputeRelations.Settlement).
-			Relation(buncolgen.DisputeRelations.SettlementLine).
+			Relation(driversettlementcol.DisputeRelations.Settlement).
+			Relation(driversettlementcol.DisputeRelations.SettlementLine).
 			Order(cols.CreatedAt.OrderDesc()).
 			Limit(limit)
 		if err := query.Scan(ctx); err != nil {
@@ -201,12 +202,12 @@ func (r *disputeRepository) CountOpen(
 	tenantInfo pagination.TenantInfo,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.DisputeColumns
+		cols := driversettlementcol.DisputeColumns
 		count, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*driversettlement.Dispute)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DisputeScopeTenant(sq, tenantInfo).
+				return driversettlementcol.DisputeScopeTenant(sq, tenantInfo).
 					Where(
 						cols.Status.In(),
 						bun.List([]driversettlement.DisputeStatus{

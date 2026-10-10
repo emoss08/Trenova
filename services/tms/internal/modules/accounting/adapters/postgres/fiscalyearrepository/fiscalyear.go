@@ -2,6 +2,7 @@
 package fiscalyearrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/fiscalyearcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
@@ -91,7 +92,7 @@ func (r *repository) SelectOptions(
 	req *fiscalyearports.FiscalYearSelectOptionsRequest,
 ) (*pagination.ListResult[*fiscalyear.FiscalYear], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*fiscalyear.FiscalYear], error) {
-		cols := buncolgen.FiscalYearColumns
+		cols := fiscalyearcol.FiscalYearColumns
 		return dbhelper.SelectOptions[*fiscalyear.FiscalYear](
 			ctx,
 			r.db.DBForContext(ctx),
@@ -375,7 +376,7 @@ func (r *repository) Update(
 			zap.String("id", entity.ID.String()),
 		)
 
-		cols := buncolgen.FiscalYearColumns
+		cols := fiscalyearcol.FiscalYearColumns
 		ov := entity.Version
 		entity.Version++
 
@@ -448,8 +449,8 @@ func (r *repository) Close(
 		result, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
-			Set(buncolgen.FiscalYearColumns.Version.Inc(1)).
-			Set(buncolgen.FiscalYearColumns.UpdatedAt.Set(), timeutils.NowUnix()).
+			Set(fiscalyearcol.FiscalYearColumns.Version.Inc(1)).
+			Set(fiscalyearcol.FiscalYearColumns.UpdatedAt.Set(), timeutils.NowUnix()).
 			Set("status = ?", fiscalyear.StatusClosed).
 			Set("closed_at = ?", req.ClosedAt).
 			Set("closed_by_id = ?", req.ClosedByID).
@@ -487,8 +488,8 @@ func (r *repository) Reopen(
 		result, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
-			Set(buncolgen.FiscalYearColumns.Version.Inc(1)).
-			Set(buncolgen.FiscalYearColumns.UpdatedAt.Set(), timeutils.NowUnix()).
+			Set(fiscalyearcol.FiscalYearColumns.Version.Inc(1)).
+			Set(fiscalyearcol.FiscalYearColumns.UpdatedAt.Set(), timeutils.NowUnix()).
 			Set("status = ?", fiscalyear.StatusOpen).
 			Set("closed_at = NULL").
 			Set("closed_by_id = NULL").
@@ -626,8 +627,8 @@ func (r *repository) activateInTx(
 	err := func() error {
 		_, txErr := tx.NewUpdate().
 			Model((*fiscalyear.FiscalYear)(nil)).
-			Set(buncolgen.FiscalYearColumns.Version.Inc(1)).
-			Set(buncolgen.FiscalYearColumns.UpdatedAt.Set(), timeutils.NowUnix()).
+			Set(fiscalyearcol.FiscalYearColumns.Version.Inc(1)).
+			Set(fiscalyearcol.FiscalYearColumns.UpdatedAt.Set(), timeutils.NowUnix()).
 			Set("is_current = ?", false).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 				return uq.Where("fy.organization_id = ?", req.TenantInfo.OrgID).
@@ -641,8 +642,8 @@ func (r *repository) activateInTx(
 
 		result, txErr := tx.NewUpdate().
 			Model(entity).
-			Set(buncolgen.FiscalYearColumns.Version.Inc(1)).
-			Set(buncolgen.FiscalYearColumns.UpdatedAt.Set(), timeutils.NowUnix()).
+			Set(fiscalyearcol.FiscalYearColumns.Version.Inc(1)).
+			Set(fiscalyearcol.FiscalYearColumns.UpdatedAt.Set(), timeutils.NowUnix()).
 			Set("status = ?", fiscalyear.StatusOpen).
 			Set("is_current = ?", true).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {

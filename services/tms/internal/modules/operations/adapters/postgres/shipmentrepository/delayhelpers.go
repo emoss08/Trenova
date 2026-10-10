@@ -1,6 +1,8 @@
 package shipmentrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -56,7 +58,7 @@ func (r *repository) DelayShipments(
 				return err
 			}
 
-			cols := buncolgen.ShipmentColumns
+			cols := shipmentcol.ShipmentColumns
 			shipmentIDs := shipmentIDsFromEntities(entities)
 			_, err = tx.NewUpdate().
 				Model((*shipment.Shipment)(nil)).
@@ -92,7 +94,7 @@ func (r *repository) AutoDelayShipments(ctx context.Context) ([]*shipment.Shipme
 				return err
 			}
 
-			cols := buncolgen.ShipmentColumns
+			cols := shipmentcol.ShipmentColumns
 			shipmentIDs := shipmentIDsFromEntities(entities)
 			_, err = tx.NewUpdate().
 				Model((*shipment.Shipment)(nil)).
@@ -131,10 +133,10 @@ func (r *repository) ListAutoDelayShipmentTenants(
 		}
 
 		rows := make([]tenantRow, 0, limit)
-		cols := buncolgen.ShipmentControlColumns
+		cols := tenantcol.ShipmentControlColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
-			TableExpr(buncolgen.ShipmentControlTable.Name+" AS sc").
+			TableExpr(tenantcol.ShipmentControlTable.Name+" AS sc").
 			Column(cols.OrganizationID.Name, cols.BusinessUnitID.Name).
 			Where(cols.AutoDelayShipments.Eq(), true).
 			Order(cols.OrganizationID.OrderAsc()).
@@ -179,7 +181,7 @@ func (r *repository) RunAutoDelayShipmentsForTenant(
 				return err
 			}
 
-			cols := buncolgen.ShipmentColumns
+			cols := shipmentcol.ShipmentColumns
 			shipmentIDs := shipmentIDsFromEntities(entities)
 			_, err = tx.NewUpdate().
 				Model((*shipment.Shipment)(nil)).
@@ -227,7 +229,7 @@ func (r *repository) getDelayedShipments(
 		Where("sp.organization_id = ?", tenantInfo.OrgID).
 		Where("sp.business_unit_id = ?", tenantInfo.BuID).
 		Where("sp.status NOT IN (?)", bun.List(shipmentstate.DelayedExcludedShipmentStatuses())).
-		Order(buncolgen.ShipmentColumns.ID.OrderAsc()).
+		Order(shipmentcol.ShipmentColumns.ID.OrderAsc()).
 		Limit(limit).
 		Scan(ctx)
 	if err != nil {
@@ -260,7 +262,7 @@ func (r *repository) getAutoDelayedShipmentsForTenant(
 		Where("sp.id IN (SELECT shipment_id FROM delayed_cte)").
 		Where("sp.organization_id = ?", tenantInfo.OrgID).
 		Where("sp.business_unit_id = ?", tenantInfo.BuID).
-		Order(buncolgen.ShipmentColumns.ID.OrderAsc()).
+		Order(shipmentcol.ShipmentColumns.ID.OrderAsc()).
 		Scan(ctx)
 	if err != nil {
 		return nil, err

@@ -1,6 +1,7 @@
 package workerptorepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 	"strings"
@@ -55,7 +56,7 @@ func (r *repository) applyListFiltersWithoutSort(
 
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.WorkerPTOTable.Alias,
+		workercol.WorkerPTOTable.Alias,
 		req.Filter,
 		(*worker.WorkerPTO)(nil),
 	)
@@ -69,7 +70,7 @@ func (r *repository) applyListPTOFilters(
 	log *zap.Logger,
 	includeWorkerRelation bool,
 ) *bun.SelectQuery {
-	cols := buncolgen.WorkerPTOColumns
+	cols := workercol.WorkerPTOColumns
 
 	if req.Status != "" {
 		ptoStatus, err := worker.PTOStatusFromString(req.Status)
@@ -108,7 +109,7 @@ func (r *repository) applyListPTOFilters(
 	}
 
 	if includeWorkerRelation && req.IncludeWorker {
-		q = q.Relation(buncolgen.WorkerPTORelations.Worker)
+		q = q.Relation(workercol.WorkerPTORelations.Worker)
 	}
 
 	return q
@@ -125,7 +126,7 @@ func (r *repository) cursorFilterQuery(
 
 	q, err := querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.WorkerPTOTable.Alias,
+		workercol.WorkerPTOTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*worker.WorkerPTO)(nil),
@@ -172,7 +173,7 @@ func (r *repository) List(
 				return r.db.DBForContext(ctx).
 					NewSelect().
 					Model(items).
-					ColumnExpr(buncolgen.WorkerPTOTable.All())
+					ColumnExpr(workercol.WorkerPTOTable.All())
 			},
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 				return r.cursorFilterQuery(sq, req)
@@ -203,13 +204,13 @@ func (r *repository) GetByID(
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return sq.
-					Where(buncolgen.WorkerPTOColumns.ID.Eq(), req.ID).
-					Where(buncolgen.WorkerPTOColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
-					Where(buncolgen.WorkerPTOColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID)
+					Where(workercol.WorkerPTOColumns.ID.Eq(), req.ID).
+					Where(workercol.WorkerPTOColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
+					Where(workercol.WorkerPTOColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID)
 			})
 
 		if req.IncludeWorker {
-			q = q.Relation(buncolgen.WorkerPTORelations.Worker)
+			q = q.Relation(workercol.WorkerPTORelations.Worker)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -250,7 +251,7 @@ func (r *repository) Update(
 			zap.String("id", entity.ID.String()),
 		)
 
-		cols := buncolgen.WorkerPTOColumns
+		cols := workercol.WorkerPTOColumns
 		expectedVersion := entity.Version
 		entity.Version++
 		entity.UpdatedAt = timeutils.NowUnix()
@@ -299,13 +300,13 @@ func (r *repository) GetByIDs(
 			return entities, nil
 		}
 
-		cols := buncolgen.WorkerPTOColumns
+		cols := workercol.WorkerPTOColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			ColumnExpr(buncolgen.WorkerPTOTable.All()).
+			ColumnExpr(workercol.WorkerPTOTable.All()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerPTOScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerPTOScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.In(), bun.In(req.IDs))
 			}).
 			Scan(ctx)
@@ -328,12 +329,12 @@ func (r *repository) HasOverlap(
 			zap.String("workerId", req.WorkerID.String()),
 		)
 
-		cols := buncolgen.WorkerPTOColumns
+		cols := workercol.WorkerPTOColumns
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.WorkerPTO)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerPTOScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerPTOScopeTenant(sq, req.TenantInfo).
 					Where(cols.WorkerID.Eq(), req.WorkerID).
 					Where(cols.Status.In(), bun.In([]worker.PTOStatus{
 						worker.PTOStatusRequested,
@@ -362,13 +363,13 @@ func (r *repository) SetBalanceAfter(
 	req *workerports.SetPTOBalanceAfterRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.WorkerPTOColumns
+		cols := workercol.WorkerPTOColumns
 		if _, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*worker.WorkerPTO)(nil)).
 			Set(cols.BalanceAfterDays.Set(), req.BalanceAfterDays).
 			WhereGroup(" AND ", func(sq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.WorkerPTOScopeTenantUpdate(sq, req.TenantInfo).
+				return workercol.WorkerPTOScopeTenantUpdate(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Exec(ctx); err != nil {
@@ -400,7 +401,7 @@ func (r *repository) UpdateStatus(
 			)
 		}
 
-		cols := buncolgen.WorkerPTOColumns
+		cols := workercol.WorkerPTOColumns
 		now := timeutils.NowUnix()
 
 		entity := new(worker.WorkerPTO)
@@ -411,7 +412,7 @@ func (r *repository) UpdateStatus(
 			Set(cols.UpdatedAt.Set(), now).
 			Set("version = version + 1").
 			WhereGroup(" AND ", func(sq *bun.UpdateQuery) *bun.UpdateQuery {
-				sq = buncolgen.WorkerPTOScopeTenantUpdate(sq, req.TenantInfo).
+				sq = workercol.WorkerPTOScopeTenantUpdate(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID).
 					Where(cols.Status.In(), bun.In(sources))
 				if req.ExpectedVersion > 0 {
@@ -577,22 +578,22 @@ func (r *repository) applyUpcomingPTOWhereGroup(
 	parsed *upcomingPTOFilterParsed,
 ) *bun.SelectQuery {
 	return q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		sq = sq.Apply(buncolgen.WorkerPTOApplyTenant(req.Filter.TenantInfo))
+		sq = sq.Apply(workercol.WorkerPTOApplyTenant(req.Filter.TenantInfo))
 
 		if req.StartDate > 0 {
-			sq = sq.Where(buncolgen.WorkerPTOColumns.StartDate.Gte(), startFloor)
+			sq = sq.Where(workercol.WorkerPTOColumns.StartDate.Gte(), startFloor)
 		}
 		if req.EndDate > 0 {
-			sq = sq.Where(buncolgen.WorkerPTOColumns.EndDate.Lte(), endCeiling)
+			sq = sq.Where(workercol.WorkerPTOColumns.EndDate.Lte(), endCeiling)
 		}
 		if parsed.HasType {
-			sq = sq.Where(buncolgen.WorkerPTOColumns.Type.Eq(), parsed.Type)
+			sq = sq.Where(workercol.WorkerPTOColumns.Type.Eq(), parsed.Type)
 		}
 		if parsed.HasStatus {
-			sq = sq.Where(buncolgen.WorkerPTOColumns.Status.Eq(), parsed.Status)
+			sq = sq.Where(workercol.WorkerPTOColumns.Status.Eq(), parsed.Status)
 		}
 		if parsed.HasWorkerID {
-			sq = sq.Where(buncolgen.WorkerPTOColumns.WorkerID.Eq(), parsed.WorkerID)
+			sq = sq.Where(workercol.WorkerPTOColumns.WorkerID.Eq(), parsed.WorkerID)
 		}
 		return sq
 	})
@@ -615,7 +616,7 @@ func (r *repository) workerRelationApplyForUpcoming(
 			)
 			return sq
 		}
-		return sq.Where(buncolgen.WorkerColumns.FleetCodeID.Eq(), fleetCodeID)
+		return sq.Where(workercol.WorkerColumns.FleetCodeID.Eq(), fleetCodeID)
 	}
 }
 
@@ -635,7 +636,7 @@ func (r *repository) filterUpcomingPTOQuery(
 	}
 
 	q = r.applyUpcomingPTOWhereGroup(q, req, startFloor, endCeiling, parsed)
-	return q.RelationWithOpts(buncolgen.WorkerPTORelations.Worker, bun.RelationOpts{
+	return q.RelationWithOpts(workercol.WorkerPTORelations.Worker, bun.RelationOpts{
 		Apply: r.workerRelationApplyForUpcoming(req, log),
 	})
 }
@@ -663,7 +664,7 @@ func (r *repository) cursorUpcomingPTOQuery(
 	filter := upcomingPTOCursorFilter(req)
 	err := querybuilder.ApplyCursorSort(
 		q,
-		buncolgen.WorkerPTOTable.Alias,
+		workercol.WorkerPTOTable.Alias,
 		filter,
 		req.Cursor,
 		(*worker.WorkerPTO)(nil),
@@ -711,7 +712,7 @@ func (r *repository) ListUpcoming(
 				return r.db.DBForContext(ctx).
 					NewSelect().
 					Model(items).
-					ColumnExpr(buncolgen.WorkerPTOTable.All())
+					ColumnExpr(workercol.WorkerPTOTable.All())
 			},
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 				return r.cursorUpcomingPTOQuery(sq, req)
@@ -898,13 +899,13 @@ func (r *repository) buildPTOQuery(
 		).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.
-				Where(buncolgen.WorkerPTOColumns.OrganizationID.Eq(), req.Filter.TenantInfo.OrgID).
-				Where(buncolgen.WorkerPTOColumns.BusinessUnitID.Eq(), req.Filter.TenantInfo.BuID).
-				Where(buncolgen.WorkerPTOColumns.Status.Eq(), worker.PTOStatusApproved).
+				Where(workercol.WorkerPTOColumns.OrganizationID.Eq(), req.Filter.TenantInfo.OrgID).
+				Where(workercol.WorkerPTOColumns.BusinessUnitID.Eq(), req.Filter.TenantInfo.BuID).
+				Where(workercol.WorkerPTOColumns.Status.Eq(), worker.PTOStatusApproved).
 				WhereGroup(" AND ", func(innerSq *bun.SelectQuery) *bun.SelectQuery {
 					return innerSq.
-						Where(buncolgen.WorkerPTOColumns.EndDate.Gte(), fromDayStartUnix).
-						Where(buncolgen.WorkerPTOColumns.StartDate.Lte(), toDayEndUnix)
+						Where(workercol.WorkerPTOColumns.EndDate.Gte(), fromDayStartUnix).
+						Where(workercol.WorkerPTOColumns.StartDate.Lte(), toDayEndUnix)
 				})
 		})
 }

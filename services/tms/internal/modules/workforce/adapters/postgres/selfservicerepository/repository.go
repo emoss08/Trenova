@@ -1,6 +1,7 @@
 package selfservicerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 
@@ -56,14 +57,14 @@ func (r *repository) ListPolicies(
 	req *workerports.ListWorkerPoliciesRequest,
 ) ([]*worker.WorkerPolicy, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerPolicy, error) {
-		cols := buncolgen.WorkerPolicyColumns
+		cols := workercol.WorkerPolicyColumns
 		entities := make([]*worker.WorkerPolicy, 0, 8)
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerPolicyScopeTenant(sq, req.TenantInfo)
+				sq = workercol.WorkerPolicyScopeTenant(sq, req.TenantInfo)
 				if req.ActiveOnly {
 					sq = sq.Where(cols.Status.Eq(), domaintypes.StatusActive)
 				}
@@ -93,8 +94,8 @@ func (r *repository) GetPolicyByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerPolicyScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerPolicyColumns.ID.Eq(), req.ID)
+				return workercol.WorkerPolicyScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerPolicyColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "WorkerPolicy")
@@ -134,7 +135,7 @@ func (r *repository) UpdatePolicy(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.WorkerPolicyColumns.Version.Eq(), ov).
+			Where(workercol.WorkerPolicyColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -154,14 +155,14 @@ func (r *repository) ListAcknowledgements(
 	req *workerports.ListPolicyAcknowledgementsRequest,
 ) ([]*worker.WorkerPolicyAcknowledgement, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerPolicyAcknowledgement, error) {
-		cols := buncolgen.WorkerPolicyAcknowledgementColumns
+		cols := workercol.WorkerPolicyAcknowledgementColumns
 		entities := make([]*worker.WorkerPolicyAcknowledgement, 0, 8)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerPolicyAcknowledgementScopeTenant(sq, req.TenantInfo)
+				sq = workercol.WorkerPolicyAcknowledgementScopeTenant(sq, req.TenantInfo)
 				if !req.PolicyID.IsNil() {
 					sq = sq.Where(cols.PolicyID.Eq(), req.PolicyID)
 				}
@@ -177,7 +178,7 @@ func (r *repository) ListAcknowledgements(
 			Limit(limitOr(req.Limit, defaultAckPageSize))
 
 		if req.IncludeWorker {
-			q = q.Relation(buncolgen.WorkerPolicyAcknowledgementRelations.Worker)
+			q = q.Relation(workercol.WorkerPolicyAcknowledgementRelations.Worker)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -214,12 +215,12 @@ func (r *repository) CountAcknowledgements(
 	versionLabel string,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.WorkerPolicyAcknowledgementColumns
+		cols := workercol.WorkerPolicyAcknowledgementColumns
 		total, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.WorkerPolicyAcknowledgement)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerPolicyAcknowledgementScopeTenant(sq, tenantInfo).
+				return workercol.WorkerPolicyAcknowledgementScopeTenant(sq, tenantInfo).
 					Where(cols.PolicyID.Eq(), policyID).
 					Where(cols.VersionLabel.Eq(), versionLabel)
 			}).
@@ -242,11 +243,11 @@ func (r *repository) PolicyCompliance(
 	req *workerports.PolicyComplianceRequest,
 ) ([]workerports.PolicyComplianceRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.PolicyComplianceRow, error) {
-		wrk := buncolgen.WorkerColumns
-		ack := buncolgen.WorkerPolicyAcknowledgementColumns
+		wrk := workercol.WorkerColumns
+		ack := workercol.WorkerPolicyAcknowledgementColumns
 		rows := make([]workerports.PolicyComplianceRow, 0, 64)
 
-		q := buncolgen.WorkerScopeTenant(
+		q := workercol.WorkerScopeTenant(
 			r.db.DBForContext(ctx).NewSelect().Model((*worker.Worker)(nil)),
 			req.TenantInfo,
 		).
@@ -288,14 +289,14 @@ func (r *repository) ListChangeRequests(
 	req *workerports.ListProfileChangeRequestsRequest,
 ) ([]*worker.WorkerProfileChangeRequest, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerProfileChangeRequest, error) {
-		cols := buncolgen.WorkerProfileChangeRequestColumns
+		cols := workercol.WorkerProfileChangeRequestColumns
 		entities := make([]*worker.WorkerProfileChangeRequest, 0, 8)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerProfileChangeRequestScopeTenant(sq, req.TenantInfo)
+				sq = workercol.WorkerProfileChangeRequestScopeTenant(sq, req.TenantInfo)
 				if !req.WorkerID.IsNil() {
 					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
 				}
@@ -303,7 +304,7 @@ func (r *repository) ListChangeRequests(
 					sq = sq.Where(cols.Status.In(), bun.List(req.Statuses))
 				}
 				if len(req.ManagerIDs) > 0 {
-					wrk := buncolgen.WorkerColumns
+					wrk := workercol.WorkerColumns
 					sq = sq.Where(
 						cols.WorkerID.Qualified()+" IN (?)",
 						r.db.DBForContext(ctx).
@@ -321,7 +322,7 @@ func (r *repository) ListChangeRequests(
 			Limit(limitOr(req.Limit, defaultChangePageSize))
 
 		if req.IncludeWorker {
-			q = q.Relation(buncolgen.WorkerProfileChangeRequestRelations.Worker)
+			q = q.Relation(workercol.WorkerProfileChangeRequestRelations.Worker)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -344,11 +345,11 @@ func (r *repository) GetChangeRequestByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerProfileChangeRequestScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerProfileChangeRequestColumns.ID.Eq(), req.ID)
+				return workercol.WorkerProfileChangeRequestScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerProfileChangeRequestColumns.ID.Eq(), req.ID)
 			})
 		if req.IncludeWorker {
-			q = q.Relation(buncolgen.WorkerProfileChangeRequestRelations.Worker)
+			q = q.Relation(workercol.WorkerProfileChangeRequestRelations.Worker)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -389,7 +390,7 @@ func (r *repository) UpdateChangeRequest(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.WorkerProfileChangeRequestColumns.Version.Eq(), ov).
+			Where(workercol.WorkerProfileChangeRequestColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {

@@ -1,6 +1,10 @@
 package accountingsyncrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customerpaymentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/journalentrycol"
 	"cmp"
 	"fmt"
 	"slices"
@@ -81,7 +85,7 @@ func candidateSourceFor(
 }
 
 func salesDocumentSource(billType billingqueue.BillType) *candidateSource {
-	cols := buncolgen.InvoiceColumns
+	cols := invoicecol.InvoiceColumns
 	return &candidateSource{
 		model:  (*invoice.Invoice)(nil),
 		org:    cols.OrganizationID,
@@ -106,7 +110,7 @@ func salesDocumentSource(billType billingqueue.BillType) *candidateSource {
 }
 
 func paymentSource(operation accountingsync.SyncOperation) (*candidateSource, error) {
-	cols := buncolgen.PaymentColumns
+	cols := customerpaymentcol.PaymentColumns
 	source := &candidateSource{
 		model:  (*customerpayment.Payment)(nil),
 		org:    cols.OrganizationID,
@@ -150,7 +154,7 @@ func paymentSource(operation accountingsync.SyncOperation) (*candidateSource, er
 }
 
 func creditApplicationSource(operation accountingsync.SyncOperation) (*candidateSource, error) {
-	cols := buncolgen.CreditMemoApplicationColumns
+	cols := customerpaymentcol.CreditMemoApplicationColumns
 	source := &candidateSource{
 		model: (*customerpayment.CreditMemoApplication)(nil),
 		org:   cols.OrganizationID,
@@ -197,7 +201,7 @@ func (s *candidateSource) query(
 	req *accountingsyncports.ListAccountingSyncCandidatesRequest,
 	limit int,
 ) *bun.SelectQuery {
-	records := buncolgen.AccountingSyncRecordColumns
+	records := accountingsynccol.AccountingSyncRecordColumns
 	queued := dba.NewSelect().
 		Model((*accountingsync.AccountingSyncRecord)(nil)).
 		ColumnExpr("1").
@@ -247,7 +251,7 @@ func (s *candidateSource) query(
 func journalSource(
 	queued func(*bun.SelectQuery, *accountingsyncports.ListAccountingSyncCandidatesRequest) *bun.SelectQuery,
 ) *candidateSource {
-	cols := buncolgen.JournalEntryColumns
+	cols := journalentrycol.JournalEntryColumns
 	return &candidateSource{
 		model:  (*journalentry.JournalEntry)(nil),
 		org:    cols.OrganizationID,
@@ -272,8 +276,8 @@ func journalDayQueued(
 	q *bun.SelectQuery,
 	req *accountingsyncports.ListAccountingSyncCandidatesRequest,
 ) *bun.SelectQuery {
-	records := buncolgen.AccountingSyncRecordColumns
-	entries := buncolgen.JournalEntryColumns
+	records := accountingsynccol.AccountingSyncRecordColumns
+	entries := journalentrycol.JournalEntryColumns
 	timezone := req.Timezone
 	if timezone == "" {
 		timezone = time.UTC.String()

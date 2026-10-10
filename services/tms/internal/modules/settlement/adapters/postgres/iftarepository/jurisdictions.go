@@ -1,6 +1,7 @@
 package iftarepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/iftacol"
 	"context"
 	"fmt"
 	"strings"
@@ -26,7 +27,7 @@ func (r *repository) allJurisdictions(ctx context.Context) ([]*ifta.Jurisdiction
 			return cached, nil
 		}
 
-		cols := buncolgen.JurisdictionColumns
+		cols := iftacol.JurisdictionColumns
 		entities := make([]*ifta.Jurisdiction, 0, defaultJurisdictionCount)
 		if err = r.db.DBForContext(ctx).
 			NewSelect().

@@ -1,6 +1,7 @@
 package assistantqueuerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
 	"context"
 	"fmt"
 
@@ -43,8 +44,8 @@ func scopeSelect(
 	q *bun.SelectQuery,
 	scope *agentports.AssistantQueueScope,
 ) *bun.SelectQuery {
-	cols := buncolgen.QueuedMessageColumns
-	q = buncolgen.QueuedMessageScopeTenant(q, scope.TenantInfo).
+	cols := conversationcol.QueuedMessageColumns
+	q = conversationcol.QueuedMessageScopeTenant(q, scope.TenantInfo).
 		Where(cols.ThreadID.Eq(), scope.ThreadID)
 	if scope.UserID.IsNotNil() {
 		q = q.Where(cols.UserID.Eq(), scope.UserID)
@@ -57,8 +58,8 @@ func scopeUpdate(
 	q *bun.UpdateQuery,
 	scope *agentports.AssistantQueueScope,
 ) *bun.UpdateQuery {
-	cols := buncolgen.QueuedMessageColumns
-	q = buncolgen.QueuedMessageScopeTenantUpdate(q, scope.TenantInfo).
+	cols := conversationcol.QueuedMessageColumns
+	q = conversationcol.QueuedMessageScopeTenantUpdate(q, scope.TenantInfo).
 		Where(cols.ThreadID.Eq(), scope.ThreadID)
 	if scope.UserID.IsNotNil() {
 		q = q.Where(cols.UserID.Eq(), scope.UserID)
@@ -71,8 +72,8 @@ func scopeDelete(
 	q *bun.DeleteQuery,
 	scope *agentports.AssistantQueueScope,
 ) *bun.DeleteQuery {
-	cols := buncolgen.QueuedMessageColumns
-	q = buncolgen.QueuedMessageScopeTenantDelete(q, scope.TenantInfo).
+	cols := conversationcol.QueuedMessageColumns
+	q = conversationcol.QueuedMessageScopeTenantDelete(q, scope.TenantInfo).
 		Where(cols.ThreadID.Eq(), scope.ThreadID)
 	if scope.UserID.IsNotNil() {
 		q = q.Where(cols.UserID.Eq(), scope.UserID)
@@ -82,7 +83,7 @@ func scopeDelete(
 }
 
 func inOrder(q *bun.SelectQuery) *bun.SelectQuery {
-	cols := buncolgen.QueuedMessageColumns
+	cols := conversationcol.QueuedMessageColumns
 
 	return q.Order(
 		cols.Position.OrderAsc(),
@@ -128,7 +129,7 @@ func (r *repository) Get(
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return scopeSelect(sq, &req.Scope).
-					Where(buncolgen.QueuedMessageColumns.ID.Eq(), req.ID)
+					Where(conversationcol.QueuedMessageColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -149,7 +150,7 @@ func (r *repository) Insert(
 			return nil, err
 		}
 
-		cols := buncolgen.QueuedMessageColumns
+		cols := conversationcol.QueuedMessageColumns
 		var tally struct {
 			Count int   `bun:"queued"`
 			Last  int64 `bun:"last"`
@@ -190,7 +191,7 @@ func (r *repository) Update(
 	entity *conversation.QueuedMessage,
 ) (*conversation.QueuedMessage, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversation.QueuedMessage, error) {
-		cols := buncolgen.QueuedMessageColumns
+		cols := conversationcol.QueuedMessageColumns
 		previous := entity.Version
 		entity.Version++
 		result, err := r.db.DBForContext(ctx).
@@ -229,7 +230,7 @@ func (r *repository) MarkSteer(
 	req *agentports.QueuedMessageRequest,
 ) (*conversation.QueuedMessage, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversation.QueuedMessage, error) {
-		cols := buncolgen.QueuedMessageColumns
+		cols := conversationcol.QueuedMessageColumns
 		entity := new(conversation.QueuedMessage)
 		result, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -259,7 +260,7 @@ func (r *repository) Delete(ctx context.Context, req *agentports.QueuedMessageRe
 			Model((*conversation.QueuedMessage)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
 				return scopeDelete(dq, &req.Scope).
-					Where(buncolgen.QueuedMessageColumns.ID.Eq(), req.ID)
+					Where(conversationcol.QueuedMessageColumns.ID.Eq(), req.ID)
 			}).
 			Exec(ctx)
 		if err != nil {
@@ -284,7 +285,7 @@ func (r *repository) DeleteMany(
 			Model((*conversation.QueuedMessage)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
 				return scopeDelete(dq, &req.Scope).
-					Where(buncolgen.QueuedMessageColumns.ID.In(), bun.List(req.IDs))
+					Where(conversationcol.QueuedMessageColumns.ID.In(), bun.List(req.IDs))
 			}).
 			Exec(ctx)
 		if err != nil {
@@ -308,7 +309,7 @@ func (r *repository) Reorder(
 			return nil, err
 		}
 
-		cols := buncolgen.QueuedMessageColumns
+		cols := conversationcol.QueuedMessageColumns
 		ids := pulid.Map(req.IDs, func(id pulid.ID) string { return id.String() })
 		items := make([]*conversation.QueuedMessage, 0, len(req.IDs))
 		_, err := db.NewUpdate().
@@ -344,7 +345,7 @@ func (r *repository) ClaimNext(
 ) (*conversation.QueuedMessage, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversation.QueuedMessage, error) {
 		db := r.db.DBForContext(ctx)
-		cols := buncolgen.QueuedMessageColumns
+		cols := conversationcol.QueuedMessageColumns
 		head := db.NewSelect().
 			Model((*conversation.QueuedMessage)(nil)).
 			Column(cols.ID.Bare()).
@@ -368,7 +369,7 @@ func (r *repository) Claim(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversation.QueuedMessage, error) {
 		return r.claim(ctx, r.db.DBForContext(ctx), &req.Scope,
 			func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return dq.Where(buncolgen.QueuedMessageColumns.ID.Eq(), req.ID)
+				return dq.Where(conversationcol.QueuedMessageColumns.ID.Eq(), req.ID)
 			})
 	})
 }

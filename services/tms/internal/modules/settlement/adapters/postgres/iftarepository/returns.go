@@ -1,6 +1,7 @@
 package iftarepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/iftacol"
 	"context"
 	"fmt"
 
@@ -31,7 +32,7 @@ func (r *repository) applyReturnFilters(
 	q *bun.SelectQuery,
 	req *iftaports.ListReturnsRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.ReturnColumns
+	cols := iftacol.ReturnColumns
 	if req.Year > 0 {
 		q = q.Where(cols.Year.Eq(), req.Year)
 	}
@@ -48,19 +49,19 @@ func (r *repository) ListReturns(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*ifta.Return], error) {
 		dba := r.db.DBForContext(ctx)
 		filter := filterOrEmpty(req.Filter)
-		cols := buncolgen.ReturnColumns
+		cols := iftacol.ReturnColumns
 
 		var totalCount *int
 		if req.Cursor.IncludeTotalCount {
 			total, err := dba.NewSelect().
 				Model((*ifta.Return)(nil)).
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return buncolgen.ReturnScopeTenant(sq, filter.TenantInfo)
+					return iftacol.ReturnScopeTenant(sq, filter.TenantInfo)
 				}).
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.ReturnTable.Alias,
+						iftacol.ReturnTable.Alias,
 						filter,
 						(*ifta.Return)(nil),
 					)
@@ -81,15 +82,15 @@ func (r *repository) ListReturns(
 			Query: func(items *[]*ifta.Return) *bun.SelectQuery {
 				return dba.NewSelect().
 					Model(items).
-					ColumnExpr(buncolgen.ReturnTable.All()).
+					ColumnExpr(iftacol.ReturnTable.All()).
 					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return buncolgen.ReturnScopeTenant(sq, filter.TenantInfo)
+						return iftacol.ReturnScopeTenant(sq, filter.TenantInfo)
 					})
 			},
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 				sq, applyErr := querybuilder.ApplyCursorFilters(
 					sq,
-					buncolgen.ReturnTable.Alias,
+					iftacol.ReturnTable.Alias,
 					filter,
 					req.Cursor,
 					(*ifta.Return)(nil),
@@ -120,22 +121,22 @@ func (r *repository) GetReturnByID(
 	req *iftaports.GetReturnByIDRequest,
 ) (*ifta.Return, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ifta.Return, error) {
-		rel := buncolgen.ReturnRelations
+		rel := iftacol.ReturnRelations
 		entity := new(ifta.Return)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ReturnScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.ReturnColumns.ID.Eq(), req.ID)
+				return iftacol.ReturnScopeTenant(sq, req.TenantInfo).
+					Where(iftacol.ReturnColumns.ID.Eq(), req.ID)
 			})
 		if req.IncludeLines || req.IncludeJurisdictions {
 			q = q.Relation(rel.Lines, func(lq *bun.SelectQuery) *bun.SelectQuery {
-				return lq.Order(buncolgen.ReturnLineColumns.SortOrder.OrderAsc())
+				return lq.Order(iftacol.ReturnLineColumns.SortOrder.OrderAsc())
 			})
 		}
 		if req.IncludeJurisdictions {
-			q = q.Relation(buncolgen.Rel(rel.Lines, buncolgen.ReturnLineRelations.Jurisdiction))
+			q = q.Relation(buncolgen.Rel(rel.Lines, iftacol.ReturnLineRelations.Jurisdiction))
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -160,8 +161,8 @@ func (r *repository) GetReturnsByIDs(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ReturnScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.ReturnColumns.ID.In(), bun.List(req.IDs))
+				return iftacol.ReturnScopeTenant(sq, req.TenantInfo).
+					Where(iftacol.ReturnColumns.ID.In(), bun.List(req.IDs))
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -178,13 +179,13 @@ func (r *repository) GetOpenReturnForPeriod(
 	req *iftaports.GetOpenReturnForPeriodRequest,
 ) (*ifta.Return, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ifta.Return, error) {
-		cols := buncolgen.ReturnColumns
+		cols := iftacol.ReturnColumns
 		entity := new(ifta.Return)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ReturnScopeTenant(sq, req.TenantInfo).
+				return iftacol.ReturnScopeTenant(sq, req.TenantInfo).
 					Where(cols.Year.Eq(), req.Year).
 					Where(cols.Quarter.Eq(), req.Quarter).
 					Where(cols.Status.In(), bun.In(openReturnStatuses))
@@ -209,13 +210,13 @@ func (r *repository) GetLatestReturnForPeriod(
 	req *iftaports.GetLatestReturnForPeriodRequest,
 ) (*ifta.Return, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ifta.Return, error) {
-		cols := buncolgen.ReturnColumns
+		cols := iftacol.ReturnColumns
 		entity := new(ifta.Return)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ReturnScopeTenant(sq, req.TenantInfo).
+				return iftacol.ReturnScopeTenant(sq, req.TenantInfo).
 					Where(cols.Year.Eq(), req.Year).
 					Where(cols.Quarter.Eq(), req.Quarter)
 			}).
@@ -262,7 +263,7 @@ func (r *repository) UpdateReturn(ctx context.Context, entity *ifta.Return) (*if
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.ReturnColumns.Version.Eq(), ov).
+			Where(iftacol.ReturnColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -287,7 +288,7 @@ func (r *repository) ReplaceReturnLines(
 ) (*ifta.Return, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ifta.Return, error) {
 		tenantInfo := pagination.TenantInfo{OrgID: ret.OrganizationID, BuID: ret.BusinessUnitID}
-		lineCols := buncolgen.ReturnLineColumns
+		lineCols := iftacol.ReturnLineColumns
 		ov := ret.Version
 		ret.Version++
 		now := timeutils.NowUnix()
@@ -297,7 +298,7 @@ func (r *repository) ReplaceReturnLines(
 			if _, dErr := tx.NewDelete().
 				Model((*ifta.ReturnLine)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return buncolgen.ReturnLineScopeTenantDelete(dq, tenantInfo).
+					return iftacol.ReturnLineScopeTenantDelete(dq, tenantInfo).
 						Where(lineCols.ReturnID.Eq(), ret.ID)
 				}).
 				Exec(txCtx); dErr != nil {
@@ -319,7 +320,7 @@ func (r *repository) ReplaceReturnLines(
 			results, uErr := tx.NewUpdate().
 				Model(ret).
 				WherePK().
-				Where(buncolgen.ReturnColumns.Version.Eq(), ov).
+				Where(iftacol.ReturnColumns.Version.Eq(), ov).
 				Returning("*").
 				Exec(txCtx)
 			if uErr != nil {
@@ -346,14 +347,14 @@ func (r *repository) DeleteReturn(
 	req *iftaports.DeleteReturnRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.ReturnColumns
-		lineCols := buncolgen.ReturnLineColumns
+		cols := iftacol.ReturnColumns
+		lineCols := iftacol.ReturnLineColumns
 
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
 			if _, lErr := tx.NewDelete().
 				Model((*ifta.ReturnLine)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return buncolgen.ReturnLineScopeTenantDelete(dq, req.TenantInfo).
+					return iftacol.ReturnLineScopeTenantDelete(dq, req.TenantInfo).
 						Where(lineCols.ReturnID.Eq(), req.ID)
 				}).
 				Exec(txCtx); lErr != nil {
@@ -363,7 +364,7 @@ func (r *repository) DeleteReturn(
 			result, dErr := tx.NewDelete().
 				Model((*ifta.Return)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return buncolgen.ReturnScopeTenantDelete(dq, req.TenantInfo).
+					return iftacol.ReturnScopeTenantDelete(dq, req.TenantInfo).
 						Where(cols.ID.Eq(), req.ID).
 						Where(cols.Version.Eq(), req.Version).
 						Where(cols.Status.Eq(), ifta.ReturnStatusDraft)

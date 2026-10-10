@@ -1,6 +1,7 @@
 package aifeedbackrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/aifeedbackcol"
 	"context"
 	"fmt"
 	"strings"
@@ -49,7 +50,7 @@ func New(p Params) aifeedbackports.AIFeedbackRepository {
 }
 
 func uniqueTarget() string {
-	cols := buncolgen.FeedbackColumns
+	cols := aifeedbackcol.FeedbackColumns
 
 	return "CONFLICT (" + strings.Join([]string{
 		cols.OrganizationID.Bare(),
@@ -66,7 +67,7 @@ func (r *repository) Upsert(
 	entity *aifeedback.Feedback,
 ) (*aifeedback.Feedback, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aifeedback.Feedback, error) {
-		cols := buncolgen.FeedbackColumns
+		cols := aifeedbackcol.FeedbackColumns
 
 		_, err := r.db.DBForContext(ctx).
 			NewInsert().
@@ -111,13 +112,13 @@ func (r *repository) Delete(
 	req aifeedbackports.DeleteAIFeedbackRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := buncolgen.FeedbackColumns
+		cols := aifeedbackcol.FeedbackColumns
 
 		res, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*aifeedback.Feedback)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.FeedbackScopeTenantDelete(dq, req.TenantInfo).
+				return aifeedbackcol.FeedbackScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.UserID.Eq(), req.UserID).
 					Where(cols.TargetType.Eq(), req.Target.TargetType).
 					Where(cols.TargetID.Eq(), req.Target.TargetID).
@@ -146,14 +147,14 @@ func (r *repository) ListForTargets(
 			return []*aifeedback.Feedback{}, nil
 		}
 
-		cols := buncolgen.FeedbackColumns
+		cols := aifeedbackcol.FeedbackColumns
 		rows := make([]*aifeedback.Feedback, 0, len(req.Targets))
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&rows).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FeedbackScopeTenant(sq, req.TenantInfo).
+				return aifeedbackcol.FeedbackScopeTenant(sq, req.TenantInfo).
 					Where(cols.UserID.Eq(), req.UserID).
 					WhereGroup(" AND ", func(targets *bun.SelectQuery) *bun.SelectQuery {
 						for _, target := range req.Targets {
@@ -187,14 +188,14 @@ func (r *repository) ListByIDs(
 			return []*aifeedback.Feedback{}, nil
 		}
 
-		cols := buncolgen.FeedbackColumns
+		cols := aifeedbackcol.FeedbackColumns
 		rows := make([]*aifeedback.Feedback, 0, len(req.IDs))
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&rows).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FeedbackScopeTenant(sq, req.TenantInfo).
+				return aifeedbackcol.FeedbackScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.In(), bun.List(req.IDs))
 			}).
 			Scan(ctx)
@@ -222,12 +223,12 @@ func (r *repository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.FeedbackTable.Alias,
+						aifeedbackcol.FeedbackTable.Alias,
 						req.Filter,
 						(*aifeedback.Feedback)(nil),
 					)
 
-					return sq.Apply(buncolgen.FeedbackApplyTenant(req.Filter.TenantInfo))
+					return sq.Apply(aifeedbackcol.FeedbackApplyTenant(req.Filter.TenantInfo))
 				}).
 				Count(ctx)
 			if err != nil {
@@ -255,7 +256,7 @@ func (r *repository) ListConnection(
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					return querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.FeedbackTable.Alias,
+						aifeedbackcol.FeedbackTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*aifeedback.Feedback)(nil),
@@ -277,7 +278,7 @@ func (r *repository) DailySatisfaction(
 	req aifeedbackports.AIFeedbackWindowRequest,
 ) ([]*aifeedbackports.AIFeedbackDay, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aifeedbackports.AIFeedbackDay, error) {
-		cols := buncolgen.FeedbackColumns
+		cols := aifeedbackcol.FeedbackColumns
 		rows := make([]*aifeedbackports.AIFeedbackDay, 0)
 		day := cols.CreatedAt.Expr("to_char(to_timestamp({}) AT TIME ZONE ?, 'YYYY-MM-DD')")
 
@@ -308,7 +309,7 @@ func (r *repository) WorstRated(
 	req aifeedbackports.AIFeedbackWindowRequest,
 ) ([]*aifeedbackports.AIFeedbackTargetScore, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aifeedbackports.AIFeedbackTargetScore, error) {
-		cols := buncolgen.FeedbackColumns
+		cols := aifeedbackcol.FeedbackColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultWorstLimit
@@ -366,9 +367,9 @@ func (r *repository) WorstRated(
 }
 
 func windowScope(sq *bun.SelectQuery, req aifeedbackports.AIFeedbackWindowRequest) *bun.SelectQuery {
-	cols := buncolgen.FeedbackColumns
+	cols := aifeedbackcol.FeedbackColumns
 
-	sq = buncolgen.FeedbackScopeTenant(sq, req.TenantInfo).
+	sq = aifeedbackcol.FeedbackScopeTenant(sq, req.TenantInfo).
 		Where(cols.CreatedAt.Gte(), req.Since)
 	if req.AgentDefinitionID.IsNotNil() {
 		return sq.Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
@@ -382,7 +383,7 @@ func (r *repository) TotalsByAgent(
 	req aifeedbackports.AIFeedbackAgentTotalsRequest,
 ) ([]*aifeedbackports.AIFeedbackAgentTotals, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aifeedbackports.AIFeedbackAgentTotals, error) {
-		cols := buncolgen.FeedbackColumns
+		cols := aifeedbackcol.FeedbackColumns
 		rows := make([]*aifeedbackports.AIFeedbackAgentTotals, 0, len(req.AgentDefinitionIDs))
 
 		err := r.db.DBForContext(ctx).
@@ -392,7 +393,7 @@ func (r *repository) TotalsByAgent(
 			ColumnExpr(buncolgen.CountFilter("positive", cols.Rating.Eq()), aifeedback.RatingPositive).
 			ColumnExpr(buncolgen.CountFilter("negative", cols.Rating.Eq()), aifeedback.RatingNegative).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.FeedbackScopeTenant(sq, req.TenantInfo).
+				sq = aifeedbackcol.FeedbackScopeTenant(sq, req.TenantInfo).
 					Where(cols.AgentDefinitionID.IsNotNull()).
 					Where(cols.CreatedAt.Gte(), req.Since)
 				if req.Until > 0 {
@@ -429,7 +430,7 @@ func (r *repository) ListNegativeSince(
 	req aifeedbackports.ListNegativeAIFeedbackRequest,
 ) ([]*aifeedback.Feedback, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aifeedback.Feedback, error) {
-		cols := buncolgen.FeedbackColumns
+		cols := aifeedbackcol.FeedbackColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultNegativeLimit
@@ -459,7 +460,7 @@ func (r *repository) ListNegativeSince(
 				cols.CreatedAt.Bare(),
 			).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FeedbackScopeTenant(sq, req.TenantInfo).
+				return aifeedbackcol.FeedbackScopeTenant(sq, req.TenantInfo).
 					Where(cols.Rating.Eq(), aifeedback.RatingNegative).
 					Where(cols.AgentDefinitionID.IsNotNull()).
 					Where(cols.CreatedAt.Gte(), req.Since)
@@ -482,7 +483,7 @@ func (r *repository) PurgeBefore(
 	req aifeedbackports.PurgeAIFeedbackRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := buncolgen.FeedbackColumns
+		cols := aifeedbackcol.FeedbackColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultPurgeLimit
@@ -496,7 +497,7 @@ func (r *repository) PurgeBefore(
 			Model((*aifeedback.Feedback)(nil)).
 			Column(cols.ID.Bare()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FeedbackScopeTenant(sq, req.TenantInfo).
+				return aifeedbackcol.FeedbackScopeTenant(sq, req.TenantInfo).
 					Where(cols.CreatedAt.Lt(), req.Before)
 			}).
 			OrderExpr(cols.CreatedAt.OrderAsc()).
@@ -505,7 +506,7 @@ func (r *repository) PurgeBefore(
 		res, err := dba.NewDelete().
 			Model((*aifeedback.Feedback)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.FeedbackScopeTenantDelete(dq, req.TenantInfo).
+				return aifeedbackcol.FeedbackScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.ID.In(), expired)
 			}).
 			Exec(ctx)
@@ -529,7 +530,7 @@ func (r *repository) LinkEvalCase(
 	req aifeedbackports.LinkAIFeedbackEvalCaseRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.FeedbackColumns
+		cols := aifeedbackcol.FeedbackColumns
 
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -538,7 +539,7 @@ func (r *repository) LinkEvalCase(
 			Set(cols.Version.Inc(1)).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.FeedbackScopeTenantUpdate(uq, req.TenantInfo).
+				return aifeedbackcol.FeedbackScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.FeedbackID)
 			}).
 			Exec(ctx)

@@ -1,6 +1,7 @@
 package fuelpurchaserepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/fuelpurchasecol"
 	"context"
 	"fmt"
 
@@ -28,15 +29,15 @@ func (r *repository) GetImportBatchByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ImportBatchScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.ImportBatchColumns.ID.Eq(), req.ID)
+				return fuelpurchasecol.ImportBatchScopeTenant(sq, req.TenantInfo).
+					Where(fuelpurchasecol.ImportBatchColumns.ID.Eq(), req.ID)
 			})
 
 		if req.IncludeRows {
 			q = q.Relation(
-				buncolgen.ImportBatchRelations.Rows,
+				fuelpurchasecol.ImportBatchRelations.Rows,
 				func(rq *bun.SelectQuery) *bun.SelectQuery {
-					return rq.Order(buncolgen.ImportRowColumns.RowNumber.OrderAsc())
+					return rq.Order(fuelpurchasecol.ImportRowColumns.RowNumber.OrderAsc())
 				},
 			)
 		}
@@ -93,7 +94,7 @@ func (r *repository) updateBatch(
 		NewUpdate().
 		Model(entity).
 		WherePK().
-		Where(buncolgen.ImportBatchColumns.Version.Eq(), ov).
+		Where(fuelpurchasecol.ImportBatchColumns.Version.Eq(), ov).
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
@@ -125,8 +126,8 @@ func (r *repository) ReplaceImportRows(
 			if _, dErr := tx.NewDelete().
 				Model((*fuelpurchase.ImportRow)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return buncolgen.ImportRowScopeTenantDelete(dq, tenant).
-						Where(buncolgen.ImportRowColumns.ImportBatchID.Eq(), batch.ID)
+					return fuelpurchasecol.ImportRowScopeTenantDelete(dq, tenant).
+						Where(fuelpurchasecol.ImportRowColumns.ImportBatchID.Eq(), batch.ID)
 				}).
 				Exec(txCtx); dErr != nil {
 				return fmt.Errorf("clear import rows: %w", dErr)
@@ -161,11 +162,11 @@ func (r *repository) ListImportRows(
 	req *fuelpurchaseports.ListImportRowsRequest,
 ) (*pagination.CursorListResult[*fuelpurchase.ImportRow], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*fuelpurchase.ImportRow], error) {
-		cols := buncolgen.ImportRowColumns
+		cols := fuelpurchasecol.ImportRowColumns
 		dba := r.db.DBForContext(ctx)
 
 		scope := func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = buncolgen.ImportRowScopeTenant(sq, req.TenantInfo).
+			sq = fuelpurchasecol.ImportRowScopeTenant(sq, req.TenantInfo).
 				Where(cols.ImportBatchID.Eq(), req.BatchID)
 			if len(req.Statuses) > 0 {
 				sq = sq.Where(cols.Status.In(), bun.In(req.Statuses))
@@ -203,7 +204,7 @@ func (r *repository) ListImportRows(
 		rows := make([]*fuelpurchase.ImportRow, 0, limit+1)
 		q := dba.NewSelect().
 			Model(&rows).
-			ColumnExpr(buncolgen.ImportRowTable.All()).
+			ColumnExpr(fuelpurchasecol.ImportRowTable.All()).
 			WhereGroup(" AND ", scope)
 
 		if !cursor.ID.IsNil() {
@@ -211,7 +212,7 @@ func (r *repository) ListImportRows(
 				Model((*fuelpurchase.ImportRow)(nil)).
 				Column(cols.RowNumber.String(), cols.ID.String()).
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return buncolgen.ImportRowScopeTenant(sq, req.TenantInfo).
+					return fuelpurchasecol.ImportRowScopeTenant(sq, req.TenantInfo).
 						Where(cols.ImportBatchID.Eq(), req.BatchID).
 						Where(cols.ID.Eq(), cursor.ID)
 				})
@@ -257,8 +258,8 @@ func (r *repository) CommitImport(
 	req *fuelpurchaseports.CommitImportRequest,
 ) (*fuelpurchaseports.CommitImportResult, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fuelpurchaseports.CommitImportResult, error) {
-		cols := buncolgen.FuelPurchaseColumns
-		rowCols := buncolgen.ImportRowColumns
+		cols := fuelpurchasecol.FuelPurchaseColumns
+		rowCols := fuelpurchasecol.ImportRowColumns
 		batch := req.Batch
 		tenant := pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID}
 		conflictClause := "CONFLICT (" + cols.OrganizationID.Name + ", " + cols.BusinessUnitID.Name +
@@ -326,7 +327,7 @@ func (r *repository) CommitImport(
 					Set(rowCols.FuelPurchaseID.SetExpr("committed.purchase_id")).
 					Set(rowCols.Error.SetNull()).
 					WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-						return buncolgen.ImportRowScopeTenantUpdate(uq, tenant).
+						return fuelpurchasecol.ImportRowScopeTenantUpdate(uq, tenant).
 							Where(rowCols.ImportBatchID.Eq(), batch.ID).
 							Where(rowCols.ID.Expr("{} = committed.row_id"))
 					}).
@@ -340,7 +341,7 @@ func (r *repository) CommitImport(
 					Model((*fuelpurchase.ImportRow)(nil)).
 					Set(rowCols.Status.Set(), fuelpurchase.ImportRowStatusAlreadyImported).
 					WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-						return buncolgen.ImportRowScopeTenantUpdate(uq, tenant).
+						return fuelpurchasecol.ImportRowScopeTenantUpdate(uq, tenant).
 							Where(rowCols.ImportBatchID.Eq(), batch.ID).
 							Where(rowCols.ID.In(), bun.List(skippedRowIDs))
 					}).
@@ -386,7 +387,7 @@ func (r *repository) applyImportBatchFilters(
 	q *bun.SelectQuery,
 	req *fuelpurchaseports.ListImportBatchesRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.ImportBatchColumns
+	cols := fuelpurchasecol.ImportBatchColumns
 
 	if req.Origin != "" {
 		q = q.Where(cols.Origin.Eq(), req.Origin)
@@ -420,7 +421,7 @@ func (r *repository) ListImportBatches(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.ImportBatchTable.Alias,
+						fuelpurchasecol.ImportBatchTable.Alias,
 						req.Filter,
 						(*fuelpurchase.ImportBatch)(nil),
 					)
@@ -443,16 +444,16 @@ func (r *repository) ListImportBatches(
 				Query: func(items *[]*fuelpurchase.ImportBatch) *bun.SelectQuery {
 					q := dba.NewSelect().
 						Model(items).
-						ColumnExpr(buncolgen.ImportBatchTable.All())
+						ColumnExpr(fuelpurchasecol.ImportBatchTable.All())
 					if req.IncludeDefaultCard {
-						q = q.Relation(buncolgen.ImportBatchRelations.DefaultFuelCard)
+						q = q.Relation(fuelpurchasecol.ImportBatchRelations.DefaultFuelCard)
 					}
 					return q
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.ImportBatchTable.Alias,
+						fuelpurchasecol.ImportBatchTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*fuelpurchase.ImportBatch)(nil),

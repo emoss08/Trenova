@@ -2,18 +2,21 @@
 
 package ratesimulation
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/ratesimulationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateSimulation].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RateSimulationFieldMap] instead of parsing struct tags via reflection.
+// the generated [ratesimulationcol.RateSimulationFieldMap] instead of parsing struct tags via reflection.
 func (e *RateSimulation) GetStaticFieldMap() map[string]string {
-	return buncolgen.RateSimulationFieldMap
+	return ratesimulationcol.RateSimulationFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateSimulationResult].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RateSimulationResultFieldMap] instead of parsing struct tags via reflection.
+// the generated [ratesimulationcol.RateSimulationResultFieldMap] instead of parsing struct tags via reflection.
 func (e *RateSimulationResult) GetStaticFieldMap() map[string]string {
-	return buncolgen.RateSimulationResultFieldMap
+	return ratesimulationcol.RateSimulationResultFieldMap
 }

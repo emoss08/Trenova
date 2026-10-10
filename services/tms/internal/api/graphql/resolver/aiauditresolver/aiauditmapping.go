@@ -1,6 +1,7 @@
 package aiauditresolver
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/aiauditcol"
 	"context"
 	"fmt"
 	"slices"
@@ -21,15 +22,15 @@ import (
 // event is worked out from: the arguments a reader sees are the recorded
 // arguments cut to their sensitivity, and the rest are read by an id.
 var aiAuditEventComputedColumns = map[string][]buncolgen.Column{
-	"onBehalfOf": {buncolgen.AIAuditEventColumns.OnBehalfOfUserID},
-	"decidedBy":  {buncolgen.AIAuditEventColumns.DecidedByUserID},
-	"agent":      {buncolgen.AIAuditEventColumns.AgentDefinitionID},
-	"traceUrl":   {buncolgen.AIAuditEventColumns.TraceID},
+	"onBehalfOf": {aiauditcol.AIAuditEventColumns.OnBehalfOfUserID},
+	"decidedBy":  {aiauditcol.AIAuditEventColumns.DecidedByUserID},
+	"agent":      {aiauditcol.AIAuditEventColumns.AgentDefinitionID},
+	"traceUrl":   {aiauditcol.AIAuditEventColumns.TraceID},
 	"arguments": {
-		buncolgen.AIAuditEventColumns.Arguments,
-		buncolgen.AIAuditEventColumns.ArgumentSensitivity,
+		aiauditcol.AIAuditEventColumns.Arguments,
+		aiauditcol.AIAuditEventColumns.ArgumentSensitivity,
 	},
-	"auditEntries": {buncolgen.AIAuditEventColumns.ID},
+	"auditEntries": {aiauditcol.AIAuditEventColumns.ID},
 }
 
 // aiAuditEventColumns are the columns a trail page selects for the fields

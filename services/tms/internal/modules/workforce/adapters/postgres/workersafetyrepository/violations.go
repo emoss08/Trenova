@@ -1,6 +1,7 @@
 package workersafetyrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -17,14 +18,14 @@ func (r *repository) ListViolations(
 	req *workerports.ListWorkerSafetyViolationsRequest,
 ) ([]*worker.WorkerSafetyViolation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerSafetyViolation, error) {
-		cols := buncolgen.WorkerSafetyViolationColumns
+		cols := workercol.WorkerSafetyViolationColumns
 		entities := make([]*worker.WorkerSafetyViolation, 0, 8)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerSafetyViolationScopeTenant(sq, req.TenantInfo)
+				sq = workercol.WorkerSafetyViolationScopeTenant(sq, req.TenantInfo)
 				if !req.SafetyEventID.IsNil() {
 					sq = sq.Where(cols.SafetyEventID.Eq(), req.SafetyEventID)
 				}
@@ -45,7 +46,7 @@ func (r *repository) ListViolations(
 				JoinOn("wsev.occurred_at >= ?", req.Since)
 		}
 		if req.IncludeEvent {
-			q = q.Relation(buncolgen.WorkerSafetyViolationRelations.SafetyEvent)
+			q = q.Relation(workercol.WorkerSafetyViolationRelations.SafetyEvent)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -67,8 +68,8 @@ func (r *repository) GetViolationByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerSafetyViolationScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerSafetyViolationColumns.ID.Eq(), req.ID)
+				return workercol.WorkerSafetyViolationScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerSafetyViolationColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "WorkerSafetyViolation")
@@ -108,7 +109,7 @@ func (r *repository) UpdateViolation(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.WorkerSafetyViolationColumns.Version.Eq(), ov).
+			Where(workercol.WorkerSafetyViolationColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -136,8 +137,8 @@ func (r *repository) DeleteViolation(
 			NewDelete().
 			Model((*worker.WorkerSafetyViolation)(nil)).
 			Apply(func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.WorkerSafetyViolationScopeTenantDelete(dq, req.TenantInfo).
-					Where(buncolgen.WorkerSafetyViolationColumns.ID.Eq(), req.ID)
+				return workercol.WorkerSafetyViolationScopeTenantDelete(dq, req.TenantInfo).
+					Where(workercol.WorkerSafetyViolationColumns.ID.Eq(), req.ID)
 			}).
 			Exec(ctx)
 		if err != nil {

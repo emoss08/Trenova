@@ -1,6 +1,7 @@
 package driversettlementrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
 	"context"
 	"database/sql"
 	"errors"
@@ -106,7 +107,7 @@ func (r *batchRepository) ListConnection(
 				Query: func(entities *[]*driversettlement.SettlementBatch) *bun.SelectQuery {
 					return dba.NewSelect().
 						Model(entities).
-						ColumnExpr(buncolgen.SettlementBatchTable.All())
+						ColumnExpr(driversettlementcol.SettlementBatchTable.All())
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					return querybuilder.ApplyCursorFilters(

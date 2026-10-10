@@ -1,6 +1,7 @@
 package development
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 
@@ -118,7 +119,7 @@ func (s *WorkerCredentialSeed) ensureTypes(
 	}
 
 	existing := make([]*worker.WorkerCredentialType, 0, len(rows))
-	cols := buncolgen.WorkerCredentialTypeColumns
+	cols := workercol.WorkerCredentialTypeColumns
 	if err := tx.NewSelect().
 		Model(&existing).
 		Where(cols.OrganizationID.Eq(), refs.orgID).
@@ -139,11 +140,11 @@ func (s *WorkerCredentialSeed) loadWorkers(
 	refs *credentialSeedRefs,
 ) ([]*worker.Worker, error) {
 	workers := make([]*worker.Worker, 0, 32)
-	cols := buncolgen.WorkerColumns
+	cols := workercol.WorkerColumns
 	err := tx.NewSelect().
 		Model(&workers).
-		Relation(buncolgen.WorkerRelations.Profile, func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Relation(buncolgen.WorkerProfileRelations.LicenseState)
+		Relation(workercol.WorkerRelations.Profile, func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Relation(workercol.WorkerProfileRelations.LicenseState)
 		}).
 		Where(cols.OrganizationID.Eq(), refs.orgID).
 		Where(cols.BusinessUnitID.Eq(), refs.buID).
@@ -336,7 +337,7 @@ func (s *WorkerCredentialSeed) deriveCompliance(
 	wrk *worker.Worker,
 ) error {
 	var credentials []*worker.WorkerCredential
-	credCols := buncolgen.WorkerCredentialColumns
+	credCols := workercol.WorkerCredentialColumns
 	if err := tx.NewSelect().
 		Model(&credentials).
 		Where(credCols.WorkerID.Eq(), wrk.ID).
@@ -353,7 +354,7 @@ func (s *WorkerCredentialSeed) deriveCompliance(
 
 	summary := worker.BuildCredentialSummary(wrk, types, credentials, refs.now)
 
-	cols := buncolgen.WorkerProfileColumns
+	cols := workercol.WorkerProfileColumns
 	_, err := tx.NewUpdate().
 		Model((*worker.WorkerProfile)(nil)).
 		Set(cols.ComplianceStatus.Set(), summary.ComplianceStatus).
@@ -374,7 +375,7 @@ func (s *WorkerCredentialSeed) mirror(
 	field worker.CredentialProfileField,
 	entity *worker.WorkerCredential,
 ) error {
-	cols := buncolgen.WorkerProfileColumns
+	cols := workercol.WorkerProfileColumns
 	var column buncolgen.Column
 	switch field {
 	case worker.CredentialProfileFieldMedicalCardExpiry:

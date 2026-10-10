@@ -2,67 +2,70 @@
 
 package accountingsync
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingAppCredential].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.AccountingAppCredentialFieldMap] instead of parsing struct tags via reflection.
+// the generated [accountingsynccol.AccountingAppCredentialFieldMap] instead of parsing struct tags via reflection.
 func (e *AccountingAppCredential) GetStaticFieldMap() map[string]string {
-	return buncolgen.AccountingAppCredentialFieldMap
+	return accountingsynccol.AccountingAppCredentialFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingBackfill].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.AccountingBackfillFieldMap] instead of parsing struct tags via reflection.
+// the generated [accountingsynccol.AccountingBackfillFieldMap] instead of parsing struct tags via reflection.
 func (e *AccountingBackfill) GetStaticFieldMap() map[string]string {
-	return buncolgen.AccountingBackfillFieldMap
+	return accountingsynccol.AccountingBackfillFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingConnection].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.AccountingConnectionFieldMap] instead of parsing struct tags via reflection.
+// the generated [accountingsynccol.AccountingConnectionFieldMap] instead of parsing struct tags via reflection.
 func (e *AccountingConnection) GetStaticFieldMap() map[string]string {
-	return buncolgen.AccountingConnectionFieldMap
+	return accountingsynccol.AccountingConnectionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingDriftFinding].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.AccountingDriftFindingFieldMap] instead of parsing struct tags via reflection.
+// the generated [accountingsynccol.AccountingDriftFindingFieldMap] instead of parsing struct tags via reflection.
 func (e *AccountingDriftFinding) GetStaticFieldMap() map[string]string {
-	return buncolgen.AccountingDriftFindingFieldMap
+	return accountingsynccol.AccountingDriftFindingFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingInboundChange].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.AccountingInboundChangeFieldMap] instead of parsing struct tags via reflection.
+// the generated [accountingsynccol.AccountingInboundChangeFieldMap] instead of parsing struct tags via reflection.
 func (e *AccountingInboundChange) GetStaticFieldMap() map[string]string {
-	return buncolgen.AccountingInboundChangeFieldMap
+	return accountingsynccol.AccountingInboundChangeFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingMapping].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.AccountingMappingFieldMap] instead of parsing struct tags via reflection.
+// the generated [accountingsynccol.AccountingMappingFieldMap] instead of parsing struct tags via reflection.
 func (e *AccountingMapping) GetStaticFieldMap() map[string]string {
-	return buncolgen.AccountingMappingFieldMap
+	return accountingsynccol.AccountingMappingFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingReferenceObject].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.AccountingReferenceObjectFieldMap] instead of parsing struct tags via reflection.
+// the generated [accountingsynccol.AccountingReferenceObjectFieldMap] instead of parsing struct tags via reflection.
 func (e *AccountingReferenceObject) GetStaticFieldMap() map[string]string {
-	return buncolgen.AccountingReferenceObjectFieldMap
+	return accountingsynccol.AccountingReferenceObjectFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingSyncAttempt].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.AccountingSyncAttemptFieldMap] instead of parsing struct tags via reflection.
+// the generated [accountingsynccol.AccountingSyncAttemptFieldMap] instead of parsing struct tags via reflection.
 func (e *AccountingSyncAttempt) GetStaticFieldMap() map[string]string {
-	return buncolgen.AccountingSyncAttemptFieldMap
+	return accountingsynccol.AccountingSyncAttemptFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingSyncRecord].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.AccountingSyncRecordFieldMap] instead of parsing struct tags via reflection.
+// the generated [accountingsynccol.AccountingSyncRecordFieldMap] instead of parsing struct tags via reflection.
 func (e *AccountingSyncRecord) GetStaticFieldMap() map[string]string {
-	return buncolgen.AccountingSyncRecordFieldMap
+	return accountingsynccol.AccountingSyncRecordFieldMap
 }

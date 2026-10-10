@@ -2,6 +2,7 @@
 package inboundmessagerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -42,7 +43,7 @@ func (r *mailboxRepository) List(
 ) (*pagination.ListResult[*inboundmessage.Mailbox], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*inboundmessage.Mailbox], error) {
 		entities := make([]*inboundmessage.Mailbox, 0, req.Filter.Pagination.SafeLimit())
-		cols := buncolgen.MailboxColumns
+		cols := inboundmessagecol.MailboxColumns
 
 		query := r.db.DBForContext(ctx).NewSelect().Model(&entities)
 		if req.Status != "" {
@@ -68,13 +69,13 @@ func (r *mailboxRepository) GetByID(
 ) (*inboundmessage.Mailbox, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*inboundmessage.Mailbox, error) {
 		entity := new(inboundmessage.Mailbox)
-		cols := buncolgen.MailboxColumns
+		cols := inboundmessagecol.MailboxColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			Where(cols.ID.Eq(), req.ID).
-			Apply(buncolgen.MailboxApplyTenant(req.TenantInfo)).
+			Apply(inboundmessagecol.MailboxApplyTenant(req.TenantInfo)).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Mailbox")
 		}
@@ -97,7 +98,7 @@ func (r *mailboxRepository) GetByTokenHash(
 	ctx = dbscope.WithSystem(ctx, "resolve the inbound mailbox a provider delivered to before its tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*inboundmessage.Mailbox, error) {
 		entity := new(inboundmessage.Mailbox)
-		cols := buncolgen.MailboxColumns
+		cols := inboundmessagecol.MailboxColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().

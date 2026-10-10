@@ -2,11 +2,14 @@
 
 package agentwait
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentwaitcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Wait].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.WaitFieldMap] instead of parsing struct tags via reflection.
+// the generated [agentwaitcol.WaitFieldMap] instead of parsing struct tags via reflection.
 func (e *Wait) GetStaticFieldMap() map[string]string {
-	return buncolgen.WaitFieldMap
+	return agentwaitcol.WaitFieldMap
 }

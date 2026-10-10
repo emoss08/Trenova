@@ -1,6 +1,7 @@
 package rateagreementrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -9,7 +10,7 @@ import (
 
 func applyRateAgreementColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.RateAgreementTable.All())
+		return q.ColumnExpr(rateagreementcol.RateAgreementTable.All())
 	}
 
 	return q.Column(columns...)
@@ -23,7 +24,7 @@ func applyRuleWindow(q *bun.SelectQuery, asOf int64) *bun.SelectQuery {
 		return q
 	}
 
-	cols := buncolgen.RateAgreementRuleColumns
+	cols := rateagreementcol.RateAgreementRuleColumns
 
 	return q.
 		Where(cols.EffectiveFrom.Lte(), asOf).

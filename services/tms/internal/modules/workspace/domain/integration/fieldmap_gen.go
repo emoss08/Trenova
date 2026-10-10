@@ -2,11 +2,14 @@
 
 package integration
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/integrationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Integration].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.IntegrationFieldMap] instead of parsing struct tags via reflection.
+// the generated [integrationcol.IntegrationFieldMap] instead of parsing struct tags via reflection.
 func (e *Integration) GetStaticFieldMap() map[string]string {
-	return buncolgen.IntegrationFieldMap
+	return integrationcol.IntegrationFieldMap
 }

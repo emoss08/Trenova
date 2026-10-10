@@ -1,6 +1,7 @@
 package detentionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/detentioncol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
@@ -73,12 +74,12 @@ func (r *evidenceRepository) Append(
 				return iErr
 			}
 
-			occCols := buncolgen.DetentionOccurrenceColumns
+			occCols := detentioncol.DetentionOccurrenceColumns
 			_, uErr := r.db.DBForContext(c).
 				NewUpdate().
 				Model((*detention.DetentionOccurrence)(nil)).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return buncolgen.DetentionOccurrenceScopeTenantUpdate(uq, tenantInfo).
+					return detentioncol.DetentionOccurrenceScopeTenantUpdate(uq, tenantInfo).
 						Where(occCols.ID.Eq(), entry.DetentionOccurrenceID)
 				}).
 				Set(occCols.EvidenceHead.Set(), entry.Hash).
@@ -101,14 +102,14 @@ func (r *evidenceRepository) headForUpdate(
 	tenantInfo pagination.TenantInfo,
 ) (string, int32, error) {
 	return dbtx.Write2(ctx, r.db, func(ctx context.Context) (string, int32, error) {
-		cols := buncolgen.DetentionEvidenceColumns
+		cols := detentioncol.DetentionEvidenceColumns
 		latest := new(detention.DetentionEvidence)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(latest).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DetentionEvidenceScopeTenant(sq, tenantInfo).
+				return detentioncol.DetentionEvidenceScopeTenant(sq, tenantInfo).
 					Where(cols.DetentionOccurrenceID.Eq(), occurrenceID)
 			}).
 			Order(cols.Sequence.OrderDesc()).
@@ -131,14 +132,14 @@ func (r *evidenceRepository) List(
 	req *detentionports.ListEvidenceRequest,
 ) ([]*detention.DetentionEvidence, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionEvidence, error) {
-		cols := buncolgen.DetentionEvidenceColumns
+		cols := detentioncol.DetentionEvidenceColumns
 		entities := make([]*detention.DetentionEvidence, 0, 16)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DetentionEvidenceScopeTenant(sq, req.TenantInfo).
+				return detentioncol.DetentionEvidenceScopeTenant(sq, req.TenantInfo).
 					Where(cols.DetentionOccurrenceID.Eq(), req.OccurrenceID)
 			}).
 			Order(cols.Sequence.OrderAsc()).
@@ -157,14 +158,14 @@ func (r *evidenceRepository) Head(
 	req *detentionports.ListEvidenceRequest,
 ) (string, int32, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (string, int32, error) {
-		cols := buncolgen.DetentionEvidenceColumns
+		cols := detentioncol.DetentionEvidenceColumns
 		latest := new(detention.DetentionEvidence)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(latest).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DetentionEvidenceScopeTenant(sq, req.TenantInfo).
+				return detentioncol.DetentionEvidenceScopeTenant(sq, req.TenantInfo).
 					Where(cols.DetentionOccurrenceID.Eq(), req.OccurrenceID)
 			}).
 			Order(cols.Sequence.OrderDesc()).

@@ -1,6 +1,7 @@
 package workerdqfrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 
@@ -53,14 +54,14 @@ func (r *repository) ListVerifications(
 	req *workerports.ListEmploymentVerificationsRequest,
 ) ([]*worker.WorkerEmploymentVerification, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerEmploymentVerification, error) {
-		cols := buncolgen.WorkerEmploymentVerificationColumns
+		cols := workercol.WorkerEmploymentVerificationColumns
 		entities := make([]*worker.WorkerEmploymentVerification, 0, 8)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerEmploymentVerificationScopeTenant(sq, req.TenantInfo)
+				sq = workercol.WorkerEmploymentVerificationScopeTenant(sq, req.TenantInfo)
 				if !req.WorkerID.IsNil() {
 					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
 				}
@@ -80,10 +81,10 @@ func (r *repository) ListVerifications(
 			Limit(limitOr(req.Limit, defaultVerificationPageSize))
 
 		if req.IncludeWorker {
-			q = q.Relation(buncolgen.WorkerEmploymentVerificationRelations.Worker)
+			q = q.Relation(workercol.WorkerEmploymentVerificationRelations.Worker)
 		}
 		if req.IncludeDocument {
-			q = q.Relation(buncolgen.WorkerEmploymentVerificationRelations.Document)
+			q = q.Relation(workercol.WorkerEmploymentVerificationRelations.Document)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -100,14 +101,14 @@ func (r *repository) ListVerificationsByWorkerIDs(
 	req *workerports.ListEmploymentVerificationsByWorkerIDsRequest,
 ) (map[pulid.ID][]*worker.WorkerEmploymentVerification, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID][]*worker.WorkerEmploymentVerification, error) {
-		cols := buncolgen.WorkerEmploymentVerificationColumns
+		cols := workercol.WorkerEmploymentVerificationColumns
 		entities := make([]*worker.WorkerEmploymentVerification, 0, len(req.WorkerIDs)*8)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerEmploymentVerificationScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerEmploymentVerificationScopeTenant(sq, req.TenantInfo).
 					Where(cols.WorkerID.In(), bun.List(req.WorkerIDs))
 			}).
 			OrderExpr(cols.EmployedTo.Qualified() + " DESC NULLS LAST").
@@ -115,10 +116,10 @@ func (r *repository) ListVerificationsByWorkerIDs(
 			Limit(len(req.WorkerIDs) * defaultVerificationPageSize)
 
 		if req.IncludeWorker {
-			q = q.Relation(buncolgen.WorkerEmploymentVerificationRelations.Worker)
+			q = q.Relation(workercol.WorkerEmploymentVerificationRelations.Worker)
 		}
 		if req.IncludeDocument {
-			q = q.Relation(buncolgen.WorkerEmploymentVerificationRelations.Document)
+			q = q.Relation(workercol.WorkerEmploymentVerificationRelations.Document)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -142,11 +143,11 @@ func (r *repository) GetVerificationByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerEmploymentVerificationScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerEmploymentVerificationColumns.ID.Eq(), req.ID)
+				return workercol.WorkerEmploymentVerificationScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerEmploymentVerificationColumns.ID.Eq(), req.ID)
 			})
 		if req.IncludeDocument {
-			q = q.Relation(buncolgen.WorkerEmploymentVerificationRelations.Document)
+			q = q.Relation(workercol.WorkerEmploymentVerificationRelations.Document)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -187,7 +188,7 @@ func (r *repository) UpdateVerification(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.WorkerEmploymentVerificationColumns.Version.Eq(), ov).
+			Where(workercol.WorkerEmploymentVerificationColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -215,8 +216,8 @@ func (r *repository) DeleteVerification(
 			NewDelete().
 			Model((*worker.WorkerEmploymentVerification)(nil)).
 			Apply(func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.WorkerEmploymentVerificationScopeTenantDelete(dq, req.TenantInfo).
-					Where(buncolgen.WorkerEmploymentVerificationColumns.ID.Eq(), req.ID)
+				return workercol.WorkerEmploymentVerificationScopeTenantDelete(dq, req.TenantInfo).
+					Where(workercol.WorkerEmploymentVerificationColumns.ID.Eq(), req.ID)
 			}).
 			Exec(ctx)
 		if err != nil {
@@ -240,8 +241,8 @@ func (r *repository) ListRetentionCandidates(
 	req *workerports.ListDQFRetentionCandidatesRequest,
 ) ([]workerports.DQFRetentionCandidate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.DQFRetentionCandidate, error) {
-		workerCols := buncolgen.WorkerColumns
-		profileCols := buncolgen.WorkerProfileColumns
+		workerCols := workercol.WorkerColumns
+		profileCols := workercol.WorkerProfileColumns
 
 		candidates := make([]workerports.DQFRetentionCandidate, 0, 32)
 		err := r.db.DBForContext(ctx).
@@ -257,7 +258,7 @@ func (r *repository) ListRetentionCandidates(
 				" AND wrkp.organization_id = wrk.organization_id"+
 				" AND wrkp.business_unit_id = wrk.business_unit_id").
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerScopeTenant(sq, req.TenantInfo).
 					Where(profileCols.TerminationDate.IsNotNull()).
 					Where(
 						profileCols.TerminationDate.Qualified()+" + ? <= ?",

@@ -2,39 +2,42 @@
 
 package ratematrix
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/ratematrixcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DensityScale].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DensityScaleFieldMap] instead of parsing struct tags via reflection.
+// the generated [ratematrixcol.DensityScaleFieldMap] instead of parsing struct tags via reflection.
 func (e *DensityScale) GetStaticFieldMap() map[string]string {
-	return buncolgen.DensityScaleFieldMap
+	return ratematrixcol.DensityScaleFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DensityScaleTier].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DensityScaleTierFieldMap] instead of parsing struct tags via reflection.
+// the generated [ratematrixcol.DensityScaleTierFieldMap] instead of parsing struct tags via reflection.
 func (e *DensityScaleTier) GetStaticFieldMap() map[string]string {
-	return buncolgen.DensityScaleTierFieldMap
+	return ratematrixcol.DensityScaleTierFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateMatrix].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RateMatrixFieldMap] instead of parsing struct tags via reflection.
+// the generated [ratematrixcol.RateMatrixFieldMap] instead of parsing struct tags via reflection.
 func (e *RateMatrix) GetStaticFieldMap() map[string]string {
-	return buncolgen.RateMatrixFieldMap
+	return ratematrixcol.RateMatrixFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateMatrixCell].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RateMatrixCellFieldMap] instead of parsing struct tags via reflection.
+// the generated [ratematrixcol.RateMatrixCellFieldMap] instead of parsing struct tags via reflection.
 func (e *RateMatrixCell) GetStaticFieldMap() map[string]string {
-	return buncolgen.RateMatrixCellFieldMap
+	return ratematrixcol.RateMatrixCellFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateMatrixDimension].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RateMatrixDimensionFieldMap] instead of parsing struct tags via reflection.
+// the generated [ratematrixcol.RateMatrixDimensionFieldMap] instead of parsing struct tags via reflection.
 func (e *RateMatrixDimension) GetStaticFieldMap() map[string]string {
-	return buncolgen.RateMatrixDimensionFieldMap
+	return ratematrixcol.RateMatrixDimensionFieldMap
 }

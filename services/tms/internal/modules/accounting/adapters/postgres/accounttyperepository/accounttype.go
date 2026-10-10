@@ -1,6 +1,7 @@
 package accounttyperepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/accounttypecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
@@ -41,15 +42,15 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *accounttypeports.ListAccountTypesRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.AccountTypeColumns
+	cols := accounttypecol.AccountTypeColumns
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.AccountTypeTable.Alias,
+		accounttypecol.AccountTypeTable.Alias,
 		req.Filter,
 		(*accounttype.AccountType)(nil),
 	)
 
-	return q.Apply(buncolgen.AccountTypeApplyTenant(req.Filter.TenantInfo)).
+	return q.Apply(accounttypecol.AccountTypeApplyTenant(req.Filter.TenantInfo)).
 		Limit(req.Filter.Pagination.SafeLimit()).
 		Offset(req.Filter.Pagination.SafeOffset()).
 		Order(cols.CreatedAt.OrderDesc())
@@ -95,12 +96,12 @@ func (r *repository) GetByID(
 		)
 
 		entity := new(accounttype.AccountType)
-		cols := buncolgen.AccountTypeColumns
+		cols := accounttypecol.AccountTypeColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AccountTypeScopeTenant(sq, req.TenantInfo).
+				return accounttypecol.AccountTypeScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
@@ -119,7 +120,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.AccountTypeTable.Alias,
+		accounttypecol.AccountTypeTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*accounttype.AccountType)(nil),
@@ -132,7 +133,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.AccountTypeTable.Alias,
+		accounttypecol.AccountTypeTable.Alias,
 		req.Filter,
 		(*accounttype.AccountType)(nil),
 	)
@@ -140,7 +141,7 @@ func (r *repository) applyTotalCountFilters(
 
 func applyAccountTypeColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.AccountTypeTable.All())
+		return q.ColumnExpr(accounttypecol.AccountTypeTable.All())
 	}
 
 	return q.Column(columns...)
@@ -231,7 +232,7 @@ func (r *repository) Update(
 
 		ov := entity.Version
 		entity.Version++
-		cols := buncolgen.AccountTypeColumns
+		cols := accounttypecol.AccountTypeColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -265,12 +266,12 @@ func (r *repository) BulkUpdateStatus(
 		)
 
 		entities := make([]*accounttype.AccountType, 0, len(req.AccountTypeIDs))
-		cols := buncolgen.AccountTypeColumns
+		cols := accounttypecol.AccountTypeColumns
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(&entities).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.AccountTypeScopeTenantUpdate(uq, req.TenantInfo).
+				return accounttypecol.AccountTypeScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.In(), bun.List(req.AccountTypeIDs))
 			}).
 			Set(cols.Status.Set(), req.Status).
@@ -300,12 +301,12 @@ func (r *repository) GetByIDs(
 		)
 
 		entities := make([]*accounttype.AccountType, 0, len(req.AccountTypeIDs))
-		cols := buncolgen.AccountTypeColumns
+		cols := accounttypecol.AccountTypeColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AccountTypeScopeTenant(sq, req.TenantInfo).
+				return accounttypecol.AccountTypeScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.In(), bun.List(req.AccountTypeIDs))
 			}).
 			Scan(ctx)
@@ -323,7 +324,7 @@ func (r *repository) SelectOptions(
 	req *accounttypeports.AccountTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*accounttype.AccountType], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*accounttype.AccountType], error) {
-		cols := buncolgen.AccountTypeColumns
+		cols := accounttypecol.AccountTypeColumns
 
 		return dbhelper.SelectOptions[*accounttype.AccountType](
 			ctx,

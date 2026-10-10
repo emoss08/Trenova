@@ -1,6 +1,7 @@
 package agentrunsteprepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 	"context"
 	"fmt"
 
@@ -86,7 +87,7 @@ func (r *repository) byKey(
 	step *agent.AgentRunStep,
 ) (*agent.AgentRunStep, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.AgentRunStep, error) {
-		cols := buncolgen.AgentRunStepColumns
+		cols := agentcol.AgentRunStepColumns
 		held := new(agent.AgentRunStep)
 
 		err := r.db.DBForContext(ctx).NewSelect().
@@ -108,7 +109,7 @@ func (r *repository) Settle(
 	req agentports.SettleAgentRunStepRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.AgentRunStepColumns
+		cols := agentcol.AgentRunStepColumns
 
 		outcome := req.Outcome
 		if outcome == nil {
@@ -160,12 +161,12 @@ func (r *repository) List(
 	req agentports.ListAgentRunStepsRequest,
 ) ([]*agent.AgentRunStep, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunStep, error) {
-		cols := buncolgen.AgentRunStepColumns
+		cols := agentcol.AgentRunStepColumns
 		steps := make([]*agent.AgentRunStep, 0, 8)
 
 		err := r.db.DBForContext(ctx).NewSelect().
 			Model(&steps).
-			Apply(buncolgen.AgentRunStepApplyTenant(req.TenantInfo)).
+			Apply(agentcol.AgentRunStepApplyTenant(req.TenantInfo)).
 			Where(cols.OwnerKind.Eq(), req.OwnerKind).
 			Where(cols.OwnerID.Eq(), req.OwnerID).
 			Order(cols.CreatedAt.OrderAsc()).
@@ -191,7 +192,7 @@ func (r *repository) Prune(
 	req agentports.PruneAgentRunStepsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.AgentRunStepColumns
+		cols := agentcol.AgentRunStepColumns
 
 		dba := r.db.DBForContext(ctx)
 		doomed := dba.NewSelect().

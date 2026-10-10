@@ -2,11 +2,14 @@
 
 package dispatchcontrol
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/dispatchcontrolcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DispatchControl].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DispatchControlFieldMap] instead of parsing struct tags via reflection.
+// the generated [dispatchcontrolcol.DispatchControlFieldMap] instead of parsing struct tags via reflection.
 func (e *DispatchControl) GetStaticFieldMap() map[string]string {
-	return buncolgen.DispatchControlFieldMap
+	return dispatchcontrolcol.DispatchControlFieldMap
 }

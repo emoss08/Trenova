@@ -1,6 +1,7 @@
 package edishipmentlinkrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -41,7 +42,7 @@ func (r *repository) ListShipmentLinks(
 ) (*pagination.ListResult[*edi.ShipmentLink], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.ShipmentLink], error) {
 		entities := make([]*edi.ShipmentLink, 0, req.Filter.Pagination.SafeLimit())
-		cols := buncolgen.ShipmentLinkColumns
+		cols := edicol.ShipmentLinkColumns
 
 		total, err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -73,7 +74,7 @@ func (r *repository) GetShipmentLinkByID(
 ) (*edi.ShipmentLink, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.ShipmentLink, error) {
 		entity := new(edi.ShipmentLink)
-		cols := buncolgen.ShipmentLinkColumns
+		cols := edicol.ShipmentLinkColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -97,7 +98,7 @@ func (r *repository) GetShipmentLinksByShipmentID(
 ) ([]*edi.ShipmentLink, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.ShipmentLink, error) {
 		entities := make([]*edi.ShipmentLink, 0)
-		cols := buncolgen.ShipmentLinkColumns
+		cols := edicol.ShipmentLinkColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -145,7 +146,7 @@ func applyShipmentLinkTenantScope(
 	query *bun.SelectQuery,
 	tenantInfo pagination.TenantInfo,
 ) *bun.SelectQuery {
-	cols := buncolgen.ShipmentLinkColumns
+	cols := edicol.ShipmentLinkColumns
 
 	return query.
 		Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).

@@ -2,11 +2,14 @@
 
 package location
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Location].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.LocationFieldMap] instead of parsing struct tags via reflection.
+// the generated [locationcol.LocationFieldMap] instead of parsing struct tags via reflection.
 func (e *Location) GetStaticFieldMap() map[string]string {
-	return buncolgen.LocationFieldMap
+	return locationcol.LocationFieldMap
 }

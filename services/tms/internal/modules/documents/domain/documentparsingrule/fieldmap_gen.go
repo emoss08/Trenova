@@ -2,25 +2,28 @@
 
 package documentparsingrule
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/documentparsingrulecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Fixture].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.FixtureFieldMap] instead of parsing struct tags via reflection.
+// the generated [documentparsingrulecol.FixtureFieldMap] instead of parsing struct tags via reflection.
 func (e *Fixture) GetStaticFieldMap() map[string]string {
-	return buncolgen.FixtureFieldMap
+	return documentparsingrulecol.FixtureFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RuleSet].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RuleSetFieldMap] instead of parsing struct tags via reflection.
+// the generated [documentparsingrulecol.RuleSetFieldMap] instead of parsing struct tags via reflection.
 func (e *RuleSet) GetStaticFieldMap() map[string]string {
-	return buncolgen.RuleSetFieldMap
+	return documentparsingrulecol.RuleSetFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RuleVersion].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RuleVersionFieldMap] instead of parsing struct tags via reflection.
+// the generated [documentparsingrulecol.RuleVersionFieldMap] instead of parsing struct tags via reflection.
 func (e *RuleVersion) GetStaticFieldMap() map[string]string {
-	return buncolgen.RuleVersionFieldMap
+	return documentparsingrulecol.RuleVersionFieldMap
 }

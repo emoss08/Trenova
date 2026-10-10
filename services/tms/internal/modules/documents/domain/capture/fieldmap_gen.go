@@ -2,60 +2,63 @@
 
 package capture
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/capturecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CaptureBatch].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CaptureBatchFieldMap] instead of parsing struct tags via reflection.
+// the generated [capturecol.CaptureBatchFieldMap] instead of parsing struct tags via reflection.
 func (e *CaptureBatch) GetStaticFieldMap() map[string]string {
-	return buncolgen.CaptureBatchFieldMap
+	return capturecol.CaptureBatchFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CaptureCoverSheet].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CaptureCoverSheetFieldMap] instead of parsing struct tags via reflection.
+// the generated [capturecol.CaptureCoverSheetFieldMap] instead of parsing struct tags via reflection.
 func (e *CaptureCoverSheet) GetStaticFieldMap() map[string]string {
-	return buncolgen.CaptureCoverSheetFieldMap
+	return capturecol.CaptureCoverSheetFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CaptureDevice].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CaptureDeviceFieldMap] instead of parsing struct tags via reflection.
+// the generated [capturecol.CaptureDeviceFieldMap] instead of parsing struct tags via reflection.
 func (e *CaptureDevice) GetStaticFieldMap() map[string]string {
-	return buncolgen.CaptureDeviceFieldMap
+	return capturecol.CaptureDeviceFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CaptureItem].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CaptureItemFieldMap] instead of parsing struct tags via reflection.
+// the generated [capturecol.CaptureItemFieldMap] instead of parsing struct tags via reflection.
 func (e *CaptureItem) GetStaticFieldMap() map[string]string {
-	return buncolgen.CaptureItemFieldMap
+	return capturecol.CaptureItemFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CapturePage].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CapturePageFieldMap] instead of parsing struct tags via reflection.
+// the generated [capturecol.CapturePageFieldMap] instead of parsing struct tags via reflection.
 func (e *CapturePage) GetStaticFieldMap() map[string]string {
-	return buncolgen.CapturePageFieldMap
+	return capturecol.CapturePageFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CapturePairing].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CapturePairingFieldMap] instead of parsing struct tags via reflection.
+// the generated [capturecol.CapturePairingFieldMap] instead of parsing struct tags via reflection.
 func (e *CapturePairing) GetStaticFieldMap() map[string]string {
-	return buncolgen.CapturePairingFieldMap
+	return capturecol.CapturePairingFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CaptureProfile].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CaptureProfileFieldMap] instead of parsing struct tags via reflection.
+// the generated [capturecol.CaptureProfileFieldMap] instead of parsing struct tags via reflection.
 func (e *CaptureProfile) GetStaticFieldMap() map[string]string {
-	return buncolgen.CaptureProfileFieldMap
+	return capturecol.CaptureProfileFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CaptureRequest].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CaptureRequestFieldMap] instead of parsing struct tags via reflection.
+// the generated [capturecol.CaptureRequestFieldMap] instead of parsing struct tags via reflection.
 func (e *CaptureRequest) GetStaticFieldMap() map[string]string {
-	return buncolgen.CaptureRequestFieldMap
+	return capturecol.CaptureRequestFieldMap
 }

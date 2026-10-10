@@ -1,6 +1,11 @@
 package development
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 
@@ -92,7 +97,7 @@ func (s *AgentActivitySeed) Run(ctx context.Context, tx bun.Tx) error {
 			// The conversation seed writes one run of its own, so an existing
 			// row is not enough to say this seed has run. Counting the
 			// scheduled runs — which only this seed writes — is.
-			cols := buncolgen.AgentRunColumns
+			cols := agentcol.AgentRunColumns
 			count, err := tx.NewSelect().
 				Model((*agent.AgentRun)(nil)).
 				Where(cols.OrganizationID.Eq(), refs.org.ID).
@@ -137,7 +142,7 @@ func (s *AgentActivitySeed) loadRefs(
 
 	refs := &activitySeedRefs{org: org, admin: admin, now: timeutils.NowUnix()}
 
-	defCols := buncolgen.DefinitionColumns
+	defCols := agentdefinitioncol.DefinitionColumns
 	loadAgent := func(name string) (*agentdefinition.Definition, error) {
 		entity := new(agentdefinition.Definition)
 		if dErr := tx.NewSelect().
@@ -159,7 +164,7 @@ func (s *AgentActivitySeed) loadRefs(
 		return nil, err
 	}
 
-	shipmentCols := buncolgen.ShipmentColumns
+	shipmentCols := shipmentcol.ShipmentColumns
 	refs.shipments = make([]*shipment.Shipment, 0, 4)
 	if err = tx.NewSelect().
 		Model(&refs.shipments).
@@ -174,7 +179,7 @@ func (s *AgentActivitySeed) loadRefs(
 		return nil, fmt.Errorf("need four seeded shipments: %w", seedhelpers.ErrEntityNotFound)
 	}
 
-	customerCols := buncolgen.CustomerColumns
+	customerCols := customercol.CustomerColumns
 	refs.customers = make([]*customer.Customer, 0, 2)
 	if err = tx.NewSelect().
 		Model(&refs.customers).
@@ -189,7 +194,7 @@ func (s *AgentActivitySeed) loadRefs(
 		return nil, fmt.Errorf("need two seeded customers: %w", seedhelpers.ErrEntityNotFound)
 	}
 
-	workerCols := buncolgen.WorkerColumns
+	workerCols := workercol.WorkerColumns
 	refs.worker = new(worker.Worker)
 	if err = tx.NewSelect().
 		Model(refs.worker).

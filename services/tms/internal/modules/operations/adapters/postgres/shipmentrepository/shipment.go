@@ -1,6 +1,9 @@
 package shipmentrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/commoditycol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 	"database/sql"
 	"errors"
@@ -107,7 +110,7 @@ func (r *repository) List(
 				Query: func(items *[]*shipment.Shipment) *bun.SelectQuery {
 					return dba.NewSelect().
 						Model(items).
-						ColumnExpr(buncolgen.ShipmentTable.All())
+						ColumnExpr(shipmentcol.ShipmentTable.All())
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					sq, aErr := cursorFilterQuery(sq, dba, req)
@@ -137,13 +140,13 @@ func (r *repository) GetByID(
 	req *shipmentports.GetShipmentByIDRequest,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		sp := buncolgen.ShipmentColumns
+		sp := shipmentcol.ShipmentColumns
 		entity := new(shipment.Shipment)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ShipmentScopeTenant(sq, req.TenantInfo).
+				return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
 					Where(sp.ID.Eq(), req.ID)
 			}).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -169,23 +172,23 @@ func (r *repository) GetByIDs(
 	req *shipmentports.GetShipmentsByIDsRequest,
 ) ([]*shipment.Shipment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
-		sp := buncolgen.ShipmentColumns
+		sp := shipmentcol.ShipmentColumns
 		entities := make([]*shipment.Shipment, 0, len(req.ShipmentIDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ShipmentScopeTenant(sq, req.TenantInfo).
+				return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
 					Where(sp.ID.In(), bun.List(req.ShipmentIDs))
 			}).
-			Relation(buncolgen.ShipmentRelations.Customer).
-			Relation(buncolgen.ShipmentRelations.ServiceType).
+			Relation(shipmentcol.ShipmentRelations.Customer).
+			Relation(shipmentcol.ShipmentRelations.ServiceType).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 				if !req.IncludeCharges {
 					return sq
 				}
 
-				return withCharges(sq.Relation(buncolgen.ShipmentRelations.BillToCustomer))
+				return withCharges(sq.Relation(shipmentcol.ShipmentRelations.BillToCustomer))
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -201,45 +204,45 @@ func (r *repository) ListRatedByFormulaTemplate(
 	req *shipmentports.ListRatedByFormulaTemplateRequest,
 ) ([]*shipment.Shipment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipment.Shipment, error) {
-		sp := buncolgen.ShipmentColumns
-		sm := buncolgen.ShipmentMoveColumns
-		stp := buncolgen.StopColumns
+		sp := shipmentcol.ShipmentColumns
+		sm := shipmentcol.ShipmentMoveColumns
+		stp := shipmentcol.StopColumns
 
 		entities := make([]*shipment.Shipment, 0, req.Limit)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ShipmentScopeTenant(sq, req.TenantInfo).
+				return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
 					Where(sp.FormulaTemplateID.Eq(), req.TemplateID)
 			}).
-			Relation(buncolgen.ShipmentRelations.Customer).
-			Relation(buncolgen.ShipmentRelations.TractorType).
-			Relation(buncolgen.ShipmentRelations.TrailerType).
-			RelationWithOpts(buncolgen.ShipmentRelations.Moves, bun.RelationOpts{
+			Relation(shipmentcol.ShipmentRelations.Customer).
+			Relation(shipmentcol.ShipmentRelations.TractorType).
+			Relation(shipmentcol.ShipmentRelations.TrailerType).
+			RelationWithOpts(shipmentcol.ShipmentRelations.Moves, bun.RelationOpts{
 				Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return sq.Order(sm.Sequence.OrderAsc())
 				},
 			}).
 			RelationWithOpts(
-				buncolgen.Rel(buncolgen.ShipmentRelations.Moves, buncolgen.ShipmentMoveRelations.Stops),
+				buncolgen.Rel(shipmentcol.ShipmentRelations.Moves, shipmentcol.ShipmentMoveRelations.Stops),
 				bun.RelationOpts{
 					Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
 						return sq.Order(stp.Sequence.OrderAsc())
 					},
 				},
 			).
-			RelationWithOpts(buncolgen.ShipmentRelations.AdditionalCharges, bun.RelationOpts{
+			RelationWithOpts(shipmentcol.ShipmentRelations.AdditionalCharges, bun.RelationOpts{
 				Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Relation(buncolgen.AdditionalChargeRelations.AccessorialCharge)
+					return sq.Relation(shipmentcol.AdditionalChargeRelations.AccessorialCharge)
 				},
 			}).
-			RelationWithOpts(buncolgen.ShipmentRelations.Commodities, bun.RelationOpts{
+			RelationWithOpts(shipmentcol.ShipmentRelations.Commodities, bun.RelationOpts{
 				Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Relation(buncolgen.ShipmentCommodityRelations.Commodity).
+					return sq.Relation(shipmentcol.ShipmentCommodityRelations.Commodity).
 						Relation(buncolgen.Rel(
-							buncolgen.ShipmentCommodityRelations.Commodity,
-							buncolgen.CommodityRelations.HazardousMaterial))
+							shipmentcol.ShipmentCommodityRelations.Commodity,
+							commoditycol.CommodityRelations.HazardousMaterial))
 				},
 			}).
 			Order(sp.CreatedAt.OrderDesc()).
@@ -261,7 +264,7 @@ func (r *repository) SelectOptions(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*shipment.Shipment], error) {
-			sp := buncolgen.ShipmentColumns
+			sp := shipmentcol.ShipmentColumns
 
 			return dbhelper.SelectOptions[*shipment.Shipment](
 				ctx,
@@ -342,7 +345,7 @@ func (r *repository) GetUnassigned(
 				Query: func(items *[]*shipment.Shipment) *bun.SelectQuery {
 					return dba.NewSelect().
 						Model(items).
-						ColumnExpr(buncolgen.ShipmentTable.All())
+						ColumnExpr(shipmentcol.ShipmentTable.All())
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					return unassignedShipmentListQuery(sq, dba, req)
@@ -371,7 +374,7 @@ func (r *repository) GetPreviousRates(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*shipmentports.PreviousRateSummary], error) {
-			sp := buncolgen.ShipmentColumns
+			sp := shipmentcol.ShipmentColumns
 			entities := make([]*shipmentports.PreviousRateSummary, 0, 50)
 
 			baseQuery := func(dba bun.IDB) *bun.SelectQuery {
@@ -384,9 +387,9 @@ func (r *repository) GetPreviousRates(
 				query := dba.NewSelect().
 					With("origin_shipments", originCTE).
 					With("destination_shipments", destinationCTE).
-					TableExpr(buncolgen.ShipmentTable.Name+" AS "+buncolgen.ShipmentTable.Alias).
+					TableExpr(shipmentcol.ShipmentTable.Name+" AS "+shipmentcol.ShipmentTable.Alias).
 					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return buncolgen.ShipmentScopeTenant(sq, req.TenantInfo).
+						return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
 							Where(sp.ShipmentTypeID.Eq(), req.ShipmentTypeID).
 							Where(sp.ServiceTypeID.Eq(), req.ServiceTypeID).
 							Where(sp.Status.Eq(), shipment.StatusInvoiced).
@@ -560,7 +563,7 @@ func (r *repository) Update(
 	entity *shipment.Shipment,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		sp := buncolgen.ShipmentColumns
+		sp := shipmentcol.ShipmentColumns
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			ov := entity.Version
 			entity.Version++
@@ -574,7 +577,7 @@ func (r *repository) Update(
 					sp.IdempotencyKey.Bare(),
 				).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return buncolgen.ShipmentScopeTenantUpdate(uq, pagination.TenantInfo{
+					return shipmentcol.ShipmentScopeTenantUpdate(uq, pagination.TenantInfo{
 						OrgID: entity.OrganizationID,
 						BuID:  entity.BusinessUnitID,
 					}).
@@ -625,7 +628,7 @@ func (r *repository) UpdateOperationalLifecycle(
 	entity *shipment.Shipment,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		sp := buncolgen.ShipmentColumns
+		sp := shipmentcol.ShipmentColumns
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			ov := entity.Version
 			entity.Version++
@@ -640,7 +643,7 @@ func (r *repository) UpdateOperationalLifecycle(
 					sp.UpdatedAt.Bare(),
 				).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return buncolgen.ShipmentScopeTenantUpdate(uq, pagination.TenantInfo{
+					return shipmentcol.ShipmentScopeTenantUpdate(uq, pagination.TenantInfo{
 						OrgID: entity.OrganizationID,
 						BuID:  entity.BusinessUnitID,
 					}).
@@ -679,7 +682,7 @@ func (r *repository) MarkReadyToInvoice(
 	entity *shipment.Shipment,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		sp := buncolgen.ShipmentColumns
+		sp := shipmentcol.ShipmentColumns
 		ov := entity.Version
 		entity.Version++
 
@@ -692,7 +695,7 @@ func (r *repository) MarkReadyToInvoice(
 				sp.UpdatedAt.Bare(),
 			).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ShipmentScopeTenantUpdate(uq, pagination.TenantInfo{
+				return shipmentcol.ShipmentScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
 				}).
@@ -723,7 +726,7 @@ func (r *repository) UpdateDerivedState(
 	entity *shipment.Shipment,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		sp := buncolgen.ShipmentColumns
+		sp := shipmentcol.ShipmentColumns
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			ov := entity.Version
 			entity.Version++
@@ -746,7 +749,7 @@ func (r *repository) UpdateDerivedState(
 					sp.UpdatedAt.Bare(),
 				).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return buncolgen.ShipmentScopeTenantUpdate(uq, pagination.TenantInfo{
+					return shipmentcol.ShipmentScopeTenantUpdate(uq, pagination.TenantInfo{
 						OrgID: entity.OrganizationID,
 						BuID:  entity.BusinessUnitID,
 					}).
@@ -789,7 +792,7 @@ func (r *repository) UpdateStatus(
 	req *shipmentports.UpdateShipmentStatusRequest,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		sp := buncolgen.ShipmentColumns
+		sp := shipmentcol.ShipmentColumns
 		entity := new(shipment.Shipment)
 
 		results, err := r.db.DBForContext(ctx).NewUpdate().
@@ -797,7 +800,7 @@ func (r *repository) UpdateStatus(
 			Set(sp.Status.Set(), req.Status).
 			Set(sp.Version.Inc(1)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ShipmentScopeTenantUpdate(uq, req.TenantInfo).
+				return shipmentcol.ShipmentScopeTenantUpdate(uq, req.TenantInfo).
 					Where(sp.ID.Eq(), req.ShipmentID).
 					Where(sp.Version.Eq(), req.Version)
 			}).
@@ -824,7 +827,7 @@ func (r *repository) Cancel(
 	req *shipmentports.CancelShipmentRequest,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		sp := buncolgen.ShipmentColumns
+		sp := shipmentcol.ShipmentColumns
 		entity := new(shipment.Shipment)
 
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
@@ -836,7 +839,7 @@ func (r *repository) Cancel(
 				Set(sp.CancelReason.Set(), req.CancelReason).
 				Set(sp.Version.Inc(1)).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return buncolgen.ShipmentScopeTenantUpdate(uq, req.TenantInfo).
+					return shipmentcol.ShipmentScopeTenantUpdate(uq, req.TenantInfo).
 						Where(sp.ID.Eq(), req.ShipmentID).
 						Where(sp.Version.Eq(), req.ExpectedVersion).
 						Where(sp.Status.NotIn(), bun.List([]shipment.Status{
@@ -875,7 +878,7 @@ func (r *repository) Uncancel(
 	req *shipmentports.UncancelShipmentRequest,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		sp := buncolgen.ShipmentColumns
+		sp := shipmentcol.ShipmentColumns
 		entity := new(shipment.Shipment)
 
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
@@ -887,7 +890,7 @@ func (r *repository) Uncancel(
 				Set(sp.CancelReason.Set(), "").
 				Set(sp.Version.Inc(1)).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return buncolgen.ShipmentScopeTenantUpdate(uq, req.TenantInfo).
+					return shipmentcol.ShipmentScopeTenantUpdate(uq, req.TenantInfo).
 						Where(sp.ID.Eq(), req.ShipmentID).
 						Where(sp.Version.Eq(), req.ExpectedVersion).
 						Where(sp.Status.Eq(), shipment.StatusCanceled)
@@ -924,7 +927,7 @@ func (r *repository) TransferOwnership(
 	req *shipmentports.TransferOwnershipRequest,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		sp := buncolgen.ShipmentColumns
+		sp := shipmentcol.ShipmentColumns
 		entity := new(shipment.Shipment)
 
 		results, err := r.db.DBForContext(ctx).NewUpdate().
@@ -932,7 +935,7 @@ func (r *repository) TransferOwnership(
 			Set(sp.OwnerID.Set(), req.OwnerID).
 			Set(sp.Version.Inc(1)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ShipmentScopeTenantUpdate(uq, req.TenantInfo).
+				return shipmentcol.ShipmentScopeTenantUpdate(uq, req.TenantInfo).
 					Where(sp.ID.Eq(), req.ShipmentID)
 			}).
 			Returning("*").
@@ -965,14 +968,14 @@ func (r *repository) FindByExternalReference(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*shipmentports.DuplicateBOLResult, error) {
-			sp := buncolgen.ShipmentColumns
+			sp := shipmentcol.ShipmentColumns
 			found := new(shipmentports.DuplicateBOLResult)
 			query := r.db.DBForContext(ctx).
 				NewSelect().
 				Column(sp.ID.Bare(), sp.ProNumber.Bare()).
 				Model((*shipment.Shipment)(nil)).
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = buncolgen.ShipmentScopeTenant(sq, req.TenantInfo).
+					sq = shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
 						Where(sp.CustomerID.Eq(), req.CustomerID).
 						Where(sp.ExternalReference.Expr("lower({})")+" = lower(?)", reference).
 						Where(sp.Status.Ne(), shipment.StatusCanceled)
@@ -1001,14 +1004,14 @@ func (r *repository) FindIDByIdempotencyKey(
 		return pulid.Nil, nil
 	}
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (pulid.ID, error) {
-		sp := buncolgen.ShipmentColumns
+		sp := shipmentcol.ShipmentColumns
 		var id pulid.ID
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*shipment.Shipment)(nil)).
 			Column(sp.ID.Bare()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ShipmentScopeTenant(sq, req.TenantInfo).
+				return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
 					Where(sp.IdempotencyKey.Eq(), req.IdempotencyKey)
 			}).
 			Limit(1).
@@ -1031,7 +1034,7 @@ func (r *repository) CheckForDuplicateBOLs(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*shipmentports.DuplicateBOLResult, error) {
-			sp := buncolgen.ShipmentColumns
+			sp := shipmentcol.ShipmentColumns
 			duplicates := make([]*shipmentports.DuplicateBOLResult, 0)
 
 			query := r.db.DBForContext(ctx).
@@ -1039,7 +1042,7 @@ func (r *repository) CheckForDuplicateBOLs(
 				Column(sp.ID.Bare(), sp.ProNumber.Bare()).
 				Model((*shipment.Shipment)(nil)).
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return buncolgen.ShipmentScopeTenant(sq, req.TenantInfo).
+					return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
 						Where(sp.BOL.Eq(), req.BOL).
 						Where(sp.Status.Ne(), shipment.StatusCanceled)
 				})
@@ -1269,8 +1272,8 @@ func ResolveSequenceCodes(
 	bu := new(tenant.BusinessUnit)
 	err = db.NewSelect().
 		Model(bu).
-		Column(buncolgen.BusinessUnitColumns.Code.Bare()).
-		Where(buncolgen.BusinessUnitColumns.ID.Eq(), entity.BusinessUnitID).
+		Column(tenantcol.BusinessUnitColumns.Code.Bare()).
+		Where(tenantcol.BusinessUnitColumns.ID.Eq(), entity.BusinessUnitID).
 		Scan(ctx)
 	if err != nil {
 		return "", "", dberror.HandleNotFoundError(err, "Sequence")

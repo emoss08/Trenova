@@ -1,6 +1,7 @@
 package agentdefinitionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
 	"context"
 	"database/sql"
 	"errors"
@@ -50,7 +51,7 @@ func (r *versionRepository) List(
 	req *agentdefinitionports.ListAgentDefinitionVersionsRequest,
 ) ([]*agentdefinition.DefinitionVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdefinition.DefinitionVersion, error) {
-		cols := buncolgen.DefinitionVersionColumns
+		cols := agentdefinitioncol.DefinitionVersionColumns
 		limit := req.Limit
 		if limit <= 0 || limit > agentdefinition.VersionsKept {
 			limit = agentdefinition.VersionsKept
@@ -61,9 +62,9 @@ func (r *versionRepository) List(
 			NewSelect().
 			Model(&versions).
 			ExcludeColumn(cols.Snapshot.Bare()).
-			Relation(buncolgen.DefinitionVersionRelations.Author).
+			Relation(agentdefinitioncol.DefinitionVersionRelations.Author).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DefinitionVersionScopeTenant(sq, req.TenantInfo).
+				return agentdefinitioncol.DefinitionVersionScopeTenant(sq, req.TenantInfo).
 					Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
 			}).
 			Order(cols.Version.OrderDesc()).
@@ -82,14 +83,14 @@ func (r *versionRepository) Get(
 	req *agentdefinitionports.GetAgentDefinitionVersionRequest,
 ) (*agentdefinition.DefinitionVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentdefinition.DefinitionVersion, error) {
-		cols := buncolgen.DefinitionVersionColumns
+		cols := agentdefinitioncol.DefinitionVersionColumns
 		version := new(agentdefinition.DefinitionVersion)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(version).
-			Relation(buncolgen.DefinitionVersionRelations.Author).
+			Relation(agentdefinitioncol.DefinitionVersionRelations.Author).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DefinitionVersionScopeTenant(sq, req.TenantInfo).
+				return agentdefinitioncol.DefinitionVersionScopeTenant(sq, req.TenantInfo).
 					Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID).
 					Where(cols.Version.Eq(), req.Version)
 			}).
@@ -107,14 +108,14 @@ func (r *versionRepository) LatestAt(
 	req *agentdefinitionports.GetAgentDefinitionVersionAtRequest,
 ) (*agentdefinition.DefinitionVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentdefinition.DefinitionVersion, error) {
-		cols := buncolgen.DefinitionVersionColumns
+		cols := agentdefinitioncol.DefinitionVersionColumns
 		version := new(agentdefinition.DefinitionVersion)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(version).
-			Relation(buncolgen.DefinitionVersionRelations.Author).
+			Relation(agentdefinitioncol.DefinitionVersionRelations.Author).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DefinitionVersionScopeTenant(sq, req.TenantInfo).
+				return agentdefinitioncol.DefinitionVersionScopeTenant(sq, req.TenantInfo).
 					Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID).
 					Where(cols.Version.Lte(), req.Version)
 			}).

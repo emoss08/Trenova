@@ -1,6 +1,7 @@
 package fuelsurchargerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/fuelsurchargecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
@@ -38,7 +39,7 @@ func NewIndexRepository(p IndexParams) fuelsurchargeports.FuelIndexRepository {
 
 func applyFuelIndexColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.FuelIndexTable.All())
+		return q.ColumnExpr(fuelsurchargecol.FuelIndexTable.All())
 	}
 
 	return q.Column(columns...)
@@ -63,7 +64,7 @@ func (r *indexRepository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.FuelIndexTable.Alias,
+						fuelsurchargecol.FuelIndexTable.Alias,
 						req.Filter,
 						(*fuelsurcharge.FuelIndex)(nil),
 					)
@@ -93,7 +94,7 @@ func (r *indexRepository) ListConnection(
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					return querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.FuelIndexTable.Alias,
+						fuelsurchargecol.FuelIndexTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*fuelsurcharge.FuelIndex)(nil),
@@ -115,13 +116,13 @@ func (r *indexRepository) listBySource(
 	source *fuelsurcharge.IndexSource,
 ) ([]*fuelsurcharge.FuelIndex, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fuelsurcharge.FuelIndex, error) {
-		cols := buncolgen.FuelIndexColumns
+		cols := fuelsurchargecol.FuelIndexColumns
 		entities := make([]*fuelsurcharge.FuelIndex, 0)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.FuelIndexScopeTenant(sq, tenantInfo).
+				sq = fuelsurchargecol.FuelIndexScopeTenant(sq, tenantInfo).
 					Where(cols.IsActive.Eq(), true)
 				if source != nil {
 					sq = sq.Where(cols.Source.Eq(), *source)
@@ -175,13 +176,13 @@ func (r *indexRepository) GetByID(
 			zap.String("id", req.FuelIndexID.String()),
 		)
 
-		cols := buncolgen.FuelIndexColumns
+		cols := fuelsurchargecol.FuelIndexColumns
 		entity := new(fuelsurcharge.FuelIndex)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FuelIndexScopeTenant(sq, req.TenantInfo).
+				return fuelsurchargecol.FuelIndexScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.FuelIndexID)
 			}).
 			Scan(ctx)
@@ -258,12 +259,12 @@ func (r *indexRepository) Delete(
 			zap.String("id", req.FuelIndexID.String()),
 		)
 
-		cols := buncolgen.FuelIndexColumns
+		cols := fuelsurchargecol.FuelIndexColumns
 		results, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*fuelsurcharge.FuelIndex)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.FuelIndexScopeTenantDelete(dq, req.TenantInfo).
+				return fuelsurchargecol.FuelIndexScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.FuelIndexID)
 			}).
 			Exec(ctx)
@@ -281,7 +282,7 @@ func (r *indexRepository) SelectOptions(
 	req *fuelsurchargeports.FuelIndexSelectOptionsRequest,
 ) (*pagination.ListResult[*fuelsurcharge.FuelIndex], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*fuelsurcharge.FuelIndex], error) {
-		cols := buncolgen.FuelIndexColumns
+		cols := fuelsurchargecol.FuelIndexColumns
 		return dbhelper.SelectOptions[*fuelsurcharge.FuelIndex](
 			ctx,
 			r.db.DBForContext(ctx),

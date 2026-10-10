@@ -1,6 +1,12 @@
 package dispatchconsolerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/fleetcodecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/trailercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/usstatecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 
@@ -18,24 +24,24 @@ import (
 )
 
 var (
-	moveFromAssignmentJoin = "JOIN " + buncolgen.ShipmentMoveTable.As(
-		buncolgen.ShipmentMoveTable.Alias) +
-		" ON " + buncolgen.ShipmentMoveColumns.ID.EqColumn(
-		buncolgen.AssignmentColumns.ShipmentMoveID) +
-		" AND " + buncolgen.ShipmentMoveColumns.OrganizationID.EqColumn(
-		buncolgen.AssignmentColumns.OrganizationID) +
-		" AND " + buncolgen.ShipmentMoveColumns.BusinessUnitID.EqColumn(
-		buncolgen.AssignmentColumns.BusinessUnitID)
+	moveFromAssignmentJoin = "JOIN " + shipmentcol.ShipmentMoveTable.As(
+		shipmentcol.ShipmentMoveTable.Alias) +
+		" ON " + shipmentcol.ShipmentMoveColumns.ID.EqColumn(
+		shipmentcol.AssignmentColumns.ShipmentMoveID) +
+		" AND " + shipmentcol.ShipmentMoveColumns.OrganizationID.EqColumn(
+		shipmentcol.AssignmentColumns.OrganizationID) +
+		" AND " + shipmentcol.ShipmentMoveColumns.BusinessUnitID.EqColumn(
+		shipmentcol.AssignmentColumns.BusinessUnitID)
 
-	fleetCodeJoin = "LEFT JOIN " + buncolgen.FleetCodeTable.As(buncolgen.FleetCodeTable.Alias) +
-		" ON " + buncolgen.FleetCodeColumns.ID.EqColumn(buncolgen.WorkerColumns.FleetCodeID) +
-		" AND " + buncolgen.FleetCodeColumns.OrganizationID.EqColumn(
-		buncolgen.WorkerColumns.OrganizationID) +
-		" AND " + buncolgen.FleetCodeColumns.BusinessUnitID.EqColumn(
-		buncolgen.WorkerColumns.BusinessUnitID)
+	fleetCodeJoin = "LEFT JOIN " + fleetcodecol.FleetCodeTable.As(fleetcodecol.FleetCodeTable.Alias) +
+		" ON " + fleetcodecol.FleetCodeColumns.ID.EqColumn(workercol.WorkerColumns.FleetCodeID) +
+		" AND " + fleetcodecol.FleetCodeColumns.OrganizationID.EqColumn(
+		workercol.WorkerColumns.OrganizationID) +
+		" AND " + fleetcodecol.FleetCodeColumns.BusinessUnitID.EqColumn(
+		workercol.WorkerColumns.BusinessUnitID)
 
-	workerStateJoin = "LEFT JOIN " + buncolgen.UsStateTable.As(buncolgen.UsStateTable.Alias) +
-		" ON " + buncolgen.UsStateColumns.ID.EqColumn(buncolgen.WorkerColumns.StateID)
+	workerStateJoin = "LEFT JOIN " + usstatecol.UsStateTable.As(usstatecol.UsStateTable.Alias) +
+		" ON " + usstatecol.UsStateColumns.ID.EqColumn(workercol.WorkerColumns.StateID)
 )
 
 func (r *repository) ListBoardDrivers(
@@ -43,7 +49,7 @@ func (r *repository) ListBoardDrivers(
 	filter *shipmentports.DispatchBoardFilter,
 ) ([]*shipmentports.BoardDriver, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipmentports.BoardDriver, error) {
-		cols := buncolgen.WorkerColumns
+		cols := workercol.WorkerColumns
 		entities := make([]*shipmentports.BoardDriver, 0, boardLimit(filter.Limit))
 
 		const tractorLateral = `LEFT JOIN LATERAL (
@@ -73,8 +79,8 @@ func (r *repository) ListBoardDrivers(
 			ColumnExpr(cols.ProfilePicURL.As("profile_pic_url")).
 			ColumnExpr(cols.AssignmentBlocked.Expr("COALESCE({}, '') AS assignment_note")).
 			ColumnExpr(cols.AvailableForDispatch.As("available_for_dispatch")).
-			ColumnExpr(buncolgen.FleetCodeColumns.Code.Expr("COALESCE({}, '') AS fleet_code_name")).
-			ColumnExpr(buncolgen.UsStateColumns.Abbreviation.Expr("COALESCE({}, '') AS state_abbr")).
+			ColumnExpr(fleetcodecol.FleetCodeColumns.Code.Expr("COALESCE({}, '') AS fleet_code_name")).
+			ColumnExpr(usstatecol.UsStateColumns.Abbreviation.Expr("COALESCE({}, '') AS state_abbr")).
 			ColumnExpr("COALESCE(wtrac.id, '') AS tractor_id").
 			ColumnExpr("COALESCE(wtrac.code, '') AS tractor_code").
 			ColumnExpr("COALESCE(wtrac.equipment_type_id, '') AS tractor_type_id").
@@ -87,7 +93,7 @@ func (r *repository) ListBoardDrivers(
 			Join(tractorLateral, domaintypes.EquipmentStatusAvailable).
 			Join(openAssignmentLateral, bun.List(openMoveStatuses)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerScopeTenant(sq, filter.TenantInfo)
+				sq = workercol.WorkerScopeTenant(sq, filter.TenantInfo)
 				sq = applyDriverFilters(sq, filter)
 
 				if filter.Query != "" {
@@ -122,8 +128,8 @@ func (r *repository) ListWorkerCommitments(
 			return []*shipmentports.WorkerCommitment{}, nil
 		}
 
-		asnCols := buncolgen.AssignmentColumns
-		moveCols := buncolgen.ShipmentMoveColumns
+		asnCols := shipmentcol.AssignmentColumns
+		moveCols := shipmentcol.ShipmentMoveColumns
 		entities := make([]*shipmentports.WorkerCommitment, 0, len(req.WorkerIDs))
 
 		const windowLateral = `JOIN LATERAL (
@@ -143,7 +149,7 @@ func (r *repository) ListWorkerCommitments(
 			ColumnExpr(asnCols.TrailerID.Expr("COALESCE({}, '') AS trailer_id")).
 			ColumnExpr(moveCols.ShipmentID.As("shipment_id")).
 			ColumnExpr(moveCols.Status.As("move_status")).
-			ColumnExpr(buncolgen.ShipmentColumns.ProNumber.Expr("COALESCE({}, '') AS pro_number")).
+			ColumnExpr(shipmentcol.ShipmentColumns.ProNumber.Expr("COALESCE({}, '') AS pro_number")).
 			ColumnExpr("COALESCE(win.window_start, 0) AS window_start").
 			ColumnExpr("COALESCE(win.window_end, 0) AS window_end").
 			ColumnExpr("COALESCE(dest.location_id, '') AS destination_id").
@@ -156,7 +162,7 @@ func (r *repository) ListWorkerCommitments(
 			Join(windowLateral, shipment.StopStatusCanceled).
 			Join(stopEdgeLateral(destinationAlias, orderDescending), shipment.StopStatusCanceled).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.AssignmentScopeTenant(sq, req.TenantInfo).
+				sq = shipmentcol.AssignmentScopeTenant(sq, req.TenantInfo).
 					Where(asnCols.ArchivedAt.IsNull()).
 					Where(asnCols.PrimaryWorkerID.In(), bun.List(req.WorkerIDs)).
 					Where(moveCols.Status.In(), bun.List(openMoveStatuses))
@@ -188,7 +194,7 @@ func (r *repository) ListWorkerTimeOff(
 			return []*shipmentports.WorkerTimeOff{}, nil
 		}
 
-		cols := buncolgen.WorkerPTOColumns
+		cols := workercol.WorkerPTOColumns
 		entities := make([]*shipmentports.WorkerTimeOff, 0, len(req.WorkerIDs))
 
 		q := r.db.DBForContext(ctx).NewSelect().
@@ -198,7 +204,7 @@ func (r *repository) ListWorkerTimeOff(
 			ColumnExpr(cols.EndDate.As("end_date")).
 			ColumnExpr(cols.Type.As("pto_type")).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerPTOScopeTenant(sq, req.TenantInfo).
+				sq = workercol.WorkerPTOScopeTenant(sq, req.TenantInfo).
 					Where(cols.Status.Eq(), worker.PTOStatusApproved).
 					Where(cols.WorkerID.In(), bun.List(req.WorkerIDs))
 
@@ -229,8 +235,8 @@ func (r *repository) ListWorkerWorkload(
 			return []*shipmentports.WorkerWorkload{}, nil
 		}
 
-		asnCols := buncolgen.AssignmentColumns
-		moveCols := buncolgen.ShipmentMoveColumns
+		asnCols := shipmentcol.AssignmentColumns
+		moveCols := shipmentcol.ShipmentMoveColumns
 		entities := make([]*shipmentports.WorkerWorkload, 0, len(req.WorkerIDs))
 
 		const departureLateral = `LEFT JOIN LATERAL (
@@ -252,14 +258,14 @@ func (r *repository) ListWorkerWorkload(
 				"COALESCE(SUM({0}), 0)::float8 AS total_miles", moveCols.Distance)).
 			ColumnExpr(buncolgen.Expr(
 				"COALESCE(MAX({0}), 0)::float8 AS shipment_revenue",
-				buncolgen.ShipmentColumns.TotalChargeAmount)).
+				shipmentcol.ShipmentColumns.TotalChargeAmount)).
 			ColumnExpr(buncolgen.Expr(
 				"MAX(COALESCE(dep.actual_departure, {0})) AS last_ended_at", asnCols.CreatedAt)).
 			Join(moveFromAssignmentJoin).
 			Join("LEFT "+shipmentJoin).
 			Join(departureLateral, shipment.StopStatusCanceled).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.AssignmentScopeTenant(sq, req.TenantInfo).
+				sq = shipmentcol.AssignmentScopeTenant(sq, req.TenantInfo).
 					Where(asnCols.PrimaryWorkerID.In(), bun.List(req.WorkerIDs)).
 					Where(moveCols.Status.NotEq(), shipment.MoveStatusCanceled)
 				if req.Since > 0 {
@@ -295,8 +301,8 @@ func (r *repository) ListWorkerLaneExperience(
 			return []*shipmentports.WorkerLaneExperience{}, nil
 		}
 
-		asnCols := buncolgen.AssignmentColumns
-		shipCols := buncolgen.ShipmentColumns
+		asnCols := shipmentcol.AssignmentColumns
+		shipCols := shipmentcol.ShipmentColumns
 		entities := make([]*shipmentports.WorkerLaneExperience, 0, len(req.WorkerIDs))
 
 		q := r.db.DBForContext(ctx).NewSelect().
@@ -307,7 +313,7 @@ func (r *repository) ListWorkerLaneExperience(
 			Join(moveFromAssignmentJoin).
 			Join(shipmentJoin).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.AssignmentScopeTenant(sq, req.TenantInfo).
+				sq = shipmentcol.AssignmentScopeTenant(sq, req.TenantInfo).
 					Where(asnCols.PrimaryWorkerID.In(), bun.List(req.WorkerIDs)).
 					Where(shipCols.CustomerID.In(), bun.List(req.CustomerIDs))
 				if req.Since > 0 {
@@ -335,14 +341,14 @@ func (r *repository) ListWorkersByIDs(
 			return []*worker.Worker{}, nil
 		}
 
-		cols := buncolgen.WorkerColumns
+		cols := workercol.WorkerColumns
 		entities := make([]*worker.Worker, 0, len(workerIDs))
 
 		err := r.db.DBForContext(ctx).NewSelect().
 			Model(&entities).
-			Relation(buncolgen.WorkerRelations.Profile).
+			Relation(workercol.WorkerRelations.Profile).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerScopeTenant(sq, tenantInfo).
+				return workercol.WorkerScopeTenant(sq, tenantInfo).
 					Where(cols.ID.In(), bun.List(workerIDs))
 			}).
 			Scan(ctx)
@@ -366,8 +372,8 @@ func (r *repository) ListEquipmentByIDs(
 			err := r.db.DBForContext(ctx).NewSelect().
 				Model(&tractors).
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return buncolgen.TractorScopeTenant(sq, req.TenantInfo).
-						Where(buncolgen.TractorColumns.ID.In(), bun.List(req.TractorIDs))
+					return tractorcol.TractorScopeTenant(sq, req.TenantInfo).
+						Where(tractorcol.TractorColumns.ID.In(), bun.List(req.TractorIDs))
 				}).
 				Scan(ctx)
 			if err != nil {
@@ -379,8 +385,8 @@ func (r *repository) ListEquipmentByIDs(
 			err := r.db.DBForContext(ctx).NewSelect().
 				Model(&trailers).
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return buncolgen.TrailerScopeTenant(sq, req.TenantInfo).
-						Where(buncolgen.TrailerColumns.ID.In(), bun.List(req.TrailerIDs))
+					return trailercol.TrailerScopeTenant(sq, req.TenantInfo).
+						Where(trailercol.TrailerColumns.ID.In(), bun.List(req.TrailerIDs))
 				}).
 				Scan(ctx)
 			if err != nil {

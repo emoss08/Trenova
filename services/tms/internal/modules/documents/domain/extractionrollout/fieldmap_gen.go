@@ -2,18 +2,21 @@
 
 package extractionrollout
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/extractionrolloutcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ExtractionRollout].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ExtractionRolloutFieldMap] instead of parsing struct tags via reflection.
+// the generated [extractionrolloutcol.ExtractionRolloutFieldMap] instead of parsing struct tags via reflection.
 func (e *ExtractionRollout) GetStaticFieldMap() map[string]string {
-	return buncolgen.ExtractionRolloutFieldMap
+	return extractionrolloutcol.ExtractionRolloutFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RolloutAssignment].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RolloutAssignmentFieldMap] instead of parsing struct tags via reflection.
+// the generated [extractionrolloutcol.RolloutAssignmentFieldMap] instead of parsing struct tags via reflection.
 func (e *RolloutAssignment) GetStaticFieldMap() map[string]string {
-	return buncolgen.RolloutAssignmentFieldMap
+	return extractionrolloutcol.RolloutAssignmentFieldMap
 }

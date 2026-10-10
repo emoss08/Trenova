@@ -1,6 +1,7 @@
 package documentaiextractionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/documentaiextractioncol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentaiextraction"
@@ -42,12 +43,12 @@ func (r *repository) GetByDocumentExtractedAt(
 ) (*documentaiextraction.Extraction, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documentaiextraction.Extraction, error) {
 		entity := new(documentaiextraction.Extraction)
-		cols := buncolgen.ExtractionColumns
+		cols := documentaiextractioncol.ExtractionColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ExtractionScopeTenant(sq, req.TenantInfo).
+				return documentaiextractioncol.ExtractionScopeTenant(sq, req.TenantInfo).
 					Where(cols.DocumentID.Eq(), req.DocumentID).
 					Where(cols.ExtractedAt.Eq(), req.ExtractedAt)
 			}).
@@ -65,7 +66,7 @@ func (r *repository) SavePending(
 	entity *documentaiextraction.Extraction,
 ) (*documentaiextraction.Extraction, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*documentaiextraction.Extraction, error) {
-		cols := buncolgen.ExtractionColumns
+		cols := documentaiextractioncol.ExtractionColumns
 		if _, err := r.db.DBForContext(ctx).
 			NewInsert().
 			Model(entity).
@@ -99,7 +100,7 @@ func (r *repository) Update(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*documentaiextraction.Extraction, error) {
 		ov := entity.Version
 		entity.Version++
-		cols := buncolgen.ExtractionColumns
+		cols := documentaiextractioncol.ExtractionColumns
 		result, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
@@ -133,7 +134,7 @@ func (r *repository) ListPollable(
 		}
 
 		items := make([]*documentaiextraction.Extraction, 0, limit)
-		cols := buncolgen.ExtractionColumns
+		cols := documentaiextractioncol.ExtractionColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&items).
@@ -165,7 +166,7 @@ func (r *repository) ListPollableTenants(
 		}
 
 		rows := make([]tenantRow, 0, limit)
-		cols := buncolgen.ExtractionColumns
+		cols := documentaiextractioncol.ExtractionColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*documentaiextraction.Extraction)(nil)).
@@ -196,7 +197,7 @@ func applyPollableDocumentAIExtractionFilters(
 	req *documentaiextractionports.ListPollableDocumentAIExtractionRequest,
 ) func(*bun.SelectQuery) *bun.SelectQuery {
 	return func(q *bun.SelectQuery) *bun.SelectQuery {
-		cols := buncolgen.ExtractionColumns
+		cols := documentaiextractioncol.ExtractionColumns
 
 		// Only an execution waiting on a task token needs the poller. One
 		// that polls on its own timer keeps no token, and the poller must

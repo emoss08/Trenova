@@ -1,6 +1,7 @@
 package driverpayrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/driverpaycol"
 	"context"
 	"fmt"
 
@@ -104,7 +105,7 @@ func (r *payCodeRepository) ListConnection(
 				Query: func(entities *[]*driverpay.PayCode) *bun.SelectQuery {
 					return dba.NewSelect().
 						Model(entities).
-						ColumnExpr(buncolgen.PayCodeTable.All()).
+						ColumnExpr(driverpaycol.PayCodeTable.All()).
 						Relation("GLAccount", func(q *bun.SelectQuery) *bun.SelectQuery { return q })
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
@@ -155,7 +156,7 @@ func (r *payCodeRepository) SelectOptions(
 	req *driverpayports.PayCodeSelectOptionsRequest,
 ) (*pagination.ListResult[*driverpay.PayCode], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driverpay.PayCode], error) {
-		cols := buncolgen.PayCodeColumns
+		cols := driverpaycol.PayCodeColumns
 		return dbhelper.SelectOptions[*driverpay.PayCode](
 			ctx,
 			r.db.DBForContext(ctx),

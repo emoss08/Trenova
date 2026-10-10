@@ -2,11 +2,14 @@
 
 package shipmentbrief
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentbriefcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Brief].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.BriefFieldMap] instead of parsing struct tags via reflection.
+// the generated [shipmentbriefcol.BriefFieldMap] instead of parsing struct tags via reflection.
 func (e *Brief) GetStaticFieldMap() map[string]string {
-	return buncolgen.BriefFieldMap
+	return shipmentbriefcol.BriefFieldMap
 }

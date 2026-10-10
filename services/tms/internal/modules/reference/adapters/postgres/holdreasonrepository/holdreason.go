@@ -1,6 +1,7 @@
 package holdreasonrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/holdreasoncol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
@@ -85,7 +86,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.HoldReasonTable.Alias,
+		holdreasoncol.HoldReasonTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*holdreason.HoldReason)(nil),
@@ -98,7 +99,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.HoldReasonTable.Alias,
+		holdreasoncol.HoldReasonTable.Alias,
 		req.Filter,
 		(*holdreason.HoldReason)(nil),
 	)
@@ -106,7 +107,7 @@ func (r *repository) applyTotalCountFilters(
 
 func applyHoldReasonColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.HoldReasonTable.All())
+		return q.ColumnExpr(holdreasoncol.HoldReasonTable.All())
 	}
 
 	return q.Column(columns...)

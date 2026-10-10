@@ -2,6 +2,7 @@
 package editransferrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -43,7 +44,7 @@ func (r *repository) GetInboundStatusCounts(
 	req ediports.GetEDITransferStatusCountsRequest,
 ) (map[edi.TransferStatus]int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[edi.TransferStatus]int, error) {
-		cols := buncolgen.EDITransferColumns
+		cols := edicol.EDITransferColumns
 		var rows []struct {
 			Status edi.TransferStatus `bun:"status"`
 			Count  int                `bun:"count"`
@@ -77,7 +78,7 @@ func (r *repository) ListInbound(
 ) (*pagination.ListResult[*edi.EDITransfer], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDITransfer], error) {
 		entities := make([]*edi.EDITransfer, 0, req.Filter.Pagination.SafeLimit())
-		cols := buncolgen.EDITransferColumns
+		cols := edicol.EDITransferColumns
 
 		total, err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -105,7 +106,7 @@ func (r *repository) ListOutbound(
 ) (*pagination.ListResult[*edi.EDITransfer], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDITransfer], error) {
 		entities := make([]*edi.EDITransfer, 0, req.Filter.Pagination.SafeLimit())
-		cols := buncolgen.EDITransferColumns
+		cols := edicol.EDITransferColumns
 
 		total, err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -134,7 +135,7 @@ func (r *repository) GetTransferByID(
 ) (*edi.EDITransfer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDITransfer, error) {
 		entity := new(edi.EDITransfer)
-		cols := buncolgen.EDITransferColumns
+		cols := edicol.EDITransferColumns
 		query := r.db.DBForContext(ctx).NewSelect().Model(entity).Where(cols.ID.Eq(), req.ID)
 
 		query = applyTransferTenantFilter(query, req.TenantInfo, req.Direction)
@@ -153,8 +154,8 @@ func (r *repository) GetTransfersByIDs(
 ) ([]*edi.EDITransfer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDITransfer, error) {
 		entities := make([]*edi.EDITransfer, 0, len(req.TransferIDs))
-		cols := buncolgen.EDITransferColumns
-		rel := buncolgen.EDITransferRelations
+		cols := edicol.EDITransferColumns
+		rel := edicol.EDITransferRelations
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -180,8 +181,8 @@ func (r *repository) SelectOptions(
 ) (*pagination.ListResult[*edi.EDITransfer], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDITransfer], error) {
 		entities := make([]*edi.EDITransfer, 0, req.SelectQueryRequest.Pagination.SafeLimit())
-		cols := buncolgen.EDITransferColumns
-		rel := buncolgen.EDITransferRelations
+		cols := edicol.EDITransferColumns
+		rel := edicol.EDITransferRelations
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
@@ -220,7 +221,7 @@ func (r *repository) GetTransferForUpdate(
 ) (*edi.EDITransfer, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDITransfer, error) {
 		entity := new(edi.EDITransfer)
-		cols := buncolgen.EDITransferColumns
+		cols := edicol.EDITransferColumns
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
@@ -242,14 +243,14 @@ func inboundFileMessages(
 	fileID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) *bun.SelectQuery {
-	cols := buncolgen.EDIMessageColumns
+	cols := edicol.EDIMessageColumns
 
 	return db.NewSelect().
 		Model((*edi.EDIMessage)(nil)).
 		ColumnExpr(cols.ID.Qualified()).
 		Where(cols.InboundFileID.Eq(), fileID).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.EDIMessageScopeTenant(sq, tenantInfo)
+			return edicol.EDIMessageScopeTenant(sq, tenantInfo)
 		})
 }
 
@@ -262,7 +263,7 @@ func applyTransferTenantFilter(
 	tenantInfo pagination.TenantInfo,
 	direction string,
 ) *bun.SelectQuery {
-	cols := buncolgen.EDITransferColumns
+	cols := edicol.EDITransferColumns
 
 	switch direction {
 	case "inbound":
@@ -295,7 +296,7 @@ func (r *repository) GetActionableInboundTransferByExternalReference(
 ) (*edi.EDITransfer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDITransfer, error) {
 		entity := new(edi.EDITransfer)
-		cols := buncolgen.EDITransferColumns
+		cols := edicol.EDITransferColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -347,7 +348,7 @@ func (r *repository) UpdateTransfer(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDITransfer, error) {
 		ov := entity.Version
 		entity.Version++
-		cols := buncolgen.EDITransferColumns
+		cols := edicol.EDITransferColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -377,7 +378,7 @@ func (r *repository) SetApprovalWorkflowRunID(
 ) (*edi.EDITransfer, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDITransfer, error) {
 		entity := new(edi.EDITransfer)
-		cols := buncolgen.EDITransferColumns
+		cols := edicol.EDITransferColumns
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
@@ -427,7 +428,7 @@ func (r *repository) listCursor(
 			}
 			if req.InboundFileID.IsNotNil() {
 				sq = sq.Where(
-					buncolgen.EDITransferColumns.InboundMessageID.In(),
+					edicol.EDITransferColumns.InboundMessageID.In(),
 					inboundFileMessages(dba, req.InboundFileID, req.Filter.TenantInfo),
 				)
 			}
@@ -452,11 +453,11 @@ func (r *repository) listCursor(
 			Cursor:     req.Cursor,
 			TotalCount: totalCount,
 			Query: func(entities *[]*edi.EDITransfer) *bun.SelectQuery {
-				rel := buncolgen.EDITransferRelations
+				rel := edicol.EDITransferRelations
 				return dba.
 					NewSelect().
 					Model(entities).
-					ColumnExpr(buncolgen.EDITransferTable.All()).
+					ColumnExpr(edicol.EDITransferTable.All()).
 					Relation(rel.SourcePartner).
 					Relation(rel.TargetPartner)
 			},

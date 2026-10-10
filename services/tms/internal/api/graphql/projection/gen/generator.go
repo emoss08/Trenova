@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"slices"
 	"sort"
 	"strconv"
@@ -351,9 +352,10 @@ func generate(data discovery) ([]byte, error) {
 		return nil, fmt.Errorf("executing template: %w", err)
 	}
 
-	formatted, err := format.Source(buf.Bytes())
+	source := bytes.Replace(buf.Bytes(), []byte(specsImportPlaceholder), []byte(columnImports(specs)), 1)
+	formatted, err := format.Source(source)
 	if err != nil {
-		return nil, fmt.Errorf("formatting generated specs: %w\n%s", err, buf.String())
+		return nil, fmt.Errorf("formatting generated specs: %w\n%s", err, string(source))
 	}
 
 	return formatted, nil
@@ -1319,7 +1321,7 @@ func loadFieldMaps(root string) (map[string]fieldMapRegistration, error) {
 	fieldMaps := map[string]fieldMapRegistration{}
 	fset := token.NewFileSet()
 
-	matches, err := filepath.Glob(filepath.Join(root, "*_gen.go"))
+	matches, err := filepath.Glob(filepath.Join(root, "*", "*_gen.go"))
 	if err != nil {
 		return nil, fmt.Errorf("globbing buncolgen files: %w", err)
 	}
@@ -1340,7 +1342,7 @@ func loadFieldMaps(root string) (map[string]fieldMapRegistration, error) {
 				if !ok {
 					continue
 				}
-				parseFieldMapSpec(fieldMaps, valueSpec)
+				parseFieldMapSpec(fieldMaps, valueSpec, file.Name.Name)
 				parseRelationsSpec(fieldMaps, valueSpec)
 			}
 		}
@@ -1349,7 +1351,11 @@ func loadFieldMaps(root string) (map[string]fieldMapRegistration, error) {
 	return fieldMaps, nil
 }
 
-func parseFieldMapSpec(registrations map[string]fieldMapRegistration, spec *ast.ValueSpec) {
+func parseFieldMapSpec(
+	registrations map[string]fieldMapRegistration,
+	spec *ast.ValueSpec,
+	packageName string,
+) {
 	for i, name := range spec.Names {
 		if !strings.HasSuffix(name.Name, "FieldMap") || i >= len(spec.Values) {
 			continue
@@ -1363,7 +1369,7 @@ func parseFieldMapSpec(registrations map[string]fieldMapRegistration, spec *ast.
 		current := registrations[entity]
 		current.EntityName = entity
 		current.Values = values
-		current.GoExpression = "buncolgen." + name.Name
+		current.GoExpression = packageName + "." + name.Name
 		if current.Relations == nil {
 			current.Relations = map[string]string{}
 		}
@@ -1479,4 +1485,34 @@ func isExported(name string) bool {
 
 func quote(value string) string {
 	return fmt.Sprintf("%q", value)
+}
+
+const (
+	specsImportPlaceholder = "import \"github.com/emoss08/trenova/pkg/buncolgen\""
+	columnsImportRoot      = "github.com/emoss08/trenova/pkg/buncolgen/"
+)
+
+var columnsFieldMap = regexp.MustCompile(`^(\w+col)\.\w+FieldMap$`)
+
+func columnImports(specs []generatedSpec) string {
+	packages := map[string]struct{}{}
+	for _, spec := range specs {
+		if match := columnsFieldMap.FindStringSubmatch(spec.FieldMap); match != nil {
+			packages[match[1]] = struct{}{}
+		}
+	}
+	names := make([]string, 0, len(packages))
+	for name := range packages {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	var b strings.Builder
+	b.WriteString("import (\n")
+	for _, name := range names {
+		fmt.Fprintf(&b, "\t%q\n", columnsImportRoot+name)
+	}
+	b.WriteString(")")
+
+	return b.String()
 }

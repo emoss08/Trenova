@@ -1,6 +1,7 @@
 package driversettlementrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
 	"context"
 	"fmt"
 
@@ -106,7 +107,7 @@ func (r *payEventRepository) ListConnection(
 			Query: func(entities *[]*driversettlement.PayEvent) *bun.SelectQuery {
 				return dba.NewSelect().
 					Model(entities).
-					ColumnExpr(buncolgen.PayEventTable.All()).
+					ColumnExpr(driversettlementcol.PayEventTable.All()).
 					Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q })
 			},
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
@@ -175,13 +176,13 @@ func (r *payEventRepository) ListAccruedForWorker(
 	req *driversettlementports.ListAccruedPayEventsRequest,
 ) ([]*driversettlement.PayEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driversettlement.PayEvent, error) {
-		cols := buncolgen.PayEventColumns
+		cols := driversettlementcol.PayEventColumns
 		items := make([]*driversettlement.PayEvent, 0)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&items).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.PayEventScopeTenant(sq, req.TenantInfo).
+				sq = driversettlementcol.PayEventScopeTenant(sq, req.TenantInfo).
 					Where(cols.WorkerID.Eq(), req.WorkerID).
 					Where(cols.OnHold.Eq(), false).
 					WhereGroup(" AND ", func(status *bun.SelectQuery) *bun.SelectQuery {
@@ -313,13 +314,13 @@ func (r *payEventRepository) ListByMovesForWorker(
 		if len(moveIDs) == 0 {
 			return []*driversettlement.PayEvent{}, nil
 		}
-		cols := buncolgen.PayEventColumns
+		cols := driversettlementcol.PayEventColumns
 		items := make([]*driversettlement.PayEvent, 0, len(moveIDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&items).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.PayEventScopeTenant(sq, tenantInfo).
+				return driversettlementcol.PayEventScopeTenant(sq, tenantInfo).
 					Where(cols.WorkerID.Eq(), workerID).
 					Where(cols.MoveID.In(), bun.List(moveIDs)).
 					Where(cols.Status.NotEq(), driversettlement.PayEventStatusVoided)

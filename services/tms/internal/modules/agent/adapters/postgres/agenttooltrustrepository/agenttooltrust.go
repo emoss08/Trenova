@@ -1,6 +1,7 @@
 package agenttooltrustrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 	"context"
 	"fmt"
 
@@ -83,7 +84,7 @@ func (r *repository) Record(
 			return nil, me
 		}
 
-		cols := buncolgen.ToolTrustColumns
+		cols := agentcol.ToolTrustColumns
 		if _, err := r.db.DBForContext(ctx).
 			NewInsert().
 			Model(entity).
@@ -116,14 +117,14 @@ func (r *repository) ListByDefinition(
 	req agentports.ListToolTrustRequest,
 ) ([]*agent.ToolTrust, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.ToolTrust, error) {
-		cols := buncolgen.ToolTrustColumns
+		cols := agentcol.ToolTrustColumns
 		rows := make([]*agent.ToolTrust, 0)
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&rows).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ToolTrustScopeTenant(sq, req.TenantInfo).
+				return agentcol.ToolTrustScopeTenant(sq, req.TenantInfo).
 					Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
 			}).
 			OrderExpr(cols.ToolName.OrderAsc()).
@@ -150,13 +151,13 @@ func (r *repository) ListByDefinitionIDs(
 			return grouped, nil
 		}
 
-		cols := buncolgen.ToolTrustColumns
+		cols := agentcol.ToolTrustColumns
 		rows := make([]*agent.ToolTrust, 0, len(req.AgentDefinitionIDs))
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&rows).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ToolTrustScopeTenant(sq, req.TenantInfo).
+				return agentcol.ToolTrustScopeTenant(sq, req.TenantInfo).
 					Where(cols.AgentDefinitionID.In(), bun.List(req.AgentDefinitionIDs))
 			}).
 			OrderExpr(cols.ToolName.OrderAsc()).
@@ -185,12 +186,12 @@ func (r *repository) MarkTierChange(
 	req agentports.MarkToolTierChangeRequest,
 ) (*agent.ToolTrust, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.ToolTrust, error) {
-		cols := buncolgen.ToolTrustColumns
+		cols := agentcol.ToolTrustColumns
 		query := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*agent.ToolTrust)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ToolTrustScopeTenantUpdate(uq, req.TenantInfo).
+				return agentcol.ToolTrustScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID).
 					Where(cols.Version.Eq(), req.Version)
 			}).
@@ -221,7 +222,7 @@ func (r *repository) MarkTierChange(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ToolTrustScopeTenant(sq, req.TenantInfo).
+				return agentcol.ToolTrustScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx); err != nil {
@@ -237,13 +238,13 @@ func (r *repository) ListReady(
 	req agentports.ListReadyToolTrustRequest,
 ) ([]*agent.ToolTrust, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.ToolTrust, error) {
-		cols := buncolgen.ToolTrustColumns
+		cols := agentcol.ToolTrustColumns
 		rows := make([]*agent.ToolTrust, 0, req.Limit)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&rows).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ToolTrustScopeTenant(sq, req.TenantInfo).
+				return agentcol.ToolTrustScopeTenant(sq, req.TenantInfo).
 					Where(cols.Streak.Gte(), max(req.MinStreak, 1))
 			}).
 			OrderExpr(cols.Streak.OrderDesc()).

@@ -1,6 +1,7 @@
 package storedmileagerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/storedmileagecol"
 	"context"
 	"strings"
 
@@ -46,17 +47,17 @@ func (r *repository) List(
 ) (*pagination.ListResult[*storedmileage.StoredMileage], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*storedmileage.StoredMileage], error) {
 		entities := make([]*storedmileage.StoredMileage, 0, req.Filter.Pagination.SafeLimit())
-		cols := buncolgen.StoredMileageColumns
+		cols := storedmileagecol.StoredMileageColumns
 		total, err := r.db.DBForContext(ctx).NewSelect().
 			Model(&entities).
 			Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
 				q = querybuilder.ApplyFilters(
 					q,
-					buncolgen.StoredMileageTable.Alias,
+					storedmileagecol.StoredMileageTable.Alias,
 					req.Filter,
 					(*storedmileage.StoredMileage)(nil),
 				)
-				return q.Apply(buncolgen.StoredMileageApplyTenant(req.Filter.TenantInfo)).
+				return q.Apply(storedmileagecol.StoredMileageApplyTenant(req.Filter.TenantInfo)).
 					Limit(req.Filter.Pagination.SafeLimit()).
 					Offset(req.Filter.Pagination.SafeOffset()).
 					Order(cols.LastCalculatedAt.OrderDesc())
@@ -76,7 +77,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.StoredMileageTable.Alias,
+		storedmileagecol.StoredMileageTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*storedmileage.StoredMileage)(nil),
@@ -89,7 +90,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.StoredMileageTable.Alias,
+		storedmileagecol.StoredMileageTable.Alias,
 		req.Filter,
 		(*storedmileage.StoredMileage)(nil),
 	)
@@ -97,7 +98,7 @@ func (r *repository) applyTotalCountFilters(
 
 func applyStoredMileageColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.StoredMileageTable.All())
+		return q.ColumnExpr(storedmileagecol.StoredMileageTable.All())
 	}
 
 	return q.Column(columns...)
@@ -163,11 +164,11 @@ func (r *repository) GetByID(
 ) (*storedmileage.StoredMileage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*storedmileage.StoredMileage, error) {
 		entity := new(storedmileage.StoredMileage)
-		cols := buncolgen.StoredMileageColumns
+		cols := storedmileagecol.StoredMileageColumns
 		err := r.db.DBForContext(ctx).NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.StoredMileageScopeTenant(sq, req.TenantInfo).
+				return storedmileagecol.StoredMileageScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
@@ -184,11 +185,11 @@ func (r *repository) Lookup(
 ) (*storedmileage.StoredMileage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*storedmileage.StoredMileage, error) {
 		entity := new(storedmileage.StoredMileage)
-		cols := buncolgen.StoredMileageColumns
+		cols := storedmileagecol.StoredMileageColumns
 		err := r.db.DBForContext(ctx).NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.StoredMileageScopeTenant(sq, req.TenantInfo).
+				return storedmileagecol.StoredMileageScopeTenant(sq, req.TenantInfo).
 					Where(cols.Status.Eq(), storedmileage.StatusActive).
 					Where(cols.RouteHash.Eq(), req.RouteHash).
 					Where(cols.DistanceUnits.Eq(), req.DistanceUnits).
@@ -222,10 +223,10 @@ func (r *repository) BulkUpsert(
 		for _, entity := range entities {
 			entity.ApplyDefaults()
 		}
-		cols := buncolgen.StoredMileageColumns
+		cols := storedmileagecol.StoredMileageColumns
 		_, err := r.db.DBForContext(ctx).NewInsert().
 			Model(&entities).
-			Column(buncolgen.StoredMileageInsertableColumns...).
+			Column(storedmileagecol.StoredMileageInsertableColumns...).
 			On(storedMileageActiveUpsertConflictClause()).
 			Set(cols.Distance.SetExcluded()).
 			Set(cols.Provider.SetExcluded()).
@@ -246,7 +247,7 @@ func (r *repository) BulkUpsert(
 }
 
 func storedMileageActiveUpsertConflictClause() string {
-	cols := buncolgen.StoredMileageColumns
+	cols := storedmileagecol.StoredMileageColumns
 	conflictColumns := []string{
 		cols.OrganizationID.Bare(),
 		cols.BusinessUnitID.Bare(),
@@ -314,14 +315,14 @@ func (r *repository) IncrementHit(
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		now := timeutils.NowUnix()
-		cols := buncolgen.StoredMileageColumns
+		cols := storedmileagecol.StoredMileageColumns
 		_, err := r.db.DBForContext(ctx).NewUpdate().
 			Model((*storedmileage.StoredMileage)(nil)).
 			Set(cols.HitCount.Inc(1)).
 			Set(cols.LastUsedAt.Set(), now).
 			Set(cols.UpdatedAt.Set(), now).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.StoredMileageScopeTenantUpdate(uq, tenantInfo).
+				return storedmileagecol.StoredMileageScopeTenantUpdate(uq, tenantInfo).
 					Where(cols.ID.Eq(), id)
 			}).
 			Exec(ctx)
@@ -335,13 +336,13 @@ func (r *repository) Deactivate(
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		now := timeutils.NowUnix()
-		cols := buncolgen.StoredMileageColumns
+		cols := storedmileagecol.StoredMileageColumns
 		result, err := r.db.DBForContext(ctx).NewUpdate().
 			Model((*storedmileage.StoredMileage)(nil)).
 			Set(cols.Status.Set(), storedmileage.StatusInactive).
 			Set(cols.UpdatedAt.Set(), now).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.StoredMileageScopeTenantUpdate(uq, req.TenantInfo).
+				return storedmileagecol.StoredMileageScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Exec(ctx)

@@ -1,6 +1,7 @@
 package reportrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/reportcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -61,7 +62,7 @@ func (r *viewRepository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.ReportViewColumns.Version.Eq(), ov).
+			Where(reportcol.ReportViewColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -87,8 +88,8 @@ func (r *viewRepository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ReportViewScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.ReportViewColumns.ID.Eq(), req.ViewID)
+				return reportcol.ReportViewScopeTenant(sq, req.TenantInfo).
+					Where(reportcol.ReportViewColumns.ID.Eq(), req.ViewID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -104,13 +105,13 @@ func (r *viewRepository) List(
 	req *reportports.ListReportViewsRequest,
 ) ([]*report.ReportView, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportView, error) {
-		cols := buncolgen.ReportViewColumns
+		cols := reportcol.ReportViewColumns
 
 		entities := make([]*report.ReportView, 0)
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.ReportViewApplyTenant(req.TenantInfo))
+			Apply(reportcol.ReportViewApplyTenant(req.TenantInfo))
 
 		if !req.DefinitionID.IsNil() {
 			q = q.Where(cols.DefinitionID.Eq(), req.DefinitionID)
@@ -151,7 +152,7 @@ func (r *viewRepository) RecordRun(
 	req *reportports.RecordReportViewRunRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.ReportViewColumns
+		cols := reportcol.ReportViewColumns
 
 		result, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -159,7 +160,7 @@ func (r *viewRepository) RecordRun(
 			Set(cols.LastRunAt.Set(), req.RanAt).
 			Set(cols.RunCount.Inc(1)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ReportViewScopeTenantUpdate(uq, req.TenantInfo).
+				return reportcol.ReportViewScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ViewID)
 			}).
 			Exec(ctx)
@@ -181,8 +182,8 @@ func (r *viewRepository) Delete(
 			NewDelete().
 			Model((*report.ReportView)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.ReportViewScopeTenantDelete(dq, req.TenantInfo).
-					Where(buncolgen.ReportViewColumns.ID.Eq(), req.ViewID)
+				return reportcol.ReportViewScopeTenantDelete(dq, req.TenantInfo).
+					Where(reportcol.ReportViewColumns.ID.Eq(), req.ViewID)
 			}).
 			Exec(ctx)
 		if err != nil {

@@ -1,6 +1,8 @@
 package roleagentgrantrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/permissioncol"
 	"context"
 	"fmt"
 
@@ -46,7 +48,7 @@ func (r *repository) ListGrantedAgentIDs(
 			return []pulid.ID{}, nil
 		}
 
-		cols := buncolgen.RoleAgentGrantColumns
+		cols := permissioncol.RoleAgentGrantColumns
 		ids := make([]pulid.ID, 0, len(req.RoleIDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -77,10 +79,10 @@ func (r *repository) listGrants(
 			NewSelect().
 			Model(&grants).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RoleAgentGrantScopeTenant(sq, tenant).
+				return permissioncol.RoleAgentGrantScopeTenant(sq, tenant).
 					Where(key.In(), bun.List(ids))
 			}).
-			Order(buncolgen.RoleAgentGrantColumns.GrantedAt.OrderAsc()).
+			Order(permissioncol.RoleAgentGrantColumns.GrantedAt.OrderAsc()).
 			Scan(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("list role agent grants: %w", err)
@@ -103,7 +105,7 @@ func (r *repository) ListRolesByAgents(
 		grants, err := r.listGrants(
 			ctx,
 			req.TenantInfo,
-			buncolgen.RoleAgentGrantColumns.AgentDefinitionID,
+			permissioncol.RoleAgentGrantColumns.AgentDefinitionID,
 			req.AgentIDs,
 		)
 		if err != nil {
@@ -119,13 +121,13 @@ func (r *repository) ListRolesByAgents(
 			roleIDs = append(roleIDs, grant.RoleID)
 		}
 
-		roleCols := buncolgen.RoleColumns
+		roleCols := permissioncol.RoleColumns
 		roles := make([]*permission.Role, 0, len(roleIDs))
 		err = r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&roles).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RoleScopeTenant(sq, req.TenantInfo).
+				return permissioncol.RoleScopeTenant(sq, req.TenantInfo).
 					Where(roleCols.ID.In(), bun.List(sliceutils.Dedupe(roleIDs)))
 			}).
 			Order(roleCols.Name.OrderAsc()).
@@ -162,7 +164,7 @@ func (r *repository) ListAgentsByRoles(
 		grants, err := r.listGrants(
 			ctx,
 			req.TenantInfo,
-			buncolgen.RoleAgentGrantColumns.RoleID,
+			permissioncol.RoleAgentGrantColumns.RoleID,
 			req.RoleIDs,
 		)
 		if err != nil {
@@ -178,13 +180,13 @@ func (r *repository) ListAgentsByRoles(
 			agentIDs = append(agentIDs, grant.AgentDefinitionID)
 		}
 
-		definitionCols := buncolgen.DefinitionColumns
+		definitionCols := agentdefinitioncol.DefinitionColumns
 		definitions := make([]*agentdefinition.Definition, 0, len(agentIDs))
 		err = r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&definitions).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DefinitionScopeTenant(sq, req.TenantInfo).
+				return agentdefinitioncol.DefinitionScopeTenant(sq, req.TenantInfo).
 					Where(definitionCols.ID.In(), bun.List(sliceutils.Dedupe(agentIDs)))
 			}).
 			Order(definitionCols.Name.OrderAsc()).
@@ -213,13 +215,13 @@ func (r *repository) ListGrantableRoles(
 	req permissionports.ListGrantableRolesRequest,
 ) ([]*permission.Role, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*permission.Role, error) {
-		cols := buncolgen.RoleColumns
+		cols := permissioncol.RoleColumns
 		roles := make([]*permission.Role, 0, len(req.RoleIDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&roles).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.RoleScopeTenant(sq, req.TenantInfo)
+				sq = permissioncol.RoleScopeTenant(sq, req.TenantInfo)
 				if len(req.RoleIDs) > 0 {
 					sq = sq.Where(cols.ID.In(), bun.List(req.RoleIDs))
 				}
@@ -258,7 +260,7 @@ func (r *repository) replace(
 			Model((*permission.RoleAgentGrant)(nil)).
 			Column(p.varying.Bare()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RoleAgentGrantScopeTenant(sq, p.tenant).
+				return permissioncol.RoleAgentGrantScopeTenant(sq, p.tenant).
 					Where(p.fixed.Eq(), p.fixedID)
 			}).
 			For("UPDATE").
@@ -278,7 +280,7 @@ func (r *repository) replace(
 			_, err = db.NewDelete().
 				Model((*permission.RoleAgentGrant)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return buncolgen.RoleAgentGrantScopeTenantDelete(dq, p.tenant).
+					return permissioncol.RoleAgentGrantScopeTenantDelete(dq, p.tenant).
 						Where(p.fixed.Eq(), p.fixedID).
 						Where(p.varying.In(), bun.List(change.Removed))
 				}).
@@ -293,7 +295,7 @@ func (r *repository) replace(
 			for _, id := range change.Added {
 				rows = append(rows, p.grant(id))
 			}
-			cols := buncolgen.RoleAgentGrantColumns
+			cols := permissioncol.RoleAgentGrantColumns
 			_, err = db.NewInsert().
 				Model(&rows).
 				On("CONFLICT (" + cols.RoleID.Bare() + ", " + cols.AgentDefinitionID.Bare() +
@@ -312,7 +314,7 @@ func (r *repository) ReplaceForAgent(
 	ctx context.Context,
 	req permissionports.ReplaceAgentGrantsRequest,
 ) (permissionports.GrantChange, error) {
-	cols := buncolgen.RoleAgentGrantColumns
+	cols := permissioncol.RoleAgentGrantColumns
 	change, err := r.replace(ctx, replaceParams{
 		tenant:  req.TenantInfo,
 		fixed:   cols.AgentDefinitionID,
@@ -341,7 +343,7 @@ func (r *repository) ReplaceForRole(
 	ctx context.Context,
 	req permissionports.ReplaceRoleGrantsRequest,
 ) (permissionports.GrantChange, error) {
-	cols := buncolgen.RoleAgentGrantColumns
+	cols := permissioncol.RoleAgentGrantColumns
 	change, err := r.replace(ctx, replaceParams{
 		tenant:  req.TenantInfo,
 		fixed:   cols.RoleID,

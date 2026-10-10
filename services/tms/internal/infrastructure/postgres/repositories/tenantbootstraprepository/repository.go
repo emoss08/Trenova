@@ -1,6 +1,7 @@
 package tenantbootstraprepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/usstatecol"
 	"context"
 	"errors"
 	"fmt"
@@ -127,7 +128,7 @@ func (r *repository) Bootstrap(
 }
 
 func (r *repository) resolveState(ctx context.Context, abbreviation string) (pulid.ID, error) {
-	cols := buncolgen.UsStateColumns
+	cols := usstatecol.UsStateColumns
 	state := new(usstate.UsState)
 	err := r.db.DBForContext(ctx).
 		NewSelect().

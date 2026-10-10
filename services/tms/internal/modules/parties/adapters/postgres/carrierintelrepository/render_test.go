@@ -1,6 +1,7 @@
 package carrierintelrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
 	"strings"
 	"testing"
 
@@ -88,7 +89,7 @@ func TestInsertIgnoreDuplicateEventsTargetsTheFingerprintIndex(t *testing.T) {
 func TestDefaultControlInsertWritesFalseBooleans(t *testing.T) {
 	t.Parallel()
 
-	cols := buncolgen.CarrierIntelControlColumns
+	cols := carrierintelcol.CarrierIntelControlColumns
 	falseColumns := []string{
 		cols.IncludeOpenTenders.Bare(),
 		cols.ExclusiveWatchlist.Bare(),

@@ -1,6 +1,9 @@
 package tenderrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/rateconfirmationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tendercol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
@@ -47,7 +50,7 @@ func New(p Params) tenderports.TenderRepository {
 
 func (r *repository) offersRelation(q *bun.SelectQuery) *bun.SelectQuery {
 	q = q.Relation("Offers", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.Order(buncolgen.TenderOfferColumns.Rank.OrderAsc())
+		return sq.Order(tendercol.TenderOfferColumns.Rank.OrderAsc())
 	})
 	return q.Relation("Offers.Carrier")
 }
@@ -94,7 +97,7 @@ func (r *repository) GetByID(
 	req tenderports.GetTenderByIDRequest,
 ) (*tender.Tender, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tender.Tender, error) {
-		cols := buncolgen.TenderColumns
+		cols := tendercol.TenderColumns
 		entity := new(tender.Tender)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -106,7 +109,7 @@ func (r *repository) GetByID(
 				return sq
 			}).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TenderScopeTenant(sq, req.TenantInfo).
+				return tendercol.TenderScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.TenderID)
 			}).
 			Scan(ctx)
@@ -124,14 +127,14 @@ func (r *repository) GetLiveByMoveID(
 	req tenderports.GetLiveTenderByMoveRequest,
 ) (*tender.Tender, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tender.Tender, error) {
-		cols := buncolgen.TenderColumns
+		cols := tendercol.TenderColumns
 		entity := new(tender.Tender)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			Apply(r.offersRelation).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TenderScopeTenant(sq, req.TenantInfo).
+				return tendercol.TenderScopeTenant(sq, req.TenantInfo).
 					Where(cols.ShipmentMoveID.Eq(), req.MoveID).
 					Where(cols.Status.In(), bun.List([]tender.Status{
 						tender.StatusActive,
@@ -160,14 +163,14 @@ func (r *repository) ListLiveByMoveIDs(
 			return []*tender.Tender{}, nil
 		}
 
-		cols := buncolgen.TenderColumns
+		cols := tendercol.TenderColumns
 		entities := make([]*tender.Tender, 0, len(req.MoveIDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			Apply(r.offersRelation).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TenderScopeTenant(sq, req.TenantInfo).
+				return tendercol.TenderScopeTenant(sq, req.TenantInfo).
 					Where(cols.ShipmentMoveID.In(), bun.List(req.MoveIDs)).
 					Where(cols.Status.In(), bun.List([]tender.Status{
 						tender.StatusActive,
@@ -189,7 +192,7 @@ func (r *repository) GetOfferByID(
 	req tenderports.GetTenderOfferByIDRequest,
 ) (*tender.TenderOffer, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tender.TenderOffer, error) {
-		cols := buncolgen.TenderOfferColumns
+		cols := tendercol.TenderOfferColumns
 		entity := new(tender.TenderOffer)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -202,7 +205,7 @@ func (r *repository) GetOfferByID(
 				return sq
 			}).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TenderOfferScopeTenant(sq, req.TenantInfo).
+				return tendercol.TenderOfferScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.OfferID)
 			}).
 			Scan(ctx)
@@ -228,23 +231,23 @@ func (r *repository) GetAcceptedOfferForPartnerReference(
 			return nil, errortypes.NewNotFoundError("Tender offer")
 		}
 
-		offerCols := buncolgen.TenderOfferColumns
-		tenderCols := buncolgen.TenderColumns
-		shipmentCols := buncolgen.ShipmentColumns
+		offerCols := tendercol.TenderOfferColumns
+		tenderCols := tendercol.TenderColumns
+		shipmentCols := shipmentcol.ShipmentColumns
 		entity := new(tender.TenderOffer)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Relation(buncolgen.TenderOfferRelations.Tender).
-			Relation(buncolgen.TenderOfferRelations.Carrier).
-			Join("JOIN "+buncolgen.TenderTable.Name+" AS "+buncolgen.TenderTable.Alias+
+			Relation(tendercol.TenderOfferRelations.Tender).
+			Relation(tendercol.TenderOfferRelations.Carrier).
+			Join("JOIN "+tendercol.TenderTable.Name+" AS "+tendercol.TenderTable.Alias+
 				" ON "+tenderCols.ID.EqColumn(offerCols.TenderID)).
-			Join("JOIN "+buncolgen.ShipmentTable.Name+" AS "+buncolgen.ShipmentTable.Alias+
+			Join("JOIN "+shipmentcol.ShipmentTable.Name+" AS "+shipmentcol.ShipmentTable.Alias+
 				" ON "+shipmentCols.ID.EqColumn(tenderCols.ShipmentID)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.TenderOfferScopeTenant(sq, req.TenantInfo)
-				sq = buncolgen.TenderScopeTenant(sq, req.TenantInfo)
-				sq = buncolgen.ShipmentScopeTenant(sq, req.TenantInfo)
+				sq = tendercol.TenderOfferScopeTenant(sq, req.TenantInfo)
+				sq = tendercol.TenderScopeTenant(sq, req.TenantInfo)
+				sq = shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo)
 				return sq.
 					Where(offerCols.EDIPartnerID.Eq(), req.PartnerID).
 					Where(offerCols.Status.Eq(), tender.OfferStatusAccepted).
@@ -281,14 +284,14 @@ func (r *repository) ListByShipment(
 	req tenderports.ListTendersByShipmentRequest,
 ) ([]*tender.Tender, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tender.Tender, error) {
-		cols := buncolgen.TenderColumns
+		cols := tendercol.TenderColumns
 		entities := make([]*tender.Tender, 0, 4)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			Apply(r.offersRelation).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TenderScopeTenant(sq, req.TenantInfo).
+				return tendercol.TenderScopeTenant(sq, req.TenantInfo).
 					Where(cols.ShipmentID.Eq(), req.ShipmentID)
 			}).
 			Order(cols.CreatedAt.OrderDesc()).
@@ -323,7 +326,7 @@ func (r *repository) ListForSweep(
 			NewSelect().
 			Model(&entities).
 			Apply(r.offersRelation).
-			Where(buncolgen.TenderColumns.Status.Eq(), tender.StatusActive).
+			Where(tendercol.TenderColumns.Status.Eq(), tender.StatusActive).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				// Arm 1: the current offer is overdue. Arm 2: no offer is in
 				// flight at all past the grace window — a workflow that died
@@ -350,7 +353,7 @@ func (r *repository) ListForSweep(
 
 		if req.TenantInfo != nil {
 			q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TenderScopeTenant(sq, *req.TenantInfo)
+				return tendercol.TenderScopeTenant(sq, *req.TenantInfo)
 			})
 		}
 
@@ -370,14 +373,14 @@ func (r *repository) SetWorkflowID(
 	workflowID string,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.TenderColumns
+		cols := tendercol.TenderColumns
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*tender.Tender)(nil)).
 			Set("workflow_id = ?", workflowID).
 			Set("updated_at = ?", timeutils.NowUnix()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.TenderScopeTenantUpdate(uq, tenantInfo).
+				return tendercol.TenderScopeTenantUpdate(uq, tenantInfo).
 					Where(cols.ID.Eq(), tenderID)
 			}).
 			Exec(ctx)
@@ -398,7 +401,7 @@ func (r *repository) UpdateTenderStatus(
 	req *tenderports.UpdateTenderStatusRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := buncolgen.TenderColumns
+		cols := tendercol.TenderColumns
 		now := timeutils.NowUnix()
 
 		q := r.db.DBForContext(ctx).
@@ -432,7 +435,7 @@ func (r *repository) UpdateTenderStatus(
 
 		results, err := q.
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.TenderScopeTenantUpdate(uq, req.TenantInfo).
+				return tendercol.TenderScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.TenderID).
 					Where(cols.Status.In(), bun.List(req.FromStatus))
 			}).
@@ -458,7 +461,7 @@ func (r *repository) UpdateOfferStatus(
 	req *tenderports.UpdateOfferStatusRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := buncolgen.TenderOfferColumns
+		cols := tendercol.TenderOfferColumns
 		now := timeutils.NowUnix()
 
 		q := r.db.DBForContext(ctx).
@@ -492,7 +495,7 @@ func (r *repository) UpdateOfferStatus(
 
 		results, err := q.
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.TenderOfferScopeTenantUpdate(uq, req.TenantInfo).
+				return tendercol.TenderOfferScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.OfferID).
 					Where(cols.Status.In(), bun.List(req.FromStatus))
 			}).
@@ -516,7 +519,7 @@ func (r *repository) BulkUpdateOfferStatus(
 	req *tenderports.BulkOfferStatusRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := buncolgen.TenderOfferColumns
+		cols := tendercol.TenderOfferColumns
 
 		q := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -525,7 +528,7 @@ func (r *repository) BulkUpdateOfferStatus(
 			Set("version = version + 1").
 			Set("updated_at = ?", timeutils.NowUnix()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				uq = buncolgen.TenderOfferScopeTenantUpdate(uq, req.TenantInfo).
+				uq = tendercol.TenderOfferScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.TenderID.Eq(), req.TenderID).
 					Where(cols.Status.In(), bun.List(req.FromStatus))
 				if !req.ExceptID.IsNil() {
@@ -551,7 +554,7 @@ func (r *repository) RecordLateOfferResponse(
 	req *tenderports.RecordLateOfferResponseRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.TenderOfferColumns
+		cols := tendercol.TenderOfferColumns
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*tender.TenderOffer)(nil)).
@@ -560,7 +563,7 @@ func (r *repository) RecordLateOfferResponse(
 			Set("response_source = ?", req.Source).
 			Set("updated_at = ?", timeutils.NowUnix()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.TenderOfferScopeTenantUpdate(uq, req.TenantInfo).
+				return tendercol.TenderOfferScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.OfferID)
 			}).
 			Exec(ctx)
@@ -598,7 +601,7 @@ func (r *repository) GetTokenByHash(
 ) (*tender.TenderOfferToken, error) {
 	ctx = dbscope.WithSystem(ctx, "resolve a public tender offer link before its tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tender.TenderOfferToken, error) {
-		cols := buncolgen.TenderOfferTokenColumns
+		cols := tendercol.TenderOfferTokenColumns
 		entity := new(tender.TenderOfferToken)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -624,14 +627,14 @@ func (r *repository) MarkTokenUsed(
 	req *tenderports.MarkTokenUsedRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := buncolgen.TenderOfferTokenColumns
+		cols := tendercol.TenderOfferTokenColumns
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*tender.TenderOfferToken)(nil)).
 			Set("used_at = ?", req.UsedAt).
 			Set("updated_at = ?", timeutils.NowUnix()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.TenderOfferTokenScopeTenantUpdate(uq, req.TenantInfo).
+				return tendercol.TenderOfferTokenScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.TokenID).
 					Where(cols.UsedAt.IsNull()).
 					Where(cols.RevokedAt.IsNull())
@@ -658,14 +661,14 @@ func (r *repository) RevokeTokensForOffer(
 	revokedAt int64,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.TenderOfferTokenColumns
+		cols := tendercol.TenderOfferTokenColumns
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*tender.TenderOfferToken)(nil)).
 			Set("revoked_at = ?", revokedAt).
 			Set("updated_at = ?", timeutils.NowUnix()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.TenderOfferTokenScopeTenantUpdate(uq, tenantInfo).
+				return tendercol.TenderOfferTokenScopeTenantUpdate(uq, tenantInfo).
 					Where(cols.TenderOfferID.Eq(), offerID).
 					Where(cols.RevokedAt.IsNull()).
 					Where(cols.UsedAt.IsNull())
@@ -695,10 +698,10 @@ func (r *repository) ListAcceptedMissingRateConfirmation(
 			limit = defaultSweepLimit
 		}
 
-		tenderCols := buncolgen.TenderColumns
-		offerCols := buncolgen.TenderOfferColumns
-		assignCols := buncolgen.CarrierAssignmentColumns
-		rateConCols := buncolgen.RateConfirmationColumns
+		tenderCols := tendercol.TenderColumns
+		offerCols := tendercol.TenderOfferColumns
+		assignCols := shipmentcol.CarrierAssignmentColumns
+		rateConCols := rateconfirmationcol.RateConfirmationColumns
 		dba := r.db.DBForContext(ctx)
 
 		acceptedOfferCarrier := dba.NewSelect().
@@ -761,7 +764,7 @@ func (r *repository) PurgeDeadOfferTokens(
 			limit = defaultTokenPurgeLimit
 		}
 
-		cols := buncolgen.TenderOfferTokenColumns
+		cols := tendercol.TenderOfferTokenColumns
 		deadAt := buncolgen.Expr(
 			"COALESCE({0}, {1}, {2})", cols.UsedAt, cols.RevokedAt, cols.ExpiresAt,
 		)

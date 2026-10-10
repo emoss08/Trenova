@@ -1,6 +1,9 @@
 package development
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/fuelpurchasecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/iftacol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
 	"context"
 	"fmt"
 	"time"
@@ -119,8 +122,8 @@ func (s *FuelSpendIFTASeed) Run(ctx context.Context, tx bun.Tx) error {
 
 			exists, err := tx.NewSelect().
 				Model((*fuelpurchase.FuelCard)(nil)).
-				Where(buncolgen.FuelCardColumns.OrganizationID.Eq(), org.ID).
-				Where(buncolgen.FuelCardColumns.BusinessUnitID.Eq(), org.BusinessUnitID).
+				Where(fuelpurchasecol.FuelCardColumns.OrganizationID.Eq(), org.ID).
+				Where(fuelpurchasecol.FuelCardColumns.BusinessUnitID.Eq(), org.BusinessUnitID).
 				Exists(ctx)
 			if err != nil {
 				return fmt.Errorf("check existing fuel cards: %w", err)
@@ -176,7 +179,7 @@ func (s *FuelSpendIFTASeed) loadTractors(
 	refs *fuelSpendSeedRefs,
 ) error {
 	tractors := make([]*tractor.Tractor, 0, fuelSpendSeedTractorCount)
-	cols := buncolgen.TractorColumns
+	cols := tractorcol.TractorColumns
 	if err := tx.NewSelect().
 		Model(&tractors).
 		Where(cols.OrganizationID.Eq(), refs.orgID).
@@ -203,7 +206,7 @@ func (s *FuelSpendIFTASeed) loadJurisdictions(
 		fuelSpendJurisdictionON,
 	}
 	rows := make([]*ifta.Jurisdiction, 0, len(wanted))
-	cols := buncolgen.JurisdictionColumns
+	cols := iftacol.JurisdictionColumns
 	if err := tx.NewSelect().
 		Model(&rows).
 		Where(cols.CountryCode.In(), bun.List([]string{ifta.CountryCodeUS, ifta.CountryCodeCA})).

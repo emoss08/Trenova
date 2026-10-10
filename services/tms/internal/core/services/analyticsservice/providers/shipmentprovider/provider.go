@@ -2,6 +2,7 @@
 package shipmentprovider
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 	"fmt"
 	"math"
@@ -1067,7 +1068,7 @@ func (p *Provider) getLaneHeatmap(
 		windowStart := now - int64(windowDays)*24*60*60
 
 		rows := make([]laneStateRow, 0)
-		cols := buncolgen.ShipmentColumns
+		cols := shipmentcol.ShipmentColumns
 		err := lanequery.New(p.db.DBForContext(ctx), lanequery.Options{
 			Tenant: &pagination.TenantInfo{OrgID: orgID, BuID: buID},
 			ShipmentFilter: func(sq *bun.SelectQuery) *bun.SelectQuery {

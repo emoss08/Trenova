@@ -1,6 +1,10 @@
 package permitrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/holdreasoncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/jurisdictionrulecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/permitcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
@@ -46,15 +50,15 @@ func (r *repository) ListByShipment(
 	req *permitports.ListPermitsRequest,
 ) ([]*permit.Permit, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*permit.Permit, error) {
-		cols := buncolgen.PermitColumns
+		cols := permitcol.PermitColumns
 		entities := make([]*permit.Permit, 0, 8)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Relation(buncolgen.PermitRelations.State).
+			Relation(permitcol.PermitRelations.State).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.PermitScopeTenant(sq, req.TenantInfo).
+				return permitcol.PermitScopeTenant(sq, req.TenantInfo).
 					Where(cols.ShipmentID.Eq(), req.ShipmentID)
 			})
 
@@ -81,10 +85,10 @@ func (r *repository) GetByID(
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Relation(buncolgen.PermitRelations.State).
+			Relation(permitcol.PermitRelations.State).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.PermitScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.PermitColumns.ID.Eq(), req.PermitID)
+				return permitcol.PermitScopeTenant(sq, req.TenantInfo).
+					Where(permitcol.PermitColumns.ID.Eq(), req.PermitID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -148,15 +152,15 @@ func (r *repository) ListRequirements(
 	req *permitports.ListRequirementsRequest,
 ) ([]*permit.Requirement, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*permit.Requirement, error) {
-		cols := buncolgen.RequirementColumns
+		cols := permitcol.RequirementColumns
 		entities := make([]*permit.Requirement, 0, 8)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Relation(buncolgen.RequirementRelations.State).
+			Relation(permitcol.RequirementRelations.State).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RequirementScopeTenant(sq, req.TenantInfo).
+				return permitcol.RequirementScopeTenant(sq, req.TenantInfo).
 					Where(cols.ShipmentID.Eq(), req.ShipmentID)
 			})
 
@@ -189,14 +193,14 @@ func (r *repository) ReplaceForShipment(
 	req *permitports.ReplaceRequirementsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.RequirementColumns
+		cols := permitcol.RequirementColumns
 
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			if _, dErr := r.db.DBForContext(c).
 				NewUpdate().
 				Model((*permit.Requirement)(nil)).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return buncolgen.RequirementScopeTenantUpdate(uq, req.TenantInfo).
+					return permitcol.RequirementScopeTenantUpdate(uq, req.TenantInfo).
 						Where(cols.ShipmentID.Eq(), req.ShipmentID).
 						Where(cols.Status.NotEq(), permit.RequirementSuperseded)
 				}).
@@ -245,7 +249,7 @@ func (r *repository) ResolveRouteStates(
 			return map[pulid.ID]pulid.ID{}, nil
 		}
 
-		cols := buncolgen.LocationColumns
+		cols := locationcol.LocationColumns
 		rows := make([]*location.Location, 0, len(req.LocationIDs))
 
 		err := r.db.DBForContext(ctx).
@@ -253,7 +257,7 @@ func (r *repository) ResolveRouteStates(
 			Model(&rows).
 			Column(cols.ID.Bare(), cols.StateID.Bare()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.LocationScopeTenant(sq, req.TenantInfo).
+				return locationcol.LocationScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.In(), bun.List(req.LocationIDs))
 			}).
 			Scan(ctx)
@@ -278,7 +282,7 @@ func (r *repository) WaiveRequirement(
 	req *permitports.WaiveRequirementRepoRequest,
 ) (*permit.Requirement, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*permit.Requirement, error) {
-		cols := buncolgen.RequirementColumns
+		cols := permitcol.RequirementColumns
 		now := timeutils.NowUnix()
 		waivedBy := req.WaivedByID
 
@@ -288,7 +292,7 @@ func (r *repository) WaiveRequirement(
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.RequirementScopeTenantUpdate(uq, req.TenantInfo).
+				return permitcol.RequirementScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.RequirementID)
 			}).
 			Set(cols.Status.Set(), permit.RequirementWaived).
@@ -318,9 +322,9 @@ func (r *repository) FindHoldReasonByCode(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.HoldReasonScopeTenant(sq, tenantInfo).
-					Where(buncolgen.HoldReasonColumns.Code.Eq(), code).
-					Where(buncolgen.HoldReasonColumns.Active.IsTrue())
+				return holdreasoncol.HoldReasonScopeTenant(sq, tenantInfo).
+					Where(holdreasoncol.HoldReasonColumns.Code.Eq(), code).
+					Where(holdreasoncol.HoldReasonColumns.Active.IsTrue())
 			}).
 			Limit(1).
 			Scan(ctx)
@@ -362,14 +366,14 @@ func (r *jurisdictionRepository) GetActiveByStateIDs(
 			return nil, nil
 		}
 
-		cols := buncolgen.JurisdictionRuleColumns
+		cols := jurisdictionrulecol.JurisdictionRuleColumns
 		entities := make([]*jurisdictionrule.JurisdictionRule, 0, len(req.StateIDs))
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Relation(buncolgen.JurisdictionRuleRelations.State).
-			Relation(buncolgen.JurisdictionRuleRelations.EscortThresholds).
+			Relation(jurisdictionrulecol.JurisdictionRuleRelations.State).
+			Relation(jurisdictionrulecol.JurisdictionRuleRelations.EscortThresholds).
 			Where(cols.Status.Eq(), jurisdictionrule.StatusActive).
 			Where(cols.StateID.In(), bun.List(req.StateIDs)).
 			Scan(ctx)
@@ -393,7 +397,7 @@ func (r *jurisdictionRepository) GetOverrides(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.OverrideScopeTenant(sq, tenantInfo)
+				return jurisdictionrulecol.OverrideScopeTenant(sq, tenantInfo)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -410,13 +414,13 @@ func (r *jurisdictionRepository) List(
 	req *permitports.ListJurisdictionRulesRequest,
 ) (*pagination.ListResult[*jurisdictionrule.JurisdictionRule], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*jurisdictionrule.JurisdictionRule], error) {
-		cols := buncolgen.JurisdictionRuleColumns
+		cols := jurisdictionrulecol.JurisdictionRuleColumns
 		entities := make([]*jurisdictionrule.JurisdictionRule, 0, req.Filter.Pagination.SafeLimit())
 
 		total, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Relation(buncolgen.JurisdictionRuleRelations.State).
+			Relation(jurisdictionrulecol.JurisdictionRuleRelations.State).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 				if req.VerificationState != "" {
 					sq = sq.Where(cols.VerificationState.Eq(), req.VerificationState)
@@ -451,11 +455,11 @@ func (r *jurisdictionRepository) GetByID(
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Relation(buncolgen.JurisdictionRuleRelations.State).
-			Where(buncolgen.JurisdictionRuleColumns.ID.Eq(), req.RuleID)
+			Relation(jurisdictionrulecol.JurisdictionRuleRelations.State).
+			Where(jurisdictionrulecol.JurisdictionRuleColumns.ID.Eq(), req.RuleID)
 
 		if req.ExpandThresholds {
-			q = q.Relation(buncolgen.JurisdictionRuleRelations.EscortThresholds)
+			q = q.Relation(jurisdictionrulecol.JurisdictionRuleRelations.EscortThresholds)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -527,7 +531,7 @@ func (r *jurisdictionRepository) Verify(
 	req *permitports.VerifyJurisdictionRuleRequest,
 ) (*jurisdictionrule.JurisdictionRule, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*jurisdictionrule.JurisdictionRule, error) {
-		cols := buncolgen.JurisdictionRuleColumns
+		cols := jurisdictionrulecol.JurisdictionRuleColumns
 
 		q := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -595,7 +599,7 @@ func (r *jurisdictionRepository) ListConnection(
 					return dba.
 						NewSelect().
 						Model(entities).
-						Relation(buncolgen.JurisdictionRuleRelations.State)
+						Relation(jurisdictionrulecol.JurisdictionRuleRelations.State)
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					return sq, nil
@@ -624,7 +628,7 @@ func (r *jurisdictionRepository) ListOverridesConnection(
 				NewSelect().
 				Model((*jurisdictionrule.Override)(nil)).
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return buncolgen.OverrideScopeTenant(sq, tenantInfo)
+					return jurisdictionrulecol.OverrideScopeTenant(sq, tenantInfo)
 				}).
 				Count(ctx)
 			if err != nil {
@@ -644,11 +648,11 @@ func (r *jurisdictionRepository) ListOverridesConnection(
 					return dba.
 						NewSelect().
 						Model(entities).
-						Relation(buncolgen.OverrideRelations.State)
+						Relation(jurisdictionrulecol.OverrideRelations.State)
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					return sq.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-						return buncolgen.OverrideScopeTenant(q, tenantInfo)
+						return jurisdictionrulecol.OverrideScopeTenant(q, tenantInfo)
 					}), nil
 				},
 			})
@@ -671,10 +675,10 @@ func (r *jurisdictionRepository) GetOverrideByID(
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Relation(buncolgen.OverrideRelations.State).
+			Relation(jurisdictionrulecol.OverrideRelations.State).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.OverrideScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.OverrideColumns.ID.Eq(), req.OverrideID)
+				return jurisdictionrulecol.OverrideScopeTenant(sq, req.TenantInfo).
+					Where(jurisdictionrulecol.OverrideColumns.ID.Eq(), req.OverrideID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -747,9 +751,9 @@ func (r *jurisdictionRepository) DeleteOverride(
 			Model((*jurisdictionrule.Override)(nil)).
 			WhereGroup(" AND ", func(sq *bun.DeleteQuery) *bun.DeleteQuery {
 				return sq.
-					Where(buncolgen.OverrideColumns.ID.Eq(), req.OverrideID).
-					Where(buncolgen.OverrideColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
-					Where(buncolgen.OverrideColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID)
+					Where(jurisdictionrulecol.OverrideColumns.ID.Eq(), req.OverrideID).
+					Where(jurisdictionrulecol.OverrideColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
+					Where(jurisdictionrulecol.OverrideColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID)
 			}).
 			Exec(ctx)
 		if err != nil {

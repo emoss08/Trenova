@@ -2,11 +2,14 @@
 
 package aiusage
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/aiusagecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AIUsageRecord].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.AIUsageRecordFieldMap] instead of parsing struct tags via reflection.
+// the generated [aiusagecol.AIUsageRecordFieldMap] instead of parsing struct tags via reflection.
 func (e *AIUsageRecord) GetStaticFieldMap() map[string]string {
-	return buncolgen.AIUsageRecordFieldMap
+	return aiusagecol.AIUsageRecordFieldMap
 }

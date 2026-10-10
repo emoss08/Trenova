@@ -2,88 +2,91 @@
 
 package driverpay
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/driverpaycol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [BenefitPlan].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.BenefitPlanFieldMap] instead of parsing struct tags via reflection.
+// the generated [driverpaycol.BenefitPlanFieldMap] instead of parsing struct tags via reflection.
 func (e *BenefitPlan) GetStaticFieldMap() map[string]string {
-	return buncolgen.BenefitPlanFieldMap
+	return driverpaycol.BenefitPlanFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EscrowAccount].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.EscrowAccountFieldMap] instead of parsing struct tags via reflection.
+// the generated [driverpaycol.EscrowAccountFieldMap] instead of parsing struct tags via reflection.
 func (e *EscrowAccount) GetStaticFieldMap() map[string]string {
-	return buncolgen.EscrowAccountFieldMap
+	return driverpaycol.EscrowAccountFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EscrowTransaction].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.EscrowTransactionFieldMap] instead of parsing struct tags via reflection.
+// the generated [driverpaycol.EscrowTransactionFieldMap] instead of parsing struct tags via reflection.
 func (e *EscrowTransaction) GetStaticFieldMap() map[string]string {
-	return buncolgen.EscrowTransactionFieldMap
+	return driverpaycol.EscrowTransactionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Expense].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ExpenseFieldMap] instead of parsing struct tags via reflection.
+// the generated [driverpaycol.ExpenseFieldMap] instead of parsing struct tags via reflection.
 func (e *Expense) GetStaticFieldMap() map[string]string {
-	return buncolgen.ExpenseFieldMap
+	return driverpaycol.ExpenseFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [PayAdvance].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.PayAdvanceFieldMap] instead of parsing struct tags via reflection.
+// the generated [driverpaycol.PayAdvanceFieldMap] instead of parsing struct tags via reflection.
 func (e *PayAdvance) GetStaticFieldMap() map[string]string {
-	return buncolgen.PayAdvanceFieldMap
+	return driverpaycol.PayAdvanceFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [PayCode].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.PayCodeFieldMap] instead of parsing struct tags via reflection.
+// the generated [driverpaycol.PayCodeFieldMap] instead of parsing struct tags via reflection.
 func (e *PayCode) GetStaticFieldMap() map[string]string {
-	return buncolgen.PayCodeFieldMap
+	return driverpaycol.PayCodeFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [PayProfile].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.PayProfileFieldMap] instead of parsing struct tags via reflection.
+// the generated [driverpaycol.PayProfileFieldMap] instead of parsing struct tags via reflection.
 func (e *PayProfile) GetStaticFieldMap() map[string]string {
-	return buncolgen.PayProfileFieldMap
+	return driverpaycol.PayProfileFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [PayProfileComponent].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.PayProfileComponentFieldMap] instead of parsing struct tags via reflection.
+// the generated [driverpaycol.PayProfileComponentFieldMap] instead of parsing struct tags via reflection.
 func (e *PayProfileComponent) GetStaticFieldMap() map[string]string {
-	return buncolgen.PayProfileComponentFieldMap
+	return driverpaycol.PayProfileComponentFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RecurringDeduction].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RecurringDeductionFieldMap] instead of parsing struct tags via reflection.
+// the generated [driverpaycol.RecurringDeductionFieldMap] instead of parsing struct tags via reflection.
 func (e *RecurringDeduction) GetStaticFieldMap() map[string]string {
-	return buncolgen.RecurringDeductionFieldMap
+	return driverpaycol.RecurringDeductionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RecurringEarning].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RecurringEarningFieldMap] instead of parsing struct tags via reflection.
+// the generated [driverpaycol.RecurringEarningFieldMap] instead of parsing struct tags via reflection.
 func (e *RecurringEarning) GetStaticFieldMap() map[string]string {
-	return buncolgen.RecurringEarningFieldMap
+	return driverpaycol.RecurringEarningFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerBenefitEnrollment].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.WorkerBenefitEnrollmentFieldMap] instead of parsing struct tags via reflection.
+// the generated [driverpaycol.WorkerBenefitEnrollmentFieldMap] instead of parsing struct tags via reflection.
 func (e *WorkerBenefitEnrollment) GetStaticFieldMap() map[string]string {
-	return buncolgen.WorkerBenefitEnrollmentFieldMap
+	return driverpaycol.WorkerBenefitEnrollmentFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerPayAssignment].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.WorkerPayAssignmentFieldMap] instead of parsing struct tags via reflection.
+// the generated [driverpaycol.WorkerPayAssignmentFieldMap] instead of parsing struct tags via reflection.
 func (e *WorkerPayAssignment) GetStaticFieldMap() map[string]string {
-	return buncolgen.WorkerPayAssignmentFieldMap
+	return driverpaycol.WorkerPayAssignmentFieldMap
 }

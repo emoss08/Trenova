@@ -2,6 +2,7 @@
 package accountingsyncrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
 	"context"
 	"errors"
 	"fmt"
@@ -63,12 +64,12 @@ func NewSyncRecordRepository(p SyncRecordParams) accountingsyncports.AccountingS
 }
 
 func syncRecordKeyTuple() string {
-	cols := buncolgen.AccountingSyncRecordColumns
+	cols := accountingsynccol.AccountingSyncRecordColumns
 	return buncolgen.Expr("({0}, {1}, {2})", cols.ID, cols.BusinessUnitID, cols.OrganizationID)
 }
 
 func dueGroup(now int64) func(*bun.SelectQuery) *bun.SelectQuery {
-	cols := buncolgen.AccountingSyncRecordColumns
+	cols := accountingsynccol.AccountingSyncRecordColumns
 	return func(q *bun.SelectQuery) *bun.SelectQuery {
 		return q.
 			WhereGroup(" OR ", func(q *bun.SelectQuery) *bun.SelectQuery {
@@ -88,7 +89,7 @@ func dueGroup(now int64) func(*bun.SelectQuery) *bun.SelectQuery {
 }
 
 func dispatchRankOrder() (string, []any) {
-	cols := buncolgen.AccountingSyncRecordColumns
+	cols := accountingsynccol.AccountingSyncRecordColumns
 	types := accountingsync.AllSyncObjectTypes()
 	var b strings.Builder
 	args := make([]any, 0, len(types)*2)
@@ -113,7 +114,7 @@ func (r *syncRecordRepository) Enqueue(
 			return result, nil
 		}
 
-		cols := buncolgen.AccountingSyncRecordColumns
+		cols := accountingsynccol.AccountingSyncRecordColumns
 		for start := 0; start < len(records); start += syncRecordInsertBatch {
 			batch := records[start:min(start+syncRecordInsertBatch, len(records))]
 			inserted := make([]pulid.ID, 0, len(batch))
@@ -149,12 +150,12 @@ func (r *syncRecordRepository) GetByID(
 ) (*accountingsync.AccountingSyncRecord, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingSyncRecord, error) {
 		entity := new(accountingsync.AccountingSyncRecord)
-		cols := buncolgen.AccountingSyncRecordColumns
+		cols := accountingsynccol.AccountingSyncRecordColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Apply(buncolgen.AccountingSyncRecordApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingSyncRecordApplyTenant(req.TenantInfo)).
 			Where(cols.ID.Eq(), req.ID).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, syncRecordEntity)
@@ -174,11 +175,11 @@ func (r *syncRecordRepository) GetByIDs(
 			return entities, nil
 		}
 
-		cols := buncolgen.AccountingSyncRecordColumns
+		cols := accountingsynccol.AccountingSyncRecordColumns
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.AccountingSyncRecordApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingSyncRecordApplyTenant(req.TenantInfo)).
 			Where(cols.ID.In(), bun.List(req.IDs)).
 			Scan(ctx); err != nil {
 			return nil, err
@@ -192,7 +193,7 @@ func (r *syncRecordRepository) applyListFilters(
 	q *bun.SelectQuery,
 	req *accountingsyncports.ListAccountingSyncRecordsConnectionRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.AccountingSyncRecordColumns
+	cols := accountingsynccol.AccountingSyncRecordColumns
 	q = q.Where(cols.ConnectionID.Eq(), req.ConnectionID)
 	if len(req.Statuses) > 0 {
 		q = q.Where(cols.Status.In(), bun.List(req.Statuses))
@@ -239,7 +240,7 @@ func (r *syncRecordRepository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.AccountingSyncRecordTable.Alias,
+						accountingsynccol.AccountingSyncRecordTable.Alias,
 						req.Filter,
 						(*accountingsync.AccountingSyncRecord)(nil),
 					)
@@ -262,12 +263,12 @@ func (r *syncRecordRepository) ListConnection(
 				Query: func(items *[]*accountingsync.AccountingSyncRecord) *bun.SelectQuery {
 					return dba.NewSelect().
 						Model(items).
-						ColumnExpr(buncolgen.AccountingSyncRecordTable.All())
+						ColumnExpr(accountingsynccol.AccountingSyncRecordTable.All())
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.AccountingSyncRecordTable.Alias,
+						accountingsynccol.AccountingSyncRecordTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*accountingsync.AccountingSyncRecord)(nil),
@@ -298,11 +299,11 @@ func (r *syncRecordRepository) ListByObjects(
 			return entities, nil
 		}
 
-		cols := buncolgen.AccountingSyncRecordColumns
+		cols := accountingsynccol.AccountingSyncRecordColumns
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.AccountingSyncRecordApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingSyncRecordApplyTenant(req.TenantInfo)).
 			Where(cols.ObjectID.In(), bun.List(req.ObjectIDs)).
 			Order(cols.QueuedAt.OrderAsc(), cols.ID.OrderAsc())
 		if !req.ConnectionID.IsNil() {
@@ -329,11 +330,11 @@ func (r *syncRecordRepository) ListByExternalIDs(
 			return entities, nil
 		}
 
-		cols := buncolgen.AccountingSyncRecordColumns
+		cols := accountingsynccol.AccountingSyncRecordColumns
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.AccountingSyncRecordApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingSyncRecordApplyTenant(req.TenantInfo)).
 			Where(cols.ConnectionID.Eq(), req.ConnectionID).
 			Where(cols.ExternalID.In(), bun.List(req.ExternalIDs)).
 			Order(cols.QueuedAt.OrderAsc(), cols.ID.OrderAsc())
@@ -353,11 +354,11 @@ func (r *syncRecordRepository) CountInFlight(
 	req *accountingsyncports.CountAccountingSyncInFlightRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.AccountingSyncRecordColumns
+		cols := accountingsynccol.AccountingSyncRecordColumns
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*accountingsync.AccountingSyncRecord)(nil)).
-			Apply(buncolgen.AccountingSyncRecordApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingSyncRecordApplyTenant(req.TenantInfo)).
 			Where(cols.ConnectionID.Eq(), req.ConnectionID).
 			Where(cols.Status.Eq(), accountingsync.SyncStatusInFlight)
 		if len(req.ObjectTypes) > 0 {
@@ -393,14 +394,14 @@ func (r *syncRecordRepository) Claim(
 			now = timeutils.NowUnix()
 		}
 
-		cols := buncolgen.AccountingSyncRecordColumns
+		cols := accountingsynccol.AccountingSyncRecordColumns
 		dba := r.db.DBForContext(ctx)
 		rankOrder, rankArgs := dispatchRankOrder()
 
 		picked := dba.NewSelect().
 			Model((*accountingsync.AccountingSyncRecord)(nil)).
-			Column(buncolgen.AccountingSyncRecordTable.PrimaryKey...).
-			Apply(buncolgen.AccountingSyncRecordApplyTenant(req.TenantInfo)).
+			Column(accountingsynccol.AccountingSyncRecordTable.PrimaryKey...).
+			Apply(accountingsynccol.AccountingSyncRecordApplyTenant(req.TenantInfo)).
 			Where(cols.ConnectionID.Eq(), req.ConnectionID).
 			WhereGroup(" AND ", dueGroup(now)).
 			OrderExpr(rankOrder, rankArgs...).
@@ -418,7 +419,7 @@ func (r *syncRecordRepository) Claim(
 			Set(cols.Version.Inc(1)).
 			Set(cols.UpdatedAt.Set(), now).
 			Where(syncRecordKeyTuple()+" IN (?)", picked).
-			Returning(buncolgen.AccountingSyncRecordTable.All()).
+			Returning(accountingsynccol.AccountingSyncRecordTable.All()).
 			Scan(ctx, &entities); err != nil {
 			return nil, fmt.Errorf("claim accounting sync records: %w", err)
 		}
@@ -439,7 +440,7 @@ func (r *syncRecordRepository) Finish(
 		}
 
 		record := req.Record
-		cols := buncolgen.AccountingSyncRecordColumns
+		cols := accountingsynccol.AccountingSyncRecordColumns
 		claimed := record.Version
 
 		return r.db.WithTx(ctx, postgresTxOptions(), func(txCtx context.Context, tx bun.Tx) error {
@@ -502,7 +503,7 @@ func (r *syncRecordRepository) Update(
 	record *accountingsync.AccountingSyncRecord,
 ) (*accountingsync.AccountingSyncRecord, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingSyncRecord, error) {
-		cols := buncolgen.AccountingSyncRecordColumns
+		cols := accountingsynccol.AccountingSyncRecordColumns
 		ov := record.Version
 		record.Version++
 
@@ -531,7 +532,7 @@ func (r *syncRecordRepository) CountByStatus(
 	req accountingsyncports.AccountingSyncConnectionRequest,
 ) ([]accountingsyncports.AccountingSyncStatusCount, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]accountingsyncports.AccountingSyncStatusCount, error) {
-		cols := buncolgen.AccountingSyncRecordColumns
+		cols := accountingsynccol.AccountingSyncRecordColumns
 		counts := make(
 			[]accountingsyncports.AccountingSyncStatusCount,
 			0,
@@ -543,7 +544,7 @@ func (r *syncRecordRepository) CountByStatus(
 			Model((*accountingsync.AccountingSyncRecord)(nil)).
 			ColumnExpr(cols.Status.As("status")).
 			ColumnExpr(buncolgen.Count("count")).
-			Apply(buncolgen.AccountingSyncRecordApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingSyncRecordApplyTenant(req.TenantInfo)).
 			Where(cols.ConnectionID.Eq(), req.ConnectionID).
 			GroupExpr(cols.Status.Qualified()).
 			Scan(ctx, &counts); err != nil {
@@ -565,7 +566,7 @@ func (r *syncRecordRepository) ListAttention(
 		}
 		limit = intutils.Clamp(limit, 1, maxSyncListLimit)
 
-		cols := buncolgen.AccountingSyncRecordColumns
+		cols := accountingsynccol.AccountingSyncRecordColumns
 		groups := make([]accountingsyncports.AccountingSyncAttentionGroup, 0, limit)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -576,7 +577,7 @@ func (r *syncRecordRepository) ListAttention(
 			ColumnExpr(buncolgen.Count("count")).
 			ColumnExpr(buncolgen.Min(cols.QueuedAt, "oldest_queued_at")).
 			ColumnExpr(buncolgen.Min(cols.ID, "sample_record_id")).
-			Apply(buncolgen.AccountingSyncRecordApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingSyncRecordApplyTenant(req.TenantInfo)).
 			Where(cols.ConnectionID.Eq(), req.ConnectionID).
 			Where(cols.Status.In(), bun.List([]accountingsync.SyncStatus{
 				accountingsync.SyncStatusBlocked,
@@ -616,14 +617,14 @@ func (r *syncRecordRepository) MappingUsage(
 			Count     int      `bun:"count"`
 		}
 		rows := make([]usageRow, 0, len(ids))
-		cols := buncolgen.AccountingSyncRecordColumns
+		cols := accountingsynccol.AccountingSyncRecordColumns
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*accountingsync.AccountingSyncRecord)(nil)).
 			Join("CROSS JOIN LATERAL unnest("+cols.MappingIDs.Qualified()+") AS usage(mapping_id)").
 			ColumnExpr("usage.mapping_id AS mapping_id").
 			ColumnExpr(buncolgen.Count("count")).
-			Apply(buncolgen.AccountingSyncRecordApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingSyncRecordApplyTenant(req.TenantInfo)).
 			Where(cols.ConnectionID.Eq(), req.ConnectionID).
 			Where(cols.Status.Eq(), accountingsync.SyncStatusSynced).
 			Where("usage.mapping_id IN (?)", bun.List(ids)).
@@ -644,12 +645,12 @@ func (r *syncRecordRepository) Requeue(
 	req *accountingsyncports.RequeueAccountingSyncRecordsRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := buncolgen.AccountingSyncRecordColumns
+		cols := accountingsynccol.AccountingSyncRecordColumns
 		query := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*accountingsync.AccountingSyncRecord)(nil)).
 			WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
-				q = buncolgen.AccountingSyncRecordScopeTenantUpdate(q, req.TenantInfo).
+				q = accountingsynccol.AccountingSyncRecordScopeTenantUpdate(q, req.TenantInfo).
 					Where(cols.ConnectionID.Eq(), req.ConnectionID).
 					Where(cols.Status.In(), bun.List(accountingsync.RetryableSyncStatuses()))
 				if len(req.ErrorCategories) > 0 {
@@ -680,12 +681,12 @@ func (r *syncRecordRepository) Release(
 	req *accountingsyncports.ReleaseAccountingSyncRecordsRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := buncolgen.AccountingSyncRecordColumns
+		cols := accountingsynccol.AccountingSyncRecordColumns
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*accountingsync.AccountingSyncRecord)(nil)).
 			WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
-				q = buncolgen.AccountingSyncRecordScopeTenantUpdate(q, req.TenantInfo).
+				q = accountingsynccol.AccountingSyncRecordScopeTenantUpdate(q, req.TenantInfo).
 					Where(cols.ConnectionID.Eq(), req.ConnectionID).
 					Where(cols.Status.Eq(), accountingsync.SyncStatusAwaitingApproval)
 				if len(req.IDs) > 0 {
@@ -711,7 +712,7 @@ func (r *syncRecordRepository) SupersedeOlder(
 	req *accountingsyncports.SupersedeAccountingSyncRecordsRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := buncolgen.AccountingSyncRecordColumns
+		cols := accountingsynccol.AccountingSyncRecordColumns
 		pending := make([]accountingsync.SyncStatus, 0, len(accountingsync.AllSyncStatuses()))
 		for _, status := range accountingsync.AllSyncStatuses() {
 			if !status.IsFinal() && status != accountingsync.SyncStatusInFlight {
@@ -723,7 +724,7 @@ func (r *syncRecordRepository) SupersedeOlder(
 			NewUpdate().
 			Model((*accountingsync.AccountingSyncRecord)(nil)).
 			WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.AccountingSyncRecordScopeTenantUpdate(q, req.TenantInfo).
+				return accountingsynccol.AccountingSyncRecordScopeTenantUpdate(q, req.TenantInfo).
 					Where(cols.ConnectionID.Eq(), req.ConnectionID).
 					Where(cols.ObjectType.Eq(), req.ObjectType).
 					Where(cols.ObjectID.Eq(), req.ObjectID).
@@ -798,8 +799,8 @@ func (r *syncRecordRepository) ListDueConnections(
 			now = timeutils.NowUnix()
 		}
 
-		cols := buncolgen.AccountingSyncRecordColumns
-		conn := buncolgen.AccountingConnectionColumns
+		cols := accountingsynccol.AccountingSyncRecordColumns
+		conn := accountingsynccol.AccountingConnectionColumns
 		due := make([]accountingsyncports.AccountingSyncDueConnection, 0, limit)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -809,8 +810,8 @@ func (r *syncRecordRepository) ListDueConnections(
 			ColumnExpr(cols.BusinessUnitID.As("business_unit_id")).
 			ColumnExpr(cols.ConnectionID.As("connection_id")).
 			Join(joinOn(
-				buncolgen.AccountingConnectionTable,
-				buncolgen.AccountingConnectionTable.Alias,
+				accountingsynccol.AccountingConnectionTable,
+				accountingsynccol.AccountingConnectionTable.Alias,
 				conn.ID.EqColumn(cols.ConnectionID),
 				conn.OrganizationID.EqColumn(cols.OrganizationID),
 				conn.BusinessUnitID.EqColumn(cols.BusinessUnitID),
@@ -844,12 +845,12 @@ func (r *syncRecordRepository) PurgeHistory(
 
 		result := new(accountingsyncports.PurgeAccountingSyncHistoryResult)
 		dba := r.db.DBForContext(ctx)
-		cols := buncolgen.AccountingSyncRecordColumns
+		cols := accountingsynccol.AccountingSyncRecordColumns
 
 		if req.PayloadsSyncedBefore > 0 {
 			picked := dba.NewSelect().
 				Model((*accountingsync.AccountingSyncRecord)(nil)).
-				Column(buncolgen.AccountingSyncRecordTable.PrimaryKey...).
+				Column(accountingsynccol.AccountingSyncRecordTable.PrimaryKey...).
 				Where(cols.Status.Eq(), accountingsync.SyncStatusSynced).
 				Where(cols.SyncedAt.Lt(), req.PayloadsSyncedBefore).
 				Where(cols.Payload.IsNotNull()).
@@ -868,10 +869,10 @@ func (r *syncRecordRepository) PurgeHistory(
 		}
 
 		if req.AttemptsBefore > 0 {
-			attemptCols := buncolgen.AccountingSyncAttemptColumns
+			attemptCols := accountingsynccol.AccountingSyncAttemptColumns
 			picked := dba.NewSelect().
 				Model((*accountingsync.AccountingSyncAttempt)(nil)).
-				Column(buncolgen.AccountingSyncAttemptTable.PrimaryKey...).
+				Column(accountingsynccol.AccountingSyncAttemptTable.PrimaryKey...).
 				Where(attemptCols.CreatedAt.Lt(), req.AttemptsBefore).
 				Limit(limit)
 			results, err := dba.NewDelete().
@@ -905,12 +906,12 @@ func (r *syncRecordRepository) ListAttempts(
 		}
 		limit = intutils.Clamp(limit, 1, maxSyncListLimit)
 
-		cols := buncolgen.AccountingSyncAttemptColumns
+		cols := accountingsynccol.AccountingSyncAttemptColumns
 		attempts := make([]*accountingsync.AccountingSyncAttempt, 0, min(limit, 16))
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&attempts).
-			Apply(buncolgen.AccountingSyncAttemptApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingSyncAttemptApplyTenant(req.TenantInfo)).
 			Where(cols.SyncRecordID.Eq(), req.SyncRecordID).
 			Order(cols.AttemptNumber.OrderDesc(), cols.CreatedAt.OrderDesc()).
 			Limit(limit).

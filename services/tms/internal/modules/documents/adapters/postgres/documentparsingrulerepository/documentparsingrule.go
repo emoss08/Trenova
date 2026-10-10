@@ -1,6 +1,7 @@
 package documentparsingrulerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/documentparsingrulecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentparsingrule"
@@ -262,7 +263,7 @@ func (r *repository) UpdateVersion(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*documentparsingrule.RuleVersion, error) {
 		ov := entity.Version
 		entity.Version++
-		cols := buncolgen.RuleVersionColumns
+		cols := documentparsingrulecol.RuleVersionColumns
 		result, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
@@ -289,7 +290,7 @@ func (r *repository) ArchivePublishedVersions(
 	ruleSetID, orgID, buID pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.RuleVersionColumns
+		cols := documentparsingrulecol.RuleVersionColumns
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*documentparsingrule.RuleVersion)(nil)).
@@ -309,7 +310,7 @@ func (r *repository) SetPublishedVersion(
 	ruleSetID, versionID, orgID, buID pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.RuleSetColumns
+		cols := documentparsingrulecol.RuleSetColumns
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*documentparsingrule.RuleSet)(nil)).

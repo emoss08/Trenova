@@ -1,6 +1,7 @@
 package carrierrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
 	"context"
 	"fmt"
 	"strings"
@@ -72,7 +73,7 @@ func (r *repository) filterQuery(
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.CarrierTable.Alias,
+		carriercol.CarrierTable.Alias,
 		req.Filter,
 		(*carrier.Carrier)(nil),
 	)
@@ -119,7 +120,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.CarrierTable.Alias,
+		carriercol.CarrierTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*carrier.Carrier)(nil),
@@ -132,7 +133,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.CarrierTable.Alias,
+		carriercol.CarrierTable.Alias,
 		req.Filter,
 		(*carrier.Carrier)(nil),
 	)
@@ -206,13 +207,13 @@ func (r *repository) GetByID(
 			zap.String("id", req.ID.String()),
 		)
 
-		cols := buncolgen.CarrierColumns
+		cols := carriercol.CarrierColumns
 		entity := new(carrier.Carrier)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierScopeTenant(sq, req.TenantInfo).
+				return carriercol.CarrierScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -237,13 +238,13 @@ func (r *repository) FindByIdentity(
 			return nil, nil //nolint:nilnil // nothing to look up without an identity
 		}
 
-		cols := buncolgen.CarrierColumns
+		cols := carriercol.CarrierColumns
 		entity := new(carrier.Carrier)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierScopeTenant(sq, req.TenantInfo).
+				return carriercol.CarrierScopeTenant(sq, req.TenantInfo).
 					WhereGroup(" AND ", func(inner *bun.SelectQuery) *bun.SelectQuery {
 						if req.SCAC != "" {
 							inner = inner.Where(
@@ -281,13 +282,13 @@ func (r *repository) GetByIDs(
 			zap.Any("request", req),
 		)
 
-		cols := buncolgen.CarrierColumns
+		cols := carriercol.CarrierColumns
 		entities := make([]*carrier.Carrier, 0, len(req.CarrierIDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierScopeTenant(sq, req.TenantInfo).
+				return carriercol.CarrierScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.In(), bun.List(req.CarrierIDs))
 			}).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -405,10 +406,10 @@ func (r *repository) deleteMissingChildren(ctx context.Context, entity *carrier.
 			NewDelete().
 			Model((*carrier.CarrierContact)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				dq = buncolgen.CarrierContactScopeTenantDelete(dq, tenantInfo).
-					Where(buncolgen.CarrierContactColumns.CarrierID.Eq(), entity.ID)
+				dq = carriercol.CarrierContactScopeTenantDelete(dq, tenantInfo).
+					Where(carriercol.CarrierContactColumns.CarrierID.Eq(), entity.ID)
 				if kept := pulid.Keep(entity.Contacts); len(kept) > 0 {
-					dq = dq.Where(buncolgen.CarrierContactColumns.ID.NotIn(), bun.List(kept))
+					dq = dq.Where(carriercol.CarrierContactColumns.ID.NotIn(), bun.List(kept))
 				}
 				return dq
 			})
@@ -420,10 +421,10 @@ func (r *repository) deleteMissingChildren(ctx context.Context, entity *carrier.
 			NewDelete().
 			Model((*carrier.CarrierInsurancePolicy)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				dq = buncolgen.CarrierInsurancePolicyScopeTenantDelete(dq, tenantInfo).
-					Where(buncolgen.CarrierInsurancePolicyColumns.CarrierID.Eq(), entity.ID)
+				dq = carriercol.CarrierInsurancePolicyScopeTenantDelete(dq, tenantInfo).
+					Where(carriercol.CarrierInsurancePolicyColumns.CarrierID.Eq(), entity.ID)
 				if kept := pulid.Keep(entity.InsurancePolicies); len(kept) > 0 {
-					dq = dq.Where(buncolgen.CarrierInsurancePolicyColumns.ID.NotIn(), bun.List(kept))
+					dq = dq.Where(carriercol.CarrierInsurancePolicyColumns.ID.NotIn(), bun.List(kept))
 				}
 				return dq
 			})
@@ -435,10 +436,10 @@ func (r *repository) deleteMissingChildren(ctx context.Context, entity *carrier.
 			NewDelete().
 			Model((*carrier.CarrierEDIChannel)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				dq = buncolgen.CarrierEDIChannelScopeTenantDelete(dq, tenantInfo).
-					Where(buncolgen.CarrierEDIChannelColumns.CarrierID.Eq(), entity.ID)
+				dq = carriercol.CarrierEDIChannelScopeTenantDelete(dq, tenantInfo).
+					Where(carriercol.CarrierEDIChannelColumns.CarrierID.Eq(), entity.ID)
 				if kept := pulid.Keep(entity.EDIChannels); len(kept) > 0 {
-					dq = dq.Where(buncolgen.CarrierEDIChannelColumns.ID.NotIn(), bun.List(kept))
+					dq = dq.Where(carriercol.CarrierEDIChannelColumns.ID.NotIn(), bun.List(kept))
 				}
 				return dq
 			})
@@ -456,13 +457,13 @@ func (r *repository) deleteMissingChildren(ctx context.Context, entity *carrier.
 // mid-upsert.
 func (r *repository) clearEDIChannelDefaults(ctx context.Context, entity *carrier.Carrier) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.CarrierEDIChannelColumns
+		cols := carriercol.CarrierEDIChannelColumns
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*carrier.CarrierEDIChannel)(nil)).
 			Set("is_default = FALSE").
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.CarrierEDIChannelScopeTenantUpdate(uq, pagination.TenantInfo{
+				return carriercol.CarrierEDIChannelScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
 				}).Where(cols.CarrierID.Eq(), entity.ID).
@@ -591,7 +592,7 @@ func (r *repository) Update(
 			ov := entity.Version
 			entity.Version++
 
-			cols := buncolgen.CarrierColumns
+			cols := carriercol.CarrierColumns
 			results, uErr := r.db.DBForContext(c).NewUpdate().
 				Model(entity).
 				ExcludeColumn(
@@ -641,13 +642,13 @@ func (r *repository) BulkUpdateStatus(
 			zap.Any("request", req),
 		)
 
-		cols := buncolgen.CarrierColumns
+		cols := carriercol.CarrierColumns
 		entities := make([]*carrier.Carrier, 0, len(req.CarrierIDs))
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(&entities).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.CarrierScopeTenantUpdate(uq, req.TenantInfo).
+				return carriercol.CarrierScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.In(), bun.List(req.CarrierIDs))
 			}).
 			Set("status = ?", req.Status).
@@ -671,14 +672,14 @@ func (r *repository) ListEDIChannels(
 	req carrierports.GetCarrierEDIChannelRequest,
 ) ([]*carrier.CarrierEDIChannel, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrier.CarrierEDIChannel, error) {
-		cols := buncolgen.CarrierEDIChannelColumns
+		cols := carriercol.CarrierEDIChannelColumns
 		entities := make([]*carrier.CarrierEDIChannel, 0, 4)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			Relation("EDIPartner").
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierEDIChannelScopeTenant(sq, req.TenantInfo).
+				return carriercol.CarrierEDIChannelScopeTenant(sq, req.TenantInfo).
 					Where(cols.CarrierID.Eq(), req.CarrierID)
 			}).
 			Order(cols.CreatedAt.OrderAsc()).
@@ -697,14 +698,14 @@ func (r *repository) GetDefaultEDIChannel(
 	req carrierports.GetCarrierEDIChannelRequest,
 ) (*carrier.CarrierEDIChannel, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carrier.CarrierEDIChannel, error) {
-		cols := buncolgen.CarrierEDIChannelColumns
+		cols := carriercol.CarrierEDIChannelColumns
 		entity := new(carrier.CarrierEDIChannel)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			Relation("EDIPartner").
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierEDIChannelScopeTenant(sq, req.TenantInfo).
+				return carriercol.CarrierEDIChannelScopeTenant(sq, req.TenantInfo).
 					Where(cols.CarrierID.Eq(), req.CarrierID).
 					Where(cols.IsDefault.IsTrue())
 			}).

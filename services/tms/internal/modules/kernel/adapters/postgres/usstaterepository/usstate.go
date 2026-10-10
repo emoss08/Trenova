@@ -1,6 +1,7 @@
 package usstaterepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/usstatecol"
 	"context"
 	"fmt"
 	"strings"
@@ -106,7 +107,7 @@ func (r *repository) GetByAbbreviation(
 			NewSelect().
 			Model(entity).
 			Where(
-				buncolgen.UsStateColumns.Abbreviation.Eq(),
+				usstatecol.UsStateColumns.Abbreviation.Eq(),
 				strings.ToUpper(strings.TrimSpace(abbreviation)),
 			).
 			Scan(ctx)
@@ -132,7 +133,7 @@ func (r *repository) GetByIDs(ctx context.Context, ids []pulid.ID) ([]*usstate.U
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Where(buncolgen.UsStateColumns.ID.In(), bun.List(ids)).
+			Where(usstatecol.UsStateColumns.ID.In(), bun.List(ids)).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to get us states by ids", zap.Error(err))

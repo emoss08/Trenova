@@ -1,6 +1,8 @@
 package iftarepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/iftacol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 	"fmt"
 
@@ -33,12 +35,12 @@ type moveMiles struct {
 }
 
 var (
-	smCols   = buncolgen.ShipmentMoveColumns
-	stpCols  = buncolgen.StopColumns
-	jmCols   = buncolgen.ShipmentMoveJurisdictionMileColumns
-	aCols    = buncolgen.AssignmentColumns
-	ifmeCols = buncolgen.JurisdictionMileageEntryColumns
-	ifjCols  = buncolgen.JurisdictionColumns
+	smCols   = shipmentcol.ShipmentMoveColumns
+	stpCols  = shipmentcol.StopColumns
+	jmCols   = shipmentcol.ShipmentMoveJurisdictionMileColumns
+	aCols    = shipmentcol.AssignmentColumns
+	ifmeCols = iftacol.JurisdictionMileageEntryColumns
+	ifjCols  = iftacol.JurisdictionColumns
 
 	accumulationPrefix = buildAccumulationPrefix()
 	routeRowsSQL       = accumulationPrefix + buildRouteRowsBody()
@@ -79,8 +81,8 @@ func buildAccumulationPrefix() string {
 		) + " AS " + smCols.Distance.Name + ", " +
 		"COALESCE(MAX(COALESCE(" + stpCols.ActualDeparture.Qualified() + ", " +
 		stpCols.ActualArrival.Qualified() + ")), " + smCols.UpdatedAt.Qualified() + ") AS completed_at" +
-		" FROM " + buncolgen.ShipmentMoveTable.As(buncolgen.ShipmentMoveTable.Alias) +
-		" LEFT JOIN " + buncolgen.StopTable.As(buncolgen.StopTable.Alias) +
+		" FROM " + shipmentcol.ShipmentMoveTable.As(shipmentcol.ShipmentMoveTable.Alias) +
+		" LEFT JOIN " + shipmentcol.StopTable.As(shipmentcol.StopTable.Alias) +
 		" ON " + stpCols.ShipmentMoveID.EqColumn(smCols.ID) +
 		" AND " + tenantJoin(
 		tenantCols{stpCols.OrganizationID, stpCols.BusinessUnitID},
@@ -96,8 +98,8 @@ func buildAccumulationPrefix() string {
 		" SELECT mc.* FROM mc WHERE " + mcCompleted.Gte() + " AND " + mcCompleted.Lt() +
 		"), overridden AS (" +
 		" SELECT DISTINCT " + ifmeCols.ShipmentMoveID.Qualified() +
-		" FROM " + buncolgen.JurisdictionMileageEntryTable.As(
-		buncolgen.JurisdictionMileageEntryTable.Alias,
+		" FROM " + iftacol.JurisdictionMileageEntryTable.As(
+		iftacol.JurisdictionMileageEntryTable.Alias,
 	) +
 		" WHERE " + ifmeCols.OrganizationID.Eq() + " AND " + ifmeCols.BusinessUnitID.Eq() +
 		" AND " + ifmeCols.ShipmentMoveID.IsNotNull() +
@@ -107,8 +109,8 @@ func buildAccumulationPrefix() string {
 		jmCols.JurisdictionCode.Qualified() + ", " + inpLoaded.Qualified() + " AS loaded, " +
 		inpDistance.Qualified() + " AS move_distance, " +
 		normalisedMiles(jmCols.Distance, jmCols.DistanceUnits) + " AS miles" +
-		" FROM " + buncolgen.ShipmentMoveJurisdictionMileTable.As(
-		buncolgen.ShipmentMoveJurisdictionMileTable.Alias,
+		" FROM " + shipmentcol.ShipmentMoveJurisdictionMileTable.As(
+		shipmentcol.ShipmentMoveJurisdictionMileTable.Alias,
 	) +
 		" JOIN inp ON " + inpID.EqColumn(jmCols.ShipmentMoveID) +
 		" AND " + tenantJoin(
@@ -155,14 +157,14 @@ func buildRouteRowsBody() string {
 		" AS empty_miles, " +
 		buncolgen.CountDistinct(jmMove, "move_count") +
 		" FROM jm" +
-		" LEFT JOIN " + buncolgen.AssignmentTable.As(buncolgen.AssignmentTable.Alias) +
+		" LEFT JOIN " + shipmentcol.AssignmentTable.As(shipmentcol.AssignmentTable.Alias) +
 		" ON " + aCols.ShipmentMoveID.EqColumn(jmMove) +
 		" AND " + tenantJoin(
 		tenantCols{aCols.OrganizationID, aCols.BusinessUnitID},
 		tenantCols{jmOrg, jmBu},
 	) +
 		" AND " + aCols.ArchivedAt.IsNull() +
-		" LEFT JOIN " + buncolgen.JurisdictionTable.As(buncolgen.JurisdictionTable.Alias) +
+		" LEFT JOIN " + iftacol.JurisdictionTable.As(iftacol.JurisdictionTable.Alias) +
 		" ON " + ifjCols.CountryCode.EqColumn(jmCountry) +
 		" AND " + ifjCols.Code.EqColumn(jmCode) +
 		" GROUP BY " + aCols.TractorID.Qualified() + ", " + jmCountry.Qualified() + ", " +
@@ -180,7 +182,7 @@ func buildNoTractorBody() string {
 	return "SELECT " + jmMove.As("move_id") + ", " +
 		rounded("COALESCE(SUM("+jmMiles.Qualified()+"), 0)") + " AS miles" +
 		" FROM jm" +
-		" LEFT JOIN " + buncolgen.AssignmentTable.As(buncolgen.AssignmentTable.Alias) +
+		" LEFT JOIN " + shipmentcol.AssignmentTable.As(shipmentcol.AssignmentTable.Alias) +
 		" ON " + aCols.ShipmentMoveID.EqColumn(jmMove) +
 		" AND " + tenantJoin(
 		tenantCols{aCols.OrganizationID, aCols.BusinessUnitID},
@@ -205,8 +207,8 @@ func buildUnattributedBody() string {
 		" FROM inp" +
 		" WHERE " + inpDistance.Qualified() + " > 0" +
 		" AND NOT EXISTS (SELECT 1 FROM " +
-		buncolgen.ShipmentMoveJurisdictionMileTable.As(
-			buncolgen.ShipmentMoveJurisdictionMileTable.Alias,
+		shipmentcol.ShipmentMoveJurisdictionMileTable.As(
+			shipmentcol.ShipmentMoveJurisdictionMileTable.Alias,
 		) +
 		" WHERE " + jmCols.ShipmentMoveID.EqColumn(inpID) +
 		" AND " + tenantJoin(
@@ -307,10 +309,10 @@ func (r *repository) manualRows(
 			ifmeCols.Miles, ifmeCols.Loaded,
 		)).
 		ColumnExpr(buncolgen.Count("move_count")).
-		Join("JOIN "+buncolgen.JurisdictionTable.As(buncolgen.JurisdictionTable.Alias)+
+		Join("JOIN "+iftacol.JurisdictionTable.As(iftacol.JurisdictionTable.Alias)+
 			" ON "+ifjCols.ID.EqColumn(ifmeCols.JurisdictionID)).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.JurisdictionMileageEntryScopeTenant(sq, req.TenantInfo).
+			return iftacol.JurisdictionMileageEntryScopeTenant(sq, req.TenantInfo).
 				Where(ifmeCols.Year.Eq(), req.Year).
 				Where(ifmeCols.Quarter.Eq(), req.Quarter)
 		}).

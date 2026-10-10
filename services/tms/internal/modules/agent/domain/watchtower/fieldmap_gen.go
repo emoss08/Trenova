@@ -2,18 +2,21 @@
 
 package watchtower
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/watchtowercol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Cursor].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CursorFieldMap] instead of parsing struct tags via reflection.
+// the generated [watchtowercol.CursorFieldMap] instead of parsing struct tags via reflection.
 func (e *Cursor) GetStaticFieldMap() map[string]string {
-	return buncolgen.CursorFieldMap
+	return watchtowercol.CursorFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Item].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ItemFieldMap] instead of parsing struct tags via reflection.
+// the generated [watchtowercol.ItemFieldMap] instead of parsing struct tags via reflection.
 func (e *Item) GetStaticFieldMap() map[string]string {
-	return buncolgen.ItemFieldMap
+	return watchtowercol.ItemFieldMap
 }

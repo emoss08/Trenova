@@ -1,6 +1,7 @@
 package tablelayoutrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tablelayoutcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablelayout"
@@ -39,13 +40,13 @@ func (r *repository) Get(
 	req *tablelayoutports.TableLayoutRequest,
 ) (*tablelayout.TableLayout, bool, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (*tablelayout.TableLayout, bool, error) {
-		cols := buncolgen.TableLayoutColumns
+		cols := tablelayoutcol.TableLayoutColumns
 		entity := new(tablelayout.TableLayout)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TableLayoutScopeTenant(sq, req.TenantInfo).
+				return tablelayoutcol.TableLayoutScopeTenant(sq, req.TenantInfo).
 					Where(cols.UserID.Eq(), req.TenantInfo.UserID).
 					Where(cols.Resource.Eq(), req.Resource)
 			}).
@@ -75,8 +76,8 @@ func (r *repository) CountForUser(
 			NewSelect().
 			Model((*tablelayout.TableLayout)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TableLayoutScopeTenant(sq, tenantInfo).
-					Where(buncolgen.TableLayoutColumns.UserID.Eq(), tenantInfo.UserID)
+				return tablelayoutcol.TableLayoutScopeTenant(sq, tenantInfo).
+					Where(tablelayoutcol.TableLayoutColumns.UserID.Eq(), tenantInfo.UserID)
 			}).
 			Count(ctx)
 		if err != nil {
@@ -96,7 +97,7 @@ func (r *repository) Upsert(
 	entity *tablelayout.TableLayout,
 ) (*tablelayout.TableLayout, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tablelayout.TableLayout, error) {
-		cols := buncolgen.TableLayoutColumns
+		cols := tablelayoutcol.TableLayoutColumns
 		_, err := r.db.DBForContext(ctx).
 			NewInsert().
 			Model(entity).
@@ -125,12 +126,12 @@ func (r *repository) Upsert(
 
 func (r *repository) Delete(ctx context.Context, req *tablelayoutports.TableLayoutRequest) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.TableLayoutColumns
+		cols := tablelayoutcol.TableLayoutColumns
 		_, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*tablelayout.TableLayout)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.TableLayoutScopeTenantDelete(dq, req.TenantInfo).
+				return tablelayoutcol.TableLayoutScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.UserID.Eq(), req.TenantInfo.UserID).
 					Where(cols.Resource.Eq(), req.Resource)
 			}).

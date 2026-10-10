@@ -2,11 +2,14 @@
 
 package equipmentmanufacturer
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/equipmentmanufacturercol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EquipmentManufacturer].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.EquipmentManufacturerFieldMap] instead of parsing struct tags via reflection.
+// the generated [equipmentmanufacturercol.EquipmentManufacturerFieldMap] instead of parsing struct tags via reflection.
 func (e *EquipmentManufacturer) GetStaticFieldMap() map[string]string {
-	return buncolgen.EquipmentManufacturerFieldMap
+	return equipmentmanufacturercol.EquipmentManufacturerFieldMap
 }

@@ -1,6 +1,7 @@
 package aifeedbackrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
 	"context"
 	"database/sql"
 	"fmt"
@@ -43,13 +44,13 @@ func (r *sourceRepository) GetMessageContext(
 ) (*aifeedbackports.AIFeedbackMessageContext, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aifeedbackports.AIFeedbackMessageContext, error) {
 		dba := r.db.DBForContext(ctx)
-		msgCols := buncolgen.MessageColumns
+		msgCols := conversationcol.MessageColumns
 
 		message := new(conversation.Message)
 		if err := dba.NewSelect().
 			Model(message).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.MessageScopeTenant(sq, req.TenantInfo).
+				return conversationcol.MessageScopeTenant(sq, req.TenantInfo).
 					Where(msgCols.ID.Eq(), req.MessageID)
 			}).
 			Scan(ctx); err != nil {
@@ -60,8 +61,8 @@ func (r *sourceRepository) GetMessageContext(
 		if err := dba.NewSelect().
 			Model(thread).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ThreadScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.ThreadColumns.ID.Eq(), message.ThreadID)
+				return conversationcol.ThreadScopeTenant(sq, req.TenantInfo).
+					Where(conversationcol.ThreadColumns.ID.Eq(), message.ThreadID)
 			}).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Conversation")
@@ -92,7 +93,7 @@ func (r *sourceRepository) exchange(
 	message *conversation.Message,
 ) ([]conversation.Message, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]conversation.Message, error) {
-		cols := buncolgen.MessageColumns
+		cols := conversationcol.MessageColumns
 		dba := r.db.DBForContext(ctx)
 		rows := make([]conversation.Message, 0)
 
@@ -100,7 +101,7 @@ func (r *sourceRepository) exchange(
 			err := dba.NewSelect().
 				Model(&rows).
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return buncolgen.MessageScopeTenant(sq, req.TenantInfo).
+					return conversationcol.MessageScopeTenant(sq, req.TenantInfo).
 						Where(cols.ThreadID.Eq(), message.ThreadID).
 						Where(cols.Kind.Eq(), conversation.MessageKindDelegated).
 						Where(cols.DelegateCallID.Eq(), message.DelegateCallID).
@@ -121,7 +122,7 @@ func (r *sourceRepository) exchange(
 			Model((*conversation.Message)(nil)).
 			ColumnExpr(buncolgen.Max(cols.Sequence, "start_sequence")).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.MessageScopeTenant(sq, req.TenantInfo).
+				return conversationcol.MessageScopeTenant(sq, req.TenantInfo).
 					Where(cols.ThreadID.Eq(), message.ThreadID).
 					Where(cols.Role.Eq(), conversation.RoleUser).
 					Where(cols.Kind.NotEq(), conversation.MessageKindDelegated).
@@ -135,7 +136,7 @@ func (r *sourceRepository) exchange(
 		err = dba.NewSelect().
 			Model(&rows).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.MessageScopeTenant(sq, req.TenantInfo).
+				return conversationcol.MessageScopeTenant(sq, req.TenantInfo).
 					Where(cols.ThreadID.Eq(), message.ThreadID).
 					Where(cols.Kind.NotEq(), conversation.MessageKindDelegated).
 					Where(cols.Sequence.Gte(), start.Int64).
@@ -166,14 +167,14 @@ func (r *sourceRepository) turn(
 	message *conversation.Message,
 ) (*conversation.AssistantTurn, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.AssistantTurn, error) {
-		cols := buncolgen.AssistantTurnColumns
+		cols := conversationcol.AssistantTurnColumns
 		turn := new(conversation.AssistantTurn)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(turn).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AssistantTurnScopeTenant(sq, req.TenantInfo).
+				return conversationcol.AssistantTurnScopeTenant(sq, req.TenantInfo).
 					Where(cols.ThreadID.Eq(), message.ThreadID).
 					Where(cols.CreatedAt.Lte(), message.CreatedAt)
 			}).

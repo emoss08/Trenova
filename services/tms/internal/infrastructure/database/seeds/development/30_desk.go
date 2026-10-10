@@ -1,6 +1,12 @@
 package development
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/briefingcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/insightcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/watchtowercol"
 	"context"
 	"fmt"
 	"time"
@@ -96,7 +102,7 @@ func (s *DeskSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return err
 			}
 
-			cols := buncolgen.ItemColumns
+			cols := watchtowercol.ItemColumns
 			count, err := tx.NewSelect().
 				Model((*watchtower.Item)(nil)).
 				Where(cols.OrganizationID.Eq(), refs.org.ID).
@@ -128,7 +134,7 @@ func (s *DeskSeed) loadRefs(
 
 	refs := &deskSeedRefs{org: org, now: timeutils.NowUnix()}
 
-	cols := buncolgen.InboundMessageColumns
+	cols := inboundmessagecol.InboundMessageColumns
 	refs.messages = make([]*inboundmessage.InboundMessage, 0, 4)
 	if err = tx.NewSelect().
 		Model(&refs.messages).
@@ -156,7 +162,7 @@ func (s *DeskSeed) loadRefs(
 // makes "Hand off" and "Ask about this" do anything: both need the subject of
 // a real record, and an invented one has none.
 func (r *deskSeedRefs) loadAgentWork(ctx context.Context, tx bun.Tx) error {
-	proposalCols := buncolgen.AgentProposalColumns
+	proposalCols := agentcol.AgentProposalColumns
 	r.proposals = make([]*agent.AgentProposal, 0, 4)
 	if err := tx.NewSelect().
 		Model(&r.proposals).
@@ -169,7 +175,7 @@ func (r *deskSeedRefs) loadAgentWork(ctx context.Context, tx bun.Tx) error {
 		return fmt.Errorf("load pending proposals: %w", err)
 	}
 
-	planCols := buncolgen.AgentPlanColumns
+	planCols := agentcol.AgentPlanColumns
 	r.plans = make([]*agent.AgentPlan, 0, 2)
 	if err := tx.NewSelect().
 		Model(&r.plans).
@@ -180,7 +186,7 @@ func (r *deskSeedRefs) loadAgentWork(ctx context.Context, tx bun.Tx) error {
 		return fmt.Errorf("load pending plans: %w", err)
 	}
 
-	runCols := buncolgen.AgentRunColumns
+	runCols := agentcol.AgentRunColumns
 	r.failedRuns = make([]*agent.AgentRun, 0, 2)
 	if err := tx.NewSelect().
 		Model(&r.failedRuns).
@@ -191,7 +197,7 @@ func (r *deskSeedRefs) loadAgentWork(ctx context.Context, tx bun.Tx) error {
 		return fmt.Errorf("load failed runs: %w", err)
 	}
 
-	exceptionCols := buncolgen.AgentExceptionColumns
+	exceptionCols := agentcol.AgentExceptionColumns
 	r.exceptions = make([]*agent.AgentException, 0, 2)
 	if err := tx.NewSelect().
 		Model(&r.exceptions).
@@ -202,7 +208,7 @@ func (r *deskSeedRefs) loadAgentWork(ctx context.Context, tx bun.Tx) error {
 		return fmt.Errorf("load open exceptions: %w", err)
 	}
 
-	insightCols := buncolgen.InsightColumns
+	insightCols := insightcol.InsightColumns
 	r.insights = make([]*insight.Insight, 0, 5)
 	if err := tx.NewSelect().
 		Model(&r.insights).
@@ -223,7 +229,7 @@ func (r *deskSeedRefs) loadAgentWork(ctx context.Context, tx bun.Tx) error {
 // once here rather than per row.
 func (r *deskSeedRefs) loadAgentNames(ctx context.Context, tx bun.Tx) error {
 	definitions := make([]*agentdefinition.Definition, 0, 8)
-	defCols := buncolgen.DefinitionColumns
+	defCols := agentdefinitioncol.DefinitionColumns
 	if err := tx.NewSelect().
 		Model(&definitions).
 		Where(defCols.OrganizationID.Eq(), r.org.ID).
@@ -238,7 +244,7 @@ func (r *deskSeedRefs) loadAgentNames(ctx context.Context, tx bun.Tx) error {
 	}
 
 	runs := make([]*agent.AgentRun, 0, 16)
-	runCols := buncolgen.AgentRunColumns
+	runCols := agentcol.AgentRunColumns
 	if err := tx.NewSelect().
 		Model(&runs).
 		Where(runCols.OrganizationID.Eq(), r.org.ID).
@@ -405,7 +411,7 @@ func (s *DeskSeed) insertBriefing(
 ) error {
 	entity := briefingFor(refs)
 
-	cols := buncolgen.BriefingColumns
+	cols := briefingcol.BriefingColumns
 	count, err := tx.NewSelect().
 		Model((*briefing.Briefing)(nil)).
 		Where(cols.OrganizationID.Eq(), refs.org.ID).

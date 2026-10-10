@@ -1,6 +1,7 @@
 package billingtransferrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/billingtransfercol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
@@ -18,7 +19,7 @@ func runItemScope(
 	q *bun.SelectQuery,
 	req *billingtransferports.ListBillingTransferRunItemsRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.BillingTransferRunItemColumns
+	cols := billingtransfercol.BillingTransferRunItemColumns
 
 	q = q.Where(cols.RunID.Eq(), req.RunID)
 	if len(req.Statuses) > 0 {
@@ -46,7 +47,7 @@ func (r *repository) ListItems(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.BillingTransferRunItemTable.Alias,
+						billingtransfercol.BillingTransferRunItemTable.Alias,
 						req.Filter,
 						(*billingtransfer.BillingTransferRunItem)(nil),
 					)
@@ -70,12 +71,12 @@ func (r *repository) ListItems(
 					return dba.
 						NewSelect().
 						Model(entities).
-						ColumnExpr(buncolgen.BillingTransferRunItemTable.All())
+						ColumnExpr(billingtransfercol.BillingTransferRunItemTable.All())
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.BillingTransferRunItemTable.Alias,
+						billingtransfercol.BillingTransferRunItemTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*billingtransfer.BillingTransferRunItem)(nil),

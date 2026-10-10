@@ -1,6 +1,7 @@
 package timesheetrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 
@@ -54,14 +55,14 @@ func (r *repository) ListEntries(
 	req *workerports.ListTimeClockEntriesRequest,
 ) ([]*worker.TimeClockEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.TimeClockEntry, error) {
-		cols := buncolgen.TimeClockEntryColumns
+		cols := workercol.TimeClockEntryColumns
 		entities := make([]*worker.TimeClockEntry, 0, 16)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.TimeClockEntryScopeTenant(sq, req.TenantInfo)
+				sq = workercol.TimeClockEntryScopeTenant(sq, req.TenantInfo)
 				if !req.WorkerID.IsNil() {
 					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
 				}
@@ -93,8 +94,8 @@ func (r *repository) ListEntries(
 
 		if req.IncludeWorker {
 			q = q.
-				Relation(buncolgen.TimeClockEntryRelations.Worker).
-				Relation(buncolgen.TimeClockEntryRelations.Worker + "." + buncolgen.WorkerRelations.FleetCode)
+				Relation(workercol.TimeClockEntryRelations.Worker).
+				Relation(workercol.TimeClockEntryRelations.Worker + "." + workercol.WorkerRelations.FleetCode)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -116,8 +117,8 @@ func (r *repository) GetEntryByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TimeClockEntryScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.TimeClockEntryColumns.ID.Eq(), req.ID)
+				return workercol.TimeClockEntryScopeTenant(sq, req.TenantInfo).
+					Where(workercol.TimeClockEntryColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "TimeClockEntry")
@@ -135,14 +136,14 @@ func (r *repository) GetOpenEntry(
 	workerID pulid.ID,
 ) (*worker.TimeClockEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.TimeClockEntry, error) {
-		cols := buncolgen.TimeClockEntryColumns
+		cols := workercol.TimeClockEntryColumns
 		entity := new(worker.TimeClockEntry)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TimeClockEntryScopeTenant(sq, tenantInfo).
+				return workercol.TimeClockEntryScopeTenant(sq, tenantInfo).
 					Where(cols.WorkerID.Eq(), workerID).
 					Where(cols.ClockedOutAt.IsNull())
 			}).
@@ -189,7 +190,7 @@ func (r *repository) UpdateEntry(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.TimeClockEntryColumns.Version.Eq(), ov).
+			Where(workercol.TimeClockEntryColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -213,8 +214,8 @@ func (r *repository) DeleteEntry(
 			NewDelete().
 			Model((*worker.TimeClockEntry)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.TimeClockEntryScopeTenantDelete(dq, req.TenantInfo).
-					Where(buncolgen.TimeClockEntryColumns.ID.Eq(), req.ID)
+				return workercol.TimeClockEntryScopeTenantDelete(dq, req.TenantInfo).
+					Where(workercol.TimeClockEntryColumns.ID.Eq(), req.ID)
 			}).
 			Exec(ctx)
 		if err != nil {
@@ -231,14 +232,14 @@ func (r *repository) ListTimesheets(
 	req *workerports.ListTimesheetsRequest,
 ) ([]*worker.Timesheet, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.Timesheet, error) {
-		cols := buncolgen.TimesheetColumns
+		cols := workercol.TimesheetColumns
 		entities := make([]*worker.Timesheet, 0, 16)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.TimesheetScopeTenant(sq, req.TenantInfo)
+				sq = workercol.TimesheetScopeTenant(sq, req.TenantInfo)
 				if !req.WorkerID.IsNil() {
 					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
 				}
@@ -275,7 +276,7 @@ func (r *repository) ListTimesheets(
 			Limit(limitOr(req.Limit, defaultTimesheetPageSize))
 
 		if req.IncludeWorker {
-			q = q.Relation(buncolgen.TimesheetRelations.Worker)
+			q = q.Relation(workercol.TimesheetRelations.Worker)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -298,11 +299,11 @@ func (r *repository) GetTimesheetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TimesheetScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.TimesheetColumns.ID.Eq(), req.ID)
+				return workercol.TimesheetScopeTenant(sq, req.TenantInfo).
+					Where(workercol.TimesheetColumns.ID.Eq(), req.ID)
 			})
 		if req.IncludeWorker {
-			q = q.Relation(buncolgen.TimesheetRelations.Worker)
+			q = q.Relation(workercol.TimesheetRelations.Worker)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -338,12 +339,12 @@ func (r *repository) GetOrCreateTimesheet(
 				NewSelect().
 				Model(found).
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return buncolgen.TimesheetScopeTenant(sq, pagination.TenantInfo{
+					return workercol.TimesheetScopeTenant(sq, pagination.TenantInfo{
 						OrgID: entity.OrganizationID,
 						BuID:  entity.BusinessUnitID,
 					}).
-						Where(buncolgen.TimesheetColumns.WorkerID.Eq(), entity.WorkerID).
-						Where(buncolgen.TimesheetColumns.PeriodStart.Eq(), entity.PeriodStart)
+						Where(workercol.TimesheetColumns.WorkerID.Eq(), entity.WorkerID).
+						Where(workercol.TimesheetColumns.PeriodStart.Eq(), entity.PeriodStart)
 				}).
 				Scan(ctx); scanErr != nil {
 				return nil, scanErr
@@ -382,7 +383,7 @@ func (r *repository) UpdateTimesheet(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.TimesheetColumns.Version.Eq(), ov).
+			Where(workercol.TimesheetColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -408,14 +409,14 @@ func (r *repository) AttachEntries(
 	from, to int64,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.TimeClockEntryColumns
+		cols := workercol.TimeClockEntryColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*worker.TimeClockEntry)(nil)).
 			Set("timesheet_id = ?", timesheetID).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.TimeClockEntryScopeTenantUpdate(uq, tenantInfo).
+				return workercol.TimeClockEntryScopeTenantUpdate(uq, tenantInfo).
 					Where(cols.WorkerID.Eq(), workerID).
 					Where(cols.ClockedInAt.Gte(), from).
 					Where(cols.ClockedInAt.Lt(), to).
@@ -448,9 +449,9 @@ func (r *repository) ListExports(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.PayrollExportScopeTenant(sq, req.TenantInfo)
+				return workercol.PayrollExportScopeTenant(sq, req.TenantInfo)
 			}).
-			Order(buncolgen.PayrollExportColumns.PeriodStart.OrderDesc()).
+			Order(workercol.PayrollExportColumns.PeriodStart.OrderDesc()).
 			Limit(limitOr(req.Limit, defaultExportPageSize)).
 			Scan(ctx); err != nil {
 			r.l.Error("failed to list payroll exports", zap.Error(err))
@@ -471,8 +472,8 @@ func (r *repository) GetExportByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.PayrollExportScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.PayrollExportColumns.ID.Eq(), req.ID)
+				return workercol.PayrollExportScopeTenant(sq, req.TenantInfo).
+					Where(workercol.PayrollExportColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "PayrollExport")
@@ -512,7 +513,7 @@ func (r *repository) UpdateExport(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.PayrollExportColumns.Version.Eq(), ov).
+			Where(workercol.PayrollExportColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -537,7 +538,7 @@ func (r *repository) StampExport(
 	req *workerports.StampExportRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.TimesheetColumns
+		cols := workercol.TimesheetColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -547,7 +548,7 @@ func (r *repository) StampExport(
 			Set("version = version + 1").
 			Set("updated_at = ?", bun.Safe(r.db.NowEpoch())).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.TimesheetScopeTenantUpdate(uq, req.TenantInfo).
+				return workercol.TimesheetScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.In(), bun.List(req.TimesheetIDs)).
 					Where(cols.Status.Eq(), worker.TimesheetApproved).
 					Where(cols.PayrollExportID.IsNull())
@@ -577,10 +578,10 @@ func (r *repository) ApprovedLeaveRanges(
 	from, to int64,
 ) ([]workerports.RotaRangeRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.RotaRangeRow, error) {
-		cols := buncolgen.WorkerPTOColumns
+		cols := workercol.WorkerPTOColumns
 		rows := make([]workerports.RotaRangeRow, 0, 4)
 
-		if err := buncolgen.WorkerPTOScopeTenant(
+		if err := workercol.WorkerPTOScopeTenant(
 			r.db.DBForContext(ctx).NewSelect().Model((*worker.WorkerPTO)(nil)),
 			tenantInfo,
 		).
@@ -608,7 +609,7 @@ func (r *repository) ClearExport(
 	exportID pulid.ID,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.TimesheetColumns
+		cols := workercol.TimesheetColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -618,7 +619,7 @@ func (r *repository) ClearExport(
 			Set("version = version + 1").
 			Set("updated_at = ?", bun.Safe(r.db.NowEpoch())).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.TimesheetScopeTenantUpdate(uq, tenantInfo).
+				return workercol.TimesheetScopeTenantUpdate(uq, tenantInfo).
 					Where(cols.PayrollExportID.Eq(), exportID)
 			}).
 			Exec(ctx)

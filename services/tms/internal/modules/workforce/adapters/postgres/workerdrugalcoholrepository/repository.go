@@ -1,6 +1,7 @@
 package workerdrugalcoholrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"database/sql"
 	"errors"
@@ -62,14 +63,14 @@ func (r *repository) ListTests(
 	req *workerports.ListWorkerDOTTestsRequest,
 ) ([]*worker.WorkerDOTTest, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerDOTTest, error) {
-		cols := buncolgen.WorkerDOTTestColumns
+		cols := workercol.WorkerDOTTestColumns
 		entities := make([]*worker.WorkerDOTTest, 0, 16)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerDOTTestScopeTenant(sq, req.TenantInfo)
+				sq = workercol.WorkerDOTTestScopeTenant(sq, req.TenantInfo)
 				if !req.WorkerID.IsNil() {
 					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
 				}
@@ -96,14 +97,14 @@ func (r *repository) ListTests(
 			Limit(limitOr(req.Limit, defaultTestPageSize))
 
 		if req.IncludeWorker {
-			q = q.Relation(buncolgen.WorkerDOTTestRelations.Worker)
+			q = q.Relation(workercol.WorkerDOTTestRelations.Worker)
 		}
 		if req.IncludeDocument {
-			q = q.Relation(buncolgen.WorkerDOTTestRelations.Document)
+			q = q.Relation(workercol.WorkerDOTTestRelations.Document)
 		}
 		if req.IncludeActors {
-			q = q.Relation(buncolgen.WorkerDOTTestRelations.OrderedBy).
-				Relation(buncolgen.WorkerDOTTestRelations.RecordedBy)
+			q = q.Relation(workercol.WorkerDOTTestRelations.OrderedBy).
+				Relation(workercol.WorkerDOTTestRelations.RecordedBy)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -125,19 +126,19 @@ func (r *repository) GetTestByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerDOTTestScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerDOTTestColumns.ID.Eq(), req.ID)
+				return workercol.WorkerDOTTestScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerDOTTestColumns.ID.Eq(), req.ID)
 			})
 
 		if req.IncludeWorker {
-			q = q.Relation(buncolgen.WorkerDOTTestRelations.Worker)
+			q = q.Relation(workercol.WorkerDOTTestRelations.Worker)
 		}
 		if req.IncludeDocument {
-			q = q.Relation(buncolgen.WorkerDOTTestRelations.Document)
+			q = q.Relation(workercol.WorkerDOTTestRelations.Document)
 		}
 		if req.IncludeActors {
-			q = q.Relation(buncolgen.WorkerDOTTestRelations.OrderedBy).
-				Relation(buncolgen.WorkerDOTTestRelations.RecordedBy)
+			q = q.Relation(workercol.WorkerDOTTestRelations.OrderedBy).
+				Relation(workercol.WorkerDOTTestRelations.RecordedBy)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -185,7 +186,7 @@ func (r *repository) UpdateTest(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.WorkerDOTTestColumns.Version.Eq(), ov).
+			Where(workercol.WorkerDOTTestColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -205,14 +206,14 @@ func (r *repository) ListViolations(
 	req *workerports.ListWorkerDOTViolationsRequest,
 ) ([]*worker.WorkerDOTViolation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerDOTViolation, error) {
-		cols := buncolgen.WorkerDOTViolationColumns
+		cols := workercol.WorkerDOTViolationColumns
 		entities := make([]*worker.WorkerDOTViolation, 0, 8)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerDOTViolationScopeTenant(sq, req.TenantInfo)
+				sq = workercol.WorkerDOTViolationScopeTenant(sq, req.TenantInfo)
 				if !req.WorkerID.IsNil() {
 					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
 				}
@@ -224,11 +225,11 @@ func (r *repository) ListViolations(
 			Order(cols.OccurredAt.OrderDesc())
 
 		if req.IncludeTests {
-			q = q.Relation(buncolgen.WorkerDOTViolationRelations.SourceTest).
-				Relation(buncolgen.WorkerDOTViolationRelations.RTDTest)
+			q = q.Relation(workercol.WorkerDOTViolationRelations.SourceTest).
+				Relation(workercol.WorkerDOTViolationRelations.RTDTest)
 		}
 		if req.IncludeWorker {
-			q = q.Relation(buncolgen.WorkerDOTViolationRelations.Worker)
+			q = q.Relation(workercol.WorkerDOTViolationRelations.Worker)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -250,12 +251,12 @@ func (r *repository) GetViolationByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerDOTViolationScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerDOTViolationColumns.ID.Eq(), req.ID)
+				return workercol.WorkerDOTViolationScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerDOTViolationColumns.ID.Eq(), req.ID)
 			})
 		if req.IncludeTests {
-			q = q.Relation(buncolgen.WorkerDOTViolationRelations.SourceTest).
-				Relation(buncolgen.WorkerDOTViolationRelations.RTDTest)
+			q = q.Relation(workercol.WorkerDOTViolationRelations.SourceTest).
+				Relation(workercol.WorkerDOTViolationRelations.RTDTest)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -274,14 +275,14 @@ func (r *repository) GetOpenViolation(
 	workerID pulid.ID,
 ) (*worker.WorkerDOTViolation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerDOTViolation, error) {
-		cols := buncolgen.WorkerDOTViolationColumns
+		cols := workercol.WorkerDOTViolationColumns
 		entity := new(worker.WorkerDOTViolation)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerDOTViolationScopeTenant(sq, tenantInfo).
+				return workercol.WorkerDOTViolationScopeTenant(sq, tenantInfo).
 					Where(cols.WorkerID.Eq(), workerID).
 					Where(cols.Status.Ne(), worker.DOTViolationStatusResolved)
 			}).
@@ -336,7 +337,7 @@ func (r *repository) UpdateViolation(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.WorkerDOTViolationColumns.Version.Eq(), ov).
+			Where(workercol.WorkerDOTViolationColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -360,14 +361,14 @@ func (r *repository) ListQueries(
 	req *workerports.ListClearinghouseQueriesRequest,
 ) ([]*worker.WorkerClearinghouseQuery, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerClearinghouseQuery, error) {
-		cols := buncolgen.WorkerClearinghouseQueryColumns
+		cols := workercol.WorkerClearinghouseQueryColumns
 		entities := make([]*worker.WorkerClearinghouseQuery, 0, 8)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerClearinghouseQueryScopeTenant(sq, req.TenantInfo)
+				sq = workercol.WorkerClearinghouseQueryScopeTenant(sq, req.TenantInfo)
 				if !req.WorkerID.IsNil() {
 					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
 				}
@@ -379,7 +380,7 @@ func (r *repository) ListQueries(
 			Order(cols.RequestedAt.OrderDesc())
 
 		if req.IncludeWorker {
-			q = q.Relation(buncolgen.WorkerClearinghouseQueryRelations.Worker)
+			q = q.Relation(workercol.WorkerClearinghouseQueryRelations.Worker)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -401,8 +402,8 @@ func (r *repository) GetQueryByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerClearinghouseQueryScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerClearinghouseQueryColumns.ID.Eq(), req.ID)
+				return workercol.WorkerClearinghouseQueryScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerClearinghouseQueryColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -443,7 +444,7 @@ func (r *repository) UpdateQuery(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.WorkerClearinghouseQueryColumns.Version.Eq(), ov).
+			Where(workercol.WorkerClearinghouseQueryColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -467,7 +468,7 @@ func (r *repository) applyPoolFilters(
 	req *workerports.ListDOTRandomPoolsRequest,
 ) *bun.SelectQuery {
 	if req.Status != "" {
-		q = q.Where(buncolgen.DOTRandomPoolColumns.Status.Eq(), req.Status)
+		q = q.Where(workercol.DOTRandomPoolColumns.Status.Eq(), req.Status)
 	}
 	return q
 }
@@ -487,7 +488,7 @@ func (r *repository) ListPools(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.DOTRandomPoolTable.Alias,
+						workercol.DOTRandomPoolTable.Alias,
 						req.Filter,
 						(*worker.DOTRandomPool)(nil),
 					)
@@ -508,12 +509,12 @@ func (r *repository) ListPools(
 			Query: func(items *[]*worker.DOTRandomPool) *bun.SelectQuery {
 				return dba.NewSelect().
 					Model(items).
-					ColumnExpr(buncolgen.DOTRandomPoolTable.All())
+					ColumnExpr(workercol.DOTRandomPoolTable.All())
 			},
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 				sq, applyErr := querybuilder.ApplyCursorFilters(
 					sq,
-					buncolgen.DOTRandomPoolTable.Alias,
+					workercol.DOTRandomPoolTable.Alias,
 					req.Filter,
 					req.Cursor,
 					(*worker.DOTRandomPool)(nil),
@@ -543,8 +544,8 @@ func (r *repository) GetPoolByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DOTRandomPoolScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.DOTRandomPoolColumns.ID.Eq(), req.ID)
+				return workercol.DOTRandomPoolScopeTenant(sq, req.TenantInfo).
+					Where(workercol.DOTRandomPoolColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -563,14 +564,14 @@ func (r *repository) GetDefaultPool(
 	tenantInfo pagination.TenantInfo,
 ) (*worker.DOTRandomPool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.DOTRandomPool, error) {
-		cols := buncolgen.DOTRandomPoolColumns
+		cols := workercol.DOTRandomPoolColumns
 		entity := new(worker.DOTRandomPool)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DOTRandomPoolScopeTenant(sq, tenantInfo).
+				return workercol.DOTRandomPoolScopeTenant(sq, tenantInfo).
 					Where(cols.IsDefault.Eq(), true)
 			}).
 			Limit(1).
@@ -592,12 +593,12 @@ func (r *repository) PoolCodeExists(
 	req *workerports.DOTRandomPoolCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := buncolgen.DOTRandomPoolColumns
+		cols := workercol.DOTRandomPoolColumns
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.DOTRandomPool)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DOTRandomPoolScopeTenant(sq, req.TenantInfo).
+				return workercol.DOTRandomPoolScopeTenant(sq, req.TenantInfo).
 					Where("LOWER("+cols.Code.String()+") = ?", strings.ToLower(req.Code))
 			})
 		if !req.ExcludeID.IsNil() {
@@ -651,7 +652,7 @@ func (r *repository) UpdatePool(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.DOTRandomPoolColumns.Version.Eq(), ov).
+			Where(workercol.DOTRandomPoolColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -681,13 +682,13 @@ func (r *repository) ClearDefaultPool(
 	exceptID pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.DOTRandomPoolColumns
+		cols := workercol.DOTRandomPoolColumns
 		q := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*worker.DOTRandomPool)(nil)).
 			Set(cols.IsDefault.Bare() + " = FALSE").
 			Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.DOTRandomPoolScopeTenantUpdate(uq, tenantInfo).
+				return workercol.DOTRandomPoolScopeTenantUpdate(uq, tenantInfo).
 					Where(cols.IsDefault.Eq(), true)
 			})
 		if !exceptID.IsNil() {
@@ -708,14 +709,14 @@ func (r *repository) ListDraws(
 	req *workerports.ListDOTRandomDrawsRequest,
 ) ([]*worker.DOTRandomDraw, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.DOTRandomDraw, error) {
-		cols := buncolgen.DOTRandomDrawColumns
+		cols := workercol.DOTRandomDrawColumns
 		entities := make([]*worker.DOTRandomDraw, 0, 16)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.DOTRandomDrawScopeTenant(sq, req.TenantInfo)
+				sq = workercol.DOTRandomDrawScopeTenant(sq, req.TenantInfo)
 				if !req.PoolID.IsNil() {
 					sq = sq.Where(cols.PoolID.Eq(), req.PoolID)
 				}
@@ -725,10 +726,10 @@ func (r *repository) ListDraws(
 			Limit(limitOr(req.Limit, defaultDrawPageSize))
 
 		if req.IncludePool {
-			q = q.Relation(buncolgen.DOTRandomDrawRelations.Pool)
+			q = q.Relation(workercol.DOTRandomDrawRelations.Pool)
 		}
 		if req.IncludeActors {
-			q = q.Relation(buncolgen.DOTRandomDrawRelations.DrawnBy)
+			q = q.Relation(workercol.DOTRandomDrawRelations.DrawnBy)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -750,20 +751,20 @@ func (r *repository) GetDrawByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DOTRandomDrawScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.DOTRandomDrawColumns.ID.Eq(), req.ID)
+				return workercol.DOTRandomDrawScopeTenant(sq, req.TenantInfo).
+					Where(workercol.DOTRandomDrawColumns.ID.Eq(), req.ID)
 			})
 
 		if req.IncludePool {
-			q = q.Relation(buncolgen.DOTRandomDrawRelations.Pool)
+			q = q.Relation(workercol.DOTRandomDrawRelations.Pool)
 		}
 		if req.IncludeEntries {
 			q = q.Relation(
-				buncolgen.DOTRandomDrawRelations.Entries,
+				workercol.DOTRandomDrawRelations.Entries,
 				func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = sq.Order(buncolgen.DOTRandomDrawEntryColumns.Rank.OrderAsc())
+					sq = sq.Order(workercol.DOTRandomDrawEntryColumns.Rank.OrderAsc())
 					if req.IncludeWorkers {
-						sq = sq.Relation(buncolgen.DOTRandomDrawEntryRelations.Worker)
+						sq = sq.Relation(workercol.DOTRandomDrawEntryRelations.Worker)
 					}
 					return sq
 				},
@@ -786,14 +787,14 @@ func (r *repository) GetDrawByPeriod(
 	req *workerports.GetDOTRandomDrawByPeriodRequest,
 ) (*worker.DOTRandomDraw, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.DOTRandomDraw, error) {
-		cols := buncolgen.DOTRandomDrawColumns
+		cols := workercol.DOTRandomDrawColumns
 		entity := new(worker.DOTRandomDraw)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DOTRandomDrawScopeTenant(sq, req.TenantInfo).
+				return workercol.DOTRandomDrawScopeTenant(sq, req.TenantInfo).
 					Where(cols.PoolID.Eq(), req.PoolID).
 					Where(cols.PeriodKey.Eq(), req.PeriodKey).
 					Where(cols.Status.Ne(), worker.RandomDrawStatusCancelled)
@@ -863,7 +864,7 @@ func (r *repository) UpdateDraw(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.DOTRandomDrawColumns.Version.Eq(), ov).
+			Where(workercol.DOTRandomDrawColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -886,8 +887,8 @@ func (r *repository) ListPoolCandidates(
 	req *workerports.ListPoolCandidatesRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		workerCols := buncolgen.WorkerColumns
-		profileCols := buncolgen.WorkerProfileColumns
+		workerCols := workercol.WorkerColumns
+		profileCols := workercol.WorkerProfileColumns
 
 		ids := make([]pulid.ID, 0, 64)
 		q := r.db.DBForContext(ctx).
@@ -898,7 +899,7 @@ func (r *repository) ListPoolCandidates(
 				" AND wrkp.organization_id = wrk.organization_id"+
 				" AND wrkp.business_unit_id = wrk.business_unit_id").
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerScopeTenant(sq, req.TenantInfo).
+				sq = workercol.WorkerScopeTenant(sq, req.TenantInfo).
 					Where(workerCols.Status.Eq(), "Active").
 					Where(profileCols.DrugAlcoholStatus.Ne(), worker.DrugAlcoholProhibited)
 				if len(req.DriverTypes) > 0 {
@@ -922,14 +923,14 @@ func (r *repository) ListDrawEntries(
 	req *workerports.ListDOTRandomDrawEntriesRequest,
 ) ([]*worker.DOTRandomDrawEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.DOTRandomDrawEntry, error) {
-		cols := buncolgen.DOTRandomDrawEntryColumns
+		cols := workercol.DOTRandomDrawEntryColumns
 		entities := make([]*worker.DOTRandomDrawEntry, 0, 32)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.DOTRandomDrawEntryScopeTenant(sq, req.TenantInfo)
+				sq = workercol.DOTRandomDrawEntryScopeTenant(sq, req.TenantInfo)
 				if !req.DrawID.IsNil() {
 					sq = sq.Where(cols.DrawID.Eq(), req.DrawID)
 				}
@@ -947,10 +948,10 @@ func (r *repository) ListDrawEntries(
 			Order(cols.Rank.OrderAsc())
 
 		if req.IncludeWorker {
-			q = q.Relation(buncolgen.DOTRandomDrawEntryRelations.Worker)
+			q = q.Relation(workercol.DOTRandomDrawEntryRelations.Worker)
 		}
 		if req.IncludeDraw {
-			q = q.Relation(buncolgen.DOTRandomDrawEntryRelations.Draw)
+			q = q.Relation(workercol.DOTRandomDrawEntryRelations.Draw)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -972,8 +973,8 @@ func (r *repository) GetDrawEntryByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DOTRandomDrawEntryScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.DOTRandomDrawEntryColumns.ID.Eq(), req.ID)
+				return workercol.DOTRandomDrawEntryScopeTenant(sq, req.TenantInfo).
+					Where(workercol.DOTRandomDrawEntryColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -996,7 +997,7 @@ func (r *repository) UpdateDrawEntry(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.DOTRandomDrawEntryColumns.Version.Eq(), ov).
+			Where(workercol.DOTRandomDrawEntryColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -1020,7 +1021,7 @@ func (r *repository) UpdateProfileRollup(
 	req *workerports.UpdateDrugAlcoholRollupRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.WorkerProfileColumns
+		cols := workercol.WorkerProfileColumns
 
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -1030,7 +1031,7 @@ func (r *repository) UpdateProfileRollup(
 			Set(cols.LastClearinghouseQueryAt.Set(), req.Rollup.LastClearinghouseQueryAt).
 			Set(cols.NextClearinghouseQueryDue.Set(), req.Rollup.NextClearinghouseQueryDue).
 			Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.WorkerProfileScopeTenantUpdate(uq, req.TenantInfo).
+				return workercol.WorkerProfileScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.WorkerID.Eq(), req.WorkerID)
 			}).
 			Exec(ctx)
@@ -1052,8 +1053,8 @@ func (r *repository) ListWorkersWithClearinghouseDue(
 ) ([]workerports.WorkerTenantRef, error) {
 	ctx = dbscope.WithSystem(ctx, "list workers due a clearinghouse query across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.WorkerTenantRef, error) {
-		workerCols := buncolgen.WorkerColumns
-		profileCols := buncolgen.WorkerProfileColumns
+		workerCols := workercol.WorkerColumns
+		profileCols := workercol.WorkerProfileColumns
 
 		refs := make([]workerports.WorkerTenantRef, 0, 64)
 		err := r.db.DBForContext(ctx).

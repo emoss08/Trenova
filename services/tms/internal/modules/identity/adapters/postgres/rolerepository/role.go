@@ -1,6 +1,7 @@
 package rolerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/permissioncol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -387,7 +388,7 @@ func (r *repository) DeleteAssignment(
 			zap.String("id", req.AssignmentID.String()),
 		)
 
-		cols := buncolgen.UserRoleAssignmentColumns
+		cols := permissioncol.UserRoleAssignmentColumns
 		deleted := new(permission.UserRoleAssignment)
 		result, err := r.db.DBForContext(ctx).
 			NewDelete().
@@ -444,7 +445,7 @@ func (r *repository) UpdateResourcePermission(
 			NewUpdate().
 			Model(rp).
 			WherePK().
-			Where(buncolgen.ResourcePermissionColumns.RoleID.Eq(), rp.RoleID).
+			Where(permissioncol.ResourcePermissionColumns.RoleID.Eq(), rp.RoleID).
 			OmitZero().
 			Returning("*").
 			Exec(ctx)
@@ -467,7 +468,7 @@ func (r *repository) DeleteResourcePermission(
 			zap.String("id", req.PermissionID.String()),
 		)
 
-		cols := buncolgen.ResourcePermissionColumns
+		cols := permissioncol.ResourcePermissionColumns
 		result, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*permission.ResourcePermission)(nil)).

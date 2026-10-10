@@ -1,6 +1,7 @@
 package journalentryrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/journalentrycol"
 	"context"
 	"fmt"
 
@@ -39,11 +40,11 @@ func (r *repository) List(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*journalentry.JournalEntry], error) {
 		limit := req.Filter.Pagination.SafeLimit()
 		entries := make([]*journalentry.JournalEntry, 0, limit)
-		cols := buncolgen.JournalEntryColumns
+		cols := journalentrycol.JournalEntryColumns
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entries).
-			Apply(buncolgen.JournalEntryApplyTenant(req.Filter.TenantInfo)).
+			Apply(journalentrycol.JournalEntryApplyTenant(req.Filter.TenantInfo)).
 			Order(cols.AccountingDate.OrderDesc()).
 			Order(cols.EntryNumber.OrderDesc()).
 			Limit(limit).
@@ -93,7 +94,7 @@ func (r *repository) GetByID(
 	req journalentryports.GetJournalEntryByIDRequest,
 ) (*journalentry.JournalEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*journalentry.JournalEntry, error) {
-		cols := buncolgen.JournalEntryColumns
+		cols := journalentrycol.JournalEntryColumns
 		entry := new(journalentry.JournalEntry)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -101,8 +102,8 @@ func (r *repository) GetByID(
 			Where(cols.ID.Eq(), req.ID).
 			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
 			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Relation(buncolgen.JournalEntryRelations.Lines, func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Order(buncolgen.JournalEntryLineColumns.LineNumber.OrderAsc())
+			Relation(journalentrycol.JournalEntryRelations.Lines, func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.Order(journalentrycol.JournalEntryLineColumns.LineNumber.OrderAsc())
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -120,7 +121,7 @@ func (r *repository) MarkReversed(
 	req journalentryports.MarkJournalEntryReversedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.JournalEntryColumns
+		cols := journalentrycol.JournalEntryColumns
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*journalentry.JournalEntry)(nil)).

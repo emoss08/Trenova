@@ -2,18 +2,21 @@
 
 package servicefailure
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/servicefailurecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ReasonCode].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ReasonCodeFieldMap] instead of parsing struct tags via reflection.
+// the generated [servicefailurecol.ReasonCodeFieldMap] instead of parsing struct tags via reflection.
 func (e *ReasonCode) GetStaticFieldMap() map[string]string {
-	return buncolgen.ReasonCodeFieldMap
+	return servicefailurecol.ReasonCodeFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ServiceFailure].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ServiceFailureFieldMap] instead of parsing struct tags via reflection.
+// the generated [servicefailurecol.ServiceFailureFieldMap] instead of parsing struct tags via reflection.
 func (e *ServiceFailure) GetStaticFieldMap() map[string]string {
-	return buncolgen.ServiceFailureFieldMap
+	return servicefailurecol.ServiceFailureFieldMap
 }

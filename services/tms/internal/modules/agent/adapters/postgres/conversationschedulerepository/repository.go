@@ -1,6 +1,8 @@
 package conversationschedulerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/conversationschedulecol"
 	"context"
 	"fmt"
 
@@ -62,7 +64,7 @@ func (r *repository) Create(
 					return fmt.Errorf("insert schedule: %w", err)
 				}
 
-				cols := buncolgen.MessageColumns
+				cols := conversationcol.MessageColumns
 				var maxSequence int
 				err := tx.NewSelect().
 					Model((*conversation.Message)(nil)).
@@ -88,7 +90,7 @@ func (r *repository) Create(
 					return fmt.Errorf("insert schedule message: %w", err)
 				}
 
-				threadCols := buncolgen.ThreadColumns
+				threadCols := conversationcol.ThreadColumns
 				if _, err = tx.NewUpdate().
 					Model((*conversation.Thread)(nil)).
 					Where(threadCols.ID.Eq(), schedule.ThreadID).
@@ -116,14 +118,14 @@ func (r *repository) Get(
 	req conversationscheduleports.GetConversationScheduleRequest,
 ) (*conversationschedule.Schedule, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversationschedule.Schedule, error) {
-		cols := buncolgen.ScheduleColumns
+		cols := conversationschedulecol.ScheduleColumns
 		entity := new(conversationschedule.Schedule)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.ScheduleScopeTenant(sq, req.TenantInfo).
+				sq = conversationschedulecol.ScheduleScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 				if req.UserID.IsNotNil() {
 					sq = sq.Where(cols.UserID.Eq(), req.UserID)
@@ -147,7 +149,7 @@ func (r *repository) List(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (
 		*pagination.ListResult[*conversationschedule.Schedule], error,
 	) {
-		cols := buncolgen.ScheduleColumns
+		cols := conversationschedulecol.ScheduleColumns
 
 		limit := req.Limit
 		if limit <= 0 {
@@ -200,8 +202,8 @@ func (r *repository) scoped(
 	tenant pagination.TenantInfo,
 	userID, threadID pulid.ID,
 ) *bun.SelectQuery {
-	cols := buncolgen.ScheduleColumns
-	sq = buncolgen.ScheduleScopeTenant(sq, tenant).Where(cols.UserID.Eq(), userID)
+	cols := conversationschedulecol.ScheduleColumns
+	sq = conversationschedulecol.ScheduleScopeTenant(sq, tenant).Where(cols.UserID.Eq(), userID)
 	if threadID.IsNotNil() {
 		sq = sq.Where(cols.ThreadID.Eq(), threadID)
 	}
@@ -222,7 +224,7 @@ func (r *repository) ListAcrossTenants(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*conversationschedule.Schedule, error) {
-			cols := buncolgen.ScheduleColumns
+			cols := conversationschedulecol.ScheduleColumns
 
 			limit := req.Limit
 			if limit <= 0 || limit > maxAcrossLimit {
@@ -252,7 +254,7 @@ func (r *repository) UpdateState(
 	schedule *conversationschedule.Schedule,
 ) (*conversationschedule.Schedule, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversationschedule.Schedule, error) {
-		cols := buncolgen.ScheduleColumns
+		cols := conversationschedulecol.ScheduleColumns
 		ov := schedule.Version
 		schedule.Version++
 
@@ -260,7 +262,7 @@ func (r *repository) UpdateState(
 			NewUpdate().
 			Model(schedule).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ScheduleScopeTenantUpdate(uq, pagination.TenantInfo{
+				return conversationschedulecol.ScheduleScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: schedule.OrganizationID,
 					BuID:  schedule.BusinessUnitID,
 				}).
@@ -292,13 +294,13 @@ func (r *repository) RecordRun(
 	req conversationscheduleports.RecordConversationScheduleRunRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.ScheduleColumns
+		cols := conversationschedulecol.ScheduleColumns
 
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*conversationschedule.Schedule)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ScheduleScopeTenantUpdate(uq, req.TenantInfo).
+				return conversationschedulecol.ScheduleScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Set(cols.LastRunAt.Set(), req.RunAt).
@@ -322,13 +324,13 @@ func (r *repository) Delete(
 		if req.UserID.IsNil() {
 			return errortypes.NewBusinessError("A schedule is deleted by its owner")
 		}
-		cols := buncolgen.ScheduleColumns
+		cols := conversationschedulecol.ScheduleColumns
 
 		res, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*conversationschedule.Schedule)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.ScheduleScopeTenantDelete(dq, req.TenantInfo).
+				return conversationschedulecol.ScheduleScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID).
 					Where(cols.UserID.Eq(), req.UserID)
 			}).

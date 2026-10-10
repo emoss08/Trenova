@@ -1,6 +1,7 @@
 package edidocumenttyperepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
 	"context"
 	"strings"
 
@@ -40,7 +41,7 @@ func (r *repository) ListDocumentTypes(
 ) ([]*edi.EDIDocumentType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIDocumentType, error) {
 		entities := make([]*edi.EDIDocumentType, 0, 8)
-		cols := buncolgen.EDIDocumentTypeColumns
+		cols := edicol.EDIDocumentTypeColumns
 		query := r.db.DBForContext(ctx).NewSelect().Model(&entities).Order(cols.Code.OrderAsc())
 		query = filterDocumentTypesQuery(query, req)
 		if err := query.Scan(ctx); err != nil {
@@ -56,7 +57,7 @@ func (r *repository) SelectDocumentTypeOptions(
 ) (*pagination.ListResult[*edi.EDIDocumentType], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIDocumentType], error) {
 		entities := make([]*edi.EDIDocumentType, 0, req.SelectQueryRequest.Pagination.SafeLimit())
-		cols := buncolgen.EDIDocumentTypeColumns
+		cols := edicol.EDIDocumentTypeColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
@@ -101,7 +102,7 @@ func filterDocumentTypesQuery(
 	query *bun.SelectQuery,
 	req ediports.ListEDIDocumentTypesRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.EDIDocumentTypeColumns
+	cols := edicol.EDIDocumentTypeColumns
 	if req.Standard != "" {
 		query = query.Where(cols.Standard.Eq(), req.Standard)
 	}
@@ -124,7 +125,7 @@ func applyDocumentTypeSearch(query *bun.SelectQuery, search string) *bun.SelectQ
 	}
 
 	term := "%" + strings.ToLower(search) + "%"
-	cols := buncolgen.EDIDocumentTypeColumns
+	cols := edicol.EDIDocumentTypeColumns
 
 	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 		return sq.WhereOr(cols.Code.LowerLike(), term).

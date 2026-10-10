@@ -1,6 +1,7 @@
 package formulatemplatereviewrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
 	"context"
 	"database/sql"
 	"errors"
@@ -64,7 +65,7 @@ func (r *repository) ListByTemplate(
 	req *formulatemplateports.ListTemplateReviewsRequest,
 ) ([]*formulatemplate.Review, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*formulatemplate.Review, error) {
-		cols := buncolgen.ReviewColumns
+		cols := formulatemplatecol.ReviewColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultHistoryLimit
@@ -74,9 +75,9 @@ func (r *repository) ListByTemplate(
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&reviews).
-			Relation(buncolgen.Rel(buncolgen.ReviewRelations.Actor)).
+			Relation(buncolgen.Rel(formulatemplatecol.ReviewRelations.Actor)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ReviewScopeTenant(sq, req.TenantInfo).
+				return formulatemplatecol.ReviewScopeTenant(sq, req.TenantInfo).
 					Where(cols.TemplateID.Eq(), req.TemplateID)
 			}).
 			Order(cols.CreatedAt.OrderDesc()).
@@ -97,14 +98,14 @@ func (r *repository) Latest(
 	tenantInfo pagination.TenantInfo,
 ) (*formulatemplate.Review, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*formulatemplate.Review, error) {
-		cols := buncolgen.ReviewColumns
+		cols := formulatemplatecol.ReviewColumns
 
 		review := new(formulatemplate.Review)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(review).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ReviewScopeTenant(sq, tenantInfo).
+				return formulatemplatecol.ReviewScopeTenant(sq, tenantInfo).
 					Where(cols.TemplateID.Eq(), templateID)
 			}).
 			Order(cols.CreatedAt.OrderDesc()).
@@ -130,7 +131,7 @@ func (r *repository) ListStaleSubmissions(
 ) ([]*formulatemplate.FormulaTemplate, error) {
 	ctx = dbscope.WithSystem(ctx, "list stale formula template submissions across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*formulatemplate.FormulaTemplate, error) {
-		cols := buncolgen.FormulaTemplateColumns
+		cols := formulatemplatecol.FormulaTemplateColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultStaleLimit

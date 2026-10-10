@@ -1,6 +1,7 @@
 package ratematrixrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/ratematrixcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
@@ -39,7 +40,7 @@ func NewDensityScaleRepository(p DensityScaleParams) ratematrixports.DensityScal
 }
 
 func orderTiers(sq *bun.SelectQuery) *bun.SelectQuery {
-	return sq.Order(buncolgen.DensityScaleTierColumns.FromPcf.OrderAsc())
+	return sq.Order(ratematrixcol.DensityScaleTierColumns.FromPcf.OrderAsc())
 }
 
 func (r *densityScaleRepository) List(
@@ -49,22 +50,22 @@ func (r *densityScaleRepository) List(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*ratematrix.DensityScale], error) {
 		log := r.l.With(zap.String("operation", "List"))
 
-		cols := buncolgen.DensityScaleColumns
+		cols := ratematrixcol.DensityScaleColumns
 		entities := make([]*ratematrix.DensityScale, 0, req.Filter.Pagination.SafeLimit())
 
 		total, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Relation(buncolgen.Rel(buncolgen.DensityScaleRelations.Tiers), orderTiers).
+			Relation(buncolgen.Rel(ratematrixcol.DensityScaleRelations.Tiers), orderTiers).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 				sq = querybuilder.ApplyFilters(
 					sq,
-					buncolgen.DensityScaleTable.Alias,
+					ratematrixcol.DensityScaleTable.Alias,
 					req.Filter,
 					(*ratematrix.DensityScale)(nil),
 				)
 
-				return sq.Apply(buncolgen.DensityScaleApplyTenant(req.Filter.TenantInfo)).
+				return sq.Apply(ratematrixcol.DensityScaleApplyTenant(req.Filter.TenantInfo)).
 					Limit(req.Filter.Pagination.SafeLimit()).
 					Offset(req.Filter.Pagination.SafeOffset()).
 					Order(cols.EffectiveFrom.OrderDesc())
@@ -90,14 +91,14 @@ func (r *densityScaleRepository) GetByID(
 		)
 
 		entity := new(ratematrix.DensityScale)
-		cols := buncolgen.DensityScaleColumns
+		cols := ratematrixcol.DensityScaleColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Relation(buncolgen.Rel(buncolgen.DensityScaleRelations.Tiers), orderTiers).
+			Relation(buncolgen.Rel(ratematrixcol.DensityScaleRelations.Tiers), orderTiers).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DensityScaleScopeTenant(sq, req.TenantInfo).
+				return ratematrixcol.DensityScaleScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.DensityScaleID)
 			}).
 			Scan(ctx)
@@ -122,14 +123,14 @@ func (r *densityScaleRepository) GetOrgDefault(
 		log := r.l.With(zap.String("operation", "GetOrgDefault"))
 
 		entity := new(ratematrix.DensityScale)
-		cols := buncolgen.DensityScaleColumns
+		cols := ratematrixcol.DensityScaleColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Relation(buncolgen.Rel(buncolgen.DensityScaleRelations.Tiers), orderTiers).
+			Relation(buncolgen.Rel(ratematrixcol.DensityScaleRelations.Tiers), orderTiers).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DensityScaleScopeTenant(sq, tenantInfo).
+				return ratematrixcol.DensityScaleScopeTenant(sq, tenantInfo).
 					Where(cols.IsOrgDefault.IsTrue()).
 					Where(cols.Status.Eq(), domaintypes.StatusActive)
 			}).
@@ -192,8 +193,8 @@ func (r *densityScaleRepository) Update(
 		ov := entity.Version
 		entity.Version++
 
-		cols := buncolgen.DensityScaleColumns
-		tierCols := buncolgen.DensityScaleTierColumns
+		cols := ratematrixcol.DensityScaleColumns
+		tierCols := ratematrixcol.DensityScaleTierColumns
 
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			results, uErr := r.db.DBForContext(c).
@@ -220,7 +221,7 @@ func (r *densityScaleRepository) Update(
 				NewDelete().
 				Model((*ratematrix.DensityScaleTier)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return buncolgen.DensityScaleTierScopeTenantDelete(dq, pagination.TenantInfo{
+					return ratematrixcol.DensityScaleTierScopeTenantDelete(dq, pagination.TenantInfo{
 						OrgID: entity.OrganizationID,
 						BuID:  entity.BusinessUnitID,
 					}).Where(tierCols.RateDensityScaleID.Eq(), entity.ID)

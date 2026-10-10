@@ -1,6 +1,7 @@
 package agentextensionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentextensioncol"
 	"context"
 	"fmt"
 
@@ -50,8 +51,8 @@ func (r *repository) ListByTenant(
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.ExtensionApplyTenant(tenantInfo)).
-			Order(buncolgen.ExtensionColumns.Type.OrderAsc()).
+			Apply(agentextensioncol.ExtensionApplyTenant(tenantInfo)).
+			Order(agentextensioncol.ExtensionColumns.Type.OrderAsc()).
 			Scan(ctx)
 		if err != nil {
 			r.l.Error("failed to list agent extensions", zap.Error(err))
@@ -73,8 +74,8 @@ func (r *repository) GetByType(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ExtensionScopeTenant(sq, tenantInfo).
-					Where(buncolgen.ExtensionColumns.Type.Eq(), typ)
+				return agentextensioncol.ExtensionScopeTenant(sq, tenantInfo).
+					Where(agentextensioncol.ExtensionColumns.Type.Eq(), typ)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -127,7 +128,7 @@ func (r *repository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.ExtensionColumns.Version.Eq(), ov).
+			Where(agentextensioncol.ExtensionColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {

@@ -2,6 +2,7 @@
 package capturerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/capturecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
@@ -70,7 +71,7 @@ func (r *requestRepository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.CaptureRequestColumns.Version.Eq(), ov).
+			Where(capturecol.CaptureRequestColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -98,9 +99,9 @@ func (r *requestRepository) GetByID(
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Relation(buncolgen.CaptureRequestRelations.CaptureProfile).
-			Where(buncolgen.CaptureRequestColumns.ID.Eq(), req.ID).
-			Apply(buncolgen.CaptureRequestApplyTenant(req.TenantInfo)).
+			Relation(capturecol.CaptureRequestRelations.CaptureProfile).
+			Where(capturecol.CaptureRequestColumns.ID.Eq(), req.ID).
+			Apply(capturecol.CaptureRequestApplyTenant(req.TenantInfo)).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Capture request")
 		}
@@ -115,13 +116,13 @@ func (r *requestRepository) ListOpen(
 ) ([]*capture.CaptureRequest, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureRequest, error) {
 		entities := make([]*capture.CaptureRequest, 0)
-		cols := buncolgen.CaptureRequestColumns
+		cols := capturecol.CaptureRequestColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Relation(buncolgen.CaptureRequestRelations.CaptureProfile).
-			Apply(buncolgen.CaptureRequestApplyTenant(req.TenantInfo)).
+			Relation(capturecol.CaptureRequestRelations.CaptureProfile).
+			Apply(capturecol.CaptureRequestApplyTenant(req.TenantInfo)).
 			Where(cols.DeviceID.Eq(), req.DeviceID).
 			Where(cols.Status.In(), bun.List(openRequestStatuses)).
 			Order(cols.CreatedAt.OrderAsc()).
@@ -144,12 +145,12 @@ func (r *requestRepository) ListForTarget(
 		}
 
 		entities := make([]*capture.CaptureRequest, 0)
-		cols := buncolgen.CaptureRequestColumns
+		cols := capturecol.CaptureRequestColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.CaptureRequestApplyTenant(req.TenantInfo)).
+			Apply(capturecol.CaptureRequestApplyTenant(req.TenantInfo)).
 			Where(cols.TargetType.Eq(), req.TargetType).
 			Where(cols.TargetID.Eq(), req.TargetID)
 		if req.UserID.IsNotNil() {
@@ -175,7 +176,7 @@ func (r *requestRepository) ListExpired(
 	ctx = dbscope.WithSystem(ctx, "list expired capture requests across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureRequest, error) {
 		entities := make([]*capture.CaptureRequest, 0)
-		cols := buncolgen.CaptureRequestColumns
+		cols := capturecol.CaptureRequestColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().

@@ -1,6 +1,7 @@
 package carrierassignmentrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -41,7 +42,7 @@ func (r *repository) GetByID(
 	req *shipmentports.GetCarrierAssignmentByIDRequest,
 ) (*shipment.CarrierAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.CarrierAssignment, error) {
-		cols := buncolgen.CarrierAssignmentColumns
+		cols := shipmentcol.CarrierAssignmentColumns
 		entity := new(shipment.CarrierAssignment)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -50,7 +51,7 @@ func (r *repository) GetByID(
 			Relation("Accessorials").
 			Relation("ShipmentMove").
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierAssignmentScopeTenant(sq, req.TenantInfo).
+				return shipmentcol.CarrierAssignmentScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.CarrierAssignmentID)
 			}).
 			Scan(ctx)
@@ -69,7 +70,7 @@ func (r *repository) GetActiveByMoveID(
 	moveID pulid.ID,
 ) (*shipment.CarrierAssignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.CarrierAssignment, error) {
-		cols := buncolgen.CarrierAssignmentColumns
+		cols := shipmentcol.CarrierAssignmentColumns
 		entity := new(shipment.CarrierAssignment)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -77,7 +78,7 @@ func (r *repository) GetActiveByMoveID(
 			Relation("Carrier").
 			Relation("Accessorials").
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierAssignmentScopeTenant(sq, tenantInfo).
+				return shipmentcol.CarrierAssignmentScopeTenant(sq, tenantInfo).
 					Where(cols.ShipmentMoveID.Eq(), moveID).
 					Where(cols.Status.Ne(), shipment.CarrierAssignmentStatusCanceled)
 			}).
@@ -103,7 +104,7 @@ func (r *repository) FindForMatching(
 			return nil, nil //nolint:nilnil // nothing to match without a reference
 		}
 
-		cols := buncolgen.CarrierAssignmentColumns
+		cols := shipmentcol.CarrierAssignmentColumns
 		entity := new(shipment.CarrierAssignment)
 		query := r.db.DBForContext(ctx).
 			NewSelect().
@@ -112,7 +113,7 @@ func (r *repository) FindForMatching(
 			Relation("Accessorials").
 			Relation("ShipmentMove").
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.CarrierAssignmentScopeTenant(sq, req.TenantInfo).
+				sq = shipmentcol.CarrierAssignmentScopeTenant(sq, req.TenantInfo).
 					Where(cols.Status.Ne(), shipment.CarrierAssignmentStatusCanceled)
 				if !req.CarrierID.IsNil() {
 					sq = sq.Where(cols.CarrierID.Eq(), req.CarrierID)
@@ -191,13 +192,13 @@ func (r *repository) deleteMissingAccessorials(
 			NewDelete().
 			Model((*shipment.CarrierAssignmentAccessorial)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				dq = buncolgen.CarrierAssignmentAccessorialScopeTenantDelete(dq, pagination.TenantInfo{
+				dq = shipmentcol.CarrierAssignmentAccessorialScopeTenantDelete(dq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
-				}).Where(buncolgen.CarrierAssignmentAccessorialColumns.CarrierAssignmentID.Eq(), entity.ID)
+				}).Where(shipmentcol.CarrierAssignmentAccessorialColumns.CarrierAssignmentID.Eq(), entity.ID)
 				if len(kept) > 0 {
 					dq = dq.Where(
-						buncolgen.CarrierAssignmentAccessorialColumns.ID.NotIn(),
+						shipmentcol.CarrierAssignmentAccessorialColumns.ID.NotIn(),
 						bun.List(kept),
 					)
 				}

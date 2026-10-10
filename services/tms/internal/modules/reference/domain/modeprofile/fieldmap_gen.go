@@ -2,25 +2,28 @@
 
 package modeprofile
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/modeprofilecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CapabilityRule].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CapabilityRuleFieldMap] instead of parsing struct tags via reflection.
+// the generated [modeprofilecol.CapabilityRuleFieldMap] instead of parsing struct tags via reflection.
 func (e *CapabilityRule) GetStaticFieldMap() map[string]string {
-	return buncolgen.CapabilityRuleFieldMap
+	return modeprofilecol.CapabilityRuleFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Deviation].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DeviationFieldMap] instead of parsing struct tags via reflection.
+// the generated [modeprofilecol.DeviationFieldMap] instead of parsing struct tags via reflection.
 func (e *Deviation) GetStaticFieldMap() map[string]string {
-	return buncolgen.DeviationFieldMap
+	return modeprofilecol.DeviationFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Profile].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ProfileFieldMap] instead of parsing struct tags via reflection.
+// the generated [modeprofilecol.ProfileFieldMap] instead of parsing struct tags via reflection.
 func (e *Profile) GetStaticFieldMap() map[string]string {
-	return buncolgen.ProfileFieldMap
+	return modeprofilecol.ProfileFieldMap
 }

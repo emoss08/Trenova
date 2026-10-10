@@ -1,6 +1,7 @@
 package ratematrixrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/ratematrixcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
@@ -44,22 +45,22 @@ func New(p Params) ratematrixports.RateMatrixRepository {
 }
 
 func orderDimensions(sq *bun.SelectQuery) *bun.SelectQuery {
-	return sq.Order(buncolgen.RateMatrixDimensionColumns.Position.OrderAsc())
+	return sq.Order(ratematrixcol.RateMatrixDimensionColumns.Position.OrderAsc())
 }
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *ratematrixports.ListRateMatrixRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.RateMatrixColumns
+	cols := ratematrixcol.RateMatrixColumns
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.RateMatrixTable.Alias,
+		ratematrixcol.RateMatrixTable.Alias,
 		req.Filter,
 		(*ratematrix.RateMatrix)(nil),
 	)
 
-	return q.Apply(buncolgen.RateMatrixApplyTenant(req.Filter.TenantInfo)).
+	return q.Apply(ratematrixcol.RateMatrixApplyTenant(req.Filter.TenantInfo)).
 		Limit(req.Filter.Pagination.SafeLimit()).
 		Offset(req.Filter.Pagination.SafeOffset()).
 		Order(cols.CreatedAt.OrderDesc())
@@ -95,7 +96,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.RateMatrixTable.Alias,
+		ratematrixcol.RateMatrixTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*ratematrix.RateMatrix)(nil),
@@ -108,7 +109,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.RateMatrixTable.Alias,
+		ratematrixcol.RateMatrixTable.Alias,
 		req.Filter,
 		(*ratematrix.RateMatrix)(nil),
 	)
@@ -116,7 +117,7 @@ func (r *repository) applyTotalCountFilters(
 
 func applyRateMatrixColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.RateMatrixTable.All())
+		return q.ColumnExpr(ratematrixcol.RateMatrixTable.All())
 	}
 
 	return q.Column(columns...)
@@ -154,7 +155,7 @@ func (r *repository) ListConnection(
 				return dba.
 					NewSelect().
 					Model(entities).
-					Relation(buncolgen.Rel(buncolgen.RateMatrixRelations.FormulaTemplate)).
+					Relation(buncolgen.Rel(ratematrixcol.RateMatrixRelations.FormulaTemplate)).
 					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 						return applyRateMatrixColumns(sq, req.RateMatrixColumns)
 					})
@@ -183,19 +184,19 @@ func (r *repository) GetByID(
 		)
 
 		entity := new(ratematrix.RateMatrix)
-		cols := buncolgen.RateMatrixColumns
+		cols := ratematrixcol.RateMatrixColumns
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RateMatrixScopeTenant(sq, req.TenantInfo).
+				return ratematrixcol.RateMatrixScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.RateMatrixID)
 			})
 
 		if req.IncludeDimensions {
 			q = q.Relation(
-				buncolgen.Rel(buncolgen.RateMatrixRelations.Dimensions),
+				buncolgen.Rel(ratematrixcol.RateMatrixRelations.Dimensions),
 				orderDimensions,
 			)
 		}
@@ -222,14 +223,14 @@ func (r *repository) GetByCode(
 		log := r.l.With(zap.String("operation", "GetByCode"), zap.String("code", req.Code))
 
 		entity := new(ratematrix.RateMatrix)
-		cols := buncolgen.RateMatrixColumns
+		cols := ratematrixcol.RateMatrixColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Relation(buncolgen.Rel(buncolgen.RateMatrixRelations.Dimensions), orderDimensions).
+			Relation(buncolgen.Rel(ratematrixcol.RateMatrixRelations.Dimensions), orderDimensions).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RateMatrixScopeTenant(sq, req.TenantInfo).
+				return ratematrixcol.RateMatrixScopeTenant(sq, req.TenantInfo).
 					Where(cols.Code.LowerLike(), req.Code).
 					Where(cols.Status.Eq(), domaintypes.StatusActive)
 			}).
@@ -291,8 +292,8 @@ func (r *repository) Update(
 		ov := entity.Version
 		entity.Version++
 
-		cols := buncolgen.RateMatrixColumns
-		dimensionCols := buncolgen.RateMatrixDimensionColumns
+		cols := ratematrixcol.RateMatrixColumns
+		dimensionCols := ratematrixcol.RateMatrixDimensionColumns
 
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			results, uErr := r.db.DBForContext(c).
@@ -319,7 +320,7 @@ func (r *repository) Update(
 				NewDelete().
 				Model((*ratematrix.RateMatrixDimension)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return buncolgen.RateMatrixDimensionScopeTenantDelete(dq, pagination.TenantInfo{
+					return ratematrixcol.RateMatrixDimensionScopeTenantDelete(dq, pagination.TenantInfo{
 						OrgID: entity.OrganizationID,
 						BuID:  entity.BusinessUnitID,
 					}).Where(dimensionCols.RateMatrixID.Eq(), entity.ID)
@@ -373,12 +374,12 @@ func (r *repository) Delete(
 			zap.String("id", req.RateMatrixID.String()),
 		)
 
-		cols := buncolgen.RateMatrixColumns
+		cols := ratematrixcol.RateMatrixColumns
 		results, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*ratematrix.RateMatrix)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.RateMatrixScopeTenantDelete(dq, req.TenantInfo).
+				return ratematrixcol.RateMatrixScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.RateMatrixID)
 			}).
 			Exec(ctx)
@@ -396,7 +397,7 @@ func (r *repository) SelectOptions(
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*ratematrix.RateMatrix], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*ratematrix.RateMatrix], error) {
-		cols := buncolgen.RateMatrixColumns
+		cols := ratematrixcol.RateMatrixColumns
 
 		return dbhelper.SelectOptions[*ratematrix.RateMatrix](
 			ctx,

@@ -1,6 +1,7 @@
 package agentdefinitionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
 	"context"
 	"fmt"
 
@@ -33,13 +34,13 @@ func (r *testPromptRepository) List(
 	req *agentdefinitionports.ListAgentTestPromptsRequest,
 ) ([]*agentdefinition.TestPrompt, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdefinition.TestPrompt, error) {
-		cols := buncolgen.TestPromptColumns
+		cols := agentdefinitioncol.TestPromptColumns
 		prompts := make([]*agentdefinition.TestPrompt, 0, agentdefinition.MaxTestPrompts)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&prompts).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TestPromptScopeTenant(sq, req.TenantInfo).
+				return agentdefinitioncol.TestPromptScopeTenant(sq, req.TenantInfo).
 					Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
 			}).
 			Order(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
@@ -57,12 +58,12 @@ func (r *testPromptRepository) Count(
 	req *agentdefinitionports.ListAgentTestPromptsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.TestPromptColumns
+		cols := agentdefinitioncol.TestPromptColumns
 		count, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*agentdefinition.TestPrompt)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TestPromptScopeTenant(sq, req.TenantInfo).
+				return agentdefinitioncol.TestPromptScopeTenant(sq, req.TenantInfo).
 					Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
 			}).
 			Count(ctx)
@@ -87,12 +88,12 @@ func (r *testPromptRepository) Delete(
 	req *agentdefinitionports.DeleteAgentTestPromptRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.TestPromptColumns
+		cols := agentdefinitioncol.TestPromptColumns
 		result, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*agentdefinition.TestPrompt)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.TestPromptScopeTenantDelete(dq, req.TenantInfo).
+				return agentdefinitioncol.TestPromptScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID).
 					Where(cols.ID.Eq(), req.ID)
 			}).

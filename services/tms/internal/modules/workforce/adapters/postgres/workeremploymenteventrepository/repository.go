@@ -1,6 +1,7 @@
 package workeremploymenteventrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -40,7 +41,7 @@ func (r *repository) List(
 	req *workerports.ListWorkerEmploymentEventsRequest,
 ) ([]*worker.WorkerEmploymentEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerEmploymentEvent, error) {
-		cols := buncolgen.WorkerEmploymentEventColumns
+		cols := workercol.WorkerEmploymentEventColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultPageSize
@@ -51,7 +52,7 @@ func (r *repository) List(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerEmploymentEventScopeTenant(sq, req.TenantInfo).
+				sq = workercol.WorkerEmploymentEventScopeTenant(sq, req.TenantInfo).
 					Where(cols.WorkerID.Eq(), req.WorkerID)
 				if len(req.Kinds) > 0 {
 					sq = sq.Where(cols.Kind.In(), bun.In(req.Kinds))
@@ -65,11 +66,11 @@ func (r *repository) List(
 			q = q.Order(cols.EffectiveAt.OrderDesc()).Order(cols.CreatedAt.OrderDesc())
 		}
 		if req.IncludeDocument {
-			q = q.Relation(buncolgen.WorkerEmploymentEventRelations.Document)
+			q = q.Relation(workercol.WorkerEmploymentEventRelations.Document)
 		}
 		if req.IncludeActors {
-			q = q.Relation(buncolgen.WorkerEmploymentEventRelations.RecordedBy).
-				Relation(buncolgen.WorkerEmploymentEventRelations.AmendedBy)
+			q = q.Relation(workercol.WorkerEmploymentEventRelations.RecordedBy).
+				Relation(workercol.WorkerEmploymentEventRelations.AmendedBy)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -91,15 +92,15 @@ func (r *repository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerEmploymentEventScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerEmploymentEventColumns.ID.Eq(), req.ID)
+				return workercol.WorkerEmploymentEventScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerEmploymentEventColumns.ID.Eq(), req.ID)
 			})
 		if req.IncludeDocument {
-			q = q.Relation(buncolgen.WorkerEmploymentEventRelations.Document)
+			q = q.Relation(workercol.WorkerEmploymentEventRelations.Document)
 		}
 		if req.IncludeActors {
-			q = q.Relation(buncolgen.WorkerEmploymentEventRelations.RecordedBy).
-				Relation(buncolgen.WorkerEmploymentEventRelations.AmendedBy)
+			q = q.Relation(workercol.WorkerEmploymentEventRelations.RecordedBy).
+				Relation(workercol.WorkerEmploymentEventRelations.AmendedBy)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -140,7 +141,7 @@ func (r *repository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.WorkerEmploymentEventColumns.Version.Eq(), ov).
+			Where(workercol.WorkerEmploymentEventColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {

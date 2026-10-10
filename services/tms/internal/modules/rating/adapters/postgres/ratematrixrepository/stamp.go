@@ -1,6 +1,7 @@
 package ratematrixrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/ratematrixcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
@@ -20,7 +21,7 @@ func (r *repository) GetLookupStamp(
 	tenantInfo pagination.TenantInfo,
 ) (string, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (string, error) {
-		cols := buncolgen.RateMatrixColumns
+		cols := ratematrixcol.RateMatrixColumns
 
 		var stamp string
 		err := r.db.DBForContext(ctx).
@@ -32,7 +33,7 @@ func (r *repository) GetLookupStamp(
 				bun.Ident(cols.UpdatedAt.Name),
 			).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RateMatrixScopeTenant(sq, tenantInfo)
+				return ratematrixcol.RateMatrixScopeTenant(sq, tenantInfo)
 			}).
 			Scan(ctx, &stamp)
 		if err != nil {

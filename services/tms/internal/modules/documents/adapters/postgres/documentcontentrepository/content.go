@@ -1,6 +1,8 @@
 package documentcontentrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/documentcontentcol"
 	"context"
 	"fmt"
 	"strings"
@@ -48,12 +50,12 @@ func (r *repository) GetByDocumentID(
 ) (*documentcontent.Content, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documentcontent.Content, error) {
 		entity := new(documentcontent.Content)
-		cols := buncolgen.ContentColumns
+		cols := documentcontentcol.ContentColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ContentScopeTenant(sq, tenantInfo).
+				return documentcontentcol.ContentScopeTenant(sq, tenantInfo).
 					Where(cols.DocumentID.Eq(), documentID)
 			}).
 			Scan(ctx)
@@ -94,7 +96,7 @@ func (r *repository) Upsert(
 	entity *documentcontent.Content,
 ) (*documentcontent.Content, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*documentcontent.Content, error) {
-		cols := buncolgen.ContentColumns
+		cols := documentcontentcol.ContentColumns
 		if _, err := r.db.DBForContext(ctx).
 			NewInsert().
 			Model(entity).
@@ -127,12 +129,12 @@ func (r *repository) ReplacePages(
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.DBForContext(ctx)
-		cols := buncolgen.PageColumns
+		cols := documentcontentcol.PageColumns
 
 		if _, err := db.NewDelete().
-			TableExpr(fmt.Sprintf("%s AS %s", buncolgen.PageTable.Name, buncolgen.PageTable.Alias)).
+			TableExpr(fmt.Sprintf("%s AS %s", documentcontentcol.PageTable.Name, documentcontentcol.PageTable.Alias)).
 			WhereGroup(" AND ", func(sq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.PageScopeTenantDelete(sq, pagination.TenantInfo{
+				return documentcontentcol.PageScopeTenantDelete(sq, pagination.TenantInfo{
 					OrgID: content.OrganizationID,
 					BuID:  content.BusinessUnitID,
 				}).
@@ -171,11 +173,11 @@ func (r *repository) ListPendingExtraction(
 		}
 
 		items := make([]*document.Document, 0, limit)
-		docCols := buncolgen.DocumentColumns
+		docCols := documentcol.DocumentColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&items).
-			ColumnExpr(buncolgen.DocumentTable.Alias+".*").
+			ColumnExpr(documentcol.DocumentTable.Alias+".*").
 			Join(`LEFT JOIN document_contents AS dc
 			ON dc.document_id = doc.id
 			AND dc.organization_id = doc.organization_id
@@ -212,7 +214,7 @@ func (r *repository) ListPendingExtractionTenants(
 		}
 
 		rows := make([]tenantRow, 0, limit)
-		docCols := buncolgen.DocumentColumns
+		docCols := documentcol.DocumentColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*document.Document)(nil)).
@@ -247,8 +249,8 @@ func (r *repository) ListPendingExtractionTenants(
 }
 
 func applyPendingDocumentExtractionFilters(q *bun.SelectQuery) *bun.SelectQuery {
-	docCols := buncolgen.DocumentColumns
-	contentCols := buncolgen.ContentColumns
+	docCols := documentcol.DocumentColumns
+	contentCols := documentcontentcol.ContentColumns
 
 	// The profile is the whole gate on whether a document is ever read, and
 	// EnqueueExtraction is the only place it was being checked. The reconcile
@@ -281,19 +283,19 @@ func (r *repository) SearchByResource(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*document.Document, error) {
 		items := make([]*document.Document, 0)
 		query := strings.TrimSpace(req.Query)
-		docCols := buncolgen.DocumentColumns
-		contentCols := buncolgen.ContentColumns
+		docCols := documentcol.DocumentColumns
+		contentCols := documentcontentcol.ContentColumns
 
 		selectQuery := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&items).
-			ColumnExpr(buncolgen.DocumentTable.All()).
-			Join("LEFT JOIN "+buncolgen.ContentTable.As(buncolgen.ContentTable.Alias)).
+			ColumnExpr(documentcol.DocumentTable.All()).
+			Join("LEFT JOIN "+documentcontentcol.ContentTable.As(documentcontentcol.ContentTable.Alias)).
 			JoinOn(contentCols.DocumentID.EqColumn(docCols.ID)).
 			JoinOn(contentCols.OrganizationID.EqColumn(docCols.OrganizationID)).
 			JoinOn(contentCols.BusinessUnitID.EqColumn(docCols.BusinessUnitID)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DocumentScopeTenant(sq, req.TenantInfo).
+				return documentcol.DocumentScopeTenant(sq, req.TenantInfo).
 					Where(docCols.IsCurrentVersion.Eq(), true).
 					Where(docCols.ResourceID.Eq(), req.ResourceID).
 					Where(docCols.ResourceType.Eq(), req.ResourceType)

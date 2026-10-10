@@ -1,6 +1,8 @@
 package shipmentrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -58,7 +60,7 @@ func (r *repository) AutoCancelShipments(
 				return err
 			}
 
-			cols := buncolgen.ShipmentColumns
+			cols := shipmentcol.ShipmentColumns
 			for _, entity := range entities {
 				if _, err = tx.NewUpdate().
 					Model((*shipment.Shipment)(nil)).
@@ -108,7 +110,7 @@ func (r *repository) RunAutoCancelShipments(ctx context.Context) ([]*shipment.Sh
 				return err
 			}
 
-			cols := buncolgen.ShipmentColumns
+			cols := shipmentcol.ShipmentColumns
 
 			for _, entity := range entities {
 				if _, err = tx.NewUpdate().
@@ -162,10 +164,10 @@ func (r *repository) ListAutoCancelShipmentTenants(
 		}
 
 		rows := make([]tenantRow, 0, limit)
-		cols := buncolgen.ShipmentControlColumns
+		cols := tenantcol.ShipmentControlColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
-			TableExpr(buncolgen.ShipmentControlTable.Name+" AS sc").
+			TableExpr(tenantcol.ShipmentControlTable.Name+" AS sc").
 			Column(cols.OrganizationID.Name, cols.BusinessUnitID.Name).
 			Where(cols.AutoCancelShipments.Eq(), true).
 			Order(cols.OrganizationID.OrderAsc()).
@@ -210,7 +212,7 @@ func (r *repository) RunAutoCancelShipmentsForTenant(
 				return err
 			}
 
-			cols := buncolgen.ShipmentColumns
+			cols := shipmentcol.ShipmentColumns
 			for _, entity := range entities {
 				if _, err = tx.NewUpdate().
 					Model((*shipment.Shipment)(nil)).
@@ -266,11 +268,11 @@ func (r *repository) getAutoCancelableShipments(
 		shipmentstate.ResolveAutoCancelThresholdDays(thresholdDays),
 	) * 24 * 60 * 60
 
-	cols := buncolgen.ShipmentColumns
+	cols := shipmentcol.ShipmentColumns
 	err := dba.NewSelect().
 		Model(&entities).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ShipmentScopeTenant(sq, tenantInfo)
+			return shipmentcol.ShipmentScopeTenant(sq, tenantInfo)
 		}).
 		Where(cols.Status.Eq(), shipment.StatusNew).
 		Where(cols.CreatedAt.Lte(), currentTime-thresholdSeconds).
@@ -318,7 +320,7 @@ func (r *repository) getAutoCancelableShipmentsForTenant(
 		Where("sp.id IN (SELECT id FROM auto_cancelable_cte)").
 		Where("sp.organization_id = ?", tenantInfo.OrgID).
 		Where("sp.business_unit_id = ?", tenantInfo.BuID).
-		Order(buncolgen.ShipmentColumns.ID.OrderAsc()).
+		Order(shipmentcol.ShipmentColumns.ID.OrderAsc()).
 		Scan(ctx)
 	if err != nil {
 		return nil, err

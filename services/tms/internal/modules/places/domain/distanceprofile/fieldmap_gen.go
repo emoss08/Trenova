@@ -2,11 +2,14 @@
 
 package distanceprofile
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/distanceprofilecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DistanceProfile].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DistanceProfileFieldMap] instead of parsing struct tags via reflection.
+// the generated [distanceprofilecol.DistanceProfileFieldMap] instead of parsing struct tags via reflection.
 func (e *DistanceProfile) GetStaticFieldMap() map[string]string {
-	return buncolgen.DistanceProfileFieldMap
+	return distanceprofilecol.DistanceProfileFieldMap
 }

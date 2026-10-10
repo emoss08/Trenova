@@ -1,6 +1,12 @@
 package carrierintelrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tendercol"
 	"context"
 	"fmt"
 
@@ -75,8 +81,8 @@ func NewSubjectRepository(p Params) carrierintelports.CarrierIntelSubjectReposit
 }
 
 func assignmentActivityQuery(db bun.IDB) *bun.SelectQuery {
-	carr := buncolgen.CarrierColumns
-	casn := buncolgen.CarrierAssignmentColumns
+	carr := carriercol.CarrierColumns
+	casn := shipmentcol.CarrierAssignmentColumns
 	return db.NewSelect().
 		Model((*shipment.CarrierAssignment)(nil)).
 		Where(casn.CarrierID.EqColumn(carr.ID)).
@@ -85,8 +91,8 @@ func assignmentActivityQuery(db bun.IDB) *bun.SelectQuery {
 }
 
 func tenderOfferActivityQuery(db bun.IDB) *bun.SelectQuery {
-	carr := buncolgen.CarrierColumns
-	tof := buncolgen.TenderOfferColumns
+	carr := carriercol.CarrierColumns
+	tof := tendercol.TenderOfferColumns
 	return db.NewSelect().
 		Model((*tender.TenderOffer)(nil)).
 		Where(tof.CarrierID.EqColumn(carr.ID)).
@@ -99,9 +105,9 @@ func buildCarrierSubjectsQuery(
 	req *carrierintelports.ListCarrierIntelSubjectsRequest,
 	limit int,
 ) *bun.SelectQuery {
-	cols := buncolgen.CarrierColumns
-	casn := buncolgen.CarrierAssignmentColumns
-	tof := buncolgen.TenderOfferColumns
+	cols := carriercol.CarrierColumns
+	casn := shipmentcol.CarrierAssignmentColumns
+	tof := tendercol.TenderOfferColumns
 
 	lastAssignment := assignmentActivityQuery(db).ColumnExpr(casn.CreatedAt.Expr("MAX({})"))
 	lastOffer := tenderOfferActivityQuery(db).ColumnExpr(tof.CreatedAt.Expr("MAX({})"))
@@ -119,10 +125,10 @@ func buildCarrierSubjectsQuery(
 			"GREATEST((?), (?)) AS ?",
 			lastAssignment,
 			lastOffer,
-			bun.Ident(buncolgen.CarrierMonitoringEnrollmentColumns.LastUsedAt.Bare()),
+			bun.Ident(carrierintelcol.CarrierMonitoringEnrollmentColumns.LastUsedAt.Bare()),
 		).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.CarrierScopeTenant(sq, req.TenantInfo).
+			return carriercol.CarrierScopeTenant(sq, req.TenantInfo).
 				Where(cols.DOTNumber.IsNotNull())
 		}).
 		Order(cols.ID.OrderAsc()).
@@ -211,7 +217,7 @@ func customerSubject(row *customerSubjectRow) carrierintelports.CarrierIntelSubj
 }
 
 func customerSubjectColumns(q *bun.SelectQuery) *bun.SelectQuery {
-	cols := buncolgen.CustomerColumns
+	cols := customercol.CustomerColumns
 	return q.Column(
 		cols.ID.Bare(),
 		cols.Name.Bare(),
@@ -225,14 +231,14 @@ func (r *subjectRepository) ListBrokerCustomerSubjects(
 	tenantInfo pagination.TenantInfo,
 ) ([]carrierintelports.CarrierIntelSubject, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]carrierintelports.CarrierIntelSubject, error) {
-		cols := buncolgen.CustomerColumns
+		cols := customercol.CustomerColumns
 		rows := make([]customerSubjectRow, 0, brokerCustomerCapacity)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*customer.Customer)(nil)).
 			Apply(customerSubjectColumns).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CustomerScopeTenant(sq, tenantInfo).
+				return customercol.CustomerScopeTenant(sq, tenantInfo).
 					Where(cols.BrokerVettingEnabled.IsTrue()).
 					Where(cols.DOTNumber.IsNotNull())
 			}).
@@ -257,7 +263,7 @@ func (r *subjectRepository) GetOrganizationSubject(
 	tenantInfo pagination.TenantInfo,
 ) (*carrierintelports.CarrierIntelSubject, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carrierintelports.CarrierIntelSubject, error) {
-		cols := buncolgen.OrganizationColumns
+		cols := tenantcol.OrganizationColumns
 		var (
 			name      string
 			dotNumber string
@@ -301,8 +307,8 @@ func (r *subjectRepository) GetCustomerSubject(
 			Model((*customer.Customer)(nil)).
 			Apply(customerSubjectColumns).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CustomerScopeTenant(sq, tenantInfo).
-					Where(buncolgen.CustomerColumns.ID.Eq(), customerID)
+				return customercol.CustomerScopeTenant(sq, tenantInfo).
+					Where(customercol.CustomerColumns.ID.Eq(), customerID)
 			}).
 			Scan(ctx, row)
 		if err != nil {
@@ -328,14 +334,14 @@ func (r *subjectRepository) ListExistingCarrierDOTs(
 			return map[string]pulid.ID{}, nil
 		}
 
-		cols := buncolgen.CarrierColumns
+		cols := carriercol.CarrierColumns
 		rows := make([]carrierDOTRow, 0, len(dotNumbers))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*carrier.Carrier)(nil)).
 			Column(cols.ID.Bare(), cols.DOTNumber.Bare()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierScopeTenant(sq, tenantInfo).
+				return carriercol.CarrierScopeTenant(sq, tenantInfo).
 					Where(cols.DOTNumber.In(), bun.List(dotNumbers))
 			}).
 			Order(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).

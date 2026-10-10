@@ -1,6 +1,7 @@
 package agentdecisionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 	"context"
 	"fmt"
 
@@ -43,12 +44,12 @@ func (r *repository) GetByID(
 		log := r.l.With(zap.String("operation", "GetByID"), zap.String("id", req.ID.String()))
 
 		entity := new(agent.AgentDecision)
-		cols := buncolgen.AgentDecisionColumns
+		cols := agentcol.AgentDecisionColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentDecisionScopeTenant(sq, *req.TenantInfo).
+				return agentcol.AgentDecisionScopeTenant(sq, *req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
@@ -86,14 +87,14 @@ func (r *repository) ListByProposals(
 			return []*agent.AgentDecision{}, nil
 		}
 
-		cols := buncolgen.AgentDecisionColumns
+		cols := agentcol.AgentDecisionColumns
 		rows := make([]*agent.AgentDecision, 0, len(req.ProposalIDs))
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&rows).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentDecisionScopeTenant(sq, req.TenantInfo).
+				return agentcol.AgentDecisionScopeTenant(sq, req.TenantInfo).
 					Where(cols.ProposalID.In(), bun.In(req.ProposalIDs)).
 					Where(cols.UndoneAt.IsNull())
 			}).
@@ -117,13 +118,13 @@ func (r *repository) ListByCommitWorkflow(
 			return []*agent.AgentDecision{}, nil
 		}
 
-		cols := buncolgen.AgentDecisionColumns
+		cols := agentcol.AgentDecisionColumns
 		rows := make([]*agent.AgentDecision, 0, 1)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&rows).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AgentDecisionScopeTenant(sq, req.TenantInfo).
+				return agentcol.AgentDecisionScopeTenant(sq, req.TenantInfo).
 					Where(cols.CommitWorkflowID.Eq(), req.WorkflowID)
 			}).
 			OrderExpr(cols.CreatedAt.OrderAsc()).
@@ -164,12 +165,12 @@ func (r *repository) settle(
 			return []pulid.ID{}, nil
 		}
 
-		cols := buncolgen.AgentDecisionColumns
+		cols := agentcol.AgentDecisionColumns
 		query := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*agent.AgentDecision)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.AgentDecisionScopeTenantUpdate(uq, req.TenantInfo).
+				return agentcol.AgentDecisionScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.In(), bun.In(req.IDs)).
 					Where(cols.CommitsAt.IsNotNull()).
 					Where(cols.CommittedAt.IsNull()).

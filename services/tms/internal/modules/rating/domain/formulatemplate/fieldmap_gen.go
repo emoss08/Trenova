@@ -2,32 +2,35 @@
 
 package formulatemplate
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [FormulaTemplate].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.FormulaTemplateFieldMap] instead of parsing struct tags via reflection.
+// the generated [formulatemplatecol.FormulaTemplateFieldMap] instead of parsing struct tags via reflection.
 func (e *FormulaTemplate) GetStaticFieldMap() map[string]string {
-	return buncolgen.FormulaTemplateFieldMap
+	return formulatemplatecol.FormulaTemplateFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [FormulaTemplateVersion].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.FormulaTemplateVersionFieldMap] instead of parsing struct tags via reflection.
+// the generated [formulatemplatecol.FormulaTemplateVersionFieldMap] instead of parsing struct tags via reflection.
 func (e *FormulaTemplateVersion) GetStaticFieldMap() map[string]string {
-	return buncolgen.FormulaTemplateVersionFieldMap
+	return formulatemplatecol.FormulaTemplateVersionFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Review].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ReviewFieldMap] instead of parsing struct tags via reflection.
+// the generated [formulatemplatecol.ReviewFieldMap] instead of parsing struct tags via reflection.
 func (e *Review) GetStaticFieldMap() map[string]string {
-	return buncolgen.ReviewFieldMap
+	return formulatemplatecol.ReviewFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TestCase].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.TestCaseFieldMap] instead of parsing struct tags via reflection.
+// the generated [formulatemplatecol.TestCaseFieldMap] instead of parsing struct tags via reflection.
 func (e *TestCase) GetStaticFieldMap() map[string]string {
-	return buncolgen.TestCaseFieldMap
+	return formulatemplatecol.TestCaseFieldMap
 }

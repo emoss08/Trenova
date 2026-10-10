@@ -3,6 +3,8 @@
 package aicorrectionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 	"testing"
 	"time"
@@ -46,10 +48,10 @@ func seededTenant(t *testing.T) (context.Context, *bun.DB, pagination.TenantInfo
 	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
 	require.NoError(t, err)
 
-	cols := buncolgen.DefinitionColumns
+	cols := agentdefinitioncol.DefinitionColumns
 	var row tenantRow
 	require.NoError(t, db.NewSelect().
-		TableExpr(buncolgen.DefinitionTable.As(buncolgen.DefinitionTable.Alias)).
+		TableExpr(agentdefinitioncol.DefinitionTable.As(agentdefinitioncol.DefinitionTable.Alias)).
 		Column(cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
 		Limit(1).
 		Scan(ctx, &row))
@@ -213,7 +215,7 @@ func TestTrainableCorrections_CountAndWeeklyTotalsFollowConsent(t *testing.T) {
 	assert.Zero(t, count(100), "an organization without consent has nothing to train on")
 	assert.Empty(t, weekly())
 
-	controls := buncolgen.AgentControlColumns
+	controls := tenantcol.AgentControlColumns
 	_, err := db.NewInsert().
 		Model(&tenant.AgentControl{
 			ID:                pulid.MustNew("agc_"),

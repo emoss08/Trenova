@@ -1,6 +1,7 @@
 package ratezonerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/ratezonecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone"
@@ -40,22 +41,22 @@ func New(p Params) ratezoneports.RateZoneRepository {
 }
 
 func orderMembers(sq *bun.SelectQuery) *bun.SelectQuery {
-	return sq.Order(buncolgen.RateZoneMemberColumns.MatchKey.OrderAsc())
+	return sq.Order(ratezonecol.RateZoneMemberColumns.MatchKey.OrderAsc())
 }
 
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *ratezoneports.ListRateZoneRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.RateZoneColumns
+	cols := ratezonecol.RateZoneColumns
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.RateZoneTable.Alias,
+		ratezonecol.RateZoneTable.Alias,
 		req.Filter,
 		(*ratezone.RateZone)(nil),
 	)
 
-	return q.Apply(buncolgen.RateZoneApplyTenant(req.Filter.TenantInfo)).
+	return q.Apply(ratezonecol.RateZoneApplyTenant(req.Filter.TenantInfo)).
 		Limit(req.Filter.Pagination.SafeLimit()).
 		Offset(req.Filter.Pagination.SafeOffset()).
 		Order(cols.CreatedAt.OrderDesc())
@@ -91,7 +92,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.RateZoneTable.Alias,
+		ratezonecol.RateZoneTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*ratezone.RateZone)(nil),
@@ -104,7 +105,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.RateZoneTable.Alias,
+		ratezonecol.RateZoneTable.Alias,
 		req.Filter,
 		(*ratezone.RateZone)(nil),
 	)
@@ -112,7 +113,7 @@ func (r *repository) applyTotalCountFilters(
 
 func applyRateZoneColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.RateZoneTable.All())
+		return q.ColumnExpr(ratezonecol.RateZoneTable.All())
 	}
 
 	return q.Column(columns...)
@@ -178,18 +179,18 @@ func (r *repository) GetByID(
 		)
 
 		entity := new(ratezone.RateZone)
-		cols := buncolgen.RateZoneColumns
+		cols := ratezonecol.RateZoneColumns
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RateZoneScopeTenant(sq, req.TenantInfo).
+				return ratezonecol.RateZoneScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.RateZoneID)
 			})
 
 		if req.IncludeMembers {
-			q = q.Relation(buncolgen.Rel(buncolgen.RateZoneRelations.Members), orderMembers)
+			q = q.Relation(buncolgen.Rel(ratezonecol.RateZoneRelations.Members), orderMembers)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -217,8 +218,8 @@ func (r *repository) ResolveMembership(
 
 		log := r.l.With(zap.String("operation", "ResolveMembership"))
 
-		memberCols := buncolgen.RateZoneMemberColumns
-		zoneCols := buncolgen.RateZoneColumns
+		memberCols := ratezonecol.RateZoneMemberColumns
+		zoneCols := ratezonecol.RateZoneColumns
 
 		zoneIDs := make([]pulid.ID, 0, len(req.MatchKeys))
 		err := r.db.DBForContext(ctx).
@@ -226,13 +227,13 @@ func (r *repository) ResolveMembership(
 			Model((*ratezone.RateZoneMember)(nil)).
 			ColumnExpr("DISTINCT "+memberCols.RateZoneID.String()).
 			Join(
-				"JOIN "+buncolgen.RateZoneTable.As(buncolgen.RateZoneTable.Alias)+
+				"JOIN "+ratezonecol.RateZoneTable.As(ratezonecol.RateZoneTable.Alias)+
 					" ON "+zoneCols.ID.Qualified()+" = "+memberCols.RateZoneID.Qualified()+
 					" AND "+zoneCols.OrganizationID.Qualified()+" = "+memberCols.OrganizationID.Qualified()+
 					" AND "+zoneCols.BusinessUnitID.Qualified()+" = "+memberCols.BusinessUnitID.Qualified(),
 			).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RateZoneMemberScopeTenant(sq, req.TenantInfo).
+				return ratezonecol.RateZoneMemberScopeTenant(sq, req.TenantInfo).
 					Where(memberCols.MatchKey.In(), bun.List(req.MatchKeys)).
 					Where(zoneCols.Status.Eq(), domaintypes.StatusActive)
 			}).
@@ -312,8 +313,8 @@ func (r *repository) Update(
 		ov := entity.Version
 		entity.Version++
 
-		zoneCols := buncolgen.RateZoneColumns
-		memberCols := buncolgen.RateZoneMemberColumns
+		zoneCols := ratezonecol.RateZoneColumns
+		memberCols := ratezonecol.RateZoneMemberColumns
 
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 			results, uErr := r.db.DBForContext(c).
@@ -336,7 +337,7 @@ func (r *repository) Update(
 				NewDelete().
 				Model((*ratezone.RateZoneMember)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return buncolgen.RateZoneMemberScopeTenantDelete(dq, pagination.TenantInfo{
+					return ratezonecol.RateZoneMemberScopeTenantDelete(dq, pagination.TenantInfo{
 						OrgID: entity.OrganizationID,
 						BuID:  entity.BusinessUnitID,
 					}).Where(memberCols.RateZoneID.Eq(), entity.ID)
@@ -371,12 +372,12 @@ func (r *repository) Delete(
 			zap.String("id", req.RateZoneID.String()),
 		)
 
-		cols := buncolgen.RateZoneColumns
+		cols := ratezonecol.RateZoneColumns
 		results, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*ratezone.RateZone)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.RateZoneScopeTenantDelete(dq, req.TenantInfo).
+				return ratezonecol.RateZoneScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.RateZoneID)
 			}).
 			Exec(ctx)
@@ -394,7 +395,7 @@ func (r *repository) SelectOptions(
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*ratezone.RateZone], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*ratezone.RateZone], error) {
-		cols := buncolgen.RateZoneColumns
+		cols := ratezonecol.RateZoneColumns
 
 		return dbhelper.SelectOptions[*ratezone.RateZone](
 			ctx,

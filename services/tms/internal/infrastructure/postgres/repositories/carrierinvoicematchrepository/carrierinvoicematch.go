@@ -1,6 +1,7 @@
 package carrierinvoicematchrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
 	"context"
 	"database/sql"
 	"errors"
@@ -44,15 +45,15 @@ func (r *repository) List(
 	req *carriersettlementports.ListCarrierInvoiceMatchesRequest,
 ) (*pagination.ListResult[*carriersettlement.InvoiceMatch], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*carriersettlement.InvoiceMatch], error) {
-		cols := buncolgen.InvoiceMatchColumns
-		rel := buncolgen.InvoiceMatchRelations
+		cols := carriersettlementcol.InvoiceMatchColumns
+		rel := carriersettlementcol.InvoiceMatchRelations
 		limit := req.Filter.Pagination.SafeLimit()
 		items := make([]*carriersettlement.InvoiceMatch, 0, limit)
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&items).
-			Apply(buncolgen.InvoiceMatchApplyTenant(req.Filter.TenantInfo)).
+			Apply(carriersettlementcol.InvoiceMatchApplyTenant(req.Filter.TenantInfo)).
 			Relation(rel.Carrier).
 			Relation(rel.CarrierAssignment).
 			Order(cols.CreatedAt.OrderDesc()).
@@ -86,14 +87,14 @@ func (r *repository) GetByID(
 	req carriersettlementports.GetCarrierInvoiceMatchByIDRequest,
 ) (*carriersettlement.InvoiceMatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.InvoiceMatch, error) {
-		cols := buncolgen.InvoiceMatchColumns
-		rel := buncolgen.InvoiceMatchRelations
+		cols := carriersettlementcol.InvoiceMatchColumns
+		rel := carriersettlementcol.InvoiceMatchRelations
 		entity := new(carriersettlement.InvoiceMatch)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.InvoiceMatchScopeTenant(sq, req.TenantInfo).
+				return carriersettlementcol.InvoiceMatchScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Relation(rel.Carrier).
@@ -112,13 +113,13 @@ func (r *repository) GetOpenByEDIInvoiceID(
 	invoiceID pulid.ID,
 ) (*carriersettlement.InvoiceMatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.InvoiceMatch, error) {
-		cols := buncolgen.InvoiceMatchColumns
+		cols := carriersettlementcol.InvoiceMatchColumns
 		entity := new(carriersettlement.InvoiceMatch)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.InvoiceMatchScopeTenant(sq, tenantInfo).
+				return carriersettlementcol.InvoiceMatchScopeTenant(sq, tenantInfo).
 					Where(cols.EDICarrierInvoiceID.Eq(), invoiceID).
 					Where(cols.Status.NotEq(), carriersettlement.InvoiceMatchStatusRejected)
 			}).
@@ -144,13 +145,13 @@ func (r *repository) GetLiveByCarrierInvoiceNumber(
 		return nil, nil //nolint:nilnil // a match without a number never collides
 	}
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.InvoiceMatch, error) {
-		cols := buncolgen.InvoiceMatchColumns
+		cols := carriersettlementcol.InvoiceMatchColumns
 		entity := new(carriersettlement.InvoiceMatch)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.InvoiceMatchScopeTenant(sq, req.TenantInfo).
+				return carriersettlementcol.InvoiceMatchScopeTenant(sq, req.TenantInfo).
 					Where(cols.CarrierID.Eq(), req.CarrierID).
 					Where(cols.InvoiceNumberKey.Eq(), key).
 					Where(cols.DuplicateOfMatchID.IsNull()).
@@ -177,13 +178,13 @@ func (r *repository) ListLiveByAssignment(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*carriersettlement.InvoiceMatch, error) {
-			cols := buncolgen.InvoiceMatchColumns
+			cols := carriersettlementcol.InvoiceMatchColumns
 			entities := make([]*carriersettlement.InvoiceMatch, 0)
 			err := r.db.DBForContext(ctx).
 				NewSelect().
 				Model(&entities).
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return buncolgen.InvoiceMatchScopeTenant(sq, req.TenantInfo).
+					return carriersettlementcol.InvoiceMatchScopeTenant(sq, req.TenantInfo).
 						Where(cols.CarrierAssignmentID.Eq(), req.AssignmentID).
 						Where(cols.Status.NotEq(), carriersettlement.InvoiceMatchStatusRejected)
 				}).
@@ -205,7 +206,7 @@ func (r *repository) ListResolvedAssignmentIDs(
 		return []pulid.ID{}, nil
 	}
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		cols := buncolgen.InvoiceMatchColumns
+		cols := carriersettlementcol.InvoiceMatchColumns
 		ids := make([]pulid.ID, 0, len(req.AssignmentIDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -213,7 +214,7 @@ func (r *repository) ListResolvedAssignmentIDs(
 			Distinct().
 			Column(cols.CarrierAssignmentID.Bare()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.InvoiceMatchScopeTenant(sq, req.TenantInfo).
+				return carriersettlementcol.InvoiceMatchScopeTenant(sq, req.TenantInfo).
 					Where(cols.CarrierAssignmentID.In(), bun.List(req.AssignmentIDs)).
 					Where(cols.Status.Eq(), carriersettlement.InvoiceMatchStatusResolved)
 			}).
@@ -231,13 +232,13 @@ func (r *repository) GetOpenByExtractionID(
 	extractionID pulid.ID,
 ) (*carriersettlement.InvoiceMatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.InvoiceMatch, error) {
-		cols := buncolgen.InvoiceMatchColumns
+		cols := carriersettlementcol.InvoiceMatchColumns
 		entity := new(carriersettlement.InvoiceMatch)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.InvoiceMatchScopeTenant(sq, tenantInfo).
+				return carriersettlementcol.InvoiceMatchScopeTenant(sq, tenantInfo).
 					Where(cols.DocumentAIExtractionID.Eq(), extractionID).
 					Where(cols.Status.NotEq(), carriersettlement.InvoiceMatchStatusRejected)
 			}).
@@ -267,12 +268,12 @@ func (r *repository) UpdateSettlementForAdjustmentEvents(
 		if len(costEventIDs) == 0 {
 			return nil
 		}
-		cols := buncolgen.InvoiceMatchColumns
+		cols := carriersettlementcol.InvoiceMatchColumns
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*carriersettlement.InvoiceMatch)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.InvoiceMatchScopeTenantUpdate(uq, tenantInfo).
+				return carriersettlementcol.InvoiceMatchScopeTenantUpdate(uq, tenantInfo).
 					Where(cols.AdjustmentCostEventID.In(), bun.List(costEventIDs)).
 					Where(cols.CarrierSettlementID.IsNull())
 			}).
@@ -312,12 +313,12 @@ func (r *repository) Update(
 	entity *carriersettlement.InvoiceMatch,
 ) (*carriersettlement.InvoiceMatch, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*carriersettlement.InvoiceMatch, error) {
-		cols := buncolgen.InvoiceMatchColumns
+		cols := carriersettlementcol.InvoiceMatchColumns
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.InvoiceMatchScopeTenantUpdate(uq, pagination.TenantInfo{
+				return carriersettlementcol.InvoiceMatchScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
 				}).

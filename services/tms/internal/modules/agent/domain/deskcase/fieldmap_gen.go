@@ -2,18 +2,21 @@
 
 package deskcase
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/deskcasecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ChecklistTemplate].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ChecklistTemplateFieldMap] instead of parsing struct tags via reflection.
+// the generated [deskcasecol.ChecklistTemplateFieldMap] instead of parsing struct tags via reflection.
 func (e *ChecklistTemplate) GetStaticFieldMap() map[string]string {
-	return buncolgen.ChecklistTemplateFieldMap
+	return deskcasecol.ChecklistTemplateFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ChecklistTick].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ChecklistTickFieldMap] instead of parsing struct tags via reflection.
+// the generated [deskcasecol.ChecklistTickFieldMap] instead of parsing struct tags via reflection.
 func (e *ChecklistTick) GetStaticFieldMap() map[string]string {
-	return buncolgen.ChecklistTickFieldMap
+	return deskcasecol.ChecklistTickFieldMap
 }

@@ -1,6 +1,7 @@
 package documenttemplaterepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/documenttemplatecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -41,12 +42,12 @@ func (r *generatedRepository) filterQuery(
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.GeneratedDocumentTable.Alias,
+		documenttemplatecol.GeneratedDocumentTable.Alias,
 		req.Filter,
 		(*documenttemplate.GeneratedDocument)(nil),
 	)
 
-	cols := buncolgen.GeneratedDocumentColumns
+	cols := documenttemplatecol.GeneratedDocumentColumns
 
 	if req.Kind != "" {
 		q = q.Where(cols.Kind.Eq(), req.Kind)
@@ -77,7 +78,7 @@ func (r *generatedRepository) List(
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return r.filterQuery(sq, req)
 			}).
-			Order(buncolgen.GeneratedDocumentColumns.CreatedAt.OrderDesc()).
+			Order(documenttemplatecol.GeneratedDocumentColumns.CreatedAt.OrderDesc()).
 			ScanAndCount(ctx)
 		if err != nil {
 			log.Error("failed to scan and count generated documents", zap.Error(err))
@@ -107,10 +108,10 @@ func (r *generatedRepository) GetByID(
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Relation(buncolgen.GeneratedDocumentRelations.TemplateVersion).
+			Relation(documenttemplatecol.GeneratedDocumentRelations.TemplateVersion).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.GeneratedDocumentScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.GeneratedDocumentColumns.ID.Eq(), req.GeneratedDocumentID)
+				return documenttemplatecol.GeneratedDocumentScopeTenant(sq, req.TenantInfo).
+					Where(documenttemplatecol.GeneratedDocumentColumns.ID.Eq(), req.GeneratedDocumentID)
 			}).
 			Scan(ctx); err != nil {
 			log.Error("failed to get generated document", zap.Error(err))
@@ -154,7 +155,7 @@ func (r *generatedRepository) Update(
 			zap.String("id", entity.ID.String()),
 		)
 
-		cols := buncolgen.GeneratedDocumentColumns
+		cols := documenttemplatecol.GeneratedDocumentColumns
 		ov := entity.Version
 		entity.Version++
 

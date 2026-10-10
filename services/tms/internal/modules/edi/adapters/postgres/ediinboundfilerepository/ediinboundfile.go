@@ -2,6 +2,7 @@
 package ediinboundfilerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -44,7 +45,7 @@ func (r *repository) ListInboundFiles(
 ) (*pagination.ListResult[*edi.EDIInboundFile], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIInboundFile], error) {
 		entities := make([]*edi.EDIInboundFile, 0, req.Filter.Pagination.SafeLimit())
-		cols := buncolgen.EDIInboundFileColumns
+		cols := edicol.EDIInboundFileColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
@@ -76,7 +77,7 @@ func (r *repository) GetInboundFileByID(
 ) (*edi.EDIInboundFile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIInboundFile, error) {
 		entity := new(edi.EDIInboundFile)
-		cols := buncolgen.EDIInboundFileColumns
+		cols := edicol.EDIInboundFileColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
@@ -84,7 +85,7 @@ func (r *repository) GetInboundFileByID(
 			Relation("Partner").
 			Relation("CommunicationProfile").
 			Where(cols.ID.Eq(), req.ID).
-			Apply(buncolgen.EDIInboundFileApplyTenant(req.TenantInfo))
+			Apply(edicol.EDIInboundFileApplyTenant(req.TenantInfo))
 		if req.IncludeMessages {
 			query = query.Relation("Messages")
 		}
@@ -141,7 +142,7 @@ func (r *repository) PurgeRawContentBefore(
 	req ediports.PurgeEDIRawPayloadsRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := buncolgen.EDIInboundFileColumns
+		cols := edicol.EDIInboundFileColumns
 		subquery := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*edi.EDIInboundFile)(nil)).
@@ -175,7 +176,7 @@ func (r *repository) PurgeRawContentBefore(
 func (r *repository) CountQuarantinedSince(ctx context.Context, since int64) (int64, error) {
 	ctx = dbscope.WithSystem(ctx, "count quarantined inbound EDI files instance-wide for the health check")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := buncolgen.EDIInboundFileColumns
+		cols := edicol.EDIInboundFileColumns
 		count, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*edi.EDIInboundFile)(nil)).
@@ -194,13 +195,13 @@ func (r *repository) ExistsByChecksum(
 	req ediports.ExistsEDIInboundFileByChecksumRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := buncolgen.EDIInboundFileColumns
+		cols := edicol.EDIInboundFileColumns
 		return r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*edi.EDIInboundFile)(nil)).
 			Where(cols.CommunicationProfileID.Eq(), req.CommunicationProfileID).
 			Where(cols.Checksum.Eq(), req.Checksum).
-			Apply(buncolgen.EDIInboundFileApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDIInboundFileApplyTenant(req.TenantInfo)).
 			Exists(ctx)
 	})
 }
@@ -210,7 +211,7 @@ func (r *repository) GetInboundFileStatusCounts(
 	req ediports.GetEDIInboundFileStatusCountsRequest,
 ) (map[edi.InboundFileStatus]int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[edi.InboundFileStatus]int, error) {
-		cols := buncolgen.EDIInboundFileColumns
+		cols := edicol.EDIInboundFileColumns
 		var rows []struct {
 			Status edi.InboundFileStatus `bun:"status"`
 			Count  int                   `bun:"count"`
@@ -220,7 +221,7 @@ func (r *repository) GetInboundFileStatusCounts(
 			Model((*edi.EDIInboundFile)(nil)).
 			ColumnExpr(cols.Status.Qualified()).
 			ColumnExpr("COUNT(*) AS count").
-			Apply(buncolgen.EDIInboundFileApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDIInboundFileApplyTenant(req.TenantInfo)).
 			GroupExpr(cols.Status.Qualified())
 		if req.Since > 0 {
 			query = query.Where(cols.ReceivedAt.Gte(), req.Since)
@@ -241,7 +242,7 @@ func (r *repository) ListRecentQuarantined(
 	req ediports.ListRecentQuarantinedEDIInboundFilesRequest,
 ) ([]*edi.EDIInboundFile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIInboundFile, error) {
-		cols := buncolgen.EDIInboundFileColumns
+		cols := edicol.EDIInboundFileColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = 10
@@ -253,7 +254,7 @@ func (r *repository) ListRecentQuarantined(
 			ExcludeColumn("raw_content").
 			Relation("Partner").
 			Where(cols.Status.Eq(), edi.InboundFileStatusQuarantined).
-			Apply(buncolgen.EDIInboundFileApplyTenant(req.TenantInfo)).
+			Apply(edicol.EDIInboundFileApplyTenant(req.TenantInfo)).
 			Order(cols.ReceivedAt.OrderDesc()).
 			Limit(limit).
 			Scan(ctx); err != nil {
@@ -269,7 +270,7 @@ func (r *repository) ListInboundFilesCursor(
 ) (*pagination.CursorListResult[*edi.EDIInboundFile], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*edi.EDIInboundFile], error) {
 		dba := r.db.DBForContext(ctx)
-		cols := buncolgen.EDIInboundFileColumns
+		cols := edicol.EDIInboundFileColumns
 		extraFilters := func(sq *bun.SelectQuery) *bun.SelectQuery {
 			if req.Status != "" {
 				sq = sq.Where(cols.Status.Eq(), req.Status)

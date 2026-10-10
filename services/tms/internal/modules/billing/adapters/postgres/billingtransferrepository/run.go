@@ -1,6 +1,7 @@
 package billingtransferrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/billingtransfercol"
 	"context"
 	"database/sql"
 	"errors"
@@ -73,7 +74,7 @@ func (r *repository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.BillingTransferRunColumns.Version.Eq(), ov).
+			Where(billingtransfercol.BillingTransferRunColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -99,8 +100,8 @@ func (r *repository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.BillingTransferRunScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.BillingTransferRunColumns.ID.Eq(), req.RunID)
+				return billingtransfercol.BillingTransferRunScopeTenant(sq, req.TenantInfo).
+					Where(billingtransfercol.BillingTransferRunColumns.ID.Eq(), req.RunID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -119,13 +120,13 @@ func (r *repository) GetActive(
 	req *billingtransferports.GetActiveBillingTransferRunRequest,
 ) (*billingtransfer.BillingTransferRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*billingtransfer.BillingTransferRun, error) {
-		cols := buncolgen.BillingTransferRunColumns
+		cols := billingtransfercol.BillingTransferRunColumns
 
 		entity := new(billingtransfer.BillingTransferRun)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Apply(buncolgen.BillingTransferRunApplyTenant(req.TenantInfo)).
+			Apply(billingtransfercol.BillingTransferRunApplyTenant(req.TenantInfo)).
 			Where(cols.RequestedByID.Eq(), req.RequestedByID).
 			Where(cols.Status.In(), bun.List(nonTerminalRunStatuses)).
 			Order(cols.CreatedAt.OrderDesc()).
@@ -153,7 +154,7 @@ func (r *repository) MarkRunning(
 	req *billingtransferports.MarkBillingTransferRunRunningRequest,
 ) (*billingtransfer.BillingTransferRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingtransfer.BillingTransferRun, error) {
-		cols := buncolgen.BillingTransferRunColumns
+		cols := billingtransfercol.BillingTransferRunColumns
 		now := timeutils.NowUnix()
 
 		entity := new(billingtransfer.BillingTransferRun)
@@ -169,7 +170,7 @@ func (r *repository) MarkRunning(
 			Set(cols.UpdatedAt.Set(), now).
 			Set(cols.Version.Inc(1)).
 			Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.BillingTransferRunScopeTenantUpdate(uq, req.TenantInfo)
+				return billingtransfercol.BillingTransferRunScopeTenantUpdate(uq, req.TenantInfo)
 			}).
 			Where(cols.ID.Eq(), req.RunID).
 			Where(cols.Status.In(), bun.List(nonTerminalRunStatuses)).
@@ -198,7 +199,7 @@ func (r *repository) RequestCancel(
 	req *billingtransferports.RequestBillingTransferRunCancelRequest,
 ) (*billingtransfer.BillingTransferRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingtransfer.BillingTransferRun, error) {
-		cols := buncolgen.BillingTransferRunColumns
+		cols := billingtransfercol.BillingTransferRunColumns
 		now := timeutils.NowUnix()
 
 		entity := new(billingtransfer.BillingTransferRun)
@@ -210,7 +211,7 @@ func (r *repository) RequestCancel(
 			Set(cols.UpdatedAt.Set(), now).
 			Set(cols.Version.Inc(1)).
 			Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.BillingTransferRunScopeTenantUpdate(uq, req.TenantInfo)
+				return billingtransfercol.BillingTransferRunScopeTenantUpdate(uq, req.TenantInfo)
 			}).
 			Where(cols.ID.Eq(), req.RunID).
 			Where(cols.Status.In(), bun.List(nonTerminalRunStatuses)).
@@ -235,7 +236,7 @@ func (r *repository) ListStale(
 ) ([]*billingtransfer.BillingTransferRun, error) {
 	ctx = dbscope.WithSystem(ctx, "list stalled billing transfer runs across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*billingtransfer.BillingTransferRun, error) {
-		cols := buncolgen.BillingTransferRunColumns
+		cols := billingtransfercol.BillingTransferRunColumns
 
 		statuses := req.Statuses
 		if len(statuses) == 0 {

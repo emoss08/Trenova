@@ -2,11 +2,14 @@
 
 package dataentrycontrol
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/dataentrycontrolcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DataEntryControl].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DataEntryControlFieldMap] instead of parsing struct tags via reflection.
+// the generated [dataentrycontrolcol.DataEntryControlFieldMap] instead of parsing struct tags via reflection.
 func (e *DataEntryControl) GetStaticFieldMap() map[string]string {
-	return buncolgen.DataEntryControlFieldMap
+	return dataentrycontrolcol.DataEntryControlFieldMap
 }

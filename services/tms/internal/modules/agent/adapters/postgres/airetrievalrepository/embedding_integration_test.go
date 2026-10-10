@@ -3,6 +3,7 @@
 package airetrievalrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/airetrievalcol"
 	"context"
 	"strings"
 	"testing"
@@ -233,11 +234,11 @@ func TestReplaceChunks_KeepsUnchangedHashesAndDropsRemovedChunks(t *testing.T) {
 func (h *harness) rowVersion(t *testing.T, sourceID pulid.ID, chunkIndex int) string {
 	t.Helper()
 
-	cols := buncolgen.EmbeddingColumns
+	cols := airetrievalcol.EmbeddingColumns
 	var version string
 	err := h.db.NewSelect().
 		Model((*airetrieval.Embedding)(nil)).
-		ColumnExpr(buncolgen.EmbeddingTable.Alias+".xmin::text").
+		ColumnExpr(airetrievalcol.EmbeddingTable.Alias+".xmin::text").
 		Where(cols.SourceID.Eq(), sourceID).
 		Where(cols.ChunkIndex.Eq(), chunkIndex).
 		Scan(h.ctx, &version)

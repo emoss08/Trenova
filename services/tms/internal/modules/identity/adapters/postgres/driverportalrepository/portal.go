@@ -1,6 +1,10 @@
 package driverportalrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/permissioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 	"strconv"
@@ -71,7 +75,7 @@ func (r *portalAccessRepository) UpdateInvitation(
 	entity *worker.PortalInvitation,
 ) (*worker.PortalInvitation, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.PortalInvitation, error) {
-		cols := buncolgen.PortalInvitationColumns
+		cols := workercol.PortalInvitationColumns
 		ov := entity.Version
 		entity.Version++
 		results, err := r.db.DBForContext(ctx).
@@ -99,16 +103,16 @@ func (r *portalAccessRepository) GetInvitationByID(
 	req workerports.GetPortalInvitationByIDRequest,
 ) (*worker.PortalInvitation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PortalInvitation, error) {
-		cols := buncolgen.PortalInvitationColumns
+		cols := workercol.PortalInvitationColumns
 		entity := new(worker.PortalInvitation)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.PortalInvitationScopeTenant(sq, req.TenantInfo).
+				return workercol.PortalInvitationScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
-			Relation(buncolgen.PortalInvitationRelations.Worker).
+			Relation(workercol.PortalInvitationRelations.Worker).
 			Scan(ctx)
 		if err != nil {
 			return nil, dberror.HandleNotFoundError(err, "PortalInvitation")
@@ -126,15 +130,15 @@ func (r *portalAccessRepository) GetInvitationByTokenHash(
 		"resolve a driver portal invitation link before its tenant is known",
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PortalInvitation, error) {
-		cols := buncolgen.PortalInvitationColumns
-		rel := buncolgen.PortalInvitationRelations
+		cols := workercol.PortalInvitationColumns
+		rel := workercol.PortalInvitationRelations
 		entity := new(worker.PortalInvitation)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			Where(cols.TokenHash.Eq(), tokenHash).
 			Relation(rel.Worker).
-			Relation(buncolgen.Rel(rel.Worker, buncolgen.WorkerRelations.Organization)).
+			Relation(buncolgen.Rel(rel.Worker, workercol.WorkerRelations.Organization)).
 			Scan(ctx)
 		if err != nil {
 			return nil, dberror.HandleNotFoundError(err, "PortalInvitation")
@@ -148,13 +152,13 @@ func (r *portalAccessRepository) GetPendingInvitationForWorker(
 	req workerports.GetPendingPortalInvitationRequest,
 ) (*worker.PortalInvitation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PortalInvitation, error) {
-		cols := buncolgen.PortalInvitationColumns
+		cols := workercol.PortalInvitationColumns
 		entity := new(worker.PortalInvitation)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.PortalInvitationScopeTenant(sq, req.TenantInfo).
+				return workercol.PortalInvitationScopeTenant(sq, req.TenantInfo).
 					Where(cols.WorkerID.Eq(), req.WorkerID).
 					Where(cols.Status.Eq(), worker.PortalInvitationStatusPending)
 			}).
@@ -173,19 +177,19 @@ func (r *portalAccessRepository) ListInvitations(
 	req *workerports.ListPortalInvitationsRequest,
 ) ([]*worker.PortalInvitation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.PortalInvitation, error) {
-		cols := buncolgen.PortalInvitationColumns
+		cols := workercol.PortalInvitationColumns
 		items := make([]*worker.PortalInvitation, 0, 8)
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&items).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.PortalInvitationScopeTenant(sq, req.TenantInfo)
+				sq = workercol.PortalInvitationScopeTenant(sq, req.TenantInfo)
 				if !req.WorkerID.IsNil() {
 					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
 				}
 				return sq
 			}).
-			Relation(buncolgen.PortalInvitationRelations.InvitedBy).
+			Relation(workercol.PortalInvitationRelations.InvitedBy).
 			Order(cols.CreatedAt.OrderDesc())
 		if err := query.Scan(ctx); err != nil {
 			return nil, fmt.Errorf("list portal invitations: %w", err)
@@ -199,14 +203,14 @@ func (r *portalAccessRepository) GetWorkerByUserID(
 	tenantInfo pagination.TenantInfo,
 ) (*worker.Worker, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.Worker, error) {
-		cols := buncolgen.WorkerColumns
-		rel := buncolgen.WorkerRelations
+		cols := workercol.WorkerColumns
+		rel := workercol.WorkerRelations
 		entity := new(worker.Worker)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerScopeTenant(sq, tenantInfo).
+				return workercol.WorkerScopeTenant(sq, tenantInfo).
 					Where(cols.UserID.Eq(), tenantInfo.UserID)
 			}).
 			Relation(rel.FleetCode).
@@ -214,7 +218,7 @@ func (r *portalAccessRepository) GetWorkerByUserID(
 			Relation(rel.State).
 			Relation(rel.Profile).
 			Relation(
-				buncolgen.Rel(rel.Profile, buncolgen.WorkerProfileRelations.LicenseState),
+				buncolgen.Rel(rel.Profile, workercol.WorkerProfileRelations.LicenseState),
 			).
 			Scan(ctx)
 		if err != nil {
@@ -229,12 +233,12 @@ func (r *portalAccessRepository) ExistsWorkerForUser(
 	tenantInfo pagination.TenantInfo,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := buncolgen.WorkerColumns
+		cols := workercol.WorkerColumns
 		exists, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*worker.Worker)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerScopeTenant(sq, tenantInfo).
+				return workercol.WorkerScopeTenant(sq, tenantInfo).
 					Where(cols.UserID.Eq(), tenantInfo.UserID)
 			}).
 			Exists(ctx)
@@ -251,14 +255,14 @@ func (r *portalAccessRepository) GetWorkerForPortalManagement(
 	workerID pulid.ID,
 ) (*worker.Worker, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.Worker, error) {
-		cols := buncolgen.WorkerColumns
-		rel := buncolgen.WorkerRelations
+		cols := workercol.WorkerColumns
+		rel := workercol.WorkerRelations
 		entity := new(worker.Worker)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerScopeTenant(sq, tenantInfo).
+				return workercol.WorkerScopeTenant(sq, tenantInfo).
 					Where(cols.ID.Eq(), workerID)
 			}).
 			Relation(rel.Organization).
@@ -353,10 +357,10 @@ func (r *portalAccessRepository) ActivatePortalAccess(
 					Model(invitation).
 					WherePK().
 					Column(
-						buncolgen.PortalInvitationColumns.Status.Bare(),
-						buncolgen.PortalInvitationColumns.AcceptedAt.Bare(),
-						buncolgen.PortalInvitationColumns.AcceptedUserID.Bare(),
-						buncolgen.PortalInvitationColumns.UpdatedAt.Bare(),
+						workercol.PortalInvitationColumns.Status.Bare(),
+						workercol.PortalInvitationColumns.AcceptedAt.Bare(),
+						workercol.PortalInvitationColumns.AcceptedUserID.Bare(),
+						workercol.PortalInvitationColumns.UpdatedAt.Bare(),
 					).
 					Exec(txCtx); err != nil {
 					return fmt.Errorf("mark invitation accepted: %w", err)
@@ -377,7 +381,7 @@ func (r *portalAccessRepository) lockInvitation(
 	tx bun.Tx,
 	ref *worker.PortalInvitation,
 ) (*worker.PortalInvitation, error) {
-	cols := buncolgen.PortalInvitationColumns
+	cols := workercol.PortalInvitationColumns
 	invitation := new(worker.PortalInvitation)
 	err := tx.NewSelect().
 		Model(invitation).
@@ -404,7 +408,7 @@ func (r *portalAccessRepository) lockWorker(
 	tx bun.Tx,
 	invitation *worker.PortalInvitation,
 ) (*worker.Worker, error) {
-	cols := buncolgen.WorkerColumns
+	cols := workercol.WorkerColumns
 	wrk := new(worker.Worker)
 	err := tx.NewSelect().
 		Model(wrk).
@@ -434,7 +438,7 @@ func (r *portalAccessRepository) ensureEmailAvailable(
 		ctx,
 		"check that a portal sign-in email is not already used by any account",
 	)
-	cols := buncolgen.UserColumns
+	cols := tenantcol.UserColumns
 	exists, err := r.db.DBForContext(ctx).NewSelect().
 		Model((*tenant.User)(nil)).
 		Where(cols.EmailAddress.Expr("LOWER({}) = LOWER(?)"), email).
@@ -458,7 +462,7 @@ func (r *portalAccessRepository) ensureDriverRole(
 	invitation *worker.PortalInvitation,
 	req *workerports.ActivatePortalAccessRequest,
 ) (*permission.Role, error) {
-	cols := buncolgen.RoleColumns
+	cols := permissioncol.RoleColumns
 	role := new(permission.Role)
 	err := tx.NewSelect().
 		Model(role).
@@ -494,7 +498,7 @@ func (r *portalAccessRepository) uniqueUsername(
 	invitation *worker.PortalInvitation,
 	base string,
 ) (string, error) {
-	cols := buncolgen.UserColumns
+	cols := tenantcol.UserColumns
 	candidate := base
 	for suffix := 2; ; suffix++ {
 		exists, err := tx.NewSelect().
@@ -524,7 +528,7 @@ func (r *portalAccessRepository) linkWorker(
 	wrk *worker.Worker,
 	userID pulid.ID,
 ) error {
-	cols := buncolgen.WorkerColumns
+	cols := workercol.WorkerColumns
 	results, err := tx.NewUpdate().
 		Model((*worker.Worker)(nil)).
 		Where(cols.ID.Eq(), wrk.ID).
@@ -548,7 +552,7 @@ func (r *portalAccessRepository) RevokePortalAccess(
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		return r.db.DBForContext(ctx).
 			RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
-				wcols := buncolgen.WorkerColumns
+				wcols := workercol.WorkerColumns
 				wrk := new(worker.Worker)
 				err := tx.NewSelect().
 					Model(wrk).
@@ -562,7 +566,7 @@ func (r *portalAccessRepository) RevokePortalAccess(
 				}
 
 				now := timeutils.NowUnix()
-				icols := buncolgen.PortalInvitationColumns
+				icols := workercol.PortalInvitationColumns
 				if _, err = tx.NewUpdate().
 					Model((*worker.PortalInvitation)(nil)).
 					Where(icols.WorkerID.Eq(), workerID).
@@ -579,7 +583,7 @@ func (r *portalAccessRepository) RevokePortalAccess(
 					return nil
 				}
 
-				ucols := buncolgen.UserColumns
+				ucols := tenantcol.UserColumns
 				if _, err = tx.NewUpdate().
 					Model((*tenant.User)(nil)).
 					Where(ucols.ID.Eq(), wrk.UserID).
@@ -611,14 +615,14 @@ func (r *portalAccessRepository) WorkerAssignedToShipment(
 	shipmentID pulid.ID,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		acols := buncolgen.AssignmentColumns
-		mcols := buncolgen.ShipmentMoveColumns
+		acols := shipmentcol.AssignmentColumns
+		mcols := shipmentcol.ShipmentMoveColumns
 		exists, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*shipment.Assignment)(nil)).
 			Join("JOIN shipment_moves AS sm ON "+mcols.ID.Qualified()+" = "+acols.ShipmentMoveID.Qualified()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AssignmentScopeTenant(sq, tenantInfo).
+				return shipmentcol.AssignmentScopeTenant(sq, tenantInfo).
 					Where(mcols.ShipmentID.Eq(), shipmentID).
 					WhereGroup(" AND ", func(inner *bun.SelectQuery) *bun.SelectQuery {
 						return inner.
@@ -640,13 +644,13 @@ func (r *portalAccessRepository) ListWorkerPTO(
 	workerID pulid.ID,
 ) ([]*worker.WorkerPTO, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerPTO, error) {
-		cols := buncolgen.WorkerPTOColumns
+		cols := workercol.WorkerPTOColumns
 		items := make([]*worker.WorkerPTO, 0, 16)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&items).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerPTOScopeTenant(sq, tenantInfo).
+				return workercol.WorkerPTOScopeTenant(sq, tenantInfo).
 					Where(cols.WorkerID.Eq(), workerID)
 			}).
 			Order(cols.StartDate.OrderDesc()).
@@ -668,13 +672,13 @@ func (r *portalAccessRepository) UpdateAssignmentAck(
 	reason string,
 ) (*shipment.Assignment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Assignment, error) {
-		acols := buncolgen.AssignmentColumns
+		acols := shipmentcol.AssignmentColumns
 		entity := new(shipment.Assignment)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AssignmentScopeTenant(sq, tenantInfo).
+				return shipmentcol.AssignmentScopeTenant(sq, tenantInfo).
 					Where(acols.ID.Eq(), assignmentID).
 					Where(acols.ArchivedAt.IsNull()).
 					WhereGroup(" AND ", func(inner *bun.SelectQuery) *bun.SelectQuery {
@@ -721,12 +725,12 @@ func (r *portalAccessRepository) WorkerAssignedToMove(
 	moveID pulid.ID,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		acols := buncolgen.AssignmentColumns
+		acols := shipmentcol.AssignmentColumns
 		exists, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*shipment.Assignment)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AssignmentScopeTenant(sq, tenantInfo).
+				return shipmentcol.AssignmentScopeTenant(sq, tenantInfo).
 					Where(acols.ShipmentMoveID.Eq(), moveID).
 					Where(acols.ArchivedAt.IsNull()).
 					WhereGroup(" AND ", func(inner *bun.SelectQuery) *bun.SelectQuery {
@@ -749,18 +753,18 @@ func (r *portalAccessRepository) ListDriverShipmentComments(
 	shipmentID pulid.ID,
 ) ([]*shipment.ShipmentComment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipment.ShipmentComment, error) {
-		cols := buncolgen.ShipmentCommentColumns
+		cols := shipmentcol.ShipmentCommentColumns
 		items := make([]*shipment.ShipmentComment, 0, 8)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&items).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ShipmentCommentScopeTenant(sq, tenantInfo).
+				return shipmentcol.ShipmentCommentScopeTenant(sq, tenantInfo).
 					Where(cols.ShipmentID.Eq(), shipmentID).
 					Where(cols.Visibility.Eq(), shipment.CommentVisibilityDriver).
 					Where(cols.DeletedAt.IsNull())
 			}).
-			Relation(buncolgen.ShipmentCommentRelations.User).
+			Relation(shipmentcol.ShipmentCommentRelations.User).
 			Order(cols.CreatedAt.OrderDesc()).
 			Scan(ctx)
 		if err != nil {
@@ -775,10 +779,10 @@ func (r *portalAccessRepository) ListWorkerLoads(
 	req *workerports.ListWorkerLoadsRequest,
 ) ([]*shipment.Assignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipment.Assignment, error) {
-		acols := buncolgen.AssignmentColumns
-		arel := buncolgen.AssignmentRelations
+		acols := shipmentcol.AssignmentColumns
+		arel := shipmentcol.AssignmentRelations
 		moveAlias := "shipment_move"
-		moveStatus := buncolgen.ShipmentMoveColumns.Status.WithAlias(moveAlias)
+		moveStatus := shipmentcol.ShipmentMoveColumns.Status.WithAlias(moveAlias)
 
 		limit := req.Limit
 		if limit <= 0 || limit > 100 {
@@ -790,7 +794,7 @@ func (r *portalAccessRepository) ListWorkerLoads(
 			NewSelect().
 			Model(&items).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AssignmentScopeTenant(sq, req.TenantInfo).
+				return shipmentcol.AssignmentScopeTenant(sq, req.TenantInfo).
 					WhereGroup(" AND ", func(inner *bun.SelectQuery) *bun.SelectQuery {
 						return inner.
 							Where(acols.PrimaryWorkerID.Eq(), req.WorkerID).
@@ -799,18 +803,18 @@ func (r *portalAccessRepository) ListWorkerLoads(
 					Where(acols.ArchivedAt.IsNull())
 			}).
 			Relation(arel.ShipmentMove).
-			Relation(buncolgen.Rel(arel.ShipmentMove, buncolgen.ShipmentMoveRelations.Shipment)).
+			Relation(buncolgen.Rel(arel.ShipmentMove, shipmentcol.ShipmentMoveRelations.Shipment)).
 			Relation(
-				buncolgen.Rel(arel.ShipmentMove, buncolgen.ShipmentMoveRelations.Stops),
+				buncolgen.Rel(arel.ShipmentMove, shipmentcol.ShipmentMoveRelations.Stops),
 				func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Order(buncolgen.StopColumns.Sequence.OrderAsc())
+					return q.Order(shipmentcol.StopColumns.Sequence.OrderAsc())
 				},
 			).
 			Relation(
 				buncolgen.Rel(
 					arel.ShipmentMove,
-					buncolgen.ShipmentMoveRelations.Stops,
-					buncolgen.StopRelations.Location,
+					shipmentcol.ShipmentMoveRelations.Stops,
+					shipmentcol.StopRelations.Location,
 				),
 			).
 			Relation(arel.Tractor).

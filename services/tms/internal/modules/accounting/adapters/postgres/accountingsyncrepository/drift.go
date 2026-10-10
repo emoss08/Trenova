@@ -1,6 +1,7 @@
 package accountingsyncrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
 	"context"
 	"fmt"
 	"strings"
@@ -70,7 +71,7 @@ func (r *driftFindingRepository) Update(
 	entity *accountingsync.AccountingDriftFinding,
 ) (*accountingsync.AccountingDriftFinding, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingDriftFinding, error) {
-		cols := buncolgen.AccountingDriftFindingColumns
+		cols := accountingsynccol.AccountingDriftFindingColumns
 		ov := entity.Version
 		entity.Version++
 
@@ -104,12 +105,12 @@ func (r *driftFindingRepository) GetByID(
 ) (*accountingsync.AccountingDriftFinding, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingDriftFinding, error) {
 		entity := new(accountingsync.AccountingDriftFinding)
-		cols := buncolgen.AccountingDriftFindingColumns
+		cols := accountingsynccol.AccountingDriftFindingColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Apply(buncolgen.AccountingDriftFindingApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingDriftFindingApplyTenant(req.TenantInfo)).
 			Where(cols.ID.Eq(), req.ID)
 		if req.ForUpdate {
 			query = query.For("UPDATE")
@@ -132,11 +133,11 @@ func (r *driftFindingRepository) ListOpen(
 			return entities, nil
 		}
 
-		cols := buncolgen.AccountingDriftFindingColumns
+		cols := accountingsynccol.AccountingDriftFindingColumns
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.AccountingDriftFindingApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingDriftFindingApplyTenant(req.TenantInfo)).
 			Where(cols.ConnectionID.Eq(), req.ConnectionID).
 			Where(cols.Status.Eq(), accountingsync.DriftStatusOpen).
 			Where(cols.ObjectID.In(), bun.List(req.ObjectIDs)).
@@ -153,9 +154,9 @@ func (r *driftFindingRepository) applyListFilters(
 	q *bun.SelectQuery,
 	req *accountingsyncports.ListAccountingDriftFindingsConnectionRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.AccountingDriftFindingColumns
+	cols := accountingsynccol.AccountingDriftFindingColumns
 	if req.Filter != nil {
-		q = q.Apply(buncolgen.AccountingDriftFindingApplyTenant(req.Filter.TenantInfo))
+		q = q.Apply(accountingsynccol.AccountingDriftFindingApplyTenant(req.Filter.TenantInfo))
 	}
 	q = q.Where(cols.ConnectionID.Eq(), req.ConnectionID)
 	if len(req.Statuses) > 0 {
@@ -203,7 +204,7 @@ func (r *driftFindingRepository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.AccountingDriftFindingTable.Alias,
+						accountingsynccol.AccountingDriftFindingTable.Alias,
 						req.Filter,
 						(*accountingsync.AccountingDriftFinding)(nil),
 					)
@@ -226,12 +227,12 @@ func (r *driftFindingRepository) ListConnection(
 				Query: func(items *[]*accountingsync.AccountingDriftFinding) *bun.SelectQuery {
 					return dba.NewSelect().
 						Model(items).
-						ColumnExpr(buncolgen.AccountingDriftFindingTable.All())
+						ColumnExpr(accountingsynccol.AccountingDriftFindingTable.All())
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					sq, applyErr := querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.AccountingDriftFindingTable.Alias,
+						accountingsynccol.AccountingDriftFindingTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*accountingsync.AccountingDriftFinding)(nil),
@@ -257,7 +258,7 @@ func (r *driftFindingRepository) Summarize(
 	req *accountingsyncports.SummarizeAccountingDriftRequest,
 ) (*accountingsyncports.AccountingDriftSummary, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsyncports.AccountingDriftSummary, error) {
-		cols := buncolgen.AccountingDriftFindingColumns
+		cols := accountingsynccol.AccountingDriftFindingColumns
 		summary := new(accountingsyncports.AccountingDriftSummary)
 		open := accountingsync.DriftStatusOpen
 
@@ -293,7 +294,7 @@ func (r *driftFindingRepository) Summarize(
 				accountingsync.DriftStatusResolved,
 				req.ResolvedSince,
 			).
-			Apply(buncolgen.AccountingDriftFindingApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingDriftFindingApplyTenant(req.TenantInfo)).
 			Where(cols.ConnectionID.Eq(), req.ConnectionID).
 			Scan(ctx, summary); err != nil {
 			return nil, err
@@ -308,7 +309,7 @@ func (r *driftFindingRepository) ListAttention(
 	req *accountingsyncports.ListAccountingDriftAttentionRequest,
 ) ([]accountingsyncports.AccountingDriftAttentionGroup, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]accountingsyncports.AccountingDriftAttentionGroup, error) {
-		cols := buncolgen.AccountingDriftFindingColumns
+		cols := accountingsynccol.AccountingDriftFindingColumns
 		groups := make(
 			[]accountingsyncports.AccountingDriftAttentionGroup,
 			0,
@@ -322,7 +323,7 @@ func (r *driftFindingRepository) ListAttention(
 			ColumnExpr(buncolgen.Count("count")).
 			ColumnExpr(buncolgen.Min(cols.DetectedAt, "oldest_detected_at")).
 			ColumnExpr(buncolgen.Min(cols.ID, "sample_id")).
-			Apply(buncolgen.AccountingDriftFindingApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingDriftFindingApplyTenant(req.TenantInfo)).
 			Where(cols.ConnectionID.Eq(), req.ConnectionID).
 			Where(cols.Status.Eq(), accountingsync.DriftStatusOpen).
 			Where(cols.DetectedAt.Lte(), req.DetectedBefore).

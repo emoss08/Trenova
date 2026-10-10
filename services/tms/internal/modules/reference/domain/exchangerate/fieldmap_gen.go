@@ -2,18 +2,21 @@
 
 package exchangerate
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/exchangeratecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ExchangeRate].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ExchangeRateFieldMap] instead of parsing struct tags via reflection.
+// the generated [exchangeratecol.ExchangeRateFieldMap] instead of parsing struct tags via reflection.
 func (e *ExchangeRate) GetStaticFieldMap() map[string]string {
-	return buncolgen.ExchangeRateFieldMap
+	return exchangeratecol.ExchangeRateFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [SettlementQuote].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.SettlementQuoteFieldMap] instead of parsing struct tags via reflection.
+// the generated [exchangeratecol.SettlementQuoteFieldMap] instead of parsing struct tags via reflection.
 func (e *SettlementQuote) GetStaticFieldMap() map[string]string {
-	return buncolgen.SettlementQuoteFieldMap
+	return exchangeratecol.SettlementQuoteFieldMap
 }

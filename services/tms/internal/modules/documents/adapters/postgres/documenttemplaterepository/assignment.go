@@ -1,6 +1,7 @@
 package documenttemplaterepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/documenttemplatecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -44,12 +45,12 @@ func (r *assignmentRepository) filterQuery(
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.DocumentTemplateAssignmentTable.Alias,
+		documenttemplatecol.DocumentTemplateAssignmentTable.Alias,
 		req.Filter,
 		(*documenttemplate.DocumentTemplateAssignment)(nil),
 	)
 
-	cols := buncolgen.DocumentTemplateAssignmentColumns
+	cols := documenttemplatecol.DocumentTemplateAssignmentColumns
 
 	if req.Kind != "" {
 		q = q.Where(cols.Kind.Eq(), req.Kind)
@@ -69,7 +70,7 @@ func (r *assignmentRepository) List(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*documenttemplate.DocumentTemplateAssignment], error) {
 		log := r.l.With(zap.String("operation", "List"))
 
-		rel := buncolgen.DocumentTemplateAssignmentRelations
+		rel := documenttemplatecol.DocumentTemplateAssignmentRelations
 		entities := make(
 			[]*documenttemplate.DocumentTemplateAssignment, 0, req.Filter.Pagination.SafeLimit(),
 		)
@@ -111,7 +112,7 @@ func (r *assignmentRepository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.DocumentTemplateAssignmentTable.Alias,
+						documenttemplatecol.DocumentTemplateAssignmentTable.Alias,
 						req.Filter,
 						(*documenttemplate.DocumentTemplateAssignment)(nil),
 					)
@@ -135,7 +136,7 @@ func (r *assignmentRepository) ListConnection(
 				) *bun.SelectQuery {
 					q := dba.NewSelect().Model(entities)
 					if len(req.DocumentTemplateAssignmentColumns) == 0 {
-						q = q.ColumnExpr(buncolgen.DocumentTemplateAssignmentTable.All())
+						q = q.ColumnExpr(documenttemplatecol.DocumentTemplateAssignmentTable.All())
 					} else {
 						q = q.Column(req.DocumentTemplateAssignmentColumns...)
 					}
@@ -144,7 +145,7 @@ func (r *assignmentRepository) ListConnection(
 				Apply: func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
 					return querybuilder.ApplyCursorFilters(
 						q,
-						buncolgen.DocumentTemplateAssignmentTable.Alias,
+						documenttemplatecol.DocumentTemplateAssignmentTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*documenttemplate.DocumentTemplateAssignment)(nil),
@@ -173,8 +174,8 @@ func (r *assignmentRepository) GetForCustomer(
 			zap.String("customerId", req.CustomerID.String()),
 		)
 
-		cols := buncolgen.DocumentTemplateAssignmentColumns
-		rel := buncolgen.DocumentTemplateAssignmentRelations
+		cols := documenttemplatecol.DocumentTemplateAssignmentColumns
+		rel := documenttemplatecol.DocumentTemplateAssignmentRelations
 		entities := make([]*documenttemplate.DocumentTemplateAssignment, 0, 8)
 
 		if err := r.db.DBForContext(ctx).
@@ -182,7 +183,7 @@ func (r *assignmentRepository) GetForCustomer(
 			Model(&entities).
 			Relation(rel.Template).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DocumentTemplateAssignmentScopeTenant(sq, req.TenantInfo).
+				return documenttemplatecol.DocumentTemplateAssignmentScopeTenant(sq, req.TenantInfo).
 					Where(cols.CustomerID.Eq(), req.CustomerID)
 			}).
 			Order(cols.Kind.OrderAsc()).
@@ -209,7 +210,7 @@ func (r *assignmentRepository) Assign(
 			zap.String("kind", string(entity.Kind)),
 		)
 
-		cols := buncolgen.DocumentTemplateAssignmentColumns
+		cols := documenttemplatecol.DocumentTemplateAssignmentColumns
 
 		if _, err := r.db.DBForContext(ctx).
 			NewInsert().
@@ -242,13 +243,13 @@ func (r *assignmentRepository) Unassign(
 			zap.String("kind", string(req.Kind)),
 		)
 
-		cols := buncolgen.DocumentTemplateAssignmentColumns
+		cols := documenttemplatecol.DocumentTemplateAssignmentColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*documenttemplate.DocumentTemplateAssignment)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.DocumentTemplateAssignmentScopeTenantDelete(dq, req.TenantInfo).
+				return documenttemplatecol.DocumentTemplateAssignmentScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.CustomerID.Eq(), req.CustomerID).
 					Where(cols.Kind.Eq(), req.Kind)
 			}).

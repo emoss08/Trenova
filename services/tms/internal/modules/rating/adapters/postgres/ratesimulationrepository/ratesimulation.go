@@ -1,6 +1,8 @@
 package ratesimulationrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/ratesimulationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratesimulation"
@@ -52,18 +54,18 @@ func (r *repository) GetByID(
 		)
 
 		entity := new(ratesimulation.RateSimulation)
-		cols := buncolgen.RateSimulationColumns
+		cols := ratesimulationcol.RateSimulationColumns
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RateSimulationScopeTenant(sq, req.TenantInfo).
+				return ratesimulationcol.RateSimulationScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.RateSimulationID)
 			})
 
 		if req.IncludeResults {
-			q = q.Relation(buncolgen.Rel(buncolgen.RateSimulationRelations.Results))
+			q = q.Relation(buncolgen.Rel(ratesimulationcol.RateSimulationRelations.Results))
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -80,13 +82,13 @@ func (r *repository) List(
 	req *ratesimulationports.ListRateSimulationsRequest,
 ) (*pagination.ListResult[*ratesimulation.RateSimulation], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*ratesimulation.RateSimulation], error) {
-		cols := buncolgen.RateSimulationColumns
+		cols := ratesimulationcol.RateSimulationColumns
 		entities := make([]*ratesimulation.RateSimulation, 0, req.Filter.Pagination.SafeLimit())
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.RateSimulationApplyTenant(req.Filter.TenantInfo))
+			Apply(ratesimulationcol.RateSimulationApplyTenant(req.Filter.TenantInfo))
 
 		if req.RateAgreementID != nil && !req.RateAgreementID.IsNil() {
 			q = q.Where(cols.RateAgreementID.Eq(), *req.RateAgreementID)
@@ -117,13 +119,13 @@ func (r *repository) ListResults(
 ) (*pagination.ListResult[*ratesimulation.RateSimulationResult], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*ratesimulation.RateSimulationResult], error) {
 		entities := make([]*ratesimulation.RateSimulationResult, 0)
-		cols := buncolgen.RateSimulationResultColumns
+		cols := ratesimulationcol.RateSimulationResultColumns
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.RateSimulationResultScopeTenant(sq, req.TenantInfo).
+				return ratesimulationcol.RateSimulationResultScopeTenant(sq, req.TenantInfo).
 					Where(cols.RateSimulationID.Eq(), req.RateSimulationID)
 			})
 
@@ -177,7 +179,7 @@ func (r *repository) Update(
 		ov := entity.Version
 		entity.Version++
 
-		cols := buncolgen.RateSimulationColumns
+		cols := ratesimulationcol.RateSimulationColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -240,7 +242,7 @@ func (r *repository) ListShipments(
 	req *ratesimulationports.ListSimulationShipmentsRequest,
 ) (*ratesimulationports.SimulationShipmentPage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ratesimulationports.SimulationShipmentPage, error) {
-		cols := buncolgen.ShipmentColumns
+		cols := shipmentcol.ShipmentColumns
 
 		entities := make([]*shipment.Shipment, 0, req.Limit)
 
@@ -249,7 +251,7 @@ func (r *repository) ListShipments(
 			Model(&entities).
 			Column("id").
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.ShipmentScopeTenant(sq, req.TenantInfo)
+				sq = shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo)
 
 				// The window is read against the day the freight actually moved,
 				// falling back to when the shipment was created for one that never

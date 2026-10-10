@@ -2,11 +2,14 @@
 
 package distancecalculation
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/distancecalculationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Run].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RunFieldMap] instead of parsing struct tags via reflection.
+// the generated [distancecalculationcol.RunFieldMap] instead of parsing struct tags via reflection.
 func (e *Run) GetStaticFieldMap() map[string]string {
-	return buncolgen.RunFieldMap
+	return distancecalculationcol.RunFieldMap
 }

@@ -1,6 +1,7 @@
 package extractionshadowrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/extractionshadowcol"
 	"context"
 	"fmt"
 	"strings"
@@ -39,7 +40,7 @@ func NewResults(p Params) extractionshadowports.ExtractionShadowResultRepository
 }
 
 func uniqueExtraction() string {
-	cols := buncolgen.ShadowResultColumns
+	cols := extractionshadowcol.ShadowResultColumns
 
 	return "CONFLICT (" + strings.Join([]string{
 		cols.OrganizationID.Bare(),
@@ -106,8 +107,8 @@ func (r *resultRepository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ShadowResultScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.ShadowResultColumns.ID.Eq(), req.ID)
+				return extractionshadowcol.ShadowResultScopeTenant(sq, req.TenantInfo).
+					Where(extractionshadowcol.ShadowResultColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -123,13 +124,13 @@ func (r *resultRepository) GetByExtraction(
 	req extractionshadowports.GetExtractionShadowResultByExtractionRequest,
 ) (*extractionshadow.ShadowResult, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*extractionshadow.ShadowResult, error) {
-		cols := buncolgen.ShadowResultColumns
+		cols := extractionshadowcol.ShadowResultColumns
 		entity := new(extractionshadow.ShadowResult)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ShadowResultScopeTenant(sq, req.TenantInfo).
+				return extractionshadowcol.ShadowResultScopeTenant(sq, req.TenantInfo).
 					Where(cols.DocumentID.Eq(), req.DocumentID).
 					Where(cols.ExtractedAt.Eq(), req.ExtractedAt)
 			}).
@@ -147,14 +148,14 @@ func (r *resultRepository) Save(
 	entity *extractionshadow.ShadowResult,
 ) (*extractionshadow.ShadowResult, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*extractionshadow.ShadowResult, error) {
-		cols := buncolgen.ShadowResultColumns
+		cols := extractionshadowcol.ShadowResultColumns
 		previous := entity.Version
 
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ShadowResultScopeTenantUpdate(uq, pagination.TenantInfo{
+				return extractionshadowcol.ShadowResultScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
 				}).
@@ -196,8 +197,8 @@ func (r *resultRepository) CountCreatedSince(
 			NewSelect().
 			Model((*extractionshadow.ShadowResult)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ShadowResultScopeTenant(sq, tenant).
-					Where(buncolgen.ShadowResultColumns.CreatedAt.Gte(), since)
+				return extractionshadowcol.ShadowResultScopeTenant(sq, tenant).
+					Where(extractionshadowcol.ShadowResultColumns.CreatedAt.Gte(), since)
 			}).
 			Count(ctx)
 		if err != nil {
@@ -215,7 +216,7 @@ func (r *resultRepository) ListScored(
 	req *extractionshadowports.ListScoredExtractionShadowResultsRequest,
 ) ([]*extractionshadow.ShadowResult, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*extractionshadow.ShadowResult, error) {
-		cols := buncolgen.ShadowResultColumns
+		cols := extractionshadowcol.ShadowResultColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultScoredLimit
@@ -245,7 +246,7 @@ func (r *resultRepository) ListScored(
 				cols.ScoredAt.Bare(),
 			).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.ShadowResultScopeTenant(sq, req.TenantInfo).
+				sq = extractionshadowcol.ShadowResultScopeTenant(sq, req.TenantInfo).
 					Where(cols.Status.Eq(), extractionshadow.ResultStatusCompleted).
 					Where(cols.ScoredAt.Gte(), req.Since)
 				if req.ProviderID.IsNotNil() {
@@ -272,7 +273,7 @@ func (r *resultRepository) TotalsByStatus(
 	req extractionshadowports.TotalExtractionShadowResultsRequest,
 ) ([]extractionshadowports.ExtractionShadowStatusTotal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]extractionshadowports.ExtractionShadowStatusTotal, error) {
-		cols := buncolgen.ShadowResultColumns
+		cols := extractionshadowcol.ShadowResultColumns
 		totals := make(
 			[]extractionshadowports.ExtractionShadowStatusTotal,
 			0,
@@ -287,7 +288,7 @@ func (r *resultRepository) TotalsByStatus(
 			ColumnExpr(cols.LatencyMs.Expr("COALESCE(SUM({}) FILTER (WHERE {} > 0), 0) AS latency_ms_sum")).
 			ColumnExpr(buncolgen.CountFilter("timed", cols.LatencyMs.Expr("{} > 0"))).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.ShadowResultScopeTenant(sq, req.TenantInfo).
+				sq = extractionshadowcol.ShadowResultScopeTenant(sq, req.TenantInfo).
 					Where(cols.CreatedAt.Gte(), req.Since)
 				if req.ProviderID.IsNotNil() {
 					sq = sq.Where(cols.ProviderID.Eq(), req.ProviderID)
@@ -321,12 +322,12 @@ func (r *resultRepository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.ShadowResultTable.Alias,
+						extractionshadowcol.ShadowResultTable.Alias,
 						req.Filter,
 						(*extractionshadow.ShadowResult)(nil),
 					)
 
-					return sq.Apply(buncolgen.ShadowResultApplyTenant(req.Filter.TenantInfo))
+					return sq.Apply(extractionshadowcol.ShadowResultApplyTenant(req.Filter.TenantInfo))
 				}).
 				Count(ctx)
 			if err != nil {
@@ -354,7 +355,7 @@ func (r *resultRepository) ListConnection(
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					return querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.ShadowResultTable.Alias,
+						extractionshadowcol.ShadowResultTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*extractionshadow.ShadowResult)(nil),
@@ -377,7 +378,7 @@ func (r *resultRepository) PurgeBefore(
 	req extractionshadowports.PurgeExtractionShadowResultsRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := buncolgen.ShadowResultColumns
+		cols := extractionshadowcol.ShadowResultColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultPurgeLimit
@@ -389,7 +390,7 @@ func (r *resultRepository) PurgeBefore(
 			Model((*extractionshadow.ShadowResult)(nil)).
 			Column(cols.ID.Bare()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ShadowResultScopeTenant(sq, req.TenantInfo).
+				return extractionshadowcol.ShadowResultScopeTenant(sq, req.TenantInfo).
 					Where(cols.CreatedAt.Lt(), req.Before)
 			}).
 			OrderExpr(cols.CreatedAt.OrderAsc()).
@@ -398,7 +399,7 @@ func (r *resultRepository) PurgeBefore(
 		res, err := dba.NewDelete().
 			Model((*extractionshadow.ShadowResult)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.ShadowResultScopeTenantDelete(dq, req.TenantInfo).
+				return extractionshadowcol.ShadowResultScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.ID.In(), expired)
 			}).
 			Exec(ctx)

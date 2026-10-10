@@ -1,6 +1,7 @@
 package tractorrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
 	"context"
 	"fmt"
 	"strings"
@@ -41,15 +42,15 @@ func (r *repository) GetByCodes(
 			return map[string]*tractor.Tractor{}, nil
 		}
 
-		cols := buncolgen.TractorColumns
+		cols := tractorcol.TractorColumns
 		entities := make([]*tractor.Tractor, 0, len(codes)+len(plates))
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			ColumnExpr(buncolgen.TractorTable.All()).
+			ColumnExpr(tractorcol.TractorTable.All()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TractorScopeTenant(sq, req.TenantInfo).
+				return tractorcol.TractorScopeTenant(sq, req.TenantInfo).
 					WhereGroup(" AND ", func(oq *bun.SelectQuery) *bun.SelectQuery {
 						if len(codes) > 0 {
 							oq = oq.Where(cols.Code.Expr("UPPER({}) IN (?)"), bun.In(codes))

@@ -1,6 +1,7 @@
 package workerrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 
@@ -53,7 +54,7 @@ func (r *repository) cursorFilterQuery(
 ) (*bun.SelectQuery, error) {
 	q, err := querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.WorkerTable.Alias,
+		workercol.WorkerTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*worker.Worker)(nil),
@@ -76,24 +77,24 @@ func (r *repository) SelectOptions(
 			req.SelectQueryRequest,
 			&dbhelper.SelectOptionsConfig{
 				ColumnRefs: []buncolgen.Column{
-					buncolgen.WorkerColumns.ID,
-					buncolgen.WorkerColumns.CreatedAt,
-					buncolgen.WorkerColumns.FirstName,
-					buncolgen.WorkerColumns.LastName,
-					buncolgen.WorkerColumns.FleetCodeID,
-					buncolgen.WorkerColumns.Status,
+					workercol.WorkerColumns.ID,
+					workercol.WorkerColumns.CreatedAt,
+					workercol.WorkerColumns.FirstName,
+					workercol.WorkerColumns.LastName,
+					workercol.WorkerColumns.FleetCodeID,
+					workercol.WorkerColumns.Status,
 				},
-				OrgColumnRef: &buncolgen.WorkerColumns.OrganizationID,
-				BuColumnRef:  &buncolgen.WorkerColumns.BusinessUnitID,
+				OrgColumnRef: &workercol.WorkerColumns.OrganizationID,
+				BuColumnRef:  &workercol.WorkerColumns.BusinessUnitID,
 				SearchColumnRefs: []buncolgen.Column{
-					buncolgen.WorkerColumns.FirstName,
-					buncolgen.WorkerColumns.LastName,
+					workercol.WorkerColumns.FirstName,
+					workercol.WorkerColumns.LastName,
 				},
 				EntityName: "Worker",
 				QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
 					q = q.
-						Where(buncolgen.WorkerColumns.Status.Eq(), domaintypes.StatusActive).
-						Relation(buncolgen.WorkerRelations.FleetCode)
+						Where(workercol.WorkerColumns.Status.Eq(), domaintypes.StatusActive).
+						Relation(workercol.WorkerRelations.FleetCode)
 					if req.OwnerOperatorsOnly {
 						now := timeutils.NowUnix()
 						q = q.Where(
@@ -140,7 +141,7 @@ func (r *repository) List(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.WorkerTable.Alias,
+						workercol.WorkerTable.Alias,
 						req.Filter,
 						(*worker.Worker)(nil),
 					)
@@ -161,10 +162,10 @@ func (r *repository) List(
 				return r.db.DBForContext(ctx).
 					NewSelect().
 					Model(items).
-					ColumnExpr(buncolgen.WorkerTable.All()).
-					Relation(buncolgen.WorkerRelations.FleetCode).
-					Relation(buncolgen.WorkerRelations.State).
-					Relation(buncolgen.WorkerRelations.Profile)
+					ColumnExpr(workercol.WorkerTable.All()).
+					Relation(workercol.WorkerRelations.FleetCode).
+					Relation(workercol.WorkerRelations.State).
+					Relation(workercol.WorkerRelations.Profile)
 			},
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 				return r.cursorFilterQuery(sq, req)
@@ -194,15 +195,15 @@ func (r *repository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerColumns.ID.Eq(), req.ID)
+				return workercol.WorkerScopeTenant(sq, req.TenantInfo).
+					Where(workercol.WorkerColumns.ID.Eq(), req.ID)
 			})
 
 		if req.IncludeProfile {
-			q.Relation(buncolgen.WorkerRelations.Profile)
+			q.Relation(workercol.WorkerRelations.Profile)
 		}
 		if req.IncludeState {
-			q.Relation(buncolgen.WorkerRelations.State)
+			q.Relation(workercol.WorkerRelations.State)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -289,7 +290,7 @@ func (r *repository) Update(
 				NewUpdate().
 				Model(entity).
 				WherePK().
-				Where(buncolgen.WorkerColumns.Version.Eq(), ov).
+				Where(workercol.WorkerColumns.Version.Eq(), ov).
 				Returning("*").
 				Exec(c)
 			if updateErr != nil {
@@ -317,7 +318,7 @@ func (r *repository) Update(
 					NewUpdate().
 					Model(entity.Profile).
 					WherePK().
-					Where(buncolgen.WorkerProfileColumns.Version.Eq(), pv).
+					Where(workercol.WorkerProfileColumns.Version.Eq(), pv).
 					Returning("*").
 					Exec(c)
 				if profileErr != nil {
@@ -351,7 +352,7 @@ func (r *repository) GetWorkerSyncReadinessCounts(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerports.WorkerSyncReadinessCounts, error) {
 		counts := new(workerports.WorkerSyncReadinessCounts)
 
-		wrk := buncolgen.WorkerColumns
+		wrk := workercol.WorkerColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -367,7 +368,7 @@ func (r *repository) GetWorkerSyncReadinessCounts(
 				),
 				domaintypes.StatusActive,
 			).
-			Apply(buncolgen.WorkerApplyTenant(tenantInfo)).
+			Apply(workercol.WorkerApplyTenant(tenantInfo)).
 			Scan(ctx, counts)
 		if err != nil {
 			return nil, err
@@ -388,8 +389,8 @@ func (r *repository) ReplaceWorkerSyncDrifts(
 				if _, err := r.db.DBForContext(c).NewDelete().
 					Model((*worker.WorkerSyncDrift)(nil)).
 					WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-						return buncolgen.WorkerSyncDriftScopeTenantDelete(dq, tenantInfo).
-							Where(buncolgen.WorkerSyncDriftColumns.WorkerID.In(), bun.List(drifts))
+						return workercol.WorkerSyncDriftScopeTenantDelete(dq, tenantInfo).
+							Where(workercol.WorkerSyncDriftColumns.WorkerID.In(), bun.List(drifts))
 					}).
 					Exec(c); err != nil {
 					return err
@@ -431,9 +432,9 @@ func (r *repository) ListWorkerSyncDrifts(
 		models := make([]*worker.WorkerSyncDrift, 0)
 
 		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(&models).Apply(buncolgen.WorkerSyncDriftApplyTenant(tenantInfo)).
-			Order(buncolgen.WorkerSyncDriftColumns.DetectedAt.OrderDesc()).
-			Order(buncolgen.WorkerSyncDriftColumns.WorkerName.OrderAsc()).
+			Model(&models).Apply(workercol.WorkerSyncDriftApplyTenant(tenantInfo)).
+			Order(workercol.WorkerSyncDriftColumns.DetectedAt.OrderDesc()).
+			Order(workercol.WorkerSyncDriftColumns.WorkerName.OrderAsc()).
 			Scan(ctx); err != nil {
 			return nil, err
 		}
@@ -461,7 +462,7 @@ func (r *repository) PatchProfileCredentialField(
 	req *workerports.PatchProfileCredentialFieldRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.WorkerProfileColumns
+		cols := workercol.WorkerProfileColumns
 		var column buncolgen.Column
 		switch req.Field {
 		case worker.CredentialProfileFieldLicenseExpiry:
@@ -487,7 +488,7 @@ func (r *repository) PatchProfileCredentialField(
 			Model((*worker.WorkerProfile)(nil)).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.WorkerProfileScopeTenantUpdate(uq, req.TenantInfo).
+				return workercol.WorkerProfileScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.WorkerID.Eq(), req.WorkerID)
 			})
 
@@ -521,7 +522,7 @@ func (r *repository) UpdateProfileComplianceStatus(
 	req *workerports.UpdateProfileComplianceStatusRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.WorkerProfileColumns
+		cols := workercol.WorkerProfileColumns
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*worker.WorkerProfile)(nil)).
@@ -529,7 +530,7 @@ func (r *repository) UpdateProfileComplianceStatus(
 			Set(cols.NextCredentialExpiry.Set(), req.NextExpiry).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.WorkerProfileScopeTenantUpdate(uq, req.TenantInfo).
+				return workercol.WorkerProfileScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.WorkerID.Eq(), req.WorkerID).
 					WhereGroup(" AND ", func(iq *bun.UpdateQuery) *bun.UpdateQuery {
 						return iq.
@@ -561,7 +562,7 @@ func (r *repository) UpdateProfileTrainingRollup(
 	req *workerports.UpdateProfileTrainingRollupRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.WorkerProfileColumns
+		cols := workercol.WorkerProfileColumns
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*worker.WorkerProfile)(nil)).
@@ -569,7 +570,7 @@ func (r *repository) UpdateProfileTrainingRollup(
 			Set(cols.NextTrainingDue.Set(), req.NextDue).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.WorkerProfileScopeTenantUpdate(uq, req.TenantInfo).
+				return workercol.WorkerProfileScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.WorkerID.Eq(), req.WorkerID).
 					WhereGroup(" AND ", func(iq *bun.UpdateQuery) *bun.UpdateQuery {
 						return iq.
@@ -600,7 +601,7 @@ func (r *repository) UpdateProfileSafetyRollup(
 	req *workerports.UpdateProfileSafetyRollupRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.WorkerProfileColumns
+		cols := workercol.WorkerProfileColumns
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*worker.WorkerProfile)(nil)).
@@ -608,7 +609,7 @@ func (r *repository) UpdateProfileSafetyRollup(
 			Set(cols.SafetyScore.Set(), req.Score).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.WorkerProfileScopeTenantUpdate(uq, req.TenantInfo).
+				return workercol.WorkerProfileScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.WorkerID.Eq(), req.WorkerID).
 					WhereGroup(" AND ", func(iq *bun.UpdateQuery) *bun.UpdateQuery {
 						return iq.
@@ -633,14 +634,14 @@ func (r *repository) UpdateProfileQualification(
 	req *workerports.UpdateProfileQualificationRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.WorkerProfileColumns
+		cols := workercol.WorkerProfileColumns
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*worker.WorkerProfile)(nil)).
 			Set(cols.IsQualified.Set(), req.Qualified).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.WorkerProfileScopeTenantUpdate(uq, req.TenantInfo).
+				return workercol.WorkerProfileScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.WorkerID.Eq(), req.WorkerID).
 					Where(cols.IsQualified.Ne(), req.Qualified)
 			}).
@@ -665,8 +666,8 @@ func (r *repository) CountRosterAttention(
 	req *workerports.CountRosterAttentionRequest,
 ) (*workerports.RosterAttention, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerports.RosterAttention, error) {
-		wcols := buncolgen.WorkerColumns
-		pcols := buncolgen.WorkerProfileColumns
+		wcols := workercol.WorkerColumns
+		pcols := workercol.WorkerProfileColumns
 
 		counts := new(workerports.RosterAttention)
 		err := r.db.DBForContext(ctx).
@@ -703,7 +704,7 @@ func (r *repository) CountRosterAttention(
 				"JOIN worker_profiles AS wrkp ON wrkp.worker_id = wrk.id AND wrkp.organization_id = wrk.organization_id AND wrkp.business_unit_id = wrk.business_unit_id",
 			).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerScopeTenant(sq, req.TenantInfo).
+				return workercol.WorkerScopeTenant(sq, req.TenantInfo).
 					Where(wcols.Status.Eq(), domaintypes.StatusActive)
 			}).
 			Scan(ctx, counts)

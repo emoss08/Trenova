@@ -1,6 +1,7 @@
 package shipmentbriefrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentbriefcol"
 	"context"
 	"database/sql"
 	"errors"
@@ -53,7 +54,7 @@ func latest(
 	db bun.IDB,
 	req *shipmentbriefports.GetLatestShipmentBriefRequest,
 ) (*shipmentbrief.Brief, error) {
-	cols := buncolgen.BriefColumns
+	cols := shipmentbriefcol.BriefColumns
 	brief := new(shipmentbrief.Brief)
 	err := db.NewSelect().
 		Model(brief).
@@ -78,7 +79,7 @@ func (r *repository) Insert(
 	brief *shipmentbrief.Brief,
 ) (*shipmentbrief.Brief, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipmentbrief.Brief, error) {
-		cols := buncolgen.BriefColumns
+		cols := shipmentbriefcol.BriefColumns
 		db := r.db.DBForContext(ctx)
 		result, err := db.NewInsert().
 			Model(brief).
@@ -117,12 +118,12 @@ func (r *repository) DeleteBefore(
 			limit = maxDeleteBatch
 		}
 
-		cols := buncolgen.BriefColumns
+		cols := shipmentbriefcol.BriefColumns
 		res, err := r.db.DBForContext(ctx).NewDelete().
 			Model((*shipmentbrief.Brief)(nil)).
 			Where(
 				cols.ID.Qualified()+" IN (SELECT "+cols.ID.Qualified()+" FROM "+
-					buncolgen.BriefTable.Name+" AS "+buncolgen.BriefTable.Alias+
+					shipmentbriefcol.BriefTable.Name+" AS "+shipmentbriefcol.BriefTable.Alias+
 					" WHERE "+cols.BriefDate.Qualified()+" < ? ORDER BY "+
 					cols.BriefDate.Qualified()+" LIMIT ?)",
 				req.BeforeDate,

@@ -1,6 +1,12 @@
 package tableinsight
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/ordercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/servicefailurecol"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -38,12 +44,12 @@ func timeline(column *buncolgen.Column) dbhelper.InsightColumn {
 }
 
 func NewCustomerSource(p Params) Result {
-	cols := buncolgen.CustomerColumns
+	cols := customercol.CustomerColumns
 	return New(&Config{
 		Resource: permission.ResourceCustomer,
 		DB:       p.DB,
 		IDColumn: cols.ID,
-		Base:     Filtered((*customer.Customer)(nil), buncolgen.CustomerTable.Alias),
+		Base:     Filtered((*customer.Customer)(nil), customercol.CustomerTable.Alias),
 		Columns: dbhelper.InsightColumns{
 			fieldStatus:  facet(&cols.Status),
 			fieldStateID: facet(&cols.StateID),
@@ -52,12 +58,12 @@ func NewCustomerSource(p Params) Result {
 }
 
 func NewInvoiceSource(p Params) Result {
-	cols := buncolgen.InvoiceColumns
+	cols := invoicecol.InvoiceColumns
 	return New(&Config{
 		Resource: permission.ResourceInvoice,
 		DB:       p.DB,
 		IDColumn: cols.ID,
-		Base:     Filtered((*invoice.Invoice)(nil), buncolgen.InvoiceTable.Alias),
+		Base:     Filtered((*invoice.Invoice)(nil), invoicecol.InvoiceTable.Alias),
 		Columns: dbhelper.InsightColumns{
 			fieldStatus:         facet(&cols.Status),
 			"settlementStatus":  facet(&cols.SettlementStatus),
@@ -77,12 +83,12 @@ func NewInvoiceSource(p Params) Result {
 }
 
 func NewLocationSource(p Params) Result {
-	cols := buncolgen.LocationColumns
+	cols := locationcol.LocationColumns
 	return New(&Config{
 		Resource: permission.ResourceLocation,
 		DB:       p.DB,
 		IDColumn: cols.ID,
-		Base:     Filtered((*location.Location)(nil), buncolgen.LocationTable.Alias),
+		Base:     Filtered((*location.Location)(nil), locationcol.LocationTable.Alias),
 		Columns: dbhelper.InsightColumns{
 			fieldStatus:          facet(&cols.Status),
 			"locationCategoryId": facet(&cols.LocationCategoryID),
@@ -92,12 +98,12 @@ func NewLocationSource(p Params) Result {
 }
 
 func NewCarrierSource(p Params) Result {
-	cols := buncolgen.CarrierColumns
+	cols := carriercol.CarrierColumns
 	return New(&Config{
 		Resource: permission.ResourceCarrier,
 		DB:       p.DB,
 		IDColumn: cols.ID,
-		Base:     Filtered((*carrier.Carrier)(nil), buncolgen.CarrierTable.Alias),
+		Base:     Filtered((*carrier.Carrier)(nil), carriercol.CarrierTable.Alias),
 		Columns: dbhelper.InsightColumns{
 			fieldStatus:        facet(&cols.Status),
 			"carrierType":      facet(&cols.CarrierType),
@@ -108,12 +114,12 @@ func NewCarrierSource(p Params) Result {
 }
 
 func NewOrderSource(p Params) Result {
-	cols := buncolgen.OrderColumns
+	cols := ordercol.OrderColumns
 	return New(&Config{
 		Resource: permission.ResourceOrder,
 		DB:       p.DB,
 		IDColumn: cols.ID,
-		Base:     Filtered((*order.Order)(nil), buncolgen.OrderTable.Alias),
+		Base:     Filtered((*order.Order)(nil), ordercol.OrderTable.Alias),
 		Columns: dbhelper.InsightColumns{
 			fieldStatus:    facet(&cols.Status),
 			"customerId":   facet(&cols.CustomerID),
@@ -128,14 +134,14 @@ func NewOrderSource(p Params) Result {
 }
 
 func NewServiceFailureSource(p Params) Result {
-	cols := buncolgen.ServiceFailureColumns
+	cols := servicefailurecol.ServiceFailureColumns
 	return New(&Config{
 		Resource: permission.ResourceServiceFailure,
 		DB:       p.DB,
 		IDColumn: cols.ID,
 		Base: Filtered(
 			(*servicefailure.ServiceFailure)(nil),
-			buncolgen.ServiceFailureTable.Alias,
+			servicefailurecol.ServiceFailureTable.Alias,
 		),
 		Columns: dbhelper.InsightColumns{
 			fieldStatus:    facet(&cols.Status),

@@ -2,11 +2,14 @@
 
 package aifeedback
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/aifeedbackcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Feedback].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.FeedbackFieldMap] instead of parsing struct tags via reflection.
+// the generated [aifeedbackcol.FeedbackFieldMap] instead of parsing struct tags via reflection.
 func (e *Feedback) GetStaticFieldMap() map[string]string {
-	return buncolgen.FeedbackFieldMap
+	return aifeedbackcol.FeedbackFieldMap
 }

@@ -1,6 +1,7 @@
 package capturerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/capturecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
@@ -59,7 +60,7 @@ func (r *pairingRepository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.CapturePairingColumns.Version.Eq(), ov).
+			Where(capturecol.CapturePairingColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -90,7 +91,7 @@ func (r *pairingRepository) GetByDeviceCodeHash(
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Where(buncolgen.CapturePairingColumns.DeviceCodeHash.Eq(), hash).
+			Where(capturecol.CapturePairingColumns.DeviceCodeHash.Eq(), hash).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, "Pairing")
 		}
@@ -106,7 +107,7 @@ func (r *pairingRepository) GetOpenByUserCode(
 	ctx = dbscope.WithSystem(ctx, "find an unclaimed pairing by the code a person typed; it has no organization yet")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CapturePairing, error) {
 		entity := new(capture.CapturePairing)
-		cols := buncolgen.CapturePairingColumns
+		cols := capturecol.CapturePairingColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -124,7 +125,7 @@ func (r *pairingRepository) GetOpenByUserCode(
 func (r *pairingRepository) ExpireStale(ctx context.Context, now int64) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "expire abandoned pairings across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.CapturePairingColumns
+		cols := capturecol.CapturePairingColumns
 
 		result, err := r.db.DBForContext(ctx).
 			NewUpdate().

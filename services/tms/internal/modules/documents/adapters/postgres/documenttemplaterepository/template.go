@@ -1,6 +1,7 @@
 package documenttemplaterepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/documenttemplatecol"
 	"context"
 	"fmt"
 
@@ -41,7 +42,7 @@ func NewTemplateRepository(p TemplateParams) documenttemplateports.DocumentTempl
 // orderVersions puts the newest revision first, which is the order the version
 // rail reads in and the order a rollback picker needs.
 func orderVersions(sq *bun.SelectQuery) *bun.SelectQuery {
-	return sq.Order(buncolgen.DocumentTemplateVersionColumns.VersionNumber.OrderDesc())
+	return sq.Order(documenttemplatecol.DocumentTemplateVersionColumns.VersionNumber.OrderDesc())
 }
 
 func (r *templateRepository) filterQuery(
@@ -50,13 +51,13 @@ func (r *templateRepository) filterQuery(
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.DocumentTemplateTable.Alias,
+		documenttemplatecol.DocumentTemplateTable.Alias,
 		req.Filter,
 		(*documenttemplate.DocumentTemplate)(nil),
 	)
 
 	if req.Kind != "" {
-		q = q.Where(buncolgen.DocumentTemplateColumns.Kind.Eq(), req.Kind)
+		q = q.Where(documenttemplatecol.DocumentTemplateColumns.Kind.Eq(), req.Kind)
 	}
 
 	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
@@ -73,7 +74,7 @@ func (r *templateRepository) List(
 		total, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Relation(buncolgen.DocumentTemplateRelations.ActiveVersion).
+			Relation(documenttemplatecol.DocumentTemplateRelations.ActiveVersion).
 			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return r.filterQuery(sq, req)
 			}).
@@ -106,7 +107,7 @@ func (r *templateRepository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.DocumentTemplateTable.Alias,
+						documenttemplatecol.DocumentTemplateTable.Alias,
 						req.Filter,
 						(*documenttemplate.DocumentTemplate)(nil),
 					)
@@ -128,7 +129,7 @@ func (r *templateRepository) ListConnection(
 				Query: func(entities *[]*documenttemplate.DocumentTemplate) *bun.SelectQuery {
 					q := dba.NewSelect().Model(entities)
 					if len(req.DocumentTemplateColumns) == 0 {
-						q = q.ColumnExpr(buncolgen.DocumentTemplateTable.All())
+						q = q.ColumnExpr(documenttemplatecol.DocumentTemplateTable.All())
 					} else {
 						q = q.Column(req.DocumentTemplateColumns...)
 					}
@@ -137,7 +138,7 @@ func (r *templateRepository) ListConnection(
 				Apply: func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
 					return querybuilder.ApplyCursorFilters(
 						q,
-						buncolgen.DocumentTemplateTable.Alias,
+						documenttemplatecol.DocumentTemplateTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*documenttemplate.DocumentTemplate)(nil),
@@ -164,15 +165,15 @@ func (r *templateRepository) GetByID(
 			zap.String("id", req.DocumentTemplateID.String()),
 		)
 
-		cols := buncolgen.DocumentTemplateColumns
-		rel := buncolgen.DocumentTemplateRelations
+		cols := documenttemplatecol.DocumentTemplateColumns
+		rel := documenttemplatecol.DocumentTemplateRelations
 		entity := new(documenttemplate.DocumentTemplate)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DocumentTemplateScopeTenant(sq, req.TenantInfo).
+				return documenttemplatecol.DocumentTemplateScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.DocumentTemplateID)
 			})
 
@@ -188,7 +189,7 @@ func (r *templateRepository) GetByID(
 			q = q.Relation(rel.Assignments).
 				Relation(buncolgen.Rel(
 					rel.Assignments,
-					buncolgen.DocumentTemplateAssignmentRelations.Customer,
+					documenttemplatecol.DocumentTemplateAssignmentRelations.Customer,
 				))
 		}
 
@@ -211,8 +212,8 @@ func (r *templateRepository) GetByIDs(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DocumentTemplateScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.DocumentTemplateColumns.ID.In(), bun.List(req.DocumentTemplateIDs))
+				return documenttemplatecol.DocumentTemplateScopeTenant(sq, req.TenantInfo).
+					Where(documenttemplatecol.DocumentTemplateColumns.ID.In(), bun.List(req.DocumentTemplateIDs))
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -254,7 +255,7 @@ func (r *templateRepository) Update(
 			zap.String("id", entity.ID.String()),
 		)
 
-		cols := buncolgen.DocumentTemplateColumns
+		cols := documenttemplatecol.DocumentTemplateColumns
 		ov := entity.Version
 		entity.Version++
 
@@ -295,7 +296,7 @@ func (r *templateRepository) Delete(
 			zap.String("id", req.DocumentTemplateID.String()),
 		)
 
-		cols := buncolgen.DocumentTemplateColumns
+		cols := documenttemplatecol.DocumentTemplateColumns
 
 		// The template points at its active version and the version points back, so
 		// the pointer has to be dropped before the cascade can remove the versions.
@@ -304,7 +305,7 @@ func (r *templateRepository) Delete(
 				NewUpdate().
 				Model((*documenttemplate.DocumentTemplate)(nil)).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return buncolgen.DocumentTemplateScopeTenantUpdate(uq, req.TenantInfo).
+					return documenttemplatecol.DocumentTemplateScopeTenantUpdate(uq, req.TenantInfo).
 						Where(cols.ID.Eq(), req.DocumentTemplateID)
 				}).
 				Set(cols.ActiveVersionID.SetNull()).
@@ -316,7 +317,7 @@ func (r *templateRepository) Delete(
 				NewDelete().
 				Model((*documenttemplate.DocumentTemplate)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return buncolgen.DocumentTemplateScopeTenantDelete(dq, req.TenantInfo).
+					return documenttemplatecol.DocumentTemplateScopeTenantDelete(dq, req.TenantInfo).
 						Where(cols.ID.Eq(), req.DocumentTemplateID)
 				}).
 				Exec(c)
@@ -342,7 +343,7 @@ func (r *templateRepository) SelectOptions(
 	req *documenttemplateports.DocumentTemplateSelectOptionsRequest,
 ) (*pagination.ListResult[*documenttemplate.DocumentTemplate], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*documenttemplate.DocumentTemplate], error) {
-		cols := buncolgen.DocumentTemplateColumns
+		cols := documenttemplatecol.DocumentTemplateColumns
 
 		return dbhelper.SelectOptions[*documenttemplate.DocumentTemplate](
 			ctx,

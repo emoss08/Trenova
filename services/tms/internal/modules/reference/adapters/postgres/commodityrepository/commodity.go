@@ -1,6 +1,7 @@
 package commodityrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/commoditycol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
@@ -41,15 +42,15 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *commodityports.ListCommodityRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.CommodityColumns
+	cols := commoditycol.CommodityColumns
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.CommodityTable.Alias,
+		commoditycol.CommodityTable.Alias,
 		req.Filter,
 		(*commodity.Commodity)(nil),
 	)
 
-	return q.Apply(buncolgen.CommodityApplyTenant(req.Filter.TenantInfo)).
+	return q.Apply(commoditycol.CommodityApplyTenant(req.Filter.TenantInfo)).
 		Limit(req.Filter.Pagination.SafeLimit()).
 		Offset(req.Filter.Pagination.SafeOffset()).
 		Order(cols.CreatedAt.OrderDesc())
@@ -95,12 +96,12 @@ func (r *repository) GetByID(
 		)
 
 		entity := new(commodity.Commodity)
-		cols := buncolgen.CommodityColumns
+		cols := commoditycol.CommodityColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CommodityScopeTenant(sq, req.TenantInfo).
+				return commoditycol.CommodityScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
@@ -119,7 +120,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.CommodityTable.Alias,
+		commoditycol.CommodityTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*commodity.Commodity)(nil),
@@ -132,7 +133,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.CommodityTable.Alias,
+		commoditycol.CommodityTable.Alias,
 		req.Filter,
 		(*commodity.Commodity)(nil),
 	)
@@ -140,7 +141,7 @@ func (r *repository) applyTotalCountFilters(
 
 func applyCommodityColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.CommodityTable.All())
+		return q.ColumnExpr(commoditycol.CommodityTable.All())
 	}
 
 	return q.Column(columns...)
@@ -231,7 +232,7 @@ func (r *repository) Update(
 
 		ov := entity.Version
 		entity.Version++
-		cols := buncolgen.CommodityColumns
+		cols := commoditycol.CommodityColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -265,12 +266,12 @@ func (r *repository) BulkUpdateStatus(
 		)
 
 		entities := make([]*commodity.Commodity, 0, len(req.CommodityIDs))
-		cols := buncolgen.CommodityColumns
+		cols := commoditycol.CommodityColumns
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(&entities).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.CommodityScopeTenantUpdate(uq, req.TenantInfo).
+				return commoditycol.CommodityScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.In(), bun.List(req.CommodityIDs))
 			}).
 			Set(cols.Status.Set(), req.Status).
@@ -300,13 +301,13 @@ func (r *repository) GetByIDs(
 		)
 
 		entities := make([]*commodity.Commodity, 0, len(req.CommodityIDs))
-		cols := buncolgen.CommodityColumns
+		cols := commoditycol.CommodityColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Relation(buncolgen.CommodityRelations.HazardousMaterial).
+			Relation(commoditycol.CommodityRelations.HazardousMaterial).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CommodityScopeTenant(sq, req.TenantInfo).
+				return commoditycol.CommodityScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.In(), bun.List(req.CommodityIDs))
 			}).
 			Scan(ctx)
@@ -324,7 +325,7 @@ func (r *repository) SelectOptions(
 	req *commodityports.CommoditySelectOptionsRequest,
 ) (*pagination.ListResult[*commodity.Commodity], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*commodity.Commodity], error) {
-		cols := buncolgen.CommodityColumns
+		cols := commoditycol.CommodityColumns
 
 		return dbhelper.SelectOptions[*commodity.Commodity](
 			ctx,

@@ -1,6 +1,7 @@
 package customfieldrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/customfieldcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
@@ -91,7 +92,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.CustomFieldDefinitionTable.Alias,
+		customfieldcol.CustomFieldDefinitionTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*customfield.CustomFieldDefinition)(nil),
@@ -104,7 +105,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.CustomFieldDefinitionTable.Alias,
+		customfieldcol.CustomFieldDefinitionTable.Alias,
 		req.Filter,
 		(*customfield.CustomFieldDefinition)(nil),
 	)
@@ -115,7 +116,7 @@ func applyCustomFieldDefinitionColumns(
 	columns []string,
 ) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.CustomFieldDefinitionTable.All())
+		return q.ColumnExpr(customfieldcol.CustomFieldDefinitionTable.All())
 	}
 
 	return q.Column(columns...)

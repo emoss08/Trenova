@@ -1,6 +1,7 @@
 package shipmentmovejurisdictionmilerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 	"fmt"
 
@@ -67,12 +68,12 @@ func (r *repository) ReplaceForMove(ctx context.Context, move *shipment.Shipment
 			rows = append(rows, row)
 		}
 
-		cols := buncolgen.ShipmentMoveJurisdictionMileColumns
+		cols := shipmentcol.ShipmentMoveJurisdictionMileColumns
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			if _, err := tx.NewDelete().
 				Model((*shipment.ShipmentMoveJurisdictionMile)(nil)).
 				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return buncolgen.ShipmentMoveJurisdictionMileScopeTenantDelete(dq, tenantInfo).
+					return shipmentcol.ShipmentMoveJurisdictionMileScopeTenantDelete(dq, tenantInfo).
 						Where(cols.ShipmentMoveID.Eq(), move.ID)
 				}).
 				Exec(c); err != nil {
@@ -107,12 +108,12 @@ func (r *repository) ListByMoveIDs(
 		if len(req.MoveIDs) == 0 {
 			return entities, nil
 		}
-		cols := buncolgen.ShipmentMoveJurisdictionMileColumns
+		cols := shipmentcol.ShipmentMoveJurisdictionMileColumns
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ShipmentMoveJurisdictionMileScopeTenant(sq, req.TenantInfo).
+				return shipmentcol.ShipmentMoveJurisdictionMileScopeTenant(sq, req.TenantInfo).
 					Where(cols.ShipmentMoveID.In(), bun.List(req.MoveIDs))
 			}).
 			Order(cols.ShipmentMoveID.OrderAsc()).
@@ -182,9 +183,9 @@ func (r *repository) completedMovesWithoutBreakdown(
 	dba bun.IDB,
 	tenantInfo pagination.TenantInfo,
 ) *bun.SelectQuery {
-	sm := buncolgen.ShipmentMoveColumns
-	st := buncolgen.StopColumns
-	jm := buncolgen.ShipmentMoveJurisdictionMileColumns
+	sm := shipmentcol.ShipmentMoveColumns
+	st := shipmentcol.StopColumns
+	jm := shipmentcol.ShipmentMoveJurisdictionMileColumns
 
 	breakdownExists := dba.NewSelect().
 		Model((*shipment.ShipmentMoveJurisdictionMile)(nil)).
@@ -207,12 +208,12 @@ func (r *repository) completedMovesWithoutBreakdown(
 			st.ActualArrival,
 			sm.UpdatedAt,
 		)).
-		Join("LEFT JOIN "+buncolgen.StopTable.As(buncolgen.StopTable.Alias)+
+		Join("LEFT JOIN "+shipmentcol.StopTable.As(shipmentcol.StopTable.Alias)+
 			" ON "+st.ShipmentMoveID.EqColumn(sm.ID)+
 			" AND "+st.OrganizationID.EqColumn(sm.OrganizationID)+
 			" AND "+st.BusinessUnitID.EqColumn(sm.BusinessUnitID)).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ShipmentMoveScopeTenant(sq, tenantInfo).
+			return shipmentcol.ShipmentMoveScopeTenant(sq, tenantInfo).
 				Where(sm.Status.Eq(), shipment.MoveStatusCompleted).
 				Where(sm.Distance.Gt(), 0).
 				Where("NOT EXISTS (?)", breakdownExists)

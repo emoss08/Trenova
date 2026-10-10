@@ -1,6 +1,7 @@
 package driversettlementrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
 	"context"
 	"fmt"
 
@@ -131,7 +132,7 @@ func (r *settlementRepository) ListConnection(
 				Query: func(entities *[]*driversettlement.Settlement) *bun.SelectQuery {
 					return dba.NewSelect().
 						Model(entities).
-						ColumnExpr(buncolgen.SettlementTable.All()).
+						ColumnExpr(driversettlementcol.SettlementTable.All()).
 						Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q })
 				},
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {

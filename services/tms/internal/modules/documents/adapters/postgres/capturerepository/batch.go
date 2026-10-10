@@ -2,6 +2,9 @@
 package capturerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/capturecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
@@ -86,9 +89,9 @@ func (r *batchRepository) Update(
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
-			ExcludeColumn(buncolgen.CaptureBatchColumns.ReceivedPageCount.String()).
+			ExcludeColumn(capturecol.CaptureBatchColumns.ReceivedPageCount.String()).
 			WherePK().
-			Where(buncolgen.CaptureBatchColumns.Version.Eq(), ov).
+			Where(capturecol.CaptureBatchColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -112,21 +115,21 @@ func (r *batchRepository) GetByID(
 ) (*capture.CaptureBatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureBatch, error) {
 		entity := new(capture.CaptureBatch)
-		rel := buncolgen.CaptureBatchRelations
+		rel := capturecol.CaptureBatchRelations
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Where(buncolgen.CaptureBatchColumns.ID.Eq(), req.ID).
-			Apply(buncolgen.CaptureBatchApplyTenant(req.TenantInfo))
+			Where(capturecol.CaptureBatchColumns.ID.Eq(), req.ID).
+			Apply(capturecol.CaptureBatchApplyTenant(req.TenantInfo))
 		if req.IncludePages {
 			query = query.Relation(rel.Pages, func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order(buncolgen.CapturePageColumns.Sequence.OrderAsc())
+				return sq.Order(capturecol.CapturePageColumns.Sequence.OrderAsc())
 			})
 		}
 		if req.IncludeItems {
 			query = query.Relation(rel.Items, func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order(buncolgen.CaptureItemColumns.Position.OrderAsc())
+				return sq.Order(capturecol.CaptureItemColumns.Position.OrderAsc())
 			})
 		}
 
@@ -148,12 +151,12 @@ func (r *batchRepository) GetByClientKey(
 ) (*capture.CaptureBatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureBatch, error) {
 		entity := new(capture.CaptureBatch)
-		cols := buncolgen.CaptureBatchColumns
+		cols := capturecol.CaptureBatchColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Apply(buncolgen.CaptureBatchApplyTenant(req.TenantInfo)).
+			Apply(capturecol.CaptureBatchApplyTenant(req.TenantInfo)).
 			Where(cols.DeviceID.Eq(), req.DeviceID).
 			Where(cols.ClientKey.Eq(), req.ClientKey).
 			Scan(ctx); err != nil {
@@ -172,7 +175,7 @@ func (r *batchRepository) ListCursor(
 ) (*pagination.CursorListResult[*capture.CaptureBatch], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.CursorListResult[*capture.CaptureBatch], error) {
 		dba := r.db.DBForContext(ctx)
-		alias := buncolgen.CaptureBatchTable.Alias
+		alias := capturecol.CaptureBatchTable.Alias
 
 		var totalCount *int
 		if req.Cursor.IncludeTotalCount {
@@ -197,7 +200,7 @@ func (r *batchRepository) ListCursor(
 			Query: func(entities *[]*capture.CaptureBatch) *bun.SelectQuery {
 				return dba.NewSelect().
 					Model(entities).
-					Relation(buncolgen.CaptureBatchRelations.CaptureDevice)
+					Relation(capturecol.CaptureBatchRelations.CaptureDevice)
 			},
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 				sq, err := querybuilder.ApplyCursorFilters(
@@ -219,7 +222,7 @@ func (r *batchRepository) narrowBatches(
 	q *bun.SelectQuery,
 	req *captureports.ListCaptureBatchesRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.CaptureBatchColumns
+	cols := capturecol.CaptureBatchColumns
 	if len(req.Statuses) > 0 {
 		q = q.Where(cols.Status.In(), bun.List(req.Statuses))
 	}
@@ -254,9 +257,9 @@ func (r *batchRepository) forRecord(
 	resourceType string,
 	resourceID pulid.ID,
 ) *bun.SelectQuery {
-	batch := buncolgen.CaptureBatchColumns
-	item := buncolgen.CaptureItemColumns
-	items := buncolgen.CaptureItemScopeTenant(r.db.DBForContext(ctx).NewSelect().
+	batch := capturecol.CaptureBatchColumns
+	item := capturecol.CaptureItemColumns
+	items := capturecol.CaptureItemScopeTenant(r.db.DBForContext(ctx).NewSelect().
 		Model((*capture.CaptureItem)(nil)).
 		ColumnExpr("1").
 		Where(item.BatchID.EqColumn(batch.ID)).
@@ -287,15 +290,15 @@ func (r *batchRepository) searchBatches(
 	term string,
 ) *bun.SelectQuery {
 	pattern := "%" + stringutils.EscapeLikePattern(term) + "%"
-	batch := buncolgen.CaptureBatchColumns
-	device := buncolgen.CaptureDeviceColumns
-	user := buncolgen.UserColumns
-	page := buncolgen.CapturePageColumns
-	item := buncolgen.CaptureItemColumns
-	shipment := buncolgen.ShipmentColumns
+	batch := capturecol.CaptureBatchColumns
+	device := capturecol.CaptureDeviceColumns
+	user := tenantcol.UserColumns
+	page := capturecol.CapturePageColumns
+	item := capturecol.CaptureItemColumns
+	shipment := shipmentcol.ShipmentColumns
 	db := r.db.DBForContext(ctx)
 
-	devices := buncolgen.CaptureDeviceScopeTenant(db.NewSelect().
+	devices := capturecol.CaptureDeviceScopeTenant(db.NewSelect().
 		Model((*capture.CaptureDevice)(nil)).
 		ColumnExpr("1").
 		Where(device.ID.EqColumn(batch.DeviceID)).
@@ -310,24 +313,24 @@ func (r *batchRepository) searchBatches(
 		Where(user.ID.EqColumn(batch.UserID)).
 		Where(user.Name.ILike(), pattern)
 
-	codes := buncolgen.CapturePageScopeTenant(db.NewSelect().
+	codes := capturecol.CapturePageScopeTenant(db.NewSelect().
 		Model((*capture.CapturePage)(nil)).
 		ColumnExpr("1").
 		Where(page.BatchID.EqColumn(batch.ID)).
 		Where(page.Markers.Expr(pageCodeMatch), pattern), ti)
 
-	routed := buncolgen.CaptureItemScopeTenant(db.NewSelect().
+	routed := capturecol.CaptureItemScopeTenant(db.NewSelect().
 		Model((*capture.CaptureItem)(nil)).
 		Column(item.FiledID.String()).
 		Where(item.BatchID.EqColumn(batch.ID)).
 		Where(item.FiledType.Eq(), permission.ResourceShipment), ti).
-		UnionAll(buncolgen.CaptureItemScopeTenant(db.NewSelect().
+		UnionAll(capturecol.CaptureItemScopeTenant(db.NewSelect().
 			Model((*capture.CaptureItem)(nil)).
 			Column(item.SuggestedID.String()).
 			Where(item.BatchID.EqColumn(batch.ID)).
 			Where(item.SuggestedType.Eq(), permission.ResourceShipment), ti))
 
-	shipments := buncolgen.ShipmentScopeTenant(db.NewSelect().
+	shipments := shipmentcol.ShipmentScopeTenant(db.NewSelect().
 		Model((*shipmentdomain.Shipment)(nil)).
 		ColumnExpr("1").
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -359,7 +362,7 @@ func (r *batchRepository) ListStale(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureBatch, error) {
 		limit := boundedLimit(req.Limit)
 		entities := make([]*capture.CaptureBatch, 0)
-		cols := buncolgen.CaptureBatchColumns
+		cols := capturecol.CaptureBatchColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -384,7 +387,7 @@ func (r *batchRepository) ListRetentionDue(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureBatch, error) {
 		limit := boundedLimit(req.Limit)
 		entities := make([]*capture.CaptureBatch, 0)
-		cols := buncolgen.CaptureBatchColumns
+		cols := capturecol.CaptureBatchColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -409,7 +412,7 @@ func (r *batchRepository) ListRetentionReminders(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureBatch, error) {
 		limit := boundedLimit(req.Limit)
 		entities := make([]*capture.CaptureBatch, 0)
-		cols := buncolgen.CaptureBatchColumns
+		cols := capturecol.CaptureBatchColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -433,13 +436,13 @@ func (r *batchRepository) ClaimRetentionReminder(
 	req captureports.ClaimRetentionReminderRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := buncolgen.CaptureBatchColumns
+		cols := capturecol.CaptureBatchColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*capture.CaptureBatch)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.CaptureBatchScopeTenantUpdate(uq, req.TenantInfo).
+				return capturecol.CaptureBatchScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID).
 					Where(cols.RetentionRemindedAt.IsNull())
 			}).
@@ -463,13 +466,13 @@ func (r *batchRepository) IncrementReceived(
 	req captureports.IncrementCaptureBatchPagesRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.CaptureBatchColumns
+		cols := capturecol.CaptureBatchColumns
 
 		_, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*capture.CaptureBatch)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.CaptureBatchScopeTenantUpdate(uq, req.TenantInfo).
+				return capturecol.CaptureBatchScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Set(cols.ReceivedPageCount.Inc(1)).
@@ -488,8 +491,8 @@ func (r *batchRepository) Delete(
 			NewDelete().
 			Model((*capture.CaptureBatch)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.CaptureBatchScopeTenantDelete(dq, req.TenantInfo).
-					Where(buncolgen.CaptureBatchColumns.ID.Eq(), req.ID)
+				return capturecol.CaptureBatchScopeTenantDelete(dq, req.TenantInfo).
+					Where(capturecol.CaptureBatchColumns.ID.Eq(), req.ID)
 			}).
 			Exec(ctx)
 

@@ -1,6 +1,10 @@
 package formulatemplaterepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/ratematrixcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 	"fmt"
 
@@ -60,7 +64,7 @@ func (r *repository) filterQuery(
 			))
 		}
 
-		q = q.Where(buncolgen.FormulaTemplateColumns.Type.Eq(), t)
+		q = q.Where(formulatemplatecol.FormulaTemplateColumns.Type.Eq(), t)
 	}
 
 	if req.Status != "" {
@@ -74,10 +78,10 @@ func (r *repository) filterQuery(
 			))
 		}
 
-		q = q.Where(buncolgen.FormulaTemplateColumns.Status.Eq(), s)
+		q = q.Where(formulatemplatecol.FormulaTemplateColumns.Status.Eq(), s)
 	}
 
-	q = q.Order(buncolgen.FormulaTemplateColumns.CreatedAt.OrderDesc())
+	q = q.Order(formulatemplatecol.FormulaTemplateColumns.CreatedAt.OrderDesc())
 
 	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }
@@ -238,7 +242,7 @@ func (r *repository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.FormulaTemplateColumns.Version.Eq(), ov).
+			Where(formulatemplatecol.FormulaTemplateColumns.Version.Eq(), ov).
 			OmitZero()
 
 		results, err := applyClearableColumns(query, entity).
@@ -264,7 +268,7 @@ func applyClearableColumns(
 	q *bun.UpdateQuery,
 	entity *formulatemplate.FormulaTemplate,
 ) *bun.UpdateQuery {
-	cols := buncolgen.FormulaTemplateColumns
+	cols := formulatemplatecol.FormulaTemplateColumns
 	return q.
 		Value(cols.Description.String(), "?", entity.Description).
 		Value(cols.ReviewComment.String(), "?", entity.ReviewComment).
@@ -293,8 +297,8 @@ func (r *repository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FormulaTemplateScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.FormulaTemplateColumns.ID.Eq(), req.TemplateID)
+				return formulatemplatecol.FormulaTemplateScopeTenant(sq, req.TenantInfo).
+					Where(formulatemplatecol.FormulaTemplateColumns.ID.Eq(), req.TemplateID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -321,8 +325,8 @@ func (r *repository) GetByIDs(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FormulaTemplateScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.FormulaTemplateColumns.ID.In(), bun.List(req.TemplateIDs))
+				return formulatemplatecol.FormulaTemplateScopeTenant(sq, req.TenantInfo).
+					Where(formulatemplatecol.FormulaTemplateColumns.ID.In(), bun.List(req.TemplateIDs))
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -353,8 +357,8 @@ func (r *repository) FindByNames(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.FormulaTemplateScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.FormulaTemplateColumns.Name.In(), bun.List(req.Names))
+				return formulatemplatecol.FormulaTemplateScopeTenant(sq, req.TenantInfo).
+					Where(formulatemplatecol.FormulaTemplateColumns.Name.In(), bun.List(req.Names))
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -381,8 +385,8 @@ func (r *repository) BulkUpdateStatus(
 			NewUpdate().
 			Model(&entities).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.FormulaTemplateScopeTenantUpdate(uq, req.TenantInfo).
-					Where(buncolgen.FormulaTemplateColumns.ID.In(), bun.List(req.TemplateIDs))
+				return formulatemplatecol.FormulaTemplateScopeTenantUpdate(uq, req.TenantInfo).
+					Where(formulatemplatecol.FormulaTemplateColumns.ID.In(), bun.List(req.TemplateIDs))
 			}).
 			Set("status = ?", req.Status).
 			Returning("*").
@@ -473,14 +477,14 @@ func (r *repository) namesLike(
 			return taken, nil
 		}
 
-		ft := buncolgen.FormulaTemplateColumns
+		ft := formulatemplatecol.FormulaTemplateColumns
 		var names []string
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*formulatemplate.FormulaTemplate)(nil)).
 			Column(ft.Name.String()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.FormulaTemplateScopeTenant(sq, tenantInfo)
+				sq = formulatemplatecol.FormulaTemplateScopeTenant(sq, tenantInfo)
 				return sq.WhereGroup(" AND ", func(orGroup *bun.SelectQuery) *bun.SelectQuery {
 					for _, source := range sources {
 						orGroup = orGroup.WhereOr(ft.Name.Like(), source.Name+" (Copy%")
@@ -532,24 +536,24 @@ func (r *repository) CountUsages(
 		}
 
 		shipmentUsage := r.usageCount(ctx, req, "shipment",
-			buncolgen.ShipmentTable,
-			buncolgen.ShipmentColumns.FormulaTemplateID,
-			buncolgen.ShipmentScopeTenant,
+			shipmentcol.ShipmentTable,
+			shipmentcol.ShipmentColumns.FormulaTemplateID,
+			shipmentcol.ShipmentScopeTenant,
 		)
 		matrixUsage := r.usageCount(ctx, req, "rate_matrix",
-			buncolgen.RateMatrixTable,
-			buncolgen.RateMatrixColumns.FormulaTemplateID,
-			buncolgen.RateMatrixScopeTenant,
+			ratematrixcol.RateMatrixTable,
+			ratematrixcol.RateMatrixColumns.FormulaTemplateID,
+			ratematrixcol.RateMatrixScopeTenant,
 		)
 		ruleUsage := r.usageCount(ctx, req, "rate_agreement_rule",
-			buncolgen.RateAgreementRuleTable,
-			buncolgen.RateAgreementRuleColumns.FormulaTemplateID,
-			buncolgen.RateAgreementRuleScopeTenant,
+			rateagreementcol.RateAgreementRuleTable,
+			rateagreementcol.RateAgreementRuleColumns.FormulaTemplateID,
+			rateagreementcol.RateAgreementRuleScopeTenant,
 		)
 		agreementAccessorialUsage := r.usageCount(ctx, req, "rate_agreement_accessorial",
-			buncolgen.RateAgreementAccessorialTable,
-			buncolgen.RateAgreementAccessorialColumns.FormulaTemplateID,
-			buncolgen.RateAgreementAccessorialScopeTenant,
+			rateagreementcol.RateAgreementAccessorialTable,
+			rateagreementcol.RateAgreementAccessorialColumns.FormulaTemplateID,
+			rateagreementcol.RateAgreementAccessorialScopeTenant,
 		)
 
 		var results []usageResult
@@ -588,7 +592,7 @@ func (r *repository) SelectOptions(
 	req *formulatemplateports.FormulaTemplateSelectOptionsRequest,
 ) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error) {
-		cols := buncolgen.FormulaTemplateColumns
+		cols := formulatemplatecol.FormulaTemplateColumns
 
 		return dbhelper.SelectOptions[*formulatemplate.FormulaTemplate](
 			ctx,

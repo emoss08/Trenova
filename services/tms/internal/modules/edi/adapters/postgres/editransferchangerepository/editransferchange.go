@@ -1,6 +1,7 @@
 package editransferchangerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -41,7 +42,7 @@ func (r *repository) ListTransferChanges(
 ) (*pagination.ListResult[*edi.TransferChange], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.TransferChange], error) {
 		entities := make([]*edi.TransferChange, 0, req.Filter.Pagination.SafeLimit())
-		cols := buncolgen.TransferChangeColumns
+		cols := edicol.TransferChangeColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
@@ -74,7 +75,7 @@ func (r *repository) GetTransferChangeByID(
 ) (*edi.TransferChange, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.TransferChange, error) {
 		entity := new(edi.TransferChange)
-		cols := buncolgen.TransferChangeColumns
+		cols := edicol.TransferChangeColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -114,7 +115,7 @@ func (r *repository) CreateTransferChangeIdempotent(
 	entity *edi.TransferChange,
 ) (*ediports.CreateEDITransferChangeIdempotentResult, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ediports.CreateEDITransferChangeIdempotentResult, error) {
-		cols := buncolgen.TransferChangeColumns
+		cols := edicol.TransferChangeColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewInsert().
@@ -164,7 +165,7 @@ func (r *repository) UpdateTransferChange(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.TransferChange, error) {
 		ov := entity.Version
 		entity.Version++
-		cols := buncolgen.TransferChangeColumns
+		cols := edicol.TransferChangeColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewUpdate().
@@ -189,11 +190,11 @@ func (r *repository) UpdateTransferChange(
 }
 
 func ScopeTenant(query *bun.SelectQuery, tenantInfo pagination.TenantInfo) *bun.SelectQuery {
-	linkCols := buncolgen.ShipmentLinkColumns
+	linkCols := edicol.ShipmentLinkColumns
 
 	return query.
 		Join(transferChangeShipmentLinkJoin()).
-		Where(buncolgen.TransferChangeColumns.BusinessUnitID.Eq(), tenantInfo.BuID).
+		Where(edicol.TransferChangeColumns.BusinessUnitID.Eq(), tenantInfo.BuID).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.WhereOr(linkCols.SourceOrganizationID.Eq(), tenantInfo.OrgID).
 				WhereOr(linkCols.TargetOrganizationID.Eq(), tenantInfo.OrgID)
@@ -201,6 +202,6 @@ func ScopeTenant(query *bun.SelectQuery, tenantInfo pagination.TenantInfo) *bun.
 }
 
 func transferChangeShipmentLinkJoin() string {
-	return "JOIN " + buncolgen.ShipmentLinkTable.As(buncolgen.ShipmentLinkTable.Alias) +
-		" ON " + buncolgen.TransferChangeColumns.ShipmentLinkID.EqColumn(buncolgen.ShipmentLinkColumns.ID)
+	return "JOIN " + edicol.ShipmentLinkTable.As(edicol.ShipmentLinkTable.Alias) +
+		" ON " + edicol.TransferChangeColumns.ShipmentLinkID.EqColumn(edicol.ShipmentLinkColumns.ID)
 }

@@ -1,6 +1,7 @@
 package ssoidentitylinkrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -39,7 +40,7 @@ func (r *repository) GetBySubject(
 	req tenantports.GetSSOIdentityLinkBySubjectRequest,
 ) (*tenant.SSOIdentityLink, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.SSOIdentityLink, error) {
-		cols := buncolgen.SSOIdentityLinkColumns
+		cols := tenantcol.SSOIdentityLinkColumns
 		entity := new(tenant.SSOIdentityLink)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -61,7 +62,7 @@ func (r *repository) GetByUser(
 	req tenantports.GetSSOIdentityLinkByUserRequest,
 ) (*tenant.SSOIdentityLink, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.SSOIdentityLink, error) {
-		cols := buncolgen.SSOIdentityLinkColumns
+		cols := tenantcol.SSOIdentityLinkColumns
 		entity := new(tenant.SSOIdentityLink)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -99,14 +100,14 @@ func (r *repository) RecordLogin(
 	at int64,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.SSOIdentityLinkColumns
+		cols := tenantcol.SSOIdentityLinkColumns
 		result, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*tenant.SSOIdentityLink)(nil)).
 			Set(cols.LastLoginAt.Set(), at).
 			Set(cols.UpdatedAt.Set(), at).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.SSOIdentityLinkScopeTenantUpdate(uq, pagination.TenantInfo{
+				return tenantcol.SSOIdentityLinkScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: link.OrganizationID,
 					BuID:  link.BusinessUnitID,
 				}).Where(cols.ID.Eq(), link.ID)

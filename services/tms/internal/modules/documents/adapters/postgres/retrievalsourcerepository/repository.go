@@ -1,6 +1,11 @@
 package retrievalsourcerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/airetrievalcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/documentcontentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
 	"context"
 	"fmt"
 	"slices"
@@ -107,8 +112,8 @@ func (r *repository) GetMemories(
 		if err = r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&memories).
-			Apply(buncolgen.MemoryApplyTenant(req.TenantInfo)).
-			Where(buncolgen.MemoryColumns.ID.In(), bun.List(ids)).
+			Apply(agentcol.MemoryApplyTenant(req.TenantInfo)).
+			Where(agentcol.MemoryColumns.ID.In(), bun.List(ids)).
 			Scan(ctx); err != nil {
 			return nil, fmt.Errorf("read memories to index: %w", err)
 		}
@@ -131,8 +136,8 @@ func (r *repository) GetDocuments(
 		docs := make([]*document.Document, 0, len(ids))
 		if err = dba.NewSelect().
 			Model(&docs).
-			Apply(buncolgen.DocumentApplyTenant(req.TenantInfo)).
-			Where(buncolgen.DocumentColumns.ID.In(), bun.List(ids)).
+			Apply(documentcol.DocumentApplyTenant(req.TenantInfo)).
+			Where(documentcol.DocumentColumns.ID.In(), bun.List(ids)).
 			Scan(ctx); err != nil {
 			return nil, fmt.Errorf("read documents: %w", err)
 		}
@@ -150,8 +155,8 @@ func (r *repository) GetDocuments(
 		contents := make([]*documentcontent.Content, 0, len(found))
 		if err = dba.NewSelect().
 			Model(&contents).
-			Apply(buncolgen.ContentApplyTenant(req.TenantInfo)).
-			Where(buncolgen.ContentColumns.DocumentID.In(), bun.List(found)).
+			Apply(documentcontentcol.ContentApplyTenant(req.TenantInfo)).
+			Where(documentcontentcol.ContentColumns.DocumentID.In(), bun.List(found)).
 			Scan(ctx); err != nil {
 			return nil, fmt.Errorf("read document contents: %w", err)
 		}
@@ -183,11 +188,11 @@ func (r *repository) attachPages(
 	documentIDs []pulid.ID,
 	sources map[pulid.ID]*agentports.RetrievalDocumentSource,
 ) error {
-	cols := buncolgen.PageColumns
+	cols := documentcontentcol.PageColumns
 	pages := make([]*documentcontent.Page, 0, len(documentIDs))
 	if err := dba.NewSelect().
 		Model(&pages).
-		Apply(buncolgen.PageApplyTenant(tenantInfo)).
+		Apply(documentcontentcol.PageApplyTenant(tenantInfo)).
 		Where(cols.DocumentID.In(), bun.List(documentIDs)).
 		OrderExpr(cols.DocumentID.OrderAsc()).
 		OrderExpr(cols.PageNumber.OrderAsc()).
@@ -223,8 +228,8 @@ func (r *repository) GetInboundMessages(
 		if err = r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&messages).
-			Apply(buncolgen.InboundMessageApplyTenant(req.TenantInfo)).
-			Where(buncolgen.InboundMessageColumns.ID.In(), bun.List(ids)).
+			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
+			Where(inboundmessagecol.InboundMessageColumns.ID.In(), bun.List(ids)).
 			Scan(ctx); err != nil {
 			return nil, fmt.Errorf("read inbound messages: %w", err)
 		}
@@ -243,19 +248,19 @@ func (r *repository) ListModelKeys(
 		}
 
 		dba := r.db.DBForContext(ctx)
-		entries := buncolgen.IndexEntryColumns
+		entries := airetrievalcol.IndexEntryColumns
 		q := dba.NewSelect().
 			Model((*airetrieval.IndexEntry)(nil)).
 			ColumnExpr(entries.ModelKey.Qualified()).
-			Apply(buncolgen.IndexEntryApplyTenant(req.TenantInfo)).
+			Apply(airetrievalcol.IndexEntryApplyTenant(req.TenantInfo)).
 			GroupExpr(entries.ModelKey.Qualified())
 
 		if req.IncludeEmbeddings {
-			embeddings := buncolgen.EmbeddingColumns
+			embeddings := airetrievalcol.EmbeddingColumns
 			q = q.UnionAll(dba.NewSelect().
 				Model((*airetrieval.Embedding)(nil)).
 				ColumnExpr(embeddings.ModelKey.Qualified()).
-				Apply(buncolgen.EmbeddingApplyTenant(req.TenantInfo)).
+				Apply(airetrievalcol.EmbeddingApplyTenant(req.TenantInfo)).
 				GroupExpr(embeddings.ModelKey.Qualified()))
 		}
 
@@ -278,18 +283,18 @@ type sourceTable struct {
 var sourceTables = map[airetrieval.SourceType]sourceTable{
 	airetrieval.SourceTypeMemory: {
 		model:       (*agent.Memory)(nil),
-		id:          buncolgen.MemoryColumns.ID,
-		applyTenant: buncolgen.MemoryApplyTenant,
+		id:          agentcol.MemoryColumns.ID,
+		applyTenant: agentcol.MemoryApplyTenant,
 	},
 	airetrieval.SourceTypeDocument: {
 		model:       (*document.Document)(nil),
-		id:          buncolgen.DocumentColumns.ID,
-		applyTenant: buncolgen.DocumentApplyTenant,
+		id:          documentcol.DocumentColumns.ID,
+		applyTenant: documentcol.DocumentApplyTenant,
 	},
 	airetrieval.SourceTypeInboundMessage: {
 		model:       (*inboundmessage.InboundMessage)(nil),
-		id:          buncolgen.InboundMessageColumns.ID,
-		applyTenant: buncolgen.InboundMessageApplyTenant,
+		id:          inboundmessagecol.InboundMessageColumns.ID,
+		applyTenant: inboundmessagecol.InboundMessageApplyTenant,
 	},
 }
 
@@ -402,18 +407,18 @@ func (r *repository) SearchDocuments(
 			return []agentports.RetrievalKeywordHit{}, err
 		}
 
-		docs := buncolgen.DocumentColumns
-		content := buncolgen.ContentColumns
+		docs := documentcol.DocumentColumns
+		content := documentcontentcol.ContentColumns
 		dba := r.db.DBForContext(ctx)
 
 		q := dba.NewSelect().
 			Model((*document.Document)(nil)).
 			ColumnExpr(docs.ID.As(sourceIDColumn)).
-			Join("LEFT JOIN "+buncolgen.ContentTable.As(buncolgen.ContentTable.Alias)).
+			Join("LEFT JOIN "+documentcontentcol.ContentTable.As(documentcontentcol.ContentTable.Alias)).
 			JoinOn(content.DocumentID.EqColumn(docs.ID)).
 			JoinOn(content.OrganizationID.EqColumn(docs.OrganizationID)).
 			JoinOn(content.BusinessUnitID.EqColumn(docs.BusinessUnitID)).
-			Apply(buncolgen.DocumentApplyTenant(req.TenantInfo)).
+			Apply(documentcol.DocumentApplyTenant(req.TenantInfo)).
 			Where(docs.IsCurrentVersion.IsTrue()).
 			Where(docs.Status.NotIn(), bun.List(document.UnsearchableStatuses()))
 
@@ -458,13 +463,13 @@ func (r *repository) SearchInboundMessages(
 			return []agentports.RetrievalKeywordHit{}, err
 		}
 
-		cols := buncolgen.InboundMessageColumns
+		cols := inboundmessagecol.InboundMessageColumns
 		dba := r.db.DBForContext(ctx)
 
 		q := dba.NewSelect().
 			Model((*inboundmessage.InboundMessage)(nil)).
 			ColumnExpr(cols.ID.As(sourceIDColumn)).
-			Apply(buncolgen.InboundMessageApplyTenant(req.TenantInfo))
+			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo))
 
 		if dbdialect.FromBun(dba).Supports(dbdialect.CapFullTextSearch) {
 			q = q.

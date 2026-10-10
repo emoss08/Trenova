@@ -1,6 +1,7 @@
 package aiproviderrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/aiprovidercol"
 	"context"
 	"fmt"
 
@@ -33,13 +34,13 @@ func (r *keyRepository) RecordFingerprint(
 	req agentports.RecordAIProviderKeyFingerprintRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.ProviderColumns
+		cols := aiprovidercol.ProviderColumns
 
 		if _, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*aiprovider.Provider)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ProviderScopeTenantUpdate(uq, req.TenantInfo).
+				return aiprovidercol.ProviderScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID).
 					Where(cols.APIKey.IsNotNull()).
 					Where(cols.APIKeyPrefix.IsNull()).
@@ -60,13 +61,13 @@ func (r *keyRepository) TouchUsed(
 	req agentports.TouchAIProviderKeyRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.ProviderColumns
+		cols := aiprovidercol.ProviderColumns
 
 		if _, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*aiprovider.Provider)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ProviderScopeTenantUpdate(uq, req.TenantInfo).
+				return aiprovidercol.ProviderScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID).
 					Where(cols.APIKey.IsNotNull()).
 					WhereGroup(" AND ", func(inner *bun.UpdateQuery) *bun.UpdateQuery {
@@ -88,13 +89,13 @@ func (r *keyRepository) ClearExpiredPrevious(
 	req agentports.ClearExpiredAIProviderKeysRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.ProviderColumns
+		cols := aiprovidercol.ProviderColumns
 
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*aiprovider.Provider)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ProviderScopeTenantUpdate(uq, req.TenantInfo).
+				return aiprovidercol.ProviderScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.RotationExpiresAt.IsNotNull()).
 					Where(cols.RotationExpiresAt.Lte(), req.Now)
 			}).

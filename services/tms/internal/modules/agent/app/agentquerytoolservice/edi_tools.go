@@ -1,6 +1,7 @@
 package agentquerytoolservice
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
 	"context"
 	"fmt"
 
@@ -567,7 +568,7 @@ func (t *listEDITransfersTool) Query(
 	}
 	if status != "" {
 		req.Filter.FieldFilters = []domaintypes.FieldFilter{
-			buncolgen.EDITransferFilter.Status(dbtype.OpEqual, status),
+			edicol.EDITransferFilter.Status(dbtype.OpEqual, status),
 		}
 		criteria.Field(paramStatus, status)
 	}

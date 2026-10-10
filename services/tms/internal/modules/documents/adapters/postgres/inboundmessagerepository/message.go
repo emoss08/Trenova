@@ -2,6 +2,7 @@
 package inboundmessagerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -45,7 +46,7 @@ func narrow(
 	sq *bun.SelectQuery,
 	req *inboundmessageports.ListInboundMessagesRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.InboundMessageColumns
+	cols := inboundmessagecol.InboundMessageColumns
 
 	if len(req.Statuses) > 0 {
 		sq = sq.Where(cols.Status.In(), bun.In(req.Statuses))
@@ -72,7 +73,7 @@ func (r *repository) List(
 ) (*pagination.ListResult[*inboundmessage.InboundMessage], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*inboundmessage.InboundMessage], error) {
 		entities := make([]*inboundmessage.InboundMessage, 0, req.Filter.Pagination.SafeLimit())
-		cols := buncolgen.InboundMessageColumns
+		cols := inboundmessagecol.InboundMessageColumns
 
 		query := narrow(
 			r.db.DBForContext(ctx).NewSelect().Model(&entities).Relation("Mailbox"),
@@ -148,14 +149,14 @@ func (r *repository) GetByID(
 ) (*inboundmessage.InboundMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*inboundmessage.InboundMessage, error) {
 		entity := new(inboundmessage.InboundMessage)
-		cols := buncolgen.InboundMessageColumns
+		cols := inboundmessagecol.InboundMessageColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			Relation("Mailbox").
 			Where(cols.ID.Eq(), req.ID).
-			Apply(buncolgen.InboundMessageApplyTenant(req.TenantInfo))
+			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo))
 		if req.IncludeAttachments {
 			query = query.Relation("Attachments")
 		}
@@ -177,7 +178,7 @@ func (r *repository) GetByProviderID(
 ) (*inboundmessage.InboundMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*inboundmessage.InboundMessage, error) {
 		entity := new(inboundmessage.InboundMessage)
-		cols := buncolgen.InboundMessageColumns
+		cols := inboundmessagecol.InboundMessageColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -293,13 +294,13 @@ func (r *repository) ListAttachments(
 ) ([]*inboundmessage.InboundAttachment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*inboundmessage.InboundAttachment, error) {
 		entities := make([]*inboundmessage.InboundAttachment, 0, 4)
-		cols := buncolgen.InboundAttachmentColumns
+		cols := inboundmessagecol.InboundAttachmentColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			Where(cols.MessageID.Eq(), messageID).
-			Apply(buncolgen.InboundAttachmentApplyTenant(tenantInfo)).
+			Apply(inboundmessagecol.InboundAttachmentApplyTenant(tenantInfo)).
 			Order(cols.CreatedAt.OrderAsc()).
 			Scan(ctx); err != nil {
 			return nil, err
@@ -332,7 +333,7 @@ func countBreakdownQuery(
 	db bun.IDB,
 	req inboundmessageports.CountInboundMessagesRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.InboundMessageColumns
+	cols := inboundmessagecol.InboundMessageColumns
 
 	query := db.NewSelect().
 		Model((*inboundmessage.InboundMessage)(nil)).
@@ -340,7 +341,7 @@ func countBreakdownQuery(
 		ColumnExpr("COALESCE(?, '') AS classification", bun.Safe(cols.Classification.Qualified())).
 		ColumnExpr(cols.MailboxID.Qualified()).
 		ColumnExpr("COUNT(*) AS count").
-		Apply(buncolgen.InboundMessageApplyTenant(req.TenantInfo))
+		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo))
 	if len(req.Statuses) > 0 {
 		query = query.Where(cols.Status.In(), bun.In(req.Statuses))
 	}
@@ -366,7 +367,7 @@ func (r *repository) CountAttachmentsByMessageIDs(
 			return counts, nil
 		}
 
-		cols := buncolgen.InboundAttachmentColumns
+		cols := inboundmessagecol.InboundAttachmentColumns
 		rows := make([]struct {
 			MessageID pulid.ID `bun:"message_id"`
 			Count     int      `bun:"count"`
@@ -378,7 +379,7 @@ func (r *repository) CountAttachmentsByMessageIDs(
 			ColumnExpr(cols.MessageID.Qualified()).
 			ColumnExpr("COUNT(*) AS count").
 			Where(cols.MessageID.In(), bun.In(req.MessageIDs)).
-			Apply(buncolgen.InboundAttachmentApplyTenant(req.TenantInfo)).
+			Apply(inboundmessagecol.InboundAttachmentApplyTenant(req.TenantInfo)).
 			GroupExpr(cols.MessageID.Qualified()).
 			Scan(ctx, &rows); err != nil {
 			return nil, err
@@ -405,7 +406,7 @@ func (r *repository) ListRecentForReview(
 		}
 
 		entities := make([]*inboundmessage.InboundMessage, 0, limit)
-		cols := buncolgen.InboundMessageColumns
+		cols := inboundmessagecol.InboundMessageColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -414,7 +415,7 @@ func (r *repository) ListRecentForReview(
 				inboundmessage.StatusInReview,
 				inboundmessage.StatusQuarantined,
 			})).
-			Apply(buncolgen.InboundMessageApplyTenant(req.TenantInfo)).
+			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
 			Order(cols.ReceivedAt.OrderDesc()).
 			Limit(limit).
 			Scan(ctx); err != nil {
@@ -434,7 +435,7 @@ func (r *repository) DeleteBefore(
 	req inboundmessageports.DeleteInboundMessagesBeforeRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := buncolgen.InboundMessageColumns
+		cols := inboundmessagecol.InboundMessageColumns
 
 		ids := r.db.DBForContext(ctx).
 			NewSelect().
@@ -446,7 +447,7 @@ func (r *repository) DeleteBefore(
 				inboundmessage.StatusIgnored,
 				inboundmessage.StatusQuarantined,
 			})).
-			Apply(buncolgen.InboundMessageApplyTenant(req.TenantInfo)).
+			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
 			Limit(req.Limit)
 
 		results, err := r.db.DBForContext(ctx).
@@ -483,7 +484,7 @@ func settledBeforeQuery(
 	req inboundmessageports.ListSettledInboundMessagesRequest,
 	entities *[]*inboundmessage.InboundMessage,
 ) *bun.SelectQuery {
-	cols := buncolgen.InboundMessageColumns
+	cols := inboundmessagecol.InboundMessageColumns
 
 	return db.NewSelect().
 		Model(entities).
@@ -493,7 +494,7 @@ func settledBeforeQuery(
 			cols.BusinessUnitID.Bare(),
 			cols.HTMLKey.Bare(),
 		).
-		Apply(buncolgen.InboundMessageApplyTenant(req.TenantInfo)).
+		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
 		Where(cols.Status.In(), bun.In([]inboundmessage.Status{
 			inboundmessage.StatusActioned,
 			inboundmessage.StatusIgnored,
@@ -529,7 +530,7 @@ func (r *repository) DeleteByIDs(
 }
 
 func deleteByIDsQuery(db bun.IDB, req inboundmessageports.DeleteInboundMessagesRequest) *bun.DeleteQuery {
-	cols := buncolgen.InboundMessageColumns
+	cols := inboundmessagecol.InboundMessageColumns
 
 	return db.NewDelete().
 		Model((*inboundmessage.InboundMessage)(nil)).

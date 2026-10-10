@@ -2,11 +2,14 @@
 
 package ratequote
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/ratequotecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RateQuote].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.RateQuoteFieldMap] instead of parsing struct tags via reflection.
+// the generated [ratequotecol.RateQuoteFieldMap] instead of parsing struct tags via reflection.
 func (e *RateQuote) GetStaticFieldMap() map[string]string {
-	return buncolgen.RateQuoteFieldMap
+	return ratequotecol.RateQuoteFieldMap
 }

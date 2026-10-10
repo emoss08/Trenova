@@ -1,6 +1,7 @@
 package iamrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/iamcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
@@ -50,6 +51,6 @@ func (r *authEventRepository) DeleteBefore(ctx context.Context, before int64) (i
 	return postgres.DeleteUnderAuditRetention(ctx, r.db, func(tx bun.Tx) *bun.DeleteQuery {
 		return tx.NewDelete().
 			Model((*iam.AuthEvent)(nil)).
-			Where(buncolgen.AuthEventColumns.OccurredAt.Lt(), before)
+			Where(iamcol.AuthEventColumns.OccurredAt.Lt(), before)
 	})
 }

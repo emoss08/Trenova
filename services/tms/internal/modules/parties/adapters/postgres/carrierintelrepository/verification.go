@@ -1,6 +1,7 @@
 package carrierintelrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
 	"context"
 	"fmt"
 
@@ -59,8 +60,8 @@ func (r *verificationRepository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierEquipmentVerificationScopeTenant(sq, tenantInfo).
-					Where(buncolgen.CarrierEquipmentVerificationColumns.ID.Eq(), id)
+				return carrierintelcol.CarrierEquipmentVerificationScopeTenant(sq, tenantInfo).
+					Where(carrierintelcol.CarrierEquipmentVerificationColumns.ID.Eq(), id)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -81,13 +82,13 @@ func (r *verificationRepository) ListByAssignmentIDs(
 			return []*carrierintel.CarrierEquipmentVerification{}, nil
 		}
 
-		cols := buncolgen.CarrierEquipmentVerificationColumns
+		cols := carrierintelcol.CarrierEquipmentVerificationColumns
 		entities := make([]*carrierintel.CarrierEquipmentVerification, 0, len(assignmentIDs))
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierEquipmentVerificationScopeTenant(sq, tenantInfo).
+				return carrierintelcol.CarrierEquipmentVerificationScopeTenant(sq, tenantInfo).
 					Where(cols.CarrierAssignmentID.In(), bun.List(assignmentIDs))
 			}).
 			Order(cols.VerifiedAt.OrderDesc(), cols.ID.OrderDesc()).

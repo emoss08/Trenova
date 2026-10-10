@@ -3,6 +3,7 @@
 package aiusagerepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
@@ -43,10 +44,10 @@ func TestSummary_BreaksUsageDownByFeature(t *testing.T) {
 	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
 	require.NoError(t, err)
 
-	cols := buncolgen.DefinitionColumns
+	cols := agentdefinitioncol.DefinitionColumns
 	var tenant tenantRow
 	require.NoError(t, db.NewSelect().
-		TableExpr(buncolgen.DefinitionTable.As(buncolgen.DefinitionTable.Alias)).
+		TableExpr(agentdefinitioncol.DefinitionTable.As(agentdefinitioncol.DefinitionTable.Alias)).
 		Column(cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
 		Limit(1).
 		Scan(ctx, &tenant))

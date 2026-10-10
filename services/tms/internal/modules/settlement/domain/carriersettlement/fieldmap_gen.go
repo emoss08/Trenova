@@ -2,46 +2,49 @@
 
 package carriersettlement
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CarrierSettlement].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CarrierSettlementFieldMap] instead of parsing struct tags via reflection.
+// the generated [carriersettlementcol.CarrierSettlementFieldMap] instead of parsing struct tags via reflection.
 func (e *CarrierSettlement) GetStaticFieldMap() map[string]string {
-	return buncolgen.CarrierSettlementFieldMap
+	return carriersettlementcol.CarrierSettlementFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CarrierSettlementBatch].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CarrierSettlementBatchFieldMap] instead of parsing struct tags via reflection.
+// the generated [carriersettlementcol.CarrierSettlementBatchFieldMap] instead of parsing struct tags via reflection.
 func (e *CarrierSettlementBatch) GetStaticFieldMap() map[string]string {
-	return buncolgen.CarrierSettlementBatchFieldMap
+	return carriersettlementcol.CarrierSettlementBatchFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CarrierSettlementLine].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CarrierSettlementLineFieldMap] instead of parsing struct tags via reflection.
+// the generated [carriersettlementcol.CarrierSettlementLineFieldMap] instead of parsing struct tags via reflection.
 func (e *CarrierSettlementLine) GetStaticFieldMap() map[string]string {
-	return buncolgen.CarrierSettlementLineFieldMap
+	return carriersettlementcol.CarrierSettlementLineFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CostEvent].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CostEventFieldMap] instead of parsing struct tags via reflection.
+// the generated [carriersettlementcol.CostEventFieldMap] instead of parsing struct tags via reflection.
 func (e *CostEvent) GetStaticFieldMap() map[string]string {
-	return buncolgen.CostEventFieldMap
+	return carriersettlementcol.CostEventFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InvoiceMatch].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.InvoiceMatchFieldMap] instead of parsing struct tags via reflection.
+// the generated [carriersettlementcol.InvoiceMatchFieldMap] instead of parsing struct tags via reflection.
 func (e *InvoiceMatch) GetStaticFieldMap() map[string]string {
-	return buncolgen.InvoiceMatchFieldMap
+	return carriersettlementcol.InvoiceMatchFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [LedgerEntry].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.LedgerEntryFieldMap] instead of parsing struct tags via reflection.
+// the generated [carriersettlementcol.LedgerEntryFieldMap] instead of parsing struct tags via reflection.
 func (e *LedgerEntry) GetStaticFieldMap() map[string]string {
-	return buncolgen.LedgerEntryFieldMap
+	return carriersettlementcol.LedgerEntryFieldMap
 }

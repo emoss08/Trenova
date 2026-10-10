@@ -2,11 +2,14 @@
 
 package documentsearchprojection
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/documentsearchprojectioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Projection].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ProjectionFieldMap] instead of parsing struct tags via reflection.
+// the generated [documentsearchprojectioncol.ProjectionFieldMap] instead of parsing struct tags via reflection.
 func (e *Projection) GetStaticFieldMap() map[string]string {
-	return buncolgen.ProjectionFieldMap
+	return documentsearchprojectioncol.ProjectionFieldMap
 }

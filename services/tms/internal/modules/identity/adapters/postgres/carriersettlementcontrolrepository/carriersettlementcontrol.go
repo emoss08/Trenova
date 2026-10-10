@@ -1,6 +1,7 @@
 package carriersettlementcontrolrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"context"
 	"fmt"
 
@@ -85,7 +86,7 @@ func (r *repository) selectControl(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.CarrierSettlementControlScopeTenant(sq, tenantInfo)
+				return tenantcol.CarrierSettlementControlScopeTenant(sq, tenantInfo)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -100,7 +101,7 @@ func (r *repository) ListAutoGenerate(
 ) ([]*tenant.CarrierSettlementControl, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations that auto-generate carrier settlements")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tenant.CarrierSettlementControl, error) {
-		cols := buncolgen.CarrierSettlementControlColumns
+		cols := tenantcol.CarrierSettlementControlColumns
 		items := make([]*tenant.CarrierSettlementControl, 0)
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -119,12 +120,12 @@ func (r *repository) Update(
 	entity *tenant.CarrierSettlementControl,
 ) (*tenant.CarrierSettlementControl, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.CarrierSettlementControl, error) {
-		cols := buncolgen.CarrierSettlementControlColumns
+		cols := tenantcol.CarrierSettlementControlColumns
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.CarrierSettlementControlScopeTenantUpdate(uq, pagination.TenantInfo{
+				return tenantcol.CarrierSettlementControlScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
 				}).

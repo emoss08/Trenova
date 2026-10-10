@@ -1,6 +1,7 @@
 package shipmenttyperepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmenttypecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
@@ -86,7 +87,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	return querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.ShipmentTypeTable.Alias,
+		shipmenttypecol.ShipmentTypeTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*shipmenttype.ShipmentType)(nil),
@@ -99,7 +100,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	return querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.ShipmentTypeTable.Alias,
+		shipmenttypecol.ShipmentTypeTable.Alias,
 		req.Filter,
 		(*shipmenttype.ShipmentType)(nil),
 	)
@@ -107,7 +108,7 @@ func (r *repository) applyTotalCountFilters(
 
 func applyShipmentTypeColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.ShipmentTypeTable.All())
+		return q.ColumnExpr(shipmenttypecol.ShipmentTypeTable.All())
 	}
 
 	return q.Column(columns...)
@@ -203,7 +204,7 @@ func (r *repository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.ShipmentTypeColumns.Version.Eq(), ov).
+			Where(shipmenttypecol.ShipmentTypeColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -234,8 +235,8 @@ func (r *repository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ShipmentTypeScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.ShipmentTypeColumns.ID.Eq(), req.ID)
+				return shipmenttypecol.ShipmentTypeScopeTenant(sq, req.TenantInfo).
+					Where(shipmenttypecol.ShipmentTypeColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -262,8 +263,8 @@ func (r *repository) GetByIDs(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ShipmentTypeScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.ShipmentTypeColumns.ID.In(), bun.List(req.ShipmentTypeIDs))
+				return shipmenttypecol.ShipmentTypeScopeTenant(sq, req.TenantInfo).
+					Where(shipmenttypecol.ShipmentTypeColumns.ID.In(), bun.List(req.ShipmentTypeIDs))
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -280,7 +281,7 @@ func (r *repository) SelectOptions(
 	req *shipmenttypeports.ShipmentTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*shipmenttype.ShipmentType], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*shipmenttype.ShipmentType], error) {
-		cols := buncolgen.ShipmentTypeColumns
+		cols := shipmenttypecol.ShipmentTypeColumns
 
 		return dbhelper.SelectOptions[*shipmenttype.ShipmentType](
 			ctx,
@@ -321,10 +322,10 @@ func (r *repository) BulkUpdateStatus(
 			NewUpdate().
 			Model(&entities).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ShipmentTypeScopeTenantUpdate(uq, req.TenantInfo).
-					Where(buncolgen.ShipmentTypeColumns.ID.In(), bun.List(req.ShipmentTypeIDs))
+				return shipmenttypecol.ShipmentTypeScopeTenantUpdate(uq, req.TenantInfo).
+					Where(shipmenttypecol.ShipmentTypeColumns.ID.In(), bun.List(req.ShipmentTypeIDs))
 			}).
-			Set(buncolgen.ShipmentTypeColumns.Status.Set(), req.Status).
+			Set(shipmenttypecol.ShipmentTypeColumns.Status.Set(), req.Status).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {

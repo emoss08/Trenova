@@ -1,6 +1,15 @@
 package accountingsyncrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
+	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/customerpaymentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/fiscalperiodcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 	"fmt"
 	"strings"
@@ -61,7 +70,7 @@ func (s *driftSource) ScopeStart(
 	tenantInfo pagination.TenantInfo,
 ) (int64, error) {
 	return dbtx.Read(ctx, s.db, func(ctx context.Context) (int64, error) {
-		cols := buncolgen.FiscalPeriodColumns
+		cols := fiscalperiodcol.FiscalPeriodColumns
 		var start int64
 		if err := s.db.DBForContext(ctx).
 			NewSelect().
@@ -78,10 +87,10 @@ func (s *driftSource) ScopeStart(
 }
 
 func (s *driftSource) newerCreate(dba bun.IDB) *bun.SelectQuery {
-	records := buncolgen.AccountingSyncRecordColumns
+	records := accountingsynccol.AccountingSyncRecordColumns
 	newer := func(c buncolgen.Column) buncolgen.Column { return c.WithAlias(newerRecordAlias) }
 	return dba.NewSelect().
-		TableExpr(buncolgen.AccountingSyncRecordTable.As(newerRecordAlias)).
+		TableExpr(accountingsynccol.AccountingSyncRecordTable.As(newerRecordAlias)).
 		ColumnExpr("1").
 		Where(newer(records.OrganizationID).EqColumn(records.OrganizationID)).
 		Where(newer(records.BusinessUnitID).EqColumn(records.BusinessUnitID)).
@@ -100,7 +109,7 @@ func (s *driftSource) latestSynced(
 	connectionID pulid.ID,
 	objectTypes []accountingsync.SyncObjectType,
 ) *bun.SelectQuery {
-	records := buncolgen.AccountingSyncRecordColumns
+	records := accountingsynccol.AccountingSyncRecordColumns
 	return q.
 		Where(records.OrganizationID.Eq(), tenantInfo.OrgID).
 		Where(records.BusinessUnitID.Eq(), tenantInfo.BuID).
@@ -123,7 +132,7 @@ func (s *driftSource) ListRecords(
 		}
 		limit = intutils.Clamp(limit, 1, maxDriftBatch)
 
-		records := buncolgen.AccountingSyncRecordColumns
+		records := accountingsynccol.AccountingSyncRecordColumns
 		dba := s.db.DBForContext(ctx)
 		entities := make([]*accountingsync.AccountingSyncRecord, 0, limit)
 		query := dba.NewSelect().Model(&entities)
@@ -192,15 +201,15 @@ func (s *driftSource) reflectedMemos(
 	connectionID pulid.ID,
 	sum *buncolgen.Column,
 ) *bun.SelectQuery {
-	inv := buncolgen.InvoiceColumns
-	records := buncolgen.AccountingSyncRecordColumns
+	inv := invoicecol.InvoiceColumns
+	records := accountingsynccol.AccountingSyncRecordColumns
 	memo := func(c buncolgen.Column) buncolgen.Column { return c.WithAlias(reflectedMemoAlias) }
 	rec := func(c buncolgen.Column) buncolgen.Column { return c.WithAlias(reflectedRecordAlias) }
 	return dba.NewSelect().
-		TableExpr(buncolgen.InvoiceTable.As(reflectedMemoAlias)).
+		TableExpr(invoicecol.InvoiceTable.As(reflectedMemoAlias)).
 		ColumnExpr("COALESCE(SUM("+memo(*sum).Qualified()+"), 0)").
 		Join(joinOn(
-			buncolgen.AccountingSyncRecordTable,
+			accountingsynccol.AccountingSyncRecordTable,
 			reflectedRecordAlias,
 			rec(records.OrganizationID).EqColumn(memo(inv.OrganizationID)),
 			rec(records.BusinessUnitID).EqColumn(memo(inv.BusinessUnitID)),
@@ -222,8 +231,8 @@ func (s *driftSource) salesStates(
 	dba bun.IDB,
 	req *accountingsyncports.ListAccountingDriftStatesRequest,
 ) *bun.SelectQuery {
-	inv := buncolgen.InvoiceColumns
-	cus := buncolgen.CustomerColumns
+	inv := invoicecol.InvoiceColumns
+	cus := customercol.CustomerColumns
 	return dba.NewSelect().
 		Model((*invoice.Invoice)(nil)).
 		ColumnExpr(inv.ID.As("object_id")).
@@ -236,18 +245,18 @@ func (s *driftSource) salesStates(
 		ColumnExpr(inv.AppliedAmountMinor.As("applied_minor")).
 		ColumnExpr(
 			"(?) AS reflected_minor",
-			s.reflectedMemos(dba, req.ConnectionID, &buncolgen.InvoiceColumns.TotalAmountMinor),
+			s.reflectedMemos(dba, req.ConnectionID, &invoicecol.InvoiceColumns.TotalAmountMinor),
 		).
 		ColumnExpr(inv.Status.Qualified()+" = ? AS voided", invoice.StatusVoided).
 		ColumnExpr(inv.Status.As("state")).
 		Join(joinOn(
-			buncolgen.CustomerTable,
-			buncolgen.CustomerTable.Alias,
+			customercol.CustomerTable,
+			customercol.CustomerTable.Alias,
 			cus.ID.EqColumn(inv.CustomerID),
 			cus.OrganizationID.EqColumn(inv.OrganizationID),
 			cus.BusinessUnitID.EqColumn(inv.BusinessUnitID),
 		)).
-		Apply(buncolgen.InvoiceApplyTenant(req.TenantInfo)).
+		Apply(invoicecol.InvoiceApplyTenant(req.TenantInfo)).
 		Where(inv.ID.In(), bun.List(req.ObjectIDs))
 }
 
@@ -255,8 +264,8 @@ func (s *driftSource) paymentStates(
 	dba bun.IDB,
 	req *accountingsyncports.ListAccountingDriftStatesRequest,
 ) *bun.SelectQuery {
-	cp := buncolgen.PaymentColumns
-	cus := buncolgen.CustomerColumns
+	cp := customerpaymentcol.PaymentColumns
+	cus := customercol.CustomerColumns
 	return dba.NewSelect().
 		Model((*customerpayment.Payment)(nil)).
 		ColumnExpr(cp.ID.As("object_id")).
@@ -270,13 +279,13 @@ func (s *driftSource) paymentStates(
 		ColumnExpr(cp.Status.Qualified()+" = ? AS voided", customerpayment.StatusReversed).
 		ColumnExpr(cp.Status.As("state")).
 		Join(joinOn(
-			buncolgen.CustomerTable,
-			buncolgen.CustomerTable.Alias,
+			customercol.CustomerTable,
+			customercol.CustomerTable.Alias,
 			cus.ID.EqColumn(cp.CustomerID),
 			cus.OrganizationID.EqColumn(cp.OrganizationID),
 			cus.BusinessUnitID.EqColumn(cp.BusinessUnitID),
 		)).
-		Apply(buncolgen.PaymentApplyTenant(req.TenantInfo)).
+		Apply(customerpaymentcol.PaymentApplyTenant(req.TenantInfo)).
 		Where(cp.ID.In(), bun.List(req.ObjectIDs))
 }
 
@@ -284,9 +293,9 @@ func (s *driftSource) applicationStates(
 	dba bun.IDB,
 	req *accountingsyncports.ListAccountingDriftStatesRequest,
 ) *bun.SelectQuery {
-	cma := buncolgen.CreditMemoApplicationColumns
-	inv := buncolgen.InvoiceColumns
-	cus := buncolgen.CustomerColumns
+	cma := customerpaymentcol.CreditMemoApplicationColumns
+	inv := invoicecol.InvoiceColumns
+	cus := customercol.CustomerColumns
 	return dba.NewSelect().
 		Model((*customerpayment.CreditMemoApplication)(nil)).
 		ColumnExpr(cma.ID.As("object_id")).
@@ -302,20 +311,20 @@ func (s *driftSource) applicationStates(
 		).
 		ColumnExpr(cma.Status.As("state")).
 		Join(joinOn(
-			buncolgen.InvoiceTable,
-			buncolgen.InvoiceTable.Alias,
+			invoicecol.InvoiceTable,
+			invoicecol.InvoiceTable.Alias,
 			inv.ID.EqColumn(cma.CreditMemoInvoiceID),
 			inv.OrganizationID.EqColumn(cma.OrganizationID),
 			inv.BusinessUnitID.EqColumn(cma.BusinessUnitID),
 		)).
 		Join(joinOn(
-			buncolgen.CustomerTable,
-			buncolgen.CustomerTable.Alias,
+			customercol.CustomerTable,
+			customercol.CustomerTable.Alias,
 			cus.ID.EqColumn(inv.CustomerID),
 			cus.OrganizationID.EqColumn(inv.OrganizationID),
 			cus.BusinessUnitID.EqColumn(inv.BusinessUnitID),
 		)).
-		Apply(buncolgen.CreditMemoApplicationApplyTenant(req.TenantInfo)).
+		Apply(customerpaymentcol.CreditMemoApplicationApplyTenant(req.TenantInfo)).
 		Where(cma.ID.In(), bun.List(req.ObjectIDs))
 }
 
@@ -334,8 +343,8 @@ func (s *driftSource) carrierStates(
 	dba bun.IDB,
 	req *accountingsyncports.ListAccountingDriftStatesRequest,
 ) *bun.SelectQuery {
-	cs := buncolgen.CarrierSettlementColumns
-	carr := buncolgen.CarrierColumns
+	cs := carriersettlementcol.CarrierSettlementColumns
+	carr := carriercol.CarrierColumns
 	voided, args := settlementVoided(
 		req.ObjectType,
 		cs.Status.Qualified(),
@@ -353,13 +362,13 @@ func (s *driftSource) carrierStates(
 		ColumnExpr(voided, args...).
 		ColumnExpr(cs.Status.As("state")).
 		Join(joinOn(
-			buncolgen.CarrierTable,
-			buncolgen.CarrierTable.Alias,
+			carriercol.CarrierTable,
+			carriercol.CarrierTable.Alias,
 			carr.ID.EqColumn(cs.CarrierID),
 			carr.OrganizationID.EqColumn(cs.OrganizationID),
 			carr.BusinessUnitID.EqColumn(cs.BusinessUnitID),
 		)).
-		Apply(buncolgen.CarrierSettlementApplyTenant(req.TenantInfo)).
+		Apply(carriersettlementcol.CarrierSettlementApplyTenant(req.TenantInfo)).
 		Where(cs.ID.In(), bun.List(req.ObjectIDs))
 }
 
@@ -367,8 +376,8 @@ func (s *driftSource) driverStates(
 	dba bun.IDB,
 	req *accountingsyncports.ListAccountingDriftStatesRequest,
 ) *bun.SelectQuery {
-	ds := buncolgen.SettlementColumns
-	wrk := buncolgen.WorkerColumns
+	ds := driversettlementcol.SettlementColumns
+	wrk := workercol.WorkerColumns
 	voided, args := settlementVoided(
 		req.ObjectType,
 		ds.Status.Qualified(),
@@ -389,13 +398,13 @@ func (s *driftSource) driverStates(
 		ColumnExpr(voided, args...).
 		ColumnExpr(ds.Status.As("state")).
 		Join(joinOn(
-			buncolgen.WorkerTable,
-			buncolgen.WorkerTable.Alias,
+			workercol.WorkerTable,
+			workercol.WorkerTable.Alias,
 			wrk.ID.EqColumn(ds.WorkerID),
 			wrk.OrganizationID.EqColumn(ds.OrganizationID),
 			wrk.BusinessUnitID.EqColumn(ds.BusinessUnitID),
 		)).
-		Apply(buncolgen.SettlementApplyTenant(req.TenantInfo)).
+		Apply(driversettlementcol.SettlementApplyTenant(req.TenantInfo)).
 		Where(ds.ID.In(), bun.List(req.ObjectIDs))
 }
 
@@ -403,13 +412,13 @@ func (s *driftSource) balanceDocuments(
 	dba bun.IDB,
 	req *accountingsyncports.ListAccountingDriftBalancesRequest,
 ) *bun.SelectQuery {
-	records := buncolgen.AccountingSyncRecordColumns
-	inv := buncolgen.InvoiceColumns
+	records := accountingsynccol.AccountingSyncRecordColumns
+	inv := invoicecol.InvoiceColumns
 	query := dba.NewSelect().
 		Model((*accountingsync.AccountingSyncRecord)(nil)).
 		Join(joinOn(
-			buncolgen.InvoiceTable,
-			buncolgen.InvoiceTable.Alias,
+			invoicecol.InvoiceTable,
+			invoicecol.InvoiceTable.Alias,
 			inv.ID.EqColumn(records.ObjectID),
 			inv.OrganizationID.EqColumn(records.OrganizationID),
 			inv.BusinessUnitID.EqColumn(records.BusinessUnitID),
@@ -435,9 +444,9 @@ func (s *driftSource) ListBalances(
 		}
 		customers = intutils.Clamp(customers, 1, maxDriftCustomers)
 
-		inv := buncolgen.InvoiceColumns
-		cus := buncolgen.CustomerColumns
-		records := buncolgen.AccountingSyncRecordColumns
+		inv := invoicecol.InvoiceColumns
+		cus := customercol.CustomerColumns
+		records := accountingsynccol.AccountingSyncRecordColumns
 		dba := s.db.DBForContext(ctx)
 
 		ids := make([]pulid.ID, 0, customers)
@@ -470,8 +479,8 @@ func (s *driftSource) ListBalances(
 			).
 			ColumnExpr(records.ExternalID.As("external_id")).
 			Join(joinOn(
-				buncolgen.CustomerTable,
-				buncolgen.CustomerTable.Alias,
+				customercol.CustomerTable,
+				customercol.CustomerTable.Alias,
 				cus.ID.EqColumn(inv.CustomerID),
 				cus.OrganizationID.EqColumn(inv.OrganizationID),
 				cus.BusinessUnitID.EqColumn(inv.BusinessUnitID),
@@ -524,11 +533,11 @@ func (s *driftSource) waitingInbound(
 	dba bun.IDB,
 	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.AccountingInboundChangeColumns
+	cols := accountingsynccol.AccountingInboundChangeColumns
 	return dba.NewSelect().
 		Model((*accountingsync.AccountingInboundChange)(nil)).
 		ColumnExpr("DISTINCT "+cols.PartyObjectID.Qualified()).
-		Apply(buncolgen.AccountingInboundChangeApplyTenant(req.TenantInfo)).
+		Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.TenantInfo)).
 		Where(cols.ConnectionID.Eq(), req.ConnectionID).
 		Where(cols.Kind.Eq(), accountingsync.InboundCustomerPayment).
 		Where(cols.Status.In(), bun.List([]accountingsync.InboundChangeStatus{
@@ -543,10 +552,10 @@ func (s *driftSource) unsettledRecords(
 	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
 	objectTypes []accountingsync.SyncObjectType,
 ) *bun.SelectQuery {
-	records := buncolgen.AccountingSyncRecordColumns
+	records := accountingsynccol.AccountingSyncRecordColumns
 	return dba.NewSelect().
 		Model((*accountingsync.AccountingSyncRecord)(nil)).
-		Apply(buncolgen.AccountingSyncRecordApplyTenant(req.TenantInfo)).
+		Apply(accountingsynccol.AccountingSyncRecordApplyTenant(req.TenantInfo)).
 		Where(records.ConnectionID.Eq(), req.ConnectionID).
 		Where(records.ObjectType.In(), bun.List(objectTypes)).
 		Where(records.Status.NotIn(), bun.List(accountingsync.FinalSyncStatuses()))
@@ -556,8 +565,8 @@ func (s *driftSource) unsettledSales(
 	dba bun.IDB,
 	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
 ) *bun.SelectQuery {
-	records := buncolgen.AccountingSyncRecordColumns
-	inv := buncolgen.InvoiceColumns
+	records := accountingsynccol.AccountingSyncRecordColumns
+	inv := invoicecol.InvoiceColumns
 	return s.unsettledRecords(dba, req, []accountingsync.SyncObjectType{
 		accountingsync.SyncObjectInvoice,
 		accountingsync.SyncObjectCreditMemo,
@@ -565,8 +574,8 @@ func (s *driftSource) unsettledSales(
 	}).
 		ColumnExpr("DISTINCT "+inv.CustomerID.Qualified()).
 		Join(joinOn(
-			buncolgen.InvoiceTable,
-			buncolgen.InvoiceTable.Alias,
+			invoicecol.InvoiceTable,
+			invoicecol.InvoiceTable.Alias,
 			inv.ID.EqColumn(records.ObjectID),
 			inv.OrganizationID.EqColumn(records.OrganizationID),
 			inv.BusinessUnitID.EqColumn(records.BusinessUnitID),
@@ -578,15 +587,15 @@ func (s *driftSource) unsettledPayments(
 	dba bun.IDB,
 	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
 ) *bun.SelectQuery {
-	records := buncolgen.AccountingSyncRecordColumns
-	cp := buncolgen.PaymentColumns
+	records := accountingsynccol.AccountingSyncRecordColumns
+	cp := customerpaymentcol.PaymentColumns
 	return s.unsettledRecords(dba, req, []accountingsync.SyncObjectType{
 		accountingsync.SyncObjectCustomerPayment,
 	}).
 		ColumnExpr("DISTINCT "+cp.CustomerID.Qualified()).
 		Join(joinOn(
-			buncolgen.PaymentTable,
-			buncolgen.PaymentTable.Alias,
+			customerpaymentcol.PaymentTable,
+			customerpaymentcol.PaymentTable.Alias,
 			cp.ID.EqColumn(records.ObjectID),
 			cp.OrganizationID.EqColumn(records.OrganizationID),
 			cp.BusinessUnitID.EqColumn(records.BusinessUnitID),
@@ -598,23 +607,23 @@ func (s *driftSource) unsettledApplications(
 	dba bun.IDB,
 	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
 ) *bun.SelectQuery {
-	records := buncolgen.AccountingSyncRecordColumns
-	cma := buncolgen.CreditMemoApplicationColumns
-	inv := buncolgen.InvoiceColumns
+	records := accountingsynccol.AccountingSyncRecordColumns
+	cma := customerpaymentcol.CreditMemoApplicationColumns
+	inv := invoicecol.InvoiceColumns
 	return s.unsettledRecords(dba, req, []accountingsync.SyncObjectType{
 		accountingsync.SyncObjectCreditApplication,
 	}).
 		ColumnExpr("DISTINCT "+inv.CustomerID.Qualified()).
 		Join(joinOn(
-			buncolgen.CreditMemoApplicationTable,
-			buncolgen.CreditMemoApplicationTable.Alias,
+			customerpaymentcol.CreditMemoApplicationTable,
+			customerpaymentcol.CreditMemoApplicationTable.Alias,
 			cma.ID.EqColumn(records.ObjectID),
 			cma.OrganizationID.EqColumn(records.OrganizationID),
 			cma.BusinessUnitID.EqColumn(records.BusinessUnitID),
 		)).
 		Join(joinOn(
-			buncolgen.InvoiceTable,
-			buncolgen.InvoiceTable.Alias,
+			invoicecol.InvoiceTable,
+			invoicecol.InvoiceTable.Alias,
 			inv.ID.EqColumn(cma.CreditMemoInvoiceID),
 			inv.OrganizationID.EqColumn(cma.OrganizationID),
 			inv.BusinessUnitID.EqColumn(cma.BusinessUnitID),

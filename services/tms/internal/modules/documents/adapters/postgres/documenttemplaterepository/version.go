@@ -1,6 +1,7 @@
 package documenttemplaterepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/documenttemplatecol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -52,10 +53,10 @@ func (r *versionRepository) GetByID(
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Relation(buncolgen.DocumentTemplateVersionRelations.Template).
+			Relation(documenttemplatecol.DocumentTemplateVersionRelations.Template).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DocumentTemplateVersionScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.DocumentTemplateVersionColumns.ID.Eq(), req.VersionID)
+				return documenttemplatecol.DocumentTemplateVersionScopeTenant(sq, req.TenantInfo).
+					Where(documenttemplatecol.DocumentTemplateVersionColumns.ID.Eq(), req.VersionID)
 			}).
 			Scan(ctx); err != nil {
 			log.Error("failed to get document template version", zap.Error(err))
@@ -76,14 +77,14 @@ func (r *versionRepository) List(
 			zap.String("templateId", req.TemplateID.String()),
 		)
 
-		cols := buncolgen.DocumentTemplateVersionColumns
+		cols := documenttemplatecol.DocumentTemplateVersionColumns
 		entities := make([]*documenttemplate.DocumentTemplateVersion, 0, 16)
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DocumentTemplateVersionScopeTenant(sq, req.TenantInfo).
+				return documenttemplatecol.DocumentTemplateVersionScopeTenant(sq, req.TenantInfo).
 					Where(cols.TemplateID.Eq(), req.TemplateID)
 			}).
 			Order(cols.VersionNumber.OrderDesc()).
@@ -104,7 +105,7 @@ func (r *versionRepository) nextVersionNumber(
 	entity *documenttemplate.DocumentTemplateVersion,
 ) (int64, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := buncolgen.DocumentTemplateVersionColumns
+		cols := documenttemplatecol.DocumentTemplateVersionColumns
 
 		var current int64
 		err := r.db.DBForContext(ctx).
@@ -112,7 +113,7 @@ func (r *versionRepository) nextVersionNumber(
 			Model((*documenttemplate.DocumentTemplateVersion)(nil)).
 			ColumnExpr(cols.VersionNumber.Expr("COALESCE(MAX({}), 0)")).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DocumentTemplateVersionScopeTenant(sq, pagination.TenantInfo{
+				return documenttemplatecol.DocumentTemplateVersionScopeTenant(sq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
 				}).Where(cols.TemplateID.Eq(), entity.TemplateID)
@@ -230,7 +231,7 @@ func (r *versionRepository) Update(
 			zap.String("id", entity.ID.String()),
 		)
 
-		cols := buncolgen.DocumentTemplateVersionColumns
+		cols := documenttemplatecol.DocumentTemplateVersionColumns
 		ov := entity.Version
 		entity.Version++
 
@@ -283,8 +284,8 @@ func (r *versionRepository) Publish(
 			zap.String("id", req.VersionID.String()),
 		)
 
-		vCols := buncolgen.DocumentTemplateVersionColumns
-		tCols := buncolgen.DocumentTemplateColumns
+		vCols := documenttemplatecol.DocumentTemplateVersionColumns
+		tCols := documenttemplatecol.DocumentTemplateColumns
 		entity := new(documenttemplate.DocumentTemplateVersion)
 
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
@@ -311,7 +312,7 @@ func (r *versionRepository) Publish(
 				NewUpdate().
 				Model((*documenttemplate.DocumentTemplateVersion)(nil)).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return buncolgen.DocumentTemplateVersionScopeTenantUpdate(uq, req.TenantInfo).
+					return documenttemplatecol.DocumentTemplateVersionScopeTenantUpdate(uq, req.TenantInfo).
 						Where(vCols.TemplateID.Eq(), incoming.TemplateID).
 						Where(vCols.Status.Eq(), documenttemplate.VersionStatusActive)
 				}).
@@ -328,7 +329,7 @@ func (r *versionRepository) Publish(
 				NewUpdate().
 				Model(entity).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return buncolgen.DocumentTemplateVersionScopeTenantUpdate(uq, req.TenantInfo).
+					return documenttemplatecol.DocumentTemplateVersionScopeTenantUpdate(uq, req.TenantInfo).
 						Where(vCols.ID.Eq(), req.VersionID).
 						Where(vCols.Version.Eq(), incoming.Version)
 				}).
@@ -356,7 +357,7 @@ func (r *versionRepository) Publish(
 				NewUpdate().
 				Model((*documenttemplate.DocumentTemplate)(nil)).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return buncolgen.DocumentTemplateScopeTenantUpdate(uq, req.TenantInfo).
+					return documenttemplatecol.DocumentTemplateScopeTenantUpdate(uq, req.TenantInfo).
 						Where(tCols.ID.Eq(), incoming.TemplateID)
 				}).
 				Set(tCols.ActiveVersionID.Set(), req.VersionID).
@@ -391,8 +392,8 @@ func (r *versionRepository) Archive(
 			zap.String("id", req.VersionID.String()),
 		)
 
-		vCols := buncolgen.DocumentTemplateVersionColumns
-		tCols := buncolgen.DocumentTemplateColumns
+		vCols := documenttemplatecol.DocumentTemplateVersionColumns
+		tCols := documenttemplatecol.DocumentTemplateColumns
 		entity := new(documenttemplate.DocumentTemplateVersion)
 
 		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
@@ -416,7 +417,7 @@ func (r *versionRepository) Archive(
 					NewUpdate().
 					Model((*documenttemplate.DocumentTemplate)(nil)).
 					WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-						return buncolgen.DocumentTemplateScopeTenantUpdate(uq, req.TenantInfo).
+						return documenttemplatecol.DocumentTemplateScopeTenantUpdate(uq, req.TenantInfo).
 							Where(tCols.ID.Eq(), existing.TemplateID).
 							Where(tCols.ActiveVersionID.Eq(), req.VersionID)
 					}).
@@ -432,7 +433,7 @@ func (r *versionRepository) Archive(
 				NewUpdate().
 				Model(entity).
 				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return buncolgen.DocumentTemplateVersionScopeTenantUpdate(uq, req.TenantInfo).
+					return documenttemplatecol.DocumentTemplateVersionScopeTenantUpdate(uq, req.TenantInfo).
 						Where(vCols.ID.Eq(), req.VersionID).
 						Where(vCols.Version.Eq(), existing.Version)
 				}).
@@ -473,13 +474,13 @@ func (r *versionRepository) Delete(
 			zap.String("id", req.VersionID.String()),
 		)
 
-		cols := buncolgen.DocumentTemplateVersionColumns
+		cols := documenttemplatecol.DocumentTemplateVersionColumns
 
 		results, err := r.db.DBForContext(ctx).
 			NewDelete().
 			Model((*documenttemplate.DocumentTemplateVersion)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.DocumentTemplateVersionScopeTenantDelete(dq, req.TenantInfo).
+				return documenttemplatecol.DocumentTemplateVersionScopeTenantDelete(dq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.VersionID).
 					Where(cols.Status.Eq(), documenttemplate.VersionStatusDraft)
 			}).

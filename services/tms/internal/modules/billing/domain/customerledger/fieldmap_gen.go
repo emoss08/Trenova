@@ -2,11 +2,14 @@
 
 package customerledger
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/customerledgercol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CustomerLedgerEntry].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CustomerLedgerEntryFieldMap] instead of parsing struct tags via reflection.
+// the generated [customerledgercol.CustomerLedgerEntryFieldMap] instead of parsing struct tags via reflection.
 func (e *CustomerLedgerEntry) GetStaticFieldMap() map[string]string {
-	return buncolgen.CustomerLedgerEntryFieldMap
+	return customerledgercol.CustomerLedgerEntryFieldMap
 }

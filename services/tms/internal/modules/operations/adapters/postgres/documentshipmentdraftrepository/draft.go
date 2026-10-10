@@ -1,6 +1,7 @@
 package documentshipmentdraftrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/documentshipmentdraftcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
@@ -42,12 +43,12 @@ func (r *repository) GetByDocumentID(
 ) (*documentshipmentdraft.DocumentShipmentDraft, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*documentshipmentdraft.DocumentShipmentDraft, error) {
 		entity := new(documentshipmentdraft.DocumentShipmentDraft)
-		cols := buncolgen.DocumentShipmentDraftColumns
+		cols := documentshipmentdraftcol.DocumentShipmentDraftColumns
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DocumentShipmentDraftScopeTenant(sq, tenantInfo).
+				return documentshipmentdraftcol.DocumentShipmentDraftScopeTenant(sq, tenantInfo).
 					Where(cols.DocumentID.Eq(), documentID)
 			}).
 			Scan(ctx)
@@ -64,7 +65,7 @@ func (r *repository) Upsert(
 	entity *documentshipmentdraft.DocumentShipmentDraft,
 ) (*documentshipmentdraft.DocumentShipmentDraft, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*documentshipmentdraft.DocumentShipmentDraft, error) {
-		cols := buncolgen.DocumentShipmentDraftColumns
+		cols := documentshipmentdraftcol.DocumentShipmentDraftColumns
 		if _, err := r.db.DBForContext(ctx).
 			NewInsert().
 			Model(entity).

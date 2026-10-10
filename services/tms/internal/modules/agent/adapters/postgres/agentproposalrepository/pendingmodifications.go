@@ -1,6 +1,7 @@
 package agentproposalrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -30,13 +31,13 @@ func (r *repository) SetPendingModifications(
 		)
 
 		entity := new(agent.AgentProposal)
-		cols := buncolgen.AgentProposalColumns
+		cols := agentcol.AgentProposalColumns
 
 		query := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.AgentProposalScopeTenantUpdate(uq, req.TenantInfo).
+				return agentcol.AgentProposalScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID).
 					Where(cols.Status.Eq(), agent.ProposalStatusPending)
 			}).

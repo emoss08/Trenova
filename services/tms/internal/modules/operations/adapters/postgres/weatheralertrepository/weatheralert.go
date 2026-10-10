@@ -2,6 +2,7 @@
 package weatheralertrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/weatheralertcol"
 	"context"
 	"maps"
 
@@ -187,7 +188,7 @@ func (r *repository) ListByNWSIDs(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*weatheralert.WeatherAlert, error) {
-		cols := buncolgen.WeatherAlertColumns
+		cols := weatheralertcol.WeatherAlertColumns
 		alerts := make([]*weatheralert.WeatherAlert, 0, len(req.NWSIDs))
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -201,7 +202,7 @@ func (r *repository) ListByNWSIDs(
 				cols.Expires.String(),
 				cols.Ends.String(),
 			).
-			Apply(buncolgen.WeatherAlertApplyTenant(req.TenantInfo)).
+			Apply(weatheralertcol.WeatherAlertApplyTenant(req.TenantInfo)).
 			Where(cols.NWSID.In(), bun.List(req.NWSIDs)).
 			Scan(ctx); err != nil {
 			return nil, err

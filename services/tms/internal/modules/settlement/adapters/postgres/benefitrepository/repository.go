@@ -1,6 +1,7 @@
 package benefitrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/driverpaycol"
 	"context"
 	"fmt"
 
@@ -55,14 +56,14 @@ func (r *repository) ListPlans(
 	req *driverpayports.ListBenefitPlansRequest,
 ) ([]*driverpay.BenefitPlan, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.BenefitPlan, error) {
-		cols := buncolgen.BenefitPlanColumns
+		cols := driverpaycol.BenefitPlanColumns
 		entities := make([]*driverpay.BenefitPlan, 0, 8)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.BenefitPlanScopeTenant(sq, req.TenantInfo)
+				sq = driverpaycol.BenefitPlanScopeTenant(sq, req.TenantInfo)
 				if req.ActiveOnly {
 					sq = sq.Where(cols.Status.Eq(), domaintypes.StatusActive)
 				}
@@ -77,7 +78,7 @@ func (r *repository) ListPlans(
 			Limit(limitOr(req.Limit, defaultPlanPageSize))
 
 		if req.IncludePayCode {
-			q = q.Relation(buncolgen.BenefitPlanRelations.PayCode)
+			q = q.Relation(driverpaycol.BenefitPlanRelations.PayCode)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -94,7 +95,7 @@ func (r *repository) PlanSelectOptions(
 	req *driverpayports.BenefitPlanSelectOptionsRequest,
 ) (*pagination.ListResult[*driverpay.BenefitPlan], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*driverpay.BenefitPlan], error) {
-		cols := buncolgen.BenefitPlanColumns
+		cols := driverpaycol.BenefitPlanColumns
 		return dbhelper.SelectOptions[*driverpay.BenefitPlan](
 			ctx,
 			r.db.DBForContext(ctx),
@@ -147,11 +148,11 @@ func (r *repository) GetPlanByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.BenefitPlanScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.BenefitPlanColumns.ID.Eq(), req.ID)
+				return driverpaycol.BenefitPlanScopeTenant(sq, req.TenantInfo).
+					Where(driverpaycol.BenefitPlanColumns.ID.Eq(), req.ID)
 			})
 		if req.IncludePayCode {
-			q = q.Relation(buncolgen.BenefitPlanRelations.PayCode)
+			q = q.Relation(driverpaycol.BenefitPlanRelations.PayCode)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -192,7 +193,7 @@ func (r *repository) UpdatePlan(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.BenefitPlanColumns.Version.Eq(), ov).
+			Where(driverpaycol.BenefitPlanColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -213,12 +214,12 @@ func (r *repository) CountPlanEnrollments(
 	planID pulid.ID,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := buncolgen.WorkerBenefitEnrollmentColumns
+		cols := driverpaycol.WorkerBenefitEnrollmentColumns
 		total, err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model((*driverpay.WorkerBenefitEnrollment)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerBenefitEnrollmentScopeTenant(sq, tenantInfo).
+				return driverpaycol.WorkerBenefitEnrollmentScopeTenant(sq, tenantInfo).
 					Where(cols.BenefitPlanID.Eq(), planID).
 					Where(cols.Status.In(), bun.In([]driverpay.BenefitEnrollmentStatus{
 						driverpay.EnrollmentPending,
@@ -240,14 +241,14 @@ func (r *repository) ListEnrollments(
 	req *driverpayports.ListBenefitEnrollmentsRequest,
 ) ([]*driverpay.WorkerBenefitEnrollment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.WorkerBenefitEnrollment, error) {
-		cols := buncolgen.WorkerBenefitEnrollmentColumns
+		cols := driverpaycol.WorkerBenefitEnrollmentColumns
 		entities := make([]*driverpay.WorkerBenefitEnrollment, 0, 8)
 
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerBenefitEnrollmentScopeTenant(sq, req.TenantInfo)
+				sq = driverpaycol.WorkerBenefitEnrollmentScopeTenant(sq, req.TenantInfo)
 				if !req.WorkerID.IsNil() {
 					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
 				}
@@ -269,10 +270,10 @@ func (r *repository) ListEnrollments(
 			Limit(limitOr(req.Limit, defaultEnrollmentPageSize))
 
 		if req.IncludePlan {
-			q = q.Relation(buncolgen.WorkerBenefitEnrollmentRelations.BenefitPlan)
+			q = q.Relation(driverpaycol.WorkerBenefitEnrollmentRelations.BenefitPlan)
 		}
 		if req.IncludeWorker {
-			q = q.Relation(buncolgen.WorkerBenefitEnrollmentRelations.Worker)
+			q = q.Relation(driverpaycol.WorkerBenefitEnrollmentRelations.Worker)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -294,11 +295,11 @@ func (r *repository) GetEnrollmentByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.WorkerBenefitEnrollmentScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.WorkerBenefitEnrollmentColumns.ID.Eq(), req.ID)
+				return driverpaycol.WorkerBenefitEnrollmentScopeTenant(sq, req.TenantInfo).
+					Where(driverpaycol.WorkerBenefitEnrollmentColumns.ID.Eq(), req.ID)
 			})
 		if req.IncludePlan {
-			q = q.Relation(buncolgen.WorkerBenefitEnrollmentRelations.BenefitPlan)
+			q = q.Relation(driverpaycol.WorkerBenefitEnrollmentRelations.BenefitPlan)
 		}
 
 		if err := q.Scan(ctx); err != nil {
@@ -339,7 +340,7 @@ func (r *repository) UpdateEnrollment(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.WorkerBenefitEnrollmentColumns.Version.Eq(), ov).
+			Where(driverpaycol.WorkerBenefitEnrollmentColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {

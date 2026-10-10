@@ -1,6 +1,10 @@
 package detentionrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/detentioncol"
+	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"context"
 	"fmt"
 
@@ -41,10 +45,10 @@ func NewOccurrenceRepository(
 }
 
 func withOccurrenceNames(q *bun.SelectQuery) *bun.SelectQuery {
-	occCols := buncolgen.DetentionOccurrenceColumns
-	locCols := buncolgen.LocationColumns
-	cusCols := buncolgen.CustomerColumns
-	shipCols := buncolgen.ShipmentColumns
+	occCols := detentioncol.DetentionOccurrenceColumns
+	locCols := locationcol.LocationColumns
+	cusCols := customercol.CustomerColumns
+	shipCols := shipmentcol.ShipmentColumns
 
 	return q.
 		ColumnExpr("dto.*").
@@ -74,12 +78,12 @@ func (r *occurrenceRepository) filterQuery(
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.DetentionOccurrenceTable.Alias,
+		detentioncol.DetentionOccurrenceTable.Alias,
 		req.Filter,
 		(*detention.DetentionOccurrence)(nil),
 	)
 
-	cols := buncolgen.DetentionOccurrenceColumns
+	cols := detentioncol.DetentionOccurrenceColumns
 
 	if req.ShipmentID != nil && !req.ShipmentID.IsNil() {
 		q = q.Where(cols.ShipmentID.Eq(), *req.ShipmentID)
@@ -141,7 +145,7 @@ func (r *occurrenceRepository) GetByID(
 			zap.String("id", req.OccurrenceID.String()),
 		)
 
-		cols := buncolgen.DetentionOccurrenceColumns
+		cols := detentioncol.DetentionOccurrenceColumns
 		entity := new(detention.DetentionOccurrence)
 
 		q := r.db.DBForContext(ctx).
@@ -149,21 +153,21 @@ func (r *occurrenceRepository) GetByID(
 			Model(entity).
 			Apply(withOccurrenceNames).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
+				return detentioncol.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.OccurrenceID)
 			})
 
 		if req.IncludeEvidence {
-			q = q.Relation(buncolgen.DetentionOccurrenceRelations.Evidence,
+			q = q.Relation(detentioncol.DetentionOccurrenceRelations.Evidence,
 				func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Order(buncolgen.DetentionEvidenceColumns.Sequence.OrderAsc())
+					return sq.Order(detentioncol.DetentionEvidenceColumns.Sequence.OrderAsc())
 				})
 		}
 
 		if req.IncludeNotices {
-			q = q.Relation(buncolgen.DetentionOccurrenceRelations.Notices,
+			q = q.Relation(detentioncol.DetentionOccurrenceRelations.Notices,
 				func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Order(buncolgen.DetentionNoticeColumns.CreatedAt.OrderAsc())
+					return sq.Order(detentioncol.DetentionNoticeColumns.CreatedAt.OrderAsc())
 				})
 		}
 
@@ -181,14 +185,14 @@ func (r *occurrenceRepository) GetByStop(
 	req *detentionports.GetOccurrenceByStopRequest,
 ) (*detention.DetentionOccurrence, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*detention.DetentionOccurrence, error) {
-		cols := buncolgen.DetentionOccurrenceColumns
+		cols := detentioncol.DetentionOccurrenceColumns
 		entity := new(detention.DetentionOccurrence)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
+				return detentioncol.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
 					Where(cols.StopID.Eq(), req.StopID)
 			}).
 			Scan(ctx)
@@ -209,7 +213,7 @@ func (r *occurrenceRepository) GetByShipment(
 	req *detentionports.GetOccurrencesByShipmentRequest,
 ) ([]*detention.DetentionOccurrence, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionOccurrence, error) {
-		cols := buncolgen.DetentionOccurrenceColumns
+		cols := detentioncol.DetentionOccurrenceColumns
 		entities := make([]*detention.DetentionOccurrence, 0, 4)
 
 		q := r.db.DBForContext(ctx).
@@ -217,7 +221,7 @@ func (r *occurrenceRepository) GetByShipment(
 			Model(&entities).
 			Apply(withOccurrenceNames).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
+				return detentioncol.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
 					Where(cols.ShipmentID.Eq(), req.ShipmentID)
 			})
 		if req.IncludeEvidence {
@@ -240,7 +244,7 @@ func (r *occurrenceRepository) ListOpen(
 	tenantInfo pagination.TenantInfo,
 ) ([]*detention.DetentionOccurrence, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionOccurrence, error) {
-		cols := buncolgen.DetentionOccurrenceColumns
+		cols := detentioncol.DetentionOccurrenceColumns
 		entities := make([]*detention.DetentionOccurrence, 0, 32)
 
 		err := r.db.DBForContext(ctx).
@@ -248,7 +252,7 @@ func (r *occurrenceRepository) ListOpen(
 			Model(&entities).
 			Apply(withOccurrenceNames).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DetentionOccurrenceScopeTenant(sq, tenantInfo).
+				return detentioncol.DetentionOccurrenceScopeTenant(sq, tenantInfo).
 					Where(cols.IsOpen.IsTrue()).
 					Where(cols.Status.Ne(), detention.OccurrenceStatusBilled)
 			}).
@@ -272,7 +276,7 @@ func (r *occurrenceRepository) ListBillingHoldsByShipments(
 			return []*detention.DetentionOccurrence{}, nil
 		}
 
-		cols := buncolgen.DetentionOccurrenceColumns
+		cols := detentioncol.DetentionOccurrenceColumns
 		entities := make([]*detention.DetentionOccurrence, 0, len(req.ShipmentIDs))
 
 		err := r.db.DBForContext(ctx).
@@ -280,7 +284,7 @@ func (r *occurrenceRepository) ListBillingHoldsByShipments(
 			Model(&entities).
 			Apply(withOccurrenceNames).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return applyBillingHold(buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo)).
+				return applyBillingHold(detentioncol.DetentionOccurrenceScopeTenant(sq, req.TenantInfo)).
 					Where(cols.ShipmentID.In(), bun.List(req.ShipmentIDs))
 			}).
 			Order(cols.ShipmentID.OrderAsc(), cols.ClockStartAt.OrderAsc(), cols.ID.OrderAsc()).
@@ -299,7 +303,7 @@ func (r *occurrenceRepository) ListBillingHolds(
 	tenantInfo pagination.TenantInfo,
 ) ([]*detention.DetentionOccurrence, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionOccurrence, error) {
-		cols := buncolgen.DetentionOccurrenceColumns
+		cols := detentioncol.DetentionOccurrenceColumns
 		entities := make([]*detention.DetentionOccurrence, 0, 16)
 
 		err := r.db.DBForContext(ctx).
@@ -307,7 +311,7 @@ func (r *occurrenceRepository) ListBillingHolds(
 			Model(&entities).
 			Apply(withOccurrenceNames).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return applyBillingHold(buncolgen.DetentionOccurrenceScopeTenant(sq, tenantInfo))
+				return applyBillingHold(detentioncol.DetentionOccurrenceScopeTenant(sq, tenantInfo))
 			}).
 			Order(cols.ClockStartAt.OrderAsc(), cols.ID.OrderAsc()).
 			Scan(ctx)
@@ -321,7 +325,7 @@ func (r *occurrenceRepository) ListBillingHolds(
 }
 
 func applyBillingHold(q *bun.SelectQuery) *bun.SelectQuery {
-	cols := buncolgen.DetentionOccurrenceColumns
+	cols := detentioncol.DetentionOccurrenceColumns
 
 	return q.
 		Where(cols.Status.Eq(), detention.OccurrenceStatusPending).
@@ -337,14 +341,14 @@ func (r *occurrenceRepository) ListByAdditionalCharges(
 			return []*detention.DetentionOccurrence{}, nil
 		}
 
-		cols := buncolgen.DetentionOccurrenceColumns
+		cols := detentioncol.DetentionOccurrenceColumns
 		entities := make([]*detention.DetentionOccurrence, 0, len(req.ChargeIDs))
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
+				return detentioncol.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
 					Where(cols.ShipmentID.In(), bun.List(req.ShipmentIDs)).
 					Where(cols.AdditionalChargeID.In(), bun.List(req.ChargeIDs)).
 					Where(cols.Status.In(), bun.List([]detention.OccurrenceStatus{
@@ -371,7 +375,7 @@ func (r *occurrenceRepository) ListNoticesDue(
 	req *detentionports.ListNoticesDueRequest,
 ) ([]*detention.DetentionOccurrence, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionOccurrence, error) {
-		cols := buncolgen.DetentionOccurrenceColumns
+		cols := detentioncol.DetentionOccurrenceColumns
 		entities := make([]*detention.DetentionOccurrence, 0, 32)
 
 		err := r.db.DBForContext(ctx).
@@ -379,7 +383,7 @@ func (r *occurrenceRepository) ListNoticesDue(
 			Model(&entities).
 			Apply(withOccurrenceNames).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
+				return detentioncol.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
 					Where(cols.NotificationStatus.Eq(), detention.NotificationStatusPending).
 					Where(cols.NoticeDueAt.IsNotNull()).
 					Where(cols.NoticeDueAt.Lte(), req.Before)
@@ -480,7 +484,7 @@ func (r *occurrenceRepository) ShipmentAccrued(
 	req *detentionports.GetOccurrencesByShipmentRequest,
 ) (decimal.Decimal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (decimal.Decimal, error) {
-		cols := buncolgen.DetentionOccurrenceColumns
+		cols := detentioncol.DetentionOccurrenceColumns
 
 		var total decimal.NullDecimal
 		err := r.db.DBForContext(ctx).
@@ -488,7 +492,7 @@ func (r *occurrenceRepository) ShipmentAccrued(
 			Model((*detention.DetentionOccurrence)(nil)).
 			ColumnExpr("COALESCE(SUM(?), 0)", bun.Safe(cols.BillableAmount.Qualified())).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
+				return detentioncol.DetentionOccurrenceScopeTenant(sq, req.TenantInfo).
 					Where(cols.ShipmentID.Eq(), req.ShipmentID)
 			}).
 			Scan(ctx, &total)
@@ -514,7 +518,7 @@ func (r *occurrenceRepository) LinkCharges(
 		return nil
 	}
 
-	cols := buncolgen.DetentionOccurrenceColumns
+	cols := detentioncol.DetentionOccurrenceColumns
 	linked := make([]pulid.ID, 0, len(req.ChargeOccurrences)*2)
 
 	for chargeID, occurrenceIDs := range req.ChargeOccurrences {
@@ -528,7 +532,7 @@ func (r *occurrenceRepository) LinkCharges(
 			Model((*detention.DetentionOccurrence)(nil)).
 			Set(cols.AdditionalChargeID.Set(), chargeID).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.DetentionOccurrenceScopeTenantUpdate(uq, req.TenantInfo).
+				return detentioncol.DetentionOccurrenceScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ShipmentID.Eq(), req.ShipmentID).
 					Where(cols.ID.In(), bun.In(occurrenceIDs))
 			}).
@@ -541,7 +545,7 @@ func (r *occurrenceRepository) LinkCharges(
 		Model((*detention.DetentionOccurrence)(nil)).
 		Set(cols.AdditionalChargeID.SetNull()).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			uq = buncolgen.DetentionOccurrenceScopeTenantUpdate(uq, req.TenantInfo).
+			uq = detentioncol.DetentionOccurrenceScopeTenantUpdate(uq, req.TenantInfo).
 				Where(cols.ShipmentID.Eq(), req.ShipmentID).
 				Where(cols.AdditionalChargeID.IsNotNull())
 			if len(linked) > 0 {

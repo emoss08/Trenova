@@ -1,6 +1,7 @@
 package accountingsyncrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
 	"context"
 	"fmt"
 
@@ -77,12 +78,12 @@ func (r *backfillRepository) GetByID(
 ) (*accountingsync.AccountingBackfill, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingBackfill, error) {
 		entity := new(accountingsync.AccountingBackfill)
-		cols := buncolgen.AccountingBackfillColumns
+		cols := accountingsynccol.AccountingBackfillColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Apply(buncolgen.AccountingBackfillApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingBackfillApplyTenant(req.TenantInfo)).
 			Where(cols.ID.Eq(), req.ID).
 			Scan(ctx); err != nil {
 			return nil, dberror.HandleNotFoundError(err, backfillEntity)
@@ -98,12 +99,12 @@ func (r *backfillRepository) GetActive(
 ) (*accountingsync.AccountingBackfill, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingBackfill, error) {
 		entity := new(accountingsync.AccountingBackfill)
-		cols := buncolgen.AccountingBackfillColumns
+		cols := accountingsynccol.AccountingBackfillColumns
 
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Apply(buncolgen.AccountingBackfillApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingBackfillApplyTenant(req.TenantInfo)).
 			Where(cols.ConnectionID.Eq(), req.ConnectionID).
 			Where(cols.Status.In(), bun.List(inProgressBackfillStatuses())).
 			Limit(1).
@@ -126,12 +127,12 @@ func (r *backfillRepository) ListByConnection(
 		}
 		limit = intutils.Clamp(limit, 1, maxBackfillListLimit)
 
-		cols := buncolgen.AccountingBackfillColumns
+		cols := accountingsynccol.AccountingBackfillColumns
 		entities := make([]*accountingsync.AccountingBackfill, 0, limit)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
-			Apply(buncolgen.AccountingBackfillApplyTenant(req.TenantInfo)).
+			Apply(accountingsynccol.AccountingBackfillApplyTenant(req.TenantInfo)).
 			Where(cols.ConnectionID.Eq(), req.ConnectionID).
 			Order(cols.CreatedAt.OrderDesc(), cols.ID.OrderDesc()).
 			Limit(limit).
@@ -148,7 +149,7 @@ func (r *backfillRepository) Update(
 	entity *accountingsync.AccountingBackfill,
 ) (*accountingsync.AccountingBackfill, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accountingsync.AccountingBackfill, error) {
-		cols := buncolgen.AccountingBackfillColumns
+		cols := accountingsynccol.AccountingBackfillColumns
 		ov := entity.Version
 		entity.Version++
 

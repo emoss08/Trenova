@@ -1,6 +1,7 @@
 package tenantbootstrap
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
 	"context"
 	"fmt"
 
@@ -18,7 +19,7 @@ const (
 
 func CreateSystemAgentDefinitions(ctx context.Context, tx bun.IDB, scope Scope) (int, error) {
 	orgID, buID := scope.OrganizationID, scope.BusinessUnitID
-	cols := buncolgen.DefinitionColumns
+	cols := agentdefinitioncol.DefinitionColumns
 	var existing []string
 	if err := tx.NewSelect().
 		Model((*agentdefinition.Definition)(nil)).

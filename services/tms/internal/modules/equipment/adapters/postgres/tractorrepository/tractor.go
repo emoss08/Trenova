@@ -1,6 +1,12 @@
 package tractorrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/equipmentmanufacturercol"
+	"github.com/emoss08/trenova/pkg/buncolgen/equipmenttypecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/fleetcodecol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
+	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
@@ -52,7 +58,7 @@ func (r *repository) applyListFilters(
 
 	q, err := querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.TractorTable.Alias,
+		tractorcol.TractorTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*tractor.Tractor)(nil),
@@ -72,7 +78,7 @@ func (r *repository) applyListCountFilters(
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.TractorTable.Alias,
+		tractorcol.TractorTable.Alias,
 		req.Filter,
 		(*tractor.Tractor)(nil),
 	)
@@ -91,7 +97,7 @@ func (r *repository) applyStatusFilter(q *bun.SelectQuery, value string) *bun.Se
 		return q
 	}
 
-	return q.Where(buncolgen.TractorColumns.Status.Eq(), status)
+	return q.Where(tractorcol.TractorColumns.Status.Eq(), status)
 }
 
 func (r *repository) List(
@@ -203,7 +209,7 @@ func (r *repository) Update(
 			NewUpdate().
 			Model(entity).
 			WherePK().
-			Where(buncolgen.TractorColumns.Version.Eq(), ov).
+			Where(tractorcol.TractorColumns.Version.Eq(), ov).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -243,8 +249,8 @@ func (r *repository) GetByID(
 				return applyTractorRelations(sq, req.TractorRelationIncludes)
 			}).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TractorScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.TractorColumns.ID.Eq(), req.ID)
+				return tractorcol.TractorScopeTenant(sq, req.TenantInfo).
+					Where(tractorcol.TractorColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -280,8 +286,8 @@ func (r *repository) GetByIDs(
 				return applyTractorRelations(sq, req.TractorRelationIncludes)
 			}).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TractorScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.TractorColumns.ID.In(), bun.List(req.TractorIDs))
+				return tractorcol.TractorScopeTenant(sq, req.TenantInfo).
+					Where(tractorcol.TractorColumns.ID.In(), bun.List(req.TractorIDs))
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -308,10 +314,10 @@ func (r *repository) BulkUpdateStatus(
 			NewUpdate().
 			Model(&entities).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.TractorScopeTenantUpdate(uq, req.TenantInfo).
-					Where(buncolgen.TractorColumns.ID.In(), bun.List(req.TractorIDs))
+				return tractorcol.TractorScopeTenantUpdate(uq, req.TenantInfo).
+					Where(tractorcol.TractorColumns.ID.In(), bun.List(req.TractorIDs))
 			}).
-			Set(buncolgen.TractorColumns.Status.Set(), req.Status).
+			Set(tractorcol.TractorColumns.Status.Set(), req.Status).
 			Returning("*").
 			Exec(ctx)
 		if err != nil {
@@ -332,8 +338,8 @@ func (r *repository) SelectOptions(
 	req *tractorports.TractorSelectOptionsRequest,
 ) (*pagination.ListResult[*tractor.Tractor], error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*tractor.Tractor], error) {
-		cols := buncolgen.TractorColumns
-		rel := buncolgen.TractorRelations
+		cols := tractorcol.TractorColumns
+		rel := tractorcol.TractorRelations
 
 		return dbhelper.SelectOptions[*tractor.Tractor](
 			ctx,
@@ -369,12 +375,12 @@ func applyTractorRelations(
 	q *bun.SelectQuery,
 	includes tractorports.TractorRelationIncludes,
 ) *bun.SelectQuery {
-	rel := buncolgen.TractorRelations
-	equipmentTypeRel := buncolgen.EquipmentTypeRelations
-	equipmentManufacturerRel := buncolgen.EquipmentManufacturerRelations
-	fleetCodeRel := buncolgen.FleetCodeRelations
-	organizationRel := buncolgen.OrganizationRelations
-	workerRel := buncolgen.WorkerRelations
+	rel := tractorcol.TractorRelations
+	equipmentTypeRel := equipmenttypecol.EquipmentTypeRelations
+	equipmentManufacturerRel := equipmentmanufacturercol.EquipmentManufacturerRelations
+	fleetCodeRel := fleetcodecol.FleetCodeRelations
+	organizationRel := tenantcol.OrganizationRelations
+	workerRel := workercol.WorkerRelations
 	includeBusinessUnit := includes.IncludeTenantDetails || includes.IncludeBusinessUnit
 	includeOrganization := includes.IncludeTenantDetails || includes.IncludeOrganization
 	includeEquipmentType := includes.IncludeEquipmentDetails || includes.IncludeEquipmentType
@@ -473,7 +479,7 @@ func applyTractorColumns(
 	includes tractorports.TractorRelationIncludes,
 ) *bun.SelectQuery {
 	if len(includes.TractorColumns) == 0 {
-		return q.ColumnExpr(buncolgen.TractorTable.All())
+		return q.ColumnExpr(tractorcol.TractorTable.All())
 	}
 
 	return q.Column(includes.TractorColumns...)

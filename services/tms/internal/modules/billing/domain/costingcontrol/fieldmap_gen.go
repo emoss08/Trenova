@@ -2,25 +2,28 @@
 
 package costingcontrol
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/costingcontrolcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CostCategory].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CostCategoryFieldMap] instead of parsing struct tags via reflection.
+// the generated [costingcontrolcol.CostCategoryFieldMap] instead of parsing struct tags via reflection.
 func (e *CostCategory) GetStaticFieldMap() map[string]string {
-	return buncolgen.CostCategoryFieldMap
+	return costingcontrolcol.CostCategoryFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CostCategoryGLAccount].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CostCategoryGLAccountFieldMap] instead of parsing struct tags via reflection.
+// the generated [costingcontrolcol.CostCategoryGLAccountFieldMap] instead of parsing struct tags via reflection.
 func (e *CostCategoryGLAccount) GetStaticFieldMap() map[string]string {
-	return buncolgen.CostCategoryGLAccountFieldMap
+	return costingcontrolcol.CostCategoryGLAccountFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CostingControl].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.CostingControlFieldMap] instead of parsing struct tags via reflection.
+// the generated [costingcontrolcol.CostingControlFieldMap] instead of parsing struct tags via reflection.
 func (e *CostingControl) GetStaticFieldMap() map[string]string {
-	return buncolgen.CostingControlFieldMap
+	return costingcontrolcol.CostingControlFieldMap
 }

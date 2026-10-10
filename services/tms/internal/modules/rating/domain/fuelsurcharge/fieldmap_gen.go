@@ -2,32 +2,35 @@
 
 package fuelsurcharge
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/fuelsurchargecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [FuelIndex].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.FuelIndexFieldMap] instead of parsing struct tags via reflection.
+// the generated [fuelsurchargecol.FuelIndexFieldMap] instead of parsing struct tags via reflection.
 func (e *FuelIndex) GetStaticFieldMap() map[string]string {
-	return buncolgen.FuelIndexFieldMap
+	return fuelsurchargecol.FuelIndexFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [FuelIndexPrice].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.FuelIndexPriceFieldMap] instead of parsing struct tags via reflection.
+// the generated [fuelsurchargecol.FuelIndexPriceFieldMap] instead of parsing struct tags via reflection.
 func (e *FuelIndexPrice) GetStaticFieldMap() map[string]string {
-	return buncolgen.FuelIndexPriceFieldMap
+	return fuelsurchargecol.FuelIndexPriceFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [FuelSurchargeProgram].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.FuelSurchargeProgramFieldMap] instead of parsing struct tags via reflection.
+// the generated [fuelsurchargecol.FuelSurchargeProgramFieldMap] instead of parsing struct tags via reflection.
 func (e *FuelSurchargeProgram) GetStaticFieldMap() map[string]string {
-	return buncolgen.FuelSurchargeProgramFieldMap
+	return fuelsurchargecol.FuelSurchargeProgramFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [FuelSurchargeTableRow].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.FuelSurchargeTableRowFieldMap] instead of parsing struct tags via reflection.
+// the generated [fuelsurchargecol.FuelSurchargeTableRowFieldMap] instead of parsing struct tags via reflection.
 func (e *FuelSurchargeTableRow) GetStaticFieldMap() map[string]string {
-	return buncolgen.FuelSurchargeTableRowFieldMap
+	return fuelsurchargecol.FuelSurchargeTableRowFieldMap
 }

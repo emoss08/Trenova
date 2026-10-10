@@ -1,6 +1,7 @@
 package assistantturnrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
 	"context"
 	"fmt"
 
@@ -71,12 +72,12 @@ func (r *repository) GetByID(
 	req agentports.GetAssistantTurnRequest,
 ) (*conversation.AssistantTurn, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.AssistantTurn, error) {
-		cols := buncolgen.AssistantTurnColumns
+		cols := conversationcol.AssistantTurnColumns
 		turn := new(conversation.AssistantTurn)
 
 		q := r.db.DBForContext(ctx).NewSelect().
 			Model(turn).
-			Apply(buncolgen.AssistantTurnApplyTenant(req.TenantInfo)).
+			Apply(conversationcol.AssistantTurnApplyTenant(req.TenantInfo)).
 			Where(cols.ID.Eq(), req.ID)
 		// The reader supplied the id, so the owner is checked here rather than
 		// trusted. A turn belongs to one person and this hands out their reply.
@@ -106,12 +107,12 @@ func (r *repository) Active(
 	req agentports.ActiveAssistantTurnRequest,
 ) (*conversation.AssistantTurn, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.AssistantTurn, error) {
-		cols := buncolgen.AssistantTurnColumns
+		cols := conversationcol.AssistantTurnColumns
 		turn := new(conversation.AssistantTurn)
 
 		err := r.db.DBForContext(ctx).NewSelect().
 			Model(turn).
-			Apply(buncolgen.AssistantTurnApplyTenant(req.TenantInfo)).
+			Apply(conversationcol.AssistantTurnApplyTenant(req.TenantInfo)).
 			Where(cols.ThreadID.Eq(), req.ThreadID).
 			Where(cols.UserID.Eq(), req.UserID).
 			Where(cols.Status.In(), bun.List(liveStatuses)).
@@ -138,10 +139,10 @@ const liveThreadTitle = "thread_title"
 // whole key, tenant included, so a turn can only ever be listed beside a
 // conversation of its own tenant.
 func threadJoin() string {
-	turnCols := buncolgen.AssistantTurnColumns
-	threadCols := buncolgen.ThreadColumns
+	turnCols := conversationcol.AssistantTurnColumns
+	threadCols := conversationcol.ThreadColumns
 
-	return "JOIN " + buncolgen.ThreadTable.As(buncolgen.ThreadTable.Alias) +
+	return "JOIN " + conversationcol.ThreadTable.As(conversationcol.ThreadTable.Alias) +
 		" ON " + threadCols.ID.EqColumn(turnCols.ThreadID) +
 		" AND " + threadCols.OrganizationID.EqColumn(turnCols.OrganizationID) +
 		" AND " + threadCols.BusinessUnitID.EqColumn(turnCols.BusinessUnitID)
@@ -152,20 +153,20 @@ func (r *repository) ListLive(
 	req agentports.ListLiveAssistantTurnsRequest,
 ) ([]*agentports.LiveAssistantTurn, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentports.LiveAssistantTurn, error) {
-		cols := buncolgen.AssistantTurnColumns
+		cols := conversationcol.AssistantTurnColumns
 		turns := make([]*agentports.LiveAssistantTurn, 0)
 
 		q := r.db.DBForContext(ctx).NewSelect().
 			Model(&turns).
-			ColumnExpr(buncolgen.AssistantTurnTable.All()).
-			ColumnExpr(buncolgen.ThreadColumns.Title.As(liveThreadTitle)).
+			ColumnExpr(conversationcol.AssistantTurnTable.All()).
+			ColumnExpr(conversationcol.ThreadColumns.Title.As(liveThreadTitle)).
 			Join(threadJoin()).
-			Apply(buncolgen.AssistantTurnApplyTenant(req.TenantInfo)).
+			Apply(conversationcol.AssistantTurnApplyTenant(req.TenantInfo)).
 			Where(cols.UserID.Eq(), req.UserID).
-			Where(buncolgen.ThreadColumns.UserID.Eq(), req.UserID).
+			Where(conversationcol.ThreadColumns.UserID.Eq(), req.UserID).
 			Where(cols.Status.In(), bun.List(liveStatuses))
 		if len(req.ExcludeOrigins) > 0 {
-			q = q.Where(buncolgen.ThreadColumns.Origin.NotIn(), bun.List(req.ExcludeOrigins))
+			q = q.Where(conversationcol.ThreadColumns.Origin.NotIn(), bun.List(req.ExcludeOrigins))
 		}
 		err := q.Order(cols.StartedAt.OrderAsc()).Scan(ctx)
 		if err != nil {
@@ -190,12 +191,12 @@ func (r *repository) RecordFingerprint(
 			return nil
 		}
 
-		cols := buncolgen.AssistantTurnColumns
+		cols := conversationcol.AssistantTurnColumns
 		q := r.db.DBForContext(ctx).NewUpdate().
 			Model((*conversation.AssistantTurn)(nil)).
 			Set(cols.Fingerprint.Set(), req.Fingerprint).
 			Where(cols.ID.Eq(), req.ID)
-		if _, err := buncolgen.AssistantTurnScopeTenantUpdate(q, req.TenantInfo).Exec(ctx); err != nil {
+		if _, err := conversationcol.AssistantTurnScopeTenantUpdate(q, req.TenantInfo).Exec(ctx); err != nil {
 			return fmt.Errorf("record the agent a turn ran as: %w", err)
 		}
 
@@ -208,7 +209,7 @@ func (r *repository) Complete(
 	req agentports.CompleteAssistantTurnRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.AssistantTurnColumns
+		cols := conversationcol.AssistantTurnColumns
 
 		q := r.db.DBForContext(ctx).NewUpdate().
 			Model((*conversation.AssistantTurn)(nil)).
@@ -216,7 +217,7 @@ func (r *repository) Complete(
 			Set(cols.CompletedAt.Set(), timeutils.NowUnix()).
 			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
 			Where(cols.ID.Eq(), req.ID)
-		q = buncolgen.AssistantTurnScopeTenantUpdate(q, req.TenantInfo)
+		q = conversationcol.AssistantTurnScopeTenantUpdate(q, req.TenantInfo)
 		if req.Error != "" {
 			q = q.Set(cols.ErrorMessage.Set(), req.Error)
 		}
@@ -245,7 +246,7 @@ func (r *repository) MarkWorkflow(
 	workflowID string,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.AssistantTurnColumns
+		cols := conversationcol.AssistantTurnColumns
 
 		q := r.db.DBForContext(ctx).NewUpdate().
 			Model((*conversation.AssistantTurn)(nil)).
@@ -255,7 +256,7 @@ func (r *repository) MarkWorkflow(
 			Where(cols.ID.Eq(), id).
 			Where(cols.Status.In(), bun.List(liveStatuses))
 
-		_, err := buncolgen.AssistantTurnScopeTenantUpdate(q, tenant).Exec(ctx)
+		_, err := conversationcol.AssistantTurnScopeTenantUpdate(q, tenant).Exec(ctx)
 		if err != nil {
 			return fmt.Errorf("record the workflow carrying a turn: %w", err)
 		}

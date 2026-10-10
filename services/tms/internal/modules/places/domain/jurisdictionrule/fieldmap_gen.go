@@ -2,25 +2,28 @@
 
 package jurisdictionrule
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/jurisdictionrulecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EscortThreshold].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.EscortThresholdFieldMap] instead of parsing struct tags via reflection.
+// the generated [jurisdictionrulecol.EscortThresholdFieldMap] instead of parsing struct tags via reflection.
 func (e *EscortThreshold) GetStaticFieldMap() map[string]string {
-	return buncolgen.EscortThresholdFieldMap
+	return jurisdictionrulecol.EscortThresholdFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [JurisdictionRule].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.JurisdictionRuleFieldMap] instead of parsing struct tags via reflection.
+// the generated [jurisdictionrulecol.JurisdictionRuleFieldMap] instead of parsing struct tags via reflection.
 func (e *JurisdictionRule) GetStaticFieldMap() map[string]string {
-	return buncolgen.JurisdictionRuleFieldMap
+	return jurisdictionrulecol.JurisdictionRuleFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Override].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.OverrideFieldMap] instead of parsing struct tags via reflection.
+// the generated [jurisdictionrulecol.OverrideFieldMap] instead of parsing struct tags via reflection.
 func (e *Override) GetStaticFieldMap() map[string]string {
-	return buncolgen.OverrideFieldMap
+	return jurisdictionrulecol.OverrideFieldMap
 }

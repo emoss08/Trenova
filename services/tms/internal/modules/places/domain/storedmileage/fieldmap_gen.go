@@ -2,11 +2,14 @@
 
 package storedmileage
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/storedmileagecol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [StoredMileage].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.StoredMileageFieldMap] instead of parsing struct tags via reflection.
+// the generated [storedmileagecol.StoredMileageFieldMap] instead of parsing struct tags via reflection.
 func (e *StoredMileage) GetStaticFieldMap() map[string]string {
-	return buncolgen.StoredMileageFieldMap
+	return storedmileagecol.StoredMileageFieldMap
 }

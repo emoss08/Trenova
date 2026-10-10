@@ -2,25 +2,28 @@
 
 package invoicerun
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/invoiceruncol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InvoiceRun].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.InvoiceRunFieldMap] instead of parsing struct tags via reflection.
+// the generated [invoiceruncol.InvoiceRunFieldMap] instead of parsing struct tags via reflection.
 func (e *InvoiceRun) GetStaticFieldMap() map[string]string {
-	return buncolgen.InvoiceRunFieldMap
+	return invoiceruncol.InvoiceRunFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InvoiceRunGroup].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.InvoiceRunGroupFieldMap] instead of parsing struct tags via reflection.
+// the generated [invoiceruncol.InvoiceRunGroupFieldMap] instead of parsing struct tags via reflection.
 func (e *InvoiceRunGroup) GetStaticFieldMap() map[string]string {
-	return buncolgen.InvoiceRunGroupFieldMap
+	return invoiceruncol.InvoiceRunGroupFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InvoiceRunGroupItem].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.InvoiceRunGroupItemFieldMap] instead of parsing struct tags via reflection.
+// the generated [invoiceruncol.InvoiceRunGroupItemFieldMap] instead of parsing struct tags via reflection.
 func (e *InvoiceRunGroupItem) GetStaticFieldMap() map[string]string {
-	return buncolgen.InvoiceRunGroupItemFieldMap
+	return invoiceruncol.InvoiceRunGroupItemFieldMap
 }

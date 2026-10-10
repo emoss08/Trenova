@@ -2,18 +2,21 @@
 
 package documentcontent
 
-import "github.com/emoss08/trenova/pkg/buncolgen"
+import (
+	"github.com/emoss08/trenova/pkg/buncolgen/documentcontentcol"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+)
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Content].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.ContentFieldMap] instead of parsing struct tags via reflection.
+// the generated [documentcontentcol.ContentFieldMap] instead of parsing struct tags via reflection.
 func (e *Content) GetStaticFieldMap() map[string]string {
-	return buncolgen.ContentFieldMap
+	return documentcontentcol.ContentFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Page].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.PageFieldMap] instead of parsing struct tags via reflection.
+// the generated [documentcontentcol.PageFieldMap] instead of parsing struct tags via reflection.
 func (e *Page) GetStaticFieldMap() map[string]string {
-	return buncolgen.PageFieldMap
+	return documentcontentcol.PageFieldMap
 }

@@ -1,6 +1,7 @@
 package extractionevalresolver
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/aicorrectioncol"
 	"context"
 	"slices"
 
@@ -22,7 +23,7 @@ func aiCorrectionColumns(ctx context.Context, nodePathPrefix string) []string {
 		return selection.Columns
 	}
 
-	cols := buncolgen.CorrectionColumns
+	cols := aicorrectioncol.CorrectionColumns
 	columns := sliceutils.AppendIfMissing(selection.Columns, cols.CorrectCount.Bare())
 
 	return sliceutils.AppendIfMissing(columns, cols.ScoredCount.Bare())

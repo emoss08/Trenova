@@ -1,6 +1,7 @@
 package aiproviderrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/aiprovidercol"
 	"context"
 	"fmt"
 
@@ -45,15 +46,15 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *agentports.ListAIProviderRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.ProviderColumns
+	cols := aiprovidercol.ProviderColumns
 	q = querybuilder.ApplyFilters(
 		q,
-		buncolgen.ProviderTable.Alias,
+		aiprovidercol.ProviderTable.Alias,
 		req.Filter,
 		(*aiprovider.Provider)(nil),
 	)
 
-	return q.Apply(buncolgen.ProviderApplyTenant(req.Filter.TenantInfo)).
+	return q.Apply(aiprovidercol.ProviderApplyTenant(req.Filter.TenantInfo)).
 		Limit(req.Filter.Pagination.SafeLimit()).
 		Offset(req.Filter.Pagination.SafeOffset()).
 		Order(cols.Priority.OrderAsc(), cols.Name.OrderAsc())
@@ -97,12 +98,12 @@ func (r *repository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					sq = querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.ProviderTable.Alias,
+						aiprovidercol.ProviderTable.Alias,
 						req.Filter,
 						(*aiprovider.Provider)(nil),
 					)
 
-					return sq.Apply(buncolgen.ProviderApplyTenant(req.Filter.TenantInfo))
+					return sq.Apply(aiprovidercol.ProviderApplyTenant(req.Filter.TenantInfo))
 				}).
 				Count(ctx)
 			if err != nil {
@@ -121,7 +122,7 @@ func (r *repository) ListConnection(
 				Query: func(entities *[]*aiprovider.Provider) *bun.SelectQuery {
 					sq := dba.NewSelect().Model(entities)
 					if len(req.Columns) == 0 {
-						return sq.ColumnExpr(buncolgen.ProviderTable.All())
+						return sq.ColumnExpr(aiprovidercol.ProviderTable.All())
 					}
 
 					return sq.Column(req.Columns...)
@@ -129,7 +130,7 @@ func (r *repository) ListConnection(
 				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 					return querybuilder.ApplyCursorFilters(
 						sq,
-						buncolgen.ProviderTable.Alias,
+						aiprovidercol.ProviderTable.Alias,
 						req.Filter,
 						req.Cursor,
 						(*aiprovider.Provider)(nil),
@@ -156,8 +157,8 @@ func (r *repository) GetByID(
 			NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ProviderScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.ProviderColumns.ID.Eq(), req.ID)
+				return aiprovidercol.ProviderScopeTenant(sq, req.TenantInfo).
+					Where(aiprovidercol.ProviderColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -193,7 +194,7 @@ func (r *repository) ListEnabled(
 	tenantInfo pagination.TenantInfo,
 ) ([]*aiprovider.Provider, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiprovider.Provider, error) {
-		cols := buncolgen.ProviderColumns
+		cols := aiprovidercol.ProviderColumns
 		entities := make([]*aiprovider.Provider, 0, defaultTaskCandidates)
 
 		err := r.db.DBForContext(ctx).
@@ -201,7 +202,7 @@ func (r *repository) ListEnabled(
 			Model(&entities).
 			ExcludeColumn(cols.APIKey.Bare(), cols.PreviousAPIKey.Bare()).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ProviderScopeTenant(sq, tenantInfo).Where(cols.Enabled.IsTrue())
+				return aiprovidercol.ProviderScopeTenant(sq, tenantInfo).Where(cols.Enabled.IsTrue())
 			}).
 			Order(cols.Priority.OrderAsc(), cols.CreatedAt.OrderAsc()).
 			Scan(ctx)
@@ -218,14 +219,14 @@ func (r *repository) ListOrdered(
 	tenantInfo pagination.TenantInfo,
 ) ([]*aiprovider.Provider, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiprovider.Provider, error) {
-		cols := buncolgen.ProviderColumns
+		cols := aiprovidercol.ProviderColumns
 		entities := make([]*aiprovider.Provider, 0, defaultTaskCandidates)
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.ProviderScopeTenant(sq, tenantInfo)
+				return aiprovidercol.ProviderScopeTenant(sq, tenantInfo)
 			}).
 			Order(cols.Priority.OrderAsc(), cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
 			Scan(ctx)
@@ -249,7 +250,7 @@ func (r *repository) SelectOptions(
 	req *agentports.AIProviderSelectOptionsRequest,
 ) (*pagination.ListResult[*aiprovider.Provider], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*aiprovider.Provider], error) {
-		cols := buncolgen.ProviderColumns
+		cols := aiprovidercol.ProviderColumns
 		return dbhelper.SelectOptions[*aiprovider.Provider](
 			ctx,
 			r.db.DBForContext(ctx),
@@ -278,7 +279,7 @@ func (r *repository) SelectOptions(
 }
 
 func applySelectOptionsFilter(q *bun.SelectQuery, task aiprovider.Task) *bun.SelectQuery {
-	cols := buncolgen.ProviderColumns
+	cols := aiprovidercol.ProviderColumns
 	q = q.Where(cols.Enabled.IsTrue())
 	if task != "" {
 		q = q.Where(cols.Tasks.Expr("{} @> ?::text[]"), pgdialect.Array([]string{string(task)}))
@@ -292,13 +293,13 @@ func buildProvidersForTaskQuery(
 	entities *[]*aiprovider.Provider,
 	req agentports.ListAIProvidersForTaskRequest,
 ) *bun.SelectQuery {
-	cols := buncolgen.ProviderColumns
+	cols := aiprovidercol.ProviderColumns
 
 	return db.
 		NewSelect().
 		Model(entities).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ProviderScopeTenant(sq, req.TenantInfo).
+			return aiprovidercol.ProviderScopeTenant(sq, req.TenantInfo).
 				Where(cols.Enabled.IsTrue()).
 				Where(
 					cols.Tasks.Expr("{} @> ?::text[]"),
@@ -353,7 +354,7 @@ func (r *repository) Update(
 	entity *aiprovider.Provider,
 ) (*aiprovider.Provider, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aiprovider.Provider, error) {
-		cols := buncolgen.ProviderColumns
+		cols := aiprovidercol.ProviderColumns
 		ov := entity.Version
 		entity.Version++
 
@@ -361,7 +362,7 @@ func (r *repository) Update(
 			NewUpdate().
 			Model(entity).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ProviderScopeTenantUpdate(uq, pagination.TenantInfo{
+				return aiprovidercol.ProviderScopeTenantUpdate(uq, pagination.TenantInfo{
 					OrgID: entity.OrganizationID,
 					BuID:  entity.BusinessUnitID,
 				}).Where(cols.ID.Eq(), entity.ID).
@@ -428,8 +429,8 @@ func (r *repository) Delete(
 			NewDelete().
 			Model((*aiprovider.Provider)(nil)).
 			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return buncolgen.ProviderScopeTenantDelete(dq, req.TenantInfo).
-					Where(buncolgen.ProviderColumns.ID.Eq(), req.ID)
+				return aiprovidercol.ProviderScopeTenantDelete(dq, req.TenantInfo).
+					Where(aiprovidercol.ProviderColumns.ID.Eq(), req.ID)
 			}).
 			Exec(ctx)
 		if err != nil {
@@ -447,13 +448,13 @@ func (r *repository) MarkTested(
 	req agentports.MarkAIProviderTestedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := buncolgen.ProviderColumns
+		cols := aiprovidercol.ProviderColumns
 
 		res, err := r.db.DBForContext(ctx).
 			NewUpdate().
 			Model((*aiprovider.Provider)(nil)).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.ProviderScopeTenantUpdate(uq, req.TenantInfo).
+				return aiprovidercol.ProviderScopeTenantUpdate(uq, req.TenantInfo).
 					Where(cols.ID.Eq(), req.ID)
 			}).
 			Set(cols.LastTest.Set(), req.Outcome).

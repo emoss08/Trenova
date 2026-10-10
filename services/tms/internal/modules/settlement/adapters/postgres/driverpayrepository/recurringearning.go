@@ -1,6 +1,7 @@
 package driverpayrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/driverpaycol"
 	"context"
 	"fmt"
 
@@ -106,7 +107,7 @@ func (r *recurringEarningRepository) ListConnection(
 				Query: func(entities *[]*driverpay.RecurringEarning) *bun.SelectQuery {
 					return dba.NewSelect().
 						Model(entities).
-						ColumnExpr(buncolgen.RecurringEarningTable.All()).
+						ColumnExpr(driverpaycol.RecurringEarningTable.All()).
 						Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
 						Relation("PayCode", func(q *bun.SelectQuery) *bun.SelectQuery { return q })
 				},

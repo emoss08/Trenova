@@ -1,6 +1,7 @@
 package notificationrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/notificationcol"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -37,7 +38,7 @@ func New(p Params) notificationports.NotificationRepository {
 	}
 }
 
-var cols = buncolgen.NotificationColumns
+var cols = notificationcol.NotificationColumns
 
 func (r *repository) scopeFilter(
 	q *bun.SelectQuery,
@@ -131,7 +132,7 @@ func (r *repository) List(
 
 		q = querybuilder.ApplyFilters(
 			q,
-			buncolgen.NotificationTable.Alias,
+			notificationcol.NotificationTable.Alias,
 			req.Filter,
 			(*notification.Notification)(nil),
 		)
@@ -156,7 +157,7 @@ func (r *repository) List(
 
 func applyNotificationColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
 	if len(columns) == 0 {
-		return q.ColumnExpr(buncolgen.NotificationTable.All())
+		return q.ColumnExpr(notificationcol.NotificationTable.All())
 	}
 
 	return q.Column(columns...)
@@ -185,7 +186,7 @@ func (r *repository) applyCursorPageFilters(
 ) (*bun.SelectQuery, error) {
 	q, err := querybuilder.ApplyCursorFilters(
 		q,
-		buncolgen.NotificationTable.Alias,
+		notificationcol.NotificationTable.Alias,
 		req.Filter,
 		req.Cursor,
 		(*notification.Notification)(nil),
@@ -205,7 +206,7 @@ func (r *repository) applyTotalCountFilters(
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.NotificationTable.Alias,
+		notificationcol.NotificationTable.Alias,
 		req.Filter,
 		(*notification.Notification)(nil),
 	)
@@ -374,7 +375,7 @@ func (r *repository) MarkAllAsRead(
 			Model((*notification.Notification)(nil)).
 			Set(cols.ReadAt.Set(), timeutils.NowUnix()).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return buncolgen.NotificationScopeTenantUpdate(uq, tenantInfo)
+				return notificationcol.NotificationScopeTenantUpdate(uq, tenantInfo)
 			})
 
 		ti := tenantInfo
@@ -413,7 +414,7 @@ func (r *repository) CountUnread(
 			NewSelect().
 			Model((*notification.Notification)(nil)).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.NotificationScopeTenant(sq, ti).
+				return notificationcol.NotificationScopeTenant(sq, ti).
 					Where(cols.ReadAt.IsNull()).
 					Where(cols.DismissedAt.IsNull())
 			})

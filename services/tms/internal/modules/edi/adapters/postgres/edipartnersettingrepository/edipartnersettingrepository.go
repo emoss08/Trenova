@@ -2,6 +2,7 @@
 package edipartnersettingrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
 	"context"
 	"strings"
 
@@ -42,7 +43,7 @@ func (r *repository) ListPartnerSettingSchemas(
 ) (*pagination.ListResult[*edi.EDIPartnerSettingSchema], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartnerSettingSchema], error) {
 		entities := make([]*edi.EDIPartnerSettingSchema, 0, req.Filter.Pagination.SafeLimit())
-		cols := buncolgen.EDIPartnerSettingSchemaColumns
+		cols := edicol.EDIPartnerSettingSchemaColumns
 
 		total, err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -74,7 +75,7 @@ func (r *repository) GetPartnerSettingSchema(
 ) (*edi.EDIPartnerSettingSchema, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIPartnerSettingSchema, error) {
 		entity := new(edi.EDIPartnerSettingSchema)
-		cols := buncolgen.EDIPartnerSettingSchemaColumns
+		cols := edicol.EDIPartnerSettingSchemaColumns
 
 		err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -97,7 +98,7 @@ func (r *repository) GetActivePartnerSettingSchema(
 ) (*edi.EDIPartnerSettingSchema, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIPartnerSettingSchema, error) {
 		entity := new(edi.EDIPartnerSettingSchema)
-		cols := buncolgen.EDIPartnerSettingSchemaColumns
+		cols := edicol.EDIPartnerSettingSchemaColumns
 
 		query := r.db.DBForContext(ctx).
 			NewSelect().
@@ -155,7 +156,7 @@ func (r *repository) searchPartnerSettingFields(
 ) (*pagination.ListResult[*edi.EDIPartnerSettingField], error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartnerSettingField], error) {
 		entities := make([]*edi.EDIPartnerSettingField, 0, req.Filter.Pagination.SafeLimit())
-		fieldCols := buncolgen.EDIPartnerSettingFieldColumns
+		fieldCols := edicol.EDIPartnerSettingFieldColumns
 
 		total, err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -183,7 +184,7 @@ func filterPartnerSettingSchemasQuery(
 	req *ediports.ListEDIPartnerSettingSchemasRequest,
 ) *bun.SelectQuery {
 	query = partnerSettingSchemaTenantScope(query, req.Filter.TenantInfo)
-	cols := buncolgen.EDIPartnerSettingSchemaColumns
+	cols := edicol.EDIPartnerSettingSchemaColumns
 
 	if req.Standard != "" {
 		query = query.Where(cols.Standard.Eq(), req.Standard)
@@ -223,8 +224,8 @@ func filterPartnerSettingFieldsQuery(
 	req *ediports.ListEDIPartnerSettingFieldsRequest,
 ) *bun.SelectQuery {
 	query = partnerSettingSchemaTenantScope(query, req.Filter.TenantInfo)
-	fieldCols := buncolgen.EDIPartnerSettingFieldColumns
-	schemaCols := buncolgen.EDIPartnerSettingSchemaColumns
+	fieldCols := edicol.EDIPartnerSettingFieldColumns
+	schemaCols := edicol.EDIPartnerSettingSchemaColumns
 
 	if req.SchemaID.IsNotNil() {
 		query = query.Where(fieldCols.SchemaID.Eq(), req.SchemaID)
@@ -270,7 +271,7 @@ func partnerSettingSchemaTenantScope(
 	query *bun.SelectQuery,
 	tenantInfo pagination.TenantInfo,
 ) *bun.SelectQuery {
-	cols := buncolgen.EDIPartnerSettingSchemaColumns
+	cols := edicol.EDIPartnerSettingSchemaColumns
 
 	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 		return sq.WhereOr(
@@ -282,11 +283,11 @@ func partnerSettingSchemaTenantScope(
 }
 
 func partnerSettingSchemaJoin() string {
-	schemaCols := buncolgen.EDIPartnerSettingSchemaColumns
-	fieldCols := buncolgen.EDIPartnerSettingFieldColumns
+	schemaCols := edicol.EDIPartnerSettingSchemaColumns
+	fieldCols := edicol.EDIPartnerSettingFieldColumns
 
-	return "JOIN " + buncolgen.EDIPartnerSettingSchemaTable.As(
-		buncolgen.EDIPartnerSettingSchemaTable.Alias,
+	return "JOIN " + edicol.EDIPartnerSettingSchemaTable.As(
+		edicol.EDIPartnerSettingSchemaTable.Alias,
 	) +
 		" ON " + schemaCols.ID.EqColumn(
 		fieldCols.SchemaID,

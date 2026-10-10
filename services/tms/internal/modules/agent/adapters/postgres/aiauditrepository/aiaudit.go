@@ -1,6 +1,7 @@
 package aiauditrepository
 
 import (
+	"github.com/emoss08/trenova/pkg/buncolgen/aiauditcol"
 	"context"
 	"database/sql"
 	"errors"
@@ -179,7 +180,7 @@ func (r *repository) lockHead(
 	head := new(aiaudit.AIAuditChainHead)
 	q := tx.NewSelect().
 		Model(head).
-		Apply(buncolgen.AIAuditChainHeadApplyTenant(tenantInfo))
+		Apply(aiauditcol.AIAuditChainHeadApplyTenant(tenantInfo))
 	if isPostgres(tx) {
 		q = q.For("UPDATE")
 	}
@@ -197,7 +198,7 @@ func (r *repository) advanceHead(
 	lastSeq int64,
 	lastHash, keyID string,
 ) error {
-	cols := buncolgen.AIAuditChainHeadColumns
+	cols := aiauditcol.AIAuditChainHeadColumns
 
 	q := tx.NewUpdate().
 		Model((*aiaudit.AIAuditChainHead)(nil)).
@@ -281,12 +282,12 @@ func existingSourceKeys(
 		return found, nil
 	}
 
-	cols := buncolgen.AIAuditEventColumns
+	cols := aiauditcol.AIAuditEventColumns
 	var held []string
 	if err := db.NewSelect().
 		Model((*aiaudit.AIAuditEvent)(nil)).
 		Column(cols.SourceKey.String()).
-		Apply(buncolgen.AIAuditEventApplyTenant(tenantInfo)).
+		Apply(aiauditcol.AIAuditEventApplyTenant(tenantInfo)).
 		Where(cols.SourceKey.In(), bun.List(keys)).
 		Scan(ctx, &held); err != nil {
 		return nil, fmt.Errorf("read existing AI audit source keys: %w", err)
@@ -322,7 +323,7 @@ func (r *repository) ListConnection(
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return querybuilder.ApplyFiltersWithoutSort(
 						sq,
-						buncolgen.AIAuditEventTable.Alias,
+						aiauditcol.AIAuditEventTable.Alias,
 						req.Filter,
 						(*aiaudit.AIAuditEvent)(nil),
 					)
@@ -351,7 +352,7 @@ func (r *repository) ListConnection(
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 				return querybuilder.ApplyCursorFilters(
 					sq,
-					buncolgen.AIAuditEventTable.Alias,
+					aiauditcol.AIAuditEventTable.Alias,
 					req.Filter,
 					req.Cursor,
 					(*aiaudit.AIAuditEvent)(nil),
@@ -377,8 +378,8 @@ func (r *repository) GetByID(
 		err := r.db.DBForContext(ctx).NewSelect().
 			Model(entity).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.AIAuditEventScopeTenant(sq, req.TenantInfo).
-					Where(buncolgen.AIAuditEventColumns.ID.Eq(), req.ID)
+				return aiauditcol.AIAuditEventScopeTenant(sq, req.TenantInfo).
+					Where(aiauditcol.AIAuditEventColumns.ID.Eq(), req.ID)
 			}).
 			Scan(ctx)
 		if err != nil {
@@ -402,8 +403,8 @@ func (r *repository) ListByIDs(
 
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model(&events).
-			Apply(buncolgen.AIAuditEventApplyTenant(tenantInfo)).
-			Where(buncolgen.AIAuditEventColumns.ID.In(), bun.List(ids)).
+			Apply(aiauditcol.AIAuditEventApplyTenant(tenantInfo)).
+			Where(aiauditcol.AIAuditEventColumns.ID.In(), bun.List(ids)).
 			Scan(ctx); err != nil {
 			return nil, fmt.Errorf("list AI audit events by id: %w", err)
 		}
@@ -416,7 +417,7 @@ func applyScope(
 	q *bun.SelectQuery,
 	scope *aiauditports.AIAuditEventScope,
 ) *bun.SelectQuery {
-	cols := buncolgen.AIAuditEventColumns
+	cols := aiauditcol.AIAuditEventColumns
 	filter := scope.Filter
 	if filter == nil {
 		filter = &aiaudit.ExportFilter{}
@@ -430,7 +431,7 @@ func applyScope(
 	}
 	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
-		buncolgen.AIAuditEventTable.Alias,
+		aiauditcol.AIAuditEventTable.Alias,
 		options,
 		(*aiaudit.AIAuditEvent)(nil),
 	)
@@ -448,7 +449,7 @@ func (r *repository) Summarize(
 	scope *aiauditports.AIAuditEventScope,
 ) (*aiauditports.AIAuditEventSummary, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aiauditports.AIAuditEventSummary, error) {
-		cols := buncolgen.AIAuditEventColumns
+		cols := aiauditcol.AIAuditEventColumns
 		summary := new(aiauditports.AIAuditEventSummary)
 
 		err := r.db.DBForContext(ctx).NewSelect().
@@ -471,7 +472,7 @@ func (r *repository) ListPage(
 	req *aiauditports.ListAIAuditEventPageRequest,
 ) ([]*aiaudit.AIAuditEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiaudit.AIAuditEvent, error) {
-		cols := buncolgen.AIAuditEventColumns
+		cols := aiauditcol.AIAuditEventColumns
 		events := make([]*aiaudit.AIAuditEvent, 0, req.Limit)
 
 		q := r.db.DBForContext(ctx).NewSelect().
@@ -501,12 +502,12 @@ func (r *repository) ListChainRange(
 	req aiauditports.ListAIAuditChainRangeRequest,
 ) ([]*aiaudit.AIAuditEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiaudit.AIAuditEvent, error) {
-		cols := buncolgen.AIAuditEventColumns
+		cols := aiauditcol.AIAuditEventColumns
 		events := make([]*aiaudit.AIAuditEvent, 0, req.Limit)
 
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model(&events).
-			Apply(buncolgen.AIAuditEventApplyTenant(req.TenantInfo)).
+			Apply(aiauditcol.AIAuditEventApplyTenant(req.TenantInfo)).
 			Where(cols.Seq.Gt(), req.AfterSeq).
 			Order(cols.Seq.OrderAsc()).
 			Limit(req.Limit).
@@ -523,13 +524,13 @@ func (r *repository) FirstSeq(
 	tenantInfo pagination.TenantInfo,
 ) (int64, bool, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (int64, bool, error) {
-		cols := buncolgen.AIAuditEventColumns
+		cols := aiauditcol.AIAuditEventColumns
 
 		var first sql.NullInt64
 		if err := r.db.DBForContext(ctx).NewSelect().
 			Model((*aiaudit.AIAuditEvent)(nil)).
 			ColumnExpr(buncolgen.Min(cols.Seq, "first_seq")).
-			Apply(buncolgen.AIAuditEventApplyTenant(tenantInfo)).
+			Apply(aiauditcol.AIAuditEventApplyTenant(tenantInfo)).
 			Scan(ctx, &first); err != nil {
 			return 0, false, fmt.Errorf("read the first AI audit seq: %w", err)
 		}
