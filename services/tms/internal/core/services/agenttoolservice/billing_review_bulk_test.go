@@ -2,6 +2,7 @@ package agenttoolservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"strings"
 	"testing"
 
@@ -23,6 +24,10 @@ type fakeQueueSet struct {
 	guard    *writeGuard
 	assigned []pulid.ID
 	moved    []pulid.ID
+}
+
+func (f *fakeQueueSet) CheckBiller(context.Context, pagination.TenantInfo, pulid.ID) error {
+	return nil
 }
 
 func newFakeQueueSet(items ...*billingqueue.BillingQueueItem) *fakeQueueSet {

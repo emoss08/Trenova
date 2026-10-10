@@ -11,11 +11,13 @@ import (
 
 type ScheduleProvider struct {
 	bufferFlushInterval time.Duration
+	dlqRetryInterval    time.Duration
 }
 
 func NewScheduleProvider(cfg *config.Config) *ScheduleProvider {
 	return &ScheduleProvider{
 		bufferFlushInterval: cfg.Audit.GetBufferFlushInterval(),
+		dlqRetryInterval:    cfg.Audit.GetDLQRetryInterval(),
 	}
 }
 
@@ -48,7 +50,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "audit-dlq-retry",
 			Description:   "Retry failed audit entries from dead-letter queue",
-			Spec:          schedule.Every(5 * time.Minute),
+			Spec:          schedule.Every(p.dlqRetryInterval),
 			Workflow:      DLQRetryWorkflow,
 			TaskQueue:     temporaltype.AuditTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,

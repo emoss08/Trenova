@@ -139,7 +139,7 @@ func (s *Service) assertWithinBudget(
 func (s *Service) ListThreads(
 	ctx context.Context,
 	req repositories.ListThreadsRequest,
-) (*pagination.ListResult[*conversation.Thread], error) {
+) (*repositories.ThreadPage, error) {
 	result, err := s.conversations.ListThreads(ctx, req)
 	if err != nil {
 		return nil, err
@@ -389,11 +389,45 @@ func (s *Service) UpdateThread(
 	return updated, nil
 }
 
+// DeleteThread removes a conversation and withdraws what its turns proposed
+// and nobody decided. Left pending, those stayed in the decisions inbox, and
+// approving one followed up into a conversation that no longer existed.
 func (s *Service) DeleteThread(
 	ctx context.Context,
 	req repositories.GetThreadRequest,
 ) error {
-	return s.conversations.DeleteThread(ctx, req)
+	if err := s.conversations.DeleteThread(ctx, req); err != nil {
+		return err
+	}
+	s.withdrawPending(ctx, req.ID, req.TenantInfo)
+
+	return nil
+}
+
+// withdrawPending runs after the conversation is gone, so a failure is logged
+// rather than returned: the person's delete went through, and a proposal left
+// waiting still expires on its own deadline.
+func (s *Service) withdrawPending(
+	ctx context.Context,
+	threadID pulid.ID,
+	tenant pagination.TenantInfo,
+) {
+	if s.proposals != nil {
+		if _, err := s.proposals.ExpirePendingByThread(ctx,
+			repositories.ExpireAgentProposalsByThreadRequest{ThreadID: threadID, TenantInfo: tenant},
+		); err != nil {
+			s.logger.Warn("could not withdraw a deleted conversation's proposals",
+				zap.String("thread", threadID.String()), zap.Error(err))
+		}
+	}
+	if s.plans != nil {
+		if _, err := s.plans.ExpirePendingByThread(ctx,
+			repositories.ExpireAgentPlansByThreadRequest{ThreadID: threadID, TenantInfo: tenant},
+		); err != nil {
+			s.logger.Warn("could not withdraw a deleted conversation's plans",
+				zap.String("thread", threadID.String()), zap.Error(err))
+		}
+	}
 }
 
 // titleIfUnnamed names a thread from its first message so the list is readable

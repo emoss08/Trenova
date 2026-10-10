@@ -64,6 +64,7 @@ type settlementLedger[E any] struct {
 	artifact  string
 	noun      string
 	sources   string
+	byName    string
 	sensitive []string
 	facts     func(*E) *settlementFacts
 	effects   func(action settlementshared.Action, plan *settlementshared.ActionPlan[*E]) []string
@@ -88,6 +89,7 @@ type settlementDecision struct {
 	volatile         []string
 	refs             map[string]permission.Resource
 	searchTerms      []string
+	prerequisites    []string
 }
 
 type settlementDecisionTool[E any] struct {
@@ -102,11 +104,13 @@ func (t *settlementDecisionTool[E]) Description() string { return t.decision.des
 
 func (t *settlementDecisionTool[E]) SearchTerms() []string { return t.decision.searchTerms }
 
+func (t *settlementDecisionTool[E]) Prerequisites() []string { return t.decision.prerequisites }
+
 func (t *settlementDecisionTool[E]) ParamSchema() map[string]any {
 	properties := map[string]any{
 		paramSettlementID: agenttoolschema.KindID(
 			"The "+t.ledger.noun+", from "+t.ledger.sources+" or this run's subject. "+
-				"Never guess one.",
+				"Never guess one."+t.ledger.byName,
 			t.ledger.kind,
 		),
 	}

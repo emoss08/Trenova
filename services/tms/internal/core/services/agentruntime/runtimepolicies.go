@@ -53,6 +53,15 @@ var runtimePolicySpecs = []runtimePolicySpec{
 			"proposal already waiting on them; it decides nothing and changes no record.",
 	},
 	{
+		name:      withdrawProposalName,
+		operation: permission.OpUpdate,
+		scope:     agent.ToolScopeRun,
+		egress:    agent.EgressNone,
+		effect:    agent.ToolEffectAsk,
+		rationale: "Takes back a proposal the agent filed earlier in the same turn, before " +
+			"anyone has seen it; it changes no record and only narrows what the person is asked.",
+	},
+	{
 		name:      delegateTaskName,
 		operation: permission.OpCreate,
 		scope:     agent.ToolScopeRun,

@@ -79,7 +79,7 @@ Keywords: assistant history, earlier chat in assistant, conversations list, sear
 Keywords: pin chat, delete conversation, export transcript, rename conversation, hide workspace, make room
 1. Open the conversation from [Desk](/desk).
 2. In the bar at the top, open **More actions** and use **Pin conversation** (or **Unpin conversation**) to keep it at the top of the rail, or **Download transcript** to save it.
-3. To rename it, double-click its name in the rail, type the new name and press Enter.
+3. To rename it, select its name in the bar at the top, type the new name and press Enter (Esc keeps the old name).
 4. To delete it, hover over it in the rail, select **Delete conversation**, then **Delete** to confirm.
 5. Select **Workspace** in the top bar (or press ⌘\\ / Ctrl+\\) to show or hide what the agent produced, or **Hide artifacts** inside it to make room for the conversation.
 

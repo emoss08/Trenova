@@ -103,11 +103,7 @@ func attemptCost(attempt *usageAttempt) *decimal.Decimal {
 		return nil
 	}
 
-	return attempt.provider.CostForTask(
-		attempt.task,
-		attempt.outcome.InputTokens,
-		attempt.outcome.OutputTokens,
-	)
+	return attempt.provider.CostForTask(attempt.task, attempt.outcome.tokenUsage())
 }
 
 func attemptUsage(attempt *usageAttempt, cost *decimal.Decimal) *aitrace.Usage {
@@ -118,7 +114,7 @@ func attemptUsage(attempt *usageAttempt, cost *decimal.Decimal) *aitrace.Usage {
 	}
 
 	input := int64(outcome.InputTokens)
-	if modeladapter.CacheSeparateFromInput(attempt.provider.Kind) {
+	if attempt.provider.Kind.CachesOutsideInput() {
 		input += int64(outcome.CacheReadTokens + outcome.CacheWriteTokens)
 	}
 	usage.ResponseModel = outcome.Model

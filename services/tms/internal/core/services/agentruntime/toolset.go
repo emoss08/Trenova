@@ -78,6 +78,23 @@ func findToolsSpec() serviceports.ToolSpec {
 // that searches in a loop has to be stopped by something else.
 const maxFindCalls = 4
 
+// searchesLeft is said once a turn has searched for tools more than twice:
+// gpt-6-luna re-worded the same need five times rather than call the tools
+// its first search had loaded, and ran out of searches before it answered.
+func searchesLeft(calls int) string {
+	if calls < maxFindCalls-1 {
+		return ""
+	}
+	left := maxFindCalls - calls
+	if left == 0 {
+		return "\n\nThat was your last tool search this turn. Call the tools you hold, " +
+			"or answer with what you have."
+	}
+
+	return fmt.Sprintf("\n\nThat was tool search %d of %d this turn, and what it found is "+
+		"loaded now. Call one of those tools rather than searching again.", calls, maxFindCalls)
+}
+
 // toolSetRequest is what a turn's tool set is built from.
 type toolSetRequest struct {
 	definition *agentdefinition.Definition
@@ -270,7 +287,8 @@ func (s *Service) carryOver(set *toolSet, history []conversation.Message) {
 		}
 		for _, call := range message.ToolCalls {
 			switch call.Name {
-			case askUserName, publishArtifactName, delegateTaskName, requestDecisionName:
+			case askUserName, publishArtifactName, delegateTaskName, requestDecisionName,
+				withdrawProposalName:
 			case findToolsName:
 				if names, stored := found[call.ID]; stored {
 					for _, name := range names {
@@ -326,13 +344,13 @@ func (s *Service) resolveFind(
 		return FindAnswer{Content: content, HandOff: handOff}
 	}
 
-	found := s.catalog.FindHybrid(agenttoolcatalog.Query{
+	found := s.withNamedTools(set.allowed, need, s.catalog.FindHybrid(agenttoolcatalog.Query{
 		Allowed:      set.allowed,
 		Text:         need,
 		Limit:        foundToolsLimit,
 		Semantic:     s.toolSemantic(ctx, actorTenant(actor), set.query),
 		SkipSemantic: set.loaded,
-	})
+	}))
 	names := make([]string, 0, len(found))
 	callable := make([]serviceports.AgentToolDescriptor, 0, len(found))
 	added := make([]serviceports.AgentToolDescriptor, 0, len(found))
@@ -387,6 +405,49 @@ func (s *Service) resolveFind(
 	}
 
 	return FindAnswer{Content: strings.TrimRight(b.String(), "\n"), Found: names}
+}
+
+// withNamedTools puts first the tools a need names outright. The prompt lists
+// what find_tools can load by name, and a model that asked for "search_worker"
+// by name was handed six other tools ranked above it and searched again.
+func (s *Service) withNamedTools(
+	allowed []string,
+	need string,
+	found []serviceports.AgentToolDescriptor,
+) []serviceports.AgentToolDescriptor {
+	named := make([]serviceports.AgentToolDescriptor, 0, 4)
+	for _, word := range strings.FieldsFunc(need, notToolNameRune) {
+		if !slices.Contains(allowed, word) ||
+			slices.ContainsFunc(named, func(d serviceports.AgentToolDescriptor) bool {
+				return d.Name == word
+			}) {
+			continue
+		}
+		if descriptor, ok := s.catalog.Descriptor(word); ok {
+			named = append(named, descriptor)
+		}
+	}
+	if len(named) == 0 {
+		return found
+	}
+
+	limit := max(foundToolsLimit, len(named))
+	for _, descriptor := range found {
+		if len(named) >= limit {
+			break
+		}
+		if !slices.ContainsFunc(named, func(d serviceports.AgentToolDescriptor) bool {
+			return d.Name == descriptor.Name
+		}) {
+			named = append(named, descriptor)
+		}
+	}
+
+	return named
+}
+
+func notToolNameRune(r rune) bool {
+	return (r < 'a' || r > 'z') && (r < '0' || r > '9') && r != '_'
 }
 
 func bestMatch(callable, added []serviceports.AgentToolDescriptor) string {

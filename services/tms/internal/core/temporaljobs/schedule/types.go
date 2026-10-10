@@ -92,6 +92,7 @@ func (s *Schedule) Hash() string {
 	h.Write([]byte(s.Spec.Cron))
 	fmt.Fprintf(h, "%d", s.Spec.Interval)
 	h.Write([]byte(s.Spec.Timezone))
+	fmt.Fprintf(h, "%d", s.Spec.Jitter)
 	h.Write([]byte(s.GetWorkflowName()))
 	h.Write([]byte(s.TaskQueue))
 	fmt.Fprintf(h, "%d", s.OverlapPolicy)

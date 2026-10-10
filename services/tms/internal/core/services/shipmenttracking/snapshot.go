@@ -25,7 +25,7 @@ const (
 	// dispatch already scores candidates with; the estimate here uses the
 	// same ones so a monitoring agent and the board do not disagree.
 	averageLinehaulMph = 50.0
-	roadCircuityFactor = 1.2
+	roadCircuityFactor = geoutils.RoadCircuityFactor
 
 	// positionStaleAfterSeconds is how old a position may be before it is
 	// reported as stale: a truck that has not reported in an hour is not
@@ -61,6 +61,7 @@ type Snapshot struct {
 	BOL        string         `json:"bol,omitempty"`
 	Status     string         `json:"status"`
 	Customer   string         `json:"customer,omitempty"`
+	Freight    string         `json:"freight,omitempty"`
 	Moves      []MoveSnapshot `json:"moves"`
 	// NextStop is the first stop not yet completed, which is where the
 	// truck is headed or sitting.
@@ -199,6 +200,7 @@ func Build(in Input) *Snapshot {
 	if sp.Customer != nil {
 		snapshot.Customer = sp.Customer.Name
 	}
+	snapshot.Freight = freightText(sp.Weight, sp.Pieces)
 
 	moves := append([]*shipment.ShipmentMove(nil), sp.Moves...)
 	sort.SliceStable(moves, func(i, j int) bool { return moves[i].Sequence < moves[j].Sequence })
@@ -302,6 +304,14 @@ func buildMove(move *shipment.ShipmentMove, in Input) MoveSnapshot {
 			ms.Coverage = board.CoverageType
 		}
 	}
+	if ms.Coverage == string(shipment.MoveCoverageTypeUnassigned) {
+		switch {
+		case ms.Carrier != "":
+			ms.Coverage = string(shipment.MoveCoverageTypeCarrier)
+		case ms.Driver != "":
+			ms.Coverage = string(shipment.MoveCoverageTypeDriver)
+		}
+	}
 
 	stops := append([]*shipment.Stop(nil), move.Stops...)
 	sort.SliceStable(stops, func(i, j int) bool { return stops[i].Sequence < stops[j].Sequence })
@@ -390,7 +400,7 @@ func positionFor(move *MoveSnapshot, in Input) *PositionSnapshot {
 		RecordedAt:        position.RecordedAt,
 		RecordedAtText:    timeutils.FormatUnixDateTimeIn(position.RecordedAt, in.Timezone),
 		AgeMinutes:        age,
-		Stale:             in.Now-position.RecordedAt > positionStaleAfterSeconds,
+		Stale:             PositionStale(position.RecordedAt, in.Now),
 	}
 }
 
@@ -415,7 +425,7 @@ func driverFor(move *MoveSnapshot, in Input) *DriverSnapshot {
 		ShiftRemainingMinutes: state.ShiftRemainingMs / msPerMinute,
 		CycleRemainingMinutes: state.CycleRemainingMs / msPerMinute,
 		RecordedAt:            state.RecordedAt,
-		Stale:                 in.Now-state.RecordedAt > hosStaleAfterSeconds,
+		Stale:                 HOSStale(state.RecordedAt, in.Now),
 	}
 }
 

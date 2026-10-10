@@ -20,11 +20,31 @@ func (s *Service) ListEvents(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 ) ([]*worker.WorkerSafetyEvent, error) {
+	if workerID.IsNil() {
+		return []*worker.WorkerSafetyEvent{}, nil
+	}
+
 	return s.repo.ListEvents(ctx, &repositories.ListWorkerSafetyEventsRequest{
 		TenantInfo:      tenantInfo,
 		WorkerID:        workerID,
 		IncludeDocument: true,
 		IncludeActors:   true,
+	})
+}
+
+// ListOpenEvents is every worker's safety events still open or under review,
+// newest first, with the worker named: what safety work is outstanding across
+// the fleet, which a read by one worker could not answer.
+func (s *Service) ListOpenEvents(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	limit int,
+) ([]*worker.WorkerSafetyEvent, error) {
+	return s.repo.ListEvents(ctx, &repositories.ListWorkerSafetyEventsRequest{
+		TenantInfo:    tenantInfo,
+		OpenOnly:      true,
+		Limit:         limit,
+		IncludeWorker: true,
 	})
 }
 

@@ -3,6 +3,7 @@ package agentruntime
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -265,4 +266,59 @@ func TestDirectedReply_SaysWhatCameOfTheTask(t *testing.T) {
 			assert.Equal(t, tt.want, directedReply(&tt.report))
 		})
 	}
+}
+
+/*
+"bill it", handed to the billing agent in a conversation about one load,
+reached it as those two words alone, and it went looking for which load. The
+conversation's subject and the records it has been working on go with the task.
+*/
+func TestDriveDirected_HandsOverTheRecordsInPlay(t *testing.T) {
+	t.Parallel()
+
+	delegate := reportBuilder()
+	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
+	fx := &delegateRecorder{run: scriptedDelegateRun(delegate)}
+	req := directedRequest(delegate)
+	req.Records = []agent.EntityRef{{Type: "shipment", ID: "shp_01M4HYAB7FKYM27B5JC48Q68MB"}}
+	req.Context.Anchors = []agentdefinition.RuntimeAnchor{
+		{Kind: "invoice", ID: "inv_01M4HYAB7FKYM27B5JC48Q68MC"},
+		{Kind: "worker", ID: "wrk_01M4HYAB7FKYM27B5JC48Q68MD", Note: "withheld"},
+	}
+
+	driveWith(t, rt, req, fx)
+
+	require.Len(t, fx.calls, 1)
+	require.NotNil(t, fx.calls[0].Context)
+	assert.Equal(t, []agent.RecordRef{
+		{EntityType: "shipment", ID: "shp_01M4HYAB7FKYM27B5JC48Q68MB"},
+		{EntityType: "invoice", ID: "inv_01M4HYAB7FKYM27B5JC48Q68MC"},
+	}, fx.calls[0].Context.Records, "a record the person may not read is not handed over")
+	assert.Contains(t, DelegateInput(directedStep, fx.calls[0].Context),
+		"shipment shp_01M4HYAB7FKYM27B5JC48Q68MB")
+}
+
+// The workflow runs a directed task from the turn's saved state and a request
+// that no longer carries the anchors, so the records are kept on the task when
+// the turn opens. Before, the billing agent got "bill it" alone in every real
+// run, though a turn driven directly handed the records over.
+func TestDriveDirected_TheRecordsInPlaySurviveTheTurnsState(t *testing.T) {
+	t.Parallel()
+
+	delegate := reportBuilder()
+	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
+	req := directedRequest(delegate)
+	req.Context.Anchors = []agentdefinition.RuntimeAnchor{
+		{Kind: "shipment", ID: "shp_01M4J2YG6896P8QFJPH2DB8PBA"},
+	}
+
+	state := rt.OpenTurn(t.Context(), req).State()
+	require.NotNil(t, state.Directed)
+	assert.Equal(t, []agent.RecordRef{{EntityType: "shipment", ID: "shp_01M4J2YG6896P8QFJPH2DB8PBA"}},
+		state.Directed.Records)
+
+	bare := directedRequest(delegate)
+	restored := rt.RestoreTurn(bare, state)
+	require.NotNil(t, restored.directed)
+	assert.Equal(t, state.Directed.Records, restored.directed.Records)
 }

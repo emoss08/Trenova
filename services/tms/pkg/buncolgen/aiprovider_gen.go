@@ -199,85 +199,89 @@ var ProviderTable = TableInfo{
 //	q.Where(ProviderColumns.ID.Eq(), id)           // WHERE aiprv.id = ?
 //	q.Order(ProviderColumns.CreatedAt.OrderDesc())  // ORDER BY aiprv.created_at DESC
 var ProviderColumns = struct {
-	ID                   Column // "id" → qualified: "aiprv.id"
-	BusinessUnitID       Column // "business_unit_id" → qualified: "aiprv.business_unit_id"
-	OrganizationID       Column // "organization_id" → qualified: "aiprv.organization_id"
-	Name                 Column // "name" → qualified: "aiprv.name"
-	Description          Column // "description" → qualified: "aiprv.description"
-	Kind                 Column // "kind" → qualified: "aiprv.kind"
-	BaseURL              Column // "base_url" → qualified: "aiprv.base_url"
-	Model                Column // "model" → qualified: "aiprv.model"
-	APIKey               Column // "api_key" → qualified: "aiprv.api_key"
-	AllowPrivateNetwork  Column // "allow_private_network" → qualified: "aiprv.allow_private_network"
-	StructuredOutputMode Column // "structured_output_mode" → qualified: "aiprv.structured_output_mode"
-	MaxTokens            Column // "max_tokens" → qualified: "aiprv.max_tokens"
-	ContextWindowTokens  Column // "context_window" → qualified: "aiprv.context_window"
-	ReasoningEffort      Column // "reasoning_effort" → qualified: "aiprv.reasoning_effort"
-	ThinkingStyle        Column // "thinking_style" → qualified: "aiprv.thinking_style"
-	ExtraBody            Column // "extra_body" → qualified: "aiprv.extra_body"
-	InputCostPerMillion  Column // "input_cost_per_million" → qualified: "aiprv.input_cost_per_million"
-	OutputCostPerMillion Column // "output_cost_per_million" → qualified: "aiprv.output_cost_per_million"
-	Tasks                Column // "tasks" → qualified: "aiprv.tasks"
-	Priority             Column // "priority" → qualified: "aiprv.priority"
-	EmbeddingDimensions  Column // "embedding_dimensions" → qualified: "aiprv.embedding_dimensions"
-	EmbeddingInputStyle  Column // "embedding_input_style" → qualified: "aiprv.embedding_input_style"
-	Trusted              Column // "trusted" → qualified: "aiprv.trusted"
-	Enabled              Column // "enabled" → qualified: "aiprv.enabled"
-	LastTest             Column // "last_test" → qualified: "aiprv.last_test"
-	TimeoutSeconds       Column // "timeout_seconds" → qualified: "aiprv.timeout_seconds"
-	MaxConcurrent        Column // "max_concurrent" → qualified: "aiprv.max_concurrent"
-	MonthlyCapUSD        Column // "monthly_cap_usd" → qualified: "aiprv.monthly_cap_usd"
-	OnCap                Column // "on_cap" → qualified: "aiprv.on_cap"
-	APIKeyPrefix         Column // "api_key_prefix" → qualified: "aiprv.api_key_prefix"
-	APIKeyLastFour       Column // "api_key_last_four" → qualified: "aiprv.api_key_last_four"
-	APIKeyAddedAt        Column // "api_key_added_at" → qualified: "aiprv.api_key_added_at"
-	APIKeyAddedByID      Column // "api_key_added_by_id" → qualified: "aiprv.api_key_added_by_id"
-	APIKeyLastUsedAt     Column // "api_key_last_used_at" → qualified: "aiprv.api_key_last_used_at"
-	PreviousAPIKey       Column // "previous_api_key" → qualified: "aiprv.previous_api_key"
-	RotationExpiresAt    Column // "rotation_expires_at" → qualified: "aiprv.rotation_expires_at"
-	Version              Column // "version" → qualified: "aiprv.version"
-	CreatedAt            Column // "created_at" → qualified: "aiprv.created_at"
-	UpdatedAt            Column // "updated_at" → qualified: "aiprv.updated_at"
+	ID                       Column // "id" → qualified: "aiprv.id"
+	BusinessUnitID           Column // "business_unit_id" → qualified: "aiprv.business_unit_id"
+	OrganizationID           Column // "organization_id" → qualified: "aiprv.organization_id"
+	Name                     Column // "name" → qualified: "aiprv.name"
+	Description              Column // "description" → qualified: "aiprv.description"
+	Kind                     Column // "kind" → qualified: "aiprv.kind"
+	BaseURL                  Column // "base_url" → qualified: "aiprv.base_url"
+	Model                    Column // "model" → qualified: "aiprv.model"
+	APIKey                   Column // "api_key" → qualified: "aiprv.api_key"
+	AllowPrivateNetwork      Column // "allow_private_network" → qualified: "aiprv.allow_private_network"
+	StructuredOutputMode     Column // "structured_output_mode" → qualified: "aiprv.structured_output_mode"
+	MaxTokens                Column // "max_tokens" → qualified: "aiprv.max_tokens"
+	ContextWindowTokens      Column // "context_window" → qualified: "aiprv.context_window"
+	ReasoningEffort          Column // "reasoning_effort" → qualified: "aiprv.reasoning_effort"
+	ThinkingStyle            Column // "thinking_style" → qualified: "aiprv.thinking_style"
+	ExtraBody                Column // "extra_body" → qualified: "aiprv.extra_body"
+	InputCostPerMillion      Column // "input_cost_per_million" → qualified: "aiprv.input_cost_per_million"
+	OutputCostPerMillion     Column // "output_cost_per_million" → qualified: "aiprv.output_cost_per_million"
+	CacheReadCostPerMillion  Column // "cache_read_cost_per_million" → qualified: "aiprv.cache_read_cost_per_million"
+	CacheWriteCostPerMillion Column // "cache_write_cost_per_million" → qualified: "aiprv.cache_write_cost_per_million"
+	Tasks                    Column // "tasks" → qualified: "aiprv.tasks"
+	Priority                 Column // "priority" → qualified: "aiprv.priority"
+	EmbeddingDimensions      Column // "embedding_dimensions" → qualified: "aiprv.embedding_dimensions"
+	EmbeddingInputStyle      Column // "embedding_input_style" → qualified: "aiprv.embedding_input_style"
+	Trusted                  Column // "trusted" → qualified: "aiprv.trusted"
+	Enabled                  Column // "enabled" → qualified: "aiprv.enabled"
+	LastTest                 Column // "last_test" → qualified: "aiprv.last_test"
+	TimeoutSeconds           Column // "timeout_seconds" → qualified: "aiprv.timeout_seconds"
+	MaxConcurrent            Column // "max_concurrent" → qualified: "aiprv.max_concurrent"
+	MonthlyCapUSD            Column // "monthly_cap_usd" → qualified: "aiprv.monthly_cap_usd"
+	OnCap                    Column // "on_cap" → qualified: "aiprv.on_cap"
+	APIKeyPrefix             Column // "api_key_prefix" → qualified: "aiprv.api_key_prefix"
+	APIKeyLastFour           Column // "api_key_last_four" → qualified: "aiprv.api_key_last_four"
+	APIKeyAddedAt            Column // "api_key_added_at" → qualified: "aiprv.api_key_added_at"
+	APIKeyAddedByID          Column // "api_key_added_by_id" → qualified: "aiprv.api_key_added_by_id"
+	APIKeyLastUsedAt         Column // "api_key_last_used_at" → qualified: "aiprv.api_key_last_used_at"
+	PreviousAPIKey           Column // "previous_api_key" → qualified: "aiprv.previous_api_key"
+	RotationExpiresAt        Column // "rotation_expires_at" → qualified: "aiprv.rotation_expires_at"
+	Version                  Column // "version" → qualified: "aiprv.version"
+	CreatedAt                Column // "created_at" → qualified: "aiprv.created_at"
+	UpdatedAt                Column // "updated_at" → qualified: "aiprv.updated_at"
 }{
-	ID:                   NewColumn("id", "aiprv"),
-	BusinessUnitID:       NewColumn("business_unit_id", "aiprv"),
-	OrganizationID:       NewColumn("organization_id", "aiprv"),
-	Name:                 NewColumn("name", "aiprv"),
-	Description:          NewColumn("description", "aiprv"),
-	Kind:                 NewColumn("kind", "aiprv"),
-	BaseURL:              NewColumn("base_url", "aiprv"),
-	Model:                NewColumn("model", "aiprv"),
-	APIKey:               NewColumn("api_key", "aiprv"),
-	AllowPrivateNetwork:  NewColumn("allow_private_network", "aiprv"),
-	StructuredOutputMode: NewColumn("structured_output_mode", "aiprv"),
-	MaxTokens:            NewColumn("max_tokens", "aiprv"),
-	ContextWindowTokens:  NewColumn("context_window", "aiprv"),
-	ReasoningEffort:      NewColumn("reasoning_effort", "aiprv"),
-	ThinkingStyle:        NewColumn("thinking_style", "aiprv"),
-	ExtraBody:            NewColumn("extra_body", "aiprv"),
-	InputCostPerMillion:  NewColumn("input_cost_per_million", "aiprv"),
-	OutputCostPerMillion: NewColumn("output_cost_per_million", "aiprv"),
-	Tasks:                NewColumn("tasks", "aiprv"),
-	Priority:             NewColumn("priority", "aiprv"),
-	EmbeddingDimensions:  NewColumn("embedding_dimensions", "aiprv"),
-	EmbeddingInputStyle:  NewColumn("embedding_input_style", "aiprv"),
-	Trusted:              NewColumn("trusted", "aiprv"),
-	Enabled:              NewColumn("enabled", "aiprv"),
-	LastTest:             NewColumn("last_test", "aiprv"),
-	TimeoutSeconds:       NewColumn("timeout_seconds", "aiprv"),
-	MaxConcurrent:        NewColumn("max_concurrent", "aiprv"),
-	MonthlyCapUSD:        NewColumn("monthly_cap_usd", "aiprv"),
-	OnCap:                NewColumn("on_cap", "aiprv"),
-	APIKeyPrefix:         NewColumn("api_key_prefix", "aiprv"),
-	APIKeyLastFour:       NewColumn("api_key_last_four", "aiprv"),
-	APIKeyAddedAt:        NewColumn("api_key_added_at", "aiprv"),
-	APIKeyAddedByID:      NewColumn("api_key_added_by_id", "aiprv"),
-	APIKeyLastUsedAt:     NewColumn("api_key_last_used_at", "aiprv"),
-	PreviousAPIKey:       NewColumn("previous_api_key", "aiprv"),
-	RotationExpiresAt:    NewColumn("rotation_expires_at", "aiprv"),
-	Version:              NewColumn("version", "aiprv"),
-	CreatedAt:            NewColumn("created_at", "aiprv"),
-	UpdatedAt:            NewColumn("updated_at", "aiprv"),
+	ID:                       NewColumn("id", "aiprv"),
+	BusinessUnitID:           NewColumn("business_unit_id", "aiprv"),
+	OrganizationID:           NewColumn("organization_id", "aiprv"),
+	Name:                     NewColumn("name", "aiprv"),
+	Description:              NewColumn("description", "aiprv"),
+	Kind:                     NewColumn("kind", "aiprv"),
+	BaseURL:                  NewColumn("base_url", "aiprv"),
+	Model:                    NewColumn("model", "aiprv"),
+	APIKey:                   NewColumn("api_key", "aiprv"),
+	AllowPrivateNetwork:      NewColumn("allow_private_network", "aiprv"),
+	StructuredOutputMode:     NewColumn("structured_output_mode", "aiprv"),
+	MaxTokens:                NewColumn("max_tokens", "aiprv"),
+	ContextWindowTokens:      NewColumn("context_window", "aiprv"),
+	ReasoningEffort:          NewColumn("reasoning_effort", "aiprv"),
+	ThinkingStyle:            NewColumn("thinking_style", "aiprv"),
+	ExtraBody:                NewColumn("extra_body", "aiprv"),
+	InputCostPerMillion:      NewColumn("input_cost_per_million", "aiprv"),
+	OutputCostPerMillion:     NewColumn("output_cost_per_million", "aiprv"),
+	CacheReadCostPerMillion:  NewColumn("cache_read_cost_per_million", "aiprv"),
+	CacheWriteCostPerMillion: NewColumn("cache_write_cost_per_million", "aiprv"),
+	Tasks:                    NewColumn("tasks", "aiprv"),
+	Priority:                 NewColumn("priority", "aiprv"),
+	EmbeddingDimensions:      NewColumn("embedding_dimensions", "aiprv"),
+	EmbeddingInputStyle:      NewColumn("embedding_input_style", "aiprv"),
+	Trusted:                  NewColumn("trusted", "aiprv"),
+	Enabled:                  NewColumn("enabled", "aiprv"),
+	LastTest:                 NewColumn("last_test", "aiprv"),
+	TimeoutSeconds:           NewColumn("timeout_seconds", "aiprv"),
+	MaxConcurrent:            NewColumn("max_concurrent", "aiprv"),
+	MonthlyCapUSD:            NewColumn("monthly_cap_usd", "aiprv"),
+	OnCap:                    NewColumn("on_cap", "aiprv"),
+	APIKeyPrefix:             NewColumn("api_key_prefix", "aiprv"),
+	APIKeyLastFour:           NewColumn("api_key_last_four", "aiprv"),
+	APIKeyAddedAt:            NewColumn("api_key_added_at", "aiprv"),
+	APIKeyAddedByID:          NewColumn("api_key_added_by_id", "aiprv"),
+	APIKeyLastUsedAt:         NewColumn("api_key_last_used_at", "aiprv"),
+	PreviousAPIKey:           NewColumn("previous_api_key", "aiprv"),
+	RotationExpiresAt:        NewColumn("rotation_expires_at", "aiprv"),
+	Version:                  NewColumn("version", "aiprv"),
+	CreatedAt:                NewColumn("created_at", "aiprv"),
+	UpdatedAt:                NewColumn("updated_at", "aiprv"),
 }
 
 // ProviderFieldMap maps JSON API field names to database column names.
@@ -285,43 +289,45 @@ var ProviderColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by Provider.GetStaticFieldMap().
 var ProviderFieldMap = map[string]string{
-	"id":                   "id",
-	"businessUnitId":       "business_unit_id",
-	"organizationId":       "organization_id",
-	"name":                 "name",
-	"description":          "description",
-	"kind":                 "kind",
-	"baseUrl":              "base_url",
-	"model":                "model",
-	"allowPrivateNetwork":  "allow_private_network",
-	"structuredOutputMode": "structured_output_mode",
-	"maxTokens":            "max_tokens",
-	"contextWindow":        "context_window",
-	"reasoningEffort":      "reasoning_effort",
-	"thinkingStyle":        "thinking_style",
-	"extraBody":            "extra_body",
-	"inputCostPerMillion":  "input_cost_per_million",
-	"outputCostPerMillion": "output_cost_per_million",
-	"tasks":                "tasks",
-	"priority":             "priority",
-	"embeddingDimensions":  "embedding_dimensions",
-	"embeddingInputStyle":  "embedding_input_style",
-	"trusted":              "trusted",
-	"enabled":              "enabled",
-	"lastTest":             "last_test",
-	"timeoutSeconds":       "timeout_seconds",
-	"maxConcurrent":        "max_concurrent",
-	"monthlyCapUsd":        "monthly_cap_usd",
-	"onCap":                "on_cap",
-	"apiKeyPrefix":         "api_key_prefix",
-	"apiKeyLastFour":       "api_key_last_four",
-	"apiKeyAddedAt":        "api_key_added_at",
-	"apiKeyAddedById":      "api_key_added_by_id",
-	"apiKeyLastUsedAt":     "api_key_last_used_at",
-	"rotationExpiresAt":    "rotation_expires_at",
-	"version":              "version",
-	"createdAt":            "created_at",
-	"updatedAt":            "updated_at",
+	"id":                       "id",
+	"businessUnitId":           "business_unit_id",
+	"organizationId":           "organization_id",
+	"name":                     "name",
+	"description":              "description",
+	"kind":                     "kind",
+	"baseUrl":                  "base_url",
+	"model":                    "model",
+	"allowPrivateNetwork":      "allow_private_network",
+	"structuredOutputMode":     "structured_output_mode",
+	"maxTokens":                "max_tokens",
+	"contextWindow":            "context_window",
+	"reasoningEffort":          "reasoning_effort",
+	"thinkingStyle":            "thinking_style",
+	"extraBody":                "extra_body",
+	"inputCostPerMillion":      "input_cost_per_million",
+	"outputCostPerMillion":     "output_cost_per_million",
+	"cacheReadCostPerMillion":  "cache_read_cost_per_million",
+	"cacheWriteCostPerMillion": "cache_write_cost_per_million",
+	"tasks":                    "tasks",
+	"priority":                 "priority",
+	"embeddingDimensions":      "embedding_dimensions",
+	"embeddingInputStyle":      "embedding_input_style",
+	"trusted":                  "trusted",
+	"enabled":                  "enabled",
+	"lastTest":                 "last_test",
+	"timeoutSeconds":           "timeout_seconds",
+	"maxConcurrent":            "max_concurrent",
+	"monthlyCapUsd":            "monthly_cap_usd",
+	"onCap":                    "on_cap",
+	"apiKeyPrefix":             "api_key_prefix",
+	"apiKeyLastFour":           "api_key_last_four",
+	"apiKeyAddedAt":            "api_key_added_at",
+	"apiKeyAddedById":          "api_key_added_by_id",
+	"apiKeyLastUsedAt":         "api_key_last_used_at",
+	"rotationExpiresAt":        "rotation_expires_at",
+	"version":                  "version",
+	"createdAt":                "created_at",
+	"updatedAt":                "updated_at",
 }
 
 // ProviderInsertableColumns lists column names suitable for INSERT statements on the "ai_providers" table.
@@ -345,6 +351,8 @@ var ProviderInsertableColumns = []string{
 	"extra_body",
 	"input_cost_per_million",
 	"output_cost_per_million",
+	"cache_read_cost_per_million",
+	"cache_write_cost_per_million",
 	"tasks",
 	"priority",
 	"embedding_dimensions",
@@ -431,43 +439,45 @@ func ProviderApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.S
 //	ProviderFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var ProviderFilter = struct {
-	ID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	Name                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
-	Description          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
-	Kind                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
-	BaseURL              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "baseUrl" → DB: "base_url"
-	Model                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "model" → DB: "model"
-	AllowPrivateNetwork  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowPrivateNetwork" → DB: "allow_private_network"
-	StructuredOutputMode func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "structuredOutputMode" → DB: "structured_output_mode"
-	MaxTokens            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxTokens" → DB: "max_tokens"
-	ContextWindowTokens  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contextWindow" → DB: "context_window"
-	ReasoningEffort      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reasoningEffort" → DB: "reasoning_effort"
-	ThinkingStyle        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "thinkingStyle" → DB: "thinking_style"
-	ExtraBody            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "extraBody" → DB: "extra_body"
-	InputCostPerMillion  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputCostPerMillion" → DB: "input_cost_per_million"
-	OutputCostPerMillion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outputCostPerMillion" → DB: "output_cost_per_million"
-	Tasks                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tasks" → DB: "tasks"
-	Priority             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "priority" → DB: "priority"
-	EmbeddingDimensions  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "embeddingDimensions" → DB: "embedding_dimensions"
-	EmbeddingInputStyle  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "embeddingInputStyle" → DB: "embedding_input_style"
-	Trusted              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "trusted" → DB: "trusted"
-	Enabled              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enabled" → DB: "enabled"
-	LastTest             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastTest" → DB: "last_test"
-	TimeoutSeconds       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "timeoutSeconds" → DB: "timeout_seconds"
-	MaxConcurrent        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxConcurrent" → DB: "max_concurrent"
-	MonthlyCapUSD        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "monthlyCapUsd" → DB: "monthly_cap_usd"
-	OnCap                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "onCap" → DB: "on_cap"
-	APIKeyPrefix         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "apiKeyPrefix" → DB: "api_key_prefix"
-	APIKeyLastFour       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "apiKeyLastFour" → DB: "api_key_last_four"
-	APIKeyAddedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "apiKeyAddedAt" → DB: "api_key_added_at"
-	APIKeyAddedByID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "apiKeyAddedById" → DB: "api_key_added_by_id"
-	APIKeyLastUsedAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "apiKeyLastUsedAt" → DB: "api_key_last_used_at"
-	RotationExpiresAt    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rotationExpiresAt" → DB: "rotation_expires_at"
-	Version              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	Name                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Description              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	Kind                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
+	BaseURL                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "baseUrl" → DB: "base_url"
+	Model                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "model" → DB: "model"
+	AllowPrivateNetwork      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowPrivateNetwork" → DB: "allow_private_network"
+	StructuredOutputMode     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "structuredOutputMode" → DB: "structured_output_mode"
+	MaxTokens                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxTokens" → DB: "max_tokens"
+	ContextWindowTokens      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contextWindow" → DB: "context_window"
+	ReasoningEffort          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reasoningEffort" → DB: "reasoning_effort"
+	ThinkingStyle            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "thinkingStyle" → DB: "thinking_style"
+	ExtraBody                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "extraBody" → DB: "extra_body"
+	InputCostPerMillion      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputCostPerMillion" → DB: "input_cost_per_million"
+	OutputCostPerMillion     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outputCostPerMillion" → DB: "output_cost_per_million"
+	CacheReadCostPerMillion  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cacheReadCostPerMillion" → DB: "cache_read_cost_per_million"
+	CacheWriteCostPerMillion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cacheWriteCostPerMillion" → DB: "cache_write_cost_per_million"
+	Tasks                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tasks" → DB: "tasks"
+	Priority                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "priority" → DB: "priority"
+	EmbeddingDimensions      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "embeddingDimensions" → DB: "embedding_dimensions"
+	EmbeddingInputStyle      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "embeddingInputStyle" → DB: "embedding_input_style"
+	Trusted                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "trusted" → DB: "trusted"
+	Enabled                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enabled" → DB: "enabled"
+	LastTest                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastTest" → DB: "last_test"
+	TimeoutSeconds           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "timeoutSeconds" → DB: "timeout_seconds"
+	MaxConcurrent            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxConcurrent" → DB: "max_concurrent"
+	MonthlyCapUSD            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "monthlyCapUsd" → DB: "monthly_cap_usd"
+	OnCap                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "onCap" → DB: "on_cap"
+	APIKeyPrefix             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "apiKeyPrefix" → DB: "api_key_prefix"
+	APIKeyLastFour           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "apiKeyLastFour" → DB: "api_key_last_four"
+	APIKeyAddedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "apiKeyAddedAt" → DB: "api_key_added_at"
+	APIKeyAddedByID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "apiKeyAddedById" → DB: "api_key_added_by_id"
+	APIKeyLastUsedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "apiKeyLastUsedAt" → DB: "api_key_last_used_at"
+	RotationExpiresAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rotationExpiresAt" → DB: "rotation_expires_at"
+	Version                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -519,6 +529,12 @@ var ProviderFilter = struct {
 	},
 	OutputCostPerMillion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("outputCostPerMillion", op, value)
+	},
+	CacheReadCostPerMillion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("cacheReadCostPerMillion", op, value)
+	},
+	CacheWriteCostPerMillion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("cacheWriteCostPerMillion", op, value)
 	},
 	Tasks: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("tasks", op, value)

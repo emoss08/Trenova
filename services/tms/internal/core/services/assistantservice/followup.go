@@ -4,6 +4,8 @@ import (
 	"cmp"
 	"context"
 	"fmt"
+	"github.com/bytedance/sonic"
+	"maps"
 	"slices"
 	"strings"
 
@@ -108,13 +110,15 @@ func (s *Service) decisionNote(ctx context.Context, p decisionNoteParams) (strin
 		return "", multiErr
 	}
 
-	note, err := s.personNote(ctx, p.tenant, []pulid.ID{proposal.ID})
+	decisions, err := s.decisionsOn(ctx, p.tenant, []pulid.ID{proposal.ID})
 	if err != nil {
 		return "", err
 	}
+	note := noteFrom(decisions, []pulid.ID{proposal.ID})
 
-	return fmt.Sprintf("%s\nDecision on proposal %s (%s). %s%s",
-		decisionLine(proposal), proposal.ID, proposal.ToolName, producedNote(proposal),
+	return fmt.Sprintf("%s%s\nDecision on proposal %s (%s). %s%s",
+		decisionLine(proposal), ranWith(proposal, decisions), proposal.ID, proposal.ToolName,
+		producedNote(proposal),
 		followUpAsk(proposal.Status == agent.ProposalStatusRejected, note)), nil
 }
 
@@ -123,33 +127,90 @@ func (s *Service) personNote(
 	tenant pagination.TenantInfo,
 	proposalIDs []pulid.ID,
 ) (string, error) {
-	if s.decisions == nil || len(proposalIDs) == 0 {
-		return "", nil
+	decisions, err := s.decisionsOn(ctx, tenant, proposalIDs)
+	if err != nil {
+		return "", err
 	}
 
-	decisions, err := s.decisions.ListByProposals(
+	return noteFrom(decisions, proposalIDs), nil
+}
+
+func (s *Service) decisionsOn(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	proposalIDs []pulid.ID,
+) ([]*agent.AgentDecision, error) {
+	if s.decisions == nil || len(proposalIDs) == 0 {
+		return nil, nil
+	}
+
+	return s.decisions.ListByProposals(
 		ctx,
 		repositories.ListAgentDecisionsByProposalsRequest{
 			ProposalIDs: proposalIDs,
 			TenantInfo:  tenant,
 		},
 	)
-	if err != nil {
-		return "", err
-	}
+}
 
+func noteFrom(decisions []*agent.AgentDecision, proposalIDs []pulid.ID) string {
 	for _, id := range proposalIDs {
 		for _, decision := range decisions {
 			if decision == nil || decision.ProposalID == nil || *decision.ProposalID != id {
 				continue
 			}
 			if note := agent.NormalizeDecisionNote(decision.Note); note != "" {
-				return note, nil
+				return note
 			}
 		}
 	}
 
-	return "", nil
+	return ""
+}
+
+// ranWith names the values a write that reports no result of its own ran with,
+// as the person approved them (their changes on the card over what was
+// proposed), leaving out ids and the agent's own rationale. "Approved
+// update_shipment, and it ran" left the agent nothing to tell the person, and
+// it wrote that the weight change had run without saying the weight.
+func ranWith(proposal *agent.AgentProposal, decisions []*agent.AgentDecision) string {
+	if proposal.Status != agent.ProposalStatusExecuted ||
+		proposal.ExecutionResult.Describe() != "" || len(proposal.ToolParams) == 0 {
+		return ""
+	}
+
+	values := maps.Clone(proposal.ToolParams)
+	for _, decision := range decisions {
+		if decision != nil && decision.ProposalID != nil && *decision.ProposalID == proposal.ID {
+			maps.Copy(values, decision.Modifications)
+		}
+	}
+
+	parts := make([]string, 0, len(values))
+	for _, key := range slices.Sorted(maps.Keys(values)) {
+		if key == agentruntime.StepRationaleParam || strings.HasSuffix(key, "Id") ||
+			strings.HasSuffix(key, "Ids") {
+			continue
+		}
+		parts = append(parts, key+": "+argumentText(values[key]))
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+
+	return " It ran with " + strings.Join(parts, "; ") + "."
+}
+
+func argumentText(value any) string {
+	if text, ok := value.(string); ok {
+		return text
+	}
+	encoded, err := sonic.MarshalString(value)
+	if err != nil {
+		return fmt.Sprint(value)
+	}
+
+	return encoded
 }
 
 func followUpAsk(declined bool, note string) string {

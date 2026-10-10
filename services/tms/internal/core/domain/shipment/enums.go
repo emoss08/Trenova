@@ -79,6 +79,16 @@ const (
 	MoveStatusCanceled  = MoveStatus("Canceled")
 )
 
+func MoveStatuses() []MoveStatus {
+	return []MoveStatus{
+		MoveStatusNew,
+		MoveStatusAssigned,
+		MoveStatusInTransit,
+		MoveStatusCompleted,
+		MoveStatusCanceled,
+	}
+}
+
 type AssignmentAck string
 
 const (

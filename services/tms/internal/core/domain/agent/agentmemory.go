@@ -392,6 +392,11 @@ type Memory struct {
 	CreatedByUserID  *pulid.ID `json:"createdByUserId"   bun:"created_by_user_id,type:VARCHAR(100),nullzero"`
 	RetiredByUserID  *pulid.ID `json:"retiredByUserId"   bun:"retired_by_user_id,type:VARCHAR(100),nullzero"`
 	RetiredAt        *int64    `json:"retiredAt"         bun:"retired_at,type:BIGINT,nullzero"`
+	// ReviewedByUserID is the person who read a tainted memory and kept it,
+	// approving it as a suggestion or reviewing it in AI Control. Tainted
+	// still says where it came from; a reviewed memory taints no turn.
+	ReviewedByUserID *pulid.ID `json:"reviewedByUserId"  bun:"reviewed_by_user_id,type:VARCHAR(100),nullzero"`
+	ReviewedAt       *int64    `json:"reviewedAt"        bun:"reviewed_at,type:BIGINT,nullzero"`
 	ExpiresAt        *int64    `json:"expiresAt"         bun:"expires_at,type:BIGINT,nullzero"`
 
 	UseCount   int    `json:"useCount"   bun:"use_count,type:INTEGER,notnull,default:0"`
@@ -618,12 +623,24 @@ func (m *Memory) ApprovedByPerson() bool {
 		m.CreatedByUserID != nil && m.CreatedByUserID.IsNotNil()
 }
 
+// Reviewed reports whether a person has read the memory and kept it.
+func (m *Memory) Reviewed() bool {
+	return m != nil && m.ReviewedAt != nil && m.ReviewedByUserID != nil &&
+		m.ReviewedByUserID.IsNotNil()
+}
+
+// Taints reports whether reading the memory taints a turn: it was written
+// after outside content and no person has reviewed it since.
+func (m *Memory) Taints() bool {
+	return m != nil && m.Tainted && !m.Reviewed()
+}
+
 func (m *Memory) DrawnFromOutside() bool {
-	return m != nil && m.Tainted && !m.ApprovedByPerson()
+	return m.Taints() && !m.ApprovedByPerson()
 }
 
 func (m *Memory) TaintedRecords() []RecordRef {
-	if m == nil || !m.Tainted {
+	if !m.Taints() {
 		return nil
 	}
 

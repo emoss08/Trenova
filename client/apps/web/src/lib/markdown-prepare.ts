@@ -111,3 +111,19 @@ export function prepareMarkdown(text: string, { streaming = false } = {}): strin
     )
     .join("");
 }
+
+/** A dollar sign the money rule above left unescaped: the start or end of math. */
+const MATH_DELIMITER = /(?<!\\)\$/u;
+
+/**
+ * Whether markdown that has been through prepareMarkdown has math in it
+ * outside code, so the typesetter is fetched only for a reply that needs it.
+ * A sign that escaped the money rule but is not math only costs a fetch.
+ */
+export function markdownHasMath(prepared: string): boolean {
+  if (!prepared.includes("$")) {
+    return false;
+  }
+
+  return segments(prepared).some((part) => !part.code && MATH_DELIMITER.test(part.text));
+}

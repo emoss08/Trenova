@@ -3,6 +3,7 @@ package agentruntime
 import (
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 )
@@ -16,6 +17,9 @@ func directedTask(req *serviceports.RunRequest) *serviceports.DirectedTask {
 		return nil
 	}
 	task := *req.Directed
+	if len(task.Records) == 0 {
+		task.Records = recordsInPlay(req)
+	}
 
 	return &task
 }
@@ -78,6 +82,7 @@ func (s *Service) driveDirected(t *Turn, fx TurnEffects) *serviceports.RunResult
 		call:     call,
 		delegate: directed.Delegate,
 		task:     directed.Task,
+		handed:   handedRecords(directed.Records),
 		directed: true,
 	})
 	result.ToolCallsUsed++
@@ -87,6 +92,36 @@ func (s *Service) driveDirected(t *Turn, fx TurnEffects) *serviceports.RunResult
 	fx.Emit(deltaEvent(reply))
 
 	return s.finish(result, &serviceports.ChatCompletionResult{Text: reply}, fx)
+}
+
+// recordsInPlay hands the conversation's subject and the records it has been
+// working on to the agent the person turned to. Without them "bill it" reached
+// the billing agent as two words, and it went looking for which load.
+func recordsInPlay(req *serviceports.RunRequest) []agent.RecordRef {
+	watched := watchedRecords(req)
+	records := make([]agent.RecordRef, 0, min(len(watched), maxDelegateRecords))
+	for _, record := range watched {
+		if len(records) == maxDelegateRecords {
+			break
+		}
+		if record.Type == "" || record.ID == "" {
+			continue
+		}
+		records = append(records, agent.RecordRef{EntityType: record.Type, ID: record.ID})
+	}
+	if len(records) == 0 {
+		return nil
+	}
+
+	return records
+}
+
+func handedRecords(records []agent.RecordRef) *DelegateContext {
+	if len(records) == 0 {
+		return nil
+	}
+
+	return &DelegateContext{Records: records}
 }
 
 // directedReply is what closes a directed turn: the other agent's answer,

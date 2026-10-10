@@ -221,7 +221,8 @@ func TestScore_WeightsRenormaliseOverTheChecksThatApply(t *testing.T) {
 	expected := (WeightFactGuard*1 + WeightMentions*0.5 + WeightReplyForm*1) /
 		(WeightFactGuard + WeightMentions + WeightReplyForm)
 	assert.InDelta(t, expected, checks.Deterministic, 1e-9)
-	assert.False(t, checks.Passed)
+	assert.Equal(t, expected >= PassThreshold, checks.Passed,
+		"the pass follows the renormalised score, not the weights of checks that do not apply")
 }
 
 func TestScore_NothingToCheckScoresFull(t *testing.T) {

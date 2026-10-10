@@ -2,6 +2,7 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/documentshipmentdraft"
@@ -128,6 +129,7 @@ func TestGetShipmentDraft_RejectsAMismatchedActor(t *testing.T) {
 type fakeQuoter struct {
 	rated   *serviceports.RatedShipment
 	lastReq *ratequoteservice.QuoteRequest
+	miles   float64
 }
 
 func (f *fakeQuoter) Quote(
@@ -135,6 +137,12 @@ func (f *fakeQuoter) Quote(
 	req *ratequoteservice.QuoteRequest,
 ) (*serviceports.RatedShipment, error) {
 	f.lastReq = req
+	if f.miles > 0 && req.Shipment != nil {
+		for _, move := range req.Shipment.Moves {
+			miles := f.miles
+			move.Distance = &miles
+		}
+	}
 
 	return f.rated, nil
 }
@@ -175,7 +183,7 @@ func TestQuoteShipment_BuildsTheLaneFromLocationsAndNeverPersists(t *testing.T) 
 		State:      &usstate.UsState{Abbreviation: "TX"},
 	}
 	agreementID := pulid.MustNew("ragr_")
-	quoter := &fakeQuoter{rated: &serviceports.RatedShipment{
+	quoter := &fakeQuoter{miles: 240, rated: &serviceports.RatedShipment{
 		Amount: decimal.NewFromInt(1450), Currency: "USD", Outcome: ratequote.OutcomeRated,
 		AgreementID: &agreementID, BaseRate: decimal.NewNullDecimal(decimal.NewFromFloat(2.9)),
 	}}
@@ -207,6 +215,7 @@ func TestQuoteShipment_BuildsTheLaneFromLocationsAndNeverPersists(t *testing.T) 
 	assert.Equal(t, "1450", view.Amount.String())
 	assert.Equal(t, agreementID.String(), view.AgreementID)
 	assert.Equal(t, []string{"Dallas, TX, 75201", "Houston, TX, 77001"}, view.Lane)
+	assert.InDelta(t, 240.0, view.TotalDistance, 0.001)
 	assert.Empty(t, view.Note)
 
 	require.NotNil(t, quoter.lastReq)
@@ -318,7 +327,10 @@ func TestShopCarriers_RanksOptionsWithMarginAndPassesTheShortlist(t *testing.T) 
 		},
 		Warnings: []string{"No Contract Inc has no agreement on this lane"},
 	}}
-	tool := newShopCarriersTool(shopper)
+	tool := newShopCarriersTool(shopper, &shopCarriers{carriers: []*carrier.Carrier{
+		{ID: carrierA, Status: carrier.StatusActive, ComplianceStatus: carrier.ComplianceStatusQualified},
+		{ID: carrierB, Status: carrier.StatusActive, ComplianceStatus: carrier.ComplianceStatusPending},
+	}})
 
 	shipmentID := pulid.MustNew("shp_")
 	result, err := tool.Query(t.Context(), testParams(map[string]any{
@@ -334,11 +346,26 @@ func TestShopCarriers_RanksOptionsWithMarginAndPassesTheShortlist(t *testing.T) 
 	assert.True(t, view.Options[0].Priced)
 	assert.Equal(t, "25", view.Options[0].MarginPercent.String())
 	assert.False(t, view.Options[1].Priced)
+	assert.Equal(t, "Qualified", view.Options[0].Compliance)
+	assert.Equal(t, "Active", view.Options[0].Status)
+	assert.Equal(t, "Pending", view.Options[1].Compliance,
+		"a carrier not yet qualified says so on its option")
 	assert.Equal(t, "2000", view.SellTotal.String())
 	assert.Len(t, view.Warnings, 1)
+	assert.Contains(t, view.Note, "Flat baseRate",
+		"a priced shop says its cost is the rate a carrier assignment takes")
 
 	assert.Equal(t, shipmentID, shopper.lastReq.ShipmentID)
 	assert.Equal(t, []pulid.ID{carrierA, carrierB}, shopper.lastReq.CarrierIDs)
 	assert.Equal(t, 2, shopper.lastReq.Limit)
 	assert.False(t, shopper.lastReq.Persist)
+}
+
+type shopCarriers struct{ carriers []*carrier.Carrier }
+
+func (s *shopCarriers) GetByIDs(
+	context.Context,
+	repositories.GetCarriersByIDsRequest,
+) ([]*carrier.Carrier, error) {
+	return s.carriers, nil
 }

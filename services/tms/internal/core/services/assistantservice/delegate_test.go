@@ -196,7 +196,7 @@ func newDelegateFixture() *delegateFixture {
 // The delegate's turn is opened as the delegate, as the same person, marked as
 // working for the agent that asked: it never holds delegate_task, and it is
 // not unattended, so a write that is the person's own still runs as theirs.
-var clockLinePrefix = regexp.MustCompile(`^Now: \d{4}-\d{2}-\d{2} \d{2}:\d{2} \S+\n\n`)
+var clockLinePrefix = regexp.MustCompile(`^Now: [A-Z][a-z]+ \d{4}-\d{2}-\d{2} \d{2}:\d{2} \S+\n\n`)
 
 func TestOpenDelegate_OpensTheDelegatesOwnTurnForTheSamePerson(t *testing.T) {
 	t.Parallel()

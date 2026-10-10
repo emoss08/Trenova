@@ -30,3 +30,15 @@ func FormatLongDurationMs(ms int64) string {
 	}
 	return fmt.Sprintf("%dm", ms/60_000)
 }
+
+func DescribeAgo(at, now int64) string {
+	if at <= 0 {
+		return ""
+	}
+	elapsed := now - at
+	if elapsed < 60 {
+		return "just now"
+	}
+
+	return FormatLongDurationMs(elapsed*1000) + " ago"
+}

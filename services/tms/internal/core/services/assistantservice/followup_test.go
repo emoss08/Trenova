@@ -277,3 +277,43 @@ func TestFollowUpInstruction_KeepsTheReplyToWhatTheNoteAndTheCardHold(t *testing
 		"Report only what this note and the proposal's card hold")
 	assert.Contains(t, followUpInstruction, "Do not propose the same change again.")
 }
+
+func (s *stubPlanStore) ExpirePendingByThread(
+	context.Context,
+	repositories.ExpireAgentPlansByThreadRequest,
+) (int, error) {
+	return 0, nil
+}
+
+// "Approved update_shipment, and it ran" left the agent nothing to say, and
+// gpt-6-luna reported the weight change without the weight. A write that
+// reports no result says what it ran with, the approver's changes winning.
+func TestRanWith_NamesTheApprovedValuesOfAWriteWithNoResult(t *testing.T) {
+	t.Parallel()
+
+	proposal := &agent.AgentProposal{
+		ID:       pulid.MustNew("ap_"),
+		Status:   agent.ProposalStatusExecuted,
+		ToolName: "update_shipment",
+		ToolParams: map[string]any{
+			"shipmentId": "shp_1",
+			"weight":     float64(38500),
+			"pieces":     float64(10),
+			"_why":       map[string]any{"because": "the person said so"},
+		},
+	}
+	changed := []*agent.AgentDecision{{
+		ProposalID:    &proposal.ID,
+		Modifications: map[string]any{"pieces": float64(12)},
+	}}
+
+	got := ranWith(proposal, changed)
+	assert.Equal(t, " It ran with pieces: 12; weight: 38500.", got)
+
+	proposal.ExecutionResult = &agent.ToolExecutionResult{Action: "created", Kind: "report", Name: "On-time"}
+	assert.Empty(t, ranWith(proposal, nil), "a write that describes its own result says that instead")
+
+	proposal.ExecutionResult = nil
+	proposal.Status = agent.ProposalStatusRejected
+	assert.Empty(t, ranWith(proposal, nil))
+}

@@ -50,7 +50,8 @@ func (t *recordStopActualTool) Description() string {
 		"advances a shipment: the move's status and everything downstream follow from " +
 		"it. Get the move and stop ids from get_shipment, and only record what you were " +
 		"actually told happened — never infer an arrival from a departure, or the " +
-		"reverse."
+		"reverse. When you are told both (\"got there 5:50, left 7:05\"), record them " +
+		"in one call: action Arrive with occurredAt and departedAt."
 }
 
 func (t *recordStopActualTool) ParamSchema() map[string]any {
@@ -75,6 +76,11 @@ func (t *recordStopActualTool) ParamSchema() map[string]any {
 				"When it happened. Leave it out unless you " +
 					"were given a time: omitted means now, which is right when someone is " +
 					"reporting an event as it happens.",
+			),
+			"departedAt": agenttoolschema.LocalDateTime(
+				"With action Arrive only, when the driver left the same stop, if you " +
+					"were told: the arrival and departure are recorded together. Needs " +
+					"occurredAt.",
 			),
 		},
 		"required":             []string{"moveId", "stopId", "action"},
@@ -157,7 +163,9 @@ func (t *recordStopActualTool) request(
 	// Only sent when the caller supplied one. A model inventing a timestamp for
 	// an event it heard about after the fact would put a precise-looking lie on
 	// the record; leaving it unset lets the service stamp it now.
-	if _, given := params.Params["occurredAt"]; !given {
+	_, occurred := params.Params["occurredAt"]
+	_, departed := params.Params["departedAt"]
+	if !occurred && !departed {
 		return request, nil
 	}
 
@@ -166,6 +174,9 @@ func (t *recordStopActualTool) request(
 		return nil, err
 	}
 	if request.OccurredAt, err = optionalLocalTime(params.Params, "occurredAt", zone); err != nil {
+		return nil, err
+	}
+	if request.DepartedAt, err = optionalLocalTime(params.Params, "departedAt", zone); err != nil {
 		return nil, err
 	}
 

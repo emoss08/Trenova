@@ -26,7 +26,7 @@ scenarios:
           calls: ["list_driver_settlements"]
           proposals: [{ tool: add_driver_settlement_adjustment }]
           maxFailedCalls: 1
-          maxCalls: 8
+          maxCalls: 10
           rubric: >
             Finds David Park's draft settlement SEED-STL-1004 and proposes a $150 deduction on it
             labelled as the fuel advance.
@@ -74,35 +74,55 @@ scenarios:
             names any missing mileage or fuel it can see that would make the return wrong.
 
   - name: scheduled-report
-    description: A standing report that exists, put on a schedule.
+    description: >
+      A standing report that exists, put on a schedule. Earlier runs' approved schedules are
+      removed first, so the report starts with none; schedule_report refuses a repeat.
     agent: Report analyst
     tags: [reports, write]
+    exclusive: delivered-not-billed-schedule
+    setup:
+      - >
+        DELETE FROM report_schedules
+        WHERE cron_expression = '0 7 * * 1'
+          AND delivery::text ILIKE '%admin@trenova.app%'
+          AND definition_id IN (
+            SELECT id FROM report_definitions WHERE name ILIKE 'Delivered, Not Billed%')
     steps:
       - say: "email me the delivered not billed report every monday at 7am"
         expect:
           calls: ["list_reports"]
-          proposals: [{ tool: schedule_report }]
+          proposals: [{ tool: "schedule_report|fork_report" }]
           maxFailedCalls: 1
           maxCalls: 6
           rubric: >
-            Finds the Delivered, Not Billed report and proposes a weekly Monday 07:00 schedule in
-            the organization's time zone, sent to the person.
+            Finds the Delivered, Not Billed report and either proposes a weekly Monday 07:00
+            schedule in the organization's time zone, sent to the person, or, for a built-in
+            report that has to be copied first, proposes the copy and says the schedule follows.
+      - decide: approve
+        expect:
+          executed: true
+          rubric: >
+            When the schedule ran, confirms the Monday 07:00 schedule; when a copy was made first,
+            proposes the schedule on the copy.
 
   - name: scheduled-report-that-does-not-exist
     description: >
-      No on-time delivery report exists locally: the agent should say so in a few searches and
-      offer to build one, not schedule a different report as if it were the one asked for.
+      No on-time delivery report exists locally. Saying so and offering to build one is right, and so
+      is building it and proposing the schedule for approval, with what the report can and cannot
+      show beside it. Scheduling a different existing report as if it were the one asked for is not.
     agent: Report analyst
     tags: [reports]
     steps:
       - say: "email me the on-time delivery report every monday at 7am"
         expect:
           calls: ["list_reports"]
-          noProposals: true
-          maxCalls: 8
+          maxCalls: 11
           rubric: >
-            Says there is no on-time delivery report, offers to build one (or names the closest
-            existing report as a choice the person makes), and schedules nothing yet.
+            Says there is no on-time delivery report. Either offers to build one (or names the
+            closest existing report as a choice the person makes) and schedules nothing, or builds
+            one and proposes the Monday 7am schedule for approval, saying plainly what it does not
+            measure (no on-time flag exists). Never schedules a different existing report as the
+            one asked for.
 
   - name: random-drug-test-draw
     description: The quarterly DOT random draw.

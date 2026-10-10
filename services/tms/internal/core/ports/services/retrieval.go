@@ -122,6 +122,11 @@ type RetrievalIndexPipeline interface {
 		modelKey string,
 	) (RetrievalPurgeResult, error)
 	Sweep(ctx context.Context, tenant pagination.TenantInfo) (RetrievalSweepResult, error)
+	ListIndexedTenants(
+		ctx context.Context,
+		after *pagination.TenantInfo,
+		limit int,
+	) ([]pagination.TenantInfo, error)
 	Wake(ctx context.Context, tenant pagination.TenantInfo)
 	ReindexPage(ctx context.Context, req *RetrievalReindexPageRequest) (RetrievalReindexPage, error)
 }

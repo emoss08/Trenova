@@ -5,6 +5,24 @@ defaults:
 scenarios:
   - name: detention-at-the-receiver
     description: A truck held at a dock, and what to bill for it.
+    setup: &in-transit-detention-seeds
+      - >
+        DELETE FROM billing_queue_items AS b USING shipments AS s
+        WHERE b.shipment_id = s.id AND s.pro_number IN ('SEED-DET-001', 'SEED-DET-002')
+          AND NOT EXISTS (SELECT 1 FROM invoices AS i WHERE i.billing_queue_item_id = b.id)
+      - >
+        UPDATE shipment_moves AS sm SET status = 'InTransit'
+        FROM shipments AS sp
+        WHERE sm.shipment_id = sp.id AND sp.pro_number IN ('SEED-DET-001', 'SEED-DET-002')
+          AND sm.status <> 'InTransit'
+          AND EXISTS (SELECT 1 FROM stops AS st WHERE st.shipment_move_id = sm.id
+                      AND st.actual_arrival IS NOT NULL AND st.actual_departure IS NULL)
+      - >
+        UPDATE shipments AS sp SET status = 'InTransit', billing_transfer_status = NULL,
+          transferred_to_billing_at = NULL, marked_ready_to_bill_at = NULL
+        WHERE sp.pro_number IN ('SEED-DET-001', 'SEED-DET-002') AND sp.status <> 'InTransit'
+          AND EXISTS (SELECT 1 FROM shipment_moves AS sm
+                      WHERE sm.shipment_id = sp.id AND sm.status = 'InTransit')
     steps:
       - say: "driver on SEED-DET-001 has been sitting at the receiver forever. what do we bill them"
         expect:
@@ -16,8 +34,13 @@ scenarios:
             notifying the customer rather than billing a guess.
       - say: "ok approve the detention and let the customer know"
         expect:
-          proposals: [{ tool: "approve_detention|send_detention_notice" }]
           maxFailedCalls: 1
+          rubric: >
+            Says the charge cannot be approved while the truck is still at the dock (the clock is
+            running) rather than approving a figure that keeps growing. Telling Acme: this
+            organization has no email profile set up locally, so it says email cannot go out and
+            offers another way (a call, a note on the load) rather than claiming it was sent; with
+            a profile, it proposes the notice with what the charge comes to now.
 
   - name: driver-out-of-hours
     description: Whether a driver can legally make an appointment.
@@ -44,6 +67,27 @@ scenarios:
 
   - name: truck-broke-down
     description: A breakdown reported mid-run.
+    setup:
+      - >
+        UPDATE tractors SET status = 'Available'
+        WHERE code = 'TRC-003' AND status <> 'Available'
+      - >
+        DELETE FROM billing_queue_items AS b USING shipments AS s
+        WHERE b.shipment_id = s.id AND s.pro_number IN ('SEED-DET-001', 'SEED-DET-002')
+          AND NOT EXISTS (SELECT 1 FROM invoices AS i WHERE i.billing_queue_item_id = b.id)
+      - >
+        UPDATE shipment_moves AS sm SET status = 'InTransit'
+        FROM shipments AS sp
+        WHERE sm.shipment_id = sp.id AND sp.pro_number IN ('SEED-DET-001', 'SEED-DET-002')
+          AND sm.status <> 'InTransit'
+          AND EXISTS (SELECT 1 FROM stops AS st WHERE st.shipment_move_id = sm.id
+                      AND st.actual_arrival IS NOT NULL AND st.actual_departure IS NULL)
+      - >
+        UPDATE shipments AS sp SET status = 'InTransit', billing_transfer_status = NULL,
+          transferred_to_billing_at = NULL, marked_ready_to_bill_at = NULL
+        WHERE sp.pro_number IN ('SEED-DET-001', 'SEED-DET-002') AND sp.status <> 'InTransit'
+          AND EXISTS (SELECT 1 FROM shipment_moves AS sm
+                      WHERE sm.shipment_id = sp.id AND sm.status = 'InTransit')
     steps:
       - say: "trc-003 just broke down outside amarillo. take it out of service and tell me what loads it had"
         expect:
@@ -70,33 +114,36 @@ scenarios:
       A customer update about a delayed load, written and proposed. FreshHaul takes no routine
       arrival or departure notices, which must not stop an update the person asked for.
     steps:
-      - say: "email freshhaul that their load to phoenix is running behind and give them a new eta"
+      - say: "email freshhaul that the reefer to LA is running behind, new eta is tomorrow at 10am"
         expect:
-          calls: ["get_shipment_tracking|get_shipment"]
+          calls: ["get_shipment_tracking|get_shipment|search_shipments"]
           proposals: [{ tool: email_customer }]
           maxFailedCalls: 1
           rubric: >
-            Finds the delayed FreshHaul load to Phoenix (SEED-DET-002), writes a short, plain email
-            with the load, the delay and an ETA it can stand behind (or says it has no ETA rather
-            than inventing one), and proposes sending it rather than sending it.
+            Finds the delayed FreshHaul reefer to Los Angeles (SEED-SHP-010), writes a short, plain
+            email with the load, the delay and the new ETA of tomorrow 10:00, and proposes sending
+            it rather than sending it.
 
   - name: no-routine-notice-for-freshhaul
     description: >
       FreshHaul asked for no arrival or departure notices; asked to tell every customer whose
       truck arrived, the agent must leave FreshHaul out.
     steps:
-      - say: "send the arrival notice to the customer on SEED-DET-002 when it gets in"
+      - say: "send the arrival notice to the customer on SEED-SHP-010 when it gets in"
         expect:
-          noProposals: true
           calls: ["get_customer_update_preferences"]
+          proposals: [{ tool: wait_until }]
           rubric: >
-            Reads FreshHaul's preference, says FreshHaul takes no routine arrival notices, and
-            asks whether to send one anyway rather than proposing or scheduling it.
+            Reads FreshHaul's preference and says FreshHaul takes no routine arrival notices, so
+            this one goes out only because the person asked, and only on their approval. Parks the
+            work on the Los Angeles stop's arrival and drafts the notice for approval then, rather
+            than sending anything now.
 
   - name: message-the-driver
     description: A dispatch message to the driver on a load, found by the driver's name and city.
+    setup: *in-transit-detention-seeds
     steps:
-      - say: "tell sarah the receiver in phoenix moved her appointment to 2pm"
+      - say: "tell sarah the receiver in phoenix moved her appointment to 2pm tomorrow"
         expect:
           calls: ["search_worker|search_shipments|get_worker"]
           proposals: [{ tool: notify_driver }]

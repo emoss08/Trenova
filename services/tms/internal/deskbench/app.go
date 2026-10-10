@@ -33,6 +33,7 @@ type OpenOptions struct {
 	Namespace string
 	OutDir    string
 	LivePaths []string
+	LockDir   string
 }
 
 type deps struct {
@@ -64,6 +65,8 @@ type Bench struct {
 	sdkLog   *os.File
 	live     *LiveFeed
 	locks    sync.Map
+	held     *namespaceLock
+	tidied   sync.Once
 }
 
 func (b *Bench) exclusive(key string) func() {
@@ -75,6 +78,20 @@ func (b *Bench) exclusive(key string) func() {
 }
 
 func Open(ctx context.Context, opts OpenOptions) (*Bench, error) {
+	held, err := lockNamespace(opts.LockDir, opts.Namespace)
+	if err != nil {
+		return nil, err
+	}
+	bench, err := open(ctx, opts)
+	if err != nil {
+		return nil, errors.Join(err, held.release())
+	}
+	bench.held = held
+
+	return bench, nil
+}
+
+func open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 	bench := &Bench{logPath: filepath.Join(opts.OutDir, logFileName)}
 
 	sdkLog, err := os.OpenFile(
@@ -105,6 +122,12 @@ func Open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 		fx.Decorate(func(inner serviceports.CompletionService) serviceports.CompletionService {
 			bench.recorder = NewRecorder(inner)
 			return bench.recorder
+		}),
+		fx.Decorate(func(serviceports.AgentReflectionScheduler) serviceports.AgentReflectionScheduler {
+			return unlearned{}
+		}),
+		fx.Decorate(func(inner serviceports.AgentTrustService) serviceports.AgentTrustService {
+			return untrusted{AgentTrustService: inner}
 		}),
 		fx.Decorate(func(inner serviceports.WorkflowStarter) serviceports.WorkflowStarter {
 			bench.watcher = NewTurnWatcher(inner)
@@ -146,10 +169,10 @@ func (b *Bench) Close() error {
 	stopErr := b.app.Stop(ctx)
 	b.live.Close()
 	if closeErr := b.sdkLog.Close(); closeErr != nil && stopErr == nil {
-		return closeErr
+		stopErr = closeErr
 	}
 
-	return stopErr
+	return errors.Join(stopErr, b.held.release())
 }
 
 func (b *Bench) LogPath() string {

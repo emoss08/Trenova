@@ -231,10 +231,13 @@ services:
             # profile.
             - "8233:8233"
         restart: unless-stopped
+        # Every closed run stays in memory until its namespace's retention lets it
+        # go, and a turn's history carries one Update per stream poll. Under 1G
+        # an evening of desk bench runs filled it until every poller timed out.
         deploy:
             resources:
                 limits:
-                    memory: 1G
+                    memory: 2G
         healthcheck:
             test: ["CMD", "temporal", "operator", "cluster", "health", "--address", "localhost:7233"]
             interval: 15s

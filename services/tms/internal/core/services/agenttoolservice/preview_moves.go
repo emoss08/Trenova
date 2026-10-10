@@ -84,8 +84,11 @@ func (t *recordStopActualTool) Preview(
 	}
 
 	verb := "arrival at"
-	if request.Action == repositories.StopActualActionDepart {
+	switch {
+	case request.Action == repositories.StopActualActionDepart:
 		verb = "departure from"
+	case request.DepartedAt != nil:
+		verb = "arrival at and departure from"
 	}
 	summary := fmt.Sprintf("Would record the %s this stop", verb)
 

@@ -305,6 +305,9 @@ func (r *artifactRecorder) fromProposals(proposals []*agent.AgentProposal, plan 
 	}
 
 	for _, proposal := range proposals {
+		if proposal != nil && proposal.Status == agent.ProposalStatusSuperseded {
+			continue
+		}
 		if artifact := draftArtifact(proposal); artifact != nil {
 			r.save(artifact)
 		}

@@ -799,6 +799,7 @@ func (r *syncRecordRepository) ListDueConnections(
 		}
 
 		cols := buncolgen.AccountingSyncRecordColumns
+		conn := buncolgen.AccountingConnectionColumns
 		due := make([]repositories.AccountingSyncDueConnection, 0, limit)
 		if err := r.db.DBForContext(ctx).
 			NewSelect().
@@ -807,6 +808,18 @@ func (r *syncRecordRepository) ListDueConnections(
 			ColumnExpr(cols.OrganizationID.As("organization_id")).
 			ColumnExpr(cols.BusinessUnitID.As("business_unit_id")).
 			ColumnExpr(cols.ConnectionID.As("connection_id")).
+			Join(joinOn(
+				buncolgen.AccountingConnectionTable,
+				buncolgen.AccountingConnectionTable.Alias,
+				conn.ID.EqColumn(cols.ConnectionID),
+				conn.OrganizationID.EqColumn(cols.OrganizationID),
+				conn.BusinessUnitID.EqColumn(cols.BusinessUnitID),
+			)).
+			Where(conn.Status.In(), bun.List(activeStatuses())).
+			Where(conn.SetupStep.Eq(), accountingsync.SetupStepComplete).
+			Where(conn.SyncStartDate.IsNotNull()).
+			Where(conn.SyncEnabledAt.IsNotNull()).
+			Where(conn.PausedAt.IsNull()).
 			WhereGroup(" AND ", dueGroup(now)).
 			Order(cols.ConnectionID.OrderAsc()).
 			Limit(limit).

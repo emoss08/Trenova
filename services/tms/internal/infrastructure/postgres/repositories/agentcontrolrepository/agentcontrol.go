@@ -2,8 +2,6 @@ package agentcontrolrepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -42,16 +40,8 @@ func (r *repository) GetOrCreate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*tenant.AgentControl, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.AgentControl, error) {
-		entity, err := r.selectControl(ctx, tenantInfo)
-		if err == nil {
-			return entity, nil
-		}
-		if !errors.Is(err, sql.ErrNoRows) {
-			return nil, dberror.HandleNotFoundError(err, "AgentControl")
-		}
-
-		control := &tenant.AgentControl{
+	newDefault := func() *tenant.AgentControl {
+		return &tenant.AgentControl{
 			BusinessUnitID:     tenantInfo.BuID,
 			OrganizationID:     tenantInfo.OrgID,
 			ShadowMode:         true,
@@ -59,20 +49,27 @@ func (r *repository) GetOrCreate(
 			BriefingEnabled:    true,
 			BriefingHourLocal:  tenant.DefaultBriefingHourLocal,
 		}
-		if _, err = r.db.DBForContext(ctx).
-			NewInsert().
-			Model(control).
-			On("CONFLICT (organization_id, business_unit_id) DO NOTHING").
-			Exec(ctx); err != nil {
-			return nil, fmt.Errorf("create default agent control: %w", err)
-		}
+	}
 
-		entity, err = r.selectControl(ctx, tenantInfo)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "AgentControl")
-		}
+	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*tenant.AgentControl]{
+		Find: func(ctx context.Context) (*tenant.AgentControl, error) {
+			return r.selectControl(ctx, tenantInfo)
+		},
+		Create: func(ctx context.Context) error {
+			if _, insertErr := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(newDefault()).
+				On("CONFLICT (organization_id, business_unit_id) DO NOTHING").
+				Exec(ctx); insertErr != nil {
+				return fmt.Errorf("create default agent control: %w", insertErr)
+			}
 
-		return entity, nil
+			return nil
+		},
+		Default: newDefault,
+		MapError: func(err error) error {
+			return dberror.HandleNotFoundError(err, "AgentControl")
+		},
 	})
 }
 

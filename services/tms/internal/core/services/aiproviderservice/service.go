@@ -406,6 +406,8 @@ func (s *Service) apply(
 	}
 	provider.InputCostPerMillion = req.InputCostPerMillion
 	provider.OutputCostPerMillion = req.OutputCostPerMillion
+	provider.CacheReadCostPerMillion = req.CacheReadCostPerMillion
+	provider.CacheWriteCostPerMillion = req.CacheWriteCostPerMillion
 	applyLimits(provider, req)
 
 	// A nil key means "leave what is stored alone", so an administrator can

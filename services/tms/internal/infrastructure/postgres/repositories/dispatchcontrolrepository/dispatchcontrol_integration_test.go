@@ -160,3 +160,38 @@ func TestListHorizonPlanningTenantsReturnsHorizonTenants(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, after, tenant)
 }
+
+// Assigning a driver plans against the dispatch control, and a proposal's
+// preview runs that plan in a read-only snapshot. Creating the missing row
+// there aborted the transaction, so every check after it failed.
+func TestGetOrCreateInAReadOnlyTransactionWritesNothing(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	data := seedtest.SeedFullTestData(t, ctx, db)
+	conn := postgres.NewTestConnection(db)
+	repo := New(Params{DB: conn, Logger: zap.NewNop()})
+
+	_, err := db.NewDelete().
+		TableExpr("dispatch_controls").
+		Where("organization_id = ?", data.Organization.ID).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	err = conn.WithTx(ctx, ports.TxOptions{ReadOnly: true}, func(txCtx context.Context, tx bun.Tx) error {
+		entity, getErr := repo.GetOrCreate(txCtx, data.Organization.ID, data.BusinessUnit.ID)
+		require.NoError(t, getErr)
+		require.NotNil(t, entity)
+
+		var one int
+		return tx.NewSelect().ColumnExpr("1").Scan(txCtx, &one)
+	})
+	require.NoError(t, err, "the transaction is still usable after the read")
+
+	count, err := db.NewSelect().
+		TableExpr("dispatch_controls").
+		Where("organization_id = ?", data.Organization.ID).
+		Count(ctx)
+	require.NoError(t, err)
+	assert.Zero(t, count, "nothing is written from a read-only transaction")
+}

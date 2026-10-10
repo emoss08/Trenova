@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"github.com/emoss08/trenova/shared/pulid"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -12,6 +13,17 @@ type AssignmentPlan struct {
 	Assignment     *shipment.Assignment
 	ShipmentBefore *shipment.Shipment
 	ShipmentAfter  *shipment.Shipment
+	// EquipmentInUse is the tractor or trailer the assignment names that is on
+	// another move still in progress. Assigning it ahead is allowed; starting
+	// this move with it is refused until that one is done.
+	EquipmentInUse []EquipmentInUse
+}
+
+type EquipmentInUse struct {
+	Kind           string
+	EquipmentID    pulid.ID
+	ShipmentMoveID pulid.ID
+	ProNumber      string
 }
 
 type AssignmentService interface {

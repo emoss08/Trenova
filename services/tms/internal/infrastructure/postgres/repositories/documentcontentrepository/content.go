@@ -306,14 +306,14 @@ func (r *repository) SearchByResource(
 			selectQuery = selectQuery.
 				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return sq.
-						Where(docCols.SearchVector.Expr(websearchMatch), query).
-						WhereOr(contentCols.SearchVector.Expr(websearchMatch), query)
+						Where(docCols.SearchVector.Expr(websearchMatch), query, query).
+						WhereOr(contentCols.SearchVector.Expr(websearchMatch), query, query)
 				}).
 				OrderExpr(
 					"GREATEST("+docCols.SearchVector.Expr(websearchRank)+", COALESCE("+
 						contentCols.SearchVector.Expr(websearchRank)+", 0)) DESC",
-					query,
-					query,
+					query, query,
+					query, query,
 				)
 		default:
 			pattern := "%" + stringutils.EscapeLikePattern(query) + "%"
@@ -340,7 +340,7 @@ func (r *repository) SearchByResource(
 }
 
 const (
-	websearchMatch = "{} @@ websearch_to_tsquery('english', ?)"
-	websearchRank  = "ts_rank_cd({}, websearch_to_tsquery('english', ?))"
+	websearchMatch = "{} @@ (websearch_to_tsquery('simple', ?) || websearch_to_tsquery('english', ?))"
+	websearchRank  = "ts_rank_cd({}, websearch_to_tsquery('simple', ?) || websearch_to_tsquery('english', ?))"
 	escapedLike    = "{} LIKE ? ESCAPE '\\'"
 )

@@ -254,7 +254,7 @@ func pendingDuplicate(
 		}
 	}
 	for _, action := range thisTurn {
-		if !action.Executed && !action.Simulated && action.ToolName == call.Name &&
+		if action.Waiting() && action.ToolName == call.Name &&
 			argumentsKey(action.Arguments) == key {
 			return true
 		}

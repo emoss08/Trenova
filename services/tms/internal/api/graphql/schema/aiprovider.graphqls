@@ -107,6 +107,17 @@ type AIProvider {
   inputCostPerMillion: Decimal
   "USD per million output tokens; null means unknown."
   outputCostPerMillion: Decimal
+  """
+  USD per million prompt tokens read from the provider's cache. Null charges
+  the protocol's usual share of the input price: a tenth.
+  """
+  cacheReadCostPerMillion: Decimal
+  """
+  USD per million prompt tokens written to the provider's cache. Null charges
+  the protocol's usual multiple of the input price: one and a quarter times
+  for Anthropic Messages, the input price for the others.
+  """
+  cacheWriteCostPerMillion: Decimal
   maxTokens: Int!
   tasks: [AITask!]!
   priority: Int!
@@ -272,6 +283,8 @@ input AIProviderPatchInput {
   apiKey: String @goField(omittable: true)
   inputCostPerMillion: Decimal @goField(omittable: true)
   outputCostPerMillion: Decimal @goField(omittable: true)
+  cacheReadCostPerMillion: Decimal @goField(omittable: true)
+  cacheWriteCostPerMillion: Decimal @goField(omittable: true)
 }
 
 extend type Query {

@@ -82,10 +82,6 @@ type Response struct {
 	ThinkingDropped int
 }
 
-func CacheSeparateFromInput(kind aiprovider.Kind) bool {
-	return kind == aiprovider.KindAnthropicMessages
-}
-
 // Adapter speaks one wire protocol.
 type Adapter interface {
 	Kind() aiprovider.Kind

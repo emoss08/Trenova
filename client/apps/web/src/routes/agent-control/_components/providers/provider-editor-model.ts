@@ -83,6 +83,8 @@ export const providerEditorSchema = z
     onCap: capActionSchema,
     inputCostPerMillion: decimalText(() => translate("A price is an amount in dollars")),
     outputCostPerMillion: decimalText(() => translate("A price is an amount in dollars")),
+    cacheReadCostPerMillion: decimalText(() => translate("A price is an amount in dollars")),
+    cacheWriteCostPerMillion: decimalText(() => translate("A price is an amount in dollars")),
     structuredOutputMode: structuredOutputModeSchema,
     reasoningEffort: reasoningEffortSchema,
     thinkingStyle: thinkingStyleSchema,
@@ -164,6 +166,8 @@ export function editorValuesFromProvider(provider: AIProviderWithLimits): Provid
     onCap: provider.onCap,
     inputCostPerMillion: decimalToText(provider.inputCostPerMillion),
     outputCostPerMillion: decimalToText(provider.outputCostPerMillion),
+    cacheReadCostPerMillion: decimalToText(provider.cacheReadCostPerMillion),
+    cacheWriteCostPerMillion: decimalToText(provider.cacheWriteCostPerMillion),
     structuredOutputMode: provider.structuredOutputMode,
     reasoningEffort: provider.reasoningEffort,
     thinkingStyle: provider.thinkingStyle,
@@ -210,6 +214,8 @@ export function editorValuesFromPreset(
     onCap: "Next",
     inputCostPerMillion: "",
     outputCostPerMillion: "",
+    cacheReadCostPerMillion: "",
+    cacheWriteCostPerMillion: "",
     structuredOutputMode: preset.structuredOutputMode,
     reasoningEffort: "Off",
     thinkingStyle: "Auto",
@@ -264,6 +270,41 @@ export function editorBlocker(
 const toDecimal = (text: string): number | null => (text.trim() === "" ? null : Number(text));
 
 /**
+ * The multiples of the input price the server charges for a cached prompt
+ * token when no cache price is entered (aiprovider.Kind.CacheReadMultiple and
+ * CacheWriteMultiple). Only Anthropic Messages reports cache writes.
+ */
+const CACHE_READ_MULTIPLE = 0.1;
+const ANTHROPIC_CACHE_WRITE_MULTIPLE = 1.25;
+
+export function reportsCacheWrites(kind: ProviderEditorValues["kind"]): boolean {
+  return kind === "AnthropicMessages";
+}
+
+/**
+ * What a cached prompt token costs per million when its price is left empty,
+ * as text for the field's placeholder; blank while the input price is.
+ */
+export function cachePriceDefault(
+  kind: ProviderEditorValues["kind"],
+  inputPrice: string,
+  part: "read" | "write",
+): string {
+  const input = inputPrice.trim() === "" ? Number.NaN : Number(inputPrice);
+  if (!Number.isFinite(input) || input < 0) {
+    return "";
+  }
+  const multiple =
+    part === "read"
+      ? CACHE_READ_MULTIPLE
+      : reportsCacheWrites(kind)
+        ? ANTHROPIC_CACHE_WRITE_MULTIPLE
+        : 1;
+
+  return String(Number((input * multiple).toFixed(6)));
+}
+
+/**
  * The save request. A blank key on an edit means "keep the stored one"; a new provider is
  * saved off unless a test has just passed, so nothing untried starts taking work.
  */
@@ -289,6 +330,8 @@ export function toSaveRequest(
         extraBodyText: values.extraBodyText,
         inputCostPerMillion: toDecimal(values.inputCostPerMillion),
         outputCostPerMillion: toDecimal(values.outputCostPerMillion),
+        cacheReadCostPerMillion: toDecimal(values.cacheReadCostPerMillion),
+        cacheWriteCostPerMillion: toDecimal(values.cacheWriteCostPerMillion),
         maxTokens: Number(values.maxTokens),
         tasks: values.tasks,
         priority: values.priority,

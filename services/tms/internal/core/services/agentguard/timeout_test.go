@@ -83,3 +83,41 @@ func TestEvaluate_TheStricterPostureStillRefusesOnATimeout(t *testing.T) {
 	require.False(t, decision.Allowed)
 	require.Equal(t, agentguard.ReasonClassifierUnavailable, decision.Reason)
 }
+
+type hedgeRecorder struct {
+	serviceports.CompletionService
+
+	hedge time.Duration
+}
+
+func (h *hedgeRecorder) CompleteStructured(
+	_ context.Context,
+	req *serviceports.StructuredCompletionRequest,
+) (*serviceports.StructuredCompletionResult, error) {
+	h.hedge = req.HedgeAfter
+
+	return &serviceports.StructuredCompletionResult{
+		Text: `{"category":"TransportationOperations","reasoning":"stub"}`,
+	}, nil
+}
+
+/*
+DB-003: with its providers asked one after another, a first provider that
+answered in 3.0 s spent the whole budget and about one question in twenty-five
+went through unclassified. The classification asks the next provider as well
+at half the budget.
+*/
+func TestEvaluate_TheClassifierAsksTheNextProviderAtHalfItsBudget(t *testing.T) {
+	t.Parallel()
+
+	stub := &hedgeRecorder{}
+	guard := &agentguard.Service{ClassifierTimeout: 3 * time.Second}
+	agentguard.SetCompletionForTest(guard, stub)
+
+	decision := guard.Evaluate(t.Context(), agentguard.EvaluateRequest{
+		Input: "how many shipments are in transit",
+	})
+
+	require.True(t, decision.Allowed)
+	require.Equal(t, 1500*time.Millisecond, stub.hedge)
+}

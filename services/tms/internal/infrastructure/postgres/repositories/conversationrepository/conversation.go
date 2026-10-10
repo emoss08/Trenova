@@ -18,7 +18,11 @@ import (
 	"go.uber.org/zap"
 )
 
-const defaultThreadLimit = 50
+const (
+	defaultThreadLimit  = 50
+	maxThreadLimit      = 100
+	maxThreadRangeLimit = 1000
+)
 
 type Params struct {
 	fx.In
@@ -144,39 +148,116 @@ func (r *repository) ListThreadAgentsByIDs(
 func (r *repository) ListThreads(
 	ctx context.Context,
 	req repositories.ListThreadsRequest,
-) (*pagination.ListResult[*conversation.Thread], error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*conversation.Thread], error) {
-		cols := buncolgen.ThreadColumns
+) (*repositories.ThreadPage, error) {
+	window, err := threadWindowOf(&req)
+	if err != nil {
+		return nil, err
+	}
 
-		limit := req.Limit
-		if limit <= 0 || limit > defaultThreadLimit {
-			limit = defaultThreadLimit
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.ThreadPage, error) {
+		entities := make([]*conversation.Thread, 0, window.limit+1)
+		if scanErr := threadPageQuery(r.db.DBForContext(ctx), &entities, &req, window).
+			Scan(ctx); scanErr != nil {
+			r.l.Error("failed to list threads", zap.Error(scanErr))
+			return nil, scanErr
 		}
 
-		entities := make([]*conversation.Thread, 0, limit)
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.ThreadScopeTenant(sq, req.TenantInfo).
-					Where(cols.UserID.Eq(), req.UserID)
-				if !req.IncludeUnlisted {
-					sq = sq.Where(cols.Origin.NotIn(), bun.In(conversation.UnlistedOrigins()))
-				}
-
-				return sq
-			}).
-			Order(cols.Pinned.OrderDesc(), cols.LastMessageAt.OrderDesc(), cols.CreatedAt.OrderDesc()).
-			Limit(limit).
-			Offset(req.Offset).
-			ScanAndCount(ctx)
-		if err != nil {
-			r.l.Error("failed to list threads", zap.Error(err))
-			return nil, err
+		page := &repositories.ThreadPage{Items: entities}
+		switch {
+		case len(entities) > window.limit:
+			page.Items = entities[:window.limit]
+			page.NextCursor = threadCursorAt(page.Items[window.limit-1]).encode()
+		case window.until != nil:
+			page.NextCursor = req.Until
 		}
 
-		return &pagination.ListResult[*conversation.Thread]{Items: entities, Total: total}, nil
+		return page, nil
 	})
+}
+
+type threadWindow struct {
+	after *threadCursor
+	until *threadCursor
+	limit int
+}
+
+func threadWindowOf(req *repositories.ListThreadsRequest) (threadWindow, error) {
+	window := threadWindow{limit: req.Limit}
+	if window.limit <= 0 {
+		window.limit = defaultThreadLimit
+	}
+	window.limit = min(window.limit, maxThreadLimit)
+
+	if req.Cursor != "" {
+		after, err := decodeThreadCursor(req.Cursor)
+		if err != nil {
+			return threadWindow{}, err
+		}
+		window.after = after
+	}
+	if req.Until != "" {
+		until, err := decodeThreadCursor(req.Until)
+		if err != nil {
+			return threadWindow{}, err
+		}
+		window.until = until
+		window.limit = maxThreadRangeLimit
+	}
+
+	return window, nil
+}
+
+func threadPageQuery(
+	db bun.IDB,
+	dest *[]*conversation.Thread,
+	req *repositories.ListThreadsRequest,
+	window threadWindow,
+) *bun.SelectQuery {
+	cols := buncolgen.ThreadColumns
+	order := buncolgen.Expr(
+		"({0}, {1}, {2}, {3})",
+		cols.Pinned,
+		cols.LastMessageAt,
+		cols.CreatedAt,
+		cols.ID,
+	)
+
+	return db.NewSelect().
+		Model(dest).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			sq = buncolgen.ThreadScopeTenant(sq, req.TenantInfo).
+				Where(cols.UserID.Eq(), req.UserID)
+			if !req.IncludeUnlisted {
+				sq = sq.Where(cols.Origin.NotIn(), bun.In(conversation.UnlistedOrigins()))
+			}
+			if window.after != nil {
+				sq = sq.Where(
+					order+" < (?, ?, ?, ?)",
+					window.after.pinned,
+					window.after.lastMessageAt,
+					window.after.createdAt,
+					window.after.id,
+				)
+			}
+			if window.until != nil {
+				sq = sq.Where(
+					order+" >= (?, ?, ?, ?)",
+					window.until.pinned,
+					window.until.lastMessageAt,
+					window.until.createdAt,
+					window.until.id,
+				)
+			}
+
+			return sq
+		}).
+		Order(
+			cols.Pinned.OrderDesc(),
+			cols.LastMessageAt.OrderDesc(),
+			cols.CreatedAt.OrderDesc(),
+			cols.ID.OrderDesc(),
+		).
+		Limit(window.limit + 1)
 }
 
 func (r *repository) UpdateThread(
@@ -259,7 +340,7 @@ func (r *repository) UpdateThreadContext(
 	req repositories.UpdateThreadContextRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if req.Usage == nil && req.AutoCompactOff == nil {
+		if req.Usage == nil && req.AutoCompactOff == nil && req.WorkingSet == nil {
 			return nil
 		}
 
@@ -276,6 +357,9 @@ func (r *repository) UpdateThreadContext(
 		}
 		if req.AutoCompactOff != nil {
 			query = query.Set(cols.AutoCompactOff.Set(), *req.AutoCompactOff)
+		}
+		if req.WorkingSet != nil {
+			query = query.Set(cols.WorkingSet.Set(), *req.WorkingSet)
 		}
 
 		res, err := query.Exec(ctx)

@@ -23,3 +23,12 @@ type ShipmentEtaReader interface {
 		shipmentIDs []pulid.ID,
 	) (map[pulid.ID]*ShipmentEta, error)
 }
+
+type ShipmentTrackingReader interface {
+	TrackingSnapshots(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		shipmentIDs []pulid.ID,
+		timezone string,
+	) (map[pulid.ID]*shipmenttracking.Snapshot, error)
+}

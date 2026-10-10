@@ -160,6 +160,10 @@ func (s *Service) CheckAvailability(
 
 	remaining := result.ProjectedAvailableDays.Sub(req.Days)
 	if remaining.LessThan(result.FloorDays) {
+		loc, err := s.OrgLocation(ctx, req.TenantInfo)
+		if err != nil {
+			return nil, err
+		}
 		result.Allowed = false
 		result.Message = fmt.Sprintf(
 			"Requesting %s %s day%s but only %s will be available on %s (balance %s, pending %s, accruing %s)",
@@ -167,7 +171,7 @@ func (s *Service) CheckAvailability(
 			req.PTOType,
 			plural(req.Days),
 			result.ProjectedAvailableDays.StringFixed(2),
-			time.Unix(req.StartDate, 0).UTC().Format("Jan 2, 2006"),
+			time.Unix(req.StartDate, 0).In(loc).Format("Jan 2, 2006"),
 			result.BalanceDays.StringFixed(2),
 			pending.StringFixed(2),
 			result.ProjectedAccrualDays.StringFixed(2),

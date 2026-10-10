@@ -113,3 +113,45 @@ func TestCoerce_ReadsRelativeDaysInTheOrganizationsTimezone(t *testing.T) {
 	unread, _ := Coerce(schema, map[string]any{"asOf": "today"})
 	assert.Equal(t, "today", unread["asOf"])
 }
+
+func TestCoerce_ReadsJSONTextAsTheListOrObjectItHolds(t *testing.T) {
+	t.Parallel()
+
+	schema := map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"filters": map[string]any{
+				"type": "array",
+				"items": map[string]any{
+					"type": "object",
+					"properties": map[string]any{
+						"field": map[string]any{"type": "string"},
+						"value": map[string]any{"type": "string"},
+					},
+				},
+			},
+			"window": map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"days": map[string]any{"type": "integer"},
+				},
+			},
+		},
+	}
+
+	got, coercions := Coerce(schema, map[string]any{
+		"filters": ` [{"field": "status", "value": "Available"}]`,
+		"window":  `{"days": "3"}`,
+	})
+
+	assert.Equal(t, map[string]any{
+		"filters": []any{map[string]any{"field": "status", "value": "Available"}},
+		"window":  map[string]any{"days": float64(3)},
+	}, got)
+	assert.Len(t, coercions, 3)
+	require.NoError(t, Validate(schema, got))
+
+	left, none := Coerce(schema, map[string]any{"filters": "[not json"})
+	assert.Equal(t, []any{"[not json"}, left["filters"])
+	assert.Len(t, none, 1)
+}

@@ -43,6 +43,7 @@ func structuredRun(req *serviceports.StructuredCompletionRequest) *runRequest {
 		MaxTokens:           req.MaxTokens,
 		PreferredProviderID: req.PreferredProviderID,
 		RequireProvider:     req.RequireProvider,
+		HedgeAfter:          req.HedgeAfter,
 		Attribution:         req.Attribution,
 	}
 }

@@ -258,6 +258,7 @@ type intakeToolParams struct {
 func provideCreateShipmentTool(p intakeToolParams) services.AgentTool {
 	deps := createShipmentDeps{
 		Shipments: p.Shipments,
+		Contracts: p.Shipments,
 		Locations: p.Locations,
 		Logger:    p.Logger,
 	}

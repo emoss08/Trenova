@@ -493,7 +493,8 @@ func (t *notifyDriverTool) SearchTerms() []string {
 func (t *notifyDriverTool) Description() string {
 	return "Send a driver a message in the Dash app, such as a moved pickup, a new " +
 		"delivery window, a weather warning on their route, or a request to call " +
-		"dispatch. Keep it " +
+		"dispatch. Passing on what the person told you needs no record checked or changed " +
+		"first: send it as they said it, naming the load when you know it. Keep it " +
 		"to what the driver needs to do; it goes to their phone. A driver without " +
 		"portal access cannot be reached this way, and the message is not " +
 		"delivered; say so if a reply matters. It is a message, not a record: put " +
@@ -700,8 +701,9 @@ func (t *emailCustomerTool) ParamSchema() map[string]any {
 			),
 			"profileId": agenttoolschema.RecordIDText(
 				permission.ResourceEmailProfile,
-				"The email profile to send from; list_email_profiles names them. "+
-					"With one profile there is nothing to choose.",
+				"The email profile to send from, from list_email_profiles. Leave it out to "+
+					"send from the profile the organization assigns to operations email, which "+
+					"is right unless the person named another.",
 			),
 			"subject": map[string]any{"type": "string", "description": "The subject line."},
 			"body": map[string]any{
@@ -710,7 +712,7 @@ func (t *emailCustomerTool) ParamSchema() map[string]any {
 					"shipment reference and the sign-off, so leave those out.",
 			},
 		},
-		"required":             []string{"shipmentId", "profileId", "subject", "body"},
+		"required":             []string{"shipmentId", "subject", "body"},
 		"additionalProperties": false,
 	}
 }
@@ -801,6 +803,10 @@ func newSendDetentionNoticeTool(detention detentionActor) serviceports.AgentTool
 }
 
 func (t *sendDetentionNoticeTool) Name() string { return "send_detention_notice" }
+
+func (t *sendDetentionNoticeTool) Prerequisites() []string {
+	return []string{"list_detention_desk", "get_detention_occurrence"}
+}
 
 func (t *sendDetentionNoticeTool) Recipe() []string {
 	return []string{"get_detention_occurrence", "send_detention_notice"}

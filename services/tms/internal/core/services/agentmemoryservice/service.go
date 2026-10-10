@@ -84,6 +84,9 @@ type Params struct {
 	// reaches its holders. Without it only the organization's and a person's
 	// own memories are read.
 	Roles repositories.RoleRepository `optional:"true"`
+	// Security records a review that clears a memory's taint as a critical
+	// change: it lets the turns that read the memory write on their own again.
+	Security services.SecurityAuditor `optional:"true"`
 }
 
 type Service struct {
@@ -97,6 +100,7 @@ type Service struct {
 	indexer  services.RetrievalIndexer
 	vectors  services.MemoryVectorSearcher
 	roles    roleReader
+	security services.SecurityAuditor
 }
 
 func New(p Params) services.AgentMemoryService {
@@ -116,6 +120,7 @@ func New(p Params) services.AgentMemoryService {
 		indexer:  p.Indexer,
 		vectors:  p.Vectors,
 		roles:    rolesOrNil(p.Roles),
+		security: p.Security,
 	}
 }
 
@@ -435,6 +440,100 @@ func (s *Service) SetStatus(
 	return updated, nil
 }
 
+func (s *Service) Review(
+	ctx context.Context,
+	req services.ReviewAgentMemoryRequest,
+	actor *services.RequestActor,
+) (*agent.Memory, error) {
+	if !actor.IsUser() {
+		return nil, errortypes.NewValidationError(
+			"actor",
+			errortypes.ErrForbidden,
+			"Only a person can review what an agent remembered",
+		)
+	}
+
+	current, err := s.repo.GetByID(ctx, repositories.GetAgentMemoryByIDRequest{
+		ID:         req.ID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if err = reviewable(current); err != nil {
+		return nil, err
+	}
+
+	reviewed, err := s.repo.Review(ctx, repositories.ReviewAgentMemoryRequest{
+		ID:         req.ID,
+		TenantInfo: req.TenantInfo,
+		ByUserID:   actor.UserID,
+		At:         timeutils.NowUnix(),
+		Version:    req.Version,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	s.recordReview(ctx, current, reviewed, actor)
+	s.queueForRetrieval(ctx, reviewed)
+
+	return reviewed, nil
+}
+
+// reviewable refuses a review that would change nothing: a memory no run
+// tainted, one already reviewed, or one that is no longer kept.
+func reviewable(memory *agent.Memory) error {
+	switch {
+	case !memory.Tainted:
+		return errortypes.NewValidationError(
+			"tainted",
+			errortypes.ErrInvalid,
+			"This memory was not written after outside content, so there is nothing to review",
+		)
+	case memory.Reviewed():
+		return errortypes.NewBusinessError("This memory has already been reviewed")
+	case memory.Status != agent.MemoryStatusActive && memory.Status != agent.MemoryStatusPaused:
+		return errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalid,
+			"Only an active or paused memory can be reviewed; approve a suggested one instead",
+		)
+	default:
+		return nil
+	}
+}
+
+func (s *Service) recordReview(
+	ctx context.Context,
+	before, after *agent.Memory,
+	actor *services.RequestActor,
+) {
+	const comment = "Agent memory reviewed: it no longer taints the turns that read it"
+	if s.security == nil {
+		s.logChange(after, jsonutils.MustToJSON(before), actor, permission.OpUpdate, comment)
+
+		return
+	}
+
+	s.security.RecordChange(ctx, &services.SecurityChange{
+		Resource:       permission.ResourceAgentMemory,
+		ResourceID:     after.ID.String(),
+		Operation:      permission.OpUpdate,
+		Actor:          actor.AuditActor(),
+		OrganizationID: after.OrganizationID,
+		BusinessUnitID: after.BusinessUnitID,
+		Before:         jsonutils.MustToJSON(before),
+		After:          jsonutils.MustToJSON(after),
+		Comment:        comment,
+		Metadata: map[string]any{
+			"taintRunId": pulid.ConvertFromPtr(before.TaintRunID).String(),
+			"kind":       string(after.Kind),
+			"scope":      string(after.Scope),
+		},
+	})
+}
+
 func (s *Service) ApproveSuggestion(
 	ctx context.Context,
 	req *services.ApproveAgentMemorySuggestionRequest,
@@ -486,13 +585,17 @@ func (s *Service) ApproveSuggestion(
 		return nil, err
 	}
 
-	s.logChange(
-		approved,
-		jsonutils.MustToJSON(current),
-		actor,
-		permission.OpUpdate,
-		"Suggested agent memory approved",
-	)
+	if current.Tainted {
+		s.recordReview(ctx, current, approved, actor)
+	} else {
+		s.logChange(
+			approved,
+			jsonutils.MustToJSON(current),
+			actor,
+			permission.OpUpdate,
+			"Suggested agent memory approved",
+		)
+	}
 	s.queueForRetrieval(ctx, approved)
 	s.recordReplaced(ctx, approved, actor)
 

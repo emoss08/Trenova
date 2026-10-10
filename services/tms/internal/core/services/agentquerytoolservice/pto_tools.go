@@ -51,6 +51,8 @@ type timeOffRow struct {
 	Decision string `json:"decision,omitempty"`
 }
 
+const maxOtherTimeOff = 5
+
 type listTimeOffTool struct {
 	pto ptoLister
 }
@@ -93,8 +95,10 @@ func (t *listTimeOffTool) ParamSchema() map[string]any {
 			"withinDays": map[string]any{
 				"type": "integer",
 				"description": fmt.Sprintf(
-					"How far ahead to look from today, in days. Defaults to %d, at "+
-						"most %d. Ignored when startingFrom or startingBefore is given.",
+					"How far ahead to look from today, in days: leave on at any point in "+
+						"that span, including leave that began earlier and is still running. "+
+						"Defaults to %d, at most %d. Ignored when startingFrom or "+
+						"startingBefore is given.",
 					defaultTimeOffWindowDays, maxTimeOffWindowDays,
 				),
 			},
@@ -183,7 +187,57 @@ func (t *listTimeOffTool) Query(
 		rows = append(rows, toTimeOffRow(pto))
 	}
 
-	return searchResult(criteria, rows, len(rows)), nil
+	found := searchResult(criteria, rows, len(rows))
+	if len(rows) == 0 {
+		if note := t.otherRequests(ctx, request); note != "" {
+			found.Note = note
+		}
+	}
+
+	return found, nil
+}
+
+// otherRequests names the requests a status or leave-type filter left out, so an empty answer is not read as "nothing pending". A model that fills
+// every parameter sent type: Vacation for a personal-day request, then tried
+// each type in turn.
+func (t *listTimeOffTool) otherRequests(ctx context.Context, request *repositories.ListPTORequest) string {
+	if request.Status == "" && request.Type == "" {
+		return ""
+	}
+	whose := "this worker's requests"
+	if request.WorkerID.IsNil() {
+		whose = "the requests"
+	}
+
+	broader := *request
+	broader.Status = ""
+	broader.Type = ""
+	broader.Filter = &pagination.QueryOptions{
+		TenantInfo: request.Filter.TenantInfo,
+		Pagination: pagination.Info{Limit: maxOtherTimeOff},
+	}
+	result, err := t.pto.List(ctx, &broader)
+	if err != nil || result == nil {
+		return ""
+	}
+	if len(result.Items) == 0 {
+		return fmt.Sprintf("There are no %s in this window of any status or type. Say so "+
+			"rather than trying each status or type in turn.", strings.TrimPrefix(whose, "the "))
+	}
+
+	described := make([]string, 0, len(result.Items))
+	for _, pto := range result.Items {
+		row := toTimeOffRow(pto)
+		who := ""
+		if row.WorkerName != "" {
+			who = row.WorkerName + ", "
+		}
+		described = append(described, fmt.Sprintf("%s (%s%s, %s)", pto.ID, who, pto.Type, pto.Status))
+	}
+
+	return fmt.Sprintf("None of %s matched the status or type given. In this window there "+
+		"are: %s. Answer from these rather than trying each status or type.",
+		whose, strings.Join(described, "; "))
 }
 
 // applyTimeOffWindow resolves the date window server-side.
@@ -229,7 +283,8 @@ func applyTimeOffWindow(
 	today := criteria.Clock.Today()
 	request.StartDateFrom = today
 	request.StartDateTo = today + int64(horizon+1)*secondsPerDay - 1
-	criteria.Field("starting within", fmt.Sprintf("%d days", horizon))
+	request.Overlapping = true
+	criteria.Field("on leave at some point within", fmt.Sprintf("%d days", horizon))
 }
 
 // timeOffEnum refuses a value outside the set rather than passing it through.

@@ -10,11 +10,16 @@ import (
 
 type ListWorkerSafetyEventsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
-	WorkerID   pulid.ID              `json:"workerId"`
+	// WorkerID narrows to one worker; nil lists every worker's, which only an
+	// OpenOnly read does, so the list stays bounded by what is unresolved.
+	WorkerID pulid.ID `json:"workerId"`
+	OpenOnly bool     `json:"openOnly"`
+	Limit    int      `json:"limit"`
 	// Since limits the list to events on or after this instant; zero means all.
 	Since           int64 `json:"since"`
 	IncludeDocument bool  `json:"includeDocument"`
 	IncludeActors   bool  `json:"includeActors"`
+	IncludeWorker   bool  `json:"includeWorker"`
 }
 
 type GetWorkerSafetyEventByIDRequest struct {

@@ -415,6 +415,11 @@ virtuals:
     - payment
 
 specials:
+  AgentMemory:
+    taints:
+      - tainted
+      - reviewedAt
+      - reviewedByUserId
   Tractor:
     lastKnownLocation:
       - lastKnownLocation

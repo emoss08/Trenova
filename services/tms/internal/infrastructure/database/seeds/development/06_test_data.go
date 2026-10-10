@@ -212,6 +212,16 @@ func (s *TestDataSeed) createAccessorialCharges(
 			ID:             pulid.MustNew("acc_"),
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
+			Code:           "LUMP",
+			Description:    "Lumper Fee",
+			Method:         accessorialcharge.MethodFlat,
+			Amount:         decimal.NewFromFloat(150.00),
+			Status:         domaintypes.StatusActive,
+		},
+		{
+			ID:             pulid.MustNew("acc_"),
+			BusinessUnitID: buID,
+			OrganizationID: orgID,
 			Code:           "RESDL",
 			Description:    "Residential Delivery",
 			Method:         accessorialcharge.MethodFlat,
@@ -373,7 +383,7 @@ func (s *TestDataSeed) createEquipmentTypes(
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			Code:           TestTrailerEquipmentTypeCode,
-			Description:    "Standard semi-trailer",
+			Description:    "Dry van (standard enclosed semi-trailer)",
 			Class:          equipmenttype.ClassTrailer,
 			Status:         domaintypes.StatusActive,
 		},
@@ -614,6 +624,18 @@ func (s *TestDataSeed) createTestTrailers(
 			Make:                    "Great Dane",
 			Model:                   "Champion CL",
 			Year:                    new(2019),
+		},
+		{
+			ID:                      pulid.MustNew("tr_"),
+			BusinessUnitID:          buID,
+			OrganizationID:          orgID,
+			EquipmentTypeID:         trailerType.ID,
+			EquipmentManufacturerID: wabash.ID,
+			Status:                  domaintypes.EquipmentStatusAvailable,
+			Code:                    "TRL-006",
+			Make:                    "Wabash",
+			Model:                   "DuraPlate",
+			Year:                    new(2024),
 		},
 	}
 
@@ -939,7 +961,7 @@ func (s *TestDataSeed) createTestShipmentTypes(
 
 	shipmentTypes := []shipmenttype.ShipmentType{
 		{
-			ID:             pulid.MustNew("st_"),
+			ID:             pulid.MustNew("sht_"),
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			Code:           "FTL",
@@ -947,7 +969,7 @@ func (s *TestDataSeed) createTestShipmentTypes(
 			Color:          "#2563EB",
 		},
 		{
-			ID:             pulid.MustNew("st_"),
+			ID:             pulid.MustNew("sht_"),
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			Code:           "LTL",
@@ -955,7 +977,7 @@ func (s *TestDataSeed) createTestShipmentTypes(
 			Color:          "#7C3AED",
 		},
 		{
-			ID:             pulid.MustNew("st_"),
+			ID:             pulid.MustNew("sht_"),
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			Code:           "PART",
@@ -963,7 +985,7 @@ func (s *TestDataSeed) createTestShipmentTypes(
 			Color:          "#0891B2",
 		},
 		{
-			ID:             pulid.MustNew("st_"),
+			ID:             pulid.MustNew("sht_"),
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			Code:           "DRAY",
@@ -971,7 +993,7 @@ func (s *TestDataSeed) createTestShipmentTypes(
 			Color:          "#EA580C",
 		},
 		{
-			ID:             pulid.MustNew("st_"),
+			ID:             pulid.MustNew("sht_"),
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			Code:           "INTM",
@@ -979,7 +1001,7 @@ func (s *TestDataSeed) createTestShipmentTypes(
 			Color:          "#0D9488",
 		},
 		{
-			ID:             pulid.MustNew("st_"),
+			ID:             pulid.MustNew("sht_"),
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			Code:           "EXP",
@@ -987,7 +1009,7 @@ func (s *TestDataSeed) createTestShipmentTypes(
 			Color:          "#DC2626",
 		},
 		{
-			ID:             pulid.MustNew("st_"),
+			ID:             pulid.MustNew("sht_"),
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			Code:           "HAZM",
@@ -995,7 +1017,7 @@ func (s *TestDataSeed) createTestShipmentTypes(
 			Color:          "#CA8A04",
 		},
 		{
-			ID:             pulid.MustNew("st_"),
+			ID:             pulid.MustNew("sht_"),
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			Code:           "TANK",
@@ -1003,7 +1025,7 @@ func (s *TestDataSeed) createTestShipmentTypes(
 			Color:          "#4F46E5",
 		},
 		{
-			ID:             pulid.MustNew("st_"),
+			ID:             pulid.MustNew("sht_"),
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			Code:           "FLAT",
@@ -1011,7 +1033,7 @@ func (s *TestDataSeed) createTestShipmentTypes(
 			Color:          "#9333EA",
 		},
 		{
-			ID:             pulid.MustNew("st_"),
+			ID:             pulid.MustNew("sht_"),
 			BusinessUnitID: buID,
 			OrganizationID: orgID,
 			Code:           "REEF",

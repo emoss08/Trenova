@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
@@ -44,7 +45,7 @@ func TestCreateShipment_TheSchemaAsksForWhatTheDomainNeeds(t *testing.T) {
 	)
 	require.NoError(t, schemaCheck(tool, map[string]any{"shipment": payload}))
 
-	for _, required := range []string{"formulaTemplateId", "shipmentTypeId"} {
+	for _, required := range []string{"shipmentTypeId"} {
 		without := maps.Clone(payload)
 		delete(without, required)
 
@@ -54,7 +55,82 @@ func TestCreateShipment_TheSchemaAsksForWhatTheDomainNeeds(t *testing.T) {
 	}
 
 	assert.Contains(t, tool.Description(), "duplicate_shipment")
-	assert.Contains(t, tool.Description(), "rating method is required")
+	assert.Contains(t, tool.Description(), "Price it the way the person did")
+
+	withoutRating := maps.Clone(payload)
+	delete(withoutRating, "formulaTemplateId")
+	require.NoError(t, schemaCheck(tool, map[string]any{"shipment": withoutRating}),
+		"the contract supplies the rating method when the call names none")
+}
+
+type fakeContractRates struct {
+	priced *serviceports.ContractRateApplication
+	err    error
+	calls  int
+}
+
+func (f *fakeContractRates) PreviewContractRate(
+	context.Context,
+	*shipment.Shipment,
+	*serviceports.RequestActor,
+) (*serviceports.ContractRateApplication, error) {
+	f.calls++
+
+	return f.priced, f.err
+}
+
+/*
+An agent that held create_shipment but not quote_shipment asked the person for
+a rating method and base rate for Peak Distributing, whose agreement already
+prices the lane. Saving the shipment consults the contract either way; leaving
+the rating out now seats the contract's.
+*/
+func TestCreateShipment_UsesTheContractsRatingWhenNoneIsGiven(t *testing.T) {
+	t.Parallel()
+
+	template := pulid.MustNew("ft_")
+	contracts := &fakeContractRates{priced: &serviceports.ContractRateApplication{
+		Applied:           true,
+		Outcome:           ratequote.OutcomeRated,
+		FormulaTemplateID: &template,
+		BaseRate:          decimal.NewNullDecimal(decimal.RequireFromString("2.10")),
+	}}
+	tool := newCreateShipmentTool(createShipmentDeps{
+		Shipments: &fakeShipmentWriter{},
+		Contracts: contracts,
+	}).(*createShipmentTool)
+	params := createShipmentParams()
+	delete(params.Params["shipment"].(map[string]any), "formulaTemplateId")
+
+	entity, err := tool.draft(t.Context(), &params)
+	require.NoError(t, err)
+	assert.Equal(t, template, entity.FormulaTemplateID)
+	require.True(t, entity.BaseRate.Valid)
+	assert.True(t, entity.BaseRate.Decimal.Equal(decimal.RequireFromString("2.10")))
+
+	named := createShipmentParams()
+	_, err = tool.draft(t.Context(), &named)
+	require.NoError(t, err)
+	assert.Equal(t, 1, contracts.calls, "a rating the call names is never second-guessed")
+}
+
+func TestCreateShipment_AsksForARatingWhenNoAgreementPricesTheLane(t *testing.T) {
+	t.Parallel()
+
+	tool := newCreateShipmentTool(createShipmentDeps{
+		Shipments: &fakeShipmentWriter{},
+		Contracts: &fakeContractRates{priced: &serviceports.ContractRateApplication{
+			Outcome: ratequote.OutcomeNoRateFound,
+		}},
+	}).(*createShipmentTool)
+	params := createShipmentParams()
+	delete(params.Params["shipment"].(map[string]any), "formulaTemplateId")
+
+	_, err := tool.draft(t.Context(), &params)
+	var refusal *errortypes.Error
+	require.ErrorAs(t, err, &refusal)
+	assert.Equal(t, "formulaTemplateId", refusal.Field)
+	assert.Contains(t, err.Error(), "list_formula_templates")
 }
 
 func TestCreateShipment_TheSchemaRefusesWhatOnlyTheRaterOrTheSystemSets(t *testing.T) {
@@ -110,7 +186,6 @@ func TestCreateShipment_ReplaysTheCallThatWasCreatedUnrated(t *testing.T) {
 	err := schemaCheck(tool, sent)
 	require.Error(t, err)
 	fields := errorFields(t, err)
-	assert.Contains(t, fields, "shipment.formulaTemplateId", "the rating method is asked for")
 	assert.Contains(t, fields, "shipment.moves[0].type", "a move has no type")
 	assert.Contains(t, fields, "shipment.moves[0].stops[0].scheduledWindowStart",
 		"a window is a local time, not Unix seconds")

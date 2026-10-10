@@ -295,7 +295,7 @@ func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, 
 		call.Provider.StructuredOutputMode == aiprovider.StructuredOutputJSONSchema {
 		body.config().Format = &anthropicOutputFormat{
 			Type:   anthropicFormatJSONSchema,
-			Schema: schema,
+			Schema: anthropicOutputSchema(schema),
 		}
 	}
 

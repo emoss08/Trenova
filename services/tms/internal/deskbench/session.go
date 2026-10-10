@@ -171,12 +171,12 @@ func (s *Session) CleanBenchThreads(ctx context.Context) (int, error) {
 	ctx = s.Context(ctx)
 
 	doomed := make([]pulid.ID, 0, cleanPageSize)
-	for offset := 0; ; offset += cleanPageSize {
+	for cursor := ""; ; {
 		page, err := s.bench.Assistant.ListThreads(ctx, repositories.ListThreadsRequest{
 			UserID:          s.User.ID,
 			TenantInfo:      s.Tenant,
 			Limit:           cleanPageSize,
-			Offset:          offset,
+			Cursor:          cursor,
 			IncludeUnlisted: true,
 		})
 		if err != nil {
@@ -187,9 +187,10 @@ func (s *Session) CleanBenchThreads(ctx context.Context) (int, error) {
 				doomed = append(doomed, thread.ID)
 			}
 		}
-		if len(page.Items) < cleanPageSize {
+		if page.NextCursor == "" {
 			break
 		}
+		cursor = page.NextCursor
 	}
 
 	for idx, threadID := range doomed {

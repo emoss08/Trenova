@@ -4182,6 +4182,15 @@
       "apps/web/components"
     ]
   },
+  "A departure time goes with an arrival; record a departure on its own as Depart": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A description of the document type": {
     "sites": 1,
     "scope": [
@@ -6407,7 +6416,7 @@
     ]
   },
   "A price is an amount in dollars": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -20233,6 +20242,24 @@
       "routes/agent-control"
     ]
   },
+  "An agent wrote these after reading text from outside the organization. Until a person reviews one, every turn that reads it waits for approval before any money, customer-visible or outside-recipient write.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "An agent wrote this after reading outside text. Keep it once you've read it, and the turns that read it can write on their own again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "An agent's own ceiling can hold it lower, never higher.": {
     "sites": 2,
     "scope": [
@@ -21365,15 +21392,6 @@
     ],
     "areas": [
       "domain/ifta"
-    ]
-  },
-  "An overridden rate cannot be negative": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/shipment"
     ]
   },
   "An override can only be stricter than the state limit": {
@@ -36009,7 +36027,34 @@
     ]
   },
   "Cache read": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Cache read price": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Cache write": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Cache write price": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -41042,7 +41087,7 @@
       "apps/web/components"
     ]
   },
-  "Change, retire or restore a memory": {
+  "Change, retire, restore or review a memory": {
     "sites": 1,
     "scope": [
       "go"
@@ -49513,24 +49558,6 @@
       "domain/dedicatedlane"
     ]
   },
-  "Confidence Score must be <= 1": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/dedicatedlane"
-    ]
-  },
-  "Confidence Score must be >= 0": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/dedicatedlane"
-    ]
-  },
   "Confidence bar": {
     "sites": 1,
     "scope": [
@@ -54651,6 +54678,15 @@
       "apps/web/components"
     ]
   },
+  "Couldn't load more conversations": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Couldn't load who this invoice is shared with.": {
     "sites": 1,
     "scope": [
@@ -54757,6 +54793,15 @@
     ],
     "areas": [
       "packages/shared/hooks"
+    ]
+  },
+  "Couldn't withdraw a proposal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Count": {
@@ -58358,6 +58403,15 @@
       "service/agentdecisionqueueservice",
       "service/agentqualityservice",
       "service/watchtowerservice"
+    ]
+  },
+  "Cursor is not one a previous page returned": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Cursor sort does not match request sort": {
@@ -62527,7 +62581,7 @@
     ]
   },
   "Default": {
-    "sites": 18,
+    "sites": 20,
     "scope": [
       "ts"
     ],
@@ -65316,6 +65370,24 @@
     "areas": [
       "template/detention.notice.email",
       "template/detention.notice.pdf"
+    ]
+  },
+  "Departed at cannot be in the future": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Departed at must be a valid timestamp": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Departed {0}": {
@@ -79679,6 +79751,24 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Enter the input cost before a cache read cost: a cache price stands beside it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
+    ]
+  },
+  "Enter the input cost before a cache write cost: a cache price stands beside it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
     ]
   },
   "Enter the invoice prefix to use for this customer": {
@@ -97112,6 +97202,15 @@
     ],
     "areas": [
       "service/agenttoolservice"
+    ]
+  },
+  "Give the arrival time when you give the departure time": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Give the card a label": {
@@ -118362,7 +118461,7 @@
     ]
   },
   "Loading more...": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -118371,6 +118470,7 @@
       "routes/admin",
       "routes/bank-receipt",
       "routes/bank-receipt-queue",
+      "routes/desk",
       "routes/edi",
       "routes/invoice",
       "routes/invoice-approval",
@@ -118611,6 +118711,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Loading the artifact…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Loading the board": {
@@ -124538,6 +124647,15 @@
       "service/agentreflectionservice"
     ]
   },
+  "Memories that taint every turn": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Memory": {
     "sites": 13,
     "scope": [
@@ -124633,7 +124751,16 @@
     ]
   },
   "Memory retired": {
-    "sites": 2,
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Memory reviewed; turns that read it can write on their own again": {
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -134645,6 +134772,15 @@
       "routes/organization"
     ]
   },
+  "No email profile is set up for this organization, so nothing can be emailed until an admin adds one in the email settings. Say so, and offer another way to reach them": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/emailservice"
+    ]
+  },
   "No email profiles yet": {
     "sites": 1,
     "scope": [
@@ -140312,6 +140448,15 @@
       "routes/desk"
     ]
   },
+  "Not reviewed; every turn that reads it waits for approval to write": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Not run yet": {
     "sites": 1,
     "scope": [
@@ -145812,6 +145957,15 @@
       "service/documentservice"
     ]
   },
+  "Only a person can review what an agent remembered": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentmemoryservice"
+    ]
+  },
   "Only a person has a home page to change": {
     "sites": 1,
     "scope": [
@@ -146224,6 +146378,15 @@
     ],
     "areas": [
       "domain/ifta"
+    ]
+  },
+  "Only an active or paused memory can be reviewed; approve a suggested one instead": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentmemoryservice"
     ]
   },
   "Only an active policy can be the default": {
@@ -158147,6 +158310,24 @@
     ],
     "areas": [
       "routes/jurisdiction-rule"
+    ]
+  },
+  "Per million prompt tokens served from the cache. Empty charges a tenth of the input price.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Per million prompt tokens written to the cache. Empty charges 1.25 times the input price.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Per million tokens": {
@@ -171897,6 +172078,15 @@
       "routes/intake"
     ]
   },
+  "Reading the conversation…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Reading the lineage…": {
     "sites": 1,
     "scope": [
@@ -183581,7 +183771,7 @@
     ]
   },
   "Retire": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -184820,7 +185010,7 @@
     ]
   },
   "Review": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "ts"
     ],
@@ -184828,6 +185018,7 @@
       "apps/web/components",
       "apps/web/lib",
       "routes/admin",
+      "routes/agent-control",
       "routes/carrier-monitoring",
       "routes/driver-expense",
       "routes/fuel-purchase",
@@ -185494,6 +185685,15 @@
       "apps/web/components"
     ]
   },
+  "Reviewed {0}; it no longer holds the writes of turns that read it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Reviewed · {0, plural, one {# minute after grace} other {# minutes after grace}}": {
     "sites": 1,
     "scope": [
@@ -185501,6 +185701,15 @@
     ],
     "areas": [
       "routes/service-failure"
+    ]
+  },
+  "Reviewed, keep it": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Reviewing user is required": {
@@ -190090,6 +190299,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Save or discard your changes first, so what you keep is what you read.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Save or dismiss this suggested memory first": {
@@ -216199,6 +216417,15 @@
       "apps/dash/_components"
     ]
   },
+  "That didn't go through": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "That event belongs to another worker": {
     "sites": 1,
     "scope": [
@@ -217660,6 +217887,15 @@
     ],
     "areas": [
       "service/agenttoolservice"
+    ]
+  },
+  "The batch for this pay period is already completed; generate individual carrier settlements for late costs instead": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/carriersettlementservice"
     ]
   },
   "The batch for this pay period is already completed; generate individual settlements for late accruals instead": {
@@ -219949,6 +220185,15 @@
     ],
     "areas": [
       "domain/ratematrix"
+    ]
+  },
+  "The departure is before the arrival": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The deposit account": {
@@ -222569,6 +222814,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "The load has no temperature control, and 0 to 0 °F would make it a frozen load. Leave both temperatures out to keep it as it is, or give the range the person asked for": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "The load's weight, formatted for display.": {
     "sites": 1,
     "scope": [
@@ -222910,6 +223164,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "The minimum temperature is above the maximum": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "The minutes of lateness are subtracted from the allowance.": {
@@ -224175,6 +224438,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "The pickup window has already closed, so no driver can make it and on-time is not judged. Assign whoever ran or will run the load, and reschedule the pickup if it has not happened yet": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/dispatchcandidateservice"
     ]
   },
   "The pivot field cannot also be selected as a dimension": {
@@ -229391,6 +229663,15 @@
       "apps/web/components"
     ]
   },
+  "This artifact could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "This artifact is not here": {
     "sites": 1,
     "scope": [
@@ -231565,6 +231846,15 @@
       "routes/reports"
     ]
   },
+  "This memory has already been reviewed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentmemoryservice"
+    ]
+  },
   "This memory has already been saved or dismissed": {
     "sites": 1,
     "scope": [
@@ -231575,6 +231865,15 @@
     ]
   },
   "This memory is already {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentmemoryservice"
+    ]
+  },
+  "This memory was not written after outside content, so there is nothing to review": {
     "sites": 1,
     "scope": [
       "go"
@@ -239632,7 +239931,7 @@
     ]
   },
   "Try again": {
-    "sites": 47,
+    "sites": 49,
     "scope": [
       "ts"
     ],
@@ -256249,6 +256548,15 @@
       "service/invoicedisputeservice"
     ]
   },
+  "Withdrawing a proposal…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Withdrawing...": {
     "sites": 1,
     "scope": [
@@ -256270,6 +256578,15 @@
       "packages/shared/lib",
       "routes/desk",
       "routes/settlement-dispute"
+    ]
+  },
+  "Withdrew a proposal it replaced": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Withheld automatically each settlement — pause here to skip a period.": {
@@ -257781,7 +258098,7 @@
       "go/other"
     ]
   },
-  "Written by a run that had read text from outside the organization; an agent that reads it is treated as having read that text too.": {
+  "Written by a run that had read text from outside the organization; until a person reviews it, an agent that reads it is treated as having read that text too.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -260991,6 +261308,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "billerId is not a user in this organization. Leave it out to assign the person who asked, or use an id a tool returned; never make one up": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "billerId is not a valid user id": {
@@ -268323,6 +268649,15 @@
     ],
     "areas": [
       "routes/ifta-return"
+    ]
+  },
+  "{0, plural, one {# memory holds every write of the turns that read it} other {# memories hold every write of the turns that read them}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0, plural, one {# mention rule} other {# mention rules}}": {
@@ -276519,6 +276854,15 @@
       "routes/time-attendance"
     ]
   },
+  "{0} on this item still need settling before it can be approved: {1}. A biller settles each in the item's review": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "{0} on this item's shipment still waits on approval; approve or waive it first": {
     "sites": 1,
     "scope": [
@@ -279259,6 +279603,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "{0} · {1, plural, one {read # time} other {read # times}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} · {1} ago": {

@@ -572,3 +572,11 @@ func TestDriverErrorUnwrapsToTheDriversOwnError(t *testing.T) {
 	assert.NoError(t, DriverError(errors.New("plain")))
 	assert.NoError(t, DriverError(nil))
 }
+
+func TestIsReadOnlyTransaction(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, IsReadOnlyTransaction(&pgconn.PgError{Code: pgerrcode.ReadOnlySQLTransaction}))
+	assert.False(t, IsReadOnlyTransaction(&pgconn.PgError{Code: pgerrcode.UniqueViolation}))
+	assert.False(t, IsReadOnlyTransaction(errors.New("plain")))
+}

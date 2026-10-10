@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/samber/lo"
 )
 
 // telematicsReader is the slice of the telematics service the tracking tools
@@ -249,6 +250,7 @@ func (t *getShipmentTrackingTool) assignments(
 	moves, err := t.board.ListBoardMoves(ctx, &repositories.DispatchBoardFilter{
 		TenantInfo:     tenant,
 		MoveIDs:        moveIDs,
+		MoveStatuses:   shipment.MoveStatuses(),
 		IncludeCovered: true,
 		Limit:          len(moveIDs),
 	})
@@ -478,10 +480,10 @@ type workerHOSRow struct {
 	WorkerID              string `json:"workerId"`
 	Name                  string `json:"name,omitempty"`
 	DutyStatus            string `json:"dutyStatus"`
-	DriveRemainingMinutes int64  `json:"driveRemainingMinutes"`
-	ShiftRemainingMinutes int64  `json:"shiftRemainingMinutes"`
-	CycleRemainingMinutes int64  `json:"cycleRemainingMinutes"`
-	BreakRemainingMinutes int64  `json:"breakRemainingMinutes"`
+	DriveRemainingMinutes *int64 `json:"driveRemainingMinutes,omitempty"`
+	ShiftRemainingMinutes *int64 `json:"shiftRemainingMinutes,omitempty"`
+	CycleRemainingMinutes *int64 `json:"cycleRemainingMinutes,omitempty"`
+	BreakRemainingMinutes *int64 `json:"breakRemainingMinutes,omitempty"`
 	CurrentTractorID      string `json:"currentTractorId,omitempty"`
 	RecordedAt            string `json:"recordedAt"`
 	Stale                 bool   `json:"stale"`
@@ -554,8 +556,8 @@ func (t *getWorkerHOSTool) Query(
 			Stale:      true,
 			Note: "No ELD has reported hours of service for this driver, so their drive, " +
 				"shift and cycle time are unknown: the driver may not be mapped to the " +
-				"telematics provider. Say so plainly and plan on nothing; do not estimate " +
-				"hours or call this tool again.",
+				"telematics provider. Do not estimate hours or call this tool again. " +
+				unknownHoursNote,
 		}, nil
 	}
 
@@ -563,10 +565,10 @@ func (t *getWorkerHOSTool) Query(
 	row := workerHOSRow{
 		WorkerID:              state.WorkerID.String(),
 		DutyStatus:            string(state.DutyStatus),
-		DriveRemainingMinutes: state.DriveRemainingMs / 60_000,
-		ShiftRemainingMinutes: state.ShiftRemainingMs / 60_000,
-		CycleRemainingMinutes: state.CycleRemainingMs / 60_000,
-		BreakRemainingMinutes: state.BreakRemainingMs / 60_000,
+		DriveRemainingMinutes: lo.ToPtr(state.DriveRemainingMs / 60_000),
+		ShiftRemainingMinutes: lo.ToPtr(state.ShiftRemainingMs / 60_000),
+		CycleRemainingMinutes: lo.ToPtr(state.CycleRemainingMs / 60_000),
+		BreakRemainingMinutes: lo.ToPtr(state.BreakRemainingMs / 60_000),
 		RecordedAt:            timeutils.FormatUnixDateTimeIn(state.RecordedAt, params.Timezone),
 		Stale:                 now-state.RecordedAt > 12*3600,
 	}
@@ -577,11 +579,18 @@ func (t *getWorkerHOSTool) Query(
 		row.Name = strings.TrimSpace(state.Worker.FirstName + " " + state.Worker.LastName)
 	}
 	if row.Stale {
-		row.Note = "This reading is more than twelve hours old; treat the clocks as unknown."
+		row.Note = "This reading is more than twelve hours old; treat the clocks as unknown. " +
+			unknownHoursNote
 	}
 
 	return row, nil
 }
+
+// unknownHoursNote keeps an unreported clock from reading as a refusal: the
+// prompt asks for what the person named to be proposed with its concerns
+// beside it, and "plan on nothing" stopped an assignment the person asked for.
+const unknownHoursNote = "Unknown hours do not stop work the person asked for: propose it " +
+	"and say beside it that the hours are unreported, for them to weigh."
 
 // pulidList reads an array of ids, refusing a malformed one by position.
 func pulidList(raw any, key string) ([]pulid.ID, error) {

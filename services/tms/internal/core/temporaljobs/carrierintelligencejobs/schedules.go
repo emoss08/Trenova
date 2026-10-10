@@ -28,7 +28,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "carrier-intelligence-sweep",
 			Description:   "Recompute carrier findings, sync monitoring watchlists, poll change feeds and refresh due snapshots",
-			Spec:          schedule.Every(15 * time.Minute),
+			Spec:          schedule.Every(30 * time.Minute),
 			Workflow:      CarrierIntelSweepWorkflow,
 			Args:          []any{&FanOutInput{}},
 			TaskQueue:     temporaltype.IntegrationTaskQueue,

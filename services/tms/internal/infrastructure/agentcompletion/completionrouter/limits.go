@@ -21,6 +21,8 @@ import (
 const (
 	slotMargin         = 30 * time.Second
 	slotStoreTimeout   = 2 * time.Second
+	slotWait           = 20 * time.Second
+	slotPoll           = 250 * time.Millisecond
 	keyTouchInterval   = 5 * time.Minute
 	maxTouchedProvider = 4096
 )
@@ -114,14 +116,7 @@ func (s *Service) claimSlot(
 
 	ttl := timeout + slotMargin
 	token := pulid.MustNew("slot_").String()
-	storeCtx, cancel := context.WithTimeout(ctx, slotStoreTimeout)
-	acquired, err := s.limits.slots.Acquire(storeCtx, repositories.AcquireProviderSlotRequest{
-		ProviderID: provider.ID,
-		Token:      token,
-		Limit:      provider.ResolvedMaxConcurrent(),
-		TTL:        ttl,
-	})
-	cancel()
+	acquired, err := s.awaitSlot(ctx, provider, token, ttl, waitsForSlot(ctx))
 	if err != nil {
 		s.logger.Warn("could not claim a provider slot; calling without one",
 			zap.String("provider", provider.Name),
@@ -151,6 +146,62 @@ func (s *Service) claimSlot(
 			}
 		})
 	}, nil
+}
+
+type slotWaitKey struct{}
+
+// lastCandidate marks the attempt on the last provider a call can go to. A busy
+// provider earlier in the order hands the call on at once; the last one has
+// nowhere to hand it, so it waits a short while for a slot instead.
+func lastCandidate(ctx context.Context, idx, count int) context.Context {
+	if idx != count-1 {
+		return ctx
+	}
+
+	return context.WithValue(ctx, slotWaitKey{}, true)
+}
+
+func waitsForSlot(ctx context.Context) bool {
+	wait, _ := ctx.Value(slotWaitKey{}).(bool)
+
+	return wait
+}
+
+// awaitSlot claims a slot, waiting up to slotWait, or the caller's deadline
+// when that comes first, when asked to. Refusing the
+// last provider at once spent a turn's retries in two seconds and failed the
+// person's reply while three conversations ran at once, though a slot frees
+// within seconds.
+func (s *Service) awaitSlot(
+	ctx context.Context,
+	provider *aiprovider.Provider,
+	token string,
+	ttl time.Duration,
+	wait bool,
+) (bool, error) {
+	deadline := time.Now().Add(slotWait)
+	if bound, ok := ctx.Deadline(); ok && bound.Before(deadline) {
+		deadline = bound
+	}
+	for {
+		storeCtx, cancel := context.WithTimeout(ctx, slotStoreTimeout)
+		acquired, err := s.limits.slots.Acquire(storeCtx, repositories.AcquireProviderSlotRequest{
+			ProviderID: provider.ID,
+			Token:      token,
+			Limit:      provider.ResolvedMaxConcurrent(),
+			TTL:        ttl,
+		})
+		cancel()
+		if err != nil || acquired || !wait || !time.Now().Add(slotPoll).Before(deadline) {
+			return acquired, err
+		}
+
+		select {
+		case <-ctx.Done():
+			return false, nil
+		case <-time.After(slotPoll):
+		}
+	}
 }
 
 func (s *Service) holdSlot(providerID pulid.ID, token string, ttl time.Duration, stop <-chan struct{}) {

@@ -3,6 +3,7 @@ package agenttoolservice
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,6 +36,8 @@ fired yet, and a person finds out weeks later that the report they asked for
 has been silent the whole time.
 */
 
+const maxSchedulesCompared = 50
+
 type scheduleWriter interface {
 	CreateSchedule(
 		ctx context.Context,
@@ -48,6 +51,10 @@ type scheduleWriter interface {
 		ctx context.Context,
 		req *reporting.SaveScheduleRequest,
 	) (*reporting.SchedulePreview, error)
+	ListSchedules(
+		ctx context.Context,
+		req *reporting.ListSchedulesRequest,
+	) ([]*report.ReportSchedule, error)
 }
 
 type scheduleReportTool struct {
@@ -162,7 +169,58 @@ func (t *scheduleReportTool) Validate(
 		return multiErr
 	}
 
+	return t.refuseRepeat(ctx, &params, definitionID)
+}
+
+// refuseRepeat refuses a schedule the report already has: the same time, zone
+// and recipients. Approving one twice sent every email twice; three identical
+// Monday schedules piled up on one report before this.
+func (t *scheduleReportTool) refuseRepeat(
+	ctx context.Context,
+	params *serviceports.ToolExecuteParams,
+	definitionID pulid.ID,
+) error {
+	existing, err := t.schedules.ListSchedules(ctx, &reporting.ListSchedulesRequest{
+		Request:      reporting.Request{TenantInfo: tenantFrom(*params)},
+		DefinitionID: definitionID,
+		EnabledOnly:  true,
+		Limit:        maxSchedulesCompared,
+	})
+	if err != nil {
+		return err
+	}
+
+	expression := strings.TrimSpace(optionalString(params.Params, "cronExpression"))
+	timezone := strings.TrimSpace(optionalString(params.Params, "timezone"))
+	recipients := stringSliceParam(params.Params, "emailRecipients")
+	for _, schedule := range existing {
+		if schedule == nil || schedule.CronExpression != expression ||
+			!strings.EqualFold(schedule.Timezone, timezone) ||
+			!sendsTo(schedule.Delivery, recipients) {
+			continue
+		}
+
+		return errortypes.NewValidationError("cronExpression", errortypes.ErrDuplicate, fmt.Sprintf(
+			"This report already runs on that schedule to those recipients (%s); tell the "+
+				"person it is set up rather than adding a second one", schedule.ID))
+	}
+
 	return nil
+}
+
+func sendsTo(delivery *report.ScheduleDelivery, recipients []string) bool {
+	if delivery == nil {
+		return len(recipients) == 0
+	}
+	for _, recipient := range recipients {
+		if !slices.ContainsFunc(delivery.EmailRecipients, func(have string) bool {
+			return strings.EqualFold(strings.TrimSpace(have), strings.TrimSpace(recipient))
+		}) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (t *scheduleReportTool) validateArgs(params map[string]any) error {

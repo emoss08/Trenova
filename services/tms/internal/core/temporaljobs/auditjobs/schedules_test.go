@@ -87,9 +87,24 @@ func TestScheduleProvider_DLQRetry(t *testing.T) {
 	assert.NotNil(t, dlqSchedule.Workflow)
 	assert.Equal(t, temporaltype.AuditTaskQueue, dlqSchedule.TaskQueue)
 	assert.Equal(t, enums.SCHEDULE_OVERLAP_POLICY_SKIP, dlqSchedule.OverlapPolicy)
+	assert.Equal(t, 5*time.Minute, dlqSchedule.Spec.Interval)
 	assert.NotNil(t, dlqSchedule.Memo)
 	assert.Equal(t, "dlq-retry", dlqSchedule.Memo["purpose"])
 	assert.Equal(t, "audit_dlq", dlqSchedule.Memo["target"])
+}
+
+func TestScheduleProvider_DLQRetryConfigOverride(t *testing.T) {
+	t.Parallel()
+
+	provider := NewScheduleProvider(&config.Config{
+		Audit: config.AuditConfig{
+			DLQRetryInterval: 15 * time.Minute,
+		},
+	})
+	schedules := provider.GetSchedules()
+
+	require.Len(t, schedules, 3)
+	assert.Equal(t, 15*time.Minute, schedules[2].Spec.Interval)
 }
 
 func TestScheduleProvider_AllSchedulesHaveRequiredFields(t *testing.T) {

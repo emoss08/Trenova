@@ -974,6 +974,7 @@ var ThreadColumns = struct {
 	SnoozeAnchor        Column // "snooze_anchor" → qualified: "athr.snooze_anchor"
 	SnoozeStopID        Column // "snooze_stop_id" → qualified: "athr.snooze_stop_id"
 	PinnedFacts         Column // "pinned_facts" → qualified: "athr.pinned_facts"
+	WorkingSet          Column // "working_set" → qualified: "athr.working_set"
 	ContextUsage        Column // "context_usage" → qualified: "athr.context_usage"
 	AutoCompactOff      Column // "auto_compact_off" → qualified: "athr.auto_compact_off"
 	HandedFromThreadID  Column // "handed_from_thread_id" → qualified: "athr.handed_from_thread_id"
@@ -1001,6 +1002,7 @@ var ThreadColumns = struct {
 	SnoozeAnchor:        NewColumn("snooze_anchor", "athr"),
 	SnoozeStopID:        NewColumn("snooze_stop_id", "athr"),
 	PinnedFacts:         NewColumn("pinned_facts", "athr"),
+	WorkingSet:          NewColumn("working_set", "athr"),
 	ContextUsage:        NewColumn("context_usage", "athr"),
 	AutoCompactOff:      NewColumn("auto_compact_off", "athr"),
 	HandedFromThreadID:  NewColumn("handed_from_thread_id", "athr"),
@@ -1033,6 +1035,7 @@ var ThreadFieldMap = map[string]string{
 	"snoozedUntil":        "snoozed_until",
 	"snoozeAnchor":        "snooze_anchor",
 	"pinnedFacts":         "pinned_facts",
+	"workingSet":          "working_set",
 	"contextUsage":        "context_usage",
 	"autoCompactOff":      "auto_compact_off",
 	"handedFromThreadId":  "handed_from_thread_id",
@@ -1064,6 +1067,7 @@ var ThreadInsertableColumns = []string{
 	"snooze_anchor",
 	"snooze_stop_id",
 	"pinned_facts",
+	"working_set",
 	"context_usage",
 	"auto_compact_off",
 	"handed_from_thread_id",
@@ -1156,6 +1160,7 @@ var ThreadFilter = struct {
 	SnoozedUntil        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "snoozedUntil" → DB: "snoozed_until"
 	SnoozeAnchor        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "snoozeAnchor" → DB: "snooze_anchor"
 	PinnedFacts         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pinnedFacts" → DB: "pinned_facts"
+	WorkingSet          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "workingSet" → DB: "working_set"
 	ContextUsage        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contextUsage" → DB: "context_usage"
 	AutoCompactOff      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoCompactOff" → DB: "auto_compact_off"
 	HandedFromThreadID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "handedFromThreadId" → DB: "handed_from_thread_id"
@@ -1215,6 +1220,9 @@ var ThreadFilter = struct {
 	},
 	PinnedFacts: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("pinnedFacts", op, value)
+	},
+	WorkingSet: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("workingSet", op, value)
 	},
 	ContextUsage: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("contextUsage", op, value)

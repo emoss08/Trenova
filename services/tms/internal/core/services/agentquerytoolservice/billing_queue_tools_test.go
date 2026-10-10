@@ -243,17 +243,24 @@ func TestGetBillingQueueItem_NamesTheInvoiceApprovalMade(t *testing.T) {
 }
 
 type fakeCandidates struct {
-	captured *serviceports.ListBillingTransferCandidatesRequest
-	result   *serviceports.BillingTransferCandidates
+	captured  *serviceports.ListBillingTransferCandidatesRequest
+	result    *serviceports.BillingTransferCandidates
+	completed *serviceports.BillingTransferCandidates
 }
 
 func (f *fakeCandidates) ListBillingTransferCandidates(
 	_ context.Context,
 	req *serviceports.ListBillingTransferCandidatesRequest,
 ) (*serviceports.BillingTransferCandidates, error) {
-	f.captured = req
+	if f.captured == nil {
+		f.captured = req
+		return f.result, nil
+	}
+	if f.completed != nil {
+		return f.completed, nil
+	}
 
-	return f.result, nil
+	return &serviceports.BillingTransferCandidates{}, nil
 }
 
 func TestListBillingTransferCandidates_SaysWhatATransferWouldDoWithEachRow(t *testing.T) {
@@ -456,8 +463,8 @@ func TestGetBillingQueueItems_ReadsASetAndSaysWhatBlocksEach(t *testing.T) {
 	require.Len(t, rows, 3)
 
 	assert.Equal(t, "INV-3001", rows[0].Number)
-	assert.False(t, rows[0].CanApprove)
-	assert.Contains(t, rows[0].ApprovalBlockedBy, "must be in review")
+	assert.True(t, rows[0].CanApprove, "approving an item waiting for review takes it into review")
+	assert.Empty(t, rows[0].ApprovalBlockedBy)
 	assert.Equal(t, "no biller", rows[0].AssignedBiller)
 	assert.Equal(t, "Proof of Delivery", rows[0].MissingDocuments)
 
@@ -495,4 +502,53 @@ func TestGetBillingQueueItems_WithholdsAmountsAtInternal(t *testing.T) {
 	assert.Empty(t, rows[0].Amount)
 	assert.Contains(t, outcome.Withheld, "amounts")
 	assert.NotContains(t, outcome.Columns, "amount", "a withheld column is not promised")
+}
+
+func TestApprovable_MatchesWhatTheQueueAccepts(t *testing.T) {
+	t.Parallel()
+
+	waiting := &billingqueue.BillingQueueItem{Status: billingqueue.StatusReadyForReview}
+	can, blocked := approvable(waiting)
+	assert.True(t, can, "the approval takes a waiting item into review itself")
+	assert.Empty(t, blocked)
+
+	flagged := &billingqueue.BillingQueueItem{
+		Status: billingqueue.StatusInReview,
+		Review: &billingqueue.Review{Issues: []*billingqueue.Issue{{Summary: "Rate differs"}}},
+	}
+	can, blocked = approvable(flagged)
+	assert.False(t, can)
+	assert.Contains(t, blocked, "flagged check")
+
+	held := &billingqueue.BillingQueueItem{
+		Status:         billingqueue.StatusInReview,
+		DetentionHolds: []*billingqueue.DetentionHold{{}},
+	}
+	can, _ = approvable(held)
+	assert.False(t, can)
+
+	can, blocked = approvable(&billingqueue.BillingQueueItem{Status: billingqueue.StatusApproved})
+	assert.False(t, can)
+	assert.Equal(t, "it is already approved", blocked)
+}
+
+/*
+Asked what was ready to bill, gpt-6-luna filtered to ReadyToInvoice and
+reported one load while eighteen more Completed loads were waiting, which a
+transfer takes once it marks them ready. A ReadyToInvoice-only listing says so.
+*/
+func TestListBillingTransferCandidates_CountsTheCompletedOnesAReadyFilterLeavesOut(t *testing.T) {
+	t.Parallel()
+
+	shipments := &fakeCandidates{
+		result:    &serviceports.BillingTransferCandidates{},
+		completed: &serviceports.BillingTransferCandidates{TotalCount: 18},
+	}
+	tool := &listBillingTransferCandidatesTool{shipments: shipments}
+
+	result, err := tool.Query(t.Context(), testParams(map[string]any{"status": "ReadyToInvoice"}))
+	require.NoError(t, err)
+
+	outcome := result.(billingTransferCandidatesResult)
+	assert.Contains(t, outcome.Note, "18 more delivered shipments are still Completed")
 }

@@ -47,6 +47,7 @@ type Params struct {
 	CommodityRepo       repositories.CommodityRepository
 	ContinuityRepo      repositories.EquipmentContinuityRepository
 	TrailerRepo         repositories.TrailerRepository
+	TractorRepo         repositories.TractorRepository `optional:"true"`
 	LocationRepo        repositories.LocationRepository
 	ShipmentValidator   *shipmentservice.Validator
 	Coordinator         *shipmentstate.Coordinator
@@ -73,6 +74,7 @@ type service struct {
 	commodityRepo       repositories.CommodityRepository
 	continuityRepo      repositories.EquipmentContinuityRepository
 	trailerRepo         repositories.TrailerRepository
+	tractorRepo         repositories.TractorRepository
 	locationRepo        repositories.LocationRepository
 	shipmentValidator   *shipmentservice.Validator
 	coordinator         *shipmentstate.Coordinator
@@ -100,6 +102,7 @@ func New(p Params) portservices.AssignmentService {
 		commodityRepo:       p.CommodityRepo,
 		continuityRepo:      p.ContinuityRepo,
 		trailerRepo:         p.TrailerRepo,
+		tractorRepo:         p.TractorRepo,
 		locationRepo:        p.LocationRepo,
 		shipmentValidator:   p.ShipmentValidator,
 		coordinator:         p.Coordinator,
@@ -584,7 +587,9 @@ func (s *service) upsertAssignment( //nolint:gocognit // legacy workflow
 	var result *shipment.Assignment
 
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		plan, err := s.planAssignment(txCtx, tenantInfo, moveID, build)
+		plan, err := s.planAssignment(
+			txCtx, tenantInfo, moveID, repositories.CapabilityLockShare, build,
+		)
 		if err != nil {
 			return err
 		}

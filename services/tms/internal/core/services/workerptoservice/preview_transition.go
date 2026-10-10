@@ -3,6 +3,7 @@ package workerptoservice
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -69,6 +70,12 @@ func (s *Service) previewTransition(
 		Before:        current,
 		After:         after,
 		ReturnsLedger: releasesUsage(current, params.target),
+		Location:      time.UTC,
+	}
+	if s.ledger != nil {
+		if preview.Location, err = s.ledger.OrgLocation(ctx, params.req.TenantInfo); err != nil {
+			return nil, err
+		}
 	}
 	if !params.notifyWorker {
 		return preview, nil

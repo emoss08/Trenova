@@ -3,6 +3,7 @@ package agenttoolservice
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/trenova/pkg/toolschema"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -290,8 +291,8 @@ func newRunRateSimulationTool(simulations rateSimulationKeeper) serviceports.Age
 				"charged or what carriers are paid. Defaults to Customer.", simulationParties),
 			paramSampleFrom: agenttoolschema.Date("The first ship day to replay."),
 			paramSampleTo:   agenttoolschema.Date("The last ship day to replay."),
-			paramSampleLimit: integerProperty("The most shipments to replay. Leave it out "+
-				"for every shipment in the window.", 1, maxSampleShipments),
+			paramSampleLimit: toolschema.KeepEmpty(integerProperty("The most shipments to "+
+				"replay. Leave it out for every shipment in the window.", 1, maxSampleShipments)),
 		},
 		required: []string{
 			paramRateAgreementID, paramSimulationName, paramSampleFrom, paramSampleTo,

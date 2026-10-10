@@ -24,7 +24,9 @@ func (f *fakePTOLister) List(
 	_ context.Context,
 	req *repositories.ListPTORequest,
 ) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
-	f.request = req
+	if f.request == nil {
+		f.request = req
+	}
 
 	return &pagination.CursorListResult[*worker.WorkerPTO]{Items: f.items}, nil
 }
@@ -236,4 +238,63 @@ func TestListTimeOffSchema_OffersOnlyValuesTheToolAccepts(t *testing.T) {
 		_, err := worker.PTOTypeFromString(value)
 		assert.NoError(t, err, "schema offers type %q", value)
 	}
+}
+
+type typeFilteringPTO struct {
+	items []*worker.WorkerPTO
+}
+
+func (f *typeFilteringPTO) List(
+	_ context.Context,
+	req *repositories.ListPTORequest,
+) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
+	matched := make([]*worker.WorkerPTO, 0, len(f.items))
+	for _, item := range f.items {
+		if req.Type != "" && string(item.Type) != req.Type {
+			continue
+		}
+		matched = append(matched, item)
+	}
+
+	return &pagination.CursorListResult[*worker.WorkerPTO]{Items: matched}, nil
+}
+
+// "Who's off this week" missed leave that began last week and is still on:
+// the window only took leave starting inside it.
+func TestListTimeOff_TheDefaultWindowTakesLeaveAlreadyUnderWay(t *testing.T) {
+	t.Parallel()
+
+	pto := &fakePTOLister{}
+	_, err := newListTimeOffTool(pto).Query(t.Context(), testParams(map[string]any{}))
+	require.NoError(t, err)
+	assert.True(t, pto.request.Overlapping)
+
+	dated := &fakePTOLister{}
+	_, err = newListTimeOffTool(dated).Query(t.Context(), testParams(map[string]any{
+		"startingFrom": 1_790_000_000,
+	}))
+	require.NoError(t, err)
+	assert.False(t, dated.request.Overlapping, "explicit start dates keep their meaning")
+}
+
+// A model that fills every parameter sent type: Vacation for a personal-day
+// request, got "none", and tried each type in turn.
+func TestListTimeOff_NamesTheRequestsAFilterLeftOut(t *testing.T) {
+	t.Parallel()
+
+	workerID := pulid.MustNew("wrk_")
+	personal := &worker.WorkerPTO{
+		ID: pulid.MustNew("wpto_"), WorkerID: workerID,
+		Type: worker.PTOTypePersonal, Status: worker.PTOStatusRequested,
+	}
+	tool := newListTimeOffTool(&typeFilteringPTO{items: []*worker.WorkerPTO{personal}})
+
+	result, err := tool.Query(t.Context(), testParams(map[string]any{
+		"workerId": workerID.String(),
+		"type":     "Vacation",
+	}))
+	require.NoError(t, err)
+	note := result.(searchOutcome).Note
+	assert.Contains(t, note, personal.ID.String())
+	assert.Contains(t, note, "Personal")
 }

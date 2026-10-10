@@ -40,7 +40,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "accounting-changes-read",
 			Description:   "Read what changed in every syncing accounting system and bring payments in",
-			Spec:          schedule.Cron("*/5 * * * *"),
+			Spec:          schedule.Cron("*/15 * * * *"),
 			Workflow:      KickAccountingChangesWorkflow,
 			TaskQueue:     temporaltype.IntegrationTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -293,4 +294,37 @@ func TestExplainRate_StillSaysNothingWhenTheShipmentCarriesNoRating(t *testing.T
 
 	assert.Nil(t, explanation.PricedBy)
 	assert.Contains(t, explanation.Note, "no rating on record")
+}
+
+/*
+The trace prices what the agreement priced. A fuel surcharge program's charge
+sits on the shipment beside it, and reading only the trace reported the
+lifecycle load's $222.56 fuel surcharge as unpriced against a $1,121.36 total.
+*/
+func TestExplainRate_ListsTheChargesTheAgreementDidNotPrice(t *testing.T) {
+	t.Parallel()
+
+	quote := ratedQuote(fullTrace())
+	quote.ID = pulid.MustNew("rq_")
+	program := pulid.MustNew("fsp_")
+	record := &shipment.Shipment{
+		TotalChargeAmount: decimal.NewNullDecimal(usd("1121.36")),
+		AdditionalCharges: []*shipment.AdditionalCharge{
+			{
+				Amount:                 usd("222.56"),
+				FuelSurchargeProgramID: &program,
+				AccessorialCharge:      &accessorialcharge.AccessorialCharge{Code: "FUEL", Description: "Fuel Surcharge"},
+			},
+			{Amount: usd("75"), RateQuoteID: &quote.ID},
+		},
+	}
+	tool := &explainRateTool{quotes: &stubQuoteReader{quote: quote}, shipments: &stubShipmentRating{record: record}}
+	explanation := explain(t, tool, map[string]any{"shipmentId": pulid.MustNew("shp_").String()})
+
+	require.Len(t, explanation.OnShipment, 1, "a charge the quote produced is already in its totals")
+	assert.Equal(t, "FUEL", explanation.OnShipment[0].Code)
+	assert.Equal(t, "fuel surcharge program", explanation.OnShipment[0].Source)
+	require.NotNil(t, explanation.ShipmentTotal)
+	assert.True(t, explanation.ShipmentTotal.Equal(usd("1121.36")))
+	assert.NotEmpty(t, explanation.ChargesNote)
 }

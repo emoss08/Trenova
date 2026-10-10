@@ -33,7 +33,7 @@ func TestAnthropicAdapter_ReadsPromptCacheTokens(t *testing.T) {
 	assert.Equal(t, 7, resp.OutputTokens)
 	assert.Equal(t, 1800, resp.CacheReadTokens)
 	assert.Equal(t, 120, resp.CacheWriteTokens)
-	assert.True(t, CacheSeparateFromInput(aiprovider.KindAnthropicMessages))
+	assert.True(t, aiprovider.KindAnthropicMessages.CachesOutsideInput())
 }
 
 func TestAnthropicAdapter_StreamReadsPromptCacheTokens(t *testing.T) {
@@ -83,7 +83,7 @@ func TestOpenAIChatAdapter_ReadsCachedPromptTokens(t *testing.T) {
 	assert.Equal(t, 2400, resp.InputTokens)
 	assert.Equal(t, 2048, resp.CacheReadTokens)
 	assert.Zero(t, resp.CacheWriteTokens, "the protocol reports no cache writes")
-	assert.False(t, CacheSeparateFromInput(aiprovider.KindOpenAIChat))
+	assert.False(t, aiprovider.KindOpenAIChat.CachesOutsideInput())
 }
 
 func TestOpenAIChatAdapter_StreamReadsCachedPromptTokens(t *testing.T) {
@@ -130,7 +130,7 @@ func TestOpenAIResponsesAdapter_ReadsCachedInputTokens(t *testing.T) {
 
 	assert.Equal(t, 3000, resp.InputTokens)
 	assert.Equal(t, 2816, resp.CacheReadTokens)
-	assert.False(t, CacheSeparateFromInput(aiprovider.KindOpenAIResponses))
+	assert.False(t, aiprovider.KindOpenAIResponses.CachesOutsideInput())
 }
 
 func TestOpenAIResponsesAdapter_StreamReadsCachedInputTokens(t *testing.T) {
@@ -170,5 +170,5 @@ func TestOllamaAdapter_ReportsNoPromptCache(t *testing.T) {
 	assert.Equal(t, 30, resp.InputTokens)
 	assert.Zero(t, resp.CacheReadTokens)
 	assert.Zero(t, resp.CacheWriteTokens)
-	assert.False(t, CacheSeparateFromInput(aiprovider.KindOllama))
+	assert.False(t, aiprovider.KindOllama.CachesOutsideInput())
 }

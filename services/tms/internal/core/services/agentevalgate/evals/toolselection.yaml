@@ -1034,3 +1034,11 @@ cases:
     expect: [forget_memory]
   - request: dismiss that insight about empty miles, it is not worth acting on
     expect: [dismiss_insight]
+  - request: Look up David Park as a driver by name.
+    expect: [search_worker, get_worker]
+  - request: search worker by name Emily Chen
+    expect: [search_worker, get_worker]
+  - request: locate tractor TRC-002 and available dry van trailers for dispatch
+    expect: [list_tractors, list_trailers]
+  - request: Find David Park in the worker roster so I can identify his settlement
+    expect: [search_worker, get_worker]

@@ -122,37 +122,48 @@ func (r *repository) GetOrCreate(
 	ctx context.Context,
 	orgID, buID pulid.ID,
 ) (*dispatchcontrol.DispatchControl, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*dispatchcontrol.DispatchControl, error) {
-		log := r.l.With(
-			zap.String("operation", "GetOrCreate"),
-			zap.String("orgId", orgID.String()),
-		)
+	log := r.l.With(
+		zap.String("operation", "GetOrCreate"),
+		zap.String("orgId", orgID.String()),
+	)
 
-		newEntity := dispatchcontrol.NewDefaultDispatchControl(orgID, buID)
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(newEntity).
-			On(`CONFLICT ("organization_id", "business_unit_id") DO NOTHING`).
-			Exec(ctx); err != nil {
-			log.Error("failed to create default dispatch control", zap.Error(err))
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Dispatch control is busy. Retry the request.",
-			)
-		}
+	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*dispatchcontrol.DispatchControl]{
+		Find: func(ctx context.Context) (*dispatchcontrol.DispatchControl, error) {
+			found := new(dispatchcontrol.DispatchControl)
+			if scanErr := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(found).
+				Where("dc.organization_id = ?", orgID).
+				Where("dc.business_unit_id = ?", buID).
+				Scan(ctx); scanErr != nil {
+				return nil, scanErr
+			}
 
-		entity := new(dispatchcontrol.DispatchControl)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("dc.organization_id = ?", orgID).
-			Where("dc.business_unit_id = ?", buID).
-			Scan(ctx); err != nil {
+			return found, nil
+		},
+		Create: func(ctx context.Context) error {
+			_, insertErr := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(dispatchcontrol.NewDefaultDispatchControl(orgID, buID)).
+				On(`CONFLICT ("organization_id", "business_unit_id") DO NOTHING`).
+				Exec(ctx)
+			if insertErr != nil {
+				log.Error("failed to create default dispatch control", zap.Error(insertErr))
+				return dberror.MapRetryableTransactionError(
+					insertErr,
+					"Dispatch control is busy. Retry the request.",
+				)
+			}
+
+			return nil
+		},
+		Default: func() *dispatchcontrol.DispatchControl {
+			return dispatchcontrol.NewDefaultDispatchControl(orgID, buID)
+		},
+		MapError: func(err error) error {
 			log.Error("failed to get dispatch control", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "DispatchControl")
-		}
-
-		return entity, nil
+			return dberror.HandleNotFoundError(err, "DispatchControl")
+		},
 	})
 }
 

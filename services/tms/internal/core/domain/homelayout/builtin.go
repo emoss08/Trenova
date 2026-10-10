@@ -4,15 +4,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 )
 
-// Canned report keys the shipped presets draw on. These are compiled against
-// the canned registry by a service-layer test, so a report removed from the
-// library breaks the build rather than a customer's home screen.
-const (
-	cannedUnbilledDelivered = "unbilled-delivered-shipments"
-	cannedARAgingByCustomer = "ar-aging-by-customer"
-	cannedCustomerScorecard = "customer-scorecard"
-)
-
 // BuiltInLayout is the home screen a user sees before anyone has authored
 // anything for them. Choosing by core responsibility means a new dispatcher and
 // a new controller each land somewhere useful on their first login without an

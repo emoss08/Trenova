@@ -125,6 +125,15 @@ func (s *Service) resolveOpenBatch(
 	if err != nil {
 		return nil, err
 	}
+	if existing != nil && existing.Status != carriersettlement.BatchStatusOpen {
+		closed := errortypes.NewValidationError(
+			"periodEnd",
+			errortypes.ErrInvalidOperation,
+			"The batch for this pay period is already completed; generate individual carrier settlements for late costs instead",
+		)
+		closed.Internal = settlementshared.ErrPeriodBatchClosed
+		return nil, closed
+	}
 	if existing != nil {
 		return existing, nil
 	}

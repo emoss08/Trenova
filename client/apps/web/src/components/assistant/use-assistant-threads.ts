@@ -1,7 +1,8 @@
 import { queries } from "@/lib/queries";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
+import { threadListQuery, threadsOf } from "@/lib/thread-list";
 import type { AssistantThread } from "@/types/assistant";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
 export type AssistantThreads = {
@@ -20,9 +21,9 @@ export type AssistantThreads = {
 
 /** The person's conversations and agents, and the one the panel has open. */
 export function useAssistantThreads(activeThreadId: string | null): AssistantThreads {
-  const threadsQuery = useQuery(queries.assistant.threads());
+  const threadsQuery = useInfiniteQuery(threadListQuery());
   const agentsQuery = useQuery(queries.assistant.myAgents());
-  const threads = useMemo(() => threadsQuery.data?.items ?? [], [threadsQuery.data?.items]);
+  const threads = threadsOf(threadsQuery.data);
   const agents = useMemo(() => agentsQuery.data ?? [], [agentsQuery.data]);
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents]);
 

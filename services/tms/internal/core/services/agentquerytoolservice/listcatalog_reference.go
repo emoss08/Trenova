@@ -444,11 +444,12 @@ func newListInvoicesTool(
 	return newListTool(listSpec{
 		name:         "list_invoices",
 		entityPlural: "invoices",
-		summary: "List invoices narrowed by status, whether they are paid, whether they " +
-			"are disputed, the amount, or the invoice and due dates. It answers what is " +
-			"unpaid, overdue or in dispute.",
-		resource: permission.ResourceInvoice,
-		config:   querybuilder.GetFieldConfiguration((*invoice.Invoice)(nil)),
+		summary: "List invoices narrowed by customer, status, whether they are paid or " +
+			"disputed, the amount, or the invoice and due dates. It answers what is unpaid, " +
+			"overdue or in dispute.",
+		searchTerms: []string{"last invoice", "latest invoice"},
+		resource:    permission.ResourceInvoice,
+		config:      querybuilder.GetFieldConfiguration((*invoice.Invoice)(nil)),
 		fields: []listField{
 			{
 				Name:   "status",

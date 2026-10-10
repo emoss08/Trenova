@@ -185,6 +185,8 @@ export type AiProviderPatchInput = {
   allowPrivateNetwork?: boolean | null | undefined;
   /** A new credential. It replaces the stored one and is never returned. */
   apiKey?: string | null | undefined;
+  cacheReadCostPerMillion?: string | null | undefined;
+  cacheWriteCostPerMillion?: string | null | undefined;
   enabled?: boolean | null | undefined;
   inputCostPerMillion?: string | null | undefined;
   outputCostPerMillion?: string | null | undefined;
@@ -8938,7 +8940,7 @@ export type ResolveAgentExceptionMutationVariables = Exact<{
 
 export type ResolveAgentExceptionMutation = { resolveAgentException: { id: string, resolutionState: AgentResolutionState, resolutionNotes: string, version: number, updatedAt: number } };
 
-export type AgentMemoryTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, kind: AgentMemoryKind, source: AgentMemorySource, status: AgentMemoryStatus, subjectType: AgentMemorySubjectType | null, subjectId: string | null, subjectLabel: string, toolName: string, content: string, agentDefinitionId: string | null, tainted: boolean, sourceRunId: string | null, sourceProposalId: string | null, sourceThreadId: string | null, reflectionId: string | null, supersedesId: string | null, createdByUserId: string | null, retiredByUserId: string | null, retiredAt: number | null, expiresAt: number | null, useCount: number, lastUsedAt: number | null, version: number, createdAt: number, updatedAt: number, supersedes: { id: string, content: string, status: AgentMemoryStatus } | null, replacedBy: { id: string, content: string, status: AgentMemoryStatus, createdAt: number } | null, evidence: { feedbackIds: Array<string>, patternKey: string, ratingCount: number, distinctUsers: number, distinctThreads: number, reason: string, quotes: Array<string>, firstRatedAt: number, lastRatedAt: number, signals: Array<string> } | null } & { ' $fragmentName'?: 'AgentMemoryTableRowFieldsFragment' };
+export type AgentMemoryTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, kind: AgentMemoryKind, source: AgentMemorySource, status: AgentMemoryStatus, subjectType: AgentMemorySubjectType | null, subjectId: string | null, subjectLabel: string, toolName: string, content: string, agentDefinitionId: string | null, tainted: boolean, taints: boolean, reviewedByUserId: string | null, reviewedAt: number | null, sourceRunId: string | null, sourceProposalId: string | null, sourceThreadId: string | null, reflectionId: string | null, supersedesId: string | null, createdByUserId: string | null, retiredByUserId: string | null, retiredAt: number | null, expiresAt: number | null, useCount: number, lastUsedAt: number | null, version: number, createdAt: number, updatedAt: number, supersedes: { id: string, content: string, status: AgentMemoryStatus } | null, replacedBy: { id: string, content: string, status: AgentMemoryStatus, createdAt: number } | null, evidence: { feedbackIds: Array<string>, patternKey: string, ratingCount: number, distinctUsers: number, distinctThreads: number, reason: string, quotes: Array<string>, firstRatedAt: number, lastRatedAt: number, signals: Array<string> } | null } & { ' $fragmentName'?: 'AgentMemoryTableRowFieldsFragment' };
 
 export type AgentMemoryTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -8982,6 +8984,14 @@ export type SetAgentMemoryStatusMutationVariables = Exact<{
 
 
 export type SetAgentMemoryStatusMutation = { setAgentMemoryStatus: { ' $fragmentRefs'?: { 'AgentMemoryTableRowFieldsFragment': AgentMemoryTableRowFieldsFragment } } };
+
+export type ReviewAgentMemoryMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+}>;
+
+
+export type ReviewAgentMemoryMutation = { reviewAgentMemory: { ' $fragmentRefs'?: { 'AgentMemoryTableRowFieldsFragment': AgentMemoryTableRowFieldsFragment } } };
 
 export type ApproveAgentMemorySuggestionMutationVariables = Exact<{
   id: string | number;
@@ -9361,7 +9371,7 @@ export type AgentFeedbackSummaryQueryVariables = Exact<{
 
 export type AgentFeedbackSummaryQuery = { agentFeedbackSummary: { agentDefinitionId: string, windowDays: number, since: number, positive: number, negative: number, satisfaction: number | null, days: Array<{ day: string, positive: number, negative: number, satisfaction: number | null }>, worstRated: Array<{ targetType: AiFeedbackTargetType, targetId: string, targetPart: string, positive: number, negative: number, lastRatedAt: number, sample: { ' $fragmentRefs'?: { 'AiFeedbackTableRowFieldsFragment': AiFeedbackTableRowFieldsFragment } } | null }> } };
 
-export type AiProviderCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, kind: AiProviderKind, baseUrl: string, model: string, hasApiKey: boolean, allowPrivateNetwork: boolean, structuredOutputMode: AiStructuredOutputMode, reasoningEffort: AiReasoningEffort, thinkingStyle: AiThinkingStyle, extraBody: unknown, inputCostPerMillion: string | null, outputCostPerMillion: string | null, maxTokens: number, tasks: Array<AiTask>, priority: number, embeddingDimensions: number | null, embeddingInputStyle: AiEmbeddingInputStyle, trusted: boolean, enabled: boolean, version: number, createdAt: number, updatedAt: number, lastTest: { success: boolean, message: string, modelIdentifier: string, schemaHonoured: boolean, latencyMs: number, detail: string, testedAt: number } | null } & { ' $fragmentName'?: 'AiProviderCardFieldsFragment' };
+export type AiProviderCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, kind: AiProviderKind, baseUrl: string, model: string, hasApiKey: boolean, allowPrivateNetwork: boolean, structuredOutputMode: AiStructuredOutputMode, reasoningEffort: AiReasoningEffort, thinkingStyle: AiThinkingStyle, extraBody: unknown, inputCostPerMillion: string | null, outputCostPerMillion: string | null, cacheReadCostPerMillion: string | null, cacheWriteCostPerMillion: string | null, maxTokens: number, tasks: Array<AiTask>, priority: number, embeddingDimensions: number | null, embeddingInputStyle: AiEmbeddingInputStyle, trusted: boolean, enabled: boolean, version: number, createdAt: number, updatedAt: number, lastTest: { success: boolean, message: string, modelIdentifier: string, schemaHonoured: boolean, latencyMs: number, detail: string, testedAt: number } | null } & { ' $fragmentName'?: 'AiProviderCardFieldsFragment' };
 
 export type AiProviderLimitFieldsFragment = { id: string, timeoutSeconds: number, maxConcurrent: number, monthlyCapUsd: string | null, onCap: AiProviderCapAction, monthSpendUsd: string, apiKey: { prefix: string, lastFour: string, addedAt: number, lastUsedAt: number | null, previousKeyExpiresAt: number | null, addedBy: { id: string, name: string } | null } | null } & { ' $fragmentName'?: 'AiProviderLimitFieldsFragment' };
 
@@ -17280,6 +17290,9 @@ export const AgentMemoryTableRowFieldsFragmentDoc = new TypedDocumentString(`
   content
   agentDefinitionId
   tainted
+  taints
+  reviewedByUserId
+  reviewedAt
   sourceRunId
   sourceProposalId
   sourceThreadId
@@ -18138,6 +18151,8 @@ export const AiProviderCardFieldsFragmentDoc = new TypedDocumentString(`
   extraBody
   inputCostPerMillion
   outputCostPerMillion
+  cacheReadCostPerMillion
+  cacheWriteCostPerMillion
   maxTokens
   tasks
   priority
@@ -25656,14 +25671,15 @@ export const ReplayAgentRunDocument = {"__meta__":{"kind":"mutation","name":"Rep
 export const AgentExceptionTableDocument = {"__meta__":{"kind":"query","name":"AgentExceptionTable","hash":"sha256:25ab7e258b1999dd80da81ecf0ad0c5b956991f6fc73cf33a2cd45def0a97b41"}} as unknown as TypedDocumentString<AgentExceptionTableQuery, AgentExceptionTableQueryVariables>;
 export const AgentExceptionDetailDocument = {"__meta__":{"kind":"query","name":"AgentExceptionDetail","hash":"sha256:a5f862a28f545ff7151df8c5e238d4c4ea80f137f9c237f2de408fa670227069"}} as unknown as TypedDocumentString<AgentExceptionDetailQuery, AgentExceptionDetailQueryVariables>;
 export const ResolveAgentExceptionDocument = {"__meta__":{"kind":"mutation","name":"ResolveAgentException","hash":"sha256:7560a022b9583caf64b19551a5703e3d4717a7ee8297e5359121c469f4357010"}} as unknown as TypedDocumentString<ResolveAgentExceptionMutation, ResolveAgentExceptionMutationVariables>;
-export const AgentMemoryTableDocument = {"__meta__":{"kind":"query","name":"AgentMemoryTable","hash":"sha256:c917f36a70202b27cc06a0412a1eb68e6652ed8ddf06ef6a74a54f14c977d2a0"}} as unknown as TypedDocumentString<AgentMemoryTableQuery, AgentMemoryTableQueryVariables>;
+export const AgentMemoryTableDocument = {"__meta__":{"kind":"query","name":"AgentMemoryTable","hash":"sha256:7fd5ccd90b0ae28e7e74150a843a16cd9ffa588102f2252587b00d6eeb03cc11"}} as unknown as TypedDocumentString<AgentMemoryTableQuery, AgentMemoryTableQueryVariables>;
 export const AgentMemoryCountDocument = {"__meta__":{"kind":"query","name":"AgentMemoryCount","hash":"sha256:f469da4636039efd1d8bd70aee025ce753109b239d117112aac3f252d4ce968c"}} as unknown as TypedDocumentString<AgentMemoryCountQuery, AgentMemoryCountQueryVariables>;
 export const AgentMemoryUsageDocument = {"__meta__":{"kind":"query","name":"AgentMemoryUsage","hash":"sha256:25550e83d389da60200a818552253cbdb5480aed9789f27f8afe8177b921ae3f"}} as unknown as TypedDocumentString<AgentMemoryUsageQuery, AgentMemoryUsageQueryVariables>;
-export const CreateAgentMemoryDocument = {"__meta__":{"kind":"mutation","name":"CreateAgentMemory","hash":"sha256:4333986d24d87abb8f16baabd5ec4f56d6e6e6e5dbedddfe59dec2b69a137d72"}} as unknown as TypedDocumentString<CreateAgentMemoryMutation, CreateAgentMemoryMutationVariables>;
-export const UpdateAgentMemoryDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentMemory","hash":"sha256:ee5e900f903f3eb6d0dee32b45ec8fd7327c69ed0d6c40a89ea80097707f432a"}} as unknown as TypedDocumentString<UpdateAgentMemoryMutation, UpdateAgentMemoryMutationVariables>;
-export const SetAgentMemoryStatusDocument = {"__meta__":{"kind":"mutation","name":"SetAgentMemoryStatus","hash":"sha256:aaf88d9ccd4a557f913ba17931d9f0b6bf568fcd9e3d3acc9930c4a63642f0df"}} as unknown as TypedDocumentString<SetAgentMemoryStatusMutation, SetAgentMemoryStatusMutationVariables>;
-export const ApproveAgentMemorySuggestionDocument = {"__meta__":{"kind":"mutation","name":"ApproveAgentMemorySuggestion","hash":"sha256:60783328ff24a4cad10cd2c4e481d10b4ca359ec480d2abc4317e38ad939fd74"}} as unknown as TypedDocumentString<ApproveAgentMemorySuggestionMutation, ApproveAgentMemorySuggestionMutationVariables>;
-export const DismissAgentMemorySuggestionDocument = {"__meta__":{"kind":"mutation","name":"DismissAgentMemorySuggestion","hash":"sha256:c0d6650ca20dc8326c37c05aa65a0a94c7980b829be53f07a9a9022641025966"}} as unknown as TypedDocumentString<DismissAgentMemorySuggestionMutation, DismissAgentMemorySuggestionMutationVariables>;
+export const CreateAgentMemoryDocument = {"__meta__":{"kind":"mutation","name":"CreateAgentMemory","hash":"sha256:fd437af38922c7ffdd7ddc6027e370a68b2fd562d0a77813960d759c50374734"}} as unknown as TypedDocumentString<CreateAgentMemoryMutation, CreateAgentMemoryMutationVariables>;
+export const UpdateAgentMemoryDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentMemory","hash":"sha256:0bd635078509de79896c77281d0d406381ce70b64d8de154499ea928f54749f9"}} as unknown as TypedDocumentString<UpdateAgentMemoryMutation, UpdateAgentMemoryMutationVariables>;
+export const SetAgentMemoryStatusDocument = {"__meta__":{"kind":"mutation","name":"SetAgentMemoryStatus","hash":"sha256:90ccac86d814fde065481f6f2bc0d18cfa1df2828963e43b023f777ffe79ba29"}} as unknown as TypedDocumentString<SetAgentMemoryStatusMutation, SetAgentMemoryStatusMutationVariables>;
+export const ReviewAgentMemoryDocument = {"__meta__":{"kind":"mutation","name":"ReviewAgentMemory","hash":"sha256:123bc395db157e018f013c723945f1fda6470fa54d7cfd2b5a5d7f71318be113"}} as unknown as TypedDocumentString<ReviewAgentMemoryMutation, ReviewAgentMemoryMutationVariables>;
+export const ApproveAgentMemorySuggestionDocument = {"__meta__":{"kind":"mutation","name":"ApproveAgentMemorySuggestion","hash":"sha256:056d9a5573a834507e6fea6768efd3a89697ec659744f8336574359171f94bb0"}} as unknown as TypedDocumentString<ApproveAgentMemorySuggestionMutation, ApproveAgentMemorySuggestionMutationVariables>;
+export const DismissAgentMemorySuggestionDocument = {"__meta__":{"kind":"mutation","name":"DismissAgentMemorySuggestion","hash":"sha256:28fdb2f30ee8dba41ca97f097b703affeaaeef683686bc65aea150a3252869ec"}} as unknown as TypedDocumentString<DismissAgentMemorySuggestionMutation, DismissAgentMemorySuggestionMutationVariables>;
 export const AgentReflectionsDocument = {"__meta__":{"kind":"query","name":"AgentReflections","hash":"sha256:eac5580cd723d8c929b5c4fd973ceaac48156672a36d5701f25b990cab0789fe"}} as unknown as TypedDocumentString<AgentReflectionsQuery, AgentReflectionsQueryVariables>;
 export const AgentPlanTableDocument = {"__meta__":{"kind":"query","name":"AgentPlanTable","hash":"sha256:5255cd6f89e45711f75b6a9c0bab65c62fd49fb78028a756fa2ad1645c479b3b"}} as unknown as TypedDocumentString<AgentPlanTableQuery, AgentPlanTableQueryVariables>;
 export const AgentPlanDetailDocument = {"__meta__":{"kind":"query","name":"AgentPlanDetail","hash":"sha256:3affbeb0bac2f8967290c76d3dce18119fce77b53b295399e5764897a1a475ef"}} as unknown as TypedDocumentString<AgentPlanDetailQuery, AgentPlanDetailQueryVariables>;
@@ -25705,15 +25721,15 @@ export const SetMyAiFeedbackDocument = {"__meta__":{"kind":"mutation","name":"Se
 export const ClearMyAiFeedbackDocument = {"__meta__":{"kind":"mutation","name":"ClearMyAIFeedback","hash":"sha256:fe3ab8a659e88516571a342f231d0e575d1a136d9c5a9655bcca2fd93613510a"}} as unknown as TypedDocumentString<ClearMyAiFeedbackMutation, ClearMyAiFeedbackMutationVariables>;
 export const AiFeedbackTableDocument = {"__meta__":{"kind":"query","name":"AIFeedbackTable","hash":"sha256:340427dceb61302fa430510e09fb15618155e62a07eda870abd25d331ae9ee8f"}} as unknown as TypedDocumentString<AiFeedbackTableQuery, AiFeedbackTableQueryVariables>;
 export const AgentFeedbackSummaryDocument = {"__meta__":{"kind":"query","name":"AgentFeedbackSummary","hash":"sha256:0a99eeca389833697ab85daf88747a577c77f96c073a0fdc51df38e67aad7e1b"}} as unknown as TypedDocumentString<AgentFeedbackSummaryQuery, AgentFeedbackSummaryQueryVariables>;
-export const AiProviderCardsDocument = {"__meta__":{"kind":"query","name":"AIProviderCards","hash":"sha256:34c633c35b3a5b33d99238f07fbee597b0a654bca74a4c8cf5d8a04c59e9118d"}} as unknown as TypedDocumentString<AiProviderCardsQuery, AiProviderCardsQueryVariables>;
-export const AiProviderDetailDocument = {"__meta__":{"kind":"query","name":"AIProviderDetail","hash":"sha256:dde739bb9a0ef0284fe80801be28c4fe51e14a00c13344b9c2fe4fba93b5ffdb"}} as unknown as TypedDocumentString<AiProviderDetailQuery, AiProviderDetailQueryVariables>;
+export const AiProviderCardsDocument = {"__meta__":{"kind":"query","name":"AIProviderCards","hash":"sha256:aa7e5fcf10cffb88fc73ca79e65fc40b8abb83d0445f690879a5e590bc8f5002"}} as unknown as TypedDocumentString<AiProviderCardsQuery, AiProviderCardsQueryVariables>;
+export const AiProviderDetailDocument = {"__meta__":{"kind":"query","name":"AIProviderDetail","hash":"sha256:44f5f4c79d366a5f219e6c04c2c7cadf9494f7f55199b9e684c74173ed45559b"}} as unknown as TypedDocumentString<AiProviderDetailQuery, AiProviderDetailQueryVariables>;
 export const AiProviderLimitsDocument = {"__meta__":{"kind":"query","name":"AIProviderLimits","hash":"sha256:41e9cec44006dcb45c576a25475ad11a1107a228ba463a0683edae4fabf22d6c"}} as unknown as TypedDocumentString<AiProviderLimitsQuery, AiProviderLimitsQueryVariables>;
 export const AiRoutePreviewDocument = {"__meta__":{"kind":"query","name":"AIRoutePreview","hash":"sha256:0502a524401b35341763abf9b0ff03589358c9ea9f199ca7e9017b44eda92b65"}} as unknown as TypedDocumentString<AiRoutePreviewQuery, AiRoutePreviewQueryVariables>;
 export const AiProviderModelsDocument = {"__meta__":{"kind":"query","name":"AIProviderModels","hash":"sha256:b0861434a19296d912bfa020fac1d1021646451ab6f9decd2bc00fd076ebe90f"}} as unknown as TypedDocumentString<AiProviderModelsQuery, AiProviderModelsQueryVariables>;
 export const AiProviderUsageDailyDocument = {"__meta__":{"kind":"query","name":"AIProviderUsageDaily","hash":"sha256:8c15d40d351e26f4e0e74838332e965bdfa69be1aa66452482fc3399dad511c7"}} as unknown as TypedDocumentString<AiProviderUsageDailyQuery, AiProviderUsageDailyQueryVariables>;
 export const TestAiProviderDraftDocument = {"__meta__":{"kind":"mutation","name":"TestAIProviderDraft","hash":"sha256:5cd1d34923e16b5189644e35108d85429a67b9f2554cd7b3aa90add20ba6f689"}} as unknown as TypedDocumentString<TestAiProviderDraftMutation, TestAiProviderDraftMutationVariables>;
-export const ReorderAiProvidersDocument = {"__meta__":{"kind":"mutation","name":"ReorderAIProviders","hash":"sha256:0740f4db19e7d458cce20f4ed2bc9f45310b991e507683feb6368a9c8518e958"}} as unknown as TypedDocumentString<ReorderAiProvidersMutation, ReorderAiProvidersMutationVariables>;
-export const PatchAiProviderDocument = {"__meta__":{"kind":"mutation","name":"PatchAIProvider","hash":"sha256:7803e372858278e3b6980cf91b8c8e74d3a6c108b58ab7aeb40d111fb124731b"}} as unknown as TypedDocumentString<PatchAiProviderMutation, PatchAiProviderMutationVariables>;
+export const ReorderAiProvidersDocument = {"__meta__":{"kind":"mutation","name":"ReorderAIProviders","hash":"sha256:acf530599a10e0b39829dcd3d9106360fb75df652a66196b368524e0710dd056"}} as unknown as TypedDocumentString<ReorderAiProvidersMutation, ReorderAiProvidersMutationVariables>;
+export const PatchAiProviderDocument = {"__meta__":{"kind":"mutation","name":"PatchAIProvider","hash":"sha256:a0cbf889b12b4fe33ea45a1051db07e9d4977c50e18264badc166d92ff496803"}} as unknown as TypedDocumentString<PatchAiProviderMutation, PatchAiProviderMutationVariables>;
 export const AiUsageSummaryDocument = {"__meta__":{"kind":"query","name":"AIUsageSummary","hash":"sha256:22b752f36ea7369cb330c482bae62e65443c496110818dff32d26d4405302d17"}} as unknown as TypedDocumentString<AiUsageSummaryQuery, AiUsageSummaryQueryVariables>;
 export const ApiKeyTableDocument = {"__meta__":{"kind":"query","name":"ApiKeyTable","hash":"sha256:aeacf34d9ae14863db97c29a2ea928d83c46bba47f49ecd6a05ccdf7d4a33951"}} as unknown as TypedDocumentString<ApiKeyTableQuery, ApiKeyTableQueryVariables>;
 export const AttentionSummaryDocument = {"__meta__":{"kind":"query","name":"AttentionSummary","hash":"sha256:f5497f5bda3b38c5a3875db4677a9a034d1bcc1c4866b6c698351fc2198b1322"}} as unknown as TypedDocumentString<AttentionSummaryQuery, AttentionSummaryQueryVariables>;

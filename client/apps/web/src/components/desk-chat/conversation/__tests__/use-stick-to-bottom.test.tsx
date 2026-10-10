@@ -14,8 +14,12 @@ class FakeResizeObserver {
   disconnect() {}
 }
 
-function Thread({ box }: { box: Box }) {
-  const { scrollRef, away } = useStickToBottom({ replies: 1, ownMessages: 1 });
+type Counts = { replies: number; ownMessages: number; oldest: string | null };
+
+const ONE: Counts = { replies: 1, ownMessages: 1, oldest: "amsg_1" };
+
+function Thread({ box, counts = ONE }: { box: Box; counts?: Counts }) {
+  const { scrollRef, away, unread } = useStickToBottom(counts);
 
   return (
     <>
@@ -38,6 +42,7 @@ function Thread({ box }: { box: Box }) {
         <div />
       </div>
       {away && <span>Jump to latest</span>}
+      <output aria-label="Unread">{unread}</output>
     </>
   );
 }
@@ -87,5 +92,89 @@ describe("useStickToBottom", () => {
     act(() => resize?.());
 
     expect(screen.getByText("Jump to latest")).toBeInTheDocument();
+  });
+});
+
+/**
+ * An earlier page of a long conversation arrives above the reader as they
+ * scroll up to it. It holds the questions they asked back then, but it is
+ * history: the reader stays where they are and nothing counts as unread.
+ */
+describe("useStickToBottom with history above", () => {
+  beforeEach(() => {
+    vi.stubGlobal("ResizeObserver", FakeResizeObserver);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    resize = null;
+  });
+
+  const away = (box: Box, scroller: HTMLElement) => {
+    fireEvent.wheel(scroller, { deltaY: -100 });
+    box.scrollTop = 200;
+    fireEvent.scroll(scroller);
+  };
+
+  it("leaves the reader where they are when an earlier page arrives", () => {
+    const box: Box = { scrollHeight: 2000, clientHeight: 500, scrollTop: 1500 };
+    const counts: Counts = { replies: 3, ownMessages: 3, oldest: "amsg_40" };
+    const { rerender } = render(<Thread box={box} counts={counts} />);
+    away(box, screen.getByTestId("scroller"));
+
+    box.scrollHeight = 3200;
+    rerender(<Thread box={box} counts={{ replies: 8, ownMessages: 8, oldest: "amsg_1" }} />);
+    act(() => resize?.());
+
+    expect(box.scrollTop).toBe(200);
+    expect(screen.getByLabelText("Unread")).toHaveTextContent("0");
+  });
+
+  it("still brings the reader down when they send a message", () => {
+    const box: Box = { scrollHeight: 2000, clientHeight: 500, scrollTop: 1500 };
+    const counts: Counts = { replies: 3, ownMessages: 3, oldest: "amsg_40" };
+    const { rerender } = render(<Thread box={box} counts={counts} />);
+    away(box, screen.getByTestId("scroller"));
+
+    box.scrollHeight = 2200;
+    rerender(<Thread box={box} counts={{ ...counts, ownMessages: 4 }} />);
+
+    expect(box.scrollTop).toBe(1700);
+  });
+
+  it("counts a reply that arrives below while the reader is away", () => {
+    const box: Box = { scrollHeight: 2000, clientHeight: 500, scrollTop: 1500 };
+    const counts: Counts = { replies: 3, ownMessages: 3, oldest: "amsg_40" };
+    const { rerender } = render(<Thread box={box} counts={counts} />);
+    away(box, screen.getByTestId("scroller"));
+
+    rerender(<Thread box={box} counts={{ ...counts, replies: 4 }} />);
+
+    expect(screen.getByLabelText("Unread")).toHaveTextContent("1");
+    expect(box.scrollTop).toBe(200);
+  });
+
+  // Dragging the scrollbar fires no wheel, touch or key: the scroll moving up
+  // is what says the reader left.
+  it("lets go when the reader drags the scrollbar up", () => {
+    const box: Box = { scrollHeight: 2000, clientHeight: 500, scrollTop: 1500 };
+    render(<Thread box={box} />);
+    const scroller = screen.getByTestId("scroller");
+
+    box.scrollTop = 600;
+    fireEvent.scroll(scroller);
+    box.scrollHeight = 2600;
+    act(() => resize?.());
+
+    expect(box.scrollTop).toBe(600);
+  });
+
+  it("stays pinned while content grows under a reader at the bottom", () => {
+    const box: Box = { scrollHeight: 2000, clientHeight: 500, scrollTop: 1500 };
+    render(<Thread box={box} />);
+
+    box.scrollHeight = 2400;
+    act(() => resize?.());
+
+    expect(box.scrollTop).toBe(1900);
   });
 });

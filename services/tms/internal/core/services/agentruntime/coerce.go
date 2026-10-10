@@ -262,6 +262,14 @@ func idProblem(path, value string, check idCheck) (argumentProblem, bool) {
 	if trimmed == "" {
 		return argumentProblem{}, false
 	}
+	if prefix, length, misCopied := pulid.MisCopied(trimmed); misCopied {
+		return argumentProblem{Path: path, Message: fmt.Sprintf(
+			"%q is not a whole id: after %q it has %d characters where an id has 26, so one "+
+				"was lost or added in copying it. Send the id exactly as the result that gave it "+
+				"wrote it.",
+			trimmed, prefix, length,
+		)}, true
+	}
 	if !pulid.LooksLike(trimmed) {
 		message := fmt.Sprintf(
 			"%q is not a record id. A record id looks like shp_01J… and comes from a lookup, "+

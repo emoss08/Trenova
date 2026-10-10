@@ -2,7 +2,10 @@ package geoutils
 
 import "math"
 
-const earthRadiusMiles = 3958.7613
+const (
+	earthRadiusMiles   = 3958.7613
+	RoadCircuityFactor = 1.2
+)
 
 func HaversineMiles(lat1, lon1, lat2, lon2 float64) float64 {
 	lat1Rad := lat1 * math.Pi / 180

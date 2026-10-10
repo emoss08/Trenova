@@ -318,33 +318,33 @@ func TestVerdictFor(t *testing.T) {
 		t,
 		telematics.FeasibilityVerdictInfeasible,
 		verdictFor(
-			&verdictInput{Eval: blocked, SlackMinutes: 500, HOSKnown: true, HOSExpected: true},
+			&verdictInput{Eval: blocked, SlackMinutes: 500, SlackKnown: true, HOSKnown: true, HOSExpected: true},
 		),
 	)
 	assert.Equal(
 		t,
 		telematics.FeasibilityVerdictUnknown,
 		verdictFor(
-			&verdictInput{Eval: clean, SlackMinutes: 500, HOSKnown: false, HOSExpected: true},
+			&verdictInput{Eval: clean, SlackMinutes: 500, SlackKnown: true, HOSKnown: false, HOSExpected: true},
 		),
 	)
 	assert.Equal(
 		t,
 		telematics.FeasibilityVerdictInfeasible,
 		verdictFor(
-			&verdictInput{Eval: clean, SlackMinutes: -30, HOSKnown: true, HOSExpected: true},
+			&verdictInput{Eval: clean, SlackMinutes: -30, SlackKnown: true, HOSKnown: true, HOSExpected: true},
 		),
 	)
 	assert.Equal(
 		t,
 		telematics.FeasibilityVerdictTight,
-		verdictFor(&verdictInput{Eval: clean, SlackMinutes: 45, HOSKnown: true, HOSExpected: true}),
+		verdictFor(&verdictInput{Eval: clean, SlackMinutes: 45, SlackKnown: true, HOSKnown: true, HOSExpected: true}),
 	)
 	assert.Equal(
 		t,
 		telematics.FeasibilityVerdictFeasible,
 		verdictFor(
-			&verdictInput{Eval: clean, SlackMinutes: 500, HOSKnown: true, HOSExpected: true},
+			&verdictInput{Eval: clean, SlackMinutes: 500, SlackKnown: true, HOSKnown: true, HOSExpected: true},
 		),
 	)
 }
@@ -358,14 +358,14 @@ func TestVerdictFor_NoTelematicsIsNeverUnknown(t *testing.T) {
 		t,
 		telematics.FeasibilityVerdictFeasible,
 		verdictFor(
-			&verdictInput{Eval: clean, SlackMinutes: 500, HOSKnown: false, HOSExpected: false},
+			&verdictInput{Eval: clean, SlackMinutes: 500, SlackKnown: true, HOSKnown: false, HOSExpected: false},
 		),
 	)
 	assert.Equal(
 		t,
 		telematics.FeasibilityVerdictTight,
 		verdictFor(
-			&verdictInput{Eval: clean, SlackMinutes: 45, HOSKnown: false, HOSExpected: false},
+			&verdictInput{Eval: clean, SlackMinutes: 45, SlackKnown: true, HOSKnown: false, HOSExpected: false},
 		),
 	)
 }

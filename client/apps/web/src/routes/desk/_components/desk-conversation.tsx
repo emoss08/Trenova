@@ -7,6 +7,7 @@ import type { TurnHandoff } from "@/components/assistant/turn-stream";
 import { turnTime } from "@/components/desk-chat/turn-time";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
+import { whenIdle } from "@/lib/when-idle";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskStore } from "@/stores/desk-store";
 import type { AssistantMessage, AssistantThread } from "@/types/assistant";
@@ -14,7 +15,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { DeskWorkspace } from "./artifacts/desk-workspace";
+import { LazyDeskWorkspace, preloadDeskWorkspace } from "./artifacts/desk-workspace-lazy";
 import { DeskCaseCard } from "./case/desk-case-card";
 import { useDeskCase } from "./case/use-desk-case";
 import { useSnoozeClock } from "./case/use-snooze-clock";
@@ -72,7 +73,7 @@ export function DeskConversation({
   }, [openWidget, setActiveThreadId, thread.id]);
 
   // The running turn's lookups are not counted until the reply keeps them.
-  const artifactsQuery = useQuery(queries.assistant.artifacts(thread.id));
+  const artifactsQuery = useQuery(queries.assistant.artifacts(thread.id)._ctx.summary);
   const { setArtifactCount, pendingLookups } = desk;
   const artifactTotal = useMemo(() => {
     const visible = withoutPendingLookups(
@@ -83,6 +84,15 @@ export function DeskConversation({
     return visible.counts?.all ?? visible.results.length;
   }, [artifactsQuery.data, pendingLookups]);
   useEffect(() => setArtifactCount(artifactTotal), [artifactTotal, setArtifactCount]);
+  // A conversation with something to show will likely have it shown: the
+  // workspace's code is read while the page is idle, before it is asked for.
+  const hasArtifacts = artifactTotal > 0;
+  useEffect(() => {
+    if (!hasArtifacts) {
+      return;
+    }
+    return whenIdle(() => void preloadDeskWorkspace().catch(() => undefined));
+  }, [hasArtifacts]);
 
   const { openArtifact, setWorkspaceOpen, workspaceOpen, liveArtifacts, noteLiveArtifacts } = desk;
   const open = useCallback(
@@ -98,7 +108,7 @@ export function DeskConversation({
         open: workspaceOpen,
         setOpen: setWorkspaceOpen,
         content: (
-          <DeskWorkspace
+          <LazyDeskWorkspace
             key={thread.id}
             threadId={thread.id}
             liveArtifacts={liveArtifacts}

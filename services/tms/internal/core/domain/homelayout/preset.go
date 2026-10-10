@@ -19,11 +19,6 @@ var (
 	_ validationframework.TenantedEntity = (*Preset)(nil)
 )
 
-const (
-	MaxPresetPriority   = 1000
-	maxPresetNameLength = 255
-)
-
 // Preset is a home screen an administrator authors once and assigns to the
 // roles that should see it. Users with similar jobs get the same starting
 // point, and a locked preset stays exactly as authored.

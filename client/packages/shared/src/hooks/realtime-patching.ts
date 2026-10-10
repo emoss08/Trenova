@@ -356,13 +356,48 @@ export interface Invalidation {
 }
 
 /**
+ * The resources behind a Desk conversation's lists. An agent at work sends
+ * them several times a second, across every conversation it is working in, so
+ * they refetch only where a screen shows them; a conversation opened later
+ * reads them fresh. Refetching every cached conversation on each one sent the
+ * open Desk ~360 requests a minute until the API answered 429.
+ */
+const ON_SCREEN_RESOURCES = new Set([
+  "agent_proposal",
+  "agent_plan",
+  "agent_waits",
+  "agent_memory",
+  "assistant_artifact",
+  "assistant_case",
+  "assistant_queue",
+  "assistant_turns",
+  "conversation_schedules",
+]);
+
+/**
+ * Where one conversation's artifacts are cached: the factory's prefix
+ * (`createQueryKeys("assistant", { artifacts })` caches
+ * `queries.assistant.artifacts(id)` under `["assistant", "artifacts",
+ * "assistant-artifacts", id]`) followed by the conversation.
+ */
+export const ARTIFACT_THREAD_PREFIX = ["assistant", "artifacts", "assistant-artifacts"] as const;
+
+/**
  * The caches an event reaches. Most events reach every root their resource
  * names. A page arriving on a capture batch is the exception: a scanner sends
  * one every second or two, and it changes only the queue, its counts and that
  * batch, never a record's requests or a batch nobody has open, so it reaches
- * those alone and only where they are on screen.
+ * those alone and only where they are on screen. A Desk conversation's lists
+ * refetch only on screen, and an artifact naming its conversation reaches that
+ * conversation's artifacts alone.
  */
 export function invalidationFor(event: ResourceInvalidationEvent): Invalidation {
+  if (event.resource === "assistant_artifact") {
+    const threadId = event.entity?.threadId;
+    if (typeof threadId === "string" && threadId !== "") {
+      return { roots: [[...ARTIFACT_THREAD_PREFIX, threadId]], activeOnly: true };
+    }
+  }
   if (event.resource === "capture_batch" && event.action === "page.received") {
     const batchId = resolveEntityID(event);
     const roots: QueryKeyRoot[] = [
@@ -374,7 +409,10 @@ export function invalidationFor(event: ResourceInvalidationEvent): Invalidation 
     }
     return { roots, activeOnly: true };
   }
-  return { roots: RESOURCE_QUERY_KEY_MAP[event.resource] ?? [], activeOnly: false };
+  return {
+    roots: RESOURCE_QUERY_KEY_MAP[event.resource] ?? [],
+    activeOnly: ON_SCREEN_RESOURCES.has(event.resource),
+  };
 }
 
 export function isBulkAction(action: string) {

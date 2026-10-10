@@ -32,7 +32,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "report-artifact-cleanup",
 			Description:   "Delete expired report artifacts and mark runs expired",
-			Spec:          schedule.Every(15 * time.Minute),
+			Spec:          schedule.Every(time.Hour),
 			Workflow:      CleanupExpiredReportRunsWorkflow,
 			TaskQueue:     temporaltype.ReportTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
@@ -43,7 +43,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "report-zombie-reconciliation",
 			Description:   "Fail report runs whose workflows are no longer running",
-			Spec:          schedule.Every(30 * time.Minute),
+			Spec:          schedule.Every(time.Hour),
 			Workflow:      ReconcileZombieReportRunsWorkflow,
 			TaskQueue:     temporaltype.ReportTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,

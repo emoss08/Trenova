@@ -112,33 +112,35 @@ func (h *Handler) get(c *gin.Context) {
 // omitted field leaves the stored credential untouched, which is what lets the
 // edit form load without ever receiving the secret.
 type saveProviderRequest struct {
-	Name                 string                          `json:"name"`
-	Description          string                          `json:"description"`
-	Kind                 aiprovider.Kind                 `json:"kind"`
-	BaseURL              string                          `json:"baseUrl"`
-	Model                string                          `json:"model"`
-	APIKey               *string                         `json:"apiKey"`
-	AllowPrivateNetwork  bool                            `json:"allowPrivateNetwork"`
-	StructuredOutputMode aiprovider.StructuredOutputMode `json:"structuredOutputMode"`
-	ReasoningEffort      aiprovider.ReasoningEffort      `json:"reasoningEffort"`
-	ThinkingStyle        aiprovider.ThinkingStyle        `json:"thinkingStyle"`
-	ExtraBody            map[string]any                  `json:"extraBody"`
-	InputCostPerMillion  *decimal.Decimal                `json:"inputCostPerMillion"`
-	OutputCostPerMillion *decimal.Decimal                `json:"outputCostPerMillion"`
-	MaxTokens            int                             `json:"maxTokens"`
-	ContextWindow        *int                            `json:"contextWindow"`
-	Tasks                []aiprovider.Task               `json:"tasks"`
-	Priority             int                             `json:"priority"`
-	EmbeddingDimensions  *int                            `json:"embeddingDimensions"`
-	EmbeddingInputStyle  aiprovider.EmbeddingInputStyle  `json:"embeddingInputStyle"`
-	Trusted              bool                            `json:"trusted"`
-	Enabled              bool                            `json:"enabled"`
-	TimeoutSeconds       int                             `json:"timeoutSeconds"`
-	MaxConcurrent        int                             `json:"maxConcurrent"`
-	MonthlyCapUSD        *decimal.Decimal                `json:"monthlyCapUsd"`
-	OnCap                aiprovider.CapAction            `json:"onCap"`
-	KeepPreviousKey      bool                            `json:"keepPreviousKey"`
-	Version              int64                           `json:"version"`
+	Name                     string                          `json:"name"`
+	Description              string                          `json:"description"`
+	Kind                     aiprovider.Kind                 `json:"kind"`
+	BaseURL                  string                          `json:"baseUrl"`
+	Model                    string                          `json:"model"`
+	APIKey                   *string                         `json:"apiKey"`
+	AllowPrivateNetwork      bool                            `json:"allowPrivateNetwork"`
+	StructuredOutputMode     aiprovider.StructuredOutputMode `json:"structuredOutputMode"`
+	ReasoningEffort          aiprovider.ReasoningEffort      `json:"reasoningEffort"`
+	ThinkingStyle            aiprovider.ThinkingStyle        `json:"thinkingStyle"`
+	ExtraBody                map[string]any                  `json:"extraBody"`
+	InputCostPerMillion      *decimal.Decimal                `json:"inputCostPerMillion"`
+	OutputCostPerMillion     *decimal.Decimal                `json:"outputCostPerMillion"`
+	CacheReadCostPerMillion  *decimal.Decimal                `json:"cacheReadCostPerMillion"`
+	CacheWriteCostPerMillion *decimal.Decimal                `json:"cacheWriteCostPerMillion"`
+	MaxTokens                int                             `json:"maxTokens"`
+	ContextWindow            *int                            `json:"contextWindow"`
+	Tasks                    []aiprovider.Task               `json:"tasks"`
+	Priority                 int                             `json:"priority"`
+	EmbeddingDimensions      *int                            `json:"embeddingDimensions"`
+	EmbeddingInputStyle      aiprovider.EmbeddingInputStyle  `json:"embeddingInputStyle"`
+	Trusted                  bool                            `json:"trusted"`
+	Enabled                  bool                            `json:"enabled"`
+	TimeoutSeconds           int                             `json:"timeoutSeconds"`
+	MaxConcurrent            int                             `json:"maxConcurrent"`
+	MonthlyCapUSD            *decimal.Decimal                `json:"monthlyCapUsd"`
+	OnCap                    aiprovider.CapAction            `json:"onCap"`
+	KeepPreviousKey          bool                            `json:"keepPreviousKey"`
+	Version                  int64                           `json:"version"`
 }
 
 func (r *saveProviderRequest) toServiceRequest(
@@ -146,35 +148,37 @@ func (r *saveProviderRequest) toServiceRequest(
 	tenantInfo pagination.TenantInfo,
 ) *serviceports.SaveAIProviderRequest {
 	return &serviceports.SaveAIProviderRequest{
-		ID:                   id,
-		Name:                 r.Name,
-		Description:          r.Description,
-		Kind:                 r.Kind,
-		BaseURL:              r.BaseURL,
-		Model:                r.Model,
-		APIKey:               r.APIKey,
-		AllowPrivateNetwork:  r.AllowPrivateNetwork,
-		StructuredOutputMode: r.StructuredOutputMode,
-		ReasoningEffort:      r.ReasoningEffort,
-		ThinkingStyle:        r.ThinkingStyle,
-		ExtraBody:            r.ExtraBody,
-		InputCostPerMillion:  r.InputCostPerMillion,
-		OutputCostPerMillion: r.OutputCostPerMillion,
-		MaxTokens:            r.MaxTokens,
-		ContextWindow:        r.ContextWindow,
-		Tasks:                r.Tasks,
-		Priority:             r.Priority,
-		EmbeddingDimensions:  r.EmbeddingDimensions,
-		EmbeddingInputStyle:  r.EmbeddingInputStyle,
-		Trusted:              r.Trusted,
-		Enabled:              r.Enabled,
-		TimeoutSeconds:       r.TimeoutSeconds,
-		MaxConcurrent:        r.MaxConcurrent,
-		MonthlyCapUSD:        r.MonthlyCapUSD,
-		OnCap:                r.OnCap,
-		KeepPreviousKey:      r.KeepPreviousKey,
-		Version:              r.Version,
-		TenantInfo:           tenantInfo,
+		ID:                       id,
+		Name:                     r.Name,
+		Description:              r.Description,
+		Kind:                     r.Kind,
+		BaseURL:                  r.BaseURL,
+		Model:                    r.Model,
+		APIKey:                   r.APIKey,
+		AllowPrivateNetwork:      r.AllowPrivateNetwork,
+		StructuredOutputMode:     r.StructuredOutputMode,
+		ReasoningEffort:          r.ReasoningEffort,
+		ThinkingStyle:            r.ThinkingStyle,
+		ExtraBody:                r.ExtraBody,
+		InputCostPerMillion:      r.InputCostPerMillion,
+		OutputCostPerMillion:     r.OutputCostPerMillion,
+		CacheReadCostPerMillion:  r.CacheReadCostPerMillion,
+		CacheWriteCostPerMillion: r.CacheWriteCostPerMillion,
+		MaxTokens:                r.MaxTokens,
+		ContextWindow:            r.ContextWindow,
+		Tasks:                    r.Tasks,
+		Priority:                 r.Priority,
+		EmbeddingDimensions:      r.EmbeddingDimensions,
+		EmbeddingInputStyle:      r.EmbeddingInputStyle,
+		Trusted:                  r.Trusted,
+		Enabled:                  r.Enabled,
+		TimeoutSeconds:           r.TimeoutSeconds,
+		MaxConcurrent:            r.MaxConcurrent,
+		MonthlyCapUSD:            r.MonthlyCapUSD,
+		OnCap:                    r.OnCap,
+		KeepPreviousKey:          r.KeepPreviousKey,
+		Version:                  r.Version,
+		TenantInfo:               tenantInfo,
 	}
 }
 

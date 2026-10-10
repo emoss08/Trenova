@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -113,6 +114,19 @@ func TestListDriverSettlements_WithholdsPayBelowRestricted(t *testing.T) {
 
 	_, err = tool.Query(t.Context(), agentParams(map[string]any{"status": "Unknown"}, ""))
 	require.Error(t, err)
+}
+
+// gpt-6-luna fills every optional parameter, and its hasExceptions: false hid
+// the settlement a deduction was for, which carried an exception.
+func TestListDriverSettlements_FalseExceptionsNarrowsNothing(t *testing.T) {
+	t.Parallel()
+
+	fake := &fakeDriverSettlements{settlements: []*driversettlement.Settlement{driverSettlement()}}
+	tool := newListDriverSettlementsTool(fake, &fakePermissions{})
+
+	_, err := tool.Query(t.Context(), agentParams(map[string]any{"hasExceptions": false}, ""))
+	require.NoError(t, err)
+	assert.Nil(t, fake.listed.HasExceptions)
 }
 
 func TestGetDriverSettlement_ListsOnlyThisSettlementsOpenDisputes(t *testing.T) {
@@ -374,4 +388,45 @@ func TestGetDriverSettlement_NamesEachLineAndItsPayEvent(t *testing.T) {
 	line := result.(driverSettlementView).Lines[0]
 	assert.Equal(t, settlement.Lines[0].ID.String(), line.ID)
 	assert.Equal(t, event.String(), line.PayEventID)
+}
+
+type statusFilteringSettlements struct {
+	fakeDriverSettlements
+}
+
+func (f *statusFilteringSettlements) List(
+	_ context.Context,
+	req *repositories.ListDriverSettlementsRequest,
+) (*pagination.ListResult[*driversettlement.Settlement], error) {
+	f.listed = req
+	if len(req.Statuses) > 0 || req.Status != "" {
+		return &pagination.ListResult[*driversettlement.Settlement]{}, nil
+	}
+
+	return &pagination.ListResult[*driversettlement.Settlement]{Items: f.settlements}, nil
+}
+
+// Asked by name for an open settlement, the list answered "none" with no hint,
+// and the agent tried each status in turn; by worker id it already named the
+// driver's recent settlements.
+func TestListDriverSettlements_NamesRecentOnesForANameQuery(t *testing.T) {
+	t.Parallel()
+
+	posted := driverSettlement()
+	posted.SettlementNumber = "SEED-STL-1005"
+	posted.Status = driversettlement.StatusPosted
+	posted.Worker = &worker.Worker{ID: posted.WorkerID, FirstName: "Emily", LastName: "Chen"}
+	fake := &statusFilteringSettlements{
+		fakeDriverSettlements{settlements: []*driversettlement.Settlement{posted}},
+	}
+	tool := newListDriverSettlementsTool(fake, &fakePermissions{})
+
+	result, err := tool.Query(t.Context(), agentParams(map[string]any{
+		"query": "Emily Chen", "open": true,
+	}, ""))
+	require.NoError(t, err)
+	note := result.(*gatedOutcome).Note
+	assert.Contains(t, note, "SEED-STL-1005 (Posted")
+	assert.Contains(t, note, "Emily Chen, workerId "+posted.WorkerID.String(),
+		"a name search names whose they are, so the driver's other records need no lookup")
 }

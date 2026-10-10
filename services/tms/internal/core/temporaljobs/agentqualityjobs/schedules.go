@@ -26,7 +26,7 @@ import (
 const (
 	sweepCatchupWindow = time.Hour
 
-	reconcileEvery       = 15 * time.Minute
+	reconcileEvery       = time.Hour
 	reconcileDescription = "Keep one nightly quality sweep schedule behind every organization " +
 		"that wants one"
 

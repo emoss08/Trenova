@@ -92,6 +92,25 @@ func (f *syncFixture) enqueue(
 	return result.Inserted
 }
 
+func (f *syncFixture) updateConnection(
+	t *testing.T,
+	change func(*accountingsync.AccountingConnection),
+) {
+	t.Helper()
+	connections := NewConnectionRepository(ConnectionParams{DB: f.conn, Logger: zap.NewNop()})
+	change(f.connection)
+	updated, err := connections.Update(f.ctx, f.connection)
+	require.NoError(t, err)
+	f.connection = updated
+}
+
+func (f *syncFixture) enableSync(t *testing.T) {
+	t.Helper()
+	f.updateConnection(t, func(c *accountingsync.AccountingConnection) {
+		c.EnableSync(accountingsync.SyncSettings{StartDate: f.now - 86_400, AutoSync: true}, f.now)
+	})
+}
+
 func (f *syncFixture) claim(t *testing.T, now int64) []*accountingsync.AccountingSyncRecord {
 	t.Helper()
 	claimed, err := f.records.Claim(f.ctx, &repositories.ClaimAccountingSyncRecordsRequest{
@@ -404,6 +423,7 @@ func TestSyncRecordRepository_ReleaseSupersedeAndList(t *testing.T) {
 	require.NotNil(t, page.TotalCount)
 	assert.Equal(t, 1, *page.TotalCount)
 
+	f.enableSync(t)
 	due, err := f.records.ListDueConnections(f.ctx, repositories.ListDueAccountingSyncConnectionsRequest{
 		Now: f.now,
 	})
@@ -411,6 +431,37 @@ func TestSyncRecordRepository_ReleaseSupersedeAndList(t *testing.T) {
 	require.Len(t, due, 1)
 	assert.Equal(t, f.connection.ID, due[0].ConnectionID)
 	assert.Equal(t, f.tenant.OrgID, due[0].OrganizationID)
+}
+
+func TestSyncRecordRepository_ListDueConnectionsSkipsConnectionsThatCannotSend(t *testing.T) {
+	f := setupSyncFixture(t)
+	f.enqueue(t, f.record(accountingsync.SyncObjectInvoice, "INV-1", f.now))
+	listDue := func() []repositories.AccountingSyncDueConnection {
+		t.Helper()
+		due, err := f.records.ListDueConnections(
+			f.ctx,
+			repositories.ListDueAccountingSyncConnectionsRequest{Now: f.now},
+		)
+		require.NoError(t, err)
+		return due
+	}
+
+	assert.Empty(t, listDue(), "a connection still being set up has nothing to send")
+
+	f.enableSync(t)
+	require.Len(t, listDue(), 1)
+
+	f.updateConnection(t, func(c *accountingsync.AccountingConnection) {
+		c.Pause(f.userID, "month-end review", f.now)
+	})
+	assert.Empty(t, listDue(), "a paused connection is not woken")
+
+	f.updateConnection(t, func(c *accountingsync.AccountingConnection) {
+		c.Resume()
+	})
+	due := listDue()
+	require.Len(t, due, 1, "resuming makes the waiting work due again")
+	assert.Equal(t, f.connection.ID, due[0].ConnectionID)
 }
 
 func TestSyncRecordRepository_IsTenantScoped(t *testing.T) {

@@ -259,6 +259,7 @@ type ListArtifactsOptions struct {
 	Query      string
 	Family     assistantartifact.Family
 	PinnedOnly bool
+	Summary    bool
 }
 
 // AssistantArtifactPage is one page of lineages, every version of each, how
@@ -820,7 +821,7 @@ type AssistantService interface {
 	ListThreads(
 		ctx context.Context,
 		req repositories.ListThreadsRequest,
-	) (*pagination.ListResult[*conversation.Thread], error)
+	) (*repositories.ThreadPage, error)
 	GetThread(
 		ctx context.Context,
 		req repositories.GetThreadRequest,

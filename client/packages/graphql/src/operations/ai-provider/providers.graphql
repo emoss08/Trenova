@@ -15,6 +15,8 @@ fragment AIProviderCardFields on AIProvider {
   extraBody
   inputCostPerMillion
   outputCostPerMillion
+  cacheReadCostPerMillion
+  cacheWriteCostPerMillion
   maxTokens
   tasks
   priority

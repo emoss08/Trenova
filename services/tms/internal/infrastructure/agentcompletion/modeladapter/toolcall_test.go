@@ -307,7 +307,14 @@ func TestOpenAIResponsesAdapter_ToolCallRoundTrip(t *testing.T) {
 	require.Len(t, resp.ToolCalls, 1)
 	assert.Equal(t, "fc_1", resp.ToolCalls[0].ID)
 	assert.Equal(t, "S12345", resp.ToolCalls[0].Arguments["number"])
-	assert.Contains(t, *captured, "tools")
+	require.Contains(t, *captured, "tools")
+	tools, ok := (*captured)["tools"].([]any)
+	require.True(t, ok)
+	require.NotEmpty(t, tools)
+	sent, ok := tools[0].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, false, sent["strict"],
+		"left out, the Responses API's default made every optional parameter required")
 }
 
 // This protocol carries tool traffic as input items rather than message roles.

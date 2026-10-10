@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/distancecalculation"
 	"github.com/emoss08/trenova/internal/core/domain/distancecontrol"
+	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
 	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -550,4 +551,65 @@ func TestResolveForShipmentInAReadOnlyTransactionBuffersNoCandidate(t *testing.T
 
 	assert.Equal(t, 200.0, resp.TotalDistance)
 	f.buffer.AssertNotCalled(t, "Push", mock.Anything, mock.Anything)
+}
+
+func TestDistanceOverrideSumsLegsOfAMultiStopRoute(t *testing.T) {
+	t.Parallel()
+
+	a, b, c := pulid.MustNew("loc_"), pulid.MustNew("loc_"), pulid.MustNew("loc_")
+	legs := map[string]float64{
+		"*|" + a.String() + ">" + b.String(): 950,
+		"*|" + b.String() + ">" + c.String(): 1210,
+	}
+	tests := []struct {
+		name     string
+		route    []pulid.ID
+		want     float64
+		wantSeen bool
+	}{
+		{name: "every leg has an override", route: []pulid.ID{a, b, c}, want: 2160, wantSeen: true},
+		{name: "a repeated stop adds nothing", route: []pulid.ID{a, b, b, c}, want: 2160, wantSeen: true},
+		{name: "a leg without one", route: []pulid.ID{a, c, b}},
+		{name: "two stops never split", route: []pulid.ID{a, c}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			overrideRepo := mocks.NewMockDistanceOverrideRepository(t)
+			overrideRepo.EXPECT().
+				GetByRouteSignature(mock.Anything, mock.Anything, mock.Anything).
+				RunAndReturn(func(
+					_ context.Context,
+					_ pagination.TenantInfo,
+					signature string,
+				) (*distanceoverride.DistanceOverride, error) {
+					if distance, ok := legs[signature]; ok {
+						return &distanceoverride.DistanceOverride{Distance: distance}, nil
+					}
+					return nil, errortypes.NewNotFoundError("Distance override")
+				})
+			service := &Service{l: zap.NewNop(), distanceOverrideRepo: overrideRepo}
+
+			move := &shipment.ShipmentMove{Stops: make([]*shipment.Stop, 0, len(tt.route))}
+			for idx, locationID := range tt.route {
+				move.Stops = append(move.Stops, &shipment.Stop{
+					LocationID: locationID,
+					Sequence:   int64(idx),
+				})
+			}
+			customerID := pulid.MustNew("cus_")
+			entity := &shipment.Shipment{CustomerID: customerID}
+
+			distance, ok, err := service.distanceOverride(
+				t.Context(),
+				entity,
+				buildRouteSignature(customerID, move),
+			)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantSeen, ok)
+			assert.InDelta(t, tt.want, distance, 0.001)
+		})
+	}
 }

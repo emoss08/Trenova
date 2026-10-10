@@ -250,6 +250,21 @@ func TestSchedule_Hash(t *testing.T) {
 	assert.Len(t, schedule1.Hash(), 16)
 }
 
+// Jitter is applied by the update, so a schedule whose jitter changed must
+// hash differently or the reconciler never sends the new jitter.
+func TestSchedule_HashChangesWithJitter(t *testing.T) {
+	bare := &Schedule{
+		ID:        "test-schedule",
+		Spec:      Cron("15 * * * *"),
+		Workflow:  dummyWorkflow,
+		TaskQueue: "test-queue",
+	}
+	jittered := *bare
+	jittered.Spec = bare.Spec.WithJitter(5 * time.Minute)
+
+	assert.NotEqual(t, bare.Hash(), jittered.Hash())
+}
+
 // A schedule's arguments are part of what it runs. Leaving them out of the
 // hash meant a schedule registered without them was never updated to carry
 // them.

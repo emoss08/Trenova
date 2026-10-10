@@ -119,7 +119,8 @@ func (t *assignMoveTool) Preview(
 		)
 		labelRefs(changes[0], map[string]string{fieldPrimaryWorkerID: check.Score.WorkerName})
 	}
-	summary += ". The driver sees the assignment." + findingsSentence(check) + note
+	summary += ". The driver sees the assignment." + findingsSentence(check) + note +
+		equipmentInUseSentence(plan.EquipmentInUse)
 
 	preview := toolpreview.Build(summary, changes...)
 	if check.RequiresOverride {
@@ -246,6 +247,25 @@ func (t *assignMoveTool) check(
 	}
 
 	return check, "", nil
+}
+
+func equipmentInUseSentence(inUse []serviceports.EquipmentInUse) string {
+	if len(inUse) == 0 {
+		return ""
+	}
+
+	parts := make([]string, 0, len(inUse))
+	for _, item := range inUse {
+		where := "another move still in progress"
+		if item.ProNumber != "" {
+			where = item.ProNumber + ", a load still in progress"
+		}
+		parts = append(parts, "the "+item.Kind+" is on "+where)
+	}
+
+	return " Equipment in use: " + strings.Join(parts, "; ") + ". This move cannot be " +
+		"started with it until that one is done, so pick other equipment unless that is the " +
+		"plan, and say so."
 }
 
 func findingsSentence(check *dispatchconsoleservice.AssignmentPreview) string {

@@ -63,6 +63,7 @@ const (
 	CodeShipmentOnHold     = "move.shipment_on_hold"
 	CodeAppointmentAtRisk  = "move.appointment_at_risk"
 	CodeAppointmentMissed  = "move.appointment_missed"
+	CodeWindowPassed       = "move.window_passed"
 	CodeDeadheadExcessive  = "move.deadhead_excessive"
 	CodeDriverTypeMismatch = "move.driver_type_mismatch"
 )

@@ -100,14 +100,27 @@ func patchFromInput(input *gqlmodel.AIProviderPatchInput) (*services.PatchAIProv
 	if err != nil {
 		return nil, err
 	}
+	cacheReadCost, err := omittableDecimal("cacheReadCostPerMillion", input.CacheReadCostPerMillion)
+	if err != nil {
+		return nil, err
+	}
+	cacheWriteCost, err := omittableDecimal(
+		"cacheWriteCostPerMillion",
+		input.CacheWriteCostPerMillion,
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	req := &services.PatchAIProviderRequest{
 		Enabled:              base.NullableOmittable(input.Enabled),
 		Trusted:              base.NullableOmittable(input.Trusted),
 		AllowPrivateNetwork:  base.NullableOmittable(input.AllowPrivateNetwork),
 		APIKey:               base.NullableOmittable(input.APIKey),
-		InputCostPerMillion:  inputCost,
-		OutputCostPerMillion: outputCost,
+		InputCostPerMillion:      inputCost,
+		OutputCostPerMillion:     outputCost,
+		CacheReadCostPerMillion:  cacheReadCost,
+		CacheWriteCostPerMillion: cacheWriteCost,
 	}
 	if input.Tasks.IsSet() {
 		req.Tasks = optional.Some(input.Tasks.Value())

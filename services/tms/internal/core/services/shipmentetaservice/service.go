@@ -68,9 +68,20 @@ type Service struct {
 	now       func() time.Time
 }
 
-var _ services.ShipmentEtaReader = (*Service)(nil)
+var (
+	_ services.ShipmentEtaReader      = (*Service)(nil)
+	_ services.ShipmentTrackingReader = (*Service)(nil)
+)
 
 func New(p Params) services.ShipmentEtaReader {
+	return fromParams(p)
+}
+
+func NewTrackingReader(p Params) services.ShipmentTrackingReader {
+	return fromParams(p)
+}
+
+func fromParams(p Params) *Service {
 	return NewWithDependencies(&Dependencies{
 		Shipments:       p.Shipments,
 		Board:           p.Console,
@@ -103,24 +114,72 @@ func (s *Service) EtasByShipmentIDs(
 	shipmentIDs []pulid.ID,
 ) (map[pulid.ID]*services.ShipmentEta, error) {
 	out := make(map[pulid.ID]*services.ShipmentEta, len(shipmentIDs))
-	if len(shipmentIDs) == 0 {
-		return out, nil
+	err := s.eachSnapshot(ctx, &snapshotRequest{
+		tenant:   tenantInfo,
+		ids:      shipmentIDs,
+		timezone: time.UTC.String(),
+	}, func(entity *shipment.Shipment, snapshot *shipmenttracking.Snapshot, reason string) {
+		if eta := EtaOf(entity, snapshot, reason); eta != nil {
+			out[entity.ID] = eta
+		}
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return out, nil
+}
+
+func (s *Service) TrackingSnapshots(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	shipmentIDs []pulid.ID,
+	timezone string,
+) (map[pulid.ID]*shipmenttracking.Snapshot, error) {
+	out := make(map[pulid.ID]*shipmenttracking.Snapshot, len(shipmentIDs))
+	err := s.eachSnapshot(ctx, &snapshotRequest{
+		tenant:   tenantInfo,
+		ids:      shipmentIDs,
+		timezone: timezone,
+	}, func(entity *shipment.Shipment, snapshot *shipmenttracking.Snapshot, _ string) {
+		out[entity.ID] = snapshot
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return out, nil
+}
+
+type snapshotRequest struct {
+	tenant   pagination.TenantInfo
+	ids      []pulid.ID
+	timezone string
+}
+
+func (s *Service) eachSnapshot(
+	ctx context.Context,
+	req *snapshotRequest,
+	visit func(*shipment.Shipment, *shipmenttracking.Snapshot, string),
+) error {
+	if len(req.ids) == 0 {
+		return nil
 	}
 
 	entities, err := s.shipments.ListTrackingShipments(
 		ctx,
 		&repositories.ListTrackingShipmentsRequest{
-			TenantInfo:  tenantInfo,
-			ShipmentIDs: shipmentIDs,
+			TenantInfo:  req.tenant,
+			ShipmentIDs: req.ids,
 		},
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	sources, err := s.collect(ctx, tenantInfo, entities)
+	sources, err := s.collect(ctx, req.tenant, entities)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	now := s.now().Unix()
@@ -131,14 +190,12 @@ func (s *Service) EtasByShipmentIDs(
 			Positions:   sources.positions,
 			HOS:         sources.hos,
 			Now:         now,
-			Timezone:    time.UTC.String(),
+			Timezone:    req.timezone,
 		})
-		if eta := EtaOf(entity, snapshot, sources.reasons[entity.ID]); eta != nil {
-			out[entity.ID] = eta
-		}
+		visit(entity, snapshot, sources.reasons[entity.ID])
 	}
 
-	return out, nil
+	return nil
 }
 
 func (s *Service) collect(
@@ -209,6 +266,7 @@ func (s *Service) collectAssignments(
 	moves, err := s.board.ListBoardMoves(ctx, &repositories.DispatchBoardFilter{
 		TenantInfo:     tenantInfo,
 		MoveIDs:        moveIDs,
+		MoveStatuses:   shipment.MoveStatuses(),
 		IncludeCovered: true,
 		Limit:          len(moveIDs),
 	})

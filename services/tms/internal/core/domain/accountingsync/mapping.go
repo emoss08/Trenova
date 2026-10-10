@@ -2,7 +2,6 @@ package accountingsync
 
 import (
 	"context"
-	"errors"
 	"slices"
 	"strings"
 
@@ -16,19 +15,6 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
-)
-
-const (
-	PrecheckConfidence  = 0.95
-	ConfidentConfidence = 0.70
-	MaxModelConfidence  = 0.90
-	MaxCandidates       = 3
-	maxReasonLength     = 500
-)
-
-var (
-	ErrMappingNotProposed = errors.New("only a proposed mapping can be rejected")
-	ErrMappingNotSet      = errors.New("the mapping has no accounting record to clear")
 )
 
 var _ bun.BeforeAppendModelHook = (*AccountingMapping)(nil)

@@ -426,6 +426,23 @@ func (f *Formula) normalized() *Formula {
 	return out
 }
 
+// ValidValuePath reports whether a value for a priced load may be set under
+// name: a formula variable, or a schema field path such as serviceType.code,
+// each segment a valid name. The engine sets a dotted path on the nested
+// field, so a sample load can say which service type it is.
+func ValidValuePath(name string) bool {
+	if name == "" || len(name) > MaxVariableNameLength {
+		return false
+	}
+	for segment := range strings.SplitSeq(name, ".") {
+		if !ValidVariableName(segment) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func ValidVariableName(name string) bool {
 	if name == "" || len(name) > MaxVariableNameLength {
 		return false

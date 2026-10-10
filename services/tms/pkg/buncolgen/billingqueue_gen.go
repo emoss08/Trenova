@@ -555,6 +555,7 @@ var BillingQueueItemColumns = struct {
 	Version                   Column // "version" → qualified: "bqi.version"
 	CreatedAt                 Column // "created_at" → qualified: "bqi.created_at"
 	UpdatedAt                 Column // "updated_at" → qualified: "bqi.updated_at"
+	SearchVector              Column // "search_vector" → qualified: "bqi.search_vector"
 	PONumber                  Column // "po_number" → qualified: "bqi.po_number"
 }{
 	ID:                        NewColumn("id", "bqi"),
@@ -594,6 +595,7 @@ var BillingQueueItemColumns = struct {
 	Version:                   NewColumn("version", "bqi"),
 	CreatedAt:                 NewColumn("created_at", "bqi"),
 	UpdatedAt:                 NewColumn("updated_at", "bqi"),
+	SearchVector:              NewColumn("search_vector", "bqi"),
 	PONumber:                  NewColumn("po_number", "bqi"),
 }
 

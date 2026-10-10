@@ -217,6 +217,9 @@ func (t *Turn) groundingTexts() []string {
 func filedTools(actions []serviceports.PendingAction) []string {
 	tools := make([]string, 0, len(actions))
 	for idx := range actions {
+		if actions[idx].Withdrawn {
+			continue
+		}
 		if !slices.Contains(tools, actions[idx].ToolName) {
 			tools = append(tools, actions[idx].ToolName)
 		}
@@ -235,7 +238,7 @@ func filedFor(t *Turn, tool string) filedCalls {
 	callIDs := make([]string, 0, 2)
 	for idx := range t.result.Actions {
 		action := &t.result.Actions[idx]
-		if action.ToolName != tool {
+		if action.ToolName != tool || action.Withdrawn {
 			continue
 		}
 		filed.arguments = append(filed.arguments, action.Arguments)

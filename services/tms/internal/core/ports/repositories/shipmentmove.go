@@ -54,6 +54,21 @@ type RecordStopActualRequest struct {
 	StopID     pulid.ID              `json:"stopId"`
 	Action     StopActualAction      `json:"action"`
 	OccurredAt *int64                `json:"occurredAt,omitempty"`
+	DepartedAt *int64                `json:"departedAt,omitempty"`
+}
+
+func (r *RecordStopActualRequest) Departure() *RecordStopActualRequest {
+	if r == nil || r.DepartedAt == nil {
+		return nil
+	}
+
+	return &RecordStopActualRequest{
+		TenantInfo: r.TenantInfo,
+		MoveID:     r.MoveID,
+		StopID:     r.StopID,
+		Action:     StopActualActionDepart,
+		OccurredAt: r.DepartedAt,
+	}
 }
 
 func (r *RecordStopActualRequest) Validate() *errortypes.MultiError {
@@ -93,10 +108,31 @@ func (r *RecordStopActualRequest) Validate() *errortypes.MultiError {
 			)
 		}
 	}
+	r.validateDeparture(multiErr)
 	if multiErr.HasErrors() {
 		return multiErr
 	}
 	return nil
+}
+
+func (r *RecordStopActualRequest) validateDeparture(multiErr *errortypes.MultiError) {
+	if r.DepartedAt == nil {
+		return
+	}
+	switch {
+	case r.Action != StopActualActionArrive:
+		multiErr.Add("departedAt", errortypes.ErrInvalid,
+			"A departure time goes with an arrival; record a departure on its own as Depart")
+	case *r.DepartedAt <= 0:
+		multiErr.Add("departedAt", errortypes.ErrInvalid, "Departed at must be a valid timestamp")
+	case *r.DepartedAt > timeutils.NowUnix()+StopActualClockSkewSeconds:
+		multiErr.Add("departedAt", errortypes.ErrInvalid, "Departed at cannot be in the future")
+	case r.OccurredAt == nil:
+		multiErr.Add("occurredAt", errortypes.ErrRequired,
+			"Give the arrival time when you give the departure time")
+	case *r.DepartedAt < *r.OccurredAt:
+		multiErr.Add("departedAt", errortypes.ErrInvalid, "The departure is before the arrival")
+	}
 }
 
 func (r *UpdateMoveStatusRequest) Validate() *errortypes.MultiError {

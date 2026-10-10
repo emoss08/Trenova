@@ -2,6 +2,7 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
@@ -18,6 +19,7 @@ import (
 const (
 	paramDrawID     = "drawId"
 	maxDrawsShown   = 24
+	maxOpenEvents   = 50
 	maxPoolsShown   = 20
 	defaultDOTTests = 25
 )
@@ -27,6 +29,11 @@ type wfSafetyReader interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		workerID pulid.ID,
+	) ([]*worker.WorkerSafetyEvent, error)
+	ListOpenEvents(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		limit int,
 	) ([]*worker.WorkerSafetyEvent, error)
 	ListViolations(
 		ctx context.Context,
@@ -80,6 +87,8 @@ type safetyViolationRow struct {
 
 type safetyEventRow struct {
 	ID               string               `json:"id"`
+	WorkerID         string               `json:"workerId,omitempty"`
+	Worker           string               `json:"worker,omitempty"`
 	Kind             string               `json:"kind"`
 	Severity         string               `json:"severity"`
 	Status           string               `json:"status"`
@@ -106,7 +115,8 @@ type recognitionRow struct {
 }
 
 type workerSafetyRecord struct {
-	WorkerID     string           `json:"workerId"`
+	WorkerID     string           `json:"workerId,omitempty"`
+	Note         string           `json:"note,omitempty"`
 	Events       []safetyEventRow `json:"events"`
 	Recognitions []recognitionRow `json:"recognitions,omitempty"`
 	Withheld     []string         `json:"withheldByAccess,omitempty"`
@@ -119,26 +129,30 @@ func newListWorkerSafetyEventsTool(
 	access := newFieldAccess(permissions)
 	return &workforceRead{
 		name: "list_worker_safety_events",
-		description: "List one worker's safety events, roadside violations and recognitions. " +
-			"Events are accidents, inspections, citations, complaints and near misses with " +
-			"their points and status, each with its violations. It yields the " +
+		description: "List safety events still open across the fleet, or one worker's with " +
+			"their roadside violations and recognitions. Leave out the worker for the fleet: " +
+			"each open event comes with its driver. Events are accidents, inspections, citations, " +
+			"complaints and near misses with their points and status. It yields the " +
 			"safetyEventId, violationId and recognitionId the safety tools take.",
 		resource: permission.ResourceWorkerSafetyEvent,
 		properties: map[string]any{
-			paramWorkerID: wfWorkerProperty("The worker"),
+			paramWorkerID: wfWorkerProperty("The worker; leave it out for every open event " +
+				"across the fleet"),
 		},
-		required: []string{paramWorkerID},
-		access:   access,
+		access: access,
 		run: func(
 			ctx context.Context,
 			params *serviceports.QueryToolParams,
 			gate *fieldGate,
 		) (any, error) {
-			workerID, err := requirePulid(params.Params, paramWorkerID)
+			workerID, given, err := optionalPulid(params.Params, paramWorkerID)
 			if err != nil {
 				return nil, err
 			}
 			tenant := tenantOf(params)
+			if !given {
+				return openSafetyEvents(ctx, safety, tenant, gate)
+			}
 			events, err := safety.ListEvents(ctx, tenant, workerID)
 			if err != nil {
 				return nil, err
@@ -515,4 +529,52 @@ func provideGetDOTRandomDrawTool(
 	permissions serviceports.PermissionEngine,
 ) serviceports.AgentQueryTool {
 	return newGetDOTRandomDrawTool(draws, permissions)
+}
+
+// openSafetyEvents answers "what safety work is still open" across the fleet:
+// every event open or under review, newest first, each with its driver. A read
+// by one worker could not, and agents reported the question as unanswerable.
+func openSafetyEvents(
+	ctx context.Context,
+	safety wfSafetyReader,
+	tenant pagination.TenantInfo,
+	gate *fieldGate,
+) (any, error) {
+	events, err := safety.ListOpenEvents(ctx, tenant, maxOpenEvents+1)
+	if err != nil {
+		return nil, err
+	}
+
+	record := &workerSafetyRecord{Events: make([]safetyEventRow, 0, min(len(events), maxOpenEvents))}
+	for idx, event := range events {
+		if idx == maxOpenEvents {
+			record.Note = fmt.Sprintf("Only the %d newest open events are listed; there are "+
+				"more. Name a worker to see all of theirs.", maxOpenEvents)
+			break
+		}
+		record.Events = append(record.Events, safetyEventRow{
+			ID:          event.ID.String(),
+			WorkerID:    event.WorkerID.String(),
+			Worker:      workerName(event.Worker),
+			Kind:        string(event.Kind),
+			Severity:    string(event.Severity),
+			Status:      string(event.Status),
+			OccurredAt:  recordedDate(event.OccurredAt),
+			Location:    event.Location,
+			Description: gatedText(gate, wfFieldDescription, event.Description),
+			Points:      event.Points,
+			PointsExpireAt: expectedDate(
+				typeutils.ValueOrZero(event.PointsExpireAt),
+				absentNotExpiring,
+			),
+			OutOfService: event.OutOfService,
+			ShipmentID:   pulidString(event.ShipmentID),
+		})
+	}
+	if len(record.Events) == 0 {
+		record.Note = "No safety event is open or under review across the fleet."
+	}
+	record.Withheld = gate.Withheld()
+
+	return record, nil
 }

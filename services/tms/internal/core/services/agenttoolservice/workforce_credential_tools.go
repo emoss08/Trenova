@@ -194,10 +194,11 @@ func newRecordWorkerCredentialTool(credentials credentialKeeper) serviceports.Ag
 		"one is refused without it.")
 	spec := withSchema(wfSpec(
 		"record_worker_credential",
-		"Record a driver's licence, medical card, endorsement, TWIC or other credential "+
-			"from the card or certificate in hand, or renew the one on file. The worker's "+
-			"compliance is worked out again from it. A person verifies it against the "+
-			"original; recording is not verifying.",
+		"Record a driver's licence, medical card, endorsement, TWIC or other credential, "+
+			"or renew the one on file. What the person says is enough: only the worker and the "+
+			"kind are required, and dates they give (\"good till oct 9 2028\") go in as said; "+
+			"the number, issuer and a scan can follow. Set renew when one of the same kind is "+
+			"on file. A person verifies it against the original; recording is not verifying.",
 		"Adds a credential to the worker's file inside Trenova, which can change whether "+
 			"they may be dispatched; nothing is sent, and archive_worker_credential retires it.",
 		permission.ResourceWorkerCredential,

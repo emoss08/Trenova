@@ -49,11 +49,13 @@ func (s *Service) openBatchForPeriod(
 		return nil, err
 	}
 	if existing != nil && existing.Status != driversettlement.BatchStatusOpen {
-		return nil, errortypes.NewValidationError(
+		closed := errortypes.NewValidationError(
 			"periodEnd",
 			errortypes.ErrInvalidOperation,
 			"The batch for this pay period is already completed; generate individual settlements for late accruals instead",
 		)
+		closed.Internal = settlementshared.ErrPeriodBatchClosed
+		return nil, closed
 	}
 	return existing, nil
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -58,7 +59,7 @@ func (r *settlementRepository) List(
 			Offset(req.Filter.Pagination.SafeOffset())
 
 		if req.Filter.Query != "" {
-			pattern := "%" + req.Filter.Query + "%"
+			pattern := "%" + stringutils.EscapeLikePattern(req.Filter.Query) + "%"
 			query = query.Where(
 				"(dstl.settlement_number ILIKE ? OR dstl.pay_profile_name ILIKE ? OR "+
 					"concat_ws(' ', worker.first_name, worker.last_name) ILIKE ?)",

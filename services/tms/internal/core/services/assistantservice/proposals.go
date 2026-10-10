@@ -34,6 +34,10 @@ type chatProposalStore interface {
 		ctx context.Context,
 		req repositories.ListAgentProposalsByRunRequest,
 	) ([]*agent.AgentProposal, error)
+	ExpirePendingByThread(
+		ctx context.Context,
+		req repositories.ExpireAgentProposalsByThreadRequest,
+	) (int, error)
 }
 
 // Evidence on a chat proposal points at the conversation, because that is where
@@ -554,6 +558,10 @@ type chatPlanStore interface {
 		ctx context.Context,
 		req repositories.ListAgentPlansByThreadRequest,
 	) ([]*agent.AgentPlan, error)
+	ExpirePendingByThread(
+		ctx context.Context,
+		req repositories.ExpireAgentPlansByThreadRequest,
+	) (int, error)
 }
 
 // planStoreOrNil keeps a typed nil out of the interface, so the absence of a

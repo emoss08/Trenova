@@ -306,6 +306,74 @@ func (_c *MockWeatherAlertRepository_GetByID_Call) RunAndReturn(run func(ctx con
 	return _c
 }
 
+// ListByNWSIDs provides a mock function for the type MockWeatherAlertRepository
+func (_mock *MockWeatherAlertRepository) ListByNWSIDs(ctx context.Context, req repositories.ListWeatherAlertsByNWSIDsRequest) ([]*weatheralert.WeatherAlert, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListByNWSIDs")
+	}
+
+	var r0 []*weatheralert.WeatherAlert
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListWeatherAlertsByNWSIDsRequest) ([]*weatheralert.WeatherAlert, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListWeatherAlertsByNWSIDsRequest) []*weatheralert.WeatherAlert); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*weatheralert.WeatherAlert)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ListWeatherAlertsByNWSIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockWeatherAlertRepository_ListByNWSIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListByNWSIDs'
+type MockWeatherAlertRepository_ListByNWSIDs_Call struct {
+	*mock.Call
+}
+
+// ListByNWSIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.ListWeatherAlertsByNWSIDsRequest
+func (_e *MockWeatherAlertRepository_Expecter) ListByNWSIDs(ctx any, req any) *MockWeatherAlertRepository_ListByNWSIDs_Call {
+	return &MockWeatherAlertRepository_ListByNWSIDs_Call{Call: _e.mock.On("ListByNWSIDs", ctx, req)}
+}
+
+func (_c *MockWeatherAlertRepository_ListByNWSIDs_Call) Run(run func(ctx context.Context, req repositories.ListWeatherAlertsByNWSIDsRequest)) *MockWeatherAlertRepository_ListByNWSIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.ListWeatherAlertsByNWSIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.ListWeatherAlertsByNWSIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockWeatherAlertRepository_ListByNWSIDs_Call) Return(weatherAlerts []*weatheralert.WeatherAlert, err error) *MockWeatherAlertRepository_ListByNWSIDs_Call {
+	_c.Call.Return(weatherAlerts, err)
+	return _c
+}
+
+func (_c *MockWeatherAlertRepository_ListByNWSIDs_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListWeatherAlertsByNWSIDsRequest) ([]*weatheralert.WeatherAlert, error)) *MockWeatherAlertRepository_ListByNWSIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListTenants provides a mock function for the type MockWeatherAlertRepository
 func (_mock *MockWeatherAlertRepository) ListTenants(ctx context.Context) ([]pagination.TenantInfo, error) {
 	ret := _mock.Called(ctx)

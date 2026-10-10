@@ -1,12 +1,15 @@
 import {
   AGENT_MEMORY_LIST_KEY,
   createAgentMemory,
+  reviewAgentMemory,
   setAgentMemoryStatus,
   updateAgentMemory,
   type AgentMemoryRow,
 } from "@/lib/graphql/agent-memories";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
+import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
@@ -61,6 +64,8 @@ function MemoryEditor({ row, preset, onClose }: MemoryEditorProps) {
   const t = useT();
   const queryClient = useQueryClient();
   const [retiring, setRetiring] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
   const form = useForm<MemoryFormValues>({
     resolver: zodResolver(memoryFormSchema) as Resolver<MemoryFormValues>,
     defaultValues: row ? memoryValuesFromRow(row) : { ...memoryFormDefaults, ...preset },
@@ -104,6 +109,22 @@ function MemoryEditor({ row, preset, onClose }: MemoryEditorProps) {
     }
   };
 
+  const review = async () => {
+    if (!row) return;
+    setReviewing(true);
+    setReviewError(null);
+    try {
+      await reviewAgentMemory(row.id, row.version);
+      await refresh();
+      toast.success(t("Memory reviewed; turns that read it can write on their own again"));
+      onClose();
+    } catch (error) {
+      setReviewError(error instanceof Error ? error.message : t("That didn't go through"));
+    } finally {
+      setReviewing(false);
+    }
+  };
+
   const fields: EditFields = {
     content: { label: t("Memory") },
     kind: { label: t("Kind"), format: (value) => t(MEMORY_KIND_LABELS[value as never] ?? "") },
@@ -134,6 +155,39 @@ function MemoryEditor({ row, preset, onClose }: MemoryEditorProps) {
       content: <MemoryUntil />,
     },
   ];
+  if (row?.taints) {
+    sections.push({
+      id: "review",
+      label: t("Review"),
+      note: t(
+        "An agent wrote this after reading outside text. Keep it once you've read it, and the turns that read it can write on their own again.",
+      ),
+      content: (
+        <div className="flex flex-col items-start gap-2">
+          {reviewError ? (
+            <Alert size="sm" variant="destructive">
+              <AlertDescription>{reviewError}</AlertDescription>
+            </Alert>
+          ) : null}
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            isLoading={reviewing}
+            disabled={flow.dirty}
+            onClick={() => void review()}
+          >
+            {t("Reviewed, keep it")}
+          </Button>
+          {flow.dirty ? (
+            <span className="text-foreground-muted text-xs">
+              {t("Save or discard your changes first, so what you keep is what you read.")}
+            </span>
+          ) : null}
+        </div>
+      ),
+    });
+  }
   if (row) {
     sections.push(
       {

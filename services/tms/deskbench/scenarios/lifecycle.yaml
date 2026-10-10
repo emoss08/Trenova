@@ -4,16 +4,40 @@ defaults:
 scenarios:
   - name: lifecycle-one-agent-book-to-posted-invoice
     description: >
-      A load from the phone call to the posted invoice in one conversation with an agent that holds
-      every step: book it from the customer's contract, cover it with a company driver, record the
-      pickup and the delivery, hand it to billing, approve it in the billing queue and post the
-      invoice. Every change is approved, and the database is checked after each one.
+      A load from entry to the posted invoice in one conversation with an agent that holds every
+      step: book it from the customer's contract, cover it with a company driver, record the pickup
+      and the delivery, hand it to billing, approve it in the billing queue and post the invoice.
+      Every change is approved, and the database is checked after each one. The load ran yesterday
+      on a lane a truck drives in a day, so the actual times can be recorded whatever hour the run
+      starts: a load that delivered a minute after it picked up is one a careful agent refuses.
     agent: Bench · Operations
     exclusive: acme-shipments
+    setup:
+      - >
+        UPDATE assignments AS a SET status = 'Canceled'
+        FROM shipment_moves AS sm
+        JOIN shipments AS sp ON sp.id = sm.shipment_id
+        WHERE a.shipment_move_id = sm.id
+          AND sp.weight = 41500
+          AND sp.customer_id = (SELECT id FROM customers WHERE code = 'ACME')
+          AND sp.status NOT IN ('Completed', 'ReadyToInvoice', 'Invoiced', 'Canceled')
+      - >
+        UPDATE shipment_moves AS sm SET status = 'Canceled'
+        FROM shipments AS sp
+        WHERE sm.shipment_id = sp.id
+          AND sp.weight = 41500
+          AND sp.customer_id = (SELECT id FROM customers WHERE code = 'ACME')
+          AND sp.status NOT IN ('Completed', 'ReadyToInvoice', 'Invoiced', 'Canceled')
+      - >
+        UPDATE shipments SET status = 'Canceled'
+        WHERE weight = 41500
+          AND customer_id = (SELECT id FROM customers WHERE code = 'ACME')
+          AND status NOT IN ('Completed', 'ReadyToInvoice', 'Invoiced', 'Canceled')
     steps:
       - say: >
-          book a load for acme: pick up at the LA terminal today at 2pm, deliver to the chicago DC
-          friday by noon, 41,500 lbs dry van, price it off their contract
+          entering a load for acme that ran yesterday: picked up at the LA terminal yesterday
+          morning, delivered to phoenix cold storage yesterday afternoon, 41,500 lbs dry van,
+          price it off their contract
         expect:
           proposals: [{ tool: create_shipment }]
           maxFailedCalls: 2
@@ -27,24 +51,26 @@ scenarios:
                 (select id from customers where code = 'ACME') order by created_at desc limit 1
               equals: New
               note: the new Acme load saved as New
-      - say: "put john smith on it with trc-001 and a dry van"
+      - say: "put david park on it with trc-001 and a dry van"
         expect:
           proposals: [{ tool: assign_move }]
           maxFailedCalls: 2
           rubric: >
-            Assigns the new load's move to John Smith, TRC-001 and a dry van trailer (TRL-001 or
-            TRL-002), and says anything that stands against it (hours, credentials, the window).
+            Assigns the new load's move to David Park, TRC-001 and a free dry van trailer
+            (TRL-006; TRL-001 and TRL-002 are on the detention loads still in transit, which the
+            preview says), and says anything that stands against it (hours, credentials, the
+            window).
       - decide: approve
         expect:
           executed: true
-      - say: "john's loaded and rolling, picked up at 2:10"
+      - say: "david got to the LA terminal at 5:50 yesterday morning and left loaded at 7:05"
         expect:
           proposals: [{ tool: "record_stop_actual|update_move_status" }]
           maxFailedCalls: 2
       - decide: approve
         expect:
           executed: true
-      - say: "he just delivered in chicago, empty now"
+      - say: "he got to phoenix cold storage at 2:40 yesterday afternoon and left empty at 3:30"
         expect:
           proposals: [{ tool: "record_stop_actual|update_move_status" }]
           maxFailedCalls: 2
@@ -94,13 +120,53 @@ scenarios:
       conversation, as a person does with the agent picker.
     agent: Shipment Assistant
     exclusive: peak-shipments
+    setup:
+      - >
+        UPDATE assignments AS a SET status = 'Canceled'
+        FROM shipment_moves AS sm JOIN shipments AS sp ON sp.id = sm.shipment_id
+        WHERE a.shipment_move_id = sm.id
+          AND sp.weight = 28000 AND sp.pro_number NOT LIKE 'SEED-%'
+          AND sp.customer_id = (SELECT id FROM customers WHERE code = 'PEAK')
+          AND sp.status NOT IN ('Completed', 'ReadyToInvoice', 'Invoiced', 'Canceled')
+      - >
+        UPDATE shipment_moves AS sm SET status = 'Canceled'
+        FROM shipments AS sp
+        WHERE sm.shipment_id = sp.id
+          AND sp.weight = 28000 AND sp.pro_number NOT LIKE 'SEED-%'
+          AND sp.customer_id = (SELECT id FROM customers WHERE code = 'PEAK')
+          AND sp.status NOT IN ('Completed', 'ReadyToInvoice', 'Invoiced', 'Canceled')
+      - >
+        UPDATE shipments SET status = 'Canceled'
+        WHERE weight = 28000 AND pro_number NOT LIKE 'SEED-%'
+          AND customer_id = (SELECT id FROM customers WHERE code = 'PEAK')
+          AND status NOT IN ('Completed', 'ReadyToInvoice', 'Invoiced', 'Canceled')
+      - >
+        DELETE FROM billing_queue_items AS b USING shipments AS s
+        WHERE b.shipment_id = s.id AND s.pro_number IN ('SEED-DET-001', 'SEED-DET-002')
+          AND NOT EXISTS (SELECT 1 FROM invoices AS i WHERE i.billing_queue_item_id = b.id)
+      - >
+        UPDATE shipment_moves AS sm SET status = 'InTransit'
+        FROM shipments AS sp
+        WHERE sm.shipment_id = sp.id AND sp.pro_number IN ('SEED-DET-001', 'SEED-DET-002')
+          AND sm.status <> 'InTransit'
+          AND EXISTS (SELECT 1 FROM stops AS st WHERE st.shipment_move_id = sm.id
+                      AND st.actual_arrival IS NOT NULL AND st.actual_departure IS NULL)
+      - >
+        UPDATE shipments AS sp SET status = 'InTransit', billing_transfer_status = NULL,
+          transferred_to_billing_at = NULL, marked_ready_to_bill_at = NULL
+        WHERE sp.pro_number IN ('SEED-DET-001', 'SEED-DET-002') AND sp.status <> 'InTransit'
+          AND EXISTS (SELECT 1 FROM shipment_moves AS sm
+                      WHERE sm.shipment_id = sp.id AND sm.status = 'InTransit')
     steps:
       - say: >
           new load for peak distributing, dallas warehouse to the denver drop point, pick up
-          tomorrow 7am, deliver the day after by 3pm, 28k lbs dry van
+          tomorrow 7am, deliver the day after by 3pm, 28k lbs dry van, $2,450 flat
         expect:
           proposals: [{ tool: create_shipment }]
           maxFailedCalls: 2
+          rubric: >
+            Peak Distributing has no rate agreement, so the load is entered at the flat price the
+            person gave, without asking them for a rating method.
       - decide: approve
         expect:
           executed: true
@@ -139,6 +205,38 @@ scenarios:
       rate confirmation, and later the carrier's delivery.
     agent: Bench · Operations
     exclusive: peak-shipments
+    setup:
+      - >
+        UPDATE carrier_assignments AS ca SET status = 'Canceled'
+        FROM shipment_moves AS sm JOIN shipments AS sp ON sp.id = sm.shipment_id
+        WHERE ca.shipment_move_id = sm.id AND sp.pro_number = 'SEED-SHP-002'
+          AND ca.status <> 'Canceled'
+      - >
+        DELETE FROM carrier_assignments AS ca USING shipment_moves AS sm, shipments AS sp
+        WHERE ca.shipment_move_id = sm.id AND sm.shipment_id = sp.id
+          AND sp.pro_number = 'SEED-SHP-002'
+          AND NOT EXISTS (SELECT 1 FROM carrier_cost_events AS e
+                          WHERE e.carrier_assignment_id = ca.id)
+      - >
+        UPDATE assignments AS a SET status = 'Canceled'
+        FROM shipment_moves AS sm JOIN shipments AS sp ON sp.id = sm.shipment_id
+        WHERE a.shipment_move_id = sm.id AND sp.pro_number = 'SEED-SHP-002'
+          AND a.status <> 'Canceled'
+      - >
+        UPDATE stops AS st SET status = 'New', actual_arrival = NULL, actual_departure = NULL
+        FROM shipment_moves AS sm JOIN shipments AS sp ON sp.id = sm.shipment_id
+        WHERE st.shipment_move_id = sm.id AND sp.pro_number = 'SEED-SHP-002'
+          AND (st.status <> 'New' OR st.actual_arrival IS NOT NULL
+            OR st.actual_departure IS NOT NULL)
+      - >
+        UPDATE shipment_moves AS sm SET status = 'New', coverage_type = 'unassigned'
+        FROM shipments AS sp
+        WHERE sm.shipment_id = sp.id AND sp.pro_number = 'SEED-SHP-002'
+          AND (sm.status <> 'New' OR sm.coverage_type <> 'unassigned')
+      - >
+        UPDATE shipments SET status = 'New', canceled_at = NULL, canceled_by_id = NULL,
+          cancel_reason = NULL
+        WHERE pro_number = 'SEED-SHP-002' AND status <> 'New'
     steps:
       - say: "the peak ltl to chicago, nobody in house can take it. shop it to carriers"
         expect:
@@ -156,7 +254,21 @@ scenarios:
           executed: true
       - say: "send them the rate con"
         expect:
-          proposals: [{ tool: "generate_rate_confirmation|send_rate_confirmation" }]
+          db:
+            - sql: >
+                select case when count(*) > 0 then 'waiting' else 'none' end
+                from agent_proposals p
+                join shipment_moves sm on sm.id = p.tool_params->>'shipmentMoveId'
+                join shipments sp on sp.id = sm.shipment_id
+                where sp.pro_number = 'SEED-SHP-002' and p.status = 'Pending'
+                  and p.tool_name in ('generate_rate_confirmation', 'send_rate_confirmation')
+              equals: waiting
+              note: >
+                A rate confirmation proposal is waiting, filed now or already filed after the
+                carrier was approved; asking for a decision on that one is right, a second is not.
+          rubric: >
+            Proposes generating or sending Blue Ridge's rate confirmation, or, when the follow-up to
+            the approval already filed it, points to that proposal rather than filing another.
 
   - name: lifecycle-rate-check-before-billing
     description: >
@@ -164,6 +276,31 @@ scenarios:
       finds it disagrees with what the shipment carries, and rerates it.
     agent: Bench · Operations
     exclusive: acme-shipments
+    setup:
+      - >
+        UPDATE shipments AS sp SET
+          formula_template_id = (SELECT ft.id FROM formula_templates AS ft
+                                 WHERE ft.organization_id = sp.organization_id
+                                   AND ft.business_unit_id = sp.business_unit_id
+                                   AND ft.name = 'Flat Rate' AND ft.type = 'FreightCharge'
+                                 LIMIT 1),
+          base_rate = 3200, freight_charge_amount = 3200, other_charge_amount = 0,
+          total_charge_amount = 3200, rating_detail = NULL, rate_quote_id = NULL,
+          rate_agreement_id = NULL, rate_agreement_rule_id = NULL, rate_override_amount = NULL,
+          rate_override_reason = NULL, rate_override_by_id = NULL, rate_override_at = NULL,
+          rate_locked = false, auto_rated = false, auto_rated_at = NULL
+        WHERE sp.pro_number = 'SEED-SHP-001'
+          AND (sp.rate_quote_id IS NOT NULL OR sp.base_rate IS DISTINCT FROM 3200
+            OR sp.total_charge_amount IS DISTINCT FROM 3200)
+      - >
+        UPDATE shipments SET status = 'New', canceled_at = NULL, canceled_by_id = NULL,
+          cancel_reason = NULL
+        WHERE pro_number = 'SEED-SHP-001' AND status = 'Canceled'
+      - >
+        UPDATE shipment_moves AS sm SET status = 'New'
+        FROM shipments AS sp
+        WHERE sm.shipment_id = sp.id AND sp.pro_number = 'SEED-SHP-001'
+          AND sm.status = 'Canceled'
     steps:
       - say: "before we bill SEED-SHP-001, is it priced right per the acme contract?"
         expect:

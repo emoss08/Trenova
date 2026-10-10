@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
@@ -58,6 +59,20 @@ type Activity struct {
 	Details        map[string]any `json:"details"        bun:"details,type:jsonb,nullzero"`
 	CreatedAt      int64          `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64          `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+}
+
+func (w *WeatherAlert) IsSameMessage(stored *WeatherAlert) bool {
+	if stored == nil {
+		return false
+	}
+
+	return w.NWSID == stored.NWSID &&
+		w.MessageType == stored.MessageType &&
+		w.AlertCategory == stored.AlertCategory &&
+		typeutils.EqualPtr(w.Effective, stored.Effective) &&
+		typeutils.EqualPtr(w.Onset, stored.Onset) &&
+		typeutils.EqualPtr(w.Expires, stored.Expires) &&
+		typeutils.EqualPtr(w.Ends, stored.Ends)
 }
 
 func (w *WeatherAlert) Validate(multiErr *errortypes.MultiError) {

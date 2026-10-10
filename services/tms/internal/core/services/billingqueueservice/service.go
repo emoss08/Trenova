@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -603,6 +604,46 @@ func (s *service) autoAssignDefaultBiller(
 	}
 }
 
+// CheckBiller says whether a user can be assigned as a biller in the tenant,
+// as AssignBiller will decide it, so a caller refuses a biller before
+// proposing the assignment rather than after it is approved.
+func (s *service) CheckBiller(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	billerID pulid.ID,
+) error {
+	_, err := s.biller(ctx, tenantInfo, billerID)
+
+	return err
+}
+
+func (s *service) biller(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	billerID pulid.ID,
+) (*tenant.User, error) {
+	biller, err := s.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
+		LookupUserID: billerID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: tenantInfo.OrgID,
+			BuID:  tenantInfo.BuID,
+		},
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, errortypes.NewValidationError(
+				"billerId",
+				errortypes.ErrInvalid,
+				"Biller user not found in the current tenant",
+			)
+		}
+
+		return nil, err
+	}
+
+	return biller, nil
+}
+
 func (s *service) AssignBiller(
 	ctx context.Context,
 	req *services.AssignBillerRequest,
@@ -629,22 +670,8 @@ func (s *service) AssignBiller(
 		return nil, err
 	}
 
-	biller, err := s.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
-		LookupUserID: req.BillerID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: req.TenantInfo.OrgID,
-			BuID:  req.TenantInfo.BuID,
-		},
-	})
+	biller, err := s.biller(ctx, req.TenantInfo, req.BillerID)
 	if err != nil {
-		if errortypes.IsNotFoundError(err) {
-			return nil, errortypes.NewValidationError(
-				"billerId",
-				errortypes.ErrInvalid,
-				"Biller user not found in the current tenant",
-			)
-		}
-
 		return nil, err
 	}
 

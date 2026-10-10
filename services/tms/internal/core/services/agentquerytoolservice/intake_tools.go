@@ -3,9 +3,11 @@ package agentquerytoolservice
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -354,6 +356,7 @@ type quoteView struct {
 	FormulaTemplateID string           `json:"formulaTemplateId,omitempty"`
 	BillToCustomerID  string           `json:"billToCustomerId,omitempty"`
 	Lane              []string         `json:"lane"`
+	TotalDistance     float64          `json:"totalDistance"`
 	Note              string           `json:"note,omitempty"`
 }
 
@@ -428,7 +431,26 @@ func (t *quoteShipmentTool) Query(
 		return nil, err
 	}
 
-	return quoteViewOf(rated, lane), nil
+	view := quoteViewOf(rated, lane)
+	view.TotalDistance = movesDistance(entity.Moves)
+	if view.TotalDistance <= 0 && rated.Outcome.Priced() {
+		view.Note = strings.TrimSpace(view.Note + " No distance could be worked out for these " +
+			"stops, so a per-mile rate priced zero miles and the amount may be only the " +
+			"agreement's minimum charge. Say so rather than quoting it as the lane's rate.")
+	}
+
+	return view, nil
+}
+
+func movesDistance(moves []*shipment.ShipmentMove) float64 {
+	total := 0.0
+	for _, move := range moves {
+		if move != nil && move.Distance != nil {
+			total += *move.Distance
+		}
+	}
+
+	return total
 }
 
 // hypotheticalShipment builds the unsaved shipment the rate engine reads: one
@@ -571,18 +593,33 @@ func quoteViewOf(rated *serviceports.RatedShipment, lane []string) *quoteView {
 // shipment, ranked by the strategy the organization chose, so an agent can
 // tender to the right one rather than the first one.
 type shopCarriersTool struct {
-	shopper carrierShopper
+	shopper  carrierShopper
+	carriers shopCarrierReader
 }
 
-func newShopCarriersTool(shopper carrierShopper) serviceports.AgentQueryTool {
-	return &shopCarriersTool{shopper: shopper}
+// shopCarrierReader reads the shopped carriers' standing, so "the cheapest
+// that's active and compliant" is answered from the shop itself rather than
+// by a model that holds no carrier lookup and gives up.
+type shopCarrierReader interface {
+	GetByIDs(
+		ctx context.Context,
+		req repositories.GetCarriersByIDsRequest,
+	) ([]*carrier.Carrier, error)
+}
+
+func newShopCarriersTool(
+	shopper carrierShopper,
+	carriers shopCarrierReader,
+) serviceports.AgentQueryTool {
+	return &shopCarriersTool{shopper: shopper, carriers: carriers}
 }
 
 func (t *shopCarriersTool) Name() string { return "shop_carriers" }
 
 func (t *shopCarriersTool) Description() string {
 	return "Price a saved shipment against carriers and rank them by contract cost, " +
-		"margin against the customer's charge, and routing guide rank. Leave the carrier list empty to " +
+		"margin against the customer's charge, and routing guide rank. Each option says " +
+		"whether the carrier is active and qualified. Leave the carrier list empty to " +
 		"use the shipment's routing guide. Read this before tendering; nothing is " +
 		"tendered or written by it."
 }
@@ -631,6 +668,8 @@ type shopOptionView struct {
 	MarginAmount    decimal.Decimal `json:"marginAmount"`
 	MarginPercent   decimal.Decimal `json:"marginPercent"`
 	BelowFloor      bool            `json:"belowFloor"`
+	Status          string          `json:"status,omitempty"`
+	Compliance      string          `json:"compliance,omitempty"`
 	GuideRank       int16           `json:"guideRank,omitempty"`
 	OfferTTLSeconds int32           `json:"offerTtlSeconds,omitempty"`
 	Note            string          `json:"note,omitempty"`
@@ -692,7 +731,47 @@ func (t *shopCarriersTool) Query(
 		return nil, err
 	}
 
-	return shopViewOf(result), nil
+	view := shopViewOf(result)
+	t.standing(ctx, req.TenantInfo, view)
+
+	return view, nil
+}
+
+// standing adds each shopped carrier's status and compliance. A carrier that
+// cannot be read is left without them rather than failing the shop.
+func (t *shopCarriersTool) standing(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	view *shopView,
+) {
+	if t.carriers == nil || len(view.Options) == 0 {
+		return
+	}
+	ids := make([]pulid.ID, 0, len(view.Options))
+	for idx := range view.Options {
+		if id, err := pulid.Parse(view.Options[idx].CarrierID); err == nil {
+			ids = append(ids, id)
+		}
+	}
+	found, err := t.carriers.GetByIDs(ctx, repositories.GetCarriersByIDsRequest{
+		TenantInfo: tenant,
+		CarrierIDs: ids,
+	})
+	if err != nil {
+		return
+	}
+	byID := make(map[string]*carrier.Carrier, len(found))
+	for _, entry := range found {
+		if entry != nil {
+			byID[entry.ID.String()] = entry
+		}
+	}
+	for idx := range view.Options {
+		if entry, ok := byID[view.Options[idx].CarrierID]; ok {
+			view.Options[idx].Status = string(entry.Status)
+			view.Options[idx].Compliance = string(entry.ComplianceStatus)
+		}
+	}
 }
 
 func shopViewOf(result *serviceports.ShopResult) *shopView {
@@ -728,13 +807,20 @@ func shopViewOf(result *serviceports.ShopResult) *shopView {
 			Note:            option.Note,
 		})
 	}
-	if len(view.Options) == 0 {
+	switch {
+	case len(view.Options) == 0:
 		view.Note = "No carrier could be priced for this shipment. Check the routing guide " +
 			"covers the lane, or name carriers explicitly."
+	case slices.ContainsFunc(view.Options, func(o shopOptionView) bool { return o.Priced }):
+		view.Note = shopPricedNote
 	}
 
 	return view
 }
+
+const shopPricedNote = "A priced option's cost is what that carrier's contract pays for " +
+	"the whole shipment, worked out from its rate: it is the sourced rate assign_move_to_carrier " +
+	"needs. To cover a one-move shipment with that carrier, pass the cost as a Flat baseRate."
 
 func optionalPulid(params map[string]any, key string) (pulid.ID, bool, error) {
 	value := optionalString(params, key)

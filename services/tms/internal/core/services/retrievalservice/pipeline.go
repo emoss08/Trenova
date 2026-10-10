@@ -479,6 +479,22 @@ func (s *Service) PurgeRetiredModel(
 	return result, nil
 }
 
+func (s *Service) ListIndexedTenants(
+	ctx context.Context,
+	after *pagination.TenantInfo,
+	limit int,
+) ([]pagination.TenantInfo, error) {
+	tenants, err := s.repo.ListIndexedTenants(ctx, repositories.ListIndexedRetrievalTenantsRequest{
+		After: after,
+		Limit: limit,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("list organizations that index sources for retrieval: %w", err)
+	}
+
+	return tenants, nil
+}
+
 func (s *Service) Sweep(
 	ctx context.Context,
 	tenant pagination.TenantInfo,

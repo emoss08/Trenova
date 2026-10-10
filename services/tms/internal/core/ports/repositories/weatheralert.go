@@ -21,6 +21,11 @@ type UpsertWeatherAlertResult struct {
 	ActivityType weatheralert.ActivityType
 }
 
+type ListWeatherAlertsByNWSIDsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	NWSIDs     []string              `json:"nwsIds"`
+}
+
 type ExpireWeatherAlertsResult struct {
 	ExpiredCount int
 }
@@ -36,6 +41,10 @@ type WeatherAlertRepository interface {
 		ctx context.Context,
 		req GetWeatherAlertByIDRequest,
 	) ([]*weatheralert.Activity, error)
+	ListByNWSIDs(
+		ctx context.Context,
+		req ListWeatherAlertsByNWSIDsRequest,
+	) ([]*weatheralert.WeatherAlert, error)
 	UpsertAlert(
 		ctx context.Context,
 		alert *weatheralert.WeatherAlert,

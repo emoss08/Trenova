@@ -2,7 +2,6 @@ package order
 
 import (
 	"context"
-	"fmt"
 	"regexp"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
@@ -82,28 +81,15 @@ func (o *Order) Validate(multiErr *errortypes.MultiError) {
 			validation.Length(0, 100).Error("BOL must be at most 100 characters"),
 		),
 		validation.Field(&o.QuotedAmount,
-			validation.By(nonNegativeNullDecimal("Quoted amount")),
+			domainvalidation.DecimalAtLeast(decimal.Zero, "Quoted amount must not be negative"),
 		),
 		validation.Field(&o.BaseAmount,
-			validation.By(nonNegativeNullDecimal("Base amount")),
+			domainvalidation.DecimalAtLeast(decimal.Zero, "Base amount must not be negative"),
 		),
 	))
 }
 
 var currencyCodePattern = regexp.MustCompile(`^[A-Z]{3}$`)
-
-func nonNegativeNullDecimal(label string) validation.RuleFunc {
-	return func(value any) error {
-		amount, ok := value.(decimal.NullDecimal)
-		if !ok || !amount.Valid {
-			return nil
-		}
-		if amount.Decimal.IsNegative() {
-			return fmt.Errorf("%s must not be negative", label)
-		}
-		return nil
-	}
-}
 
 func (o *Order) GetID() pulid.ID {
 	return o.ID

@@ -40,18 +40,26 @@ func (f *fakeSpend) MonthSpend(
 type fakeSlots struct {
 	mu       sync.Mutex
 	full     map[pulid.ID]bool
+	busyFor  map[pulid.ID]int
+	tries    map[pulid.ID]int
 	held     map[string]pulid.ID
 	released []pulid.ID
 }
 
 func newFakeSlots() *fakeSlots {
-	return &fakeSlots{full: map[pulid.ID]bool{}, held: map[string]pulid.ID{}}
+	return &fakeSlots{
+		full:    map[pulid.ID]bool{},
+		busyFor: map[pulid.ID]int{},
+		tries:   map[pulid.ID]int{},
+		held:    map[string]pulid.ID{},
+	}
 }
 
 func (f *fakeSlots) Acquire(_ context.Context, req repositories.AcquireProviderSlotRequest) (bool, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	if f.full[req.ProviderID] {
+	f.tries[req.ProviderID]++
+	if f.full[req.ProviderID] || f.tries[req.ProviderID] <= f.busyFor[req.ProviderID] {
 		return false, nil
 	}
 	f.held[req.Token] = req.ProviderID
@@ -168,6 +176,25 @@ func TestSlots_SendsWorkOnWhenAProviderIsAtItsLimit(t *testing.T) {
 	assert.Equal(t, int32(1), secondCalls.Load())
 	assert.Equal(t, []pulid.ID{second.ID}, slots.released)
 	assert.Empty(t, slots.held, "every slot taken is given back")
+}
+
+// The last provider a call can go to waits for a slot rather than failing: a
+// slot frees within seconds, and refusing at once failed a person's reply
+// while three conversations ran at once. An earlier one still hands on at once.
+func TestSlots_TheLastProviderWaitsForASlot(t *testing.T) {
+	t.Parallel()
+
+	server, calls := chatServer(t, http.StatusOK, `{"ok":true}`)
+	only := openAIChatProvider("only", server.URL, 10)
+	slots := newFakeSlots()
+	slots.busyFor[only.ID] = 2
+	service := withLimits(newTestService(t, only), &Params{Slots: slots})
+
+	result, err := service.CompleteStructured(t.Context(), generalRequest())
+	require.NoError(t, err)
+	assert.Equal(t, only.ID, result.ProviderID)
+	assert.Equal(t, int32(1), calls.Load())
+	assert.Equal(t, 3, slots.tries[only.ID], "it tried until a slot freed")
 }
 
 func TestTimeout_MovesOnFromAProviderThatTakesTooLong(t *testing.T) {

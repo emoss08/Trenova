@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,6 +24,8 @@ const (
 
 	defaultPurgeBatch = 1000
 	maxPurgeBatch     = 10000
+
+	maxIndexedTenantPage = 1000
 )
 
 func (r *repository) findSettings(
@@ -462,4 +465,50 @@ func embeddingKeyTuple() string {
 		cols.ChunkIndex,
 		cols.ModelKey,
 	)
+}
+
+type indexedTenantRow struct {
+	OrganizationID pulid.ID `bun:"organization_id"`
+	BusinessUnitID pulid.ID `bun:"business_unit_id"`
+}
+
+func (r *repository) ListIndexedTenants(
+	ctx context.Context,
+	req repositories.ListIndexedRetrievalTenantsRequest,
+) ([]pagination.TenantInfo, error) {
+	ctx = dbscope.WithSystem(ctx, "list organizations that index sources for retrieval")
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
+		cols := buncolgen.SettingsColumns
+		limit := intutils.Clamp(req.Limit, 1, maxIndexedTenantPage)
+
+		q := r.db.DBForContext(ctx).
+			NewSelect().
+			Model((*airetrieval.Settings)(nil)).
+			Column(cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
+			Where(cols.ActiveModelKey.Ne(), "").
+			Order(cols.OrganizationID.OrderAsc(), cols.BusinessUnitID.OrderAsc()).
+			Limit(limit)
+		if req.After != nil {
+			q = q.Where(
+				buncolgen.Expr("({0}, {1}) > (?, ?)", cols.OrganizationID, cols.BusinessUnitID),
+				req.After.OrgID,
+				req.After.BuID,
+			)
+		}
+
+		rows := make([]indexedTenantRow, 0, limit)
+		if err := q.Scan(ctx, &rows); err != nil {
+			return nil, fmt.Errorf("list organizations that index sources for retrieval: %w", err)
+		}
+
+		tenants := make([]pagination.TenantInfo, 0, len(rows))
+		for _, row := range rows {
+			tenants = append(tenants, pagination.TenantInfo{
+				OrgID: row.OrganizationID,
+				BuID:  row.BusinessUnitID,
+			})
+		}
+
+		return tenants, nil
+	})
 }

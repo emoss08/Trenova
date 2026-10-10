@@ -88,12 +88,14 @@ import { DeskUndoBar, useUndoWindow } from "./conversation/desk-undo-bar";
 import { DeskWebLive } from "./conversation/desk-web";
 import { composerStatus, streamingText } from "./conversation/turn-status";
 import { useStickToBottom } from "./conversation/use-stick-to-bottom";
+import { useSharedMap } from "@/hooks/use-keyed-sharing";
 import { liveWebSearch, turnWebSources } from "./conversation/web-cites";
 import { DeskErrorButton, DeskErrorCard } from "./desk-error-card";
 import { DeskIcon } from "./desk-icons";
 import { deskComposerLock, DeskUsageMeter, useRequestMore } from "./desk-locks";
 import { useOnline } from "./desk-online";
 import { DeskTermsNote } from "./desk-terms-note";
+import { DeskTranscriptSkeleton } from "./desk-skeletons";
 import { turnTime } from "./turn-time";
 import "./desk-chat.css";
 import "./desk-chat-compact.css";
@@ -287,7 +289,7 @@ export function DeskThread({
           onOpeningQuestionSent: givenOpeningSent ?? NO_OP,
         }
       : storedOpening;
-  const artifactsQuery = useQuery(queries.assistant.artifacts(thread.id));
+  const artifactsQuery = useQuery(queries.assistant.artifacts(thread.id)._ctx.summary);
   const budgetQuery = useQuery({ ...queries.assistant.threadBudget(thread.id), staleTime: 60_000 });
   const artifacts = useMemo(() => artifactsQuery.data?.results ?? [], [artifactsQuery.data]);
   const compact = density === "compact";
@@ -440,7 +442,11 @@ export function DeskThread({
 
   const replies = entries.filter((entry) => entry.kind === "assistant").length;
   const ownMessages = entries.filter((entry) => entry.kind === "user").length + (turn ? 1 : 0);
-  const { scrollRef, away, unread, jumpToLatest } = useStickToBottom({ replies, ownMessages });
+  const { scrollRef, away, unread, jumpToLatest } = useStickToBottom({
+    replies,
+    ownMessages,
+    oldest: entries[0]?.message.id ?? null,
+  });
 
   // A long conversation opens on its newest page; the earlier ones are read
   // as the person scrolls up to them, and the page holds still while they
@@ -791,7 +797,10 @@ export function DeskThread({
   const lock = composerLock?.lock ?? fallbackLock;
   const rateLimited = turn?.status === "error" ? turn.rateLimited : null;
 
-  const replySteps = useMemo(() => {
+  // Each reply's steps and artifacts are worked out from the whole list, and
+  // stay the same arrays while they are equal (useSharedMap), so a reply's
+  // memoized row is skipped when an older page arrives above it.
+  const replyStepsByEntry = useMemo(() => {
     const byEntry = new Map<string, ToolStep[]>();
     let steps: ToolStep[] = [];
     let askedAt = 0;
@@ -806,12 +815,13 @@ export function DeskThread({
     }
     return byEntry;
   }, [entries]);
+  const replySteps = useSharedMap(replyStepsByEntry);
 
   // A step that only looked something up has no words of its own; what it
   // made is shown under the reply's text that follows it, where the design
   // puts a reply's artifacts, or on its last step when no text follows.
   const showsArtifacts = artifactHost !== undefined;
-  const rowArtifacts = useMemo(() => {
+  const rowArtifactsByEntry = useMemo(() => {
     const byEntry = new Map<string, AssistantArtifact[]>();
     if (!showsArtifacts) {
       return byEntry;
@@ -845,6 +855,7 @@ export function DeskThread({
     settle();
     return byEntry;
   }, [entries, model.artifactsByMessage, showsArtifacts]);
+  const rowArtifacts = useSharedMap(rowArtifactsByEntry);
 
   // Which rows open the conversation, and which reply steps carry their
   // reply's time: worked out before drawing, from what each row will show.
@@ -923,6 +934,9 @@ export function DeskThread({
               >
                 <div className="dk-scroll" ref={scrollRef} tabIndex={0}>
                   <div className="dk-grid dk-flow">
+                    {model.historyLoading && entries.length === 0 && turn === null && (
+                      <DeskTranscriptSkeleton />
+                    )}
                     {hasOlder && (
                       <div ref={olderRef} className="dk-older" aria-live="polite">
                         {loadingOlder ? t("Reading earlier messages…") : ""}

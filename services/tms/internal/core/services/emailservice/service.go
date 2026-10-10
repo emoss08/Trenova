@@ -897,7 +897,22 @@ func (s *Service) resolveProfile(
 	if !errortypes.IsNotFoundError(err) {
 		return nil, err
 	}
-	return s.repo.GetAssignedProfile(ctx, req.TenantInfo, email.PurposeGeneral)
+	profile, err = s.repo.GetAssignedProfile(ctx, req.TenantInfo, email.PurposeGeneral)
+	if errortypes.IsNotFoundError(err) {
+		return nil, noEmailProfile()
+	}
+
+	return profile, err
+}
+
+// noEmailProfile says what a send with no profile behind it is missing.
+// "EmailProfile not found" told an agent nothing it could act on, and it
+// kept trying; this says nothing can be emailed until one is set up.
+func noEmailProfile() error {
+	return errortypes.NewBusinessError(
+		"No email profile is set up for this organization, so nothing can be emailed until " +
+			"an admin adds one in the email settings. Say so, and offer another way to reach them",
+	)
 }
 
 func (s *Service) markFailed(

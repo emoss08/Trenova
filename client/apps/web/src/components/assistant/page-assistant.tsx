@@ -16,6 +16,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Lock01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useMemo, useRef, type ReactNode } from "react";
+import { toast } from "sonner";
 
 const NO_THREADS: AssistantThread[] = [];
 import { DeskThread } from "@/components/desk-chat/desk-thread";
@@ -111,19 +112,30 @@ export function PageAssistant({
   });
   const thread = threadQuery.data ?? opened.data?.thread ?? null;
 
-  const artifactsQuery = useQuery({
-    ...queries.assistant.artifacts(threadId),
-    enabled: threadId !== "" && onOpenArtifact !== undefined,
-  });
-  const artifacts = useMemo(() => artifactsQuery.data?.results ?? [], [artifactsQuery.data]);
+  // An artifact's contents are read when a person opens it, not with the
+  // conversation: reading every one with its payload up front, and again on
+  // every artifact event, cost a request burst for links nobody followed.
   const openArtifact = useCallback(
     (id: string) => {
-      const artifact = artifacts.find((candidate) => candidate.id === id);
-      if (artifact) {
-        onOpenArtifact?.(artifact);
+      if (threadId === "" || onOpenArtifact === undefined) {
+        return;
       }
+      void queryClient
+        .fetchQuery(queries.assistant.artifacts(threadId)._ctx.lineage(id))
+        .then((lineage) => {
+          const artifact =
+            lineage.results.find((candidate) => candidate.id === id) ?? lineage.results.at(-1);
+          if (artifact) {
+            onOpenArtifact(artifact);
+          }
+        })
+        .catch(() => {
+          toast.error(t("That artifact could not be opened"), {
+            description: t("Try again shortly."),
+          });
+        });
     },
-    [artifacts, onOpenArtifact],
+    [onOpenArtifact, queryClient, t, threadId],
   );
 
   const pageArtifacts = useMemo(() => ({ open: openArtifact }), [openArtifact]);

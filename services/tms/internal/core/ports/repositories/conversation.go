@@ -31,10 +31,16 @@ type ListThreadsRequest struct {
 	UserID     pulid.ID
 	TenantInfo pagination.TenantInfo
 	Limit      int
-	Offset     int
+	Cursor     string
+	Until      string
 	// IncludeUnlisted also returns conversations whose origin keeps them out
 	// of the rail, such as quick questions that were not kept.
 	IncludeUnlisted bool
+}
+
+type ThreadPage struct {
+	Items      []*conversation.Thread `json:"items"`
+	NextCursor string                 `json:"nextCursor,omitempty"`
 }
 
 type ListMessagesRequest struct {
@@ -76,6 +82,7 @@ type UpdateThreadContextRequest struct {
 	TenantInfo     pagination.TenantInfo
 	Usage          *conversation.ContextUsage
 	AutoCompactOff *bool
+	WorkingSet     *[]conversation.WorkingRecord
 }
 
 // CountMessagesRequest counts a thread's messages, which is how long the
@@ -209,10 +216,7 @@ type ConversationRepository interface {
 		ctx context.Context,
 		req ListThreadAgentsByIDsRequest,
 	) ([]*conversation.Thread, error)
-	ListThreads(
-		ctx context.Context,
-		req ListThreadsRequest,
-	) (*pagination.ListResult[*conversation.Thread], error)
+	ListThreads(ctx context.Context, req ListThreadsRequest) (*ThreadPage, error)
 	UpdateThread(ctx context.Context, thread *conversation.Thread) (*conversation.Thread, error)
 	DeleteThread(ctx context.Context, req GetThreadRequest) error
 	// DeleteStaleThreads removes unkept conversations of an origin, with their

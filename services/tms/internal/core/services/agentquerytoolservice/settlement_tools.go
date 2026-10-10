@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
@@ -290,7 +291,8 @@ func (t *listDriverSettlementsTool) ParamSchema() map[string]any {
 			"open: true.", settlementStatuses),
 		paramOpenSettlements: boolParam("true for only settlements still open to change: " +
 			"Draft, PendingApproval and Approved."),
-		"hasExceptions": boolParam("true for only those with exceptions, false for none."),
+		"hasExceptions": boolParam("true for only those with exceptions. Leave it out to " +
+			"list them all; false narrows nothing."),
 	}, defaultListLimit, maxListLimit))
 }
 
@@ -333,7 +335,7 @@ func (t *listDriverSettlementsTool) Query(
 		},
 		WorkerID:      workerID,
 		Status:        driversettlement.Status(status),
-		HasExceptions: optionalBoolPointer(params.Params, "hasExceptions"),
+		HasExceptions: onlyWithExceptions(params.Params),
 	}
 	if openOnly && status == "" {
 		req.Statuses = openSettlementStatuses
@@ -378,30 +380,51 @@ func (t *listDriverSettlementsTool) Query(
 	return gatedResult(&found, gate), nil
 }
 
+// onlyWithExceptions narrows to settlements with exceptions only when asked.
+// gpt-6-luna fills every optional parameter, and its hasExceptions: false hid
+// the very settlement a deduction was for, because it carried an exception.
+func onlyWithExceptions(params map[string]any) *bool {
+	if !optionalBool(params, "hasExceptions") {
+		return nil
+	}
+	only := true
+
+	return &only
+}
+
 func (t *listDriverSettlementsTool) otherSettlements(
 	ctx context.Context,
 	req *repositories.ListDriverSettlementsRequest,
 	zone *time.Location,
 ) string {
-	narrowed := req.Filter.Query != "" || req.Status != "" || len(req.Statuses) > 0 ||
-		req.HasExceptions != nil
-	if req.WorkerID.IsNil() || !narrowed {
-		return ""
-	}
-
-	result, err := t.settlements.List(ctx, &repositories.ListDriverSettlementsRequest{
+	statusNarrowed := req.Status != "" || len(req.Statuses) > 0 || req.HasExceptions != nil
+	broader := &repositories.ListDriverSettlementsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: req.Filter.TenantInfo,
 			Pagination: pagination.Info{Limit: maxOtherSettlements},
 		},
 		WorkerID: req.WorkerID,
-	})
+	}
+	switch {
+	case req.WorkerID.IsNotNil() && (req.Filter.Query != "" || statusNarrowed):
+	case req.WorkerID.IsNil() && req.Filter.Query != "" && statusNarrowed:
+		broader.Filter.Query = req.Filter.Query
+	default:
+		return ""
+	}
+
+	result, err := t.settlements.List(ctx, broader)
 	if err != nil {
 		return ""
 	}
+	whose := "this driver's settlements"
+	if req.WorkerID.IsNil() {
+		whose = fmt.Sprintf("the settlements matching %q", req.Filter.Query)
+	}
 	if len(result.Items) == 0 {
-		return "This driver has no settlements in any status. Say so rather than " +
-			"searching again; generate_driver_settlement drafts one."
+		return fmt.Sprintf("There are no %s in any status. Say so rather than "+
+			"searching again; generate_driver_settlement drafts one.",
+			strings.TrimPrefix(whose, "the "))
 	}
 
 	described := make([]string, 0, len(result.Items))
@@ -409,16 +432,21 @@ func (t *listDriverSettlementsTool) otherSettlements(
 		if entity == nil {
 			continue
 		}
-		described = append(described, fmt.Sprintf("%s (%s, %s to %s)",
+		driver := ""
+		if req.WorkerID.IsNil() {
+			driver = fmt.Sprintf(", %s, workerId %s",
+				stringutils.FirstNonEmpty(workerName(entity.Worker), "driver"), entity.WorkerID)
+		}
+		described = append(described, fmt.Sprintf("%s (%s, %s to %s, id %s%s)",
 			entity.SettlementNumber, entity.Status,
 			timeutils.FormatCalendarDate(entity.PeriodStart, zone),
-			timeutils.FormatCalendarDate(entity.PeriodEnd, zone)))
+			timeutils.FormatCalendarDate(entity.PeriodEnd, zone), entity.ID, driver))
 	}
 
 	return fmt.Sprintf(
-		"None of this driver's settlements matched those filters. Their %d most recent, "+
-			"in any status, are: %s. Answer from these rather than trying each status in turn.",
-		len(described), strings.Join(described, "; "),
+		"None of %s matched those filters. The %d most recent, in any status, are: %s. "+
+			"Answer from these rather than trying each status in turn.",
+		whose, len(described), strings.Join(described, "; "),
 	)
 }
 

@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 562.
+Tools listed: 563.
 
 ## The model
 
@@ -59,7 +59,7 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 191 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 192 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 8 |
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 226 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 3 |
@@ -264,6 +264,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Test formula expression (`test_formula_expression`) | Reads only | Automatic | — | — | Prices an expression with the formula engine, for sample values or a shipment the caller may read; nothing is saved and nothing is sent. |
 | Web read (`web_read`) | Reads only | Automatic | — | Always, from web | Reads a page a web search returned; it changes nothing in Trenova and returns text written outside it. |
 | Web search (`web_search`) | Reads only | Automatic | — | Always, from web | Searches the public web through the organization's extension; it changes nothing in Trenova, sends only the query, and returns text written outside it. |
+| Withdraw proposal (`withdraw_proposal`) | Reads only | Automatic | — | — | Takes back a proposal the agent filed earlier in the same turn, before anyone has seen it; it changes no record and only narrows what the person is asked. |
 
 ## The caller's own records
 

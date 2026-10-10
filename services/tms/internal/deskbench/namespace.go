@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/temporaljobs/connection"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	namespacepb "go.temporal.io/api/namespace/v1"
 	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/api/workflowservice/v1"
 	"go.temporal.io/sdk/client"
@@ -16,7 +17,7 @@ import (
 
 const (
 	DefaultNamespace     = "deskbench"
-	namespaceRetention   = 72 * time.Hour
+	namespaceRetention   = time.Hour
 	namespaceReadyWithin = 45 * time.Second
 	namespacePollEvery   = 500 * time.Millisecond
 )
@@ -77,9 +78,9 @@ func EnsureNamespace(ctx context.Context, cfg *config.TemporalConfig, namespace 
 }
 
 func register(ctx context.Context, namespaces client.NamespaceClient, namespace string) error {
-	_, err := namespaces.Describe(ctx, namespace)
+	described, err := namespaces.Describe(ctx, namespace)
 	if err == nil {
-		return nil
+		return keepRetentionShort(ctx, namespaces, namespace, described)
 	}
 
 	var missing *serviceerror.NamespaceNotFound
@@ -95,6 +96,34 @@ func register(ctx context.Context, namespaces client.NamespaceClient, namespace 
 	var exists *serviceerror.NamespaceAlreadyExists
 	if err != nil && !errors.As(err, &exists) {
 		return fmt.Errorf("register temporal namespace %s: %w", namespace, err)
+	}
+
+	return nil
+}
+
+// keepRetentionShort trims a namespace an earlier bench registered with a
+// longer retention. The local dev server keeps every closed run in memory
+// until retention lets it go, and three days of bench runs filled its memory
+// limit until it stopped answering polls; a run's files hold all it needs.
+func keepRetentionShort(
+	ctx context.Context,
+	namespaces client.NamespaceClient,
+	namespace string,
+	described *workflowservice.DescribeNamespaceResponse,
+) error {
+	current := described.GetConfig().GetWorkflowExecutionRetentionTtl()
+	if current != nil && current.AsDuration() <= namespaceRetention {
+		return nil
+	}
+
+	err := namespaces.Update(ctx, &workflowservice.UpdateNamespaceRequest{
+		Namespace: namespace,
+		Config: &namespacepb.NamespaceConfig{
+			WorkflowExecutionRetentionTtl: durationpb.New(namespaceRetention),
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("shorten temporal namespace %s retention: %w", namespace, err)
 	}
 
 	return nil
@@ -127,4 +156,29 @@ func awaitNamespace(ctx context.Context, workflows client.Client, namespace stri
 		case <-ticker.C:
 		}
 	}
+}
+
+const (
+	namespaceLookupAttempts = 4
+	namespaceLookupBackoff  = time.Second
+)
+
+func retryNamespaceLookup(ctx context.Context, start func() error) error {
+	var err error
+	for attempt := range namespaceLookupAttempts {
+		if err = start(); err == nil {
+			return nil
+		}
+		var missing *serviceerror.NamespaceNotFound
+		if !errors.As(err, &missing) {
+			return err
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(namespaceLookupBackoff * time.Duration(attempt+1)):
+		}
+	}
+
+	return err
 }

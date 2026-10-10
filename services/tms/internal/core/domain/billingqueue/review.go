@@ -480,3 +480,19 @@ func derefInt(v *int64) int64 {
 
 	return *v
 }
+
+// OpenIssues are the flagged checks on the item nobody has settled, read with
+// its review. While any is open the item cannot be approved.
+func (b *BillingQueueItem) OpenIssues() []*Issue {
+	if b == nil || b.Review == nil {
+		return nil
+	}
+	open := make([]*Issue, 0, len(b.Review.Issues))
+	for _, issue := range b.Review.Issues {
+		if issue != nil && issue.IsOpen() {
+			open = append(open, issue)
+		}
+	}
+
+	return open
+}

@@ -56,6 +56,11 @@ type StructuredCompletionRequest struct {
 	// priority order applies, so a deleted preference never strands a caller.
 	PreferredProviderID pulid.ID
 	RequireProvider     bool
+	// HedgeAfter is for a caller bounded by a short deadline: when the
+	// provider asked last has not answered by then, the next in the order is
+	// asked too and the first answer wins, so one slow provider does not spend
+	// the whole budget. Zero asks the providers one after another.
+	HedgeAfter time.Duration
 	// Attribution says who the call is for, so its cost lands somewhere.
 	Attribution AIUsageAttribution
 }

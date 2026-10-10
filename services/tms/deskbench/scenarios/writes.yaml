@@ -7,6 +7,13 @@ scenarios:
     description: >
       The smallest write there is, asked casually, approved, and reported back. Checks that the
       proposal names the right load, that it runs once approved, and that the follow-up says so.
+      The note an earlier run added is removed first, so the load does not already carry it.
+    exclusive: SEED-SHP-010
+    setup:
+      - >
+        DELETE FROM shipment_comments
+        WHERE shipment_id = (SELECT id FROM shipments WHERE pro_number = 'SEED-SHP-010')
+          AND comment ILIKE '%receiver%' AND comment ILIKE '%tomorrow%'
     steps:
       - say: "put a note on the late freshhaul reefer to LA that the receiver pushed us to tomorrow am"
         expect:
@@ -44,12 +51,73 @@ scenarios:
   - name: reschedule-delivery
     description: >
       A schedule change on a stop, named by its place in the trip rather than by id, which the
-      agent has to resolve to the right stop before proposing anything. When this was written
-      no agent tool changed a saved stop's window: update_shipment leaves stops alone, while a
-      person does it through the same updateShipment mutation. Expect this to fail until a stop
-      schedule tool exists, and the agent to say it cannot rather than misuse another tool.
+      agent has to resolve to the right stop before proposing anything. The windows are rolled
+      forward first, so the load is always one that has not picked up yet. It runs on the bench's
+      Operations agent: no agent in the seeded organization holds reschedule_stop (DB-019).
+      Acme loads other scenarios booked or copied in the same run are canceled first, so
+      SEED-SHP-001 is the one Acme load to Chicago not yet picked up.
+    agent: Bench · Operations
+    exclusive: acme-shipments
+    setup:
+      - >
+        UPDATE shipment_moves AS sm SET status = 'Canceled'
+        FROM shipments AS sp
+        WHERE sm.shipment_id = sp.id
+          AND sp.status = 'New'
+          AND sp.pro_number NOT LIKE 'SEED-%'
+          AND sp.customer_id = (SELECT id FROM customers WHERE code = 'ACME')
+          AND sp.id IN (
+            SELECT p.execution_result->'record'->>'id'
+            FROM agent_proposals p
+            JOIN agent_runs r ON r.id = p.run_id
+            JOIN assistant_threads t ON t.id = r.subject_id
+            WHERE t.title LIKE '[bench]%' AND p.status = 'Executed'
+              AND p.tool_name IN ('create_shipment', 'duplicate_shipment'))
+      - >
+        UPDATE shipments AS sp SET status = 'Canceled'
+        WHERE sp.status = 'New'
+          AND sp.pro_number NOT LIKE 'SEED-%'
+          AND sp.customer_id = (SELECT id FROM customers WHERE code = 'ACME')
+          AND sp.id IN (
+            SELECT p.execution_result->'record'->>'id'
+            FROM agent_proposals p
+            JOIN agent_runs r ON r.id = p.run_id
+            JOIN assistant_threads t ON t.id = r.subject_id
+            WHERE t.title LIKE '[bench]%' AND p.status = 'Executed'
+              AND p.tool_name IN ('create_shipment', 'duplicate_shipment'))
+      - >
+        UPDATE assignments AS a SET status = 'Canceled'
+        FROM shipment_moves AS sm JOIN shipments AS sp ON sp.id = sm.shipment_id
+        WHERE a.shipment_move_id = sm.id AND sp.pro_number = 'SEED-SHP-001'
+          AND a.status <> 'Canceled'
+      - >
+        UPDATE stops AS st SET status = 'New', actual_arrival = NULL, actual_departure = NULL
+        FROM shipment_moves AS sm JOIN shipments AS sp ON sp.id = sm.shipment_id
+        WHERE st.shipment_move_id = sm.id AND sp.pro_number = 'SEED-SHP-001'
+          AND (st.status <> 'New' OR st.actual_arrival IS NOT NULL
+            OR st.actual_departure IS NOT NULL)
+      - >
+        UPDATE shipment_moves AS sm SET status = 'New', coverage_type = 'unassigned'
+        FROM shipments AS sp
+        WHERE sm.shipment_id = sp.id AND sp.pro_number = 'SEED-SHP-001'
+          AND (sm.status <> 'New' OR sm.coverage_type <> 'unassigned')
+      - >
+        UPDATE shipments SET status = 'New', canceled_at = NULL, canceled_by_id = NULL,
+          cancel_reason = NULL
+        WHERE pro_number = 'SEED-SHP-001' AND status <> 'New'
+      - >
+        UPDATE stops AS st
+        SET scheduled_window_start = (extract(epoch FROM now())::bigint / 3600) * 3600
+              + 86400 * (sm.sequence + st.sequence + 1),
+            scheduled_window_end = (extract(epoch FROM now())::bigint / 3600) * 3600
+              + 86400 * (sm.sequence + st.sequence + 1) + 7200
+        FROM shipment_moves AS sm
+        JOIN shipments AS sp ON sp.id = sm.shipment_id
+        WHERE st.shipment_move_id = sm.id
+          AND sp.pro_number = 'SEED-SHP-001'
+          AND st.status = 'New'
     steps:
-      - say: "acme load going to chicago, push the delivery appt back a day"
+      - say: "acme's chicago load that hasn't picked up yet, push the delivery appt back a day"
         expect:
           calls: ["search_shipments|list_shipments|get_shipment"]
           proposals: [{ tool: "reschedule_stop|update_stop_schedule|update_shipment" }]
@@ -65,14 +133,78 @@ scenarios:
           rubric: Reports the new delivery window as it now stands.
 
   - name: assign-a-driver
-    description: Dispatch's core write, with a driver named by first name only.
+    description: >
+      Dispatch's core write, with a driver named by first name only. The windows are rolled
+      forward first so the load can still be made, and David Park is a driver who is compliant.
+      It shares SEED-SHP-002 with lifecycle-carrier-covered, which covers it with a carrier, so
+      the two never run at once and each starts from the load uncovered.
+    exclusive: peak-shipments
+    setup: &uncovered_peak_load
+      - >
+        UPDATE carrier_assignments AS ca SET status = 'Canceled'
+        FROM shipment_moves AS sm JOIN shipments AS sp ON sp.id = sm.shipment_id
+        WHERE ca.shipment_move_id = sm.id AND sp.pro_number = 'SEED-SHP-002'
+          AND ca.status <> 'Canceled'
+      - >
+        DELETE FROM carrier_assignments AS ca USING shipment_moves AS sm, shipments AS sp
+        WHERE ca.shipment_move_id = sm.id AND sm.shipment_id = sp.id
+          AND sp.pro_number = 'SEED-SHP-002'
+          AND NOT EXISTS (SELECT 1 FROM carrier_cost_events AS e
+                          WHERE e.carrier_assignment_id = ca.id)
+      - >
+        UPDATE assignments AS a SET status = 'Canceled'
+        FROM shipment_moves AS sm JOIN shipments AS sp ON sp.id = sm.shipment_id
+        WHERE a.shipment_move_id = sm.id AND sp.pro_number = 'SEED-SHP-002'
+          AND a.status <> 'Canceled'
+      - >
+        UPDATE stops AS st SET status = 'New', actual_arrival = NULL, actual_departure = NULL
+        FROM shipment_moves AS sm JOIN shipments AS sp ON sp.id = sm.shipment_id
+        WHERE st.shipment_move_id = sm.id AND sp.pro_number = 'SEED-SHP-002'
+          AND (st.status <> 'New' OR st.actual_arrival IS NOT NULL
+            OR st.actual_departure IS NOT NULL)
+      - >
+        UPDATE shipment_moves AS sm SET status = 'New', coverage_type = 'unassigned'
+        FROM shipments AS sp
+        WHERE sm.shipment_id = sp.id AND sp.pro_number = 'SEED-SHP-002'
+          AND (sm.status <> 'New' OR sm.coverage_type <> 'unassigned')
+      - >
+        UPDATE shipments SET status = 'New', canceled_at = NULL, canceled_by_id = NULL,
+          cancel_reason = NULL
+        WHERE pro_number = 'SEED-SHP-002' AND status <> 'New'
+      - >
+        UPDATE stops AS st
+        SET scheduled_window_start = (extract(epoch FROM now())::bigint / 3600) * 3600
+              + 86400 * (sm.sequence + st.sequence + 1),
+            scheduled_window_end = (extract(epoch FROM now())::bigint / 3600) * 3600
+              + 86400 * (sm.sequence + st.sequence + 1) + 7200
+        FROM shipment_moves AS sm
+        JOIN shipments AS sp ON sp.id = sm.shipment_id
+        WHERE st.shipment_move_id = sm.id
+          AND sp.pro_number = 'SEED-SHP-002'
+          AND st.status = 'New'
     steps:
-      - say: "put mike on the peak ltl load to chicago, trc-002 and a dry van"
+      - say: "put david on the peak ltl load to chicago, trc-002 and a dry van"
         expect:
           calls: ["search_shipments|list_shipments|get_shipment|search_worker|list_workers"]
           proposals: [{ tool: assign_move }]
           maxFailedCalls: 1
           rubric: >
-            Resolves Mike Johnson, TRC-002 and a dry van (TRL-001 or TRL-002) and proposes the
+            Resolves David Park, TRC-002 and a dry van (TRL-001 or TRL-002) and proposes the
             assignment on SEED-SHP-002's move, flagging anything that would stop it (hours,
             credentials, the trailer's status).
+
+  - name: find-a-carrier-for-it
+    description: Nobody in house can take a load, so dispatch looks outside.
+    agent: Dispatch desk
+    tags: [carriers, read]
+    exclusive: peak-shipments
+    setup: *uncovered_peak_load
+    steps:
+      - say: "no drivers for the peak ltl going to chicago, can you shop it to carriers"
+        expect:
+          calls: ["shop_carriers"]
+          maxFailedCalls: 1
+          rubric: >
+            Shops SEED-SHP-002 and lists the carriers it found with what each would cost or why
+            it was ruled out, leaving out Lone Star (inactive) and saying Harbor Point is pending
+            compliance if it appears.

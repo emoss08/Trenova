@@ -66,16 +66,17 @@ func newWaitUntilTool(waits serviceports.AgentWaitService) serviceports.AgentToo
 func (t *waitUntilTool) Name() string { return waitUntilName }
 
 func (t *waitUntilTool) Description() string {
-	return "Park this work until something happens, instead of checking back. Use it when the " +
-		"next step depends on the world: a truck reaching or leaving a stop (StopArrival, " +
-		"StopDeparture), a reply about a shipment or from a carrier or customer (Reply), an " +
-		"appointment coming round (AppointmentNear), detention free time running out " +
-		"(FreeTimeEnding), a driver's drive time falling low (HOSDriveBelow), or a time (Time). " +
-		"Nothing runs while it waits. When it ends, or gives up after giveUpAfterHours, you are " +
-		"started again in this same conversation or on this same record, told what happened and " +
-		"what you said you would do. A wait on something already true is refused with what is " +
-		"true now. After setting one, end your turn: tell the person in one line what you are " +
-		"waiting for and what you will do then."
+	return "Park this work until something happens, instead of checking back. It waits for a " +
+		"stop's arrival or departure (StopArrival, StopDeparture: met when the truck is seen there " +
+		"or the time is recorded, so a load with no truck yet can be waited on), a reply about a shipment or from a " +
+		"carrier or customer (Reply), an appointment coming round (AppointmentNear), detention " +
+		"free time running out (FreeTimeEnding), a driver's drive time falling low " +
+		"(HOSDriveBelow), or a time (Time). When it ends, or gives " +
+		"up after giveUpAfterHours, you are started again here, told what happened and what you " +
+		"said you would do. A wait on something already true is refused with what is true now. " +
+		"Check now what can be checked now, such as a customer's notice preferences, and say " +
+		"what it means before you wait. After setting one, end your turn: say in one line what " +
+		"you are waiting for and what you will do then."
 }
 
 func (t *waitUntilTool) ParamSchema() map[string]any {
@@ -95,21 +96,22 @@ func (t *waitUntilTool) ParamSchema() map[string]any {
 			},
 			"at": agenttoolschema.LocalDateTime("For Time: when to pick the work up."),
 			paramShipmentMoveID: agenttoolschema.RecordIDText(permission.ResourceShipmentMove,
-				"For StopArrival, StopDeparture and AppointmentNear: the move the stop is on."),
+				"For StopArrival, StopDeparture and AppointmentNear: the move the stop is on, from "+
+					"get_shipment."),
 			paramStopID: agenttoolschema.RecordIDText(permission.ResourceShipmentStop,
-				"The stop: required for AppointmentNear; for StopArrival and "+
-					"StopDeparture, leave it out to wait for the move's next one."),
+				"The stop, from get_shipment: required for AppointmentNear; for StopArrival "+
+					"and StopDeparture, leave it out to wait for the move's next one."),
 			fieldShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
-				"For Reply: a reply about this shipment."),
+				"For Reply: a reply about this shipment, from search_shipments or the run subject."),
 			paramCarrierID: agenttoolschema.RecordIDText(permission.ResourceCarrier,
-				"For Reply: a reply from this carrier."),
+				"For Reply: a reply from this carrier, from list_carriers."),
 			paramCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
-				"For Reply: a reply from this customer."),
+				"For Reply: a reply from this customer, from list_customers."),
 			paramWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
-				"For HOSDriveBelow: the driver."),
+				"For HOSDriveBelow: the driver, from search_worker."),
 			"detentionOccurrenceId": agenttoolschema.KindID(
-				"For FreeTimeEnding: the detention record "+
-					"(detention.occurrence_opened names it).",
+				"For FreeTimeEnding: the detention record, from list_detention_desk or the "+
+					"run subject (detention.occurrence_opened names it).",
 				permission.KindDetentionOccurrence,
 			),
 			"minutesBefore": map[string]any{

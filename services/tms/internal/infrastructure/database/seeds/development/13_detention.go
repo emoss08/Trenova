@@ -1299,6 +1299,7 @@ func (s *DetentionSeed) createDetentionShipment(
 		Status:         def.moveStatus,
 		Loaded:         true,
 		Sequence:       0,
+		CoverageType:   shipment.MoveCoverageTypeDriver,
 	}
 	if _, err := tx.NewInsert().Model(move).Exec(ctx); err != nil {
 		return 0, fmt.Errorf("insert shipment move: %w", err)

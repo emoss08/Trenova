@@ -216,7 +216,7 @@ func getCatalogSpecs() []getSpec {
 		specOfGet(newGetCarrierTool(nil, nil)),
 		specOfGet(newGetTractorTool(nil, nil)),
 		specOfGet(newGetTrailerTool(nil, nil)),
-		specOfGet(newGetDetentionOccurrenceTool(nil, nil)),
+		specOfGet(newGetDetentionOccurrenceTool(nil, nil, nil)),
 		specOfGet(newGetServiceFailureTool(nil, nil)),
 	}
 }

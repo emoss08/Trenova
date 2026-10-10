@@ -44,7 +44,7 @@ scenarios:
         expect:
           calls: ["propose_formula"]
           maxFailedCalls: 1
-          formula: ["totalDistance", "totalStops"]
+          formula: ["totalDistance", '/totalStops|len\(stops\)|count\(stops/']
           rubric: >
             Keeps baseRate * totalDistance and adds 75 for each stop beyond two, with the 75 and
             the 2 as named variables, and shows a load with three stops priced.

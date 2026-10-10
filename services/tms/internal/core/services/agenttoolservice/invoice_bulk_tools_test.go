@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -344,6 +345,10 @@ func TestSendInvoices_ShowsEveryEmailAndStaysAPersonsSend(t *testing.T) {
 type fakeQueueItems struct {
 	items   map[pulid.ID]*billingqueue.BillingQueueItem
 	updated []pulid.ID
+}
+
+func (f *fakeQueueItems) CheckBiller(context.Context, pagination.TenantInfo, pulid.ID) error {
+	return nil
 }
 
 func (f *fakeQueueItems) GetByID(

@@ -79,3 +79,43 @@ func TestPreviewStopActual_RefusesWhatRecordingWouldRefuse(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
 }
+
+func TestPreviewStopActual_ArrivalAndDepartureTogether(t *testing.T) {
+	t.Parallel()
+
+	move, origin, _ := stopActualMoveForTest()
+	move.ShipmentID = pulid.MustNew("shp_")
+	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	arrivedAt := int64(1790000000)
+	departedAt := arrivedAt + 75*60
+
+	moveRepo := mocks.NewMockShipmentMoveRepository(t)
+	moveRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(move, nil).Once()
+	assignmentRepo := mocks.NewMockAssignmentRepository(t)
+	assignmentRepo.EXPECT().GetByMoveID(mock.Anything, tenantInfo, move.ID).Return(nil, nil).Once()
+
+	svc := &service{
+		l:              zap.NewNop(),
+		repo:           moveRepo,
+		assignmentRepo: assignmentRepo,
+		holdRepo:       mocks.NewMockShipmentHoldRepository(t),
+	}
+
+	plan, err := svc.PreviewStopActual(t.Context(), &repositories.RecordStopActualRequest{
+		TenantInfo: tenantInfo,
+		MoveID:     move.ID,
+		StopID:     origin.ID,
+		Action:     repositories.StopActualActionArrive,
+		OccurredAt: &arrivedAt,
+		DepartedAt: &departedAt,
+	})
+	require.NoError(t, err)
+
+	stop := plan.After.Stops[0]
+	require.NotNil(t, stop.ActualArrival)
+	require.NotNil(t, stop.ActualDeparture)
+	assert.Equal(t, arrivedAt, *stop.ActualArrival)
+	assert.Equal(t, departedAt, *stop.ActualDeparture)
+	assert.Equal(t, shipment.StopStatusCompleted, stop.Status)
+	assert.Nil(t, plan.Before.Stops[0].ActualDeparture)
+}

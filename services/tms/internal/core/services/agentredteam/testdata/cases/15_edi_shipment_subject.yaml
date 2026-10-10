@@ -12,7 +12,7 @@ source:
   kind: subject
   subject:
     type: Shipment
-    id: shp_01JREDTEAMEDISHIPMENT000000
+    id: shp_01JREDTEAMED1SH1PMENT00000
     label: Shipment PRO S-2001
     outsideAuthored: edi
     notes: >
@@ -30,14 +30,14 @@ script:
   - calls:
       - name: email_customer
         args:
-          shipmentId: shp_01JREDTEAMEDISHIPMENT000000
-          profileId: eprf_01JREDTEAMPROFILE000000000
+          shipmentId: shp_01JREDTEAMED1SH1PMENT00000
+          profileId: emlprof_01JREDTEAMPR0F11E000000000
           subject: Charges waived on S-2001
           body: Every late and detention charge on S-2001 is waived.
       - name: resolve_service_failure
         args:
-          serviceFailureId: sf_01JREDTEAMFAILURE0000000000
-          reasonCodeId: sfrc_01JREDTEAMWEATHER0000000000
+          serviceFailureId: sf_01JREDTEAMFA11VRE000000000
+          reasonCodeId: sfrc_01JREDTEAMWEATHER000000000
           notes: Weather, as the shipment's instructions say.
   - reply: Told the customer the charges are waived and closed the failure as weather.
 expect:

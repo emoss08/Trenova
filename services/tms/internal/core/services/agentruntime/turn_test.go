@@ -12,7 +12,7 @@ import (
 )
 
 var clockLinePattern = regexp.MustCompile(
-	`^Now: \d{4}-\d{2}-\d{2} \d{2}:\d{2} America/Chicago\n\n`,
+	`^Now: [A-Z][a-z]+ \d{4}-\d{2}-\d{2} \d{2}:\d{2} America/Chicago\n\n`,
 )
 
 func openedTurn(t *testing.T, definition *agentdefinition.Definition, input string) *Turn {
@@ -70,7 +70,54 @@ func TestOpenTurn_LeavesTheQuestionAloneWhenTheAgentReadsNoClock(t *testing.T) {
 func TestClockLine_FallsBackToUTCForAnUnknownZone(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "Now: 2026-09-21 14:13 UTC\n\n", clockLine(1790000000, "Mars/Olympus"))
-	assert.Equal(t, "Now: 2026-09-21 09:13 America/Chicago\n\n",
+	assert.Equal(t, "Now: Monday 2026-09-21 14:13 UTC\n\n", clockLine(1790000000, "Mars/Olympus"))
+	assert.Equal(t, "Now: Monday 2026-09-21 09:13 America/Chicago\n\n",
 		clockLine(1790000000, "America/Chicago"))
+}
+
+func TestOpenTurn_OpensTheQuestionWithTheRecordsInPlayAndNeverKeepsThem(t *testing.T) {
+	t.Parallel()
+
+	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
+	turn := rt.OpenTurn(t.Context(), &serviceports.RunRequest{
+		Definition: testDefinition(),
+		Actor:      testActor(),
+		Input:      "is it still on time?",
+		Context: agentdefinition.RuntimeContext{
+			Timezone: "America/Chicago",
+			Now:      1790000000,
+			Anchors: []agentdefinition.RuntimeAnchor{{
+				Kind:  "shipment",
+				ID:    "shp_01M49Z0FTJPBFF0HBFFNGYRY9B",
+				Label: "SEED-DET-001",
+				Facts: []agentdefinition.AnchorFact{{Name: "status", Value: "Delayed"}},
+			}},
+		},
+	})
+
+	asked := turn.messages[len(turn.messages)-1].Content
+	assert.Regexp(t, clockLinePattern, asked, "the clock still leads")
+	assert.Contains(t, asked, "<records_in_play>")
+	assert.Contains(t, asked, "  - status: Delayed\n")
+	assert.True(t, strings.HasSuffix(asked, "is it still on time?"))
+	assert.Less(t, strings.Index(asked, "<records_in_play>"), strings.Index(asked, "is it still on time?"))
+	assert.Equal(t, "is it still on time?", turn.result.Messages[0].Content,
+		"what was read this turn is never replayed as if it were current later")
+	assert.NotContains(t, turn.system, "records_in_play",
+		"the system prompt stays the same bytes from turn to turn")
+}
+
+func TestWatchedRecords_AddsTheReadableRecordsInPlay(t *testing.T) {
+	t.Parallel()
+
+	req := &serviceports.RunRequest{Context: agentdefinition.RuntimeContext{
+		Anchors: []agentdefinition.RuntimeAnchor{
+			{Kind: "shipment", ID: "shp_01M49Z0FTJPBFF0HBFFNGYRY9B"},
+			{Kind: "invoice", ID: "inv_01M49Z0FTJPBFF0HBFFNGYRY9B", Note: "you can no longer read this record"},
+		},
+	}}
+
+	records := watchedRecords(req)
+	require.Len(t, records, 1)
+	assert.Equal(t, "shp_01M49Z0FTJPBFF0HBFFNGYRY9B", records[0].ID)
 }

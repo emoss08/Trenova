@@ -21,6 +21,12 @@ import {
 import { toast } from "sonner";
 import type { LiveArtifacts } from "../desk-layout";
 import { useOutsideDismiss } from "@/components/desk-chat/use-outside-dismiss";
+import {
+  DeskArtifactBodySkeleton,
+  DeskWorkspaceSkeleton,
+  type DeskArtifactShape,
+} from "@/components/desk-chat/desk-skeletons";
+import { whenIdle } from "@/lib/when-idle";
 import { tableViewFrom } from "./artifact-payloads";
 import { ArtIcon, DeskArtKindIcon, deskArtKind, deskArtKindName } from "./desk-art-kinds";
 import { DeskArtifactBrowser } from "./desk-artifact-browser";
@@ -431,7 +437,7 @@ function useRememberedLineage(
 ): ArtifactLineage | null {
   const inPage = lineageContaining(lineages, remembered);
   const lineageQuery = useQuery({
-    ...queries.assistant.artifactLineage(threadId, remembered ?? ""),
+    ...queries.assistant.artifacts(threadId)._ctx.lineage(remembered ?? ""),
     enabled: loaded && remembered !== undefined && inPage === null,
     retry: false,
   });
@@ -440,6 +446,52 @@ function useRememberedLineage(
   }
   const versions = lineageQuery.data?.results ?? [];
   return versions.length > 0 ? (groupLineages(versions)[0] ?? null) : null;
+}
+
+/**
+ * The open lineage with every version's contents. The list the stack is built
+ * from carries only what names each artifact; what it holds is read here, for
+ * the one that is shown, and refreshed with the list.
+ */
+function useFullLineage(threadId: string, active: ArtifactLineage | null) {
+  const lineageQuery = useQuery({
+    ...queries.assistant.artifacts(threadId)._ctx.lineage(active?.id ?? ""),
+    enabled: active !== null,
+  });
+  const lineage = useMemo(
+    () => groupLineages(lineageQuery.data?.results ?? [])[0] ?? null,
+    [lineageQuery.data],
+  );
+
+  return {
+    lineage: lineage !== null && lineage.id === active?.id ? lineage : null,
+    failed: lineageQuery.isError,
+    retry: lineageQuery.refetch,
+  };
+}
+
+/** How many of the lineages behind the open one are read ahead, so picking one is instant. */
+const READ_AHEAD = 4;
+
+/** The shape an artifact's contents are drawn in while they are read. */
+function shapeOf(artifact: AssistantArtifact): DeskArtifactShape {
+  switch (deskArtKind(artifact)) {
+    case "table":
+    case "report":
+    case "diff":
+      return "table";
+    case "doc":
+    case "email":
+    case "plan":
+      return "document";
+    case "record":
+    case "bill":
+    case "rate":
+    case "extract":
+      return "record";
+    default:
+      return "lines";
+  }
 }
 
 /**
@@ -468,7 +520,7 @@ export function DeskWorkspace({
 }) {
   const t = useT();
   const queryClient = useQueryClient();
-  const artifactsQuery = useQuery(queries.assistant.artifacts(threadId));
+  const artifactsQuery = useQuery(queries.assistant.artifacts(threadId)._ctx.summary);
   const page = useMemo(
     () =>
       withoutPendingLookups(
@@ -491,6 +543,7 @@ export function DeskWorkspace({
     artifactsQuery.isSuccess,
   );
   const active = rememberedLineage ?? lineages[0] ?? null;
+  const full = useFullLineage(threadId, active);
 
   const [versionByLineage, setVersionByLineage] = useState<Record<string, number>>({});
   const [fanning, setFanning] = useState(false);
@@ -550,6 +603,26 @@ export function DeskWorkspace({
     return () => observer.disconnect();
   }, [hasArtifacts]);
 
+  // The lineages in the stack are the ones a person picks next; their
+  // contents are read once the open one has arrived, so a pick draws at once.
+  const stacked = active ? stackLineages(lineages, active, recent) : [];
+  const readAhead = stacked
+    .filter((lineage) => lineage.id !== active?.id)
+    .slice(0, READ_AHEAD)
+    .map((lineage) => lineage.id)
+    .join(",");
+  const activeLoaded = full.lineage !== null;
+  useEffect(() => {
+    if (!activeLoaded || readAhead === "") {
+      return;
+    }
+    return whenIdle(() => {
+      for (const id of readAhead.split(",")) {
+        void queryClient.prefetchQuery(queries.assistant.artifacts(threadId)._ctx.lineage(id));
+      }
+    });
+  }, [activeLoaded, queryClient, readAhead, threadId]);
+
   const pinMutation = useApiMutation({
     mutationFn: ({ id, pinned }: { id: string; pinned: boolean }) =>
       apiService.assistantService.pinArtifact(threadId, id, pinned),
@@ -574,17 +647,7 @@ export function DeskWorkspace({
   );
 
   if (artifactsQuery.isLoading) {
-    return (
-      <div className="dk-apx" ref={paneRef}>
-        <div className="dk-ax-top">
-          <div className="dk-ax-stack">
-            <div className="dk-ax-card dk-front dk-sk-card" />
-          </div>
-        </div>
-        <div className="dk-ax-body" />
-        <div className="dk-ax-foot" />
-      </div>
-    );
+    return <DeskWorkspaceSkeleton />;
   }
 
   if (artifactsQuery.isError) {
@@ -615,10 +678,13 @@ export function DeskWorkspace({
     );
   }
 
-  const last = active.versions.length - 1;
+  // The versions are the full lineage's once it is read; until then the
+  // list's, which name the version but do not hold it.
+  const shownLineage = full.lineage ?? active;
+  const last = shownLineage.versions.length - 1;
   const index = Math.min(versionByLineage[active.id] ?? last, last);
-  const artifact = active.versions[index];
-  const previous = index > 0 ? active.versions[index - 1] : null;
+  const artifact = shownLineage.versions[index];
+  const previous = index > 0 ? shownLineage.versions[index - 1] : null;
   const go = (step: number) => {
     const next = stepLineage(
       lineages.some((lineage) => lineage.id === active.id) ? lineages : [active, ...lineages],
@@ -629,9 +695,9 @@ export function DeskWorkspace({
   };
   const isDocument = artifact.kind === "document" || artifact.kind === "briefing";
   const versions =
-    active.versions.length > 1 && !isDocument ? (
+    full.lineage !== null && full.lineage.versions.length > 1 && !isDocument ? (
       <VersionPicker
-        lineage={active}
+        lineage={full.lineage}
         index={index}
         onChange={(at) => setVersionByLineage((current) => ({ ...current, [active.id]: at }))}
       />
@@ -669,7 +735,7 @@ export function DeskWorkspace({
         <>
           <div className="dk-ax-top">
             <ArtStack
-              lineages={stackLineages(lineages, active, recent)}
+              lineages={stacked}
               active={active}
               newest={newest}
               total={total}
@@ -723,14 +789,32 @@ export function DeskWorkspace({
                     : t("From {0}", older.day)}
               </div>
             )}
-            <Provenance artifact={artifact} previous={previous} />
-            <ArtifactBody
-              artifact={artifact}
-              previous={previous}
-              versions={versions}
-              lineage={active}
-              onOpenArtifact={open}
-            />
+            {full.lineage !== null ? (
+              <>
+                <Provenance artifact={artifact} previous={previous} />
+                <ArtifactBody
+                  artifact={artifact}
+                  previous={previous}
+                  versions={versions}
+                  lineage={full.lineage}
+                  onOpenArtifact={open}
+                />
+              </>
+            ) : full.failed ? (
+              <div className="dk-ax-pad dk-ax-oldnote">
+                {t("This artifact could not be loaded.")}
+                <Button
+                  variant="quiet"
+                  size="sm"
+                  className="ml-2"
+                  onClick={() => void full.retry()}
+                >
+                  {t("Try again")}
+                </Button>
+              </div>
+            ) : (
+              <DeskArtifactBodySkeleton shape={shapeOf(artifact)} />
+            )}
           </div>
           <div className="dk-ax-foot">
             <Button

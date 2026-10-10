@@ -19,7 +19,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "document-intelligence-reconciliation",
 			Description:   "Reconcile stale document intelligence jobs",
-			Spec:          schedule.Every(10 * time.Minute),
+			Spec:          schedule.Every(30 * time.Minute),
 			Workflow:      ReconcileDocumentIntelligenceWorkflow,
 			TaskQueue:     temporaltype.DocumentIntelligenceTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
@@ -27,7 +27,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "document-ai-extraction-poller",
 			Description:   "Poll pending OpenAI background extraction jobs",
-			Spec:          schedule.Every(30 * time.Second),
+			Spec:          schedule.Every(5 * time.Minute),
 			Workflow:      PollPendingDocumentAIExtractionsWorkflow,
 			TaskQueue:     temporaltype.DocumentIntelligenceTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,

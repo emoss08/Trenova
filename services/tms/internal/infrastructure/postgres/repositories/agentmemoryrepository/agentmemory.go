@@ -467,7 +467,9 @@ func (r *repository) FindActive(
 					Where(cols.Content.Expr(memoryWords("{}")+" = "+memoryWords("?")), req.Content)
 				sq = sameReaders(sq, &req)
 				if !req.Tainted {
-					sq = sq.Where(cols.Tainted.IsFalse())
+					sq = sq.WhereGroup(" AND ", func(clean *bun.SelectQuery) *bun.SelectQuery {
+						return clean.Where(cols.Tainted.IsFalse()).WhereOr(cols.ReviewedAt.IsNotNull())
+					})
 				}
 				if req.Subject != nil {
 					sq = sq.Where(cols.SubjectType.Eq(), req.Subject.Type).
@@ -483,7 +485,7 @@ func (r *repository) FindActive(
 
 				return sq
 			}).
-			OrderExpr(cols.Tainted.OrderAsc()).
+			OrderExpr(taintsLast()).
 			OrderExpr(activeFirst()).
 			OrderExpr(cols.CreatedAt.OrderDesc()).
 			Limit(1).
@@ -554,6 +556,45 @@ func (r *repository) SetStatus(
 		res, err := query.Exec(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("set agent memory status: %w", err)
+		}
+		if err = dberror.CheckRowsAffected(res, "AgentMemory", req.ID.String()); err != nil {
+			return nil, err
+		}
+
+		return r.GetByID(
+			ctx,
+			repositories.GetAgentMemoryByIDRequest{ID: req.ID, TenantInfo: req.TenantInfo},
+		)
+	})
+}
+
+func (r *repository) Review(
+	ctx context.Context,
+	req repositories.ReviewAgentMemoryRequest,
+) (*agent.Memory, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Memory, error) {
+		cols := buncolgen.MemoryColumns
+		res, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model((*agent.Memory)(nil)).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.MemoryScopeTenantUpdate(uq, req.TenantInfo).
+					Where(cols.ID.Eq(), req.ID).
+					Where(cols.Version.Eq(), req.Version).
+					Where(cols.Tainted.IsTrue()).
+					Where(cols.ReviewedAt.IsNull()).
+					Where(cols.Status.In(), bun.List([]agent.MemoryStatus{
+						agent.MemoryStatusActive,
+						agent.MemoryStatusPaused,
+					}))
+			}).
+			Set(cols.ReviewedByUserID.Set(), nullableID(req.ByUserID)).
+			Set(cols.ReviewedAt.Set(), req.At).
+			Set(cols.UpdatedAt.Set(), req.At).
+			Set(cols.Version.Inc(1)).
+			Exec(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("review agent memory: %w", err)
 		}
 		if err = dberror.CheckRowsAffected(res, "AgentMemory", req.ID.String()); err != nil {
 			return nil, err
@@ -688,6 +729,8 @@ func (r *repository) ResolveSuggestion(
 				Set(cols.OwnerUserID.Set(), nullableID(owner)).
 				Set(cols.RoleID.Set(), nullableID(role)).
 				Set(cols.CreatedByUserID.Set(), nullableID(req.ByUserID)).
+				Set(cols.ReviewedByUserID.Set(), nullableID(req.ByUserID)).
+				Set(cols.ReviewedAt.Set(), req.At).
 				Set(cols.RetiredAt.Set(), nil).
 				Set(cols.RetiredByUserID.Set(), nil)
 		case agent.MemoryStatusDismissed:
@@ -826,6 +869,15 @@ func keptOnly(sq *bun.SelectQuery, now int64, includeSuggested bool) *bun.Select
 
 func replaceableStatuses() []agent.MemoryStatus {
 	return []agent.MemoryStatus{agent.MemoryStatusActive, agent.MemoryStatusPaused}
+}
+
+// taintsLast puts a memory that taints the turns reading it after one that
+// does not: a clean one, or a tainted one a person has reviewed.
+func taintsLast() string {
+	cols := buncolgen.MemoryColumns
+
+	return "CASE WHEN " + cols.Tainted.Qualified() + " AND " + cols.ReviewedAt.Qualified() +
+		" IS NULL THEN 1 ELSE 0 END ASC"
 }
 
 func activeFirst() string {

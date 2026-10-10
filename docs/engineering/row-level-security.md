@@ -35,7 +35,7 @@ PostgreSQL ──▶ policy: organization_id = (SELECT trenova_rls.org_id())
 | Roles, scope schema and every policy | migration `20261231007040_row_level_security` |
 | HTTP binding | `pkg/authctx` (`SetSessionAuthContext`, `SetAPIKeyContext`, `SetCaptureDeviceContext`) |
 | Temporal binding | `internal/core/temporaljobs/interceptors/tenantscope.go` |
-| Guards | `schemalint/rls_integration_test.go`, `systemscopelint`, `postgres/rls_integration_test.go` |
+| Guards | `schemalint/rls_integration_test.go`, `systemscopelint`, `rlslint` (repository methods run in a scoped transaction), `postgres/rls_integration_test.go` |
 
 ## Roles
 
@@ -104,6 +104,15 @@ func (r *repository) GetByID(ctx context.Context, req GetRequest) (*thing.Thing,
 }
 ```
 
+- The scope belongs on the exported method, around everything it reads. A method
+  whose unexported helpers run the queries is still an unscoped method: the rate
+  engine's `ResolveRules` opened a transaction only in the last of its three helpers,
+  and every quote from a caller without one of its own was refused.
+  `rlslint.TestRepositoryMethodsRunInScopedTransactions` follows calls to the
+  receiver's unexported helpers, transitively, and fails an exported method that
+  reaches one touching the connection outside `dbtx`. A closure handed to another
+  method is that method's to scope, so take the `ctx` the closure is given rather
+  than the one around it.
 - A statement that is allowed to fail inside a transaction (insert, then read the
   winner on a unique violation) goes in `dbtx.Savepoint`; otherwise the failure
   aborts the transaction and the read after it fails too.

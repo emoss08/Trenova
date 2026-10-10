@@ -116,6 +116,7 @@ func (s *Service) Classify(
 			OutputSchema: classifierSchema(),
 			SchemaName:   "scope_classification",
 			MaxTokens:    classifierMaxTokens,
+			HedgeAfter:   s.classifierHedge(),
 		},
 	)
 	if err != nil {

@@ -462,6 +462,17 @@ Keywords: agent memory, standing instruction, fact, correction, retire memory
 5. To stop agents reading an entry, open it and select **Retire memory**, or right-click it and
    choose **Retire**; **Restore** brings it back.
 
+### Review a memory an agent wrote after reading outside content
+Keywords: tainted memory, outside content, writes waiting for approval, review memory, why every proposal needs approval
+1. Open [AI control](/admin/agent-control) and select **Memory** in the rail.
+2. When a notice says memories hold every write of the turns that read them, read each one it
+   lists. An agent wrote it after reading text from outside the organization, so until a person
+   reviews it, every turn that reads it waits for approval before any money, customer-visible or
+   outside-recipient write.
+3. Select **Reviewed, keep it** to keep the memory as the organization's own, or **Retire** to stop
+   agents reading it. You can also open a memory and use **Reviewed, keep it** under **Review**,
+   or right-click it in the list.
+
 ### Let agents learn from their work
 Keywords: self-improving agents, learning, reflection, look back, lessons, procedures, what the agent learned
 1. Open [AI control](/admin/agent-control) on **Overview**. In **Organization-wide**, select
@@ -500,7 +511,9 @@ An agent that has read content written outside the organization (an inbound emai
 extracted document, an EDI file, a bank receipt, a file attached in chat, or a memory such a
 run wrote) never sends anything to a customer, driver or outside address, or moves money, on
 its own: that change waits for a person's approval whatever tier the tool has, and the
-proposal is marked as having read outside content. A suggested memory drawn from ratings of
+proposal is marked as having read outside content. A memory such a run wrote stops counting once
+a person reviews it or approves it as a suggestion; the review is recorded in the audit log, and
+**Where it came from** still shows that it came from outside content. A suggested memory drawn from ratings of
 one agent is kept for that agent alone once approved.
 
 An agent looks back over a conversation once it has been quiet for ten minutes (or after an hour

@@ -180,6 +180,10 @@ func (t *Turn) requestProposalDecision(id pulid.ID) toolOutcome {
 func (t *Turn) filedThisTurn(id pulid.ID) (toolOutcome, bool) {
 	for idx := range t.result.Actions {
 		action := &t.result.Actions[idx]
+		if action.ProposalID == id && action.Withdrawn {
+			return failedOutcome("Proposal %s (%s) was withdrawn in this turn and is not "+
+				"waiting on anyone.", id, action.ToolName), true
+		}
 		if action.ProposalID == id && !action.Executed {
 			return toolOutcome{content: fmt.Sprintf("Proposal %s (%s) was filed in this turn, "+
 				"and it is already in the approval box in front of the person. End your turn "+

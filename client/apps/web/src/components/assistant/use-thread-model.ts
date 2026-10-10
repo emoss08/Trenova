@@ -1,7 +1,9 @@
 import { answerMessageIds } from "@/components/ai-feedback/feedback-targets";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
+import { useSharedItems } from "@/hooks/use-keyed-sharing";
 import { useAssistantStore } from "@/stores/assistant-store";
+import { useRealtimeStore } from "@/stores/realtime-store";
 import type {
   AssistantArtifact,
   AssistantArtifactEvent,
@@ -35,7 +37,7 @@ import { groupPlans } from "./plan-state";
 import { decidedSignature, groupProposalsByMessage, pollIntervalFor } from "./proposal-state";
 import { agentSuggestions } from "./suggestions";
 import { composerBlock, shouldSendOpeningQuestion } from "./thread-guard";
-import { delegatedOwners, groupThread, turnPlacements } from "./thread-view";
+import { delegatedOwners, groupThread, turnPlacements, type ThreadEntry } from "./thread-view";
 import { useLiveThreadIds } from "./use-active-turns";
 import { steeredIds } from "./turn-stream";
 import { useAssistantTurn } from "./use-assistant-turn";
@@ -66,6 +68,9 @@ export type PageBinding = {
 
 /** A question the page asks on the person's behalf, sent once per key. */
 export type PageRequest = { key: string; text: string };
+
+/** An entry is its message: the same message is the same row however the list around it grows. */
+const entryKey = (entry: ThreadEntry) => entry.message.id;
 
 export type ThreadModelOptions = {
   thread: AssistantThread;
@@ -166,6 +171,7 @@ export function useThreadModel({
   // While an approval is being carried out the lists are polled, so the
   // card moves from "waiting for it to run" to its outcome without a
   // remount; the moment nothing is running, they are not.
+  const realtimeConnected = useRealtimeStore((state) => state.connectionState === "connected");
   const proposalsQuery = useQuery({
     ...queries.assistant.proposals(thread.id),
     refetchInterval: (query) =>
@@ -174,6 +180,7 @@ export function useThreadModel({
         queryClient.getQueryData<{ results: AssistantPlan[] }>(
           queries.assistant.plans(thread.id).queryKey,
         )?.results ?? [],
+        realtimeConnected,
       ),
   });
   const plansQuery = useQuery({
@@ -184,6 +191,7 @@ export function useThreadModel({
           queries.assistant.proposals(thread.id).queryKey,
         )?.results ?? [],
         query.state.data?.results ?? [],
+        realtimeConnected,
       ),
   });
 
@@ -262,7 +270,11 @@ export function useThreadModel({
     [clearDecisionFocus, focus, thread.id],
   );
 
-  const entries = useMemo(() => groupThread(messages), [messages]);
+  // Built again whenever the history changes, an older page included; each
+  // entry stays the object it was while it is equal, so a row drawn from it
+  // is skipped rather than drawn again for a page that arrived above it.
+  const grouped = useMemo(() => groupThread(messages), [messages]);
+  const entries = useSharedItems(grouped, entryKey);
   // A reply of several steps is headed once and timed from its question.
   const placements = useMemo(() => turnPlacements(entries), [entries]);
   const answerIds = useMemo(() => answerMessageIds(entries), [entries]);
@@ -625,6 +637,8 @@ export function useThreadModel({
     threadFull,
     block,
     isEmpty,
+    /** The conversation's messages are being read for the first time. */
+    historyLoading: history.isLoading,
     suggestions,
     composerContext,
     followUpDecision,

@@ -27,11 +27,11 @@ const (
 
 var (
 	OrganizationID = pulid.ID("org_01JREDTEAMTENANT0000000000")
-	BusinessUnitID = pulid.ID("bu_01JREDTEAMTENANT00000000000")
-	UserID         = pulid.ID("usr_01JREDTEAMPERSON0000000000")
-	MainAgentID    = pulid.ID("agdef_01JREDTEAMAGENT000000000")
-	ThreadID       = pulid.ID("athr_01JREDTEAMTHREAD000000000")
-	RunID          = pulid.ID("arun_01JREDTEAMRUN000000000000")
+	BusinessUnitID = pulid.ID("bu_01JREDTEAMTENANT0000000000")
+	UserID         = pulid.ID("usr_01JREDTEAMPERS0N0000000000")
+	MainAgentID    = pulid.ID("agdef_01JREDTEAMAGENT00000000000")
+	ThreadID       = pulid.ID("athr_01JREDTEAMTHREAD0000000000")
+	RunID          = pulid.ID("ar_01JREDTEAMRVN0000000000000")
 )
 
 type RunParams struct {
@@ -354,7 +354,7 @@ func contextFor(
 func memoryFor(spec MemorySpec, tenant Tenant) *agent.Memory {
 	id := pulid.ID(spec.ID)
 	if id.IsNil() {
-		id = pulid.ID("amem_01JREDTEAMMEMORY00000000000")
+		id = pulid.ID("amem_01JREDTEAMMEM0RY0000000000")
 	}
 	kind := agent.MemoryKind(spec.Kind)
 	if !kind.IsValid() {

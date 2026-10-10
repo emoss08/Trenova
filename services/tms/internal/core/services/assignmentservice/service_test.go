@@ -349,7 +349,7 @@ func TestAssignToMove_RejectsTrailerContinuityMismatch(t *testing.T) {
 			BusinessUnitID: tenantInfo.BuID,
 			Code:           "TRL-100",
 		}, nil).
-		Once()
+		Times(2)
 
 	locationRepo := mocks.NewMockLocationRepository(t)
 	locationRepo.EXPECT().
@@ -402,6 +402,76 @@ func TestAssignToMove_RejectsTrailerContinuityMismatch(t *testing.T) {
 		"Trailer TRL-100 is currently located at Madison Yard which doesn't match this move's current pickup location. Locate the trailer before assigning or assign a different trailer",
 		err.Error(),
 	)
+}
+
+func TestAssignToMove_RejectsDriverNotInOrganization(t *testing.T) {
+	t.Parallel()
+
+	moveID := pulid.MustNew("sm_")
+	shipmentID := pulid.MustNew("shp_")
+	madeUpWorkerID := pulid.ID("wrk_" + moveID.String()[len("sm_"):])
+	tenantInfo := pagination.TenantInfo{
+		OrgID: pulid.MustNew("org_"),
+		BuID:  pulid.MustNew("bu_"),
+	}
+
+	repo := mocks.NewMockAssignmentRepository(t)
+	repo.EXPECT().
+		GetMoveByID(mock.Anything, tenantInfo, moveID).
+		Return(&shipment.ShipmentMove{
+			ID:             moveID,
+			ShipmentID:     shipmentID,
+			OrganizationID: tenantInfo.OrgID,
+			BusinessUnitID: tenantInfo.BuID,
+			Status:         shipment.MoveStatusNew,
+		}, nil).
+		Once()
+	repo.EXPECT().GetByMoveID(mock.Anything, tenantInfo, moveID).Return(nil, nil).Once()
+
+	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo.EXPECT().
+		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		Return(validShipment(shipmentID, moveID, tenantInfo), nil).
+		Once()
+
+	holdRepo := mocks.NewMockShipmentHoldRepository(t)
+	holdRepo.EXPECT().
+		HasActiveDispatchHold(mock.Anything, mock.AnythingOfType("*repositories.ActiveShipmentHoldRequest")).
+		Return(false, nil).
+		Once()
+
+	workerRepo := mocks.NewMockWorkerRepository(t)
+	workerRepo.EXPECT().
+		GetByID(mock.Anything, repositories.GetWorkerByIDRequest{
+			ID:         madeUpWorkerID,
+			TenantInfo: tenantInfo,
+		}).
+		Return(nil, errortypes.NewNotFoundError("Worker not found within your organization")).
+		Once()
+
+	svc := &service{
+		orgRepo:      assetOperationsOrgRepo(t, tenantInfo, true),
+		l:            zap.NewNop(),
+		db:           dbtest.NopConnection{},
+		repo:         repo,
+		shipmentRepo: shipmentRepo,
+		holdRepo:     holdRepo,
+		workerRepo:   workerRepo,
+		coordinator:  shipmentstate.NewCoordinator(),
+	}
+
+	entity, err := svc.AssignToMove(t.Context(), &repositories.AssignShipmentMoveRequest{
+		TenantInfo:      tenantInfo,
+		ShipmentMoveID:  moveID,
+		PrimaryWorkerID: madeUpWorkerID,
+		TractorID:       pulid.MustNew("trac_"),
+	})
+
+	require.Nil(t, entity)
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+	require.Len(t, multiErr.Errors, 1)
+	assert.Equal(t, "primaryWorkerId", multiErr.Errors[0].Field)
 }
 
 func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing.T) {

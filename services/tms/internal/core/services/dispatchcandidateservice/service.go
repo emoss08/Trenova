@@ -555,12 +555,14 @@ func (s *Service) scoreDriver(p *scoreDriverParams) *CandidateScore {
 	result.EstimatedDriveMs = trip.driveMs
 	result.ProjectedArrival = trip.projectedArrival
 	result.MinutesOfSlack = int64(trip.slackMinutes)
+	result.SlackKnown = trip.appointmentKnown
 	result.ProjectedAvailable = ProjectedTimeAvailable(
 		p.Snapshot.CommitmentsByWorker[p.Driver.WorkerID],
 		p.Snapshot.Now,
 	)
 
 	if hosState != nil {
+		result.HOSKnown = true
 		result.DriveRemainingMs = hosState.DriveRemainingMs
 		result.ShiftRemainingMs = hosState.ShiftRemainingMs
 		result.CycleRemainingMs = hosState.CycleRemainingMs
@@ -576,6 +578,7 @@ func (s *Service) scoreDriver(p *scoreDriverParams) *CandidateScore {
 	result.Verdict = verdictFor(&verdictInput{
 		Eval:         eval,
 		SlackMinutes: trip.slackMinutes,
+		SlackKnown:   trip.appointmentKnown,
 		HOSKnown:     hosKnown,
 		HOSExpected:  p.Snapshot.TelematicsActive,
 		Projection:   projection,
@@ -652,6 +655,16 @@ func appointmentFinding(
 	trip tripEstimate,
 	control *dispatchcontrol.DispatchControl,
 ) *dispatcheligibility.Finding {
+	if trip.windowClosedAt > 0 {
+		return &dispatcheligibility.Finding{
+			Code:     dispatcheligibility.CodeWindowPassed,
+			Severity: dispatcheligibility.SeverityWarn,
+			Field:    "assignment",
+			Message: "The pickup window has already closed, so no driver can make it " +
+				"and on-time is not judged. Assign whoever ran or will run the load, " +
+				"and reschedule the pickup if it has not happened yet",
+		}
+	}
 	if !trip.appointmentKnown || trip.slackMinutes >= 0 {
 		return nil
 	}
@@ -689,6 +702,7 @@ type tripEstimate struct {
 	projectedComplete int64
 	slackMinutes      float64
 	appointmentKnown  bool
+	windowClosedAt    int64
 }
 
 func (s *Service) computeTrip(
@@ -735,7 +749,11 @@ func (s *Service) computeTrip(
 	if move.OriginWindowEnd != nil && *move.OriginWindowEnd > appointment {
 		appointment = *move.OriginWindowEnd
 	}
-	if appointment > 0 {
+	switch {
+	case appointment <= 0:
+	case appointment <= snapshot.Now:
+		estimate.windowClosedAt = appointment
+	default:
 		estimate.appointmentKnown = true
 		estimate.slackMinutes = float64(appointment-estimate.projectedArrival) / 60
 	}

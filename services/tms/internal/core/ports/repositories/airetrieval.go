@@ -220,6 +220,11 @@ type SetAIRetrievalPausedRequest struct {
 	Now        int64
 }
 
+type ListIndexedRetrievalTenantsRequest struct {
+	After *pagination.TenantInfo
+	Limit int
+}
+
 type SwapAIRetrievalModelRequest struct {
 	TenantInfo      pagination.TenantInfo
 	PendingModelKey string
@@ -259,6 +264,10 @@ type AIRetrievalSettingsRepository interface {
 		ctx context.Context,
 		req SwapAIRetrievalModelRequest,
 	) (*SwapAIRetrievalModelResult, error)
+	ListIndexedTenants(
+		ctx context.Context,
+		req ListIndexedRetrievalTenantsRequest,
+	) ([]pagination.TenantInfo, error)
 	PurgeModel(
 		ctx context.Context,
 		req PurgeAIRetrievalModelRequest,

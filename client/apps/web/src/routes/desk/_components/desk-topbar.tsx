@@ -17,6 +17,13 @@ import { resolveUserTimezone } from "@trenova/shared/lib/date";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { DeskCaseMenu } from "./case/desk-case-menu";
 import { DeskHandoffMenu } from "./handoff/desk-handoff-menu";
+import { DeskThreadTitle } from "./desk-thread-title";
+import { preloadDeskWorkspace } from "./artifacts/desk-workspace-lazy";
+
+/** Reaching the Workspace button starts reading its code, so a click opens it at once. */
+function preloadWorkspace() {
+  preloadDeskWorkspace().catch(() => undefined);
+}
 import { deskIconClass } from "@/components/desk-chat/desk-button-styles";
 
 /**
@@ -37,6 +44,7 @@ export function DeskTopBar({
   onToggleWorkspace,
   onTogglePin,
   onDownload,
+  onRename,
   onOpenRail,
 }: {
   place: DeskPlace;
@@ -56,6 +64,8 @@ export function DeskTopBar({
   onToggleWorkspace: () => void;
   onTogglePin: () => void;
   onDownload: () => void;
+  /** Renames the open conversation; the name in the bar is where it is edited. */
+  onRename: (title: string) => void;
   /** Opens the rail over the page, where it is folded away on a phone. */
   onOpenRail?: () => void;
 }) {
@@ -97,7 +107,7 @@ export function DeskTopBar({
               <span className="dk-ttl-a">{t("Agent unavailable")}</span>
             )}
             <span className="dk-ttl-sl">/</span>
-            <b>{thread.title || t("Untitled conversation")}</b>
+            <DeskThreadTitle key={thread.id} thread={thread} onRename={onRename} />
           </>
         ) : place === "agent" ? (
           <>
@@ -168,6 +178,8 @@ export function DeskTopBar({
             )}
             aria-pressed={workspaceOpen}
             aria-label={t("Workspace")}
+            onPointerEnter={preloadWorkspace}
+            onFocus={preloadWorkspace}
             onClick={onToggleWorkspace}
           >
             <DeskIcon name="panel" size={15} />

@@ -2,6 +2,8 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"fmt"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -45,7 +47,9 @@ func (t *listBillingTransferCandidatesTool) Description() string {
 		"ReturnToOperations), the documents it still lacks and its rate or validation " +
 		"issues, decided by the checks the transfer itself makes. totals counts and sums " +
 		"the charges of each outcome per currency, so quote them rather than adding rows " +
-		"yourself. To transfer, propose one transfer_to_billing: allTransferable with these " +
+		"yourself. A question about what is waiting is answered from this list; propose a " +
+		"transfer only when asked to send them. To transfer, propose one transfer_to_billing: " +
+		"allTransferable with these " +
 		"same filters when every row that can go should go, or shipmentIds for a hand-picked " +
 		"set, rather than one call per shipment."
 }
@@ -142,8 +146,40 @@ func (t *listBillingTransferCandidatesTool) Query(
 		candidates.Decisions,
 		window.offset == 0 && !candidates.HasMore,
 	)
+	if selection.Status == shipment.StatusReadyToInvoice {
+		if note := t.completedAlsoWaiting(ctx, params, selection); note != "" {
+			result.Note = strings.TrimSpace(result.Note + " " + note)
+		}
+	}
 
 	return result, nil
+}
+
+// completedAlsoWaiting counts what a ReadyToInvoice-only listing left out:
+// delivered loads still Completed, which a transfer takes once it marks them
+// ready. Asked what was ready to bill, gpt-6-luna filtered to ReadyToInvoice
+// and reported one load while eighteen more were waiting.
+func (t *listBillingTransferCandidatesTool) completedAlsoWaiting(
+	ctx context.Context,
+	params *serviceports.QueryToolParams,
+	selection billingtransfercriteria.Criteria,
+) string {
+	selection.Status = shipment.StatusCompleted
+	completed, err := t.shipments.ListBillingTransferCandidates(
+		ctx,
+		&serviceports.ListBillingTransferCandidatesRequest{
+			Filter:                      selection.QueryOptions(tenantOf(params), pagination.Info{Limit: 1}),
+			Status:                      selection.Status,
+			MarkCompletedReadyToInvoice: true,
+		},
+	)
+	if err != nil || completed.TotalCount == 0 {
+		return ""
+	}
+
+	return fmt.Sprintf("%d more delivered shipments are still Completed: a transfer with "+
+		"markCompletedReadyToInvoice takes them too. Call again without status to list them, "+
+		"and count them when asked what is ready to bill.", completed.TotalCount)
 }
 
 func candidateRow(decision *serviceports.BillingTransferDecision) billingTransferCandidateRow {

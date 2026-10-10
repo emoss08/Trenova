@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbdialect"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -174,6 +175,39 @@ func (r *repository) GetActivities(
 		}
 
 		return activities, nil
+	})
+}
+
+func (r *repository) ListByNWSIDs(
+	ctx context.Context,
+	req repositories.ListWeatherAlertsByNWSIDsRequest,
+) ([]*weatheralert.WeatherAlert, error) {
+	if len(req.NWSIDs) == 0 {
+		return []*weatheralert.WeatherAlert{}, nil
+	}
+
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*weatheralert.WeatherAlert, error) {
+		cols := buncolgen.WeatherAlertColumns
+		alerts := make([]*weatheralert.WeatherAlert, 0, len(req.NWSIDs))
+		if err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&alerts).
+			Column(
+				cols.NWSID.String(),
+				cols.MessageType.String(),
+				cols.AlertCategory.String(),
+				cols.Effective.String(),
+				cols.Onset.String(),
+				cols.Expires.String(),
+				cols.Ends.String(),
+			).
+			Apply(buncolgen.WeatherAlertApplyTenant(req.TenantInfo)).
+			Where(cols.NWSID.In(), bun.List(req.NWSIDs)).
+			Scan(ctx); err != nil {
+			return nil, err
+		}
+
+		return alerts, nil
 	})
 }
 

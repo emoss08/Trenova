@@ -20,9 +20,8 @@ import ReactMarkdown, {
   type Options as MarkdownOptions,
 } from "react-markdown";
 import { Link, useInRouterContext } from "react-router";
-import { prepareMarkdown } from "@/lib/markdown-prepare";
-import "katex/dist/katex.min.css";
-import rehypeKatex from "rehype-katex";
+import { useKatexPlugin } from "@/lib/katex-plugin";
+import { markdownHasMath, prepareMarkdown } from "@/lib/markdown-prepare";
 import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -296,8 +295,17 @@ const components: Components = {
     </td>
   ),
   code: ({ className, children, ...props }) => {
-    const isBlock = typeof className === "string" && className.includes("language-");
     const text = textOf(children);
+    // Math the typesetter has not been read for yet: shown as written, in the
+    // box an unfinished block uses, until the reply is drawn again with it.
+    if (typeof className === "string" && className.includes("language-math")) {
+      return className.includes("math-display") ? (
+        <pre className="md-math-raw">{text}</pre>
+      ) : (
+        <span className="md-math-pending">{text}</span>
+      );
+    }
+    const isBlock = typeof className === "string" && className.includes("language-");
     if (isBlock || text.includes("\n")) {
       return <CodeBlock className={className}>{children}</CodeBlock>;
     }
@@ -340,12 +348,13 @@ export const AiMarkdown = memo(function AiMarkdown({
     [overrides],
   );
   const prepared = useMemo(() => prepareMarkdown(content), [content]);
+  const rehypePlugins = rehypePluginsWith(useKatexPlugin(markdownHasMath(prepared)));
 
   return (
     <div className={cn("text-sm wrap-break-word", className)}>
       <ReactMarkdown
         remarkPlugins={deskSubset ? DESK_REMARK_PLUGINS : REMARK_PLUGINS}
-        rehypePlugins={REHYPE_PLUGINS}
+        rehypePlugins={rehypePlugins}
         components={merged}
         urlTransform={urlTransform}
       >
@@ -367,11 +376,25 @@ const DESK_REMARK_PLUGINS = [...REMARK_PLUGINS, remarkDeskSubset];
 /** A reference definition line, "[id]: url", wherever it sits in a reply. */
 const DEFINITION = /^ {0,3}\[[^\]\n]+\]:[ \t]*\S.*$/gmu;
 
-/** What every reply's markup goes through: math typeset, figures aligned. */
-const REHYPE_PLUGINS: PluggableList = [
-  rehypeKatex,
-  [rehypeNumericColumns, { className: "md-num" }],
-];
+/** What every reply's markup goes through: figures aligned. */
+const REHYPE_PLUGINS: PluggableList = [[rehypeNumericColumns, { className: "md-num" }]];
+
+let withMath: { katex: PluggableList[number]; plugins: PluggableList } | null = null;
+
+/**
+ * The reply's plugins, with the math typesetter first once it has been read.
+ * One list for the tab, so a block's plugins keep their identity and it is
+ * not parsed again for nothing.
+ */
+function rehypePluginsWith(katex: PluggableList[number] | null): PluggableList {
+  if (katex === null) {
+    return REHYPE_PLUGINS;
+  }
+  if (withMath?.katex !== katex) {
+    withMath = { katex, plugins: [katex, ...REHYPE_PLUGINS] };
+  }
+  return withMath.plugins;
+}
 
 /**
  * react-markdown empties any address with a scheme it does not know, which
@@ -391,13 +414,13 @@ const MarkdownBlock = memo(function MarkdownBlock({
 }: {
   content: string;
   merged: Components;
-  rehypePlugins?: PluggableList;
+  rehypePlugins: PluggableList;
   deskSubset: boolean;
 }) {
   return (
     <ReactMarkdown
       remarkPlugins={deskSubset ? DESK_REMARK_PLUGINS : REMARK_PLUGINS}
-      rehypePlugins={rehypePlugins ?? REHYPE_PLUGINS}
+      rehypePlugins={rehypePlugins}
       components={merged}
       urlTransform={urlTransform}
     >
@@ -440,22 +463,23 @@ export const StreamingAiMarkdown = memo(function StreamingAiMarkdown({
     () => (overrides ? { ...components, ...overrides } : components),
     [overrides],
   );
-  const wordPlugins = useMemo<PluggableList | undefined>(
+  const basePlugins = rehypePluginsWith(useKatexPlugin(markdownHasMath(prepared)));
+  const wordPlugins = useMemo<PluggableList>(
     () =>
       wordClassName
-        ? [...REHYPE_PLUGINS, [rehypeStreamWords, { className: wordClassName }]]
-        : undefined,
-    [wordClassName],
+        ? [...basePlugins, [rehypeStreamWords, { className: wordClassName }]]
+        : basePlugins,
+    [basePlugins, wordClassName],
   );
-  const lastPlugins = useMemo<PluggableList | undefined>(
+  const lastPlugins = useMemo<PluggableList>(
     () =>
       wordClassName || caretClassName
         ? [
-            ...REHYPE_PLUGINS,
+            ...basePlugins,
             [rehypeStreamWords, { className: wordClassName ?? "", caret: caretClassName }],
           ]
-        : undefined,
-    [caretClassName, wordClassName],
+        : basePlugins,
+    [basePlugins, caretClassName, wordClassName],
   );
 
   return (

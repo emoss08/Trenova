@@ -329,3 +329,10 @@ func (r *fakeProposalRepo) MarkReminded(
 ) (int, error) {
 	return 0, nil
 }
+
+func (f *fakeProposalRepo) ExpirePendingByThread(
+	context.Context,
+	repositories.ExpireAgentProposalsByThreadRequest,
+) (int, error) {
+	return 0, nil
+}

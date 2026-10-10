@@ -1,5 +1,6 @@
 import type { ResourceInvalidationEvent } from "@trenova/shared/hooks/realtime-patching";
-import type { AssistantThread, AssistantThreadList } from "@/types/assistant";
+import type { ThreadPages } from "@/lib/thread-list";
+import type { AssistantThread } from "@/types/assistant";
 import { describe, expect, it } from "vitest";
 import { boundCaseRecords, touchesCase } from "../case-realtime";
 
@@ -50,9 +51,12 @@ function caseThread(subjectId: string): AssistantThread {
  * does not refetch the rail on every shipment edit.
  */
 describe("touchesCase", () => {
-  const list: AssistantThreadList = {
-    items: [caseThread("shp_case"), { ...caseThread("shp_plain"), case: undefined }],
-    total: 2,
+  const list: ThreadPages = {
+    pages: [
+      { items: [{ ...caseThread("shp_plain"), case: undefined }], nextCursor: "c1" },
+      { items: [caseThread("shp_case")], nextCursor: "" },
+    ],
+    pageParams: ["", "c1"],
   };
   const bound = boundCaseRecords(list);
 

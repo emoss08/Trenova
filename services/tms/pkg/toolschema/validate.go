@@ -33,9 +33,6 @@ func Validate(schema, args map[string]any) error {
 	return check(compiled, args)
 }
 
-// Compile reports whether a tool's parameter schema is a schema at all. A
-// schema the validator cannot compile refuses every call to its tool, so the
-// catalog is checked with this before any model sees it.
 func Compile(schema map[string]any) error {
 	if len(schema) == 0 {
 		return nil

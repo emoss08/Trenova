@@ -433,12 +433,16 @@ func (r queueDetailReader) detail(
 // what stands in the way, by the rules approval enforces.
 func approvable(item *billingqueue.BillingQueueItem) (canApprove bool, blockedBy string) {
 	switch {
-	case !billingqueue.IsAllowedTransition(item.Status, billingqueue.StatusApproved) ||
-		item.Status == billingqueue.StatusApproved:
-		return false, "an item in " + string(item.Status) + " cannot be approved; it must " +
-			"be in review"
+	case item.Status == billingqueue.StatusApproved:
+		return false, "it is already approved"
+	case item.Status != billingqueue.StatusReadyForReview &&
+		!billingqueue.IsAllowedTransition(item.Status, billingqueue.StatusApproved):
+		return false, "an item in " + string(item.Status) + " cannot be approved"
 	case len(item.DetentionHolds) > 0:
 		return false, "a detention charge on its shipment is still waiting on approval"
+	case len(item.OpenIssues()) > 0:
+		return false, "a flagged check on it has not been settled; a biller settles it in " +
+			"the item's review before it can be approved"
 	default:
 		return true, ""
 	}

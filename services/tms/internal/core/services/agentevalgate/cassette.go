@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
 	"sync"
 
 	"github.com/bytedance/sonic"
@@ -93,9 +94,19 @@ type hashedRequest struct {
 	Tools    []serviceports.ToolSpec `json:"tools"`
 }
 
+// mintedIDs are the ids a turn mints as it runs (a proposal, a plan, an
+// artifact, a turn), which reach the model in filing results. They differ on
+// every run though nothing the prompt or a tool says has changed, so the hash
+// reads each as its kind alone.
+var mintedIDs = regexp.MustCompile(`\b(ap|apl|art|atrn)_[0-9A-HJKMNP-TV-Z]{26}\b`)
+
+func withoutMintedIDs(text string) string {
+	return mintedIDs.ReplaceAllString(text, "${1}_minted")
+}
+
 func HashRequest(req *serviceports.ChatCompletionRequest) (string, error) {
 	hashed := hashedRequest{
-		System:   req.System,
+		System:   withoutMintedIDs(req.System),
 		Messages: make([]hashedMessage, 0, len(req.Messages)),
 		Tools:    req.Tools,
 	}
@@ -103,7 +114,7 @@ func HashRequest(req *serviceports.ChatCompletionRequest) (string, error) {
 		message := req.Messages[idx]
 		hashed.Messages = append(hashed.Messages, hashedMessage{
 			Role:       string(message.Role),
-			Content:    message.Content,
+			Content:    withoutMintedIDs(message.Content),
 			ToolCalls:  cassetteCalls(message.ToolCalls),
 			ToolCallID: message.ToolCallID,
 			ToolName:   message.ToolName,

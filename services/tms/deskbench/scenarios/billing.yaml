@@ -13,10 +13,11 @@ scenarios:
           noProposals: true
           facts:
             - sql: >
-                select count(*) from shipments where status = 'ReadyToInvoice'
-                union all
-                select count(*) from shipments where status = 'Completed'
-              note: how many are ready to invoice and how many completed can still be transferred
+                select count(*) from shipments s where s.status in ('ReadyToInvoice', 'Completed')
+                  and not exists (select 1 from billing_queue_items b where b.shipment_id = s.id)
+              note: >
+                how many delivered loads can go to billing (ready to invoice or completed, none yet
+                in the billing queue); an empty group need not be named as zero
           rubric: >
             Gives both groups: the shipments already ready to invoice and the completed ones that
             can be transferred to billing, each with its customer and amount or a table it kept,

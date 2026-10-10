@@ -9,7 +9,7 @@ import type {
 } from "@/types/assistant";
 import type { ToolExchange } from "./thread-view";
 import { describeToolCall, isWebTool, parseToolResult, WEB_READ_TOOL } from "./tool-presentation";
-import { REQUEST_DECISION_TOOL } from "./decision-requests";
+import { REQUEST_DECISION_TOOL, WITHDRAW_PROPOSAL_TOOL } from "./decision-requests";
 import {
   DELEGATE_TOOL,
   emptyDelegateProgress,
@@ -70,6 +70,7 @@ const NAMED_EFFECTS: Readonly<Record<string, ToolEffect>> = {
   compose_table_view: "present",
   ask_user: "ask",
   [REQUEST_DECISION_TOOL]: "ask",
+  [WITHDRAW_PROPOSAL_TOOL]: "ask",
   [DELEGATE_TOOL]: "delegate",
 };
 
@@ -653,6 +654,9 @@ function askLine(step: ToolStep, t: TranslateFn): ActivityLine {
   if (step.name === REQUEST_DECISION_TOOL) {
     return decisionLine(step, t);
   }
+  if (step.name === WITHDRAW_PROPOSAL_TOOL) {
+    return withdrawalLine(step, t);
+  }
   if (step.status === "failed") {
     return {
       phrase: t("Couldn't ask you"),
@@ -664,6 +668,27 @@ function askLine(step: ToolStep, t: TranslateFn): ActivityLine {
 
   return {
     phrase: step.status === "running" ? t("Asking you…") : t("Asked you to choose"),
+    detail: "",
+    failure: "",
+    state: step.status === "running" ? "running" : "done",
+  };
+}
+
+function withdrawalLine(step: ToolStep, t: TranslateFn): ActivityLine {
+  if (step.status === "failed") {
+    return {
+      phrase: t("Couldn't withdraw a proposal"),
+      detail: failureMessage(step),
+      failure: "",
+      state: "failed",
+    };
+  }
+
+  return {
+    phrase:
+      step.status === "running"
+        ? t("Withdrawing a proposal…")
+        : t("Withdrew a proposal it replaced"),
     detail: "",
     failure: "",
     state: step.status === "running" ? "running" : "done",

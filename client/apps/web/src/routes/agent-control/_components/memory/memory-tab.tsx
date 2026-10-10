@@ -6,12 +6,17 @@ import {
   agentMemoryTableGraphQLConfig,
   agentMemoryTotalQueryKey,
   fetchAgentMemoryTotal,
+  reviewAgentMemory,
   setAgentMemoryStatus,
   type AgentMemoryRow,
 } from "@/lib/graphql/agent-memories";
 import { queries } from "@/lib/queries";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArchiveIcon, ArchiveRestoreIcon } from "@trenova/shared/components/icons";
+import {
+  ArchiveIcon,
+  ArchiveRestoreIcon,
+  CheckVerified01Icon,
+} from "@trenova/shared/components/icons";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -35,6 +40,7 @@ import type { MemoryFormValues } from "./memory-form-schema";
 import { MemoryKindMark } from "./memory-kind";
 import { MemoryPanel } from "./memory-panel";
 import { MemorySuggestions } from "./memory-suggestions";
+import { MemoryTaintNotice } from "./memory-taint-notice";
 import { MemoryUsageNotice } from "./memory-usage-notice";
 
 const starterParsers = {
@@ -94,7 +100,27 @@ export default function MemoryTab() {
     ]);
   };
 
+  const review = async (row: Row<AgentMemoryRow>) => {
+    try {
+      await reviewAgentMemory(row.original.id, row.original.version);
+      toast.success(t("Memory reviewed; turns that read it can write on their own again"));
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [AGENT_MEMORY_LIST_KEY] }),
+        invalidateAIControlCounts(queryClient),
+      ]);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("That didn't go through"));
+    }
+  };
+
   const contextMenuActions: RowAction<AgentMemoryRow>[] = [
+    {
+      id: "review",
+      label: t("Reviewed, keep it"),
+      icon: CheckVerified01Icon,
+      onClick: (row) => void review(row),
+      hidden: (row) => !canUpdate || !row.original.taints,
+    },
     {
       id: "retire",
       label: t("Retire"),
@@ -131,6 +157,7 @@ export default function MemoryTab() {
         {learningOff && <> {t("Learning is off, so agents won't suggest new ones.")}</>}
       </p>
       <MemoryUsageNotice />
+      <MemoryTaintNotice canDecide={canUpdate} />
       <MemorySuggestions canDecide={canUpdate} />
       <AgentReflections />
       <section className="sec">

@@ -353,3 +353,19 @@ func TestCoerceArguments_LeavesOutOptionalParametersSentEmpty(t *testing.T) {
 	})
 	assert.NotContains(t, onlyBlank, "shipmentIds", "a list of nothing is a list not sent")
 }
+
+// gpt-6-luna dropped the last character of a detention occurrence's id and
+// was told the value was not a record id at all, with a shipment id as the
+// example, which said nothing about what had gone wrong.
+func TestContractCall_NamesAnIdCutShortInCopying(t *testing.T) {
+	t.Parallel()
+
+	_, err := contractCall(toolschema.NewValidator(), "stub", coercionSchema(),
+		map[string]any{"limit": 1, "customerId": "cus_01J9Z3QK8M5T7V2X4Y6W0R1N8"})
+
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+	problems := argumentProblems(multiErr)
+	require.Len(t, problems, 1)
+	assert.Contains(t, problems[0], `after "cus_" it has 25 characters where an id has 26`)
+}

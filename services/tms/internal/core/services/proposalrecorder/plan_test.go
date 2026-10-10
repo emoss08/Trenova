@@ -114,3 +114,22 @@ func TestRecord_LeavesASingleProposalOnItsOwn(t *testing.T) {
 	assert.Nil(t, result.Proposals[0].PlanID)
 	assert.Equal(t, 0, result.Proposals[0].PlanStep)
 }
+
+// A proposal the agent withdrew later in the same turn is recorded Superseded:
+// never pending and never a plan step. With it gone, its replacement stands
+// alone rather than in a plan that approved both.
+func TestRecord_AWithdrawnProposalIsSupersededAndOutOfThePlan(t *testing.T) {
+	t.Parallel()
+
+	plans := &capturingPlans{}
+	withdrawn := pendingAction("create_shipment")
+	withdrawn.Withdrawn = true
+	result := recordActions(t, plans, withdrawn, pendingAction("create_shipment"))
+
+	assert.Nil(t, result.Plan)
+	assert.Empty(t, plans.created)
+	require.Len(t, result.Proposals, 2)
+	assert.Equal(t, agent.ProposalStatusSuperseded, result.Proposals[0].Status)
+	assert.Nil(t, result.Proposals[0].PlanID)
+	assert.Equal(t, agent.ProposalStatusPending, result.Proposals[1].Status)
+}

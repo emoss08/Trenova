@@ -1,9 +1,12 @@
 package detentionservice
 
 import (
+	"cmp"
 	"context"
 	"fmt"
+	"slices"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/shared/intutils"
 
@@ -81,6 +84,8 @@ type DeskEntry struct {
 	MinutesUntilNoticeDue *int32                         `json:"minutesUntilNoticeDue"`
 	NoticeWindowOpen      bool                           `json:"noticeWindowOpen"`
 	AmountAtRisk          decimal.Decimal                `json:"amountAtRisk"`
+	BillableMinutes       int32                          `json:"billableMinutes"`
+	PricedAt              int64                          `json:"pricedAt"`
 	Urgency               string                         `json:"urgency"`
 }
 
@@ -97,6 +102,10 @@ func (s *Service) ListDesk(
 	}
 
 	now := s.now()
+	priced, err := s.priceOpenClocks(ctx, tenantInfo, occurrences, now)
+	if err != nil {
+		return nil, err
+	}
 	entries := make([]*DeskEntry, 0, len(occurrences))
 
 	for _, occurrence := range occurrences {
@@ -104,10 +113,139 @@ func (s *Service) ListDesk(
 			continue
 		}
 
-		entries = append(entries, newDeskEntry(occurrence, now, deskUrgency(occurrence, now)))
+		entry := newDeskEntry(occurrence, now, deskUrgency(occurrence, now))
+		if current, ok := priced[occurrence.ID]; ok {
+			entry.AmountAtRisk = current.BillableAmount
+			entry.BillableMinutes = current.BillableMinutes
+			entry.PricedAt = now
+		}
+		entries = append(entries, entry)
 	}
 
 	return entries, nil
+}
+
+type ClockPrice struct {
+	BillableMinutes int32
+	BillableAmount  decimal.Decimal
+	AsOf            int64
+}
+
+func (s *Service) PriceOpenClock(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	occurrence *detention.DetentionOccurrence,
+) (*ClockPrice, error) {
+	if occurrence == nil {
+		return nil, nil
+	}
+
+	now := s.now()
+	priced, err := s.priceOpenClocks(
+		ctx, tenantInfo, []*detention.DetentionOccurrence{occurrence}, now,
+	)
+	if err != nil {
+		return nil, err
+	}
+	current, ok := priced[occurrence.ID]
+	if !ok {
+		return nil, nil
+	}
+
+	return &ClockPrice{
+		BillableMinutes: current.BillableMinutes,
+		BillableAmount:  current.BillableAmount,
+		AsOf:            now,
+	}, nil
+}
+
+func (s *Service) priceOpenClocks(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	open []*detention.DetentionOccurrence,
+	now int64,
+) (map[pulid.ID]ComputeResult, error) {
+	shipments := make([]pulid.ID, 0, len(open))
+	for _, occurrence := range open {
+		if occurrence == nil || !occurrence.IsOpen || occurrence.IsFrozen() ||
+			occurrence.PolicySnapshot == nil {
+			continue
+		}
+		if !slices.Contains(shipments, occurrence.ShipmentID) {
+			shipments = append(shipments, occurrence.ShipmentID)
+		}
+	}
+	if len(shipments) == 0 {
+		return nil, nil
+	}
+
+	location, err := s.tenantLocation(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	priced := make(map[pulid.ID]ComputeResult, len(open))
+	for _, shipmentID := range shipments {
+		occurrences, listErr := s.occurrenceRepo.GetByShipment(ctx,
+			&repositories.GetOccurrencesByShipmentRequest{
+				ShipmentID: shipmentID,
+				TenantInfo: tenantInfo,
+			})
+		if listErr != nil {
+			return nil, listErr
+		}
+		priceShipmentClocks(occurrences, now, location, priced)
+	}
+
+	return priced, nil
+}
+
+func priceShipmentClocks(
+	occurrences []*detention.DetentionOccurrence,
+	now int64,
+	location *time.Location,
+	priced map[pulid.ID]ComputeResult,
+) {
+	ordered := slices.DeleteFunc(slices.Clone(occurrences), func(o *detention.DetentionOccurrence) bool {
+		return o == nil
+	})
+	slices.SortStableFunc(ordered, func(a, b *detention.DetentionOccurrence) int {
+		return cmp.Compare(a.ClockStartAt, b.ClockStartAt)
+	})
+
+	dayAccrued := map[string]decimal.Decimal{}
+	shipmentAccrued := decimal.Zero
+	for _, occurrence := range ordered {
+		if occurrence.IsFrozen() || occurrence.PolicySnapshot == nil {
+			shipmentAccrued = shipmentAccrued.Add(occurrence.BillableAmount)
+			continue
+		}
+
+		computed := Compute(ComputeInput{
+			Snapshot:         *occurrence.PolicySnapshot,
+			StopType:         occurrence.StopType,
+			ScheduleType:     occurrence.ScheduleType,
+			ArrivedAt:        occurrence.ArrivedAt,
+			DepartedAt:       occurrence.DepartedAt,
+			AppointmentStart: occurrence.AppointmentStart,
+			AppointmentEnd:   occurrence.AppointmentEnd,
+			NoticeSentAt:     occurrence.NoticeSentAt,
+			Now:              now,
+			Location:         location,
+			DayAccrued:       dayAccrued,
+			ShipmentAccrued:  shipmentAccrued,
+		})
+		if !computed.Applicable {
+			continue
+		}
+		for day, amount := range computed.DayAllocation {
+			dayAccrued[day] = dayAccrued[day].Add(amount)
+		}
+		shipmentAccrued = shipmentAccrued.Add(computed.BillableAmount)
+		if occurrence.IsOpen {
+			priced[occurrence.ID] = computed
+		}
+	}
 }
 
 // UrgencyAwaitingApproval marks a charge whose clock has stopped and that is
@@ -151,6 +289,8 @@ func newDeskEntry(
 		MinutesUntilNoticeDue: occurrence.MinutesUntilNoticeDue(now),
 		NoticeWindowOpen:      occurrence.NoticeWindowOpen(now),
 		AmountAtRisk:          occurrence.BillableAmount,
+		BillableMinutes:       occurrence.BillableMinutes,
+		PricedAt:              occurrence.UpdatedAt,
 		Urgency:               urgency,
 	}
 }

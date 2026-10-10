@@ -2,10 +2,12 @@ package carriersettlementjobs
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
+	"github.com/emoss08/trenova/internal/core/services/settlementshared"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -73,6 +75,10 @@ func (a *Activities) GenerateCarrierSettlementBatchesActivity(
 			systemActor(),
 		)
 		if genErr != nil {
+			if errors.Is(genErr, settlementshared.ErrPeriodBatchClosed) {
+				result.Skipped++
+				continue
+			}
 			result.Failed++
 			a.logger.Error("failed to auto-generate carrier settlement batch",
 				zap.Error(genErr),

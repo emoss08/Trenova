@@ -183,6 +183,7 @@ type shipmentMoveSummary struct {
 	Distance   *float64                   `json:"distance,omitempty"`
 	Assignment *shipmentAssignmentSummary `json:"assignment,omitempty"`
 	Carrier    *shipmentCarrierSummary    `json:"carrier,omitempty"`
+	Coverage   string                     `json:"coverage,omitempty"`
 	Stops      []shipmentStopSummary      `json:"stops"`
 }
 
@@ -335,6 +336,9 @@ func moveSummary(move *shipment.ShipmentMove, input *shipmentSummaryInput) shipm
 		Assignment: assignmentSummary(move.Assignment, input.people),
 		Carrier:    carrierSummary(move.CarrierAssignment),
 		Stops:      make([]shipmentStopSummary, 0, len(move.Stops)),
+	}
+	if out.Assignment == nil && out.Carrier == nil {
+		out.Coverage = coverageNone
 	}
 	for _, stop := range sliceutils.SortedNonNil(move.Stops, stopSequence) {
 		out.Stops = append(out.Stops, stopSummary(stop, input.timezone))

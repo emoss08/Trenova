@@ -144,6 +144,42 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* the open conversation's name: a click renames it in place */
+.dk-ttl-t {
+  min-width: 0;
+  flex: 0 1 auto;
+  margin: 0 -4px;
+  padding: 2px 4px;
+  border-radius: 6px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+  cursor: text;
+  transition: background 150ms;
+}
+.dk-ttl-t:hover {
+  background: var(--dsk-hover);
+}
+.dk-ttl-t > span {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dk-ttl-in {
+  flex: 0 1 auto;
+  min-width: 16ch;
+  max-width: min(520px, 100%);
+  field-sizing: content;
+  margin: 0 -4px;
+  padding: 2px 4px;
+  font: inherit;
+  font-weight: 500;
+  color: var(--dsk-fg);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  outline: none;
+}
 .dk-top .dk-sp {
   flex: 1;
 }
@@ -1860,9 +1896,6 @@
     transform 220ms var(--dk-spring),
     opacity 140ms;
 }
-.dk-sb-dot.dk-v i {
-  background: oklch(0.62 0.15 283);
-}
 .dk-sb-c:hover .dk-sb-dot i,
 .dk-sb-c.dk-on .dk-sb-dot i {
   transform: scale(1.35);
@@ -2029,9 +2062,6 @@
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--dsk-blue) 45%, transparent);
 }
 .dk-sb-dot i {
-  background: var(--dsk-faint);
-}
-.dk-sb-dot.dk-v i {
   background: var(--dsk-faint);
 }
 .dk-sb-dot.dk-s-new i,
@@ -8295,27 +8325,7 @@
 /* the shipment and its paperwork */
 /* what happened to it, oldest first */
 /* hold and approve, always in reach */
-/* the rail: renaming a conversation in place, the empty list, and the way back */
-.dk-sb-in {
-  flex: 1;
-  min-width: 0;
-  height: 22px;
-  margin: -2px 0;
-  padding: 0 6px;
-  font: inherit;
-  color: var(--dsk-fg);
-  background: var(--dsk-sunken);
-  border: 1px solid var(--dsk-b-strong);
-  border-radius: 6px;
-  outline: none;
-}
-.dk-sb-in:focus {
-  border-color: oklch(0.55 0.2 262);
-  box-shadow: 0 0 0 3px color-mix(in oklch, oklch(0.55 0.2 262) 22%, transparent);
-}
-.dk-sb-c.dk-ed .dk-sb-acts {
-  display: none;
-}
+/* the rail: the empty list, and the way back */
 .dk-sb-empty {
   padding: 2px 10px 0;
   font-size: 12px;
@@ -8325,6 +8335,44 @@
 }
 .dk-sb-empty .dk-kbd {
   margin: 0 1px;
+}
+/* where the next page of conversations arrives: room for it, a bar while it loads, a retry if it failed */
+.dk-sb-more {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 8px 0 34px;
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-sb-more-err {
+  padding-left: 10px;
+}
+.dk-sb-more-err > span {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dk-sb-retry {
+  flex: none;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+  transition: background 140ms;
+}
+.dk-sb-retry:hover {
+  background: color-mix(in oklch, var(--dsk-fg) 6%, transparent);
+}
+.dk-sb-skel {
+  width: 62%;
+  height: 8px;
+  border-radius: 5px;
 }
 .dk-sb-bk-c,
 .dk-sb-bk-l {
@@ -8546,6 +8594,11 @@
   font: 12.5px/1.6 var(--font-mono);
   color: var(--dsk-subtle);
   white-space: pre-wrap;
+}
+/* inline math as written, for the moment before the typesetter arrives */
+.dk-prose .dk-md .md-math-pending {
+  font: 0.92em var(--font-mono);
+  color: var(--dsk-subtle);
 }
 /* "Why this step?" in a footnote's card: the agent's own account of the step */
 .dk-why {
@@ -9239,9 +9292,6 @@
 .dk-cx-f span {
   margin-left: auto;
 }
-.dk-sb-in {
-  font-size: inherit;
-}
 @media (max-height: 720px) {
   .dk-flow {
     padding-top: 28px;
@@ -9776,4 +9826,133 @@
 .dk-world b {
   font-weight: 500;
   color: var(--dsk-fg);
+}
+
+/* skeletons: the outline of what is loading, in the Desk's own palette (desk-skeletons.tsx) */
+.dk-sk {
+  display: block;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--dsk-sunken) 0%,
+    color-mix(in srgb, var(--dsk-fg) 7%, var(--dsk-sunken)) 50%,
+    var(--dsk-sunken) 100%
+  );
+  background-size: 200% 100%;
+  animation: dk-skel 1.2s ease-in-out infinite;
+}
+.dsk.dk-calm .dk-sk {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-sk {
+    animation: none;
+  }
+}
+.dk-skt .dk-sk-time {
+  width: 34px;
+  height: 9px;
+  margin: 6px 0 0 auto;
+}
+.dk-skt .dk-sk-q {
+  height: 18px;
+  border-radius: 7px;
+}
+.dk-skt .dk-sk-who {
+  width: 132px;
+  height: 10px;
+  margin-top: 22px;
+}
+.dk-skt .dk-sk-ln {
+  height: 10px;
+  margin-top: 13px;
+}
+.dk-skb {
+  padding: 8px 16px 20px;
+}
+.dk-skb-tb {
+  display: flex;
+  flex-direction: column;
+}
+.dk-skb-tr {
+  display: grid;
+  grid-template-columns: 34fr 22fr 26fr 18fr;
+  align-items: center;
+  gap: 16px;
+  height: var(--row-h-compact, 30px);
+  border-bottom: 1px solid var(--dsk-b-sub);
+}
+.dk-skb-tr .dk-sk {
+  height: 8px;
+  max-width: 100%;
+}
+.dk-skb-th .dk-sk {
+  height: 7px;
+  opacity: 0.7;
+}
+.dk-skb-doc,
+.dk-skb-rec {
+  display: flex;
+  flex-direction: column;
+}
+.dk-skb-title {
+  height: 15px;
+  border-radius: 6px;
+}
+.dk-skb-sub {
+  height: 9px;
+  margin-top: 10px;
+}
+.dk-skb-para {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  margin-top: 22px;
+}
+.dk-skb-ln {
+  height: 9px;
+}
+.dk-skb-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 24px;
+  margin-top: 24px;
+}
+.dk-skb-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dk-skb-label {
+  height: 7px;
+  opacity: 0.7;
+}
+.dk-skw-card {
+  pointer-events: none;
+}
+.dk-skw-icon {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+}
+.dk-skw-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.dk-skw-title {
+  width: 52%;
+  height: 9px;
+}
+.dk-skw-meta {
+  width: 30%;
+  height: 7px;
+  opacity: 0.7;
+}
+.dk-skw-link {
+  width: 168px;
+  height: 9px;
+  margin: 9px 6px;
 }

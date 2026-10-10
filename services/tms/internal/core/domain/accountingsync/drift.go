@@ -2,7 +2,6 @@ package accountingsync
 
 import (
 	"context"
-	"errors"
 	"slices"
 	"strings"
 
@@ -22,16 +21,6 @@ const (
 	maxDriftModifiedBy   = 200
 	maxDriftState        = 50
 	maxDriftDetailLines  = 50
-)
-
-var (
-	ErrDriftClosed         = errors.New("the finding was already resolved or dismissed")
-	ErrDriftNoteRequired   = errors.New("a note is required to dismiss a finding")
-	ErrDriftFixUnavailable = errors.New("that fix is not offered for this finding")
-	ErrDriftExplainOnly    = errors.New(
-		"a trial balance difference is explained, not fixed: find the entry made in the " +
-			"accounting system or the record Trenova could not send, then dismiss it",
-	)
 )
 
 type DriftLine struct {

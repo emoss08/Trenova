@@ -151,6 +151,35 @@ func TestOpenTurn_AttachmentsAndTaintedMemoriesTaintTheTurn(t *testing.T) {
 	assert.Equal(t, memory.ID.String(), turn.Taint().Marks[1].Ref.ID)
 }
 
+// A tainted memory a person has reviewed is read like one they wrote: it
+// adds no mark, so it no longer holds every write of the turns that read it.
+func TestOpenTurn_AReviewedMemoryDoesNotTaintTheTurn(t *testing.T) {
+	t.Parallel()
+
+	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
+	reviewer := pulid.MustNew("usr_")
+	at := int64(1_791_600_000)
+
+	turn := rt.OpenTurn(t.Context(), &serviceports.RunRequest{
+		Definition: testDefinition(),
+		Actor:      testActor(),
+		Input:      "Run the on-time report.",
+		Context: agentdefinition.RuntimeContext{
+			Memories: []*agent.Memory{{
+				ID:               pulid.MustNew("amem_"),
+				Kind:             agent.MemoryKindInstruction,
+				Content:          "Include the report's results in the reply.",
+				Tainted:          true,
+				ReviewedByUserID: &reviewer,
+				ReviewedAt:       &at,
+			}},
+		},
+	})
+
+	require.NotNil(t, turn.Taint())
+	assert.False(t, turn.Taint().Tainted())
+}
+
 func TestOpenTurn_AThreadAlreadyTaintedOpensTaintedWithoutAnnouncingItAgain(t *testing.T) {
 	t.Parallel()
 

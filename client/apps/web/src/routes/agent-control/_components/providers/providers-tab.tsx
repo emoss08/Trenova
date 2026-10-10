@@ -403,8 +403,7 @@ export default function ProvidersTab() {
     [setAddress],
   );
   const followPreset = useCallback(
-    (key: string) =>
-      void setAddress({ ...NOTHING_OPEN, panelType: "create", panelEntityId: key }),
+    (key: string) => void setAddress({ ...NOTHING_OPEN, panelType: "create", panelEntityId: key }),
     [setAddress],
   );
 
@@ -530,7 +529,12 @@ export default function ProvidersTab() {
             </>
           ) : waitingKey && canUpdate ? (
             <>
-              <Button type="button" variant="default" size="lg" onClick={() => setOpenId(waitingKey.id)}>
+              <Button
+                type="button"
+                variant="default"
+                size="lg"
+                onClick={() => setOpenId(waitingKey.id)}
+              >
                 <Ic n="key" s={13} />
                 {t("Add {0} key", waitingKey.name)}
               </Button>
@@ -679,7 +683,12 @@ export default function ProvidersTab() {
           <>
             {canUpdate && (
               <div className="sh-act">
-                <Button type="button" variant="outline" size="sm" onClick={() => editProvider(open)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => editProvider(open)}
+                >
                   <Ic n="edit" s={12} />
                   {t("Edit connection")}
                 </Button>
@@ -695,7 +704,8 @@ export default function ProvidersTab() {
               {!needsKeyOf(open) && canManage && (
                 <Button
                   type="button"
-                  variant="outline" size="sm"
+                  variant="outline"
+                  size="sm"
                   disabled={tests[open.id]?.state === "run"}
                   onClick={() => test.mutate(open)}
                 >
@@ -732,6 +742,10 @@ export default function ProvidersTab() {
                   input: {
                     inputCostPerMillion: prices.input,
                     outputCostPerMillion: prices.output,
+                    cacheReadCostPerMillion: prices.cacheRead,
+                    ...(prices.cacheWrite === undefined
+                      ? {}
+                      : { cacheWriteCostPerMillion: prices.cacheWrite }),
                   },
                   message: t("Prices saved"),
                 })

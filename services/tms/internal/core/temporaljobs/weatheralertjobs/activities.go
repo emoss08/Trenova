@@ -24,6 +24,8 @@ type PollNWSAlertsTenantPayload struct {
 
 type PollNWSAlertsResult struct {
 	temporaljobs.TenantRunResult
+	FeedUnchanged bool `json:"feedUnchanged"`
+	AlertsInFeed  int  `json:"alertsInFeed"`
 }
 
 type ActivitiesParams struct {
@@ -45,17 +47,43 @@ func NewActivities(p ActivitiesParams) *Activities {
 	}
 }
 
-func (a *Activities) PollNWSAlertsActivity(ctx context.Context) error {
-	a.logger.Info("Starting weather alert poll activity")
+func (a *Activities) PollNWSAlertsActivity(ctx context.Context) (*PollNWSAlertsResult, error) {
 	recordActivityHeartbeat(ctx, "polling-nws-alerts")
 
-	if err := a.service.PollNWSAlerts(ctx); err != nil {
+	polled, err := a.service.PollNWSAlerts(ctx, func(details ...any) {
+		recordActivityHeartbeat(ctx, details...)
+	})
+	if err != nil {
 		a.logger.Error("Weather alert poll activity failed", zap.Error(err))
-		return err
+		return nil, err
 	}
 
-	a.logger.Info("Weather alert poll activity completed")
-	return nil
+	result := &PollNWSAlertsResult{
+		FeedUnchanged: polled.FeedUnchanged,
+		AlertsInFeed:  polled.AlertsInFeed,
+	}
+	result.TenantsScanned = polled.TenantsScanned
+	for _, synced := range polled.Tenants {
+		if synced.Err != nil {
+			a.logger.Error("Weather alert tenant poll failed",
+				zap.String("orgID", synced.TenantInfo.OrgID.String()),
+				zap.String("buID", synced.TenantInfo.BuID.String()),
+				zap.Error(synced.Err))
+			result.AddFailure(temporaljobs.NewTenantWorkItem(synced.TenantInfo, 1), synced.Err)
+			continue
+		}
+
+		result.AddTenantResult(synced.Written, synced.Unchanged)
+	}
+
+	a.logger.Info("Weather alert poll activity completed",
+		zap.Bool("feedUnchanged", result.FeedUnchanged),
+		zap.Int("alertsInFeed", result.AlertsInFeed),
+		zap.Int("tenantsProcessed", result.TenantsProcessed),
+		zap.Int("alertsWritten", result.RecordsProcessed),
+		zap.Int("failures", result.FailureCount))
+
+	return result, nil
 }
 
 func (a *Activities) ListWeatherAlertTenantsActivity(

@@ -882,3 +882,22 @@ func TestGetReportRun_HandsBackASampleOfAFinishedRunsRows(t *testing.T) {
 	assert.Len(t, status.Rows, 3)
 	assert.Contains(t, status.Note, "first 3 of its 3 rows")
 }
+
+// gpt-6-luna searched four wordings for an on-time report that did not exist
+// before it said so. A search that finds nothing names every report there is.
+func TestListReports_NamesEveryReportWhenNothingMatches(t *testing.T) {
+	t.Parallel()
+
+	_, _, tools := reportingTools(t)
+
+	result, err := tools["list_reports"].Query(t.Context(), testParams(map[string]any{
+		"query": "on-time delivery",
+	}))
+	require.NoError(t, err)
+
+	outcome, ok := result.(searchOutcome)
+	require.True(t, ok)
+	assert.Zero(t, outcome.Count)
+	assert.Contains(t, outcome.Note, "These are every report there is")
+	assert.Contains(t, outcome.Note, "will not find more")
+}

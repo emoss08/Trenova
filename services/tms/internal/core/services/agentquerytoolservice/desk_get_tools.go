@@ -4,11 +4,13 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
+	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
+	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,9 +25,39 @@ of those pages names its record in the page context, and each needs a get tool
 so the model can read the record rather than the page title.
 */
 
+type openClockPricer interface {
+	PriceOpenClock(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		occurrence *detention.DetentionOccurrence,
+	) (*detentionservice.ClockPrice, error)
+}
+
+type pricedOccurrence struct {
+	*detention.DetentionOccurrence
+
+	CurrentlyBillable *currentlyBillable `json:"currentlyBillable,omitempty"`
+}
+
+type currentlyBillable struct {
+	BillableMinutes int32        `json:"billableMinutes"`
+	BillableAmount  string       `json:"billableAmount"`
+	AsOf            optionalDate `json:"asOf"`
+	Note            string       `json:"note"`
+}
+
+func provideGetDetentionOccurrenceTool(
+	repo repositories.DetentionOccurrenceRepository,
+	permissions serviceports.PermissionEngine,
+	detentions *detentionservice.Service,
+) serviceports.AgentQueryTool {
+	return newGetDetentionOccurrenceTool(repo, permissions, detentions)
+}
+
 func newGetDetentionOccurrenceTool(
 	repo repositories.DetentionOccurrenceRepository,
 	permissions serviceports.PermissionEngine,
+	pricer openClockPricer,
 ) serviceports.AgentQueryTool {
 	return newGetTool(&getSpec{
 		name:     "get_detention_occurrence",
@@ -34,16 +66,38 @@ func newGetDetentionOccurrenceTool(
 		kinds:    []permission.RecordKind{permission.KindDetentionOccurrence},
 		summary: "Retrieve one detention occurrence by id: the stop, the clock, free time, " +
 			"billable minutes, amounts, notice status, and the evidence and notices on file. " +
+			"A clock still running also carries currentlyBillable, priced as of now; quote " +
+			"that rather than the stored amounts, which date from the last recalculation. " +
 			"Use list_detention_desk first when you do not have an id.",
 		paramName: "occurrenceId",
 		idSource:  "from list_detention_desk, the page you are on, or this run's subject",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
-			return repo.GetByID(ctx, &repositories.GetDetentionOccurrenceByIDRequest{
+			occurrence, err := repo.GetByID(ctx, &repositories.GetDetentionOccurrenceByIDRequest{
 				OccurrenceID:    id,
 				TenantInfo:      tenant,
 				IncludeEvidence: true,
 				IncludeNotices:  true,
 			})
+			if err != nil || pricer == nil {
+				return occurrence, err
+			}
+
+			price, err := pricer.PriceOpenClock(ctx, tenant, occurrence)
+			if err != nil || price == nil {
+				return occurrence, err
+			}
+
+			return pricedOccurrence{
+				DetentionOccurrence: occurrence,
+				CurrentlyBillable: &currentlyBillable{
+					BillableMinutes: price.BillableMinutes,
+					BillableAmount:  price.BillableAmount.StringFixed(2),
+					AsOf:            recordedDate(price.AsOf),
+					Note: "The clock is still running. These are what it would bill if " +
+						"the truck left now; the stored billableMinutes and billableAmount " +
+						"are from the last recalculation.",
+				},
+			}, nil
 		},
 	}, permissions)
 }
@@ -247,6 +301,21 @@ func workerCredentialDetailFrom(
 	return detail
 }
 
+// updatePreferenceWarning is what a customer set to None means for the agent.
+// It used to name only a delay and a new ETA as what the person may still ask
+// for, and Haiku, asked to send FreshHaul's arrival notice, read that notice as
+// routine and set no wait.
+func updatePreferenceWarning(preference customer.StatusUpdatePreference) string {
+	if preference != customer.StatusUpdateNone {
+		return ""
+	}
+
+	return "This customer gets no routine arrival or departure notices, so never send one " +
+		"on your own. An arrival or departure notice the person asks for is not routine: " +
+		"it still goes out with their approval, and when it waits on the truck, wait for " +
+		"it as asked. So does any other update they ask for, such as a delay or a new ETA."
+}
+
 // newGetCustomerUpdatePreferencesTool answers the one question the customer
 // update desk has to ask before it writes anything: does this customer want
 // to be told, and who is on the list.
@@ -267,7 +336,8 @@ func newGetCustomerUpdatePreferencesTool(
 			"whether they want arrival notices, departure notices, both or neither, and " +
 			"who receives them. A customer set to None gets no routine arrival or " +
 			"departure notice; that does not stop an update the person asks you to send, " +
-			"such as a delay or a new ETA, which goes out on their approval. When the " +
+			"such as an arrival notice, a delay or a new ETA, which goes out on their " +
+			"approval. When the " +
 			"recipient list is empty the notice profile's own recipients are the fallback. " +
 			"Call this before writing any status update.",
 		paramName: "customerId",
@@ -292,10 +362,8 @@ func newGetCustomerUpdatePreferencesTool(
 				"wantsDepartures":        entity.StatusUpdatePreference.WantsDepartures(),
 				"statusUpdateRecipients": entity.StatusUpdateRecipients,
 			}
-			if entity.StatusUpdatePreference == customer.StatusUpdateNone {
-				out["warning"] = "This customer gets no routine arrival or departure notices, " +
-					"so never send one on your own. An update the person asked for, such as a " +
-					"delay or a new ETA, still goes out with their approval."
+			if warning := updatePreferenceWarning(entity.StatusUpdatePreference); warning != "" {
+				out["warning"] = warning
 			}
 			if entity.StatusUpdateRecipients == "" && entity.EmailProfile != nil {
 				out["fallbackRecipients"] = entity.EmailProfile.ToRecipients

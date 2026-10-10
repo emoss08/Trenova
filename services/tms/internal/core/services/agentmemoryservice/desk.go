@@ -800,8 +800,12 @@ func (s *Service) ConfirmDesk(
 		return nil, err
 	}
 
-	s.logChange(confirmed, jsonutils.MustToJSON(current), person.Actor, permission.OpUpdate,
-		"Suggested agent memory saved from the conversation")
+	if current.Tainted {
+		s.recordReview(ctx, current, confirmed, person.Actor)
+	} else {
+		s.logChange(confirmed, jsonutils.MustToJSON(current), person.Actor, permission.OpUpdate,
+			"Suggested agent memory saved from the conversation")
+	}
 	s.queueForRetrieval(ctx, confirmed)
 	s.recordReplaced(ctx, confirmed, person.Actor)
 

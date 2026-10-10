@@ -96,7 +96,11 @@ func (r *repository) applyListPTOFilters(
 	}
 
 	if req.StartDateFrom > 0 {
-		q = q.Where(cols.StartDate.Gte(), req.StartDateFrom)
+		if req.Overlapping {
+			q = q.Where(cols.EndDate.Gte(), req.StartDateFrom)
+		} else {
+			q = q.Where(cols.StartDate.Gte(), req.StartDateFrom)
+		}
 	}
 
 	if req.StartDateTo > 0 {

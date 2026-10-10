@@ -427,15 +427,15 @@ func TestCostForTask_PricesEmbeddingOnInputAlone(t *testing.T) {
 	input := decimal.RequireFromString("0.06")
 	p.InputCostPerMillion = &input
 
-	cost := p.CostForTask(aiprovider.TaskEmbedding, 500_000, 0)
+	cost := p.CostForTask(aiprovider.TaskEmbedding, aiprovider.TokenUsage{Input: 500_000})
 	require.NotNil(t, cost)
 	assert.True(t, cost.Equal(decimal.RequireFromString("0.03")), cost.String())
 
-	assert.Nil(t, p.CostForTask(aiprovider.TaskGeneral, 500_000, 10),
+	assert.Nil(t, p.CostForTask(aiprovider.TaskGeneral, aiprovider.TokenUsage{Input: 500_000, Output: 10}),
 		"a text task without an output price has an unknown cost")
 
 	p.InputCostPerMillion = nil
-	assert.Nil(t, p.CostForTask(aiprovider.TaskEmbedding, 500_000, 0))
+	assert.Nil(t, p.CostForTask(aiprovider.TaskEmbedding, aiprovider.TokenUsage{Input: 500_000}))
 }
 
 func TestEmbeddingNeverWritesToTheLedger(t *testing.T) {
@@ -540,4 +540,41 @@ func TestValidate_ContextWindowMustBeOneAModelCouldHave(t *testing.T) {
 	served := 65_536
 	p.ContextWindowTokens = &served
 	assert.False(t, fieldErrors(t, p)["contextWindow"])
+}
+
+/*
+A cache price stands beside the input price: one entered without it would
+price nothing, since a cached token's default is a share of input.
+*/
+func TestProvider_ValidateCachePrices(t *testing.T) {
+	t.Parallel()
+
+	price := func(s string) *decimal.Decimal {
+		d := decimal.RequireFromString(s)
+		return &d
+	}
+	priced := func() *aiprovider.Provider {
+		p := validProvider()
+		p.InputCostPerMillion = price("3")
+		p.OutputCostPerMillion = price("15")
+		return p
+	}
+
+	p := priced()
+	p.CacheReadCostPerMillion = price("-1")
+	assert.True(t, fieldErrors(t, p)["cacheReadCostPerMillion"])
+
+	p = priced()
+	p.CacheWriteCostPerMillion = price("-1")
+	assert.True(t, fieldErrors(t, p)["cacheWriteCostPerMillion"])
+
+	p = priced()
+	p.InputCostPerMillion = nil
+	p.CacheReadCostPerMillion = price("0.3")
+	assert.True(t, fieldErrors(t, p)["cacheReadCostPerMillion"])
+
+	p = priced()
+	p.CacheReadCostPerMillion = price("0.3")
+	p.CacheWriteCostPerMillion = price("3.75")
+	assert.Empty(t, fieldErrors(t, p))
 }

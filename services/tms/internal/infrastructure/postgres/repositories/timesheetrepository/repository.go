@@ -331,34 +331,42 @@ func (r *repository) GetOrCreateTimesheet(
 	ctx context.Context,
 	entity *worker.Timesheet,
 ) (*worker.Timesheet, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.Timesheet, error) {
-		db := r.db.DBForContext(ctx)
-
-		if _, err := db.NewInsert().
-			Model(entity).
-			On("CONFLICT (organization_id, business_unit_id, worker_id, period_start) DO NOTHING").
-			Exec(ctx); err != nil {
-			r.l.Error("failed to open timesheet", zap.Error(err))
-			return nil, fmt.Errorf("open timesheet: %w", err)
-		}
-		// Whichever side of the conflict this call was on, the row that exists is
-		// the answer, so it is read back rather than assumed.
-		existing := new(worker.Timesheet)
-		if err := db.NewSelect().
-			Model(existing).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.TimesheetScopeTenant(sq, pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
+	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*worker.Timesheet]{
+		Find: func(ctx context.Context) (*worker.Timesheet, error) {
+			found := new(worker.Timesheet)
+			if scanErr := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(found).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return buncolgen.TimesheetScopeTenant(sq, pagination.TenantInfo{
+						OrgID: entity.OrganizationID,
+						BuID:  entity.BusinessUnitID,
+					}).
+						Where(buncolgen.TimesheetColumns.WorkerID.Eq(), entity.WorkerID).
+						Where(buncolgen.TimesheetColumns.PeriodStart.Eq(), entity.PeriodStart)
 				}).
-					Where(buncolgen.TimesheetColumns.WorkerID.Eq(), entity.WorkerID).
-					Where(buncolgen.TimesheetColumns.PeriodStart.Eq(), entity.PeriodStart)
-			}).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Timesheet")
-		}
+				Scan(ctx); scanErr != nil {
+				return nil, scanErr
+			}
 
-		return existing, nil
+			return found, nil
+		},
+		Create: func(ctx context.Context) error {
+			if _, insertErr := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(entity).
+				On("CONFLICT (organization_id, business_unit_id, worker_id, period_start) DO NOTHING").
+				Exec(ctx); insertErr != nil {
+				r.l.Error("failed to open timesheet", zap.Error(insertErr))
+				return fmt.Errorf("open timesheet: %w", insertErr)
+			}
+
+			return nil
+		},
+		Default: func() *worker.Timesheet { return entity },
+		MapError: func(err error) error {
+			return dberror.HandleNotFoundError(err, "Timesheet")
+		},
 	})
 }
 

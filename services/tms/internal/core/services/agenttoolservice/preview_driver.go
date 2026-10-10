@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 var (
@@ -80,7 +81,7 @@ func (t *rejectWorkerPTOTool) Preview(
 
 	return ptoDecisionPreview(
 		fmt.Sprintf("Would reject %s, telling the driver why: %s",
-			ptoLabel(decision.Before), decision.After.RejectionReason),
+			ptoLabel(decision.Before, decision.Location), decision.After.RejectionReason),
 		decision,
 	)
 }
@@ -100,7 +101,7 @@ func (t *cancelWorkerPTOTool) Preview(
 	}
 
 	summary := fmt.Sprintf("Would cancel %s, telling the driver why: %s",
-		ptoLabel(decision.Before), decision.After.CancellationReason)
+		ptoLabel(decision.Before, decision.Location), decision.After.CancellationReason)
 	if decision.ReturnsLedger {
 		summary += fmt.Sprintf(" The %s booked day(s) go back to the driver's balance.",
 			decision.Before.Days.StringFixed(2))
@@ -159,7 +160,7 @@ func ptoDecisionPreview(
 		toolpreview.Record{
 			Resource: permission.ResourceWorkerPTO,
 			ID:       decision.Before.ID,
-			Label:    ptoLabel(decision.Before),
+			Label:    ptoLabel(decision.Before, decision.Location),
 			Version:  pinnedVersion(decision.Before.Version),
 		},
 		decision.Before,
@@ -236,11 +237,16 @@ func driverName(notice *serviceports.DriverNotificationPreview) string {
 	return notice.WorkerName
 }
 
-func ptoLabel(pto *worker.WorkerPTO) string {
+// ptoLabel names a request by its days in the organization's zone, the one
+// they are booked in. In UTC a request stored in the evening read a day later
+// than list_time_off showed it, and an agent withdrew six correct approvals
+// as mismatched. The zone is the organization's, not the viewer's, so the
+// preview's digest is the same whoever computes it.
+func ptoLabel(pto *worker.WorkerPTO, loc *time.Location) string {
 	return fmt.Sprintf("%s time off from %s to %s",
 		pto.Type,
-		time.Unix(pto.StartDate, 0).UTC().Format("2006-01-02"),
-		time.Unix(pto.EndDate, 0).UTC().Format("2006-01-02"),
+		timeutils.FormatCalendarDate(pto.StartDate, loc),
+		timeutils.FormatCalendarDate(pto.EndDate, loc),
 	)
 }
 

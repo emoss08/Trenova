@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/driverpayservice"
 	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
+	"github.com/emoss08/trenova/internal/core/services/settlementshared"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -83,7 +84,9 @@ func (a *Activities) GenerateSettlementBatchesActivity(
 			systemActor(),
 		)
 		if genErr != nil {
-			if isDuplicatePeriodError(genErr) {
+			if isDuplicatePeriodError(genErr) ||
+				errors.Is(genErr, settlementshared.ErrPeriodBatchClosed) {
+				result.Skipped++
 				continue
 			}
 			result.Failed++

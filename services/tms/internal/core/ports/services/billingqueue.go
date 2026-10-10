@@ -133,6 +133,7 @@ type BillingQueueService interface {
 		req *AssignBillerRequest,
 		actor *RequestActor,
 	) (*billingqueue.BillingQueueItem, error)
+	CheckBiller(ctx context.Context, tenantInfo pagination.TenantInfo, billerID pulid.ID) error
 	UpdateStatus(
 		ctx context.Context,
 		req *UpdateBillingQueueStatusRequest,

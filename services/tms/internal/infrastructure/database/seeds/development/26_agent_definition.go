@@ -230,8 +230,12 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			Instructions: agentdefinition.TemplateDispatchAssistant.StarterInstructions() + "\n\n" +
 				"We run mostly reefer freight out of the Los Angeles terminal. When a driver is " +
 				"asked about, check hours of service before anything else.",
-			Guardrails:        []string{"Promise a delivery time to a customer", "Change a rate"},
-			ToolNames:         agentdefinition.TemplateDispatchAssistant.StarterTools(),
+			Guardrails: []string{"Promise a delivery time to a customer", "Change a rate"},
+			ToolNames: append(
+				agentdefinition.TemplateDispatchAssistant.StarterTools(),
+				"get_dispatch_board",
+				"notify_driver",
+			),
 			AutonomyCeiling:   agent.TierActWithApproval,
 			DataAccessCeiling: agentdefinition.TemplateDispatchAssistant.StarterDataAccess(),
 			TriggerMode:       agentdefinition.TriggerChat,

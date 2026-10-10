@@ -269,8 +269,9 @@ func threadRequest(c *gin.Context) (repositories.GetThreadRequest, error) {
 }
 
 type listThreadsQuery struct {
-	Limit  int `form:"limit"`
-	Offset int `form:"offset"`
+	Limit  int    `form:"limit"`
+	Cursor string `form:"cursor"`
+	Until  string `form:"until"`
 }
 
 func (h *Handler) listThreads(c *gin.Context) {
@@ -286,7 +287,8 @@ func (h *Handler) listThreads(c *gin.Context) {
 		UserID:     authCtx.UserID,
 		TenantInfo: tenantFromAuthContext(authCtx),
 		Limit:      query.Limit,
-		Offset:     query.Offset,
+		Cursor:     query.Cursor,
+		Until:      query.Until,
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)
