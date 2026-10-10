@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial/shipmentcommercialtest"
+
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -281,11 +283,11 @@ func agreementCalculator(
 
 	calculator := New(Params{
 		Logger:        zap.NewNop(),
-		RateEngine:    StubRateEngineForAgreement(t, 100, &agreement.ID),
+		RateEngine:    shipmentcommercialtest.StubRateEngineForAgreement(t, 100, &agreement.ID),
 		Predicate:     predicate,
 		AgreementRepo: agreementRepoFor(t, agreement),
 	})
-	calculator.now = func() int64 { return ratedAt }
+	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	return calculator
 }

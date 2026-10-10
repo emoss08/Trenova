@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp/exchangeratestamptest"
+
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
@@ -12,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -351,7 +352,7 @@ func TestPreviewPost_StampsTheExchangeRateOfAForeignCurrencyInvoice(t *testing.T
 
 	f := newPostFixture(t)
 	f.invoice.CurrencyCode = "CAD"
-	f.svc.stamper = exchangeratestamp.NewFixedForTest(t, "USD", decimal.RequireFromString("0.7312"))
+	f.svc.stamper = exchangeratestamptest.NewFixedForTest(t, "USD", decimal.RequireFromString("0.7312"))
 
 	preview, err := f.svc.PreviewPost(t.Context(), f.request(), f.actor())
 	require.NoError(t, err)
@@ -368,7 +369,7 @@ func TestPreviewPost_LeavesAFunctionalCurrencyInvoiceUnstamped(t *testing.T) {
 	t.Parallel()
 
 	f := newPostFixture(t)
-	f.svc.stamper = exchangeratestamp.NewFixedForTest(t, "USD", decimal.RequireFromString("0.7312"))
+	f.svc.stamper = exchangeratestamptest.NewFixedForTest(t, "USD", decimal.RequireFromString("0.7312"))
 
 	preview, err := f.svc.PreviewPost(t.Context(), f.request(), f.actor())
 	require.NoError(t, err)

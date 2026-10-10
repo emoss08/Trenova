@@ -90,7 +90,7 @@ func TestServiceDuplicate_StartsShipmentDuplicateWorkflow(t *testing.T) {
 	svc := &service{
 		l:            zap.NewNop(),
 		repo:         repo,
-		validator:    NewTestValidator(t),
+		validator:    newTestValidator(t),
 		auditService: audit,
 		workflowStarter: &fakeShipmentTemporalClient{
 			startWorkflowFunc: func(
@@ -170,7 +170,7 @@ func TestServiceDuplicate_RefusesToCopyAnUnratedShipment(t *testing.T) {
 				l:            zap.NewNop(),
 				repo:         repo,
 				billingRepo:  billingControlWith(t, tt.disposition),
-				validator:    NewTestValidator(t),
+				validator:    newTestValidator(t),
 				auditService: mocks.NewMockAuditService(t),
 				workflowStarter: &fakeShipmentTemporalClient{
 					startWorkflowFunc: func(
@@ -214,7 +214,7 @@ func TestServiceDuplicate_RejectsInvalidRequest(t *testing.T) {
 	svc := &service{
 		l:            zap.NewNop(),
 		repo:         mocks.NewMockShipmentRepository(t),
-		validator:    NewTestValidator(t),
+		validator:    newTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
@@ -235,7 +235,7 @@ func TestServiceDuplicate_RejectsMissingTemporalClient(t *testing.T) {
 	svc := &service{
 		l:               zap.NewNop(),
 		repo:            mocks.NewMockShipmentRepository(t),
-		validator:       NewTestValidator(t),
+		validator:       newTestValidator(t),
 		auditService:    mocks.NewMockAuditService(t),
 		eventService:    noopShipmentEventService{},
 		coordinator:     newStateCoordinator(),

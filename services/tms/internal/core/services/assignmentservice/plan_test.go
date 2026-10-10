@@ -5,13 +5,13 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/services/rateengine/rateenginetest"
+
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/rateengine"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
-	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
 	"github.com/emoss08/trenova/internal/testutil/capabilitytest"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -121,10 +121,10 @@ func previewAssignmentServiceWith(
 	svc.controlRepo = controlRepo
 	svc.commercial = shipmentcommercial.New(shipmentcommercial.Params{
 		Logger:          zap.NewNop(),
-		RateEngine:      rateengine.NewFallbackEngine(t, formula),
+		RateEngine:      rateenginetest.NewFallbackEngine(t, formula),
 		AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 	})
-	svc.shipmentValidator = shipmentservice.NewTestValidator(t)
+	svc.shipmentValidator = newTestShipmentValidator(t)
 
 	return svc
 }

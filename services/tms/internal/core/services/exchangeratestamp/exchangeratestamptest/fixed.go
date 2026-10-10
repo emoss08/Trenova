@@ -1,7 +1,9 @@
-package exchangeratestamp
+package exchangeratestamptest
 
 import (
 	"testing"
+
+	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -12,7 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func NewFixedForTest(t *testing.T, functionalCurrency string, rate decimal.Decimal) *Stamper {
+func NewFixedForTest(t *testing.T, functionalCurrency string, rate decimal.Decimal) *exchangeratestamp.Stamper {
 	t.Helper()
 
 	controls := mocks.NewMockAccountingControlRepository(t)
@@ -29,7 +31,7 @@ func NewFixedForTest(t *testing.T, functionalCurrency string, rate decimal.Decim
 		Return(&services.RateConversionResult{Rate: rate}, nil).
 		Maybe()
 
-	return New(Params{
+	return exchangeratestamp.New(exchangeratestamp.Params{
 		Logger:   zap.NewNop(),
 		Controls: controls,
 		Rates:    rates,

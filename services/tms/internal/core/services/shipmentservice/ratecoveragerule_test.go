@@ -3,6 +3,8 @@ package shipmentservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/services/shipmentservice/shipmentservicetest"
+
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -137,11 +139,11 @@ func billingControlWith(
 func rateCoverageValidator(t *testing.T, billing repositories.BillingControlRepository) *Validator {
 	t.Helper()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	v.coverage = rateCoverage{billing: billing}
 	v.validator = newValidatorBuilder(validatorDeps{
-		ControlRepo:    testShipmentControlRepo(t),
-		CustomerRepo:   NewTestCustomerRepository(t),
+		ControlRepo:    shipmentservicetest.NewControlRepository(t),
+		CustomerRepo:   shipmentservicetest.NewCustomerRepository(t),
 		CommodityRepo:  mocks.NewMockCommodityRepository(t),
 		HazmatRuleRepo: mocks.NewMockHazmatSegregationRuleRepository(t),
 		ShipmentRepo:   mocks.NewMockShipmentRepository(t),

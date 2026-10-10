@@ -319,7 +319,7 @@ func TestServiceUpdate_RejectsReadyToInvoiceBeforeCompletion(t *testing.T) {
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,
-		validator:    NewTestValidator(t),
+		validator:    newTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
 		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
@@ -427,7 +427,7 @@ func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,
-		validator:    NewTestValidator(t),
+		validator:    newTestValidator(t),
 		auditService: auditService,
 		commercial: newTestCommercialCalculator(
 			t,
@@ -564,7 +564,7 @@ func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) 
 		repo:           repo,
 		controlRepo:    controlRepo,
 		continuityRepo: continuityRepo,
-		validator:      NewTestValidator(t),
+		validator:      newTestValidator(t),
 		auditService:   auditService,
 		commercial: newTestCommercialCalculator(
 			t,
@@ -668,7 +668,7 @@ func TestServiceUpdate_RejectsMoveTransitionToInTransitWhenEquipmentActiveElsewh
 		repo:           repo,
 		assignmentRepo: assignmentRepo,
 		controlRepo:    controlRepo,
-		validator:      NewTestValidator(t),
+		validator:      newTestValidator(t),
 		auditService:   mocks.NewMockAuditService(t),
 		commercial: newTestCommercialCalculator(
 			t,
@@ -803,7 +803,7 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,
-		validator:    NewTestValidatorWithAssignmentRepo(t, assignmentRepo),
+		validator:    newTestValidatorWithAssignmentRepo(t, assignmentRepo),
 		auditService: mocks.NewMockAuditService(t),
 		commercial: newTestCommercialCalculator(
 			t,
@@ -925,7 +925,7 @@ func TestServiceUpdate_RejectsTwoMovesGoingInTransitWithSameTrailerInPayload(t *
 		repo:           repo,
 		assignmentRepo: assignmentRepo,
 		controlRepo:    controlRepo,
-		validator:      NewTestValidator(t),
+		validator:      newTestValidator(t),
 		auditService:   mocks.NewMockAuditService(t),
 		commercial: newTestCommercialCalculator(
 			t,
@@ -1026,7 +1026,7 @@ func TestServiceUpdate_PreservesAssignedStateWhenPayloadSendsNew(t *testing.T) {
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,
-		validator:    NewTestValidator(t),
+		validator:    newTestValidator(t),
 		auditService: auditService,
 		commercial: newTestCommercialCalculator(
 			t,
@@ -1088,7 +1088,7 @@ func TestServiceUpdate_RejectsDirectInvoiceFromCompleted(t *testing.T) {
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,
-		validator:    NewTestValidator(t),
+		validator:    newTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),

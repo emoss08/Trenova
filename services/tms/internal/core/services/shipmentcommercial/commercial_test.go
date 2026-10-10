@@ -3,6 +3,8 @@ package shipmentcommercial
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial/shipmentcommercialtest"
+
 	"go.uber.org/zap"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
@@ -33,7 +35,7 @@ func TestRecalculate_GeneratesDetentionCharge(t *testing.T) {
 		DetentionChargeID:            new(pulid.MustNew("acc_")),
 	}
 
-	rateEngine := StubRateEngine(t, 100)
+	rateEngine := shipmentcommercialtest.StubRateEngine(t, 100)
 
 	accessorialRepo := mocks.NewMockAccessorialChargeRepository(t)
 	accessorialRepo.EXPECT().
@@ -91,7 +93,7 @@ func TestRecalculate_RemovesGeneratedDetentionChargeWhenNoLongerEligible(t *test
 		DetentionChargeID:            &detentionChargeID,
 	}
 
-	rateEngine := StubRateEngine(t, 100)
+	rateEngine := shipmentcommercialtest.StubRateEngine(t, 100)
 
 	accessorialRepo := mocks.NewMockAccessorialChargeRepository(t)
 	accessorialRepo.EXPECT().
@@ -143,7 +145,7 @@ func TestRecalculate_UpdatesExistingGeneratedDetentionChargeWithoutDuplicating(t
 		DetentionChargeID:            &detentionChargeID,
 	}
 
-	rateEngine := StubRateEngine(t, 100)
+	rateEngine := shipmentcommercialtest.StubRateEngine(t, 100)
 
 	accessorialRepo := mocks.NewMockAccessorialChargeRepository(t)
 	accessorialRepo.EXPECT().
@@ -204,7 +206,7 @@ func TestRecalculate_PreservesUserEditedDetentionChargeAmount(t *testing.T) {
 		DetentionChargeID:            &detentionChargeID,
 	}
 
-	rateEngine := StubRateEngine(t, 100)
+	rateEngine := shipmentcommercialtest.StubRateEngine(t, 100)
 
 	accessorialRepo := mocks.NewMockAccessorialChargeRepository(t)
 	accessorialRepo.EXPECT().
@@ -264,7 +266,7 @@ func TestCalculateTotals_PreservesOverriddenDetentionChargeAmounts(t *testing.T)
 		DetentionChargeID:            &detentionChargeID,
 	}
 
-	rateEngine := StubRateEngine(t, 100)
+	rateEngine := shipmentcommercialtest.StubRateEngine(t, 100)
 
 	accessorialRepo := mocks.NewMockAccessorialChargeRepository(t)
 
@@ -292,7 +294,7 @@ func TestCalculateTotals_IncludesFuelSurchargeEstimate(t *testing.T) {
 	programID := pulid.MustNew("fsp_")
 	fuelChargeID := pulid.MustNew("acc_")
 
-	rateEngine := StubRateEngine(t, 1000)
+	rateEngine := shipmentcommercialtest.StubRateEngine(t, 1000)
 
 	resolver := mocks.NewMockFuelSurchargeResolver(t)
 	resolver.EXPECT().
@@ -346,7 +348,7 @@ func TestCalculateTotals_ReplacesStaleFuelSurchargeFromPayload(t *testing.T) {
 		},
 	}
 
-	rateEngine := StubRateEngine(t, 1000)
+	rateEngine := shipmentcommercialtest.StubRateEngine(t, 1000)
 
 	resolver := mocks.NewMockFuelSurchargeResolver(t)
 	resolver.EXPECT().
@@ -391,7 +393,7 @@ func TestCalculateTotals_LockedFuelSurchargeIsPreserved(t *testing.T) {
 		},
 	}
 
-	rateEngine := StubRateEngine(t, 1000)
+	rateEngine := shipmentcommercialtest.StubRateEngine(t, 1000)
 
 	calculator := New(Params{
 		Logger:          zap.NewNop(),
@@ -419,7 +421,7 @@ func TestRecalculate_GeneratesFuelSurchargeCharge(t *testing.T) {
 	programID := pulid.MustNew("fsp_")
 	fuelChargeID := pulid.MustNew("acc_")
 
-	rateEngine := StubRateEngine(t, 1000)
+	rateEngine := shipmentcommercialtest.StubRateEngine(t, 1000)
 
 	resolver := mocks.NewMockFuelSurchargeResolver(t)
 	resolver.EXPECT().
@@ -482,7 +484,7 @@ func TestRecalculate_ReplacesFuelSurchargeOnProgramSwap(t *testing.T) {
 		},
 	}
 
-	rateEngine := StubRateEngine(t, 1000)
+	rateEngine := shipmentcommercialtest.StubRateEngine(t, 1000)
 
 	resolver := mocks.NewMockFuelSurchargeResolver(t)
 	resolver.EXPECT().
@@ -543,7 +545,7 @@ func TestRecalculate_RemovesFuelSurchargeWhenNoLongerApplicable(t *testing.T) {
 		},
 	}
 
-	rateEngine := StubRateEngine(t, 1000)
+	rateEngine := shipmentcommercialtest.StubRateEngine(t, 1000)
 
 	resolver := mocks.NewMockFuelSurchargeResolver(t)
 	resolver.EXPECT().
@@ -589,7 +591,7 @@ func TestRecalculate_RemovesFuelSurchargeWhenAmountIsZero(t *testing.T) {
 		},
 	}
 
-	rateEngine := StubRateEngine(t, 1000)
+	rateEngine := shipmentcommercialtest.StubRateEngine(t, 1000)
 
 	resolver := mocks.NewMockFuelSurchargeResolver(t)
 	resolver.EXPECT().

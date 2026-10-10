@@ -3,6 +3,8 @@ package shipmentservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/services/shipmentservice/shipmentservicetest"
+
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/domain/hazmatsegregationrule"
@@ -38,7 +40,7 @@ func TestValidatorValidateCreate_SkipsHazmatSegregationWhenDisabled(t *testing.T
 	v := &Validator{
 		validator: newValidatorBuilder(validatorDeps{
 			ControlRepo:    controlRepo,
-			CustomerRepo:   NewTestCustomerRepository(t),
+			CustomerRepo:   shipmentservicetest.NewCustomerRepository(t),
 			CommodityRepo:  mocks.NewMockCommodityRepository(t),
 			HazmatRuleRepo: mocks.NewMockHazmatSegregationRuleRepository(t),
 			ShipmentRepo:   mocks.NewMockShipmentRepository(t),
@@ -97,7 +99,7 @@ func TestValidatorValidateCreate_RejectsProhibitedHazmatPair(t *testing.T) {
 	v := &Validator{
 		validator: newValidatorBuilder(validatorDeps{
 			ControlRepo:    controlRepo,
-			CustomerRepo:   NewTestCustomerRepository(t),
+			CustomerRepo:   shipmentservicetest.NewCustomerRepository(t),
 			CommodityRepo:  commodityRepo,
 			HazmatRuleRepo: ruleRepo,
 			ShipmentRepo:   mocks.NewMockShipmentRepository(t),
@@ -162,7 +164,7 @@ func TestValidatorValidateCreate_RejectsDistanceRuleMatch(t *testing.T) {
 	v := &Validator{
 		validator: newValidatorBuilder(validatorDeps{
 			ControlRepo:    controlRepo,
-			CustomerRepo:   NewTestCustomerRepository(t),
+			CustomerRepo:   shipmentservicetest.NewCustomerRepository(t),
 			CommodityRepo:  commodityRepo,
 			HazmatRuleRepo: ruleRepo,
 			ShipmentRepo:   mocks.NewMockShipmentRepository(t),
@@ -231,7 +233,7 @@ func TestValidatorValidateCreate_MatchesSpecificHazmatMaterialsUnordered(t *test
 	v := &Validator{
 		validator: newValidatorBuilder(validatorDeps{
 			ControlRepo:    controlRepo,
-			CustomerRepo:   NewTestCustomerRepository(t),
+			CustomerRepo:   shipmentservicetest.NewCustomerRepository(t),
 			CommodityRepo:  commodityRepo,
 			HazmatRuleRepo: ruleRepo,
 			ShipmentRepo:   mocks.NewMockShipmentRepository(t),
@@ -294,7 +296,7 @@ func TestValidatorValidateCreate_IgnoresInactiveOrUnmatchedRules(t *testing.T) {
 	v := &Validator{
 		validator: newValidatorBuilder(validatorDeps{
 			ControlRepo:    controlRepo,
-			CustomerRepo:   NewTestCustomerRepository(t),
+			CustomerRepo:   shipmentservicetest.NewCustomerRepository(t),
 			CommodityRepo:  commodityRepo,
 			HazmatRuleRepo: ruleRepo,
 			ShipmentRepo:   mocks.NewMockShipmentRepository(t),
@@ -358,7 +360,7 @@ func TestHazmatSegregationValidationAndServiceStayAligned(t *testing.T) {
 	v := &Validator{
 		validator: newValidatorBuilder(validatorDeps{
 			ControlRepo:    controlRepo,
-			CustomerRepo:   NewTestCustomerRepository(t),
+			CustomerRepo:   shipmentservicetest.NewCustomerRepository(t),
 			CommodityRepo:  commodityRepo,
 			HazmatRuleRepo: ruleRepo,
 			ShipmentRepo:   mocks.NewMockShipmentRepository(t),

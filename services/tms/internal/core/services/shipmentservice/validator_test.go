@@ -18,7 +18,7 @@ import (
 func TestValidateCreate_RejectsNestedIDs(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 	entity.Moves[0].ID = pulid.MustNew("sm_")
 	entity.Moves[0].Stops[0].ID = pulid.MustNew("stp_")
@@ -36,7 +36,7 @@ func TestValidateCreate_RejectsNestedIDs(t *testing.T) {
 func TestValidateCreate_DefaultsMissingEntryMethod(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 
 	multiErr := v.ValidateCreate(t.Context(), entity)
@@ -48,7 +48,7 @@ func TestValidateCreate_DefaultsMissingEntryMethod(t *testing.T) {
 func TestValidateUpdate_RejectsDuplicateMoveIDs(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 	entity.ID = pulid.MustNew("shp_")
 	entity.Version = 1
@@ -71,7 +71,7 @@ func TestValidateUpdate_RejectsDuplicateMoveIDs(t *testing.T) {
 func TestValidateUpdate_RejectsDuplicateStopIDsAcrossShipment(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 	entity.ID = pulid.MustNew("shp_")
 	entity.Version = 1
@@ -96,7 +96,7 @@ func TestValidateUpdate_RejectsDuplicateStopIDsAcrossShipment(t *testing.T) {
 func TestValidateUpdate_RejectsDuplicateStopSequencesWithinMove(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 	entity.ID = pulid.MustNew("shp_")
 	entity.Version = 1
@@ -120,7 +120,7 @@ func TestValidateUpdate_RejectsDuplicateStopSequencesWithinMove(t *testing.T) {
 func TestValidateUpdate_RejectsDuplicateMoveSequences(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 	entity.ID = pulid.MustNew("shp_")
 	entity.Version = 1
@@ -143,7 +143,7 @@ func TestValidateUpdate_RejectsDuplicateMoveSequences(t *testing.T) {
 func TestValidateUpdate_AllowsUniqueNestedIDs(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 	entity.ID = pulid.MustNew("shp_")
 	entity.Version = 1
@@ -170,7 +170,7 @@ func TestValidateUpdate_AllowsUniqueNestedIDs(t *testing.T) {
 func TestValidateCreate_RejectsAdditionalChargeNestedIDs(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 	entity.AdditionalCharges = []*shipment.AdditionalCharge{
 		{
@@ -193,7 +193,7 @@ func TestValidateCreate_RejectsAdditionalChargeNestedIDs(t *testing.T) {
 func TestValidateUpdate_RejectsDuplicateAdditionalChargeIDs(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 	entity.ID = pulid.MustNew("shp_")
 	entity.Version = 1
@@ -226,7 +226,7 @@ func TestValidateUpdate_RejectsDuplicateAdditionalChargeIDs(t *testing.T) {
 func TestValidateCreate_RejectsShipmentCommodityNestedIDs(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 	entity.Commodities = []*shipment.ShipmentCommodity{
 		{
@@ -248,7 +248,7 @@ func TestValidateCreate_RejectsShipmentCommodityNestedIDs(t *testing.T) {
 func TestValidateUpdate_RejectsDuplicateShipmentCommodityIDs(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 	entity.ID = pulid.MustNew("shp_")
 	entity.Version = 1
@@ -279,7 +279,7 @@ func TestValidateUpdate_RejectsDuplicateShipmentCommodityIDs(t *testing.T) {
 func TestValidateCreate_MapsShipmentCommodityFieldErrorsToNestedPath(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 	entity.Commodities = []*shipment.ShipmentCommodity{
 		{
@@ -299,7 +299,7 @@ func TestValidateCreate_MapsShipmentCommodityFieldErrorsToNestedPath(t *testing.
 func TestValidateCreate_MapsAdditionalChargeFieldErrorsToNestedPath(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 	entity.AdditionalCharges = []*shipment.AdditionalCharge{
 		{
@@ -320,7 +320,7 @@ func TestValidateCreate_MapsAdditionalChargeFieldErrorsToNestedPath(t *testing.T
 func TestValidateCreate_RejectsActualDepartureBeforeActualArrival(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 	actualArrival := int64(200)
 	actualDeparture := int64(100)
@@ -337,7 +337,7 @@ func TestValidateCreate_RejectsActualDepartureBeforeActualArrival(t *testing.T) 
 func TestValidateCreate_RejectsActualArrivalInFuture(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 	actualArrival := timeutils.NowUnix() + 3600
 	entity.Moves[0].Stops[0].ActualArrival = &actualArrival
@@ -352,7 +352,7 @@ func TestValidateCreate_RejectsActualArrivalInFuture(t *testing.T) {
 func TestValidateUpdate_RejectsActualDepartureInFuture(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 	entity.ID = pulid.MustNew("shp_")
 	entity.Version = 1
@@ -372,7 +372,7 @@ func TestValidateUpdate_RejectsActualDepartureInFuture(t *testing.T) {
 func TestValidateUpdate_RejectsScheduledWindowEndBeforeArrivalOnNestedStop(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 	entity.ID = pulid.MustNew("shp_")
 	entity.Version = 1
@@ -397,7 +397,7 @@ func TestValidateUpdate_RejectsScheduledWindowEndBeforeArrivalOnNestedStop(t *te
 func TestValidateCreate_RejectsMoveWithFewerThanTwoStops(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 	entity.Moves[0].Stops = []*shipment.Stop{validStop()}
 
@@ -411,7 +411,7 @@ func TestValidateCreate_RejectsMoveWithFewerThanTwoStops(t *testing.T) {
 func TestValidateCreate_RejectsMoveWithNonPickupFirstStop(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 	entity.Moves[0].Stops[0].Type = shipment.StopTypeDelivery
 
@@ -425,7 +425,7 @@ func TestValidateCreate_RejectsMoveWithNonPickupFirstStop(t *testing.T) {
 func TestValidateCreate_RejectsMoveWithNonDeliveryLastStop(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 	entity.Moves[0].Stops[1].Type = shipment.StopTypePickup
 
@@ -439,7 +439,7 @@ func TestValidateCreate_RejectsMoveWithNonDeliveryLastStop(t *testing.T) {
 func TestValidateCreate_RejectsDeliveryBeforePickup(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 	entity.Moves[0].Stops = []*shipment.Stop{
 		{
@@ -472,7 +472,7 @@ func TestValidateCreate_RejectsDeliveryBeforePickup(t *testing.T) {
 func TestValidateCreate_RejectsMoveWithOutOfOrderPlannedStops(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 	entity.Moves[0].Stops[0].ScheduledWindowEnd = new(int64(10))
 	entity.Moves[0].Stops[1].ScheduledWindowStart = 5
@@ -487,7 +487,7 @@ func TestValidateCreate_RejectsMoveWithOutOfOrderPlannedStops(t *testing.T) {
 func TestValidateUpdate_RejectsMoveWithOutOfOrderActualStops(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 	entity.ID = pulid.MustNew("shp_")
 	entity.Version = 1
@@ -511,7 +511,7 @@ func TestValidateUpdate_RejectsMoveWithOutOfOrderActualStops(t *testing.T) {
 func TestValidateCreate_AllowsLegacyCompatibleMixedStopSequence(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	entity := validShipmentForValidation()
 	entity.Moves[0].Stops = []*shipment.Stop{
 		makeStopForValidation(shipment.StopTypePickup, 0, 1, 2),
@@ -530,7 +530,7 @@ func TestValidateUpdate_RejectsActualArrivalBeforePreviousTractorEvent(t *testin
 
 	assignmentRepo := mocks.NewMockAssignmentRepository(t)
 	allowNoExternalTimelineOverlap(assignmentRepo)
-	v := NewTestValidatorWithAssignmentRepo(t, assignmentRepo)
+	v := newTestValidatorWithAssignmentRepo(t, assignmentRepo)
 
 	entity := validShipmentForValidation()
 	entity.ID = pulid.MustNew("shp_")
@@ -595,7 +595,7 @@ func TestValidateUpdate_RejectsActualDepartureAfterNextPrimaryWorkerEvent(t *tes
 
 	assignmentRepo := mocks.NewMockAssignmentRepository(t)
 	allowNoExternalTimelineOverlap(assignmentRepo)
-	v := NewTestValidatorWithAssignmentRepo(t, assignmentRepo)
+	v := newTestValidatorWithAssignmentRepo(t, assignmentRepo)
 
 	entity := validShipmentForValidation()
 	entity.ID = pulid.MustNew("shp_")
@@ -674,7 +674,7 @@ func TestValidateUpdate_RejectsOverlappingActualTimesWithinShipmentForSameTracto
 			mock.AnythingOfType("pulid.ID"),
 		).
 		Return(nil, nil)
-	v := NewTestValidatorWithAssignmentRepo(t, assignmentRepo)
+	v := newTestValidatorWithAssignmentRepo(t, assignmentRepo)
 	entity := validShipmentForValidation()
 	entity.ID = pulid.MustNew("shp_")
 	entity.Version = 1
@@ -721,7 +721,7 @@ func TestValidateUpdate_RejectsActualArrivalWithinPersistedTractorWindow(t *test
 	t.Parallel()
 
 	assignmentRepo := mocks.NewMockAssignmentRepository(t)
-	v := NewTestValidatorWithAssignmentRepo(t, assignmentRepo)
+	v := newTestValidatorWithAssignmentRepo(t, assignmentRepo)
 
 	entity := validShipmentForValidation()
 	entity.ID = pulid.MustNew("shp_")
@@ -792,7 +792,7 @@ func TestValidateUpdateWithOriginal_SkipsExternalTimelineLookupForUnchangedActua
 	t.Parallel()
 
 	assignmentRepo := mocks.NewMockAssignmentRepository(t)
-	v := NewTestValidatorWithAssignmentRepo(t, assignmentRepo)
+	v := newTestValidatorWithAssignmentRepo(t, assignmentRepo)
 
 	original := validShipmentForValidation()
 	original.ID = pulid.MustNew("shp_")
@@ -823,7 +823,7 @@ func TestValidateUpdateWithOriginal_SkipsExternalTimelineLookupForUnchangedActua
 func TestValidateUpdateWithOriginal_PreservesOriginalEntryMethod(t *testing.T) {
 	t.Parallel()
 
-	v := NewTestValidator(t)
+	v := newTestValidator(t)
 	original := validShipmentForValidation()
 	original.ID = pulid.MustNew("shp_")
 	original.Version = 1

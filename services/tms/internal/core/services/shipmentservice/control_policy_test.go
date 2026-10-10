@@ -3,6 +3,8 @@ package shipmentservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/services/shipmentservice/shipmentservicetest"
+
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -33,7 +35,7 @@ func TestValidatorValidateCreate_RejectsWeightAboveShipmentControlLimit(t *testi
 	v := &Validator{
 		validator: newValidatorBuilder(validatorDeps{
 			ControlRepo:    controlRepo,
-			CustomerRepo:   NewTestCustomerRepository(t),
+			CustomerRepo:   shipmentservicetest.NewCustomerRepository(t),
 			CommodityRepo:  mocks.NewMockCommodityRepository(t),
 			HazmatRuleRepo: mocks.NewMockHazmatSegregationRuleRepository(t),
 			ShipmentRepo:   mocks.NewMockShipmentRepository(t),
@@ -83,7 +85,7 @@ func TestValidatorValidateUpdate_RejectsMoveRemovalWhenDisallowed(t *testing.T) 
 	v := &Validator{
 		validator: newValidatorBuilder(validatorDeps{
 			ControlRepo:    controlRepo,
-			CustomerRepo:   NewTestCustomerRepository(t),
+			CustomerRepo:   shipmentservicetest.NewCustomerRepository(t),
 			CommodityRepo:  mocks.NewMockCommodityRepository(t),
 			HazmatRuleRepo: mocks.NewMockHazmatSegregationRuleRepository(t),
 			ShipmentRepo:   shipmentRepo,

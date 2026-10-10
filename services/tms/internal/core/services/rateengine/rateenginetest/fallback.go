@@ -1,8 +1,10 @@
-package rateengine
+package rateenginetest
 
 import (
 	"context"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/core/services/rateengine"
 
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -21,7 +23,7 @@ import (
 // shipment ends up with the right numbers, not which contract produced them.
 // Resolving nothing puts the engine on its fallback path, so those tests go on
 // asserting exactly what they asserted before rate agreements existed.
-func NewFallbackEngine(t *testing.T, formula services.FormulaCalculator) *Service {
+func NewFallbackEngine(t *testing.T, formula services.FormulaCalculator) *rateengine.Service {
 	t.Helper()
 
 	agreementRepo := mocks.NewMockRateAgreementRepository(t)
@@ -53,7 +55,7 @@ func NewFallbackEngine(t *testing.T, formula services.FormulaCalculator) *Servic
 		}).
 		Maybe()
 
-	return New(Params{
+	return rateengine.New(rateengine.Params{
 		Logger:        zap.NewNop(),
 		AgreementRepo: agreementRepo,
 		ZoneRepo:      zoneRepo,

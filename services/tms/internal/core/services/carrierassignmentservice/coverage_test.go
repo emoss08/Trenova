@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -76,7 +75,7 @@ func TestApplyCoverageChangeStampsCoverageExplicitly(t *testing.T) {
 				l:                 zap.NewNop(),
 				shipmentRepo:      shipmentRepo,
 				controlRepo:       controlRepo,
-				shipmentValidator: shipmentservice.NewTestValidator(t),
+				shipmentValidator: newTestShipmentValidator(t),
 				coordinator: shipmentstate.NewCoordinatorWithClock(
 					func() int64 { return 10 },
 				),

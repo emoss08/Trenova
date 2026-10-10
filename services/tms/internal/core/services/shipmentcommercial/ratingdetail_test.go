@@ -3,6 +3,8 @@ package shipmentcommercial
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial/shipmentcommercialtest"
+
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -24,8 +26,8 @@ func TestRecalculate_ContractRatingLeavesResolvedVariablesEmptyNotNil(t *testing
 
 	entity := validShipment()
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: StubRateEngine(t, 1000)})
-	calculator.now = func() int64 { return ratedAt }
+	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)})
+	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	require.NoError(
 		t,
@@ -78,14 +80,14 @@ func TestRecalculate_FormulaPricedShipmentNamesItsTemplate(t *testing.T) {
 				Outcome:        ratequote.OutcomeFormulaFallback,
 				LinehaulAmount: linehaul,
 				TotalAmount:    linehaul,
-				RatedAt:        ratedAt,
+				RatedAt:        shipmentcommercialtest.RatedAt,
 				Trace:          trace,
 			},
 		}, nil).
 		Once()
 
 	calculator := New(Params{Logger: zap.NewNop(), RateEngine: engine})
-	calculator.now = func() int64 { return ratedAt }
+	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	require.NoError(
 		t,
@@ -146,14 +148,14 @@ func TestRecalculate_ClampedRateRecordsTheGuardrailThatDecidedIt(t *testing.T) {
 				Outcome:        ratequote.OutcomeRated,
 				LinehaulAmount: clamped,
 				TotalAmount:    clamped,
-				RatedAt:        ratedAt,
+				RatedAt:        shipmentcommercialtest.RatedAt,
 				Trace:          trace,
 			},
 		}, nil).
 		Once()
 
 	calculator := New(Params{Logger: zap.NewNop(), RateEngine: engine})
-	calculator.now = func() int64 { return ratedAt }
+	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	require.NoError(
 		t,

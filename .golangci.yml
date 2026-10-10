@@ -79,6 +79,39 @@ linters:
               desc: use bytedance/sonic instead of encoding/json
             - pkg: io/ioutil
               desc: use os or io instead
+        testcode:
+          files:
+            - $all
+            - "!$test"
+            - "!**/internal/testutil/**"
+            - "!**/*test/*.go"
+            - "!**/internal/core/services/agentevalgate/*.go"
+            - "!**/internal/core/services/agentredteam/*.go"
+          deny:
+            - pkg: github.com/emoss08/trenova/internal/testutil
+              desc: test helpers are linked into the binary; import them only from _test.go files
+            - pkg: github.com/stretchr/testify/mock
+              desc: mocks are linked into the binary; import them only from _test.go files
+            - pkg: github.com/golang/mock
+              desc: mocks are linked into the binary; import them only from _test.go files
+            - pkg: github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest
+              desc: test helper packages are linked into the binary; import them only from _test.go files
+            - pkg: github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest
+              desc: test helper packages are linked into the binary; import them only from _test.go files
+            - pkg: github.com/emoss08/trenova/internal/core/services/exchangeratestamp/exchangeratestamptest
+              desc: test helper packages are linked into the binary; import them only from _test.go files
+            - pkg: github.com/emoss08/trenova/internal/core/services/rateengine/rateenginetest
+              desc: test helper packages are linked into the binary; import them only from _test.go files
+            - pkg: github.com/emoss08/trenova/internal/core/services/shipmentcommercial/shipmentcommercialtest
+              desc: test helper packages are linked into the binary; import them only from _test.go files
+            - pkg: github.com/emoss08/trenova/internal/core/services/shipmentservice/shipmentservicetest
+              desc: test helper packages are linked into the binary; import them only from _test.go files
+            - pkg: github.com/emoss08/trenova/internal/core/temporaljobs/replaytest
+              desc: test helper packages are linked into the binary; import them only from _test.go files
+            - pkg: github.com/emoss08/trenova/internal/infrastructure/config/configtest
+              desc: test helper packages are linked into the binary; import them only from _test.go files
+            - pkg: github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest
+              desc: test helper packages are linked into the binary; import them only from _test.go files
     errcheck:
       check-type-assertions: true
     revive:

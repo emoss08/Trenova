@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/services/shipmentservice/shipmentservicetest"
+
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
@@ -1068,7 +1070,7 @@ func newIntegrationShipmentServiceWith(
 	validator := NewValidator(ValidatorParams{
 		DB:                        conn,
 		ControlRepo:               controlRepo,
-		CustomerRepo:              NewTestCustomerRepository(t),
+		CustomerRepo:              shipmentservicetest.NewCustomerRepository(t),
 		CommodityRepo:             commodityRepo,
 		HazmatSegregationRuleRepo: hazmatRuleRepo,
 		ShipmentRepo:              shipmentRepo,

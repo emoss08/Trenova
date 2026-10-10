@@ -36,7 +36,7 @@ func TestServiceCheckForDuplicateBOLs_SkipsLookupWhenDisabled(t *testing.T) {
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,
-		validator:    NewTestValidator(t),
+		validator:    newTestValidator(t),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -86,7 +86,7 @@ func TestServiceCheckForDuplicateBOLs_ReturnsDuplicateError(t *testing.T) {
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  controlRepo,
-		validator:    NewTestValidator(t),
+		validator:    newTestValidator(t),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
@@ -120,7 +120,7 @@ func TestCheckDuplicateBOLsWithControl_NoDuplicates(t *testing.T) {
 		l:            zap.NewNop(),
 		repo:         repo,
 		controlRepo:  mocks.NewMockShipmentControlRepository(t),
-		validator:    NewTestValidator(t),
+		validator:    newTestValidator(t),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}

@@ -5,9 +5,11 @@ package invoiceadjustmentservice
 import (
 	"context"
 	"fmt"
+	"testing"
+
+	"github.com/emoss08/trenova/internal/core/services/rateengine/rateenginetest"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/chargeallocationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerledgerrepository"
-	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
@@ -22,7 +24,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
-	"github.com/emoss08/trenova/internal/core/services/rateengine"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -1136,7 +1137,7 @@ func newIntegrationHarness(
 		WorkflowStarter: starter,
 		Commercial: shipmentcommercial.New(shipmentcommercial.Params{
 			Logger: zap.NewNop(),
-			RateEngine: rateengine.NewFallbackEngine(
+			RateEngine: rateenginetest.NewFallbackEngine(
 				t,
 				&fakeFormulaCalculator{amount: formulaAmount},
 			),
@@ -1197,7 +1198,7 @@ func (h *integrationHarness) buildService(
 		WorkflowStarter: starter,
 		Commercial: shipmentcommercial.New(shipmentcommercial.Params{
 			Logger: zap.NewNop(),
-			RateEngine: rateengine.NewFallbackEngine(
+			RateEngine: rateenginetest.NewFallbackEngine(
 				t,
 				&fakeFormulaCalculator{amount: formulaAmount},
 			),

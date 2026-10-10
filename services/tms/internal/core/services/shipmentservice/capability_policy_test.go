@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/services/shipmentservice/shipmentservicetest"
+
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
@@ -112,7 +114,7 @@ func validatorWithProfileAndEquipment(
 	return &Validator{
 		validator: newValidatorBuilder(validatorDeps{
 			ControlRepo:       controlRepo,
-			CustomerRepo:      NewTestCustomerRepository(t),
+			CustomerRepo:      shipmentservicetest.NewCustomerRepository(t),
 			CommodityRepo:     mocks.NewMockCommodityRepository(t),
 			HazmatRuleRepo:    mocks.NewMockHazmatSegregationRuleRepository(t),
 			ShipmentRepo:      mocks.NewMockShipmentRepository(t),
@@ -656,7 +658,7 @@ func validatorWithPermits(
 	return &Validator{
 		validator: newValidatorBuilder(validatorDeps{
 			ControlRepo:    controlRepo,
-			CustomerRepo:   NewTestCustomerRepository(t),
+			CustomerRepo:   shipmentservicetest.NewCustomerRepository(t),
 			CommodityRepo:  mocks.NewMockCommodityRepository(t),
 			HazmatRuleRepo: mocks.NewMockHazmatSegregationRuleRepository(t),
 			ShipmentRepo:   mocks.NewMockShipmentRepository(t),

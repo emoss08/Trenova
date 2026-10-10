@@ -1,4 +1,4 @@
-package shipmentcommercial
+package shipmentcommercialtest
 
 import (
 	"testing"
@@ -12,9 +12,9 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// ratedAt is the fixed moment the stubbed quotes claim to have been produced,
+// RatedAt is the fixed moment the stubbed quotes claim to have been produced,
 // so a test asserting on a rating detail is never comparing against the clock.
-const ratedAt = int64(7300)
+const RatedAt = int64(7300)
 
 // StubRateEngine returns a rate engine that always prices at the given amount.
 //
@@ -53,7 +53,7 @@ func StubRateEngineForAgreement(
 				RateAgreementID: agreementID,
 				LinehaulAmount:  linehaul,
 				TotalAmount:     linehaul,
-				RatedAt:         ratedAt,
+				RatedAt:         RatedAt,
 				Trace: &ratetypes.Trace{
 					Totals: ratetypes.Totals{Linehaul: linehaul, Total: linehaul},
 				},

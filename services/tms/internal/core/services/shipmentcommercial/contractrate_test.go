@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial/shipmentcommercialtest"
+
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -49,7 +51,7 @@ func TestRecalculate_PricesFormulaOnlyAndPersistsNoQuote(t *testing.T) {
 		Once()
 
 	calculator := New(Params{Logger: zap.NewNop(), RateEngine: engine})
-	calculator.now = func() int64 { return ratedAt }
+	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	require.NoError(
 		t,
@@ -81,8 +83,8 @@ func TestRecalculate_KeepsTheContractProvenanceOnAnAutoRatedShipment(t *testing.
 		RateQuoteID:   "rq_01",
 	}
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: StubRateEngine(t, 1000)})
-	calculator.now = func() int64 { return ratedAt }
+	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)})
+	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	require.NoError(
 		t,
@@ -109,8 +111,8 @@ func TestRecalculate_DropsTheContractProvenanceOnceEdited(t *testing.T) {
 	entity.AutoRated = false
 	entity.RatingDetail = &shipment.RatingDetail{AgreementName: "Acme TL 2026"}
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: StubRateEngine(t, 1000)})
-	calculator.now = func() int64 { return ratedAt }
+	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)})
+	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	require.NoError(
 		t,
@@ -138,7 +140,7 @@ func TestRecalculate_LockedShipmentKeepsItsCharges(t *testing.T) {
 	engine := mocks.NewMockRateEngine(t)
 
 	calculator := New(Params{Logger: zap.NewNop(), RateEngine: engine})
-	calculator.now = func() int64 { return ratedAt }
+	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	require.NoError(
 		t,
@@ -164,8 +166,8 @@ func TestAdoptContractRate_SeatsTheRatingMethodAndBaseRate(t *testing.T) {
 	templateID := pulid.MustNew("fmt_")
 	agreementID := pulid.MustNew("ragr_")
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: StubRateEngine(t, 1000)})
-	calculator.now = func() int64 { return ratedAt }
+	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)})
+	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	calculator.AdoptContractRate(t.Context(), entity, &services.RatedShipment{
 		Amount:            decimal.NewFromInt(1000),
@@ -179,7 +181,7 @@ func TestAdoptContractRate_SeatsTheRatingMethodAndBaseRate(t *testing.T) {
 	assert.True(t, decimal.NewFromFloat(2.15).Equal(entity.BaseRate.Decimal))
 	assert.True(t, entity.AutoRated)
 	require.NotNil(t, entity.AutoRatedAt)
-	assert.Equal(t, ratedAt, *entity.AutoRatedAt)
+	assert.Equal(t, shipmentcommercialtest.RatedAt, *entity.AutoRatedAt)
 }
 
 // A rule that binds no rate of its own prices through whatever the shipment
@@ -191,8 +193,8 @@ func TestAdoptContractRate_KeepsTheBaseRateWhenTheRuleBindsNone(t *testing.T) {
 	entity := validShipment()
 	entity.BaseRate = decimal.NewNullDecimal(decimal.NewFromFloat(3.5))
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: StubRateEngine(t, 1000)})
-	calculator.now = func() int64 { return ratedAt }
+	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)})
+	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	calculator.AdoptContractRate(t.Context(), entity, &services.RatedShipment{
 		Amount:  decimal.NewFromInt(1000),
@@ -212,8 +214,8 @@ func TestAdoptContractRate_ClearsAPreviousDeparture(t *testing.T) {
 	entity.RateOverrideReason = "Spot rate agreed with the customer"
 	entity.RateOverrideByID = &userID
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: StubRateEngine(t, 1000)})
-	calculator.now = func() int64 { return ratedAt }
+	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)})
+	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	calculator.AdoptContractRate(t.Context(), entity, &services.RatedShipment{
 		Amount:  decimal.NewFromInt(1000),
@@ -232,8 +234,8 @@ func TestAdoptContractRate_IgnoresAnUnpricedOutcome(t *testing.T) {
 
 	entity := validShipment()
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: StubRateEngine(t, 0)})
-	calculator.now = func() int64 { return ratedAt }
+	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 0)})
+	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	calculator.AdoptContractRate(t.Context(), entity, &services.RatedShipment{
 		Amount:  decimal.Zero,
@@ -321,10 +323,10 @@ func TestRecordRateDeparture_RecordsWhatWasGivenAway(t *testing.T) {
 
 	calculator := New(Params{
 		Logger:     zap.NewNop(),
-		RateEngine: StubRateEngine(t, 1000),
+		RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000),
 		QuoteRepo:  quoteRepo,
 	})
-	calculator.now = func() int64 { return ratedAt }
+	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	require.NoError(t, calculator.RecordRateDeparture(t.Context(), entity, userID, true))
 
@@ -355,10 +357,10 @@ func TestRecordRateDeparture_WritesNoQuoteWhenNothingJustDeparted(t *testing.T) 
 
 	calculator := New(Params{
 		Logger:     zap.NewNop(),
-		RateEngine: StubRateEngine(t, 1000),
+		RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000),
 		QuoteRepo:  quoteRepo,
 	})
-	calculator.now = func() int64 { return ratedAt }
+	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	require.NoError(
 		t,
@@ -380,10 +382,10 @@ func TestRecordRateDeparture_IgnoresAnAutoRatedShipment(t *testing.T) {
 
 	calculator := New(Params{
 		Logger:     zap.NewNop(),
-		RateEngine: StubRateEngine(t, 1000),
+		RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000),
 		QuoteRepo:  quoteRepo,
 	})
-	calculator.now = func() int64 { return ratedAt }
+	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	require.NoError(
 		t,
@@ -449,7 +451,7 @@ func TestRateAndAdoptContract_AddsNoAccessorialsWhenNothingPricedTheLane(t *test
 		RateEngine:    engine,
 		AgreementRepo: agreementRepoFor(t, agreement),
 	})
-	calculator.now = func() int64 { return ratedAt }
+	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	entity := validShipment()
 
@@ -488,7 +490,7 @@ func departingCalculator(
 				RateAgreementID: &agreementID,
 				LinehaulAmount:  linehaul,
 				TotalAmount:     linehaul,
-				RatedAt:         ratedAt,
+				RatedAt:         shipmentcommercialtest.RatedAt,
 			},
 		}, nil).
 		Maybe()
@@ -498,7 +500,7 @@ func departingCalculator(
 		RateEngine:    engine,
 		AgreementRepo: agreementRepoFor(t, agreement),
 	})
-	calculator.now = func() int64 { return ratedAt }
+	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
 
 	return calculator
 }

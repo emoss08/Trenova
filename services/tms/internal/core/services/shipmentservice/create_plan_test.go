@@ -44,7 +44,7 @@ func previewCreateService(
 		l:           zap.NewNop(),
 		repo:        repo,
 		controlRepo: controlRepo,
-		validator:   NewTestValidator(t),
+		validator:   newTestValidator(t),
 		commercial: newTestCommercialCalculator(t,
 			formula,
 			mocks.NewMockAccessorialChargeRepository(t),

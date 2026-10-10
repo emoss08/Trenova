@@ -4,12 +4,13 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp/exchangeratestamptest"
+
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -333,7 +334,7 @@ func TestMarkPaidStampsTheExchangeRateOfAForeignCurrencySettlement(t *testing.T)
 		journalRepo:      journals,
 		generator:        journalNumbers{},
 		auditService:     silentAudit{},
-		stamper:          exchangeratestamp.NewFixedForTest(t, "USD", decimal.RequireFromString("0.7312")),
+		stamper:          exchangeratestamptest.NewFixedForTest(t, "USD", decimal.RequireFromString("0.7312")),
 	}
 	paid, err := svc.MarkPaid(t.Context(), &serviceports.MarkSettlementPaidRequest{
 		TenantInfo: pagination.TenantInfo{

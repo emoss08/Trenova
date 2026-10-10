@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -97,7 +96,7 @@ func newPlanFixture(t *testing.T, moveStatus shipment.MoveStatus) *planFixture {
 		holdRepo:          f.holds,
 		controlRepo:       f.controls,
 		rateConRepo:       f.rateCons,
-		shipmentValidator: shipmentservice.NewTestValidator(t),
+		shipmentValidator: newTestShipmentValidator(t),
 		coordinator:       shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
 

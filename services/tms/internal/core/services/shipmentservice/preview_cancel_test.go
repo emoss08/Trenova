@@ -40,7 +40,7 @@ func TestPreviewCancel_IsTheCancellationCancelMakes(t *testing.T) {
 		l:            zap.NewNop(),
 		db:           dbtest.NopConnection{},
 		repo:         repo,
-		validator:    NewTestValidator(t),
+		validator:    newTestValidator(t),
 		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
