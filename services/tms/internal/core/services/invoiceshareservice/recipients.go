@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/authctx"

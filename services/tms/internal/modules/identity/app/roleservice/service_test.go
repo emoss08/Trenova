@@ -1,0 +1,1506 @@
+package roleservice
+
+import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"errors"
+	"testing"
+
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/rbactest"
+	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+)
+
+func newStubValidator() *Validator {
+	return &Validator{
+		validator: validationframework.
+			NewTenantedValidatorBuilder[*permission.Role]().
+			WithModelName("Role").
+			Build(),
+	}
+}
+
+type testServiceDeps struct {
+	roleRepo   *permissionportsmock.MockRoleRepository
+	rbacRepo   *rbactest.Repository
+	permCache  *permissionportsmock.MockPermissionCacheRepository
+	permEngine *permissionportsmock.MockPermissionEngine
+	audit      *securityaudittest.Recorder
+	svc        *Service
+}
+
+func setupTestService(t *testing.T) *testServiceDeps {
+	t.Helper()
+
+	roleRepo := permissionportsmock.NewMockRoleRepository(t)
+	rbacRepo := &rbactest.Repository{}
+	permCache := permissionportsmock.NewMockPermissionCacheRepository(t)
+	permEngine := permissionportsmock.NewMockPermissionEngine(t)
+	logger := zap.NewNop()
+	recorder := &securityaudittest.Recorder{}
+
+	svc := &Service{
+		l:          logger.Named("test.role"),
+		roleRepo:   roleRepo,
+		rbacRepo:   rbacRepo,
+		permCache:  permCache,
+		permEngine: permEngine,
+		validator:  newStubValidator(),
+		registry:   permission.NewRegistry(),
+		auditor:    recorder,
+	}
+
+	return &testServiceDeps{
+		roleRepo:   roleRepo,
+		rbacRepo:   rbacRepo,
+		permCache:  permCache,
+		permEngine: permEngine,
+		audit:      recorder,
+		svc:        svc,
+	}
+}
+
+// expectFullEffectivePermissions arms the permission engine for scenarios that
+// reach a sensitivity check. Tests that stop earlier must not declare it, so an
+// unused expectation stays a failure.
+func (d *testServiceDeps) expectFullEffectivePermissions() {
+	d.permEngine.On("GetEffectivePermissions", mock.Anything, mock.Anything, mock.Anything).
+		Return(testFullEffectivePermissions(), nil)
+}
+
+func testFullEffectivePermissions() *permissionports.EffectivePermissions {
+	registry := permission.NewRegistry()
+	resources := make(map[string]permissionports.EffectiveResourcePermission, len(registry.All()))
+	for _, def := range registry.All() {
+		operations := make([]permission.Operation, len(def.Operations))
+		for i, op := range def.Operations {
+			operations[i] = op.Operation
+		}
+
+		resources[def.Resource] = permissionports.EffectiveResourcePermission{
+			Operations: operations,
+			DataScope:  permission.DataScopeAll,
+		}
+	}
+
+	return &permissionports.EffectivePermissions{
+		MaxSensitivity: permission.SensitivityConfidential,
+		Resources:      resources,
+	}
+}
+
+func TestCreateRole_PrivilegeEscalation_Fails(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+
+	role := &permission.Role{
+		Name:           "Elevated Role",
+		MaxSensitivity: permission.SensitivityConfidential,
+		Permissions:    []*permission.ResourcePermission{},
+	}
+
+	deps.permEngine.ExpectedCalls = nil
+
+	deps.permEngine.On("GetEffectivePermissions", ctx, actorID, orgID).
+		Return(&permissionports.EffectivePermissions{
+			MaxSensitivity: permission.SensitivityInternal,
+			Resources:      make(map[string]permissionports.EffectiveResourcePermission),
+		}, nil)
+
+	err := deps.svc.CreateRole(ctx, CreateRoleRequest{
+		ActorID:        actorID,
+		OrganizationID: orgID,
+		Role:           role,
+	})
+
+	require.Error(t, err)
+	var multiErr *errortypes.MultiError
+	require.True(t, errors.As(err, &multiErr))
+
+	deps.permEngine.AssertExpectations(t)
+}
+
+func TestUpdateRole_SystemRole_Fails(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+
+	role := &permission.Role{
+		ID:   roleID,
+		Name: "Updated Role",
+	}
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(&permission.Role{
+		ID:       roleID,
+		IsSystem: true,
+	}, nil)
+
+	err := deps.svc.UpdateRole(ctx, UpdateRoleRequest{
+		ActorID:        actorID,
+		OrganizationID: orgID,
+		Role:           role,
+	})
+
+	require.Error(t, err)
+	assert.Equal(t, ErrCannotModifySystemRole, err)
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestUpdateRole_Success(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+
+	role := &permission.Role{
+		ID:             roleID,
+		Name:           "Updated Role",
+		MaxSensitivity: permission.SensitivityInternal,
+		Permissions:    []*permission.ResourcePermission{},
+	}
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(&permission.Role{
+		ID:       roleID,
+		IsSystem: false,
+	}, nil)
+	deps.roleRepo.On("Update", ctx, role).Return(nil)
+	deps.permCache.On("InvalidateByRole", ctx, roleID, deps.roleRepo).Return(nil)
+
+	err := deps.svc.UpdateRole(ctx, UpdateRoleRequest{
+		ActorID:        actorID,
+		OrganizationID: orgID,
+		Role:           role,
+	})
+
+	require.NoError(t, err)
+
+	deps.roleRepo.AssertExpectations(t)
+	deps.permCache.AssertExpectations(t)
+}
+
+func TestListRoles(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	orgID := pulid.MustNew("org_")
+
+	expectedRoles := []*permission.Role{
+		{ID: pulid.MustNew("rol_"), Name: "Role 1"},
+		{ID: pulid.MustNew("rol_"), Name: "Role 2"},
+	}
+
+	req := &permissionports.ListRolesRequest{
+		Filter: &pagination.QueryOptions{
+			TenantInfo: pagination.TenantInfo{OrgID: orgID},
+			Pagination: pagination.Info{Limit: 10, Offset: 0},
+		},
+	}
+
+	deps.roleRepo.On("List", ctx, req).Return(&pagination.ListResult[*permission.Role]{
+		Items: expectedRoles,
+		Total: 2,
+	}, nil)
+
+	result, err := deps.svc.ListRoles(ctx, req)
+
+	require.NoError(t, err)
+	assert.Len(t, result.Items, 2)
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestAssignRole_Success(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	targetUserID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+
+	assignment := &permission.UserRoleAssignment{
+		UserID: targetUserID,
+		RoleID: roleID,
+	}
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(&permission.Role{
+		ID:          roleID,
+		Permissions: []*permission.ResourcePermission{},
+	}, nil)
+	deps.roleRepo.On("GetUserRoleAssignments", ctx, targetUserID, orgID).
+		Return([]*permission.UserRoleAssignment{}, nil)
+	deps.roleRepo.On("CreateAssignment", ctx, assignment).Return(nil)
+	deps.permEngine.On("InvalidateUser", ctx, targetUserID, orgID).Return(nil)
+
+	err := deps.svc.AssignRole(ctx, AssignRoleRequest{
+		ActorID:        actorID,
+		OrganizationID: orgID,
+		Assignment:     assignment,
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, orgID, assignment.OrganizationID)
+	assert.Equal(t, actorID, assignment.AssignedBy)
+
+	deps.roleRepo.AssertExpectations(t)
+	deps.permEngine.AssertExpectations(t)
+}
+
+func TestAssignRole_DuplicateActiveAssignment_Fails(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	targetUserID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+
+	assignment := &permission.UserRoleAssignment{
+		UserID: targetUserID,
+		RoleID: roleID,
+	}
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(&permission.Role{
+		ID:          roleID,
+		Permissions: []*permission.ResourcePermission{},
+	}, nil)
+	deps.roleRepo.On("GetUserRoleAssignments", ctx, targetUserID, orgID).
+		Return([]*permission.UserRoleAssignment{
+			{
+				UserID: targetUserID,
+				RoleID: roleID,
+			},
+		}, nil)
+
+	err := deps.svc.AssignRole(ctx, AssignRoleRequest{
+		ActorID:        actorID,
+		OrganizationID: orgID,
+		Assignment:     assignment,
+	})
+
+	require.ErrorIs(t, err, ErrRoleAlreadyAssigned)
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestUnassignRole_Success(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	assignmentID := pulid.MustNew("ura_")
+
+	userID := pulid.MustNew("usr_")
+	deps.roleRepo.On("DeleteAssignment", ctx, permissionports.DeleteRoleAssignmentRequest{
+		AssignmentID:   assignmentID,
+		OrganizationID: orgID,
+	}).Return(&permission.UserRoleAssignment{
+		ID:             assignmentID,
+		UserID:         userID,
+		OrganizationID: orgID,
+	}, nil)
+	deps.permEngine.On("InvalidateUser", ctx, userID, orgID).Return(nil)
+
+	err := deps.svc.UnassignRole(ctx, UnassignRoleRequest{
+		ActorID:        actorID,
+		OrganizationID: orgID,
+		AssignmentID:   assignmentID,
+	})
+
+	require.NoError(t, err)
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestGetImpactedUsers(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	roleID := pulid.MustNew("rol_")
+
+	expected := []permissionports.ImpactedUser{
+		{UserID: pulid.MustNew("usr_"), UserName: "User 1"},
+		{UserID: pulid.MustNew("usr_"), UserName: "User 2"},
+	}
+
+	deps.roleRepo.On("GetUsersWithRole", ctx, roleID).Return(expected, nil)
+
+	users, err := deps.svc.GetImpactedUsers(ctx, roleID)
+
+	require.NoError(t, err)
+	assert.Len(t, users, 2)
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestInitializeOrganizationRoles(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	orgID := pulid.MustNew("org_")
+	creatorID := pulid.MustNew("usr_")
+
+	deps.roleRepo.On("Create", ctx, mock.MatchedBy(func(role *permission.Role) bool {
+		return role.OrganizationID == orgID &&
+			role.Name == "Organization Administrator" &&
+			role.IsSystem &&
+			role.CreatedBy == creatorID
+	})).Return(nil)
+	deps.roleRepo.On("CreateAssignment", ctx, mock.MatchedBy(func(a *permission.UserRoleAssignment) bool {
+		return a.UserID == creatorID &&
+			a.OrganizationID == orgID &&
+			a.AssignedBy == creatorID
+	})).
+		Return(nil)
+
+	err := deps.svc.InitializeOrganizationRoles(ctx, orgID, creatorID)
+
+	require.NoError(t, err)
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestCreateResourcePermission_Success(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+
+	rp := &permission.ResourcePermission{
+		RoleID:     roleID,
+		Resource:   "shipment",
+		Operations: []permission.Operation{permission.OpRead},
+		DataScope:  permission.DataScopeOrganization,
+	}
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(&permission.Role{
+		ID:       roleID,
+		IsSystem: false,
+	}, nil)
+	deps.roleRepo.On("CreateResourcePermission", ctx, rp).Return(nil)
+	deps.permCache.On("InvalidateByRole", ctx, roleID, deps.roleRepo).Return(nil)
+
+	err := deps.svc.CreateResourcePermission(ctx, actorID, orgID, rp)
+
+	require.NoError(t, err)
+
+	deps.roleRepo.AssertExpectations(t)
+	deps.permCache.AssertExpectations(t)
+}
+
+func TestCreateResourcePermission_SystemRole_Fails(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+
+	rp := &permission.ResourcePermission{
+		RoleID:   roleID,
+		Resource: "shipment",
+	}
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(&permission.Role{
+		ID:       roleID,
+		IsSystem: true,
+	}, nil)
+
+	err := deps.svc.CreateResourcePermission(ctx, actorID, orgID, rp)
+
+	require.Error(t, err)
+	assert.Equal(t, ErrCannotModifySystemRole, err)
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestDeleteResourcePermission_Success(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+	permID := pulid.MustNew("rp_")
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(&permission.Role{
+		ID:       roleID,
+		IsSystem: false,
+	}, nil)
+	deps.roleRepo.On("DeleteResourcePermission", ctx, permissionports.DeleteResourcePermissionRequest{
+		PermissionID: permID,
+		RoleID:       roleID,
+	}).Return(nil)
+	deps.permCache.On("InvalidateByRole", ctx, roleID, deps.roleRepo).Return(nil)
+
+	err := deps.svc.DeleteResourcePermission(ctx, orgID, permID, roleID)
+
+	require.NoError(t, err)
+
+	deps.roleRepo.AssertExpectations(t)
+	deps.permCache.AssertExpectations(t)
+}
+
+func TestCircularInheritance_DirectSelfReference(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+
+	role := &permission.Role{
+		ID:            roleID,
+		Name:          "Self Referencing Role",
+		ParentRoleIDs: []pulid.ID{roleID},
+	}
+
+	err := deps.svc.CreateRole(ctx, CreateRoleRequest{
+		ActorID:        actorID,
+		OrganizationID: orgID,
+		Role:           role,
+	})
+
+	require.Error(t, err)
+	assert.Equal(t, ErrCircularInheritance, err)
+
+}
+
+func TestValidateNoEscalation_ResourceNotAllowed(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+
+	role := &permission.Role{
+		Name:           "Role with forbidden resource",
+		MaxSensitivity: permission.SensitivityInternal,
+		Permissions: []*permission.ResourcePermission{
+			{
+				Resource:   "billing",
+				Operations: []permission.Operation{permission.OpRead},
+				DataScope:  permission.DataScopeOrganization,
+			},
+		},
+	}
+
+	deps.permEngine.ExpectedCalls = nil
+
+	deps.permEngine.On("GetEffectivePermissions", ctx, actorID, orgID).
+		Return(&permissionports.EffectivePermissions{
+			MaxSensitivity: permission.SensitivityInternal,
+			Resources: map[string]permissionports.EffectiveResourcePermission{
+				"shipment": {
+					Operations: []permission.Operation{permission.OpRead},
+					DataScope:  permission.DataScopeOrganization,
+				},
+			},
+		}, nil)
+
+	err := deps.svc.CreateRole(ctx, CreateRoleRequest{
+		ActorID:        actorID,
+		OrganizationID: orgID,
+		Role:           role,
+	})
+
+	require.Error(t, err)
+	var multiErr *errortypes.MultiError
+	require.True(t, errors.As(err, &multiErr))
+
+	deps.permEngine.AssertExpectations(t)
+}
+
+func TestValidateNoEscalation_OperationNotAllowed(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+
+	role := &permission.Role{
+		Name:           "Role with forbidden operation",
+		MaxSensitivity: permission.SensitivityInternal,
+		Permissions: []*permission.ResourcePermission{
+			{
+				Resource:   "shipment",
+				Operations: []permission.Operation{permission.OpRead, permission.OpCreate},
+				DataScope:  permission.DataScopeOrganization,
+			},
+		},
+	}
+
+	deps.permEngine.ExpectedCalls = nil
+
+	deps.permEngine.On("GetEffectivePermissions", ctx, actorID, orgID).
+		Return(&permissionports.EffectivePermissions{
+			MaxSensitivity: permission.SensitivityInternal,
+			Resources: map[string]permissionports.EffectiveResourcePermission{
+				"shipment": {
+					Operations: []permission.Operation{permission.OpRead},
+					DataScope:  permission.DataScopeOrganization,
+				},
+			},
+		}, nil)
+
+	err := deps.svc.CreateRole(ctx, CreateRoleRequest{
+		ActorID:        actorID,
+		OrganizationID: orgID,
+		Role:           role,
+	})
+
+	require.Error(t, err)
+	var multiErr *errortypes.MultiError
+	require.True(t, errors.As(err, &multiErr))
+
+	deps.permEngine.AssertExpectations(t)
+}
+
+func TestValidateNoEscalation_DataScopeNotAllowed(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+
+	role := &permission.Role{
+		Name:           "Role with forbidden data scope",
+		MaxSensitivity: permission.SensitivityInternal,
+		Permissions: []*permission.ResourcePermission{
+			{
+				Resource:   "shipment",
+				Operations: []permission.Operation{permission.OpRead},
+				DataScope:  permission.DataScopeAll,
+			},
+		},
+	}
+
+	deps.permEngine.ExpectedCalls = nil
+
+	deps.permEngine.On("GetEffectivePermissions", ctx, actorID, orgID).
+		Return(&permissionports.EffectivePermissions{
+			MaxSensitivity: permission.SensitivityInternal,
+			Resources: map[string]permissionports.EffectiveResourcePermission{
+				"shipment": {
+					Operations: []permission.Operation{permission.OpRead},
+					DataScope:  permission.DataScopeOrganization,
+				},
+			},
+		}, nil)
+
+	err := deps.svc.CreateRole(ctx, CreateRoleRequest{
+		ActorID:        actorID,
+		OrganizationID: orgID,
+		Role:           role,
+	})
+
+	require.Error(t, err)
+	var multiErr *errortypes.MultiError
+	require.True(t, errors.As(err, &multiErr))
+
+	deps.permEngine.AssertExpectations(t)
+}
+
+func TestGetRoleByID(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	roleID := pulid.MustNew("rol_")
+	orgID := pulid.MustNew("org_")
+
+	expectedRole := &permission.Role{
+		ID:   roleID,
+		Name: "Test Role",
+	}
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(expectedRole, nil)
+
+	role, err := deps.svc.GetRoleByID(ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, roleID, role.ID)
+	assert.Equal(t, "Test Role", role.Name)
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestGetRoleByID_NotFound(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	roleID := pulid.MustNew("rol_")
+	orgID := pulid.MustNew("org_")
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(nil, errors.New("not found"))
+
+	role, err := deps.svc.GetRoleByID(ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	})
+
+	require.Error(t, err)
+	assert.Nil(t, role)
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestUpdateResourcePermission_Success(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+	permID := pulid.MustNew("rp_")
+
+	rp := &permission.ResourcePermission{
+		ID:         permID,
+		RoleID:     roleID,
+		Resource:   "shipment",
+		Operations: []permission.Operation{permission.OpRead, permission.OpUpdate},
+		DataScope:  permission.DataScopeOrganization,
+	}
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(&permission.Role{
+		ID:       roleID,
+		IsSystem: false,
+	}, nil)
+	deps.roleRepo.On("UpdateResourcePermission", ctx, rp).Return(nil)
+	deps.permCache.On("InvalidateByRole", ctx, roleID, deps.roleRepo).Return(nil)
+
+	err := deps.svc.UpdateResourcePermission(ctx, actorID, orgID, rp)
+
+	require.NoError(t, err)
+
+	deps.roleRepo.AssertExpectations(t)
+	deps.permCache.AssertExpectations(t)
+}
+
+func TestUpdateResourcePermission_SystemRole_Fails(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+	permID := pulid.MustNew("rp_")
+
+	rp := &permission.ResourcePermission{
+		ID:       permID,
+		RoleID:   roleID,
+		Resource: "shipment",
+	}
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(&permission.Role{
+		ID:       roleID,
+		IsSystem: true,
+	}, nil)
+
+	err := deps.svc.UpdateResourcePermission(ctx, actorID, orgID, rp)
+
+	require.Error(t, err)
+	assert.Equal(t, ErrCannotModifySystemRole, err)
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestUpdateResourcePermission_PrivilegeEscalation_Fails(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+	permID := pulid.MustNew("rp_")
+
+	rp := &permission.ResourcePermission{
+		ID:         permID,
+		RoleID:     roleID,
+		Resource:   "billing",
+		Operations: []permission.Operation{permission.OpRead},
+		DataScope:  permission.DataScopeOrganization,
+	}
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(&permission.Role{
+		ID:       roleID,
+		IsSystem: false,
+	}, nil)
+	deps.permEngine.ExpectedCalls = nil
+	deps.permEngine.On("GetEffectivePermissions", ctx, actorID, orgID).
+		Return(&permissionports.EffectivePermissions{
+			MaxSensitivity: permission.SensitivityInternal,
+			Resources: map[string]permissionports.EffectiveResourcePermission{
+				"shipment": {
+					Operations: []permission.Operation{permission.OpRead},
+					DataScope:  permission.DataScopeOrganization,
+				},
+			},
+		}, nil)
+
+	err := deps.svc.UpdateResourcePermission(ctx, actorID, orgID, rp)
+
+	require.Error(t, err)
+	var multiErr *errortypes.MultiError
+	require.True(t, errors.As(err, &multiErr))
+
+	deps.roleRepo.AssertExpectations(t)
+	deps.permEngine.AssertExpectations(t)
+}
+
+func TestCircularInheritance_IndirectCycle(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleA := pulid.MustNew("rol_")
+	roleB := pulid.MustNew("rol_")
+	roleC := pulid.MustNew("rol_")
+
+	role := &permission.Role{
+		ID:            roleC,
+		Name:          "Role C",
+		ParentRoleIDs: []pulid.ID{roleB},
+		Permissions:   []*permission.ResourcePermission{},
+	}
+
+	deps.roleRepo.On("GetByID", ctx, mock.MatchedBy(func(req permissionports.GetRoleByIDRequest) bool {
+		return req.ID == roleB
+	})).Return(&permission.Role{
+		ID:            roleB,
+		ParentRoleIDs: []pulid.ID{roleA},
+	}, nil)
+	deps.roleRepo.On("GetByID", ctx, mock.MatchedBy(func(req permissionports.GetRoleByIDRequest) bool {
+		return req.ID == roleA
+	})).Return(&permission.Role{
+		ID:            roleA,
+		ParentRoleIDs: []pulid.ID{roleC},
+	}, nil)
+
+	err := deps.svc.CreateRole(ctx, CreateRoleRequest{
+		ActorID:        actorID,
+		OrganizationID: orgID,
+		Role:           role,
+	})
+
+	require.Error(t, err)
+	assert.Equal(t, ErrCircularInheritance, err)
+
+}
+
+func TestCircularInheritance_NoParents(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+
+	role := &permission.Role{
+		Name:           "Role without parents",
+		ParentRoleIDs:  []pulid.ID{},
+		MaxSensitivity: permission.SensitivityInternal,
+		Permissions:    []*permission.ResourcePermission{},
+	}
+
+	deps.roleRepo.On("Create", ctx, role).Return(nil)
+
+	err := deps.svc.CreateRole(ctx, CreateRoleRequest{
+		ActorID:        actorID,
+		OrganizationID: orgID,
+		Role:           role,
+	})
+
+	require.NoError(t, err)
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestCircularInheritance_ValidChain(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	parentRoleID := pulid.MustNew("rol_")
+
+	role := &permission.Role{
+		Name:           "Child Role",
+		ParentRoleIDs:  []pulid.ID{parentRoleID},
+		MaxSensitivity: permission.SensitivityInternal,
+		Permissions:    []*permission.ResourcePermission{},
+	}
+
+	deps.roleRepo.On("GetByID", ctx, mock.MatchedBy(func(req permissionports.GetRoleByIDRequest) bool {
+		return req.ID == parentRoleID
+	})).Return(&permission.Role{
+		ID:            parentRoleID,
+		ParentRoleIDs: []pulid.ID{},
+	}, nil)
+	deps.roleRepo.On("Create", ctx, role).Return(nil)
+
+	err := deps.svc.CreateRole(ctx, CreateRoleRequest{
+		ActorID:        actorID,
+		OrganizationID: orgID,
+		Role:           role,
+	})
+
+	require.NoError(t, err)
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestUnassignRole_Error(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	assignmentID := pulid.MustNew("ura_")
+
+	deps.roleRepo.On("DeleteAssignment", ctx, permissionports.DeleteRoleAssignmentRequest{
+		AssignmentID:   assignmentID,
+		OrganizationID: orgID,
+	}).Return(nil, errors.New("database error"))
+
+	err := deps.svc.UnassignRole(ctx, UnassignRoleRequest{
+		ActorID:        actorID,
+		OrganizationID: orgID,
+		AssignmentID:   assignmentID,
+	})
+
+	require.Error(t, err)
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestDeleteResourcePermission_SystemRole_Fails(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+	permID := pulid.MustNew("rp_")
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(&permission.Role{
+		ID:       roleID,
+		IsSystem: true,
+	}, nil)
+
+	err := deps.svc.DeleteResourcePermission(ctx, orgID, permID, roleID)
+
+	require.Error(t, err)
+	assert.Equal(t, ErrCannotModifySystemRole, err)
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestInitializeOrganizationRoles_CreateRoleError(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	orgID := pulid.MustNew("org_")
+	creatorID := pulid.MustNew("usr_")
+
+	deps.roleRepo.On("Create", ctx, mock.Anything).Return(errors.New("create failed"))
+
+	err := deps.svc.InitializeOrganizationRoles(ctx, orgID, creatorID)
+
+	require.Error(t, err)
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestInitializeOrganizationRoles_AssignmentError(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	orgID := pulid.MustNew("org_")
+	creatorID := pulid.MustNew("usr_")
+
+	deps.roleRepo.On("Create", ctx, mock.Anything).Return(nil)
+	deps.roleRepo.On("CreateAssignment", ctx, mock.Anything).Return(errors.New("assignment failed"))
+
+	err := deps.svc.InitializeOrganizationRoles(ctx, orgID, creatorID)
+
+	require.Error(t, err)
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestUpdateRole_GetByIDError(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+
+	role := &permission.Role{
+		ID:   roleID,
+		Name: "Updated Role",
+	}
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(nil, errors.New("not found"))
+
+	err := deps.svc.UpdateRole(ctx, UpdateRoleRequest{
+		ActorID:        actorID,
+		OrganizationID: orgID,
+		Role:           role,
+	})
+
+	require.Error(t, err)
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestAssignRole_GetRoleError(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+
+	assignment := &permission.UserRoleAssignment{
+		UserID: pulid.MustNew("usr_"),
+		RoleID: roleID,
+	}
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(nil, errors.New("not found"))
+
+	err := deps.svc.AssignRole(ctx, AssignRoleRequest{
+		ActorID:        actorID,
+		OrganizationID: orgID,
+		Assignment:     assignment,
+	})
+
+	require.Error(t, err)
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestCreateResourcePermission_GetRoleError(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+
+	rp := &permission.ResourcePermission{
+		RoleID:   roleID,
+		Resource: "shipment",
+	}
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(nil, errors.New("not found"))
+
+	err := deps.svc.CreateResourcePermission(ctx, actorID, orgID, rp)
+
+	require.Error(t, err)
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestUpdateResourcePermission_GetRoleError(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+
+	rp := &permission.ResourcePermission{
+		ID:       pulid.MustNew("rp_"),
+		RoleID:   roleID,
+		Resource: "shipment",
+	}
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(nil, errors.New("not found"))
+
+	err := deps.svc.UpdateResourcePermission(ctx, actorID, orgID, rp)
+
+	require.Error(t, err)
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestDeleteResourcePermission_GetRoleError(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+	permID := pulid.MustNew("rp_")
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(nil, errors.New("not found"))
+
+	err := deps.svc.DeleteResourcePermission(ctx, orgID, permID, roleID)
+
+	require.Error(t, err)
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestNew(t *testing.T) {
+	t.Parallel()
+
+	roleRepo := permissionportsmock.NewMockRoleRepository(t)
+	permCache := permissionportsmock.NewMockPermissionCacheRepository(t)
+	permEngine := permissionportsmock.NewMockPermissionEngine(t)
+	validator := newStubValidator()
+	registry := permission.NewRegistry()
+
+	svc := New(Params{
+		Logger:           zap.NewNop(),
+		RoleRepo:         roleRepo,
+		PermissionCache:  permCache,
+		PermissionEngine: permEngine,
+		Validator:        validator,
+		Registry:         registry,
+	})
+
+	require.NotNil(t, svc)
+}
+
+func TestNewTestValidator(t *testing.T) {
+	t.Parallel()
+
+	v := NewTestValidator()
+	require.NotNil(t, v)
+}
+
+func TestGetUserRoleAssignments_Success(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+
+	expected := []*permission.UserRoleAssignment{
+		{
+			UserID:         userID,
+			RoleID:         roleID,
+			OrganizationID: orgID,
+			AssignedBy:     pulid.MustNew("usr_"),
+		},
+	}
+
+	deps.roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).Return(expected, nil)
+
+	assignments, err := deps.svc.GetUserRoleAssignments(ctx, userID, orgID)
+
+	require.NoError(t, err)
+	assert.Len(t, assignments, 1)
+	assert.Equal(t, userID, assignments[0].UserID)
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestGetUserRoleAssignments_Error(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+
+	deps.roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
+		Return(nil, errors.New("db error"))
+
+	assignments, err := deps.svc.GetUserRoleAssignments(ctx, userID, orgID)
+
+	require.Error(t, err)
+	assert.Nil(t, assignments)
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestCreateResourcePermission_PermissionRepoError(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+
+	rp := &permission.ResourcePermission{
+		RoleID:     roleID,
+		Resource:   "shipment",
+		Operations: []permission.Operation{permission.OpRead},
+		DataScope:  permission.DataScopeOrganization,
+	}
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(&permission.Role{
+		ID:       roleID,
+		IsSystem: false,
+	}, nil)
+	deps.roleRepo.On("CreateResourcePermission", ctx, rp).Return(errors.New("db error"))
+
+	err := deps.svc.CreateResourcePermission(ctx, actorID, orgID, rp)
+
+	require.Error(t, err)
+	assert.Equal(t, "db error", err.Error())
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestCreateResourcePermission_CacheInvalidationError(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+
+	rp := &permission.ResourcePermission{
+		RoleID:     roleID,
+		Resource:   "shipment",
+		Operations: []permission.Operation{permission.OpRead},
+		DataScope:  permission.DataScopeOrganization,
+	}
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(&permission.Role{
+		ID:       roleID,
+		IsSystem: false,
+	}, nil)
+	deps.roleRepo.On("CreateResourcePermission", ctx, rp).Return(nil)
+	deps.permCache.On("InvalidateByRole", ctx, roleID, deps.roleRepo).
+		Return(errors.New("cache error"))
+
+	err := deps.svc.CreateResourcePermission(ctx, actorID, orgID, rp)
+
+	require.NoError(t, err)
+
+	deps.roleRepo.AssertExpectations(t)
+	deps.permCache.AssertExpectations(t)
+}
+
+func TestUpdateResourcePermission_PermissionRepoError(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+	permID := pulid.MustNew("rp_")
+
+	rp := &permission.ResourcePermission{
+		ID:         permID,
+		RoleID:     roleID,
+		Resource:   "shipment",
+		Operations: []permission.Operation{permission.OpRead},
+		DataScope:  permission.DataScopeOrganization,
+	}
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(&permission.Role{
+		ID:       roleID,
+		IsSystem: false,
+	}, nil)
+	deps.roleRepo.On("UpdateResourcePermission", ctx, rp).Return(errors.New("db error"))
+
+	err := deps.svc.UpdateResourcePermission(ctx, actorID, orgID, rp)
+
+	require.Error(t, err)
+	assert.Equal(t, "db error", err.Error())
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestUpdateResourcePermission_CacheInvalidationError(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	deps.expectFullEffectivePermissions()
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+	permID := pulid.MustNew("rp_")
+
+	rp := &permission.ResourcePermission{
+		ID:         permID,
+		RoleID:     roleID,
+		Resource:   "shipment",
+		Operations: []permission.Operation{permission.OpRead},
+		DataScope:  permission.DataScopeOrganization,
+	}
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(&permission.Role{
+		ID:       roleID,
+		IsSystem: false,
+	}, nil)
+	deps.roleRepo.On("UpdateResourcePermission", ctx, rp).Return(nil)
+	deps.permCache.On("InvalidateByRole", ctx, roleID, deps.roleRepo).
+		Return(errors.New("cache error"))
+
+	err := deps.svc.UpdateResourcePermission(ctx, actorID, orgID, rp)
+
+	require.NoError(t, err)
+
+	deps.roleRepo.AssertExpectations(t)
+	deps.permCache.AssertExpectations(t)
+}
+
+func TestDeleteResourcePermission_NotFoundError(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+	permID := pulid.MustNew("rp_")
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(&permission.Role{
+		ID:       roleID,
+		IsSystem: false,
+	}, nil)
+	deps.roleRepo.On("DeleteResourcePermission", ctx, permissionports.DeleteResourcePermissionRequest{
+		PermissionID: permID,
+		RoleID:       roleID,
+	}).Return(errors.New("not found"))
+
+	err := deps.svc.DeleteResourcePermission(ctx, orgID, permID, roleID)
+
+	require.Error(t, err)
+	assert.Equal(t, "not found", err.Error())
+
+	deps.roleRepo.AssertExpectations(t)
+}
+
+func TestSaveRoleConstraint_ValidatesRolesAndInvalidatesCache(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	roleID := pulid.MustNew("rol_")
+	otherRoleID := pulid.MustNew("rol_")
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(&permission.Role{ID: roleID}, nil)
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         otherRoleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(&permission.Role{ID: otherRoleID}, nil)
+	deps.permCache.On("InvalidateOrganization", ctx, orgID).Return(nil)
+
+	err := deps.svc.SaveRoleConstraint(ctx, &SaveConstraintRequest{
+		ActorID:        actorID,
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		Constraint: &permission.RoleConstraint{
+			Name:     "Dispatch separation",
+			Type:     permission.RoleConstraintTypeSSD,
+			MaxRoles: 1,
+		},
+		RoleIDs: []pulid.ID{roleID, otherRoleID},
+	})
+
+	require.NoError(t, err)
+
+	deps.roleRepo.AssertExpectations(t)
+	deps.permCache.AssertExpectations(t)
+}
+
+func TestSaveRoleConstraint_DuplicateRoleIDsFail(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+
+	err := deps.svc.SaveRoleConstraint(ctx, &SaveConstraintRequest{
+		OrganizationID: orgID,
+		Constraint: &permission.RoleConstraint{
+			Name:     "Dispatch separation",
+			Type:     permission.RoleConstraintTypeSSD,
+			MaxRoles: 1,
+		},
+		RoleIDs: []pulid.ID{roleID, roleID},
+	})
+
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "Constraint role IDs must be unique")
+}
+
+func TestSaveRoleConstraint_InvalidTenantRoleFails(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+	otherRoleID := pulid.MustNew("rol_")
+	expectedErr := errors.New("role not found")
+
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(&permission.Role{ID: roleID}, nil)
+	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
+		ID:         otherRoleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(nil, expectedErr)
+
+	err := deps.svc.SaveRoleConstraint(ctx, &SaveConstraintRequest{
+		OrganizationID: orgID,
+		Constraint: &permission.RoleConstraint{
+			Name:     "Dispatch separation",
+			Type:     permission.RoleConstraintTypeSSD,
+			MaxRoles: 1,
+		},
+		RoleIDs: []pulid.ID{roleID, otherRoleID},
+	})
+
+	require.ErrorIs(t, err, expectedErr)
+
+	deps.roleRepo.AssertExpectations(t)
+	deps.permCache.AssertNotCalled(t, "InvalidateOrganization")
+}

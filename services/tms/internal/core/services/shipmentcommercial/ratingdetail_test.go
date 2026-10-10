@@ -4,8 +4,8 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/ratequoteportsmock"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/ratequote"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial/shipmentcommercialtest"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"

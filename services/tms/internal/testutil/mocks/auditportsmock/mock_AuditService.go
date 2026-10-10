@@ -7,8 +7,8 @@ package auditportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/audit"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

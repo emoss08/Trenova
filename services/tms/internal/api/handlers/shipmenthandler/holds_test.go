@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/holdreason"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"

@@ -10,7 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 

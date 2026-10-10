@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/shipmentmovehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"

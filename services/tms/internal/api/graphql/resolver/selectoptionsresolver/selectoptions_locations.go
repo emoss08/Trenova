@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/location"
-	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
-	"github.com/emoss08/trenova/internal/core/domain/ratezone"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationcategoryports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"

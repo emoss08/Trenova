@@ -78,7 +78,7 @@ See `03_worker_example.go` for the companion seed implementation.
 
 Standard formula templates are no longer seeded from this directory. The catalog
 lives embedded at
-`internal/core/services/formulatemplateservice/standardcatalog/standard_templates.yaml`
+`internal/modules/rating/app/formulatemplateservice/standardcatalog/standard_templates.yaml`
 and is shared by FormulaTemplateSeed and the production
 `POST /formula-templates/install-standards` endpoint.
 

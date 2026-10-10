@@ -3,8 +3,8 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/core/services/fiscalyearservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalyearservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

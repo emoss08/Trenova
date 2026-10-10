@@ -10,8 +10,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/customfield"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
 	"github.com/emoss08/trenova/shared/pulid"
 )

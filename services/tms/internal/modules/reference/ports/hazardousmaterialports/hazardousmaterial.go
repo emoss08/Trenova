@@ -3,7 +3,7 @@ package hazardousmaterialports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

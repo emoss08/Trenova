@@ -7,7 +7,7 @@ package servicefailureportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

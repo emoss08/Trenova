@@ -7,7 +7,7 @@ package ediportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	mock "github.com/stretchr/testify/mock"

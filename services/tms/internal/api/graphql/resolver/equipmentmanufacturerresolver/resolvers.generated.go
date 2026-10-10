@@ -4,7 +4,7 @@ package equipmentmanufacturerresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	equipmentmanufacturerservice "github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
+	equipmentmanufacturerservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 )
 
 type Deps struct {

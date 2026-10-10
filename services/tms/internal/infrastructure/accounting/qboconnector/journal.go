@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/quickbooks"
 )

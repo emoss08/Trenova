@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	_ "github.com/emoss08/trenova/internal/core/domain/tenant" // import for documentation generation
-	"github.com/emoss08/trenova/internal/core/services/roleservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	_ "github.com/emoss08/trenova/internal/modules/identity/domain/tenant" // import for documentation generation
+	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"

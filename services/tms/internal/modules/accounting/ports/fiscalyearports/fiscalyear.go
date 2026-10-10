@@ -3,7 +3,7 @@ package fiscalyearports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

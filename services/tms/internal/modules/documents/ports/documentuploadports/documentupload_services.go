@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/emoss08/trenova/internal/core/domain/documentupload"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"

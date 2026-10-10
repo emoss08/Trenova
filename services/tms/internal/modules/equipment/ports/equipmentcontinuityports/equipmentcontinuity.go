@@ -3,7 +3,7 @@ package equipmentcontinuityports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

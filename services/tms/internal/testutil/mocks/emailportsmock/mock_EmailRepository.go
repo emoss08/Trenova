@@ -7,7 +7,7 @@ package emailportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/email"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

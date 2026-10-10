@@ -3,8 +3,8 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/services/documenttemplateservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/app/documenttemplateservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"

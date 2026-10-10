@@ -1,0 +1,215 @@
+package reporting
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/cronutils"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/zap"
+)
+
+type SaveScheduleRequest struct {
+	Request
+
+	ScheduleID      pulid.ID
+	DefinitionID    pulid.ID
+	CronExpression  string
+	Timezone        string
+	Formats         []string
+	EmailRecipients []string
+	EmailAttach     bool
+	EmailInline     bool
+	NotifyUserIDs   []pulid.ID
+	Alert           *report.ScheduleAlert
+	Enabled         bool
+	Version         int64
+}
+
+func (req *SaveScheduleRequest) delivery() *report.ScheduleDelivery {
+	return &report.ScheduleDelivery{
+		EmailRecipients: sliceutils.DedupeStrings(req.EmailRecipients),
+		EmailAttach:     req.EmailAttach,
+		EmailInline:     req.EmailInline,
+		NotifyUserIDs:   sliceutils.Dedupe(req.NotifyUserIDs),
+	}
+}
+
+func (s *Service) validateScheduleRequest(
+	ctx context.Context,
+	req *SaveScheduleRequest,
+) (*report.ReportDefinition, error) {
+	definition, err := s.GetDefinition(ctx, &GetDefinitionRequest{
+		Request:      req.Request,
+		DefinitionID: req.DefinitionID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	timezone := req.Timezone
+	if timezone == "" {
+		timezone = s.orgTimezone(ctx, req.TenantInfo)
+		req.Timezone = timezone
+	}
+
+	if _, err = cronutils.NextRun(req.CronExpression, timezone, timeutils.NowUnix()); err != nil {
+		return nil, errortypes.NewValidationError(
+			"cronExpression", errortypes.ErrInvalid, err.Error(),
+		)
+	}
+
+	if err = s.validateNotifyUsers(ctx, req); err != nil {
+		return nil, err
+	}
+
+	return definition, nil
+}
+
+// validateNotifyUsers rejects in-app recipients that are not members of the
+// tenant, so a schedule can never leak report notifications across
+// organizations.
+func (s *Service) validateNotifyUsers(ctx context.Context, req *SaveScheduleRequest) error {
+	notifyUserIDs := sliceutils.Dedupe(req.NotifyUserIDs)
+	if len(notifyUserIDs) == 0 {
+		return nil
+	}
+
+	users, err := s.userRepo.GetByIDs(ctx, tenantports.GetUsersByIDsRequest{
+		TenantInfo: req.TenantInfo,
+		UserIDs:    notifyUserIDs,
+	})
+	if err != nil {
+		s.l.Error("failed to resolve schedule notify users", zap.Error(err))
+		return err
+	}
+
+	if len(users) == len(notifyUserIDs) {
+		return nil
+	}
+
+	found := make(map[pulid.ID]struct{}, len(users))
+	for _, user := range users {
+		found[user.ID] = struct{}{}
+	}
+	multiErr := errortypes.NewMultiError()
+	for i, userID := range notifyUserIDs {
+		if _, ok := found[userID]; !ok {
+			multiErr.Add(
+				fmt.Sprintf("notifyUserIds[%d]", i),
+				errortypes.ErrInvalid,
+				"User is not a member of this organization",
+			)
+		}
+	}
+	return multiErr
+}
+
+func (s *Service) CreateSchedule(
+	ctx context.Context,
+	req *SaveScheduleRequest,
+) (*report.ReportSchedule, error) {
+	planned, err := s.planSchedule(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	created, err := s.scheduleRepo.Create(ctx, planned.Schedule)
+	if err != nil {
+		s.l.Error("failed to create report schedule", zap.Error(err))
+		return nil, err
+	}
+
+	return created, nil
+}
+
+func (s *Service) UpdateSchedule(
+	ctx context.Context,
+	req *SaveScheduleRequest,
+) (*report.ReportSchedule, error) {
+	change, err := s.PlanUpdateSchedule(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.scheduleRepo.Update(ctx, change.After)
+}
+
+type GetScheduleRequest struct {
+	Request
+
+	ScheduleID pulid.ID
+}
+
+func (s *Service) GetSchedule(
+	ctx context.Context,
+	req *GetScheduleRequest,
+) (*report.ReportSchedule, error) {
+	return s.scheduleRepo.GetByID(ctx, &reportports.GetReportScheduleRequest{
+		TenantInfo: req.TenantInfo,
+		ScheduleID: req.ScheduleID,
+	})
+}
+
+type ListSchedulesRequest struct {
+	Request
+
+	DefinitionID pulid.ID
+	EnabledOnly  bool
+	Limit        int
+	Offset       int
+}
+
+func (s *Service) ListSchedules(
+	ctx context.Context,
+	req *ListSchedulesRequest,
+) ([]*report.ReportSchedule, error) {
+	return s.scheduleRepo.List(ctx, &reportports.ListReportSchedulesRequest{
+		TenantInfo:   req.TenantInfo,
+		DefinitionID: req.DefinitionID,
+		EnabledOnly:  req.EnabledOnly,
+		Limit:        req.Limit,
+		Offset:       req.Offset,
+	})
+}
+
+func (s *Service) DeleteSchedule(ctx context.Context, req *GetScheduleRequest) error {
+	if _, err := s.PlanDeleteSchedule(ctx, req); err != nil {
+		return err
+	}
+
+	return s.scheduleRepo.Delete(ctx, &reportports.GetReportScheduleRequest{
+		TenantInfo: req.TenantInfo,
+		ScheduleID: req.ScheduleID,
+	})
+}
+
+// scheduleAlertsEqual reports whether two alert conditions are the same, which
+// decides if suppression state survives an edit.
+//
+// The threshold value is a pointer, so struct equality would compare addresses
+// and report every save as a change — quietly re-arming a suppressed alert each
+// time anything else on the schedule was edited.
+func scheduleAlertsEqual(a, b *report.ScheduleAlert) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	if a.Operator != b.Operator || a.Threshold != b.Threshold ||
+		a.ColumnID != b.ColumnID || a.SuppressWhileFiring != b.SuppressWhileFiring {
+		return false
+	}
+	switch {
+	case a.Value == nil && b.Value == nil:
+		return true
+	case a.Value == nil || b.Value == nil:
+		return false
+	default:
+		return *a.Value == *b.Value
+	}
+}

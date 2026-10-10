@@ -10,7 +10,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"gopkg.in/yaml.v3"
 )

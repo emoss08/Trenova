@@ -7,7 +7,7 @@ package fiscalperiodportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

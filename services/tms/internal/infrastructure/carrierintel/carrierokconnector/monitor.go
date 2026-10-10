@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/intelkit"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/shared/carrierok"

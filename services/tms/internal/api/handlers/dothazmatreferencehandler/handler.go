@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/domain/dothazmatreference"
-	"github.com/emoss08/trenova/internal/core/services/dothazmatreferenceservice"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/dothazmatreference"
+	"github.com/emoss08/trenova/internal/modules/reference/app/dothazmatreferenceservice"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/dothazmatreferenceports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"

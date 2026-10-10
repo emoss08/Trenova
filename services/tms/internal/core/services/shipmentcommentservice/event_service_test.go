@@ -3,7 +3,7 @@ package shipmentcommentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 )
 

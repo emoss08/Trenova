@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/core/services/workerleaveservice"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"

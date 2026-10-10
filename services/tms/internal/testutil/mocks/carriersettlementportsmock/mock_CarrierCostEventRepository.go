@@ -7,7 +7,7 @@ package carriersettlementportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

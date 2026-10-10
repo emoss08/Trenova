@@ -3,7 +3,7 @@ package weatheralertports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/weatheralert"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

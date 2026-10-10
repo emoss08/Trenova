@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/holdreason"
-	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/sliceutils"
 )

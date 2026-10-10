@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/core/domain/holdreason"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

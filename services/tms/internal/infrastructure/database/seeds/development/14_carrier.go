@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"

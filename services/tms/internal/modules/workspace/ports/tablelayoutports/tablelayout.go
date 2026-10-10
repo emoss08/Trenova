@@ -3,7 +3,7 @@ package tablelayoutports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/tablelayout"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablelayout"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 

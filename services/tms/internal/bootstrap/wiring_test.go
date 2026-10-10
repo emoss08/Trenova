@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/bootstrap/apiapp"
 	"github.com/emoss08/trenova/internal/bootstrap/core"
 	"github.com/emoss08/trenova/internal/bootstrap/workerapp"
-	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
+	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"

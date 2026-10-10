@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"

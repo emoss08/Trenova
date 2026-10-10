@@ -1,8 +1,8 @@
 package ediinboundservice
 
 import (
-	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/services/edix12inspect"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

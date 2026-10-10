@@ -13,10 +13,10 @@ package workerdqfservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"

@@ -134,6 +134,18 @@ func readPairs(p string, fn func(a, b string)) error {
 	return nil
 }
 
+func (l *ledger) resolvePackage(p string) string {
+	for range len(l.packages) + 1 {
+		next, moved := l.packages[p]
+		if !moved {
+			return p
+		}
+		p = next
+	}
+
+	return p
+}
+
 func splitSymbol(s string) (pkg, name string) {
 	i := strings.LastIndex(s, ".")
 	return s[:i], s[i+1:]
@@ -161,7 +173,7 @@ func rewriteFile(p string, l *ledger) (bool, error) {
 		if _, moved := l.symbols[importPath]; moved {
 			aliases[name] = importPath
 		}
-		if newPath, moved := l.packages[importPath]; moved {
+		if newPath := l.resolvePackage(importPath); newPath != importPath {
 			edits = append(edits, edit{
 				start: fset.Position(im.Path.Pos()).Offset,
 				end:   fset.Position(im.Path.End()).Offset,
@@ -197,7 +209,11 @@ func rewriteFile(p string, l *ledger) (bool, error) {
 	}
 
 	out := applyEdits(data, edits)
-	out = addImports(out, added)
+	resolved := make(map[string]bool, len(added))
+	for p := range added {
+		resolved[l.resolvePackage(p)] = true
+	}
+	out = addImports(out, resolved)
 	formatted, err := imports.Process(p, out, nil)
 	if err != nil {
 		return false, fmt.Errorf("format %s: %w", p, err)

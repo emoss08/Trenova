@@ -3,8 +3,8 @@ package aifeedbackports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
-	"github.com/emoss08/trenova/internal/core/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

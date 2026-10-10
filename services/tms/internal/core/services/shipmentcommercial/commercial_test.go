@@ -5,9 +5,9 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/fuelsurchargeportsmock"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial/shipmentcommercialtest"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"

@@ -4,7 +4,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 

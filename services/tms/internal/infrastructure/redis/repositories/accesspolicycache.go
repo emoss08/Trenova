@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/iam"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/pkg/redishelpers"
 	"github.com/redis/go-redis/v9"

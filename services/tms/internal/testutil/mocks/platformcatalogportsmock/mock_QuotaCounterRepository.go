@@ -7,7 +7,7 @@ package platformcatalogportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

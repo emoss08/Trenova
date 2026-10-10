@@ -7,7 +7,7 @@ package documentuploadportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/documentupload"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	mock "github.com/stretchr/testify/mock"
 )

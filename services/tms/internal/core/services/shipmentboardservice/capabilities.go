@@ -3,9 +3,9 @@ package shipmentboardservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"

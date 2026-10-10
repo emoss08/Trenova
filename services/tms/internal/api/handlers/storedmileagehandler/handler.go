@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/storedmileage"
-	"github.com/emoss08/trenova/internal/core/services/storedmileageservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/places/domain/storedmileage"
+	"github.com/emoss08/trenova/internal/modules/places/app/storedmileageservice"
 	"github.com/emoss08/trenova/internal/modules/places/ports/storedmileageports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"

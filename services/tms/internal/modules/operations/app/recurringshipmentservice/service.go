@@ -1,0 +1,330 @@
+package recurringshipmentservice
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
+	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/pulid"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+const (
+	patternLookbackDays = 90
+	patternMinShipments = 3
+)
+
+type Params struct {
+	fx.In
+
+	Logger       *zap.Logger
+	Repo         recurringshipmentports.RecurringShipmentRepository
+	Validator    *Validator
+	AuditService auditports.AuditService
+	Realtime     agentports.RealtimeService `optional:"true"`
+	Invalidator  shipmentports.ShipmentInvalidator
+}
+
+type Service struct {
+	l            *zap.Logger
+	repo         recurringshipmentports.RecurringShipmentRepository
+	validator    *Validator
+	auditService auditports.AuditService
+	realtime     agentports.RealtimeService
+	invalidator  shipmentports.ShipmentInvalidator
+}
+
+func New(p Params) *Service {
+	return &Service{
+		l:            p.Logger.Named("service.recurring-shipment"),
+		repo:         p.Repo,
+		validator:    p.Validator,
+		auditService: p.AuditService,
+		realtime:     p.Realtime,
+		invalidator:  p.Invalidator,
+	}
+}
+
+func (s *Service) List(
+	ctx context.Context,
+	req *recurringshipmentports.ListRecurringShipmentsRequest,
+) (*pagination.ListResult[*recurringshipment.RecurringShipment], error) {
+	return s.repo.List(ctx, req)
+}
+
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *recurringshipmentports.ListRecurringShipmentConnectionRequest,
+) (*pagination.CursorListResult[*recurringshipment.RecurringShipment], error) {
+	return s.repo.ListConnection(ctx, req)
+}
+
+func (s *Service) Get(
+	ctx context.Context,
+	req *recurringshipmentports.GetRecurringShipmentByIDRequest,
+) (*recurringshipment.RecurringShipment, error) {
+	return s.repo.GetByID(ctx, req)
+}
+
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	req *recurringshipmentports.RecurringShipmentSelectOptionsRequest,
+) (*pagination.ListResult[*recurringshipment.RecurringShipment], error) {
+	return s.repo.SelectOptions(ctx, req)
+}
+
+func (s *Service) Create(
+	ctx context.Context,
+	entity *recurringshipment.RecurringShipment,
+	userID pulid.ID,
+) (*recurringshipment.RecurringShipment, error) {
+	log := s.l.With(
+		zap.String("operation", "Create"),
+		zap.String("userID", userID.String()),
+	)
+
+	if err := s.planCreate(ctx, entity, userID); err != nil {
+		return nil, err
+	}
+
+	createdEntity, err := s.repo.Create(ctx, entity)
+	if err != nil {
+		log.Error("failed to create recurring shipment", zap.Error(err))
+		return nil, err
+	}
+
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
+		Resource:       permission.ResourceRecurringShipment,
+		ResourceID:     createdEntity.GetID().String(),
+		Operation:      permission.OpCreate,
+		UserID:         userID,
+		CurrentState:   jsonutils.MustToJSON(createdEntity),
+		OrganizationID: createdEntity.OrganizationID,
+		BusinessUnitID: createdEntity.BusinessUnitID,
+	},
+		auditservice.WithComment("Recurring shipment created"),
+	); err != nil {
+		log.Error("failed to log audit action", zap.Error(err))
+	}
+
+	s.publishInvalidation(ctx, createdEntity, userID, "created")
+
+	return createdEntity, nil
+}
+
+func (s *Service) Update(
+	ctx context.Context,
+	entity *recurringshipment.RecurringShipment,
+	userID pulid.ID,
+) (*recurringshipment.RecurringShipment, error) {
+	log := s.l.With(
+		zap.String("operation", "Update"),
+		zap.String("userID", userID.String()),
+	)
+
+	original, err := s.planUpdate(ctx, entity)
+	if err != nil {
+		log.Error("failed to plan recurring shipment update", zap.Error(err))
+		return nil, err
+	}
+
+	updatedEntity, err := s.repo.Update(ctx, entity)
+	if err != nil {
+		log.Error("failed to update recurring shipment", zap.Error(err))
+		return nil, err
+	}
+
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
+		Resource:       permission.ResourceRecurringShipment,
+		ResourceID:     updatedEntity.GetID().String(),
+		Operation:      permission.OpUpdate,
+		UserID:         userID,
+		CurrentState:   jsonutils.MustToJSON(updatedEntity),
+		PreviousState:  jsonutils.MustToJSON(original),
+		OrganizationID: updatedEntity.OrganizationID,
+		BusinessUnitID: updatedEntity.BusinessUnitID,
+	},
+		auditservice.WithComment("Recurring shipment updated"),
+		auditservice.WithDiff(original, updatedEntity),
+	); err != nil {
+		log.Error("failed to log audit action", zap.Error(err))
+	}
+
+	s.publishInvalidation(ctx, updatedEntity, userID, "updated")
+
+	return updatedEntity, nil
+}
+
+func (s *Service) UpdateStatus(
+	ctx context.Context,
+	req *recurringshipmentports.UpdateRecurringShipmentStatusRequest,
+	userID pulid.ID,
+) (*recurringshipment.RecurringShipment, error) {
+	log := s.l.With(
+		zap.String("operation", "UpdateStatus"),
+		zap.String("userID", userID.String()),
+	)
+
+	updatedEntity, err := s.repo.UpdateStatus(ctx, req)
+	if err != nil {
+		log.Error("failed to update recurring shipment status", zap.Error(err))
+		return nil, err
+	}
+
+	if err = s.auditService.LogAction(&auditports.LogActionParams{
+		Resource:       permission.ResourceRecurringShipment,
+		ResourceID:     updatedEntity.GetID().String(),
+		Operation:      permission.OpUpdate,
+		UserID:         userID,
+		CurrentState:   jsonutils.MustToJSON(updatedEntity),
+		OrganizationID: updatedEntity.OrganizationID,
+		BusinessUnitID: updatedEntity.BusinessUnitID,
+	},
+		auditservice.WithComment("Recurring shipment status changed to "+string(req.Status)),
+	); err != nil {
+		log.Error("failed to log audit action", zap.Error(err))
+	}
+
+	s.publishInvalidation(ctx, updatedEntity, userID, "updated")
+
+	return updatedEntity, nil
+}
+
+func (s *Service) Match(
+	ctx context.Context,
+	req *recurringshipmentports.MatchRecurringShipmentsRequest,
+) (*recurringshipmentports.MatchRecurringShipmentsResponse, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	matches, err := s.repo.Match(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	response := &recurringshipmentports.MatchRecurringShipmentsResponse{Matches: matches}
+
+	// Only hunt for a historical lane pattern when no active series covers the
+	// lane — the pattern hint exists to prompt series creation.
+	if len(matches) == 0 {
+		pattern, patternErr := s.repo.DetectLanePattern(ctx, &recurringshipmentports.DetectLanePatternRequest{
+			TenantInfo:            req.TenantInfo,
+			CustomerID:            req.CustomerID,
+			OriginLocationID:      req.OriginLocationID,
+			DestinationLocationID: req.DestinationLocationID,
+			LookbackDays:          patternLookbackDays,
+			MinShipments:          patternMinShipments,
+		})
+		if patternErr != nil {
+			s.l.Warn("failed to detect lane pattern", zap.Error(patternErr))
+		} else {
+			response.Pattern = pattern
+		}
+	}
+
+	return response, nil
+}
+
+func (s *Service) Generate(
+	ctx context.Context,
+	req *recurringshipmentports.GenerateRecurringShipmentRequest,
+) (*recurringshipmentports.GenerateRecurringShipmentResult, error) {
+	log := s.l.With(
+		zap.String("operation", "Generate"),
+		zap.String("recurringShipmentId", req.RecurringShipmentID.String()),
+	)
+
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	if req.Trigger == "" {
+		req.Trigger = recurringshipment.RunTriggerManual
+	}
+
+	result, err := s.repo.Generate(ctx, req)
+	if err != nil {
+		log.Error("failed to generate shipment from recurring series", zap.Error(err))
+		return nil, err
+	}
+
+	if result.Shipment != nil {
+		if err = s.auditService.LogAction(&auditports.LogActionParams{
+			Resource:       permission.ResourceShipment,
+			ResourceID:     result.Shipment.GetID().String(),
+			Operation:      permission.OpCreate,
+			UserID:         req.RequestedBy,
+			CurrentState:   jsonutils.MustToJSON(result.Shipment),
+			OrganizationID: result.Shipment.OrganizationID,
+			BusinessUnitID: result.Shipment.BusinessUnitID,
+		},
+			auditservice.WithComment("Shipment generated from recurring series"),
+		); err != nil {
+			log.Error("failed to log audit action", zap.Error(err))
+		}
+
+		shipmentports.InvalidateShipments(ctx, s.invalidator, &shipmentports.ShipmentInvalidation{
+			OrganizationID: result.Shipment.OrganizationID,
+			BusinessUnitID: result.Shipment.BusinessUnitID,
+			ActorUserID:    req.RequestedBy,
+			ActorType:      permissionports.PrincipalTypeUser,
+			ActorID:        req.RequestedBy,
+			Action:         "created",
+			RecordID:       result.Shipment.ID,
+			Entity:         result.Shipment,
+		})
+	}
+
+	if result.Series != nil {
+		s.publishInvalidation(ctx, result.Series, req.RequestedBy, "updated")
+	}
+
+	return result, nil
+}
+
+func (s *Service) ListRuns(
+	ctx context.Context,
+	req *recurringshipmentports.ListRecurringShipmentRunsRequest,
+) (*pagination.ListResult[*recurringshipment.RecurringShipmentRun], error) {
+	return s.repo.ListRuns(ctx, req)
+}
+
+func (s *Service) publishInvalidation(
+	ctx context.Context,
+	entity *recurringshipment.RecurringShipment,
+	userID pulid.ID,
+	action string,
+) {
+	if s.realtime == nil {
+		return
+	}
+
+	if err := realtimeinvalidation.Publish(
+		ctx,
+		s.realtime,
+		&realtimeinvalidation.PublishParams{
+			OrganizationID: entity.OrganizationID,
+			BusinessUnitID: entity.BusinessUnitID,
+			ActorUserID:    userID,
+			ActorType:      permissionports.PrincipalTypeUser,
+			ActorID:        userID,
+			Resource:       "recurring-shipments",
+			Action:         action,
+			RecordID:       entity.ID,
+			Entity:         entity,
+		},
+	); err != nil {
+		s.l.Warn("failed to publish recurring shipment invalidation", zap.Error(err))
+	}
+}

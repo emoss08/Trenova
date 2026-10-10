@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/stretchr/testify/assert"
 )
 

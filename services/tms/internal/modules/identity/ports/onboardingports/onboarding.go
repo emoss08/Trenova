@@ -3,7 +3,7 @@ package onboardingports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/onboarding"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/onboarding"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 

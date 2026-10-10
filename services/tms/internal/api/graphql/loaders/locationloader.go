@@ -3,7 +3,7 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/location"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

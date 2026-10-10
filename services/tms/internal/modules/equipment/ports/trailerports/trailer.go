@@ -3,7 +3,7 @@ package trailerports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"

@@ -1,12 +1,12 @@
 package dispatcheligibility
 
 import (
-	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/services/hosprojection"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/hosprojection"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )

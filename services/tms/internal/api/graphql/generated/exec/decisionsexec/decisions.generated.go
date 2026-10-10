@@ -10,8 +10,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 

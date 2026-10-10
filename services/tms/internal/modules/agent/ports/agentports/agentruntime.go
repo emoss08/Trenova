@@ -3,10 +3,10 @@ package agentports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"

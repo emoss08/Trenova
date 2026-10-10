@@ -6,7 +6,7 @@ import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	benefitsservice "github.com/emoss08/trenova/internal/core/services/benefitsservice"
 	driverportalservice "github.com/emoss08/trenova/internal/core/services/driverportalservice"
-	driversettlementservice "github.com/emoss08/trenova/internal/core/services/driversettlementservice"
+	driversettlementservice "github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 )
 
 type Deps struct {

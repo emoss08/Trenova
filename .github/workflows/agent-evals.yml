@@ -14,25 +14,25 @@ on:
       - develop
       - "claude/**"
     paths:
-      - "services/tms/internal/core/domain/agentdefinition/**"
-      - "services/tms/internal/core/services/agentruntime/**"
-      - "services/tms/internal/core/services/agenttoolservice/**"
-      - "services/tms/internal/core/services/agentquerytoolservice/**"
-      - "services/tms/internal/core/services/agenttoolpolicy/**"
-      - "services/tms/internal/core/services/agenttoolcatalog/**"
-      - "services/tms/internal/core/services/agentguard/**"
-      - "services/tms/internal/core/services/agentscoring/**"
-      - "services/tms/internal/core/services/agentredteam/**"
-      - "services/tms/internal/core/services/agentevalgate/**"
-      - "services/tms/internal/core/services/productguideservice/**"
+      - "services/tms/internal/modules/agent/domain/agentdefinition/**"
+      - "services/tms/internal/modules/agent/app/agentruntime/**"
+      - "services/tms/internal/modules/agent/app/agenttoolservice/**"
+      - "services/tms/internal/modules/agent/app/agentquerytoolservice/**"
+      - "services/tms/internal/modules/agent/app/agenttoolpolicy/**"
+      - "services/tms/internal/modules/agent/app/agenttoolcatalog/**"
+      - "services/tms/internal/modules/agent/app/agentguard/**"
+      - "services/tms/internal/modules/agent/app/agentscoring/**"
+      - "services/tms/internal/modules/agent/app/agentredteam/**"
+      - "services/tms/internal/modules/agent/app/agentevalgate/**"
+      - "services/tms/internal/modules/agent/app/productguideservice/**"
       - "services/tms/pkg/productguide/catalog_gen.json"
       - "services/tms/internal/modules/agent/ports/agentports/agenttool.go"
       - "services/tms/internal/modules/agent/ports/agentports/toolpolicy.go"
       - "services/tms/internal/modules/agent/ports/agentports/agentruntime.go"
       - "services/tms/internal/modules/agent/ports/agentports/retrievalquery.go"
       - "shared/rankfusion/**"
-      - "services/tms/internal/core/services/insightservice/narrator/**"
-      - "services/tms/internal/core/services/briefingservice/briefingwriter/**"
+      - "services/tms/internal/modules/agent/app/insightservice/narrator/**"
+      - "services/tms/internal/modules/agent/app/briefingservice/briefingwriter/**"
       - "shared/numberguard/**"
       - ".github/workflows/agent-evals.yml"
   pull_request:
@@ -42,25 +42,25 @@ on:
       - develop
     types: [opened, synchronize, reopened, labeled]
     paths:
-      - "services/tms/internal/core/domain/agentdefinition/**"
-      - "services/tms/internal/core/services/agentruntime/**"
-      - "services/tms/internal/core/services/agenttoolservice/**"
-      - "services/tms/internal/core/services/agentquerytoolservice/**"
-      - "services/tms/internal/core/services/agenttoolpolicy/**"
-      - "services/tms/internal/core/services/agenttoolcatalog/**"
-      - "services/tms/internal/core/services/agentguard/**"
-      - "services/tms/internal/core/services/agentscoring/**"
-      - "services/tms/internal/core/services/agentredteam/**"
-      - "services/tms/internal/core/services/agentevalgate/**"
-      - "services/tms/internal/core/services/productguideservice/**"
+      - "services/tms/internal/modules/agent/domain/agentdefinition/**"
+      - "services/tms/internal/modules/agent/app/agentruntime/**"
+      - "services/tms/internal/modules/agent/app/agenttoolservice/**"
+      - "services/tms/internal/modules/agent/app/agentquerytoolservice/**"
+      - "services/tms/internal/modules/agent/app/agenttoolpolicy/**"
+      - "services/tms/internal/modules/agent/app/agenttoolcatalog/**"
+      - "services/tms/internal/modules/agent/app/agentguard/**"
+      - "services/tms/internal/modules/agent/app/agentscoring/**"
+      - "services/tms/internal/modules/agent/app/agentredteam/**"
+      - "services/tms/internal/modules/agent/app/agentevalgate/**"
+      - "services/tms/internal/modules/agent/app/productguideservice/**"
       - "services/tms/pkg/productguide/catalog_gen.json"
       - "services/tms/internal/modules/agent/ports/agentports/agenttool.go"
       - "services/tms/internal/modules/agent/ports/agentports/toolpolicy.go"
       - "services/tms/internal/modules/agent/ports/agentports/agentruntime.go"
       - "services/tms/internal/modules/agent/ports/agentports/retrievalquery.go"
       - "shared/rankfusion/**"
-      - "services/tms/internal/core/services/insightservice/narrator/**"
-      - "services/tms/internal/core/services/briefingservice/briefingwriter/**"
+      - "services/tms/internal/modules/agent/app/insightservice/narrator/**"
+      - "services/tms/internal/modules/agent/app/briefingservice/briefingwriter/**"
       - "shared/numberguard/**"
       - ".github/workflows/agent-evals.yml"
   schedule:
@@ -107,14 +107,14 @@ jobs:
         run: |
           set -euo pipefail
           go test -tags=nomsgpack -count=1 -run 'TestPromptSnapshots' \
-            ./internal/core/domain/agentdefinition/
+            ./internal/modules/agent/domain/agentdefinition/
 
       - name: Tool catalog snapshot
         working-directory: ./services/tms
         run: |
           set -euo pipefail
           go test -tags=nomsgpack -count=1 -run 'TestToolCatalogSnapshot' \
-            ./internal/core/services/agentevalgate/
+            ./internal/modules/agent/app/agentevalgate/
 
       # The hybrid gates rank from evals/embeddings/nomic-embed-text.json and
       # skip until it is recorded; set the repository variable
@@ -127,7 +127,7 @@ jobs:
           set -euo pipefail
           go test -tags=nomsgpack -count=1 -v \
             -run 'AgainstFloors|TestParaphrasesShareNoWordWithTheirTool|EmbeddingFixture' \
-            ./internal/core/services/agentevalgate/
+            ./internal/modules/agent/app/agentevalgate/
 
       - name: Argument parsing and aliasing
         working-directory: ./services/tms
@@ -135,13 +135,13 @@ jobs:
           set -euo pipefail
           go test -tags=nomsgpack -count=1 \
             -run 'TestArgumentCases|TestDeclaredArguments|TestAliasedArguments' \
-            ./internal/core/services/agentruntime/
+            ./internal/modules/agent/app/agentruntime/
 
       - name: Red-team suite and recorded replays
         working-directory: ./services/tms
         run: |
           set -euo pipefail
-          go test -tags=nomsgpack -count=1 -v ./internal/core/services/agentredteam/ \
+          go test -tags=nomsgpack -count=1 -v ./internal/modules/agent/app/agentredteam/ \
             | tee "$RUNNER_TEMP/redteam.log"
           {
             echo "## Red-team known gaps"
@@ -168,12 +168,12 @@ jobs:
         run: |
           set -euo pipefail
           go test -tags=nomsgpack -count=1 \
-            ./internal/core/services/agenttoolpolicy/... \
-            ./internal/core/services/agenttoolcatalog/... \
-            ./internal/core/services/agentguard/... \
-            ./internal/core/services/agentscoring/... \
-            ./internal/core/services/insightservice/narrator/... \
-            ./internal/core/services/briefingservice/briefingwriter/...
+            ./internal/modules/agent/app/agenttoolpolicy/... \
+            ./internal/modules/agent/app/agenttoolcatalog/... \
+            ./internal/modules/agent/app/agentguard/... \
+            ./internal/modules/agent/app/agentscoring/... \
+            ./internal/modules/agent/app/insightservice/narrator/... \
+            ./internal/modules/agent/app/briefingservice/briefingwriter/...
 
       - name: Number guard
         working-directory: ./shared
@@ -219,7 +219,7 @@ jobs:
         run: |
           set -euo pipefail
           go test -tags=nomsgpack,liveeval -count=1 -v -timeout 30m \
-            -run 'TestLiveRedTeam' ./internal/core/services/agentredteam/ \
+            -run 'TestLiveRedTeam' ./internal/modules/agent/app/agentredteam/ \
             -args $RECORD $UPDATE_BASELINE
 
       - name: Summarize the live run
@@ -243,6 +243,6 @@ jobs:
           name: agent-evals-live
           path: |
             ${{ runner.temp }}/live-eval.json
-            services/tms/internal/core/services/agentredteam/testdata/cassettes/live_*.json
-            services/tms/internal/core/services/agentredteam/testdata/live-baseline.json
+            services/tms/internal/modules/agent/app/agentredteam/testdata/cassettes/live_*.json
+            services/tms/internal/modules/agent/app/agentredteam/testdata/live-baseline.json
           if-no-files-found: ignore

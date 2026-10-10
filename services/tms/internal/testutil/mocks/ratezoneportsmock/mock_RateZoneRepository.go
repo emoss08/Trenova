@@ -7,7 +7,7 @@ package ratezoneportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/ratezone"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

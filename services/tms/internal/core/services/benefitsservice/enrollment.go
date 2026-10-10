@@ -3,8 +3,8 @@ package benefitsservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/driverpay"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"

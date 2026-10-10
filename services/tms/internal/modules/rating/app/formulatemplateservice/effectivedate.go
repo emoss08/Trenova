@@ -1,0 +1,99 @@
+package formulatemplateservice
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/zap"
+)
+
+const effectiveFromGraceSeconds int64 = 3600
+
+func (s *Service) UpdateVersionEffectiveDate(
+	ctx context.Context,
+	req *formulatemplateports.UpdateEffectiveDateRequest,
+) (*formulatemplate.FormulaTemplateVersion, error) {
+	log := s.l.With(
+		zap.String("operation", "UpdateVersionEffectiveDate"),
+		zap.String("templateID", req.TemplateID.String()),
+		zap.Int64("versionNumber", req.VersionNumber),
+	)
+
+	version, err := s.versionRepo.GetByTemplateAndVersion(ctx, &formulatemplateports.GetVersionRequest{
+		TenantInfo:    req.TenantInfo,
+		TemplateID:    req.TemplateID,
+		VersionNumber: req.VersionNumber,
+	})
+	if err != nil {
+		log.Error("failed to get version", zap.Error(err))
+		return nil, err
+	}
+
+	template, err := s.getTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
+	if err != nil {
+		log.Error("failed to get formula template", zap.Error(err))
+		return nil, err
+	}
+
+	if req.EffectiveFrom != nil {
+		if template.Status != formulatemplate.StatusActive {
+			return nil, errortypes.NewValidationError(
+				"effectiveFrom",
+				errortypes.ErrInvalid,
+				"Only Active templates can have scheduled versions",
+			)
+		}
+
+		// A schedule puts content into production on a date without anyone
+		// looking at it then, so the content must already have passed review.
+		if version.Status != formulatemplate.StatusActive {
+			return nil, errortypes.NewValidationError(
+				"versionNumber",
+				errortypes.ErrInvalid,
+				"Only approved snapshots can be scheduled; this version was captured while the template was {0}",
+				version.Status.String(),
+			)
+		}
+
+		if *req.EffectiveFrom <= timeutils.NowUnix()-effectiveFromGraceSeconds {
+			return nil, errortypes.NewValidationError(
+				"effectiveFrom",
+				errortypes.ErrInvalid,
+				"Effective date cannot be more than one hour in the past",
+			)
+		}
+	}
+
+	updated, err := s.versionRepo.UpdateEffectiveDate(ctx, req)
+	if err != nil {
+		log.Error("failed to update version effective date", zap.Error(err))
+		return nil, err
+	}
+
+	s.logAuditAction(
+		log,
+		template,
+		permission.OpUpdate,
+		req.TenantInfo.UserID,
+		nil,
+		"Formula template version effective date updated",
+		auditservice.WithMetadata(map[string]any{
+			"versionNumber": req.VersionNumber,
+			"effectiveFrom": req.EffectiveFrom,
+		}),
+	)
+
+	return updated, nil
+}
+
+func (s *Service) ListScheduledVersions(
+	ctx context.Context,
+	req *formulatemplateports.ListScheduledVersionsRequest,
+) ([]*formulatemplate.FormulaTemplateVersion, error) {
+	return s.versionRepo.ListScheduled(ctx, req)
+}

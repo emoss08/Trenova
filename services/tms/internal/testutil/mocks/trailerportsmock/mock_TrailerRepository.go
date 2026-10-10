@@ -7,7 +7,7 @@ package trailerportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

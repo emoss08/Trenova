@@ -3,7 +3,7 @@ package auditports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/audit"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 

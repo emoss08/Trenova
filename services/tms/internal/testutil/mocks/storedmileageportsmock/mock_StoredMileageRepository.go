@@ -7,7 +7,7 @@ package storedmileageportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/storedmileage"
+	"github.com/emoss08/trenova/internal/modules/places/domain/storedmileage"
 	"github.com/emoss08/trenova/internal/modules/places/ports/storedmileageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

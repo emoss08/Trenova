@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/services/agentsafetyservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentsafetyservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"

@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/domain/aiusage"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/errortypes"

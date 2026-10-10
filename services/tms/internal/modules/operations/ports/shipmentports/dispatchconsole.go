@@ -3,10 +3,10 @@ package shipmentports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

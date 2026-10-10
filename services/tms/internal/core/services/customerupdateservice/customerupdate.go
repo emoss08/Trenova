@@ -7,8 +7,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"

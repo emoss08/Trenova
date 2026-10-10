@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/api/routelint"
 	"github.com/emoss08/trenova/internal/api/writecoverage"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"

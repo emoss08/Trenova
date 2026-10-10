@@ -2,10 +2,10 @@ package base
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/core/domain/commodity"
-	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/shared/sliceutils"
 )

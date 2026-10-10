@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"slices"
 	"sort"
 	"strconv"
@@ -123,7 +124,7 @@ func fillDefaults(opts *generatorOptions, moduleRoot, resolverDir string) {
 	)
 	opts.DomainDir = valueOrDefault(
 		opts.DomainDir,
-		filepath.Join(moduleRoot, "internal", "core", "domain"),
+		filepath.Join(moduleRoot, "internal", "modules", "*", "domain"),
 	)
 	opts.GoModPath = valueOrDefault(opts.GoModPath, filepath.Join(moduleRoot, "go.mod"))
 }
@@ -438,14 +439,14 @@ func loadExistingFunctions(resolverDir string) (map[string]struct{}, error) {
 }
 
 func domainBindings(cfg gqlgenConfig, modulePath string) []modelBinding {
-	prefix := modulePath + "/internal/core/domain/"
+	domainPath := regexp.MustCompile(`^` + regexp.QuoteMeta(modulePath) + `/internal/(?:core|modules/[^/]+)/domain/`)
 	bindings := make([]modelBinding, 0, len(cfg.Models))
 	for gqlName, model := range cfg.Models {
 		if len(model.Model) == 0 {
 			continue
 		}
 		modelPath := model.Model[0]
-		if !strings.HasPrefix(modelPath, prefix) {
+		if !domainPath.MatchString(modelPath) {
 			continue
 		}
 		index := strings.LastIndex(modelPath, ".")
@@ -588,17 +589,19 @@ func buildGeneratedType(
 }
 
 func loadDomainPackage(binding modelBinding, domainDir, modulePath string) (parsedPackage, error) {
-	prefix := modulePath + "/internal/core/domain/"
-	rel := strings.TrimPrefix(binding.ImportPath, prefix)
-	if rel == binding.ImportPath || rel == "" {
+	slashed := filepath.ToSlash(domainDir)
+	internalIndex := strings.LastIndex(slashed, "/internal/")
+	rel := strings.TrimPrefix(binding.ImportPath, modulePath+"/")
+	if internalIndex == -1 || rel == binding.ImportPath || !strings.Contains(rel, "/domain/") {
 		return parsedPackage{}, fmt.Errorf(
-			"domain import %q is outside %q",
+			"domain import %q is outside the domain directories %q",
 			binding.ImportPath,
-			prefix,
+			domainDir,
 		)
 	}
 
-	return loadStructsFromDir(filepath.Join(domainDir, filepath.FromSlash(rel)))
+	moduleRoot := filepath.FromSlash(slashed[:internalIndex])
+	return loadStructsFromDir(filepath.Join(moduleRoot, filepath.FromSlash(rel)))
 }
 
 func qualifyDomainFieldTypes(domainStruct goStruct, packageName string) goStruct {

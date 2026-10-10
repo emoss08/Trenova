@@ -3,9 +3,9 @@ package servicefailurereasoncodeservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"

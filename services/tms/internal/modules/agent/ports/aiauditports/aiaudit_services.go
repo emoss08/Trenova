@@ -3,8 +3,8 @@ package aiauditports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

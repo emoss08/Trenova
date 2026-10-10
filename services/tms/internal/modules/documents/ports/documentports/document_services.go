@@ -5,7 +5,7 @@ import (
 	"io"
 	"mime/multipart"
 
-	"github.com/emoss08/trenova/internal/core/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )

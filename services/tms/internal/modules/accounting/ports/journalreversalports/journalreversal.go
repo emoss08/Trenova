@@ -3,7 +3,7 @@ package journalreversalports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

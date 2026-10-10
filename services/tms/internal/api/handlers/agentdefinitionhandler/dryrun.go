@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"

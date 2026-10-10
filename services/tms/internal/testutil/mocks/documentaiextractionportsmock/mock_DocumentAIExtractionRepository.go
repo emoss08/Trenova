@@ -7,7 +7,7 @@ package documentaiextractionportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/documentaiextraction"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentaiextraction"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

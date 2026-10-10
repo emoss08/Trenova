@@ -1,0 +1,319 @@
+package agenttoolservice
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+)
+
+// ptoDecider is the slice of the PTO service these tools need. The service
+// itself owns the ledger, the overlap check and the driver notification, none
+// of which a tool has any business reimplementing.
+type ptoDecider interface {
+	Approve(
+		ctx context.Context,
+		req *workerports.UpdatePTOStatusRequest,
+	) (*worker.WorkerPTO, error)
+	Reject(
+		ctx context.Context,
+		req *workerports.UpdatePTOStatusRequest,
+	) (*worker.WorkerPTO, error)
+	Cancel(
+		ctx context.Context,
+		req *workerports.UpdatePTOStatusRequest,
+	) (*worker.WorkerPTO, error)
+}
+
+const ptoIDNote = "The id of the time-off request, from list_time_off. " +
+	"A worker id is not a request id."
+
+type approveWorkerPTOTool struct {
+	pto ptoApprover
+}
+
+func newApproveWorkerPTOTool(pto ptoApprover) agentports.AgentTool {
+	return &approveWorkerPTOTool{pto: pto}
+}
+
+func (t *approveWorkerPTOTool) Name() string { return "approve_worker_pto" }
+
+func (t *approveWorkerPTOTool) Recipe() []string {
+	return []string{"list_time_off", "approve_worker_pto"}
+}
+
+func (t *approveWorkerPTOTool) Description() string {
+	return "Approve a worker's time-off request. Approving books the days against " +
+		"their balance and takes them off the board for those dates. When you hold " +
+		"get_worker_schedule, say what they are covering on those days beside the " +
+		"proposal; when you do not, propose it anyway and say coverage was not checked, " +
+		"since the person approving weighs it. Only a request still awaiting a decision " +
+		"can be approved; for several, propose each."
+}
+
+func (t *approveWorkerPTOTool) SearchTerms() []string {
+	return []string{"approve time off", "approve vacation", "approve pto request"}
+}
+
+func (t *approveWorkerPTOTool) ParamSchema() map[string]any {
+	return map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"ptoId": agenttoolschema.RecordIDText(permission.ResourceWorkerPTO, ptoIDNote),
+			"reason": map[string]any{
+				"type": "string",
+				"description": "An optional note recorded with the decision. " +
+					"Leave it out unless you were given one.",
+			},
+		},
+		"required":             []string{"ptoId"},
+		"additionalProperties": false,
+	}
+}
+
+func (t *approveWorkerPTOTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceWorkerPTO,
+		Operation:     permission.OpApprove,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "Books approved time off; the worker is told it was approved but reads no " +
+			"text the model wrote.",
+	}
+}
+
+func (t *approveWorkerPTOTool) Execute(
+	ctx context.Context,
+	params agentports.ToolExecuteParams,
+) error {
+	if err := guardExecute(t, params); err != nil {
+		return err
+	}
+
+	request, err := ptoStatusRequest(params)
+	if err != nil {
+		return err
+	}
+
+	_, err = t.pto.Approve(ctx, request)
+
+	return err
+}
+
+type rejectWorkerPTOTool struct {
+	pto ptoRejecter
+}
+
+func newRejectWorkerPTOTool(pto ptoRejecter) agentports.AgentTool {
+	return &rejectWorkerPTOTool{pto: pto}
+}
+
+func (t *rejectWorkerPTOTool) Name() string { return "reject_worker_pto" }
+
+func (t *rejectWorkerPTOTool) Description() string {
+	return "Decline a worker's time-off request. A rejection is final — the request " +
+		"cannot be reopened, and the worker is told why — so the reason must be the " +
+		"one you were actually given, not one you composed."
+}
+
+func (t *rejectWorkerPTOTool) SearchTerms() []string {
+	return []string{"reject time off", "deny vacation", "decline pto request"}
+}
+
+func (t *rejectWorkerPTOTool) ParamSchema() map[string]any {
+	return map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"ptoId": agenttoolschema.RecordIDText(permission.ResourceWorkerPTO, ptoIDNote),
+			"reason": map[string]any{
+				"type": "string",
+				"description": "Why it is being declined. Required, and shown to the " +
+					"worker. If nobody told you why, ask rather than guessing.",
+			},
+		},
+		"required":             []string{"ptoId", "reason"},
+		"additionalProperties": false,
+	}
+}
+
+func (t *rejectWorkerPTOTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceWorkerPTO,
+		Operation:     permission.OpReject,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierActWithApproval,
+		Egress:        []agent.EgressClass{agent.EgressDriverVisible},
+		Effect:        agent.ToolEffectChange,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "The worker is sent the rejection reason by push notice and text message.",
+	}
+}
+
+func (t *rejectWorkerPTOTool) Execute(
+	ctx context.Context,
+	params agentports.ToolExecuteParams,
+) error {
+	request, err := t.request(&params)
+	if err != nil {
+		return err
+	}
+
+	_, err = t.pto.Reject(ctx, request)
+
+	return err
+}
+
+func (t *rejectWorkerPTOTool) request(
+	params *agentports.ToolExecuteParams,
+) (*workerports.UpdatePTOStatusRequest, error) {
+	return ptoDecisionRequest(t, params)
+}
+
+type cancelWorkerPTOTool struct {
+	pto ptoRejecter
+}
+
+func newCancelWorkerPTOTool(pto ptoRejecter) agentports.AgentTool {
+	return &cancelWorkerPTOTool{pto: pto}
+}
+
+func (t *cancelWorkerPTOTool) Name() string { return "cancel_worker_pto" }
+
+func (t *cancelWorkerPTOTool) SearchTerms() []string {
+	return []string{"cancel vacation", "cancel time off", "cancel approved vacation"}
+}
+
+func (t *cancelWorkerPTOTool) Description() string {
+	return "Cancel a worker's time off, whether it was still awaiting a decision or " +
+		"already approved. Cancelling approved time off returns the days to their " +
+		"balance and puts them back on the board for those dates."
+}
+
+func (t *cancelWorkerPTOTool) ParamSchema() map[string]any {
+	return map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"ptoId": agenttoolschema.RecordIDText(permission.ResourceWorkerPTO, ptoIDNote),
+			"reason": map[string]any{
+				"type":        "string",
+				"description": "Why it is being cancelled. Recorded with the change.",
+			},
+		},
+		"required":             []string{"ptoId", "reason"},
+		"additionalProperties": false,
+	}
+}
+
+func (t *cancelWorkerPTOTool) Policy() agentports.ToolPolicy {
+	return agentports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceWorkerPTO,
+		Operation:     permission.OpCancel,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierActWithApproval,
+		Egress:        []agent.EgressClass{agent.EgressDriverVisible},
+		Effect:        agent.ToolEffectChange,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "The worker is sent the cancellation reason by push notice and text " +
+			"message.",
+	}
+}
+
+func (t *cancelWorkerPTOTool) Execute(
+	ctx context.Context,
+	params agentports.ToolExecuteParams,
+) error {
+	request, err := t.request(&params)
+	if err != nil {
+		return err
+	}
+
+	_, err = t.pto.Cancel(ctx, request)
+
+	return err
+}
+
+func (t *cancelWorkerPTOTool) request(
+	params *agentports.ToolExecuteParams,
+) (*workerports.UpdatePTOStatusRequest, error) {
+	return ptoDecisionRequest(t, params)
+}
+
+// ptoDecisionRequest is a decision the driver is told the reason for. The
+// service refuses an empty reason too; failing here names the parameter the
+// model left out, which is the correction it can act on.
+func ptoDecisionRequest(
+	tool agentports.AgentTool,
+	params *agentports.ToolExecuteParams,
+) (*workerports.UpdatePTOStatusRequest, error) {
+	if err := guardExecute(tool, *params); err != nil {
+		return nil, err
+	}
+
+	request, err := ptoStatusRequest(*params)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err = requireString(params.Params, "reason"); err != nil {
+		return nil, err
+	}
+
+	return request, nil
+}
+
+// ptoStatusRequest builds the decision envelope the three transitions share.
+//
+// ExpectedVersion is deliberately left at zero: the service reads the record's
+// current version when the caller does not supply one, and a model has no way
+// to know a version. Leaving it out is the honest thing; inventing one would
+// defeat the concurrency check it exists to run.
+func ptoStatusRequest(
+	params agentports.ToolExecuteParams,
+) (*workerports.UpdatePTOStatusRequest, error) {
+	id, err := requirePulid(params.Params, "ptoId")
+	if err != nil {
+		return nil, err
+	}
+
+	return &workerports.UpdatePTOStatusRequest{
+		ID:         id,
+		TenantInfo: tenantFrom(params),
+		UserID:     params.Actor.UserID,
+		Reason:     optionalString(params.Params, "reason"),
+	}, nil
+}
+
+// Target names the record this call would change, so a proposal to change it
+// can be checked against the record's version before it runs.
+func (t *approveWorkerPTOTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+	return targetOf(params, "ptoId", permission.ResourceWorkerPTO)
+}
+
+// Target names the record this call would change, so a proposal to change it
+// can be checked against the record's version before it runs.
+func (t *rejectWorkerPTOTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+	return targetOf(params, "ptoId", permission.ResourceWorkerPTO)
+}
+
+// Target names the record this call would change, so a proposal to change it
+// can be checked against the record's version before it runs.
+func (t *cancelWorkerPTOTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+	return targetOf(params, "ptoId", permission.ResourceWorkerPTO)
+}

@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/carrier"
-	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
-	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"

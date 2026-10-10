@@ -3,10 +3,10 @@ package rateresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
-	"github.com/emoss08/trenova/internal/core/domain/ratequote"
-	"github.com/emoss08/trenova/internal/core/domain/ratezone"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 

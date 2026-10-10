@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/services/tableinsightservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/tableinsightservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/shopspring/decimal"

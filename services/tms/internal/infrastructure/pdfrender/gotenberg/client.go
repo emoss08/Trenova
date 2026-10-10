@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v5"
-	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"go.uber.org/fx"

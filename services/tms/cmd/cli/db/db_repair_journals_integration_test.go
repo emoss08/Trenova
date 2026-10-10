@@ -6,8 +6,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"

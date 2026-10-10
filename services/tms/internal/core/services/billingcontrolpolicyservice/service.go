@@ -1,8 +1,8 @@
 package billingcontrolpolicyservice
 
 import (
-	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.uber.org/fx"
 	"go.uber.org/zap"

@@ -1,0 +1,371 @@
+package shipmentjobs
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/operations/jobs/shipmentjobs/shipmentcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"go.temporal.io/sdk/activity"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+type ActivitiesParams struct {
+	fx.In
+
+	Repo         shipmentports.ShipmentRepository
+	AuditService auditports.AuditService
+	EventService shipmenteventports.ShipmentEventService
+	Invalidator  shipmentports.ShipmentInvalidator
+	AgentEvents  agentports.AgentEventPublisher `optional:"true"`
+	Logger       *zap.Logger
+}
+
+type Activities struct {
+	repo         shipmentports.ShipmentRepository
+	auditService auditports.AuditService
+	eventService shipmenteventports.ShipmentEventService
+	invalidator  shipmentports.ShipmentInvalidator
+	agentEvents  agentports.AgentEventPublisher
+	logger       *zap.Logger
+}
+
+func NewActivities(p ActivitiesParams) *Activities {
+	return &Activities{
+		repo:         p.Repo,
+		auditService: p.AuditService,
+		eventService: p.EventService,
+		invalidator:  p.Invalidator,
+		agentEvents:  p.AgentEvents,
+		logger:       p.Logger.Named("shipment-activities"),
+	}
+}
+
+func (a *Activities) BulkDuplicateShipmentsActivity(
+	ctx context.Context,
+	payload *shipmentcontract.BulkDuplicateShipmentsPayload,
+) (*BulkDuplicateShipmentsResult, error) {
+	a.logger.Info(
+		"Starting shipment bulk duplication activity",
+		zap.String("shipmentId", payload.ShipmentID.String()),
+		zap.Int("count", payload.Count),
+	)
+
+	recordActivityHeartbeat(ctx, "duplicating shipments")
+
+	duplicated, err := a.repo.BulkDuplicate(ctx, &shipmentports.BulkDuplicateShipmentRequest{
+		TenantInfo:    paginationTenantInfoFromPayload(payload),
+		ShipmentID:    payload.ShipmentID,
+		Count:         payload.Count,
+		OverrideDates: payload.OverrideDates,
+		FirstPickupAt: payload.FirstPickupAt,
+	})
+	if err != nil {
+		a.logger.Error("Shipment bulk duplication failed", zap.Error(err))
+		return nil, temporaltype.ToPlanRefusal(err)
+	}
+
+	shipmentIDs := make([]pulid.ID, 0, len(duplicated))
+	for _, entity := range duplicated {
+		shipmentIDs = append(shipmentIDs, entity.ID)
+
+		if auditErr := a.auditService.LogAction(
+			&auditports.LogActionParams{
+				Resource:       permission.ResourceShipment,
+				ResourceID:     entity.GetID().String(),
+				Operation:      permission.OpCreate,
+				UserID:         payload.RequestedBy,
+				CurrentState:   jsonutils.MustToJSON(entity),
+				OrganizationID: entity.OrganizationID,
+				BusinessUnitID: entity.BusinessUnitID,
+			},
+			auditservice.WithComment("Shipment duplicated"),
+		); auditErr != nil {
+			a.logger.Error("failed to log duplicated shipment audit action", zap.Error(auditErr))
+		}
+
+		if a.eventService != nil {
+			if eventErr := a.eventService.Record(ctx, shipmenteventservice.BuildShipmentCreated(
+				shipmenteventservice.TenantRef{
+					OrganizationID: entity.OrganizationID,
+					BusinessUnitID: entity.BusinessUnitID,
+				},
+				entity,
+				kernelports.AuditActor{
+					UserID:        payload.RequestedBy,
+					PrincipalType: permissionports.PrincipalTypeUser,
+					PrincipalID:   payload.RequestedBy,
+				},
+			)); eventErr != nil {
+				a.logger.Warn("failed to record duplicated shipment event", zap.Error(eventErr))
+			}
+		}
+
+		agentports.PublishAgentEvent(ctx, a.agentEvents, agentports.AgentEvent{
+			Kind:      agent.EventShipmentCreated,
+			SubjectID: entity.ID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+		})
+	}
+
+	if len(duplicated) > 0 {
+		shipmentports.InvalidateShipments(ctx, a.invalidator, &shipmentports.ShipmentInvalidation{
+			OrganizationID: payload.OrganizationID,
+			BusinessUnitID: payload.BusinessUnitID,
+			ActorUserID:    payload.RequestedBy,
+			ActorType:      permissionports.PrincipalTypeUser,
+			ActorID:        payload.RequestedBy,
+			Action:         "bulk_created",
+		})
+	}
+
+	return &BulkDuplicateShipmentsResult{
+		ShipmentIDs:      shipmentIDs,
+		DuplicatedCount:  len(duplicated),
+		CompletedAt:      timeutils.NowUnix(),
+		SourceShipmentID: payload.ShipmentID,
+	}, nil
+}
+
+func paginationTenantInfoFromPayload(payload *shipmentcontract.BulkDuplicateShipmentsPayload) pagination.TenantInfo {
+	return pagination.TenantInfo{
+		OrgID:  payload.OrganizationID,
+		BuID:   payload.BusinessUnitID,
+		UserID: payload.RequestedBy,
+	}
+}
+
+func (a *Activities) AutoDelayShipmentsActivity(
+	ctx context.Context,
+) (*AutoDelayShipmentsResult, error) {
+	a.logger.Info("Starting shipment auto delay activity")
+	recordActivityHeartbeat(ctx, "auto-delaying shipments")
+
+	delayedShipments, err := a.repo.AutoDelayShipments(ctx)
+	if err != nil {
+		a.logger.Error("Shipment auto delay failed", zap.Error(err))
+		return nil, err
+	}
+
+	shipmentIDs := make([]pulid.ID, 0, len(delayedShipments))
+	for _, entity := range delayedShipments {
+		shipmentIDs = append(shipmentIDs, entity.ID)
+
+		shipmentports.InvalidateShipments(ctx, a.invalidator, &shipmentports.ShipmentInvalidation{
+			OrganizationID: entity.OrganizationID,
+			BusinessUnitID: entity.BusinessUnitID,
+			Action:         "delayed",
+			RecordID:       entity.ID,
+			Entity:         entity,
+		})
+	}
+
+	return &AutoDelayShipmentsResult{
+		ShipmentIDs:  shipmentIDs,
+		DelayedCount: len(delayedShipments),
+		CompletedAt:  timeutils.NowUnix(),
+	}, nil
+}
+
+func (a *Activities) ListAutoDelayShipmentTenantsActivity(
+	ctx context.Context,
+	payload *ListShipmentTenantsPayload,
+) (*ListShipmentTenantsResult, error) {
+	limit := temporaljobs.NormalizeLimit(payload.Limit, temporaljobs.DefaultTenantScanLimit)
+	tenants, err := a.repo.ListAutoDelayShipmentTenants(ctx, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ListShipmentTenantsResult{
+		Tenants: temporaljobs.BuildTenantWorkItems(tenants, temporaljobs.DefaultTenantRecordLimit),
+	}, nil
+}
+
+func (a *Activities) AutoDelayTenantShipmentsActivity(
+	ctx context.Context,
+	payload *ShipmentTenantWorkPayload,
+) (*AutoDelayShipmentsResult, error) {
+	limit := temporaljobs.NormalizeLimit(payload.Limit, temporaljobs.DefaultTenantRecordLimit)
+	tenantInfo := payload.TenantInfo()
+
+	a.logger.Info(
+		"Starting tenant shipment auto delay activity",
+		zap.String("orgID", tenantInfo.OrgID.String()),
+		zap.String("buID", tenantInfo.BuID.String()),
+		zap.Int("limit", limit),
+	)
+	recordActivityHeartbeat(ctx, "auto-delaying-tenant-shipments", tenantInfo.OrgID.String())
+
+	delayedShipments, err := a.repo.RunAutoDelayShipmentsForTenant(ctx, tenantInfo, limit)
+	if err != nil {
+		a.logger.Error("Tenant shipment auto delay failed", zap.Error(err))
+		return nil, err
+	}
+
+	shipmentIDs := make([]pulid.ID, 0, len(delayedShipments))
+	for _, entity := range delayedShipments {
+		shipmentIDs = append(shipmentIDs, entity.ID)
+
+		shipmentports.InvalidateShipments(ctx, a.invalidator, &shipmentports.ShipmentInvalidation{
+			OrganizationID: entity.OrganizationID,
+			BusinessUnitID: entity.BusinessUnitID,
+			Action:         "delayed",
+			RecordID:       entity.ID,
+			Entity:         entity,
+		})
+	}
+
+	return &AutoDelayShipmentsResult{
+		ShipmentIDs:  shipmentIDs,
+		DelayedCount: len(delayedShipments),
+		CompletedAt:  timeutils.NowUnix(),
+		TenantRunResult: temporaljobs.TenantRunResult{
+			TenantsScanned:   1,
+			TenantsProcessed: 1,
+			RecordsProcessed: len(delayedShipments),
+		},
+	}, nil
+}
+
+func (a *Activities) AutoCancelShipmentsActivity(
+	ctx context.Context,
+) (*AutoCancelShipmentsResult, error) {
+	a.logger.Info("Starting shipment auto cancel activity")
+	recordActivityHeartbeat(ctx, "auto-canceling shipments")
+
+	canceledShipments, err := a.repo.RunAutoCancelShipments(ctx)
+	if err != nil {
+		a.logger.Error("Shipment auto cancel failed", zap.Error(err))
+		return nil, err
+	}
+
+	shipmentIDs := make([]pulid.ID, 0, len(canceledShipments))
+	for _, entity := range canceledShipments {
+		shipmentIDs = append(shipmentIDs, entity.ID)
+	}
+
+	if len(canceledShipments) > 0 {
+		for _, tenantInfo := range uniqueShipmentTenants(canceledShipments) {
+			shipmentports.InvalidateShipments(ctx, a.invalidator, &shipmentports.ShipmentInvalidation{
+				OrganizationID: tenantInfo.OrgID,
+				BusinessUnitID: tenantInfo.BuID,
+				Action:         "bulk_canceled",
+			})
+		}
+	}
+
+	return &AutoCancelShipmentsResult{
+		ShipmentIDs:   shipmentIDs,
+		CanceledCount: len(canceledShipments),
+		CompletedAt:   timeutils.NowUnix(),
+	}, nil
+}
+
+func (a *Activities) ListAutoCancelShipmentTenantsActivity(
+	ctx context.Context,
+	payload *ListShipmentTenantsPayload,
+) (*ListShipmentTenantsResult, error) {
+	limit := temporaljobs.NormalizeLimit(payload.Limit, temporaljobs.DefaultTenantScanLimit)
+	tenants, err := a.repo.ListAutoCancelShipmentTenants(ctx, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ListShipmentTenantsResult{
+		Tenants: temporaljobs.BuildTenantWorkItems(tenants, temporaljobs.DefaultTenantRecordLimit),
+	}, nil
+}
+
+func (a *Activities) AutoCancelTenantShipmentsActivity(
+	ctx context.Context,
+	payload *ShipmentTenantWorkPayload,
+) (*AutoCancelShipmentsResult, error) {
+	limit := temporaljobs.NormalizeLimit(payload.Limit, temporaljobs.DefaultTenantRecordLimit)
+	tenantInfo := payload.TenantInfo()
+
+	a.logger.Info(
+		"Starting tenant shipment auto cancel activity",
+		zap.String("orgID", tenantInfo.OrgID.String()),
+		zap.String("buID", tenantInfo.BuID.String()),
+		zap.Int("limit", limit),
+	)
+	recordActivityHeartbeat(ctx, "auto-canceling-tenant-shipments", tenantInfo.OrgID.String())
+
+	canceledShipments, err := a.repo.RunAutoCancelShipmentsForTenant(ctx, tenantInfo, limit)
+	if err != nil {
+		a.logger.Error("Tenant shipment auto cancel failed", zap.Error(err))
+		return nil, err
+	}
+
+	shipmentIDs := make([]pulid.ID, 0, len(canceledShipments))
+	for _, entity := range canceledShipments {
+		shipmentIDs = append(shipmentIDs, entity.ID)
+	}
+
+	if len(canceledShipments) > 0 {
+		shipmentports.InvalidateShipments(ctx, a.invalidator, &shipmentports.ShipmentInvalidation{
+			OrganizationID: tenantInfo.OrgID,
+			BusinessUnitID: tenantInfo.BuID,
+			Action:         "bulk_canceled",
+		})
+	}
+
+	return &AutoCancelShipmentsResult{
+		ShipmentIDs:   shipmentIDs,
+		CanceledCount: len(canceledShipments),
+		CompletedAt:   timeutils.NowUnix(),
+		TenantRunResult: temporaljobs.TenantRunResult{
+			TenantsScanned:   1,
+			TenantsProcessed: 1,
+			RecordsProcessed: len(canceledShipments),
+		},
+	}, nil
+}
+
+func uniqueShipmentTenants(entities []*shipment.Shipment) []pagination.TenantInfo {
+	seen := make(map[string]struct{}, len(entities))
+	tenants := make([]pagination.TenantInfo, 0, len(entities))
+
+	for _, entity := range entities {
+		key := entity.OrganizationID.String() + ":" + entity.BusinessUnitID.String()
+		if _, exists := seen[key]; exists {
+			continue
+		}
+
+		seen[key] = struct{}{}
+		tenants = append(tenants, pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		})
+	}
+
+	return tenants
+}
+
+func recordActivityHeartbeat(ctx context.Context, details ...any) {
+	defer func() {
+		_ = recover()
+	}()
+
+	activity.RecordHeartbeat(ctx, details...)
+}

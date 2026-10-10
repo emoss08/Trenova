@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/domain/platformplan"
-	"github.com/emoss08/trenova/internal/core/domain/subscription"
-	"github.com/emoss08/trenova/internal/core/services/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/subscription"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/testutil/plantest"

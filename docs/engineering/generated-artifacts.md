@@ -22,7 +22,7 @@ git status --porcelain -- internal/api/graphql/generated internal/api/graphql/gq
 go generate ./internal/infrastructure/database/seeder/...          # pkg/seedhelpers/seed_ids_gen.go
 go generate ./internal/api/graphql/projection/...                  # internal/api/graphql/projection/specs_gen.go
 go generate ./internal/infrastructure/database/reportcatalog/...   # pkg/reportcatalog/catalog_gen.go
-go generate ./internal/core/services/agenttoolpolicy/safetydoc/...  # ../../docs/engineering/ai-tool-safety.md
+go generate ./internal/modules/agent/app/agenttoolpolicy/safetydoc/...  # ../../docs/engineering/ai-tool-safety.md
 go generate ./internal/api/writecoverage/...                       # ../../docs/engineering/agent-write-coverage.md
 ```
 
@@ -74,7 +74,7 @@ document**:
 
 ```bash
 cd services/tms
-go generate ./internal/core/services/agenttoolpolicy/safetydoc/...
+go generate ./internal/modules/agent/app/agenttoolpolicy/safetydoc/...
 git diff --exit-code -- ../../docs/engineering/ai-tool-safety.md
 ```
 
@@ -138,8 +138,8 @@ schema or policy, or adding or removing a tool means refreshing them**:
 
 ```bash
 cd services/tms
-go test -run TestPromptSnapshots ./internal/core/domain/agentdefinition/ -update
-go test -run TestToolCatalogSnapshot ./internal/core/services/agentevalgate/ -update
+go test -run TestPromptSnapshots ./internal/modules/agent/domain/agentdefinition/ -update
+go test -run TestToolCatalogSnapshot ./internal/modules/agent/app/agentevalgate/ -update
 ```
 
 A tool description, a product guide page or an eval request is also embedded, by content

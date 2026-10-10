@@ -4,8 +4,8 @@ package documenttemplateresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	documenttemplateservice "github.com/emoss08/trenova/internal/core/services/documenttemplateservice"
-	emailservice "github.com/emoss08/trenova/internal/core/services/emailservice"
+	documenttemplateservice "github.com/emoss08/trenova/internal/modules/documents/app/documenttemplateservice"
+	emailservice "github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
 )
 
 type Deps struct {

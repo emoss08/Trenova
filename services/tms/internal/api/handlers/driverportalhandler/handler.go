@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	_ "github.com/emoss08/trenova/internal/core/domain/driverpay"
+	_ "github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/services/driverportalservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"

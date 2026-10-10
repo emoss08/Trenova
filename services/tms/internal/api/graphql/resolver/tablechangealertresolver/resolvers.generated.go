@@ -4,7 +4,7 @@ package tablechangealertresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	tablechangealertservice "github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
+	tablechangealertservice "github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice"
 )
 
 type Deps struct {

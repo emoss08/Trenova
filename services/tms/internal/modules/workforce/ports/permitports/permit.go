@@ -3,9 +3,9 @@ package permitports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/holdreason"
-	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
-	"github.com/emoss08/trenova/internal/core/domain/permit"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
+	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

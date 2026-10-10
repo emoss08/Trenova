@@ -5,33 +5,33 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/services/agentevalgate"
-	"github.com/emoss08/trenova/internal/core/services/retrievalservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
+	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 const (
-	FixturePath    = "internal/core/services/agentevalgate/" + agentevalgate.RetrievalEmbeddingFixturePath
+	FixturePath    = "internal/modules/agent/app/agentevalgate/" + agentevalgate.RetrievalEmbeddingFixturePath
 	ModelKey       = "eval.local/" + agentevalgate.EmbeddingFixtureModel + "@768"
-	DocumentSuite  = "internal/core/services/agentevalgate/evals/documentretrieval.yaml"
-	InboxSuite     = "internal/core/services/agentevalgate/evals/inboxretrieval.yaml"
-	MemorySuite    = "internal/core/services/agentevalgate/evals/memoryretrieval.yaml"
-	DocumentFloors = "internal/core/services/agentevalgate/evals/documentretrieval.floors.json"
-	InboxFloors    = "internal/core/services/agentevalgate/evals/inboxretrieval.floors.json"
-	MemoryFloors   = "internal/core/services/agentevalgate/evals/memoryretrieval.floors.json"
+	DocumentSuite  = "internal/modules/agent/app/agentevalgate/evals/documentretrieval.yaml"
+	InboxSuite     = "internal/modules/agent/app/agentevalgate/evals/inboxretrieval.yaml"
+	MemorySuite    = "internal/modules/agent/app/agentevalgate/evals/memoryretrieval.yaml"
+	DocumentFloors = "internal/modules/agent/app/agentevalgate/evals/documentretrieval.floors.json"
+	InboxFloors    = "internal/modules/agent/app/agentevalgate/evals/inboxretrieval.floors.json"
+	MemoryFloors   = "internal/modules/agent/app/agentevalgate/evals/memoryretrieval.floors.json"
 
 	RecordCommand = "cd services/tms && ollama pull nomic-embed-text && " +
 		agentevalgate.OllamaURLEnv + "=" + agentevalgate.DefaultOllamaURL +
 		" go test -count=1 -run 'TestRecordRetrievalEmbeddingFixture' " +
-		"./internal/core/services/retrievalservice/ -record"
+		"./internal/modules/agent/app/retrievalservice/ -record"
 	FloorsCommand = "cd services/tms && " +
 		"TRENOVA_TEST_POSTGRES_IMAGE=trenova-postgres:local go test -tags integration " +
-		"-count=1 -run 'TestRetrievalAgainstFloors' ./internal/core/services/retrievalservice/ -update"
+		"-count=1 -run 'TestRetrievalAgainstFloors' ./internal/modules/agent/app/retrievalservice/ -update"
 )
 
 func EmbeddingInputs(

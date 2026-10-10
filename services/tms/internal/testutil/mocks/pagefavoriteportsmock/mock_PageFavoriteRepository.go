@@ -7,7 +7,7 @@ package pagefavoriteportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/pagefavorite"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagefavorite"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/pagefavoriteports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

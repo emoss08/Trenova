@@ -7,7 +7,7 @@ package ratequoteportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/ratequote"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

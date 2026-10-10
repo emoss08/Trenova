@@ -6,7 +6,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/core/services/performancereviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"

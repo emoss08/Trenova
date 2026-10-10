@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/services/driverpayservice"
-	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"

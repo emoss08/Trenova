@@ -7,7 +7,7 @@ package weatheralertportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/weatheralert"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

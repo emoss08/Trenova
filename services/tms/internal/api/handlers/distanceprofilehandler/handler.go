@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/services/distanceprofileservice"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/places/app/distanceprofileservice"
 	"github.com/emoss08/trenova/internal/modules/places/ports/distanceprofileports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"

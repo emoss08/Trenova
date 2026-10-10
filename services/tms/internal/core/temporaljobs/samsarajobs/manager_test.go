@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/services/samsarasyncservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/samsarasyncservice"
 	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs/samsaracontract"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"

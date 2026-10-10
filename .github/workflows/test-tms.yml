@@ -230,7 +230,7 @@ jobs:
         run: |
           set -euo pipefail
           go test -p 2 -tags=integration,nomsgpack \
-            ./internal/infrastructure/postgres/repositories/airetrievalrepository/... \
+            ./internal/modules/agent/adapters/postgres/airetrievalrepository/... \
             ./internal/infrastructure/postgres/schemalint/...
 
   lint:
@@ -364,9 +364,9 @@ jobs:
         working-directory: ./services/tms
         run: |
           set -euo pipefail
-          go generate ./internal/core/services/agenttoolpolicy/safetydoc/...
+          go generate ./internal/modules/agent/app/agenttoolpolicy/safetydoc/...
           if ! git diff --exit-code -- ../../docs/engineering/ai-tool-safety.md; then
-            echo "::error::docs/engineering/ai-tool-safety.md is stale - run 'go generate ./internal/core/services/agenttoolpolicy/safetydoc/...' in services/tms and commit"
+            echo "::error::docs/engineering/ai-tool-safety.md is stale - run 'go generate ./internal/modules/agent/app/agenttoolpolicy/safetydoc/...' in services/tms and commit"
             exit 1
           fi
 

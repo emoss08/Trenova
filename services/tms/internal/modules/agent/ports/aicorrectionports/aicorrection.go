@@ -3,7 +3,7 @@ package aicorrectionports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

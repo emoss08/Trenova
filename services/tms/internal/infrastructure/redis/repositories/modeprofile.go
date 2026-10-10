@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/redishelpers"

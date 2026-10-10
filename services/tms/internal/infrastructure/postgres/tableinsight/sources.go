@@ -1,13 +1,13 @@
 package tableinsight
 
 import (
-	"github.com/emoss08/trenova/internal/core/domain/carrier"
-	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/domain/location"
-	"github.com/emoss08/trenova/internal/core/domain/order"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbhelper"

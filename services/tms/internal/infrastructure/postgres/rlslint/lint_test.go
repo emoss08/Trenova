@@ -66,11 +66,16 @@ func TestRepositoryMethodsRunInScopedTransactions(t *testing.T) {
 	t.Parallel()
 
 	root := serviceRoot(t)
-	violations, err := ScanRepositories(
-		filepath.Join(root, "internal", "infrastructure", "postgres", "repositories"),
-		root,
-	)
+	dirs, err := filepath.Glob(filepath.Join(root, "internal", "modules", "*", "adapters", "postgres"))
 	require.NoError(t, err)
+	dirs = append(dirs, filepath.Join(root, "internal", "infrastructure", "postgres", "repositories"))
+
+	violations := make([]TxViolation, 0)
+	for _, dir := range dirs {
+		found, scanErr := ScanRepositories(dir, root)
+		require.NoError(t, scanErr)
+		violations = append(violations, found...)
+	}
 
 	unexpected := make([]string, 0)
 	seen := make(map[string]struct{}, len(violations))

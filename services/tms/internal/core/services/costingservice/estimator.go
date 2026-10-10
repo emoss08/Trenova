@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
-	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"

@@ -7,7 +7,7 @@ package fuelsurchargeportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"

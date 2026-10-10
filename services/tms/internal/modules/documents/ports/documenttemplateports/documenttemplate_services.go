@@ -4,7 +4,7 @@ import (
 	"context"
 	"html/template"
 
-	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/templateengine"
 	"github.com/emoss08/trenova/shared/i18n"

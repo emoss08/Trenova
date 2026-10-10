@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/integrationhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/services/samsarasyncservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/samsarasyncservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs/samsaracontract"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"

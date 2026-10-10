@@ -7,7 +7,7 @@ package dothazmatreferenceportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/dothazmatreference"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/dothazmatreference"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/dothazmatreferenceports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

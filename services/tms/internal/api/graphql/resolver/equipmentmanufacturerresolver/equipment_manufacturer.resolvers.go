@@ -12,8 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/mappers"
-	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
 	"github.com/emoss08/trenova/shared/pulid"
 )

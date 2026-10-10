@@ -3,7 +3,7 @@ package costingservice_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"

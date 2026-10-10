@@ -3,7 +3,7 @@ package subscriptionports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/subscription"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/subscription"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

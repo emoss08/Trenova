@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/uptrace/bun"

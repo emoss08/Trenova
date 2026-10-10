@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/bulkedit"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/bulkedit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/bulkeditports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"

@@ -3,10 +3,10 @@ package deskcaseports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/agentwait"
-	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/domain/deskcase"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"

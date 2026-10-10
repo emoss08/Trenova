@@ -4,8 +4,8 @@ import (
 	"html/template"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 

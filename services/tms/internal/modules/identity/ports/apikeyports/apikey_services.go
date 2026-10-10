@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"

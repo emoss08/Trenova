@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

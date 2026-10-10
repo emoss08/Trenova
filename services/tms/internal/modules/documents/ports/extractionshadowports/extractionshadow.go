@@ -3,7 +3,7 @@ package extractionshadowports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"

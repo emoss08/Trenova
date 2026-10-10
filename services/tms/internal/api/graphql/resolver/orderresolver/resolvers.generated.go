@@ -4,7 +4,7 @@ package orderresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	orderservice "github.com/emoss08/trenova/internal/core/services/orderservice"
+	orderservice "github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 )
 
 type Deps struct {

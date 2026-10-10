@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
-	"github.com/emoss08/trenova/internal/core/domain/extractionshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"

@@ -3,7 +3,7 @@ package aitrainingports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/aitraining"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

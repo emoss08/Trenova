@@ -3,8 +3,8 @@ package inboundmessageresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"

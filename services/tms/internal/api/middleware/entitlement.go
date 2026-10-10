@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/authctx"

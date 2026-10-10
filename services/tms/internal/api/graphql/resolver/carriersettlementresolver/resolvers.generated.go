@@ -4,7 +4,7 @@ package carriersettlementresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	carriersettlementservice "github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
+	carriersettlementservice "github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 )
 

@@ -3,10 +3,10 @@ package organizationrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
-	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"

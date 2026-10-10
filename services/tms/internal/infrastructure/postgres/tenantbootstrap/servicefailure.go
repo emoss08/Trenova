@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 )

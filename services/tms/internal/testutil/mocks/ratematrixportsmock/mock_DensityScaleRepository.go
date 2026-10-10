@@ -7,7 +7,7 @@ package ratematrixportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

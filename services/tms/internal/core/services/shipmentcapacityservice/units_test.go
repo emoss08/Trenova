@@ -3,11 +3,11 @@ package shipmentcapacityservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/carrier"
-	"github.com/emoss08/trenova/internal/core/domain/carriercapacity"
-	"github.com/emoss08/trenova/internal/core/domain/location"
-	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"

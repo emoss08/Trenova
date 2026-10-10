@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 )
 
 // Request is one completion, already rendered to text. Adapters do not see the

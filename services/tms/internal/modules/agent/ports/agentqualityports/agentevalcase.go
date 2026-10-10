@@ -3,7 +3,7 @@ package agentqualityports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/exchangerate"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/exchangerate"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 

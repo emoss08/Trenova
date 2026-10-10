@@ -188,7 +188,7 @@ func resolveOptions(opts generatorOptions) (generatorOptions, error) {
 		resolved.GqlgenPath = filepath.Join(root, "gqlgen.yml")
 	}
 	if resolved.DomainDir == "" {
-		resolved.DomainDir = filepath.Join(root, "internal/core/domain")
+		resolved.DomainDir = filepath.Join(root, "internal/modules/*/domain")
 	}
 	if resolved.BuncolgenDir == "" {
 		resolved.BuncolgenDir = filepath.Join(root, "pkg/buncolgen")
@@ -1103,8 +1103,26 @@ func namedType(t *gqlast.Type) string {
 	return t.Name()
 }
 
-func loadGoStructs(root string, modulePath string) (map[string]goStruct, error) {
+func loadGoStructs(pattern string, modulePath string) (map[string]goStruct, error) {
+	roots, err := filepath.Glob(pattern)
+	if err != nil {
+		return nil, fmt.Errorf("expanding %q: %w", pattern, err)
+	}
+	if len(roots) == 0 {
+		return nil, fmt.Errorf("no domain directory matches %q", pattern)
+	}
+
 	structs := map[string]goStruct{}
+	for _, root := range roots {
+		if err = loadGoStructsFrom(root, modulePath, structs); err != nil {
+			return nil, err
+		}
+	}
+
+	return structs, nil
+}
+
+func loadGoStructsFrom(root string, modulePath string, structs map[string]goStruct) error {
 	fset := token.NewFileSet()
 
 	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, walkErr error) error {
@@ -1173,7 +1191,7 @@ func loadGoStructs(root string, modulePath string) (map[string]goStruct, error) 
 		return nil, fmt.Errorf("walking Go domain structs in %q: %w", root, err)
 	}
 
-	return structs, nil
+	return nil
 }
 
 func packagePathForFile(root string, modulePath string, path string) (string, error) {
@@ -1191,9 +1209,9 @@ func packagePathForFile(root string, modulePath string, path string) (string, er
 	}
 
 	base := filepath.ToSlash(filepath.Clean(rootAbs))
-	domainIndex := strings.LastIndex(base, "/internal/core/domain")
+	domainIndex := strings.LastIndex(base, "/internal/")
 	if domainIndex == -1 {
-		return "", fmt.Errorf("domain root %q must end with internal/core/domain", root)
+		return "", fmt.Errorf("domain root %q must be inside the module's internal directory", root)
 	}
 	domainImportRoot := strings.TrimSuffix(modulePath+base[domainIndex:], "/")
 	if rel == "." {

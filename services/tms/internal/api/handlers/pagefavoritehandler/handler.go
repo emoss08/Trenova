@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/domain/pagefavorite"
-	"github.com/emoss08/trenova/internal/core/services/pagefavoriteservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagefavorite"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/pagefavoriteservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/pagefavoriteports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"

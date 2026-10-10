@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"

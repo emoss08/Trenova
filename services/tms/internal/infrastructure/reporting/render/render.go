@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/report"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"go.uber.org/fx"
 )

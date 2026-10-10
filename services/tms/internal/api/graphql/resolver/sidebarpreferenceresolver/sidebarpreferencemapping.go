@@ -3,8 +3,8 @@ package sidebarpreferenceresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/sidebarpreference"
-	"github.com/emoss08/trenova/internal/core/services/sidebarpreferenceservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/sidebarpreference"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/sidebarpreferenceservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 )

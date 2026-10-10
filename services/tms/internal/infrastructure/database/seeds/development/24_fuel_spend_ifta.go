@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/core/domain/ifta"
-	"github.com/emoss08/trenova/internal/core/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/domaintypes"

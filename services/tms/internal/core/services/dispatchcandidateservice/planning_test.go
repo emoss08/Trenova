@@ -3,7 +3,7 @@ package dispatchcandidateservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/telematics"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"

@@ -4,7 +4,7 @@ package ptopolicyresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	ptoledgerservice "github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
+	ptoledgerservice "github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	ptopolicyservice "github.com/emoss08/trenova/internal/core/services/ptopolicyservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )

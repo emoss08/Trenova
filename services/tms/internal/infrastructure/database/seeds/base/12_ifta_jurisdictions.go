@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/ifta"
-	"github.com/emoss08/trenova/internal/core/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/seedhelpers"

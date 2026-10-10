@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/seedhelpers"

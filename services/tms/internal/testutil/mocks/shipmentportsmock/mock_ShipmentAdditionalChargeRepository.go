@@ -7,7 +7,7 @@ package shipmentportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/uptrace/bun"
 )

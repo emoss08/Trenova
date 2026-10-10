@@ -4,7 +4,7 @@ package manualjournalresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	manualjournalservice "github.com/emoss08/trenova/internal/core/services/manualjournalservice"
+	manualjournalservice "github.com/emoss08/trenova/internal/modules/accounting/app/manualjournalservice"
 )
 
 type Deps struct {

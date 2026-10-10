@@ -3,11 +3,11 @@ package shipmentholdservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/holdreason"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/services/auditservice"
-	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"

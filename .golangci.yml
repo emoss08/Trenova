@@ -85,8 +85,8 @@ linters:
             - "!$test"
             - "!**/internal/testutil/**"
             - "!**/*test/*.go"
-            - "!**/internal/core/services/agentevalgate/*.go"
-            - "!**/internal/core/services/agentredteam/*.go"
+            - "!**/internal/modules/agent/app/agentevalgate/*.go"
+            - "!**/internal/modules/agent/app/agentredteam/*.go"
           deny:
             - pkg: github.com/emoss08/trenova/internal/testutil
               desc: test helpers are linked into the binary; import them only from _test.go files
@@ -96,15 +96,15 @@ linters:
               desc: mocks are linked into the binary; import them only from _test.go files
             - pkg: github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest
               desc: test helper packages are linked into the binary; import them only from _test.go files
-            - pkg: github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest
+            - pkg: github.com/emoss08/trenova/internal/modules/agent/agenttest
               desc: test helper packages are linked into the binary; import them only from _test.go files
-            - pkg: github.com/emoss08/trenova/internal/core/services/exchangeratestamp/exchangeratestamptest
+            - pkg: github.com/emoss08/trenova/internal/modules/identity/identitytest
               desc: test helper packages are linked into the binary; import them only from _test.go files
-            - pkg: github.com/emoss08/trenova/internal/core/services/rateengine/rateenginetest
+            - pkg: github.com/emoss08/trenova/internal/modules/rating/ratingtest
               desc: test helper packages are linked into the binary; import them only from _test.go files
             - pkg: github.com/emoss08/trenova/internal/core/services/shipmentcommercial/shipmentcommercialtest
               desc: test helper packages are linked into the binary; import them only from _test.go files
-            - pkg: github.com/emoss08/trenova/internal/core/services/shipmentservice/shipmentservicetest
+            - pkg: github.com/emoss08/trenova/internal/modules/operations/operationstest
               desc: test helper packages are linked into the binary; import them only from _test.go files
             - pkg: github.com/emoss08/trenova/internal/core/temporaljobs/replaytest
               desc: test helper packages are linked into the binary; import them only from _test.go files
@@ -202,7 +202,7 @@ linters:
       # Domain validation errors are surfaced verbatim as field-level messages in
       # the client's forms, so they are user-facing copy rather than Go error
       # strings destined to be wrapped. Sentence case is correct for them.
-      - path: internal/(core|cloud)/domain/
+      - path: internal/(core|cloud|modules/\w+)/domain/
         text: 'ST1005: error strings should not be capitalized'
         linters:
           - staticcheck

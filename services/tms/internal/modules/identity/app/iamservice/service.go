@@ -1,0 +1,762 @@
+package iamservice
+
+import (
+	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
+	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
+	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/slugutil"
+	"github.com/emoss08/trenova/shared/pulid"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+const (
+	identityProviderSlugMaxLength = 80
+	scimTokenPrefix               = "scim_"
+)
+
+type Params struct {
+	fx.In
+
+	Repo        iamports.IAMRepository
+	PolicyCache iamports.AccessPolicyCacheRepository
+	Encryption  *encryptionservice.Service
+	Validator   *Validator
+	Auditor     permissionports.SecurityAuditor
+	Logger      *zap.Logger
+	Plans       platformplanports.PlanService `optional:"true"`
+}
+
+type service struct {
+	repo        iamports.IAMRepository
+	policyCache iamports.AccessPolicyCacheRepository
+	enc         *encryptionservice.Service
+	validator   *Validator
+	auditor     permissionports.SecurityAuditor
+	l           *zap.Logger
+	plans       platformplanports.PlanService
+}
+
+func New(p Params) iamports.IAMService {
+	return &service{
+		repo:        p.Repo,
+		policyCache: p.PolicyCache,
+		enc:         p.Encryption,
+		validator:   p.Validator,
+		auditor:     p.Auditor,
+		l:           p.Logger.Named("service.iam"),
+		plans:       p.Plans,
+	}
+}
+
+func (s *service) requireSSO(ctx context.Context, tenantInfo pagination.TenantInfo) error {
+	return planservice.RequireCapability(ctx, s.plans, tenantInfo, platformplan.CapabilitySSO)
+}
+
+func (s *service) ListIdentityProviders(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) ([]*iam.IdentityProvider, error) {
+	return s.repo.ListIdentityProviders(ctx, iamports.ListIAMRequest{TenantInfo: tenantInfo})
+}
+
+func (s *service) CreateIdentityProvider(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	req *iamports.IdentityProviderRequest,
+) (*iam.IdentityProvider, error) {
+	if err := s.requireSSO(ctx, tenantInfo); err != nil {
+		return nil, err
+	}
+	entity, err := s.identityProviderFromRequest(tenantInfo, req, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	created, err := s.repo.CreateIdentityProvider(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceIdentityProvider,
+		resourceID: created.ID,
+		operation:  permission.OpCreate,
+		after:      created,
+		comment:    "Identity provider created",
+	})
+	return created, nil
+}
+
+func (s *service) UpdateIdentityProvider(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	id pulid.ID,
+	req *iamports.IdentityProviderRequest,
+) (*iam.IdentityProvider, error) {
+	if err := s.requireSSO(ctx, tenantInfo); err != nil {
+		return nil, err
+	}
+	existing, err := s.repo.GetIdentityProvider(ctx, tenantInfo, id)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := s.identityProviderFromRequest(tenantInfo, req, existing)
+	if err != nil {
+		return nil, err
+	}
+	entity.ID = id
+	entity.Version = existing.Version
+	secretChanged := strings.TrimSpace(req.OIDCClientSecret) != ""
+	if !secretChanged {
+		entity.OIDCClientSecret = existing.OIDCClientSecret
+	}
+
+	updated, err := s.repo.UpdateIdentityProvider(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceIdentityProvider,
+		resourceID: id,
+		operation:  permission.OpUpdate,
+		before:     existing,
+		after:      updated,
+		comment:    "Identity provider updated",
+		metadata:   map[string]any{"clientSecretChanged": secretChanged},
+	})
+	return updated, nil
+}
+
+func (s *service) DeleteIdentityProvider(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	id pulid.ID,
+) error {
+	existing, err := s.repo.GetIdentityProvider(ctx, tenantInfo, id)
+	if err != nil {
+		return err
+	}
+
+	if err = s.repo.DeleteIdentityProvider(ctx, tenantInfo, id); err != nil {
+		return err
+	}
+
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceIdentityProvider,
+		resourceID: id,
+		operation:  permission.OpDelete,
+		before:     existing,
+		comment:    "Identity provider deleted",
+	})
+	return nil
+}
+
+func (s *service) identityProviderFromRequest(
+	tenantInfo pagination.TenantInfo,
+	req *iamports.IdentityProviderRequest,
+	existing *iam.IdentityProvider,
+) (*iam.IdentityProvider, error) {
+	if req == nil {
+		return nil, errortypes.NewValidationError(
+			"identityProvider",
+			errortypes.ErrRequired,
+			"Identity provider is required",
+		)
+	}
+
+	protocol := req.Protocol
+	if protocol == "" {
+		protocol = iam.IdentityProviderProtocolOIDC
+	}
+	if protocol != iam.IdentityProviderProtocolOIDC {
+		return nil, errortypes.NewValidationError(
+			"protocol",
+			errortypes.ErrInvalid,
+			"SAML providers cannot be managed until SAML sign-in is available",
+		)
+	}
+
+	slug := normalizeProviderSlug(req.Slug, req.Name)
+	secret, err := s.resolveOIDCSecret(tenantInfo, slug, req.OIDCClientSecret, existing)
+	if err != nil {
+		return nil, err
+	}
+
+	entity := &iam.IdentityProvider{
+		OrganizationID:    tenantInfo.OrgID,
+		BusinessUnitID:    tenantInfo.BuID,
+		Name:              strings.TrimSpace(req.Name),
+		Slug:              slug,
+		Protocol:          protocol,
+		Enabled:           req.Enabled,
+		EnforceSSO:        req.EnforceSSO,
+		AutoProvision:     req.AutoProvision,
+		AllowFederatedMFA: req.AllowFederatedMFA,
+		AllowedDomains:    normalizedStrings(req.AllowedDomains),
+		AttributeMap:      req.AttributeMap,
+		OIDCIssuerURL:     strings.TrimSpace(req.OIDCIssuerURL),
+		OIDCClientID:      strings.TrimSpace(req.OIDCClientID),
+		OIDCClientSecret:  secret,
+		OIDCRedirectURL:   strings.TrimSpace(req.OIDCRedirectURL),
+		OIDCScopes:        normalizedScopes(req.OIDCScopes),
+	}
+	multiErr := errortypes.NewMultiError()
+	entity.Validate(multiErr)
+	validateOIDCConfig(entity, multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+	return entity, nil
+}
+
+func (s *service) resolveOIDCSecret(
+	tenantInfo pagination.TenantInfo,
+	slug string,
+	rawSecret string,
+	existing *iam.IdentityProvider,
+) (string, error) {
+	trimmed := strings.TrimSpace(rawSecret)
+	if trimmed == "" && existing != nil {
+		return existing.OIDCClientSecret, nil
+	}
+	if trimmed == "" {
+		return "", nil
+	}
+	encrypted, err := s.enc.EncryptStringWithAAD(trimmed, encryptionservice.AAD{
+		Purpose:        encryptionservice.PurposeIAMOIDCClientSecret,
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		ResourceID:     slug,
+	})
+	if err != nil {
+		return "", errortypes.NewBusinessError("Failed to encrypt identity provider secret").
+			WithInternal(err)
+	}
+	return encrypted, nil
+}
+
+func validateOIDCConfig(entity *iam.IdentityProvider, multiErr *errortypes.MultiError) {
+	if entity.Protocol != iam.IdentityProviderProtocolOIDC {
+		return
+	}
+	if entity.OIDCIssuerURL == "" {
+		multiErr.Add("oidcIssuerUrl", errortypes.ErrRequired, "OIDC issuer URL is required")
+	}
+	if entity.OIDCClientID == "" {
+		multiErr.Add("oidcClientId", errortypes.ErrRequired, "OIDC client ID is required")
+	}
+	if entity.OIDCClientSecret == "" {
+		multiErr.Add("oidcClientSecret", errortypes.ErrRequired, "OIDC client secret is required")
+	}
+	if entity.OIDCRedirectURL == "" {
+		multiErr.Add("oidcRedirectUrl", errortypes.ErrRequired, "OIDC redirect URL is required")
+	}
+}
+
+func normalizeProviderSlug(rawSlug, name string) string {
+	slug := slugutil.NormalizeLoginSlug(rawSlug)
+	if strings.TrimSpace(rawSlug) == "" {
+		slug = slugutil.NormalizeLoginSlug(name)
+	}
+	if len(slug) > identityProviderSlugMaxLength {
+		slug = strings.Trim(slug[:identityProviderSlugMaxLength], "-")
+	}
+	if slug == "" {
+		return "provider"
+	}
+	return slug
+}
+
+func normalizedStrings(values []string) []string {
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		trimmed := strings.TrimSpace(value)
+		if trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+	return result
+}
+
+func normalizedScopes(values []string) []string {
+	scopes := normalizedStrings(values)
+	if len(scopes) == 0 {
+		return []string{"openid", "email", "profile"}
+	}
+	return scopes
+}
+
+func (s *service) ListSCIMDirectories(
+	ctx context.Context,
+	req *iamports.ListSCIMDirectoryRequest,
+) (*pagination.ListResult[*iam.SCIMDirectory], error) {
+	return s.repo.ListSCIMDirectories(ctx, req)
+}
+
+func (s *service) CreateSCIMDirectory(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	entity *iam.SCIMDirectory,
+) (*iam.SCIMDirectory, error) {
+	if err := s.requireSSO(ctx, tenantInfo); err != nil {
+		return nil, err
+	}
+	entity.OrganizationID = tenantInfo.OrgID
+	entity.BusinessUnitID = tenantInfo.BuID
+	entity.TenantSlug = strings.TrimSpace(entity.TenantSlug)
+
+	created, err := s.repo.CreateSCIMDirectory(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceSCIMDirectory,
+		resourceID: created.ID,
+		operation:  permission.OpCreate,
+		after:      created,
+		comment:    "SCIM directory created",
+	})
+	return created, nil
+}
+
+func (s *service) UpdateSCIMDirectory(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	id pulid.ID,
+	entity *iam.SCIMDirectory,
+) (*iam.SCIMDirectory, error) {
+	existing, err := s.repo.GetSCIMDirectory(ctx, iamports.GetSCIMDirectoryRequest{
+		ID:         id,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	entity.ID = id
+	entity.OrganizationID = tenantInfo.OrgID
+	entity.BusinessUnitID = tenantInfo.BuID
+	entity.TenantSlug = strings.TrimSpace(entity.TenantSlug)
+
+	updated, err := s.repo.UpdateSCIMDirectory(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceSCIMDirectory,
+		resourceID: id,
+		operation:  permission.OpUpdate,
+		before:     existing,
+		after:      updated,
+		comment:    "SCIM directory updated",
+	})
+	return updated, nil
+}
+
+func (s *service) DeleteSCIMDirectory(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	id pulid.ID,
+) error {
+	existing, err := s.repo.GetSCIMDirectory(ctx, iamports.GetSCIMDirectoryRequest{
+		ID:         id,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+
+	if err = s.repo.DeleteSCIMDirectory(ctx, tenantInfo, id); err != nil {
+		return err
+	}
+
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceSCIMDirectory,
+		resourceID: id,
+		operation:  permission.OpDelete,
+		before:     existing,
+		comment:    "SCIM directory deleted",
+	})
+	return nil
+}
+
+func (s *service) ListSCIMTokens(
+	ctx context.Context,
+	orgID, directoryID pulid.ID,
+) ([]*iam.SCIMToken, error) {
+	return s.repo.ListSCIMTokens(ctx, orgID, directoryID)
+}
+
+func (s *service) CreateSCIMToken(
+	ctx context.Context,
+	orgID pulid.ID,
+	directoryID pulid.ID,
+	req *iamports.SCIMTokenCreateRequest,
+) (*iamports.SCIMTokenCreateResponse, error) {
+	if req == nil {
+		return nil, errortypes.NewValidationError(
+			"token",
+			errortypes.ErrRequired,
+			"SCIM token request is required",
+		)
+	}
+
+	generated, err := generateSCIMToken()
+	if err != nil {
+		return nil, errortypes.NewBusinessError("Failed to generate SCIM token").WithInternal(err)
+	}
+
+	entity := &iam.SCIMToken{
+		OrganizationID: orgID,
+		DirectoryID:    directoryID,
+		Name:           strings.TrimSpace(req.Name),
+		Prefix:         generated.prefix,
+		TokenHash:      generated.hash,
+		Status:         iam.SCIMTokenStatusActive,
+		ExpiresAt:      req.ExpiresAt,
+	}
+	if entity.Name == "" {
+		return nil, errortypes.NewValidationError(
+			"name",
+			errortypes.ErrRequired,
+			"Name is required",
+		)
+	}
+
+	saved, err := s.repo.CreateSCIMToken(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: pagination.TenantInfo{OrgID: orgID},
+		resource:   permission.ResourceSCIMDirectory,
+		resourceID: directoryID,
+		operation:  permission.OpUpdate,
+		after:      saved,
+		comment:    "SCIM token created",
+		metadata: map[string]any{
+			metadataTokenID:     saved.ID.String(),
+			metadataTokenPrefix: saved.Prefix,
+		},
+	})
+	return &iamports.SCIMTokenCreateResponse{
+		SCIMToken: saved,
+		Token:     generated.token,
+	}, nil
+}
+
+func (s *service) RevokeSCIMToken(
+	ctx context.Context,
+	orgID, tokenID pulid.ID,
+) (*iam.SCIMToken, error) {
+	revoked, err := s.repo.RevokeSCIMToken(ctx, orgID, tokenID)
+	if err != nil {
+		return nil, err
+	}
+
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: pagination.TenantInfo{OrgID: orgID},
+		resource:   permission.ResourceSCIMDirectory,
+		resourceID: revoked.DirectoryID,
+		operation:  permission.OpUpdate,
+		after:      revoked,
+		comment:    "SCIM token revoked",
+		metadata: map[string]any{
+			metadataTokenID:     revoked.ID.String(),
+			metadataTokenPrefix: revoked.Prefix,
+		},
+	})
+	return revoked, nil
+}
+
+type generatedSCIMToken struct {
+	prefix string
+	token  string
+	hash   string
+}
+
+func generateSCIMToken() (*generatedSCIMToken, error) {
+	prefixBytes := make([]byte, 9)
+	secretBytes := make([]byte, 32)
+	if _, err := rand.Read(prefixBytes); err != nil {
+		return nil, err
+	}
+	if _, err := rand.Read(secretBytes); err != nil {
+		return nil, err
+	}
+
+	prefix := scimTokenPrefix + base64.RawURLEncoding.EncodeToString(prefixBytes)
+	secret := base64.RawURLEncoding.EncodeToString(secretBytes)
+	token := prefix + "." + secret
+	sum := sha256.Sum256([]byte(token))
+	return &generatedSCIMToken{
+		prefix: prefix,
+		token:  token,
+		hash:   base64.RawURLEncoding.EncodeToString(sum[:]),
+	}, nil
+}
+
+func (s *service) ListSCIMGroupRoleMappings(
+	ctx context.Context,
+	req *iamports.ListSCIMGroupRoleMappingsRequest,
+) (*pagination.ListResult[*iam.SCIMGroupRoleMapping], error) {
+	return s.repo.ListSCIMGroupRoleMappings(ctx, req)
+}
+
+func (s *service) ListSCIMGroupRoleMappingsConnection(
+	ctx context.Context,
+	req *iamports.ListSCIMGroupRoleMappingConnectionRequest,
+) (*pagination.CursorListResult[*iam.SCIMGroupRoleMapping], error) {
+	return s.repo.ListSCIMGroupRoleMappingsConnection(ctx, req)
+}
+
+func (s *service) CreateSCIMGroupRoleMapping(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	directoryID pulid.ID,
+	entity *iam.SCIMGroupRoleMapping,
+) (*iam.SCIMGroupRoleMapping, error) {
+	if err := s.requireSSO(ctx, tenantInfo); err != nil {
+		return nil, err
+	}
+	entity.OrganizationID = tenantInfo.OrgID
+	entity.BusinessUnitID = tenantInfo.BuID
+	entity.DirectoryID = directoryID
+
+	created, err := s.repo.CreateSCIMGroupRoleMapping(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceSCIMDirectory,
+		resourceID: directoryID,
+		operation:  permission.OpUpdate,
+		after:      created,
+		comment:    "SCIM group mapped to a role",
+		metadata:   map[string]any{metadataMappingID: created.ID.String()},
+	})
+	return created, nil
+}
+
+func (s *service) UpdateSCIMGroupRoleMapping(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	id pulid.ID,
+	entity *iam.SCIMGroupRoleMapping,
+) (*iam.SCIMGroupRoleMapping, error) {
+	entity.ID = id
+	entity.OrganizationID = tenantInfo.OrgID
+	entity.BusinessUnitID = tenantInfo.BuID
+
+	updated, err := s.repo.UpdateSCIMGroupRoleMapping(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceSCIMDirectory,
+		resourceID: updated.DirectoryID,
+		operation:  permission.OpUpdate,
+		after:      updated,
+		comment:    "SCIM group role mapping updated",
+		metadata:   map[string]any{metadataMappingID: id.String()},
+	})
+	return updated, nil
+}
+
+func (s *service) DeleteSCIMGroupRoleMapping(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	id pulid.ID,
+) error {
+	if err := s.repo.DeleteSCIMGroupRoleMapping(ctx, tenantInfo, id); err != nil {
+		return err
+	}
+
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceSCIMDirectory,
+		resourceID: id,
+		operation:  permission.OpUpdate,
+		comment:    "SCIM group role mapping deleted",
+		metadata:   map[string]any{metadataMappingID: id.String()},
+	})
+	return nil
+}
+
+func (s *service) ListProvisioningAuditRecords(
+	ctx context.Context,
+	orgID pulid.ID,
+	directoryID pulid.ID,
+	limit int,
+) ([]*iam.ProvisioningAuditRecord, error) {
+	return s.repo.ListProvisioningAuditRecords(ctx, orgID, directoryID, limit)
+}
+
+func (s *service) ListAccessPolicies(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) ([]*iam.AccessPolicy, error) {
+	return s.repo.ListAccessPolicies(ctx, iamports.ListIAMRequest{TenantInfo: tenantInfo})
+}
+
+func (s *service) CreateAccessPolicy(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	entity *iam.AccessPolicy,
+) (*iam.AccessPolicy, error) {
+	entity.OrganizationID = tenantInfo.OrgID
+	entity.BusinessUnitID = tenantInfo.BuID
+	prepareAccessPolicy(entity)
+	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
+		return nil, multiErr
+	}
+	created, err := s.repo.CreateAccessPolicy(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+	s.invalidateAccessPolicyCache(ctx, tenantInfo)
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceAccessPolicy,
+		resourceID: created.ID,
+		operation:  permission.OpCreate,
+		after:      created,
+		comment:    "Access policy created",
+	})
+	return created, nil
+}
+
+func (s *service) UpdateAccessPolicy(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	id pulid.ID,
+	entity *iam.AccessPolicy,
+) (*iam.AccessPolicy, error) {
+	entity.ID = id
+	entity.OrganizationID = tenantInfo.OrgID
+	entity.BusinessUnitID = tenantInfo.BuID
+	prepareAccessPolicy(entity)
+	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
+		return nil, multiErr
+	}
+	updated, err := s.repo.UpdateAccessPolicy(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+	s.invalidateAccessPolicyCache(ctx, tenantInfo)
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceAccessPolicy,
+		resourceID: id,
+		operation:  permission.OpUpdate,
+		after:      updated,
+		comment:    "Access policy updated",
+	})
+	return updated, nil
+}
+
+func prepareAccessPolicy(entity *iam.AccessPolicy) {
+	entity.Name = strings.TrimSpace(entity.Name)
+	entity.Resource = strings.TrimSpace(entity.Resource)
+	entity.Operation = strings.TrimSpace(entity.Operation)
+	entity.Conditions = normalizeAccessPolicyConditions(entity.Conditions)
+}
+
+func (s *service) DeleteAccessPolicy(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	id pulid.ID,
+) error {
+	if err := s.repo.DeleteAccessPolicy(ctx, tenantInfo, id); err != nil {
+		return err
+	}
+	s.invalidateAccessPolicyCache(ctx, tenantInfo)
+	s.recordChange(ctx, &iamChange{
+		tenantInfo: tenantInfo,
+		resource:   permission.ResourceAccessPolicy,
+		resourceID: id,
+		operation:  permission.OpDelete,
+		comment:    "Access policy deleted",
+	})
+	return nil
+}
+
+func (s *service) invalidateAccessPolicyCache(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) {
+	if s.policyCache == nil {
+		return
+	}
+	err := s.policyCache.Invalidate(ctx, iamports.IAMTenantPolicyLookupRequest{
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+	})
+	if err != nil {
+		s.l.Error("failed to invalidate access policy cache",
+			zap.String("orgID", tenantInfo.OrgID.String()),
+			zap.String("buID", tenantInfo.BuID.String()),
+			zap.Error(err),
+		)
+	}
+}
+
+func (s *service) ListAuthEvents(
+	ctx context.Context,
+	orgID pulid.ID,
+	limit int,
+) ([]*iam.AuthEvent, error) {
+	return s.repo.ListAuthEvents(ctx, orgID, limit)
+}
+
+func (s *service) ListRiskDecisions(
+	ctx context.Context,
+	orgID pulid.ID,
+	limit int,
+) ([]*iam.RiskDecision, error) {
+	return s.repo.ListRiskDecisions(ctx, orgID, limit)
+}
+
+func (s *service) ListExternalIdentities(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) ([]*iam.ExternalIdentity, error) {
+	return s.repo.ListExternalIdentities(ctx, iamports.ListIAMRequest{TenantInfo: tenantInfo})
+}
+
+func (s *service) ListMFAAuthenticators(
+	ctx context.Context,
+	orgID pulid.ID,
+	limit int,
+) ([]*iam.MFAAuthenticator, error) {
+	return s.repo.ListMFAAuthenticators(ctx, orgID, limit)
+}

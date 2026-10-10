@@ -4,7 +4,7 @@ package iftaresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	iftaservice "github.com/emoss08/trenova/internal/core/services/iftaservice"
+	iftaservice "github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 )
 

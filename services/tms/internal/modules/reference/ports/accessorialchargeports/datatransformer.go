@@ -3,19 +3,19 @@ package accessorialchargeports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/core/domain/accounttype"
-	"github.com/emoss08/trenova/internal/core/domain/commodity"
-	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/domain/documenttype"
-	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
-	"github.com/emoss08/trenova/internal/core/domain/glaccount"
-	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/internal/core/domain/location"
-	"github.com/emoss08/trenova/internal/core/domain/servicetype"
-	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
 )
 
 type DataTransformer interface {

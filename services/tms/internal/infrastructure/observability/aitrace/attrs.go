@@ -3,7 +3,7 @@ package aitrace
 import (
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.opentelemetry.io/otel/attribute"
 )

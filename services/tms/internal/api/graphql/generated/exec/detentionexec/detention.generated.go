@@ -9,7 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 

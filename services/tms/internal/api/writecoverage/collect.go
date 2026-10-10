@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 
 	"github.com/emoss08/trenova/internal/api"
-	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy/registered"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy/registered"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 

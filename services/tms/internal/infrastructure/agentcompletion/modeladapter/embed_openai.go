@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/stringutils"

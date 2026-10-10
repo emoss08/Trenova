@@ -7,7 +7,7 @@ package agentportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

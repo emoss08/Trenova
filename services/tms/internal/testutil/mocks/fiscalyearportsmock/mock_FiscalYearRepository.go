@@ -7,7 +7,7 @@ package fiscalyearportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

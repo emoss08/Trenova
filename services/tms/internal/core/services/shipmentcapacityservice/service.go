@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/tender"
-	"github.com/emoss08/trenova/internal/core/services/ratequoteservice"
-	"github.com/emoss08/trenova/internal/core/services/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carriercapacityports"

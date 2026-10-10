@@ -3,8 +3,8 @@ package ediinboundservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

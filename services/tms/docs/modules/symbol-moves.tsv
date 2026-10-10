@@ -6821,3 +6821,14 @@ github.com/emoss08/trenova/internal/core/temporaljobs/agentwaitjobs.Schedule	git
 github.com/emoss08/trenova/internal/core/temporaljobs/agentwaitjobs.Worker	github.com/emoss08/trenova/internal/core/temporaljobs/agentwaitjobs/agentwaitcontract.Worker
 github.com/emoss08/trenova/internal/core/temporaljobs/agentwaitjobs.WorkflowIDFor	github.com/emoss08/trenova/internal/core/temporaljobs/agentwaitjobs/agentwaitcontract.WorkflowIDFor
 github.com/emoss08/trenova/internal/core/temporaljobs/agentwaitjobs.WorkflowName	github.com/emoss08/trenova/internal/core/temporaljobs/agentwaitjobs/agentwaitcontract.WorkflowName
+github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/agentruntimetest.ScriptedCompletion	github.com/emoss08/trenova/internal/modules/agent/agenttest.ScriptedCompletion
+github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/agentruntimetest.StubQueryTool	github.com/emoss08/trenova/internal/modules/agent/agenttest.StubQueryTool
+github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/agentruntimetest.StubQueryRegistry	github.com/emoss08/trenova/internal/modules/agent/agenttest.StubQueryRegistry
+github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/agentruntimetest.StubActionTool	github.com/emoss08/trenova/internal/modules/agent/agenttest.StubActionTool
+github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/agentruntimetest.StubActionRegistry	github.com/emoss08/trenova/internal/modules/agent/agenttest.StubActionRegistry
+github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/agentruntimetest.StubPermissions	github.com/emoss08/trenova/internal/modules/agent/agenttest.StubPermissions
+github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice/shipmentservicetest.NewAssignmentRepository	github.com/emoss08/trenova/internal/modules/operations/operationstest.NewAssignmentRepository
+github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice/shipmentservicetest.NewControlRepository	github.com/emoss08/trenova/internal/modules/operations/operationstest.NewControlRepository
+github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice/shipmentservicetest.NewCustomerRepository	github.com/emoss08/trenova/internal/modules/operations/operationstest.NewCustomerRepository
+github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp/exchangeratestamptest.NewFixedForTest	github.com/emoss08/trenova/internal/modules/identity/identitytest.NewFixedForTest
+github.com/emoss08/trenova/internal/modules/rating/app/rateengine/rateenginetest.NewFallbackEngine	github.com/emoss08/trenova/internal/modules/rating/ratingtest.NewFallbackEngine

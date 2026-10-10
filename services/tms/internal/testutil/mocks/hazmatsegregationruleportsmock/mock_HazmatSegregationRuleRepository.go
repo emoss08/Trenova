@@ -7,7 +7,7 @@ package hazmatsegregationruleportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/hazmatsegregationrule"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/hazmatsegregationruleports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

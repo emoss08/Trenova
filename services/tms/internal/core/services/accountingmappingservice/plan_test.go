@@ -3,7 +3,7 @@ package accountingmappingservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

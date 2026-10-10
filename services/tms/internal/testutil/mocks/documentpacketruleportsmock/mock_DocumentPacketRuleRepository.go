@@ -7,7 +7,7 @@ package documentpacketruleportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentpacketruleports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

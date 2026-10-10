@@ -1,8 +1,8 @@
 package core
 
 import (
-	"github.com/emoss08/trenova/internal/core/services/insightservice/detector"
-	"github.com/emoss08/trenova/internal/core/services/insightservice/detectors"
+	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detector"
+	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detectors"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 )
 

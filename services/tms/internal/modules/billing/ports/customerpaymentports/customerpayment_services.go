@@ -3,8 +3,8 @@ package customerpaymentports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/core/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"

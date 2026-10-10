@@ -1,8 +1,8 @@
 package aicorrectionports
 
 import (
-	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
-	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 )

@@ -7,7 +7,7 @@ package equipmentcontinuityportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"

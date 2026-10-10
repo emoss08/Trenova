@@ -3,8 +3,8 @@ package assistanthandler
 import (
 	"net/http"
 
-	"github.com/emoss08/trenova/internal/core/domain/agentwait"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"

@@ -1,0 +1,152 @@
+package identity
+
+import (
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/agentcontrolrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/apikeyrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/billingcontrolrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/carriersettlementcontrolrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/dashcontrolrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/datarententionrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/documentcontrolrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/driverportalrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/iamrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/invoiceadjustmentcontrolrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/onboardingrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/passwordresetrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/rbacrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/roleassignmentrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/rolerepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/sequenceconfigrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/settlementcontrolrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/shipmentcontrolrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/ssoconfigrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/ssoidentitylinkrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/tenantsyncrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/apikeyservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/autheventservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/authservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/billingcontrolservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/dashcontrolservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/dataretentionservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/documentcontrolservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
+	"github.com/emoss08/trenova/internal/modules/identity/app/iamservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/invoiceadjustmentcontrolservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/journalreviewservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/locationcodegenerator"
+	"github.com/emoss08/trenova/internal/modules/identity/app/mfaservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/onboardingservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/organizationservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/passwordresetservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/roleassignmentservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/sequenceconfigservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/settlementcontrolservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/shipmentcontrolservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/tableinsightservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/tenanttimezone"
+	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/workerptoservice"
+	permissiondomain "github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"go.uber.org/fx"
+)
+
+//nolint:funlen // the module's providers are its part of the application graph
+func SharedOptions() fx.Option {
+	return fx.Options(
+		fx.Provide(
+			tenantsyncrepository.New,
+			onboardingrepository.New,
+			iamrepository.New,
+			iamrepository.NewAuthEventRepository,
+			iamrepository.NewMFARepository,
+			ssoconfigrepository.New,
+			ssoidentitylinkrepository.New,
+			datarententionrepository.New,
+			documentcontrolrepository.New,
+			passwordresetrepository.New,
+			rbacrepository.New,
+			rolerepository.New,
+			roleassignmentrepository.New,
+			agentcontrolrepository.New,
+			sequenceconfigrepository.New,
+			shipmentcontrolrepository.New,
+			driverportalrepository.New,
+			settlementcontrolrepository.New,
+			dashcontrolrepository.New,
+			carriersettlementcontrolrepository.New,
+			accountingcontrolrepository.New,
+			apikeyrepository.New,
+			invoiceadjustmentcontrolrepository.New,
+			billingcontrolrepository.New,
+			organizationservice.NewValidator,
+			iamservice.NewValidator,
+			userservice.NewValidator,
+			roleservice.NewValidator,
+			sequenceconfigservice.NewValidator,
+			shipmentcontrolservice.NewValidator,
+			accountingcontrolservice.NewValidator,
+			invoiceadjustmentcontrolservice.NewValidator,
+			billingcontrolservice.NewValidator,
+			documentcontrolservice.NewValidator,
+			organizationservice.New,
+			iamservice.New,
+			userservice.New,
+			authservice.New,
+			mfaservice.New,
+			tableinsightservice.New,
+			autheventservice.New,
+			permission.NewEngine,
+			roleservice.New,
+			permissiondomain.NewRegistry,
+			permissiondomain.NewRouteRegistry,
+			roleassignmentservice.New,
+			tenanttimezone.New,
+			passwordresetservice.New,
+			onboardingservice.New,
+			onboardingservice.NewSampleData,
+			sequenceconfigservice.New,
+			shipmentcontrolservice.New,
+			dataretentionservice.New,
+			settlementcontrolservice.New,
+			dashcontrolservice.New,
+			accountingcontrolservice.New,
+			accountingcontrolpolicyservice.New,
+			exchangeratestamp.New,
+			locationcodegenerator.New,
+			invoiceadjustmentcontrolservice.New,
+			journalreviewservice.New,
+			func(s *journalreviewservice.Service) journalentryports.JournalReviewService { return s },
+			billingcontrolservice.New,
+			documentcontrolservice.New,
+			ptoledgerservice.New,
+			func(s *ptoledgerservice.Service) workeroverviewservice.BalanceReader { return s },
+			fx.Annotate(
+				workerptoservice.New,
+				fx.As(new(workerports.WorkerPTOService)),
+			),
+			apikeyservice.New,
+			fx.Annotate(
+				apikeyservice.NewUsageBufferWithLifecycle,
+				fx.As(new(apikeyports.UsageRecorder)),
+			),
+		),
+		planservice.Module,
+		quotaservice.Module,
+	)
+}
+
+func APIOptions() fx.Option {
+	return fx.Options()
+}

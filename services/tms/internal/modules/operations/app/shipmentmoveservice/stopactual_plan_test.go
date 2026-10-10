@@ -1,0 +1,122 @@
+package shipmentmoveservice
+
+import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"testing"
+
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+)
+
+func TestPreviewStopActual_ReadsWithoutWriting(t *testing.T) {
+	t.Parallel()
+
+	move, origin, _ := stopActualMoveForTest()
+	move.ShipmentID = pulid.MustNew("shp_")
+	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	occurredAt := int64(1790000000)
+
+	moveRepo := shipmentportsmock.NewMockShipmentMoveRepository(t)
+	moveRepo.EXPECT().
+		GetByID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetMoveByIDRequest) bool {
+			return req.MoveID == move.ID && req.ExpandMoveDetails && !req.ForUpdate
+		})).
+		Return(move, nil).
+		Once()
+	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
+	assignmentRepo.EXPECT().
+		GetByMoveID(mock.Anything, tenantInfo, move.ID).
+		Return(nil, nil).
+		Once()
+
+	svc := &service{
+		l:              zap.NewNop(),
+		repo:           moveRepo,
+		assignmentRepo: assignmentRepo,
+		holdRepo:       shipmentportsmock.NewMockShipmentHoldRepository(t),
+	}
+
+	plan, err := svc.PreviewStopActual(t.Context(), &shipmentports.RecordStopActualRequest{
+		TenantInfo: tenantInfo,
+		MoveID:     move.ID,
+		StopID:     origin.ID,
+		Action:     shipmentports.StopActualActionArrive,
+		OccurredAt: &occurredAt,
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, shipment.MoveStatusAssigned, plan.Before.Status)
+	assert.Equal(t, shipment.MoveStatusInTransit, plan.After.Status)
+	assert.Nil(t, plan.Before.Stops[0].ActualArrival)
+	require.NotNil(t, plan.After.Stops[0].ActualArrival)
+	assert.Equal(t, occurredAt, *plan.After.Stops[0].ActualArrival)
+}
+
+func TestPreviewStopActual_RefusesWhatRecordingWouldRefuse(t *testing.T) {
+	t.Parallel()
+
+	move, _, destination := stopActualMoveForTest()
+	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+
+	moveRepo := shipmentportsmock.NewMockShipmentMoveRepository(t)
+	moveRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(move, nil).Once()
+
+	svc := &service{l: zap.NewNop(), repo: moveRepo}
+
+	_, err := svc.PreviewStopActual(t.Context(), &shipmentports.RecordStopActualRequest{
+		TenantInfo: tenantInfo,
+		MoveID:     move.ID,
+		StopID:     destination.ID,
+		Action:     shipmentports.StopActualActionArrive,
+	})
+	require.Error(t, err)
+	assert.True(t, errortypes.IsBusinessError(err))
+}
+
+func TestPreviewStopActual_ArrivalAndDepartureTogether(t *testing.T) {
+	t.Parallel()
+
+	move, origin, _ := stopActualMoveForTest()
+	move.ShipmentID = pulid.MustNew("shp_")
+	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	arrivedAt := int64(1790000000)
+	departedAt := arrivedAt + 75*60
+
+	moveRepo := shipmentportsmock.NewMockShipmentMoveRepository(t)
+	moveRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(move, nil).Once()
+	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
+	assignmentRepo.EXPECT().GetByMoveID(mock.Anything, tenantInfo, move.ID).Return(nil, nil).Once()
+
+	svc := &service{
+		l:              zap.NewNop(),
+		repo:           moveRepo,
+		assignmentRepo: assignmentRepo,
+		holdRepo:       shipmentportsmock.NewMockShipmentHoldRepository(t),
+	}
+
+	plan, err := svc.PreviewStopActual(t.Context(), &shipmentports.RecordStopActualRequest{
+		TenantInfo: tenantInfo,
+		MoveID:     move.ID,
+		StopID:     origin.ID,
+		Action:     shipmentports.StopActualActionArrive,
+		OccurredAt: &arrivedAt,
+		DepartedAt: &departedAt,
+	})
+	require.NoError(t, err)
+
+	stop := plan.After.Stops[0]
+	require.NotNil(t, stop.ActualArrival)
+	require.NotNil(t, stop.ActualDeparture)
+	assert.Equal(t, arrivedAt, *stop.ActualArrival)
+	assert.Equal(t, departedAt, *stop.ActualDeparture)
+	assert.Equal(t, shipment.StopStatusCompleted, stop.Status)
+	assert.Nil(t, plan.Before.Stops[0].ActualDeparture)
+}

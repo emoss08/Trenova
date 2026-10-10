@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/session"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/pkg/redishelpers"
 	"github.com/emoss08/trenova/shared/pulid"

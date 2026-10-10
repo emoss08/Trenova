@@ -7,7 +7,7 @@ package storedmileageportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/storedmileage"
+	"github.com/emoss08/trenova/internal/modules/places/domain/storedmileage"
 	mock "github.com/stretchr/testify/mock"
 )
 

@@ -3,7 +3,7 @@ package reportresolver
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/i18n"

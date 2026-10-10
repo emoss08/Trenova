@@ -1,7 +1,7 @@
 package accounting
 
 import (
-	"github.com/emoss08/trenova/internal/core/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 )
 

@@ -5,37 +5,9 @@ import (
 	"github.com/emoss08/trenova/internal/bootstrap/infrastructure"
 	"github.com/emoss08/trenova/internal/bootstrap/modules"
 	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
-	"github.com/emoss08/trenova/internal/core/services/agentextensionservice"
-	"github.com/emoss08/trenova/internal/core/services/agentguard"
-	"github.com/emoss08/trenova/internal/core/services/agentruneventservice"
-	"github.com/emoss08/trenova/internal/core/services/agenttoolruleservice"
-	"github.com/emoss08/trenova/internal/core/services/agentwaitservice"
-	"github.com/emoss08/trenova/internal/core/services/aiauditservice"
-	"github.com/emoss08/trenova/internal/core/services/aidocumentservice"
-	"github.com/emoss08/trenova/internal/core/services/aiproviderspendservice"
-	"github.com/emoss08/trenova/internal/core/services/aitraininghistoryservice"
 	"github.com/emoss08/trenova/internal/core/services/analyticsservice"
-	"github.com/emoss08/trenova/internal/core/services/assistantcaseservice"
-	"github.com/emoss08/trenova/internal/core/services/assistantfollowupservice"
-	"github.com/emoss08/trenova/internal/core/services/assistantqueueservice"
-	"github.com/emoss08/trenova/internal/core/services/assistantservice"
-	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
 	"github.com/emoss08/trenova/internal/core/services/casechecklistservice"
-	"github.com/emoss08/trenova/internal/core/services/conversationscheduleservice"
-	"github.com/emoss08/trenova/internal/core/services/editransport"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
-	"github.com/emoss08/trenova/internal/core/services/formula"
-	"github.com/emoss08/trenova/internal/core/services/formulaassistantservice"
-	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
-	"github.com/emoss08/trenova/internal/core/services/integrationservice"
-	"github.com/emoss08/trenova/internal/core/services/planservice"
-	"github.com/emoss08/trenova/internal/core/services/productguideservice"
-	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
-	"github.com/emoss08/trenova/internal/core/services/quotaservice"
-	"github.com/emoss08/trenova/internal/core/services/rateengine"
-	"github.com/emoss08/trenova/internal/core/services/retrievalquery"
-	"github.com/emoss08/trenova/internal/core/services/samsarasyncservice"
-	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs/samsaracontract"
 	accountinginfra "github.com/emoss08/trenova/internal/infrastructure/accounting"
@@ -47,7 +19,22 @@ import (
 	reportingrender "github.com/emoss08/trenova/internal/infrastructure/reporting/render"
 	reportingresultcache "github.com/emoss08/trenova/internal/infrastructure/reporting/resultcache"
 	telematicsinfra "github.com/emoss08/trenova/internal/infrastructure/telematics"
-	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
+	"github.com/emoss08/trenova/internal/modules/accounting"
+	"github.com/emoss08/trenova/internal/modules/agent"
+	"github.com/emoss08/trenova/internal/modules/billing"
+	"github.com/emoss08/trenova/internal/modules/documents"
+	"github.com/emoss08/trenova/internal/modules/edi"
+	"github.com/emoss08/trenova/internal/modules/equipment"
+	"github.com/emoss08/trenova/internal/modules/identity"
+	"github.com/emoss08/trenova/internal/modules/kernel"
+	"github.com/emoss08/trenova/internal/modules/operations"
+	"github.com/emoss08/trenova/internal/modules/parties"
+	"github.com/emoss08/trenova/internal/modules/places"
+	"github.com/emoss08/trenova/internal/modules/rating"
+	"github.com/emoss08/trenova/internal/modules/reference"
+	"github.com/emoss08/trenova/internal/modules/settlement"
+	"github.com/emoss08/trenova/internal/modules/workforce"
+	"github.com/emoss08/trenova/internal/modules/workspace"
 	"go.uber.org/fx"
 )
 
@@ -68,51 +55,20 @@ func OptionsFor(e *edition.Edition) fx.Option {
 		infrastructure.DatabaseModule,
 		modules.ValidatorModule,
 		modules.PostgresRepositoryModule,
-		planservice.Module,
-		quotaservice.Module,
 		modules.QueryCacheModule,
 		fx.Provide(encryptionservice.New),
-		fx.Provide(integrationservice.New),
-		fx.Provide(fx.Annotate(
-			func(svc *integrationservice.Service) fuelpurchaseports.FuelCardFeedResolver { return svc },
-		)),
 		fuelcard.Module,
 		carrierintelinfra.Module,
 		accountinginfra.Module,
 		agentextensioninfra.Module,
-		agentextensionservice.Module,
 		fx.Provide(telematicsinfra.NewFactory),
-		formula.Module,
-		formulatemplateservice.Module,
-		formulaassistantservice.Module,
-		rateengine.Module,
-		editransport.Module,
 		temporaljobs.Module,
-		productguideservice.Module,
-		retrievalquery.Module,
-		agentguard.Module,
-		agentruneventservice.Module,
-		aiauditservice.Module,
-		watchtowersources.Module,
-		proposalrecorder.Module,
-		assistantservice.Module,
-		assistantturnservice.Module,
-		assistantfollowupservice.Module,
-		assistantqueueservice.Module,
-		agentwaitservice.Module,
-		assistantcaseservice.Module,
 		casechecklistservice.Module,
-		conversationscheduleservice.Module,
-		aiproviderspendservice.Module,
-		agenttoolruleservice.LoaderModule,
-		fx.Provide(aitraininghistoryservice.NewEmpty),
-		fx.Provide(aidocumentservice.NewContract),
 		reportingrender.Module,
 		reportingresultcache.Module,
 		fx.Provide(reportingexecutor.New),
 		analyticsservice.Module,
 		ServiceModule,
-		fx.Provide(samsarasyncservice.New),
 		fx.Provide(samsaracontract.NewManager),
 		modulesinfra.StorageModule,
 		modulesinfra.SMSModule,
@@ -120,6 +76,22 @@ func OptionsFor(e *edition.Edition) fx.Option {
 		modulesinfra.TemplatingModule,
 		modulesinfra.RealtimePublisherModule,
 		modulesinfra.MeilisearchClientModule,
+		kernel.SharedOptions(),
+		identity.SharedOptions(),
+		workspace.SharedOptions(),
+		reference.SharedOptions(),
+		places.SharedOptions(),
+		equipment.SharedOptions(),
+		parties.SharedOptions(),
+		workforce.SharedOptions(),
+		documents.SharedOptions(),
+		rating.SharedOptions(),
+		operations.SharedOptions(),
+		edi.SharedOptions(),
+		accounting.SharedOptions(),
+		billing.SharedOptions(),
+		settlement.SharedOptions(),
+		agent.SharedOptions(),
 		e.Option(),
 	)
 }

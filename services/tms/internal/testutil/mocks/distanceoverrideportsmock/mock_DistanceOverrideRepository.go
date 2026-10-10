@@ -7,7 +7,7 @@ package distanceoverrideportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride"
 	"github.com/emoss08/trenova/internal/modules/places/ports/distanceoverrideports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

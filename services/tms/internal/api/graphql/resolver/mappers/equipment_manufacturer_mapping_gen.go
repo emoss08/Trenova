@@ -4,7 +4,7 @@ package mappers
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"

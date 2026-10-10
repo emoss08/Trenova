@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/ratezone"
-	"github.com/emoss08/trenova/internal/core/services/ratezoneservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone"
+	"github.com/emoss08/trenova/internal/modules/rating/app/ratezoneservice"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"

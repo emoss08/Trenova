@@ -4,7 +4,7 @@ package documentpacketruleresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	documentpacketruleservice "github.com/emoss08/trenova/internal/core/services/documentpacketruleservice"
+	documentpacketruleservice "github.com/emoss08/trenova/internal/modules/documents/app/documentpacketruleservice"
 )
 
 type Deps struct {

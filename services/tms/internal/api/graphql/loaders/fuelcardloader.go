@@ -3,8 +3,8 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/core/services/fuelpurchaseservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

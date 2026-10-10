@@ -1,0 +1,166 @@
+package driverpayservice
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/zap"
+)
+
+func (s *Service) ListAdvances(
+	ctx context.Context,
+	req *driverpayports.ListPayAdvancesRequest,
+) (*pagination.ListResult[*driverpay.PayAdvance], error) {
+	return s.advanceRepo.List(ctx, req)
+}
+
+func (s *Service) ListAdvancesConnection(
+	ctx context.Context,
+	req *driverpayports.ListPayAdvanceConnectionRequest,
+) (*pagination.CursorListResult[*driverpay.PayAdvance], error) {
+	return s.advanceRepo.ListConnection(ctx, req)
+}
+
+func (s *Service) GetAdvance(
+	ctx context.Context,
+	req driverpayports.GetPayAdvanceByIDRequest,
+) (*driverpay.PayAdvance, error) {
+	return s.advanceRepo.GetByID(ctx, req)
+}
+
+func (s *Service) IssueAdvance(
+	ctx context.Context,
+	entity *driverpay.PayAdvance,
+	actor *permissionports.RequestActor,
+) (*driverpay.PayAdvance, error) {
+	if err := requireActor(actor, "Pay advance issuance"); err != nil {
+		return nil, err
+	}
+	if err := PlanIssueAdvance(entity, actor.UserID); err != nil {
+		return nil, err
+	}
+
+	created, err := s.advanceRepo.Create(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+	s.logAdvanceAudit(created, nil, actor.UserID, permission.OpCreate, "Pay advance issued")
+	return created, nil
+}
+
+func (s *Service) UpdateAdvance(
+	ctx context.Context,
+	entity *driverpay.PayAdvance,
+	actor *permissionports.RequestActor,
+) (*driverpay.PayAdvance, error) {
+	if err := requireActor(actor, "Pay advance update"); err != nil {
+		return nil, err
+	}
+	previous, err := s.advanceRepo.GetByID(ctx, driverpayports.GetPayAdvanceByIDRequest{
+		ID: entity.ID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if previous.Status != driverpay.AdvanceStatusOutstanding {
+		return nil, errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalidOperation,
+			"Only outstanding advances with no recovery activity can be edited",
+		)
+	}
+
+	entity.RecoveredMinor = previous.RecoveredMinor
+	entity.WrittenOffMinor = previous.WrittenOffMinor
+	entity.SyncStatus()
+
+	multiErr := errortypes.NewMultiError()
+	entity.Validate(multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+
+	updated, err := s.advanceRepo.Update(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+	s.logAdvanceAudit(updated, previous, actor.UserID, permission.OpUpdate, "Pay advance updated")
+	return updated, nil
+}
+
+func (s *Service) WriteOffAdvance(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	advanceID pulid.ID,
+	reason string,
+	actor *permissionports.RequestActor,
+) (*driverpay.PayAdvance, error) {
+	if err := requireActor(actor, "Pay advance write-off"); err != nil {
+		return nil, err
+	}
+	if reason == "" {
+		return nil, errortypes.NewValidationError(
+			"reason",
+			errortypes.ErrRequired,
+			"A write-off reason is required",
+		)
+	}
+	entity, err := s.advanceRepo.GetByID(ctx, driverpayports.GetPayAdvanceByIDRequest{
+		ID:         advanceID,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	previous := *entity
+	if err = PlanWriteOffAdvance(entity, reason, actor.UserID, timeutils.NowUnix()); err != nil {
+		return nil, err
+	}
+
+	updated, err := s.advanceRepo.Update(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+	s.logAdvanceAudit(updated, &previous, actor.UserID, permission.OpCancel,
+		"Pay advance written off: "+reason)
+	return updated, nil
+}
+
+func (s *Service) logAdvanceAudit(
+	current, previous *driverpay.PayAdvance,
+	userID pulid.ID,
+	operation permission.Operation,
+	comment string,
+) {
+	params := &auditports.LogActionParams{
+		Resource:       permission.ResourcePayAdvance,
+		ResourceID:     current.ID.String(),
+		Operation:      operation,
+		UserID:         userID,
+		CurrentState:   jsonutils.MustToJSON(current),
+		OrganizationID: current.OrganizationID,
+		BusinessUnitID: current.BusinessUnitID,
+	}
+	options := []auditports.LogOption{auditservice.WithComment(comment)}
+	if previous != nil {
+		params.PreviousState = jsonutils.MustToJSON(previous)
+		options = append(options, auditservice.WithDiff(previous, current))
+	}
+	if err := s.auditService.LogAction(params, options...); err != nil {
+		s.l.Error("failed to log pay advance audit action", zap.Error(err))
+	}
+}

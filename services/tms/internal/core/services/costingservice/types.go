@@ -1,7 +1,7 @@
 package costingservice
 
 import (
-	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )

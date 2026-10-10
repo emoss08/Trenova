@@ -7,7 +7,7 @@ package customfieldportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/customfield"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

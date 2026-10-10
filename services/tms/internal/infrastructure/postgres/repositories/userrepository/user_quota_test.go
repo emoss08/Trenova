@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"

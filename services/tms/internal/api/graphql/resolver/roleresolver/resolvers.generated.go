@@ -4,7 +4,7 @@ package roleresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	roleservice "github.com/emoss08/trenova/internal/core/services/roleservice"
+	roleservice "github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 )
 
 type Deps struct {

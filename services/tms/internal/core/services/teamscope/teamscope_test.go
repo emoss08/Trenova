@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/core/services/orgstructureservice"
 	"github.com/emoss08/trenova/internal/core/services/teamscope"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"

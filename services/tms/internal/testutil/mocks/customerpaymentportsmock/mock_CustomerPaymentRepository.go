@@ -7,7 +7,7 @@ package customerpaymentportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"

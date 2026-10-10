@@ -7,7 +7,7 @@ package commodityportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

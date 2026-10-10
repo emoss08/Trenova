@@ -3,8 +3,8 @@ package rateimport_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/domain/rategeo"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/pkg/rateimport"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"

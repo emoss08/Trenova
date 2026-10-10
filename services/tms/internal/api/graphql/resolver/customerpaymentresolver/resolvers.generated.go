@@ -4,7 +4,7 @@ package customerpaymentresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	customerservice "github.com/emoss08/trenova/internal/core/services/customerservice"
+	customerservice "github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 )

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/aicontrolsummary"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 

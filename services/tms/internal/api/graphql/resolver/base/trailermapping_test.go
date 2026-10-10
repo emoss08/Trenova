@@ -8,7 +8,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/mappers"
-	"github.com/emoss08/trenova/internal/core/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"

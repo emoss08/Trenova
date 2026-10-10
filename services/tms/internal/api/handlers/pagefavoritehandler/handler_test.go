@@ -9,8 +9,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/domain/pagefavorite"
-	"github.com/emoss08/trenova/internal/core/services/pagefavoriteservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagefavorite"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/pagefavoriteservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"

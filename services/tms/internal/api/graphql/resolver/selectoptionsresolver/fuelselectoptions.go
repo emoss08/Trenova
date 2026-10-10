@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/fuelsurcharge"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"

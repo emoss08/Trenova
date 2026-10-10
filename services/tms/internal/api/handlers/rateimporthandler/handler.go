@@ -8,9 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/rateimport"
-	"github.com/emoss08/trenova/internal/core/services/rateimportservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateimport"
+	"github.com/emoss08/trenova/internal/modules/rating/app/rateimportservice"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateimportports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"

@@ -1,0 +1,80 @@
+package documentservice
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+)
+
+type noopDocumentContentService struct{}
+
+func (noopDocumentContentService) GetContent(
+	context.Context,
+	pulid.ID,
+	pagination.TenantInfo,
+) (*documentcontent.Content, error) {
+	return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
+}
+
+func (noopDocumentContentService) GetShipmentDraft(
+	context.Context,
+	pulid.ID,
+	pagination.TenantInfo,
+) (*documentshipmentdraft.DocumentShipmentDraft, error) {
+	return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
+}
+
+func (noopDocumentContentService) SearchDocuments(
+	context.Context,
+	pagination.TenantInfo,
+	string,
+	string,
+	string,
+) ([]*document.Document, error) {
+	return nil, nil
+}
+
+func (noopDocumentContentService) Reextract(
+	context.Context,
+	pulid.ID,
+	pagination.TenantInfo,
+) error {
+	return nil
+}
+
+func (noopDocumentContentService) EnqueueExtraction(
+	context.Context,
+	*document.Document,
+	pulid.ID,
+) error {
+	return nil
+}
+
+type noopDocumentSearchProjectionService struct{}
+
+func (noopDocumentSearchProjectionService) Upsert(
+	context.Context,
+	*document.Document,
+	string,
+) error {
+	return nil
+}
+
+func (noopDocumentSearchProjectionService) Delete(
+	context.Context,
+	pulid.ID,
+	pagination.TenantInfo,
+) error {
+	return nil
+}
+
+var (
+	_ documentports.DocumentContentService                          = noopDocumentContentService{}
+	_ documentsearchprojectionports.DocumentSearchProjectionService = noopDocumentSearchProjectionService{}
+)

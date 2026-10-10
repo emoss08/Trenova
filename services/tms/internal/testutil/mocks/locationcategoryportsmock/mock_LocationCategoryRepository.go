@@ -7,7 +7,7 @@ package locationcategoryportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
+	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationcategoryports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

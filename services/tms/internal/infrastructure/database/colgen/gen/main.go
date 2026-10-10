@@ -19,7 +19,7 @@ const (
 )
 
 var (
-	domainDir     = flag.String("domain", "", "Path to domain directory containing entity packages")
+	domainDir     = flag.String("domain", "", "Glob of domain directories containing entity packages")
 	outputDir     = flag.String("output", "", "Output directory for generated column files")
 	outputImport  = flag.String("import", helperImportPath, "Import path of the output directory")
 	outputPackage = flag.String("package", helperPackage, "Package name of the output directory")
@@ -52,23 +52,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	entries, err := os.ReadDir(*domainDir)
+	pkgDirs, err := domainPackageDirs(*domainDir)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error reading domain directory: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error reading domain directories: %v\n", err)
 		os.Exit(1)
 	}
 
 	var totalModels int
 
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
+	for _, pkgDir := range pkgDirs {
+		entry := dirEntryName(pkgDir)
 		if _, excluded := excludedPackages[entry.Name()]; excluded {
 			continue
 		}
 
-		pkgDir := filepath.Join(*domainDir, entry.Name())
 		result, parseErr := structparse.ParsePackage(pkgDir)
 		if parseErr != nil {
 			fmt.Fprintf(os.Stderr, "Error parsing %s: %v\n", entry.Name(), parseErr)
@@ -151,4 +148,38 @@ func generateBridgeFile(tmpl *template.Template, models []structparse.Model, pkg
 
 	outputPath := filepath.Join(pkgDir, "fieldmap_gen.go")
 	return os.WriteFile(outputPath, formatted, 0o644)
+}
+
+type dirEntryName string
+
+func (d dirEntryName) Name() string {
+	return filepath.Base(string(d))
+}
+
+func domainPackageDirs(pattern string) ([]string, error) {
+	roots, err := filepath.Glob(pattern)
+	if err != nil {
+		return nil, fmt.Errorf("expand %q: %w", pattern, err)
+	}
+	if len(roots) == 0 {
+		return nil, fmt.Errorf("no domain directory matches %q", pattern)
+	}
+
+	dirs := make([]string, 0, 160)
+	for _, root := range roots {
+		entries, readErr := os.ReadDir(root)
+		if readErr != nil {
+			return nil, fmt.Errorf("read %s: %w", root, readErr)
+		}
+		for _, entry := range entries {
+			if entry.IsDir() {
+				dirs = append(dirs, filepath.Join(root, entry.Name()))
+			}
+		}
+	}
+	sort.Slice(dirs, func(i, j int) bool {
+		return filepath.Base(dirs[i]) < filepath.Base(dirs[j])
+	})
+
+	return dirs, nil
 }

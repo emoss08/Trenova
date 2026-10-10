@@ -4,9 +4,9 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/apikey"
-	"github.com/emoss08/trenova/internal/core/domain/session"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"

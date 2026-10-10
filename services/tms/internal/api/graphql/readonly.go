@@ -6,7 +6,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
-	"github.com/emoss08/trenova/internal/core/services/planservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/vektah/gqlparser/v2/ast"

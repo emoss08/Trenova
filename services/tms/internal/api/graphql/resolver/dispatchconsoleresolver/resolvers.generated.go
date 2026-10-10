@@ -4,7 +4,7 @@ package dispatchconsoleresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	carrierassignmentservice "github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
+	carrierassignmentservice "github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 )

@@ -9,8 +9,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
-	"github.com/emoss08/trenova/internal/core/services/rateconfirmationservice"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
+	"github.com/emoss08/trenova/internal/modules/rating/app/rateconfirmationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"

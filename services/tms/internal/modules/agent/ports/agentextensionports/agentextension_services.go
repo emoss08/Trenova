@@ -3,8 +3,8 @@ package agentextensionports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/agentextension"
-	"github.com/emoss08/trenova/internal/core/domain/configspec"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
 )

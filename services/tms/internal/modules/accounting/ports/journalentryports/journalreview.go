@@ -3,7 +3,7 @@ package journalentryports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

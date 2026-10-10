@@ -18,7 +18,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/shared/httpsafe"
 	"go.uber.org/fx"

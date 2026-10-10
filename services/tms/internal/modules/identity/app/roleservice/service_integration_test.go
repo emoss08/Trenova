@@ -1,0 +1,970 @@
+//go:build integration
+
+package roleservice
+
+import (
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"context"
+	"encoding/json"
+	"fmt"
+	"testing"
+	"time"
+
+	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/rbactest"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/shared/pulid"
+	sharedtestutil "github.com/emoss08/trenova/shared/testutil"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/redis/go-redis/v9"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
+	"go.uber.org/zap"
+)
+
+type integrationRoleRepo struct {
+	db *bun.DB
+	*permissionportsmock.MockRoleRepository
+}
+
+func (r *integrationRoleRepo) Create(ctx context.Context, role *permission.Role) error {
+	now := timeutils.NowUnix()
+	if role.CreatedAt == 0 {
+		role.CreatedAt = now
+	}
+	if role.UpdatedAt == 0 {
+		role.UpdatedAt = now
+	}
+	_, err := r.db.NewInsert().Model(role).Exec(ctx)
+	if err != nil {
+		return err
+	}
+	for _, rp := range role.Permissions {
+		rp.RoleID = role.ID
+		if rp.CreatedAt == 0 {
+			rp.CreatedAt = now
+		}
+		if rp.UpdatedAt == 0 {
+			rp.UpdatedAt = now
+		}
+		if _, err := r.db.NewInsert().Model(rp).Exec(ctx); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *integrationRoleRepo) Update(ctx context.Context, role *permission.Role) error {
+	role.UpdatedAt = timeutils.NowUnix()
+	_, err := r.db.NewUpdate().Model(role).WherePK().OmitZero().Exec(ctx)
+	return err
+}
+
+func (r *integrationRoleRepo) GetByID(
+	ctx context.Context,
+	req permissionports.GetRoleByIDRequest,
+) (*permission.Role, error) {
+	role := new(permission.Role)
+	err := r.db.NewSelect().Model(role).
+		Relation("Permissions").
+		Where("r.id = ?", req.ID).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("r.organization_id = ?", req.TenantInfo.OrgID).
+				WhereOr("r.organization_id IS NULL")
+		}).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return role, nil
+}
+
+func (r *integrationRoleRepo) List(
+	_ context.Context,
+	_ *permissionports.ListRolesRequest,
+) (*pagination.ListResult[*permission.Role], error) {
+	return nil, nil
+}
+
+func (r *integrationRoleRepo) GetRolesWithInheritance(
+	ctx context.Context,
+	roleIDs []pulid.ID,
+) ([]*permission.Role, error) {
+	roles := make([]*permission.Role, 0)
+	err := r.db.NewSelect().Model(&roles).
+		Relation("Permissions").
+		Where("r.id IN (?)", bun.List(roleIDs)).
+		Scan(ctx)
+	return roles, err
+}
+
+func (r *integrationRoleRepo) GetUsersWithRole(
+	ctx context.Context,
+	roleID pulid.ID,
+) ([]permissionports.ImpactedUser, error) {
+	var users []permissionports.ImpactedUser
+	err := r.db.NewSelect().
+		TableExpr("user_role_assignments AS ura").
+		Join("JOIN users AS u ON u.id = ura.user_id").
+		ColumnExpr("ura.user_id").
+		ColumnExpr("ura.organization_id").
+		ColumnExpr("u.name AS user_name").
+		Where("ura.role_id = ?", roleID).
+		Scan(ctx, &users)
+	return users, err
+}
+
+func (r *integrationRoleRepo) GetUserRoleAssignments(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+) ([]*permission.UserRoleAssignment, error) {
+	assignments := make([]*permission.UserRoleAssignment, 0)
+	err := r.db.NewSelect().Model(&assignments).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("user_id = ?", userID).
+				Where("organization_id = ?", orgID)
+		}).
+		Scan(ctx)
+	return assignments, err
+}
+
+func (r *integrationRoleRepo) CreateAssignment(
+	ctx context.Context,
+	assignment *permission.UserRoleAssignment,
+) error {
+	if assignment.AssignedAt == 0 {
+		assignment.AssignedAt = timeutils.NowUnix()
+	}
+	_, err := r.db.NewInsert().Model(assignment).Exec(ctx)
+	return err
+}
+
+func (r *integrationRoleRepo) DeleteAssignment(
+	ctx context.Context,
+	req permissionports.DeleteRoleAssignmentRequest,
+) (*permission.UserRoleAssignment, error) {
+	deleted := new(permission.UserRoleAssignment)
+	_, err := r.db.NewDelete().
+		Model(deleted).
+		Where("id = ?", req.AssignmentID).
+		Where("organization_id = ?", req.OrganizationID).
+		Returning("*").
+		Exec(ctx)
+	return deleted, err
+}
+
+func (r *integrationRoleRepo) CreateResourcePermission(
+	ctx context.Context,
+	rp *permission.ResourcePermission,
+) error {
+	now := timeutils.NowUnix()
+	if rp.CreatedAt == 0 {
+		rp.CreatedAt = now
+	}
+	if rp.UpdatedAt == 0 {
+		rp.UpdatedAt = now
+	}
+	_, err := r.db.NewInsert().Model(rp).Exec(ctx)
+	return err
+}
+
+func (r *integrationRoleRepo) UpdateResourcePermission(
+	ctx context.Context,
+	rp *permission.ResourcePermission,
+) error {
+	rp.UpdatedAt = timeutils.NowUnix()
+	_, err := r.db.NewUpdate().Model(rp).WherePK().Exec(ctx)
+	return err
+}
+
+func (r *integrationRoleRepo) DeleteResourcePermission(
+	ctx context.Context,
+	req permissionports.DeleteResourcePermissionRequest,
+) error {
+	_, err := r.db.NewDelete().
+		Model((*permission.ResourcePermission)(nil)).
+		Where("id = ?", req.PermissionID).
+		Where("role_id = ?", req.RoleID).
+		Exec(ctx)
+	return err
+}
+
+func (r *integrationRoleRepo) GetResourcePermissionsByRoleID(
+	ctx context.Context,
+	roleID pulid.ID,
+) ([]*permission.ResourcePermission, error) {
+	perms := make([]*permission.ResourcePermission, 0)
+	err := r.db.NewSelect().Model(&perms).Where("role_id = ?", roleID).Scan(ctx)
+	return perms, err
+}
+
+type integrationUserRepo struct {
+	db *bun.DB
+	*tenantportsmock.MockUserRepository
+}
+
+func (u *integrationUserRepo) GetByID(
+	_ context.Context,
+	_ tenantports.GetUserByIDRequest,
+) (*tenant.User, error) {
+	return nil, nil
+}
+
+func (u *integrationUserRepo) SelectOptions(
+	_ context.Context,
+	_ *pagination.SelectQueryRequest,
+) (*pagination.ListResult[*tenant.User], error) {
+	return nil, nil
+}
+
+func (u *integrationUserRepo) FindByEmail(_ context.Context, _ string) (*tenant.User, error) {
+	return nil, nil
+}
+
+func (u *integrationUserRepo) UpdateLastLoginAt(_ context.Context, _ pulid.ID) error {
+	return nil
+}
+
+func (u *integrationUserRepo) GetOrganizations(
+	_ context.Context,
+	_ pulid.ID,
+) ([]*tenant.OrganizationMembership, error) {
+	return nil, nil
+}
+
+func (u *integrationUserRepo) List(
+	_ context.Context,
+	_ *tenantports.ListUsersRequest,
+) (*pagination.ListResult[*tenant.User], error) {
+	return nil, nil
+}
+
+func (u *integrationUserRepo) UpdateCurrentOrganization(_ context.Context, _, _, _ pulid.ID) error {
+	return nil
+}
+
+func (u *integrationUserRepo) GetUserOrganizationSummaries(
+	ctx context.Context,
+	userID pulid.ID,
+) ([]tenantports.OrgSummary, error) {
+	var summaries []tenantports.OrgSummary
+	err := u.db.NewSelect().
+		TableExpr("organizations AS o").
+		Join("JOIN users AS u ON u.organization_id = o.id").
+		ColumnExpr("o.id").
+		ColumnExpr("o.name").
+		Where("u.id = ?", userID).
+		Scan(ctx, &summaries)
+	return summaries, err
+}
+
+func (u *integrationUserRepo) Update(_ context.Context, _ *tenant.User) (*tenant.User, error) {
+	return nil, nil
+}
+
+func (u *integrationUserRepo) BulkUpdateStatus(
+	_ context.Context,
+	_ *tenantports.BulkUpdateUserStatusRequest,
+) ([]*tenant.User, error) {
+	return nil, nil
+}
+
+func (u *integrationUserRepo) GetByIDs(
+	_ context.Context,
+	_ tenantports.GetUsersByIDsRequest,
+) ([]*tenant.User, error) {
+	return nil, nil
+}
+
+type integrationPermCacheRepo struct {
+	client *redis.Client
+}
+
+func (p *integrationPermCacheRepo) Get(
+	ctx context.Context,
+	key permissionports.PermissionCacheKey,
+) (*permissionports.CachedPermissions, error) {
+	redisKey := fmt.Sprintf("perms:%s:%s", key.UserID.String(), key.OrgID.String())
+	data, err := p.client.HGet(ctx, redisKey, key.Variant).Bytes()
+	if err == redis.Nil {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var perms permissionports.CachedPermissions
+	if err := json.Unmarshal(data, &perms); err != nil {
+		return nil, err
+	}
+	return &perms, nil
+}
+
+func (p *integrationPermCacheRepo) Set(
+	ctx context.Context,
+	key permissionports.PermissionCacheKey,
+	perms *permissionports.CachedPermissions,
+	ttl time.Duration,
+) error {
+	redisKey := fmt.Sprintf("perms:%s:%s", key.UserID.String(), key.OrgID.String())
+	data, err := sonic.Marshal(perms)
+	if err != nil {
+		return err
+	}
+	if err := p.client.HSet(ctx, redisKey, key.Variant, data).Err(); err != nil {
+		return err
+	}
+	return p.client.Expire(ctx, redisKey, ttl).Err()
+}
+
+func (p *integrationPermCacheRepo) Delete(ctx context.Context, userID, orgID pulid.ID) error {
+	key := fmt.Sprintf("perms:%s:%s", userID.String(), orgID.String())
+	return p.client.Del(ctx, key).Err()
+}
+
+func (p *integrationPermCacheRepo) InvalidateByRole(
+	ctx context.Context,
+	roleID pulid.ID,
+	roleRepo permissionports.RoleRepository,
+) error {
+	users, err := roleRepo.GetUsersWithRole(ctx, roleID)
+	if err != nil {
+		return err
+	}
+	for _, u := range users {
+		if err := p.Delete(ctx, u.UserID, u.OrganizationID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (p *integrationPermCacheRepo) InvalidateOrganization(
+	ctx context.Context,
+	orgID pulid.ID,
+) error {
+	pattern := fmt.Sprintf("perms:*:%s", orgID.String())
+	keys, err := p.client.Keys(ctx, pattern).Result()
+	if err != nil {
+		return err
+	}
+	if len(keys) > 0 {
+		return p.client.Del(ctx, keys...).Err()
+	}
+	return nil
+}
+
+func createRoleServiceSchema(t *testing.T, db *bun.DB) {
+	t.Helper()
+	ctx := t.Context()
+
+	queries := []string{
+		`CREATE TABLE IF NOT EXISTS organizations (
+			id VARCHAR(100) PRIMARY KEY,
+			name VARCHAR(255) NOT NULL
+		)`,
+		`CREATE TABLE IF NOT EXISTS users (
+			id VARCHAR(100) PRIMARY KEY,
+			name VARCHAR(255) NOT NULL,
+			organization_id VARCHAR(100) REFERENCES organizations(id)
+		)`,
+		`CREATE TABLE IF NOT EXISTS roles (
+			id VARCHAR(100) PRIMARY KEY,
+			business_unit_id VARCHAR(100),
+			organization_id VARCHAR(100) REFERENCES organizations(id),
+			name VARCHAR(255) NOT NULL,
+			description TEXT,
+			core_responsibility VARCHAR(50),
+			parent_role_ids TEXT[],
+			max_sensitivity VARCHAR(50) NOT NULL DEFAULT 'internal',
+			is_system BOOLEAN DEFAULT FALSE,
+			created_by VARCHAR(100),
+			created_at BIGINT NOT NULL,
+			updated_at BIGINT NOT NULL
+		)`,
+		`CREATE TABLE IF NOT EXISTS resource_permissions (
+			id VARCHAR(100) PRIMARY KEY,
+			role_id VARCHAR(100) NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+			resource VARCHAR(100) NOT NULL,
+			operations TEXT[] NOT NULL,
+			data_scope VARCHAR(50) NOT NULL DEFAULT 'organization',
+			created_at BIGINT NOT NULL,
+			updated_at BIGINT NOT NULL,
+			UNIQUE(role_id, resource)
+		)`,
+		`CREATE TABLE IF NOT EXISTS user_role_assignments (
+			id VARCHAR(100) PRIMARY KEY,
+			user_id VARCHAR(100) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			organization_id VARCHAR(100) NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+			role_id VARCHAR(100) NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+			expires_at BIGINT,
+			assigned_by VARCHAR(100),
+			assigned_at BIGINT NOT NULL,
+			UNIQUE(user_id, organization_id, role_id)
+		)`,
+	}
+
+	for _, q := range queries {
+		_, err := db.ExecContext(ctx, q)
+		require.NoError(t, err)
+	}
+}
+
+type integrationPermEngine struct {
+	roleRepo  permissionports.RoleRepository
+	cacheRepo permissionports.PermissionCacheRepository
+	registry  *permission.Registry
+}
+
+func (e *integrationPermEngine) Check(
+	ctx context.Context,
+	req *permissionports.PermissionCheckRequest,
+) (*permissionports.PermissionCheckResult, error) {
+	assignments, err := e.roleRepo.GetUserRoleAssignments(ctx, req.UserID, req.OrganizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	roleIDs := make([]pulid.ID, 0, len(assignments))
+	for _, a := range assignments {
+		roleIDs = append(roleIDs, a.RoleID)
+	}
+
+	if len(roleIDs) == 0 {
+		return &permissionports.PermissionCheckResult{Allowed: false, Reason: "no_permission"}, nil
+	}
+
+	roles, err := e.roleRepo.GetRolesWithInheritance(ctx, roleIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, role := range roles {
+		for _, perm := range role.Permissions {
+			if string(perm.Resource) == string(req.Resource) {
+				for _, op := range perm.Operations {
+					if op == req.Operation {
+						return &permissionports.PermissionCheckResult{
+							Allowed:   true,
+							Reason:    "allowed",
+							DataScope: perm.DataScope,
+						}, nil
+					}
+				}
+			}
+		}
+	}
+
+	return &permissionports.PermissionCheckResult{Allowed: false, Reason: "no_permission"}, nil
+}
+
+func (e *integrationPermEngine) CheckBatch(
+	_ context.Context,
+	_ *permissionports.BatchPermissionCheckRequest,
+) (*permissionports.BatchPermissionCheckResult, error) {
+	return nil, nil
+}
+
+func (e *integrationPermEngine) GetLightManifest(
+	_ context.Context,
+	_, _ pulid.ID,
+) (*permissionports.LightPermissionManifest, error) {
+	return nil, nil
+}
+
+func (e *integrationPermEngine) GetResourcePermissions(
+	_ context.Context,
+	_, _ pulid.ID,
+	_ string,
+) (*permissionports.ResourcePermissionDetail, error) {
+	return nil, nil
+}
+
+func (e *integrationPermEngine) InvalidateUser(ctx context.Context, userID, orgID pulid.ID) error {
+	return e.cacheRepo.Delete(ctx, userID, orgID)
+}
+
+func (e *integrationPermEngine) GetEffectivePermissions(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+) (*permissionports.EffectivePermissions, error) {
+	assignments, err := e.roleRepo.GetUserRoleAssignments(ctx, userID, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	roleIDs := make([]pulid.ID, 0, len(assignments))
+	for _, a := range assignments {
+		roleIDs = append(roleIDs, a.RoleID)
+	}
+
+	if len(roleIDs) == 0 {
+		return &permissionports.EffectivePermissions{
+			UserID:         userID,
+			OrganizationID: orgID,
+			Resources:      make(map[string]permissionports.EffectiveResourcePermission),
+		}, nil
+	}
+
+	roles, err := e.roleRepo.GetRolesWithInheritance(ctx, roleIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	resources := make(map[string]permissionports.EffectiveResourcePermission)
+	var maxSensitivity permission.FieldSensitivity
+	for _, role := range roles {
+		if role.MaxSensitivity.Level() > maxSensitivity.Level() {
+			maxSensitivity = role.MaxSensitivity
+		}
+		for _, perm := range role.Permissions {
+			rp := resources[string(perm.Resource)]
+			rp.Operations = append(rp.Operations, perm.Operations...)
+			rp.DataScope = perm.DataScope
+			resources[string(perm.Resource)] = rp
+		}
+	}
+
+	return &permissionports.EffectivePermissions{
+		UserID:         userID,
+		OrganizationID: orgID,
+		MaxSensitivity: maxSensitivity,
+		Resources:      resources,
+	}, nil
+}
+
+func (e *integrationPermEngine) SimulatePermissions(
+	_ context.Context,
+	_ *permissionports.SimulatePermissionsRequest,
+) (*permissionports.EffectivePermissions, error) {
+	return nil, nil
+}
+
+func (e *integrationPermEngine) AgentsUsable(
+	_ context.Context,
+	_ *permissionports.RequestActor,
+	_ permission.Operation,
+) (*permissionports.UsableAgents, error) {
+	return &permissionports.UsableAgents{Assistant: true}, nil
+}
+
+func (e *integrationPermEngine) MayUseAgent(
+	_ context.Context,
+	_ *permissionports.RequestActor,
+	_ *agentdefinition.Definition,
+) (bool, error) {
+	return true, nil
+}
+
+func (e *integrationPermEngine) RoleCoverage(
+	_ context.Context,
+	_ *permissionports.RoleCoverageRequest,
+) ([]permissionports.RoleCoverage, error) {
+	return []permissionports.RoleCoverage{}, nil
+}
+
+func setupIntegrationService(t *testing.T) (*Service, *bun.DB) {
+	t.Helper()
+
+	tc, db := sharedtestutil.SetupTestDB(t)
+	_ = tc
+	createRoleServiceSchema(t, db)
+
+	redisClient := sharedtestutil.SetupTestRedis(t)
+
+	roleRepo := &integrationRoleRepo{
+		db:                 db,
+		MockRoleRepository: &permissionportsmock.MockRoleRepository{},
+	}
+	cacheRepo := &integrationPermCacheRepo{client: redisClient}
+
+	permEngine := &integrationPermEngine{
+		roleRepo:  roleRepo,
+		cacheRepo: cacheRepo,
+		registry:  permission.NewRegistry(),
+	}
+
+	svc := &Service{
+		l:          zap.NewNop().Named("test.role-service"),
+		roleRepo:   roleRepo,
+		rbacRepo:   &rbactest.Repository{},
+		permCache:  cacheRepo,
+		permEngine: permEngine,
+		validator: &Validator{
+			validator: validationframework.
+				NewTenantedValidatorBuilder[*permission.Role]().
+				WithModelName("Role").
+				Build(),
+		},
+		registry: permission.NewRegistry(),
+	}
+
+	return svc, db
+}
+
+func TestIntegration_CreateRole_CircularInheritance(t *testing.T) {
+	svc, db := setupIntegrationService(t)
+	ctx := t.Context()
+
+	orgID := pulid.MustNew("org_")
+	actorID := pulid.MustNew("usr_")
+
+	sharedtestutil.MustExec(
+		t,
+		db,
+		`INSERT INTO organizations (id, name) VALUES (?, ?)`,
+		orgID.String(),
+		"Test Org",
+	)
+	sharedtestutil.MustExec(
+		t,
+		db,
+		`INSERT INTO users (id, name, organization_id) VALUES (?, ?, ?)`,
+		actorID.String(),
+		"Admin",
+		orgID.String(),
+	)
+
+	roleID := pulid.MustNew("rol_")
+	role := &permission.Role{
+		ID:            roleID,
+		Name:          "Self Referencing",
+		ParentRoleIDs: []pulid.ID{roleID},
+	}
+
+	err := svc.CreateRole(ctx, CreateRoleRequest{
+		ActorID:        actorID,
+		OrganizationID: orgID,
+		Role:           role,
+	})
+
+	require.Error(t, err)
+	assert.Equal(t, ErrCircularInheritance, err)
+}
+
+// seedActorRole gives the actor a role carrying the sensitivity and resource
+// grants the service's no-escalation guard requires. Without it an actor can
+// only ever grant permissions it already holds, which is nothing.
+func seedActorRole(
+	t *testing.T,
+	db *bun.DB,
+	orgID, actorID pulid.ID,
+	sensitivity permission.FieldSensitivity,
+	resources ...string,
+) pulid.ID {
+	t.Helper()
+
+	now := timeutils.NowUnix()
+	actorRoleID := pulid.MustNew("rol_")
+
+	sharedtestutil.MustExec(
+		t,
+		db,
+		`INSERT INTO roles (id, organization_id, name, max_sensitivity, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
+		actorRoleID.String(),
+		orgID.String(),
+		"Actor Role",
+		string(sensitivity),
+		now,
+		now,
+	)
+
+	for _, resource := range resources {
+		sharedtestutil.MustExec(
+			t,
+			db,
+			`INSERT INTO resource_permissions (id, role_id, resource, operations, data_scope, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+			pulid.MustNew("rsp_").String(),
+			actorRoleID.String(),
+			resource,
+			pgdialect.Array([]string{
+				string(permission.OpRead),
+				string(permission.OpCreate),
+				string(permission.OpUpdate),
+				string(permission.OpDelete),
+			}),
+			string(permission.DataScopeOrganization),
+			now,
+			now,
+		)
+	}
+
+	sharedtestutil.MustExec(
+		t,
+		db,
+		`INSERT INTO user_role_assignments (id, user_id, organization_id, role_id, assigned_at) VALUES (?, ?, ?, ?, ?)`,
+		pulid.MustNew("ura_").String(),
+		actorID.String(),
+		orgID.String(),
+		actorRoleID.String(),
+		now,
+	)
+
+	return actorRoleID
+}
+
+func TestIntegration_UpdateRole_Success(t *testing.T) {
+	svc, db := setupIntegrationService(t)
+	ctx := t.Context()
+
+	orgID := pulid.MustNew("org_")
+	actorID := pulid.MustNew("usr_")
+	roleID := pulid.MustNew("rol_")
+
+	sharedtestutil.MustExec(
+		t,
+		db,
+		`INSERT INTO organizations (id, name) VALUES (?, ?)`,
+		orgID.String(),
+		"Test Org",
+	)
+	sharedtestutil.MustExec(
+		t,
+		db,
+		`INSERT INTO users (id, name, organization_id) VALUES (?, ?, ?)`,
+		actorID.String(),
+		"Admin",
+		orgID.String(),
+	)
+
+	now := timeutils.NowUnix()
+	sharedtestutil.MustExec(
+		t,
+		db,
+		`INSERT INTO roles (id, organization_id, name, max_sensitivity, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
+		roleID.String(),
+		orgID.String(),
+		"Original",
+		"internal",
+		now,
+		now,
+	)
+	seedActorRole(t, db, orgID, actorID, permission.SensitivityRestricted)
+
+	role := &permission.Role{
+		ID:             roleID,
+		Name:           "Updated Role",
+		MaxSensitivity: permission.SensitivityInternal,
+		Permissions:    []*permission.ResourcePermission{},
+	}
+
+	err := svc.UpdateRole(ctx, UpdateRoleRequest{
+		ActorID:        actorID,
+		OrganizationID: orgID,
+		Role:           role,
+	})
+
+	require.NoError(t, err)
+}
+
+func TestIntegration_UpdateRole_SystemRole_Fails(t *testing.T) {
+	svc, db := setupIntegrationService(t)
+	ctx := t.Context()
+
+	orgID := pulid.MustNew("org_")
+	actorID := pulid.MustNew("usr_")
+	roleID := pulid.MustNew("rol_")
+
+	sharedtestutil.MustExec(
+		t,
+		db,
+		`INSERT INTO organizations (id, name) VALUES (?, ?)`,
+		orgID.String(),
+		"Test Org",
+	)
+	sharedtestutil.MustExec(
+		t,
+		db,
+		`INSERT INTO users (id, name, organization_id) VALUES (?, ?, ?)`,
+		actorID.String(),
+		"Admin",
+		orgID.String(),
+	)
+
+	now := timeutils.NowUnix()
+	sharedtestutil.MustExec(
+		t,
+		db,
+		`INSERT INTO roles (id, organization_id, name, max_sensitivity, is_system, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		roleID.String(),
+		orgID.String(),
+		"System Role",
+		"internal",
+		true,
+		now,
+		now,
+	)
+
+	role := &permission.Role{
+		ID:   roleID,
+		Name: "Updated",
+	}
+
+	err := svc.UpdateRole(ctx, UpdateRoleRequest{
+		ActorID:        actorID,
+		OrganizationID: orgID,
+		Role:           role,
+	})
+
+	require.Error(t, err)
+	assert.Equal(t, ErrCannotModifySystemRole, err)
+}
+
+func TestIntegration_AssignRole_Success(t *testing.T) {
+	svc, db := setupIntegrationService(t)
+	ctx := t.Context()
+
+	orgID := pulid.MustNew("org_")
+	actorID := pulid.MustNew("usr_")
+	targetUserID := pulid.MustNew("usr_")
+	roleID := pulid.MustNew("rol_")
+
+	sharedtestutil.MustExec(
+		t,
+		db,
+		`INSERT INTO organizations (id, name) VALUES (?, ?)`,
+		orgID.String(),
+		"Test Org",
+	)
+	sharedtestutil.MustExec(
+		t,
+		db,
+		`INSERT INTO users (id, name, organization_id) VALUES (?, ?, ?)`,
+		actorID.String(),
+		"Admin",
+		orgID.String(),
+	)
+	sharedtestutil.MustExec(
+		t,
+		db,
+		`INSERT INTO users (id, name, organization_id) VALUES (?, ?, ?)`,
+		targetUserID.String(),
+		"User",
+		orgID.String(),
+	)
+
+	now := timeutils.NowUnix()
+	sharedtestutil.MustExec(
+		t,
+		db,
+		`INSERT INTO roles (id, organization_id, name, max_sensitivity, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
+		roleID.String(),
+		orgID.String(),
+		"Test Role",
+		"internal",
+		now,
+		now,
+	)
+
+	assignment := &permission.UserRoleAssignment{
+		UserID: targetUserID,
+		RoleID: roleID,
+	}
+
+	err := svc.AssignRole(ctx, AssignRoleRequest{
+		ActorID:        actorID,
+		OrganizationID: orgID,
+		Assignment:     assignment,
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, orgID, assignment.OrganizationID)
+	assert.Equal(t, actorID, assignment.AssignedBy)
+}
+
+func TestIntegration_InitializeOrganizationRoles(t *testing.T) {
+	svc, db := setupIntegrationService(t)
+	ctx := t.Context()
+
+	orgID := pulid.MustNew("org_")
+	creatorID := pulid.MustNew("usr_")
+
+	sharedtestutil.MustExec(
+		t,
+		db,
+		`INSERT INTO organizations (id, name) VALUES (?, ?)`,
+		orgID.String(),
+		"Test Org",
+	)
+	sharedtestutil.MustExec(
+		t,
+		db,
+		`INSERT INTO users (id, name, organization_id) VALUES (?, ?, ?)`,
+		creatorID.String(),
+		"Creator",
+		orgID.String(),
+	)
+
+	err := svc.InitializeOrganizationRoles(ctx, orgID, creatorID)
+
+	require.NoError(t, err)
+
+	roleRepo := &integrationRoleRepo{
+		db:                 db,
+		MockRoleRepository: &permissionportsmock.MockRoleRepository{},
+	}
+	assignments, err := roleRepo.GetUserRoleAssignments(ctx, creatorID, orgID)
+	require.NoError(t, err)
+	assert.NotEmpty(t, assignments)
+}
+
+func TestIntegration_CreateResourcePermission_Success(t *testing.T) {
+	svc, db := setupIntegrationService(t)
+	ctx := t.Context()
+
+	orgID := pulid.MustNew("org_")
+	actorID := pulid.MustNew("usr_")
+	roleID := pulid.MustNew("rol_")
+
+	sharedtestutil.MustExec(
+		t,
+		db,
+		`INSERT INTO organizations (id, name) VALUES (?, ?)`,
+		orgID.String(),
+		"Test Org",
+	)
+	sharedtestutil.MustExec(
+		t,
+		db,
+		`INSERT INTO users (id, name, organization_id) VALUES (?, ?, ?)`,
+		actorID.String(),
+		"Admin",
+		orgID.String(),
+	)
+
+	now := timeutils.NowUnix()
+	sharedtestutil.MustExec(
+		t,
+		db,
+		`INSERT INTO roles (id, organization_id, name, max_sensitivity, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)`,
+		roleID.String(),
+		orgID.String(),
+		"Test Role",
+		"internal",
+		now,
+		now,
+	)
+
+	seedActorRole(t, db, orgID, actorID, permission.SensitivityRestricted, "shipment")
+
+	rp := &permission.ResourcePermission{
+		RoleID:     roleID,
+		Resource:   "shipment",
+		Operations: []permission.Operation{permission.OpRead},
+		DataScope:  permission.DataScopeOrganization,
+	}
+
+	err := svc.CreateResourcePermission(ctx, actorID, orgID, rp)
+
+	require.NoError(t, err)
+	assert.NotEmpty(t, rp.ID)
+}

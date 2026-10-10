@@ -103,7 +103,7 @@ manifest. The recipe is part of the configuration, so `--resume` refuses a chang
 
 The builder has two cross-checks. `tests/fixtures/extraction-schema.json` is the production reply
 schema, and a Go test (`TestFineTuningPipelineSchemaFixtureIsCurrent`) fails when it goes stale.
-Regenerate it with `TRENOVA_UPDATE_FIXTURES=1 go test ./internal/core/services/aidocumentservice/`.
+Regenerate it with `TRENOVA_UPDATE_FIXTURES=1 go test ./internal/modules/agent/app/aidocumentservice/`.
 In the other direction, `trenova ai fine-tune score` reads the recipe's replies with production's
 reply reader.
 

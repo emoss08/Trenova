@@ -8,11 +8,11 @@ package workersafetyservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/workeremploymentservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"

@@ -1,0 +1,373 @@
+package agenttoolservice
+
+import (
+	"context"
+	"fmt"
+	"slices"
+	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/shared/sliceutils"
+	"github.com/emoss08/trenova/shared/timeutils"
+)
+
+var (
+	_ agentports.ToolPreviewer = (*retryAccountingSyncTool)(nil)
+	_ agentports.ToolPreviewer = (*skipAccountingSyncTool)(nil)
+	_ agentports.ToolPreviewer = (*pauseAccountingSyncTool)(nil)
+	_ agentports.ToolPreviewer = (*resumeAccountingSyncTool)(nil)
+	_ agentports.ToolPreviewer = (*requestAccountingBackfillTool)(nil)
+)
+
+const (
+	fieldAttemptCount  = "attemptCount"
+	fieldSkippedReason = "skippedReason"
+	fieldSkippedByID   = "skippedById"
+	fieldPausedAt      = "pausedAt"
+	fieldPausedReason  = "pausedReason"
+	fieldPausedByID    = "pausedById"
+	fieldRangeStart    = "rangeStart"
+	fieldRangeEnd      = "rangeEnd"
+	fieldObjectTypes   = "objectTypes"
+	fieldRequestedByID = "requestedById"
+	fieldRedatedTo     = "redatedTo"
+	fieldRedatedByID   = "redatedById"
+)
+
+func syncRecordOptions() []toolpreview.Option {
+	return []toolpreview.Option{
+		toolpreview.Only(
+			fieldStatus,
+			fieldAttemptCount,
+			fieldSkippedReason,
+			fieldSkippedByID,
+			fieldRedatedTo,
+			fieldRedatedByID,
+		),
+		toolpreview.WithRefs(map[string]permission.Resource{
+			fieldSkippedByID: permission.ResourceUser,
+			fieldRedatedByID: permission.ResourceUser,
+		}),
+		toolpreview.Labels(map[string]string{
+			fieldAttemptCount:  "Attempts",
+			fieldSkippedReason: "Why it is skipped",
+			fieldSkippedByID:   "Skipped by",
+			fieldRedatedTo:     "Sent dated",
+			fieldRedatedByID:   "Re-dated by",
+		}),
+	}
+}
+
+func syncPauseOptions() []toolpreview.Option {
+	return []toolpreview.Option{
+		toolpreview.Only(fieldPausedAt, fieldPausedReason, fieldPausedByID),
+		toolpreview.Volatile(fieldPausedAt),
+		toolpreview.WithRefs(map[string]permission.Resource{
+			fieldPausedByID: permission.ResourceUser,
+		}),
+		toolpreview.Labels(map[string]string{
+			fieldPausedAt:     "Paused at",
+			fieldPausedReason: "Why it is paused",
+			fieldPausedByID:   "Paused by",
+		}),
+	}
+}
+
+func backfillOptions() []toolpreview.Option {
+	return []toolpreview.Option{
+		toolpreview.Only(
+			fieldRangeStart,
+			fieldRangeEnd,
+			fieldObjectTypes,
+			fieldStatus,
+			fieldRequestedByID,
+		),
+		toolpreview.WithRefs(map[string]permission.Resource{
+			fieldRequestedByID: permission.ResourceUser,
+		}),
+		toolpreview.Labels(map[string]string{
+			fieldRangeStart:    "Documents dated from",
+			fieldRangeEnd:      "Documents dated to",
+			fieldObjectTypes:   "Documents",
+			fieldRequestedByID: "Requested by",
+		}),
+	}
+}
+
+func syncRecordRecord(record *accountingsync.AccountingSyncRecord) toolpreview.Record {
+	return toolpreview.Record{
+		Resource: permission.ResourceAccountingSync,
+		ID:       record.ID,
+		Label:    syncDocumentLabel(record),
+		Version:  previewVersion(record.Version),
+	}
+}
+
+func syncConnectionRecord(summary *accountingsyncports.AccountingSyncSummary) toolpreview.Record {
+	return toolpreview.Record{
+		Resource: permission.ResourceAccountingIntegration,
+		ID:       summary.Connection.ID,
+		Label:    summary.ProviderName,
+		Version:  previewVersion(summary.Connection.Version),
+	}
+}
+
+func refusedSync(summary string, err error) (*agent.ToolPreview, error) {
+	if isRefusal(err) {
+		return warnWouldFail(toolpreview.Build(summary), err), nil
+	}
+
+	return nil, err
+}
+
+func (t *retryAccountingSyncTool) Preview(
+	ctx context.Context,
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+) (*agent.ToolPreview, error) {
+	plan, err := t.plan(ctx, &params)
+	if err != nil {
+		return refusedSync("Would send documents to the accounting system again.", err)
+	}
+
+	if len(plan.req.IDs) == 0 {
+		waiting := 0
+		for _, group := range plan.summary.Attention {
+			if slices.Contains(plan.req.ErrorCategories, group.ErrorCategory) {
+				waiting += group.Count
+			}
+		}
+		preview := toolpreview.Build(fmt.Sprintf(
+			"Would send to %s again every record that last failed as %s; %d are blocked or "+
+				"gave up that way now, plus any still retrying.",
+			plan.summary.ProviderName,
+			joinCategories(plan.req.ErrorCategories),
+			waiting,
+		))
+		preview.Partial = true
+
+		return preview, nil
+	}
+
+	now := timeutils.NowUnix()
+	changes := make([]*agent.RecordChange, 0, len(plan.records))
+	for _, record := range plan.records {
+		change, cErr := toolpreview.Update(
+			syncRecordRecord(record),
+			record,
+			func(retried *accountingsync.AccountingSyncRecord) error {
+				return retried.Retry(now)
+			},
+			syncRecordOptions()...,
+		)
+		if cErr != nil {
+			return refusedSync("Would send documents to the accounting system again.", cErr)
+		}
+		changes = append(changes, change)
+	}
+
+	summary := fmt.Sprintf(
+		"Would send %s to %s again; the accounting system recognizes a repeat, so nothing "+
+			"is entered twice.",
+		countOf(len(plan.records), "document"),
+		plan.summary.ProviderName,
+	)
+	left := 0
+	if len(plan.req.ErrorCategories) > 0 {
+		waiting, wErr := t.waitingCount(ctx, plan.req)
+		if wErr != nil {
+			return nil, wErr
+		}
+		left = max(waiting-len(plan.records), 0)
+	}
+	if left > 0 {
+		summary += fmt.Sprintf(
+			" It leaves %s that last failed as %s for another retry.",
+			countOf(left, "other record"),
+			joinCategories(plan.req.ErrorCategories),
+		)
+	}
+	preview := toolpreview.Build(summary, changes...)
+	if left > 0 {
+		preview.Partial = true
+	}
+
+	return preview, nil
+}
+
+func (t *skipAccountingSyncTool) Preview(
+	ctx context.Context,
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+) (*agent.ToolPreview, error) {
+	req, record, err := t.request(ctx, &params)
+	if err != nil {
+		return refusedSync("Would keep a document out of the accounting system.", err)
+	}
+
+	plan, err := planUpdate(
+		syncRecordRecord(record),
+		record,
+		func(skipped *accountingsync.AccountingSyncRecord) error {
+			return skipped.Skip(req.UserID, req.Reason)
+		},
+		syncRecordOptions()...,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return plan.preview(fmt.Sprintf(
+		"Would keep %s out of the accounting system for good: %s. Nothing sends it again, "+
+			"so the books will not have it unless someone enters it there.",
+		syncDocumentLabel(record),
+		req.Reason,
+	)), nil
+}
+
+func (t *redateAccountingSyncTool) Preview(
+	ctx context.Context,
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+) (*agent.ToolPreview, error) {
+	req, redatePlan, err := t.request(ctx, &params)
+	if err != nil {
+		return refusedSync(
+			"Would send a document to the accounting system dated on the first open day.",
+			err,
+		)
+	}
+
+	now := timeutils.NowUnix()
+	plan, err := planUpdate(
+		syncRecordRecord(redatePlan.Before),
+		redatePlan.Before,
+		func(redated *accountingsync.AccountingSyncRecord) error {
+			return redated.Redate(req.UserID, redatePlan.SentDate, now)
+		},
+		syncRecordOptions()...,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return plan.preview(fmt.Sprintf(
+		"Would send %s to the accounting system dated %s, the first open day after its books "+
+			"closed. Trenova keeps the document's own date, and the note in the books names it.",
+		syncDocumentLabel(redatePlan.Before),
+		redatePlan.SentDay,
+	)), nil
+}
+
+func (t *pauseAccountingSyncTool) Preview(
+	ctx context.Context,
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+) (*agent.ToolPreview, error) {
+	req, summary, err := t.request(ctx, &params)
+	if err != nil {
+		return refusedSync("Would pause sending to the accounting system.", err)
+	}
+
+	now := timeutils.NowUnix()
+	change, err := toolpreview.Update(
+		syncConnectionRecord(summary),
+		summary.Connection,
+		func(paused *accountingsync.AccountingConnection) error {
+			paused.Pause(req.UserID, req.Reason, now)
+
+			return nil
+		},
+		syncPauseOptions()...,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return toolpreview.Build(fmt.Sprintf(
+		"Would stop sending to %s; %s waiting now would wait until it resumes. Nothing is "+
+			"lost.",
+		summary.ProviderName,
+		countOf(waitingToSend(summary), "document"),
+	), change), nil
+}
+
+func (t *resumeAccountingSyncTool) Preview(
+	ctx context.Context,
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+) (*agent.ToolPreview, error) {
+	_, summary, err := t.request(ctx, &params)
+	if err != nil {
+		return refusedSync("Would resume sending to the accounting system.", err)
+	}
+
+	change, err := toolpreview.Update(
+		syncConnectionRecord(summary),
+		summary.Connection,
+		func(resumed *accountingsync.AccountingConnection) error {
+			resumed.Resume()
+
+			return nil
+		},
+		syncPauseOptions()...,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return toolpreview.Build(fmt.Sprintf(
+		"Would start sending to %s again; %s queued would go out now and cannot be called "+
+			"back. It was paused because: %s",
+		summary.ProviderName,
+		countOf(waitingToSend(summary), "document"),
+		summary.Connection.PausedReason,
+	), change), nil
+}
+
+func waitingToSend(summary *accountingsyncports.AccountingSyncSummary) int {
+	return countWithStatus(
+		summary,
+		accountingsync.SyncStatusQueued,
+		accountingsync.SyncStatusRetrying,
+	)
+}
+
+func (p *backfillPlan) backfill() *accountingsync.AccountingBackfill {
+	return accountingsync.NewAccountingBackfill(&accountingsync.NewBackfillParams{
+		TenantInfo:    p.req.TenantInfo,
+		ConnectionID:  p.connection.ID,
+		RangeStart:    p.from,
+		RangeEnd:      p.to,
+		ObjectTypes:   p.types,
+		RequestedByID: p.req.UserID,
+	})
+}
+
+func (t *requestAccountingBackfillTool) Preview(
+	ctx context.Context,
+	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+) (*agent.ToolPreview, error) {
+	plan, err := t.plan(ctx, &params)
+	if err != nil {
+		return refusedSync("Would send earlier documents to the accounting system.", err)
+	}
+
+	change, err := toolpreview.Create(toolpreview.Record{
+		Resource: permission.ResourceAccountingIntegration,
+		Label:    "Backfill to " + plan.provider,
+	}, plan.backfill(), backfillOptions()...)
+	if err != nil {
+		return nil, err
+	}
+
+	return toolpreview.Build(fmt.Sprintf(
+		"Would send every %s dated %s to %s that Trenova has not already sent to %s. "+
+			"Anything already entered there by hand would arrive twice, and nothing sent can "+
+			"be called back.",
+		strings.Join(sliceutils.Strings(plan.types), ", "),
+		dayLabel(plan.from),
+		dayLabel(plan.to),
+		plan.provider,
+	), change), nil
+}

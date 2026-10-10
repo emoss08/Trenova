@@ -1,16 +1,16 @@
 package driverportalservice
 
 import (
-	"github.com/emoss08/trenova/internal/core/services/documentservice"
-	"github.com/emoss08/trenova/internal/core/services/driversettlementservice"
-	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/performancereviewservice"
-	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/core/services/schedulingservice"
 	"github.com/emoss08/trenova/internal/core/services/selfserviceservice"
 	"github.com/emoss08/trenova/internal/core/services/workercredentialservice"
 	"github.com/emoss08/trenova/internal/core/services/workersafetyservice"
-	"github.com/emoss08/trenova/internal/core/services/workerservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"

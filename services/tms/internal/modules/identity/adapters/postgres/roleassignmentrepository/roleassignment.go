@@ -1,0 +1,102 @@
+package roleassignmentrepository
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/uptrace/bun"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+type Params struct {
+	fx.In
+
+	DB     *postgres.Connection
+	Logger *zap.Logger
+}
+
+type repository struct {
+	db *postgres.Connection
+	l  *zap.Logger
+}
+
+func New(p Params) permissionports.RoleAssignmentRepository {
+	return &repository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.role-assignment-repository"),
+	}
+}
+
+func (r *repository) filterQuery(
+	q *bun.SelectQuery,
+	req *permissionports.ListRoleAssignmentsRequest,
+) *bun.SelectQuery {
+	if req.ExpandRoles {
+		q = q.Relation("Role")
+	}
+
+	q = q.Where("ura.organization_id = ?", req.Filter.TenantInfo.OrgID)
+
+	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+}
+
+func (r *repository) List(
+	ctx context.Context,
+	req *permissionports.ListRoleAssignmentsRequest,
+) (*pagination.ListResult[*permission.UserRoleAssignment], error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*pagination.ListResult[*permission.UserRoleAssignment], error) {
+		log := r.l.With(
+			zap.String("operation", "List"),
+			zap.Any("request", req),
+		)
+
+		entities := make([]*permission.UserRoleAssignment, 0, req.Filter.Pagination.SafeLimit())
+		total, err := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(&entities).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return r.filterQuery(sq, req)
+			}).ScanAndCount(ctx)
+		if err != nil {
+			log.Error("failed to scan and count role assignments", zap.Error(err))
+			return nil, err
+		}
+
+		return &pagination.ListResult[*permission.UserRoleAssignment]{
+			Items: entities,
+			Total: total,
+		}, nil
+	})
+}
+
+func (r *repository) GetByID(
+	ctx context.Context,
+	req permissionports.GetRoleAssignmentByIDRequest,
+) (*permission.UserRoleAssignment, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*permission.UserRoleAssignment, error) {
+		entity := new(permission.UserRoleAssignment)
+		q := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Where("ura.organization_id = ?", req.TenantInfo.OrgID).
+					Where("ura.id = ?", req.RoleAssignmentID)
+			})
+
+		if req.ExpandRoles {
+			q.Relation("Role")
+		}
+
+		if err := q.Scan(ctx); err != nil {
+			return nil, dberror.HandleNotFoundError(err, "RoleAssignment")
+		}
+
+		return entity, nil
+	})
+}

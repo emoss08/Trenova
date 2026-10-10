@@ -1,0 +1,90 @@
+package agentdefinitionservice
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/emoss08/trenova/shared/typeutils"
+)
+
+// Patch changes a few of an agent's settings without a full form behind the
+// request: the capabilities page turns a tool off or a limit down and leaves
+// everything else as it is. The change goes through the same validation,
+// data-access check, schedule and audit as a full update.
+func (s *Service) Patch(
+	ctx context.Context,
+	req *agentdefinitionports.PatchAgentDefinitionRequest,
+	actor *permissionports.RequestActor,
+) (*agentdefinition.Definition, error) {
+	existing, err := s.repo.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
+		ID:         req.ID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	previous := *existing
+	updated := *existing
+	if req.Version != 0 {
+		updated.Version = req.Version
+	}
+	if req.Edit != nil {
+		if err = req.Edit(&updated); err != nil {
+			return nil, err
+		}
+	}
+	updated.ForgetReheldTools()
+	updated.PruneDelegateTopics()
+	updated.NoteEnabledChange(previous.Enabled, actorUser(actor), timeutils.NowUnix())
+
+	if err = s.validate(ctx, &updated, &previous); err != nil {
+		return nil, err
+	}
+	if err = s.checkDataAccess(ctx, &updated, &previous, actor); err != nil {
+		return nil, err
+	}
+	if err = s.requireAutomation(ctx, req.TenantInfo, &updated, &previous); err != nil {
+		return nil, err
+	}
+	if scheduleChanged(&previous, &updated) {
+		if err = s.schedule(&updated); err != nil {
+			return nil, err
+		}
+	}
+
+	loaded := updated.Version
+	saved, err := s.inTransaction(ctx, s.versioned(func(saveCtx context.Context) (
+		*agentdefinition.Definition,
+		error,
+	) {
+		return s.repo.Update(saveCtx, &updated)
+	}, &previous, actor))
+	if err != nil {
+		return nil, s.editConflict(ctx, &conflictRequest{
+			tenantInfo: req.TenantInfo,
+			agentID:    req.ID,
+			loaded:     loaded,
+			cause:      err,
+		})
+	}
+	if saved == nil {
+		return nil, errortypes.NewNotFoundError("Agent not found")
+	}
+
+	if scheduleChanged(&previous, saved) || !typeutils.EqualPtr(previous.EndsAt, saved.EndsAt) {
+		s.schedules.Sync(ctx, saved)
+	}
+	comment := req.Comment
+	if comment == "" {
+		comment = "Agent updated"
+	}
+	s.logAudit(saved, &previous, permission.OpUpdate, actor, comment)
+
+	return saved, nil
+}

@@ -3,8 +3,8 @@ package documentcontentports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/document"
-	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

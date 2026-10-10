@@ -7,7 +7,7 @@ package customerportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	mock "github.com/stretchr/testify/mock"
 )

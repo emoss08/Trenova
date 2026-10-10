@@ -3,7 +3,7 @@ package insightports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/insight"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

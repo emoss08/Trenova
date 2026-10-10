@@ -7,8 +7,8 @@ package invoiceadjustmentportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

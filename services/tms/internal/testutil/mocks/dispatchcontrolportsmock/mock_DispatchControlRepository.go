@@ -7,7 +7,7 @@ package dispatchcontrolportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

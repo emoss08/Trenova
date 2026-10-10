@@ -3,10 +3,10 @@ package servicefailureports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/services/edix12"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"

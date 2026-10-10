@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"

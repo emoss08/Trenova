@@ -7,7 +7,7 @@ package accessorialchargeportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

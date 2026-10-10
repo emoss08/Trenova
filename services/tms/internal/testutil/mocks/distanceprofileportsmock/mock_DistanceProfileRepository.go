@@ -7,7 +7,7 @@ package distanceprofileportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/distanceprofile"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distanceprofile"
 	"github.com/emoss08/trenova/internal/modules/places/ports/distanceprofileports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

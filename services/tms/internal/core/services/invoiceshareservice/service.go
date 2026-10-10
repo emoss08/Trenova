@@ -3,11 +3,11 @@ package invoiceshareservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/invoice"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/services/auditservice"
-	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"

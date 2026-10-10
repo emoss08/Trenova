@@ -3,7 +3,7 @@ package instancebootstrapports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/instancebootstrap"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/instancebootstrap"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 

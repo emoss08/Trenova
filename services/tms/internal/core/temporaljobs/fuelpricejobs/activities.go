@@ -3,11 +3,11 @@ package fuelpricejobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/integration"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
-	"github.com/emoss08/trenova/internal/core/services/formula/effectiveversioncache"
-	"github.com/emoss08/trenova/internal/core/services/fuelsurchargeservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formula/effectiveversioncache"
+	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"

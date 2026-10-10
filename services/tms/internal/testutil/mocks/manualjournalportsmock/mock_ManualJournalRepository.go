@@ -7,7 +7,7 @@ package manualjournalportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

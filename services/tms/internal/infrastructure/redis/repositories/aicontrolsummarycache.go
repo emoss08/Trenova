@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/aicontrolsummary"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
 	"github.com/emoss08/trenova/pkg/redishelpers"
 	"github.com/emoss08/trenova/shared/jsonutils"

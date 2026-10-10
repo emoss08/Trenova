@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/jurisdictionrulehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/jurisdictionrule"
+	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/jurisdictionruleports"

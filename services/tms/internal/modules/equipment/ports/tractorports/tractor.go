@@ -3,7 +3,7 @@ package tractorports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"

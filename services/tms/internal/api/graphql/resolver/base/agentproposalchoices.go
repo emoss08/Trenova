@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"go.uber.org/zap"

@@ -3,8 +3,8 @@ package invoiceports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/core/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"

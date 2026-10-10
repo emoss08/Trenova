@@ -3,8 +3,8 @@ package shipmentbriefports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/domain/shipmentbrief"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )

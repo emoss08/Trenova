@@ -7,7 +7,7 @@ package sidebarpreferenceportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/sidebarpreference"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/sidebarpreference"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/sidebarpreferenceports"
 	mock "github.com/stretchr/testify/mock"
 )

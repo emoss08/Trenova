@@ -1,0 +1,898 @@
+package assistantjobs
+
+import (
+	"cmp"
+	"context"
+	"errors"
+	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/shared/pulid"
+	"go.opentelemetry.io/otel/trace"
+	"go.temporal.io/sdk/activity"
+	"go.temporal.io/sdk/contrib/workflowstreams"
+	"go.temporal.io/sdk/temporal"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+// Error types the workflow must not retry. Each names an outcome a second
+// attempt would reach identically, and the issue this work comes from is
+// explicit that validation and authorization outcomes are surfaced rather
+// than retried.
+const (
+	errTypeNoActor = "AssistantTurnHasNoActor"
+	// errTypeRejected is a question turned away before it was answered, for
+	// a reason written for the person who asked: an empty message, a
+	// disabled agent, a spent budget, a conversation that is full.
+	errTypeRejected = "AssistantTurnRejected"
+)
+
+// The messages a reader is shown for a turn that did not finish. They say
+// what happened to the conversation, because that is what the reader will
+// look at next.
+const (
+	stoppedMessage = "Stopped. What was said so far has been kept in the conversation."
+	failedMessage  = "The assistant could not finish this reply. Try again in a moment."
+)
+
+// turnFinishKey names saving the turn in the ledger. Saving appends the turn
+// to the conversation, and a retry of a save that landed before its worker was
+// lost would append the same turn twice. Each attempt claims its own key under
+// this prefix, after checking that no earlier attempt saved the turn or began
+// to: an attempt that failed cleanly settles its key as failed, which is the
+// one outcome a later attempt may save after.
+const turnFinishKey = "assistant-turn-finish"
+
+// streamFlushTimeout bounds the last flush of what an activity published. It
+// rides a context cancellation cannot reach, so it needs a bound of its own.
+const streamFlushTimeout = 10 * time.Second
+
+type ActivitiesParams struct {
+	fx.In
+
+	Logger        *zap.Logger
+	Assistant     *assistantservice.Service
+	Turns         *assistantturnservice.Service
+	TurnRepo      agentports.AssistantTurnRepository
+	Steps         agentports.RunStepLedger
+	Notifications *notificationservice.Service
+	Trajectory    agentports.AgentRunEventRecorder   `optional:"true"`
+	FollowUps     agentports.DecisionFollowUpResumer `optional:"true"`
+	Metrics       *metrics.Registry                  `optional:"true"`
+	// Workflows starts the compaction a turn that filled its conversation
+	// sets off.
+	Workflows   kernelports.WorkflowStarter         `optional:"true"`
+	Reflections agentports.AgentReflectionScheduler `optional:"true"`
+	Queue       agentports.AssistantQueueSettler    `optional:"true"`
+}
+
+// Activities are a turn's first and last steps. Everything between them is
+// agentflow's.
+type Activities struct {
+	logger        *zap.Logger
+	assistant     *assistantservice.Service
+	turns         *assistantturnservice.Service
+	turnRepo      agentports.AssistantTurnRepository
+	steps         agentports.RunStepLedger
+	trajectory    agentports.AgentRunEventRecorder
+	threads       replyThreads
+	notifications replyNotifications
+	followUps     agentports.DecisionFollowUpResumer
+	metrics       *metrics.Assistant
+	workflows     kernelports.WorkflowStarter
+	reflections   agentports.AgentReflectionScheduler
+	queue         agentports.AssistantQueueSettler
+}
+
+func NewActivities(p ActivitiesParams) *Activities {
+	a := &Activities{
+		logger:      p.Logger.Named("job.assistant-turn"),
+		assistant:   p.Assistant,
+		turns:       p.Turns,
+		turnRepo:    p.TurnRepo,
+		steps:       p.Steps,
+		trajectory:  p.Trajectory,
+		followUps:   p.FollowUps,
+		metrics:     metrics.AssistantFrom(p.Metrics),
+		workflows:   p.Workflows,
+		reflections: p.Reflections,
+		queue:       p.Queue,
+	}
+	// Assigned only when present: a nil pointer held by an interface is not
+	// a nil interface, and the notice would dereference it.
+	if p.Assistant != nil {
+		a.threads = p.Assistant
+	}
+	if p.Notifications != nil {
+		a.notifications = p.Notifications
+	}
+
+	return a
+}
+
+// PrepareTurnActivity checks the question and makes it ready to answer.
+//
+// The name carries its package because Temporal's activity registry is keyed
+// by method name across a whole task queue, and a collision is a panic at
+// startup rather than a compile error.
+func (a *Activities) PrepareTurnActivity(
+	ctx context.Context,
+	payload *assistantcontract.AssistantTurnPayload,
+) (*assistantservice.TurnPlan, error) {
+	if payload.Actor.UserID.IsNil() {
+		// A turn runs as the person who asked. A worker that carried on
+		// without one would be running as something nobody granted, which is
+		// precisely what a background worker must never do.
+		return nil, temporal.NewNonRetryableApplicationError(
+			"this turn arrived without the person who asked for it", errTypeNoActor, nil,
+		)
+	}
+
+	started := time.Now()
+	plan, err := a.assistant.PrepareTurn(ctx, payload.SendRequest(), &payload.Actor)
+	a.metrics.RecordPrepare(prepareOutcome(plan, err), time.Since(started).Seconds())
+	if err != nil {
+		if rejected(err) {
+			// The refusal's figures travel with it, so a usage cap reaches the
+			// reader as the cap it is rather than as a sentence.
+			return nil, temporal.NewNonRetryableApplicationError(
+				err.Error(), errTypeRejected, err, rejectionParams(err),
+			)
+		}
+
+		return nil, fmt.Errorf("prepare this turn: %w", err)
+	}
+
+	return plan, nil
+}
+
+// prepareOutcome names how preparing a turn ended, for its timing.
+func prepareOutcome(plan *assistantservice.TurnPlan, err error) string {
+	switch {
+	case err != nil && rejected(err):
+		return "rejected"
+	case err != nil:
+		return "failed"
+	case plan.Refused():
+		return "refused"
+	default:
+		return "allowed"
+	}
+}
+
+// rejected reports an error that is an answer rather than a fault: something
+// the person asked for that cannot be done, which asking again will not
+// change.
+// rejectionParams are the figures a refusal carries for the client, empty
+// for one that carries none.
+func rejectionParams(err error) map[string]string {
+	if quota, ok := errors.AsType[*errortypes.QuotaExceededError](err); ok {
+		params := quota.Params()
+		params["code"] = planLimitCode
+		return params
+	}
+	if restriction, ok := errors.AsType[*errortypes.PlanRestrictionError](err); ok {
+		params := restriction.Params()
+		params["code"] = planRestrictedCode
+		return params
+	}
+
+	var business *errortypes.BusinessError
+	if errors.As(err, &business) && len(business.Params) > 0 {
+		return business.Params
+	}
+
+	return map[string]string{}
+}
+
+func rejected(err error) bool {
+	return errortypes.IsBusinessError(err) ||
+		errortypes.IsQuotaExceededError(err) ||
+		errortypes.IsPlanRestrictionError(err) ||
+		errortypes.IsMultiError(err) ||
+		errortypes.IsNotFoundError(err) ||
+		errortypes.IsAuthorizationError(err)
+}
+
+// FinishTurnActivity saves what the turn came to, closes its record, and says
+// how it ended.
+//
+// It runs however the turn ended: answered, refused, failed partway or
+// stopped. Whatever ran is kept in the conversation.
+func (a *Activities) FinishTurnActivity(
+	ctx context.Context,
+	in *FinishTurnInput,
+) (*TurnEnding, error) {
+	payload := in.Payload
+	tenant := payload.TenantInfo()
+
+	turn, err := a.turnRepo.GetByID(ctx, agentports.GetAssistantTurnRequest{
+		ID:         payload.TurnID,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("read this turn's record: %w", err)
+	}
+
+	fresh, err := a.claimSave(ctx, payload)
+	if err != nil {
+		return nil, err
+	}
+	if !fresh {
+		// An earlier attempt saved it, or began to and was lost. Either way
+		// the conversation holds what it holds, and saving again would add
+		// the same turn twice. The reader is sent to read it.
+		a.logger.Info("this turn was already saved on an earlier attempt",
+			zap.String("turn", payload.TurnID.String()),
+		)
+
+		ending := a.alreadySaved(ctx, turn)
+		ending.Next = a.continueTurn(
+			ctx,
+			in,
+			conversation.AssistantTurnStatus(ending.Result.Status),
+		)
+		a.cueReflection(ctx, in)
+		emitTurnRoots(ctx, in, turn, ending.Result.Status)
+
+		return ending, nil
+	}
+
+	ending, cause, err := a.finish(ctx, in)
+	if err != nil {
+		// Nothing was appended: the save fails before the append or in it.
+		// Settling the claim as failed is what lets the retry save.
+		a.settle(ctx, payload, agentports.RunStepFailed, err.Error())
+
+		return nil, err
+	}
+	a.settle(ctx, payload, agentports.RunStepCompleted, ending.Result.Status)
+	a.recordLoopRefusals(ctx, in)
+	a.turns.Complete(ctx, turn, conversation.AssistantTurnStatus(ending.Result.Status), cause)
+	a.recordTrajectory(ctx, tenant, payload, in.Events, ending.Event)
+	ending.Next = a.continueTurn(ctx, in, conversation.AssistantTurnStatus(ending.Result.Status))
+	a.cueReflection(ctx, in)
+	emitTurnRoots(ctx, in, turn, ending.Result.Status)
+
+	return ending, nil
+}
+
+func emitTurnRoots(
+	ctx context.Context,
+	in *FinishTurnInput,
+	turn *conversation.AssistantTurn,
+	status string,
+) {
+	payload := in.Payload
+	end := time.Now()
+	start := agentflow.StartedAt(turn.CreatedAt, turn.StartedAt)
+	turnAnchor := aitrace.AnchorFor(aitrace.AnchorAssistantTurn, payload.TurnID.String())
+
+	var definition *agentdefinition.Definition
+	if in.Plan != nil {
+		definition = in.Plan.Definition
+	}
+
+	var delegations []agentports.DelegatedRun
+	if in.Run != nil {
+		delegations = in.Run.Delegations
+	}
+	spans := agentflow.DelegateSpans(in.Events)
+	links := make([]trace.Link, 0, len(delegations))
+	for idx := range delegations {
+		delegation := &delegations[idx]
+		anchor := aitrace.ForDelegate(payload.TurnID, delegation.CallID)
+		if !anchor.IsValid() {
+			continue
+		}
+		links = append(links, anchor.Link())
+
+		span := spans[delegation.CallID]
+		delegateStatus := span.Status
+		if delegateStatus == "" {
+			delegateStatus = string(agentports.DelegateStatusCompleted)
+			if delegation.Failed {
+				delegateStatus = string(agentports.DelegateStatusFailed)
+			}
+		}
+		var failure *modelcall.Failure
+		if delegation.Failed {
+			failure = &modelcall.Failure{Message: delegateStatus}
+		}
+		agentflow.EmitRoot(ctx, &agentflow.RootParams{
+			Anchor:         anchor,
+			Definition:     delegation.Definition,
+			OwnerKind:      agentports.RunStepOwnerAssistantTurn,
+			OwnerID:        payload.TurnID,
+			TurnID:         payload.TurnID,
+			ThreadID:       payload.ThreadID,
+			DelegateCallID: delegation.CallID,
+			UserID:         payload.Actor.UserID,
+			Tenant:         payload.TenantInfo(),
+			Trigger:        string(turn.Origin),
+			Status:         delegateStatus,
+			Failure:        failure,
+			Result:         &agentports.RunResult{Taint: delegation.Taint},
+			Usage:          delegation.Usage,
+			ToolCalls:      span.ToolCalls,
+			Start:          cmp.Or(span.Start, start),
+			End:            cmp.Or(span.End, end),
+			Links:          []trace.Link{turnAnchor.Link()},
+		})
+	}
+
+	agentflow.EmitRoot(ctx, &agentflow.RootParams{
+		Anchor:     turnAnchor,
+		Definition: definition,
+		OwnerKind:  agentports.RunStepOwnerAssistantTurn,
+		OwnerID:    payload.TurnID,
+		TurnID:     payload.TurnID,
+		ThreadID:   payload.ThreadID,
+		UserID:     payload.Actor.UserID,
+		Tenant:     payload.TenantInfo(),
+		Trigger:    string(turn.Origin),
+		Status:     status,
+		Failure:    in.Failure,
+		Result:     in.Run,
+		Start:      start,
+		End:        end,
+		Origin:     payload.Origin,
+		Links:      links,
+	})
+}
+
+// resumeFollowUps starts the report of a decision made while this turn held
+// the conversation, now that the conversation is free. The turn read its
+// proposals before that decision, so it could not report it, and the
+// decision's own follow-up found the conversation busy.
+//
+// A turn the person started resumes however it ended, since it held the
+// conversation either way. A follow-up that could not be prepared does not:
+// it saved no note, so resuming from it would start the same failing
+// follow-up again, and the conversation's next turn resumes instead.
+func (a *Activities) continueTurn(
+	ctx context.Context,
+	in *FinishTurnInput,
+	status conversation.AssistantTurnStatus,
+) *agentports.QueuedTurn {
+	return a.continueConversation(ctx, &conversationContinuation{
+		tenant:   in.Payload.TenantInfo(),
+		threadID: in.Payload.ThreadID,
+		userID:   in.Payload.Actor.UserID,
+		read:     in.Steered,
+		status:   status,
+		resume:   in.Plan != nil || !in.Payload.Request.ReportsDecision(),
+	})
+}
+
+// conversationContinuation is a conversation whose live turn just closed:
+// what that turn read from the queue, how it ended, and whether a decision
+// follow-up may be resumed from it.
+type conversationContinuation struct {
+	tenant   pagination.TenantInfo
+	threadID pulid.ID
+	userID   pulid.ID
+	read     []pulid.ID
+	status   conversation.AssistantTurnStatus
+	resume   bool
+}
+
+// continueConversation starts whatever the conversation has waiting, now that
+// its one live slot is free. What the person queued goes first: they asked
+// for it, and the turn that answers it reads every decision made meanwhile.
+// A queue is sent on only after a turn that ended as it should; one stopped
+// or failed holds it until the person sends it on. With nothing queued, a
+// decision made while the conversation was busy is reported.
+func (a *Activities) continueConversation(
+	ctx context.Context,
+	c *conversationContinuation,
+) *agentports.QueuedTurn {
+	var next *agentports.QueuedTurn
+	if a.queue != nil {
+		next = a.queue.SettleQueue(ctx, &agentports.SettleQueueRequest{
+			TenantInfo: c.tenant,
+			ThreadID:   c.threadID,
+			UserID:     c.userID,
+			Read:       c.read,
+			Dispatch:   sendsQueueOn(c.status),
+		})
+	}
+	if next != nil || !c.resume || a.followUps == nil {
+		return next
+	}
+
+	a.followUps.ResumeFollowUps(ctx, agentports.ResumeFollowUpsRequest{
+		TenantInfo: c.tenant,
+		ThreadID:   c.threadID,
+	})
+
+	return nil
+}
+
+func sendsQueueOn(status conversation.AssistantTurnStatus) bool {
+	return status == conversation.AssistantTurnStatusCompleted ||
+		status == conversation.AssistantTurnStatusRefused
+}
+
+func (a *Activities) cueReflection(ctx context.Context, in *FinishTurnInput) {
+	if a.reflections == nil || in.Plan == nil || in.Plan.Refused() {
+		return
+	}
+
+	payload := in.Payload
+	a.reflections.AfterTurn(ctx, &agentports.ReflectOnThreadRequest{
+		TenantInfo: payload.TenantInfo(),
+		ThreadID:   payload.ThreadID,
+		UserID:     payload.Actor.UserID,
+		TurnID:     payload.TurnID,
+	})
+}
+
+// finish saves the turn and decides how it ended. cause is why the turn did
+// not finish, for the turn's record; err is a failure to save, which fails the
+// activity so it is tried again.
+func (a *Activities) finish(
+	ctx context.Context,
+	in *FinishTurnInput,
+) (ending *TurnEnding, cause, err error) {
+	if in.Plan == nil {
+		// Turned away, or stopped, before there was anything to save.
+		if in.Failure != nil && in.Failure.Stopped {
+			return failedEnding(conversation.AssistantTurnStatusStopped, stoppedMessage),
+				in.Failure.Err(), nil
+		}
+		if in.Rejection != "" {
+			ending := failedEnding(conversation.AssistantTurnStatusFailed, in.Rejection)
+			if limit := usageLimit(in.RejectionParams); limit != nil {
+				ending.Event.Data = map[string]any{
+					"message": in.Rejection,
+					"code":    errorCodeUsageLimit,
+					"limit":   limit,
+				}
+			}
+			return ending, errors.New(in.Rejection), nil
+		}
+
+		return failedEndingFor(conversation.AssistantTurnStatusFailed, failedMessage, in.Failure),
+			in.Failure.Err(), nil
+	}
+
+	cause = in.Failure.Err()
+	stream, emit := a.openStream(ctx)
+	defer a.closeStream(ctx, stream)
+
+	result, err := a.assistant.FinishTurn(ctx, &assistantservice.FinishTurnRequest{
+		TurnID:     in.Payload.TurnID,
+		Plan:       in.Plan,
+		Actor:      &in.Payload.Actor,
+		TenantInfo: in.Payload.TenantInfo(),
+		Run:        in.Run,
+		Failure:    cause,
+		Artifacts:  in.Artifacts,
+	}, emit)
+	if err != nil {
+		return nil, nil, fmt.Errorf("save this turn: %w", err)
+	}
+	a.recordFingerprint(ctx, in)
+
+	status := assistantturnservice.StatusFor(result.Refused, cause)
+	switch status {
+	case conversation.AssistantTurnStatusStopped:
+		return keptInThread(failedEnding(status, stoppedMessage)), cause, nil
+	case conversation.AssistantTurnStatusFailed:
+		return keptInThread(failedEndingFor(status, failedMessage, in.Failure)), cause, nil
+	default:
+		return &TurnEnding{
+			Result: assistantcontract.AssistantTurnResult{
+				Status:  string(status),
+				Refused: result.Refused,
+				Result:  result,
+			},
+			Event:   temporaltype.StreamItem{Event: agentports.AssistantEventDone, Data: result},
+			Compact: compactionCue(status, result),
+		}, nil, nil
+	}
+}
+
+// compactionCue is the cue to compact a conversation a turn answered, when it
+// compacts itself and the turn left it past conversation.AutoCompactShare.
+// Only an answered turn sets one off: a refusal added nothing worth room.
+func compactionCue(
+	status conversation.AssistantTurnStatus,
+	result *agentports.SendMessageResult,
+) *CompactionCue {
+	if status != conversation.AssistantTurnStatusCompleted || result.Thread == nil {
+		return nil
+	}
+	usage := result.Thread.ContextUsage
+	if !result.Thread.CompactsItself() || !usage.NeedsCompaction() {
+		return nil
+	}
+
+	return &CompactionCue{Before: usage.Total(), After: usage.Total() - usage.Frees()}
+}
+
+func (a *Activities) recordFingerprint(ctx context.Context, in *FinishTurnInput) {
+	fingerprint := assistantservice.TurnFingerprint(in.Plan, in.Run)
+	if fingerprint == nil || a.turnRepo == nil {
+		return
+	}
+
+	if err := a.turnRepo.RecordFingerprint(ctx, agentports.RecordAssistantTurnFingerprintRequest{
+		ID:          in.Payload.TurnID,
+		TenantInfo:  in.Payload.TenantInfo(),
+		Fingerprint: fingerprint,
+	}); err != nil {
+		a.logger.Warn("could not keep the agent a turn ran as",
+			zap.String("turn", in.Payload.TurnID.String()),
+			zap.Error(err),
+		)
+	}
+}
+
+func failedEnding(status conversation.AssistantTurnStatus, message string) *TurnEnding {
+	return &TurnEnding{
+		Result: assistantcontract.AssistantTurnResult{Status: string(status), Message: message},
+		Event: temporaltype.StreamItem{
+			Event: agentports.AssistantEventError,
+			Data:  map[string]any{"message": message},
+		},
+	}
+}
+
+// failedEndingFor is a failed ending that says why, where the failure knows:
+// no model is set up, or every model asked was down and which ones.
+func failedEndingFor(
+	status conversation.AssistantTurnStatus,
+	message string,
+	failure *modelcall.Failure,
+) *TurnEnding {
+	ending := failedEnding(status, message)
+	if failure == nil {
+		return ending
+	}
+	data := map[string]any{"message": message}
+	switch {
+	case failure.Plan != nil:
+		ending = failedEnding(status, failure.Plan.Message)
+		data["message"] = failure.Plan.Message
+		data["code"] = errorCodeUsageLimit
+		data["limit"] = planLimit(failure.Plan)
+	case failure.NoProvider:
+		data["code"] = errorCodeNoProvider
+	case len(failure.Providers) > 0:
+		data["code"] = errorCodeNoModelAnswered
+		data["providers"] = failure.Providers
+	default:
+		return ending
+	}
+	ending.Event.Data = data
+
+	return ending
+}
+
+// keptInThread marks a failed ending whose turn was saved, closing note and
+// all, so the reader can hand over to the conversation, which now shows the
+// failure as it will be read back later, instead of keeping its own copy.
+func keptInThread(ending *TurnEnding) *TurnEnding {
+	if data, ok := ending.Event.Data.(map[string]any); ok {
+		data["saved"] = true
+	}
+
+	return ending
+}
+
+// The codes on a failed turn's error event, for a client that shows each
+// differently.
+const (
+	errorCodeNoProvider      = "no_provider"
+	errorCodeNoModelAnswered = "no_model_answered"
+	// errorCodeUsageLimit is a question a usage cap turned away: the agent's
+	// monthly budget or daily runs, or the person's own monthly allowance.
+	errorCodeUsageLimit = "usage_limit"
+
+	planLimitCode      = "quota_exceeded"
+	planRestrictedCode = "plan_restricted"
+	planLimitKind      = "plan_limit"
+)
+
+func planLimit(refusal *modelcall.PlanRefusal) map[string]any {
+	return map[string]any{
+		"kind":     planLimitKind,
+		"used":     strconv.FormatInt(refusal.Used, 10),
+		"limit":    strconv.FormatInt(refusal.Limit, 10),
+		"meter":    refusal.Meter,
+		"plan":     refusal.Plan,
+		"resetsAt": int64(0),
+	}
+}
+
+// usageLimit is the cap a refusal names, in the shape the client reads, or
+// nil when the refusal was not a usage cap.
+func usageLimit(params map[string]string) map[string]any {
+	var kind, used string
+	switch {
+	case params["code"] == planLimitCode:
+		return map[string]any{
+			"kind":     planLimitKind,
+			"used":     params["used"],
+			"limit":    params["limit"],
+			"meter":    params["meter"],
+			"plan":     params["plan"],
+			"resetsAt": int64(0),
+		}
+	case params["code"] == "person_allowance":
+		kind, used = "person_allowance", params["used"]
+	case params["code"] == "agent_budget" &&
+		(params["cap"] == "monthly_budget" || params["cap"] == "daily_runs"):
+		kind, used = params["cap"], params["spent"]
+	default:
+		return nil
+	}
+	resetsAt, _ := strconv.ParseInt(params["resetsAt"], 10, 64)
+
+	return map[string]any{
+		"kind":     kind,
+		"used":     used,
+		"limit":    params["limit"],
+		"resetsAt": resetsAt,
+	}
+}
+
+// alreadySaved is the ending for a turn an earlier attempt saved. It carries
+// no result, only where to read one, which is what tells the client to fetch
+// the conversation rather than trust what it has on screen.
+func (a *Activities) alreadySaved(
+	ctx context.Context,
+	turn *conversation.AssistantTurn,
+) *TurnEnding {
+	current, err := a.turnRepo.GetByID(ctx, agentports.GetAssistantTurnRequest{
+		ID:         turn.ID,
+		TenantInfo: pagination.TenantInfo{OrgID: turn.OrganizationID, BuID: turn.BusinessUnitID},
+	})
+	if err == nil {
+		turn = current
+	}
+	if !turn.Status.Terminal() {
+		// The attempt that saved it was lost before closing the record. Left
+		// open, the record would hold the conversation's one live slot for
+		// ever; what the turn came to is in the conversation either way.
+		a.turns.Complete(ctx, turn, conversation.AssistantTurnStatusCompleted, nil)
+		turn.Status = conversation.AssistantTurnStatusCompleted
+	}
+
+	event := assistantturnservice.ClosingEvent(turn)
+
+	return &TurnEnding{
+		Result: assistantcontract.AssistantTurnResult{Status: string(turn.Status)},
+		Event:  temporaltype.StreamItem{Event: event.Event, Data: event.Data},
+	}
+}
+
+// CloseTurnActivity closes a turn's record the save could not close. It is
+// the last thing a turn does when saving it failed on every attempt, and it
+// never touches the conversation, only the record, which is what frees the
+// conversation for its next question.
+func (a *Activities) CloseTurnActivity(
+	ctx context.Context,
+	payload *assistantcontract.AssistantTurnPayload,
+	message string,
+) error {
+	turn, err := a.turnRepo.GetByID(ctx, agentports.GetAssistantTurnRequest{
+		ID:         payload.TurnID,
+		TenantInfo: payload.TenantInfo(),
+	})
+	if err != nil {
+		return fmt.Errorf("read this turn's record: %w", err)
+	}
+	if turn.Status.Terminal() {
+		return nil
+	}
+
+	err = a.turns.Close(ctx, turn, conversation.AssistantTurnStatusFailed, message)
+	if err != nil {
+		return fmt.Errorf("close this turn's record: %w", err)
+	}
+	emitTurnRoots(ctx, &FinishTurnInput{
+		Payload: payload,
+		Failure: &modelcall.Failure{Message: message},
+	}, turn, string(conversation.AssistantTurnStatusFailed))
+
+	return nil
+}
+
+// recordLoopRefusals files the calls the loop refused without dispatching
+// them, so the agent's scorecard counts them (agentruntime.RecordLoopRefusals).
+// The turn is already saved, so a failure here is logged, not returned.
+func (a *Activities) recordLoopRefusals(ctx context.Context, in *FinishTurnInput) {
+	if in.Run == nil || len(in.Run.LoopRefusals) == 0 || in.Plan == nil ||
+		in.Plan.Definition == nil {
+		return
+	}
+	payload := in.Payload
+	failed := agentruntime.RecordLoopRefusals(ctx, &agentruntime.RecordLoopRefusalsRequest{
+		Ledger: a.steps,
+		Tenant: payload.TenantInfo(),
+		Owner: agentports.RunStepOwner{
+			Kind: agentports.RunStepOwnerAssistantTurn,
+			ID:   payload.TurnID,
+		},
+		DefinitionID: in.Plan.Definition.ID,
+		Attempt:      int(activity.GetInfo(ctx).Attempt),
+		Refusals:     in.Run.LoopRefusals,
+	})
+	if failed > 0 {
+		a.logger.Warn("could not record some of a turn's refused tool calls",
+			zap.String("turn", payload.TurnID.String()),
+			zap.Int("unrecorded", failed),
+		)
+	}
+}
+
+// claimSave reserves saving the turn for this attempt, and reports whether
+// this attempt may save it.
+func (a *Activities) claimSave(ctx context.Context, payload *assistantcontract.AssistantTurnPayload) (bool, error) {
+	tenant := payload.TenantInfo()
+	recorded, err := a.steps.Loaded(ctx, tenant, agentports.RunStepOwner{
+		Kind: agentports.RunStepOwnerAssistantTurn,
+		ID:   payload.TurnID,
+	})
+	if err != nil {
+		return false, fmt.Errorf("read what this turn already did: %w", err)
+	}
+	for i := range recorded {
+		step := &recorded[i]
+		if step.Kind == agentports.RunStepCompletion &&
+			strings.HasPrefix(step.Key, turnFinishKey) &&
+			step.Status != agentports.RunStepFailed {
+			return false, nil
+		}
+	}
+
+	verdict, err := a.steps.Claim(ctx, tenant, saveStep(ctx, payload))
+	if err != nil {
+		return false, fmt.Errorf("claim saving this turn: %w", err)
+	}
+
+	return verdict.State == agentports.StepFresh, nil
+}
+
+func saveStep(ctx context.Context, payload *assistantcontract.AssistantTurnPayload) agentports.RunStep {
+	attempt := int(activity.GetInfo(ctx).Attempt)
+
+	return agentports.RunStep{
+		OwnerKind: agentports.RunStepOwnerAssistantTurn,
+		OwnerID:   payload.TurnID,
+		Attempt:   attempt,
+		Kind:      agentports.RunStepCompletion,
+		Key:       turnFinishKey + ":" + strconv.Itoa(attempt),
+		ToolName:  turnFinishKey,
+	}
+}
+
+// settle closes this attempt's claim so the ledger agrees with the record.
+func (a *Activities) settle(
+	ctx context.Context,
+	payload *assistantcontract.AssistantTurnPayload,
+	status agentports.RunStepStatus,
+	content string,
+) {
+	step := saveStep(ctx, payload)
+	step.Status = status
+	step.Outcome = agentports.RunStepOutcome{
+		Content: content,
+		Failed:  status == agentports.RunStepFailed,
+	}
+
+	if err := a.steps.Settle(context.WithoutCancel(ctx), payload.TenantInfo(), step); err != nil {
+		a.logger.Error("could not close the claim on saving a turn",
+			zap.String("turn", payload.TurnID.String()),
+			zap.Error(err),
+		)
+	}
+}
+
+// recordTrajectory keeps the durable account of what the turn said: every
+// event but the streamed text, which the transcript already holds whole.
+func (a *Activities) recordTrajectory(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	payload *assistantcontract.AssistantTurnPayload,
+	events []temporaltype.StreamItem,
+	ending temporaltype.StreamItem,
+) {
+	if a.trajectory == nil {
+		return
+	}
+
+	writer := a.trajectory.Recorder(ctx, tenant, agentports.RunStepOwner{
+		Kind: agentports.RunStepOwnerAssistantTurn,
+		ID:   payload.TurnID,
+	})
+	for _, event := range events {
+		agentports.RecordTrajectory(writer, ctx, kernelports.StreamEvent{
+			Event: event.Event,
+			Data:  event.Data,
+			At:    event.At,
+		})
+	}
+	agentports.RecordTrajectory(writer, ctx, kernelports.StreamEvent{
+		Event: ending.Event,
+		Data:  ending.Data,
+		At:    ending.At,
+	})
+	agentports.FlushTrajectory(writer, ctx)
+}
+
+// openStream is how the save reaches the reader: a proposal the turn raised
+// is shown as a draft beside the conversation the moment it is saved. A
+// stream that cannot be opened costs the reader those announcements, not the
+// turn, so it is logged and the save goes on.
+func (a *Activities) openStream(
+	ctx context.Context,
+) (*workflowstreams.Client, kernelports.AssistantStreamEmitter) {
+	stream, err := workflowstreams.NewClientFromActivity(ctx, workflowstreams.Options{})
+	if err != nil {
+		a.logger.Warn("could not open this turn's stream to save it", zap.Error(err))
+
+		return nil, nil
+	}
+
+	events := stream.Topic(temporaltype.StreamEventsTopic)
+
+	return stream, func(event kernelports.StreamEvent) {
+		events.Publish(temporaltype.StreamItem{Event: event.Event, Data: event.Data}, true)
+	}
+}
+
+func (a *Activities) closeStream(ctx context.Context, stream *workflowstreams.Client) {
+	if stream == nil {
+		return
+	}
+
+	flushCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), streamFlushTimeout)
+	defer cancel()
+
+	if err := stream.Close(flushCtx); err != nil {
+		a.logger.Warn("could not flush the last of a turn's stream", zap.Error(err))
+	}
+}
+
+// artifactObserver keeps what a chat turn's tool calls produce, where they
+// ran. It is agentflow's observer for a run on a conversation.
+type artifactObserver struct {
+	assistant *assistantservice.Service
+}
+
+func newArtifactObserver(assistant *assistantservice.Service) agentflow.ToolObserver {
+	return &artifactObserver{assistant: assistant}
+}
+
+func (o *artifactObserver) ObserveTool(
+	ctx context.Context,
+	run agentflow.RunContext,
+	observation agentports.ToolObservation,
+	emit kernelports.AssistantStreamEmitter,
+) (*agentports.ShownArtifact, []*assistantartifact.Artifact, error) {
+	return o.assistant.ObserveTool(ctx, run.ThreadID, run.Actor, observation, emit)
+}

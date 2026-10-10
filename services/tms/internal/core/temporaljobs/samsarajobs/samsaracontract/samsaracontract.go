@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/services/samsarasyncservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/samsarasyncservice"
 	workflowstarterservice "github.com/emoss08/trenova/internal/core/services/workflowstarter"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/bootstrap"
-	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"

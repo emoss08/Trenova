@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/core/domain/servicetype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 

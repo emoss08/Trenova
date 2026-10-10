@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/core/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )

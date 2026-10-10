@@ -1,8 +1,8 @@
 package journalreversalports
 
 import (
-	"github.com/emoss08/trenova/internal/core/domain/journalentry"
-	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

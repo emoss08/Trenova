@@ -3,7 +3,7 @@ package locationcategoryports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
+	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

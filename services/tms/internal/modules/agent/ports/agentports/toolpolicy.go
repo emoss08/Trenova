@@ -4,8 +4,8 @@ import (
 	"context"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
 type ToolPolicy struct {

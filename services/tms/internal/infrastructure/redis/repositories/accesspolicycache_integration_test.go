@@ -5,7 +5,7 @@ package repositories
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/iam"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"

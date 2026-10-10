@@ -7,7 +7,7 @@ package detentionportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	mock "github.com/stretchr/testify/mock"
 )

@@ -1,0 +1,214 @@
+package billingqueue
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/pkg/dbtype"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/shared/money"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/shopspring/decimal"
+	"github.com/uptrace/bun"
+)
+
+var (
+	_ bun.BeforeAppendModelHook          = (*BillingQueueItem)(nil)
+	_ validationframework.TenantedEntity = (*BillingQueueItem)(nil)
+	_ domaintypes.PostgresSearchable     = (*BillingQueueItem)(nil)
+)
+
+type BillingQueueItem struct {
+	bun.BaseModel `bun:"table:billing_queue_items,alias:bqi" json:"-"`
+
+	ID                        pulid.ID             `json:"id"                        bun:"id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID            pulid.ID             `json:"organizationId"            bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID            pulid.ID             `json:"businessUnitId"            bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	ShipmentID                pulid.ID             `json:"shipmentId"                bun:"shipment_id,type:VARCHAR(100),nullzero"`
+	OrderID                   pulid.ID             `json:"orderId"                   bun:"order_id,type:VARCHAR(100),nullzero"`
+	BillToCustomerID          pulid.ID             `json:"billToCustomerId"          bun:"bill_to_customer_id,type:VARCHAR(100),notnull"`
+	AllocatedTotalAmount      decimal.Decimal      `json:"allocatedTotalAmount"      bun:"allocated_total_amount,type:NUMERIC(19,4),notnull,default:0"`
+	AllocatedTotalAmountMinor int64                `json:"allocatedTotalAmountMinor" bun:"allocated_total_amount_minor,type:BIGINT,notnull"`
+	AssignedBillerID          *pulid.ID            `json:"assignedBillerId"          bun:"assigned_biller_id,type:VARCHAR(100),nullzero"`
+	Number                    string               `json:"number"                    bun:"number,type:VARCHAR(100),nullzero"`
+	Status                    Status               `json:"status"                    bun:"status,type:billing_queue_status,notnull,default:'ReadyForReview'"`
+	BillType                  BillType             `json:"billType"                  bun:"bill_type,type:billing_type,notnull,default:'Invoice'"`
+	ExceptionReasonCode       *ExceptionReasonCode `json:"exceptionReasonCode"       bun:"exception_reason_code,type:VARCHAR(50),nullzero"`
+	ReviewNotes               string               `json:"reviewNotes"               bun:"review_notes,type:TEXT,nullzero"`
+	ExceptionNotes            string               `json:"exceptionNotes"            bun:"exception_notes,type:TEXT,nullzero"`
+	ReviewStartedAt           *int64               `json:"reviewStartedAt"           bun:"review_started_at,type:BIGINT,nullzero"`
+	ReviewCompletedAt         *int64               `json:"reviewCompletedAt"         bun:"review_completed_at,type:BIGINT,nullzero"`
+	CanceledByID              *pulid.ID            `json:"canceledById"              bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
+	CanceledAt                *int64               `json:"canceledAt"                bun:"canceled_at,type:BIGINT,nullzero"`
+	CancelReason              string               `json:"cancelReason"              bun:"cancel_reason,type:VARCHAR(100),nullzero"`
+	HoldReasonCode            *HoldReasonCode      `json:"holdReasonCode"            bun:"hold_reason_code,type:VARCHAR(30),nullzero"`
+	HeldAt                    *int64               `json:"heldAt"                    bun:"held_at,type:BIGINT,nullzero"`
+	HeldByID                  *pulid.ID            `json:"heldById"                  bun:"held_by_id,type:VARCHAR(100),nullzero"`
+	StatusBeforeHold          *Status              `json:"statusBeforeHold"          bun:"status_before_hold,type:billing_queue_status,nullzero"`
+	IsAdjustmentOrigin        bool                 `json:"isAdjustmentOrigin"        bun:"is_adjustment_origin,type:BOOLEAN,notnull"`
+	InvoiceID                 pulid.ID             `json:"invoiceId"                 bun:"invoice_id,type:VARCHAR(100),nullzero"`
+	SourceInvoiceID           *pulid.ID            `json:"sourceInvoiceId"           bun:"source_invoice_id,type:VARCHAR(100),nullzero"`
+	SourceInvoiceAdjustmentID *pulid.ID            `json:"sourceInvoiceAdjustmentId" bun:"source_invoice_adjustment_id,type:VARCHAR(100),nullzero"`
+	SourceCreditMemoInvoiceID *pulid.ID            `json:"sourceCreditMemoInvoiceId" bun:"source_credit_memo_invoice_id,type:VARCHAR(100),nullzero"`
+	CorrectionGroupID         *pulid.ID            `json:"correctionGroupId"         bun:"correction_group_id,type:VARCHAR(100),nullzero"`
+	RebillStrategy            string               `json:"rebillStrategy"            bun:"rebill_strategy,type:VARCHAR(50),nullzero"`
+	RequiresReplacementReview bool                 `json:"requiresReplacementReview" bun:"requires_replacement_review,type:BOOLEAN,notnull"`
+	RerateVariancePercent     decimal.Decimal      `json:"rerateVariancePercent"     bun:"rerate_variance_percent,type:NUMERIC(9,6),notnull,default:0"`
+	AdjustmentContext         map[string]any       `json:"adjustmentContext"         bun:"adjustment_context,type:JSONB,notnull,default:'{}'"`
+	Version                   int64                `json:"version"                   bun:"version,type:BIGINT,notnull"`
+	CreatedAt                 int64                `json:"createdAt"                 bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt                 int64                `json:"updatedAt"                 bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	SearchVector              string               `json:"-"                         bun:"search_vector,type:TSVECTOR,scanonly"`
+
+	Shipment       *shipment.Shipment `json:"shipment,omitempty"       bun:"rel:belongs-to,join:shipment_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	BillToCustomer *customer.Customer `json:"billToCustomer,omitempty" bun:"rel:belongs-to,join:bill_to_customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	AssignedBiller *tenant.User       `json:"assignedBiller,omitempty" bun:"rel:belongs-to,join:assigned_biller_id=id"`
+	CanceledBy     *tenant.User       `json:"canceledBy,omitempty"     bun:"rel:belongs-to,join:canceled_by_id=id"`
+
+	// PayerShare is this item's payer's part of the shipment's charges, filled
+	// when the item is read with its shipment details.
+	PayerShare *PayerShare `json:"payerShare,omitempty" bun:"-"`
+
+	// DetentionHolds are the detention charges on the shipment still waiting
+	// on an approver, filled when the item is read with its shipment details.
+	// While any is listed the item cannot be approved.
+	DetentionHolds []*DetentionHold `json:"detentionHolds,omitempty" bun:"-"`
+
+	// PONumber is the customer's purchase order, from the item's order. It is
+	// read with the item rather than stored on it.
+	PONumber string `json:"poNumber,omitempty" bun:"po_number,scanonly"`
+
+	// Review is everything a biller reads to decide the item, filled when the
+	// item is read with its shipment details.
+	Review *Review `json:"review,omitempty" bun:"-"`
+}
+
+func (b *BillingQueueItem) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		b,
+		validation.Field(
+			&b.OrganizationID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&b.BusinessUnitID,
+			validation.Required.Error("Business unit ID is required"),
+		),
+		validation.Field(
+			&b.BillToCustomerID,
+			validation.Required.Error("Bill-to customer is required"),
+		),
+	))
+
+	// A correction of a consolidated invoice has neither a single shipment nor a
+	// single order to point at; the invoice it corrects is what identifies it. A
+	// standalone memo has none of those and is identified by its bill-to alone.
+	if b.ShipmentID.IsNil() && b.OrderID.IsNil() &&
+		(b.SourceInvoiceID == nil || b.SourceInvoiceID.IsNil()) &&
+		b.BillToCustomerID.IsNil() {
+		multiErr.Add(
+			"shipmentId",
+			errortypes.ErrRequired,
+			"A billing queue item must be attached to a shipment, an order, a source invoice or a bill-to customer",
+		)
+	}
+}
+
+func (b *BillingQueueItem) SyncAllocatedMinor() {
+	b.AllocatedTotalAmountMinor = money.MinorUnits(b.AllocatedTotalAmount)
+}
+
+func (b *BillingQueueItem) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+
+	switch query.(type) {
+	case *bun.InsertQuery:
+		if b.ID.IsNil() {
+			b.ID = pulid.MustNew("bqi_")
+		}
+		b.CreatedAt = now
+	case *bun.UpdateQuery:
+		b.UpdatedAt = now
+	}
+
+	return nil
+}
+
+func (b *BillingQueueItem) GetID() pulid.ID {
+	return b.ID
+}
+
+func (b *BillingQueueItem) GetOrganizationID() pulid.ID {
+	return b.OrganizationID
+}
+
+func (b *BillingQueueItem) GetBusinessUnitID() pulid.ID {
+	return b.BusinessUnitID
+}
+
+func (b *BillingQueueItem) GetTableName() string {
+	return "billing_queue_items"
+}
+
+func (b *BillingQueueItem) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias:      "bqi",
+		UseSearchVector: true,
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "status", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightA},
+			{
+				Name:   "review_notes",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
+			{
+				Name:   "exception_notes",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
+			{
+				Name:   "cancel_reason",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
+		},
+		Relationships: []*domaintypes.RelationshipDefintion{
+			{
+				Field:        "shipment",
+				Type:         dbtype.RelationshipTypeBelongsTo,
+				TargetEntity: (*shipment.Shipment)(nil),
+				TargetTable:  "shipments",
+				ForeignKey:   "shipment_id",
+				ReferenceKey: "id",
+				Alias:        "sp",
+				Queryable:    true,
+			},
+			{
+				Field:        "bill_to_customer",
+				Type:         dbtype.RelationshipTypeBelongsTo,
+				TargetEntity: (*customer.Customer)(nil),
+				TargetTable:  "customers",
+				ForeignKey:   "bill_to_customer_id",
+				ReferenceKey: "id",
+				Alias:        "bill_cus",
+				Queryable:    true,
+			},
+			{
+				Field:        "assigned_biller",
+				Type:         dbtype.RelationshipTypeBelongsTo,
+				TargetEntity: (*tenant.User)(nil),
+				TargetTable:  "users",
+				ForeignKey:   "assigned_biller_id",
+				ReferenceKey: "id",
+				Alias:        "usr",
+				Queryable:    true,
+			},
+		},
+	}
+}

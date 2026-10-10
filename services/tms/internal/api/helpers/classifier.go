@@ -6,7 +6,7 @@ import (
 	"errors"
 	"io"
 
-	formulaerrors "github.com/emoss08/trenova/internal/core/services/formula/errors"
+	formulaerrors "github.com/emoss08/trenova/internal/modules/rating/app/formula/errors"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/go-playground/validator/v10"

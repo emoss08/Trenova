@@ -8,7 +8,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/exchangerate"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/exchangerate"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

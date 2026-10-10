@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/core/domain/rategeo"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/shared/decimalutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"

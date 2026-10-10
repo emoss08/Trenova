@@ -3,7 +3,7 @@ package quotatx
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/services/quotaservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/uptrace/bun"

@@ -7,7 +7,7 @@ package bankreceiptportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

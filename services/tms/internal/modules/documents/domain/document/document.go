@@ -1,0 +1,471 @@
+package document
+
+import (
+	"context"
+	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/uptrace/bun"
+)
+
+var (
+	_ bun.BeforeAppendModelHook      = (*Document)(nil)
+	_ domaintypes.PostgresSearchable = (*Document)(nil)
+)
+
+type Status string
+type PreviewStatus string
+type ContentStatus string
+type ShipmentDraftStatus string
+type ProcessingProfile string
+
+// SignatureStatus is whether a document carries the signature its type needs.
+// It stays Unknown until extraction reads the signature line or a person says.
+type SignatureStatus string
+
+const (
+	SignatureStatusUnknown  SignatureStatus = "Unknown"
+	SignatureStatusSigned   SignatureStatus = "Signed"
+	SignatureStatusUnsigned SignatureStatus = "Unsigned"
+)
+
+const (
+	StatusDraft           Status = "Draft"
+	StatusActive          Status = "Active"
+	StatusArchived        Status = "Archived"
+	StatusExpired         Status = "Expired"
+	StatusPending         Status = "Pending"
+	StatusRejected        Status = "Rejected"
+	StatusPendingApproval Status = "PendingApproval"
+)
+
+const (
+	PreviewStatusPending     PreviewStatus = "Pending"
+	PreviewStatusReady       PreviewStatus = "Ready"
+	PreviewStatusFailed      PreviewStatus = "Failed"
+	PreviewStatusUnsupported PreviewStatus = "Unsupported"
+)
+
+const (
+	ContentStatusPending    ContentStatus = "Pending"
+	ContentStatusExtracting ContentStatus = "Extracting"
+	ContentStatusExtracted  ContentStatus = "Extracted"
+	ContentStatusIndexed    ContentStatus = "Indexed"
+	ContentStatusFailed     ContentStatus = "Failed"
+)
+
+const (
+	ShipmentDraftStatusUnavailable ShipmentDraftStatus = "Unavailable"
+	ShipmentDraftStatusPending     ShipmentDraftStatus = "Pending"
+	ShipmentDraftStatusReady       ShipmentDraftStatus = "Ready"
+	ShipmentDraftStatusFailed      ShipmentDraftStatus = "Failed"
+)
+
+const (
+	ProcessingProfileNone                   ProcessingProfile = "none"
+	ProcessingProfileRateConfirmationImport ProcessingProfile = "rate_confirmation_import"
+	ProcessingProfileAssistantAttachment    ProcessingProfile = "assistant_attachment"
+	// ProcessingProfileInboundAttachment is a file that came in on a monitored
+	// mailbox. It is its own profile rather than borrowing the rate-confirmation
+	// one because a POD, an invoice and a tender all arrive this way, and
+	// labelling them all a rate confirmation would be a lie the pipeline then
+	// acts on.
+	ProcessingProfileInboundAttachment ProcessingProfile = "inbound_attachment"
+	// ProcessingProfileCapture is paper scanned or printed into Trenova. It is
+	// read like an inbound attachment: what a scan is, and whose it is, is only
+	// known once its text has been read.
+	ProcessingProfileCapture ProcessingProfile = "capture"
+)
+
+func (s Status) String() string {
+	return string(s)
+}
+
+func (s Status) IsValid() bool {
+	switch s {
+	case StatusDraft,
+		StatusActive,
+		StatusArchived,
+		StatusExpired,
+		StatusPending,
+		StatusRejected,
+		StatusPendingApproval:
+		return true
+	}
+	return false
+}
+
+func (s PreviewStatus) IsValid() bool {
+	switch s {
+	case PreviewStatusPending,
+		PreviewStatusReady,
+		PreviewStatusFailed,
+		PreviewStatusUnsupported:
+		return true
+	}
+	return false
+}
+
+func (s ContentStatus) IsValid() bool {
+	switch s {
+	case ContentStatusPending,
+		ContentStatusExtracting,
+		ContentStatusExtracted,
+		ContentStatusIndexed,
+		ContentStatusFailed:
+		return true
+	}
+	return false
+}
+
+func (s ShipmentDraftStatus) IsValid() bool {
+	switch s {
+	case ShipmentDraftStatusUnavailable,
+		ShipmentDraftStatusPending,
+		ShipmentDraftStatusReady,
+		ShipmentDraftStatusFailed:
+		return true
+	}
+	return false
+}
+
+// AllProcessingProfiles is the whole set, so a caller that has to reason about
+// which of them do what reads the list rather than repeating it.
+func AllProcessingProfiles() []ProcessingProfile {
+	return []ProcessingProfile{
+		ProcessingProfileNone,
+		ProcessingProfileRateConfirmationImport,
+		ProcessingProfileAssistantAttachment,
+		ProcessingProfileInboundAttachment,
+		ProcessingProfileCapture,
+	}
+}
+
+// IntelligenceProcessingProfiles are the ones a document is read under. It is
+// derived from SupportsIntelligence rather than listed again, so the two cannot
+// disagree about which documents get opened.
+func IntelligenceProcessingProfiles() []ProcessingProfile {
+	profiles := make([]ProcessingProfile, 0, len(AllProcessingProfiles()))
+	for _, profile := range AllProcessingProfiles() {
+		if profile.SupportsIntelligence() {
+			profiles = append(profiles, profile)
+		}
+	}
+
+	return profiles
+}
+
+func (p ProcessingProfile) IsValid() bool {
+	switch p {
+	case ProcessingProfileNone,
+		ProcessingProfileRateConfirmationImport,
+		ProcessingProfileAssistantAttachment,
+		ProcessingProfileInboundAttachment,
+		ProcessingProfileCapture:
+		return true
+	}
+	return false
+}
+
+func NormalizeProcessingProfile(raw string) (ProcessingProfile, error) {
+	profile := ProcessingProfile(strings.TrimSpace(raw))
+	if profile == "" {
+		return ProcessingProfileNone, nil
+	}
+	if !profile.IsValid() {
+		return "", errInvalidProcessingProfile(profile)
+	}
+	return profile, nil
+}
+
+func (p ProcessingProfile) SupportsIntelligence() bool {
+	return p == ProcessingProfileRateConfirmationImport ||
+		p == ProcessingProfileAssistantAttachment ||
+		p == ProcessingProfileInboundAttachment ||
+		p == ProcessingProfileCapture
+}
+
+func SupportsPreview(fileType string) bool {
+	fileType = strings.ToLower(fileType)
+	return strings.HasPrefix(fileType, "image/") || fileType == "application/pdf"
+}
+
+type Document struct {
+	bun.BaseModel `bun:"table:documents,alias:doc" json:"-"`
+
+	ID                    pulid.ID            `json:"id"                    bun:"id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID        pulid.ID            `json:"organizationId"        bun:"organization_id,type:VARCHAR(100),notnull,pk"`
+	BusinessUnitID        pulid.ID            `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
+	LineageID             pulid.ID            `json:"lineageId"             bun:"lineage_id,type:VARCHAR(100),notnull"`
+	VersionNumber         int64               `json:"versionNumber"         bun:"version_number,type:BIGINT,notnull,default:1"`
+	IsCurrentVersion      bool                `json:"isCurrentVersion"      bun:"is_current_version,type:BOOLEAN,notnull"`
+	FileName              string              `json:"fileName"              bun:"file_name,type:VARCHAR(255),notnull"`
+	OriginalName          string              `json:"originalName"          bun:"original_name,type:VARCHAR(255),notnull"`
+	FileSize              int64               `json:"fileSize"              bun:"file_size,type:BIGINT,notnull"`
+	FileType              string              `json:"fileType"              bun:"file_type,type:VARCHAR(100),notnull"`
+	StoragePath           string              `json:"storagePath"           bun:"storage_path,type:VARCHAR(500),notnull"`
+	ChecksumSHA256        string              `json:"checksumSha256"        bun:"checksum_sha256,type:VARCHAR(64),nullzero"`
+	StorageVersionID      string              `json:"storageVersionId"      bun:"storage_version_id,type:VARCHAR(255),nullzero"`
+	StorageRetentionMode  string              `json:"storageRetentionMode"  bun:"storage_retention_mode,type:VARCHAR(50),nullzero"`
+	StorageRetentionUntil *int64              `json:"storageRetentionUntil" bun:"storage_retention_until,type:BIGINT,nullzero"`
+	StorageLegalHold      bool                `json:"storageLegalHold"      bun:"storage_legal_hold,type:BOOLEAN,notnull"`
+	CryptoMode            string              `json:"cryptoMode"            bun:"crypto_mode,type:VARCHAR(32),notnull,default:'envelope_v1'"`
+	CryptoVersion         int16               `json:"cryptoVersion"         bun:"crypto_version,type:SMALLINT,notnull,default:1"`
+	Status                Status              `json:"status"                bun:"status,type:document_status_enum,notnull,default:'Active'"`
+	Description           string              `json:"description"           bun:"description,type:TEXT,nullzero"`
+	ResourceID            string              `json:"resourceId"            bun:"resource_id,type:VARCHAR(100),notnull"`
+	ResourceType          string              `json:"resourceType"          bun:"resource_type,type:VARCHAR(100),notnull"`
+	ProcessingProfile     ProcessingProfile   `json:"processingProfile"     bun:"processing_profile,type:VARCHAR(64),notnull,default:'none'"`
+	ExpirationDate        *int64              `json:"expirationDate"        bun:"expiration_date,type:BIGINT,nullzero"`
+	Tags                  []string            `json:"tags"                  bun:"tags,type:VARCHAR(100)[],default:'{}'"`
+	IsPublic              bool                `json:"isPublic"              bun:"is_public,type:BOOLEAN,notnull"`
+	UploadedByID          pulid.ID            `json:"uploadedById"          bun:"uploaded_by_id,type:VARCHAR(100),notnull"`
+	ApprovedByID          pulid.ID            `json:"approvedById"          bun:"approved_by_id,type:VARCHAR(100),nullzero"`
+	ApprovedAt            *int64              `json:"approvedAt"            bun:"approved_at,type:BIGINT,nullzero"`
+	RejectedByID          pulid.ID            `json:"rejectedById"          bun:"rejected_by_id,type:VARCHAR(100),nullzero"`
+	RejectedAt            *int64              `json:"rejectedAt"            bun:"rejected_at,type:BIGINT,nullzero"`
+	RejectionReason       string              `json:"rejectionReason"       bun:"rejection_reason,type:TEXT,nullzero"`
+	PreviewStoragePath    string              `json:"previewStoragePath"    bun:"preview_storage_path,type:VARCHAR(500),nullzero"`
+	PreviewStatus         PreviewStatus       `json:"previewStatus"         bun:"preview_status,type:document_preview_status_enum,notnull,nullzero,default:'Unsupported'"`
+	ContentStatus         ContentStatus       `json:"contentStatus"         bun:"content_status,type:document_content_status_enum,notnull,nullzero,default:'Pending'"`
+	ContentError          string              `json:"contentError"          bun:"content_error,type:TEXT,nullzero"`
+	DetectedKind          string              `json:"detectedKind"          bun:"detected_kind,type:VARCHAR(100),nullzero"`
+	HasExtractedText      bool                `json:"hasExtractedText"      bun:"has_extracted_text,type:BOOLEAN,notnull"`
+	ShipmentDraftStatus   ShipmentDraftStatus `json:"shipmentDraftStatus"   bun:"shipment_draft_status,type:document_shipment_draft_status_enum,notnull,nullzero,default:'Unavailable'"`
+	DocumentTypeID        *pulid.ID           `json:"documentTypeId"        bun:"document_type_id,type:VARCHAR(100),nullzero"`
+	SignatureStatus       SignatureStatus     `json:"signatureStatus"       bun:"signature_status,type:VARCHAR(20),notnull,nullzero,default:'Unknown'"`
+	SignedAt              *int64              `json:"signedAt"              bun:"signed_at,type:BIGINT,nullzero"`
+	SearchVector          string              `json:"-"                     bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank                  string              `json:"-"                     bun:"rank,type:VARCHAR(100),scanonly"`
+	Version               int64               `json:"version"               bun:"version,type:BIGINT"`
+	CreatedAt             int64               `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt             int64               `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+
+	BusinessUnit *tenant.BusinessUnit       `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization *tenant.Organization       `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	DocumentType *documenttype.DocumentType `json:"documentType,omitempty" bun:"rel:belongs-to,join:document_type_id=id"`
+}
+
+func (d *Document) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+
+	switch query.(type) {
+	case *bun.InsertQuery:
+		if d.ID.IsNil() {
+			d.ID = pulid.MustNew("doc_")
+		}
+		if d.LineageID.IsNil() {
+			d.LineageID = d.ID
+		}
+		if d.VersionNumber == 0 {
+			d.VersionNumber = 1
+		}
+		if d.PreviewStatus == "" {
+			switch {
+			case d.PreviewStoragePath != "":
+				d.PreviewStatus = PreviewStatusReady
+			case SupportsPreview(d.FileType):
+				d.PreviewStatus = PreviewStatusPending
+			default:
+				d.PreviewStatus = PreviewStatusUnsupported
+			}
+		}
+		if d.ContentStatus == "" {
+			d.ContentStatus = ContentStatusPending
+		}
+		if d.ShipmentDraftStatus == "" {
+			d.ShipmentDraftStatus = ShipmentDraftStatusUnavailable
+		}
+		if d.ProcessingProfile == "" {
+			d.ProcessingProfile = ProcessingProfileNone
+		}
+		if d.CryptoMode == "" {
+			d.CryptoMode = "envelope_v1"
+		}
+		if d.CryptoVersion == 0 {
+			d.CryptoVersion = 1
+		}
+		d.CreatedAt = now
+		d.UpdatedAt = now
+	case *bun.UpdateQuery:
+		d.UpdatedAt = now
+	}
+
+	return nil
+}
+
+func (d *Document) GetID() pulid.ID {
+	return d.ID
+}
+
+func (d *Document) GetOrganizationID() pulid.ID {
+	return d.OrganizationID
+}
+
+func (d *Document) GetBusinessUnitID() pulid.ID {
+	return d.BusinessUnitID
+}
+
+func (d *Document) GetTableName() string {
+	return "documents"
+}
+
+func (d *Document) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias:      "doc",
+		UseSearchVector: true,
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "file_name", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
+			{
+				Name:   "original_name",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightA,
+			},
+			{
+				Name:   "description",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
+		},
+	}
+}
+
+func (d *Document) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(d,
+		validation.Field(&d.OrganizationID,
+			validation.Required.Error("Organization is required"),
+		),
+		validation.Field(&d.BusinessUnitID,
+			validation.Required.Error("Business unit is required"),
+		),
+		// Versions of one document share a lineage; without it a new version
+		// would present as an unrelated document and the old one would stay
+		// current.
+		validation.Field(&d.LineageID, validation.Required.Error("Lineage is required")),
+		validation.Field(&d.VersionNumber,
+			validation.Required.Error("Version number is required"),
+			validation.Min(int64(1)).Error("Version number must be at least one"),
+		),
+		validation.Field(&d.FileName,
+			validation.Required.Error("File name is required"),
+			validation.Length(1, maxFileNameLength).
+				Error("File name cannot be longer than 255 characters"),
+		),
+		validation.Field(&d.OriginalName,
+			validation.Required.Error("Original name is required"),
+			validation.Length(1, maxFileNameLength).
+				Error("Original name cannot be longer than 255 characters"),
+		),
+		validation.Field(&d.FileSize,
+			validation.Required.Error("File size is required"),
+			validation.Min(int64(1)).Error("File size must be greater than zero"),
+		),
+		validation.Field(&d.FileType,
+			validation.Required.Error("File type is required"),
+			validation.Length(1, maxFileTypeLength).
+				Error("File type cannot be longer than 100 characters"),
+		),
+		validation.Field(&d.StoragePath,
+			validation.Required.Error("Storage path is required"),
+			validation.Length(1, maxStoragePathLength).
+				Error("Storage path cannot be longer than 500 characters"),
+		),
+		validation.Field(&d.ChecksumSHA256,
+			validation.Length(checksumLength, checksumLength).
+				Error("Checksum must be a 64 character digest"),
+		),
+		validation.Field(&d.StorageVersionID,
+			validation.Length(0, maxStorageVersionLength).
+				Error("Storage version cannot be longer than 255 characters"),
+		),
+		validation.Field(&d.CryptoMode,
+			validation.Required.Error("Crypto mode is required"),
+			validation.Length(1, maxCryptoModeLength).
+				Error("Crypto mode cannot be longer than 32 characters"),
+		),
+		validation.Field(&d.CryptoVersion,
+			validation.Required.Error("Crypto version is required"),
+			validation.Min(int16(1)).Error("Crypto version must be at least one"),
+		),
+		validation.Field(&d.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[Status]("Status is invalid"),
+		),
+		// A document with no owning resource is unreachable from every surface
+		// that lists documents.
+		validation.Field(&d.ResourceID,
+			validation.Required.Error("Resource is required"),
+			validation.Length(1, maxDocumentResourceLength).
+				Error("Resource cannot be longer than 100 characters"),
+		),
+		validation.Field(&d.ResourceType,
+			validation.Required.Error("Resource type is required"),
+			validation.Length(1, maxDocumentResourceLength).
+				Error("Resource type cannot be longer than 100 characters"),
+		),
+		validation.Field(&d.ProcessingProfile,
+			validation.Required.Error("Processing profile is required"),
+			domainvalidation.ValidEnum[ProcessingProfile]("Processing profile is invalid"),
+		),
+		validation.Field(&d.PreviewStatus,
+			domainvalidation.ValidEnum[PreviewStatus]("Preview status is invalid"),
+		),
+		validation.Field(&d.ContentStatus,
+			domainvalidation.ValidEnum[ContentStatus]("Content status is invalid"),
+		),
+		validation.Field(&d.ShipmentDraftStatus,
+			domainvalidation.ValidEnum[ShipmentDraftStatus]("Shipment draft status is invalid"),
+		),
+		validation.Field(&d.PreviewStoragePath,
+			validation.Length(0, maxStoragePathLength).
+				Error("Preview storage path cannot be longer than 500 characters"),
+		),
+		validation.Field(&d.Tags,
+			validation.Each(validation.Length(1, maxDocumentTagLength).
+				Error("A tag must be between 1 and 100 characters")),
+		),
+		validation.Field(&d.UploadedByID, validation.Required.Error("Uploaded by is required")),
+		// An approval is an accountability record: who approved it and when are
+		// both part of it or neither is.
+		validation.Field(&d.ApprovedAt,
+			validation.When(d.ApprovedByID.IsNotNil(), validation.Required.Error(
+				"An approved document must record when it was approved",
+			)),
+		),
+		validation.Field(&d.ApprovedByID,
+			validation.When(d.ApprovedAt != nil, validation.Required.Error(
+				"An approved document must record who approved it",
+			)),
+		),
+		validation.Field(&d.RejectedAt,
+			validation.When(d.Status == StatusRejected, validation.Required.Error(
+				"A rejected document must record when it was rejected",
+			)),
+		),
+		validation.Field(&d.RejectionReason,
+			validation.When(d.Status == StatusRejected, validation.Required.Error(
+				"A rejected document must record why it was rejected",
+			)),
+			validation.Length(0, MaxRejectionReasonLength).
+				Error("Rejection reason cannot be longer than 1000 characters"),
+		),
+	))
+}
+
+const (
+	maxFileNameLength         = 255
+	maxFileTypeLength         = 100
+	maxStoragePathLength      = 500
+	maxStorageVersionLength   = 255
+	maxCryptoModeLength       = 32
+	maxDocumentResourceLength = 100
+	maxDocumentTagLength      = 100
+	checksumLength            = 64
+)

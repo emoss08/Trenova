@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/customerpaymenthandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"

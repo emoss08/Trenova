@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/shopspring/decimal"
 )
 

@@ -3,7 +3,7 @@ package customerledgerports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/customerledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 

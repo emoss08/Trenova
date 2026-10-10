@@ -5,8 +5,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"

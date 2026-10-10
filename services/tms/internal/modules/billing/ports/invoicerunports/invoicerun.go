@@ -3,7 +3,7 @@ package invoicerunports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

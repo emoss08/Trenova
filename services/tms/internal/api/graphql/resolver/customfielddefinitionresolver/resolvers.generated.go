@@ -4,7 +4,7 @@ package customfielddefinitionresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	customfieldservice "github.com/emoss08/trenova/internal/core/services/customfieldservice"
+	customfieldservice "github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
 )
 
 type Deps struct {

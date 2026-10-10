@@ -3,7 +3,7 @@ package journalsourceports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/journalsource"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 

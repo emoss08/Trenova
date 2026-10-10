@@ -1,7 +1,7 @@
 package infrastructure
 
 import (
-	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/infrastructure/templating/assetinliner"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"

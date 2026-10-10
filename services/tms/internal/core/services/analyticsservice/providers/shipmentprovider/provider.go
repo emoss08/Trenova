@@ -7,9 +7,9 @@ import (
 	"math"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/costingcontrol"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"

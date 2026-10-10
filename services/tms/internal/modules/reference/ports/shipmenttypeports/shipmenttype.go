@@ -3,7 +3,7 @@ package shipmenttypeports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

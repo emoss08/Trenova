@@ -7,7 +7,7 @@ package distancecontrolportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/distancecontrol"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distancecontrol"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"

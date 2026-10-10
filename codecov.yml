@@ -15,7 +15,7 @@ ignore:
   - "services/tms/internal/infrastructure/observability/**/*"
   - "services/tms/internal/pkg/domainregistry/**/*"
   - "services/tms/internal/pkg/seedhelpers/**/*"
-  - "services/tms/internal/core/domain/**/*"
+  - "services/tms/internal/modules/*/domain/**/*"
   - "shared/testutil/**/*"
   - "**/*_gen.go"
   - "**/*_generated.go"

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/shared/pulid"
 )

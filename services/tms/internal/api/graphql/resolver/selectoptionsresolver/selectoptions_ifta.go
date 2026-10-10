@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/ifta"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/shared/sliceutils"
 )

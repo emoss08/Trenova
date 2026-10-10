@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/csrf"
-	"github.com/emoss08/trenova/internal/core/domain/session"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"

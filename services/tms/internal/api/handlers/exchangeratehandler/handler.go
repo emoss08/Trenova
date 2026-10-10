@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/services/exchangerateservice"
+	"github.com/emoss08/trenova/internal/modules/reference/app/exchangerateservice"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"

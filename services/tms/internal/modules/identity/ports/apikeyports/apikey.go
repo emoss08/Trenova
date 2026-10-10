@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/apikey"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

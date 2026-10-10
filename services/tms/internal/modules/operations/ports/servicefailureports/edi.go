@@ -1,7 +1,7 @@
 package servicefailureports
 
 import (
-	"github.com/emoss08/trenova/internal/core/services/edix12"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 

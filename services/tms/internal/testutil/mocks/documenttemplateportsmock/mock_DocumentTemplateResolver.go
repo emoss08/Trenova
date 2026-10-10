@@ -7,7 +7,7 @@ package documenttemplateportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	mock "github.com/stretchr/testify/mock"
 )

@@ -4,9 +4,9 @@ package driversettlementresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	driverpayservice "github.com/emoss08/trenova/internal/core/services/driverpayservice"
-	driversettlementservice "github.com/emoss08/trenova/internal/core/services/driversettlementservice"
-	settlementcontrolservice "github.com/emoss08/trenova/internal/core/services/settlementcontrolservice"
+	driverpayservice "github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
+	driversettlementservice "github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	settlementcontrolservice "github.com/emoss08/trenova/internal/modules/identity/app/settlementcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 )

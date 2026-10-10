@@ -4,9 +4,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/telematics"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/services/telematicsservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
 )
 
 func MapWorkerHOSState(state *telematics.WorkerHOSState) *gqlmodel.WorkerHosState {

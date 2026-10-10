@@ -7,7 +7,7 @@ package accounttypeportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/accounttype"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accounttypeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

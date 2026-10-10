@@ -3,7 +3,7 @@ package carriercapacityports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/carriercapacity"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

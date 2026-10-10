@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
-	"github.com/emoss08/trenova/internal/core/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"

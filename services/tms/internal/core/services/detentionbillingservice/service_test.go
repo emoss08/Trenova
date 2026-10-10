@@ -5,7 +5,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"

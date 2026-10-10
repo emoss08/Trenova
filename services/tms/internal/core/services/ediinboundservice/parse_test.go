@@ -3,9 +3,9 @@ package ediinboundservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/edi"
-	editemplates "github.com/emoss08/trenova/internal/core/domain/edi/templates"
-	"github.com/emoss08/trenova/internal/core/services/edix12"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	editemplates "github.com/emoss08/trenova/internal/modules/edi/domain/edi/templates"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"

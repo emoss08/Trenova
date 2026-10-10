@@ -13,9 +13,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/edi"
-	"github.com/emoss08/trenova/internal/core/services/ediservice"
-	"github.com/emoss08/trenova/internal/core/services/editransport"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"

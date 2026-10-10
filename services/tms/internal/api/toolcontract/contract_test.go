@@ -9,8 +9,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/schemadiff"
 	"github.com/emoss08/trenova/internal/api/writecoverage"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy/registered"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy/registered"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/stretchr/testify/require"

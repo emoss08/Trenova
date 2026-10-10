@@ -7,7 +7,7 @@ package servicetypeportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/servicetype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/servicetypeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

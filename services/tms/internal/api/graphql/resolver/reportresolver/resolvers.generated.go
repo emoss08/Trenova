@@ -4,7 +4,7 @@ package reportresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	reportingservice "github.com/emoss08/trenova/internal/core/services/reporting"
+	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	tableexportservice "github.com/emoss08/trenova/internal/core/services/tableexportservice"
 )
 

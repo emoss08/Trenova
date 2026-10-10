@@ -3,7 +3,7 @@ package ratematrixports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"

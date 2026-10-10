@@ -3,7 +3,7 @@ package invoiceshareservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

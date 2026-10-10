@@ -11,7 +11,7 @@
 
 ## Regenerating
 
-The generator lives at `internal/infrastructure/database/colgen/gen` and scans `internal/core/domain/`:
+The generator lives at `internal/infrastructure/database/colgen/gen` and scans every module's domain directory (`internal/modules/*/domain/`):
 
 ```bash
 cd services/tms && task generate-columns

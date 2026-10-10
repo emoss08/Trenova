@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 )
 
 type AccountingTokenGrant struct {

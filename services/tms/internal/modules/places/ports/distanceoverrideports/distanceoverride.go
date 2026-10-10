@@ -3,7 +3,7 @@ package distanceoverrideports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

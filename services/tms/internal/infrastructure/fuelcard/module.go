@@ -1,7 +1,7 @@
 package fuelcard
 
 import (
-	"github.com/emoss08/trenova/internal/core/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/infrastructure/fuelcard/fileconnector"
 	"github.com/emoss08/trenova/internal/infrastructure/fuelcard/rampconnector"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"

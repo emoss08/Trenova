@@ -4,9 +4,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/core/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/timeutils"
 )

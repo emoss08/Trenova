@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/client"

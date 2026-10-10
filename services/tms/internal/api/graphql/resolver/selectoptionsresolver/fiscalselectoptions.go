@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	"github.com/emoss08/trenova/shared/stringutils"

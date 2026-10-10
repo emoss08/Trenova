@@ -7,7 +7,7 @@ package invoiceportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	mock "github.com/stretchr/testify/mock"

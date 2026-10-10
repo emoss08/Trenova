@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"

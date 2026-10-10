@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
-	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/tablechangealertports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"

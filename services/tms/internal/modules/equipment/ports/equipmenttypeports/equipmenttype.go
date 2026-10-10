@@ -3,7 +3,7 @@ package equipmenttypeports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

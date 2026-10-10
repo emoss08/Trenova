@@ -7,7 +7,7 @@ package tenantportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	mock "github.com/stretchr/testify/mock"
 )
 

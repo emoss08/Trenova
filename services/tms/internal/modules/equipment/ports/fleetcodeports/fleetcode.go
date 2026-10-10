@@ -3,7 +3,7 @@ package fleetcodeports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

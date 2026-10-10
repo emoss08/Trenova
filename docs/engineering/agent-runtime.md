@@ -3,8 +3,8 @@
 How AI work actually executes: where it runs, what makes it safe to retry,
 what survives a crash, and what is written down afterwards.
 
-Read this before changing anything under `internal/core/services/agentruntime/`,
-`internal/core/services/assistantservice/`, or any of the Temporal packages
+Read this before changing anything under `internal/modules/agent/app/agentruntime/`,
+`internal/modules/agent/app/assistantservice/`, or any of the Temporal packages
 named below.
 
 ## Everything is a workflow
@@ -1254,7 +1254,7 @@ request is laid out stable first:
   `agentdefinition.PromptVersion` names this shape (v7) on runs, evaluation
   cases and fingerprints; the snapshots under
   `domain/agentdefinition/testdata/prompts` are regenerated with
-  `go test -run TestPromptSnapshots ./internal/core/domain/agentdefinition/ -update`.
+  `go test -run TestPromptSnapshots ./internal/modules/agent/domain/agentdefinition/ -update`.
 - **Anthropic** gets three of its four marks: the last tool, the end of the
   shared system part, and the last block of the conversation, which lets each
   call of a tool loop read the exchange before it back from the cache.

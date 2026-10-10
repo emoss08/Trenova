@@ -3,7 +3,7 @@ package ratesimulationports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/ratesimulation"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratesimulation"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

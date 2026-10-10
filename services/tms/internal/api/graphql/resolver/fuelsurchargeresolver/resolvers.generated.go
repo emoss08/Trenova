@@ -4,7 +4,7 @@ package fuelsurchargeresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	fuelsurchargeservice "github.com/emoss08/trenova/internal/core/services/fuelsurchargeservice"
+	fuelsurchargeservice "github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 )
 

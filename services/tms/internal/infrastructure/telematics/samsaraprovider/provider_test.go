@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/telematics"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	sharedsamsara "github.com/emoss08/trenova/shared/samsara"
 	"github.com/stretchr/testify/assert"

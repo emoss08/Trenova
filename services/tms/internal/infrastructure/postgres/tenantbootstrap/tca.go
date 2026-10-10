@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"

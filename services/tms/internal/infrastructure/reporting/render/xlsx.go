@@ -7,7 +7,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/report"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/reportfmt"
 	"github.com/shopspring/decimal"

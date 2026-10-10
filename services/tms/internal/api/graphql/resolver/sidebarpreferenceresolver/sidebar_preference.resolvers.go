@@ -9,7 +9,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/services/sidebarpreferenceservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/sidebarpreferenceservice"
 )
 
 func (r *MutationResolver) UpdateSidebarPreferences(ctx context.Context, input gqlmodel.SidebarPreferencesInput) (*gqlmodel.SidebarPreferences, error) {

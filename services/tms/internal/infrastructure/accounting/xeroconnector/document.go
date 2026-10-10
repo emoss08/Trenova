@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/xero"

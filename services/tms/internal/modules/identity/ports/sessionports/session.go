@@ -3,7 +3,7 @@ package sessionports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/session"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 

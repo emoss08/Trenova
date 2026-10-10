@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/core/domain/email"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

@@ -5,9 +5,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/services/quotaservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"

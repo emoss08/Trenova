@@ -3,7 +3,7 @@ package modeprofileports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/modeprofile"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

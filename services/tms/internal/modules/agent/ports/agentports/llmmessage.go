@@ -1,7 +1,7 @@
 package agentports
 
 import (
-	"github.com/emoss08/trenova/internal/core/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 

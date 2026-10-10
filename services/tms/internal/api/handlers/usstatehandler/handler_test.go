@@ -8,8 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/handlers/usstatehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/domain/usstate"
-	"github.com/emoss08/trenova/internal/core/services/usstateservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/usstateservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"

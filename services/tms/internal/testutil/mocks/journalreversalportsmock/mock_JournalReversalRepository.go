@@ -7,7 +7,7 @@ package journalreversalportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

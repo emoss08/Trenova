@@ -3,8 +3,8 @@ package loaders
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vikstrous/dataloadgen"

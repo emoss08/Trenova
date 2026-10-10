@@ -5,7 +5,7 @@ package tenderresolver
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	routingguideservice "github.com/emoss08/trenova/internal/core/services/routingguideservice"
-	tenderservice "github.com/emoss08/trenova/internal/core/services/tenderservice"
+	tenderservice "github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 )
 
 type Deps struct {

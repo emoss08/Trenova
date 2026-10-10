@@ -7,7 +7,7 @@ package equipmentmanufacturerportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"

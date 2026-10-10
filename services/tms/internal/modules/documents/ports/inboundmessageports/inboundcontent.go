@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 )
 
 // ErrInboundContentRejected is a provider refusing to return a message for

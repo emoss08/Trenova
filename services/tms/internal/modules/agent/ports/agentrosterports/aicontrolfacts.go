@@ -3,8 +3,8 @@ package agentrosterports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/agentroster"
-	"github.com/emoss08/trenova/internal/core/domain/aicontrolsummary"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentroster"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

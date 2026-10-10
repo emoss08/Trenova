@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/domain/documenttemplate/starters"
-	"github.com/emoss08/trenova/internal/core/services/documenttemplateservice"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/starters"
+	"github.com/emoss08/trenova/internal/modules/documents/app/documenttemplateservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"

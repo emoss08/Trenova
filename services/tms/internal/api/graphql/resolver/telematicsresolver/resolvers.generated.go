@@ -4,7 +4,7 @@ package telematicsresolver
 
 import (
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	telematicsservice "github.com/emoss08/trenova/internal/core/services/telematicsservice"
+	telematicsservice "github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 )
 

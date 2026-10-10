@@ -7,7 +7,7 @@ package tablechangealertportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/tablechangealertports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

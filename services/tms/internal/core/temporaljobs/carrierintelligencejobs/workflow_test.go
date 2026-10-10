@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"

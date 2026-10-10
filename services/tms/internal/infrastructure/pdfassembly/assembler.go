@@ -13,7 +13,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/emoss08/trenova/internal/core/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"

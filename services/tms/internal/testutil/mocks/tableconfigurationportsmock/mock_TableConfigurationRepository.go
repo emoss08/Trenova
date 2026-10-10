@@ -7,7 +7,7 @@ package tableconfigurationportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/tableconfigurationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

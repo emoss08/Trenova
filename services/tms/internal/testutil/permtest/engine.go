@@ -3,8 +3,8 @@ package permtest
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 )

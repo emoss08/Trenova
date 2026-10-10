@@ -10,7 +10,7 @@ activity and must keep to its determinism rules.
 
 ## The model
 
-`internal/core/domain/agent/preview.go`.
+`internal/modules/agent/domain/agent/preview.go`.
 
 | Type | Is |
 |---|---|
@@ -66,7 +66,7 @@ record would be plausible and wrong — parameter names are not fields, transiti
 fields, services compute totals — so each tool shares one plan function between `Execute` and
 `Preview`.
 
-`internal/core/services/toolpreview` builds the preview from that plan function:
+`internal/modules/agent/app/toolpreview` builds the preview from that plan function:
 
 | Function | Builds |
 |---|---|
@@ -102,7 +102,7 @@ repeatable-read transaction of its own (`toolsimulation.InSnapshot`).
 
 ## The preview service
 
-`internal/core/services/proposalpreviewservice`, behind `agentports.ProposalPreviewService`.
+`internal/modules/agent/app/proposalpreviewservice`, behind `agentports.ProposalPreviewService`.
 
 `ForProposal(ctx, {Proposal, Modifications, Viewer})`, in order:
 
@@ -416,12 +416,12 @@ unstable digest shows itself.
 
 | Piece | Path (under `services/tms`) |
 |---|---|
-| Model, bounds, digest | `internal/core/domain/agent/preview.go`, `proposalbaseline.go` |
+| Model, bounds, digest | `internal/modules/agent/domain/agent/preview.go`, `proposalbaseline.go` |
 | Ports | `internal/modules/agent/ports/agentports/agenttool.go`, `internal/modules/agent/ports/agentports/proposalpreview.go`, `internal/modules/agent/ports/agentports/agentproposalbaseline.go` |
-| Builder | `internal/core/services/toolpreview/` |
-| Service | `internal/core/services/proposalpreviewservice/` |
+| Builder | `internal/modules/agent/app/toolpreview/` |
+| Service | `internal/modules/agent/app/proposalpreviewservice/` |
 | Labels, baselines | `internal/infrastructure/postgres/repositories/{recordlabelrepository,agentproposalbaselinerepository}/` |
-| Filing | `internal/core/services/agentruntime/baseline.go` |
+| Filing | `internal/modules/agent/app/agentruntime/baseline.go` |
 | Decisions | `agentdecisionservice/preview.go`, `agentplanservice/preview.go`, `proposalexecutor` |
 | Migration | `20261231006790_agent_proposal_previews` (Postgres and the SQLite mirror) |
 

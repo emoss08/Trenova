@@ -41,19 +41,10 @@ type activityOwner struct {
 func TestActivityNamesDoNotCollideOnAQueue(t *testing.T) {
 	t.Parallel()
 
-	root, err := filepath.Abs(filepath.Join("..", "temporaljobs"))
-	require.NoError(t, err)
-
-	entries, err := os.ReadDir(root)
-	require.NoError(t, err)
-
 	byQueue := map[string][]activityOwner{}
 	packages := 0
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-		dir := filepath.Join(root, entry.Name())
+	for _, dir := range jobPackageDirs(t) {
+		entry := filepath.Base(dir)
 		queue, ok := taskQueueOf(t, dir)
 		if !ok {
 			continue
@@ -62,7 +53,7 @@ func TestActivityNamesDoNotCollideOnAQueue(t *testing.T) {
 		for _, activity := range activityMethodsIn(t, dir) {
 			byQueue[queue] = append(
 				byQueue[queue],
-				activityOwner{pkg: entry.Name(), activity: activity},
+				activityOwner{pkg: entry, activity: activity},
 			)
 		}
 	}
@@ -143,4 +134,30 @@ func receiverTypeName(recv *ast.FieldList) string {
 	}
 
 	return ident.Name
+}
+
+func jobPackageDirs(t *testing.T) []string {
+	t.Helper()
+
+	root, err := filepath.Abs(filepath.Join("..", "temporaljobs"))
+	require.NoError(t, err)
+	entries, err := os.ReadDir(root)
+	require.NoError(t, err)
+
+	dirs := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		if entry.IsDir() {
+			dirs = append(dirs, filepath.Join(root, entry.Name()))
+		}
+	}
+
+	moduleJobs, err := filepath.Glob(filepath.Join(root, "..", "..", "modules", "*", "jobs", "*"))
+	require.NoError(t, err)
+	for _, dir := range moduleJobs {
+		if info, statErr := os.Stat(dir); statErr == nil && info.IsDir() {
+			dirs = append(dirs, dir)
+		}
+	}
+
+	return dirs
 }

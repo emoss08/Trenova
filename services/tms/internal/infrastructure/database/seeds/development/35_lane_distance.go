@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
-	"github.com/emoss08/trenova/internal/core/domain/location"
+	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/seedhelpers"

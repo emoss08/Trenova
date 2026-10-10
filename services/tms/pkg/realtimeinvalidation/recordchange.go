@@ -1,6 +1,6 @@
 package realtimeinvalidation
 
-import "github.com/emoss08/trenova/internal/core/domain/permission"
+import "github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 
 const RecordChangePrefix = "audited:"
 

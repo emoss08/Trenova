@@ -2,8 +2,8 @@ package watchtowerresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/core/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )

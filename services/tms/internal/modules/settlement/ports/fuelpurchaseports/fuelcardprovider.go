@@ -3,8 +3,8 @@ package fuelpurchaseports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/core/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/fuelimport"
 	"github.com/emoss08/trenova/pkg/pagination"
 )

@@ -1,7 +1,7 @@
 package manualjournalports
 
 import (
-	"github.com/emoss08/trenova/internal/core/domain/manualjournal"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"

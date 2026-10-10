@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
-	"github.com/emoss08/trenova/internal/core/services/ratematrixservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/app/ratematrixservice"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"

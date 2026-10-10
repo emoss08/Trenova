@@ -1,8 +1,8 @@
 package integrationports
 
 import (
-	"github.com/emoss08/trenova/internal/core/domain/configspec"
-	"github.com/emoss08/trenova/internal/core/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 

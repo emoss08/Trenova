@@ -321,7 +321,7 @@ HTTP-derived retry mapping, the step ledger that makes a retried write safe, the
 turn stream, per-agent schedules, the one-shot and batch workflows, and the
 `GetVersion` branches waiting on in-flight executions to drain.
 **Read [docs/engineering/agent-runtime.md](docs/engineering/agent-runtime.md)
-before changing anything under `internal/core/services/agentruntime/`,
+before changing anything under `internal/modules/agent/app/agentruntime/`,
 `assistantservice/`, or `internal/core/temporaljobs/{agentflow,modelcall,agentjobs,assistantjobs,completionjobs,importassistantjobs}/`.**
 Extensions (web search and anything like it) add agent-only tools that an organization turns
 on with its own vendor account; how they are gated, metered, and why a turn that read outside

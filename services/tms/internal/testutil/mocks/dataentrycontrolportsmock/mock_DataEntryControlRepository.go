@@ -7,7 +7,7 @@ package dataentrycontrolportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/dataentrycontrol"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/dataentrycontrol"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/dataentrycontrolports"
 	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"

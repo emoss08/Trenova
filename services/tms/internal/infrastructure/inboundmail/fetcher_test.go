@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

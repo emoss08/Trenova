@@ -1,7 +1,7 @@
 package bankreceiptworkitemports
 
 import (
-	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

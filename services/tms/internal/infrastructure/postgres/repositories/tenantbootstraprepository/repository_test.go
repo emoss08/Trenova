@@ -3,7 +3,7 @@ package tenantbootstraprepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"

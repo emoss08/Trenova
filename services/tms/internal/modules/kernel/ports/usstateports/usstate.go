@@ -3,7 +3,7 @@ package usstateports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

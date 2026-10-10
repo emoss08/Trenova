@@ -3,7 +3,7 @@ package driversettlementports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )

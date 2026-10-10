@@ -1,7 +1,7 @@
 package core
 
 import (
-	"github.com/emoss08/trenova/internal/core/services/briefingservice/briefingfacts"
+	"github.com/emoss08/trenova/internal/modules/agent/app/briefingservice/briefingfacts"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
