@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (p *TransferRunPayload) tenant() pagination.TenantInfo {
+func (p *TransferRunPayload) Tenant() pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID:  p.OrganizationID,
 		BuID:   p.BusinessUnitID,

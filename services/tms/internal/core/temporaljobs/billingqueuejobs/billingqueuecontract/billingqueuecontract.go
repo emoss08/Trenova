@@ -22,7 +22,7 @@ type ApprovalRunPayload struct {
 	AssignApprover bool `json:"assignApprover,omitempty"`
 }
 
-func (p *ApprovalRunPayload) tenant() pagination.TenantInfo {
+func (p *ApprovalRunPayload) Tenant() pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID:  p.OrganizationID,
 		BuID:   p.BusinessUnitID,

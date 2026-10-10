@@ -195,7 +195,7 @@ func TestManager_GetWorkersSyncWorkflowStatus(t *testing.T) {
 		OrgID: pulid.MustNew("org_"),
 		BuID:  pulid.MustNew("bu_"),
 	}
-	workflowID := samsaracontract.buildWorkersSyncWorkflowID(tenantInfo)
+	workflowID := samsaracontract.BuildWorkersSyncWorkflowID(tenantInfo)
 	startedAt := time.Unix(1710000000, 0)
 
 	manager, _ := setupManager(t, &fakeTemporalClient{

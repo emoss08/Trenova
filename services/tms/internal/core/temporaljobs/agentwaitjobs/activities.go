@@ -28,11 +28,11 @@ func (a *Activities) ScheduleWaitActivity(
 	ctx context.Context,
 	payload *agentwaitcontract.Payload,
 ) (*agentwaitcontract.Schedule, error) {
-	return a.worker.Schedule(ctx, payload.tenant(), payload.WaitID)
+	return a.worker.Schedule(ctx, payload.Tenant(), payload.WaitID)
 }
 
 func (a *Activities) CheckWaitActivity(ctx context.Context, in *CheckInput) (*agentwaitcontract.Check, error) {
-	return a.worker.Check(ctx, in.Payload.tenant(), in.Payload.WaitID, in.Now)
+	return a.worker.Check(ctx, in.Payload.Tenant(), in.Payload.WaitID, in.Now)
 }
 
 func (a *Activities) ReconcileOverdueWaitsActivity(ctx context.Context) (int, error) {

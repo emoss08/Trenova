@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/billingqueuejobs"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -124,7 +123,7 @@ func (s *Service) startWorkflow(
 			TaskQueue:             temporaltype.TaskQueueBilling.String(),
 			WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
 		},
-		billingqueuejobs.BulkApprovalWorkflow,
+		billingqueuecontract.BulkApprovalWorkflowName,
 		&billingqueuecontract.ApprovalRunPayload{
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: run.OrganizationID,

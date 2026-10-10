@@ -87,7 +87,7 @@ func (a *Activities) NotifyUnseenTurnActivity(
 	}
 
 	payload := in.Payload
-	tenant := payload.tenantInfo()
+	tenant := payload.TenantInfo()
 	correlation := payload.TurnID.String()
 
 	sent, err := a.notifications.ExistsRecent(ctx, repositories.ExistsRecentNotificationRequest{

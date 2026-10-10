@@ -52,9 +52,9 @@ func NewManager(p ManagerParams) *Manager {
 
 func (m *Manager) StartWorkersSyncWorkflow(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	TenantInfo pagination.TenantInfo,
 ) (*SyncWorkflowStartResponse, error) {
-	readiness, err := m.syncService.GetWorkerSyncReadiness(ctx, tenantInfo)
+	readiness, err := m.syncService.GetWorkerSyncReadiness(ctx, TenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -64,18 +64,18 @@ func (m *Manager) StartWorkersSyncWorkflow(
 		)
 	}
 
-	workflowID := buildWorkersSyncWorkflowID(tenantInfo)
+	workflowID := BuildWorkersSyncWorkflowID(TenantInfo)
 	payload := &WorkersSyncWorkflowPayload{
 		BasePayload: temporaltype.BasePayload{
-			OrganizationID: tenantInfo.OrgID,
-			BusinessUnitID: tenantInfo.BuID,
-			UserID:         tenantInfo.UserID,
+			OrganizationID: TenantInfo.OrgID,
+			BusinessUnitID: TenantInfo.BuID,
+			UserID:         TenantInfo.UserID,
 			Timestamp:      timeutils.NowUnix(),
 			Metadata: map[string]any{
 				"trigger": "api",
 			},
 		},
-		RequestedBy: tenantInfo.UserID,
+		RequestedBy: TenantInfo.UserID,
 	}
 
 	if !m.workflowStarter.Enabled() {
@@ -90,7 +90,7 @@ func (m *Manager) StartWorkersSyncWorkflow(
 			WorkflowExecutionErrorWhenAlreadyStarted: true,
 			StaticSummary: fmt.Sprintf(
 				"Sync workers to Samsara for business unit %s",
-				tenantInfo.BuID.String(),
+				TenantInfo.BuID.String(),
 			),
 		},
 		SyncWorkersToSamsaraWorkflowName,
@@ -123,7 +123,7 @@ func (m *Manager) StartWorkersSyncWorkflow(
 
 func (m *Manager) GetWorkersSyncWorkflowStatus(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	TenantInfo pagination.TenantInfo,
 	workflowID string,
 	runID string,
 ) (*SyncWorkflowStatusResponse, error) {
@@ -132,7 +132,7 @@ func (m *Manager) GetWorkersSyncWorkflowStatus(
 		return nil, errortypes.NewBusinessError("workflow id is required")
 	}
 
-	expectedWorkflowID := buildWorkersSyncWorkflowID(tenantInfo)
+	expectedWorkflowID := BuildWorkersSyncWorkflowID(TenantInfo)
 	if requestedWorkflowID != expectedWorkflowID {
 		return nil, errortypes.NewNotFoundError("Samsara worker sync workflow not found")
 	}
@@ -208,11 +208,11 @@ func (m *Manager) GetWorkersSyncWorkflowStatus(
 	return response, nil
 }
 
-func buildWorkersSyncWorkflowID(tenantInfo pagination.TenantInfo) string {
+func BuildWorkersSyncWorkflowID(TenantInfo pagination.TenantInfo) string {
 	return fmt.Sprintf(
 		syncWorkersWorkflowIDFormat,
-		tenantInfo.OrgID.String(),
-		tenantInfo.BuID.String(),
+		TenantInfo.OrgID.String(),
+		TenantInfo.BuID.String(),
 	)
 }
 

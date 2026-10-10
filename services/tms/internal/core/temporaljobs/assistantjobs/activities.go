@@ -150,7 +150,7 @@ func (a *Activities) PrepareTurnActivity(
 	}
 
 	started := time.Now()
-	plan, err := a.assistant.PrepareTurn(ctx, payload.sendRequest(), &payload.Actor)
+	plan, err := a.assistant.PrepareTurn(ctx, payload.SendRequest(), &payload.Actor)
 	a.metrics.RecordPrepare(prepareOutcome(plan, err), time.Since(started).Seconds())
 	if err != nil {
 		if rejected(err) {
@@ -225,7 +225,7 @@ func (a *Activities) FinishTurnActivity(
 	in *FinishTurnInput,
 ) (*TurnEnding, error) {
 	payload := in.Payload
-	tenant := payload.tenantInfo()
+	tenant := payload.TenantInfo()
 
 	turn, err := a.turnRepo.GetByID(ctx, repositories.GetAssistantTurnRequest{
 		ID:         payload.TurnID,
@@ -329,7 +329,7 @@ func emitTurnRoots(
 			ThreadID:       payload.ThreadID,
 			DelegateCallID: delegation.CallID,
 			UserID:         payload.Actor.UserID,
-			Tenant:         payload.tenantInfo(),
+			Tenant:         payload.TenantInfo(),
 			Trigger:        string(turn.Origin),
 			Status:         delegateStatus,
 			Failure:        failure,
@@ -350,7 +350,7 @@ func emitTurnRoots(
 		TurnID:     payload.TurnID,
 		ThreadID:   payload.ThreadID,
 		UserID:     payload.Actor.UserID,
-		Tenant:     payload.tenantInfo(),
+		Tenant:     payload.TenantInfo(),
 		Trigger:    string(turn.Origin),
 		Status:     status,
 		Failure:    in.Failure,
@@ -377,12 +377,12 @@ func (a *Activities) continueTurn(
 	status conversation.AssistantTurnStatus,
 ) *serviceports.QueuedTurn {
 	return a.continueConversation(ctx, &conversationContinuation{
-		tenant:   in.Payload.tenantInfo(),
+		tenant:   in.Payload.TenantInfo(),
 		threadID: in.Payload.ThreadID,
 		userID:   in.Payload.Actor.UserID,
 		read:     in.Steered,
 		status:   status,
-		resume:   in.Plan != nil || !in.Payload.Request.reportsDecision(),
+		resume:   in.Plan != nil || !in.Payload.Request.ReportsDecision(),
 	})
 }
 
@@ -442,7 +442,7 @@ func (a *Activities) cueReflection(ctx context.Context, in *FinishTurnInput) {
 
 	payload := in.Payload
 	a.reflections.AfterTurn(ctx, &serviceports.ReflectOnThreadRequest{
-		TenantInfo: payload.tenantInfo(),
+		TenantInfo: payload.TenantInfo(),
 		ThreadID:   payload.ThreadID,
 		UserID:     payload.Actor.UserID,
 		TurnID:     payload.TurnID,
@@ -486,7 +486,7 @@ func (a *Activities) finish(
 		TurnID:     in.Payload.TurnID,
 		Plan:       in.Plan,
 		Actor:      &in.Payload.Actor,
-		TenantInfo: in.Payload.tenantInfo(),
+		TenantInfo: in.Payload.TenantInfo(),
 		Run:        in.Run,
 		Failure:    cause,
 		Artifacts:  in.Artifacts,
@@ -541,7 +541,7 @@ func (a *Activities) recordFingerprint(ctx context.Context, in *FinishTurnInput)
 
 	if err := a.turnRepo.RecordFingerprint(ctx, repositories.RecordAssistantTurnFingerprintRequest{
 		ID:          in.Payload.TurnID,
-		TenantInfo:  in.Payload.tenantInfo(),
+		TenantInfo:  in.Payload.TenantInfo(),
 		Fingerprint: fingerprint,
 	}); err != nil {
 		a.logger.Warn("could not keep the agent a turn ran as",
@@ -701,7 +701,7 @@ func (a *Activities) CloseTurnActivity(
 ) error {
 	turn, err := a.turnRepo.GetByID(ctx, repositories.GetAssistantTurnRequest{
 		ID:         payload.TurnID,
-		TenantInfo: payload.tenantInfo(),
+		TenantInfo: payload.TenantInfo(),
 	})
 	if err != nil {
 		return fmt.Errorf("read this turn's record: %w", err)
@@ -733,7 +733,7 @@ func (a *Activities) recordLoopRefusals(ctx context.Context, in *FinishTurnInput
 	payload := in.Payload
 	failed := agentruntime.RecordLoopRefusals(ctx, &agentruntime.RecordLoopRefusalsRequest{
 		Ledger: a.steps,
-		Tenant: payload.tenantInfo(),
+		Tenant: payload.TenantInfo(),
 		Owner: serviceports.RunStepOwner{
 			Kind: serviceports.RunStepOwnerAssistantTurn,
 			ID:   payload.TurnID,
@@ -753,7 +753,7 @@ func (a *Activities) recordLoopRefusals(ctx context.Context, in *FinishTurnInput
 // claimSave reserves saving the turn for this attempt, and reports whether
 // this attempt may save it.
 func (a *Activities) claimSave(ctx context.Context, payload *assistantcontract.AssistantTurnPayload) (bool, error) {
-	tenant := payload.tenantInfo()
+	tenant := payload.TenantInfo()
 	recorded, err := a.steps.Loaded(ctx, tenant, serviceports.RunStepOwner{
 		Kind: serviceports.RunStepOwnerAssistantTurn,
 		ID:   payload.TurnID,
@@ -805,7 +805,7 @@ func (a *Activities) settle(
 		Failed:  status == serviceports.RunStepFailed,
 	}
 
-	if err := a.steps.Settle(context.WithoutCancel(ctx), payload.tenantInfo(), step); err != nil {
+	if err := a.steps.Settle(context.WithoutCancel(ctx), payload.TenantInfo(), step); err != nil {
 		a.logger.Error("could not close the claim on saving a turn",
 			zap.String("turn", payload.TurnID.String()),
 			zap.Error(err),

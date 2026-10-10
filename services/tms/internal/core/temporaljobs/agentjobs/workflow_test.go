@@ -128,7 +128,7 @@ func (s *AgentRunWorkflowTestSuite) stubOpen() {
 			s.opened = input
 			req := &serviceports.RunRequest{
 				Definition: input.Definition,
-				Actor:      agentActor(input.Payload.tenantInfo()),
+				Actor:      agentActor(input.Payload.TenantInfo()),
 				Input:      "A scheduled run.",
 				RunID:      input.Payload.RunID,
 				Unattended: true,

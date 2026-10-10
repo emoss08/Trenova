@@ -69,7 +69,7 @@ func (a *Activities) PrepareRunActivity(
 	ctx context.Context,
 	payload *billingtransfercontract.TransferRunPayload,
 ) (*PreparedRun, error) {
-	tenant := payload.tenant()
+	tenant := payload.Tenant()
 
 	run, err := a.runRepo.GetByID(ctx, &repositories.GetBillingTransferRunRequest{
 		TenantInfo: tenant,

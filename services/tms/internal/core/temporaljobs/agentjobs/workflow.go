@@ -242,7 +242,7 @@ func (w *Workflows) AgentRunWorkflow(ctx workflow.Context, payload *agentcontrac
 	}
 
 	var a *Activities
-	tenant := payload.tenantInfo()
+	tenant := payload.TenantInfo()
 
 	prepareCtx := workflow.WithActivityOptions(ctx, withPriority(prepareActivityOptions, payload,
 		agentflowcontract.PriorityBackground))
@@ -359,7 +359,7 @@ func awaitEveryDecision(
 
 		var pending int
 		if err := workflow.ExecuteActivity(countCtx, a.PendingProposalsActivity,
-			&PendingProposalsInput{RunID: payload.RunID, TenantInfo: payload.tenantInfo()},
+			&PendingProposalsInput{RunID: payload.RunID, TenantInfo: payload.TenantInfo()},
 		).Get(countCtx, &pending); err != nil {
 			workflow.GetLogger(ctx).Warn("could not count the run's pending proposals",
 				"runId", payload.RunID.String(), "error", err.Error())
@@ -403,7 +403,7 @@ func expireProposals(
 // change to what it schedules breaks every one of them mid-wait.
 func runInOneActivity(ctx workflow.Context, payload *agentcontract.AgentRunPayload) error {
 	var a *Activities
-	tenant := payload.tenantInfo()
+	tenant := payload.TenantInfo()
 
 	prepareCtx := workflow.WithActivityOptions(ctx, prepareActivityOptions)
 	var prepared PrepareRunResult
@@ -523,7 +523,7 @@ func failEvaluation(
 	if err := workflow.ExecuteActivity(failCtx, a.FailEvaluationActivity, &FailEvaluationInput{
 		EvaluationID: payload.EvaluationID,
 		Error:        cause.Error(),
-		TenantInfo:   payload.tenantInfo(),
+		TenantInfo:   payload.TenantInfo(),
 	}).Get(failCtx, nil); err != nil {
 		workflow.GetLogger(ctx).Error("could not record why an evaluation failed",
 			"evaluationId", payload.EvaluationID.String(), "error", err.Error())
@@ -553,7 +553,7 @@ func replayInOneActivity(ctx workflow.Context, payload *agentcontract.AgentEvalu
 		_ = workflow.ExecuteActivity(failCtx, a.FailEvaluationActivity, &FailEvaluationInput{
 			EvaluationID: payload.EvaluationID,
 			Error:        err.Error(),
-			TenantInfo:   payload.tenantInfo(),
+			TenantInfo:   payload.TenantInfo(),
 		}).Get(failCtx, nil)
 
 		return err

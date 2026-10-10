@@ -31,7 +31,7 @@ type AgentRunPayload struct {
 	Origin string `json:"traceOrigin,omitempty"`
 }
 
-func (p *AgentRunPayload) tenantInfo() pagination.TenantInfo {
+func (p *AgentRunPayload) TenantInfo() pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID: p.OrganizationID,
 		BuID:  p.BusinessUnitID,
@@ -53,7 +53,7 @@ type AgentEvaluationPayload struct {
 	EvaluationID pulid.ID `json:"evaluationId"`
 }
 
-func (p *AgentEvaluationPayload) tenantInfo() pagination.TenantInfo {
+func (p *AgentEvaluationPayload) TenantInfo() pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID: p.OrganizationID,
 		BuID:  p.BusinessUnitID,

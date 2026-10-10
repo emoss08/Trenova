@@ -115,7 +115,7 @@ func (w *Workflows) dryRun(
 	runCtx, cancel := workflow.WithCancel(ctx)
 	defer cancel()
 	workflow.Go(ctx, func(timerCtx workflow.Context) {
-		if workflow.Sleep(timerCtx, assistantcontract.dryRunTimeout) == nil {
+		if workflow.Sleep(timerCtx, assistantcontract.DryRunTimeout) == nil {
 			cancel()
 		}
 	})

@@ -61,7 +61,7 @@ func (a *Activities) openReplay(
 	ctx context.Context,
 	payload *agentcontract.AgentEvaluationPayload,
 ) (*replay, error) {
-	tenant := payload.tenantInfo()
+	tenant := payload.TenantInfo()
 
 	evaluation, err := a.evaluations.GetByID(ctx, repositories.GetAgentEvaluationByIDRequest{
 		ID:         payload.EvaluationID,
@@ -538,7 +538,7 @@ func (a *Activities) finishedReplay(
 ) (*ReplayRunResult, error) {
 	evaluation, err := a.evaluations.GetByID(ctx, repositories.GetAgentEvaluationByIDRequest{
 		ID:         payload.EvaluationID,
-		TenantInfo: payload.tenantInfo(),
+		TenantInfo: payload.TenantInfo(),
 	})
 	if err != nil {
 		return nil, err
@@ -575,7 +575,7 @@ func (a *Activities) FinishReplayActivity(
 ) (*ReplayRunResult, error) {
 	evaluation, err := a.evaluations.GetByID(ctx, repositories.GetAgentEvaluationByIDRequest{
 		ID:         input.Payload.EvaluationID,
-		TenantInfo: input.Payload.tenantInfo(),
+		TenantInfo: input.Payload.TenantInfo(),
 	})
 	if err != nil {
 		return nil, err

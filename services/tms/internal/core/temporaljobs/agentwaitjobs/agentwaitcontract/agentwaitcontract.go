@@ -31,7 +31,7 @@ type Payload struct {
 	WaitID pulid.ID `json:"waitId"`
 }
 
-func (p *Payload) tenant() pagination.TenantInfo {
+func (p *Payload) Tenant() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: p.OrganizationID, BuID: p.BusinessUnitID}
 }
 
@@ -66,8 +66,8 @@ type FinishInput struct {
 
 // Worker is what the workflow asks of the waits.
 type Worker interface {
-	Schedule(ctx context.Context, tenant pagination.TenantInfo, id pulid.ID) (*Schedule, error)
-	Check(ctx context.Context, tenant pagination.TenantInfo, id pulid.ID, now int64) (*Check, error)
+	Schedule(ctx context.Context, Tenant pagination.TenantInfo, id pulid.ID) (*Schedule, error)
+	Check(ctx context.Context, Tenant pagination.TenantInfo, id pulid.ID, now int64) (*Check, error)
 	Finish(ctx context.Context, in *FinishInput) error
 	// ReconcileOverdue closes and picks up every open wait past its expiry
 	// whose workflow did not, and says how many.

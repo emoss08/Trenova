@@ -34,7 +34,7 @@ type CompactionPayload struct {
 	Auto bool `json:"auto"`
 }
 
-func (p *CompactionPayload) tenantInfo() pagination.TenantInfo {
+func (p *CompactionPayload) TenantInfo() pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID:  p.OrganizationID,
 		BuID:   p.BusinessUnitID,
@@ -82,9 +82,9 @@ type StartCompactionRequest struct {
 	Auto       bool
 }
 
-// compactionTurns is the part of the turn service starting a compaction
+// CompactionTurns is the part of the turn service starting a compaction
 // needs.
-type compactionTurns interface {
+type CompactionTurns interface {
 	StartTurn(
 		ctx context.Context,
 		req assistantturnservice.StartRequest,
@@ -97,7 +97,7 @@ type compactionTurns interface {
 // both start here.
 func StartCompaction(
 	ctx context.Context,
-	turns compactionTurns,
+	turns CompactionTurns,
 	workflows serviceports.WorkflowStarter,
 	req StartCompactionRequest,
 ) (*conversation.AssistantTurn, error) {
@@ -122,8 +122,8 @@ func StartCompaction(
 
 const AgentDryRunWorkflowName = "AgentDryRunWorkflow"
 
-// dryRunTimeout bounds a dry run; a person is watching it.
-const dryRunTimeout = 5 * time.Minute
+// DryRunTimeout bounds a dry run; a person is watching it.
+const DryRunTimeout = 5 * time.Minute
 
 // DryRunWorkflowIDFor names the execution carrying a dry run.
 func DryRunWorkflowIDFor(runID pulid.ID) string {
@@ -154,7 +154,7 @@ func StartDryRunWorkflow(
 		TaskQueue:                                temporaltype.TaskQueueAgentChat.String(),
 		WorkflowIDReusePolicy:                    enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
 		WorkflowExecutionErrorWhenAlreadyStarted: true,
-		WorkflowExecutionTimeout:                 dryRunTimeout + agentflowcontract.DrainWindow,
+		WorkflowExecutionTimeout:                 DryRunTimeout + agentflowcontract.DrainWindow,
 		StaticSummary:                            "Agent dry run",
 		Priority: temporal.Priority{
 			PriorityKey: agentflowcontract.PriorityInteractive,
@@ -197,7 +197,7 @@ func StartTurnWorkflow(
 		WorkflowExecutionErrorWhenAlreadyStarted: true,
 		StaticSummary:                            "Assistant turn",
 		// Somebody is waiting on this one. Fairness by organization keeps one
-		// busy tenant from queueing everybody else's replies behind its own.
+		// busy Tenant from queueing everybody else's replies behind its own.
 		Priority: temporal.Priority{
 			PriorityKey: agentflowcontract.PriorityInteractive,
 			FairnessKey: start.Actor.OrganizationID.String(),
@@ -229,7 +229,7 @@ func WorkflowIDFor(turnID pulid.ID) string {
 //
 // The actor travels with the turn rather than being rebuilt on the worker.
 // A turn runs as the person who asked and as nobody else, and a worker that
-// reconstructed an actor from a tenant would be inventing an authority that
+// reconstructed an actor from a Tenant would be inventing an authority that
 // nobody granted.
 type AssistantTurnPayload struct {
 	temporaltype.BasePayload
@@ -245,7 +245,7 @@ type AssistantTurnPayload struct {
 	Origin string `json:"traceOrigin,omitempty"`
 }
 
-func (p *AssistantTurnPayload) tenantInfo() pagination.TenantInfo {
+func (p *AssistantTurnPayload) TenantInfo() pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID:  p.OrganizationID,
 		BuID:   p.BusinessUnitID,
@@ -253,13 +253,13 @@ func (p *AssistantTurnPayload) tenantInfo() pagination.TenantInfo {
 	}
 }
 
-func (p *AssistantTurnPayload) sendRequest() *serviceports.SendMessageRequest {
+func (p *AssistantTurnPayload) SendRequest() *serviceports.SendMessageRequest {
 	return &serviceports.SendMessageRequest{
 		ThreadID:              p.ThreadID,
 		Content:               p.Content,
 		Page:                  p.Request.Page,
 		Surface:               p.Request.Surface,
-		TenantInfo:            p.tenantInfo(),
+		TenantInfo:            p.TenantInfo(),
 		PreferredProviderID:   p.Request.PreferredProviderID,
 		ProviderChosen:        p.Request.ProviderChosen,
 		AttachmentDocumentIDs: p.Request.AttachmentDocumentIDs,
@@ -293,15 +293,15 @@ type AssistantTurnRequest struct {
 	Awaited bool `json:"awaited,omitempty"`
 }
 
-// reportsDecision says the turn was started to report a decision rather than
+// ReportsDecision says the turn was started to report a decision rather than
 // to answer something the person asked.
-func (r AssistantTurnRequest) reportsDecision() bool {
+func (r AssistantTurnRequest) ReportsDecision() bool {
 	return r.FollowUpProposalID.IsNotNil() || r.FollowUpPlanID.IsNotNil()
 }
 
-// resumesWait says the turn was started to pick up work the agent parked on
+// ResumesWait says the turn was started to pick up work the agent parked on
 // a wait rather than to answer something the person asked.
-func (r AssistantTurnRequest) resumesWait() bool {
+func (r AssistantTurnRequest) ResumesWait() bool {
 	return r.ResumeWaitID.IsNotNil()
 }
 

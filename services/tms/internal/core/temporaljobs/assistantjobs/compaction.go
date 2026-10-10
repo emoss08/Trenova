@@ -290,7 +290,7 @@ func (a *Activities) PrepareCompactionActivity(
 	plan, err := a.assistant.PrepareCompaction(ctx, &assistantservice.CompactRequest{
 		ThreadID:   payload.ThreadID,
 		TurnID:     payload.TurnID,
-		TenantInfo: payload.tenantInfo(),
+		TenantInfo: payload.TenantInfo(),
 		Auto:       payload.Auto,
 	}, &payload.Actor)
 	if err != nil {
@@ -360,7 +360,7 @@ func (a *Activities) EndCompactionActivity(
 		if err := a.assistant.StopCompactingItself(
 			ctx,
 			payload.ThreadID,
-			payload.tenantInfo(),
+			payload.TenantInfo(),
 		); err != nil {
 			a.logger.Warn("could not stop a conversation compacting itself",
 				zap.String("thread", payload.ThreadID.String()),
@@ -388,7 +388,7 @@ func (a *Activities) closeCompaction(
 ) {
 	turn, err := a.turnRepo.GetByID(ctx, repositories.GetAssistantTurnRequest{
 		ID:         payload.TurnID,
-		TenantInfo: payload.tenantInfo(),
+		TenantInfo: payload.TenantInfo(),
 	})
 	if err != nil {
 		a.logger.Error("could not read a compaction's record",
@@ -406,7 +406,7 @@ func (a *Activities) closeCompaction(
 	}
 
 	a.continueConversation(ctx, &conversationContinuation{
-		tenant:   payload.tenantInfo(),
+		tenant:   payload.TenantInfo(),
 		threadID: payload.ThreadID,
 		userID:   payload.Actor.UserID,
 		status:   status,
@@ -424,7 +424,7 @@ func (a *Activities) StartAutoCompactionActivity(
 ) (*StartedCompaction, error) {
 	turn, err := assistantcontract.StartCompaction(ctx, a.turns, a.workflows, assistantcontract.StartCompactionRequest{
 		ThreadID:   payload.ThreadID,
-		TenantInfo: payload.tenantInfo(),
+		TenantInfo: payload.TenantInfo(),
 		Actor:      payload.Actor,
 		Auto:       true,
 	})

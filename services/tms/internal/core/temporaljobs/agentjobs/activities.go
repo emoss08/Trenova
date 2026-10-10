@@ -156,7 +156,7 @@ func (a *Activities) PrepareRunActivity(
 	ctx context.Context,
 	payload *agentcontract.AgentRunPayload,
 ) (*PrepareRunResult, error) {
-	tenant := payload.tenantInfo()
+	tenant := payload.TenantInfo()
 
 	definition, err := a.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
 		ID:         payload.DefinitionID,
@@ -232,7 +232,7 @@ func (a *Activities) runRequest(
 	definition *agentdefinition.Definition,
 	subject *agentdefinition.RuntimeSubject,
 ) (*serviceports.RunRequest, error) {
-	tenant := payload.tenantInfo()
+	tenant := payload.TenantInfo()
 	actor, err := a.unattendedActor(ctx, tenant, definition)
 	if err != nil {
 		return nil, err
@@ -294,7 +294,7 @@ func (a *Activities) RunAgentActivity(
 	input *RunAgentInput,
 ) (*RunAgentResult, error) {
 	payload := input.Payload
-	tenant := payload.tenantInfo()
+	tenant := payload.TenantInfo()
 
 	req, err := a.runRequest(ctx, payload, input.Definition, input.Subject)
 	if err != nil {
@@ -413,7 +413,7 @@ func (a *Activities) recordLoopRefusals(
 	}
 	failed := agentruntime.RecordLoopRefusals(ctx, &agentruntime.RecordLoopRefusalsRequest{
 		Ledger: a.steps,
-		Tenant: input.Payload.tenantInfo(),
+		Tenant: input.Payload.TenantInfo(),
 		Owner: serviceports.RunStepOwner{
 			Kind: serviceports.RunStepOwnerAgentRun,
 			ID:   input.Payload.RunID,
@@ -452,7 +452,7 @@ func emitRunRoot(
 		OwnerID:    payload.RunID,
 		RunID:      payload.RunID,
 		UserID:     payload.UserID,
-		Tenant:     payload.tenantInfo(),
+		Tenant:     payload.TenantInfo(),
 		Trigger:    string(payload.Trigger),
 		Status:     string(status),
 		Failure:    input.Failure,
@@ -496,7 +496,7 @@ func (a *Activities) recordTrajectory(
 	payload *agentcontract.AgentRunPayload,
 	events []temporaltype.StreamItem,
 ) {
-	writer := a.trajectoryFor(ctx, payload.tenantInfo(), payload.RunID)
+	writer := a.trajectoryFor(ctx, payload.TenantInfo(), payload.RunID)
 	for _, event := range events {
 		serviceports.RecordTrajectory(writer, ctx, serviceports.StreamEvent{
 			Event: event.Event,
@@ -523,7 +523,7 @@ func (a *Activities) settleRun(
 	ctx context.Context,
 	p settleRunParams,
 ) (*FinishRunResult, *agent.AgentRun, error) {
-	tenant := p.Payload.tenantInfo()
+	tenant := p.Payload.TenantInfo()
 
 	run, err := a.runRepo.GetByID(ctx, repositories.GetAgentRunByIDRequest{
 		ID:         p.Payload.RunID,
@@ -849,7 +849,7 @@ func (a *Activities) resumedWait(
 	}
 	wait, err := a.waits.Get(ctx, &repositories.GetAgentWaitRequest{
 		ID:         payload.WaitID,
-		TenantInfo: payload.tenantInfo(),
+		TenantInfo: payload.TenantInfo(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("read the wait this run picks up: %w", err)

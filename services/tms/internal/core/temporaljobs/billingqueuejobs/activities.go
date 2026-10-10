@@ -50,7 +50,7 @@ func (a *Activities) StartApprovalRunActivity(
 ) (bool, error) {
 	info := activity.GetInfo(ctx)
 	started, err := a.repo.MarkApprovalRunRunning(ctx, &repositories.MarkApprovalRunRunningRequest{
-		TenantInfo:         payload.tenant(),
+		TenantInfo:         payload.Tenant(),
 		RunID:              payload.RunID,
 		TemporalWorkflowID: info.WorkflowExecution.ID,
 		TemporalRunID:      info.WorkflowExecution.RunID,
@@ -58,7 +58,7 @@ func (a *Activities) StartApprovalRunActivity(
 	if err != nil {
 		return false, err
 	}
-	a.publishRunChanged(ctx, payload.tenant(), payload.RunID, payload.UserID)
+	a.publishRunChanged(ctx, payload.Tenant(), payload.RunID, payload.UserID)
 
 	return started, nil
 }
@@ -67,7 +67,7 @@ func (a *Activities) ListApprovalRunItemsActivity(
 	ctx context.Context,
 	payload *billingqueuecontract.ApprovalRunPayload,
 ) ([]pulid.ID, error) {
-	items, err := a.repo.ListPendingApprovalRunItems(ctx, payload.tenant(), payload.RunID)
+	items, err := a.repo.ListPendingApprovalRunItems(ctx, payload.Tenant(), payload.RunID)
 	if err != nil {
 		return nil, err
 	}
