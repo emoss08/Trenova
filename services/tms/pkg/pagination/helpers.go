@@ -398,9 +398,30 @@ func normalizeFilterValue(value any, operator string) any {
 		return v
 	case string:
 		return parseFilterValue(v, operator)
+	case jsonNumber:
+		return normalizeJSONNumber(v, value)
 	default:
 		return value
 	}
+}
+
+// jsonNumber is how gqlgen hands a variable's number on: its POST transport
+// decodes with UseNumber, so a filter's 7 arrives as a json.Number, which
+// nothing below reads as a number.
+type jsonNumber interface {
+	Int64() (int64, error)
+	Float64() (float64, error)
+}
+
+func normalizeJSONNumber(number jsonNumber, original any) any {
+	if whole, err := number.Int64(); err == nil {
+		return whole
+	}
+	if fraction, err := number.Float64(); err == nil {
+		return fraction
+	}
+
+	return original
 }
 
 func normalizeSlice(slice []any) any {

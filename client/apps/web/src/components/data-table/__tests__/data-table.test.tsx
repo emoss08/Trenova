@@ -40,6 +40,17 @@ const { useDataTableQueryMock, defaultQueryResult } = vi.hoisted(() => {
   };
 });
 
+const presence = vi.hoisted(() => ({ resources: [] as string[] }));
+
+vi.mock("@/components/presence/data-table-viewers", () => ({
+  DataTableViewers: ({ resource }: { resource: string }) => {
+    presence.resources.push(resource);
+    return null;
+  },
+  RecordPresence: ({ children }: { children: React.ReactNode }) => children,
+  RecordViewers: () => null,
+}));
+
 vi.mock("@/hooks/use-permission", () => ({
   // Both hooks: the config manager inside the table reaches for the
   // single-operation one, and a factory missing it throws only on the runs
@@ -96,9 +107,11 @@ beforeAll(async () => {
 }, 60_000);
 
 function createQueryClient() {
-  return seedDataTableQueries(new QueryClient({
-    defaultOptions: { queries: { retry: false, gcTime: 0 } },
-  }));
+  return seedDataTableQueries(
+    new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: 0 } },
+    }),
+  );
 }
 
 function renderDataTable(props?: Partial<React.ComponentProps<typeof DataTable<TestRow>>>) {
@@ -123,6 +136,20 @@ function renderDataTable(props?: Partial<React.ComponentProps<typeof DataTable<T
 describe("DataTable", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    presence.resources.length = 0;
+  });
+
+  /*
+   * The toolbar's resource is the table's name, which also titles its "New"
+   * button, and presence joined under it: "AI Audit Event" is no resource, so
+   * the audit trail asked /realtime/presence/AI Audit Event/ and was refused
+   * with a 400 on every load. Presence joins under the permission resource.
+   */
+  it("joins presence under the table's permission resource, not its name", () => {
+    renderDataTable({ name: "AI Audit Event", resource: "ai_audit_trail" });
+
+    expect(presence.resources).toContain("ai_audit_trail");
+    expect(presence.resources).not.toContain("AI Audit Event");
   });
 
   it("renders row data from the query", () => {

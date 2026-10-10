@@ -271,7 +271,25 @@ func Seal(e *AIAuditEvent, prevHash string, key *ChainKey) error {
 }
 
 // VerifyHash reports whether a row still hashes to what it recorded.
+//
+// The cost column was once tagged nullzero, so a cost of exactly zero, sealed
+// as 0.000000, was stored as NULL. Those rows cannot be rewritten, so a row
+// read back without a cost also verifies as that zero. Nothing else about the
+// row may differ, and a cost that was not zero cannot be dropped this way.
 func VerifyHash(e *AIAuditEvent, key *ChainKey) (bool, error) {
+	ok, err := hashMatches(e, key)
+	if err != nil || ok || e.CostUSD != nil {
+		return ok, err
+	}
+
+	zero := decimal.Zero
+	sealed := *e
+	sealed.CostUSD = &zero
+
+	return hashMatches(&sealed, key)
+}
+
+func hashMatches(e *AIAuditEvent, key *ChainKey) (bool, error) {
 	sum, err := ComputeHash(e, key)
 	if err != nil {
 		return false, err

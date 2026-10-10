@@ -2,6 +2,7 @@ package aiaudit
 
 import (
 	"encoding/json" //nolint:depguard // the test decodes as bun does, with json.Number
+	"reflect"
 	"strings"
 	"testing"
 
@@ -12,6 +13,8 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
 func sampleEvent() *AIAuditEvent {
@@ -173,4 +176,52 @@ func TestSeal_WithoutAKeyWritesAnUnsignedLink(t *testing.T) {
 	signed := sampleEvent()
 	require.NoError(t, Seal(signed, GenesisHash, &ChainKey{ID: "k", Secret: []byte("x")}))
 	assert.NotEqual(t, event.Hash, signed.Hash)
+}
+
+/*
+A model call that cost exactly nothing was hashed with its cost, 0.000000, and
+the cost column's nullzero tag stored it as NULL, since a decimal zero reports
+itself zero. Read back, the row hashed without a cost and the chain broke at
+the first such row (#117 locally, an embedding call that rounds to nothing).
+Those rows cannot be rewritten, so a row stored without a cost also verifies as
+the zero it was hashed with; nothing else about it may differ.
+*/
+func TestVerifyHash_AZeroCostStoredAsNullStillVerifies(t *testing.T) {
+	t.Parallel()
+
+	key := &ChainKey{ID: "k1", Secret: []byte(strings.Repeat("s", 32))}
+	zero := decimal.Zero
+	event := sampleEvent()
+	event.Kind = KindModelCall
+	event.CostUSD = &zero
+	require.NoError(t, Seal(event, GenesisHash, key))
+
+	stored := *event
+	stored.CostUSD = nil
+	ok, err := VerifyHash(&stored, key)
+	require.NoError(t, err)
+	assert.True(t, ok, "the zero it was hashed with is what NULL stood for")
+
+	changed := stored
+	changed.Model = "another-model"
+	ok, err = VerifyHash(&changed, key)
+	require.NoError(t, err)
+	assert.False(t, ok, "reading NULL as zero excuses nothing else")
+
+	priced := sampleEvent()
+	require.NoError(t, Seal(priced, GenesisHash, key))
+	priced.CostUSD = nil
+	ok, err = VerifyHash(priced, key)
+	require.NoError(t, err)
+	assert.False(t, ok, "a cost that was not zero cannot be dropped")
+}
+
+func TestAIAuditEvent_StoresAZeroCostAsZero(t *testing.T) {
+	t.Parallel()
+
+	db := bun.NewDB(nil, pgdialect.New())
+	field, ok := db.Table(reflect.TypeFor[AIAuditEvent]()).FieldMap["cost_usd"]
+	require.True(t, ok)
+	assert.False(t, field.NullZero,
+		"nullzero writes a zero cost as NULL, which no longer hashes as it was sealed")
 }

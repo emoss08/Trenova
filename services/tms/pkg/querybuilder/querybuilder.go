@@ -8,6 +8,8 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/emoss08/trenova/shared/intutils"
+
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -411,17 +413,15 @@ func (qb *QueryBuilder) applyToDateFilter(fieldRef string, dateRange map[string]
 }
 
 func extractDays(value any) int {
-	switch v := value.(type) {
-	case int:
-		return v
-	case float64:
-		return int(v)
-	case map[string]any:
-		if days, ok := v["days"]; ok {
+	if v, ok := value.(map[string]any); ok {
+		if days, found := v["days"]; found {
 			return extractDays(days)
 		}
+
+		return 0
 	}
-	return 0
+
+	return intutils.IntValue(value)
 }
 
 func getDayBounds(t time.Time) (startUnix, endUnix int64) {

@@ -147,6 +147,17 @@ every number as its exact decimal. Cost is written with six decimal places. A va
 back from `jsonb` therefore hashes exactly as it did before it was stored. A tenant's first
 row links to `GenesisHash`, which is 64 zeros.
 
+**A zero cost stored as NULL.** The `cost_usd` column was once tagged `nullzero`. A decimal
+zero reports itself zero, so a model call that cost exactly nothing was sealed with `costUsd`
+`"0.000000"` and stored as NULL. Read back, it hashed without a cost, and the first such row
+broke the chain (locally #117, an embedding call that rounds to nothing; 2,196 rows in all).
+Rows on the trail are never rewritten, so `VerifyHash` also accepts a row read back with no
+cost as the zero it was sealed with. Every other field must still match, and a cost that was
+not zero cannot be dropped this way. The column has no `nullzero` now, so a zero cost is
+stored as zero. An auditor checking an exported file must do the same: when a row with a null
+`cost_usd` does not verify, hash it with `"0.000000"`. This changes how a row is read, not
+its canonical form, so no `hash_version` changed.
+
 Keys come from `aiAudit.chain.keys` and `aiAudit.chain.activeKeyId`. In production they come
 from `TRENOVA_AI_AUDIT_CHAIN_KEYS="id:secret,id:secret"` and
 `TRENOVA_AI_AUDIT_CHAIN_ACTIVE_KEY_ID`, never from the database. Each secret is at least 32

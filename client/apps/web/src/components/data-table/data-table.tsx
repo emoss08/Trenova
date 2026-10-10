@@ -695,8 +695,7 @@ export function DataTable<TData extends Record<string, any>>({
     });
   });
 
-  const openedRowId =
-    keyboard?.cursorRowId ?? expansion?.expandedRowId ?? panelEntityId ?? null;
+  const openedRowId = keyboard?.cursorRowId ?? expansion?.expandedRowId ?? panelEntityId ?? null;
   useEffect(() => {
     if (!openedRowId) return;
     setSeenRowIds((current) => {
@@ -785,7 +784,10 @@ export function DataTable<TData extends Record<string, any>>({
     if (!showChanges) return 0;
     let count = 0;
     for (const row of tableData) {
-      if (isChangedSince(row, changesSince) && !seenRowIds.has((row as unknown as { id: string }).id)) {
+      if (
+        isChangedSince(row, changesSince) &&
+        !seenRowIds.has((row as unknown as { id: string }).id)
+      ) {
         count += 1;
       }
     }
@@ -802,10 +804,7 @@ export function DataTable<TData extends Record<string, any>>({
     return [...pinnedRowIds, ...pageRowIds.filter((id) => !pinned.has(id))];
   }, [pageRowIds, pinnedRowIds, pinnedRowsCollapsed]);
 
-  const hasRowSelection = useCallback(
-    () => hasSelectedRows(selectionAtom.get()),
-    [selectionAtom],
-  );
+  const hasRowSelection = useCallback(() => hasSelectedRows(selectionAtom.get()), [selectionAtom]);
 
   const handleToggleRowSelection = useLatestCallback((rowId: string) => {
     table.setRowSelection((current) => {
@@ -1320,6 +1319,7 @@ export function DataTable<TData extends Record<string, any>>({
               onAskApplied={handleAskApplied}
               addRecordActions={resolvedAddRecordActions}
               resource={name}
+              presenceResource={resource}
               currentConfig={currentConfig}
               onApplyConfig={handleApplyConfig}
               activeView={activeView}
@@ -1519,7 +1519,9 @@ export function DataTable<TData extends Record<string, any>>({
         {TablePanel && (
           <RecordPresence
             resource={resource}
-            recordId={isPanelOpen && panelMode === "edit" ? (panelRow?.id as string | undefined) : null}
+            recordId={
+              isPanelOpen && panelMode === "edit" ? (panelRow?.id as string | undefined) : null
+            }
           >
             <TablePanel
               open={isPanelOpen}
@@ -1549,11 +1551,7 @@ export function DataTable<TData extends Record<string, any>>({
         />
       ) : null}
       {enableRowSelection && resolvedDockActions.length > 0 && (
-        <DataTableDock
-          table={table}
-          actions={resolvedDockActions}
-          totals={selectionTotals}
-        />
+        <DataTableDock table={table} actions={resolvedDockActions} totals={selectionTotals} />
       )}
     </DataTableProvider>
   );

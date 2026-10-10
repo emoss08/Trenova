@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/pkg/pagination"
+
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -1787,4 +1789,20 @@ func TestQueryBuilder_ApplyGeoFilters_RadiusConversion(t *testing.T) {
 	})
 
 	assert.NotNil(t, qb.GetQuery())
+}
+
+/*
+pagination.NormalizeFilterValue hands a whole number on as int64, from GraphQL
+and from REST alike, and extractDays read only int and float64: "the last 7
+days" counted as zero days and matched only rows from this second on, so the AI
+audit trail, and every other table filtered by lastndays or nextndays, came up
+empty.
+*/
+func TestExtractDays_ReadsTheDayCountAFilterIsNormalizedTo(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, 7, extractDays(pagination.NormalizeFilterValue(float64(7), "lastndays")))
+	assert.Equal(t, 7, extractDays(int64(7)))
+	assert.Equal(t, 30, extractDays(int32(30)))
+	assert.Equal(t, 15, extractDays(map[string]any{"days": int64(15)}))
 }
