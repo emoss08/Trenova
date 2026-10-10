@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { AiMarkdown, StreamingAiMarkdown } from "../ai-markdown";
@@ -134,5 +134,31 @@ describe("a reply still streaming", () => {
         drawn(<AiMarkdown content={text} />),
       );
     }
+  });
+});
+
+/**
+ * KaTeX is most of a reply renderer's weight and almost no reply has math, so
+ * it is fetched the first time one does. Until it arrives the math shows as
+ * written, inline and in its own box, and is then typeset in place.
+ */
+describe("math in a reply", () => {
+  it("shows math as written until the typesetter arrives, then typesets it", async () => {
+    renderReply("$$a + b$$\n\nThe rate is $r = d / t$ per mile.");
+
+    expect(document.querySelector(".md-math-pending")?.textContent).toBe("r = d / t");
+    expect(document.querySelector("pre.md-math-raw")?.textContent).toContain("a + b");
+    expect(document.querySelector(".md-code")).toBeNull();
+
+    await waitFor(() => expect(document.querySelector(".katex-display")).not.toBeNull());
+    expect(document.querySelectorAll(".katex")).toHaveLength(2);
+    expect(document.querySelector(".md-math-pending")).toBeNull();
+  });
+
+  it("leaves money as money", () => {
+    renderReply("$48,210.00 across six customers");
+
+    expect(screen.getByText(/\$48,210\.00 across six customers/)).toBeInTheDocument();
+    expect(document.querySelector(".md-math-pending, .katex")).toBeNull();
   });
 });

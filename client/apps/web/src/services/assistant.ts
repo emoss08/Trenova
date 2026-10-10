@@ -29,7 +29,7 @@ import {
   assistantProposalListSchema,
   proposalEditsSchema,
   assistantProviderListSchema,
-  assistantThreadListSchema,
+  assistantThreadPageSchema,
   assistantThreadSchema,
   conversationScheduleListSchema,
   queuedMessageListSchema,
@@ -90,6 +90,8 @@ export type ArtifactListParams = {
   q?: string;
   kind?: string;
   pinned?: boolean;
+  /** Each payload cut to the keys that name and draw an artifact in a list. */
+  summary?: boolean;
 };
 
 export function downloadAssistantTranscript(threadId: AssistantThread["id"]): void {
@@ -201,9 +203,31 @@ export type UpdateThreadOptions = {
 };
 
 export class AssistantService {
-  public async listThreads(limit = 50, offset = 0) {
-    const response = await api.get(`/assistant/threads/?limit=${limit}&offset=${offset}`);
-    return safeParse(assistantThreadListSchema, response, "Assistant Thread");
+  /**
+   * One page of the person's conversations; the cursor is the previous page's
+   * `nextCursor`. Given `until` (a page's own `nextCursor`), it reads that
+   * page's range again instead: everything from the cursor down to the place
+   * `until` marks, however many conversations sit there now.
+   */
+  public async listThreads({
+    limit,
+    cursor,
+    until,
+    signal,
+  }: { limit?: number; cursor?: string; until?: string; signal?: AbortSignal } = {}) {
+    const params = new URLSearchParams();
+    if (limit !== undefined) {
+      params.set("limit", String(limit));
+    }
+    if (cursor) {
+      params.set("cursor", cursor);
+    }
+    if (until) {
+      params.set("until", until);
+    }
+    const query = params.size > 0 ? `?${params.toString()}` : "";
+    const response = await api.get(`/assistant/threads/${query}`, { signal });
+    return safeParse(assistantThreadPageSchema, response, "Assistant Thread");
   }
 
   public async startThread(agentDefinitionId: string, options: StartThreadOptions = {}) {
@@ -253,6 +277,7 @@ export class AssistantService {
     if (options?.q) params.set("q", options.q);
     if (options?.kind) params.set("kind", options.kind);
     if (options?.pinned) params.set("pinned", "true");
+    if (options?.summary) params.set("summary", "true");
     const query = params.toString();
     const response = await api.get(
       `/assistant/threads/${threadId}/artifacts/${query ? `?${query}` : ""}`,

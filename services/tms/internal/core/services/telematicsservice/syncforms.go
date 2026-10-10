@@ -16,13 +16,10 @@ func (s *Service) syncForms(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	provider services.TelematicsProvider,
+	drivers *sweepDrivers,
 	result *TenantSweepResult,
 ) error {
-	workersByExternalID, err := s.workersByExternalID(ctx, tenantInfo)
-	if err != nil {
-		return err
-	}
-	if len(workersByExternalID) == 0 {
+	if len(drivers.externalIDs) == 0 {
 		return nil
 	}
 
@@ -35,39 +32,38 @@ func (s *Service) syncForms(
 	now := timeutils.NowUnix()
 	startAt := now - formsLookbackSeconds
 
+	submissions, listErr := provider.ListFormSubmissions(ctx, drivers.externalIDs, startAt, now)
+	if _, ok := partialDriverFailures(listErr); !ok {
+		return listErr
+	}
+
 	upserted := 0
-	for externalID := range workersByExternalID {
-		submissions, listErr := provider.ListFormSubmissions(ctx, externalID, startAt, now)
-		if listErr != nil {
-			return listErr
+	for i := range submissions {
+		submission := &submissions[i]
+		ingestErr := s.ingestFormSubmission(
+			ctx,
+			tenantInfo,
+			drivers.workersByExternalID,
+			mappingsByTemplate,
+			&ingestFormInput{
+				Provider:     providerType,
+				SubmissionID: submission.ID,
+				TemplateID:   submission.TemplateID,
+				TemplateName: submission.TemplateName,
+				DriverID:     submission.DriverID,
+				RouteStopID:  submission.RouteStopID,
+				SubmittedAt:  submission.SubmittedAt,
+				Fields:       submission.Fields,
+			},
+		)
+		if ingestErr != nil {
+			return ingestErr
 		}
-		for i := range submissions {
-			submission := &submissions[i]
-			ingestErr := s.ingestFormSubmission(
-				ctx,
-				tenantInfo,
-				workersByExternalID,
-				mappingsByTemplate,
-				&ingestFormInput{
-					Provider:     providerType,
-					SubmissionID: submission.ID,
-					TemplateID:   submission.TemplateID,
-					TemplateName: submission.TemplateName,
-					DriverID:     submission.DriverID,
-					RouteStopID:  submission.RouteStopID,
-					SubmittedAt:  submission.SubmittedAt,
-					Fields:       submission.Fields,
-				},
-			)
-			if ingestErr != nil {
-				return ingestErr
-			}
-			upserted++
-		}
+		upserted++
 	}
 
 	result.FormsUpserted = upserted
-	return nil
+	return listErr
 }
 
 func (s *Service) formMappingsByTemplate(

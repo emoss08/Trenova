@@ -73,3 +73,56 @@ func TestUpsertAlertAndExpireStaleAlerts(t *testing.T) {
 	require.NoError(t, err)
 	assert.GreaterOrEqual(t, result.ExpiredCount, 0)
 }
+
+func TestListByNWSIDsReturnsTheStoredMessages(t *testing.T) {
+	t.Parallel()
+
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	defer cleanup()
+
+	data := seedtest.SeedFullTestData(t, ctx, db)
+	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	tenantInfo := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
+
+	effective := int64(100)
+	expires := int64(4_102_444_800)
+	_, err := repo.UpsertAlert(ctx, &weatheralert.WeatherAlert{
+		OrganizationID: data.Organization.ID,
+		BusinessUnitID: data.BusinessUnit.ID,
+		NWSID:          "urn:oid:weather-alert-stored",
+		Event:          "Winter Storm Warning",
+		MessageType:    "Alert",
+		AlertCategory:  weatheralert.AlertCategoryWinterWeather,
+		Effective:      &effective,
+		Expires:        &expires,
+		Geometry: &postgis.Geometry{
+			Geometry: orb.Polygon{
+				{{-97.0, 32.0}, {-96.0, 32.0}, {-96.0, 33.0}, {-97.0, 33.0}, {-97.0, 32.0}},
+			},
+		},
+		FirstSeenAt:   10,
+		LastUpdatedAt: 10,
+	})
+	require.NoError(t, err)
+
+	stored, err := repo.ListByNWSIDs(ctx, repositories.ListWeatherAlertsByNWSIDsRequest{
+		TenantInfo: tenantInfo,
+		NWSIDs:     []string{"urn:oid:weather-alert-stored", "urn:oid:weather-alert-unknown"},
+	})
+	require.NoError(t, err)
+	require.Len(t, stored, 1)
+	assert.Equal(t, "urn:oid:weather-alert-stored", stored[0].NWSID)
+	assert.Equal(t, "Alert", stored[0].MessageType)
+	assert.Equal(t, weatheralert.AlertCategoryWinterWeather, stored[0].AlertCategory)
+	require.NotNil(t, stored[0].Effective)
+	require.NotNil(t, stored[0].Expires)
+	assert.Equal(t, effective, *stored[0].Effective)
+	assert.Equal(t, expires, *stored[0].Expires)
+	assert.Nil(t, stored[0].Onset)
+
+	none, err := repo.ListByNWSIDs(ctx, repositories.ListWeatherAlertsByNWSIDsRequest{
+		TenantInfo: tenantInfo,
+	})
+	require.NoError(t, err)
+	assert.Empty(t, none)
+}

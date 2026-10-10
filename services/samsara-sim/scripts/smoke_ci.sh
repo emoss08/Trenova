@@ -132,7 +132,7 @@ put_json "/_sim/time" '{"paused":true,"speed":1,"setTime":"2026-03-02T08:00:00Z"
   | jq -e '.data.paused == true and (.data.now | type) == "string"' >/dev/null
 
 echo "[3/8] Capture baseline vehicle/route/HOS state"
-stats_before="$(get_json "/fleet/vehicles/stats?limit=256")"
+stats_before="$(get_json "/fleet/vehicles/stats?types=gps")"
 moving_vehicle_id="$(echo "${stats_before}" | jq -r '([.data[] | select((.gps.speedMilesPerHour // 0) > 1) | .id] + [.data[0].id])[0] // empty')"
 if [[ -z "${moving_vehicle_id}" ]]; then
   echo "unable to resolve vehicle id from vehicle stats payload" >&2
@@ -225,7 +225,7 @@ fi
 
 echo "[4/8] Advance simulation time and validate moving GPS"
 post_json "/_sim/time/step" '{"durationMs":900000}' | jq -e '.data.now != null' >/dev/null
-stats_after="$(get_json "/fleet/vehicles/stats?vehicleIds=${moving_vehicle_id}")"
+stats_after="$(get_json "/fleet/vehicles/stats?types=gps&vehicleIds=${moving_vehicle_id}")"
 lat_after="$(echo "${stats_after}" | jq -r '.data[0].gps.latitude // empty')"
 lon_after="$(echo "${stats_after}" | jq -r '.data[0].gps.longitude // empty')"
 if [[ -z "${lat_after}" || -z "${lon_after}" ]]; then
@@ -325,51 +325,53 @@ echo "${inbox_payload}" | jq -e \
    and (.data[0].delivery.id | length > 0)
    and (.data[0].signature.timestamp | length > 0)' >/dev/null
 
-echo "[8/8] Validate rate-limit response + headers"
+echo "[8/8] Validate rate-limit response, Retry-After and error envelope"
 rate_limited=0
-rate_limit_limit=""
-rate_limit_remaining=""
-rate_limit_reset=""
 rate_limit_retry_after=""
-# The GET budget (180/min) is shared across every /fleet endpoint for the
-# token and counted on request arrival, before the handler runs. A serial
-# request loop cannot outrun the wall-clock window when individual responses
-# are slow, so exhaust the budget with a concurrent burst against a cheap
-# endpoint, then confirm the 429 and its headers with serial requests. The
-# outer retry covers a burst that straddles a window boundary.
+rate_limit_legacy_header=""
+rate_limit_body=""
 for _ in $(seq 1 3); do
-  seq 1 240 | xargs -P 16 -I. curl -sS -o /dev/null \
+  seq 1 40 | xargs -P 16 -I. curl -sS -o /dev/null \
     -H "${AUTH_HEADER}" \
     -H "${PROFILE_HEADER}" \
     "${BASE_URL}/fleet/routes?limit=1" >/dev/null 2>&1 || true
   for _ in $(seq 1 20); do
     header_file="$(mktemp)"
-    status_code="$(curl -sS -o /dev/null -D "${header_file}" -w "%{http_code}" \
+    body_file="$(mktemp)"
+    status_code="$(curl -sS -o "${body_file}" -D "${header_file}" -w "%{http_code}" \
       -H "${AUTH_HEADER}" \
       -H "${PROFILE_HEADER}" \
-      "${BASE_URL}/fleet/vehicles/stats?vehicleIds=${moving_vehicle_id}")"
+      "${BASE_URL}/fleet/routes?limit=1")"
     if [[ "${status_code}" == "429" ]]; then
       rate_limited=1
-      rate_limit_limit="$(response_header "X-RateLimit-Limit" "${header_file}")"
-      rate_limit_remaining="$(response_header "X-RateLimit-Remaining" "${header_file}")"
-      rate_limit_reset="$(response_header "X-RateLimit-Reset" "${header_file}")"
-      rate_limit_retry_after="$(response_header "Retry-After" "${header_file}")"
-      rm -f "${header_file}"
+      rate_limit_retry_after="$(response_header "Retry-After" "${header_file}" || true)"
+      rate_limit_legacy_header="$(response_header "X-RateLimit-Limit" "${header_file}" || true)"
+      rate_limit_body="$(cat "${body_file}")"
+      rm -f "${header_file}" "${body_file}"
       break
     fi
-    rm -f "${header_file}"
+    rm -f "${header_file}" "${body_file}"
   done
   if [[ "${rate_limited}" == "1" ]]; then
     break
   fi
+  sleep 1
 done
 
 if [[ "${rate_limited}" != "1" ]]; then
-  echo "expected to hit rate limit but no 429 response was returned" >&2
+  echo "expected GET /fleet/routes (Level Two, 5 req/s) to return 429 under a burst" >&2
   exit 1
 fi
-if [[ -z "${rate_limit_limit}" || -z "${rate_limit_remaining}" || -z "${rate_limit_reset}" || -z "${rate_limit_retry_after}" ]]; then
-  echo "rate-limit headers missing on 429 response" >&2
+if [[ ! "${rate_limit_retry_after}" =~ ^[0-9]+\.[0-9]{5}$ ]]; then
+  echo "expected decimal Retry-After seconds, got '${rate_limit_retry_after}'" >&2
+  exit 1
+fi
+if [[ -n "${rate_limit_legacy_header}" ]]; then
+  echo "unexpected undocumented X-RateLimit-Limit header on 429 response" >&2
+  exit 1
+fi
+if ! echo "${rate_limit_body}" | jq -e '(keys == ["message", "requestId"]) and (.message | startswith("Exceeded rate limit"))' >/dev/null; then
+  echo "429 body does not match the Samsara error envelope: ${rate_limit_body}" >&2
   exit 1
 fi
 

@@ -1,6 +1,7 @@
 import { Button } from "@trenova/shared/components/ui/button";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
+import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { artifactDocumentUrl } from "@/services/assistant";
 import type { AssistantArtifact } from "@/types/assistant";
@@ -236,7 +237,7 @@ export function DeskDocBody({
   }, [notice]);
 
   const refresh = () =>
-    queryClient.invalidateQueries({ queryKey: ["assistant-artifacts", threadId] });
+    queryClient.invalidateQueries({ queryKey: queries.assistant.artifacts(threadId).queryKey });
 
   const saveMutation = useApiMutation({
     mutationFn: ({ body, note }: { body: string; note: string }) =>

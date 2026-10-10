@@ -88,6 +88,8 @@ type Thread struct {
 	// trimming the history for length never drops one.
 	PinnedFacts []string `json:"pinnedFacts" bun:"pinned_facts,type:JSONB,nullzero"`
 
+	WorkingSet []WorkingRecord `json:"workingSet,omitempty" bun:"working_set,type:JSONB,nullzero"`
+
 	// ContextUsage is how full the model's context window was after the
 	// conversation's last turn or compaction; nil before its first.
 	// AutoCompactOff says the conversation no longer compacts itself on

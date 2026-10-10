@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -89,11 +90,18 @@ func TestServerFaultInjectionEndpoints(t *testing.T) {
 	faulted := performAuthorizedRequestWithBody(
 		srv,
 		http.MethodGet,
-		"/fleet/vehicles/stats?vehicleIds=veh-1",
+		"/fleet/vehicles/stats?types=gps&vehicleIds=281474976710657",
 		nil,
 	)
 	if faulted.Code != http.StatusTooManyRequests {
 		t.Fatalf("expected injected 429 for vehicle stats, got %d", faulted.Code)
+	}
+	if retryAfter := faulted.Header().Get("Retry-After"); retryAfter != "0.02000" {
+		t.Fatalf("expected Legacy Tier 2 decimal Retry-After 0.02000, got %q", retryAfter)
+	}
+	faultMessage := mustReadAPIError(t, faulted.Body.Bytes())
+	if !strings.Contains(faultMessage, "Legacy Tier 2") {
+		t.Fatalf("expected injected 429 to name the endpoint limit, got %q", faultMessage)
 	}
 
 	resetResp := performAuthorizedRequestWithBody(
@@ -109,7 +117,7 @@ func TestServerFaultInjectionEndpoints(t *testing.T) {
 	recovered := performAuthorizedRequestWithBody(
 		srv,
 		http.MethodGet,
-		"/fleet/vehicles/stats?vehicleIds=veh-1",
+		"/fleet/vehicles/stats?types=gps&vehicleIds=281474976710657",
 		nil,
 	)
 	if recovered.Code != http.StatusOK {

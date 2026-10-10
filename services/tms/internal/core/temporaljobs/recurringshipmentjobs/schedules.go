@@ -19,7 +19,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "recurring-shipment-dispatch",
 			Description:   "Materialize shipments for due recurring shipment series",
-			Spec:          schedule.Every(time.Minute),
+			Spec:          schedule.Every(5 * time.Minute),
 			Workflow:      DispatchDueRecurringShipmentsWorkflow,
 			TaskQueue:     temporaltype.TaskQueueSystem.String(),
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,

@@ -13,10 +13,11 @@ scenarios:
           noProposals: true
           facts:
             - sql: >
-                select count(*) from shipments where status = 'ReadyToInvoice'
-                union all
-                select count(*) from shipments where status = 'Completed'
-              note: how many are ready to invoice and how many completed can still be transferred
+                select count(*) from shipments s where s.status in ('ReadyToInvoice', 'Completed')
+                  and not exists (select 1 from billing_queue_items b where b.shipment_id = s.id)
+              note: >
+                how many delivered loads can go to billing (ready to invoice or completed, none yet
+                in the billing queue); an empty group need not be named as zero
           rubric: >
             Gives both groups: the shipments already ready to invoice and the completed ones that
             can be transferred to billing, each with its customer and amount or a table it kept,
@@ -66,3 +67,38 @@ scenarios:
           rubric: >
             Finds Completed shipments with no invoice and not ReadyToInvoice, by pro number,
             and explains what moving them to billing would do.
+
+  - name: lumper-charge-on-a-load
+    description: >
+      An accessorial added to a saved load, at an amount the person names rather than the charge's
+      configured $150. Exercises add_shipment_charge, which Billing exceptions holds since DB-019 and
+      no other case reached. Lumper charges earlier runs added are removed first, so the load starts
+      without one.
+    tags: [billing, write]
+    exclusive: SEED-SHP-008
+    setup:
+      - >
+        DELETE FROM additional_charges AS ac USING shipments AS sp, accessorial_charges AS acc
+        WHERE ac.shipment_id = sp.id AND acc.id = ac.accessorial_charge_id
+          AND sp.pro_number = 'SEED-SHP-008' AND acc.code = 'LUMP'
+          AND NOT ac.is_system_generated
+    steps:
+      - say: "add a 175 lumper to SEED-SHP-008, the receiver charged our driver at the dock"
+        expect:
+          proposals: [{ tool: add_shipment_charge }]
+          maxFailedCalls: 1
+          rubric: >
+            Proposes one lumper charge of $175 on SEED-SHP-008, not the charge's configured $150,
+            and says it waits for approval.
+      - decide: approve
+        expect:
+          executed: true
+          db:
+            - sql: >
+                select coalesce(sum(ac.amount), 0)::numeric(10,2)::text
+                from additional_charges ac
+                join shipments sp on sp.id = ac.shipment_id
+                join accessorial_charges acc on acc.id = ac.accessorial_charge_id
+                where sp.pro_number = 'SEED-SHP-008' and acc.code = 'LUMP'
+              equals: "175.00"
+              note: one lumper charge of $175 is on the load

@@ -37,6 +37,7 @@ function renderBar(overrides: Partial<AssistantThread> = {}) {
     onToggleWorkspace: vi.fn(),
     onTogglePin: vi.fn(),
     onDownload: vi.fn(),
+    onRename: vi.fn(),
   };
   render(
     <QueryClientProvider client={new QueryClient()}>
@@ -98,5 +99,101 @@ describe("DeskTopBar", () => {
     for (const name of ["Make this a case", "Hand off to another agent", "More actions"]) {
       expect(screen.getByRole("button", { name })).not.toHaveAttribute("title");
     }
+  });
+});
+
+/**
+ * The conversation is renamed where its name is shown: a click on the name
+ * in the bar turns it into a field.
+ */
+describe("DeskTopBar rename", () => {
+  const field = () => screen.getByRole("textbox", { name: "Conversation name" });
+
+  it("renames from the name in the bar: click, type, Enter", () => {
+    const handlers = renderBar();
+
+    fireEvent.click(screen.getByRole("button", { name: "Late loads" }));
+    expect(field()).toHaveValue("Late loads");
+    fireEvent.change(field(), { target: { value: "  Detention claims  " } });
+    fireEvent.keyDown(field(), { key: "Enter" });
+
+    expect(handlers.onRename).toHaveBeenCalledTimes(1);
+    expect(handlers.onRename).toHaveBeenCalledWith("Detention claims");
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+  });
+
+  // Enter ends the edit, and the field losing focus afterwards must not send
+  // the same name a second time.
+  it("sends a name once when Enter is followed by the field losing focus", () => {
+    const handlers = renderBar();
+
+    fireEvent.click(screen.getByRole("button", { name: "Late loads" }));
+    const input = field();
+    fireEvent.change(input, { target: { value: "Detention claims" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    fireEvent.blur(input);
+
+    expect(handlers.onRename).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the new name when the field loses focus", () => {
+    const handlers = renderBar();
+
+    fireEvent.click(screen.getByRole("button", { name: "Late loads" }));
+    fireEvent.change(field(), { target: { value: "Detention claims" } });
+    fireEvent.blur(field());
+
+    expect(handlers.onRename).toHaveBeenCalledWith("Detention claims");
+  });
+
+  it("leaves the name alone on Escape", () => {
+    const handlers = renderBar();
+
+    fireEvent.click(screen.getByRole("button", { name: "Late loads" }));
+    fireEvent.change(field(), { target: { value: "Something else" } });
+    fireEvent.keyDown(field(), { key: "Escape" });
+
+    expect(handlers.onRename).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Late loads" })).toBeInTheDocument();
+  });
+
+  it("sends nothing for a blank or unchanged name", () => {
+    const handlers = renderBar();
+
+    fireEvent.click(screen.getByRole("button", { name: "Late loads" }));
+    fireEvent.change(field(), { target: { value: "   " } });
+    fireEvent.keyDown(field(), { key: "Enter" });
+    fireEvent.click(screen.getByRole("button", { name: "Late loads" }));
+    fireEvent.keyDown(field(), { key: "Enter" });
+
+    expect(handlers.onRename).not.toHaveBeenCalled();
+  });
+
+  it("can be renamed again after a rename", () => {
+    const handlers = renderBar();
+
+    fireEvent.click(screen.getByRole("button", { name: "Late loads" }));
+    fireEvent.change(field(), { target: { value: "First" } });
+    fireEvent.keyDown(field(), { key: "Enter" });
+    fireEvent.click(screen.getByRole("button", { name: "Late loads" }));
+    fireEvent.change(field(), { target: { value: "Second" } });
+    fireEvent.keyDown(field(), { key: "Enter" });
+
+    expect(handlers.onRename).toHaveBeenNthCalledWith(1, "First");
+    expect(handlers.onRename).toHaveBeenNthCalledWith(2, "Second");
+  });
+
+  it("names an untitled conversation and still offers to rename it", () => {
+    renderBar({ title: "" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Untitled conversation" }));
+    expect(field()).toHaveValue("");
+  });
+
+  it("caps a name at the length the server keeps", () => {
+    renderBar();
+
+    fireEvent.click(screen.getByRole("button", { name: "Late loads" }));
+    expect(field()).toHaveAttribute("maxLength", "200");
   });
 });

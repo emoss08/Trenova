@@ -32,28 +32,35 @@ type partyMatch struct {
 }
 
 type shipmentPartySources struct {
-	customers repositories.CustomerRepository
-	locations repositories.LocationRepository
-	workers   repositories.WorkerRepository
+	customers   repositories.CustomerRepository
+	locations   repositories.LocationRepository
+	workers     repositories.WorkerRepository
+	commodities repositories.CommodityRepository
+	types       repositories.ShipmentTypeRepository
 }
 
 func (s shipmentPartySources) none() bool {
-	return s.customers == nil && s.locations == nil && s.workers == nil
+	return s.customers == nil && s.locations == nil && s.workers == nil &&
+		s.commodities == nil && s.types == nil
 }
 
 type shipmentParties struct {
-	customers []partyMatch
-	locations []partyMatch
-	workers   []partyMatch
+	customers   []partyMatch
+	locations   []partyMatch
+	workers     []partyMatch
+	commodities []partyMatch
+	types       []partyMatch
 }
 
 func (p *shipmentParties) empty() bool {
-	return len(p.customers) == 0 && len(p.locations) == 0 && len(p.workers) == 0
+	return len(p.kinds()) == 0
 }
 
 func (p *shipmentParties) kinds() [][]partyMatch {
-	kinds := make([][]partyMatch, 0, 3)
-	for _, matches := range [][]partyMatch{p.customers, p.locations, p.workers} {
+	kinds := make([][]partyMatch, 0, 5)
+	for _, matches := range [][]partyMatch{
+		p.customers, p.locations, p.workers, p.commodities, p.types,
+	} {
 		if len(matches) > 0 {
 			kinds = append(kinds, matches)
 		}
@@ -80,6 +87,32 @@ func (p *shipmentParties) allFromDifferentWords() bool {
 	}
 
 	return true
+}
+
+// onlyPlacesFromDifferentWords reports a query naming two or more places and
+// nothing else, such as "denver phoenix": a load through both, not either.
+func (p *shipmentParties) onlyPlacesFromDifferentWords() bool {
+	return len(p.kinds()) == 1 && len(partiesByTerm(p.locations)) > 1
+}
+
+// partiesByTerm groups matches by the word that found them, in the order the
+// words came. "peak denver phoenix" names two places, and a load must stop at
+// both: matching either filled the page with Peak's newest loads into Denver
+// and left out the one load from Denver to Phoenix.
+func partiesByTerm(matches []partyMatch) [][]partyMatch {
+	groups := make([][]partyMatch, 0, partyTokenLimit)
+	for _, match := range matches {
+		idx := slices.IndexFunc(groups, func(group []partyMatch) bool {
+			return group[0].term == match.term
+		})
+		if idx < 0 {
+			groups = append(groups, []partyMatch{match})
+			continue
+		}
+		groups[idx] = append(groups[idx], match)
+	}
+
+	return groups
 }
 
 func partyIDs(matches []partyMatch) []pulid.ID {
@@ -176,6 +209,30 @@ func (t *searchShipmentsTool) resolveParties(
 			for _, item := range found.Items {
 				parties.workers = append(parties.workers, partyMatch{
 					term: term, id: item.ID, name: workerName(item),
+				})
+			}
+		}
+
+		if t.parties.commodities != nil {
+			found, err := t.parties.commodities.List(ctx, &repositories.ListCommodityRequest{Filter: filter})
+			if err != nil {
+				return nil, err
+			}
+			for _, item := range found.Items {
+				parties.commodities = append(parties.commodities, partyMatch{
+					term: term, id: item.ID, name: item.Name,
+				})
+			}
+		}
+
+		if t.parties.types != nil {
+			found, err := t.parties.types.List(ctx, &repositories.ListShipmentTypesRequest{Filter: filter})
+			if err != nil {
+				return nil, err
+			}
+			for _, item := range found.Items {
+				parties.types = append(parties.types, partyMatch{
+					term: term, id: item.ID, name: item.Code,
 				})
 			}
 		}

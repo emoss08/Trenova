@@ -13,7 +13,7 @@ export function DeskArtifactLinkPage() {
   const t = useT();
   const { threadId = "", slug = "" } = useParams<{ threadId: string; slug: string }>();
   const lineageQuery = useQuery({
-    ...queries.assistant.artifactBySlug(threadId, slug),
+    ...queries.assistant.artifacts(threadId)._ctx.slug(slug),
     enabled: threadId !== "" && slug !== "",
     retry: false,
   });

@@ -15,6 +15,7 @@ func newDefaultFixtureFormServer(t *testing.T) *Server {
 	t.Helper()
 
 	cfg := config.Default()
+	cfg.RateLimits.Enabled = false
 	cfg.Auth.Tokens = []string{"dev-samsara-token"}
 	cfg.Webhooks.Enabled = false
 
@@ -126,41 +127,34 @@ func generatedShipperConsignee(t *testing.T) (bol, pod Record) {
 	live := NewLiveSimulator(loadDefaultFixtureStore(t), "shipment-form-seed")
 	now := live.anchorTime.Add(3 * 24 * time.Hour)
 	windowStart := now.Add(-2 * 24 * time.Hour)
-	records := live.GeneratedFormSubmissions(now, windowStart, now, nil, []string{"drv-1"})
+	records := live.GeneratedFormSubmissions(now, windowStart, now, nil, []string{testDriverID})
 	if len(records) == 0 {
-		t.Fatal("expected generated submissions for drv-1")
+		t.Fatal("expected generated submissions for 1654973")
 	}
 
-	bolByDay := map[string]Record{}
-	podByDay := map[string]Record{}
+	byID := make(map[string]Record, len(records))
 	for _, record := range records {
-		day := submissionDayToken(recordID(record))
-		switch nestedString(record, "formTemplate", "id") {
-		case shipperTemplateID:
-			if _, ok := bolByDay[day]; !ok {
-				bolByDay[day] = record
-			}
-		case consigneeTemplateID:
-			if _, ok := podByDay[day]; !ok {
-				podByDay[day] = record
-			}
-		}
+		byID[recordID(record)] = record
 	}
-	for day, bolRecord := range bolByDay {
-		if podRecord, ok := podByDay[day]; ok {
-			return bolRecord, podRecord
+	startDay := windowStart.Add(-24 * time.Hour).Truncate(24 * time.Hour)
+	for day := startDay; !day.After(now.Truncate(24 * time.Hour)); day = day.Add(24 * time.Hour) {
+		bolRecord, hasBOL := byID[formSubmissionID(day, testDriverID, formSubmissionKindBOL)]
+		podRecord, hasPOD := byID[formSubmissionID(day, testDriverID, formSubmissionKindPOD)]
+		if !hasBOL || !hasPOD {
+			continue
 		}
+		if nestedString(bolRecord, "formTemplate", "id") != shipperTemplateID {
+			t.Fatalf("expected BOL on shipper template, got %v", bolRecord["formTemplate"])
+		}
+		if nestedString(podRecord, "formTemplate", "id") != consigneeTemplateID {
+			t.Fatalf("expected POD on consignee template, got %v", podRecord["formTemplate"])
+		}
+		return bolRecord, podRecord
 	}
-	t.Fatal("expected a paired Bill of Lading and Proof of Delivery on the same sim day for drv-1")
+	t.Fatal(
+		"expected a paired Bill of Lading and Proof of Delivery on the same sim day for 1654973",
+	)
 	return nil, nil
-}
-
-func submissionDayToken(id string) string {
-	parts := strings.Split(id, "-")
-	if len(parts) >= 3 {
-		return parts[2]
-	}
-	return id
 }
 
 func TestBillOfLadingSubmissionShape(t *testing.T) {
@@ -168,20 +162,29 @@ func TestBillOfLadingSubmissionShape(t *testing.T) {
 
 	bol, _ := generatedShipperConsignee(t)
 
-	if nestedString(bol, "submittedBy", "id") != "drv-1" {
-		t.Fatalf("expected submitter drv-1, got %q", nestedString(bol, "submittedBy", "id"))
+	if nestedString(bol, "submittedBy", "id") != testDriverID {
+		t.Fatalf("expected submitter 1654973, got %q", nestedString(bol, "submittedBy", "id"))
 	}
 	if nestedString(bol, "submittedBy", "type") != formSubmitterTypeDriver {
 		t.Fatal("expected driver submitter type")
 	}
-	if stringValue(bol, "routeId") != "route-1" {
-		t.Fatalf("expected routeId route-1, got %q", stringValue(bol, "routeId"))
+	if stringValue(bol, "routeId") != fixtureRouteID {
+		t.Fatalf("expected routeId 4129806431, got %q", stringValue(bol, "routeId"))
 	}
-	if stopID := stringValue(bol, "routeStopId"); !strings.HasSuffix(stopID, "-stop-1") {
-		t.Fatalf("expected pickup routeStopId ending -stop-1, got %q", stopID)
+	live := NewLiveSimulator(loadDefaultFixtureStore(t), "shipment-form-seed")
+	route, ok := live.RouteByID(live.anchorTime.Add(3*24*time.Hour), fixtureRouteID)
+	if !ok {
+		t.Fatal("expected fixture route")
 	}
-	if _, ok := bol["externalIds"].(map[string]any); !ok {
-		t.Fatalf("expected externalIds object, got %T", bol["externalIds"])
+	firstStop := routeRefFromRecord(route).Stops[0].ID
+	if stopID := stringValue(bol, "routeStopId"); stopID != firstStop {
+		t.Fatalf("expected pickup routeStopId %q (first /fleet/routes stop), got %q", firstStop, stopID)
+	}
+	if _, present := bol["externalIds"]; present {
+		t.Fatalf("expected generated submissions to carry no externalIds, got %v", bol["externalIds"])
+	}
+	if duration, isNumber := bol["durationMs"].(int64); !isNumber || duration <= 0 {
+		t.Fatalf("expected positive durationMs, got %v", bol["durationMs"])
 	}
 	location, ok := bol["location"].(map[string]any)
 	if !ok {
@@ -270,12 +273,11 @@ func TestProofOfDeliverySubmissionShape(t *testing.T) {
 	if !podSubmitted.After(bolSubmitted) {
 		t.Fatalf("expected POD (%s) after BOL (%s)", podSubmitted, bolSubmitted)
 	}
-	if stopID := stringValue(pod, "routeStopId"); strings.HasSuffix(stopID, "-stop-1") ||
-		stopID == "" {
+	if stopID := stringValue(pod, "routeStopId"); routeStopSequence(fixtureRouteID, stopID) < 2 {
 		t.Fatalf("expected delivery routeStopId at a later stop, got %q", stopID)
 	}
-	if stringValue(pod, "routeId") != "route-1" {
-		t.Fatalf("expected routeId route-1, got %q", stringValue(pod, "routeId"))
+	if stringValue(pod, "routeId") != fixtureRouteID {
+		t.Fatalf("expected routeId 4129806431, got %q", stringValue(pod, "routeId"))
 	}
 
 	fields, ok := pod["fields"].([]any)
@@ -346,4 +348,13 @@ func TestFormSubmissionStreamFilterByShipperTemplate(t *testing.T) {
 			t.Fatalf("unexpected title %q", stringValue(record, "title"))
 		}
 	}
+}
+
+func routeStopSequence(routeID, stopID string) int {
+	for sequence := 1; sequence <= 6; sequence++ {
+		if routeStopID(routeID, sequence) == stopID {
+			return sequence
+		}
+	}
+	return 0
 }

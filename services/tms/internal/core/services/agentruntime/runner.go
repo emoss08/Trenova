@@ -336,7 +336,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 				} else {
 					answer := fx.Find(t, call.Arguments)
 					outcome = toolOutcome{
-						content: answer.Content,
+						content: answer.Content + searchesLeft(tools.findCalls),
 						found:   answer.Found,
 						handOff: answer.HandOff,
 					}
@@ -375,6 +375,21 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 					"the turn is not offered the approval box", "%s", unofferedDecisionRefusal)
 				if tools.offers(requestDecisionName) {
 					outcome = t.requestDecision(call.Arguments)
+				}
+				result.ToolCallsUsed++
+				s.recordToolResult(t, fx, call, outcome)
+				continue
+			}
+
+			if call.Name == withdrawProposalName {
+				outcome := refusedOutcome(aitrace.OutcomeDenied,
+					"the turn has filed no proposal to withdraw", "%s", unofferedWithdrawal)
+				if t.req.Delegation != nil {
+					outcome = refusedOutcome(aitrace.OutcomeDenied,
+						"a delegated task cannot withdraw a proposal", "%s", delegatedWithdrawal)
+				}
+				if tools.offers(withdrawProposalName) {
+					outcome = t.withdrawProposal(call.Arguments)
 				}
 				result.ToolCallsUsed++
 				s.recordToolResult(t, fx, call, outcome)
@@ -451,7 +466,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 			outcome := fx.Dispatch(t, DispatchCall{
 				Call:                 call,
 				CompletionText:       completion.Text,
-				ProposedSoFar:        result.Actions,
+				ProposedSoFar:        unwithdrawn(result.Actions),
 				Ordinal:              t.counts.next(call),
 				AfterExternalContent: t.external,
 				Taint:                result.Taint,
@@ -582,6 +597,7 @@ func (s *Service) recordToolResult(
 	}
 	if outcome.action != nil {
 		result.Actions = append(result.Actions, *outcome.action)
+		t.offerWithdrawal(outcome.action)
 	}
 	outcome = fx.Observe(t, &call, outcome.exported()).internal()
 	s.countToolOutcome(fx, call.Name, &outcome)

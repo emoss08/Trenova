@@ -20,6 +20,8 @@ type geofenceCircle struct {
 	Latitude         float64
 	Longitude        float64
 	RadiusMeters     float64
+	Vertices         []geofenceVertex
+	Geofence         map[string]any
 }
 
 type geofenceTransition struct {
@@ -27,51 +29,6 @@ type geofenceTransition struct {
 	At        time.Time
 	VehicleID string
 	Circle    geofenceCircle
-}
-
-func (l *LiveSimulator) loadGeofenceCircles() []geofenceCircle {
-	addresses, err := l.store.List(ResourceAddresses)
-	if err != nil {
-		return []geofenceCircle{}
-	}
-
-	out := make([]geofenceCircle, 0, len(addresses))
-	for _, address := range addresses {
-		geofence, ok := anyAsMap(address["geofence"])
-		if !ok {
-			continue
-		}
-		circle, ok := anyAsMap(geofence["circle"])
-		if !ok {
-			continue
-		}
-
-		latitude := floatFromAny(circle["latitude"])
-		longitude := floatFromAny(circle["longitude"])
-		radius := floatFromAny(circle["radiusMeters"])
-		if radius <= 0 || !isReasonableCoordinate(latitude, longitude) {
-			continue
-		}
-
-		externalIDs := map[string]any{}
-		if rawExternalIDs, okIDs := anyAsMap(address["externalIds"]); okIDs {
-			externalIDs = cloneMap(rawExternalIDs)
-		}
-		out = append(out, geofenceCircle{
-			AddressID:        recordID(address),
-			Name:             stringValue(address, "name"),
-			FormattedAddress: stringValue(address, "formattedAddress"),
-			ExternalIDs:      externalIDs,
-			Latitude:         latitude,
-			Longitude:        longitude,
-			RadiusMeters:     radius,
-		})
-	}
-
-	sort.Slice(out, func(i, j int) bool {
-		return out[i].AddressID < out[j].AddressID
-	})
-	return out
 }
 
 func (l *LiveSimulator) GeofenceWebhookEmissions(
@@ -184,12 +141,7 @@ func (l *LiveSimulator) vehicleGeofenceTransitions(
 		)
 		for circleIndex := range circles {
 			circle := &circles[circleIndex]
-			inside := haversineMeters(
-				state.Latitude,
-				state.Longitude,
-				circle.Latitude,
-				circle.Longitude,
-			) <= circle.RadiusMeters
+			inside := circle.contains(state.Latitude, state.Longitude)
 			if timeIndex > 0 && inside != previous[circleIndex] {
 				out = append(out, geofenceTransition{
 					EventType: ternary(inside, geofenceEventEntry, geofenceEventExit),
@@ -241,14 +193,21 @@ func geofenceWebhookData(
 			"name":             circle.Name,
 			"formattedAddress": circle.FormattedAddress,
 			"externalIds":      cloneMap(circle.ExternalIDs),
-			"geofence": map[string]any{
-				"circle": map[string]any{
-					"latitude":     circle.Latitude,
-					"longitude":    circle.Longitude,
-					"radiusMeters": circle.RadiusMeters,
-				},
-			},
+			"geofence":         geofencePayload(circle),
 		},
 		"vehicle": vehicle,
+	}
+}
+
+func geofencePayload(circle *geofenceCircle) map[string]any {
+	if len(circle.Geofence) > 0 {
+		return cloneMap(circle.Geofence)
+	}
+	return map[string]any{
+		fieldCircle: map[string]any{
+			keyLatitude:       circle.Latitude,
+			keyLongitude:      circle.Longitude,
+			fieldRadiusMeters: circle.RadiusMeters,
+		},
 	}
 }

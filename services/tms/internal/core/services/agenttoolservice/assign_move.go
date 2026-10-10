@@ -26,7 +26,9 @@ func newAssignMoveTool(
 func (t *assignMoveTool) Name() string { return "assign_move" }
 
 func (t *assignMoveTool) Prerequisites() []string {
-	return []string{"get_shipment", "rank_move_candidates"}
+	return []string{
+		"get_shipment", "rank_move_candidates", "search_worker", "list_tractors", "list_trailers",
+	}
 }
 
 func (t *assignMoveTool) Recipe() []string {
@@ -52,7 +54,7 @@ func (t *assignMoveTool) ParamSchema() map[string]any {
 			"primaryWorkerId": agenttoolschema.RecordIDText(
 				permission.ResourceWorker,
 				"The driver to put on the move, from rank_move_candidates, "+
-					"plan_dispatch or list_workers.",
+					"plan_dispatch, search_worker or list_workers.",
 			),
 			"tractorId": agenttoolschema.RecordIDText(
 				permission.ResourceTractor,

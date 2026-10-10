@@ -1,11 +1,15 @@
 package assets
 
 import (
+	"fmt"
 	"net/url"
 	"time"
 
 	"github.com/emoss08/trenova/shared/samsara/internal/httpx"
+	samsaraspec "github.com/emoss08/trenova/shared/samsara/internal/samsaraspec"
 )
+
+const maxLocationStreamLimit = 512
 
 type ListParams struct {
 	Type               Type
@@ -16,15 +20,16 @@ type ListParams struct {
 	TagIDs             []string
 	ParentTagIDs       []string
 	IDs                []string
+	ExternalIDs        []string
 	AttributeValueIDs  []string
 	Attributes         []string
-	Limit              int
+	IncludeAttributes  bool
 }
 
 //nolint:gocritic // value receiver keeps call sites simple for immutable params.
 func (p ListParams) Validate() error {
-	if p.Limit != 0 && (p.Limit < 1 || p.Limit > 512) {
-		return ErrListLimitInvalid
+	if p.Type != "" && !samsaraspec.ListAssetsParamsType(p.Type).Valid() {
+		return fmt.Errorf("%w: %q", ErrAssetTypeInvalid, p.Type)
 	}
 	return nil
 }
@@ -40,8 +45,9 @@ func (p ListParams) Query() url.Values {
 	httpx.SetStringsCSV(values, "tagIds", p.TagIDs)
 	httpx.SetStringsCSV(values, "parentTagIds", p.ParentTagIDs)
 	httpx.SetStringsCSV(values, "ids", p.IDs)
+	httpx.SetStringsCSV(values, "externalIds", p.ExternalIDs)
 	httpx.SetStringsCSV(values, "attributeValueIds", p.AttributeValueIDs)
-	httpx.SetInt(values, "limit", p.Limit)
+	httpx.SetBool(values, "includeAttributes", p.IncludeAttributes)
 	for _, attr := range p.Attributes {
 		if attr != "" {
 			values.Add("attributes", attr)
@@ -70,8 +76,8 @@ func (p LocationStreamParams) Validate() error {
 	if p.EndTime != nil && p.EndTime.Before(*p.StartTime) {
 		return ErrLocationWindowInvalid
 	}
-	if p.Limit != 0 && (p.Limit < 1 || p.Limit > 512) {
-		return ErrListLimitInvalid
+	if p.Limit != 0 && (p.Limit < 1 || p.Limit > maxLocationStreamLimit) {
+		return ErrLocationStreamLimitInvalid
 	}
 	if p.IncludeHighFrequencyLocations && p.IncludeGeofenceLookup {
 		return ErrHighFrequencyWithGeofence

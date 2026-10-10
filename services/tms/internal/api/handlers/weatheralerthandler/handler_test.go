@@ -22,8 +22,11 @@ type weatherAlertServiceStub struct {
 	detail     *serviceports.WeatherAlertDetail
 }
 
-func (s *weatherAlertServiceStub) PollNWSAlerts(context.Context) error {
-	return nil
+func (s *weatherAlertServiceStub) PollNWSAlerts(
+	context.Context,
+	serviceports.WeatherAlertPollHeartbeat,
+) (*serviceports.PollNWSAlertsResult, error) {
+	return &serviceports.PollNWSAlertsResult{}, nil
 }
 
 func (s *weatherAlertServiceStub) ListWeatherAlertTenants(

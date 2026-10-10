@@ -13,8 +13,8 @@ scenarios:
           maxFailedCalls: 0
           noProposals: true
           facts:
-            - sql: select count(*) from shipments where status = 'InTransit'
-              note: the number of shipments in transit
+            - sql: select count(*) from shipments where status in ('InTransit', 'Delayed')
+              note: the number of shipments rolling (in transit, late ones included)
           rubric: Gives the number and offers the list; does not make up loads.
 
   - name: late-loads-this-morning
@@ -61,10 +61,11 @@ scenarios:
           calls: ["list_shipments|search_shipments|get_dispatch_board"]
           maxFailedCalls: 0
           noProposals: true
-          facts:
-            - sql: >
-                select count(*) from shipments where status in ('New', 'PartiallyAssigned')
-              note: the number of shipments not fully assigned
+          rubric: >
+            Says how many loads still need a driver from a total a tool returned (the board's
+            uncovered moves, or a list's total of shipments not fully assigned), names which
+            measure it is, and lists the most urgent ones. Never counts a list that was cut short
+            and never claims it cannot give a number when the result carried one.
       - say: "ok of those which one picks up first"
         expect:
           maxCalls: 4
@@ -118,6 +119,17 @@ scenarios:
   - name: delivered-and-billed
     description: Two questions in one message, the second depending on the first.
     tags: [billing]
+    setup:
+      - >
+        WITH removed AS (
+          DELETE FROM billing_queue_items AS b USING shipments AS s
+          WHERE b.shipment_id = s.id AND s.pro_number = 'SEED-SHP-005'
+            AND b.status = 'ReadyForReview'
+            AND NOT EXISTS (SELECT 1 FROM invoices AS i WHERE i.billing_queue_item_id = b.id)
+          RETURNING b.shipment_id)
+        UPDATE shipments SET status = 'Completed', billing_transfer_status = NULL,
+          transferred_to_billing_at = NULL, marked_ready_to_bill_at = NULL
+        WHERE id IN (SELECT shipment_id FROM removed) AND status = 'ReadyToInvoice'
     steps:
       - say: "did the acme steel load deliver yet? and if so did we bill it"
         expect:

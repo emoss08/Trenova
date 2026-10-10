@@ -79,11 +79,13 @@ import { Mark } from "../kit/marks";
 import { groupPresets, presetDisplayName } from "./preset-options";
 import { ConfirmDialog } from "../kit/modal";
 import {
+  cachePriceDefault,
   draftTestInput,
   editorProblem,
   editorValuesFromPreset,
   editorValuesFromProvider,
   providerEditorSchema,
+  reportsCacheWrites,
   routingDraft,
   toSaveRequest,
   type KeyRule,
@@ -177,8 +179,7 @@ export function ProviderEditor({
       const result = await schema(draft, context, options);
       const problem = editorProblem(draft, {
         create: target.kind === "create",
-        keyRequired:
-          keyRequired(draft.kind) || Boolean(preset?.requiresApiKey),
+        keyRequired: keyRequired(draft.kind) || Boolean(preset?.requiresApiKey),
         hasStoredKey: target.kind === "edit" && Boolean(target.provider.hasApiKey),
         requiresBaseUrl:
           catalog.kinds.find((entry) => entry.kind === draft.kind)?.requiresBaseUrl ?? false,
@@ -340,6 +341,14 @@ export function ProviderEditor({
     },
     inputCostPerMillion: { label: t("Input price") },
     outputCostPerMillion: { label: t("Output price") },
+    cacheReadCostPerMillion: {
+      label: t("Cache read price"),
+      format: (value) => (value === "" ? t("Default") : `$${String(value)}`),
+    },
+    cacheWriteCostPerMillion: {
+      label: t("Cache write price"),
+      format: (value) => (value === "" ? t("Default") : `$${String(value)}`),
+    },
     description: { label: t("Description") },
     structuredOutputMode: { label: t("Structured output") },
     reasoningEffort: { label: t("Reasoning") },
@@ -381,8 +390,8 @@ export function ProviderEditor({
       warning:
         urlProblem === "private"
           ? t(
-            "This address is on your own network. Turn on Private network so Trenova can reach it.",
-          )
+              "This address is on your own network. Turn on Private network so Trenova can reach it.",
+            )
           : undefined,
       content: (
         <div className={FIELD_STACK}>
@@ -435,8 +444,8 @@ export function ProviderEditor({
             error={
               urlProblem === "private"
                 ? t(
-                  "This address is on your own network. Turn on Private network so Trenova can reach it.",
-                )
+                    "This address is on your own network. Turn on Private network so Trenova can reach it.",
+                  )
                 : urlProblem === "scheme"
                   ? t("Start with http:// or https://")
                   : undefined
@@ -501,40 +510,40 @@ export function ProviderEditor({
     },
     ...(needsKeyField
       ? [
-        {
-          id: "key",
-          label: t("API key"),
-          note: t("The credential Trenova signs each request with."),
-          help: t(
-            "A new key takes effect when you save. Keep the old one working for a day if other systems still use it.",
-          ),
-          keys: ["apiKey", "keepPreviousKey"],
-          content: (
-            <div className={FIELD_STACK}>
-              {saved?.apiKey && values.apiKey === "" && <StoredKey info={saved.apiKey} />}
-              <InputField<ProviderEditorValues>
-                control={form.control}
-                name="apiKey"
-                rules={keyMandatory && !hasStoredKey ? { required: true } : undefined}
-                type="password"
-                autoComplete="new-password"
-                label={hasStoredKey ? t("Replace key") : t("Key")}
-                description={t("Stored encrypted and never shown again.")}
-                placeholder={keyPlaceholder(values.kind, values.baseUrl) ?? t("API key")}
-                inputClassProps={cn(aicFieldTrigger, "font-mono")}
-              />
-              {hasStoredKey && values.apiKey !== "" && (
-                <SwitchRow<ProviderEditorValues>
+          {
+            id: "key",
+            label: t("API key"),
+            note: t("The credential Trenova signs each request with."),
+            help: t(
+              "A new key takes effect when you save. Keep the old one working for a day if other systems still use it.",
+            ),
+            keys: ["apiKey", "keepPreviousKey"],
+            content: (
+              <div className={FIELD_STACK}>
+                {saved?.apiKey && values.apiKey === "" && <StoredKey info={saved.apiKey} />}
+                <InputField<ProviderEditorValues>
                   control={form.control}
-                  name="keepPreviousKey"
-                  label={t("Keep the old key working for 24 hours")}
-                  note={t("So nothing fails while other systems switch over.")}
+                  name="apiKey"
+                  rules={keyMandatory && !hasStoredKey ? { required: true } : undefined}
+                  type="password"
+                  autoComplete="new-password"
+                  label={hasStoredKey ? t("Replace key") : t("Key")}
+                  description={t("Stored encrypted and never shown again.")}
+                  placeholder={keyPlaceholder(values.kind, values.baseUrl) ?? t("API key")}
+                  inputClassProps={cn(aicFieldTrigger, "font-mono")}
                 />
-              )}
-            </div>
-          ),
-        } satisfies EditSection,
-      ]
+                {hasStoredKey && values.apiKey !== "" && (
+                  <SwitchRow<ProviderEditorValues>
+                    control={form.control}
+                    name="keepPreviousKey"
+                    label={t("Keep the old key working for 24 hours")}
+                    note={t("So nothing fails while other systems switch over.")}
+                  />
+                )}
+              </div>
+            ),
+          } satisfies EditSection,
+        ]
       : []),
     {
       id: "tasks",
@@ -612,6 +621,8 @@ export function ProviderEditor({
         "onCap",
         "inputCostPerMillion",
         "outputCostPerMillion",
+        "cacheReadCostPerMillion",
+        "cacheWriteCostPerMillion",
       ],
       content: (
         <FormGroup cols={1}>
@@ -699,6 +710,42 @@ export function ProviderEditor({
               layout="inline"
             />
           </FormControl>
+          <FormControl className="min-h-2">
+            <InputField<ProviderEditorValues>
+              control={form.control}
+              name="cacheReadCostPerMillion"
+              inputMode="decimal"
+              label={t("Cache read price")}
+              description={t(
+                "Per million prompt tokens served from the cache. Empty charges a tenth of the input price.",
+              )}
+              leftElement={DOLLAR}
+              placeholder={
+                cachePriceDefault(values.kind, values.inputCostPerMillion, "read") || "—"
+              }
+              inputClassProps={aicFieldTrigger}
+              layout="inline"
+            />
+          </FormControl>
+          {reportsCacheWrites(values.kind) && (
+            <FormControl className="min-h-2">
+              <InputField<ProviderEditorValues>
+                control={form.control}
+                name="cacheWriteCostPerMillion"
+                inputMode="decimal"
+                label={t("Cache write price")}
+                description={t(
+                  "Per million prompt tokens written to the cache. Empty charges 1.25 times the input price.",
+                )}
+                leftElement={DOLLAR}
+                placeholder={
+                  cachePriceDefault(values.kind, values.inputCostPerMillion, "write") || "—"
+                }
+                inputClassProps={aicFieldTrigger}
+                layout="inline"
+              />
+            </FormControl>
+          )}
         </FormGroup>
       ),
     },
@@ -723,34 +770,34 @@ export function ProviderEditor({
     },
     ...(saved && canDelete
       ? [
-        {
-          id: "danger",
-          label: t("Remove"),
-          note: t("Take it out of the chain once nothing should use it."),
-          content: (
-            <div className="border-danger-border flex items-center justify-between gap-4 rounded-lg border px-3 py-2.5">
-              <div className="flex flex-col gap-0.5">
-                <b className="text-base font-medium">{t("Remove {0}", saved.name)}</b>
-                <span className="text-muted-foreground text-sm">
-                  {saved.tasks.length === 0
-                    ? t("It handles no tasks.")
-                    : saved.tasks.length === 1
-                      ? t("Its 1 task falls to the next provider in line.")
-                      : t("Its {0} tasks fall to the next provider in line.", saved.tasks.length)}
-                </span>
+          {
+            id: "danger",
+            label: t("Remove"),
+            note: t("Take it out of the chain once nothing should use it."),
+            content: (
+              <div className="border-danger-border flex items-center justify-between gap-4 rounded-lg border px-3 py-2.5">
+                <div className="flex flex-col gap-0.5">
+                  <b className="text-base font-medium">{t("Remove {0}", saved.name)}</b>
+                  <span className="text-muted-foreground text-sm">
+                    {saved.tasks.length === 0
+                      ? t("It handles no tasks.")
+                      : saved.tasks.length === 1
+                        ? t("Its 1 task falls to the next provider in line.")
+                        : t("Its {0} tasks fall to the next provider in line.", saved.tasks.length)}
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => setRemoving(true)}
+                >
+                  {t("Remove provider")}
+                </Button>
               </div>
-              <Button
-                type="button"
-                size="sm"
-                variant="destructive"
-                onClick={() => setRemoving(true)}
-              >
-                {t("Remove provider")}
-              </Button>
-            </div>
-          ),
-        } satisfies EditSection,
-      ]
+            ),
+          } satisfies EditSection,
+        ]
       : []),
   ];
 
@@ -838,9 +885,7 @@ export function ProviderEditor({
     </div>
   );
 
-  const markIcon = (
-    <Mark provider={mark} preset={preset} s={28} />
-  );
+  const markIcon = <Mark provider={mark} preset={preset} s={28} />;
   const closeOnDismiss = (next: boolean) => {
     if (!next) onClose();
   };
@@ -1190,43 +1235,43 @@ function ModelPicker({ list, model, onPick, local }: ModelPickerProps) {
         maskVariant="background"
       >
         <div className="flex flex-col" role="radiogroup" aria-label={t("Model")}>
-        {unlisted && (
-          <button type="button" role="radio" aria-checked className={MODEL_ROW}>
-            <span className={MODEL_DOT} />
-            <span className="flex min-w-0 flex-col">
-              <b className="truncate font-mono text-sm font-medium">{current}</b>
-              <span className="text-muted-foreground text-xs">
-                {t("Not listed by the endpoint")}
+          {unlisted && (
+            <button type="button" role="radio" aria-checked className={MODEL_ROW}>
+              <span className={MODEL_DOT} />
+              <span className="flex min-w-0 flex-col">
+                <b className="truncate font-mono text-sm font-medium">{current}</b>
+                <span className="text-muted-foreground text-xs">
+                  {t("Not listed by the endpoint")}
+                </span>
               </span>
-            </span>
-          </button>
-        )}
-        {page.items.map((option) => (
-          <button
-            key={option.id}
-            type="button"
-            role="radio"
-            aria-checked={model === option.id}
-            className={MODEL_ROW}
-            onClick={() => onPick(option.id)}
-          >
-            <span className={MODEL_DOT} />
-            <span className="flex min-w-0 flex-col">
-              <b className="truncate font-mono text-sm font-medium">{option.id}</b>
-              <span className="text-muted-foreground text-xs">{metaOf(option)}</span>
-            </span>
-            {priceOf(option) && (
-              <span className="text-muted-foreground font-mono text-xs">{priceOf(option)}</span>
-            )}
-          </button>
-        ))}
-        {page.total === 0 && (
-          <p className="text-muted-foreground m-0 px-3 py-4.5 text-center text-sm">
-            {search.trim()
-              ? t("No models match “{0}”.", search.trim())
-              : t("No models in this group.")}
-          </p>
-        )}
+            </button>
+          )}
+          {page.items.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              role="radio"
+              aria-checked={model === option.id}
+              className={MODEL_ROW}
+              onClick={() => onPick(option.id)}
+            >
+              <span className={MODEL_DOT} />
+              <span className="flex min-w-0 flex-col">
+                <b className="truncate font-mono text-sm font-medium">{option.id}</b>
+                <span className="text-muted-foreground text-xs">{metaOf(option)}</span>
+              </span>
+              {priceOf(option) && (
+                <span className="text-muted-foreground font-mono text-xs">{priceOf(option)}</span>
+              )}
+            </button>
+          ))}
+          {page.total === 0 && (
+            <p className="text-muted-foreground m-0 px-3 py-4.5 text-center text-sm">
+              {search.trim()
+                ? t("No models match “{0}”.", search.trim())
+                : t("No models in this group.")}
+            </p>
+          )}
         </div>
       </ScrollArea>
       {page.items.some((option) => option.priceSource === "OpenRouter") && (

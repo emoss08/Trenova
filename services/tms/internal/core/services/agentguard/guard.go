@@ -146,6 +146,15 @@ func (s *Service) classifierTimeout() time.Duration {
 	return s.ClassifierTimeout
 }
 
+// classifierHedge is how long the first scope-classification provider has
+// before the next is asked as well. Asked one after another, a first provider
+// that answered in 3.0 s spent the whole budget and the guard let about one
+// question in twenty-five through unclassified; at half the budget the next
+// has the other half, and a provider that answers in time is asked alone.
+func (s *Service) classifierHedge() time.Duration {
+	return s.classifierTimeout() / 2
+}
+
 // Evaluate is the decision described above, timed and filed by the stage that
 // made it, so a slow question says whether the rules or the classifier held it.
 func (s *Service) Evaluate(ctx context.Context, req EvaluateRequest) Decision {

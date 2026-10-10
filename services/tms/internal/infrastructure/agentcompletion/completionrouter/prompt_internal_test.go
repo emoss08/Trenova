@@ -58,3 +58,19 @@ func TestRenderedPromptCarriesTheSchemaOnlyWhenPrompted(t *testing.T) {
 	require.NotNil(t, strict.Temperature)
 	assert.InDelta(t, 0.1, *strict.Temperature, 1e-9)
 }
+
+// A structured request's reasoning override reaches the provider call, so a
+// short-deadline caller can turn thinking off on a provider configured Off;
+// a request without one leaves each provider's own setting alone.
+func TestCallForCarriesTheRequestsReasoningOverride(t *testing.T) {
+	t.Parallel()
+
+	s := newTestService(t)
+	provider := &aiprovider.Provider{StructuredOutputMode: aiprovider.StructuredOutputJSONSchema}
+
+	req := renderedExtractionRequest()
+	req.Reasoning = aiprovider.ReasoningNone
+	assert.Equal(t, aiprovider.ReasoningNone, s.callFor(provider, "", structuredRun(req)).Request.Reasoning)
+
+	assert.Empty(t, s.callFor(provider, "", structuredRun(renderedExtractionRequest())).Request.Reasoning)
+}

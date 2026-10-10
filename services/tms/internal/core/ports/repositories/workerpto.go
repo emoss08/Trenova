@@ -16,6 +16,7 @@ type ListPTORequest struct {
 	Type          string                   `json:"type"`          // Filter by PTO type (Vacation, Sick, etc.)
 	StartDateFrom int64                    `json:"startDateFrom"` // Filter PTO starting from this date
 	StartDateTo   int64                    `json:"startDateTo"`   // Filter PTO starting up to this date
+	Overlapping   bool                     `json:"overlapping"`   // Leave on at any point in the window
 	WorkerID      pulid.ID                 `json:"workerId"`      // Filter by specific worker
 	IncludeWorker bool                     `json:"includeWorker"` // Include worker details in response
 }

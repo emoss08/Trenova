@@ -832,10 +832,8 @@ func (e *engine) GetResourcePermissions(
 		zap.String("resource", resource),
 	)
 
-	def, ok := e.registry.Get(resource)
-	if !ok {
-		def, ok = e.registry.Get(e.registry.GetEffectiveResource(resource))
-		if !ok {
+	if _, ok := e.registry.Get(resource); !ok {
+		if _, ok = e.registry.Get(e.registry.GetEffectiveResource(resource)); !ok {
 			return nil, nil //nolint:nilnil // this is expected for non-registered resources
 		}
 	}
@@ -866,14 +864,16 @@ func (e *engine) GetResourcePermissions(
 		ops[i] = permission.Operation(op)
 	}
 
-	accessibleFields := e.getAccessibleFields(def, maxSensitivity)
-
+	// No field allowlist: the registry knows only the fields a resource
+	// classifies itself, and every reader treats a non-empty list as the
+	// complete set. Built from the classified fields alone, it withheld every
+	// unclassified one, such as a move's miles, though MaxSensitivity, which
+	// each reader checks first, already allows them.
 	return &services.ResourcePermissionDetail{
-		Resource:         resource,
-		Operations:       ops,
-		DataScope:        permission.DataScope(resourcePerms.DataScope),
-		MaxSensitivity:   maxSensitivity,
-		AccessibleFields: accessibleFields,
+		Resource:       resource,
+		Operations:     ops,
+		DataScope:      permission.DataScope(resourcePerms.DataScope),
+		MaxSensitivity: maxSensitivity,
 	}, nil
 }
 
@@ -1371,18 +1371,4 @@ func (e *engine) computeChecksum(manifest *services.LightPermissionManifest) str
 
 func (e *engine) computeRouteAccess(permissions map[string]uint32) map[string]bool {
 	return e.routeRegistry.ComputeAccess(permissions)
-}
-
-func (e *engine) getAccessibleFields(
-	def *permission.ResourceDefinition,
-	maxSensitivity permission.FieldSensitivity,
-) []string {
-	var fields []string
-	for field, sensitivity := range def.FieldSensitivities {
-		if maxSensitivity.CanAccess(sensitivity) {
-			fields = append(fields, field)
-		}
-	}
-	sort.Strings(fields)
-	return fields
 }

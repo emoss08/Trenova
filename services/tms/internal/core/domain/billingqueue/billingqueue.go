@@ -64,6 +64,7 @@ type BillingQueueItem struct {
 	Version                   int64                `json:"version"                   bun:"version,type:BIGINT,notnull"`
 	CreatedAt                 int64                `json:"createdAt"                 bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                 int64                `json:"updatedAt"                 bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	SearchVector              string               `json:"-"                         bun:"search_vector,type:TSVECTOR,scanonly"`
 
 	Shipment       *shipment.Shipment `json:"shipment,omitempty"       bun:"rel:belongs-to,join:shipment_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 	BillToCustomer *customer.Customer `json:"billToCustomer,omitempty" bun:"rel:belongs-to,join:bill_to_customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`

@@ -2,6 +2,7 @@ package agenttoolservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -28,6 +29,16 @@ type fakeQueue struct {
 	guard   *writeGuard
 	updated *serviceports.UpdateBillingQueueStatusRequest
 	actor   *serviceports.RequestActor
+	unknown map[pulid.ID]bool
+}
+
+func (f *fakeQueue) CheckBiller(_ context.Context, _ pagination.TenantInfo, billerID pulid.ID) error {
+	if f.unknown[billerID] {
+		return errortypes.NewValidationError("billerId", errortypes.ErrInvalid,
+			"Biller user not found in the current tenant")
+	}
+
+	return nil
 }
 
 func (f *fakeQueue) GetByID(
@@ -300,6 +311,30 @@ func TestApproveBillingQueueItem_RefusesAnItemADetentionChargeHolds(t *testing.T
 	requireWarning(t, preview, agent.PreviewWarningWouldFail)
 }
 
+// A flagged check nobody settled holds the item too. Proposing the approval
+// anyway left the person an approval that failed when they made it.
+func TestApproveBillingQueueItem_RefusesAnItemWithAnOpenFlaggedCheck(t *testing.T) {
+	t.Parallel()
+
+	queue, tool := approveFixture(t, &fakeApprovalInvoices{})
+	settled := "accepted"
+	queue.item.Review = &billingqueue.Review{Issues: []*billingqueue.Issue{
+		{Summary: "Fuel surcharge is not in the agreement"},
+		{Summary: "Weight differs from the BOL", ResolutionKey: &settled},
+	}}
+	params := agentParamsFor(map[string]any{paramBillingQueueItemID: queue.item.ID.String()})
+
+	err := tool.Validate(t.Context(), params)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "Fuel surcharge is not in the agreement")
+	assert.NotContains(t, err.Error(), "Weight differs")
+
+	preview := previewWithoutWrites(t, queue.guard, func() (*agent.ToolPreview, error) {
+		return tool.Preview(t.Context(), params)
+	})
+	requireWarning(t, preview, agent.PreviewWarningWouldFail)
+}
+
 // Approval is a person's decision: the agent's own call is refused, and the
 // write runs as the person who approved the proposal, naming the invoice made.
 func TestApproveBillingQueueItem_RunsOnlyFromAPersonsApproval(t *testing.T) {
@@ -416,4 +451,28 @@ func TestBillingDecisions_DeclareWhoMayMakeThem(t *testing.T) {
 	}
 
 	assert.Equal(t, permission.OpAssign, newAssignBillerTool(queue).Policy().Operation)
+}
+
+/*
+A biller id the model made up was proposed, approved by a person, and only
+then refused as not a user in the organization. It is refused before it is
+proposed, with what to send instead.
+*/
+func TestAssignBillingQueueBiller_RefusesABillerWhoIsNotAUser(t *testing.T) {
+	t.Parallel()
+
+	item := reviewedItem(billingqueue.StatusReadyForReview)
+	item.AssignedBillerID = nil
+	invented := pulid.MustNew("usr_")
+	queue := &fakeQueue{item: item, guard: &writeGuard{}, unknown: map[pulid.ID]bool{invented: true}}
+	tool := newAssignBillerTool(queue).(*assignBillerTool)
+	params := executeParams(map[string]any{
+		paramBillingQueueItemID: item.ID.String(),
+		paramBillerID:           invented.String(),
+	})
+
+	err := tool.Validate(t.Context(), params)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "Leave it out to assign the person who asked")
+	assert.Nil(t, queue.item.AssignedBillerID)
 }

@@ -3,12 +3,16 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { useDeskStore } from "@/stores/desk-store";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { groupLineages, lineageContaining } from "../desk-lineage";
 import { changedCells, gridOf } from "../desk-table-body";
 import { DeskWorkspace } from "../desk-workspace";
 
-const state = vi.hoisted(() => ({ artifacts: [] as unknown[] }));
+const state = vi.hoisted(() => ({
+  artifacts: [] as unknown[],
+  lineageReads: [] as string[],
+  lineage: null as null | ((id: string) => Promise<unknown>),
+}));
 
 vi.mock("@/lib/queries", () => ({
   queries: {
@@ -16,10 +20,22 @@ vi.mock("@/lib/queries", () => ({
       artifacts: (threadId: string) => ({
         queryKey: ["assistant-artifacts", threadId],
         queryFn: () => page(),
-      }),
-      artifactLineage: (threadId: string, id: string) => ({
-        queryKey: ["assistant-artifacts", threadId, "lineage", id],
-        queryFn: () => ({ results: [] }),
+        _ctx: {
+          summary: {
+            queryKey: ["assistant-artifacts", threadId, "summary"],
+            queryFn: () => summaryPage(),
+          },
+          lineage: (id: string) => ({
+            queryKey: ["assistant-artifacts", threadId, "lineage", id],
+            queryFn: () => {
+              state.lineageReads.push(id);
+              return state.lineage ? state.lineage(id) : Promise.resolve(lineageOf(id));
+            },
+          }),
+          browse: (filters: unknown) => ({
+            queryKey: ["assistant-artifacts", threadId, "browse", filters],
+          }),
+        },
       }),
       proposals: (threadId: string) => ({
         queryKey: ["assistant", "proposals", threadId],
@@ -39,6 +55,28 @@ function page(needle = "") {
     nextCursor: "",
     counts: { all: results.length, pinned: 0, families: { table: results.length } },
   };
+}
+
+/** The list as the server sends it for the Desk: each payload cut to the keys that name it. */
+function summaryPage() {
+  const full = page();
+  return {
+    ...full,
+    results: full.results.map((item) => ({
+      ...item,
+      payload: Object.fromEntries(
+        Object.entries(item.payload).filter(([key]) => ["tool", "entity", "path"].includes(key)),
+      ),
+    })),
+  };
+}
+
+/** Every version of the lineage an artifact belongs to, with their contents. */
+function lineageOf(id: string) {
+  const all = state.artifacts as AssistantArtifact[];
+  const found = all.find((item) => item.id === id);
+  const root = found ? found.lineageId || found.id : id;
+  return { results: all.filter((item) => (item.lineageId || item.id) === root) };
 }
 
 vi.mock("@/services/api", () => ({
@@ -131,6 +169,11 @@ describe("changedCells", () => {
     expect([...changed][0]).toMatch(/:status$/);
     expect(changedCells(after, null).size).toBe(0);
   });
+});
+
+beforeEach(() => {
+  state.lineageReads = [];
+  state.lineage = null;
 });
 
 function renderWorkspace(onClose = vi.fn(), pendingLookups?: ReadonlySet<string>) {
@@ -238,5 +281,44 @@ describe("DeskWorkspace", () => {
     fireEvent.keyDown(document, { key: "Escape" });
     expect(document.querySelector(".dk-ax-stack.dk-fan")).toBeNull();
     expect(onClose).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * The list the stack is built from names each artifact and nothing more; what
+ * one holds is read when it is shown, so a conversation with many large
+ * tables opens on a list of names rather than all their rows.
+ */
+describe("DeskWorkspace contents", () => {
+  it("reads the contents of the artifact it shows, from its lineage", async () => {
+    state.artifacts = [
+      workers("art_1", "Active"),
+      workers("art_3", "Inactive", { lineageId: "art_1", lineageSeq: 2 }),
+    ];
+    renderWorkspace();
+
+    expect(await screen.findByText("Avery Lane")).toBeInTheDocument();
+    expect(state.lineageReads).toEqual(["art_1"]);
+  });
+
+  it("draws the outline of a table while its rows are read", async () => {
+    state.artifacts = [workers("art_1", "Active")];
+    state.lineage = () => new Promise(() => undefined);
+    renderWorkspace();
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Loading the artifact…");
+    expect(document.querySelector(".dk-skb-tb")).not.toBeNull();
+    expect(screen.queryByText("Avery Lane")).not.toBeInTheDocument();
+  });
+
+  it("offers to read the contents again when they could not be", async () => {
+    state.artifacts = [workers("art_1", "Active")];
+    state.lineage = () => Promise.reject(new Error("offline"));
+    renderWorkspace();
+
+    expect(await screen.findByText("This artifact could not be loaded.")).toBeInTheDocument();
+    state.lineage = null;
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText("Avery Lane")).toBeInTheDocument();
   });
 });

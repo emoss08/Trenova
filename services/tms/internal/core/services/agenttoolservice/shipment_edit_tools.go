@@ -49,8 +49,7 @@ func (t *rescheduleStopTool) Name() string { return "reschedule_stop" }
 
 func (t *rescheduleStopTool) SearchTerms() []string {
 	return []string{
-		"move the appointment", "push the delivery", "change the pickup time", "reschedule",
-		"new appointment", "stop window",
+		"move the appointment", "change the pickup time", "new appointment", "stop window",
 	}
 }
 
@@ -63,11 +62,9 @@ func (t *rescheduleStopTool) Recipe() []string {
 }
 
 func (t *rescheduleStopTool) Description() string {
-	return "Move a saved shipment's pickup or delivery appointment: the stop's scheduled " +
-		"window, in the stop's own local time. Give the new window start; the window end " +
-		"moves with it, keeping its length, unless you give one. Take the stop id from " +
-		"get_shipment. It changes the schedule only; record what actually happened at a stop " +
-		"with record_stop_actual."
+	return "Move a saved shipment's pickup or delivery appointment: the stop's planned " +
+		"window, local to the stop. Give the new window start; the window end moves with " +
+		"it, keeping its length, unless you give one. Take the stop id from get_shipment."
 }
 
 func (t *rescheduleStopTool) ParamSchema() map[string]any {
@@ -79,7 +76,8 @@ func (t *rescheduleStopTool) ParamSchema() map[string]any {
 			"stopId": agenttoolschema.RecordIDText(permission.ResourceShipmentStop,
 				"The stop to reschedule, from the moves' stops in get_shipment."),
 			paramWindowStart: agenttoolschema.LocalDateTime(
-				"When the stop's window now opens, in the stop location's local time."),
+				"When the stop's window now opens, in the stop location's local time. This is " +
+					"the plan; an actual arrival or departure goes to record_stop_actual."),
 			paramWindowEnd: agenttoolschema.LocalDateTime(
 				"When it now closes, in the same local time. Leave it out to keep the " +
 					"window's length."),
@@ -291,8 +289,8 @@ func (t *addShipmentChargeTool) Name() string { return "add_shipment_charge" }
 
 func (t *addShipmentChargeTool) SearchTerms() []string {
 	return []string{
-		"lumper", "add a charge", "accessorial", "layover", "tarp fee", "extra stop charge",
-		"bill the customer for",
+		"lumper", "add a charge", "accessorial", "layover", "tarp fee",
+		"bill an extra charge",
 	}
 }
 
@@ -305,10 +303,10 @@ func (t *addShipmentChargeTool) Recipe() []string {
 }
 
 func (t *addShipmentChargeTool) Description() string {
-	return "Add an accessorial charge to a saved shipment before it is billed: a lumper, " +
-		"layover, tarp, extra stop or any charge from list_accessorial_charges, at the " +
-		"charge's own rate unless you give an amount. Detention is approved through the " +
-		"detention desk instead; a shipment already invoiced is corrected with a credit memo."
+	return "Add an accessorial charge to a saved shipment not yet invoiced, at the charge's " +
+		"own rate unless you give an amount. It takes a lumper, layover, tarp, extra stop or " +
+		"any charge from list_accessorial_charges. An invoiced shipment is corrected with a " +
+		"credit memo."
 }
 
 func (t *addShipmentChargeTool) ParamSchema() map[string]any {
@@ -319,7 +317,8 @@ func (t *addShipmentChargeTool) ParamSchema() map[string]any {
 				"The shipment to charge, from search_shipments or list_shipments."),
 			"accessorialChargeId": agenttoolschema.RecordIDText(
 				permission.ResourceAccessorialCharge,
-				"The charge, from list_accessorial_charges."),
+				"The charge, from list_accessorial_charges. Not detention: a detention "+
+					"charge is approved with approve_detention."),
 			paramUnits: map[string]any{
 				"type": "integer",
 				"description": "How many units: hours, stops, days or pieces for a per-unit " +

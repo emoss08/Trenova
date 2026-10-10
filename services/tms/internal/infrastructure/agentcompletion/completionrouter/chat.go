@@ -107,11 +107,14 @@ func (s *Service) runChat(
 		})
 		started := time.Now()
 		attemptStart := time.Now()
-		result, streamed, attemptErr := s.attemptChat(attemptCtx, provider, req, sink)
+		result, streamed, attemptErr := s.attemptChat(
+			lastCandidate(attemptCtx, idx, len(queue)), provider, req, sink,
+		)
 		elapsed := time.Since(attemptStart)
 		latency := time.Since(started)
 		attemptErr = stopped(ctx, attemptErr)
 		s.observe(ctx, provider, attemptErr)
+		outcome := chatOutcome(provider, result, streamed, attemptErr)
 		s.settleAttempt(attemptCtx, span, &usageAttempt{
 			provider:    provider,
 			task:        aiprovider.TaskAssistantChat,
@@ -121,7 +124,7 @@ func (s *Service) runChat(
 			latency:     latency,
 			firstToken:  streamed.firstToken(started),
 			streamed:    sink != nil,
-			outcome:     chatOutcome(provider, result, streamed, attemptErr),
+			outcome:     outcome,
 			err:         attemptErr,
 			operation:   aitrace.OperationChat,
 			attempt:     idx + 1,
@@ -133,7 +136,7 @@ func (s *Service) runChat(
 			if first := firstOtherThan(failures, provider.ID); first != nil {
 				result.FallbackFrom = first
 			}
-			result.CostUSD = provider.CostFor(result.InputTokens, result.OutputTokens)
+			result.CostUSD = provider.CostFor(outcome.tokenUsage())
 
 			return result, nil
 		}

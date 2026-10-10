@@ -43,14 +43,16 @@ func newApproveWorkerPTOTool(pto ptoApprover) serviceports.AgentTool {
 func (t *approveWorkerPTOTool) Name() string { return "approve_worker_pto" }
 
 func (t *approveWorkerPTOTool) Recipe() []string {
-	return []string{"list_time_off", "get_worker_schedule", "approve_worker_pto"}
+	return []string{"list_time_off", "approve_worker_pto"}
 }
 
 func (t *approveWorkerPTOTool) Description() string {
 	return "Approve a worker's time-off request. Approving books the days against " +
-		"their balance and takes them off the board for those dates, so check what " +
-		"they are covering before you propose it. Only a request that is still " +
-		"awaiting a decision can be approved."
+		"their balance and takes them off the board for those dates. When you hold " +
+		"get_worker_schedule, say what they are covering on those days beside the " +
+		"proposal; when you do not, propose it anyway and say coverage was not checked, " +
+		"since the person approving weighs it. Only a request still awaiting a decision " +
+		"can be approved; for several, propose each."
 }
 
 func (t *approveWorkerPTOTool) SearchTerms() []string {

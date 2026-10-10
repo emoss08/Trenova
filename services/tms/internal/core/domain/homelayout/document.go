@@ -7,17 +7,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-// Mode records where a user's home screen comes from. A user who has never
-// touched the canvas stays on ModePreset, so an administrator's later edits to
-// the assigned preset reach them; the moment they rearrange anything they move
-// to ModeCustom and own their own layout.
-type Mode string
-
-const (
-	ModePreset = Mode("preset")
-	ModeCustom = Mode("custom")
-)
-
 func (m Mode) IsValid() bool {
 	switch m {
 	case ModePreset, ModeCustom:

@@ -113,8 +113,9 @@ func TestDescribeFormulaSchema_ReadsTheCallersTenant(t *testing.T) {
 	result, err := newDescribeFormulaSchemaTool(workbench).Query(t.Context(), params)
 	require.NoError(t, err)
 
-	reference := result.(*formulaassistantservice.Reference)
-	assert.Equal(t, "shipment", reference.SchemaID)
+	view, ok := result.(*formulaSchemaView)
+	require.True(t, ok)
+	assert.Equal(t, "shipment", view.SchemaID)
 	assert.Equal(t, params.OrganizationID, workbench.tenant.OrgID)
 	assert.Equal(t, params.BusinessUnitID, workbench.tenant.BuID)
 }

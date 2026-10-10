@@ -32,32 +32,48 @@ scenarios:
     agent: Master data steward
     tags: [masterdata]
     steps:
-      - say: "new customer Blue Mesa Produce out of Tucson AZ, code BMPR"
+      - say: "new customer Blue Mesa Produce, 2210 E Benson Hwy, Tucson AZ 85706, code BMPR"
         expect:
           calls: ["list_customers"]
           proposals: [{ tool: create_customer, args: { code: BMPR } }]
           maxFailedCalls: 2
 
-  - name: find-a-carrier-for-it
-    description: Nobody in house can take a load, so dispatch looks outside.
-    agent: Dispatch desk
-    tags: [carriers, read]
-    steps:
-      - say: "no drivers for the peak ltl going to chicago, can you shop it to carriers"
-        expect:
-          calls: ["shop_carriers"]
-          maxFailedCalls: 1
-          rubric: >
-            Shops SEED-SHP-002 and lists the carriers it found with what each would cost or why
-            it was ruled out, leaving out Lone Star (inactive) and saying Harbor Point is pending
-            compliance if it appears.
-
   - name: send-a-delivered-load-to-billing
     description: The hand-off from operations to billing, approved.
     agent: Billing exceptions
     tags: [billing]
+    setup:
+      - >
+        WITH removed AS (
+          DELETE FROM billing_queue_items AS b USING shipments AS s, customers AS c
+          WHERE b.shipment_id = s.id AND c.id = s.customer_id AND c.code = 'ACME'
+            AND s.pro_number LIKE 'SEED-%'
+            AND s.pro_number NOT IN ('SEED-DET-001', 'SEED-DET-002')
+            AND b.status = 'ReadyForReview'
+            AND NOT EXISTS (SELECT 1 FROM invoices AS i WHERE i.billing_queue_item_id = b.id)
+          RETURNING b.shipment_id)
+        UPDATE shipments SET status = 'Completed', billing_transfer_status = NULL,
+          transferred_to_billing_at = NULL, marked_ready_to_bill_at = NULL
+        WHERE id IN (SELECT shipment_id FROM removed) AND status = 'ReadyToInvoice'
+      - >
+        DELETE FROM billing_queue_items AS b USING shipments AS s
+        WHERE b.shipment_id = s.id AND s.pro_number IN ('SEED-DET-001', 'SEED-DET-002')
+          AND NOT EXISTS (SELECT 1 FROM invoices AS i WHERE i.billing_queue_item_id = b.id)
+      - >
+        UPDATE shipment_moves AS sm SET status = 'InTransit'
+        FROM shipments AS sp
+        WHERE sm.shipment_id = sp.id AND sp.pro_number IN ('SEED-DET-001', 'SEED-DET-002')
+          AND sm.status <> 'InTransit'
+          AND EXISTS (SELECT 1 FROM stops AS st WHERE st.shipment_move_id = sm.id
+                      AND st.actual_arrival IS NOT NULL AND st.actual_departure IS NULL)
+      - >
+        UPDATE shipments AS sp SET status = 'InTransit', billing_transfer_status = NULL,
+          transferred_to_billing_at = NULL, marked_ready_to_bill_at = NULL
+        WHERE sp.pro_number IN ('SEED-DET-001', 'SEED-DET-002') AND sp.status <> 'InTransit'
+          AND EXISTS (SELECT 1 FROM shipment_moves AS sm
+                      WHERE sm.shipment_id = sp.id AND sm.status = 'InTransit')
     steps:
-      - say: "the acme steel load delivered, send it over to billing"
+      - say: "acme's last delivered load that hasn't gone to billing yet, send it over"
         expect:
           proposals: [{ tool: transfer_to_billing }]
           maxFailedCalls: 1
@@ -72,23 +88,34 @@ scenarios:
     steps:
       - say: "invoice the peak denver to phoenix load"
         expect:
-          proposals: [{ tool: "create_invoice|transfer_to_billing|approve_billing_queue_item" }]
+          noCalls: [create_invoice]
           maxFailedCalls: 1
+          replyIncludes: ["SEED-SHP-009"]
+          facts:
+            - sql: >
+                select case when status = 'Invoiced' then 'invoiced' else pro_number end
+                from shipments where pro_number = 'SEED-SHP-009'
+              note: that it is already invoiced, when an earlier run posted its invoice
           rubric: >
-            Finds SEED-SHP-009 and proposes the step that gets it invoiced from where it stands
-            (Ready to invoice), saying what comes after.
+            Finds SEED-SHP-009 (Peak, Denver to Phoenix) and proposes the step that gets it
+            invoiced from where it stands, saying what comes after: posting the draft an earlier
+            run left (one invoice or the batch twin), or the queue step before it. A posted invoice
+            cannot be reset between runs, so once one is posted the right answer is that it is
+            already invoiced, with nothing proposed that would duplicate it.
 
   - name: request-time-off
     description: Time off asked for on a driver's behalf.
     agent: Workforce coordinator
     tags: [workforce]
     steps:
-      - say: "mike needs next friday off, put it in as vacation"
+      - say: "carlos needs next friday off, put it in as vacation"
         expect:
           calls: ["search_worker|list_workers"]
           proposals: [{ tool: request_worker_pto }]
           maxFailedCalls: 1
-          rubric: Resolves Mike Johnson and next Friday's date, and proposes one day of vacation.
+          rubric: >
+            Resolves Carlos Rivera and next Friday's date, and proposes one day of vacation, or says
+            plainly what time off already covers that day.
 
   - name: approve-pending-time-off
     description: Clearing what is waiting.
@@ -136,7 +163,7 @@ scenarios:
     agent: Compliance desk
     tags: [compliance]
     steps:
-      - say: "jane got her new med card today, good till oct 2028"
+      - say: "jane got her new med card today, good till oct 9 2028"
         expect:
           calls: ["search_worker|list_workers|list_worker_credentials"]
           proposals: [{ tool: "record_worker_credential|update_worker_credential" }]

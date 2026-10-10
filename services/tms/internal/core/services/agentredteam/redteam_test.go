@@ -116,7 +116,7 @@ func TestDecideNamesTaintForEveryWriteThatLeaves(t *testing.T) {
 			OrganizationID: OrganizationID,
 			BusinessUnitID: BusinessUnitID,
 			Actor:          actor,
-			Params:         map[string]any{"messageId": "imsg_01JREDTEAMEMAIL00000000000"},
+			Params:         map[string]any{"messageId": "imsg_01JREDTEAMEMA1100000000000"},
 		}
 		if !policy.Classified(params).Egress.Leaves() {
 			continue

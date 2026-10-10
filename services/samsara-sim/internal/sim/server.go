@@ -10,12 +10,13 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/samsara-sim/internal/config"
@@ -26,19 +27,6 @@ type profileContextKey struct{}
 type tokenPolicy struct {
 	RawToken string
 	ReadOnly bool
-}
-
-type rateLimitBucket struct {
-	WindowStart int64
-	Count       int
-}
-
-type rateLimitDecision struct {
-	Limit      int
-	Remaining  int
-	Reset      int64
-	RetryAfter int
-	Allowed    bool
 }
 
 type Server struct {
@@ -55,10 +43,10 @@ type Server struct {
 	tokenLookup     map[string]struct{}
 	tokenPolicies   map[string]tokenPolicy
 	requestSeq      atomic.Uint64
+	requestSalt     uint64
 	eventMu         sync.Mutex
 	eventSentAt     map[string]time.Time
-	rateLimitMu     sync.Mutex
-	rateLimit       map[string]rateLimitBucket
+	rateLimiter     *rateLimiter
 	webhookInboxMu  sync.Mutex
 	webhookInbox    []Record
 	webhookInboxSeq atomic.Uint64
@@ -66,6 +54,7 @@ type Server struct {
 	dvirWindow      lazyEmissionWindow
 	formWindow      lazyEmissionWindow
 	routeStopWindow lazyEmissionWindow
+	documentWindow  lazyEmissionWindow
 	geofenceEntries atomic.Int64
 	geofenceExits   atomic.Int64
 }
@@ -141,13 +130,17 @@ func NewServer(
 		logger:       serverLogger,
 		mux:          http.NewServeMux(),
 		eventSentAt:  map[string]time.Time{},
-		rateLimit:    map[string]rateLimitBucket{},
+		requestSalt:  uint64(time.Now().UnixNano()),
 		webhookInbox: []Record{},
+	}
+	if cfg.RateLimits.Enabled {
+		srv.rateLimiter = newRateLimiter(cfg.RateLimits.Multiplier, time.Now)
 	}
 	if err := srv.scripts.Reload(); err != nil {
 		srv.logger.Warn("failed to load scenario scripts", slog.String("error", err.Error()))
 	}
 	srv.live.SetScriptEngine(srv.scripts)
+	srv.live.SetClock(srv.clock)
 	if srv.dispatcher != nil {
 		srv.dispatcher.SetClock(srv.clock)
 		srv.dispatcher.SetFaultEngine(srv.faults)
@@ -181,10 +174,15 @@ func (s *Server) registerRoutes() {
 	s.registerAddressRoutes()
 	s.registerAssetRoutes()
 	s.registerDriverRoutes()
+	s.registerAssignmentRoutes()
+	s.registerTagRoutes()
+	s.registerTrailerRoutes()
+	s.registerEquipmentRoutes()
 	s.registerRouteRoutes()
 	s.registerDvirRoutes()
 	s.registerFormRoutes()
 	s.registerMessageRoutes()
+	s.registerDocumentRoutes()
 	s.registerComplianceRoutes()
 	s.registerVehicleRoutes()
 	s.registerWebhookRoutes()
@@ -193,7 +191,12 @@ func (s *Server) registerRoutes() {
 
 func (s *Server) withMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		_, pattern := s.mux.Handler(request)
 		if isPublicPath(request.URL.Path) || isWebhookInboxDelivery(request) {
+			if pattern == "" {
+				s.writeRouteError(writer, request)
+				return
+			}
 			next.ServeHTTP(writer, request)
 			return
 		}
@@ -202,7 +205,12 @@ func (s *Server) withMiddleware(next http.Handler) http.Handler {
 		if !ok {
 			return
 		}
-		if !s.applyRateLimitMiddleware(writer, request, policy.RawToken) {
+		if !isControlPlanePath(request.URL.Path) &&
+			!s.applyRateLimitMiddleware(writer, request, policy.RawToken, pattern) {
+			return
+		}
+		if pattern == "" {
+			s.writeRouteError(writer, request)
 			return
 		}
 		s.serveScenarioRequest(writer, request, next)
@@ -211,6 +219,58 @@ func (s *Server) withMiddleware(next http.Handler) http.Handler {
 
 func isPublicPath(path string) bool {
 	return path == "/_sim/health" || path == "/_sim/map"
+}
+
+func isControlPlanePath(path string) bool {
+	return path == "/_sim" || strings.HasPrefix(path, "/_sim/")
+}
+
+var routeProbeMethods = []string{
+	http.MethodGet,
+	http.MethodHead,
+	http.MethodPost,
+	http.MethodPut,
+	http.MethodPatch,
+	http.MethodDelete,
+	http.MethodOptions,
+}
+
+func (s *Server) allowedMethods(request *http.Request) []string {
+	allowed := make([]string, 0, len(routeProbeMethods))
+	probe := request.WithContext(request.Context())
+	for _, method := range routeProbeMethods {
+		if method == request.Method {
+			continue
+		}
+		probe.Method = method
+		if _, pattern := s.mux.Handler(probe); pattern != "" {
+			allowed = append(allowed, method)
+		}
+	}
+	return allowed
+}
+
+func (s *Server) writeRouteError(writer http.ResponseWriter, request *http.Request) {
+	allowed := s.allowedMethods(request)
+	if len(allowed) == 0 {
+		s.writeAPIError(
+			writer,
+			http.StatusNotFound,
+			fmt.Errorf(
+				"%w: no endpoint matches %s %s",
+				ErrRouteNotFound,
+				request.Method,
+				request.URL.Path,
+			),
+		)
+		return
+	}
+	writer.Header().Set("Allow", strings.Join(allowed, ", "))
+	s.writeAPIError(
+		writer,
+		http.StatusMethodNotAllowed,
+		methodNotAllowedError{Method: request.Method, Path: request.URL.Path},
+	)
 }
 
 func isWebhookInboxDelivery(request *http.Request) bool {
@@ -225,8 +285,12 @@ func (s *Server) authenticateRequest(
 	request *http.Request,
 ) (tokenPolicy, bool) {
 	token, err := parseBearerToken(request.Header.Get("Authorization"))
+	if err != nil {
+		s.writeAPIError(writer, http.StatusUnauthorized, err)
+		return tokenPolicy{}, false
+	}
 	policy, ok := s.tokenPolicyFor(token)
-	if err != nil || !ok {
+	if !ok {
 		s.writeAPIError(writer, http.StatusUnauthorized, ErrUnauthorized)
 		return tokenPolicy{}, false
 	}
@@ -241,17 +305,38 @@ func (s *Server) applyRateLimitMiddleware(
 	writer http.ResponseWriter,
 	request *http.Request,
 	token string,
+	pattern string,
 ) bool {
-	rl := s.evaluateRateLimit(token, request)
-	s.applyRateLimitHeaders(writer, &rl)
-	if rl.Allowed {
+	if s.rateLimiter == nil {
 		return true
 	}
-	if rl.RetryAfter > 0 {
-		writer.Header().Set("Retry-After", strconv.Itoa(rl.RetryAfter))
+
+	endpointKey := ""
+	rule := rateLimitRule{}
+	if pattern != "" {
+		endpointKey = patternRouteKey(pattern, request.Method)
+		rule = endpointRateLimitRule(endpointKey, request.Method)
 	}
-	s.writeAPIError(writer, http.StatusTooManyRequests, ErrRateLimitExceeded)
+	decision := s.rateLimiter.allow(token, endpointKey, rule)
+	if decision.Allowed {
+		return true
+	}
+
+	writer.Header().Set("Retry-After", formatRetryAfter(decision.RetryAfter))
+	s.writeAPIError(
+		writer,
+		http.StatusTooManyRequests,
+		s.rateLimiter.exceededError(&decision, request.Method, patternPath(pattern)),
+	)
 	return false
+}
+
+func patternPath(pattern string) string {
+	method, path, found := strings.Cut(strings.TrimSpace(pattern), " ")
+	if !found || strings.HasPrefix(method, "/") {
+		return strings.TrimSpace(pattern)
+	}
+	return strings.TrimSpace(path)
 }
 
 func (s *Server) serveScenarioRequest(
@@ -389,62 +474,6 @@ func isSafeHTTPMethod(method string) bool {
 	}
 }
 
-func (s *Server) evaluateRateLimit(token string, request *http.Request) rateLimitDecision {
-	const windowSeconds = int64(60)
-	limit := 180
-	if !isSafeHTTPMethod(request.Method) {
-		limit = 60
-	}
-
-	now := time.Now().UTC().Unix()
-	windowStart := (now / windowSeconds) * windowSeconds
-	windowReset := windowStart + windowSeconds
-	bucketKey := strings.TrimSpace(token) +
-		"|" + strings.ToUpper(strings.TrimSpace(request.Method))
-
-	s.rateLimitMu.Lock()
-	defer s.rateLimitMu.Unlock()
-
-	bucket := s.rateLimit[bucketKey]
-	if bucket.WindowStart != windowStart {
-		bucket = rateLimitBucket{
-			WindowStart: windowStart,
-			Count:       0,
-		}
-	}
-	bucket.Count++
-	s.rateLimit[bucketKey] = bucket
-
-	remaining := limit - bucket.Count
-	allowed := bucket.Count <= limit
-	if remaining < 0 {
-		remaining = 0
-	}
-	retryAfter := 0
-	if !allowed {
-		retryAfter = int(windowReset - now)
-		if retryAfter < 1 {
-			retryAfter = 1
-		}
-	}
-	return rateLimitDecision{
-		Limit:      limit,
-		Remaining:  remaining,
-		Reset:      windowReset,
-		RetryAfter: retryAfter,
-		Allowed:    allowed,
-	}
-}
-
-func (s *Server) applyRateLimitHeaders(writer http.ResponseWriter, decision *rateLimitDecision) {
-	if decision == nil {
-		return
-	}
-	writer.Header().Set("X-RateLimit-Limit", strconv.Itoa(decision.Limit))
-	writer.Header().Set("X-RateLimit-Remaining", strconv.Itoa(decision.Remaining))
-	writer.Header().Set("X-RateLimit-Reset", strconv.FormatInt(decision.Reset, 10))
-}
-
 func (s *Server) profileFromContext(ctx context.Context) string {
 	rawProfile := ctx.Value(profileContextKey{})
 	profile, ok := rawProfile.(string)
@@ -575,50 +604,15 @@ func (s *Server) clearWebhookInbox() {
 }
 
 func (s *Server) writeAPIError(writer http.ResponseWriter, status int, err error) {
-	requestID := s.nextRequestID()
-	body := map[string]any{
-		"message":   err.Error(),
-		"requestId": requestID,
-		"code":      apiErrorCode(err),
+	body := apiErrorBody{
+		Message:   apiErrorMessage(err),
+		RequestID: s.nextRequestID(),
 	}
 	if encodeErr := writeJSON(writer, status, body); encodeErr != nil {
 		s.logger.Error(
 			"failed to write API error response",
 			slog.String("error", encodeErr.Error()),
 		)
-	}
-}
-
-func apiErrorCode(err error) string {
-	switch {
-	case errors.Is(err, ErrUnauthorized), errors.Is(err, ErrInvalidAuthorization):
-		return "UNAUTHORIZED"
-	case errors.Is(err, ErrForbidden):
-		return "FORBIDDEN"
-	case errors.Is(err, ErrRateLimitExceeded):
-		return "RATE_LIMIT_EXCEEDED"
-	case errors.Is(err, ErrRecordNotFound):
-		return "NOT_FOUND"
-	case errors.Is(err, ErrRecordConflict):
-		return "CONFLICT"
-	case errors.Is(err, ErrLimitInvalid):
-		return "INVALID_LIMIT"
-	case errors.Is(err, ErrCursorInvalid):
-		return "INVALID_CURSOR"
-	case errors.Is(err, ErrSortOrderInvalid):
-		return "INVALID_SORT_ORDER"
-	case errors.Is(err, ErrSortByInvalid):
-		return "INVALID_SORT_BY"
-	case errors.Is(err, ErrInvalidBody):
-		return "INVALID_BODY"
-	case errors.Is(err, ErrStatTypesRequired):
-		return "TYPES_REQUIRED"
-	case errors.Is(err, ErrStatTypeInvalid):
-		return "INVALID_TYPES"
-	case errors.Is(err, ErrTimeRangeRequired):
-		return "TIME_RANGE_REQUIRED"
-	default:
-		return "ERROR"
 	}
 }
 
@@ -665,6 +659,11 @@ func (s *Server) applyEndpointFaultPre(
 		return true
 	}
 
+	if rule.Effect.StatusCode == http.StatusTooManyRequests {
+		s.writeInjectedRateLimit(writer, request)
+		return true
+	}
+
 	if rule.Effect.StatusCode != 0 {
 		s.writeAPIError(
 			writer,
@@ -677,9 +676,71 @@ func (s *Server) applyEndpointFaultPre(
 	return false
 }
 
+func (s *Server) writeInjectedRateLimit(writer http.ResponseWriter, request *http.Request) {
+	_, pattern := s.mux.Handler(request)
+	endpointKey := patternRouteKey(pattern, request.Method)
+	rule := endpointRateLimitRule(endpointKey, request.Method)
+	limiter := s.rateLimiter
+	if limiter == nil {
+		limiter = newRateLimiter(s.cfg.RateLimits.Multiplier, time.Now)
+	}
+	requests := limiter.effectiveRequests(rule)
+	decision := rateLimitDecision{
+		RetryAfter: time.Duration(float64(rule.Per) / requests),
+		Scope:      rateLimitScopeEndpoint,
+		Rule:       rule,
+	}
+	writer.Header().Set("Retry-After", formatRetryAfter(decision.RetryAfter))
+	s.writeAPIError(
+		writer,
+		http.StatusTooManyRequests,
+		limiter.exceededError(&decision, request.Method, patternPath(pattern)),
+	)
+}
+
+type methodNotAllowedError struct {
+	Method string
+	Path   string
+}
+
+func (e methodNotAllowedError) Error() string {
+	return e.Method + " not allowed on " + e.Path
+}
+
+func (e methodNotAllowedError) Unwrap() error {
+	return ErrMethodNotAllowed
+}
+
+func apiErrorMessage(err error) string {
+	message := strings.TrimSpace(err.Error())
+	if message == "" {
+		return "An error has occurred."
+	}
+	first, size := utf8.DecodeRuneInString(message)
+	message = string(unicode.ToUpper(first)) + message[size:]
+	switch message[len(message)-1] {
+	case '.', '!', '?':
+		return message
+	default:
+		return message + "."
+	}
+}
+
+type apiErrorBody struct {
+	Message   string `json:"message"`
+	RequestID string `json:"requestId"`
+}
+
 func (s *Server) nextRequestID() string {
-	next := s.requestSeq.Add(1)
-	return fmt.Sprintf("sim-%08d", next)
+	mixed := splitMix64(s.requestSalt + s.requestSeq.Add(1))
+	return fmt.Sprintf("%08x", uint32(mixed>>32))
+}
+
+func splitMix64(value uint64) uint64 {
+	value += 0x9e3779b97f4a7c15
+	value = (value ^ (value >> 30)) * 0xbf58476d1ce4e5b9
+	value = (value ^ (value >> 27)) * 0x94d049bb133111eb
+	return value ^ (value >> 31)
 }
 
 func writeJSON(writer http.ResponseWriter, status int, payload any) error {
@@ -802,133 +863,6 @@ func parseLimit(values url.Values, maxValue int) int {
 	return limit
 }
 
-func parseLimitStrict(values url.Values, maxValue int) (int, error) {
-	rawLimit := strings.TrimSpace(values.Get("limit"))
-	if rawLimit == "" {
-		return maxValue, nil
-	}
-
-	limit, err := strconv.Atoi(rawLimit)
-	if err != nil || limit <= 0 || limit > maxValue {
-		return 0, ErrLimitInvalid
-	}
-	return limit, nil
-}
-
-func paginate(
-	records []Record,
-	values url.Values,
-	maxLimit int,
-) (page []Record, pagination map[string]any, err error) {
-	limit, err := parseLimitStrict(values, maxLimit)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	workingSet := cloneRecords(records)
-	sortBy := strings.TrimSpace(values.Get("sortBy"))
-	if sortBy != "" {
-		if err = sortRecords(workingSet, sortBy); err != nil {
-			return nil, nil, err
-		}
-	}
-	sortOrder, err := parseSortOrder(values)
-	if err != nil {
-		return nil, nil, err
-	}
-	if sortOrder == "desc" {
-		reverseRecords(workingSet)
-	}
-
-	start := 0
-	after := strings.TrimSpace(values.Get("after"))
-	if after != "" {
-		found := false
-		for idx, record := range workingSet {
-			if recordCursor(record) == after {
-				start = idx + 1
-				found = true
-				break
-			}
-		}
-		if !found {
-			return nil, nil, ErrCursorInvalid
-		}
-	}
-
-	if start >= len(workingSet) {
-		return []Record{}, map[string]any{
-			"endCursor":   "",
-			"hasNextPage": false,
-		}, nil
-	}
-
-	end := start + limit
-	if end > len(workingSet) {
-		end = len(workingSet)
-	}
-
-	page = cloneRecords(workingSet[start:end])
-	hasNext := end < len(workingSet)
-	endCursor := ""
-	if len(page) > 0 {
-		endCursor = recordCursor(page[len(page)-1])
-	}
-
-	return page, map[string]any{
-		"endCursor":   endCursor,
-		"hasNextPage": hasNext,
-	}, nil
-}
-
-func parseSortOrder(values url.Values) (string, error) {
-	rawOrder := strings.ToLower(strings.TrimSpace(values.Get("sortOrder")))
-	if rawOrder == "" {
-		return "asc", nil
-	}
-	switch rawOrder {
-	case "asc", "desc":
-		return rawOrder, nil
-	default:
-		return "", ErrSortOrderInvalid
-	}
-}
-
-func sortRecords(records []Record, sortBy string) error {
-	normalized := strings.ToLower(strings.TrimSpace(sortBy))
-	var selector func(record Record) string
-	switch normalized {
-	case "id":
-		selector = recordID
-	case "name":
-		selector = func(record Record) string { return stringValue(record, "name") }
-	case "status":
-		selector = func(record Record) string { return stringValue(record, "status") }
-	case "happenedattime":
-		selector = func(record Record) string { return stringValue(record, "happenedAtTime") }
-	case "logstarttime":
-		selector = func(record Record) string { return stringValue(record, "logStartTime") }
-	default:
-		return ErrSortByInvalid
-	}
-
-	sort.Slice(records, func(i, j int) bool {
-		left := selector(records[i])
-		right := selector(records[j])
-		if left == right {
-			return recordCursor(records[i]) < recordCursor(records[j])
-		}
-		return left < right
-	})
-	return nil
-}
-
-func reverseRecords(records []Record) {
-	for left, right := 0, len(records)-1; left < right; left, right = left+1, right-1 {
-		records[left], records[right] = records[right], records[left]
-	}
-}
-
 func filterByIDs(records []Record, ids []string) []Record {
 	if len(ids) == 0 {
 		return cloneRecords(records)
@@ -1008,67 +942,12 @@ func anyAsMap(raw any) (map[string]any, bool) {
 	}
 }
 
-func recordCursor(record Record) string {
-	if id := recordID(record); id != "" {
-		return id
-	}
-
-	happenedAt := stringValue(record, "happenedAtTime")
-	if happenedAt != "" {
-		assetID := nestedString(record, "asset", "id")
-		if assetID != "" {
-			return assetID + "@" + happenedAt
-		}
-		return happenedAt
-	}
-
-	logStart := stringValue(record, "logStartTime")
-	if logStart != "" {
-		driverID := nestedString(record, "driver", "id")
-		if driverID != "" {
-			return driverID + "@" + logStart
-		}
-		return logStart
-	}
-
-	startTime := stringValue(record, "startTime")
-	if startTime != "" {
-		driverID := nestedString(record, "driver", "id")
-		if driverID != "" {
-			return driverID + "@" + startTime
-		}
-		return startTime
-	}
-
-	return ""
-}
-
 func recordsAsAny(records []Record) []any {
 	data := make([]any, 0, len(records))
 	for _, record := range records {
 		data = append(data, cloneRecord(record))
 	}
 	return data
-}
-
-func numbersAsInt64(raw any) []int64 {
-	switch typed := raw.(type) {
-	case []any:
-		values := make([]int64, 0, len(typed))
-		for _, item := range typed {
-			switch cast := item.(type) {
-			case float64:
-				values = append(values, int64(cast))
-			case int64:
-				values = append(values, cast)
-			}
-		}
-		return values
-	case []int64:
-		return append([]int64{}, typed...)
-	default:
-		return []int64{}
-	}
 }
 
 type truncatingResponseWriter struct {

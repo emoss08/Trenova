@@ -7,29 +7,67 @@ scenarios:
       A whole load entered from one message, the way it comes off a phone call: customer by
       nickname, places by what dispatch calls them, dates relative to today.
     agent: Shipment Assistant
+    exclusive: acme-shipments
     steps:
       - say: >
           new load for acme, pick up at the LA terminal tomorrow 8am, deliver to the chicago DC
-          friday by noon, 40k lbs dry van
+          four days later by noon, 40k lbs dry van
         expect:
           proposals: [{ tool: create_shipment }]
           maxFailedCalls: 2
           noRecordIds: true
           rubric: >
             Resolves Acme Manufacturing, TERM-LA and DC-CHI, sets a pickup tomorrow 08:00 and a
-            delivery Friday by 12:00 in each stop's own zone, 40,000 lb, dry van, and asks only
-            for what it truly cannot work out (such as a missing rating method) instead of
-            guessing.
+            delivery four days after pickup by 12:00 in each stop's own zone, 40,000 lb, dry van,
+            priced off Acme's rate agreement without asking about rating, and asks only for what
+            it truly cannot work out instead of guessing.
       - decide: approve
         expect:
           executed: true
           rubric: Reports the new shipment's pro number.
 
+  - name: load-with-no-price-and-no-contract
+    description: >
+      Plenty of loads have no contract: a spot load for a customer without an agreement is priced
+      by the person, as the shipment form's rating method, base rate and charges are. Given no
+      price, the agent asks for one and offers something to react to, then enters the load at the
+      price the person gives.
+    agent: Bench · Operations
+    steps:
+      - say: >
+          new load for peak distributing, dallas warehouse to the denver drop point, pick up
+          tomorrow 7am, deliver the day after by 3pm, 28k lbs dry van
+        expect:
+          noProposals: true
+          maxFailedCalls: 2
+          rubric: >
+            Says Peak Distributing has no rate agreement for the lane and asks for the price,
+            offering a figure or a way to price it (a quote, a per-mile or flat rate) rather than
+            listing rating methods for the person to pick from. Does not invent a price.
+      - say: "make it 2450 flat plus a 75 dollar lumper"
+        expect:
+          proposals: [{ tool: create_shipment }]
+          maxFailedCalls: 1
+          rubric: >
+            Proposes the load on the Flat Rate method with a 2,450 base rate and a lumper
+            accessorial charge of 75, without asking again.
+
   - name: duplicate-a-load-for-next-week
     description: Repeat freight is copied, not re-entered.
     agent: Dispatch desk
+    exclusive: acme-shipments
+    setup:
+      - >
+        UPDATE shipments SET status = 'New', canceled_at = NULL, canceled_by_id = NULL,
+          cancel_reason = NULL
+        WHERE pro_number = 'SEED-SHP-001' AND status = 'Canceled'
+      - >
+        UPDATE shipment_moves AS sm SET status = 'New'
+        FROM shipments AS sp
+        WHERE sm.shipment_id = sp.id AND sp.pro_number = 'SEED-SHP-001'
+          AND sm.status = 'Canceled'
     steps:
-      - say: "copy SEED-SHP-001 for next week, same everything"
+      - say: "copy SEED-SHP-001 a week later, same everything"
         expect:
           proposals: [{ tool: duplicate_shipment }]
           noCalls: [create_shipment]
@@ -41,6 +79,9 @@ scenarios:
   - name: correct-a-weight
     description: The most ordinary edit, with the number written the way people write it.
     agent: Shipment Assistant
+    exclusive: SEED-SHP-004
+    setup:
+      - UPDATE shipments SET weight = 38000 WHERE pro_number = 'SEED-SHP-004'
     steps:
       - say: "SEED-SHP-004 weight is wrong, it's 38,500 not whatever we have"
         expect:
@@ -74,6 +115,22 @@ scenarios:
     description: Tracking and an on-time judgement in one question.
     agent: Shipment Assistant
     tags: [read, tracking]
+    setup: &seed-shp-008-in-transit
+      - >
+        UPDATE stops AS st SET status = 'New', actual_arrival = NULL, actual_departure = NULL
+        FROM shipment_moves AS sm JOIN shipments AS sp ON sp.id = sm.shipment_id
+        WHERE st.shipment_move_id = sm.id AND sp.pro_number = 'SEED-SHP-008'
+          AND sm.sequence = 1 AND st.sequence = 1
+          AND (st.status <> 'New' OR st.actual_arrival IS NOT NULL
+            OR st.actual_departure IS NOT NULL)
+      - >
+        UPDATE shipment_moves AS sm SET status = 'InTransit'
+        FROM shipments AS sp
+        WHERE sm.shipment_id = sp.id AND sp.pro_number = 'SEED-SHP-008'
+          AND sm.sequence = 1 AND sm.status <> 'InTransit'
+      - >
+        UPDATE shipments SET status = 'InTransit'
+        WHERE pro_number = 'SEED-SHP-008' AND status <> 'InTransit'
     steps:
       - say: "wheres SEED-SHP-008 right now and is it gonna make the delivery appt"
         expect:
@@ -87,8 +144,11 @@ scenarios:
             judge from.
 
   - name: mark-a-move-delivered
-    description: A status change reported from the road.
-    agent: Dispatch desk
+    description: >
+      A status change reported from the road. The Dispatch desk does not hold record_stop_actual
+      (DB-019), so this runs on the bench's Operations agent.
+    agent: Bench · Operations
+    setup: *seed-shp-008-in-transit
     steps:
       - say: "driver on SEED-SHP-008 just delivered in chicago, mark it done"
         expect:

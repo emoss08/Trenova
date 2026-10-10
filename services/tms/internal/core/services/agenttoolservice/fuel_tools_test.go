@@ -3,6 +3,7 @@ package agenttoolservice
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
@@ -572,4 +573,43 @@ func TestFuelIndexPriceTools_OnlyAPersonMovesAPrice(t *testing.T) {
 		assert.Equal(t, agent.TierPropose, policy.MaxTier, policy.Name)
 		assert.Equal(t, permission.ResourceFuelSurchargeProgram, policy.Resource, policy.Name)
 	}
+}
+
+func TestRecordFuelPurchase_WorksOutTheTotalFromTheUnitPrice(t *testing.T) {
+	t.Parallel()
+
+	fuel := &fakeFuel{guard: &writeGuard{}}
+	tool := newRecordFuelPurchaseTool(fuel, fakeJurisdictions{})
+	params := purchaseParams()
+	delete(params, paramTotalAmount)
+	params[paramQuantity] = "112"
+	params[paramUnitPrice] = "3.89"
+
+	_, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), executeParams(params))
+	require.NoError(t, err)
+	require.NotNil(t, fuel.created)
+	assert.Equal(t, int64(43_568), fuel.created.Purchase.TotalAmountMinor)
+
+	delete(params, paramUnitPrice)
+	err = tool.(serviceports.ToolValidator).Validate(t.Context(), executeParams(params))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), paramTotalAmount)
+}
+
+func TestRecordFuelPurchase_RecordsADayAloneAtNoonInTheOrganizationsZone(t *testing.T) {
+	t.Parallel()
+
+	fuel := &fakeFuel{guard: &writeGuard{}}
+	tool := newRecordFuelPurchaseTool(fuel, fakeJurisdictions{})
+	params := purchaseParams()
+	params[paramPurchasedAt] = "2026-10-08"
+	execute := executeParams(params)
+	execute.Timezone = "America/Chicago"
+
+	_, err := tool.(serviceports.ToolResultReporter).ExecuteWithResult(t.Context(), execute)
+	require.NoError(t, err)
+	require.NotNil(t, fuel.created)
+
+	recorded := time.Unix(fuel.created.Purchase.PurchasedAt, 0).In(time.FixedZone("CDT", -5*3600))
+	assert.Equal(t, "2026-10-08 12:00", recorded.Format("2006-01-02 15:04"))
 }

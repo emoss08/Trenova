@@ -1,4 +1,5 @@
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
+import { stubLayout } from "@/test/layout";
 import type { AssistantThread } from "@/types/assistant";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
@@ -54,9 +55,8 @@ function renderRail(props: Partial<DeskRailProps> = {}) {
     onSettings: vi.fn(),
     onTogglePin: vi.fn(),
     onDelete: vi.fn(),
-    onRename: vi.fn(),
   };
-  const view = render(
+  const element = (next: Partial<DeskRailProps>) => (
     <MemoryRouter initialEntries={["/desk"]}>
       <DeskRail
         place="today"
@@ -69,20 +69,30 @@ function renderRail(props: Partial<DeskRailProps> = {}) {
         decisionsCount={0}
         decisionsWaitHere={false}
         {...handlers}
-        {...props}
+        {...next}
       />
-    </MemoryRouter>,
+    </MemoryRouter>
   );
+  const view = render(element(props));
 
-  return { ...view, handlers };
+  return {
+    ...view,
+    handlers,
+    /** Renders the same rail again with new props, as the Desk does on every change. */
+    update: (next: Partial<DeskRailProps>) => view.rerender(element(next)),
+  };
 }
+
+let restoreLayout = () => {};
 
 beforeEach(() => {
   state.live = new Set();
+  restoreLayout = stubLayout(320);
 });
 
 afterEach(() => {
   vi.useRealTimers();
+  restoreLayout();
 });
 
 /**
@@ -158,6 +168,51 @@ describe("DeskRail", () => {
     expect(row?.querySelector(".dk-sb-dot")).not.toHaveClass("dk-s-new");
   });
 
+  // The same rail, drawn again as the person moves: the row must follow the
+  // conversation being opened and then read, not keep the dot it first drew.
+  it("quiets a new reply's dot once its conversation is opened, and after it is read", () => {
+    const unread = thread({
+      id: "new",
+      title: "Unread one",
+      attention: { pendingDecisions: 0, lastTurnFailed: false, unread: true },
+    });
+    const { update } = renderRail({ threads: [unread] });
+    const row = () => screen.getByText("Unread one").closest(".dk-sb-c");
+
+    expect(row()?.querySelector(".dk-sb-dot")).toHaveClass("dk-s-new");
+
+    update({ threads: [unread], place: "thread", activeThreadId: "new" });
+    expect(row()).toHaveClass("dk-on");
+    expect(row()?.querySelector(".dk-sb-dot")).not.toHaveClass("dk-s-new");
+
+    const read = {
+      ...unread,
+      attention: { pendingDecisions: 0, lastTurnFailed: false, unread: false },
+    };
+    update({ threads: [read], place: "today", activeThreadId: null });
+    expect(row()).not.toHaveClass("dk-on");
+    expect(row()?.querySelector(".dk-sb-dot")).not.toHaveClass("dk-s-new");
+  });
+
+  it("marks a reply that arrives later in a conversation already listed", () => {
+    const seen = thread({
+      id: "a",
+      title: "Seen one",
+      attention: { pendingDecisions: 0, lastTurnFailed: false, unread: false },
+    });
+    const { update } = renderRail({ threads: [seen] });
+    const dot = () =>
+      screen.getByText("Seen one").closest(".dk-sb-c")?.querySelector(".dk-sb-dot");
+
+    expect(dot()).not.toHaveClass("dk-s-new");
+    update({
+      threads: [
+        { ...seen, attention: { pendingDecisions: 0, lastTurnFailed: false, unread: true } },
+      ],
+    });
+    expect(dot()).toHaveClass("dk-s-new");
+  });
+
   it("pins in one click and deletes only after asking again", () => {
     vi.useFakeTimers();
     const subject = thread({ id: "a", title: "Blocked invoices" });
@@ -212,31 +267,95 @@ describe("DeskRail", () => {
   });
 });
 
-describe("DeskRail rename", () => {
-  it("renames a conversation in place: double-click, type, Enter", () => {
-    const { handlers } = renderRail({ threads: [thread({ id: "a", title: "Old name" })] });
-    fireEvent.doubleClick(screen.getByText("Old name"));
-    const field = screen.getByRole("textbox", { name: "Conversation name" });
-    fireEvent.change(field, { target: { value: "  New name  " } });
-    fireEvent.keyDown(field, { key: "Enter" });
-    expect(handlers.onRename).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "a" }),
-      "New name",
-    );
-  });
+describe("DeskRail rows", () => {
+  // The name is changed from the top bar; a double-click on the rail is a
+  // second click on the row, not an edit.
+  it("does not turn a row into a field on double-click", () => {
+    renderRail({ threads: [thread({ id: "a", title: "Old name" })] });
 
-  it("leaves the name alone on Escape", () => {
-    const { handlers } = renderRail({ threads: [thread({ id: "a", title: "Same" })] });
-    fireEvent.doubleClick(screen.getByText("Same"));
-    fireEvent.keyDown(screen.getByRole("textbox", { name: "Conversation name" }), {
-      key: "Escape",
-    });
-    expect(handlers.onRename).not.toHaveBeenCalled();
-    expect(screen.getByText("Same")).toBeInTheDocument();
+    fireEvent.doubleClick(screen.getByText("Old name"));
+
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.getByText("Old name")).toBeInTheDocument();
   });
 
   it("says where chats will show up when there are none", () => {
     renderRail();
     expect(screen.getByText(/Your chats will show up here/)).toBeInTheDocument();
+  });
+});
+
+function paging(overrides: Partial<NonNullable<DeskRailProps["paging"]>> = {}) {
+  return {
+    hasMore: true,
+    loadingMore: false,
+    failed: false,
+    loadMore: vi.fn(),
+    ...overrides,
+  };
+}
+
+function many(count: number): AssistantThread[] {
+  return Array.from({ length: count }, (_, index) =>
+    thread({ id: `t${index}`, title: `Conversation ${index}` }),
+  );
+}
+
+/**
+ * Someone who has used the Desk for months has thousands of conversations.
+ * Only the rows near the viewport are mounted, and the next page is read as
+ * the reader nears the place it arrives.
+ */
+describe("DeskRail paging", () => {
+  it("mounts only the conversations near the viewport", () => {
+    renderRail({ threads: many(300) });
+
+    const mounted = document.querySelectorAll(".dk-sb-c");
+    expect(mounted.length).toBeGreaterThan(0);
+    expect(mounted.length).toBeLessThan(40);
+    expect(screen.getByText("Conversation 0")).toBeInTheDocument();
+    expect(screen.queryByText("Conversation 299")).not.toBeInTheDocument();
+  });
+
+  it("asks for the next page when the reader is near where it arrives", () => {
+    const more = paging();
+    renderRail({ threads: many(3), paging: more });
+
+    expect(more.loadMore).toHaveBeenCalled();
+  });
+
+  it("does not ask while the reader is far from the end", () => {
+    const more = paging();
+    renderRail({ threads: many(300), paging: more });
+
+    expect(more.loadMore).not.toHaveBeenCalled();
+  });
+
+  it("does not ask again while a page is loading, and shows that it is", () => {
+    const more = paging({ loadingMore: true });
+    renderRail({ threads: many(3), paging: more });
+
+    expect(more.loadMore).not.toHaveBeenCalled();
+    expect(screen.getByRole("status", { name: "Loading more..." })).toBeInTheDocument();
+  });
+
+  it("does not ask when every conversation has been read", () => {
+    const more = paging({ hasMore: false });
+    renderRail({ threads: many(3), paging: more });
+
+    expect(more.loadMore).not.toHaveBeenCalled();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  // A failed page is not asked for again on every render, which would hammer
+  // a server that is already struggling; the person retries it.
+  it("offers to try again when a page could not be read", () => {
+    const more = paging({ failed: true });
+    renderRail({ threads: many(3), paging: more });
+
+    expect(more.loadMore).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent("Couldn't load more conversations");
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(more.loadMore).toHaveBeenCalledTimes(1);
   });
 });

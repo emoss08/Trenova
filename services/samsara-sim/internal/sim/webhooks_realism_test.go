@@ -41,12 +41,12 @@ func TestDispatcherEmitsDuplicateDeliveriesWithMetadata(t *testing.T) {
 	store := NewStore(&Fixture{
 		Webhooks: []Record{
 			{
-				"id":        "wh-1",
+				"id":        "523918",
 				"name":      "realtime sink",
 				"url":       server.URL,
 				"secretKey": "target-secret",
 				"eventTypes": []any{
-					"VehicleSpeeding",
+					"SpeedingEventStarted",
 				},
 				"simDelivery": map[string]any{
 					"allowDuplicates":      true,
@@ -69,10 +69,10 @@ func TestDispatcherEmitsDuplicateDeliveriesWithMetadata(t *testing.T) {
 	}, store, nil)
 	defer dispatcher.Shutdown()
 
-	if err := dispatcher.Dispatch("default", "VehicleSpeeding", map[string]any{
+	if err := dispatcher.Dispatch("default", "SpeedingEventStarted", map[string]any{
 		"id": "evt-speed-1",
 		"vehicle": map[string]any{
-			"id": "veh-1",
+			"id": testVehicleID,
 		},
 	}); err != nil {
 		t.Fatalf("dispatch webhook: %v", err)

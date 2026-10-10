@@ -79,3 +79,50 @@ func TestSetToolTier_PromotesACoreToolTheAgentDoesNotList(t *testing.T) {
 	})
 	require.Error(t, err, "a selectable tool the agent does not hold still cannot be promoted")
 }
+
+// An agent saved with no tiers holds JSON null, and merging a tier into it with
+// || made an array that broke reading every agent in the organization.
+func TestSetToolTier_MergesIntoAnAgentSavedWithNoTiers(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	registry := seeder.NewRegistry()
+	seeds.Register(registry)
+	engine := seeder.NewEngine(
+		db,
+		registry,
+		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
+	)
+	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
+	require.NoError(t, err)
+
+	var row tierDefinitionRow
+	require.NoError(t, db.NewSelect().
+		Table("agent_definitions").
+		Column("id", "organization_id", "business_unit_id").
+		Limit(1).
+		Scan(ctx, &row))
+	_, err = db.NewUpdate().
+		Table("agent_definitions").
+		Set("tool_tiers = 'null'::jsonb").
+		Where("id = ?", row.ID).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	tenant := pagination.TenantInfo{OrgID: row.OrganizationID, BuID: row.BusinessUnitID}
+	require.NoError(t, repo.SetToolTier(ctx, repositories.SetAgentDefinitionToolTierRequest{
+		ID:         row.ID,
+		TenantInfo: tenant,
+		ToolName:   "remember",
+		Tier:       agent.TierActWithApproval,
+	}))
+
+	definition, err := repo.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+		ID:         row.ID,
+		TenantInfo: tenant,
+	})
+	require.NoError(t, err)
+	require.Equal(t, map[string]agent.AutonomyTier{"remember": agent.TierActWithApproval},
+		definition.ToolTiers)
+}

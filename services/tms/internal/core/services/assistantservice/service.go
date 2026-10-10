@@ -38,6 +38,7 @@ type Params struct {
 	// the record a conversation was opened from.
 	Artifacts repositories.AssistantArtifactRepository `optional:"true"`
 	Subjects  serviceports.AgentSubjectDescriber       `optional:"true"`
+	Anchors   serviceports.RecordAnchorReader          `optional:"true"`
 	Activity  serviceports.AgentActivityPublisher      `optional:"true"`
 	// Documents checks that an attached file is the person's own; Contents
 	// reads what document intelligence made of it.
@@ -108,6 +109,7 @@ type Service struct {
 	labeler       serviceports.RecordLabeler
 	artifacts     repositories.AssistantArtifactRepository
 	subjects      serviceports.AgentSubjectDescriber
+	anchors       serviceports.RecordAnchorReader
 	activity      serviceports.AgentActivityPublisher
 	documents     repositories.DocumentRepository
 	contents      serviceports.DocumentContentService
@@ -148,6 +150,7 @@ func New(p Params) *Service {
 		labeler:       p.Labeler,
 		artifacts:     p.Artifacts,
 		subjects:      p.Subjects,
+		anchors:       p.Anchors,
 		activity:      p.Activity,
 		documents:     p.Documents,
 		contents:      p.Contents,

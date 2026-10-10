@@ -59,6 +59,11 @@ func (s *service) planStopActual(
 	if err != nil {
 		return nil, err
 	}
+	if departure := req.Departure(); departure != nil {
+		if stop, err = applyStopActual(move, departure); err != nil {
+			return nil, err
+		}
+	}
 	plan.stop = stop
 
 	plan.targetStatus = deriveMoveStatusFromStops(move)

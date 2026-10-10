@@ -97,6 +97,12 @@ type DataTableToolbarProps<TData extends Record<string, any>> = {
   onAskApplied?: (composed: ComposedTableQuery) => void;
   addRecordActions?: AddRecordAction[];
   resource?: string;
+  /**
+   * The permission resource presence joins under. DataTable passes its name as
+   * resource, which also titles the "New" button, and "AI Audit Event" is no
+   * resource the server knows.
+   */
+  presenceResource?: string;
   currentConfig: TableConfig;
   onApplyConfig?: (config: TableConfig, source?: TableViewSource) => void;
   activeView?: ActiveTableView | null;
@@ -134,6 +140,7 @@ export function DataTableToolbar<TData extends Record<string, any>>({
   onAskApplied,
   addRecordActions = [],
   resource,
+  presenceResource,
   currentConfig,
   onApplyConfig,
   activeView,
@@ -212,7 +219,7 @@ export function DataTableToolbar<TData extends Record<string, any>>({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          {resource ? <DataTableViewers resource={resource} /> : null}
+          {presenceResource ? <DataTableViewers resource={presenceResource} /> : null}
           {slots?.trailing}
           {showExport && (
             <Tooltip>

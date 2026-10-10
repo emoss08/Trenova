@@ -190,6 +190,9 @@ func (t *listReportsTool) Query(
 	}
 
 	outcome := searchResult(criteria, shown, matched).paged(window, more)
+	if matched == 0 && strings.TrimSpace(query) != "" {
+		outcome.Note = everyReport(query, entries, saved, category)
+	}
 	if more {
 		// The count alone reads as "this is all of them" to a model that has
 		// no other signal, and it will then answer as though the rest do not
@@ -205,6 +208,43 @@ func (t *listReportsTool) Query(
 
 	return outcome, nil
 }
+
+// everyReport answers a search that found nothing with the whole catalog, by
+// name. gpt-6-luna searched four wordings for an on-time report that did not
+// exist before it would say so; the list settles it in one call.
+func everyReport(
+	query string,
+	entries []*canned.Entry,
+	saved []*report.ReportDefinition,
+	category string,
+) string {
+	names := make([]string, 0, len(entries)+len(saved))
+	for _, entry := range entries {
+		if entry != nil && (category == "" || strings.EqualFold(entry.Category, category)) {
+			names = append(names, entry.Name)
+		}
+	}
+	for _, definition := range saved {
+		if definition != nil && (category == "" || strings.EqualFold(definition.Category, category)) {
+			names = append(names, definition.Name)
+		}
+	}
+	if len(names) == 0 {
+		return fmt.Sprintf("No report matches %q, and there are none to list. Offer to build one.",
+			query)
+	}
+	if len(names) > maxReportNamesListed {
+		return fmt.Sprintf("No report's name or description matches %q. There are %d reports; "+
+			"call again with no query to page through them before concluding it does not exist.",
+			query, len(names))
+	}
+
+	return fmt.Sprintf("No report's name or description matches %q. These are every report "+
+		"there is: %s. If none of them is it, say so and offer to build one; other wordings "+
+		"will not find more.", query, strings.Join(names, "; "))
+}
+
+const maxReportNamesListed = 40
 
 // listableDefinitionStatuses are the saved reports worth naming: an active
 // one runs, a draft previews and can be finished. Archived ones and ones

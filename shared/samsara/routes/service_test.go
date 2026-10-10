@@ -3,6 +3,7 @@ package routes
 import (
 	"context"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -22,15 +23,28 @@ func TestListValidation(t *testing.T) {
 		}},
 	)
 
-	_, err := svc.List(t.Context(), ListParams{Limit: 513})
-	require.Error(t, err)
-	assert.ErrorIs(t, err, ErrListLimitInvalid)
-
 	start := time.Date(2026, 3, 1, 12, 0, 0, 0, time.UTC)
-	end := start.Add(-time.Hour)
-	_, err = svc.List(t.Context(), ListParams{StartTime: &start, EndTime: &end})
-	require.Error(t, err)
-	assert.ErrorIs(t, err, ErrListLimitInvalid)
+	end := start.Add(time.Hour)
+
+	_, err := svc.List(t.Context(), ListParams{})
+	require.ErrorIs(t, err, ErrTimeRangeRequired)
+
+	_, err = svc.List(t.Context(), ListParams{StartTime: &start})
+	require.ErrorIs(t, err, ErrTimeRangeRequired)
+
+	_, err = svc.List(t.Context(), ListParams{StartTime: &start, EndTime: &end, Limit: 513})
+	require.ErrorIs(t, err, ErrListLimitInvalid)
+
+	before := start.Add(-time.Hour)
+	_, err = svc.List(t.Context(), ListParams{StartTime: &start, EndTime: &before})
+	require.ErrorIs(t, err, ErrTimeRangeInvalid)
+
+	_, err = svc.List(t.Context(), ListParams{
+		StartTime: &start,
+		EndTime:   &end,
+		Include:   []string{"stops.address"},
+	})
+	require.ErrorIs(t, err, ErrIncludeInvalid)
 }
 
 func TestListAllPaginates(t *testing.T) {
@@ -64,7 +78,9 @@ func TestListAllPaginates(t *testing.T) {
 		}},
 	)
 
-	routes, err := svc.ListAll(t.Context(), ListParams{})
+	start := time.Date(2026, 3, 1, 12, 0, 0, 0, time.UTC)
+	end := start.Add(24 * time.Hour)
+	routes, err := svc.ListAll(t.Context(), ListParams{StartTime: &start, EndTime: &end})
 	require.NoError(t, err)
 	require.Len(t, routes, 2)
 	assert.Equal(t, "r1", routes[0].Id)
@@ -113,9 +129,72 @@ func TestCreateValidation(t *testing.T) {
 		}},
 	)
 
-	_, err := svc.Create(t.Context(), CreateRequest{})
-	require.Error(t, err)
-	assert.ErrorIs(t, err, ErrRouteNameRequired)
+	addressID := "22410013"
+	otherAddressID := "22410014"
+	notes := strings.Repeat("n", 2001)
+	windows := make([]AppointmentWindow, 4)
+	singleUse := &samsaraspec.RoutesSingleUseAddressObjectRequestBody{}
+
+	tests := []struct {
+		name    string
+		req     CreateRequest
+		wantErr error
+	}{
+		{name: "missing name", req: CreateRequest{}, wantErr: ErrRouteNameRequired},
+		{
+			name:    "too few stops",
+			req:     CreateRequest{Name: "Route", Stops: []Stop{{AddressId: &addressID}}},
+			wantErr: ErrRouteStopsTooFew,
+		},
+		{
+			name: "route notes too long",
+			req: CreateRequest{
+				Name:  "Route",
+				Notes: &notes,
+				Stops: []Stop{{AddressId: &addressID}, {AddressId: &otherAddressID}},
+			},
+			wantErr: ErrRouteNotesTooLong,
+		},
+		{
+			name: "stop without location",
+			req: CreateRequest{
+				Name:  "Route",
+				Stops: []Stop{{AddressId: &addressID}, {}},
+			},
+			wantErr: ErrStopLocationRequired,
+		},
+		{
+			name: "stop with both locations",
+			req: CreateRequest{
+				Name: "Route",
+				Stops: []Stop{
+					{AddressId: &addressID},
+					{AddressId: &otherAddressID, SingleUseLocation: singleUse},
+				},
+			},
+			wantErr: ErrStopLocationRequired,
+		},
+		{
+			name: "too many appointment windows",
+			req: CreateRequest{
+				Name: "Route",
+				Stops: []Stop{
+					{AddressId: &addressID},
+					{AddressId: &otherAddressID, AppointmentWindows: &windows},
+				},
+			},
+			wantErr: ErrStopAppointmentsTooMany,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := svc.Create(t.Context(), tt.req)
+			require.ErrorIs(t, err, tt.wantErr)
+		})
+	}
 }
 
 func TestCreatePathAndResponse(t *testing.T) {
@@ -131,7 +210,14 @@ func TestCreatePathAndResponse(t *testing.T) {
 		}},
 	)
 
-	created, err := svc.Create(t.Context(), CreateRequest{Name: "Route A", Stops: []Stop{}})
+	addressID := "22410013"
+	created, err := svc.Create(t.Context(), CreateRequest{
+		Name: "Route A",
+		Stops: []Stop{
+			{AddressId: &addressID},
+			{SingleUseLocation: &samsaraspec.RoutesSingleUseAddressObjectRequestBody{}},
+		},
+	})
 	require.NoError(t, err)
 	assert.Equal(t, "r-new", created.Id)
 }
@@ -148,6 +234,15 @@ func TestUpdateValidation(t *testing.T) {
 	_, err := svc.Update(t.Context(), " ", UpdateRequest{})
 	require.Error(t, err)
 	assert.ErrorIs(t, err, ErrRouteIDRequired)
+
+	existingID := "8818201"
+	stops := []UpdateStop{{Id: &existingID}, {}}
+	_, err = svc.Update(t.Context(), "4291022", UpdateRequest{Stops: &stops})
+	require.ErrorIs(t, err, ErrStopLocationRequired)
+
+	blank := " "
+	_, err = svc.Update(t.Context(), "4291022", UpdateRequest{Name: &blank})
+	require.ErrorIs(t, err, ErrRouteNameRequired)
 }
 
 func TestUpdatePathAndResponse(t *testing.T) {

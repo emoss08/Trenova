@@ -308,12 +308,12 @@ func TestWorkerPTO_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "end date equal to start date fails",
+			name: "a single day off starts and ends on the same date",
 			modify: func(wpto *WorkerPTO) {
 				wpto.StartDate = 1700000000
 				wpto.EndDate = 1700000000
 			},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "missing reason fails",

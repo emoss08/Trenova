@@ -1,6 +1,10 @@
 package aiprovider
 
-import "slices"
+import (
+	"slices"
+
+	"github.com/shopspring/decimal"
+)
 
 // Kind identifies the wire protocol a provider speaks, not the vendor behind it.
 // Modelling the protocol is what makes the long tail reachable: every runtime that
@@ -20,6 +24,39 @@ const (
 	// a `format` object and does real grammar-constrained decoding, so routing it
 	// here buys constrained output instead of a silent downgrade to prompting.
 	KindOllama = Kind("Ollama")
+)
+
+// CachesOutsideInput reports whether the protocol counts cached prompt tokens
+// apart from its input tokens. Anthropic reports cache reads and writes beside
+// input_tokens; the OpenAI protocols count cached tokens inside them.
+func (k Kind) CachesOutsideInput() bool {
+	return k == KindAnthropicMessages
+}
+
+// CacheReadMultiple is the share of the input price a cached prompt token
+// costs when no price was entered for it. Anthropic bills a cache read at a
+// tenth of input; OpenAI's discount runs from half to a tenth by model, and a
+// tenth is its rate for the current models, so an older model's operator
+// enters its own.
+func (k Kind) CacheReadMultiple() decimal.Decimal {
+	return cacheReadMultiple
+}
+
+// CacheWriteMultiple is the multiple of the input price a prompt token written
+// to the cache costs when no price was entered for it: Anthropic bills a
+// five-minute cache write at one and a quarter times input; the other
+// protocols report no writes, and a write they did report is input.
+func (k Kind) CacheWriteMultiple() decimal.Decimal {
+	if k == KindAnthropicMessages {
+		return anthropicCacheWriteMultiple
+	}
+
+	return decimal.NewFromInt(1)
+}
+
+var (
+	cacheReadMultiple           = decimal.RequireFromString("0.1")
+	anthropicCacheWriteMultiple = decimal.RequireFromString("1.25")
 )
 
 func (k Kind) IsValid() bool {

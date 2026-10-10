@@ -31,11 +31,12 @@ func (h *Handler) registerArtifactRoutes(api *gin.RouterGroup, resource string) 
 }
 
 type listArtifactsQuery struct {
-	Limit  int    `form:"limit"`
-	Cursor string `form:"cursor"`
-	Query  string `form:"q"`
-	Kind   string `form:"kind"`
-	Pinned bool   `form:"pinned"`
+	Limit   int    `form:"limit"`
+	Cursor  string `form:"cursor"`
+	Query   string `form:"q"`
+	Kind    string `form:"kind"`
+	Pinned  bool   `form:"pinned"`
+	Summary bool   `form:"summary"`
 }
 
 func (h *Handler) listThreadArtifacts(c *gin.Context) {
@@ -57,6 +58,7 @@ func (h *Handler) listThreadArtifacts(c *gin.Context) {
 		Query:      query.Query,
 		Family:     assistantartifact.Family(query.Kind),
 		PinnedOnly: query.Pinned,
+		Summary:    query.Summary,
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)

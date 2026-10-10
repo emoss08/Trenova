@@ -103,7 +103,7 @@ type AIAuditEvent struct {
 	ReasoningTokens  int              `json:"reasoningTokens"  bun:"reasoning_tokens,type:INTEGER,notnull,default:0"`
 	CacheReadTokens  int              `json:"cacheReadTokens"  bun:"cache_read_tokens,type:INTEGER,notnull,default:0"`
 	CacheWriteTokens int              `json:"cacheWriteTokens" bun:"cache_write_tokens,type:INTEGER,notnull,default:0"`
-	CostUSD          *decimal.Decimal `json:"costUsd"          bun:"cost_usd,type:NUMERIC(14,6),nullzero"`
+	CostUSD          *decimal.Decimal `json:"costUsd"          bun:"cost_usd,type:NUMERIC(14,6)"`
 	LatencyMs        *int64           `json:"latencyMs"        bun:"latency_ms,type:BIGINT,nullzero"`
 
 	ToolName    string   `json:"toolName"    bun:"tool_name,type:VARCHAR(200),nullzero"`

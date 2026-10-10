@@ -19,7 +19,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const clockLineLayout = "2006-01-02 15:04"
+const clockLineLayout = "Monday 2006-01-02 15:04"
 
 // Turn is one turn's working state: what the model is shown, what it may call,
 // and what it has done so far.
@@ -525,10 +525,13 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 	}
 
 	messages, shortened := replayHistory(history, req.Proposals)
-	now := timeutils.NowUnix()
+	now := turnNow(&runtimeContext)
 	input := req.Input
 	if req.Delegation == nil {
 		input = outOfViewDecisions(history, req.Proposals) + input
+		input = agentdefinition.DescribeAnchors(
+			runtimeContext.Anchors, now, runtimeContext.Timezone,
+		) + input
 	}
 	if definition.HasContextProvider(agentdefinition.ContextClock) {
 		input = clockLine(now, runtimeContext.Timezone) + input
@@ -576,6 +579,18 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 
 func (t *Turn) localNow(fx TurnEffects) time.Time {
 	return time.Unix(fx.Now(), 0).In(timeutils.LoadLocation(t.req.Context.Timezone))
+}
+
+// turnNow is the moment the turn's context was built, which is the clock the
+// prompt already reads ("Today is"), so the question's clock line, its records'
+// ages and its taint marks agree with it, and a replay with a fixed clock sends
+// the same request every run.
+func turnNow(rc *agentdefinition.RuntimeContext) int64 {
+	if rc.Now > 0 {
+		return rc.Now
+	}
+
+	return timeutils.NowUnix()
 }
 
 func clockLine(now int64, timezone string) string {

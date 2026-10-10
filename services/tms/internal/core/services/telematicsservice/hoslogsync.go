@@ -2,6 +2,7 @@ package telematicsservice
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -21,13 +22,10 @@ func (s *Service) syncHOSLogs(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	provider services.TelematicsProvider,
+	drivers *sweepDrivers,
 	result *TenantSweepResult,
 ) error {
-	workersByExternalID, err := s.workersByExternalID(ctx, tenantInfo)
-	if err != nil {
-		return err
-	}
-	if len(workersByExternalID) == 0 {
+	if len(drivers.externalIDs) == 0 {
 		return nil
 	}
 
@@ -35,21 +33,26 @@ func (s *Service) syncHOSLogs(
 	windowStart := now - hosLogLookbackSeconds
 	providerType := string(provider.Type())
 
-	workerIDs := make([]pulid.ID, 0, len(workersByExternalID))
-	logs := make([]*telematics.WorkerHOSLog, 0, len(workersByExternalID)*16)
-	failed := 0
-	for externalID, workerID := range workersByExternalID {
-		entries, listErr := provider.ListHOSLogs(ctx, externalID, windowStart, now)
-		if listErr != nil {
-			failed++
-			s.l.Warn("failed to fetch hos logs for worker",
-				zap.String("organizationId", tenantInfo.OrgID.String()),
-				zap.String("workerId", workerID.String()),
-				zap.Error(listErr))
+	logsByDriver, listErr := provider.ListHOSLogs(ctx, drivers.externalIDs, windowStart, now)
+	failedDrivers, ok := partialDriverFailures(listErr)
+	if !ok {
+		s.l.Warn("failed to fetch hos logs for workers",
+			zap.String("organizationId", tenantInfo.OrgID.String()),
+			zap.Int("failed", len(drivers.externalIDs)),
+			zap.Error(listErr))
+		return nil
+	}
+
+	workerIDs := make([]pulid.ID, 0, max(len(drivers.externalIDs)-len(failedDrivers), 0))
+	logs := make([]*telematics.WorkerHOSLog, 0, len(drivers.externalIDs)*16)
+	for _, externalID := range drivers.externalIDs {
+		if _, failed := failedDrivers[externalID]; failed {
 			continue
 		}
 
+		workerID := drivers.workersByExternalID[externalID]
 		workerIDs = append(workerIDs, workerID)
+		entries := logsByDriver[externalID]
 		for i := range entries {
 			entry := &entries[i]
 			if entry.LogStartAt <= 0 {
@@ -70,6 +73,13 @@ func (s *Service) syncHOSLogs(
 		}
 	}
 
+	if len(failedDrivers) > 0 {
+		s.l.Warn("hos log sweep skipped workers after provider errors",
+			zap.String("organizationId", tenantInfo.OrgID.String()),
+			zap.Int("failed", len(failedDrivers)),
+			zap.Error(listErr))
+	}
+
 	if len(workerIDs) == 0 {
 		return nil
 	}
@@ -84,13 +94,18 @@ func (s *Service) syncHOSLogs(
 		return err
 	}
 	result.HOSLogsUpserted = synced
-
-	if failed > 0 {
-		s.l.Warn("hos log sweep skipped workers after provider errors",
-			zap.String("organizationId", tenantInfo.OrgID.String()),
-			zap.Int("failed", failed))
-	}
 	return nil
+}
+
+func partialDriverFailures(err error) (map[string]struct{}, bool) {
+	if err == nil {
+		return nil, true
+	}
+	batchErr, ok := errors.AsType[*services.ProviderDriverBatchError](err)
+	if !ok {
+		return nil, false
+	}
+	return batchErr.FailedDriverSet(), true
 }
 
 // normalizeDutyStatus keeps unknown provider statuses in the timeline as on-duty time

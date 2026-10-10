@@ -1302,9 +1302,14 @@ export const assistantProviderListSchema = z.object({
   results: z.array(assistantProviderOptionSchema).default([]),
 });
 
-export const assistantThreadListSchema = z.object({
+/**
+ * One page of the person's conversations, pinned first and then newest
+ * first. The cursor continues below the page's last row; empty when nothing
+ * follows.
+ */
+export const assistantThreadPageSchema = z.object({
   items: z.array(assistantThreadSchema),
-  total: z.number().default(0),
+  nextCursor: z.string().default(""),
 });
 
 /**
@@ -2038,7 +2043,7 @@ export type ToolSimulation = z.infer<typeof toolSimulationSchema>;
 export type AgentEventDescriptor = z.infer<typeof agentEventDescriptorSchema>;
 export type SaveAgentDefinitionRequest = z.infer<typeof saveAgentDefinitionRequestSchema>;
 export type AssistantThread = z.infer<typeof assistantThreadSchema>;
-export type AssistantThreadList = z.infer<typeof assistantThreadListSchema>;
+export type AssistantThreadPage = z.infer<typeof assistantThreadPageSchema>;
 export type CannotContinueReason = z.infer<typeof cannotContinueReasonSchema>;
 export type ThreadOrigin = z.infer<typeof threadOriginSchema>;
 export type TurnOrigin = z.infer<typeof turnOriginSchema>;

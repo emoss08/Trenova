@@ -7,284 +7,12 @@ import (
 	"time"
 )
 
-func (s *Server) registerAddressRoutes() {
-	s.mux.HandleFunc("GET /addresses", s.handleAddressList)
-	s.mux.HandleFunc("POST /addresses", s.handleAddressCreate)
-	s.mux.HandleFunc("GET /addresses/{id}", s.handleAddressGet)
-	s.mux.HandleFunc("PATCH /addresses/{id}", s.handleAddressPatch)
-	s.mux.HandleFunc("DELETE /addresses/{id}", s.handleAddressDelete)
-}
-
-func (s *Server) registerAssetRoutes() {
-	s.mux.HandleFunc("GET /assets", s.handleAssetList)
-	s.mux.HandleFunc("POST /assets", s.handleAssetCreate)
-	s.mux.HandleFunc("PATCH /assets", s.handleAssetPatch)
-	s.mux.HandleFunc("DELETE /assets", s.handleAssetDelete)
-	s.mux.HandleFunc("GET /assets/location-and-speed/stream", s.handleAssetLocationStream)
-}
-
-func (s *Server) registerDriverRoutes() {
-	s.mux.HandleFunc("GET /fleet/drivers", s.handleDriverList)
-	s.mux.HandleFunc("POST /fleet/drivers", s.handleDriverCreate)
-}
-
 func (s *Server) registerRouteRoutes() {
 	s.mux.HandleFunc("GET /fleet/routes", s.handleRouteList)
 	s.mux.HandleFunc("POST /fleet/routes", s.handleRouteCreate)
 	s.mux.HandleFunc("GET /fleet/routes/{id}", s.handleRouteGet)
 	s.mux.HandleFunc("PATCH /fleet/routes/{id}", s.handleRoutePatch)
 	s.mux.HandleFunc("DELETE /fleet/routes/{id}", s.handleRouteDelete)
-}
-
-func (s *Server) handleAddressList(writer http.ResponseWriter, request *http.Request) {
-	records, err := s.store.List(ResourceAddresses)
-	if err != nil {
-		s.writeAPIError(writer, http.StatusInternalServerError, err)
-		return
-	}
-
-	filtered := filterByIDs(records, idsFromQuery(request.URL.Query(), "ids"))
-	page, pagination, err := paginate(filtered, request.URL.Query(), 512)
-	if err != nil {
-		s.writeAPIError(writer, http.StatusBadRequest, err)
-		return
-	}
-	payload := map[string]any{
-		"data":       recordsAsAny(page),
-		"pagination": pagination,
-	}
-	s.respondJSON(writer, request, requestSignature(request)+"|address-list", payload)
-}
-
-func (s *Server) handleAddressCreate(writer http.ResponseWriter, request *http.Request) {
-	body, err := readRecordBody(request)
-	if err != nil {
-		s.writeAPIError(writer, http.StatusBadRequest, err)
-		return
-	}
-
-	created, err := s.store.Create(ResourceAddresses, body)
-	if err != nil {
-		s.respondStoreError(writer, err)
-		return
-	}
-	s.dispatchEvent(request, "AddressCreated", created)
-
-	payload := map[string]any{"data": created}
-	s.respondJSON(writer, request, requestSignature(request)+"|address-create", payload)
-}
-
-func (s *Server) handleAddressGet(writer http.ResponseWriter, request *http.Request) {
-	id, err := pathID(request)
-	if err != nil {
-		s.writeAPIError(writer, http.StatusBadRequest, err)
-		return
-	}
-
-	record, err := s.store.Get(ResourceAddresses, id)
-	if err != nil {
-		s.respondStoreError(writer, err)
-		return
-	}
-	payload := map[string]any{"data": record}
-	s.respondJSON(writer, request, requestSignature(request)+"|address-get", payload)
-}
-
-func (s *Server) handleAddressPatch(writer http.ResponseWriter, request *http.Request) {
-	id, err := pathID(request)
-	if err != nil {
-		s.writeAPIError(writer, http.StatusBadRequest, err)
-		return
-	}
-
-	body, err := readRecordBody(request)
-	if err != nil {
-		s.writeAPIError(writer, http.StatusBadRequest, err)
-		return
-	}
-
-	updated, err := s.store.Patch(ResourceAddresses, id, body)
-	if err != nil {
-		s.respondStoreError(writer, err)
-		return
-	}
-	s.dispatchEvent(request, "AddressUpdated", updated)
-
-	payload := map[string]any{"data": updated}
-	s.respondJSON(writer, request, requestSignature(request)+"|address-patch", payload)
-}
-
-func (s *Server) handleAddressDelete(writer http.ResponseWriter, request *http.Request) {
-	id, err := pathID(request)
-	if err != nil {
-		s.writeAPIError(writer, http.StatusBadRequest, err)
-		return
-	}
-
-	record, getErr := s.store.Get(ResourceAddresses, id)
-	if getErr != nil {
-		s.respondStoreError(writer, getErr)
-		return
-	}
-
-	err = s.store.Delete(ResourceAddresses, id)
-	if err != nil {
-		s.respondStoreError(writer, err)
-		return
-	}
-	s.dispatchEvent(request, "AddressDeleted", record)
-	writer.WriteHeader(http.StatusNoContent)
-}
-
-func (s *Server) handleAssetList(writer http.ResponseWriter, request *http.Request) {
-	records, err := s.store.List(ResourceAssets)
-	if err != nil {
-		s.writeAPIError(writer, http.StatusInternalServerError, err)
-		return
-	}
-
-	filtered := filterByIDs(records, idsFromQuery(request.URL.Query(), "ids"))
-	page, pagination, err := paginate(filtered, request.URL.Query(), 512)
-	if err != nil {
-		s.writeAPIError(writer, http.StatusBadRequest, err)
-		return
-	}
-	payload := map[string]any{
-		"data":       recordsAsAny(page),
-		"pagination": pagination,
-	}
-	s.respondJSON(writer, request, requestSignature(request)+"|asset-list", payload)
-}
-
-func (s *Server) handleAssetCreate(writer http.ResponseWriter, request *http.Request) {
-	body, err := readRecordBody(request)
-	if err != nil {
-		s.writeAPIError(writer, http.StatusBadRequest, err)
-		return
-	}
-
-	created, err := s.store.Create(ResourceAssets, body)
-	if err != nil {
-		s.respondStoreError(writer, err)
-		return
-	}
-	s.dispatchEvent(request, "VehicleCreated", created)
-
-	payload := map[string]any{"data": created}
-	s.respondJSON(writer, request, requestSignature(request)+"|asset-create", payload)
-}
-
-func (s *Server) handleAssetPatch(writer http.ResponseWriter, request *http.Request) {
-	id, err := queryID(request)
-	if err != nil {
-		s.writeAPIError(writer, http.StatusBadRequest, err)
-		return
-	}
-
-	body, err := readRecordBody(request)
-	if err != nil {
-		s.writeAPIError(writer, http.StatusBadRequest, err)
-		return
-	}
-
-	updated, err := s.store.Patch(ResourceAssets, id, body)
-	if err != nil {
-		s.respondStoreError(writer, err)
-		return
-	}
-	s.dispatchEvent(request, "VehicleUpdated", updated)
-
-	payload := map[string]any{"data": updated}
-	s.respondJSON(writer, request, requestSignature(request)+"|asset-patch", payload)
-}
-
-func (s *Server) handleAssetDelete(writer http.ResponseWriter, request *http.Request) {
-	id, err := queryID(request)
-	if err != nil {
-		s.writeAPIError(writer, http.StatusBadRequest, err)
-		return
-	}
-
-	err = s.store.Delete(ResourceAssets, id)
-	if err != nil {
-		s.respondStoreError(writer, err)
-		return
-	}
-	writer.WriteHeader(http.StatusNoContent)
-}
-
-func (s *Server) handleAssetLocationStream(writer http.ResponseWriter, request *http.Request) {
-	startTime, endTime, err := parseTimeRange(request)
-	if err != nil {
-		s.writeAPIError(writer, http.StatusBadRequest, err)
-		return
-	}
-
-	assetIDs := idsFromQuery(request.URL.Query(), "ids")
-	now := s.simNow()
-
-	var records []Record
-	if s.live != nil {
-		records = s.live.AssetStream(now, assetIDs, startTime, endTime)
-	} else {
-		seedRecords, listErr := s.store.List(ResourceAssetLocation)
-		if listErr != nil {
-			s.writeAPIError(writer, http.StatusInternalServerError, listErr)
-			return
-		}
-		records = filterAssetLocationRecords(seedRecords, assetIDs, startTime, endTime)
-	}
-
-	page, pagination, err := paginate(records, request.URL.Query(), 512)
-	if err != nil {
-		s.writeAPIError(writer, http.StatusBadRequest, err)
-		return
-	}
-	if pagination["endCursor"] == "" {
-		delete(pagination, "endCursor")
-	}
-	payload := map[string]any{
-		"data":       recordsAsAny(page),
-		"pagination": pagination,
-	}
-	s.respondJSON(writer, request, requestSignature(request)+"|asset-stream", payload)
-}
-
-func (s *Server) handleDriverList(writer http.ResponseWriter, request *http.Request) {
-	records, err := s.store.List(ResourceDrivers)
-	if err != nil {
-		s.writeAPIError(writer, http.StatusInternalServerError, err)
-		return
-	}
-
-	page, pagination, err := paginate(records, request.URL.Query(), 512)
-	if err != nil {
-		s.writeAPIError(writer, http.StatusBadRequest, err)
-		return
-	}
-	payload := map[string]any{
-		"data":       recordsAsAny(page),
-		"pagination": pagination,
-	}
-	s.respondJSON(writer, request, requestSignature(request)+"|driver-list", payload)
-}
-
-func (s *Server) handleDriverCreate(writer http.ResponseWriter, request *http.Request) {
-	body, err := readRecordBody(request)
-	if err != nil {
-		s.writeAPIError(writer, http.StatusBadRequest, err)
-		return
-	}
-
-	created, err := s.store.Create(ResourceDrivers, body)
-	if err != nil {
-		s.respondStoreError(writer, err)
-		return
-	}
-	s.dispatchEvent(request, "DriverCreated", created)
-
-	payload := map[string]any{"data": created}
-	s.respondJSON(writer, request, requestSignature(request)+"|driver-create", payload)
 }
 
 func (s *Server) handleRouteList(writer http.ResponseWriter, request *http.Request) {
@@ -312,7 +40,7 @@ func (s *Server) handleRouteList(writer http.ResponseWriter, request *http.Reque
 		}
 	}
 
-	page, pagination, err := paginate(records, request.URL.Query(), 512)
+	page, pagination, err := paginate(records, request)
 	if err != nil {
 		s.writeAPIError(writer, http.StatusBadRequest, err)
 		return
@@ -363,7 +91,7 @@ func (s *Server) handleRouteCreate(writer http.ResponseWriter, request *http.Req
 		body["name"] = "Sim Route " + now
 	}
 
-	created, err := s.store.Create(ResourceRoutes, body)
+	created, err := s.store.CreateFromAPI(ResourceRoutes, body, CreateOptions{At: s.simNow()})
 	if err != nil {
 		s.respondStoreError(writer, err)
 		return
@@ -387,7 +115,7 @@ func (s *Server) handleRoutePatch(writer http.ResponseWriter, request *http.Requ
 		return
 	}
 
-	updated, err := s.store.Patch(ResourceRoutes, id, body)
+	updated, err := s.store.PatchFromAPI(ResourceRoutes, id, body, s.simNow())
 	if err != nil {
 		s.respondStoreError(writer, err)
 		return
@@ -432,28 +160,17 @@ func (s *Server) respondStoreError(writer http.ResponseWriter, err error) {
 func parseTimeRange(
 	request *http.Request,
 ) (startTime, endTime *time.Time, err error) {
-	rawStart := queryValue(request, "startTime")
-	if rawStart != "" {
-		parsedStart, parseErr := time.Parse(time.RFC3339, rawStart)
-		if parseErr != nil {
-			return nil, nil, ErrInvalidBody
-		}
-		parsedStart = parsedStart.UTC()
-		startTime = &parsedStart
+	values := request.URL.Query()
+	startTime, err = parseOptionalTimePtr(values, fieldStartTime)
+	if err != nil {
+		return nil, nil, err
 	}
-
-	rawEnd := queryValue(request, "endTime")
-	if rawEnd != "" {
-		parsedEnd, parseErr := time.Parse(time.RFC3339, rawEnd)
-		if parseErr != nil {
-			return nil, nil, ErrInvalidBody
-		}
-		parsedEnd = parsedEnd.UTC()
-		endTime = &parsedEnd
+	endTime, err = parseOptionalTimePtr(values, fieldEndTime)
+	if err != nil {
+		return nil, nil, err
 	}
-
 	if startTime != nil && endTime != nil && endTime.Before(*startTime) {
-		return nil, nil, ErrInvalidBody
+		return nil, nil, invalidParameter(fieldEndTime, "must not be before startTime")
 	}
 	return startTime, endTime, nil
 }

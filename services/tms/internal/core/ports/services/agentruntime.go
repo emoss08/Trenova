@@ -30,6 +30,10 @@ type PendingAction struct {
 	// previewed instead of made; Simulation is the preview.
 	Simulated  bool                  `json:"simulated"`
 	Simulation *agent.ToolSimulation `json:"simulation,omitempty"`
+	// Withdrawn is set when the agent withdrew the proposal later in the same
+	// turn, because a later proposal replaced it. It is recorded Superseded
+	// and never offered for a decision.
+	Withdrawn bool `json:"withdrawn,omitempty"`
 	// Target is the record this action would change and its version as of the
 	// proposal, when the tool names one. Nil means the tool has no single
 	// target, or its version could not be read; either way the proposal is
@@ -58,6 +62,12 @@ type PendingAction struct {
 	ExecutedVersion *int64 `json:"executedVersion,omitempty"`
 	StepKey         string `json:"stepKey,omitempty"`
 	ExecutedAt      int64  `json:"executedAt,omitempty"`
+}
+
+// Waiting reports whether the action is a proposal still in front of a
+// person: not run, not simulated and not withdrawn.
+func (a *PendingAction) Waiting() bool {
+	return !a.Executed && !a.Simulated && !a.Withdrawn
 }
 
 // ProposalTarget is a record and its version at the moment a change to it was
@@ -168,6 +178,10 @@ type Delegation struct {
 type DirectedTask struct {
 	Delegate agentdefinition.RuntimeDelegate `json:"delegate"`
 	Task     string                          `json:"task"`
+	// Records are the conversation's subject and records in play when the
+	// turn opened, handed to the agent with the task. They ride on the task
+	// because a restored turn's request does not carry the anchors.
+	Records []agent.RecordRef `json:"records,omitempty"`
 }
 
 // Scope is how the turn's events and saved steps are tagged.

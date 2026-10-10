@@ -51,7 +51,7 @@ func (t *approveWorkerPTOTool) Preview(
 	return ptoDecisionPreview(fmt.Sprintf(
 		"Would approve %s, booking %s days against the driver's balance and taking them "+
 			"off the board for those dates. The driver is told it was approved.",
-		ptoLabel(decision.Before),
+		ptoLabel(decision.Before, decision.Location),
 		decision.Before.Days.String(),
 	), decision)
 }

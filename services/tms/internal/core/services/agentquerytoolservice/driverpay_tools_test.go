@@ -2,6 +2,8 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
@@ -24,8 +26,9 @@ type fakeDriverPay struct {
 	deductions  []*driverpay.RecurringDeduction
 	earnings    []*driverpay.RecurringEarning
 
-	codeRequest   repositories.ListActivePayCodesRequest
-	escrowRequest *repositories.ListEscrowAccountsRequest
+	codeRequest    repositories.ListActivePayCodesRequest
+	escrowRequest  *repositories.ListEscrowAccountsRequest
+	advanceRequest *repositories.ListPayAdvancesRequest
 }
 
 func (f *fakeDriverPay) ListActivePayCodes(
@@ -61,10 +64,22 @@ func (f *fakeDriverPay) ListEscrowAccounts(
 }
 
 func (f *fakeDriverPay) ListAdvances(
-	context.Context,
-	*repositories.ListPayAdvancesRequest,
+	_ context.Context,
+	req *repositories.ListPayAdvancesRequest,
 ) (*pagination.ListResult[*driverpay.PayAdvance], error) {
-	return &pagination.ListResult[*driverpay.PayAdvance]{Items: f.advances}, nil
+	f.advanceRequest = req
+	if req.Status == "" {
+		return &pagination.ListResult[*driverpay.PayAdvance]{Items: f.advances}, nil
+	}
+
+	matched := make([]*driverpay.PayAdvance, 0, len(f.advances))
+	for _, advance := range f.advances {
+		if advance.Status == req.Status {
+			matched = append(matched, advance)
+		}
+	}
+
+	return &pagination.ListResult[*driverpay.PayAdvance]{Items: matched}, nil
 }
 
 func (f *fakeDriverPay) ListDeductions(
@@ -230,4 +245,88 @@ func TestListPayAdvances_ShowsWhatIsStillOwed(t *testing.T) {
 	withheld, err := tool.Query(t.Context(), agentParams(map[string]any{}, ""))
 	require.NoError(t, err)
 	assert.Empty(t, withheld.(*gatedOutcome).Items.([]payAdvanceRow)[0].Amount)
+}
+
+type fakeDriverNames struct{ workers []*worker.Worker }
+
+func (f *fakeDriverNames) List(
+	_ context.Context,
+	req *repositories.ListWorkersRequest,
+) (*pagination.CursorListResult[*worker.Worker], error) {
+	matched := make([]*worker.Worker, 0, len(f.workers))
+	for _, item := range f.workers {
+		full := strings.ToLower(item.FirstName + " " + item.LastName)
+		if strings.Contains(full, strings.ToLower(req.Filter.Query)) {
+			matched = append(matched, item)
+		}
+	}
+
+	return &pagination.CursorListResult[*worker.Worker]{Items: matched}, nil
+}
+
+/*
+"take 150 out of emily chen's settlement for the fuel advance" sent the
+advances list her name, which it did not take, and then sent it as query,
+the name every other list takes it by. A name that fits one driver
+narrows the list to them; one that fits nobody or several is refused with who
+it fits.
+*/
+func TestListPayAdvances_NarrowsToTheDriverNamed(t *testing.T) {
+	t.Parallel()
+
+	emily := &worker.Worker{ID: pulid.MustNew("wrk_"), FirstName: "Emily", LastName: "Chen"}
+	emil := &worker.Worker{ID: pulid.MustNew("wrk_"), FirstName: "Emil", LastName: "Chenko"}
+	fake := &fakeDriverPay{}
+	tool := &listPayAdvancesTool{newFakeDriverPayTool(fake)}
+	tool.workers = &fakeDriverNames{workers: []*worker.Worker{emily, emil}}
+
+	_, err := tool.Query(t.Context(), agentParams(map[string]any{"query": "emily chen"},
+		permission.SensitivityRestricted))
+	require.NoError(t, err)
+	require.NotNil(t, fake.advanceRequest)
+	assert.Equal(t, emily.ID, fake.advanceRequest.WorkerID)
+
+	_, err = tool.Query(t.Context(), agentParams(map[string]any{"query": "chen"},
+		permission.SensitivityRestricted))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), emily.ID.String())
+	assert.Contains(t, err.Error(), emil.ID.String())
+
+	_, err = tool.Query(t.Context(), agentParams(map[string]any{"query": "nobody"},
+		permission.SensitivityRestricted))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "search_worker")
+}
+
+/*
+gpt-6-luna asked for David Park's outstanding advances, was told none matched
+and that others "may exist", and asked again without the status. An empty
+status-filtered list says what the driver has in any status, or that there
+is none at all, so the next call is the proposal.
+*/
+func TestListPayAdvances_AnEmptyStatusSaysWhatOtherStatusesHold(t *testing.T) {
+	t.Parallel()
+
+	worker := pulid.MustNew("wrk_")
+	recovered := &driverpay.PayAdvance{
+		ID: pulid.MustNew("padv_"), WorkerID: worker, Status: driverpay.AdvanceStatusRecovered,
+		Reference: "FUEL-0412", IssuedDate: 1790000000, CurrencyCode: "USD",
+	}
+	fake := &fakeDriverPay{advances: []*driverpay.PayAdvance{recovered}}
+	tool := &listPayAdvancesTool{newFakeDriverPayTool(fake)}
+
+	result, err := tool.Query(t.Context(), agentParams(map[string]any{
+		"workerId": worker.String(), "status": "Outstanding",
+	}, permission.SensitivityRestricted))
+	require.NoError(t, err)
+	note := result.(*gatedOutcome).Note
+	assert.Contains(t, note, "FUEL-0412 (Recovered")
+	assert.NotContains(t, note, "may exist")
+
+	fake.advances = nil
+	result, err = tool.Query(t.Context(), agentParams(map[string]any{
+		"workerId": worker.String(), "status": "Outstanding",
+	}, permission.SensitivityRestricted))
+	require.NoError(t, err)
+	assert.Contains(t, result.(*gatedOutcome).Note, "no pay advances in any status")
 }

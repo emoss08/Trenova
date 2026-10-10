@@ -275,7 +275,7 @@
     },
     {
       "name": "add_carrier_settlement_adjustment",
-      "description": "Add a manual adjustment line to a draft or pending carrier settlement: a positive amount pays the carrier more, one below zero takes money back. The settlement is flagged as manually adjusted for whoever approves it. Say why in the description.",
+      "description": "Add a manual adjustment line to a draft or pending carrier settlement: a positive amount pays the carrier more, one below zero takes money back. The settlement is flagged as manually adjusted for whoever approves it. Say why in the description. When the person names the amount and the reason, propose it: a concern such as no matching advance on file or a net below zero goes in your reply beside the proposal, for them to weigh on the preview, rather than in place of it.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -308,6 +308,11 @@
         ],
         "type": "object"
       },
+      "prerequisites": [
+        "list_carrier_settlements",
+        "get_carrier_settlement",
+        "list_gl_accounts"
+      ],
       "policy": {
         "kind": "action",
         "resource": "carrier_settlement",
@@ -440,7 +445,7 @@
     },
     {
       "name": "add_driver_settlement_adjustment",
-      "description": "Add a manual adjustment line to a draft or pending driver settlement: a positive amount pays the driver more, one below zero takes money back. The settlement is flagged as manually adjusted for whoever approves it. Say why in the description.",
+      "description": "Add a manual adjustment line to a draft or pending driver settlement: a positive amount pays the driver more, one below zero takes money back. The settlement is flagged as manually adjusted for whoever approves it. Say why in the description. When the person names the amount and the reason, propose it: a concern such as no matching advance on file or a net below zero goes in your reply beside the proposal, for them to weigh on the preview, rather than in place of it.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -467,7 +472,7 @@
             "type": "string"
           },
           "settlementId": {
-            "description": "The driver settlement, from list_driver_settlements or get_driver_settlement or this run's subject. Never guess one.",
+            "description": "The driver settlement, from list_driver_settlements or get_driver_settlement or this run's subject. Never guess one. list_driver_settlements finds it by the driver's name as query, with no lookup before it.",
             "type": "string",
             "x-recordKinds": [
               "driver_settlement"
@@ -481,6 +486,11 @@
         ],
         "type": "object"
       },
+      "prerequisites": [
+        "list_driver_settlements",
+        "get_driver_settlement",
+        "list_pay_codes"
+      ],
       "policy": {
         "kind": "action",
         "resource": "driver_settlement",
@@ -724,12 +734,12 @@
     },
     {
       "name": "add_shipment_charge",
-      "description": "Add an accessorial charge to a saved shipment before it is billed: a lumper, layover, tarp, extra stop or any charge from list_accessorial_charges, at the charge's own rate unless you give an amount. Detention is approved through the detention desk instead; a shipment already invoiced is corrected with a credit memo.",
+      "description": "Add an accessorial charge to a saved shipment not yet invoiced, at the charge's own rate unless you give an amount. It takes a lumper, layover, tarp, extra stop or any charge from list_accessorial_charges. An invoiced shipment is corrected with a credit memo.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "accessorialChargeId": {
-            "description": "The charge, from list_accessorial_charges.",
+            "description": "The charge, from list_accessorial_charges. Not detention: a detention charge is approved with approve_detention.",
             "type": "string",
             "x-recordOf": "accessorial_charge"
           },
@@ -761,8 +771,7 @@
         "accessorial",
         "layover",
         "tarp fee",
-        "extra stop charge",
-        "bill the customer for"
+        "bill an extra charge"
       ],
       "prerequisites": [
         "search_shipments",
@@ -1700,7 +1709,7 @@
     },
     {
       "name": "approve_billing_queue_item",
-      "description": "Propose approving a billing queue item you have reviewed and found clean. Clean means charges that match the agreement, the documents the customer requires, and no detention charge waiting on approval. Approval creates the item's draft invoice, or puts it on a statement customer's statement, and the organization's auto-post setting may post it; a person always decides. Say in reviewNotes what you checked. Once approved, propose post_invoice for the draft. For more than one item, propose approve_billing_queue_items once with all of them instead.",
+      "description": "Propose approving a billing queue item. On your own, propose it only for an item you reviewed and found clean: charges that match the agreement, the documents the customer requires, and no detention charge waiting on approval. When the person asks you to approve it, propose it, and say in reviewNotes and your reply what you could not confirm; they decide with that in front of them. An item still waiting for review is taken into review by the approval itself. Approval creates the item's draft invoice, or puts it on a statement customer's statement, and the organization's auto-post setting may post it. Once approved, propose post_invoice for the draft. For more than one item, propose approve_billing_queue_items once with all of them instead.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -1747,7 +1756,7 @@
     },
     {
       "name": "approve_billing_queue_items",
-      "description": "Propose approving several billing queue items you have reviewed and found clean, in one proposal the person approves together. Use it instead of approve_billing_queue_item whenever more than one item is ready. Each item is approved exactly as approve_billing_queue_item would: charges that match the agreement, the documents the customer requires and no detention charge waiting on approval. Approval creates each item's draft invoice, or puts it on a statement customer's statement, and the auto-post setting may post it; a person always decides and may untick items. An item the queue would refuse is reported, not approved, and the rest still go. Say in reviewNotes what you checked. Up to 50 items.",
+      "description": "Propose approving several billing queue items in one proposal the person approves together. On your own, propose only items you reviewed and found clean; when the person asks for them, propose those items and say in reviewNotes what you could not confirm. Use it instead of approve_billing_queue_item whenever more than one item is ready. Each item is approved exactly as approve_billing_queue_item would: charges that match the agreement, the documents the customer requires and no detention charge waiting on approval. Approval creates each item's draft invoice, or puts it on a statement customer's statement, and the auto-post setting may post it; a person always decides and may untick items. An item the queue would refuse is reported, not approved, and the rest still go. Up to 50 items.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -1921,6 +1930,10 @@
         ],
         "type": "object"
       },
+      "prerequisites": [
+        "list_detention_desk",
+        "get_detention_occurrence"
+      ],
       "policy": {
         "kind": "action",
         "resource": "detention_policy",
@@ -1950,7 +1963,7 @@
         "additionalProperties": false,
         "properties": {
           "settlementId": {
-            "description": "The driver settlement, from list_driver_settlements or get_driver_settlement or this run's subject. Never guess one.",
+            "description": "The driver settlement, from list_driver_settlements or get_driver_settlement or this run's subject. Never guess one. list_driver_settlements finds it by the driver's name as query, with no lookup before it.",
             "type": "string",
             "x-recordKinds": [
               "driver_settlement"
@@ -2176,7 +2189,7 @@
     },
     {
       "name": "approve_worker_pto",
-      "description": "Approve a worker's time-off request. Approving books the days against their balance and takes them off the board for those dates, so check what they are covering before you propose it. Only a request that is still awaiting a decision can be approved.",
+      "description": "Approve a worker's time-off request. Approving books the days against their balance and takes them off the board for those dates. When you hold get_worker_schedule, say what they are covering on those days beside the proposal; when you do not, propose it anyway and say coverage was not checked, since the person approving weighs it. Only a request still awaiting a decision can be approved; for several, propose each.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -2623,7 +2636,7 @@
         "additionalProperties": false,
         "properties": {
           "primaryWorkerId": {
-            "description": "The driver to put on the move, from rank_move_candidates, plan_dispatch or list_workers.",
+            "description": "The driver to put on the move, from rank_move_candidates, plan_dispatch, search_worker or list_workers.",
             "type": "string",
             "x-recordOf": "worker"
           },
@@ -2657,7 +2670,10 @@
       },
       "prerequisites": [
         "get_shipment",
-        "rank_move_candidates"
+        "rank_move_candidates",
+        "search_worker",
+        "list_tractors",
+        "list_trailers"
       ],
       "policy": {
         "kind": "action",
@@ -5252,11 +5268,7 @@
             "type": "integer"
           },
           "purchasedAt": {
-            "description": "When it was bought, as the receipt says. Leave it out to keep it. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
-            "examples": [
-              "2026-10-01T08:00:00-05:00"
-            ],
-            "format": "date-time",
+            "description": "When it was bought: the receipt's date and time with its offset, such as 2026-10-08T14:30:00-05:00, or the day alone (2026-10-08, yesterday) when nobody gave a time; a day is recorded at noon in the organization's time zone, which is what the IFTA quarter needs. Leave it out to keep it.",
             "type": "string"
           },
           "quantity": {
@@ -5277,7 +5289,7 @@
             "type": "boolean"
           },
           "totalAmount": {
-            "description": "The total paid as a decimal such as 389.90. Leave it out to keep it.",
+            "description": "The total paid as a decimal such as 389.90, as the receipt says. Leave it out when you have unitPrice and the quantity: it is worked out to the cent from them. Leave it out to keep it.",
             "type": "string"
           },
           "tractorId": {
@@ -6457,7 +6469,6 @@
             "type": "array"
           }
         },
-        "required": null,
         "type": "object"
       },
       "searchTerms": [
@@ -7325,6 +7336,7 @@
                   "additionalProperties": false,
                   "properties": {
                     "columnId": {
+                      "description": "The id of one of this definition's columns, or of a column describe_report lists.",
                       "type": "string"
                     },
                     "direction": {
@@ -7421,7 +7433,7 @@
     },
     {
       "name": "create_shipment",
-      "description": "Enter a new shipment. To copy an existing shipment use duplicate_shipment instead, which carries its stops, commodities, charges and rating exactly. Give the customer, service type, shipment type and rating method (formulaTemplateId, from list_formula_templates) by id: the rating method is required, and a shipment nothing can price is refused. Add the freight (pieces, weight, commodities, temperatures when it matters), any accessorial charges, and one move with its stops in travel order: each stop has a location id from list_locations, a type, and a scheduled window in local time at the stop, such as 2026-10-01T08:00. Stops and moves count from 0. For a shipment read from an uploaded document, pass sourceDocumentId to link it and close its import conversation. The pro number is assigned by the system. A BOL must be unique among open shipments, so never reuse one; ask the person for it.",
+      "description": "Enter a new shipment, priced by the customer's rate agreement when no price is given; to copy one, use duplicate_shipment. Give the customer, service type and shipment type by id. Price it the way the person did: \"$2,450 flat\" is the Flat Rate template with baseRate 2450, \"$2.10 a mile\" Per Mile with 2.10, and charges they name are accessorial charges. Given no price, leave the rating out and call it: it finds the agreement itself, so do not look one up. Only when it says none covers the lane, ask the person for the price, offering one to react to. Add the freight (pieces, weight, commodities, temperatures) and one move with its stops in travel order, each with a location id, a type and a local window such as 2026-10-01T08:00, from 0. Pass sourceDocumentId for a shipment read from an uploaded document. The system assigns the pro number; the BOL is optional, and a BOL must be unique.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -7471,7 +7483,7 @@
                 "type": "array"
               },
               "baseRate": {
-                "description": "The rate the rating method multiplies, as a decimal such as 2.45, only when the customer agreed one.",
+                "description": "The rate the rating method prices with, as the person gave it: 2450 for a $2,450 flat load, 2.10 for $2.10 a mile.",
                 "type": "string"
               },
               "billToCustomerId": {
@@ -7525,7 +7537,7 @@
                 "type": "string"
               },
               "formulaTemplateId": {
-                "description": "The rating method that prices the freight, from list_formula_templates. Required: a rate agreement covering the lane may replace it with its own when the shipment is saved.",
+                "description": "The rating method that prices the freight, from list_formula_templates. Leave it out when the customer's rate agreement covers the lane, and the contract's is used.",
                 "type": "string",
                 "x-recordOf": "formula_template"
               },
@@ -7585,7 +7597,7 @@
                             "x-enumOf": "shipment.stopScheduleType"
                           },
                           "scheduledWindowEnd": {
-                            "description": "When the stop's window closes, if it has one. A local date and time as YYYY-MM-DDTHH:MM with no UTC offset, such as 2026-10-01T08:00, read in the timezone of where it happens; never Unix seconds.",
+                            "description": "When the stop's window closes: the deadline the person gave, or the end of the part of the day they named. A local date and time as YYYY-MM-DDTHH:MM with no UTC offset, such as 2026-10-01T08:00, read in the timezone of where it happens; never Unix seconds.",
                             "examples": [
                               "2026-10-01T08:00"
                             ],
@@ -7593,7 +7605,7 @@
                             "type": "string"
                           },
                           "scheduledWindowStart": {
-                            "description": "When the stop's window opens. A local date and time as YYYY-MM-DDTHH:MM with no UTC offset, such as 2026-10-01T08:00, read in the timezone of where it happens; never Unix seconds.",
+                            "description": "When the stop's window opens. A part of the day the person named is a window, not a question: morning 08:00 to 12:00, afternoon 13:00 to 17:00, evening 17:00 to 21:00. A deadline alone (\"by 3pm\", \"by noon\") opens at 08:00 that day and closes at the deadline. Use it and say which you used. A local date and time as YYYY-MM-DDTHH:MM with no UTC offset, such as 2026-10-01T08:00, read in the timezone of where it happens; never Unix seconds.",
                             "examples": [
                               "2026-10-01T08:00"
                             ],
@@ -7698,7 +7710,6 @@
               "customerId",
               "serviceTypeId",
               "shipmentTypeId",
-              "formulaTemplateId",
               "moves"
             ],
             "type": "object"
@@ -8984,10 +8995,14 @@
     },
     {
       "name": "describe_formula_schema",
-      "description": "Describe what a rating formula may use: the shipment variables, the functions and the rate tables it can look up. Read it before writing or explaining a formula, so every name you use is one the engine knows.",
+      "description": "Describe what a rating formula may use: every shipment variable (one line each), the functions by signature, and the rate tables it can look up. Read it before writing or explaining a formula, so every name you use is one the engine knows. Give query (\"reefer\", \"stops\", \"round\") for the matching variables and functions in full, with examples. A name not listed is not a shipment field: make it a template variable or ask, never guess.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "query": {
+            "description": "Words for what the formula needs, such as \"reefer\" or \"weight\": only the variables and functions that match, described in full.",
+            "type": "string"
+          },
           "schemaId": {
             "description": "The formula schema, as the page draft names it; shipment when it names none.",
             "type": "string"
@@ -10265,7 +10280,7 @@
             "type": "string"
           },
           "profileId": {
-            "description": "The email profile to send from; list_email_profiles names them. With one profile there is nothing to choose.",
+            "description": "The email profile to send from, from list_email_profiles. Leave it out to send from the profile the organization assigns to operations email, which is right unless the person named another.",
             "type": "string",
             "x-recordOf": "email_profile"
           },
@@ -10281,7 +10296,6 @@
         },
         "required": [
           "shipmentId",
-          "profileId",
           "subject",
           "body"
         ],
@@ -10629,7 +10643,7 @@
                   ]
                 },
                 "targetId": {
-                  "description": "The record it goes on, by id from that record's read tool.",
+                  "description": "The record it goes on, by id from search_shipments, search_worker, list_tractors, list_trailers, list_customers or list_carriers.",
                   "type": "string",
                   "x-recordKinds": [
                     "shipment",
@@ -11072,7 +11086,7 @@
     },
     {
       "name": "generate_driver_settlement",
-      "description": "Generate one driver's draft settlement for a pay period from the pay they have accrued, with their recurring earnings, deductions, escrow and advance recovery. Use it for a driver the batch missed or an off-cycle statement; generate_driver_settlement_batch settles everyone. A period already settled for the driver is refused.",
+      "description": "Generate one driver's draft settlement for a pay period from the pay they have accrued, with their recurring earnings, deductions, escrow and advance recovery. Use it for a driver the batch missed or an off-cycle statement; generate_driver_settlement_batch settles everyone. A period already settled for the driver is refused. The draft is shown to the person before anything is kept, so when they name a period (\"last week\", \"the first half of the month\") work out its days from today's date and propose it rather than asking which dates.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -12076,7 +12090,7 @@
     },
     {
       "name": "get_customer_update_preferences",
-      "description": "Retrieve what a customer asked to be told as their freight moves: whether they want arrivals, departures, both or nothing, and who receives them. A customer set to None is not to be emailed about a stop at all. When the recipient list is empty the notice profile's own recipients are the fallback. Call this before writing any status update.",
+      "description": "Retrieve what a customer asked to be told as their freight moves: whether they want arrival notices, departure notices, both or neither, and who receives them. A customer set to None gets no routine arrival or departure notice; that does not stop an update the person asks you to send, such as an arrival notice, a delay or a new ETA, which goes out on their approval. When the recipient list is empty the notice profile's own recipients are the fallback. Call this before writing any status update.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -12162,7 +12176,7 @@
     },
     {
       "name": "get_detention_occurrence",
-      "description": "Retrieve one detention occurrence by id: the stop, the clock, free time, billable minutes, amounts, notice status, and the evidence and notices on file. Use list_detention_desk first when you do not have an id.",
+      "description": "Retrieve one detention occurrence by id: the stop, the clock, free time, billable minutes, amounts, notice status, and the evidence and notices on file. A clock still running also carries currentlyBillable, priced as of now; quote that rather than the stored amounts, which date from the last recalculation. Use list_detention_desk first when you do not have an id.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -12203,7 +12217,7 @@
     },
     {
       "name": "get_dispatch_board",
-      "description": "The dispatch board: every move in the window with its urgency and coverage, and every driver with availability, hours remaining and last position. Urgency is Late, Now, Today, Tomorrow or Planned, and each move shows who covers it and its pickup and delivery windows. This is the one call for \"what is late\", \"what is uncovered\" and \"who is free\". Late means the pickup window has already opened with nobody there; check get_shipment_tracking on a late move before deciding it is a problem, since arrivals are sometimes recorded late.",
+      "description": "The dispatch board: every move in the window with its urgency and coverage, and every driver with availability, hours remaining and last position. Urgency is Late, Now, Today, Tomorrow or Planned, and each move shows who covers it and its pickup and delivery windows. This is the one call for \"what is late\", \"what is uncovered\" and \"who is free\". Urgency follows the pickup window, so each late move's lateTo says whether it is late to pick up or to deliver; check get_shipment_tracking on a late move before acting on it, since arrivals are sometimes recorded late. A rundown or a list answers from the board as it stands, saying what each is late to do, rather than tracking each move. To act on one load, such as a note or a change, find it with search_shipments.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -15126,7 +15140,7 @@
     },
     {
       "name": "list_billing_transfer_candidates",
-      "description": "List the delivered shipments not yet in the billing queue, oldest first: the same list the transfer-to-billing dialog offers. Each row says what a transfer would do with it (Transfer, MarkReadyAndTransfer, Refused with a failure code, or ReturnToOperations), the documents it still lacks and its rate or validation issues, decided by the checks the transfer itself makes. totals counts and sums the charges of each outcome per currency, so quote them rather than adding rows yourself. To transfer, propose one transfer_to_billing: allTransferable with these same filters when every row that can go should go, or shipmentIds for a hand-picked set, rather than one call per shipment.",
+      "description": "List the delivered shipments not yet in the billing queue, oldest first: the same list the transfer-to-billing dialog offers. Each row says what a transfer would do with it (Transfer, MarkReadyAndTransfer, Refused with a failure code, or ReturnToOperations), the documents it still lacks and its rate or validation issues, decided by the checks the transfer itself makes. totals counts and sums the charges of each outcome per currency, so quote them rather than adding rows yourself. A question about what is waiting is answered from this list; propose a transfer only when asked to send them. To transfer, propose one transfer_to_billing: allTransferable with these same filters when every row that can go should go, or shipmentIds for a hand-picked set, rather than one call per shipment.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -16077,10 +16091,19 @@
     },
     {
       "name": "list_detention_desk",
-      "description": "List every open detention occurrence: a truck at a stop past its free time, with minutes until free time ends, notice status and the amount at risk. The notice status says whether the customer notice is due or overdue. Urgency Lost means the notice window closed without a notice and the charge may not be collectable; NoticeOverdue and NoticeDueSoon say what to send. send_detention_notice sends it. The list also carries every stopped charge waiting on approval, as AwaitingApproval: its shipment cannot be invoiced until someone approves or waives it, which approve_detention and waive_detention propose.",
+      "description": "List every open detention occurrence: a truck at a stop past its free time, with minutes until free time ends, notice status and the amount at risk. The notice status says whether the customer notice is due or overdue. Urgency Lost means the notice window closed without a notice and the charge may not be collectable; NoticeOverdue and NoticeDueSoon say what to send. send_detention_notice sends it. The list also carries every stopped charge waiting on approval, as AwaitingApproval: its shipment cannot be invoiced until someone approves or waives it, which approve_detention and waive_detention propose. A running clock is priced as of now, so billableMinutes and amountAtRisk are what it would bill if the truck left this minute. Narrow to one load with shipmentId or proNumber rather than paging through urgencies.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "proNumber": {
+            "description": "Optional: only the shipment with this pro number, such as SEED-DET-001.",
+            "type": "string"
+          },
+          "shipmentId": {
+            "description": "Optional: only this shipment's occurrences, from search_shipments or get_shipment.",
+            "type": "string",
+            "x-recordOf": "shipment"
+          },
           "urgency": {
             "description": "Optional: only occurrences at this urgency.",
             "enum": [
@@ -16425,12 +16448,12 @@
     },
     {
       "name": "list_driver_settlements",
-      "description": "List driver pay settlements, the drivers' pay statements, newest period first. Each has the driver, period, pay date, status and exceptions, with gross, deductions and net pay when your data access reaches them. Narrow to one driver, a status or those with exceptions; get_driver_settlement opens one.",
+      "description": "List driver pay settlements, the drivers' pay statements, newest period first. Each has the driver, period, pay date, status and exceptions, with gross, deductions and net pay when your data access reaches them. Narrow to one driver (workerId, or their name as query), a status, open: true for every settlement still open to change (Draft, PendingApproval, Approved) in one call, or those with exceptions; get_driver_settlement opens one.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "hasExceptions": {
-            "description": "true for only those with exceptions, false for none.",
+            "description": "true for only those with exceptions. Leave it out to list them all; false narrows nothing.",
             "type": "boolean"
           },
           "limit": {
@@ -16441,12 +16464,16 @@
             "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
             "type": "integer"
           },
+          "open": {
+            "description": "true for only settlements still open to change: Draft, PendingApproval and Approved.",
+            "type": "boolean"
+          },
           "query": {
-            "description": "Words to look for in the settlement number or pay profile.",
+            "description": "Words to look for in the settlement number, pay profile or the driver's name.",
             "type": "string"
           },
           "status": {
-            "description": "Only settlements in this status.",
+            "description": "Only settlements in this status. Leave it out with open: true.",
             "enum": [
               "Draft",
               "PendingApproval",
@@ -17258,6 +17285,10 @@
           "offset": {
             "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
             "type": "integer"
+          },
+          "query": {
+            "description": "Only this driver's, by the name the person used, such as \"emily chen\"; instead of workerId.",
+            "type": "string"
           },
           "status": {
             "description": "Only accounts in this status.",
@@ -19267,7 +19298,7 @@
     },
     {
       "name": "list_invoices",
-      "description": "List invoices narrowed by status, whether they are paid, whether they are disputed, the amount, or the invoice and due dates. It answers what is unpaid, overdue or in dispute. Filters: status (Draft|Posted|Voided): where the invoice is in its own lifecycle, not whether it is paid; settlementStatus (Unpaid|PartiallyPaid|Paid): this is the one to use for \"unpaid\" or \"outstanding\"; disputeStatus (None|Disputed); billType (Invoice|CreditMemo|DebitMemo): CreditMemo and DebitMemo are memos; apply a posted CreditMemo with apply_credit_memo; id (text): in with several ids reads them together; billToName (text): who the invoice is billed to; dueDate (date): overdue is a due date before today with settlementStatus not Paid; text: number, shipmentProNumber; date: invoiceDate, createdAt; number: totalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List invoices narrowed by customer, status, whether they are paid or disputed, the amount, or the invoice and due dates. It answers what is unpaid, overdue or in dispute. Filters: status (Draft|Posted|Voided): where the invoice is in its own lifecycle, not whether it is paid; settlementStatus (Unpaid|PartiallyPaid|Paid): this is the one to use for \"unpaid\" or \"outstanding\"; disputeStatus (None|Disputed); billType (Invoice|CreditMemo|DebitMemo): CreditMemo and DebitMemo are memos; apply a posted CreditMemo with apply_credit_memo; id (text): in with several ids reads them together; billToName (text): who the invoice is billed to; dueDate (date): overdue is a due date before today with settlementStatus not Paid; text: number, shipmentProNumber; date: invoiceDate, createdAt; number: totalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -19376,6 +19407,10 @@
         },
         "type": "object"
       },
+      "searchTerms": [
+        "last invoice",
+        "latest invoice"
+      ],
       "policy": {
         "kind": "query",
         "resource": "invoice",
@@ -20157,6 +20192,10 @@
             "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
             "type": "integer"
           },
+          "query": {
+            "description": "Only this driver's, by the name the person used, such as \"emily chen\"; instead of workerId.",
+            "type": "string"
+          },
           "status": {
             "description": "Only advances in this status.",
             "enum": [
@@ -20576,6 +20615,10 @@
             "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
             "type": "integer"
           },
+          "query": {
+            "description": "Only this driver's, by the name the person used, such as \"emily chen\"; instead of workerId.",
+            "type": "string"
+          },
           "status": {
             "description": "Only deductions in this status.",
             "enum": [
@@ -20629,6 +20672,10 @@
           "offset": {
             "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
             "type": "integer"
+          },
+          "query": {
+            "description": "Only this driver's, by the name the person used, such as \"emily chen\"; instead of workerId.",
+            "type": "string"
           },
           "status": {
             "description": "Only earnings in this status.",
@@ -21511,7 +21558,7 @@
     },
     {
       "name": "list_shipments",
-      "description": "List shipments by status, billing state, dates or charges: anything with a date or threshold, such as picking up today or delivered yesterday. Each row carries its first pickup and last delivery (place and window) and who is driving each move (or that it needs a driver), so ordering by pickup or finding loads that need a driver needs no get_shipment. search_shipments matches words like a pro number, customer or city. Filters: status (New|PartiallyAssigned|Assigned|InTransit|Delayed|PartiallyCompleted|ReadyToInvoice|Completed|Invoiced|Canceled): no Delivered; a delivered load is Completed, then ReadyToInvoice, then Invoiced. For when it delivered, filter actualDeliveryDate; billingTransferStatus (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled): isnull means never transferred; freightTerms (Prepaid|Collect|ThirdParty); customerId (text): from list_customers, never guessed; text: proNumber, bol; date: actualShipDate, actualDeliveryDate, billedAt, canceledAt, createdAt; number: totalChargeAmount, weight. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List shipments by status, billing state, dates or charges, such as picking up today. Rows carry the first pickup, last delivery and each move's driver. Pro numbers and cities: search_shipments. Filters: status (New|PartiallyAssigned|Assigned|InTransit|Delayed|PartiallyCompleted|ReadyToInvoice|Completed|Invoiced|Canceled): rolling is InTransit and Delayed, one in filter; no Delivered: a delivered load is Completed, ReadyToInvoice, then Invoiced; billingTransferStatus (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled): isnull means never transferred; freightTerms (Prepaid|Collect|ThirdParty); customerId (text): from list_customers, never guessed; text: proNumber, bol; date: actualShipDate, actualDeliveryDate, billedAt, canceledAt, createdAt; number: totalChargeAmount, weight. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -21799,7 +21846,7 @@
             "x-enumOf": "worker.ptoType"
           },
           "withinDays": {
-            "description": "How far ahead to look from today, in days. Defaults to 14, at most 365. Ignored when startingFrom or startingBefore is given.",
+            "description": "How far ahead to look from today, in days: leave on at any point in that span, including leave that began earlier and is still running. Defaults to 14, at most 365. Ignored when startingFrom or startingBefore is given.",
             "type": "integer"
           },
           "workerId": {
@@ -21947,6 +21994,12 @@
         },
         "type": "object"
       },
+      "searchTerms": [
+        "find tractor by unit number",
+        "locate tractor",
+        "tractor unit number",
+        "available tractors"
+      ],
       "policy": {
         "kind": "query",
         "resource": "tractor",
@@ -21971,7 +22024,7 @@
     },
     {
       "name": "list_trailers",
-      "description": "List trailers narrowed by status, ownership, or a registration, lease or inspection date. Use it for questions about which trailers are out of service or overdue for inspection. Filters: status (Available|OutOfService|AtMaintenance|Sold): Available means it can be dispatched, OutOfService means it cannot, AtMaintenance means it is in the shop, and Sold means it has left the fleet; ownershipType (CompanyOwned|Leased|OwnerOperator); registrationExpiry (date): when the plate lapses; lastInspectionDate (date): the last annual inspection; text: code, make, model, licensePlateNumber; number: year; date: leaseEndDate, createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List trailers narrowed by status, ownership, or a registration, lease or inspection date, each with its equipment type (dry van, reefer, flatbed). Use it for questions about which trailers are out of service or overdue for inspection. Filters: status (Available|OutOfService|AtMaintenance|Sold): Available means it can be dispatched, OutOfService means it cannot, AtMaintenance means it is in the shop, and Sold means it has left the fleet; ownershipType (CompanyOwned|Leased|OwnerOperator); registrationExpiry (date): when the plate lapses; lastInspectionDate (date): the last annual inspection; text: code, make, model, licensePlateNumber; number: year; date: leaseEndDate, createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -22080,6 +22133,10 @@
         },
         "type": "object"
       },
+      "searchTerms": [
+        "find trailer by unit number",
+        "available dry vans"
+      ],
       "policy": {
         "kind": "query",
         "resource": "trailer",
@@ -22515,19 +22572,16 @@
     },
     {
       "name": "list_worker_safety_events",
-      "description": "List one worker's safety events, roadside violations and recognitions. Events are accidents, inspections, citations, complaints and near misses with their points and status, each with its violations. It yields the safetyEventId, violationId and recognitionId the safety tools take.",
+      "description": "List safety events still open across the fleet, or one worker's with their roadside violations and recognitions. Leave out the worker for the fleet: each open event comes with its driver. Events are accidents, inspections, citations, complaints and near misses with their points and status. It yields the safetyEventId, violationId and recognitionId the safety tools take.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "workerId": {
-            "description": "The worker, by id from search_worker or list_workers. A name is not an id.",
+            "description": "The worker; leave it out for every open event across the fleet, by id from search_worker or list_workers. A name is not an id.",
             "type": "string",
             "x-recordOf": "worker"
           }
         },
-        "required": [
-          "workerId"
-        ],
         "type": "object"
       },
       "policy": {
@@ -23207,7 +23261,7 @@
     },
     {
       "name": "notify_driver",
-      "description": "Send a driver a message in the Dash app, such as a moved pickup, a new delivery window, a weather warning on their route, or a request to call dispatch. Keep it to what the driver needs to do; it goes to their phone. A driver without portal access cannot be reached this way, and the message is not delivered; say so if a reply matters. It is a message, not a record: put anything the office needs later on the shipment with add_shipment_comment.",
+      "description": "Send a driver a message in the Dash app, such as a moved pickup, a new delivery window, a weather warning on their route, or a request to call dispatch. Passing on what the person told you needs no record checked or changed first: send it as they said it, naming the load when you know it. Keep it to what the driver needs to do; it goes to their phone. A driver without portal access cannot be reached this way, and the message is not delivered; say so if a reply matters. It is a message, not a record: put anything the office needs later on the shipment with add_shipment_comment.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -24330,7 +24384,7 @@
         "additionalProperties": false,
         "properties": {
           "settlementId": {
-            "description": "The driver settlement, from list_driver_settlements or get_driver_settlement or this run's subject. Never guess one.",
+            "description": "The driver settlement, from list_driver_settlements or get_driver_settlement or this run's subject. Never guess one. list_driver_settlements finds it by the driver's name as query, with no lookup before it.",
             "type": "string",
             "x-recordKinds": [
               "driver_settlement"
@@ -24841,6 +24895,7 @@
                   "additionalProperties": false,
                   "properties": {
                     "columnId": {
+                      "description": "The id of one of this definition's columns, or of a column describe_report lists.",
                       "type": "string"
                     },
                     "direction": {
@@ -24918,7 +24973,7 @@
             "type": "string"
           },
           "expression": {
-            "description": "The expression, built only from describe_formula_schema's names and this formula's variables. Write every rate, fee, minimum or percentage as a variable, never as a number in the expression: one template prices every customer, and a figure written into it can only be changed by editing the formula. baseRate * totalDistance, not 2.85 * totalDistance.",
+            "description": "The expression, built only from describe_formula_schema's names and this formula's variables. Write every rate, fee, minimum, percentage and weight or mileage break as a variable, never as a number in the expression: one template prices every customer, and a figure written into it can only be changed by editing the formula. baseRate * totalDistance, not 2.85 * totalDistance; totalWeight < breakOne, not totalWeight < 500. Only a unit conversion such as / 100 for hundredweight stays a number. It returns the charge for the whole load, never a rate: a figure per mile, hour or stop is multiplied by totalDistance, the hours or the stops in the expression. Write it from the terms the person states, even when they say the terms are their contracts': open an agreement or program only when they ask you to take the terms from one. A quantity no shipment field holds, such as hours at a stop, is a variable with a default: declare it and propose rather than asking how it will arrive. So is a condition no field marks directly, such as team service: compare the nearest field to a variable (serviceType.code == teamServiceCode) or make it a yes/no variable, and say in the explanation what to set it to.",
             "type": "string"
           },
           "scenarios": {
@@ -24935,7 +24990,7 @@
                   "type": "string"
                 },
                 "variables": {
-                  "description": "Variable values for this load, by variable name.",
+                  "description": "Values for this load, by variable name or schema field path (serviceType.code), so a load can say which service or equipment it is.",
                   "type": "object"
                 }
               },
@@ -24953,7 +25008,7 @@
             "type": "string"
           },
           "variables": {
-            "description": "The formula's own variables: every rate, fee, minimum and percentage the expression uses, and any other input that is not a shipment variable. Give the figure the person named as its default.",
+            "description": "The formula's own variables: every rate, fee, minimum, percentage and break the expression uses, and any input no shipment variable holds, such as hours at a stop. Something billed per stop, per hour or per event is written for one occurrence from such an input, cap included; say so in the explanation rather than asking how the data arrives. Give the figure the person named as its default.",
             "items": {
               "additionalProperties": false,
               "properties": {
@@ -25581,7 +25636,7 @@
         "additionalProperties": false,
         "properties": {
           "settlementId": {
-            "description": "The driver settlement, from list_driver_settlements or get_driver_settlement or this run's subject. Never guess one.",
+            "description": "The driver settlement, from list_driver_settlements or get_driver_settlement or this run's subject. Never guess one. list_driver_settlements finds it by the driver's name as query, with no lookup before it.",
             "type": "string",
             "x-recordKinds": [
               "driver_settlement"
@@ -25915,7 +25970,7 @@
             "type": "string"
           },
           "settlementId": {
-            "description": "The driver settlement, from list_driver_settlements or get_driver_settlement or this run's subject. Never guess one.",
+            "description": "The driver settlement, from list_driver_settlements or get_driver_settlement or this run's subject. Never guess one. list_driver_settlements finds it by the driver's name as query, with no lookup before it.",
             "type": "string",
             "x-recordKinds": [
               "driver_settlement"
@@ -26193,11 +26248,7 @@
             "type": "integer"
           },
           "purchasedAt": {
-            "description": "When it was bought, as the receipt says. A date and time with its UTC offset (RFC 3339), such as 2026-10-01T08:00:00-05:00.",
-            "examples": [
-              "2026-10-01T08:00:00-05:00"
-            ],
-            "format": "date-time",
+            "description": "When it was bought: the receipt's date and time with its offset, such as 2026-10-08T14:30:00-05:00, or the day alone (2026-10-08, yesterday) when nobody gave a time; a day is recorded at noon in the organization's time zone, which is what the IFTA quarter needs.",
             "type": "string"
           },
           "quantity": {
@@ -26218,7 +26269,7 @@
             "type": "boolean"
           },
           "totalAmount": {
-            "description": "The total paid as a decimal such as 389.90.",
+            "description": "The total paid as a decimal such as 389.90, as the receipt says. Leave it out when you have unitPrice and the quantity: it is worked out to the cent from them.",
             "type": "string"
           },
           "tractorId": {
@@ -26256,8 +26307,7 @@
           "jurisdictionId",
           "purchasedAt",
           "fuelType",
-          "quantity",
-          "totalAmount"
+          "quantity"
         ],
         "type": "object"
       },
@@ -26667,7 +26717,7 @@
     },
     {
       "name": "record_stop_actual",
-      "description": "Record that a driver arrived at or departed from a stop. This is what advances a shipment: the move's status and everything downstream follow from it. Get the move and stop ids from get_shipment, and only record what you were actually told happened — never infer an arrival from a departure, or the reverse.",
+      "description": "Record that a driver arrived at or departed from a stop. This is what advances a shipment: the move's status and everything downstream follow from it. Get the move and stop ids from get_shipment, and only record what you were actually told happened — never infer an arrival from a departure, or the reverse. When you are told both (\"got there 5:50, left 7:05\"), record them in one call: action Arrive with occurredAt and departedAt.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -26679,6 +26729,14 @@
             ],
             "type": "string",
             "x-enumOf": "shipmentMove.stopActualAction"
+          },
+          "departedAt": {
+            "description": "With action Arrive only, when the driver left the same stop, if you were told: the arrival and departure are recorded together. Needs occurredAt. A local date and time as YYYY-MM-DDTHH:MM with no UTC offset, such as 2026-10-01T08:00, read in the timezone of where it happens; never Unix seconds.",
+            "examples": [
+              "2026-10-01T08:00"
+            ],
+            "format": "local-date-time",
+            "type": "string"
           },
           "moveId": {
             "description": "The move the stop belongs to, from get_shipment (its moves) or get_dispatch_board.",
@@ -26834,7 +26892,6 @@
             "x-recordOf": "worker"
           }
         },
-        "required": null,
         "type": "object"
       },
       "searchTerms": [
@@ -26867,7 +26924,7 @@
     },
     {
       "name": "record_worker_credential",
-      "description": "Record a driver's licence, medical card, endorsement, TWIC or other credential from the card or certificate in hand, or renew the one on file. The worker's compliance is worked out again from it. A person verifies it against the original; recording is not verifying.",
+      "description": "Record a driver's licence, medical card, endorsement, TWIC or other credential, or renew the one on file. What the person says is enough: only the worker and the kind are required, and dates they give (\"good till oct 9 2028\") go in as said; the number, issuer and a scan can follow. Set renew when one of the same kind is on file. A person verifies it against the original; recording is not verifying.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -27400,7 +27457,7 @@
             "type": "string"
           },
           "settlementId": {
-            "description": "The driver settlement, from list_driver_settlements or get_driver_settlement or this run's subject. Never guess one.",
+            "description": "The driver settlement, from list_driver_settlements or get_driver_settlement or this run's subject. Never guess one. list_driver_settlements finds it by the driver's name as query, with no lookup before it.",
             "type": "string",
             "x-recordKinds": [
               "driver_settlement"
@@ -27934,7 +27991,7 @@
             "type": "string"
           },
           "settlementId": {
-            "description": "The driver settlement, from list_driver_settlements or get_driver_settlement or this run's subject. Never guess one.",
+            "description": "The driver settlement, from list_driver_settlements or get_driver_settlement or this run's subject. Never guess one. list_driver_settlements finds it by the driver's name as query, with no lookup before it.",
             "type": "string",
             "x-recordKinds": [
               "driver_settlement"
@@ -28184,14 +28241,13 @@
             "x-recordOf": "inbound_message"
           },
           "profileId": {
-            "description": "The email profile to send from; list_email_profiles names them. With one profile there is nothing to choose.",
+            "description": "The email profile to send from, from list_email_profiles. Leave it out to send from the profile the organization assigns to operations email.",
             "type": "string",
             "x-recordOf": "email_profile"
           }
         },
         "required": [
           "messageId",
-          "profileId",
           "body"
         ],
         "type": "object"
@@ -28652,12 +28708,12 @@
             "type": "string"
           },
           "reason": {
-            "description": "The reason the worker gave. The driver sees it with the request.",
+            "description": "The reason the worker gave, when one was given; the driver sees it with the request. Omit it rather than ask, and the kind is used.",
             "maxLength": 255,
             "type": "string"
           },
           "startDate": {
-            "description": "The first day off. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "description": "The first day off. \"Next Friday\" is the coming Friday, not the one a week later. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
             "examples": [
               "2026-10-01"
             ],
@@ -28688,8 +28744,7 @@
           "workerId",
           "type",
           "startDate",
-          "endDate",
-          "reason"
+          "endDate"
         ],
         "type": "object"
       },
@@ -28764,7 +28819,7 @@
     },
     {
       "name": "reschedule_stop",
-      "description": "Move a saved shipment's pickup or delivery appointment: the stop's scheduled window, in the stop's own local time. Give the new window start; the window end moves with it, keeping its length, unless you give one. Take the stop id from get_shipment. It changes the schedule only; record what actually happened at a stop with record_stop_actual.",
+      "description": "Move a saved shipment's pickup or delivery appointment: the stop's planned window, local to the stop. Give the new window start; the window end moves with it, keeping its length, unless you give one. Take the stop id from get_shipment.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -28787,7 +28842,7 @@
             "type": "string"
           },
           "windowStart": {
-            "description": "When the stop's window now opens, in the stop location's local time. A local date and time as YYYY-MM-DDTHH:MM with no UTC offset, such as 2026-10-01T08:00, read in the timezone of where it happens; never Unix seconds.",
+            "description": "When the stop's window now opens, in the stop location's local time. This is the plan; an actual arrival or departure goes to record_stop_actual. A local date and time as YYYY-MM-DDTHH:MM with no UTC offset, such as 2026-10-01T08:00, read in the timezone of where it happens; never Unix seconds.",
             "examples": [
               "2026-10-01T08:00"
             ],
@@ -28804,9 +28859,7 @@
       },
       "searchTerms": [
         "move the appointment",
-        "push the delivery",
         "change the pickup time",
-        "reschedule",
         "new appointment",
         "stop window"
       ],
@@ -30318,7 +30371,6 @@
             ]
           }
         },
-        "required": null,
         "type": "object"
       },
       "searchTerms": [
@@ -30390,7 +30442,8 @@
             "description": "The most shipments to replay. Leave it out for every shipment in the window.",
             "maximum": 50000,
             "minimum": 1,
-            "type": "integer"
+            "type": "integer",
+            "x-keepEmpty": true
           },
           "sampleTo": {
             "description": "The last ship day to replay. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
@@ -31037,7 +31090,7 @@
     },
     {
       "name": "search_shipments",
-      "description": "Find shipments by the words people use for them: a pro number or BOL, a customer's name or code, or a place one of its stops is at (a location's name or city). Words naming a customer and a place narrow to that customer's loads with a stop there, so \"sunbelt chicago\" finds Sunbelt's loads through Chicago. Narrow by status too. Call it with no query to see the most recent shipments. Each row carries its first pickup, last delivery and who is driving each move (or that it needs a driver); open one with get_shipment only for more than that.",
+      "description": "Find shipments by the words people use for them: a pro number or BOL, a customer's name or code, a stop's place or city, the driver, or what it carries. Words naming a customer, a place or a driver narrow to loads matching each, so \"sunbelt chicago\" finds Sunbelt's loads through Chicago and \"jane chicago\" Jane's load there. Narrow by status too. Call it with no query to see the most recent shipments. Each row carries its first pickup, final stop and who is driving each move (or that it needs a driver); open one with get_shipment only for more than that.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -31050,21 +31103,24 @@
             "type": "string"
           },
           "status": {
-            "description": "Optional status filter. There is no Delivered: a delivered load is Completed. Omit to include every status.",
-            "enum": [
-              "New",
-              "PartiallyAssigned",
-              "Assigned",
-              "InTransit",
-              "Delayed",
-              "PartiallyCompleted",
-              "ReadyToInvoice",
-              "Completed",
-              "Invoiced",
-              "Canceled"
-            ],
-            "type": "string",
-            "x-enumOf": "shipment.status"
+            "description": "Only shipments in these statuses, all in one call; omit for every status. Not picked up yet is New, PartiallyAssigned and Assigned; on the road is InTransit and Delayed. A load the person calls late or running behind is Delayed. There is no Delivered: a delivered load is Completed, ReadyToInvoice or Invoiced.",
+            "items": {
+              "enum": [
+                "New",
+                "PartiallyAssigned",
+                "Assigned",
+                "InTransit",
+                "Delayed",
+                "PartiallyCompleted",
+                "ReadyToInvoice",
+                "Completed",
+                "Invoiced",
+                "Canceled"
+              ],
+              "type": "string",
+              "x-enumOf": "shipment.status"
+            },
+            "type": "array"
           }
         },
         "type": "object"
@@ -31103,7 +31159,7 @@
     },
     {
       "name": "search_worker",
-      "description": "List workers (drivers), optionally narrowed by a name or code. Call it with no query to see who is on the roster; pass a query only when you already have a name. Returns matches with their ids, which get_worker can then expand. To find drivers by a licence or medical card date, use list_expiring_credentials instead — this tool does not filter on dates.",
+      "description": "Find a driver or other worker by name or code, or list the roster. Call it with no query to see who is on the roster; pass a query only when you already have a name. Returns matches with their ids, which get_worker can then expand. To find drivers by a licence or medical card date, use list_expiring_credentials instead — this tool does not filter on dates.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -31118,6 +31174,15 @@
         },
         "type": "object"
       },
+      "searchTerms": [
+        "look up a driver by name",
+        "find a driver",
+        "driver's worker id",
+        "who is this driver",
+        "driver roster",
+        "worker directory",
+        "employee by name"
+      ],
       "policy": {
         "kind": "query",
         "resource": "worker",
@@ -31224,6 +31289,10 @@
         ],
         "type": "object"
       },
+      "prerequisites": [
+        "list_detention_desk",
+        "get_detention_occurrence"
+      ],
       "policy": {
         "kind": "action",
         "resource": "customer_communication",
@@ -32241,7 +32310,7 @@
     },
     {
       "name": "shop_carriers",
-      "description": "Price a saved shipment against carriers and rank them by contract cost, margin against the customer's charge, and routing guide rank. Leave the carrier list empty to use the shipment's routing guide. Read this before tendering; nothing is tendered or written by it.",
+      "description": "Price a saved shipment against carriers and rank them by contract cost, margin against the customer's charge, and routing guide rank. Each option says whether the carrier is active and qualified. Leave the carrier list empty to use the shipment's routing guide. Read this before tendering; nothing is tendered or written by it.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -32671,7 +32740,7 @@
         "additionalProperties": false,
         "properties": {
           "settlementId": {
-            "description": "The driver settlement, from list_driver_settlements or get_driver_settlement or this run's subject. Never guess one.",
+            "description": "The driver settlement, from list_driver_settlements or get_driver_settlement or this run's subject. Never guess one. list_driver_settlements finds it by the driver's name as query, with no lookup before it.",
             "type": "string",
             "x-recordKinds": [
               "driver_settlement"
@@ -32823,7 +32892,6 @@
             ]
           }
         },
-        "required": [],
         "type": "object"
       },
       "searchTerms": [
@@ -33157,7 +33225,7 @@
                   "type": "string"
                 },
                 "variables": {
-                  "description": "Variable values for this load, by variable name.",
+                  "description": "Values for this load, by variable name or schema field path (serviceType.code), so a load can say which service or equipment it is.",
                   "type": "object"
                 }
               },
@@ -36280,6 +36348,7 @@
                   "additionalProperties": false,
                   "properties": {
                     "columnId": {
+                      "description": "The id of one of this definition's columns, or of a column describe_report lists.",
                       "type": "string"
                     },
                     "direction": {
@@ -36655,7 +36724,8 @@
             "x-recordOf": "customer"
           },
           "pieces": {
-            "description": "The total piece or handling-unit count.",
+            "description": "The total piece or handling-unit count. Leave it out to keep it.",
+            "minimum": 1,
             "type": "integer"
           },
           "serviceTypeId": {
@@ -36674,11 +36744,11 @@
             "x-recordOf": "shipment_type"
           },
           "temperatureMax": {
-            "description": "Fahrenheit.",
+            "description": "Fahrenheit, with temperatureMin.",
             "type": "integer"
           },
           "temperatureMin": {
-            "description": "Fahrenheit.",
+            "description": "Fahrenheit, with temperatureMax, for a load that needs temperature control. Leave both out to keep the load as it is.",
             "type": "integer"
           },
           "tractorTypeId": {
@@ -36692,7 +36762,8 @@
             "x-recordOf": "equipment_type"
           },
           "weight": {
-            "description": "Pounds.",
+            "description": "Pounds. Leave it out to keep it.",
+            "minimum": 1,
             "type": "integer"
           }
         },
@@ -37847,12 +37918,12 @@
             "x-recordOf": "worker_pto"
           },
           "reason": {
-            "description": "The reason the worker gave. The driver sees it with the request.",
+            "description": "The reason the worker gave, when one was given; the driver sees it with the request. Omit it rather than ask, and the kind is used.",
             "maxLength": 255,
             "type": "string"
           },
           "startDate": {
-            "description": "The first day off. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "description": "The first day off. \"Next Friday\" is the coming Friday, not the one a week later. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
             "examples": [
               "2026-10-01"
             ],
@@ -38276,7 +38347,7 @@
             "type": "string"
           },
           "settlementId": {
-            "description": "The driver settlement, from list_driver_settlements or get_driver_settlement or this run's subject. Never guess one.",
+            "description": "The driver settlement, from list_driver_settlements or get_driver_settlement or this run's subject. Never guess one. list_driver_settlements finds it by the driver's name as query, with no lookup before it.",
             "type": "string",
             "x-recordKinds": [
               "driver_settlement"
@@ -38520,7 +38591,7 @@
     },
     {
       "name": "wait_until",
-      "description": "Park this work until something happens, instead of checking back. Use it when the next step depends on the world: a truck reaching or leaving a stop (StopArrival, StopDeparture), a reply about a shipment or from a carrier or customer (Reply), an appointment coming round (AppointmentNear), detention free time running out (FreeTimeEnding), a driver's drive time falling low (HOSDriveBelow), or a time (Time). Nothing runs while it waits. When it ends, or gives up after giveUpAfterHours, you are started again in this same conversation or on this same record, told what happened and what you said you would do. A wait on something already true is refused with what is true now. After setting one, end your turn: tell the person in one line what you are waiting for and what you will do then.",
+      "description": "Park this work until something happens, instead of checking back. It waits for a stop's arrival or departure (StopArrival, StopDeparture: met when the truck is seen there or the time is recorded, so a load with no truck yet can be waited on), a reply about a shipment or from a carrier or customer (Reply), an appointment coming round (AppointmentNear), detention free time running out (FreeTimeEnding), a driver's drive time falling low (HOSDriveBelow), or a time (Time). When it ends, or gives up after giveUpAfterHours, you are started again here, told what happened and what you said you would do. A wait on something already true is refused with what is true now. Check now what can be checked now, such as a customer's notice preferences, and say what it means before you wait. After setting one, end your turn: say in one line what you are waiting for and what you will do then.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -38533,12 +38604,12 @@
             "type": "string"
           },
           "carrierId": {
-            "description": "For Reply: a reply from this carrier.",
+            "description": "For Reply: a reply from this carrier, from list_carriers.",
             "type": "string",
             "x-recordOf": "carrier"
           },
           "customerId": {
-            "description": "For Reply: a reply from this customer.",
+            "description": "For Reply: a reply from this customer, from list_customers.",
             "type": "string",
             "x-recordOf": "customer"
           },
@@ -38547,7 +38618,7 @@
             "type": "string"
           },
           "detentionOccurrenceId": {
-            "description": "For FreeTimeEnding: the detention record (detention.occurrence_opened names it).",
+            "description": "For FreeTimeEnding: the detention record, from list_detention_desk or the run subject (detention.occurrence_opened names it).",
             "type": "string",
             "x-recordKinds": [
               "detention_occurrence"
@@ -38566,17 +38637,17 @@
             "type": "integer"
           },
           "shipmentId": {
-            "description": "For Reply: a reply about this shipment.",
+            "description": "For Reply: a reply about this shipment, from search_shipments or the run subject.",
             "type": "string",
             "x-recordOf": "shipment"
           },
           "shipmentMoveId": {
-            "description": "For StopArrival, StopDeparture and AppointmentNear: the move the stop is on.",
+            "description": "For StopArrival, StopDeparture and AppointmentNear: the move the stop is on, from get_shipment.",
             "type": "string",
             "x-recordOf": "shipment_move"
           },
           "stopId": {
-            "description": "The stop: required for AppointmentNear; for StopArrival and StopDeparture, leave it out to wait for the move's next one.",
+            "description": "The stop, from get_shipment: required for AppointmentNear; for StopArrival and StopDeparture, leave it out to wait for the move's next one.",
             "type": "string",
             "x-recordOf": "shipment_stop"
           },
@@ -38599,7 +38670,7 @@
             "x-enumOf": "agent_wait_kinds"
           },
           "workerId": {
-            "description": "For HOSDriveBelow: the driver.",
+            "description": "For HOSDriveBelow: the driver, from search_worker.",
             "type": "string",
             "x-recordOf": "worker"
           }
@@ -38872,6 +38943,30 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Closes a dispute case inside Trenova with no outcome; it moves no money and a new case can be opened with open_invoice_dispute."
+      }
+    },
+    {
+      "name": "withdraw_proposal",
+      "policy": {
+        "kind": "runtime",
+        "resource": "assistant",
+        "operation": "update",
+        "scope": "run",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "ask",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Takes back a proposal the agent filed earlier in the same turn, before anyone has seen it; it changes no record and only narrows what the person is asked."
       }
     },
     {

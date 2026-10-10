@@ -53,6 +53,7 @@ func (s *service) PreviewAssignToMove(
 		ctx,
 		req.TenantInfo,
 		req.ShipmentMoveID,
+		repositories.CapabilityLockNone,
 		func(existing *shipment.Assignment) (*shipment.Assignment, error) {
 			return NewMoveAssignment(req, existing)
 		},
@@ -66,17 +67,80 @@ func (s *service) PreviewAssignToMove(
 		return nil, err
 	}
 
+	inUse, err := s.equipmentInUse(ctx, req.TenantInfo, plan.assignment, req.ShipmentMoveID)
+	if err != nil {
+		return nil, err
+	}
+
 	return &portservices.AssignmentPlan{
 		Assignment:     plan.assignment,
 		ShipmentBefore: plan.original,
 		ShipmentAfter:  updated,
+		EquipmentInUse: inUse,
 	}, nil
+}
+
+// equipmentInUse finds the assigned tractor or trailer on another move still
+// in progress. The assignment goes through, as dispatch plans equipment ahead,
+// but the move cannot start with it: recording the pickup was refused only
+// after the assignment had been approved, with nothing said when it was.
+func (s *service) equipmentInUse(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	assignment *shipment.Assignment,
+	moveID pulid.ID,
+) ([]portservices.EquipmentInUse, error) {
+	if assignment == nil {
+		return nil, nil
+	}
+
+	found := make([]portservices.EquipmentInUse, 0, 2)
+	check := func(kind string, id *pulid.ID, find func() (*shipment.Assignment, error)) error {
+		if id == nil || id.IsNil() {
+			return nil
+		}
+		conflict, err := find()
+		if err != nil || conflict == nil {
+			return err
+		}
+		inUse := portservices.EquipmentInUse{
+			Kind:           kind,
+			EquipmentID:    *id,
+			ShipmentMoveID: conflict.ShipmentMoveID,
+		}
+		if move, moveErr := s.repo.GetMoveByID(ctx, tenantInfo, conflict.ShipmentMoveID); moveErr == nil &&
+			move != nil {
+			if other, shipErr := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+				ID:         move.ShipmentID,
+				TenantInfo: tenantInfo,
+			}); shipErr == nil && other != nil {
+				inUse.ProNumber = other.ProNumber
+			}
+		}
+		found = append(found, inUse)
+
+		return nil
+	}
+
+	if err := check("tractor", assignment.TractorID, func() (*shipment.Assignment, error) {
+		return s.repo.FindInProgressByTractorID(ctx, tenantInfo, *assignment.TractorID, moveID)
+	}); err != nil {
+		return nil, err
+	}
+	if err := check("trailer", assignment.TrailerID, func() (*shipment.Assignment, error) {
+		return s.repo.FindInProgressByTrailerID(ctx, tenantInfo, *assignment.TrailerID, moveID)
+	}); err != nil {
+		return nil, err
+	}
+
+	return found, nil
 }
 
 func (s *service) planAssignment(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
+	lock repositories.CapabilityLock,
 	build func(*shipment.Assignment) (*shipment.Assignment, error),
 ) (*assignmentPlan, error) {
 	move, err := s.repo.GetMoveByID(ctx, tenantInfo, moveID)
@@ -92,6 +156,7 @@ func (s *service) planAssignment(
 		s.orgRepo,
 		tenantInfo,
 		moveID,
+		lock,
 	); err != nil {
 		return nil, err
 	}
@@ -135,11 +200,92 @@ func (s *service) planAssignment(
 	if err != nil {
 		return nil, err
 	}
+	if err = s.ensureParties(ctx, tenantInfo, entity); err != nil {
+		return nil, err
+	}
 	if err = s.validateTrailerContinuity(ctx, tenantInfo, targetMove, entity); err != nil {
 		return nil, err
 	}
 
 	return &assignmentPlan{moveID: moveID, original: original, assignment: entity}, nil
+}
+
+// ensureParties refuses an assignment naming a driver, tractor or trailer
+// that is not in the organization. An agent sent a driver id it had made from
+// the move's own id; nothing looked it up, so it was proposed, approved, and
+// only then refused by the database's foreign key.
+func (s *service) ensureParties(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	assignment *shipment.Assignment,
+) error {
+	multiErr := errortypes.NewMultiError()
+	check := func(field, kind string, id *pulid.ID, find func(pulid.ID) error) error {
+		if id == nil || id.IsNil() || find == nil {
+			return nil
+		}
+		err := find(*id)
+		if errortypes.IsNotFoundError(err) {
+			multiErr.Add(field, errortypes.ErrInvalid,
+				"No "+kind+" with this id is in the organization; look one up rather than "+
+					"building an id")
+
+			return nil
+		}
+
+		return err
+	}
+
+	var worker func(pulid.ID) error
+	if s.workerRepo != nil {
+		worker = func(id pulid.ID) error {
+			_, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+				ID: id, TenantInfo: tenantInfo,
+			})
+
+			return err
+		}
+	}
+	var tractor func(pulid.ID) error
+	if s.tractorRepo != nil {
+		tractor = func(id pulid.ID) error {
+			_, err := s.tractorRepo.GetByID(ctx, repositories.GetTractorByIDRequest{
+				ID: id, TenantInfo: tenantInfo,
+			})
+
+			return err
+		}
+	}
+	var trailer func(pulid.ID) error
+	if s.trailerRepo != nil {
+		trailer = func(id pulid.ID) error {
+			_, err := s.trailerRepo.GetByID(ctx, repositories.GetTrailerByIDRequest{
+				ID: id, TenantInfo: tenantInfo,
+			})
+
+			return err
+		}
+	}
+
+	for _, party := range []struct {
+		field, kind string
+		id          *pulid.ID
+		find        func(pulid.ID) error
+	}{
+		{"primaryWorkerId", "driver", assignment.PrimaryWorkerID, worker},
+		{"secondaryWorkerId", "driver", assignment.SecondaryWorkerID, worker},
+		{"tractorId", "tractor", assignment.TractorID, tractor},
+		{"trailerId", "trailer", assignment.TrailerID, trailer},
+	} {
+		if err := check(party.field, party.kind, party.id, party.find); err != nil {
+			return err
+		}
+	}
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
 }
 
 func (s *service) projectAssignment(

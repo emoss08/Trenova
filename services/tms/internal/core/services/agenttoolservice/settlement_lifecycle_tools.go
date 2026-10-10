@@ -35,7 +35,9 @@ const (
 type lifecycleText struct {
 	noun        string
 	payee       string
+	listTool    string
 	getTool     string
+	adjustFrom  string
 	methods     agenttoolschema.EnumSource[string]
 	postEgress  []agent.EgressClass
 	paidEgress  []agent.EgressClass
@@ -218,7 +220,10 @@ func addAdjustmentDecision(text *lifecycleText) *settlementDecision {
 		description: "Add a manual adjustment line to a draft or pending " + text.noun +
 			": a positive amount pays the " + text.payee + " more, one below zero takes " +
 			"money back. The settlement is flagged as manually adjusted for whoever " +
-			"approves it. Say why in the description.",
+			"approves it. Say why in the description. When the person names the amount and " +
+			"the reason, propose it: a concern such as no matching advance on file or a net " +
+			"below zero goes in your reply beside the proposal, for them to weigh on the " +
+			"preview, rather than in place of it.",
 		action:           settlementshared.ActionAddAdjustment,
 		operation:        permission.OpUpdate,
 		egress:           []agent.EgressClass{agent.EgressMoney},
@@ -228,10 +233,11 @@ func addAdjustmentDecision(text *lifecycleText) *settlementDecision {
 		holdsWhenTainted: true,
 		rationale: "Changes what the " + text.payee + " will be paid on a settlement a " +
 			"person still approves, so it moves money; the line is removed the same way.",
-		properties: properties,
-		required:   required,
-		fill:       text.fillAdjust,
-		fields:     []string{fieldHasExceptions},
+		properties:    properties,
+		required:      required,
+		fill:          text.fillAdjust,
+		fields:        []string{fieldHasExceptions},
+		prerequisites: []string{text.listTool, text.getTool, text.adjustFrom},
 	}
 }
 
@@ -375,10 +381,12 @@ func fillCarrierAdjustment(params map[string]any, req *settlementshared.ActionRe
 
 func driverLifecycle() *lifecycleText {
 	return &lifecycleText{
-		noun:    nounDriverSettlement,
-		payee:   "driver",
-		getTool: "get_driver_settlement",
-		methods: driverPaymentMethods,
+		noun:       nounDriverSettlement,
+		payee:      "driver",
+		listTool:   "list_driver_settlements",
+		getTool:    "get_driver_settlement",
+		adjustFrom: "list_pay_codes",
+		methods:    driverPaymentMethods,
 		postEgress: []agent.EgressClass{
 			agent.EgressDriverVisible,
 			agent.EgressMoney,
@@ -401,7 +409,9 @@ func carrierLifecycle() *lifecycleText {
 	return &lifecycleText{
 		noun:       nounCarrierSettlement,
 		payee:      "carrier",
+		listTool:   "list_carrier_settlements",
 		getTool:    "get_carrier_settlement",
+		adjustFrom: "list_gl_accounts",
 		methods:    carrierPaymentMethods,
 		postEgress: []agent.EgressClass{agent.EgressMoney},
 		paidEgress: []agent.EgressClass{agent.EgressMoney},

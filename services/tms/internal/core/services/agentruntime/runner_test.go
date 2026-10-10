@@ -389,6 +389,7 @@ func TestRun_RefusesAnArgumentTheToolDoesNotDeclare(t *testing.T) {
 		Definition: testDefinition("raise_exception"),
 		Actor:      testActor(),
 		Input:      "Flag shp_1",
+		RunID:      pulid.MustNew("ar_"),
 	})
 	require.NoError(t, err)
 
@@ -1351,4 +1352,47 @@ func TestRestoreTurn_DecidesFromTheToolsHeldWhenTheTurnOpened(t *testing.T) {
 	before.Held = nil
 	assert.Empty(t, drive(before),
 		"a state from before the set was kept is decided from the definition, as it was then")
+}
+
+// raise_exception needs a run, and a conversation's turn has none, so in the
+// Desk it could only be refused; a model that reached for it spent a call and
+// told the person nothing. A background run keeps it.
+func TestRun_OffersRaiseExceptionOnlyWithARun(t *testing.T) {
+	t.Parallel()
+
+	action := actionTool("raise_exception", agent.TierPropose, nil)
+	for _, tc := range []struct {
+		name  string
+		runID pulid.ID
+		held  bool
+	}{
+		{name: "a conversation's turn", runID: pulid.Nil, held: false},
+		{name: "a background run", runID: pulid.MustNew("ar_"), held: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+				textTurn("Nothing to flag."),
+			}}
+			rt := newRuntime(completion, &stubQueryRegistry{},
+				&stubActionRegistry{Tools: []serviceports.AgentTool{action}}, nil)
+
+			_, err := rt.Run(t.Context(), &serviceports.RunRequest{
+				Definition: testDefinition("raise_exception"),
+				Actor:      testActor(),
+				Input:      "Anything wrong with shp_1?",
+				RunID:      tc.runID,
+			})
+			require.NoError(t, err)
+
+			require.NotEmpty(t, completion.Requests)
+			offered := offeredTools(completion.Requests[0])
+			if tc.held {
+				assert.Contains(t, offered, "raise_exception")
+			} else {
+				assert.NotContains(t, offered, "raise_exception")
+			}
+		})
+	}
 }

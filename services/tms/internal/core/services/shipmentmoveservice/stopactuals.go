@@ -78,10 +78,17 @@ func (s *service) RecordStopActual(
 		s.evaluateServiceFailuresAfterMoveStatus(ctx, updatedMove.ShipmentID, req.TenantInfo)
 		s.notifyMoveObservers(ctx, req.TenantInfo, updatedMove, previousStatus)
 	}
-	if req.Action == repositories.StopActualActionDepart && updatedMove != nil {
+	departure := req.Departure()
+	switch {
+	case req.Action == repositories.StopActualActionDepart && updatedMove != nil:
 		s.flagDetentionCandidate(ctx, req, updatedMove)
+	case departure != nil && updatedMove != nil:
+		s.flagDetentionCandidate(ctx, departure, updatedMove)
 	}
 	s.publishStopActualEvent(ctx, req)
+	if departure != nil {
+		s.publishStopActualEvent(ctx, departure)
+	}
 
 	return updatedMove, nil
 }

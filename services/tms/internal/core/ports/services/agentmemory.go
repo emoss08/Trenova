@@ -70,6 +70,14 @@ type SetAgentMemoryStatusRequest struct {
 	Status     agent.MemoryStatus
 }
 
+// ReviewAgentMemoryRequest is a person saying they read a tainted memory and
+// keep it, at the version they read.
+type ReviewAgentMemoryRequest struct {
+	ID         pulid.ID
+	TenantInfo pagination.TenantInfo
+	Version    int64
+}
+
 // RecallAgentMemoriesRequest is the agent's read: what has been recorded
 // about this text, this record or this tool.
 type RecallAgentMemoriesRequest struct {
@@ -325,6 +333,14 @@ type AgentMemoryService interface {
 	SetStatus(
 		ctx context.Context,
 		req SetAgentMemoryStatusRequest,
+		actor *RequestActor,
+	) (*agent.Memory, error)
+	// Review clears a tainted memory's taint for the person who read it:
+	// from then on it is the organization's own, followed as written, and
+	// a turn that reads it is not tainted by it.
+	Review(
+		ctx context.Context,
+		req ReviewAgentMemoryRequest,
 		actor *RequestActor,
 	) (*agent.Memory, error)
 	GetByID(ctx context.Context, req repositories.GetAgentMemoryByIDRequest) (*agent.Memory, error)

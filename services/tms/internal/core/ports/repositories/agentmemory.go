@@ -102,6 +102,16 @@ type SetAgentMemoryStatusRequest struct {
 	At         int64
 }
 
+// ReviewAgentMemoryRequest records that a person read a tainted memory and
+// kept it, at the version they read: a memory changed since is not cleared.
+type ReviewAgentMemoryRequest struct {
+	ID         pulid.ID
+	TenantInfo pagination.TenantInfo
+	ByUserID   pulid.ID
+	At         int64
+	Version    int64
+}
+
 type MarkAgentMemoriesUsedRequest struct {
 	TenantInfo pagination.TenantInfo
 	IDs        []pulid.ID
@@ -215,6 +225,9 @@ type AgentMemoryRepository interface {
 	FindActive(ctx context.Context, req FindActiveAgentMemoryRequest) (*agent.Memory, error)
 	CountActive(ctx context.Context, req CountActiveAgentMemoriesRequest) (int, error)
 	SetStatus(ctx context.Context, req SetAgentMemoryStatusRequest) (*agent.Memory, error)
+	// Review clears an Active or Paused memory's taint for the person who
+	// read it; a memory that does not taint, or that changed, is refused.
+	Review(ctx context.Context, req ReviewAgentMemoryRequest) (*agent.Memory, error)
 	MarkUsed(ctx context.Context, req MarkAgentMemoriesUsedRequest) error
 	ListSuggestionContext(
 		ctx context.Context,

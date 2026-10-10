@@ -306,8 +306,10 @@ func TestGetWorkerHOS_ReadsTheClocksAndMarksAStaleReading(t *testing.T) {
 	row, ok := result.(workerHOSRow)
 	require.True(t, ok)
 	assert.Equal(t, "Maria Ortiz", row.Name)
-	assert.EqualValues(t, 90, row.DriveRemainingMinutes)
+	require.NotNil(t, row.DriveRemainingMinutes)
+	assert.EqualValues(t, 90, *row.DriveRemainingMinutes)
 	assert.True(t, row.Stale)
+	assert.Contains(t, row.Note, "do not stop")
 	assert.NotEmpty(t, row.Note)
 
 	unmapped, err := tool.Query(
@@ -321,6 +323,16 @@ func TestGetWorkerHOS_ReadsTheClocksAndMarksAStaleReading(t *testing.T) {
 	assert.Equal(t, "Unknown", none.DutyStatus)
 	assert.True(t, none.Stale)
 	assert.Contains(t, none.Note, "No ELD has reported hours of service")
+	/*
+		gpt-6-luna read "plan on nothing" and zeros on every clock as "no hours
+		left" and proposed no assignment for a driver the person named. Unknown
+		clocks are left out, and the note says unreported hours are a concern
+		to name beside the proposal, not a reason to withhold it.
+	*/
+	assert.Nil(t, none.DriveRemainingMinutes, "an unknown clock is absent, not zero")
+	assert.Nil(t, none.CycleRemainingMinutes)
+	assert.Contains(t, none.Note, "do not stop")
+	assert.NotContains(t, none.Note, "plan on nothing")
 }
 
 type fakeBoard struct {

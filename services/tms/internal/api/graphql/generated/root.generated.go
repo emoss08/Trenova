@@ -534,6 +534,8 @@ type AIFeedbackResolver interface {
 type AIProviderResolver interface {
 	InputCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
 	OutputCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
+	CacheReadCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
+	CacheWriteCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
 	MonthlyCapUsd(ctx context.Context, obj *aiprovider.Provider) (*string, error)
 	MonthSpendUsd(ctx context.Context, obj *aiprovider.Provider) (string, error)
 	APIKey(ctx context.Context, obj *aiprovider.Provider) (*aiprovider.KeyInfo, error)
@@ -1529,6 +1531,7 @@ type MutationResolver interface {
 	CreateAgentMemory(ctx context.Context, input gqlmodel.AgentMemoryInput) (*agent.Memory, error)
 	UpdateAgentMemory(ctx context.Context, id string, input gqlmodel.AgentMemoryInput) (*agent.Memory, error)
 	SetAgentMemoryStatus(ctx context.Context, id string, status agent.MemoryStatus) (*agent.Memory, error)
+	ReviewAgentMemory(ctx context.Context, id string, version int) (*agent.Memory, error)
 	ApproveAgentMemorySuggestion(ctx context.Context, id string, input gqlmodel.ApproveAgentMemorySuggestionInput) (*agent.Memory, error)
 	DismissAgentMemorySuggestion(ctx context.Context, id string, version int) (*agent.Memory, error)
 	ResolveAgentException(ctx context.Context, id string, input gqlmodel.AgentExceptionResolveInput) (*agent.AgentException, error)
@@ -5643,8 +5646,17 @@ type AgentMemory {
   scope: AgentMemoryScope!
   ownerUserId: ID
   roleId: ID
-  "Written by a run that had read content from outside the organization; an agent that reads it back is tainted by it."
+  "Written by a run that had read content from outside the organization. Kept after a review, as where the memory came from."
   tainted: Boolean!
+  """
+  Whether a turn that reads the memory is tainted by it: written after outside content and not
+  reviewed since. Every money, customer-visible and outside-recipient write of such a turn
+  waits for a person.
+  """
+  taints: Boolean!
+  "The person who read the tainted memory and kept it; from then on it taints no turn."
+  reviewedByUserId: ID
+  reviewedAt: Timestamp
   "The run whose outside content the memory carries."
   taintRunId: ID
   sourceRunId: ID
@@ -6036,7 +6048,13 @@ extend type Mutation {
   updateAgentMemory(id: ID!, input: AgentMemoryInput!): AgentMemory!
   "Retires or restores a memory; a retired one is kept and no longer read. A suggested memory is refused."
   setAgentMemoryStatus(id: ID!, status: AgentMemoryStatus!): AgentMemory!
-  "Makes a suggested memory Active, with the text as the administrator edited it."
+  """
+  Clears a tainted memory's taint once a person has read it and keeps it: it is followed as the
+  organization's own and no longer taints the turns that read it. Refused for a memory that does
+  not taint, and for one changed since the version given.
+  """
+  reviewAgentMemory(id: ID!, version: Int!): AgentMemory!
+  "Makes a suggested memory Active, with the text as the administrator edited it. A tainted suggestion approved is reviewed."
   approveAgentMemorySuggestion(id: ID!, input: ApproveAgentMemorySuggestionInput!): AgentMemory!
   "Refuses a suggested memory; its pattern is not suggested again for 30 days."
   dismissAgentMemorySuggestion(id: ID!, version: Int!): AgentMemory!
@@ -8812,6 +8830,17 @@ type AIProvider {
   inputCostPerMillion: Decimal
   "USD per million output tokens; null means unknown."
   outputCostPerMillion: Decimal
+  """
+  USD per million prompt tokens read from the provider's cache. Null charges
+  the protocol's usual share of the input price: a tenth.
+  """
+  cacheReadCostPerMillion: Decimal
+  """
+  USD per million prompt tokens written to the provider's cache. Null charges
+  the protocol's usual multiple of the input price: one and a quarter times
+  for Anthropic Messages, the input price for the others.
+  """
+  cacheWriteCostPerMillion: Decimal
   maxTokens: Int!
   tasks: [AITask!]!
   priority: Int!
@@ -8977,6 +9006,8 @@ input AIProviderPatchInput {
   apiKey: String @goField(omittable: true)
   inputCostPerMillion: Decimal @goField(omittable: true)
   outputCostPerMillion: Decimal @goField(omittable: true)
+  cacheReadCostPerMillion: Decimal @goField(omittable: true)
+  cacheWriteCostPerMillion: Decimal @goField(omittable: true)
 }
 
 extend type Query {

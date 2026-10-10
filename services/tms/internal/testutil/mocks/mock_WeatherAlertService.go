@@ -295,20 +295,31 @@ func (_c *MockWeatherAlertService_ListWeatherAlertTenants_Call) RunAndReturn(run
 }
 
 // PollNWSAlerts provides a mock function for the type MockWeatherAlertService
-func (_mock *MockWeatherAlertService) PollNWSAlerts(ctx context.Context) error {
-	ret := _mock.Called(ctx)
+func (_mock *MockWeatherAlertService) PollNWSAlerts(ctx context.Context, heartbeat services.WeatherAlertPollHeartbeat) (*services.PollNWSAlertsResult, error) {
+	ret := _mock.Called(ctx, heartbeat)
 
 	if len(ret) == 0 {
 		panic("no return value specified for PollNWSAlerts")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) error); ok {
-		r0 = returnFunc(ctx)
-	} else {
-		r0 = ret.Error(0)
+	var r0 *services.PollNWSAlertsResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.WeatherAlertPollHeartbeat) (*services.PollNWSAlertsResult, error)); ok {
+		return returnFunc(ctx, heartbeat)
 	}
-	return r0
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.WeatherAlertPollHeartbeat) *services.PollNWSAlertsResult); ok {
+		r0 = returnFunc(ctx, heartbeat)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.PollNWSAlertsResult)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, services.WeatherAlertPollHeartbeat) error); ok {
+		r1 = returnFunc(ctx, heartbeat)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // MockWeatherAlertService_PollNWSAlerts_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PollNWSAlerts'
@@ -318,29 +329,35 @@ type MockWeatherAlertService_PollNWSAlerts_Call struct {
 
 // PollNWSAlerts is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockWeatherAlertService_Expecter) PollNWSAlerts(ctx any) *MockWeatherAlertService_PollNWSAlerts_Call {
-	return &MockWeatherAlertService_PollNWSAlerts_Call{Call: _e.mock.On("PollNWSAlerts", ctx)}
+//   - heartbeat services.WeatherAlertPollHeartbeat
+func (_e *MockWeatherAlertService_Expecter) PollNWSAlerts(ctx any, heartbeat any) *MockWeatherAlertService_PollNWSAlerts_Call {
+	return &MockWeatherAlertService_PollNWSAlerts_Call{Call: _e.mock.On("PollNWSAlerts", ctx, heartbeat)}
 }
 
-func (_c *MockWeatherAlertService_PollNWSAlerts_Call) Run(run func(ctx context.Context)) *MockWeatherAlertService_PollNWSAlerts_Call {
+func (_c *MockWeatherAlertService_PollNWSAlerts_Call) Run(run func(ctx context.Context, heartbeat services.WeatherAlertPollHeartbeat)) *MockWeatherAlertService_PollNWSAlerts_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
+		var arg1 services.WeatherAlertPollHeartbeat
+		if args[1] != nil {
+			arg1 = args[1].(services.WeatherAlertPollHeartbeat)
+		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
 }
 
-func (_c *MockWeatherAlertService_PollNWSAlerts_Call) Return(err error) *MockWeatherAlertService_PollNWSAlerts_Call {
-	_c.Call.Return(err)
+func (_c *MockWeatherAlertService_PollNWSAlerts_Call) Return(pollNWSAlertsResult *services.PollNWSAlertsResult, err error) *MockWeatherAlertService_PollNWSAlerts_Call {
+	_c.Call.Return(pollNWSAlertsResult, err)
 	return _c
 }
 
-func (_c *MockWeatherAlertService_PollNWSAlerts_Call) RunAndReturn(run func(ctx context.Context) error) *MockWeatherAlertService_PollNWSAlerts_Call {
+func (_c *MockWeatherAlertService_PollNWSAlerts_Call) RunAndReturn(run func(ctx context.Context, heartbeat services.WeatherAlertPollHeartbeat) (*services.PollNWSAlertsResult, error)) *MockWeatherAlertService_PollNWSAlerts_Call {
 	_c.Call.Return(run)
 	return _c
 }

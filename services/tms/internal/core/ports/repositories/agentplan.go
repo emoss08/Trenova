@@ -94,4 +94,10 @@ type AgentPlanRepository interface {
 		ctx context.Context,
 		req ExpireAgentPlansByDefinitionRequest,
 	) (int, error)
+	ExpirePendingByThread(ctx context.Context, req ExpireAgentPlansByThreadRequest) (int, error)
+}
+
+type ExpireAgentPlansByThreadRequest struct {
+	ThreadID   pulid.ID              `json:"threadId"`
+	TenantInfo pagination.TenantInfo `json:"-"`
 }

@@ -213,6 +213,7 @@ func (s *Service) prepareTurn(
 		Mentions:            mentions,
 		Taint:               thread.Taint,
 		Facts:               thread.PinnedFacts,
+		Anchors:             checks.anchors,
 	}
 
 	decision, runReq := s.admit(ctx, turnReq)
@@ -349,6 +350,13 @@ func (s *Service) FinishTurn(
 
 	taint := turnTaint(plan, req.Run)
 	s.keepThreadTaint(ctx, thread, taint, req.TenantInfo)
+	s.keepWorkingSet(ctx, &workingTurn{
+		thread:  thread,
+		plan:    plan,
+		saved:   saved,
+		actions: turn.Actions,
+		at:      timeutils.NowUnix(),
+	}, req.TenantInfo)
 
 	thread.MarkContinuable()
 	result := &services.SendMessageResult{

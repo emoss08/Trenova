@@ -2,13 +2,13 @@ package sim
 
 import (
 	"fmt"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"math"
-	"net/http"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const (
@@ -18,14 +18,19 @@ const (
 	formFieldTypeCheckBoxes     = "check_boxes"
 	formFieldTypeSignature      = "signature"
 
-	formSubmissionStatusCompleted = "completed"
-	formSubmitterTypeDriver       = "driver"
+	formSubmissionStatusCompleted   = "completed"
+	formSubmissionStatusNeedsReview = "needsReview"
+	formSubmitterTypeDriver         = "driver"
 
-	formTemplateTitleBillOfLading    = "Bill of Lading (Shipper)"
-	formTemplateTitleProofOfDelivery = "Proof of Delivery (Consignee)"
+	formTemplateTitleBillOfLading       = "Bill of Lading (Shipper)"
+	formTemplateTitleProofOfDelivery    = "Proof of Delivery (Consignee)"
+	formTemplateTitleTrailerInterchange = "Trailer Interchange Receipt"
 
-	formSubmissionKindBOL = "bol"
-	formSubmissionKindPOD = "pod"
+	formSubmissionKindBOL         = "bol"
+	formSubmissionKindPOD         = "pod"
+	formSubmissionKindInterchange = "interchange"
+	formInterchangeRate           = 0.22
+	formInterchangePhotoCount     = 2
 
 	formMediaProcessingStatusFinished = "finished"
 	formMediaURLPrefix                = "https://samsara-forms-submission-media-uploads.s3.us-west-2.amazonaws.com/"
@@ -72,17 +77,27 @@ var (
 		"Sam Delgado",
 		"Terry Okafor",
 	}
+	formTirePositions = []string{
+		"Axle 1 Left",
+		"Axle 1 Right",
+		"Axle 2 Left",
+		"Axle 2 Right",
+	}
 )
 
 type formGenerationContext struct {
-	Now              time.Time
-	GenericTemplates []Record
-	BOLTemplate      Record
-	PODTemplate      Record
-	Roster           map[string]driverRoster
-	RouteByDriver    map[string]string
-	Waypoints        map[string][]routePoint
-	GeometryCache    map[string]*routeGeometry
+	Now                 time.Time
+	GenericTemplates    []Record
+	BOLTemplate         Record
+	PODTemplate         Record
+	InterchangeTemplate Record
+	Roster              map[string]driverRoster
+	RouteByDriver       map[string]routeRef
+	TrailerByVehicle    map[string]string
+	Geofences           []geofenceCircle
+	APIUserID           string
+	Waypoints           map[string][]routePoint
+	GeometryCache       map[string]*routeGeometry
 }
 
 type formSubmissionSpec struct {
@@ -97,66 +112,6 @@ type formSubmissionSpec struct {
 	SubmittedAt  time.Time
 	RouteID      string
 	RouteStopID  string
-}
-
-func (s *Server) handleFormSubmissionStream(writer http.ResponseWriter, request *http.Request) {
-	startTime, endTime, err := parseTimeRange(request)
-	if err != nil {
-		s.writeAPIError(writer, http.StatusBadRequest, err)
-		return
-	}
-	if startTime == nil {
-		s.writeAPIError(writer, http.StatusBadRequest, ErrTimeRangeRequired)
-		return
-	}
-
-	now := s.simNow()
-	windowEnd := now
-	if endTime != nil {
-		windowEnd = *endTime
-	}
-	if windowEnd.Sub(*startTime) > formStreamMaxRangeDays*24*time.Hour {
-		s.writeAPIError(writer, http.StatusBadRequest, ErrInvalidBody)
-		return
-	}
-
-	templateIDs := idsFromQuery(request.URL.Query(), "formTemplateIds")
-	submitterIDs := append(
-		idsFromQuery(request.URL.Query(), "driverIds"),
-		idsFromQuery(request.URL.Query(), "userIds")...,
-	)
-
-	records := []Record{}
-	if s.live != nil {
-		records = s.live.GeneratedFormSubmissions(
-			now,
-			*startTime,
-			windowEnd,
-			templateIDs,
-			submitterIDs,
-		)
-	}
-	seedRecords, listErr := s.store.List(ResourceFormSubmissions)
-	if listErr != nil {
-		s.writeAPIError(writer, http.StatusInternalServerError, listErr)
-		return
-	}
-	records = append(
-		records,
-		filterFormSubmissions(seedRecords, *startTime, windowEnd, templateIDs, submitterIDs)...,
-	)
-	sortFormSubmissions(records)
-
-	page, pagination, err := paginate(records, request.URL.Query(), 512)
-	if err != nil {
-		s.writeAPIError(writer, http.StatusBadRequest, err)
-		return
-	}
-	payload := map[string]any{
-		"data":       recordsAsAny(page),
-		"pagination": pagination,
-	}
-	s.respondJSON(writer, request, requestSignature(request)+"|form-submission-stream", payload)
 }
 
 func (l *LiveSimulator) GeneratedFormSubmissions(
@@ -185,19 +140,30 @@ func (l *LiveSimulator) GeneratedFormSubmissions(
 	templateFilter := toStringSet(templateIDs)
 	submitterFilter := toStringSet(submitterIDs)
 
-	genericTemplates, bolTemplate, podTemplate := partitionFormTemplates(templates)
+	partition := partitionFormTemplates(templates)
+	snapshot := l.fleet()
 
 	ctx := formGenerationContext{
-		Now:              now,
-		GenericTemplates: genericTemplates,
-		BOLTemplate:      bolTemplate,
-		PODTemplate:      podTemplate,
-		Roster:           roster,
-		RouteByDriver:    l.routeIDByDriverMap(),
-		Waypoints:        l.loadAssetWaypoints(),
-		GeometryCache:    map[string]*routeGeometry{},
+		Now:                 now,
+		GenericTemplates:    partition.Generic,
+		BOLTemplate:         partition.BOL,
+		PODTemplate:         partition.POD,
+		InterchangeTemplate: partition.Interchange,
+		Roster:              roster,
+		RouteByDriver:       routeRefsByDriver(l.routeRefs(now)),
+		TrailerByVehicle:    coupledTrailersByVehicle(snapshot.assets),
+		Geofences:           snapshot.geofences,
+		APIUserID:           formAPIUserID(templates),
+		Waypoints:           l.loadAssetWaypoints(),
+		GeometryCache:       map[string]*routeGeometry{},
 	}
 
+	if windowStart.Before(telemetryEpoch) {
+		windowStart = telemetryEpoch
+	}
+	if !windowEnd.After(windowStart) {
+		return []Record{}
+	}
 	startDay := windowStart.Add(-24 * time.Hour).Truncate(24 * time.Hour)
 	endDay := windowEnd.Truncate(24 * time.Hour)
 	dayCount := int(endDay.Sub(startDay)/(24*time.Hour)) + 1
@@ -254,7 +220,8 @@ func (l *LiveSimulator) driverDayFormSubmissions(
 	if workSpan <= 0 {
 		return []Record{}
 	}
-	routeID := ctx.RouteByDriver[driverID]
+	route := ctx.RouteByDriver[driverID]
+	routeID := route.ID
 
 	out := make([]Record, 0, 4)
 
@@ -309,7 +276,7 @@ func (l *LiveSimulator) driverDayFormSubmissions(
 			SubmissionID: formSubmissionID(day, driverID, formSubmissionKindBOL),
 			SubmittedAt:  submittedAt,
 			RouteID:      routeID,
-			RouteStopID:  l.routeStopIDForKind(routeID, formSubmissionKindBOL),
+			RouteStopID:  routeStopIDAt(&route, formSubmissionKindBOL),
 		}); ok {
 			out = append(out, record)
 		}
@@ -330,12 +297,99 @@ func (l *LiveSimulator) driverDayFormSubmissions(
 			SubmissionID: formSubmissionID(day, driverID, formSubmissionKindPOD),
 			SubmittedAt:  submittedAt,
 			RouteID:      routeID,
-			RouteStopID:  l.routeStopIDForKind(routeID, formSubmissionKindPOD),
+			RouteStopID:  routeStopIDAt(&route, formSubmissionKindPOD),
 		}); ok {
 			out = append(out, record)
 		}
 	}
 
+	if record, ok := l.interchangeSubmission(ctx, &dayCtx, driverID, driverName, vehicleID, day); ok {
+		out = append(out, record)
+	}
+
+	return out
+}
+
+func (l *LiveSimulator) interchangeSubmission(
+	ctx *formGenerationContext,
+	dayCtx *dailyEventContext,
+	driverID string,
+	driverName string,
+	vehicleID string,
+	day time.Time,
+) (Record, bool) {
+	dayKey := day.Format(dateLayout)
+	if ctx.InterchangeTemplate == nil || ctx.TrailerByVehicle[vehicleID] == "" ||
+		l.hashFraction("form|interchange", driverID, dayKey) >= formInterchangeRate {
+		return nil, false
+	}
+	offset := time.Duration(
+		(5 + 12*l.hashFraction("form|interchange-time", driverID, dayKey)) * float64(time.Minute),
+	)
+	return l.buildFormSubmission(ctx, formSubmissionSpec{
+		Template:     ctx.InterchangeTemplate,
+		DriverID:     driverID,
+		DriverName:   driverName,
+		VehicleID:    vehicleID,
+		Day:          day,
+		Kind:         formSubmissionKindInterchange,
+		SubmissionID: formSubmissionID(day, driverID, formSubmissionKindInterchange),
+		SubmittedAt:  dayCtx.DrivingEnd.Add(offset).Truncate(time.Second),
+	})
+}
+
+func routeStopIDAt(route *routeRef, kind string) string {
+	stop, ok := route.firstStop()
+	if kind == formSubmissionKindPOD {
+		stop, ok = route.lastStop()
+	}
+	if !ok {
+		return ""
+	}
+	return stop.ID
+}
+
+func coupledTrailersByVehicle(assets []Record) map[string]string {
+	out := make(map[string]string, len(assets))
+	for _, asset := range assets {
+		if assetType(asset) != assetTypeTrailer {
+			continue
+		}
+		vehicleID := stringValue(asset, fieldSimCoupledVehicleID)
+		if vehicleID == "" {
+			continue
+		}
+		if current, exists := out[vehicleID]; !exists || recordID(asset) < current {
+			out[vehicleID] = recordID(asset)
+		}
+	}
+	return out
+}
+
+func formAPIUserID(templates []Record) string {
+	users := formUserIDs(templates)
+	ids := make([]string, 0, len(users))
+	for id := range users {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	if len(ids) == 0 {
+		return ""
+	}
+	return ids[0]
+}
+
+func formUserIDs(templates []Record) map[string]struct{} {
+	out := map[string]struct{}{}
+	for _, template := range templates {
+		for _, key := range []string{"createdBy", "updatedBy"} {
+			if nestedString(template, key, keyType) == formUserTypeUser {
+				if id := nestedString(template, key, keyID); id != "" {
+					out[id] = struct{}{}
+				}
+			}
+		}
+	}
 	return out
 }
 
@@ -358,10 +412,14 @@ func (l *LiveSimulator) buildFormSubmission(
 		).Truncate(time.Second)
 	}
 
+	status := formSubmissionStatusCompleted
+	if _, requiresApproval := anyAsMap(spec.Template["approvalConfig"]); requiresApproval {
+		status = formSubmissionStatusNeedsReview
+	}
 	record := Record{
 		"id":              spec.SubmissionID,
 		"title":           stringValue(spec.Template, "title") + " - " + spec.DriverName,
-		"status":          formSubmissionStatusCompleted,
+		"status":          status,
 		"isRequired":      templateHasFieldType(spec.Template, formFieldTypeCheckBoxes),
 		"createdAtTime":   createdAt.UTC().Format(time.RFC3339),
 		"updatedAtTime":   spec.SubmittedAt.UTC().Format(time.RFC3339),
@@ -374,10 +432,13 @@ func (l *LiveSimulator) buildFormSubmission(
 			"id":         recordID(spec.Template),
 			"revisionId": stringValue(spec.Template, "revisionId"),
 		},
-		"externalIds": map[string]any{},
-		"location":    l.formSubmissionLocation(ctx, &spec),
-		"fields":      l.formFieldInputs(ctx, &spec),
+		"durationMs": spec.SubmittedAt.Sub(createdAt).Milliseconds(),
 	}
+	location := l.formSubmissionLocation(ctx, &spec)
+	if location != nil {
+		record["location"] = location
+	}
+	record["fields"] = l.formFieldInputs(ctx, &spec, location)
 	if spec.RouteID != "" {
 		record["routeId"] = spec.RouteID
 	}
@@ -388,61 +449,36 @@ func (l *LiveSimulator) buildFormSubmission(
 }
 
 func formSubmissionID(day time.Time, driverID, suffix string) string {
-	return strings.Join([]string{
-		"form-sub",
+	return deterministicUUID(
+		"form-submission",
 		day.UTC().Format("20060102"),
-		driverID,
+		strings.TrimSpace(driverID),
 		suffix,
-	}, "-")
+	)
 }
 
-func partitionFormTemplates(templates []Record) (generic []Record, bol, pod Record) {
-	generic = make([]Record, 0, len(templates))
+type formTemplatePartition struct {
+	Generic     []Record
+	BOL         Record
+	POD         Record
+	Interchange Record
+}
+
+func partitionFormTemplates(templates []Record) formTemplatePartition {
+	out := formTemplatePartition{Generic: make([]Record, 0, len(templates))}
 	for _, template := range templates {
 		switch stringValue(template, "title") {
 		case formTemplateTitleBillOfLading:
-			bol = template
+			out.BOL = template
 		case formTemplateTitleProofOfDelivery:
-			pod = template
+			out.POD = template
+		case formTemplateTitleTrailerInterchange:
+			out.Interchange = template
 		default:
-			generic = append(generic, template)
+			out.Generic = append(out.Generic, template)
 		}
-	}
-	return generic, bol, pod
-}
-
-func (l *LiveSimulator) routeIDByDriverMap() map[string]string {
-	routes, err := l.store.List(ResourceRoutes)
-	if err != nil {
-		return map[string]string{}
-	}
-	out := make(map[string]string, len(routes))
-	for _, route := range routes {
-		driverID := nestedString(route, "driver", "id")
-		if driverID == "" {
-			continue
-		}
-		if _, exists := out[driverID]; exists {
-			continue
-		}
-		out[driverID] = recordID(route)
 	}
 	return out
-}
-
-func (l *LiveSimulator) routeStopIDForKind(routeID, kind string) string {
-	if routeID == "" {
-		return ""
-	}
-	stopCount := l.routeStopCount(routeID)
-	if stopCount <= 0 {
-		return ""
-	}
-	sequence := 1
-	if kind == formSubmissionKindPOD {
-		sequence = stopCount
-	}
-	return strings.Join([]string{routeID, "stop", strconv.Itoa(sequence)}, "-")
 }
 
 func (l *LiveSimulator) formSubmissionLocation(
@@ -480,17 +516,10 @@ func templateHasFieldType(template Record, fieldType string) bool {
 	return false
 }
 
-func (l *LiveSimulator) routeStopCount(routeID string) int {
-	return clampInt(
-		3+int(math.Floor(4*l.hashFraction("route-stop-count", routeID))),
-		3,
-		6,
-	)
-}
-
 func (l *LiveSimulator) formFieldInputs(
 	ctx *formGenerationContext,
 	spec *formSubmissionSpec,
+	location map[string]any,
 ) []any {
 	rawFields, ok := spec.Template["fields"].([]any)
 	if !ok {
@@ -548,7 +577,11 @@ func (l *LiveSimulator) formFieldInputs(
 				"valueIds": valueIDs,
 			}
 		default:
-			continue
+			key, value, ok := l.generatedExtendedValue(ctx, spec, field, location, valueHash)
+			if !ok {
+				continue
+			}
+			input[key] = value
 		}
 		out = append(out, input)
 	}
@@ -603,7 +636,7 @@ func formTextValue(label string, day time.Time, driverID string, valueHash float
 }
 
 func formSignatureValue(submissionID, fieldID string, now time.Time) map[string]any {
-	mediaID := deterministicEventID(submissionID, fieldID, "signature-media")
+	mediaID := deterministicUUID(submissionID, fieldID, "signature-media")
 	return map[string]any{
 		"media": map[string]any{
 			"id":               mediaID,
@@ -690,39 +723,6 @@ func formCheckBoxSelection(
 	return values, valueIDs
 }
 
-func filterFormSubmissions(
-	records []Record,
-	windowStart time.Time,
-	windowEnd time.Time,
-	templateIDs []string,
-	submitterIDs []string,
-) []Record {
-	templateFilter := toStringSet(templateIDs)
-	submitterFilter := toStringSet(submitterIDs)
-	startRaw := windowStart.UTC().Format(time.RFC3339)
-	endRaw := windowEnd.UTC().Format(time.RFC3339)
-
-	out := make([]Record, 0, len(records))
-	for _, record := range records {
-		updatedAt := stringutils.FirstNonEmptyTrimmed(
-			stringValue(record, "updatedAtTime"),
-			stringValue(record, "submittedAtTime"),
-			stringValue(record, "createdAtTime"),
-		)
-		if updatedAt == "" || updatedAt <= startRaw || updatedAt > endRaw {
-			continue
-		}
-		if !matchesStringFilter(templateFilter, nestedString(record, "formTemplate", "id")) {
-			continue
-		}
-		if !matchesStringFilter(submitterFilter, nestedString(record, "submittedBy", "id")) {
-			continue
-		}
-		out = append(out, cloneRecord(record))
-	}
-	return out
-}
-
 func sortFormSubmissions(records []Record) {
 	sort.Slice(records, func(i, j int) bool {
 		left := stringutils.FirstNonEmptyTrimmed(
@@ -759,4 +759,135 @@ func (l *LiveSimulator) FormWebhookEmissions(
 		})
 	}
 	return out
+}
+
+func (l *LiveSimulator) generatedExtendedValue(
+	ctx *formGenerationContext,
+	spec *formSubmissionSpec,
+	field Record,
+	location map[string]any,
+	valueHash float64,
+) (key string, value map[string]any, ok bool) {
+	fieldID := stringValue(field, keyID)
+	fieldType := stringValue(field, keyType)
+	switch fieldType {
+	case formFieldTypeDateTime:
+		at := spec.SubmittedAt.Add(-time.Duration(2+6*valueHash) * time.Minute)
+		rendered := map[string]any{keyType: formFieldTypeDateTime, keyValue: at.UTC().Format(time.RFC3339)}
+		return formValueKeys[fieldType], rendered, true
+	case formFieldTypeAsset:
+		trailerID := ctx.TrailerByVehicle[spec.VehicleID]
+		asset, exists := l.fleet().assetByID[trailerID]
+		if !exists {
+			return "", nil, false
+		}
+		return formValueKeys[fieldType], map[string]any{keyAsset: formTrackedAsset(asset)}, true
+	case formFieldTypeGeofence:
+		circle, found := nearestGeofence(ctx.Geofences, location)
+		if !found {
+			return "", nil, false
+		}
+		return formValueKeys[fieldType], map[string]any{"geofence": map[string]any{
+			"entryType":      formEntryTypeTracked,
+			keyID:            circle.AddressID,
+			"address":        circle.FormattedAddress,
+			fieldExternalIDs: cloneMap(circle.ExternalIDs),
+		}}, true
+	case formFieldTypeBarcode:
+		seal := fmt.Sprintf("SL-%06d", int(valueHash*1000000)%1000000)
+		return formValueKeys[fieldType], map[string]any{
+			"barcodes": []any{map[string]any{keyValue: seal}},
+		}, true
+	case formFieldTypeMedia:
+		media := make([]any, 0, formInterchangePhotoCount)
+		for idx := range formInterchangePhotoCount {
+			media = append(media, formMediaRecord(
+				deterministicUUID(spec.SubmissionID, fieldID, "photo", strconv.Itoa(idx)),
+			))
+		}
+		return formValueKeys[fieldType], map[string]any{"mediaList": media}, true
+	case formFieldTypePerson:
+		if ctx.APIUserID == "" {
+			return "", nil, false
+		}
+		return formValueKeys[fieldType], map[string]any{"person": map[string]any{
+			"entryType":         formEntryTypeTracked,
+			"polymorphicUserId": map[string]any{keyID: ctx.APIUserID, keyType: formUserTypeUser},
+		}}, true
+	case formFieldTypeTable:
+		return formValueKeys[fieldType], l.generatedTireTable(spec, field), true
+	default:
+		return "", nil, false
+	}
+}
+
+func (l *LiveSimulator) generatedTireTable(spec *formSubmissionSpec, field Record) map[string]any {
+	columns := make([]any, 0, 3)
+	defs := make([]Record, 0, 3)
+	for _, raw := range listOf(field["columns"]) {
+		column, ok := anyAsMap(raw)
+		if !ok {
+			continue
+		}
+		defs = append(defs, Record(column))
+		columns = append(columns, map[string]any{
+			keyID:   column[keyID],
+			"label": column["label"],
+			keyType: column[keyType],
+		})
+	}
+	rows := make([]any, 0, len(formTirePositions))
+	for idx, position := range formTirePositions {
+		depth := math.Round(6 + 8*l.hashFraction("form|tread", spec.SubmissionID, position))
+		cells := make([]any, 0, len(defs))
+		for _, column := range defs {
+			cell := map[string]any{keyID: stringValue(column, keyID), keyType: stringValue(column, keyType)}
+			switch stringValue(column, keyType) {
+			case formFieldTypeText:
+				cell["textValue"] = map[string]any{keyValue: position}
+			case formFieldTypeNumber:
+				cell["numberValue"] = map[string]any{keyValue: depth}
+			case formFieldTypeMultipleChoice:
+				choice := 0
+				if depth < 8 {
+					choice = 1
+				}
+				option, ok := formOptionAt(column, choice)
+				if !ok {
+					continue
+				}
+				cell["multipleChoiceValue"] = map[string]any{
+					keyValue:  stringValue(option, "label"),
+					"valueId": stringValue(option, keyID),
+				}
+			default:
+				continue
+			}
+			cells = append(cells, cell)
+		}
+		rows = append(rows, map[string]any{
+			keyID:   deterministicUUID(spec.SubmissionID, "tire-row", strconv.Itoa(idx)),
+			"cells": cells,
+		})
+	}
+	return map[string]any{"columns": columns, "rows": rows}
+}
+
+func nearestGeofence(circles []geofenceCircle, location map[string]any) (geofenceCircle, bool) {
+	if len(circles) == 0 {
+		return geofenceCircle{}, false
+	}
+	latitude, latOK := location[keyLatitude].(float64)
+	longitude, lonOK := location[keyLongitude].(float64)
+	best := 0
+	if latOK && lonOK {
+		bestDistance := math.Inf(1)
+		for idx := range circles {
+			distance := haversineMeters(latitude, longitude, circles[idx].Latitude, circles[idx].Longitude)
+			if distance < bestDistance {
+				best, bestDistance = idx, distance
+			}
+		}
+	}
+	return circles[best], true
 }

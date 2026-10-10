@@ -537,7 +537,9 @@ func (r *repository) MarkRun(
 // SetToolTier merges one tool's tier into tool_tiers in place. Update writes
 // the whole row from a definition a person loaded, so a tier the ledger set
 // between their load and their save would be silently undone; a JSONB merge
-// touches only the one key. The tool must be one the agent holds, since a
+// touches only the one key. An agent saved with no tiers holds JSON null, and
+// null || {...} is an array that no definition can be read from, so anything
+// but an object is merged into as empty. The tool must be one the agent holds, since a
 // tier for a tool the agent cannot call is a validation error on the next
 // save. A core tool is held by every agent without being listed.
 func (r *repository) SetToolTier(
@@ -560,7 +562,8 @@ func (r *repository) SetToolTier(
 				return uq.Where("? = ANY("+cols.ToolNames.Qualified()+")", req.ToolName)
 			}).
 			Set(
-				cols.ToolTiers.SetExpr("COALESCE({}, jsonb_build_object()) || jsonb_build_object(?::text, ?::text)"),
+				cols.ToolTiers.SetExpr("(CASE WHEN jsonb_typeof({}) = 'object' THEN {} "+
+					"ELSE jsonb_build_object() END) || jsonb_build_object(?::text, ?::text)"),
 				req.ToolName,
 				string(req.Tier),
 			).

@@ -5,7 +5,7 @@
       "type": "Feature",
       "properties": {
         "name": "Austin Roundtrip",
-        "assetId": "veh-1001",
+        "assetId": "281474977075805",
         "speedMps": 20,
         "source": "OSRM demo server (OpenStreetMap network)"
       },
@@ -8907,7 +8907,7 @@
       "type": "Feature",
       "properties": {
         "name": "Dallas Metro Arc",
-        "assetId": "veh-1002",
+        "assetId": "281474977075819",
         "speedMps": 19,
         "source": "OSRM demo server (OpenStreetMap network)"
       },
@@ -15977,7 +15977,7 @@
       "type": "Feature",
       "properties": {
         "name": "Houston Belt Sweep",
-        "assetId": "veh-1003",
+        "assetId": "281474977075842",
         "speedMps": 21,
         "source": "OSRM demo server (OpenStreetMap network)"
       },
@@ -26815,7 +26815,7 @@
       "type": "Feature",
       "properties": {
         "name": "San Antonio To Austin Loop",
-        "assetId": "veh-1004",
+        "assetId": "281474977075860",
         "speedMps": 20,
         "source": "OSRM demo server (OpenStreetMap network)"
       },
@@ -40017,7 +40017,7 @@
       "type": "Feature",
       "properties": {
         "name": "Fort Worth Waco Corridor",
-        "assetId": "veh-1005",
+        "assetId": "281474977075891",
         "speedMps": 20,
         "source": "OSRM demo server (OpenStreetMap network)"
       },
@@ -48871,7 +48871,7 @@
       "type": "Feature",
       "properties": {
         "name": "El Paso Long Eastbound",
-        "assetId": "veh-1006",
+        "assetId": "281474977075907",
         "speedMps": 24,
         "source": "OSRM demo server (OpenStreetMap network)"
       },
@@ -58361,7 +58361,7 @@
       "type": "Feature",
       "properties": {
         "name": "Lubbock Abilene Run",
-        "assetId": "veh-1007",
+        "assetId": "281474977075934",
         "speedMps": 22,
         "source": "OSRM demo server (OpenStreetMap network)"
       },
@@ -74463,7 +74463,7 @@
       "type": "Feature",
       "properties": {
         "name": "Corpus SA Shuttle",
-        "assetId": "veh-1008",
+        "assetId": "281474977075958",
         "speedMps": 21,
         "source": "OSRM demo server (OpenStreetMap network)"
       },
@@ -87617,7 +87617,7 @@
       "type": "Feature",
       "properties": {
         "name": "Tyler Dallas Commute",
-        "assetId": "veh-1009",
+        "assetId": "281474977075973",
         "speedMps": 20,
         "source": "OSRM demo server (OpenStreetMap network)"
       },
@@ -99447,7 +99447,7 @@
       "type": "Feature",
       "properties": {
         "name": "Midland Odessa Big Spring",
-        "assetId": "veh-1010",
+        "assetId": "281474977076001",
         "speedMps": 23,
         "source": "OSRM demo server (OpenStreetMap network)"
       },
@@ -105769,7 +105769,7 @@
       "type": "Feature",
       "properties": {
         "name": "Amarillo Wichita Falls",
-        "assetId": "veh-1011",
+        "assetId": "281474977076028",
         "speedMps": 22,
         "source": "OSRM demo server (OpenStreetMap network)"
       },
@@ -126255,7 +126255,7 @@
       "type": "Feature",
       "properties": {
         "name": "Brownsville Coastal North",
-        "assetId": "veh-1012",
+        "assetId": "281474977076045",
         "speedMps": 21,
         "source": "OSRM demo server (OpenStreetMap network)"
       },

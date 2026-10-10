@@ -177,3 +177,81 @@ func TestRecordStopActualRequest_ValidateOccurredAt(t *testing.T) {
 	withinSkew.OccurredAt = &nearNow
 	require.Nil(t, withinSkew.Validate())
 }
+
+func TestRecordStopActualRequest_ValidateDepartedAt(t *testing.T) {
+	t.Parallel()
+
+	arrived := timeutils.NowUnix() - 7200
+	base := func() *repositories.RecordStopActualRequest {
+		return &repositories.RecordStopActualRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: pulid.MustNew("org_"),
+				BuID:  pulid.MustNew("bu_"),
+			},
+			MoveID:     pulid.MustNew("sm_"),
+			StopID:     pulid.MustNew("stp_"),
+			Action:     repositories.StopActualActionArrive,
+			OccurredAt: &arrived,
+		}
+	}
+
+	valid := base()
+	left := arrived + 3600
+	valid.DepartedAt = &left
+	require.Nil(t, valid.Validate())
+	departure := valid.Departure()
+	require.NotNil(t, departure)
+	assert.Equal(t, repositories.StopActualActionDepart, departure.Action)
+	assert.Equal(t, left, *departure.OccurredAt)
+	assert.Nil(t, base().Departure())
+
+	tests := []struct {
+		name   string
+		mutate func(*repositories.RecordStopActualRequest)
+		want   string
+	}{
+		{
+			name: "before the arrival",
+			mutate: func(r *repositories.RecordStopActualRequest) {
+				early := arrived - 60
+				r.DepartedAt = &early
+			},
+			want: "The departure is before the arrival",
+		},
+		{
+			name: "with a departure",
+			mutate: func(r *repositories.RecordStopActualRequest) {
+				r.Action = repositories.StopActualActionDepart
+				r.DepartedAt = &left
+			},
+			want: "A departure time goes with an arrival",
+		},
+		{
+			name: "without the arrival time",
+			mutate: func(r *repositories.RecordStopActualRequest) {
+				r.OccurredAt = nil
+				r.DepartedAt = &left
+			},
+			want: "Give the arrival time",
+		},
+		{
+			name: "in the future",
+			mutate: func(r *repositories.RecordStopActualRequest) {
+				later := timeutils.NowUnix() + repositories.StopActualClockSkewSeconds + 3600
+				r.DepartedAt = &later
+			},
+			want: "Departed at cannot be in the future",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			req := base()
+			tt.mutate(req)
+			multiErr := req.Validate()
+			require.NotNil(t, multiErr)
+			assert.Contains(t, multiErr.Error(), tt.want)
+		})
+	}
+}

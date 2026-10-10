@@ -18,7 +18,7 @@ curl -fsSL "${headers[@]}" "${BASE_URL}/_sim/events/active?limit=128" |
   }'
 
 echo "Checking vehicle stats + HOS correlation..."
-vehicles_json="$(curl -fsSL "${headers[@]}" "${BASE_URL}/fleet/vehicles/stats?limit=128")"
+vehicles_json="$(curl -fsSL "${headers[@]}" "${BASE_URL}/fleet/vehicles/stats?types=gps")"
 hos_json="$(curl -fsSL "${headers[@]}" "${BASE_URL}/fleet/hos/clocks?limit=128")"
 
 echo "${vehicles_json}" | jq '{vehicles: [.data[] | {id, mph: (.gps.speedMilesPerHour // 0)}] | .[:6]}'

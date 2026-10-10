@@ -19,10 +19,7 @@ func TestServerVehicleStatsFeedRequiresTypes(t *testing.T) {
 		t.Fatalf("expected 400 without types, got %d", response.Code)
 	}
 
-	body := mustReadJSONMap(t, response.Body.Bytes())
-	if got := stringValue(body, "code"); got != "TYPES_REQUIRED" {
-		t.Fatalf("expected TYPES_REQUIRED error code, got %q", got)
-	}
+	assertAPIErrorMessage(t, response.Body.Bytes(), ErrStatTypesRequired)
 }
 
 func TestServerVehicleStatsFeedRejectsUnknownType(t *testing.T) {
@@ -38,10 +35,7 @@ func TestServerVehicleStatsFeedRejectsUnknownType(t *testing.T) {
 		t.Fatalf("expected 400 for unknown type, got %d", response.Code)
 	}
 
-	body := mustReadJSONMap(t, response.Body.Bytes())
-	if got := stringValue(body, "code"); got != "INVALID_TYPES" {
-		t.Fatalf("expected INVALID_TYPES error code, got %q", got)
-	}
+	assertAPIErrorMessage(t, response.Body.Bytes(), ErrStatTypeInvalid)
 }
 
 func TestServerVehicleStatsFeedCursorPagination(t *testing.T) {
@@ -50,7 +44,7 @@ func TestServerVehicleStatsFeedCursorPagination(t *testing.T) {
 	first := performAuthorizedRequest(
 		srv,
 		http.MethodGet,
-		"/fleet/vehicles/stats/feed?types=gps,engineStates,fuelPercents,obdOdometerMeters",
+		"/fleet/vehicles/stats/feed?types=gps,engineStates,fuelPercents",
 	)
 	if first.Code != http.StatusOK {
 		t.Fatalf("expected 200 from initial feed call, got %d", first.Code)
@@ -61,18 +55,22 @@ func TestServerVehicleStatsFeedCursorPagination(t *testing.T) {
 	if len(firstRecords) == 0 {
 		t.Fatal("expected initial feed call to return vehicle records")
 	}
-	vehicle := findRecordByID(t, firstRecords, "veh-1")
+	vehicle := findRecordByID(t, firstRecords, testVehicleID)
 	assertFeedSampleCount(t, vehicle, "gps", 1)
 	assertFeedSampleCount(t, vehicle, "engineStates", 1)
 	assertFeedSampleCount(t, vehicle, "fuelPercents", 1)
-	assertFeedSampleCount(t, vehicle, "obdOdometerMeters", 1)
+	if _, has := vehicle["obdOdometerMeters"]; has {
+		t.Fatal("expected only the requested stat types in the feed")
+	}
 
 	gpsSample := firstFeedSample(t, vehicle, "gps")
 	if _, ok := gpsSample["latitude"].(float64); !ok {
 		t.Fatalf("expected gps sample latitude, got %v", gpsSample["latitude"])
 	}
-	if isEcu, ok := gpsSample["isEcuSpeed"].(bool); !ok || isEcu {
-		t.Fatalf("expected gps sample isEcuSpeed false, got %v", gpsSample["isEcuSpeed"])
+	engineSample := firstFeedSample(t, vehicle, "engineStates")
+	wantEcu := stringValue(Record(engineSample), "value") != engineStateOff
+	if isEcu, ok := gpsSample["isEcuSpeed"].(bool); !ok || isEcu != wantEcu {
+		t.Fatalf("expected gps isEcuSpeed %v, got %v", wantEcu, gpsSample["isEcuSpeed"])
 	}
 
 	firstPagination := mustReadPaginationMap(t, firstPayload)
@@ -103,7 +101,7 @@ func TestServerVehicleStatsFeedCursorPagination(t *testing.T) {
 
 	secondPayload := mustReadJSONMap(t, second.Body.Bytes())
 	secondRecords := mustReadDataRecords(t, second.Body.Bytes())
-	vehicle = findRecordByID(t, secondRecords, "veh-1")
+	vehicle = findRecordByID(t, secondRecords, testVehicleID)
 	samples := feedSamples(t, vehicle, "gps")
 	if len(samples) < 4 || len(samples) > 7 {
 		t.Fatalf("expected roughly five 2-minute samples after 10m step, got %d", len(samples))
@@ -161,10 +159,7 @@ func TestServerVehicleStatsFeedRejectsInvalidCursor(t *testing.T) {
 		t.Fatalf("expected 400 for invalid cursor, got %d", response.Code)
 	}
 
-	body := mustReadJSONMap(t, response.Body.Bytes())
-	if got := stringValue(body, "code"); got != "INVALID_CURSOR" {
-		t.Fatalf("expected INVALID_CURSOR error code, got %q", got)
-	}
+	assertAPIErrorMessage(t, response.Body.Bytes(), ErrCursorInvalid)
 }
 
 func TestServerVehicleStatsHistoryRequiresWindow(t *testing.T) {
@@ -180,10 +175,7 @@ func TestServerVehicleStatsHistoryRequiresWindow(t *testing.T) {
 		t.Fatalf("expected 400 without time range, got %d", response.Code)
 	}
 
-	body := mustReadJSONMap(t, response.Body.Bytes())
-	if got := stringValue(body, "code"); got != "TIME_RANGE_REQUIRED" {
-		t.Fatalf("expected TIME_RANGE_REQUIRED error code, got %q", got)
-	}
+	assertAPIErrorMessage(t, response.Body.Bytes(), ErrTimeRangeRequired)
 }
 
 func TestServerVehicleStatsHistoryReturnsWindowSamples(t *testing.T) {
@@ -200,7 +192,7 @@ func TestServerVehicleStatsHistoryReturnsWindowSamples(t *testing.T) {
 	}
 
 	records := mustReadDataRecords(t, response.Body.Bytes())
-	vehicle := findRecordByID(t, records, "veh-1")
+	vehicle := findRecordByID(t, records, testVehicleID)
 	if got := len(feedSamples(t, vehicle, "gps")); got < 2 {
 		t.Fatalf("expected multiple gps history samples, got %d", got)
 	}

@@ -339,7 +339,7 @@ func (c *checker) memories() {
 
 	for _, opened := range c.outcome.Opened {
 		for _, memory := range opened.Memories {
-			if memory == nil || !memory.Tainted {
+			if memory == nil || !memory.Taints() {
 				continue
 			}
 			if !opened.Taint.Tainted() {

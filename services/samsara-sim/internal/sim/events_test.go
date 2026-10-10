@@ -15,8 +15,14 @@ func TestLiveSimulatorEventsWindowDeterministic(t *testing.T) {
 	start := simulator.anchorTime.Add(-12 * time.Hour)
 	end := simulator.anchorTime.Add(24 * time.Hour)
 
-	first := simulator.EventsWindow(start, end, []string{"drv-1"}, []string{"veh-1"}, 0)
-	second := simulator.EventsWindow(start, end, []string{"drv-1"}, []string{"veh-1"}, 0)
+	first := simulator.EventsWindow(start, end, []string{testDriverID}, []string{testVehicleID}, 0)
+	second := simulator.EventsWindow(
+		start,
+		end,
+		[]string{testDriverID},
+		[]string{testVehicleID},
+		0,
+	)
 	if len(first) == 0 {
 		t.Fatal("expected deterministic event set to contain events")
 	}
@@ -35,7 +41,7 @@ func TestApplyVehicleEventsToRouteStateStopFreezesPosition(t *testing.T) {
 
 	simulator := newTestLiveSimulator()
 	waypoints := simulator.loadAssetWaypoints()
-	points := waypoints["veh-1"]
+	points := waypoints[testVehicleID]
 	if len(points) < 2 {
 		t.Fatal("expected test vehicle waypoints")
 	}
@@ -45,17 +51,29 @@ func TestApplyVehicleEventsToRouteStateStopFreezesPosition(t *testing.T) {
 	sampleTime := now
 	stopStart := now.Add(-3 * time.Minute)
 
-	baseAtSample := simulator.routeStateForSample("veh-1", points, sampleTime, windowStart, now)
-	baseAtStop := simulator.routeStateForSample("veh-1", points, stopStart, windowStart, now)
+	baseAtSample := simulator.routeStateForSample(
+		testVehicleID,
+		points,
+		sampleTime,
+		windowStart,
+		now,
+	)
+	baseAtStop := simulator.routeStateForSample(
+		testVehicleID,
+		points,
+		stopStart,
+		windowStart,
+		now,
+	)
 	withEvent := simulator.applyVehicleEventsToRouteState(
-		"veh-1",
+		testVehicleID,
 		points,
 		[]SimEvent{
 			{
 				ID:        "evt-stop",
 				Type:      simEventStopFuelBreak,
-				DriverID:  "drv-1",
-				VehicleID: "veh-1",
+				DriverID:  testDriverID,
+				VehicleID: testVehicleID,
 				StartsAt:  stopStart,
 				EndsAt:    stopStart.Add(20 * time.Minute),
 				Severity:  "info",
@@ -171,9 +189,9 @@ func TestEventsWindowScriptOverride(t *testing.T) {
 	content := "version: 1\n" +
 		"timezone: UTC\n" +
 		"scenarios:\n" +
-		"  - id: drv-1-override\n" +
-		"    driverId: drv-1\n" +
-		"    vehicleId: veh-1\n" +
+		"  - id: alex-rivera-override\n" +
+		"    driverId: \"1654973\"\n" +
+		"    vehicleId: \"281474976710657\"\n" +
 		"    baseDate: \"" + dayStart.Format("2006-01-02") + "\"\n" +
 		"    events:\n" +
 		"      - type: speeding.burst_minor\n" +
@@ -193,8 +211,8 @@ func TestEventsWindowScriptOverride(t *testing.T) {
 	events := simulator.EventsWindow(
 		dayStart,
 		dayStart.Add(24*time.Hour),
-		[]string{"drv-1"},
-		[]string{"veh-1"},
+		[]string{testDriverID},
+		[]string{testVehicleID},
 		0,
 	)
 	foundScript := false

@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -16,20 +16,17 @@ type ActivitiesParams struct {
 	fx.In
 
 	Pipeline serviceports.RetrievalIndexPipeline
-	Tenants  repositories.TenantSyncRepository
 	Logger   *zap.Logger
 }
 
 type Activities struct {
 	pipeline serviceports.RetrievalIndexPipeline
-	tenants  repositories.TenantSyncRepository
 	l        *zap.Logger
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
 		pipeline: p.Pipeline,
-		tenants:  p.Tenants,
 		l:        p.Logger.Named("job.retrieval-index"),
 	}
 }
@@ -120,12 +117,28 @@ func (a *Activities) ListRetrievalOrganizationsActivity(
 	ctx context.Context,
 	input *ListOrganizationsInput,
 ) (*temporaljobs.TenantPage, error) {
-	organizations, err := a.tenants.ListOrganizations(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("list organizations: %w", err)
+	limit := temporaljobs.NormalizeLimit(input.Limit, temporaljobs.DefaultOrganizationPageSize)
+
+	var after *pagination.TenantInfo
+	if input.After != nil {
+		cursor := input.After.TenantInfo()
+		after = &cursor
 	}
 
-	return temporaljobs.OrganizationPage(organizations, input.After, input.Limit), nil
+	tenants, err := a.pipeline.ListIndexedTenants(ctx, after, limit+1)
+	if err != nil {
+		return nil, fmt.Errorf("list organizations that index sources for retrieval: %w", err)
+	}
+
+	hasMore := len(tenants) > limit
+	if hasMore {
+		tenants = tenants[:limit]
+	}
+
+	return &temporaljobs.TenantPage{
+		Tenants: temporaljobs.BuildTenantWorkItems(tenants, 1),
+		HasMore: hasMore,
+	}, nil
 }
 
 func (a *Activities) ReindexRetrievalPageActivity(

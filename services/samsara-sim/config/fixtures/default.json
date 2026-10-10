@@ -1,12 +1,15 @@
 {
   "addresses": [
     {
-      "id": "addr-1",
+      "id": "41226316",
       "name": "Austin Main Yard",
       "formattedAddress": "100 Fleet Ave, Austin, TX 78701",
       "latitude": 30.2672,
       "longitude": -97.7431,
       "notes": "Primary dispatch yard",
+      "createdAtTime": "2025-11-03T15:20:00Z",
+      "addressTypes": ["yard"],
+      "contactIds": ["22407"],
       "geofence": {
         "circle": {
           "latitude": 30.2672,
@@ -16,12 +19,15 @@
       }
     },
     {
-      "id": "addr-2",
+      "id": "41226329",
       "name": "Dallas Distribution Hub",
       "formattedAddress": "200 Warehouse Rd, Dallas, TX 75201",
       "latitude": 32.7767,
       "longitude": -96.797,
       "notes": "North Texas cross-dock",
+      "createdAtTime": "2025-11-03T15:26:00Z",
+      "addressTypes": ["yard"],
+      "contactIds": ["22414"],
       "geofence": {
         "circle": {
           "latitude": 32.7767,
@@ -31,11 +37,14 @@
       }
     },
     {
-      "id": "addr-3",
+      "id": "41226347",
       "name": "San Antonio Customer Drop",
       "formattedAddress": "455 Commerce St, San Antonio, TX 78205",
       "latitude": 29.4241,
       "longitude": -98.4936,
+      "createdAtTime": "2025-11-10T17:42:00Z",
+      "addressTypes": ["customerSite"],
+      "contactIds": ["22421", "22428"],
       "geofence": {
         "circle": {
           "latitude": 29.4241,
@@ -45,12 +54,14 @@
       }
     },
     {
-      "id": "addr-4",
+      "id": "41226358",
       "name": "Houston Regional Depot",
       "formattedAddress": "860 Bay Area Blvd, Houston, TX 77058",
       "latitude": 29.5502,
       "longitude": -95.097,
       "notes": "Regional depot and fueling",
+      "createdAtTime": "2025-11-12T14:05:00Z",
+      "addressTypes": ["yard"],
       "geofence": {
         "circle": {
           "latitude": 29.5502,
@@ -60,12 +71,14 @@
       }
     },
     {
-      "id": "addr-5",
+      "id": "41226372",
       "name": "Georgetown Corridor Fuel Stop",
       "formattedAddress": "2400 Interstate 35 Frontage Rd, Georgetown, TX 78626",
       "latitude": 30.655758,
       "longitude": -97.701621,
       "notes": "On-route stop along the Austin roundtrip corridor",
+      "createdAtTime": "2025-12-01T19:30:00Z",
+      "addressTypes": ["vendor"],
       "geofence": {
         "circle": {
           "latitude": 30.655758,
@@ -75,12 +88,14 @@
       }
     },
     {
-      "id": "addr-6",
+      "id": "41226391",
       "name": "Fort Worth Relay Point",
       "formattedAddress": "5600 White Settlement Rd, Fort Worth, TX 76114",
       "latitude": 32.827618,
       "longitude": -97.205875,
       "notes": "On-route relay along the Dallas metro arc",
+      "createdAtTime": "2025-12-02T16:12:00Z",
+      "addressTypes": ["shortHaul"],
       "geofence": {
         "circle": {
           "latitude": 32.827618,
@@ -90,12 +105,14 @@
       }
     },
     {
-      "id": "addr-7",
+      "id": "41226405",
       "name": "Humble Staging Lot",
       "formattedAddress": "19100 Eastex Fwy, Humble, TX 77338",
       "latitude": 30.054452,
       "longitude": -95.157897,
       "notes": "On-route staging along the Houston belt sweep",
+      "createdAtTime": "2025-12-04T13:48:00Z",
+      "addressTypes": ["yard"],
       "geofence": {
         "circle": {
           "latitude": 30.054452,
@@ -107,214 +124,1353 @@
   ],
   "assets": [
     {
-      "id": "veh-1001",
+      "id": "281474977075805",
       "name": "Truck 1001",
       "type": "vehicle",
       "licensePlate": "TX-1001",
       "make": "Freightliner",
       "model": "Cascadia",
-      "serialNumber": "VIN1001SIM",
+      "year": 2022,
+      "vin": "1FUJGLDR5CLBP1001",
+      "serialNumber": "GJLR-GWB-Z33",
       "regulationMode": "regulated",
+      "notes": "Sleeper tractor domiciled at the Austin terminal",
       "externalIds": {
         "tmsVehicleId": "unit-1001"
       },
+      "gateway": {
+        "model": "VG34",
+        "serial": "GJLR-GWB-Z33"
+      },
+      "esn": "79581234",
+      "cameraSerial": "CGWW-M4A-LGJ",
+      "harshAccelerationSettingType": "heavyDuty",
+      "attributes": [
+        {
+          "id": "c35397c1-6577-570c-b74b-87f3f43956f4",
+          "name": "Fuel Type",
+          "stringValues": [
+            "Diesel"
+          ]
+        },
+        {
+          "id": "280083db-abc6-5c9c-8691-34bc8cbcd324",
+          "name": "GVWR (lb)",
+          "numberValues": [
+            80000
+          ]
+        },
+        {
+          "id": "5e6d51d2-bdec-5d41-8e7e-000a3289806e",
+          "name": "Next PM Due",
+          "dateValues": [
+            "2026-04-10"
+          ]
+        }
+      ],
+      "simImmobilizer": {
+        "installedAtTime": "2026-01-12T15:30:00Z"
+      },
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z",
-      "vin": "1FUJGLDR5CLBP1001"
+      "updatedAtTime": "2026-03-01T14:24:00Z"
     },
     {
-      "id": "veh-1002",
+      "id": "281474977075819",
       "name": "Truck 1002",
       "type": "vehicle",
       "licensePlate": "TX-1002",
       "make": "Volvo",
       "model": "VNL",
-      "serialNumber": "VIN1002SIM",
+      "year": 2021,
+      "vin": "4V4NC9EH6EN171002",
+      "serialNumber": "GXZZ-U5X-VXN",
       "regulationMode": "regulated",
+      "notes": "Sleeper tractor domiciled at the Dallas-Fort Worth terminal",
       "externalIds": {
         "tmsVehicleId": "unit-1002"
       },
+      "gateway": {
+        "model": "VG54NA",
+        "serial": "GXZZ-U5X-VXN"
+      },
+      "esn": "79581301",
+      "harshAccelerationSettingType": "heavyDuty",
+      "attributes": [
+        {
+          "id": "c35397c1-6577-570c-b74b-87f3f43956f4",
+          "name": "Fuel Type",
+          "stringValues": [
+            "Diesel"
+          ]
+        },
+        {
+          "id": "280083db-abc6-5c9c-8691-34bc8cbcd324",
+          "name": "GVWR (lb)",
+          "numberValues": [
+            80000
+          ]
+        },
+        {
+          "id": "5e6d51d2-bdec-5d41-8e7e-000a3289806e",
+          "name": "Next PM Due",
+          "dateValues": [
+            "2026-05-11"
+          ]
+        }
+      ],
+      "simOdometerReading": {
+        "meters": 612480000,
+        "time": "2026-01-08T13:00:00Z"
+      },
+      "simEngineHoursReading": {
+        "hours": 18420,
+        "time": "2026-01-08T13:00:00Z"
+      },
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z",
-      "vin": "4V4NC9EH6EN171002"
+      "updatedAtTime": "2026-03-01T14:24:00Z"
     },
     {
-      "id": "veh-1003",
+      "id": "281474977075842",
       "name": "Truck 1003",
       "type": "vehicle",
       "licensePlate": "TX-1003",
       "make": "Kenworth",
       "model": "T680",
-      "serialNumber": "VIN1003SIM",
+      "year": 2023,
+      "vin": "1XKAD49X1KJ211003",
+      "serialNumber": "GMDZ-5TP-TVY",
       "regulationMode": "regulated",
+      "notes": "Sleeper tractor domiciled at the Houston terminal",
       "externalIds": {
         "tmsVehicleId": "unit-1003"
       },
+      "gateway": {
+        "model": "VG54NA",
+        "serial": "GMDZ-5TP-TVY"
+      },
+      "esn": "79622218",
+      "cameraSerial": "C29U-9DS-M6N",
+      "harshAccelerationSettingType": "heavyDuty",
+      "auxInputType1": "powerTakeOff",
+      "attributes": [
+        {
+          "id": "c35397c1-6577-570c-b74b-87f3f43956f4",
+          "name": "Fuel Type",
+          "stringValues": [
+            "Diesel"
+          ]
+        },
+        {
+          "id": "280083db-abc6-5c9c-8691-34bc8cbcd324",
+          "name": "GVWR (lb)",
+          "numberValues": [
+            80000
+          ]
+        },
+        {
+          "id": "5e6d51d2-bdec-5d41-8e7e-000a3289806e",
+          "name": "Next PM Due",
+          "dateValues": [
+            "2026-06-12"
+          ]
+        }
+      ],
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z",
-      "vin": "1XKAD49X1KJ211003"
+      "updatedAtTime": "2026-03-01T14:24:00Z"
     },
     {
-      "id": "veh-1004",
+      "id": "281474977075860",
       "name": "Truck 1004",
       "type": "vehicle",
       "licensePlate": "TX-1004",
       "make": "Peterbilt",
       "model": "579",
-      "serialNumber": "VIN1004SIM",
+      "year": 2020,
+      "vin": "1NPXGGGG50D171004",
+      "serialNumber": "G5R5-Z4G-97J",
       "regulationMode": "regulated",
+      "notes": "Sleeper tractor domiciled at the Austin terminal",
       "externalIds": {
         "tmsVehicleId": "unit-1004"
       },
+      "gateway": {
+        "model": "VG34",
+        "serial": "G5R5-Z4G-97J"
+      },
+      "esn": "79640577",
+      "harshAccelerationSettingType": "heavyDuty",
+      "attributes": [
+        {
+          "id": "c35397c1-6577-570c-b74b-87f3f43956f4",
+          "name": "Fuel Type",
+          "stringValues": [
+            "Diesel"
+          ]
+        },
+        {
+          "id": "280083db-abc6-5c9c-8691-34bc8cbcd324",
+          "name": "GVWR (lb)",
+          "numberValues": [
+            80000
+          ]
+        },
+        {
+          "id": "5e6d51d2-bdec-5d41-8e7e-000a3289806e",
+          "name": "Next PM Due",
+          "dateValues": [
+            "2026-07-13"
+          ]
+        }
+      ],
+      "simOdometerReading": {
+        "meters": 488211000,
+        "time": "2026-01-09T13:30:00Z"
+      },
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z",
-      "vin": "1NPXGGGG50D171004"
+      "updatedAtTime": "2026-03-01T14:24:00Z"
     },
     {
-      "id": "veh-1005",
+      "id": "281474977075891",
       "name": "Truck 1005",
       "type": "vehicle",
       "licensePlate": "TX-1005",
       "make": "Freightliner",
       "model": "Cascadia",
-      "serialNumber": "VIN1005SIM",
+      "year": 2022,
+      "vin": "3AKJHHDR5JSKA1005",
+      "serialNumber": "GS3P-DXP-35R",
       "regulationMode": "regulated",
+      "notes": "Sleeper tractor domiciled at the Dallas-Fort Worth terminal",
       "externalIds": {
         "tmsVehicleId": "unit-1005"
       },
+      "gateway": {
+        "model": "VG54NA",
+        "serial": "GS3P-DXP-35R"
+      },
+      "esn": "79702261",
+      "cameraSerial": "C3N7-PYM-E2D",
+      "harshAccelerationSettingType": "heavyDuty",
+      "attributes": [
+        {
+          "id": "c35397c1-6577-570c-b74b-87f3f43956f4",
+          "name": "Fuel Type",
+          "stringValues": [
+            "Diesel"
+          ]
+        },
+        {
+          "id": "280083db-abc6-5c9c-8691-34bc8cbcd324",
+          "name": "GVWR (lb)",
+          "numberValues": [
+            80000
+          ]
+        },
+        {
+          "id": "5e6d51d2-bdec-5d41-8e7e-000a3289806e",
+          "name": "Next PM Due",
+          "dateValues": [
+            "2026-08-14"
+          ]
+        }
+      ],
+      "simImmobilizer": {
+        "installedAtTime": "2026-01-14T16:05:00Z"
+      },
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z",
-      "vin": "3AKJHHDR5JSKA1005"
+      "updatedAtTime": "2026-03-01T14:24:00Z"
     },
     {
-      "id": "veh-1006",
+      "id": "281474977075907",
       "name": "Truck 1006",
       "type": "vehicle",
       "licensePlate": "TX-1006",
       "make": "Volvo",
       "model": "VNL",
-      "serialNumber": "VIN1006SIM",
+      "year": 2021,
+      "vin": "4V4NC9EH8LN181006",
+      "serialNumber": "G99X-5JC-RLZ",
       "regulationMode": "regulated",
+      "notes": "Sleeper tractor domiciled at the El Paso terminal",
       "externalIds": {
         "tmsVehicleId": "unit-1006"
       },
+      "gateway": {
+        "model": "VG54NA",
+        "serial": "G99X-5JC-RLZ"
+      },
+      "esn": "79711840",
+      "harshAccelerationSettingType": "heavyDuty",
+      "auxInputType3": "emergencyLights",
+      "auxInputType4": "eightWayLights",
+      "attributes": [
+        {
+          "id": "c35397c1-6577-570c-b74b-87f3f43956f4",
+          "name": "Fuel Type",
+          "stringValues": [
+            "Diesel"
+          ]
+        },
+        {
+          "id": "280083db-abc6-5c9c-8691-34bc8cbcd324",
+          "name": "GVWR (lb)",
+          "numberValues": [
+            80000
+          ]
+        },
+        {
+          "id": "5e6d51d2-bdec-5d41-8e7e-000a3289806e",
+          "name": "Next PM Due",
+          "dateValues": [
+            "2026-09-15"
+          ]
+        }
+      ],
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z",
-      "vin": "4V4NC9EH8LN181006"
+      "updatedAtTime": "2026-03-01T14:24:00Z"
     },
     {
-      "id": "veh-1007",
+      "id": "281474977075934",
       "name": "Truck 1007",
       "type": "vehicle",
       "licensePlate": "TX-1007",
       "make": "Kenworth",
       "model": "T680",
-      "serialNumber": "VIN1007SIM",
+      "year": 2023,
+      "vin": "1XKYD49X3PJ221007",
+      "serialNumber": "GL2S-3YT-XLL",
       "regulationMode": "regulated",
+      "notes": "Sleeper tractor domiciled at the Permian Basin terminal",
       "externalIds": {
         "tmsVehicleId": "unit-1007"
       },
+      "gateway": {
+        "model": "VG34",
+        "serial": "GL2S-3YT-XLL"
+      },
+      "esn": "79730452",
+      "cameraSerial": "CEX7-6D4-D2E",
+      "harshAccelerationSettingType": "heavyDuty",
+      "attributes": [
+        {
+          "id": "c35397c1-6577-570c-b74b-87f3f43956f4",
+          "name": "Fuel Type",
+          "stringValues": [
+            "Diesel"
+          ]
+        },
+        {
+          "id": "280083db-abc6-5c9c-8691-34bc8cbcd324",
+          "name": "GVWR (lb)",
+          "numberValues": [
+            80000
+          ]
+        },
+        {
+          "id": "5e6d51d2-bdec-5d41-8e7e-000a3289806e",
+          "name": "Next PM Due",
+          "dateValues": [
+            "2026-04-16"
+          ]
+        }
+      ],
+      "simOdometerReading": {
+        "meters": 701334000,
+        "time": "2026-01-10T15:00:00Z"
+      },
+      "simEngineHoursReading": {
+        "hours": 22105,
+        "time": "2026-01-10T15:00:00Z"
+      },
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z",
-      "vin": "1XKYD49X3PJ221007"
+      "updatedAtTime": "2026-03-01T14:24:00Z"
     },
     {
-      "id": "veh-1008",
+      "id": "281474977075958",
       "name": "Truck 1008",
       "type": "vehicle",
       "licensePlate": "TX-1008",
       "make": "Peterbilt",
       "model": "579",
-      "serialNumber": "VIN1008SIM",
+      "year": 2020,
+      "vin": "1NPXGGGG70D281008",
+      "serialNumber": "GTM6-9MK-S5C",
       "regulationMode": "regulated",
+      "notes": "Sleeper tractor domiciled at the San Antonio terminal",
       "externalIds": {
         "tmsVehicleId": "unit-1008"
       },
+      "gateway": {
+        "model": "VG54NA",
+        "serial": "GTM6-9MK-S5C"
+      },
+      "esn": "79755123",
+      "harshAccelerationSettingType": "heavyDuty",
+      "auxInputType1": "powerTakeOff",
+      "attributes": [
+        {
+          "id": "c35397c1-6577-570c-b74b-87f3f43956f4",
+          "name": "Fuel Type",
+          "stringValues": [
+            "Diesel"
+          ]
+        },
+        {
+          "id": "280083db-abc6-5c9c-8691-34bc8cbcd324",
+          "name": "GVWR (lb)",
+          "numberValues": [
+            80000
+          ]
+        },
+        {
+          "id": "5e6d51d2-bdec-5d41-8e7e-000a3289806e",
+          "name": "Next PM Due",
+          "dateValues": [
+            "2026-05-17"
+          ]
+        }
+      ],
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z",
-      "vin": "1NPXGGGG70D281008"
+      "updatedAtTime": "2026-03-01T14:24:00Z"
     },
     {
-      "id": "veh-1009",
+      "id": "281474977075973",
       "name": "Truck 1009",
       "type": "vehicle",
       "licensePlate": "TX-1009",
       "make": "Freightliner",
       "model": "Cascadia",
-      "serialNumber": "VIN1009SIM",
+      "year": 2022,
+      "vin": "3AKJGLDR2ESFV1009",
+      "serialNumber": "G3JR-6UE-WEY",
       "regulationMode": "regulated",
+      "notes": "Sleeper tractor domiciled at the Dallas-Fort Worth terminal",
       "externalIds": {
         "tmsVehicleId": "unit-1009"
       },
+      "gateway": {
+        "model": "VG54NA",
+        "serial": "G3JR-6UE-WEY"
+      },
+      "esn": "79781909",
+      "cameraSerial": "C3XH-ERZ-NPS",
+      "harshAccelerationSettingType": "heavyDuty",
+      "attributes": [
+        {
+          "id": "c35397c1-6577-570c-b74b-87f3f43956f4",
+          "name": "Fuel Type",
+          "stringValues": [
+            "Diesel"
+          ]
+        },
+        {
+          "id": "280083db-abc6-5c9c-8691-34bc8cbcd324",
+          "name": "GVWR (lb)",
+          "numberValues": [
+            80000
+          ]
+        },
+        {
+          "id": "5e6d51d2-bdec-5d41-8e7e-000a3289806e",
+          "name": "Next PM Due",
+          "dateValues": [
+            "2026-06-18"
+          ]
+        }
+      ],
+      "simImmobilizer": {
+        "installedAtTime": "2026-01-19T14:40:00Z"
+      },
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z",
-      "vin": "3AKJGLDR2ESFV1009"
+      "updatedAtTime": "2026-03-01T14:24:00Z"
     },
     {
-      "id": "veh-1010",
+      "id": "281474977076001",
       "name": "Truck 1010",
       "type": "vehicle",
       "licensePlate": "TX-1010",
       "make": "Volvo",
       "model": "VNL",
-      "serialNumber": "VIN1010SIM",
+      "year": 2021,
+      "vin": "4V4NC9EH0MN191010",
+      "serialNumber": "GE6N-6FG-U9V",
       "regulationMode": "regulated",
+      "notes": "Sleeper tractor domiciled at the Permian Basin terminal",
       "externalIds": {
         "tmsVehicleId": "unit-1010"
       },
+      "gateway": {
+        "model": "VG34",
+        "serial": "GE6N-6FG-U9V"
+      },
+      "esn": "79803344",
+      "harshAccelerationSettingType": "heavyDuty",
+      "attributes": [
+        {
+          "id": "c35397c1-6577-570c-b74b-87f3f43956f4",
+          "name": "Fuel Type",
+          "stringValues": [
+            "Diesel"
+          ]
+        },
+        {
+          "id": "280083db-abc6-5c9c-8691-34bc8cbcd324",
+          "name": "GVWR (lb)",
+          "numberValues": [
+            80000
+          ]
+        },
+        {
+          "id": "5e6d51d2-bdec-5d41-8e7e-000a3289806e",
+          "name": "Next PM Due",
+          "dateValues": [
+            "2026-07-19"
+          ]
+        }
+      ],
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z",
-      "vin": "4V4NC9EH0MN191010"
+      "updatedAtTime": "2026-03-01T14:24:00Z"
     },
     {
-      "id": "veh-1011",
+      "id": "281474977076028",
       "name": "Truck 1011",
       "type": "vehicle",
       "licensePlate": "TX-1011",
       "make": "Kenworth",
       "model": "T680",
-      "serialNumber": "VIN1011SIM",
+      "year": 2024,
+      "vin": "1XKYDP9X5RJ231011",
+      "serialNumber": "GFVA-5RN-TFF",
       "regulationMode": "regulated",
+      "notes": "Sleeper tractor domiciled at the Panhandle terminal",
       "externalIds": {
         "tmsVehicleId": "unit-1011"
       },
+      "gateway": {
+        "model": "VG54NA",
+        "serial": "GFVA-5RN-TFF"
+      },
+      "esn": "79820618",
+      "cameraSerial": "C47X-NBB-C2U",
+      "harshAccelerationSettingType": "heavyDuty",
+      "attributes": [
+        {
+          "id": "c35397c1-6577-570c-b74b-87f3f43956f4",
+          "name": "Fuel Type",
+          "stringValues": [
+            "Diesel"
+          ]
+        },
+        {
+          "id": "280083db-abc6-5c9c-8691-34bc8cbcd324",
+          "name": "GVWR (lb)",
+          "numberValues": [
+            80000
+          ]
+        },
+        {
+          "id": "5e6d51d2-bdec-5d41-8e7e-000a3289806e",
+          "name": "Next PM Due",
+          "dateValues": [
+            "2026-08-20"
+          ]
+        }
+      ],
+      "simOdometerReading": {
+        "meters": 395902000,
+        "time": "2026-01-11T16:20:00Z"
+      },
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z",
-      "vin": "1XKYDP9X5RJ231011"
+      "updatedAtTime": "2026-03-01T14:24:00Z"
     },
     {
-      "id": "veh-1012",
+      "id": "281474977076045",
       "name": "Truck 1012",
       "type": "vehicle",
       "licensePlate": "TX-1012",
       "make": "Peterbilt",
       "model": "579",
-      "serialNumber": "VIN1012SIM",
+      "year": 2020,
+      "vin": "1NPXGGGG90D391012",
+      "serialNumber": "G7YV-DZ2-W94",
       "regulationMode": "regulated",
+      "notes": "Sleeper tractor domiciled at the Rio Grande Valley terminal",
       "externalIds": {
         "tmsVehicleId": "unit-1012"
       },
+      "gateway": {
+        "model": "VG54NA",
+        "serial": "G7YV-DZ2-W94"
+      },
+      "esn": "79856072",
+      "harshAccelerationSettingType": "heavyDuty",
+      "attributes": [
+        {
+          "id": "c35397c1-6577-570c-b74b-87f3f43956f4",
+          "name": "Fuel Type",
+          "stringValues": [
+            "Diesel"
+          ]
+        },
+        {
+          "id": "280083db-abc6-5c9c-8691-34bc8cbcd324",
+          "name": "GVWR (lb)",
+          "numberValues": [
+            80000
+          ]
+        },
+        {
+          "id": "5e6d51d2-bdec-5d41-8e7e-000a3289806e",
+          "name": "Next PM Due",
+          "dateValues": [
+            "2026-09-21"
+          ]
+        }
+      ],
       "createdAtTime": "2026-01-01T08:00:00Z",
-      "updatedAtTime": "2026-03-01T14:24:00Z",
-      "vin": "1NPXGGGG90D391012"
+      "updatedAtTime": "2026-03-01T14:24:00Z"
     },
     {
-      "id": "trl-2042",
+      "id": "281474979348595",
+      "name": "Trailer 2041",
+      "type": "trailer",
+      "licensePlate": "TX-T2041",
+      "make": "Wabash",
+      "model": "DuraPlate",
+      "year": 2019,
+      "vin": "1JJV532D8KL222089",
+      "serialNumber": "1JJV532D8KL222089",
+      "notes": "53' dry van",
+      "externalIds": {
+        "tmsTrailerId": "trailer-2041"
+      },
+      "installedGateway": {
+        "model": "AT11",
+        "serial": "GBZJ-CAS-SME"
+      },
+      "enabledForMobile": true,
+      "attributes": [
+        {
+          "id": "9b252f6c-f8a9-5493-b385-ade95f325d2e",
+          "name": "Trailer Length (ft)",
+          "numberValues": [
+            53
+          ]
+        },
+        {
+          "id": "09bf964b-247b-5c71-99c4-e73efa13381a",
+          "name": "Trailer Type",
+          "stringValues": [
+            "Dry Van"
+          ]
+        }
+      ],
+      "simCoupledVehicleId": "281474977075805",
+      "createdAtTime": "2026-01-05T10:00:00Z",
+      "updatedAtTime": "2026-02-10T15:30:00Z"
+    },
+    {
+      "id": "281474979348612",
       "name": "Trailer 2042",
       "type": "trailer",
       "licensePlate": "TX-T2042",
-      "serialNumber": "TRAIL2042SIM",
+      "make": "Utility",
+      "model": "3000R",
+      "year": 2020,
+      "vin": "1UYVS2534LU829506",
+      "serialNumber": "1UYVS2534LU829506",
+      "notes": "53' reefer",
       "externalIds": {
         "tmsTrailerId": "trailer-2042"
       },
+      "installedGateway": {
+        "model": "AG46P",
+        "serial": "GFGU-3KM-WA6"
+      },
+      "enabledForMobile": true,
+      "attributes": [
+        {
+          "id": "9b252f6c-f8a9-5493-b385-ade95f325d2e",
+          "name": "Trailer Length (ft)",
+          "numberValues": [
+            53
+          ]
+        },
+        {
+          "id": "09bf964b-247b-5c71-99c4-e73efa13381a",
+          "name": "Trailer Type",
+          "stringValues": [
+            "Reefer"
+          ]
+        }
+      ],
+      "simCoupledVehicleId": "281474977075819",
+      "simReefer": {
+        "zones": 1,
+        "setPointMilliC": -18000,
+        "unitModel": "Thermo King Precedent S-700",
+        "carrier": false,
+        "runMode": "Continuous"
+      },
+      "simOdometerReading": {
+        "meters": 261837269,
+        "time": "2026-01-06T15:00:00Z"
+      },
       "createdAtTime": "2026-01-05T10:00:00Z",
       "updatedAtTime": "2026-03-01T14:20:00Z"
+    },
+    {
+      "id": "281474979348629",
+      "name": "Trailer 2043",
+      "type": "trailer",
+      "licensePlate": "TX-T2043",
+      "make": "Utility",
+      "model": "4000D-X",
+      "year": 2021,
+      "vin": "1UYVS2533MU197101",
+      "serialNumber": "1UYVS2533MU197101",
+      "notes": "53' dry van",
+      "externalIds": {
+        "tmsTrailerId": "trailer-2043"
+      },
+      "installedGateway": {
+        "model": "AT11",
+        "serial": "G7AL-2B5-CX3"
+      },
+      "enabledForMobile": true,
+      "attributes": [
+        {
+          "id": "9b252f6c-f8a9-5493-b385-ade95f325d2e",
+          "name": "Trailer Length (ft)",
+          "numberValues": [
+            53
+          ]
+        },
+        {
+          "id": "09bf964b-247b-5c71-99c4-e73efa13381a",
+          "name": "Trailer Type",
+          "stringValues": [
+            "Dry Van"
+          ]
+        }
+      ],
+      "simCoupledVehicleId": "281474977075842",
+      "createdAtTime": "2026-01-07T12:00:00Z",
+      "updatedAtTime": "2026-02-12T15:30:00Z"
+    },
+    {
+      "id": "281474979348646",
+      "name": "Trailer 2044",
+      "type": "trailer",
+      "licensePlate": "TX-T2044",
+      "make": "Wabash",
+      "model": "DuraPlate",
+      "year": 2022,
+      "vin": "1JJV532D9NL717616",
+      "serialNumber": "1JJV532D9NL717616",
+      "notes": "53' dry van",
+      "externalIds": {
+        "tmsTrailerId": "trailer-2044"
+      },
+      "installedGateway": {
+        "model": "AT11",
+        "serial": "GARV-CC5-ELN"
+      },
+      "enabledForMobile": true,
+      "attributes": [
+        {
+          "id": "9b252f6c-f8a9-5493-b385-ade95f325d2e",
+          "name": "Trailer Length (ft)",
+          "numberValues": [
+            53
+          ]
+        },
+        {
+          "id": "09bf964b-247b-5c71-99c4-e73efa13381a",
+          "name": "Trailer Type",
+          "stringValues": [
+            "Dry Van"
+          ]
+        }
+      ],
+      "simCoupledVehicleId": "281474977075860",
+      "createdAtTime": "2026-01-08T13:00:00Z",
+      "updatedAtTime": "2026-02-13T15:30:00Z"
+    },
+    {
+      "id": "281474979348663",
+      "name": "Trailer 2045",
+      "type": "trailer",
+      "licensePlate": "TX-T2045",
+      "make": "Utility",
+      "model": "3000R",
+      "year": 2023,
+      "vin": "1UYVS2531PU392179",
+      "serialNumber": "1UYVS2531PU392179",
+      "notes": "53' reefer",
+      "externalIds": {
+        "tmsTrailerId": "trailer-2045"
+      },
+      "installedGateway": {
+        "model": "AG46P",
+        "serial": "GGAK-6D6-UU7"
+      },
+      "enabledForMobile": true,
+      "attributes": [
+        {
+          "id": "9b252f6c-f8a9-5493-b385-ade95f325d2e",
+          "name": "Trailer Length (ft)",
+          "numberValues": [
+            53
+          ]
+        },
+        {
+          "id": "09bf964b-247b-5c71-99c4-e73efa13381a",
+          "name": "Trailer Type",
+          "stringValues": [
+            "Reefer"
+          ]
+        }
+      ],
+      "simCoupledVehicleId": "281474977075891",
+      "simReefer": {
+        "zones": 1,
+        "setPointMilliC": 2000,
+        "unitModel": "Thermo King Precedent S-600",
+        "carrier": false,
+        "runMode": "Start/Stop"
+      },
+      "createdAtTime": "2026-01-09T14:00:00Z",
+      "updatedAtTime": "2026-02-14T15:30:00Z"
+    },
+    {
+      "id": "281474979348680",
+      "name": "Trailer 2046",
+      "type": "trailer",
+      "licensePlate": "TX-T2046",
+      "make": "Utility",
+      "model": "4000D-X",
+      "year": 2019,
+      "vin": "1UYVS2534KU846398",
+      "serialNumber": "1UYVS2534KU846398",
+      "notes": "53' dry van",
+      "externalIds": {
+        "tmsTrailerId": "trailer-2046"
+      },
+      "installedGateway": {
+        "model": "AT11",
+        "serial": "G7EJ-KP6-3RG"
+      },
+      "enabledForMobile": true,
+      "attributes": [
+        {
+          "id": "9b252f6c-f8a9-5493-b385-ade95f325d2e",
+          "name": "Trailer Length (ft)",
+          "numberValues": [
+            53
+          ]
+        },
+        {
+          "id": "09bf964b-247b-5c71-99c4-e73efa13381a",
+          "name": "Trailer Type",
+          "stringValues": [
+            "Dry Van"
+          ]
+        }
+      ],
+      "simCoupledVehicleId": "281474977075907",
+      "simOdometerReading": {
+        "meters": 204081033,
+        "time": "2026-01-06T15:00:00Z"
+      },
+      "createdAtTime": "2026-01-10T15:00:00Z",
+      "updatedAtTime": "2026-02-15T15:30:00Z"
+    },
+    {
+      "id": "281474979348697",
+      "name": "Trailer 2047",
+      "type": "trailer",
+      "licensePlate": "TX-T2047",
+      "make": "Wabash",
+      "model": "DuraPlate",
+      "year": 2020,
+      "vin": "1JJV532D9LL767073",
+      "serialNumber": "1JJV532D9LL767073",
+      "notes": "53' dry van",
+      "externalIds": {
+        "tmsTrailerId": "trailer-2047"
+      },
+      "installedGateway": {
+        "model": "AT11",
+        "serial": "GBHR-DFY-NMA"
+      },
+      "enabledForMobile": true,
+      "attributes": [
+        {
+          "id": "9b252f6c-f8a9-5493-b385-ade95f325d2e",
+          "name": "Trailer Length (ft)",
+          "numberValues": [
+            53
+          ]
+        },
+        {
+          "id": "09bf964b-247b-5c71-99c4-e73efa13381a",
+          "name": "Trailer Type",
+          "stringValues": [
+            "Dry Van"
+          ]
+        }
+      ],
+      "simCoupledVehicleId": "281474977075934",
+      "createdAtTime": "2026-01-11T16:00:00Z",
+      "updatedAtTime": "2026-02-16T15:30:00Z"
+    },
+    {
+      "id": "281474979348714",
+      "name": "Trailer 2048",
+      "type": "trailer",
+      "licensePlate": "TX-T2048",
+      "make": "Great Dane",
+      "model": "Champion CL",
+      "year": 2021,
+      "vin": "1GRAA0622MW322884",
+      "serialNumber": "1GRAA0622MW322884",
+      "notes": "53' dry van",
+      "externalIds": {
+        "tmsTrailerId": "trailer-2048"
+      },
+      "installedGateway": {
+        "model": "AT11",
+        "serial": "GY7T-9JX-YR7"
+      },
+      "enabledForMobile": true,
+      "attributes": [
+        {
+          "id": "9b252f6c-f8a9-5493-b385-ade95f325d2e",
+          "name": "Trailer Length (ft)",
+          "numberValues": [
+            53
+          ]
+        },
+        {
+          "id": "09bf964b-247b-5c71-99c4-e73efa13381a",
+          "name": "Trailer Type",
+          "stringValues": [
+            "Dry Van"
+          ]
+        }
+      ],
+      "simCoupledVehicleId": "281474977075958",
+      "createdAtTime": "2026-01-12T17:00:00Z",
+      "updatedAtTime": "2026-02-17T15:30:00Z"
+    },
+    {
+      "id": "281474979348731",
+      "name": "Trailer 2049",
+      "type": "trailer",
+      "licensePlate": "TX-T2049",
+      "make": "Great Dane",
+      "model": "Everest SS",
+      "year": 2022,
+      "vin": "1GRAA9627NW204626",
+      "serialNumber": "1GRAA9627NW204626",
+      "notes": "53' multi-temp reefer",
+      "externalIds": {
+        "tmsTrailerId": "trailer-2049"
+      },
+      "installedGateway": {
+        "model": "AG46P",
+        "serial": "GTJB-GW4-HG9"
+      },
+      "enabledForMobile": true,
+      "attributes": [
+        {
+          "id": "9b252f6c-f8a9-5493-b385-ade95f325d2e",
+          "name": "Trailer Length (ft)",
+          "numberValues": [
+            53
+          ]
+        },
+        {
+          "id": "09bf964b-247b-5c71-99c4-e73efa13381a",
+          "name": "Trailer Type",
+          "stringValues": [
+            "Reefer"
+          ]
+        }
+      ],
+      "simCoupledVehicleId": "281474977075973",
+      "simReefer": {
+        "zones": 2,
+        "setPointMilliC": -20000,
+        "unitModel": "Carrier Vector 8611MT",
+        "carrier": true,
+        "runMode": "Continuous"
+      },
+      "createdAtTime": "2026-01-13T10:00:00Z",
+      "updatedAtTime": "2026-02-18T15:30:00Z"
+    },
+    {
+      "id": "281474979348748",
+      "name": "Trailer 2050",
+      "type": "trailer",
+      "licensePlate": "TX-T2050",
+      "make": "Wabash",
+      "model": "DuraPlate",
+      "year": 2023,
+      "vin": "1JJV532D6PL486872",
+      "serialNumber": "1JJV532D6PL486872",
+      "notes": "53' dry van",
+      "externalIds": {
+        "tmsTrailerId": "trailer-2050"
+      },
+      "installedGateway": {
+        "model": "AT11",
+        "serial": "GHJJ-YX2-U4B"
+      },
+      "enabledForMobile": true,
+      "attributes": [
+        {
+          "id": "9b252f6c-f8a9-5493-b385-ade95f325d2e",
+          "name": "Trailer Length (ft)",
+          "numberValues": [
+            53
+          ]
+        },
+        {
+          "id": "09bf964b-247b-5c71-99c4-e73efa13381a",
+          "name": "Trailer Type",
+          "stringValues": [
+            "Dry Van"
+          ]
+        }
+      ],
+      "simCoupledVehicleId": "281474977076001",
+      "simOdometerReading": {
+        "meters": 201497378,
+        "time": "2026-01-06T15:00:00Z"
+      },
+      "createdAtTime": "2026-01-05T11:00:00Z",
+      "updatedAtTime": "2026-02-19T15:30:00Z"
+    },
+    {
+      "id": "281474979348765",
+      "name": "Trailer 2051",
+      "type": "trailer",
+      "licensePlate": "TX-T2051",
+      "make": "Great Dane",
+      "model": "Champion CL",
+      "year": 2019,
+      "vin": "1GRAA0620KW547608",
+      "serialNumber": "1GRAA0620KW547608",
+      "notes": "53' dry van",
+      "externalIds": {
+        "tmsTrailerId": "trailer-2051"
+      },
+      "installedGateway": {
+        "model": "AT11",
+        "serial": "G3GK-AFA-MAB"
+      },
+      "enabledForMobile": true,
+      "attributes": [
+        {
+          "id": "9b252f6c-f8a9-5493-b385-ade95f325d2e",
+          "name": "Trailer Length (ft)",
+          "numberValues": [
+            53
+          ]
+        },
+        {
+          "id": "09bf964b-247b-5c71-99c4-e73efa13381a",
+          "name": "Trailer Type",
+          "stringValues": [
+            "Dry Van"
+          ]
+        }
+      ],
+      "simCoupledVehicleId": "281474977076028",
+      "createdAtTime": "2026-01-06T12:00:00Z",
+      "updatedAtTime": "2026-02-20T15:30:00Z"
+    },
+    {
+      "id": "281474979348782",
+      "name": "Trailer 2052",
+      "type": "trailer",
+      "licensePlate": "TX-T2052",
+      "make": "Utility",
+      "model": "4000D-X",
+      "year": 2020,
+      "vin": "1UYVS2535LU909624",
+      "serialNumber": "1UYVS2535LU909624",
+      "notes": "53' dry van",
+      "externalIds": {
+        "tmsTrailerId": "trailer-2052"
+      },
+      "installedGateway": {
+        "model": "AT11",
+        "serial": "GW27-XUL-3WS"
+      },
+      "enabledForMobile": true,
+      "attributes": [
+        {
+          "id": "9b252f6c-f8a9-5493-b385-ade95f325d2e",
+          "name": "Trailer Length (ft)",
+          "numberValues": [
+            53
+          ]
+        },
+        {
+          "id": "09bf964b-247b-5c71-99c4-e73efa13381a",
+          "name": "Trailer Type",
+          "stringValues": [
+            "Dry Van"
+          ]
+        }
+      ],
+      "simCoupledVehicleId": "281474977076045",
+      "createdAtTime": "2026-01-07T13:00:00Z",
+      "updatedAtTime": "2026-02-21T15:30:00Z"
+    },
+    {
+      "id": "281474979348799",
+      "name": "Trailer 2053",
+      "type": "trailer",
+      "licensePlate": "TX-T2053",
+      "make": "Utility",
+      "model": "3000R",
+      "year": 2021,
+      "vin": "1UYVS2534MU246807",
+      "serialNumber": "1UYVS2534MU246807",
+      "notes": "53' reefer",
+      "externalIds": {
+        "tmsTrailerId": "trailer-2053"
+      },
+      "installedGateway": {
+        "model": "AG46P",
+        "serial": "GE6V-6KC-GND"
+      },
+      "enabledForMobile": true,
+      "attributes": [
+        {
+          "id": "9b252f6c-f8a9-5493-b385-ade95f325d2e",
+          "name": "Trailer Length (ft)",
+          "numberValues": [
+            53
+          ]
+        },
+        {
+          "id": "09bf964b-247b-5c71-99c4-e73efa13381a",
+          "name": "Trailer Type",
+          "stringValues": [
+            "Reefer"
+          ]
+        }
+      ],
+      "simParkedAddressId": "41226316",
+      "simReefer": {
+        "zones": 1,
+        "setPointMilliC": 1000,
+        "unitModel": "Thermo King Precedent S-700",
+        "carrier": false,
+        "runMode": "Start/Stop"
+      },
+      "createdAtTime": "2026-01-08T14:00:00Z",
+      "updatedAtTime": "2026-02-22T15:30:00Z"
+    },
+    {
+      "id": "281474979348816",
+      "name": "Trailer 2054",
+      "type": "trailer",
+      "licensePlate": "TX-T2054",
+      "make": "Great Dane",
+      "model": "Champion CL",
+      "year": 2022,
+      "vin": "1GRAA0621NW421729",
+      "serialNumber": "1GRAA0621NW421729",
+      "notes": "53' dry van",
+      "externalIds": {
+        "tmsTrailerId": "trailer-2054"
+      },
+      "installedGateway": {
+        "model": "AT11",
+        "serial": "GMSW-9JN-LC4"
+      },
+      "enabledForMobile": true,
+      "attributes": [
+        {
+          "id": "9b252f6c-f8a9-5493-b385-ade95f325d2e",
+          "name": "Trailer Length (ft)",
+          "numberValues": [
+            53
+          ]
+        },
+        {
+          "id": "09bf964b-247b-5c71-99c4-e73efa13381a",
+          "name": "Trailer Type",
+          "stringValues": [
+            "Dry Van"
+          ]
+        }
+      ],
+      "simParkedAddressId": "41226329",
+      "simOdometerReading": {
+        "meters": 242716845,
+        "time": "2026-01-06T15:00:00Z"
+      },
+      "createdAtTime": "2026-01-09T15:00:00Z",
+      "updatedAtTime": "2026-02-23T15:30:00Z"
+    },
+    {
+      "id": "281474980315201",
+      "name": "Reefer Unit 2042",
+      "type": "equipment",
+      "make": "Thermo King",
+      "model": "Precedent S-700",
+      "year": 2021,
+      "serialNumber": "TK69525628",
+      "notes": "Refrigeration unit mounted on Trailer 2042",
+      "externalIds": {
+        "tmsEquipmentId": "equip-reefer-unit-2042"
+      },
+      "installedGateway": {
+        "model": "AG26",
+        "serial": "GLC2-V4K-EHB"
+      },
+      "simMountedOnAssetId": "281474979348612",
+      "attributes": [
+        {
+          "id": "80acc745-2fb8-557b-8dba-8be85a2d32dd",
+          "name": "Equipment Class",
+          "stringValues": [
+            "Refrigeration Unit"
+          ]
+        }
+      ],
+      "createdAtTime": "2026-01-07T14:00:00Z",
+      "updatedAtTime": "2026-02-14T16:45:00Z"
+    },
+    {
+      "id": "281474980315218",
+      "name": "Reefer Unit 2045",
+      "type": "equipment",
+      "make": "Thermo King",
+      "model": "Precedent S-600",
+      "year": 2022,
+      "serialNumber": "TK91232503",
+      "notes": "Refrigeration unit mounted on Trailer 2045",
+      "externalIds": {
+        "tmsEquipmentId": "equip-reefer-unit-2045"
+      },
+      "installedGateway": {
+        "model": "AG26",
+        "serial": "G3HC-7DE-47F"
+      },
+      "simMountedOnAssetId": "281474979348663",
+      "attributes": [
+        {
+          "id": "80acc745-2fb8-557b-8dba-8be85a2d32dd",
+          "name": "Equipment Class",
+          "stringValues": [
+            "Refrigeration Unit"
+          ]
+        }
+      ],
+      "createdAtTime": "2026-01-08T14:00:00Z",
+      "updatedAtTime": "2026-02-15T16:45:00Z"
+    },
+    {
+      "id": "281474980315235",
+      "name": "Reefer Unit 2049",
+      "type": "equipment",
+      "make": "Carrier",
+      "model": "Vector 8611MT",
+      "year": 2023,
+      "serialNumber": "CR18352687",
+      "notes": "Refrigeration unit mounted on Trailer 2049",
+      "externalIds": {
+        "tmsEquipmentId": "equip-reefer-unit-2049"
+      },
+      "installedGateway": {
+        "model": "AG26",
+        "serial": "GE7L-DN6-D27"
+      },
+      "simMountedOnAssetId": "281474979348731",
+      "attributes": [
+        {
+          "id": "80acc745-2fb8-557b-8dba-8be85a2d32dd",
+          "name": "Equipment Class",
+          "stringValues": [
+            "Refrigeration Unit"
+          ]
+        }
+      ],
+      "createdAtTime": "2026-01-09T14:00:00Z",
+      "updatedAtTime": "2026-02-16T16:45:00Z"
+    },
+    {
+      "id": "281474980315252",
+      "name": "Reefer Unit 2053",
+      "type": "equipment",
+      "make": "Thermo King",
+      "model": "Precedent S-700",
+      "year": 2021,
+      "serialNumber": "TK49241832",
+      "notes": "Refrigeration unit mounted on Trailer 2053",
+      "externalIds": {
+        "tmsEquipmentId": "equip-reefer-unit-2053"
+      },
+      "installedGateway": {
+        "model": "AG26",
+        "serial": "G3XT-H6A-E9C"
+      },
+      "simMountedOnAssetId": "281474979348799",
+      "attributes": [
+        {
+          "id": "80acc745-2fb8-557b-8dba-8be85a2d32dd",
+          "name": "Equipment Class",
+          "stringValues": [
+            "Refrigeration Unit"
+          ]
+        }
+      ],
+      "createdAtTime": "2026-01-10T14:00:00Z",
+      "updatedAtTime": "2026-02-17T16:45:00Z"
+    },
+    {
+      "id": "281474980315269",
+      "name": "Yard Spotter 01",
+      "type": "equipment",
+      "make": "Kalmar",
+      "model": "Ottawa T2",
+      "year": 2020,
+      "serialNumber": "KO60833700",
+      "notes": "Terminal tractor for trailer moves in the Austin yard",
+      "externalIds": {
+        "tmsEquipmentId": "equip-yard-spotter-01"
+      },
+      "installedGateway": {
+        "model": "AG53",
+        "serial": "GRAF-ECY-M3R"
+      },
+      "simParkedAddressId": "41226316",
+      "simYardLoop": true,
+      "attributes": [
+        {
+          "id": "80acc745-2fb8-557b-8dba-8be85a2d32dd",
+          "name": "Equipment Class",
+          "stringValues": [
+            "Terminal Tractor"
+          ]
+        }
+      ],
+      "createdAtTime": "2026-01-11T14:00:00Z",
+      "updatedAtTime": "2026-02-18T16:45:00Z"
     }
   ],
   "assetLocationStream": [
     {
       "asset": {
-        "id": "veh-1001",
+        "id": "281474977075805",
         "externalIds": {
           "tmsVehicleId": "unit-1001"
         }
@@ -340,7 +1496,7 @@
     },
     {
       "asset": {
-        "id": "veh-1001",
+        "id": "281474977075805",
         "externalIds": {
           "tmsVehicleId": "unit-1001"
         }
@@ -358,7 +1514,7 @@
     },
     {
       "asset": {
-        "id": "veh-1001",
+        "id": "281474977075805",
         "externalIds": {
           "tmsVehicleId": "unit-1001"
         }
@@ -376,7 +1532,7 @@
     },
     {
       "asset": {
-        "id": "veh-1001",
+        "id": "281474977075805",
         "externalIds": {
           "tmsVehicleId": "unit-1001"
         }
@@ -394,7 +1550,7 @@
     },
     {
       "asset": {
-        "id": "veh-1002",
+        "id": "281474977075819",
         "externalIds": {
           "tmsVehicleId": "unit-1002"
         }
@@ -412,7 +1568,7 @@
     },
     {
       "asset": {
-        "id": "veh-1002",
+        "id": "281474977075819",
         "externalIds": {
           "tmsVehicleId": "unit-1002"
         }
@@ -430,7 +1586,7 @@
     },
     {
       "asset": {
-        "id": "veh-1002",
+        "id": "281474977075819",
         "externalIds": {
           "tmsVehicleId": "unit-1002"
         }
@@ -448,7 +1604,7 @@
     },
     {
       "asset": {
-        "id": "veh-1002",
+        "id": "281474977075819",
         "externalIds": {
           "tmsVehicleId": "unit-1002"
         }
@@ -466,7 +1622,7 @@
     },
     {
       "asset": {
-        "id": "veh-1003",
+        "id": "281474977075842",
         "externalIds": {
           "tmsVehicleId": "unit-1003"
         }
@@ -484,7 +1640,7 @@
     },
     {
       "asset": {
-        "id": "veh-1003",
+        "id": "281474977075842",
         "externalIds": {
           "tmsVehicleId": "unit-1003"
         }
@@ -502,7 +1658,7 @@
     },
     {
       "asset": {
-        "id": "veh-1003",
+        "id": "281474977075842",
         "externalIds": {
           "tmsVehicleId": "unit-1003"
         }
@@ -520,7 +1676,7 @@
     },
     {
       "asset": {
-        "id": "veh-1003",
+        "id": "281474977075842",
         "externalIds": {
           "tmsVehicleId": "unit-1003"
         }
@@ -539,9 +1695,27 @@
   ],
   "drivers": [
     {
-      "id": "drv-1",
+      "id": "1654973",
       "name": "Alex Rivera",
+      "username": "arivera",
+      "phone": "5125550141",
+      "email": "alex.rivera@lonestarfreight.example",
+      "licenseNumber": "88960665",
+      "licenseState": "TX",
+      "dateOfBirth": "1970-01-05",
+      "timezone": "America/Chicago",
+      "locale": "us",
+      "notes": "Hazmat endorsed; Regional routes",
       "driverActivationStatus": "active",
+      "eldDayStartHour": 0,
+      "eldExempt": false,
+      "eldPcEnabled": true,
+      "eldYmEnabled": true,
+      "eldBigDayExemptionEnabled": false,
+      "eldAdverseWeatherExemptionEnabled": false,
+      "waitingTimeDutyStatusEnabled": false,
+      "hasDrivingFeaturesHidden": false,
+      "hasVehicleUnpinningEnabled": true,
       "externalIds": {
         "workerId": "worker-1001"
       },
@@ -555,12 +1729,67 @@
             "jurisdiction": "TX"
           }
         ]
-      }
+      },
+      "tachographCardNumber": "1000000492436002",
+      "currentIdCardCode": "941767043",
+      "vehicleGroupTagId": "342423",
+      "trailerGroupTagId": "342412",
+      "peerGroupTagId": "342412",
+      "attributes": [
+        {
+          "id": "e7e00b5a-9d65-5291-91b2-8ddbada1efda",
+          "name": "CDL Class",
+          "stringValues": [
+            "A"
+          ]
+        },
+        {
+          "id": "5edd5128-9b8c-5d56-9f36-f17ba517a3fd",
+          "name": "Hazmat Endorsement",
+          "stringValues": [
+            "Yes"
+          ]
+        },
+        {
+          "id": "656d398b-3ead-5605-920b-89a7a29e04d3",
+          "name": "Years of Experience",
+          "numberValues": [
+            17
+          ]
+        },
+        {
+          "id": "dddcb584-8945-508a-9869-8d6159a1d4c3",
+          "name": "Medical Card Expiration",
+          "dateValues": [
+            "2027-01-10"
+          ]
+        }
+      ],
+      "createdAtTime": "2026-01-02T15:00:00Z",
+      "updatedAtTime": "2026-02-03T17:30:00Z"
     },
     {
-      "id": "drv-2",
+      "id": "1654988",
       "name": "Jordan Lee",
+      "username": "jlee",
+      "phone": "2145550187",
+      "email": "jordan.lee@lonestarfreight.example",
+      "licenseNumber": "23496434",
+      "licenseState": "TX",
+      "dateOfBirth": "1972-02-06",
+      "timezone": "America/Chicago",
+      "locale": "us",
+      "notes": "Regional routes",
       "driverActivationStatus": "active",
+      "eldDayStartHour": 0,
+      "eldExempt": false,
+      "eldPcEnabled": true,
+      "eldYmEnabled": true,
+      "eldBigDayExemptionEnabled": false,
+      "eldAdverseWeatherExemptionEnabled": false,
+      "waitingTimeDutyStatusEnabled": false,
+      "hasDrivingFeaturesHidden": false,
+      "hasVehicleUnpinningEnabled": true,
       "externalIds": {
         "workerId": "worker-1002"
       },
@@ -574,12 +1803,66 @@
             "jurisdiction": "TX"
           }
         ]
-      }
+      },
+      "tachographCardNumber": "1000000492436119",
+      "vehicleGroupTagId": "342456",
+      "trailerGroupTagId": "342445",
+      "peerGroupTagId": "342445",
+      "attributes": [
+        {
+          "id": "e7e00b5a-9d65-5291-91b2-8ddbada1efda",
+          "name": "CDL Class",
+          "stringValues": [
+            "A"
+          ]
+        },
+        {
+          "id": "5edd5128-9b8c-5d56-9f36-f17ba517a3fd",
+          "name": "Hazmat Endorsement",
+          "stringValues": [
+            "No"
+          ]
+        },
+        {
+          "id": "656d398b-3ead-5605-920b-89a7a29e04d3",
+          "name": "Years of Experience",
+          "numberValues": [
+            11
+          ]
+        },
+        {
+          "id": "dddcb584-8945-508a-9869-8d6159a1d4c3",
+          "name": "Medical Card Expiration",
+          "dateValues": [
+            "2027-02-11"
+          ]
+        }
+      ],
+      "createdAtTime": "2026-01-03T15:00:00Z",
+      "updatedAtTime": "2026-02-04T17:30:00Z"
     },
     {
-      "id": "drv-3",
+      "id": "1655012",
       "name": "Morgan Patel",
+      "username": "mpatel",
+      "phone": "7135550126",
+      "email": "morgan.patel@lonestarfreight.example",
+      "licenseNumber": "76142305",
+      "licenseState": "TX",
+      "dateOfBirth": "1974-03-07",
+      "timezone": "America/Chicago",
+      "locale": "us",
+      "notes": "Hazmat endorsed; Regional routes",
       "driverActivationStatus": "active",
+      "eldDayStartHour": 0,
+      "eldExempt": false,
+      "eldPcEnabled": true,
+      "eldYmEnabled": true,
+      "eldBigDayExemptionEnabled": false,
+      "eldAdverseWeatherExemptionEnabled": false,
+      "waitingTimeDutyStatusEnabled": false,
+      "hasDrivingFeaturesHidden": false,
+      "hasVehicleUnpinningEnabled": true,
       "externalIds": {
         "workerId": "worker-1003"
       },
@@ -593,12 +1876,66 @@
             "jurisdiction": "TX"
           }
         ]
-      }
+      },
+      "tachographCardNumber": "1000000492436227",
+      "vehicleGroupTagId": "342478",
+      "trailerGroupTagId": "342467",
+      "peerGroupTagId": "342467",
+      "attributes": [
+        {
+          "id": "e7e00b5a-9d65-5291-91b2-8ddbada1efda",
+          "name": "CDL Class",
+          "stringValues": [
+            "A"
+          ]
+        },
+        {
+          "id": "5edd5128-9b8c-5d56-9f36-f17ba517a3fd",
+          "name": "Hazmat Endorsement",
+          "stringValues": [
+            "Yes"
+          ]
+        },
+        {
+          "id": "656d398b-3ead-5605-920b-89a7a29e04d3",
+          "name": "Years of Experience",
+          "numberValues": [
+            19
+          ]
+        },
+        {
+          "id": "dddcb584-8945-508a-9869-8d6159a1d4c3",
+          "name": "Medical Card Expiration",
+          "dateValues": [
+            "2027-03-12"
+          ]
+        }
+      ],
+      "createdAtTime": "2026-01-04T15:00:00Z",
+      "updatedAtTime": "2026-02-05T17:30:00Z"
     },
     {
-      "id": "drv-4",
+      "id": "1655047",
       "name": "Casey Nguyen",
+      "username": "cnguyen",
+      "phone": "5125550163",
+      "email": "casey.nguyen@lonestarfreight.example",
+      "licenseNumber": "91475499",
+      "licenseState": "TX",
+      "dateOfBirth": "1976-04-08",
+      "timezone": "America/Chicago",
+      "locale": "us",
+      "notes": "Regional routes",
       "driverActivationStatus": "active",
+      "eldDayStartHour": 0,
+      "eldExempt": false,
+      "eldPcEnabled": true,
+      "eldYmEnabled": true,
+      "eldBigDayExemptionEnabled": false,
+      "eldAdverseWeatherExemptionEnabled": false,
+      "waitingTimeDutyStatusEnabled": false,
+      "hasDrivingFeaturesHidden": false,
+      "hasVehicleUnpinningEnabled": true,
       "externalIds": {
         "workerId": "worker-1004"
       },
@@ -612,12 +1949,66 @@
             "jurisdiction": "TX"
           }
         ]
-      }
+      },
+      "currentIdCardCode": "941767118",
+      "vehicleGroupTagId": "342423",
+      "trailerGroupTagId": "342412",
+      "peerGroupTagId": "342412",
+      "attributes": [
+        {
+          "id": "e7e00b5a-9d65-5291-91b2-8ddbada1efda",
+          "name": "CDL Class",
+          "stringValues": [
+            "A"
+          ]
+        },
+        {
+          "id": "5edd5128-9b8c-5d56-9f36-f17ba517a3fd",
+          "name": "Hazmat Endorsement",
+          "stringValues": [
+            "No"
+          ]
+        },
+        {
+          "id": "656d398b-3ead-5605-920b-89a7a29e04d3",
+          "name": "Years of Experience",
+          "numberValues": [
+            5
+          ]
+        },
+        {
+          "id": "dddcb584-8945-508a-9869-8d6159a1d4c3",
+          "name": "Medical Card Expiration",
+          "dateValues": [
+            "2027-04-13"
+          ]
+        }
+      ],
+      "createdAtTime": "2026-01-05T15:00:00Z",
+      "updatedAtTime": "2026-02-06T17:30:00Z"
     },
     {
-      "id": "drv-5",
+      "id": "1655069",
       "name": "Taylor Brooks",
+      "username": "tbrooks",
+      "phone": "8175550119",
+      "email": "taylor.brooks@lonestarfreight.example",
+      "licenseNumber": "84050403",
+      "licenseState": "TX",
+      "dateOfBirth": "1978-05-09",
+      "timezone": "America/Chicago",
+      "locale": "us",
+      "notes": "Regional routes",
       "driverActivationStatus": "active",
+      "eldDayStartHour": 0,
+      "eldExempt": false,
+      "eldPcEnabled": true,
+      "eldYmEnabled": true,
+      "eldBigDayExemptionEnabled": false,
+      "eldAdverseWeatherExemptionEnabled": false,
+      "waitingTimeDutyStatusEnabled": false,
+      "hasDrivingFeaturesHidden": false,
+      "hasVehicleUnpinningEnabled": true,
       "externalIds": {
         "workerId": "worker-1005"
       },
@@ -631,12 +2022,65 @@
             "jurisdiction": "TX"
           }
         ]
-      }
+      },
+      "vehicleGroupTagId": "342456",
+      "trailerGroupTagId": "342445",
+      "peerGroupTagId": "342445",
+      "attributes": [
+        {
+          "id": "e7e00b5a-9d65-5291-91b2-8ddbada1efda",
+          "name": "CDL Class",
+          "stringValues": [
+            "A"
+          ]
+        },
+        {
+          "id": "5edd5128-9b8c-5d56-9f36-f17ba517a3fd",
+          "name": "Hazmat Endorsement",
+          "stringValues": [
+            "No"
+          ]
+        },
+        {
+          "id": "656d398b-3ead-5605-920b-89a7a29e04d3",
+          "name": "Years of Experience",
+          "numberValues": [
+            12
+          ]
+        },
+        {
+          "id": "dddcb584-8945-508a-9869-8d6159a1d4c3",
+          "name": "Medical Card Expiration",
+          "dateValues": [
+            "2027-05-14"
+          ]
+        }
+      ],
+      "createdAtTime": "2026-01-06T15:00:00Z",
+      "updatedAtTime": "2026-02-07T17:30:00Z"
     },
     {
-      "id": "drv-6",
+      "id": "1655101",
       "name": "Riley Martinez",
+      "username": "rmartinez",
+      "phone": "9155550172",
+      "email": "riley.martinez@lonestarfreight.example",
+      "licenseNumber": "42487263",
+      "licenseState": "TX",
+      "dateOfBirth": "1980-06-10",
+      "timezone": "America/Denver",
+      "locale": "us",
+      "notes": "Long-haul OTR",
       "driverActivationStatus": "active",
+      "eldDayStartHour": 0,
+      "eldExempt": false,
+      "eldPcEnabled": true,
+      "eldYmEnabled": true,
+      "eldBigDayExemptionEnabled": false,
+      "eldAdverseWeatherExemptionEnabled": true,
+      "waitingTimeDutyStatusEnabled": false,
+      "hasDrivingFeaturesHidden": false,
+      "hasVehicleUnpinningEnabled": true,
       "externalIds": {
         "workerId": "worker-1006"
       },
@@ -650,12 +2094,65 @@
             "jurisdiction": "TX"
           }
         ]
-      }
+      },
+      "vehicleGroupTagId": "342511",
+      "trailerGroupTagId": "342500",
+      "peerGroupTagId": "342500",
+      "attributes": [
+        {
+          "id": "e7e00b5a-9d65-5291-91b2-8ddbada1efda",
+          "name": "CDL Class",
+          "stringValues": [
+            "A"
+          ]
+        },
+        {
+          "id": "5edd5128-9b8c-5d56-9f36-f17ba517a3fd",
+          "name": "Hazmat Endorsement",
+          "stringValues": [
+            "No"
+          ]
+        },
+        {
+          "id": "656d398b-3ead-5605-920b-89a7a29e04d3",
+          "name": "Years of Experience",
+          "numberValues": [
+            14
+          ]
+        },
+        {
+          "id": "dddcb584-8945-508a-9869-8d6159a1d4c3",
+          "name": "Medical Card Expiration",
+          "dateValues": [
+            "2027-06-15"
+          ]
+        }
+      ],
+      "createdAtTime": "2026-01-07T15:00:00Z",
+      "updatedAtTime": "2026-02-08T17:30:00Z"
     },
     {
-      "id": "drv-7",
+      "id": "1655134",
       "name": "Avery Johnson",
+      "username": "ajohnson",
+      "phone": "4325550158",
+      "email": "avery.johnson@lonestarfreight.example",
+      "licenseNumber": "37144643",
+      "licenseState": "TX",
+      "dateOfBirth": "1982-07-11",
+      "timezone": "America/Chicago",
+      "locale": "us",
+      "notes": "Hazmat endorsed; Long-haul OTR",
       "driverActivationStatus": "active",
+      "eldDayStartHour": 0,
+      "eldExempt": false,
+      "eldPcEnabled": true,
+      "eldYmEnabled": true,
+      "eldBigDayExemptionEnabled": false,
+      "eldAdverseWeatherExemptionEnabled": true,
+      "waitingTimeDutyStatusEnabled": false,
+      "hasDrivingFeaturesHidden": false,
+      "hasVehicleUnpinningEnabled": true,
       "externalIds": {
         "workerId": "worker-1007"
       },
@@ -669,12 +2166,65 @@
             "jurisdiction": "TX"
           }
         ]
-      }
+      },
+      "vehicleGroupTagId": "342522",
+      "trailerGroupTagId": "342500",
+      "peerGroupTagId": "342500",
+      "attributes": [
+        {
+          "id": "e7e00b5a-9d65-5291-91b2-8ddbada1efda",
+          "name": "CDL Class",
+          "stringValues": [
+            "A"
+          ]
+        },
+        {
+          "id": "5edd5128-9b8c-5d56-9f36-f17ba517a3fd",
+          "name": "Hazmat Endorsement",
+          "stringValues": [
+            "Yes"
+          ]
+        },
+        {
+          "id": "656d398b-3ead-5605-920b-89a7a29e04d3",
+          "name": "Years of Experience",
+          "numberValues": [
+            8
+          ]
+        },
+        {
+          "id": "dddcb584-8945-508a-9869-8d6159a1d4c3",
+          "name": "Medical Card Expiration",
+          "dateValues": [
+            "2027-07-16"
+          ]
+        }
+      ],
+      "createdAtTime": "2026-01-08T15:00:00Z",
+      "updatedAtTime": "2026-02-09T17:30:00Z"
     },
     {
-      "id": "drv-8",
+      "id": "1655158",
       "name": "Quinn Davis",
+      "username": "qdavis",
+      "phone": "2105550134",
+      "email": "quinn.davis@lonestarfreight.example",
+      "licenseNumber": "23726295",
+      "licenseState": "TX",
+      "dateOfBirth": "1984-08-12",
+      "timezone": "America/Chicago",
+      "locale": "us",
+      "notes": "Regional routes",
       "driverActivationStatus": "active",
+      "eldDayStartHour": 0,
+      "eldExempt": false,
+      "eldPcEnabled": true,
+      "eldYmEnabled": true,
+      "eldBigDayExemptionEnabled": false,
+      "eldAdverseWeatherExemptionEnabled": false,
+      "waitingTimeDutyStatusEnabled": false,
+      "hasDrivingFeaturesHidden": false,
+      "hasVehicleUnpinningEnabled": true,
       "externalIds": {
         "workerId": "worker-1008"
       },
@@ -688,12 +2238,66 @@
             "jurisdiction": "TX"
           }
         ]
-      }
+      },
+      "currentIdCardCode": "941767276",
+      "vehicleGroupTagId": "342434",
+      "trailerGroupTagId": "342412",
+      "peerGroupTagId": "342412",
+      "attributes": [
+        {
+          "id": "e7e00b5a-9d65-5291-91b2-8ddbada1efda",
+          "name": "CDL Class",
+          "stringValues": [
+            "A"
+          ]
+        },
+        {
+          "id": "5edd5128-9b8c-5d56-9f36-f17ba517a3fd",
+          "name": "Hazmat Endorsement",
+          "stringValues": [
+            "No"
+          ]
+        },
+        {
+          "id": "656d398b-3ead-5605-920b-89a7a29e04d3",
+          "name": "Years of Experience",
+          "numberValues": [
+            13
+          ]
+        },
+        {
+          "id": "dddcb584-8945-508a-9869-8d6159a1d4c3",
+          "name": "Medical Card Expiration",
+          "dateValues": [
+            "2027-08-17"
+          ]
+        }
+      ],
+      "createdAtTime": "2026-01-09T15:00:00Z",
+      "updatedAtTime": "2026-02-10T17:30:00Z"
     },
     {
-      "id": "drv-9",
+      "id": "1655192",
       "name": "Drew Thompson",
+      "username": "dthompson",
+      "phone": "9035550190",
+      "email": "drew.thompson@lonestarfreight.example",
+      "licenseNumber": "46433252",
+      "licenseState": "TX",
+      "dateOfBirth": "1986-09-13",
+      "timezone": "America/Chicago",
+      "locale": "us",
+      "notes": "Regional routes",
       "driverActivationStatus": "active",
+      "eldDayStartHour": 0,
+      "eldExempt": false,
+      "eldPcEnabled": true,
+      "eldYmEnabled": true,
+      "eldBigDayExemptionEnabled": false,
+      "eldAdverseWeatherExemptionEnabled": false,
+      "waitingTimeDutyStatusEnabled": false,
+      "hasDrivingFeaturesHidden": false,
+      "hasVehicleUnpinningEnabled": true,
       "externalIds": {
         "workerId": "worker-1009"
       },
@@ -707,12 +2311,66 @@
             "jurisdiction": "TX"
           }
         ]
-      }
+      },
+      "currentIdCardCode": "941767305",
+      "vehicleGroupTagId": "342456",
+      "trailerGroupTagId": "342445",
+      "peerGroupTagId": "342445",
+      "attributes": [
+        {
+          "id": "e7e00b5a-9d65-5291-91b2-8ddbada1efda",
+          "name": "CDL Class",
+          "stringValues": [
+            "A"
+          ]
+        },
+        {
+          "id": "5edd5128-9b8c-5d56-9f36-f17ba517a3fd",
+          "name": "Hazmat Endorsement",
+          "stringValues": [
+            "No"
+          ]
+        },
+        {
+          "id": "656d398b-3ead-5605-920b-89a7a29e04d3",
+          "name": "Years of Experience",
+          "numberValues": [
+            10
+          ]
+        },
+        {
+          "id": "dddcb584-8945-508a-9869-8d6159a1d4c3",
+          "name": "Medical Card Expiration",
+          "dateValues": [
+            "2027-09-18"
+          ]
+        }
+      ],
+      "createdAtTime": "2026-01-10T15:00:00Z",
+      "updatedAtTime": "2026-02-11T17:30:00Z"
     },
     {
-      "id": "drv-10",
+      "id": "1655230",
       "name": "Sam Parker",
+      "username": "sparker",
+      "phone": "4325550121",
+      "email": "sam.parker@lonestarfreight.example",
+      "licenseNumber": "92073102",
+      "licenseState": "TX",
+      "dateOfBirth": "1988-10-14",
+      "timezone": "America/Chicago",
+      "locale": "us",
+      "notes": "Hazmat endorsed; Long-haul OTR",
       "driverActivationStatus": "active",
+      "eldDayStartHour": 0,
+      "eldExempt": false,
+      "eldPcEnabled": true,
+      "eldYmEnabled": true,
+      "eldBigDayExemptionEnabled": false,
+      "eldAdverseWeatherExemptionEnabled": true,
+      "waitingTimeDutyStatusEnabled": false,
+      "hasDrivingFeaturesHidden": false,
+      "hasVehicleUnpinningEnabled": true,
       "externalIds": {
         "workerId": "worker-1010"
       },
@@ -726,12 +2384,65 @@
             "jurisdiction": "TX"
           }
         ]
-      }
+      },
+      "vehicleGroupTagId": "342522",
+      "trailerGroupTagId": "342500",
+      "peerGroupTagId": "342500",
+      "attributes": [
+        {
+          "id": "e7e00b5a-9d65-5291-91b2-8ddbada1efda",
+          "name": "CDL Class",
+          "stringValues": [
+            "A"
+          ]
+        },
+        {
+          "id": "5edd5128-9b8c-5d56-9f36-f17ba517a3fd",
+          "name": "Hazmat Endorsement",
+          "stringValues": [
+            "Yes"
+          ]
+        },
+        {
+          "id": "656d398b-3ead-5605-920b-89a7a29e04d3",
+          "name": "Years of Experience",
+          "numberValues": [
+            24
+          ]
+        },
+        {
+          "id": "dddcb584-8945-508a-9869-8d6159a1d4c3",
+          "name": "Medical Card Expiration",
+          "dateValues": [
+            "2027-10-19"
+          ]
+        }
+      ],
+      "createdAtTime": "2026-01-11T15:00:00Z",
+      "updatedAtTime": "2026-02-12T17:30:00Z"
     },
     {
-      "id": "drv-11",
+      "id": "1655261",
       "name": "Jamie Clark",
+      "username": "jclark",
+      "phone": "8065550147",
+      "email": "jamie.clark@lonestarfreight.example",
+      "licenseNumber": "33362906",
+      "licenseState": "TX",
+      "dateOfBirth": "1990-11-15",
+      "timezone": "America/Chicago",
+      "locale": "us",
+      "notes": "Long-haul OTR",
       "driverActivationStatus": "active",
+      "eldDayStartHour": 0,
+      "eldExempt": false,
+      "eldPcEnabled": true,
+      "eldYmEnabled": true,
+      "eldBigDayExemptionEnabled": false,
+      "eldAdverseWeatherExemptionEnabled": true,
+      "waitingTimeDutyStatusEnabled": false,
+      "hasDrivingFeaturesHidden": false,
+      "hasVehicleUnpinningEnabled": true,
       "externalIds": {
         "workerId": "worker-1011"
       },
@@ -745,12 +2456,65 @@
             "jurisdiction": "TX"
           }
         ]
-      }
+      },
+      "vehicleGroupTagId": "342533",
+      "trailerGroupTagId": "342500",
+      "peerGroupTagId": "342500",
+      "attributes": [
+        {
+          "id": "e7e00b5a-9d65-5291-91b2-8ddbada1efda",
+          "name": "CDL Class",
+          "stringValues": [
+            "A"
+          ]
+        },
+        {
+          "id": "5edd5128-9b8c-5d56-9f36-f17ba517a3fd",
+          "name": "Hazmat Endorsement",
+          "stringValues": [
+            "No"
+          ]
+        },
+        {
+          "id": "656d398b-3ead-5605-920b-89a7a29e04d3",
+          "name": "Years of Experience",
+          "numberValues": [
+            17
+          ]
+        },
+        {
+          "id": "dddcb584-8945-508a-9869-8d6159a1d4c3",
+          "name": "Medical Card Expiration",
+          "dateValues": [
+            "2027-11-20"
+          ]
+        }
+      ],
+      "createdAtTime": "2026-01-12T15:00:00Z",
+      "updatedAtTime": "2026-02-13T17:30:00Z"
     },
     {
-      "id": "drv-12",
+      "id": "1655297",
       "name": "Cameron Scott",
+      "username": "cscott",
+      "phone": "9565550109",
+      "email": "cameron.scott@lonestarfreight.example",
+      "licenseNumber": "92303453",
+      "licenseState": "TX",
+      "dateOfBirth": "1992-12-16",
+      "timezone": "America/Chicago",
+      "locale": "us",
+      "notes": "Long-haul OTR",
       "driverActivationStatus": "active",
+      "eldDayStartHour": 0,
+      "eldExempt": false,
+      "eldPcEnabled": true,
+      "eldYmEnabled": true,
+      "eldBigDayExemptionEnabled": false,
+      "eldAdverseWeatherExemptionEnabled": true,
+      "waitingTimeDutyStatusEnabled": false,
+      "hasDrivingFeaturesHidden": false,
+      "hasVehicleUnpinningEnabled": true,
       "externalIds": {
         "workerId": "worker-1012"
       },
@@ -764,127 +2528,162 @@
             "jurisdiction": "TX"
           }
         ]
-      }
+      },
+      "vehicleGroupTagId": "342489",
+      "trailerGroupTagId": "342467",
+      "peerGroupTagId": "342467",
+      "attributes": [
+        {
+          "id": "e7e00b5a-9d65-5291-91b2-8ddbada1efda",
+          "name": "CDL Class",
+          "stringValues": [
+            "A"
+          ]
+        },
+        {
+          "id": "5edd5128-9b8c-5d56-9f36-f17ba517a3fd",
+          "name": "Hazmat Endorsement",
+          "stringValues": [
+            "No"
+          ]
+        },
+        {
+          "id": "656d398b-3ead-5605-920b-89a7a29e04d3",
+          "name": "Years of Experience",
+          "numberValues": [
+            9
+          ]
+        },
+        {
+          "id": "dddcb584-8945-508a-9869-8d6159a1d4c3",
+          "name": "Medical Card Expiration",
+          "dateValues": [
+            "2027-12-21"
+          ]
+        }
+      ],
+      "createdAtTime": "2026-01-13T15:00:00Z",
+      "updatedAtTime": "2026-02-14T17:30:00Z"
     }
   ],
   "routes": [
     {
-      "id": "route-1",
+      "id": "4129806431",
       "name": "Texas Route 1",
       "driver": {
-        "id": "drv-1",
+        "id": "1654973",
         "name": "Alex Rivera"
       },
       "vehicle": {
-        "id": "veh-1001",
+        "id": "281474977075805",
         "name": "Truck 1001"
       }
     },
     {
-      "id": "route-2",
+      "id": "4129806458",
       "name": "Texas Route 2",
       "driver": {
-        "id": "drv-2",
+        "id": "1654988",
         "name": "Jordan Lee"
       },
       "vehicle": {
-        "id": "veh-1002",
+        "id": "281474977075819",
         "name": "Truck 1002"
       }
     },
     {
-      "id": "route-3",
+      "id": "4129806472",
       "name": "Texas Route 3",
       "driver": {
-        "id": "drv-3",
+        "id": "1655012",
         "name": "Morgan Patel"
       },
       "vehicle": {
-        "id": "veh-1003",
+        "id": "281474977075842",
         "name": "Truck 1003"
       }
     },
     {
-      "id": "route-4",
+      "id": "4129806490",
       "name": "Texas Route 4",
       "driver": {
-        "id": "drv-4",
+        "id": "1655047",
         "name": "Casey Nguyen"
       },
       "vehicle": {
-        "id": "veh-1004",
+        "id": "281474977075860",
         "name": "Truck 1004"
       }
     },
     {
-      "id": "route-5",
+      "id": "4129806517",
       "name": "Texas Route 5",
       "driver": {
-        "id": "drv-5",
+        "id": "1655069",
         "name": "Taylor Brooks"
       },
       "vehicle": {
-        "id": "veh-1005",
+        "id": "281474977075891",
         "name": "Truck 1005"
       }
     },
     {
-      "id": "route-6",
+      "id": "4129806533",
       "name": "Texas Route 6",
       "driver": {
-        "id": "drv-6",
+        "id": "1655101",
         "name": "Riley Martinez"
       },
       "vehicle": {
-        "id": "veh-1006",
+        "id": "281474977075907",
         "name": "Truck 1006"
       }
     },
     {
-      "id": "route-7",
+      "id": "4129806561",
       "name": "Texas Route 7",
       "driver": {
-        "id": "drv-7",
+        "id": "1655134",
         "name": "Avery Johnson"
       },
       "vehicle": {
-        "id": "veh-1007",
+        "id": "281474977075934",
         "name": "Truck 1007"
       }
     },
     {
-      "id": "route-8",
+      "id": "4129806589",
       "name": "Texas Route 8",
       "driver": {
-        "id": "drv-8",
+        "id": "1655158",
         "name": "Quinn Davis"
       },
       "vehicle": {
-        "id": "veh-1008",
+        "id": "281474977075958",
         "name": "Truck 1008"
       }
     },
     {
-      "id": "route-9",
+      "id": "4129806604",
       "name": "Texas Route 9",
       "driver": {
-        "id": "drv-9",
+        "id": "1655192",
         "name": "Drew Thompson"
       },
       "vehicle": {
-        "id": "veh-1009",
+        "id": "281474977075973",
         "name": "Truck 1009"
       }
     },
     {
-      "id": "route-10",
+      "id": "4129806626",
       "name": "Texas Route 10",
       "driver": {
-        "id": "drv-10",
+        "id": "1655230",
         "name": "Sam Parker"
       },
       "vehicle": {
-        "id": "veh-1010",
+        "id": "281474977076001",
         "name": "Truck 1010"
       }
     }
@@ -898,11 +2697,11 @@
       "createdAtTime": "2026-01-05T08:00:00Z",
       "updatedAtTime": "2026-02-12T09:30:00Z",
       "createdBy": {
-        "id": "user-1",
+        "id": "524871",
         "type": "user"
       },
       "updatedBy": {
-        "id": "user-1",
+        "id": "524871",
         "type": "user"
       },
       "fields": [
@@ -946,15 +2745,26 @@
       "id": "5d21c4b8-6a97-4e30-9f1d-83b5a2c7e604",
       "revisionId": "9e43a6d0-8cb9-4f52-a13f-a5d7c4e98216",
       "title": "Incident Report",
-      "formCategory": "general",
+      "formCategory": "safety",
+      "approvalConfig": {
+        "type": "singleApproval",
+        "singleApprovalConfig": {
+          "allowManualApproverSelection": true,
+          "requirements": {
+            "roleIds": [
+              "23d4d8d3-dc10-4e7a-a183-69968751f23e"
+            ]
+          }
+        }
+      },
       "createdAtTime": "2026-01-05T08:15:00Z",
       "updatedAtTime": "2026-02-12T09:45:00Z",
       "createdBy": {
-        "id": "user-1",
+        "id": "524871",
         "type": "user"
       },
       "updatedBy": {
-        "id": "user-1",
+        "id": "524871",
         "type": "user"
       },
       "fields": [
@@ -1024,11 +2834,11 @@
       "createdAtTime": "2026-01-05T08:00:00Z",
       "updatedAtTime": "2026-02-12T09:30:00Z",
       "createdBy": {
-        "id": "user-1",
+        "id": "524871",
         "type": "user"
       },
       "updatedBy": {
-        "id": "user-1",
+        "id": "524871",
         "type": "user"
       },
       "fields": [
@@ -1094,11 +2904,11 @@
       "createdAtTime": "2026-01-05T08:30:00Z",
       "updatedAtTime": "2026-02-12T10:00:00Z",
       "createdBy": {
-        "id": "user-1",
+        "id": "524871",
         "type": "user"
       },
       "updatedBy": {
-        "id": "user-1",
+        "id": "524871",
         "type": "user"
       },
       "fields": [
@@ -1175,11 +2985,11 @@
       "createdAtTime": "2026-01-05T08:45:00Z",
       "updatedAtTime": "2026-02-12T10:15:00Z",
       "createdBy": {
-        "id": "user-1",
+        "id": "524871",
         "type": "user"
       },
       "updatedBy": {
-        "id": "user-1",
+        "id": "524871",
         "type": "user"
       },
       "fields": [
@@ -1260,34 +3070,200 @@
           "fieldIndexLastInclusive": 6
         }
       ]
+    },
+    {
+      "id": "c77994b5-55e8-42f7-8fd7-d4afcdb4ded6",
+      "revisionId": "976777e0-9b7b-41e3-8e0f-6435e1563052",
+      "title": "Trailer Interchange Receipt",
+      "formCategory": "assetInspection",
+      "description": "Completed by the driver whenever a trailer is dropped at or hooked from a yard.",
+      "createdAtTime": "2026-01-06T09:00:00Z",
+      "updatedAtTime": "2026-02-14T11:20:00Z",
+      "createdBy": {
+        "id": "524871",
+        "type": "user"
+      },
+      "updatedBy": {
+        "id": "524871",
+        "type": "user"
+      },
+      "fields": [
+        {
+          "id": "70d82dff-53dc-4b72-8b6e-a9f7835ed4a7",
+          "label": "Trailer",
+          "type": "asset",
+          "isRequired": true,
+          "allowedAssetTypes": [
+            "trailer"
+          ]
+        },
+        {
+          "id": "3131091b-2b9e-45f6-882e-bb079ada6ee8",
+          "label": "Interchange Time",
+          "type": "datetime",
+          "isRequired": true,
+          "allowedDateTimeValueType": "datetime"
+        },
+        {
+          "id": "1bacde37-4c8e-45e0-8a71-0556585988c5",
+          "label": "Interchange Location",
+          "type": "geofence",
+          "isRequired": true
+        },
+        {
+          "id": "0f031ca3-adfd-486a-97ae-bafcc1f24820",
+          "label": "Interchange Type",
+          "type": "multiple_choice",
+          "isRequired": true,
+          "options": [
+            {
+              "id": "e1c6eedc-5191-4352-842b-920415cb923f",
+              "label": "Drop"
+            },
+            {
+              "id": "4baef113-64cf-44a3-a21c-0851dcc91437",
+              "label": "Hook"
+            }
+          ]
+        },
+        {
+          "id": "62fd9868-7452-4b19-8ed0-cc04ac58b36a",
+          "label": "Seal Scan",
+          "type": "barcode",
+          "isRequired": false
+        },
+        {
+          "id": "650e5520-bce9-457d-9801-3d0a22c9b9ef",
+          "label": "Trailer Photos",
+          "type": "media",
+          "isRequired": true
+        },
+        {
+          "id": "0a031537-fad8-44b3-8b2a-4a4a8f9f903d",
+          "label": "Tire Tread Depths",
+          "type": "table",
+          "isRequired": false,
+          "columns": [
+            {
+              "id": "cd18889d-a97e-4fab-bbb0-3db859a625bd",
+              "label": "Tire Position",
+              "type": "text"
+            },
+            {
+              "id": "fecba7e1-d4e1-4316-bbea-46610acc5317",
+              "label": "Tread Depth (32nds)",
+              "type": "number",
+              "numDecimalPlaces": 0
+            },
+            {
+              "id": "53b54503-66c2-4067-9452-b31141d28acf",
+              "label": "Condition",
+              "type": "multiple_choice",
+              "options": [
+                {
+                  "id": "f2e8a0b2-a082-47e3-80f6-39db5b4f3893",
+                  "label": "Good"
+                },
+                {
+                  "id": "c3b4845e-6489-4a54-aa93-d7482c72c180",
+                  "label": "Worn"
+                },
+                {
+                  "id": "907b516b-c929-4e0f-80a8-54c674038ff5",
+                  "label": "Replace"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "d3e189b1-2e0c-4a2b-ab38-603d8bc926f5",
+          "label": "Received By",
+          "type": "person",
+          "isRequired": false,
+          "allowManualEntry": true,
+          "includeDrivers": true,
+          "includeUsers": true,
+          "filterByRoleIds": [
+            "23d4d8d3-dc10-4e7a-a183-69968751f23e"
+          ]
+        },
+        {
+          "id": "118be3e5-ca0e-4dd8-b69a-5d289a24ddb2",
+          "label": "Damage Notes",
+          "type": "text",
+          "isRequired": false
+        }
+      ],
+      "sections": [
+        {
+          "id": "9bd6cafd-ad8f-43a9-b335-3061df971738",
+          "label": "Interchange",
+          "fieldIndexFirstInclusive": 0,
+          "fieldIndexLastInclusive": 4
+        },
+        {
+          "id": "acfef198-35bc-4cba-8530-3bde6afdc3e2",
+          "label": "Condition",
+          "fieldIndexFirstInclusive": 5,
+          "fieldIndexLastInclusive": 8
+        }
+      ]
     }
   ],
   "formSubmissions": [
     {
-      "id": "form-sub-1",
+      "id": "3f9a6c2e-7b41-4d8a-9e15-c2b7d04f8a61",
       "title": "Truck 1001 Daily Inspection",
       "status": "notStarted",
       "isRequired": true,
       "createdAtTime": "2026-03-01T12:00:00Z",
       "updatedAtTime": "2026-03-01T12:00:00Z",
+      "submittedAtTime": "2026-03-01T12:00:00Z",
+      "submittedBy": {
+        "id": "524871",
+        "type": "user"
+      },
+      "assignedTo": {
+        "id": "1654973",
+        "type": "driver"
+      },
+      "assignedAtTime": "2026-03-01T12:00:00Z",
+      "dueAtTime": "2026-03-01T18:00:00Z",
       "formTemplate": {
-        "id": "e3c5abf4-2f5d-4f03-8a07-648d2d4f4a51"
+        "id": "e3c5abf4-2f5d-4f03-8a07-648d2d4f4a51",
+        "revisionId": "84f6d5e3-4e10-4cd6-9d52-5df1097a8740"
       },
       "fields": []
     }
   ],
   "liveShares": [
     {
-      "id": "ls-1",
+      "id": "kq3m8vz2pt7xw4nb6rd",
       "name": "All Active Vehicles",
       "type": "assetsLocation",
-      "liveSharingUrl": "https://example.invalid/liveshare/ls-1",
-      "description": "Simulator share for active fleet"
+      "liveSharingUrl": "https://cloud.samsara.com/o/20936/fleet/viewer/asset/x7rd2mq9vk4tn8pw3hb",
+      "description": "Live view of every Texas Operations unit for customer service",
+      "assetsLocationLinkConfig": {
+        "tagIds": [
+          "342401"
+        ]
+      }
+    },
+    {
+      "id": "p4wn7rk2xd9qm3tv8cs",
+      "name": "Austin Main Yard arrivals",
+      "type": "assetsNearLocation",
+      "liveSharingUrl": "https://cloud.samsara.com/o/20936/fleet/viewer/address/m3hq8tz5rw2kv9dn4bx",
+      "description": "Trucks approaching the Austin yard",
+      "assetsNearLocationLinkConfig": {
+        "addressId": "41226316"
+      }
     }
   ],
   "messages": [
     {
-      "driverId": 1001,
+      "driverId": 1654973,
       "text": "Begin route and send departure confirmation.",
       "isRead": false,
       "sender": {
@@ -1297,7 +3273,7 @@
       "sentAtMs": 1772373000000
     },
     {
-      "driverId": 1002,
+      "driverId": 1654988,
       "text": "Fuel stop approved at exit 22.",
       "isRead": true,
       "sender": {
@@ -1309,7 +3285,7 @@
   ],
   "webhooks": [
     {
-      "id": "wh-1",
+      "id": "523918",
       "name": "Core Fleet Events",
       "url": "http://localhost:8091/_sim/webhooks/inbox",
       "version": "2021-06-09",
@@ -1320,6 +3296,7 @@
         "AddressUpdated",
         "AlertIncident",
         "DriverCreated",
+        "DriverUpdated",
         "DvirSubmitted",
         "FormSubmitted",
         "FormUpdated",
@@ -1339,7 +3316,7 @@
   ],
   "vehicleStats": [
     {
-      "id": "veh-1001",
+      "id": "281474977075805",
       "name": "Truck 1001",
       "fuelPercent": {
         "time": "2026-03-01T14:14:00Z",
@@ -1355,7 +3332,7 @@
       }
     },
     {
-      "id": "veh-1002",
+      "id": "281474977075819",
       "name": "Truck 1002",
       "fuelPercent": {
         "time": "2026-03-01T14:14:00Z",
@@ -1371,7 +3348,7 @@
       }
     },
     {
-      "id": "veh-1003",
+      "id": "281474977075842",
       "name": "Truck 1003",
       "fuelPercent": {
         "time": "2026-03-01T14:14:00Z",
@@ -1387,7 +3364,7 @@
       }
     },
     {
-      "id": "veh-1004",
+      "id": "281474977075860",
       "name": "Truck 1004",
       "fuelPercent": {
         "time": "2026-03-01T14:14:00Z",
@@ -1403,7 +3380,7 @@
       }
     },
     {
-      "id": "veh-1005",
+      "id": "281474977075891",
       "name": "Truck 1005",
       "fuelPercent": {
         "time": "2026-03-01T14:14:00Z",
@@ -1419,7 +3396,7 @@
       }
     },
     {
-      "id": "veh-1006",
+      "id": "281474977075907",
       "name": "Truck 1006",
       "fuelPercent": {
         "time": "2026-03-01T14:14:00Z",
@@ -1435,7 +3412,7 @@
       }
     },
     {
-      "id": "veh-1007",
+      "id": "281474977075934",
       "name": "Truck 1007",
       "fuelPercent": {
         "time": "2026-03-01T14:14:00Z",
@@ -1451,7 +3428,7 @@
       }
     },
     {
-      "id": "veh-1008",
+      "id": "281474977075958",
       "name": "Truck 1008",
       "fuelPercent": {
         "time": "2026-03-01T14:14:00Z",
@@ -1467,7 +3444,7 @@
       }
     },
     {
-      "id": "veh-1009",
+      "id": "281474977075973",
       "name": "Truck 1009",
       "fuelPercent": {
         "time": "2026-03-01T14:14:00Z",
@@ -1483,7 +3460,7 @@
       }
     },
     {
-      "id": "veh-1010",
+      "id": "281474977076001",
       "name": "Truck 1010",
       "fuelPercent": {
         "time": "2026-03-01T14:14:00Z",
@@ -1499,7 +3476,7 @@
       }
     },
     {
-      "id": "veh-1011",
+      "id": "281474977076028",
       "name": "Truck 1011",
       "fuelPercent": {
         "time": "2026-03-01T14:14:00Z",
@@ -1515,7 +3492,7 @@
       }
     },
     {
-      "id": "veh-1012",
+      "id": "281474977076045",
       "name": "Truck 1012",
       "fuelPercent": {
         "time": "2026-03-01T14:14:00Z",
@@ -1534,7 +3511,7 @@
   "hosClocks": [
     {
       "driver": {
-        "id": "drv-1",
+        "id": "1654973",
         "name": "Alex Rivera"
       },
       "currentDutyStatus": {
@@ -1561,13 +3538,13 @@
         "shiftDrivingViolationDurationMs": 0
       },
       "currentVehicle": {
-        "id": "veh-1001",
+        "id": "281474977075805",
         "name": "Truck 1001"
       }
     },
     {
       "driver": {
-        "id": "drv-2",
+        "id": "1654988",
         "name": "Jordan Lee"
       },
       "currentDutyStatus": {
@@ -1594,13 +3571,13 @@
         "shiftDrivingViolationDurationMs": 0
       },
       "currentVehicle": {
-        "id": "veh-1002",
+        "id": "281474977075819",
         "name": "Truck 1002"
       }
     },
     {
       "driver": {
-        "id": "drv-3",
+        "id": "1655012",
         "name": "Morgan Patel"
       },
       "currentDutyStatus": {
@@ -1627,13 +3604,13 @@
         "shiftDrivingViolationDurationMs": 0
       },
       "currentVehicle": {
-        "id": "veh-1003",
+        "id": "281474977075842",
         "name": "Truck 1003"
       }
     },
     {
       "driver": {
-        "id": "drv-4",
+        "id": "1655047",
         "name": "Casey Nguyen"
       },
       "currentDutyStatus": {
@@ -1660,13 +3637,13 @@
         "shiftDrivingViolationDurationMs": 0
       },
       "currentVehicle": {
-        "id": "veh-1004",
+        "id": "281474977075860",
         "name": "Truck 1004"
       }
     },
     {
       "driver": {
-        "id": "drv-5",
+        "id": "1655069",
         "name": "Taylor Brooks"
       },
       "currentDutyStatus": {
@@ -1693,13 +3670,13 @@
         "shiftDrivingViolationDurationMs": 0
       },
       "currentVehicle": {
-        "id": "veh-1005",
+        "id": "281474977075891",
         "name": "Truck 1005"
       }
     },
     {
       "driver": {
-        "id": "drv-6",
+        "id": "1655101",
         "name": "Riley Martinez"
       },
       "currentDutyStatus": {
@@ -1726,13 +3703,13 @@
         "shiftDrivingViolationDurationMs": 0
       },
       "currentVehicle": {
-        "id": "veh-1006",
+        "id": "281474977075907",
         "name": "Truck 1006"
       }
     },
     {
       "driver": {
-        "id": "drv-7",
+        "id": "1655134",
         "name": "Avery Johnson"
       },
       "currentDutyStatus": {
@@ -1759,13 +3736,13 @@
         "shiftDrivingViolationDurationMs": 0
       },
       "currentVehicle": {
-        "id": "veh-1007",
+        "id": "281474977075934",
         "name": "Truck 1007"
       }
     },
     {
       "driver": {
-        "id": "drv-8",
+        "id": "1655158",
         "name": "Quinn Davis"
       },
       "currentDutyStatus": {
@@ -1792,13 +3769,13 @@
         "shiftDrivingViolationDurationMs": 0
       },
       "currentVehicle": {
-        "id": "veh-1008",
+        "id": "281474977075958",
         "name": "Truck 1008"
       }
     },
     {
       "driver": {
-        "id": "drv-9",
+        "id": "1655192",
         "name": "Drew Thompson"
       },
       "currentDutyStatus": {
@@ -1825,13 +3802,13 @@
         "shiftDrivingViolationDurationMs": 0
       },
       "currentVehicle": {
-        "id": "veh-1009",
+        "id": "281474977075973",
         "name": "Truck 1009"
       }
     },
     {
       "driver": {
-        "id": "drv-10",
+        "id": "1655230",
         "name": "Sam Parker"
       },
       "currentDutyStatus": {
@@ -1858,13 +3835,13 @@
         "shiftDrivingViolationDurationMs": 0
       },
       "currentVehicle": {
-        "id": "veh-1010",
+        "id": "281474977076001",
         "name": "Truck 1010"
       }
     },
     {
       "driver": {
-        "id": "drv-11",
+        "id": "1655261",
         "name": "Jamie Clark"
       },
       "currentDutyStatus": {
@@ -1893,7 +3870,7 @@
     },
     {
       "driver": {
-        "id": "drv-12",
+        "id": "1655297",
         "name": "Cameron Scott"
       },
       "currentDutyStatus": {
@@ -1924,84 +3901,84 @@
   "hosLogs": [
     {
       "driver": {
-        "id": "drv-1",
+        "id": "1654973",
         "name": "Alex Rivera"
       },
       "hosLogs": []
     },
     {
       "driver": {
-        "id": "drv-2",
+        "id": "1654988",
         "name": "Jordan Lee"
       },
       "hosLogs": []
     },
     {
       "driver": {
-        "id": "drv-3",
+        "id": "1655012",
         "name": "Morgan Patel"
       },
       "hosLogs": []
     },
     {
       "driver": {
-        "id": "drv-4",
+        "id": "1655047",
         "name": "Casey Nguyen"
       },
       "hosLogs": []
     },
     {
       "driver": {
-        "id": "drv-5",
+        "id": "1655069",
         "name": "Taylor Brooks"
       },
       "hosLogs": []
     },
     {
       "driver": {
-        "id": "drv-6",
+        "id": "1655101",
         "name": "Riley Martinez"
       },
       "hosLogs": []
     },
     {
       "driver": {
-        "id": "drv-7",
+        "id": "1655134",
         "name": "Avery Johnson"
       },
       "hosLogs": []
     },
     {
       "driver": {
-        "id": "drv-8",
+        "id": "1655158",
         "name": "Quinn Davis"
       },
       "hosLogs": []
     },
     {
       "driver": {
-        "id": "drv-9",
+        "id": "1655192",
         "name": "Drew Thompson"
       },
       "hosLogs": []
     },
     {
       "driver": {
-        "id": "drv-10",
+        "id": "1655230",
         "name": "Sam Parker"
       },
       "hosLogs": []
     },
     {
       "driver": {
-        "id": "drv-11",
+        "id": "1655261",
         "name": "Jamie Clark"
       },
       "hosLogs": []
     },
     {
       "driver": {
-        "id": "drv-12",
+        "id": "1655297",
         "name": "Cameron Scott"
       },
       "hosLogs": []
@@ -2010,40 +3987,40 @@
   "driverTachograph": [
     {
       "driver": {
-        "id": "drv-1",
+        "id": "1654973",
         "name": "Alex Rivera"
       },
       "files": [
         {
-          "id": "drv-tacho-1",
+          "id": "6c1f0a2e-8d3b-4f57-a9e4-1b7c2d5e8f30",
           "createdAtTime": "2026-02-28T22:00:00Z",
-          "url": "https://example.invalid/tacho/drivers/drv-tacho-1"
+          "url": "https://example.invalid/tacho/drivers/6c1f0a2e-8d3b-4f57-a9e4-1b7c2d5e8f30"
         }
       ]
     },
     {
       "driver": {
-        "id": "drv-2",
+        "id": "1654988",
         "name": "Jordan Lee"
       },
       "files": [
         {
-          "id": "drv-tacho-2",
+          "id": "9a4e7b1c-2f6d-4c83-b5a0-3e8d1f7c4b62",
           "createdAtTime": "2026-02-28T22:00:00Z",
-          "url": "https://example.invalid/tacho/drivers/drv-tacho-2"
+          "url": "https://example.invalid/tacho/drivers/9a4e7b1c-2f6d-4c83-b5a0-3e8d1f7c4b62"
         }
       ]
     },
     {
       "driver": {
-        "id": "drv-3",
+        "id": "1655012",
         "name": "Morgan Patel"
       },
       "files": [
         {
-          "id": "drv-tacho-3",
+          "id": "d2b8f5a1-7c4e-4e19-8f6b-5a3c9e2d7b14",
           "createdAtTime": "2026-02-28T22:00:00Z",
-          "url": "https://example.invalid/tacho/drivers/drv-tacho-3"
+          "url": "https://example.invalid/tacho/drivers/d2b8f5a1-7c4e-4e19-8f6b-5a3c9e2d7b14"
         }
       ]
     }
@@ -2051,43 +4028,874 @@
   "vehicleTachograph": [
     {
       "vehicle": {
-        "id": "veh-1001",
+        "id": "281474977075805",
         "name": "Truck 1001"
       },
       "files": [
         {
-          "id": "veh-tacho-1",
+          "id": "1e7d4c9b-3a6f-4b25-9c8e-7f2a5d1b6e43",
           "createdAtTime": "2026-02-28T22:05:00Z",
-          "url": "https://example.invalid/tacho/vehicles/veh-tacho-1",
+          "url": "https://example.invalid/tacho/vehicles/1e7d4c9b-3a6f-4b25-9c8e-7f2a5d1b6e43",
           "vehicleIdentificationNumber": "VIN1001SIM"
         }
       ]
     },
     {
       "vehicle": {
-        "id": "veh-1002",
+        "id": "281474977075819",
         "name": "Truck 1002"
       },
       "files": [
         {
-          "id": "veh-tacho-2",
+          "id": "5b3a9e7d-6c1f-4d84-a2b7-9e4c8f3a1d56",
           "createdAtTime": "2026-02-28T22:05:00Z",
-          "url": "https://example.invalid/tacho/vehicles/veh-tacho-2",
+          "url": "https://example.invalid/tacho/vehicles/5b3a9e7d-6c1f-4d84-a2b7-9e4c8f3a1d56",
           "vehicleIdentificationNumber": "VIN1002SIM"
         }
       ]
     },
     {
       "vehicle": {
-        "id": "veh-1003",
+        "id": "281474977075842",
         "name": "Truck 1003"
       },
       "files": [
         {
-          "id": "veh-tacho-3",
+          "id": "8f6c2d4a-1b9e-4a37-b6d5-2c7e9a4f8b19",
           "createdAtTime": "2026-02-28T22:05:00Z",
-          "url": "https://example.invalid/tacho/vehicles/veh-tacho-3",
+          "url": "https://example.invalid/tacho/vehicles/8f6c2d4a-1b9e-4a37-b6d5-2c7e9a4f8b19",
           "vehicleIdentificationNumber": "VIN1003SIM"
+        }
+      ]
+    }
+  ],
+  "tags": [
+    {
+      "id": "342401",
+      "name": "Texas Operations",
+      "externalIds": {
+        "tmsTagId": "region-tx"
+      }
+    },
+    {
+      "id": "342412",
+      "name": "Central Texas",
+      "parentTagId": "342401",
+      "externalIds": {
+        "tmsTagId": "region-central"
+      }
+    },
+    {
+      "id": "342423",
+      "name": "Austin Terminal",
+      "parentTagId": "342412",
+      "externalIds": {
+        "tmsTagId": "terminal-aus"
+      },
+      "addresses": [
+        "41226316",
+        "41226372"
+      ],
+      "assets": [
+        "281474979348595",
+        "281474979348646",
+        "281474979348799",
+        "281474980315252",
+        "281474980315269"
+      ],
+      "drivers": [
+        "1654973",
+        "1655047"
+      ],
+      "vehicles": [
+        "281474977075805",
+        "281474977075860"
+      ]
+    },
+    {
+      "id": "342434",
+      "name": "San Antonio Terminal",
+      "parentTagId": "342412",
+      "externalIds": {
+        "tmsTagId": "terminal-sat"
+      },
+      "addresses": [
+        "41226347"
+      ],
+      "assets": [
+        "281474979348714"
+      ],
+      "drivers": [
+        "1655158"
+      ],
+      "vehicles": [
+        "281474977075958"
+      ]
+    },
+    {
+      "id": "342445",
+      "name": "North Texas",
+      "parentTagId": "342401",
+      "externalIds": {
+        "tmsTagId": "region-north"
+      }
+    },
+    {
+      "id": "342456",
+      "name": "Dallas-Fort Worth Terminal",
+      "parentTagId": "342445",
+      "externalIds": {
+        "tmsTagId": "terminal-dfw"
+      },
+      "addresses": [
+        "41226329",
+        "41226391"
+      ],
+      "assets": [
+        "281474979348612",
+        "281474979348663",
+        "281474979348731",
+        "281474979348816",
+        "281474980315201",
+        "281474980315218",
+        "281474980315235"
+      ],
+      "drivers": [
+        "1654988",
+        "1655069",
+        "1655192"
+      ],
+      "vehicles": [
+        "281474977075819",
+        "281474977075891",
+        "281474977075973"
+      ]
+    },
+    {
+      "id": "342467",
+      "name": "Gulf Coast",
+      "parentTagId": "342401",
+      "externalIds": {
+        "tmsTagId": "region-gulf"
+      }
+    },
+    {
+      "id": "342478",
+      "name": "Houston Terminal",
+      "parentTagId": "342467",
+      "externalIds": {
+        "tmsTagId": "terminal-hou"
+      },
+      "addresses": [
+        "41226358",
+        "41226405"
+      ],
+      "assets": [
+        "281474979348629"
+      ],
+      "drivers": [
+        "1655012"
+      ],
+      "vehicles": [
+        "281474977075842"
+      ]
+    },
+    {
+      "id": "342489",
+      "name": "Rio Grande Valley Terminal",
+      "parentTagId": "342467",
+      "externalIds": {
+        "tmsTagId": "terminal-rgv"
+      },
+      "assets": [
+        "281474979348782"
+      ],
+      "drivers": [
+        "1655297"
+      ],
+      "vehicles": [
+        "281474977076045"
+      ]
+    },
+    {
+      "id": "342500",
+      "name": "West Texas",
+      "parentTagId": "342401",
+      "externalIds": {
+        "tmsTagId": "region-west"
+      }
+    },
+    {
+      "id": "342511",
+      "name": "El Paso Terminal",
+      "parentTagId": "342500",
+      "externalIds": {
+        "tmsTagId": "terminal-elp"
+      },
+      "assets": [
+        "281474979348680"
+      ],
+      "drivers": [
+        "1655101"
+      ],
+      "vehicles": [
+        "281474977075907"
+      ]
+    },
+    {
+      "id": "342522",
+      "name": "Permian Basin Terminal",
+      "parentTagId": "342500",
+      "externalIds": {
+        "tmsTagId": "terminal-pb"
+      },
+      "assets": [
+        "281474979348697",
+        "281474979348748"
+      ],
+      "drivers": [
+        "1655134",
+        "1655230"
+      ],
+      "vehicles": [
+        "281474977075934",
+        "281474977076001"
+      ]
+    },
+    {
+      "id": "342533",
+      "name": "Panhandle Terminal",
+      "parentTagId": "342500",
+      "externalIds": {
+        "tmsTagId": "terminal-ama"
+      },
+      "assets": [
+        "281474979348765"
+      ],
+      "drivers": [
+        "1655261"
+      ],
+      "vehicles": [
+        "281474977076028"
+      ]
+    },
+    {
+      "id": "342544",
+      "name": "Fleet Equipment"
+    },
+    {
+      "id": "342555",
+      "name": "Tractors",
+      "parentTagId": "342544",
+      "vehicles": [
+        "281474977075805",
+        "281474977075819",
+        "281474977075842",
+        "281474977075860",
+        "281474977075891",
+        "281474977075907",
+        "281474977075934",
+        "281474977075958",
+        "281474977075973",
+        "281474977076001",
+        "281474977076028",
+        "281474977076045"
+      ]
+    },
+    {
+      "id": "342566",
+      "name": "Reefer Trailers",
+      "parentTagId": "342544",
+      "assets": [
+        "281474979348612",
+        "281474979348663",
+        "281474979348731",
+        "281474979348799"
+      ]
+    },
+    {
+      "id": "342577",
+      "name": "Dry Van Trailers",
+      "parentTagId": "342544",
+      "assets": [
+        "281474979348595",
+        "281474979348629",
+        "281474979348646",
+        "281474979348680",
+        "281474979348697",
+        "281474979348714",
+        "281474979348748",
+        "281474979348765",
+        "281474979348782",
+        "281474979348816"
+      ]
+    },
+    {
+      "id": "342588",
+      "name": "Reefer Units",
+      "parentTagId": "342544",
+      "assets": [
+        "281474980315201",
+        "281474980315218",
+        "281474980315235",
+        "281474980315252"
+      ]
+    },
+    {
+      "id": "342599",
+      "name": "Yard Equipment",
+      "parentTagId": "342544",
+      "assets": [
+        "281474980315269"
+      ]
+    },
+    {
+      "id": "342610",
+      "name": "Driver Programs"
+    },
+    {
+      "id": "342621",
+      "name": "Hazmat Certified",
+      "parentTagId": "342610",
+      "drivers": [
+        "1654973",
+        "1655012",
+        "1655134",
+        "1655230"
+      ]
+    },
+    {
+      "id": "342632",
+      "name": "Long Haul",
+      "parentTagId": "342610",
+      "drivers": [
+        "1655101",
+        "1655134",
+        "1655230",
+        "1655261",
+        "1655297"
+      ]
+    },
+    {
+      "id": "342643",
+      "name": "Regional",
+      "parentTagId": "342610",
+      "drivers": [
+        "1654973",
+        "1654988",
+        "1655012",
+        "1655047",
+        "1655069",
+        "1655158",
+        "1655192"
+      ]
+    },
+    {
+      "id": "342654",
+      "name": "Driver Mentors",
+      "parentTagId": "342610",
+      "drivers": [
+        "1654988",
+        "1655101"
+      ]
+    }
+  ],
+  "driverVehicleAssignments": [],
+  "driverSignOuts": [],
+  "driverWorkflows": [
+    {
+      "id": "3733d024-1193-58f5-a850-11ccaeafa053",
+      "name": "Pre-Trip Inspection",
+      "workflowType": "startOfDay",
+      "simPublishedDriverIds": [
+        "1654973",
+        "1654988",
+        "1655012",
+        "1655047",
+        "1655069",
+        "1655101",
+        "1655134",
+        "1655158",
+        "1655192",
+        "1655230",
+        "1655261",
+        "1655297"
+      ]
+    },
+    {
+      "id": "03b840f0-dfcf-5c12-8d15-526435e718a9",
+      "name": "End of Day Checklist",
+      "workflowType": "endOfDay",
+      "simPublishedDriverIds": [
+        "1654973",
+        "1654988",
+        "1655012",
+        "1655047",
+        "1655069",
+        "1655101",
+        "1655134",
+        "1655158",
+        "1655192",
+        "1655230",
+        "1655261",
+        "1655297"
+      ]
+    },
+    {
+      "id": "67b741ef-00f6-5254-b54b-ef9f053e876d",
+      "name": "Trailer Hook-Up Verification",
+      "workflowType": "assetSelection",
+      "simPublishedDriverIds": [
+        "1654973",
+        "1654988",
+        "1655012",
+        "1655047",
+        "1655069",
+        "1655101",
+        "1655134",
+        "1655158",
+        "1655192",
+        "1655230",
+        "1655261",
+        "1655297"
+      ]
+    },
+    {
+      "id": "f33608f3-6e33-52f1-9d76-d5466af06382",
+      "name": "Reefer Pre-Cool Check",
+      "workflowType": "assetSelection",
+      "simPublishedDriverIds": [
+        "1654988",
+        "1655069",
+        "1655192"
+      ]
+    },
+    {
+      "id": "eefe71ef-4e3c-5515-a41a-fb83414e3383",
+      "name": "Drop Trailer Checklist",
+      "workflowType": "leaveAsset",
+      "simPublishedDriverIds": [
+        "1654973",
+        "1654988",
+        "1655012",
+        "1655047",
+        "1655069",
+        "1655101",
+        "1655134",
+        "1655158",
+        "1655192",
+        "1655230",
+        "1655261",
+        "1655297"
+      ]
+    },
+    {
+      "id": "097be39d-1607-5cd0-a223-e3f6a66ff0a8",
+      "name": "Stop Arrival Confirmation",
+      "workflowType": "stopArrival",
+      "simPublishedDriverIds": [
+        "1655101",
+        "1655134",
+        "1655230",
+        "1655261",
+        "1655297"
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "id": "22407",
+      "firstName": "Marisol",
+      "lastName": "Vega",
+      "email": "mvega@lonestarfreight.example",
+      "phone": "512-555-0142"
+    },
+    {
+      "id": "22414",
+      "firstName": "Dwayne",
+      "lastName": "Holloway",
+      "email": "dholloway@lonestarfreight.example",
+      "phone": "214-555-0187"
+    },
+    {
+      "id": "22421",
+      "firstName": "Priya",
+      "lastName": "Natarajan",
+      "email": "receiving@alamogrocers.example",
+      "phone": "210-555-0163"
+    },
+    {
+      "id": "22428",
+      "firstName": "Luis",
+      "lastName": "Cardenas",
+      "email": "lcardenas@alamogrocers.example",
+      "phone": "210-555-0119"
+    }
+  ],
+  "documentTypes": [
+    {
+      "id": "0b98705f-2348-4951-ac38-8227f739c512",
+      "name": "Bill of Lading",
+      "orgId": 20936,
+      "fieldTypes": [
+        {
+          "fieldType": "string",
+          "label": "BOL Number",
+          "requiredField": true
+        },
+        {
+          "fieldType": "scannedDocument",
+          "label": "Signed BOL",
+          "requiredField": true
+        },
+        {
+          "fieldType": "number",
+          "label": "Pieces",
+          "requiredField": true,
+          "numberFieldTypeMetaData": {
+            "numberOfDecimalPlaces": 0
+          }
+        },
+        {
+          "fieldType": "number",
+          "label": "Weight (lbs)",
+          "requiredField": true,
+          "numberFieldTypeMetaData": {
+            "numberOfDecimalPlaces": 0
+          }
+        },
+        {
+          "fieldType": "barcode",
+          "label": "Seal Number",
+          "requiredField": false
+        },
+        {
+          "fieldType": "signature",
+          "label": "Shipper Signature",
+          "requiredField": true,
+          "signatureFieldTypeMetaData": {
+            "legalText": "Received the above described freight in apparent good order, except as noted."
+          }
+        }
+      ],
+      "conditionalFieldSections": []
+    },
+    {
+      "id": "be808532-9681-462c-bd82-acdf5849ce4f",
+      "name": "Proof of Delivery",
+      "orgId": 20936,
+      "fieldTypes": [
+        {
+          "fieldType": "scannedDocument",
+          "label": "Signed POD",
+          "requiredField": true
+        },
+        {
+          "fieldType": "string",
+          "label": "Receiver Name",
+          "requiredField": true
+        },
+        {
+          "fieldType": "dateTime",
+          "label": "Delivered At",
+          "requiredField": true
+        },
+        {
+          "fieldType": "signature",
+          "label": "Receiver Signature",
+          "requiredField": true,
+          "signatureFieldTypeMetaData": {
+            "legalText": "Freight received in good condition unless noted below."
+          }
+        },
+        {
+          "fieldType": "multipleChoice",
+          "label": "Delivery Exception",
+          "requiredField": true,
+          "multipleChoiceFieldTypeMetaData": [
+            {
+              "label": "None"
+            },
+            {
+              "label": "Shortage"
+            },
+            {
+              "label": "Overage"
+            },
+            {
+              "label": "Damage"
+            }
+          ]
+        },
+        {
+          "fieldType": "photo",
+          "label": "Damage Photos",
+          "requiredField": false
+        },
+        {
+          "fieldType": "string",
+          "label": "Damage Notes",
+          "requiredField": false
+        }
+      ],
+      "conditionalFieldSections": [
+        {
+          "triggeringFieldIndex": 4,
+          "triggeringFieldValue": "Damage",
+          "conditionalFieldFirstIndex": 5,
+          "conditionalFieldLastIndex": 6
+        }
+      ]
+    },
+    {
+      "id": "35f78a3f-d7b6-482f-81a5-1021ac1a15be",
+      "name": "Fuel Receipt",
+      "orgId": 20936,
+      "fieldTypes": [
+        {
+          "fieldType": "photo",
+          "label": "Receipt Photo",
+          "requiredField": true
+        },
+        {
+          "fieldType": "multipleChoice",
+          "label": "Fuel Type",
+          "requiredField": true,
+          "multipleChoiceFieldTypeMetaData": [
+            {
+              "label": "Diesel"
+            },
+            {
+              "label": "DEF"
+            },
+            {
+              "label": "Reefer Diesel"
+            }
+          ]
+        },
+        {
+          "fieldType": "number",
+          "label": "Gallons",
+          "requiredField": true,
+          "numberFieldTypeMetaData": {
+            "numberOfDecimalPlaces": 3
+          }
+        },
+        {
+          "fieldType": "number",
+          "label": "Price per Gallon",
+          "requiredField": true,
+          "numberFieldTypeMetaData": {
+            "numberOfDecimalPlaces": 3
+          }
+        },
+        {
+          "fieldType": "number",
+          "label": "Total Amount",
+          "requiredField": true,
+          "numberFieldTypeMetaData": {
+            "numberOfDecimalPlaces": 2
+          }
+        },
+        {
+          "fieldType": "number",
+          "label": "Odometer",
+          "requiredField": false,
+          "numberFieldTypeMetaData": {
+            "numberOfDecimalPlaces": 0
+          }
+        }
+      ],
+      "conditionalFieldSections": []
+    },
+    {
+      "id": "edb6b4bf-d44f-4bea-beb4-98d05b7e1811",
+      "name": "Lumper Receipt",
+      "orgId": 20936,
+      "fieldTypes": [
+        {
+          "fieldType": "photo",
+          "label": "Receipt Photo",
+          "requiredField": true
+        },
+        {
+          "fieldType": "string",
+          "label": "Lumper Service",
+          "requiredField": true
+        },
+        {
+          "fieldType": "number",
+          "label": "Amount",
+          "requiredField": true,
+          "numberFieldTypeMetaData": {
+            "numberOfDecimalPlaces": 2
+          }
+        },
+        {
+          "fieldType": "multipleChoice",
+          "label": "Payment Method",
+          "requiredField": true,
+          "multipleChoiceFieldTypeMetaData": [
+            {
+              "label": "Comchek"
+            },
+            {
+              "label": "EFS Check"
+            },
+            {
+              "label": "Company Card"
+            },
+            {
+              "label": "Cash"
+            }
+          ]
+        },
+        {
+          "fieldType": "string",
+          "label": "Check Number",
+          "requiredField": false
+        }
+      ],
+      "conditionalFieldSections": [
+        {
+          "triggeringFieldIndex": 3,
+          "triggeringFieldValue": "Comchek",
+          "conditionalFieldFirstIndex": 4,
+          "conditionalFieldLastIndex": 4
+        },
+        {
+          "triggeringFieldIndex": 3,
+          "triggeringFieldValue": "EFS Check",
+          "conditionalFieldFirstIndex": 4,
+          "conditionalFieldLastIndex": 4
+        }
+      ]
+    },
+    {
+      "id": "83a01efc-360f-4973-be3d-f3f54e3930ec",
+      "name": "Scale Ticket",
+      "orgId": 20936,
+      "fieldTypes": [
+        {
+          "fieldType": "photo",
+          "label": "Ticket Photo",
+          "requiredField": true
+        },
+        {
+          "fieldType": "string",
+          "label": "Scale Location",
+          "requiredField": true
+        },
+        {
+          "fieldType": "number",
+          "label": "Steer Axle (lbs)",
+          "requiredField": true,
+          "numberFieldTypeMetaData": {
+            "numberOfDecimalPlaces": 0
+          }
+        },
+        {
+          "fieldType": "number",
+          "label": "Drive Axles (lbs)",
+          "requiredField": true,
+          "numberFieldTypeMetaData": {
+            "numberOfDecimalPlaces": 0
+          }
+        },
+        {
+          "fieldType": "number",
+          "label": "Trailer Axles (lbs)",
+          "requiredField": true,
+          "numberFieldTypeMetaData": {
+            "numberOfDecimalPlaces": 0
+          }
+        },
+        {
+          "fieldType": "number",
+          "label": "Gross Weight (lbs)",
+          "requiredField": true,
+          "numberFieldTypeMetaData": {
+            "numberOfDecimalPlaces": 0
+          }
+        },
+        {
+          "fieldType": "dateTime",
+          "label": "Weighed At",
+          "requiredField": true
+        }
+      ],
+      "conditionalFieldSections": []
+    }
+  ],
+  "users": [
+    {
+      "id": "524871",
+      "name": "Dana Whitfield",
+      "email": "dana.whitfield@lonestarfreight.example",
+      "authType": "default",
+      "roles": [
+        {
+          "role": {
+            "id": "23d4d8d3-dc10-4e7a-a183-69968751f23e",
+            "name": "Full Admin"
+          }
+        }
+      ]
+    },
+    {
+      "id": "524878",
+      "name": "Marcus Bell",
+      "email": "marcus.bell@lonestarfreight.example",
+      "authType": "default",
+      "roles": [
+        {
+          "role": {
+            "id": "8a9371af-82d1-4158-bf91-4ecc8d3a114c",
+            "name": "Maintenance Technician"
+          },
+          "tag": {
+            "id": "342412",
+            "name": "Central Texas",
+            "parentTagId": "342401"
+          }
+        }
+      ]
+    },
+    {
+      "id": "524885",
+      "name": "Elena Ortiz",
+      "email": "elena.ortiz@lonestarfreight.example",
+      "authType": "default",
+      "roles": [
+        {
+          "role": {
+            "id": "8a9371af-82d1-4158-bf91-4ecc8d3a114c",
+            "name": "Maintenance Technician"
+          },
+          "tag": {
+            "id": "342445",
+            "name": "North Texas",
+            "parentTagId": "342401"
+          }
+        }
+      ]
+    },
+    {
+      "id": "524892",
+      "name": "Ray Kowalski",
+      "email": "ray.kowalski@lonestarfreight.example",
+      "authType": "default",
+      "roles": [
+        {
+          "role": {
+            "id": "8a9371af-82d1-4158-bf91-4ecc8d3a114c",
+            "name": "Maintenance Technician"
+          },
+          "tag": {
+            "id": "342467",
+            "name": "Gulf Coast",
+            "parentTagId": "342401"
+          }
         }
       ]
     }

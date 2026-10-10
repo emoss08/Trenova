@@ -2,6 +2,7 @@ package assignmentservice
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -11,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/rateengine"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
+	"github.com/emoss08/trenova/internal/testutil/capabilitytest"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -32,6 +34,18 @@ func previewAssignmentService(
 ) *service {
 	t.Helper()
 
+	return previewAssignmentServiceWith(t, tenantInfo, original, existing, nil)
+}
+
+func previewAssignmentServiceWith(
+	t *testing.T,
+	tenantInfo pagination.TenantInfo,
+	original *shipment.Shipment,
+	existing *shipment.Assignment,
+	tractorConflict *shipment.Assignment,
+) *service {
+	t.Helper()
+
 	moveID := original.Moves[0].ID
 	repo := mocks.NewMockAssignmentRepository(t)
 	repo.EXPECT().
@@ -46,6 +60,20 @@ func previewAssignmentService(
 		}, nil).
 		Once()
 	repo.EXPECT().GetByMoveID(mock.Anything, tenantInfo, moveID).Return(existing, nil).Once()
+	repo.EXPECT().
+		FindInProgressByTractorID(mock.Anything, tenantInfo, mock.Anything, moveID).
+		Return(tractorConflict, nil).
+		Maybe()
+	repo.EXPECT().
+		FindInProgressByTrailerID(mock.Anything, tenantInfo, mock.Anything, moveID).
+		Return(nil, nil).
+		Maybe()
+	if tractorConflict != nil {
+		repo.EXPECT().
+			GetMoveByID(mock.Anything, tenantInfo, tractorConflict.ShipmentMoveID).
+			Return(nil, errors.New("not found")).
+			Once()
+	}
 
 	shipmentRepo := mocks.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
@@ -61,7 +89,13 @@ func previewAssignmentService(
 	holdRepo.EXPECT().HasActiveDispatchHold(mock.Anything, mock.Anything).Return(false, nil).Once()
 
 	svc := &service{
-		orgRepo:      assetOperationsOrgRepo(t, tenantInfo, true),
+		orgRepo: capabilitytest.OrgRepo(t, capabilitytest.OrgRepoParams{
+			TenantInfo:             tenantInfo,
+			Lock:                   repositories.CapabilityLockNone,
+			BrokerageEnabled:       true,
+			AssetOperationsEnabled: true,
+			Optional:               true,
+		}),
 		l:            zap.NewNop(),
 		db:           dbtest.NopConnection{},
 		repo:         repo,
@@ -122,6 +156,34 @@ func TestPreviewAssignToMove_ProjectsTheAssignmentWithoutSavingIt(t *testing.T) 
 	assert.Equal(t, shipment.StatusAssigned, plan.ShipmentAfter.Status)
 	assert.Equal(t, shipment.MoveStatusAssigned, plan.ShipmentAfter.Moves[0].Status)
 	assert.Equal(t, shipment.MoveCoverageTypeDriver, plan.ShipmentAfter.Moves[0].CoverageType)
+}
+
+// A tractor still on another move in progress can be assigned ahead, but the
+// move cannot start with it; the preview says so rather than leaving the
+// refusal to the pickup, after the assignment was approved.
+func TestPreviewAssignToMove_SaysWhenEquipmentIsOnAMoveInProgress(t *testing.T) {
+	t.Parallel()
+
+	moveID := pulid.MustNew("sm_")
+	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	original := validShipment(pulid.MustNew("shp_"), moveID, tenantInfo)
+	original.Moves[0].CoverageType = shipment.MoveCoverageTypeUnassigned
+	tractorID := pulid.MustNew("trac_")
+	busyMove := pulid.MustNew("sm_")
+
+	svc := previewAssignmentServiceWith(t, tenantInfo, original, nil,
+		&shipment.Assignment{ShipmentMoveID: busyMove, TractorID: &tractorID})
+
+	plan, err := svc.PreviewAssignToMove(t.Context(), &repositories.AssignShipmentMoveRequest{
+		TenantInfo:      tenantInfo,
+		ShipmentMoveID:  moveID,
+		PrimaryWorkerID: pulid.MustNew("wrk_"),
+		TractorID:       tractorID,
+	})
+	require.NoError(t, err, "assigning equipment ahead is allowed")
+	require.Len(t, plan.EquipmentInUse, 1)
+	assert.Equal(t, "tractor", plan.EquipmentInUse[0].Kind)
+	assert.Equal(t, busyMove, plan.EquipmentInUse[0].ShipmentMoveID)
 }
 
 func TestPreviewAssignToMove_RefusesAMoveAlreadyAssigned(t *testing.T) {

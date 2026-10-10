@@ -67,12 +67,22 @@ export function MemoryProvenance({ memory }: { memory: AgentMemoryRow | null | u
 
       {memory.tainted ? (
         <DescriptionItem label={t("Outside content")} span="full">
-          <OutsideContentBadge
-            t={t}
-            title={t(
-              "Written by a run that had read text from outside the organization; an agent that reads it is treated as having read that text too.",
-            )}
-          />
+          <span className="flex flex-wrap items-center gap-2">
+            <OutsideContentBadge
+              t={t}
+              title={t(
+                "Written by a run that had read text from outside the organization; until a person reviews it, an agent that reads it is treated as having read that text too.",
+              )}
+            />
+            <span className="text-foreground-muted text-xs">
+              {memory.reviewedAt
+                ? t(
+                    "Reviewed {0}; it no longer holds the writes of turns that read it",
+                    formatUnixDateTimeMedium(memory.reviewedAt),
+                  )
+                : t("Not reviewed; every turn that reads it waits for approval to write")}
+            </span>
+          </span>
         </DescriptionItem>
       ) : null}
 

@@ -161,7 +161,12 @@ type runRequest struct {
 	// same task and trust checks as any other candidate.
 	PreferredProviderID pulid.ID
 	RequireProvider     bool
-	Attribution         serviceports.AIUsageAttribution
+	// HedgeAfter asks the next provider too when the one asked last has not
+	// answered by then; zero tries them one after another.
+	HedgeAfter time.Duration
+	// Reasoning overrides each provider's configured effort for this call.
+	Reasoning   aiprovider.ReasoningEffort
+	Attribution serviceports.AIUsageAttribution
 }
 
 type runOutcome struct {
@@ -179,6 +184,17 @@ type runOutcome struct {
 	ProviderKind     aiprovider.Kind
 	LatencyMs        int64
 	CostUSD          *decimal.Decimal
+}
+
+// tokenUsage is what the provider reported, in the shape a price is read
+// against, so every cost the router records is priced the same way.
+func (o *runOutcome) tokenUsage() aiprovider.TokenUsage {
+	return aiprovider.TokenUsage{
+		Input:      o.InputTokens,
+		Output:     o.OutputTokens,
+		CacheRead:  o.CacheReadTokens,
+		CacheWrite: o.CacheWriteTokens,
+	}
 }
 
 // candidatesFor resolves the providers allowed to serve a task, in the order
@@ -312,6 +328,10 @@ func (s *Service) runAmong(
 	usable []*aiprovider.Provider,
 	req *runRequest,
 ) (*runOutcome, error) {
+	if req.HedgeAfter > 0 && len(usable) > 1 {
+		return s.runHedged(ctx, usable, req)
+	}
+
 	var lastErr error
 	for idx, provider := range usable {
 		// A caller that has gone is not answered by the next provider: the
@@ -320,61 +340,96 @@ func (s *Service) runAmong(
 			return nil, err
 		}
 
-		attemptCtx, span := s.startAttempt(ctx, &attemptSpec{
-			operation:   aitrace.OperationChat,
-			provider:    provider,
-			attempt:     idx + 1,
-			failover:    idx > 0,
-			maxTokens:   req.MaxTokens,
-			attribution: req.Attribution,
-		})
-		started := time.Now()
-		outcome, attemptErr := s.attempt(attemptCtx, provider, req)
-		latency := time.Since(started)
-		attemptErr = stopped(ctx, attemptErr)
-		s.observe(ctx, provider, attemptErr)
-		s.settleAttempt(attemptCtx, span, &usageAttempt{
-			provider:    provider,
-			task:        req.Task,
-			surface:     surfaceFor(aiusage.SurfaceStructured, req.Attribution),
-			attribution: req.Attribution,
-			tenant:      req.TenantInfo,
-			latency:     latency,
-			outcome:     outcome,
-			err:         attemptErr,
-			operation:   aitrace.OperationChat,
-			attempt:     idx + 1,
-			failover:    idx > 0,
-		})
+		outcome, attemptErr := s.tryProvider(ctx, &candidateAttempt{
+			provider: provider,
+			idx:      idx,
+			count:    len(usable),
+		}, req)
 		if attemptErr == nil {
-			s.touchKey(ctx, provider, req.TenantInfo)
-			outcome.LatencyMs = latency.Milliseconds()
-			outcome.CostUSD = provider.CostFor(outcome.InputTokens, outcome.OutputTokens)
-
 			return outcome, nil
 		}
 
 		if ctx.Err() != nil {
 			return nil, attemptErr
 		}
-
-		// A refusal is the model's decision, not a fault in the endpoint. Asking
-		// the next provider the same question invites it to answer something the
-		// first declined, so the chain stops here.
 		if errors.Is(attemptErr, errRefused) {
-			return nil, errortypes.NewBusinessError("The model declined this request")
+			return nil, errDeclined()
 		}
 
 		lastErr = attemptErr
-		s.logger.Warn("provider attempt failed, falling through",
-			zap.String("provider", provider.Name),
-			zap.String("kind", string(provider.Kind)),
-			zap.String("task", string(req.Task)),
-			zap.Error(attemptErr),
-		)
+		s.fellThrough(provider, req, attemptErr)
 	}
 
 	return nil, fmt.Errorf("every configured provider for %s failed: %w", req.Task, lastErr)
+}
+
+type candidateAttempt struct {
+	provider *aiprovider.Provider
+	idx      int
+	count    int
+}
+
+// tryProvider asks one candidate, settling the attempt's usage, trace and
+// health. ctx is the context the attempt runs under: the caller's, or for a
+// hedged call one that is canceled when another provider answers first, which
+// observe and stopped then read as a cancellation rather than a fault.
+func (s *Service) tryProvider(
+	ctx context.Context,
+	candidate *candidateAttempt,
+	req *runRequest,
+) (*runOutcome, error) {
+	provider, idx := candidate.provider, candidate.idx
+	attemptCtx, span := s.startAttempt(ctx, &attemptSpec{
+		operation:   aitrace.OperationChat,
+		provider:    provider,
+		attempt:     idx + 1,
+		failover:    idx > 0,
+		maxTokens:   req.MaxTokens,
+		attribution: req.Attribution,
+	})
+	started := time.Now()
+	outcome, attemptErr := s.attempt(lastCandidate(attemptCtx, idx, candidate.count), provider, req)
+	latency := time.Since(started)
+	attemptErr = stopped(ctx, attemptErr)
+	s.observe(ctx, provider, attemptErr)
+	s.settleAttempt(attemptCtx, span, &usageAttempt{
+		provider:    provider,
+		task:        req.Task,
+		surface:     surfaceFor(aiusage.SurfaceStructured, req.Attribution),
+		attribution: req.Attribution,
+		tenant:      req.TenantInfo,
+		latency:     latency,
+		outcome:     outcome,
+		err:         attemptErr,
+		operation:   aitrace.OperationChat,
+		attempt:     idx + 1,
+		failover:    idx > 0,
+	})
+	if attemptErr != nil {
+		return nil, attemptErr
+	}
+
+	s.touchKey(ctx, provider, req.TenantInfo)
+	outcome.LatencyMs = latency.Milliseconds()
+	outcome.CostUSD = provider.CostFor(outcome.tokenUsage())
+
+	return outcome, nil
+}
+
+// errDeclined ends the chain on a refusal. A refusal is the model's decision,
+// not a fault in the endpoint, and asking the next provider the same question
+// invites it to answer something the first declined.
+func errDeclined() error {
+	return errortypes.NewBusinessError("The model declined this request")
+}
+
+func (s *Service) fellThrough(provider *aiprovider.Provider, req *runRequest, err error) {
+	s.logger.Warn("provider attempt failed, falling through",
+		zap.String("provider", provider.Name),
+		zap.String("kind", string(provider.Kind)),
+		zap.String("task", string(req.Task)),
+		zap.Error(err),
+	)
 }
 
 var errRefused = errors.New("model declined the request")
@@ -478,6 +533,7 @@ func (s *Service) callFor(
 			SchemaName:   req.SchemaName,
 			MaxTokens:    maxTokens,
 			Sampling:     modeladapter.SamplingForTask(req.Task),
+			Reasoning:    req.Reasoning,
 		},
 	}
 }

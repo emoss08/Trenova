@@ -2,8 +2,6 @@ package carriersettlementcontrolrepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -43,16 +41,8 @@ func (r *repository) GetOrCreate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*tenant.CarrierSettlementControl, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.CarrierSettlementControl, error) {
-		entity, err := r.selectControl(ctx, tenantInfo)
-		if err == nil {
-			return entity, nil
-		}
-		if !errors.Is(err, sql.ErrNoRows) {
-			return nil, dberror.HandleNotFoundError(err, "CarrierSettlementControl")
-		}
-
-		control := &tenant.CarrierSettlementControl{
+	newDefault := func() *tenant.CarrierSettlementControl {
+		return &tenant.CarrierSettlementControl{
 			ID:                 pulid.MustNew("carstlc_"),
 			BusinessUnitID:     tenantInfo.BuID,
 			OrganizationID:     tenantInfo.OrgID,
@@ -61,19 +51,27 @@ func (r *repository) GetOrCreate(
 			PeriodEndDayOfWeek: 6,
 			PayDelayDays:       5,
 		}
-		if _, err = r.db.DBForContext(ctx).
-			NewInsert().
-			Model(control).
-			On("CONFLICT (organization_id, business_unit_id) DO NOTHING").
-			Exec(ctx); err != nil {
-			return nil, fmt.Errorf("create default carrier settlement control: %w", err)
-		}
+	}
 
-		entity, err = r.selectControl(ctx, tenantInfo)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "CarrierSettlementControl")
-		}
-		return entity, nil
+	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*tenant.CarrierSettlementControl]{
+		Find: func(ctx context.Context) (*tenant.CarrierSettlementControl, error) {
+			return r.selectControl(ctx, tenantInfo)
+		},
+		Create: func(ctx context.Context) error {
+			if _, insertErr := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(newDefault()).
+				On("CONFLICT (organization_id, business_unit_id) DO NOTHING").
+				Exec(ctx); insertErr != nil {
+				return fmt.Errorf("create default carrier settlement control: %w", insertErr)
+			}
+
+			return nil
+		},
+		Default: newDefault,
+		MapError: func(err error) error {
+			return dberror.HandleNotFoundError(err, "CarrierSettlementControl")
+		},
 	})
 }
 

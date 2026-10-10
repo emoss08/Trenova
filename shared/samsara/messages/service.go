@@ -3,7 +3,6 @@ package messages
 import (
 	"context"
 	"net/http"
-	"strings"
 
 	"github.com/emoss08/trenova/shared/samsara/internal/httpx"
 )
@@ -39,18 +38,16 @@ func (s *service) List(ctx context.Context, params ListParams) (ListResponse, er
 }
 
 func (s *service) Create(ctx context.Context, req CreateRequest) (CreateResponse, error) {
-	if strings.TrimSpace(req.Text) == "" {
-		return CreateResponse{}, ErrTextRequired
-	}
-	if len(req.DriverIds) == 0 {
-		return CreateResponse{}, ErrDriverIDsRequired
+	body, err := req.body()
+	if err != nil {
+		return CreateResponse{}, err
 	}
 
 	out := CreateResponse{}
-	if err := s.client.Do(ctx, httpx.Request{
+	if err = s.client.Do(ctx, httpx.Request{
 		Method: http.MethodPost,
 		Path:   "/v1/fleet/messages",
-		Body:   req,
+		Body:   body,
 		Out:    &out,
 	}); err != nil {
 		return CreateResponse{}, err

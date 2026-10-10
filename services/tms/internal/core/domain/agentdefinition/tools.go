@@ -11,8 +11,6 @@ func (t Template) StarterTools() []string {
 	switch t {
 	case TemplateDispatchAssistant:
 		return []string{
-			"get_shipment",
-			"search_shipments",
 			"list_shipments",
 			"get_worker",
 			"search_worker",
@@ -22,7 +20,6 @@ func (t Template) StarterTools() []string {
 			"list_expiring_credentials",
 			"list_time_off",
 			"list_hold_reasons",
-			"rank_move_candidates",
 			"shop_carriers",
 			"assign_move",
 			"add_shipment_comment",
@@ -44,7 +41,6 @@ func (t Template) StarterTools() []string {
 			"send_rate_confirmation",
 			"void_rate_confirmation",
 			"record_rate_confirmation_confirmed",
-			"list_edi_partners",  //nolint:goconst // a template names each tool by its wire name
 			"list_edi_transfers", //nolint:goconst // a template names each tool by its wire name
 			"get_edi_transfer",   //nolint:goconst // a template names each tool by its wire name
 			"send_edi_tender",
@@ -67,13 +63,16 @@ func (t Template) StarterTools() []string {
 			"list_recurring_shipments",
 			"generate_recurring_shipment",
 			"update_shipment",
+			"get_shipment_tracking",
+			"get_worker_hos",
+			"record_stop_actual",
+			"reschedule_stop",
 		}
 	case TemplateBillingAssistant:
 		return []string{
 			"get_shipment",
 			"search_shipments",
 			"list_shipments",
-			"list_customers",
 			"list_billing_transfer_candidates",
 			"transfer_to_billing",
 			"list_billing_queue_items",
@@ -94,8 +93,6 @@ func (t Template) StarterTools() []string {
 			"send_invoice",
 			"post_invoices",
 			"send_invoices",
-			"list_reports",
-			"describe_report",
 			"run_report",
 			"list_email_profiles",
 			"request_missing_docs",
@@ -114,7 +111,6 @@ func (t Template) StarterTools() []string {
 			"submit_invoice_adjustment",
 			"approve_invoice_adjustment",
 			"reject_invoice_adjustment",
-			"list_open_statements",
 			"list_invoice_runs",
 			"get_invoice_run",
 			"build_invoice_run",
@@ -126,6 +122,10 @@ func (t Template) StarterTools() []string {
 			"share_invoice",
 			"reassign_billing_charge",
 			"manage_billing_transfer_run",
+			"explain_rate",
+			"add_shipment_charge",
+			"approve_detention",
+			"send_detention_notice",
 		}
 	case TemplateComplianceAssistant:
 		return []string{
@@ -136,8 +136,6 @@ func (t Template) StarterTools() []string {
 			"list_time_off",
 			"list_tractors",
 			"list_trailers",
-			"list_reports",
-			"describe_report",
 			"preview_report",
 			"run_report",
 			"get_report_run",
@@ -184,18 +182,20 @@ func (t Template) StarterTools() []string {
 			"schedule_dot_test",
 			"update_dot_random_selection",
 			"list_worker_leave_cases",
+			"get_worker_hos",
+			"request_credential_renewal",
+			"place_worker_dispatch_hold",
 		}
 	case TemplateCustomerAssistant:
 		return []string{
 			"get_shipment",
 			"search_shipments",
 			"list_shipments",
-			"list_customers",
 			"list_invoices",
 			"add_shipment_comment",
 			"list_insights",
 			"get_insight",
-			"list_edi_partners",
+			"list_edi_partners", //nolint:goconst // a template names each tool by its wire name
 			"list_edi_transfers",
 			"get_edi_transfer",
 			"accept_edi_tender",
@@ -234,12 +234,15 @@ func (t Template) StarterTools() []string {
 			"create_customer",
 			"update_customer",
 			"update_customer_status",
-			toolListLocations,
 			"update_location",
 			"update_location_status",
 			"list_commodities",
 			"create_commodity",
 			"update_commodity",
+			"get_shipment_tracking",
+			"list_email_profiles",
+			"email_customer",
+			"quote_shipment",
 		}
 	case TemplateLoadMonitor:
 		return []string{

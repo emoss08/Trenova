@@ -121,42 +121,66 @@ func (r *repository) Update(
 	})
 }
 
+// GetOrCreate reads the organization's data entry control, creating the
+// default one when it has none. A preview reads inside a read-only snapshot,
+// where the insert fails and aborts the whole transaction: every check after it
+// then failed ("current transaction is aborted"), so no customer could be
+// proposed. The read comes first, the insert runs in a savepoint, and a
+// read-only caller gets the defaults without anything being written.
 func (r *repository) GetOrCreate(
 	ctx context.Context,
 	orgID, buID pulid.ID,
 ) (*dataentrycontrol.DataEntryControl, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*dataentrycontrol.DataEntryControl, error) {
-		log := r.l.With(
-			zap.String("operation", "GetOrCreate"),
-			zap.String("orgId", orgID.String()),
-		)
+	log := r.l.With(
+		zap.String("operation", "GetOrCreate"),
+		zap.String("orgId", orgID.String()),
+	)
 
-		newEntity := dataentrycontrol.NewDefaultDataEntryControl(orgID, buID)
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(newEntity).
-			On(`CONFLICT ("organization_id", "business_unit_id") DO NOTHING`).
-			Exec(ctx); err != nil {
-			log.Error("failed to create default data entry control", zap.Error(err))
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Data entry control is busy. Retry the request.",
-			)
-		}
+	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*dataentrycontrol.DataEntryControl]{
+		Find: func(ctx context.Context) (*dataentrycontrol.DataEntryControl, error) {
+			return r.find(ctx, orgID, buID)
+		},
+		Create: func(ctx context.Context) error {
+			_, insertErr := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(dataentrycontrol.NewDefaultDataEntryControl(orgID, buID)).
+				On(`CONFLICT ("organization_id", "business_unit_id") DO NOTHING`).
+				Exec(ctx)
+			if insertErr != nil {
+				log.Error("failed to create default data entry control", zap.Error(insertErr))
+				return dberror.MapRetryableTransactionError(
+					insertErr,
+					"Data entry control is busy. Retry the request.",
+				)
+			}
 
-		entity := new(dataentrycontrol.DataEntryControl)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("dec.organization_id = ?", orgID).
-					Where("dec.business_unit_id = ?", buID)
-			}).
-			Scan(ctx); err != nil {
+			return nil
+		},
+		Default: func() *dataentrycontrol.DataEntryControl {
+			return dataentrycontrol.NewDefaultDataEntryControl(orgID, buID)
+		},
+		MapError: func(err error) error {
 			log.Error("failed to get data entry control", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "DataEntryControl")
-		}
-
-		return entity, nil
+			return dberror.HandleNotFoundError(err, "DataEntryControl")
+		},
 	})
+}
+
+func (r *repository) find(
+	ctx context.Context,
+	orgID, buID pulid.ID,
+) (*dataentrycontrol.DataEntryControl, error) {
+	entity := new(dataentrycontrol.DataEntryControl)
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("dec.organization_id = ?", orgID).
+				Where("dec.business_unit_id = ?", buID)
+		}).
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return entity, nil
 }

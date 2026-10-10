@@ -193,6 +193,28 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
 			},
 			{
+				Name:       "cacheReadCostPerMillion",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aiprovider.Provider)
+					return gqlexec.Resolver[resolverAIProvider](ec, "AIProvider").CacheReadCostPerMillion(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:       "cacheWriteCostPerMillion",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*aiprovider.Provider)
+					return gqlexec.Resolver[resolverAIProvider](ec, "AIProvider").CacheWriteCostPerMillion(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
 				Name:     "maxTokens",
 				NonNull:  true,
 				ChildErr: errNoChild9,
@@ -918,6 +940,8 @@ var Shard = &gqlexec.Shard{
 type resolverAIProvider interface {
 	InputCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
 	OutputCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
+	CacheReadCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
+	CacheWriteCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
 	MonthlyCapUsd(ctx context.Context, obj *aiprovider.Provider) (*string, error)
 	MonthSpendUsd(ctx context.Context, obj *aiprovider.Provider) (string, error)
 	APIKey(ctx context.Context, obj *aiprovider.Provider) (*aiprovider.KeyInfo, error)
@@ -1211,7 +1235,7 @@ func unmarshalInputAIProviderPatchInput(ctx context.Context, ec *gqlexec.Exec, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"enabled", "trusted", "allowPrivateNetwork", "tasks", "apiKey", "inputCostPerMillion", "outputCostPerMillion"}
+	fieldsInOrder := [...]string{"enabled", "trusted", "allowPrivateNetwork", "tasks", "apiKey", "inputCostPerMillion", "outputCostPerMillion", "cacheReadCostPerMillion", "cacheWriteCostPerMillion"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -1267,6 +1291,20 @@ func unmarshalInputAIProviderPatchInput(ctx context.Context, ec *gqlexec.Exec, o
 				return it, err
 			}
 			it.OutputCostPerMillion = graphql.OmittableOf(data)
+		case "cacheReadCostPerMillion":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cacheReadCostPerMillion"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CacheReadCostPerMillion = graphql.OmittableOf(data)
+		case "cacheWriteCostPerMillion":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cacheWriteCostPerMillion"))
+			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.CacheWriteCostPerMillion = graphql.OmittableOf(data)
 		}
 	}
 	return it, nil

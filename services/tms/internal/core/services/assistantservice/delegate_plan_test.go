@@ -354,3 +354,10 @@ func TestListThreadPlans_HoldsAPlanWithAStepFromAnAgentInShadowMode(t *testing.T
 	require.NotNil(t, listed[0].Hold, "the delegate's switch holds the whole plan")
 	assert.Equal(t, "Shipment Desk", listed[0].Hold.AgentName)
 }
+
+func (s *threadPlans) ExpirePendingByThread(
+	context.Context,
+	repositories.ExpireAgentPlansByThreadRequest,
+) (int, error) {
+	return 0, nil
+}

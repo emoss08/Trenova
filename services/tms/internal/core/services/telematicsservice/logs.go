@@ -58,10 +58,12 @@ func (s *Service) GetWorkerHOSLogs(
 		return nil, err
 	}
 
-	entries, err := provider.ListHOSLogs(ctx, externalID, startAt, endAt)
+	logsByDriver, err := provider.ListHOSLogs(ctx, []string{externalID}, startAt, endAt)
 	if err != nil {
 		return nil, err
 	}
+
+	entries := logsByDriver[externalID]
 
 	out := make([]*WorkerHOSLogEntry, 0, len(entries))
 	for i := range entries {
@@ -90,10 +92,12 @@ func (s *Service) GetWorkerHOSDailyLogs(
 		return nil, err
 	}
 
-	days, err := provider.ListHOSDailyLogs(ctx, externalID, startDate, endDate)
+	daysByDriver, err := provider.ListHOSDailyLogs(ctx, []string{externalID}, startDate, endDate)
 	if err != nil {
 		return nil, err
 	}
+
+	days := daysByDriver[externalID]
 
 	out := make([]*WorkerHOSDailyLog, 0, len(days))
 	for i := range days {
@@ -122,7 +126,7 @@ func (s *Service) GetWorkerFormSubmissions(
 		return nil, err
 	}
 
-	submissions, err := provider.ListFormSubmissions(ctx, externalID, startAt, endAt)
+	submissions, err := provider.ListFormSubmissions(ctx, []string{externalID}, startAt, endAt)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +152,22 @@ func (s *Service) GetHOSCertificationSummary(
 		return []*HOSCertificationSummary{}, nil
 	}
 
+	externalIDs := make([]string, 0, len(mappings))
+	for i := range mappings {
+		if mappings[i].ExternalID != "" {
+			externalIDs = append(externalIDs, mappings[i].ExternalID)
+		}
+	}
+	if len(externalIDs) == 0 {
+		return []*HOSCertificationSummary{}, nil
+	}
+
 	provider, err := s.resolveProvider(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	daysByDriver, err := provider.ListHOSDailyLogs(ctx, externalIDs, startDate, endDate)
 	if err != nil {
 		return nil, err
 	}
@@ -160,11 +179,7 @@ func (s *Service) GetHOSCertificationSummary(
 			continue
 		}
 
-		days, dayErr := provider.ListHOSDailyLogs(ctx, mapping.ExternalID, startDate, endDate)
-		if dayErr != nil {
-			return nil, dayErr
-		}
-
+		days := daysByDriver[mapping.ExternalID]
 		uncertified := 0
 		for j := range days {
 			if !days[j].IsCertified {

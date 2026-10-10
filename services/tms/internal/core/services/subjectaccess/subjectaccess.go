@@ -25,6 +25,21 @@ func MayRead(
 	if !names {
 		return true, nil
 	}
+
+	allowed, err := MayReadResource(ctx, engine, actor, resource)
+	if err != nil {
+		return false, fmt.Errorf("check access to the conversation's subject: %w", err)
+	}
+
+	return allowed, nil
+}
+
+func MayReadResource(
+	ctx context.Context,
+	engine services.PermissionEngine,
+	actor *services.RequestActor,
+	resource permission.Resource,
+) (bool, error) {
 	if engine == nil || actor == nil {
 		return false, nil
 	}
@@ -40,7 +55,7 @@ func MayRead(
 		Operation:      permission.OpRead,
 	})
 	if err != nil {
-		return false, fmt.Errorf("check access to the conversation's subject: %w", err)
+		return false, err
 	}
 
 	return result.Allowed, nil

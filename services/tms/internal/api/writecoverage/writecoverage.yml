@@ -154,6 +154,9 @@ writes:
   "mutation resolveAgentException":
     exempt: agent-administration
     reason: "An agent exception is an agent handing a case to a person; the person resolves it."
+  "mutation reviewAgentMemory":
+    exempt: agent-administration
+    reason: "A person vouching for what an agent wrote after reading outside content; an agent clearing the taint on what it will read would undo the hold."
   "mutation setAgentMemoryStatus":
     tools: [forget_memory]
   "mutation undoMyDecision":

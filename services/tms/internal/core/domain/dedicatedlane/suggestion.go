@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -110,8 +111,8 @@ func (dls *Suggestion) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(
 			&dls.ConfidenceScore,
 			validation.Required.Error("Confidence Score is required"),
-			validation.Min(decimal.NewFromFloat(0.0)).Error("Confidence Score must be >= 0"),
-			validation.Max(decimal.NewFromFloat(1.0)).Error("Confidence Score must be <= 1"),
+			domainvalidation.DecimalAtLeast(decimal.Zero, "Confidence Score must be >= 0"),
+			domainvalidation.DecimalAtMost(decimal.NewFromInt(1), "Confidence Score must be <= 1"),
 		),
 		validation.Field(
 			&dls.FrequencyCount,

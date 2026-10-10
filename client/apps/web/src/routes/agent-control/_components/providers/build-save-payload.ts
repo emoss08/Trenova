@@ -54,6 +54,10 @@ export function buildSavePayload(
     // The server takes a thinking style only for the Anthropic protocol, and
     // the field is shown only for it.
     thinkingStyle: rest.kind === "AnthropicMessages" ? rest.thinkingStyle : "Auto",
+    // Only the Anthropic protocol reports prompt tokens written to its cache,
+    // so a write price on any other is one nothing would ever charge.
+    cacheWriteCostPerMillion:
+      rest.kind === "AnthropicMessages" ? rest.cacheWriteCostPerMillion : null,
   };
 }
 

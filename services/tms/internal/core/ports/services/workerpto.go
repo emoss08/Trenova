@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -69,6 +70,9 @@ type WorkerPTOTransitionPreview struct {
 	ReturnsLedger bool
 	Driver        *DriverNotificationPreview
 	SMS           *DriverSMSPreview
+	// Location is the organization's, the zone a request's days are booked
+	// in, so the days a preview names are the days the ledger counts.
+	Location *time.Location
 }
 
 type WorkerPTOService interface {

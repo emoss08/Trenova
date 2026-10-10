@@ -109,9 +109,10 @@ type candidateView struct {
 	Blocked             bool          `json:"blocked"`
 	DeadheadMiles       *float64      `json:"deadheadMiles,omitempty"`
 	ProjectedArrival    optionalDate  `json:"projectedArrival"`
-	MinutesOfSlack      int64         `json:"minutesOfSlack"`
-	DriveRemainingHours float64       `json:"driveRemainingHours"`
-	ShiftRemainingHours float64       `json:"shiftRemainingHours"`
+	MinutesOfSlack      *int64        `json:"minutesOfSlack,omitempty"`
+	DriveRemainingHours *float64      `json:"driveRemainingHours,omitempty"`
+	ShiftRemainingHours *float64      `json:"shiftRemainingHours,omitempty"`
+	Hours               string        `json:"hours,omitempty"`
 	HOSStrategy         string        `json:"hosStrategy,omitempty"`
 	Findings            []findingView `json:"findings"`
 	Factors             []factorView  `json:"factors"`
@@ -184,19 +185,27 @@ func candidatesViewOf(
 
 func candidateViewOf(score *dispatchcandidateservice.CandidateScore) candidateView {
 	out := candidateView{
-		WorkerID:            score.WorkerID.String(),
-		WorkerName:          score.WorkerName,
-		Score:               score.Score,
-		Verdict:             score.Verdict,
-		Blocked:             score.Blocked(),
-		DeadheadMiles:       score.DeadheadMiles,
-		ProjectedArrival:    expectedDate(score.ProjectedArrival, "unknown"),
-		MinutesOfSlack:      score.MinutesOfSlack,
-		DriveRemainingHours: hoursOf(score.DriveRemainingMs),
-		ShiftRemainingHours: hoursOf(score.ShiftRemainingMs),
-		HOSStrategy:         score.HOSStrategy,
-		Findings:            findingViews(score.Findings),
-		Factors:             make([]factorView, 0, len(score.Factors)),
+		WorkerID:         score.WorkerID.String(),
+		WorkerName:       score.WorkerName,
+		Score:            score.Score,
+		Verdict:          score.Verdict,
+		Blocked:          score.Blocked(),
+		DeadheadMiles:    score.DeadheadMiles,
+		ProjectedArrival: expectedDate(score.ProjectedArrival, "unknown"),
+		HOSStrategy:      score.HOSStrategy,
+		Findings:         findingViews(score.Findings),
+		Factors:          make([]factorView, 0, len(score.Factors)),
+	}
+	if score.SlackKnown {
+		out.MinutesOfSlack = &score.MinutesOfSlack
+	}
+	if score.HOSKnown {
+		drive, shift := hoursOf(score.DriveRemainingMs), hoursOf(score.ShiftRemainingMs)
+		out.DriveRemainingHours, out.ShiftRemainingHours = &drive, &shift
+	} else {
+		out.Hours = "No ELD has reported this driver's hours of service, so they are unknown, " +
+			"not zero. Say so beside an assignment you propose rather than holding it back: " +
+			"the dispatcher approving it decides with that in front of them."
 	}
 	if score.TractorID.IsNotNil() {
 		out.TractorID = score.TractorID.String()

@@ -2,9 +2,12 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
@@ -12,21 +15,23 @@ import (
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 const (
-	absentNotClosed  = "not closed"
-	fieldSplit       = "splitPercent"
-	fieldTarget      = "targetAmountMinor"
-	fieldBalance     = "balanceMinor"
-	fieldInterest    = "annualInterestRate"
-	fieldRecovered   = "recoveredMinor"
-	fieldCap         = "totalCapMinor"
-	fieldDeducted    = "deductedToDateMinor"
-	fieldPaidToDate  = "paidToDateMinor"
-	workerIDFromList = "Only this driver's, by id from search_worker or list_workers."
+	absentNotClosed   = "not closed"
+	fieldSplit        = "splitPercent"
+	fieldTarget       = "targetAmountMinor"
+	fieldBalance      = "balanceMinor"
+	fieldInterest     = "annualInterestRate"
+	fieldRecovered    = "recoveredMinor"
+	fieldCap          = "totalCapMinor"
+	fieldDeducted     = "deductedToDateMinor"
+	fieldPaidToDate   = "paidToDateMinor"
+	workerIDFromList  = "Only this driver's, by id from search_worker or list_workers."
+	driverNameMatches = 5
 )
 
 var (
@@ -104,8 +109,16 @@ type driverPayReader interface {
 }
 
 type driverPayTool struct {
-	pay    driverPayReader
-	access fieldAccess
+	pay     driverPayReader
+	access  fieldAccess
+	workers driverNameReader
+}
+
+type driverNameReader interface {
+	List(
+		ctx context.Context,
+		req *repositories.ListWorkersRequest,
+	) (*pagination.CursorListResult[*worker.Worker], error)
 }
 
 func newDriverPayTool(
@@ -139,29 +152,45 @@ func provideListWorkerPayAssignmentsTool(
 func provideListEscrowAccountsTool(
 	pay *driverpayservice.Service,
 	permissions serviceports.PermissionEngine,
+	workers repositories.WorkerRepository,
 ) serviceports.AgentQueryTool {
-	return &listEscrowAccountsTool{newDriverPayTool(pay, permissions)}
+	tool := newDriverPayTool(pay, permissions)
+	tool.workers = workers
+
+	return &listEscrowAccountsTool{tool}
 }
 
 func provideListPayAdvancesTool(
 	pay *driverpayservice.Service,
 	permissions serviceports.PermissionEngine,
+	workers repositories.WorkerRepository,
 ) serviceports.AgentQueryTool {
-	return &listPayAdvancesTool{newDriverPayTool(pay, permissions)}
+	tool := newDriverPayTool(pay, permissions)
+	tool.workers = workers
+
+	return &listPayAdvancesTool{tool}
 }
 
 func provideListRecurringDeductionsTool(
 	pay *driverpayservice.Service,
 	permissions serviceports.PermissionEngine,
+	workers repositories.WorkerRepository,
 ) serviceports.AgentQueryTool {
-	return &listRecurringDeductionsTool{newDriverPayTool(pay, permissions)}
+	tool := newDriverPayTool(pay, permissions)
+	tool.workers = workers
+
+	return &listRecurringDeductionsTool{tool}
 }
 
 func provideListRecurringEarningsTool(
 	pay *driverpayservice.Service,
 	permissions serviceports.PermissionEngine,
+	workers repositories.WorkerRepository,
 ) serviceports.AgentQueryTool {
-	return &listRecurringEarningsTool{newDriverPayTool(pay, permissions)}
+	tool := newDriverPayTool(pay, permissions)
+	tool.workers = workers
+
+	return &listRecurringEarningsTool{tool}
 }
 
 type workerFilter struct {
@@ -170,13 +199,19 @@ type workerFilter struct {
 	window   page
 }
 
-func readWorkerFilter(
+func (t *driverPayTool) readWorkerFilter(
+	ctx context.Context,
 	params *serviceports.QueryToolParams,
 	statuses agenttoolschema.EnumSource[string],
 ) (workerFilter, error) {
 	workerID, err := optionalID(params.Params, paramWorkerID)
 	if err != nil {
 		return workerFilter{}, err
+	}
+	if workerID.IsNil() {
+		if workerID, err = t.driverNamed(ctx, params); err != nil {
+			return workerFilter{}, err
+		}
 	}
 	status, err := validEnum(params.Params, paramStatus, statuses)
 	if err != nil {
@@ -218,8 +253,52 @@ func workerFilterSchema(
 ) map[string]any {
 	return objectSchema(withPaging(map[string]any{
 		paramWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker, workerIDFromList),
-		paramStatus:   enumParam("Only "+what+" in this status.", statuses),
+		paramQuery: map[string]any{
+			"type": "string",
+			"description": "Only this driver's, by the name the person used, such as " +
+				"\"emily chen\"; instead of workerId.",
+		},
+		paramStatus: enumParam("Only "+what+" in this status.", statuses),
 	}, defaultListLimit, maxListLimit))
+}
+
+// driverNamed reads the driver a list was narrowed to by name. A name that
+// fits nobody or several drivers is refused with who it fits, so the model
+// picks the one meant rather than reading another driver's pay.
+func (t *driverPayTool) driverNamed(
+	ctx context.Context,
+	params *serviceports.QueryToolParams,
+) (pulid.ID, error) {
+	name := strings.TrimSpace(optionalString(params.Params, paramQuery))
+	if name == "" || t.workers == nil {
+		return pulid.Nil, nil
+	}
+
+	found, err := t.workers.List(ctx, &repositories.ListWorkersRequest{
+		Filter: &pagination.QueryOptions{
+			TenantInfo: tenantOf(params),
+			Pagination: pagination.Info{Limit: driverNameMatches},
+			Query:      name,
+		},
+	})
+	if err != nil {
+		return pulid.Nil, err
+	}
+
+	switch len(found.Items) {
+	case 0:
+		return pulid.Nil, fmt.Errorf("no driver is named %q; look them up with search_worker", name)
+	case 1:
+		return found.Items[0].ID, nil
+	default:
+		named := make([]string, 0, len(found.Items))
+		for _, item := range found.Items {
+			named = append(named, workerName(item)+" ("+item.ID.String()+")")
+		}
+
+		return pulid.Nil, fmt.Errorf("%q fits more than one driver: %s; send the one meant "+
+			"as workerId", name, strings.Join(named, ", "))
+	}
 }
 
 type listPayCodesTool struct{ driverPayTool }
@@ -516,7 +595,7 @@ func (t *listEscrowAccountsTool) Query(
 	if err := guardQuery(params); err != nil {
 		return nil, err
 	}
-	filter, err := readWorkerFilter(params, escrowStatuses)
+	filter, err := t.readWorkerFilter(ctx, params, escrowStatuses)
 	if err != nil {
 		return nil, err
 	}
@@ -605,7 +684,7 @@ func (t *listPayAdvancesTool) Query(
 	if err := guardQuery(params); err != nil {
 		return nil, err
 	}
-	filter, err := readWorkerFilter(params, advanceStatuses)
+	filter, err := t.readWorkerFilter(ctx, params, advanceStatuses)
 	if err != nil {
 		return nil, err
 	}
@@ -647,8 +726,53 @@ func (t *listPayAdvancesTool) Query(
 	}
 	found := searchResult(filter.criteria("pay advances", params), rows, len(rows)).
 		paged(filter.window, more)
+	if len(rows) == 0 && filter.status != "" {
+		if note := t.advancesInOtherStatuses(ctx, params, filter); note != "" {
+			found.Note = note
+		}
+	}
 
 	return gatedResult(&found, gate), nil
+}
+
+// advancesInOtherStatuses answers an empty status-filtered list with what the
+// same search holds in any status, or that it holds nothing at all. Told only
+// that "other pay advances may exist", a model asked again without the status
+// before it would propose the deduction it had been asked for.
+func (t *listPayAdvancesTool) advancesInOtherStatuses(
+	ctx context.Context,
+	params *serviceports.QueryToolParams,
+	filter workerFilter,
+) string {
+	result, err := t.pay.ListAdvances(ctx, &repositories.ListPayAdvancesRequest{
+		Filter: &pagination.QueryOptions{
+			TenantInfo: tenantOf(params),
+			Pagination: pagination.Info{Limit: maxOtherSettlements},
+		},
+		WorkerID: filter.workerID,
+	})
+	if err != nil {
+		return ""
+	}
+	if len(result.Items) == 0 {
+		return fmt.Sprintf("There are no pay advances in any status for this search, so none "+
+			"is %s. Say so rather than searching again.", filter.status)
+	}
+
+	zone := clockFor(params).Location()
+	described := make([]string, 0, len(result.Items))
+	for _, advance := range result.Items {
+		if advance == nil {
+			continue
+		}
+		described = append(described, fmt.Sprintf("%s (%s, issued %s, id %s)",
+			stringutils.FirstNonEmpty(advance.Reference, advance.ID.String()), advance.Status,
+			timeutils.FormatCalendarDate(advance.IssuedDate, zone), advance.ID))
+	}
+
+	return fmt.Sprintf("None of these pay advances is %s. The %d most recent, in any status, "+
+		"are: %s. Answer from these rather than searching each status in turn.",
+		filter.status, len(described), strings.Join(described, "; "))
 }
 
 type recurringRow struct {
@@ -694,7 +818,7 @@ func (t *listRecurringDeductionsTool) Query(
 	if err := guardQuery(params); err != nil {
 		return nil, err
 	}
-	filter, err := readWorkerFilter(params, deductionStatuses)
+	filter, err := t.readWorkerFilter(ctx, params, deductionStatuses)
 	if err != nil {
 		return nil, err
 	}
@@ -769,7 +893,7 @@ func (t *listRecurringEarningsTool) Query(
 	if err := guardQuery(params); err != nil {
 		return nil, err
 	}
-	filter, err := readWorkerFilter(params, earningStatuses)
+	filter, err := t.readWorkerFilter(ctx, params, earningStatuses)
 	if err != nil {
 		return nil, err
 	}

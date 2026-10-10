@@ -93,6 +93,14 @@ func (s *Service) patchEdits(
 		price := req.OutputCostPerMillion.Value
 		edits = append(edits, func(p *aiprovider.Provider) { p.OutputCostPerMillion = price })
 	}
+	if req.CacheReadCostPerMillion.Set {
+		price := req.CacheReadCostPerMillion.Value
+		edits = append(edits, func(p *aiprovider.Provider) { p.CacheReadCostPerMillion = price })
+	}
+	if req.CacheWriteCostPerMillion.Set {
+		price := req.CacheWriteCostPerMillion.Value
+		edits = append(edits, func(p *aiprovider.Provider) { p.CacheWriteCostPerMillion = price })
+	}
 
 	if req.APIKey.Set {
 		incoming := ""

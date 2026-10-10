@@ -5,10 +5,12 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -240,4 +242,48 @@ func (f *fakeUsage) SpendByProvider(
 	repositories.AIUsageProviderSpendRequest,
 ) (map[pulid.ID]decimal.Decimal, error) {
 	return map[pulid.ID]decimal.Decimal{}, nil
+}
+
+// OpenAI counts the prompt it served from its cache inside prompt_tokens, and
+// the row priced all of it as fresh input. The cached part is priced on its
+// own, at a tenth of input when no cache price is entered.
+func TestCompleteStructured_PricesCachedPromptTokensApart(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		encoded, _ := sonic.Marshal(map[string]any{
+			"model": "test-model",
+			"choices": []map[string]any{{"finish_reason": "stop", "message": map[string]any{
+				"role": "assistant", "content": `{"answer":"cached"}`,
+			}}},
+			"usage": map[string]any{
+				"prompt_tokens":         1000,
+				"completion_tokens":     7,
+				"prompt_tokens_details": map[string]any{"cached_tokens": 800},
+			},
+		})
+		_, _ = w.Write(encoded)
+	}))
+	t.Cleanup(server.Close)
+
+	usage := &fakeUsage{}
+	svc := newTestService(t, priced(openAIChatProvider("cached", server.URL, 10), "1", "10"))
+	svc.usage = usage
+
+	result, err := svc.CompleteStructured(t.Context(), generalRequest())
+	require.NoError(t, err)
+
+	rows := usage.recorded(t, 1)
+	require.Len(t, rows, 1)
+	assert.Equal(t, 800, rows[0].CacheReadTokens)
+	require.NotNil(t, rows[0].CostUSD)
+	// 200 fresh at $1/M, 800 cached at $0.10/M, 7 out at $10/M
+	assert.True(
+		t,
+		rows[0].CostUSD.Equal(decimal.RequireFromString("0.00035")),
+		rows[0].CostUSD.String(),
+	)
+	require.NotNil(t, result.CostUSD)
+	assert.True(t, result.CostUSD.Equal(*rows[0].CostUSD))
 }

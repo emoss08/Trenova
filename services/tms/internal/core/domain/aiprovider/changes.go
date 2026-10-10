@@ -58,7 +58,9 @@ var ChangeRules = []editchange.Rule[Provider]{
 		Field: "inputCostPerMillion", Label: "Price",
 		Same: func(a, b *Provider) bool {
 			return decimalutils.PtrEqual(a.InputCostPerMillion, b.InputCostPerMillion) &&
-				decimalutils.PtrEqual(a.OutputCostPerMillion, b.OutputCostPerMillion)
+				decimalutils.PtrEqual(a.OutputCostPerMillion, b.OutputCostPerMillion) &&
+				decimalutils.PtrEqual(a.CacheReadCostPerMillion, b.CacheReadCostPerMillion) &&
+				decimalutils.PtrEqual(a.CacheWriteCostPerMillion, b.CacheWriteCostPerMillion)
 		},
 	},
 	{

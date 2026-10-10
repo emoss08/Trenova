@@ -59,33 +59,39 @@ func applyAccountingDefaults(
 		Code string   `bun:"account_code"`
 	}
 
-	rows := make([]accountRow, 0, 3)
+	rows := make([]accountRow, 0, 4)
 	if err := tx.NewSelect().
 		Model((*glaccount.GLAccount)(nil)).
 		Column("id", "account_code").
 		Where("organization_id = ?", orgID).
 		Where("business_unit_id = ?", buID).
-		Where("account_code IN (?)", bun.List([]string{"1110", "6940", "3030"})).
+		Where("account_code IN (?)", bun.List([]string{"1110", "4010", "6940", "3030"})).
 		Scan(ctx, &rows); err != nil {
 		return err
 	}
 
 	var arAccountID pulid.ID
+	var revenueAccountID pulid.ID
 	var writeOffAccountID pulid.ID
 	var retainedEarningsAccountID pulid.ID
 	for i := range rows {
 		switch rows[i].Code {
 		case "1110":
 			arAccountID = rows[i].ID
+		case "4010":
+			revenueAccountID = rows[i].ID
 		case "6940":
 			writeOffAccountID = rows[i].ID
 		case "3030":
 			retainedEarningsAccountID = rows[i].ID
 		}
 	}
-	missing := make([]string, 0, 3)
+	missing := make([]string, 0, 4)
 	if arAccountID.IsNil() {
 		missing = append(missing, "1110 (AR)")
+	}
+	if revenueAccountID.IsNil() {
+		missing = append(missing, "4010 (revenue)")
 	}
 	if writeOffAccountID.IsNil() {
 		missing = append(missing, "6940 (write-off)")
@@ -103,6 +109,7 @@ func applyAccountingDefaults(
 	_, err := tx.NewUpdate().
 		Model((*tenant.AccountingControl)(nil)).
 		Set("default_ar_account_id = ?", arAccountID).
+		Set("default_revenue_account_id = ?", revenueAccountID).
 		Set("default_write_off_account_id = ?", writeOffAccountID).
 		Set("default_retained_earnings_account_id = ?", retainedEarningsAccountID).
 		Where("organization_id = ?", orgID).

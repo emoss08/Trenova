@@ -70,7 +70,22 @@ func (s *Service) watchWorld(
 		return nil
 	}
 
-	return openWorld(cursor, req.Records, now)
+	return openWorld(cursor, watchedRecords(req), now)
+}
+
+func watchedRecords(req *serviceports.RunRequest) []agent.EntityRef {
+	if len(req.Context.Anchors) == 0 {
+		return req.Records
+	}
+	records := make([]agent.EntityRef, 0, len(req.Records)+len(req.Context.Anchors))
+	records = append(records, req.Records...)
+	for _, anchor := range req.Context.Anchors {
+		if anchor.Note == "" {
+			records = append(records, agent.EntityRef{Type: anchor.Kind, ID: anchor.ID, Label: anchor.Label})
+		}
+	}
+
+	return records
 }
 
 func openWorld(cursor string, records []agent.EntityRef, now int64) *WorldState {
@@ -122,20 +137,32 @@ func (w *WorldState) watch(record agent.EntityRef) {
 }
 
 func (w *WorldState) read(call *serviceports.ToolCall, summary string) {
-	if w == nil || !strings.HasPrefix(call.Name, "get_") {
+	if w == nil {
 		return
 	}
-	kind := strings.TrimPrefix(call.Name, "get_")
-	for _, key := range slices.Sorted(maps.Keys(call.Arguments)) {
+	for _, record := range RecordsRead(call.Name, call.Arguments, summary) {
+		w.watch(record)
+	}
+}
+
+func RecordsRead(name string, arguments map[string]any, summary string) []agent.EntityRef {
+	if !strings.HasPrefix(name, "get_") || len(arguments) == 0 {
+		return nil
+	}
+	kind := strings.TrimPrefix(name, "get_")
+	records := make([]agent.EntityRef, 0, 1)
+	for _, key := range slices.Sorted(maps.Keys(arguments)) {
 		if !strings.HasSuffix(key, "Id") && !strings.HasSuffix(key, "ID") && key != "id" {
 			continue
 		}
-		id, ok := call.Arguments[key].(string)
+		id, ok := arguments[key].(string)
 		if !ok || !recordID(id) {
 			continue
 		}
-		w.watch(agent.EntityRef{Type: kind, ID: id, Label: summary})
+		records = append(records, agent.EntityRef{Type: kind, ID: id, Label: summary})
 	}
+
+	return records
 }
 
 func (w *WorldState) wrote(action *serviceports.PendingAction, at int64) {

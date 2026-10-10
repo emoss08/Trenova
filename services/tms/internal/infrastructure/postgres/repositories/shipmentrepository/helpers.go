@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/schema"
 )
 
 func standardShipmentFilter(
@@ -66,14 +67,35 @@ func withRoute(q *bun.SelectQuery) *bun.SelectQuery {
 		}).
 		Relation(buncolgen.Rel(stops, buncolgen.StopRelations.Location)).
 		Relation(buncolgen.Rel(stops, buncolgen.StopRelations.Location, buncolgen.LocationRelations.State)).
-		Relation(buncolgen.Rel(moves, buncolgen.ShipmentMoveRelations.Assignment)).
+		RelationWithOpts(buncolgen.Rel(moves, buncolgen.ShipmentMoveRelations.Assignment),
+			bun.RelationOpts{AdditionalJoinOnConditions: activeAssignmentJoin()}).
 		Relation(buncolgen.Rel(
 			moves, buncolgen.ShipmentMoveRelations.Assignment, buncolgen.AssignmentRelations.PrimaryWorker,
 		)).
 		Relation(buncolgen.Rel(
 			moves, buncolgen.ShipmentMoveRelations.Assignment, buncolgen.AssignmentRelations.Tractor,
 		)).
-		Relation(buncolgen.Rel(moves, buncolgen.ShipmentMoveRelations.CarrierAssignment))
+		RelationWithOpts(buncolgen.Rel(moves, buncolgen.ShipmentMoveRelations.CarrierAssignment),
+			bun.RelationOpts{AdditionalJoinOnConditions: activeCarrierAssignmentJoin()})
+}
+
+// A move holds one live assignment but keeps every one it had: an archived
+// driver assignment or a canceled carrier assignment stays beside the live
+// one. Joined as a has-one without these conditions, a move could come back
+// carrying a canceled carrier and read as covered, or with its live
+// assignment missing. The aliases are the ones bun gives a has-one joined
+// under the has-many moves: the relation's field name.
+func activeAssignmentJoin() []schema.QueryWithArgs {
+	return []schema.QueryWithArgs{schema.SafeQuery("?.? IS NULL", []any{
+		bun.Ident("assignment"), bun.Ident(buncolgen.AssignmentColumns.ArchivedAt.Name),
+	})}
+}
+
+func activeCarrierAssignmentJoin() []schema.QueryWithArgs {
+	return []schema.QueryWithArgs{schema.SafeQuery("?.? != ?", []any{
+		bun.Ident("carrier_assignment"), bun.Ident(buncolgen.CarrierAssignmentColumns.Status.Name),
+		shipment.CarrierAssignmentStatusCanceled,
+	})}
 }
 
 func cursorFilterQuery(
@@ -140,6 +162,9 @@ func applyShipmentOptionFilters(
 	if opts.Status != "" {
 		q = q.Where(buncolgen.ShipmentColumns.Status.Eq(), shipment.Status(opts.Status))
 	}
+	if len(opts.Statuses) > 0 {
+		q = q.Where(buncolgen.ShipmentColumns.Status.In(), bun.In(opts.Statuses))
+	}
 	if opts.HasActivityWindow() {
 		q = q.Where("EXISTS (?)", activityWindowPredicate(dba, opts))
 	}
@@ -152,11 +177,34 @@ func applyShipmentOptionFilters(
 	if len(opts.StopLocationIDs) > 0 {
 		q = q.Where("EXISTS (?)", stopLocationPredicate(dba, opts.StopLocationIDs))
 	}
+	for _, group := range opts.StopEachOf {
+		if len(group) > 0 {
+			q = q.Where("EXISTS (?)", stopLocationPredicate(dba, group))
+		}
+	}
 	if len(opts.WorkerIDs) > 0 {
 		q = q.Where("EXISTS (?)", assignedWorkerPredicate(dba, opts.WorkerIDs))
 	}
+	if len(opts.CommodityIDs) > 0 {
+		q = q.Where("EXISTS (?)", commodityPredicate(dba, opts.CommodityIDs))
+	}
+	if len(opts.ShipmentTypeIDs) > 0 {
+		q = q.Where(buncolgen.ShipmentColumns.ShipmentTypeID.In(), bun.In(opts.ShipmentTypeIDs))
+	}
 
 	return q
+}
+
+func commodityPredicate(dba bun.IDB, commodityIDs []pulid.ID) *bun.SelectQuery {
+	cols := buncolgen.ShipmentCommodityColumns
+
+	return dba.NewSelect().
+		TableExpr(buncolgen.ShipmentCommodityTable.As("sc_com")).
+		ColumnExpr("1").
+		Where("sc_com."+cols.ShipmentID.Name+" = sp.id").
+		Where("sc_com."+cols.OrganizationID.Name+" = sp.organization_id").
+		Where("sc_com."+cols.BusinessUnitID.Name+" = sp.business_unit_id").
+		Where("sc_com."+cols.CommodityID.Name+" IN (?)", bun.In(commodityIDs))
 }
 
 func assignedWorkerPredicate(dba bun.IDB, workerIDs []pulid.ID) *bun.SelectQuery {

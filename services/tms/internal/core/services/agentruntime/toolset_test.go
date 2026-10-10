@@ -914,3 +914,42 @@ func TestResolveFind_NamesOnlyStrongMatchesBeyondTheAgent(t *testing.T) {
 	assert.NotContains(t, answer, "list_shipments",
 		"a tool that only takes the word as a parameter is not what was asked for")
 }
+
+func TestSearchesLeft_SpeaksUpOnlyNearTheCap(t *testing.T) {
+	t.Parallel()
+
+	assert.Empty(t, searchesLeft(1))
+	assert.Empty(t, searchesLeft(2))
+	assert.Contains(t, searchesLeft(3), "search 3 of 4")
+	assert.Contains(t, searchesLeft(4), "last tool search")
+}
+
+/*
+gpt-6-luna asked find_tools for "search_worker, list_driver_settlements and
+list_pay_advances" by name, was handed six other tools ranked above
+search_worker, and searched a fourth time for it. A tool the need names
+outright, and the agent holds, comes first.
+*/
+func TestResolveFind_LoadsTheToolsANeedNamesOutright(t *testing.T) {
+	t.Parallel()
+
+	service, names := wideRuntime(t)
+	set := service.newToolSet(
+		t.Context(),
+		toolSetRequest{
+			definition: testDefinition(names...),
+			actor:      testActor(),
+			input:      "say hello",
+			unattended: false,
+		},
+	)
+	require.NotContains(t, specNames(set.specs), "list_trailers",
+		"the fixture depends on this one not being preselected")
+
+	answer := findContent(t, service, set, map[string]any{
+		"need": "Use list_trailers (and list_nothing) to see invoices by due date",
+	})
+
+	assert.Contains(t, specNames(set.specs), "list_trailers")
+	assert.Contains(t, answer, "- list_trailers:")
+}

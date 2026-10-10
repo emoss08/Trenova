@@ -12,6 +12,8 @@ export type DecisionRequestRef = {
 
 export const REQUEST_DECISION_TOOL = "request_decision";
 
+export const WITHDRAW_PROPOSAL_TOOL = "withdraw_proposal";
+
 function textOf(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }

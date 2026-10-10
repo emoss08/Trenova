@@ -4,19 +4,59 @@ defaults:
 scenarios:
   - name: correction-mid-flow
     description: >
-      The person proposes something on the wrong load and corrects it: the agent must drop the
-      first proposal's target and work on the one meant.
+      A note for "the acme load" when Acme has several: the agent asks, and the answer narrows to
+      one load by its lane and its status.
     agent: Dispatch desk
+    exclusive: acme-shipments
+    setup:
+      - >
+        UPDATE shipment_moves AS sm SET status = 'Canceled'
+        FROM shipments AS sp
+        WHERE sm.shipment_id = sp.id
+          AND sp.status = 'New'
+          AND sp.pro_number NOT LIKE 'SEED-%'
+          AND sp.customer_id = (SELECT id FROM customers WHERE code = 'ACME')
+          AND sp.id IN (
+            SELECT p.execution_result->'record'->>'id'
+            FROM agent_proposals p
+            JOIN agent_runs r ON r.id = p.run_id
+            JOIN assistant_threads t ON t.id = r.subject_id
+            WHERE t.title LIKE '[bench]%' AND p.status = 'Executed'
+              AND p.tool_name IN ('create_shipment', 'duplicate_shipment'))
+      - >
+        UPDATE shipments AS sp SET status = 'Canceled'
+        WHERE sp.status = 'New'
+          AND sp.pro_number NOT LIKE 'SEED-%'
+          AND sp.customer_id = (SELECT id FROM customers WHERE code = 'ACME')
+          AND sp.id IN (
+            SELECT p.execution_result->'record'->>'id'
+            FROM agent_proposals p
+            JOIN agent_runs r ON r.id = p.run_id
+            JOIN assistant_threads t ON t.id = r.subject_id
+            WHERE t.title LIKE '[bench]%' AND p.status = 'Executed'
+              AND p.tool_name IN ('create_shipment', 'duplicate_shipment'))
+      - >
+        UPDATE shipments SET status = 'New', canceled_at = NULL, canceled_by_id = NULL,
+          cancel_reason = NULL
+        WHERE pro_number = 'SEED-SHP-001' AND status = 'Canceled'
+      - >
+        UPDATE shipment_moves AS sm SET status = 'New'
+        FROM shipments AS sp
+        WHERE sm.shipment_id = sp.id AND sp.pro_number = 'SEED-SHP-001'
+          AND sm.status = 'Canceled'
     steps:
       - say: "add a note on the acme load that the shipper wants a call before arrival"
         expect:
           maxFailedCalls: 2
-      - say: "no wait, not the steel one, the one going LA to chicago"
+      - say: "the LA to chicago one that hasn't been picked up yet"
         expect:
-          proposals: [{ tool: add_shipment_comment }]
+          noCalls: [ask_user]
+          maxCalls: 4
           rubric: >
-            Puts the note on SEED-SHP-001 (Acme, LA to Chicago), not SEED-SHP-005, and does not
-            also add it to the first load.
+            Settles on SEED-SHP-001 (Acme, LA to Chicago, still New), the only Acme load on that
+            lane not yet picked up: proposes the note on it, or, when the first turn already
+            proposed it there, says that proposal is the one, without asking again or proposing
+            a second note. Never puts the note on another load.
 
   - name: ambiguous-load-asks
     description: >
@@ -33,9 +73,16 @@ scenarios:
             pickup date or status) instead of cancelling any of them.
 
   - name: remember-a-customer-rule
-    description: A standing instruction about a customer, kept for later conversations.
+    description: >
+      A standing instruction about a customer, kept for later conversations. The rule an earlier
+      run kept is removed first, so the agent records it rather than finding it already on file.
     agent: Dispatch desk
     tags: [memory]
+    exclusive: acme-memory
+    setup:
+      - >
+        DELETE FROM agent_memories
+        WHERE content ILIKE '%acme%' AND content ILIKE '%24 hour%notice%'
     steps:
       - say: "remember acme always needs 24 hours notice before we deliver"
         expect:
@@ -48,6 +95,22 @@ scenarios:
     description: Parking work until something happens on the road.
     agent: Dispatch desk
     tags: [waits]
+    setup:
+      - >
+        UPDATE stops AS st SET status = 'New', actual_arrival = NULL, actual_departure = NULL
+        FROM shipment_moves AS sm JOIN shipments AS sp ON sp.id = sm.shipment_id
+        WHERE st.shipment_move_id = sm.id AND sp.pro_number = 'SEED-SHP-008'
+          AND sm.sequence = 1 AND st.sequence = 1
+          AND (st.status <> 'New' OR st.actual_arrival IS NOT NULL
+            OR st.actual_departure IS NOT NULL)
+      - >
+        UPDATE shipment_moves AS sm SET status = 'InTransit'
+        FROM shipments AS sp
+        WHERE sm.shipment_id = sp.id AND sp.pro_number = 'SEED-SHP-008'
+          AND sm.sequence = 1 AND sm.status <> 'InTransit'
+      - >
+        UPDATE shipments SET status = 'InTransit'
+        WHERE pro_number = 'SEED-SHP-008' AND status <> 'InTransit'
     steps:
       - say: "let me know when SEED-SHP-008 delivers in chicago"
         expect:
@@ -89,3 +152,70 @@ scenarios:
           facts:
             - sql: select total_charge_amount from shipments where pro_number = 'SEED-SHP-006'
               note: the shipment's total
+
+  - name: records-in-play-after-a-change
+    description: >
+      The conversation reads a load, changes it, and asks about it again. The later turns should
+      answer from the records read again at the start of each turn, not from what an earlier turn
+      said, and without looking the load up again.
+    agent: Bench · Operations
+    tags: [anchors]
+    exclusive: SEED-SHP-004
+    setup:
+      - UPDATE shipments SET weight = 38000 WHERE pro_number = 'SEED-SHP-004'
+    steps:
+      - say: "what's the weight on SEED-SHP-004"
+        expect:
+          calls: ["get_shipment|search_shipments"]
+      - say: "make it 39,250"
+        expect:
+          proposals: [{ tool: update_shipment }]
+          maxFailedCalls: 1
+      - decide: approve
+        expect:
+          executed: true
+      - say: "who's the customer on it and where does it deliver"
+        expect:
+          maxCalls: 1
+          rubric: >
+            Names the customer and the delivery place from the records in play, without searching
+            for the load again.
+      - say: "and is it covered yet"
+        expect:
+          maxCalls: 0
+          rubric: >
+            Answers whether a driver or carrier is on SEED-SHP-004 from the records in play, with
+            no tool call.
+
+  - name: records-in-play-are-dated
+    description: >
+      A load whose truck has not reported recently: the agent must say how old the position is
+      rather than present it as where the truck is now.
+    agent: Bench · Operations
+    tags: [anchors]
+    setup:
+      - >
+        DELETE FROM billing_queue_items AS b USING shipments AS s
+        WHERE b.shipment_id = s.id AND s.pro_number IN ('SEED-DET-001', 'SEED-DET-002')
+          AND NOT EXISTS (SELECT 1 FROM invoices AS i WHERE i.billing_queue_item_id = b.id)
+      - >
+        UPDATE shipment_moves AS sm SET status = 'InTransit'
+        FROM shipments AS sp
+        WHERE sm.shipment_id = sp.id AND sp.pro_number IN ('SEED-DET-001', 'SEED-DET-002')
+          AND sm.status <> 'InTransit'
+          AND EXISTS (SELECT 1 FROM stops AS st WHERE st.shipment_move_id = sm.id
+                      AND st.actual_arrival IS NOT NULL AND st.actual_departure IS NULL)
+      - >
+        UPDATE shipments AS sp SET status = 'InTransit', billing_transfer_status = NULL,
+          transferred_to_billing_at = NULL, marked_ready_to_bill_at = NULL
+        WHERE sp.pro_number IN ('SEED-DET-001', 'SEED-DET-002') AND sp.status <> 'InTransit'
+          AND EXISTS (SELECT 1 FROM shipment_moves AS sm
+                      WHERE sm.shipment_id = sp.id AND sm.status = 'InTransit')
+    steps:
+      - say: "pull up SEED-DET-001"
+      - say: "where's the truck right now"
+        expect:
+          maxCalls: 1
+          rubric: >
+            Gives the last reported position with how long ago it was reported, says it is too old
+            to be where the truck is now if so, and does not present it as the current location.

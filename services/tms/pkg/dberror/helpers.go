@@ -181,6 +181,12 @@ func DriverError(err error) error {
 	return nil
 }
 
+// IsReadOnlyTransaction reports a write attempted inside a read-only
+// transaction, such as a preview's snapshot.
+func IsReadOnlyTransaction(err error) bool {
+	return ExtractCode(err) == pgerrcode.ReadOnlySQLTransaction
+}
+
 func IsRowLevelSecurityViolation(err error) bool {
 	details, ok := extractPostgresErrorDetails(err)
 	if !ok {

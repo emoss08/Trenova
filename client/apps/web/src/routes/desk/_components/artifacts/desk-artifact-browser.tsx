@@ -1,4 +1,5 @@
 import { Button } from "@trenova/shared/components/ui/button";
+import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -108,7 +109,7 @@ export function DeskArtifactBrowser({
 
   const filters = { q: searched, kind: kind === "all" ? "" : kind, pinned: onlyPinned };
   const pages = useInfiniteQuery({
-    queryKey: ["assistant-artifacts", threadId, "browse", filters],
+    queryKey: queries.assistant.artifacts(threadId)._ctx.browse(filters).queryKey,
     queryFn: ({ pageParam, signal }) =>
       apiService.assistantService.listArtifacts(threadId, {
         signal,

@@ -92,6 +92,13 @@ type ListAgentProposalsByIDsRequest struct {
 	TenantInfo pagination.TenantInfo
 }
 
+// ExpireAgentProposalsByThreadRequest names a conversation whose proposals
+// still waiting on a decision are withdrawn, because it is being deleted.
+type ExpireAgentProposalsByThreadRequest struct {
+	ThreadID   pulid.ID              `json:"threadId"`
+	TenantInfo pagination.TenantInfo `json:"-"`
+}
+
 type ListAgentProposalsByThreadRequest struct {
 	ThreadID   pulid.ID              `json:"threadId"`
 	TenantInfo pagination.TenantInfo `json:"-"`
@@ -176,6 +183,7 @@ type AgentProposalRepository interface {
 		ctx context.Context,
 		req ExpireAgentProposalsByDefinitionRequest,
 	) (int, error)
+	ExpirePendingByThread(ctx context.Context, req ExpireAgentProposalsByThreadRequest) (int, error)
 	ListPendingForReminder(
 		ctx context.Context,
 		req ListPendingProposalsForReminderRequest,

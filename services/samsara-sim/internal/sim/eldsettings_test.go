@@ -118,6 +118,7 @@ func TestServerFleetDriversExposeEldSettings(t *testing.T) {
 	t.Parallel()
 
 	cfg := config.Default()
+	cfg.RateLimits.Enabled = false
 	cfg.Auth.Tokens = []string{"dev-samsara-token"}
 	cfg.Webhooks.Enabled = false
 

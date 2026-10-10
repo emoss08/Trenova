@@ -111,33 +111,44 @@ func (r *repository) GetOrCreate(
 	ctx context.Context,
 	orgID, buID pulid.ID,
 ) (*tenant.DocumentControl, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.DocumentControl, error) {
-		defaultEntity := tenant.NewDefaultDocumentControl(orgID, buID)
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(defaultEntity).
-			On(`CONFLICT ("organization_id", "business_unit_id") DO NOTHING`).
-			Exec(ctx); err != nil {
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Document control is busy. Retry the request.",
-			)
-		}
+	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*tenant.DocumentControl]{
+		Find: func(ctx context.Context) (*tenant.DocumentControl, error) {
+			found := new(tenant.DocumentControl)
+			if scanErr := r.db.DBForContext(ctx).
+				NewSelect().
+				Model(found).
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return buncolgen.DocumentControlScopeTenant(sq, pagination.TenantInfo{
+						OrgID: orgID,
+						BuID:  buID,
+					})
+				}).
+				Scan(ctx); scanErr != nil {
+				return nil, scanErr
+			}
 
-		entity := new(tenant.DocumentControl)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return buncolgen.DocumentControlScopeTenant(sq, pagination.TenantInfo{
-					OrgID: orgID,
-					BuID:  buID,
-				})
-			}).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "DocumentControl")
-		}
+			return found, nil
+		},
+		Create: func(ctx context.Context) error {
+			_, insertErr := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(tenant.NewDefaultDocumentControl(orgID, buID)).
+				On(`CONFLICT ("organization_id", "business_unit_id") DO NOTHING`).
+				Exec(ctx)
+			if insertErr != nil {
+				return dberror.MapRetryableTransactionError(
+					insertErr,
+					"Document control is busy. Retry the request.",
+				)
+			}
 
-		return entity, nil
+			return nil
+		},
+		Default: func() *tenant.DocumentControl {
+			return tenant.NewDefaultDocumentControl(orgID, buID)
+		},
+		MapError: func(err error) error {
+			return dberror.HandleNotFoundError(err, "DocumentControl")
+		},
 	})
 }

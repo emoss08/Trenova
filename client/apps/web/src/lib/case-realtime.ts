@@ -2,7 +2,7 @@ import type {
   QueryKeyRoot,
   ResourceInvalidationEvent,
 } from "@trenova/shared/hooks/realtime-patching";
-import type { AssistantThreadList } from "@/types/assistant";
+import { threadsOf, type ThreadPages } from "@/lib/thread-list";
 
 /**
  * Where a Desk case is cached: the case header of the open conversation and
@@ -30,10 +30,10 @@ const CASE_RECORD_RESOURCES = new Set([
 /** The fields of an event's entity that can name the record a case is about. */
 const RECORD_FIELDS = ["shipmentId", "invoiceId", "resourceId"] as const;
 
-const boundByList = new WeakMap<AssistantThreadList, ReadonlySet<string>>();
+const boundByList = new WeakMap<ThreadPages, ReadonlySet<string>>();
 
 /** The records the person's cases are about, read once per thread list. */
-export function boundCaseRecords(list: AssistantThreadList | undefined): ReadonlySet<string> {
+export function boundCaseRecords(list: ThreadPages | undefined): ReadonlySet<string> {
   if (!list) {
     return new Set();
   }
@@ -43,7 +43,7 @@ export function boundCaseRecords(list: AssistantThreadList | undefined): Readonl
   }
 
   const bound = new Set<string>();
-  for (const thread of list.items) {
+  for (const thread of threadsOf(list)) {
     if (thread.case && thread.subjectId) {
       bound.add(thread.subjectId);
     }

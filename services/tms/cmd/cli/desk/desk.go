@@ -452,6 +452,7 @@ func openBench(ctx context.Context, outDir string, livePaths ...string) (*deskbe
 		Namespace: flags.namespace,
 		OutDir:    outDir,
 		LivePaths: livePaths,
+		LockDir:   benchRoot,
 	})
 }
 

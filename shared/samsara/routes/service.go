@@ -2,7 +2,6 @@ package routes
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -26,6 +25,7 @@ func NewService(client httpx.Requester) Service {
 	return &service{client: client}
 }
 
+//nolint:gocritic // params is intentionally passed by value.
 func (s *service) List(ctx context.Context, params ListParams) (ListResponse, error) {
 	if err := params.Validate(); err != nil {
 		return ListResponse{}, err
@@ -43,12 +43,13 @@ func (s *service) List(ctx context.Context, params ListParams) (ListResponse, er
 	return out, nil
 }
 
+//nolint:gocritic // params is intentionally passed by value.
 func (s *service) ListAll(ctx context.Context, params ListParams) ([]Route, error) {
 	if err := params.Validate(); err != nil {
 		return nil, err
 	}
 	if params.Limit == 0 {
-		params.Limit = 512
+		params.Limit = maxListLimit
 	}
 
 	items := make([]Route, 0)
@@ -75,7 +76,7 @@ func (s *service) Get(ctx context.Context, id string) (Route, error) {
 	out := routeResponse{}
 	if err := s.client.Do(ctx, httpx.Request{
 		Method: http.MethodGet,
-		Path:   fmt.Sprintf("/fleet/routes/%s", routeID),
+		Path:   httpx.PathWithID("/fleet/routes", routeID),
 		Out:    &out,
 	}); err != nil {
 		return Route{}, err
@@ -88,8 +89,8 @@ func (s *service) Get(ctx context.Context, id string) (Route, error) {
 
 //nolint:gocritic // request is copied intentionally to keep create validation side-effect free.
 func (s *service) Create(ctx context.Context, req CreateRequest) (Route, error) {
-	if strings.TrimSpace(req.Name) == "" {
-		return Route{}, ErrRouteNameRequired
+	if err := ValidateCreateRequest(req); err != nil {
+		return Route{}, err
 	}
 
 	out := createResponse{}
@@ -112,11 +113,14 @@ func (s *service) Update(ctx context.Context, id string, req UpdateRequest) (Rou
 	if routeID == "" {
 		return Route{}, ErrRouteIDRequired
 	}
+	if err := ValidateUpdateRequest(req); err != nil {
+		return Route{}, err
+	}
 
 	out := updateResponse{}
 	if err := s.client.Do(ctx, httpx.Request{
 		Method: http.MethodPatch,
-		Path:   fmt.Sprintf("/fleet/routes/%s", routeID),
+		Path:   httpx.PathWithID("/fleet/routes", routeID),
 		Body:   req,
 		Out:    &out,
 	}); err != nil {
@@ -136,7 +140,7 @@ func (s *service) Delete(ctx context.Context, id string) error {
 
 	return s.client.Do(ctx, httpx.Request{
 		Method:         http.MethodDelete,
-		Path:           fmt.Sprintf("/fleet/routes/%s", routeID),
+		Path:           httpx.PathWithID("/fleet/routes", routeID),
 		ExpectedStatus: []int{http.StatusNoContent},
 	})
 }

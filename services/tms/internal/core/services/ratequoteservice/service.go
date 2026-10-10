@@ -2,6 +2,7 @@ package ratequoteservice
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/ratequote"
@@ -24,6 +25,7 @@ type Params struct {
 	ShipmentRepo       repositories.ShipmentRepository
 	BillingControlRepo repositories.BillingControlRepository
 	Engine             services.RateEngine
+	Distances          services.DistanceCalculationService `optional:"true"`
 }
 
 type Service struct {
@@ -32,6 +34,7 @@ type Service struct {
 	shipmentRepo       repositories.ShipmentRepository
 	billingControlRepo repositories.BillingControlRepository
 	engine             services.RateEngine
+	distances          services.DistanceCalculationService
 }
 
 func New(p Params) *Service {
@@ -41,6 +44,7 @@ func New(p Params) *Service {
 		shipmentRepo:       p.ShipmentRepo,
 		billingControlRepo: p.BillingControlRepo,
 		engine:             p.Engine,
+		distances:          p.Distances,
 	}
 }
 
@@ -156,6 +160,9 @@ func (s *Service) Quote(
 
 	req.Shipment.OrganizationID = req.TenantInfo.OrgID
 	req.Shipment.BusinessUnitID = req.TenantInfo.BuID
+	if err := s.fillMissingDistances(ctx, req.Shipment); err != nil {
+		return nil, err
+	}
 
 	return s.rate(ctx, req.Shipment, &ExplainRequest{
 		TenantInfo: req.TenantInfo,
@@ -163,6 +170,29 @@ func (s *Service) Quote(
 		PartyID:    req.PartyID,
 		AsOf:       req.AsOf,
 	}, ratequote.PurposeQuote, req.Persist)
+}
+
+func (s *Service) fillMissingDistances(ctx context.Context, entity *shipment.Shipment) error {
+	if s.distances == nil {
+		return nil
+	}
+	missing := make([]*shipment.ShipmentMove, 0, len(entity.Moves))
+	for _, move := range entity.Moves {
+		if moveWithoutDistance(move) {
+			missing = append(missing, move)
+		}
+	}
+	if len(missing) == 0 {
+		return nil
+	}
+
+	routed := *entity
+	routed.Moves = missing
+	if _, err := s.distances.ResolveForShipment(ctx, &routed); err != nil {
+		return fmt.Errorf("work out the quote's distance: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Service) rate(
@@ -243,8 +273,13 @@ func (s *Service) Shop(
 		log.Error("failed to load shipment for shopping", zap.Error(err))
 		return nil, err
 	}
+	// A move saved without its miles priced every per-mile carrier at its
+	// minimum charge, so a shop for the cheapest carrier tied them all.
+	if err = s.fillMissingDistances(ctx, entity); err != nil {
+		log.Warn("could not work out the shipment's distance for the shop", zap.Error(err))
+	}
 
-	return s.engine.Shop(ctx, &services.ShopRequest{
+	result, err := s.engine.Shop(ctx, &services.ShopRequest{
 		Shipment:       entity,
 		TenantInfo:     req.TenantInfo,
 		Strategy:       req.Strategy,
@@ -256,4 +291,30 @@ func (s *Service) Shop(
 		Persist:        req.Persist,
 		UserID:         req.TenantInfo.UserID,
 	})
+	if err != nil {
+		return nil, err
+	}
+	if hasMoveWithoutDistance(entity) {
+		result.Warnings = append(result.Warnings, shopWithoutDistanceWarning)
+	}
+
+	return result, nil
+}
+
+const shopWithoutDistanceWarning = "A move on this shipment has no distance, and none could " +
+	"be worked out from its stops, so a carrier paid per mile was priced at its minimum charge. " +
+	"Set the move's miles before comparing per-mile carriers."
+
+func hasMoveWithoutDistance(entity *shipment.Shipment) bool {
+	for _, move := range entity.Moves {
+		if moveWithoutDistance(move) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func moveWithoutDistance(move *shipment.ShipmentMove) bool {
+	return move != nil && (move.Distance == nil || *move.Distance <= 0)
 }

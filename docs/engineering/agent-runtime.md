@@ -309,8 +309,13 @@ opens tainted when:
   mark on the `shipment` (`agent.OutsideAuthoredTaint`), and the subject block
   of the prompt says who wrote it;
 - the person attached a file to the question;
-- a memory read into its prompt was written by a tainted run (a person's approval
-  of the `remember` that wrote it changes how it is rendered, not whether it taints);
+- a memory read into its prompt was written by a tainted run and nobody has
+  reviewed it since (`Memory.Taints`). A person's approval of the `remember` that
+  wrote it changes how it is rendered, not whether it taints; a review does both.
+  Approving a tainted suggestion (in AI Control or on the Desk) is its review, and
+  AI Control lists every Active memory that still taints with a "Reviewed, keep it"
+  action (`reviewAgentMemory`), because one such memory holds every money,
+  customer-visible and outside-recipient write of every turn that reads it;
 - its conversation is already tainted (`assistant_threads.taint`), which a
   decision follow-up inherits because it is a turn on the same conversation;
 - the agent that handed it a task was (`DelegateCall.Taint`).
@@ -418,7 +423,7 @@ What is kept:
 | `agent_runs` | `tainted`, `taint`, `tainted_at` |
 | `agent_proposals` | `tainted` (the run had read outside content when the write was decided), `taint`, `egress_class`, `held_by` |
 | `assistant_threads` | `taint`, `tainted_at` |
-| `agent_memories` | `tainted`, `taint_run_id`, for a memory `remember` wrote from a tainted or nil-taint run (`CarriesTaint`); `source_proposal_id` and `created_by_user_id` when a person approved the `remember` that wrote it |
+| `agent_memories` | `tainted`, `taint_run_id`, for a memory `remember` wrote from a tainted or nil-taint run (`CarriesTaint`); `source_proposal_id` and `created_by_user_id` when a person approved the `remember` that wrote it; `reviewed_by_user_id` and `reviewed_at` when a person reviewed it, after which it taints no turn while `tainted` still records where it came from |
 | `agent_reflections` | `tainted`, for a look back over a window that read outside content (or whose taint is unknown); every lesson it keeps is a suggestion and carries the window's taint |
 | `shipment_comments` | `metadata.tainted`, for a note `add_shipment_comment` wrote on its own after outside content |
 
@@ -437,7 +442,7 @@ a person decided), goes under "What this organization has recorded for its
 agents", grouped under a heading per thing it is about ("About Acme Foods
 (customer)", "About tool assign_move", "For the whole organization"), where an
 Instruction is followed as if the person who recorded it were asking now. A
-tainted memory nobody approved (`Memory.DrawnFromOutside`) goes under "Recorded
+tainted memory nobody approved or reviewed (`Memory.DrawnFromOutside`) goes under "Recorded
 by agents after reading outside content", fenced as
 `<memory_from_outside_content>`, each line naming the kind it was recorded as,
 and framed as information drawn from outside text that is never followed. It
@@ -856,6 +861,55 @@ guard's memory of reads, is saved with the structured changes
 (`assistant_messages.world_changes`) and reaches the reader as `world_changed`.
 Delegated turns neither watch nor steer.
 
+### Records in play
+
+A conversation keeps the records it is about (`assistant_threads.working_set`,
+`conversation.WorkingRecord`, newest first, at most `MaxWorkingSet` = 12): its
+subject, what the person mentioned or had open, what the agent read with a
+`get_*` call (`agentruntime.RecordsRead`, the same rule the world watch uses; a
+failed read and another agent's delegated steps add nothing) and what its
+executed writes changed. `FinishTurn` adds them through `keepWorkingSet`; the
+subject always sorts first, and the kind is read off the id's prefix
+(`permission.RecordKindOfIDPrefix`), so an id of no known kind is never kept.
+
+Every turn reads them again while it is prepared, beside the subject
+(`checkTurn` → `anchorRecords` → `services.RecordAnchorReader`,
+`recordanchorservice`): this turn's mentions and page record first, then the
+working set, leaving out the subject, which `<subject_context>` already reads
+fresh. Access is checked per kind on every turn (`subjectaccess.MayReadResource`);
+a record the person can no longer read, one that is gone and one that could not
+be read are each named with a note and no facts. Each kind that moves has a
+batch reader:
+
+- **Shipment**: the tracking snapshot (`ShipmentTrackingReader.TrackingSnapshots`,
+  the same build `EtasByShipmentIDs` uses), rendered by
+  `shipmenttracking.Snapshot.Facts`: status and customer, what needs attention,
+  the next stop (arrived and not departed, or overdue and by how long), who covers
+  it, the last position, the driver's hours and the estimated arrival.
+- **Invoice**: status, settlement and dispute, bill-to, shipment and due date.
+  Amounts are left to `get_invoice`, which gates them by the reader's data access.
+- **Detention occurrence**: status and notice, the clock, and the charge priced as
+  of now for a running clock (`detentionservice.PriceOpenClock`).
+- **Tractor**: status and last position. **Trailer**: status. **Worker**: hours of
+  service, or that no ELD has reported any.
+
+Other kinds (a customer, a location) are named but not read: nothing on them
+changes under a conversation. What was read reaches the model as a
+`<records_in_play>` block ahead of the question, after the `Now:` line
+(`agentdefinition.DescribeAnchors`). It says the block is current and wins over
+anything said earlier, and every fact taken from a report rather than the record
+itself carries its age, "reported 40m ago", with "too old to plan on" past the
+tracking snapshot's own staleness (`shipmenttracking.PositionStale`, `HOSStale`).
+An ETA is as old as the position it was worked from.
+
+The block is never saved: the question is kept as the person typed it, so a later
+turn never replays an old snapshot as if it were current, compaction can drop the
+transcript without leaving a stale status or ETA behind, and the system prompt and
+the replayed history stay the same bytes from turn to turn for the provider's cache.
+The anchored records are also watched for changes during the turn
+(`watchedRecords`), so one that changes mid-turn reaches the model as a
+`WorldChange` notice. Delegated turns get no block.
+
 ### Parking work on a wait
 
 An agent can park its work until something happens with `wait_until`; the turn
@@ -919,6 +973,28 @@ each with the digest of the preview it showed. A plan's steps are asked for by `
 the plan's, anchored on its first waiting step. A step of a plan among
 `proposalIds` is refused with the plan's id, and a mix of tools is refused.
 Exactly one of the three parameters is given.
+
+### A proposal the agent replaced is withdrawn
+
+A turn's proposals are filed when it ends, and two or more become one plan the person
+approves whole. An agent that proposes a change, notices a mistake and proposes it again
+corrected would otherwise leave both in that plan: one approval ran both, and a load was
+entered twice. Once a turn has filed a proposal a person will decide, the loop offers
+`withdraw_proposal {proposalId, reason?}` (`agentruntime/withdrawproposal.go`). Every
+filing result names its proposal's id ("Recorded a proposal to run "create_shipment"
+(proposal ap_…)"), and the runtime answers the call itself, like `request_decision`: it
+marks that action `Withdrawn` on `PendingAction`, and the recorder records it
+`Superseded` (never pending, never a plan step, never on the watchtower, no draft
+artifact), so the approval box offers only what is still filed. Only a proposal of this
+turn can be withdrawn; one from an earlier turn is refused with the instruction to have the
+person reject it, since it is already in front of them, and one that already ran is refused
+too. A withdrawn action is left out of `ProposedSoFar` (so the same change filed again is a
+new proposal, not a duplicate), of the grounding guard's filed writes and of a delegate's
+report; a delegated turn is never offered the tool. The AI audit trail records the
+superseded proposal's `filed` event and the `withdraw_proposal` call like any runtime step,
+with no new event kind or canonical field. It took no gate: the tool is added to the turn's
+in-workflow tool set as data when a filing comes back, no command is added, and a history
+recorded before it never calls it.
 
 ### What a tool receives
 
@@ -1015,7 +1091,9 @@ says whether the memory is kept or only offered on a card
 (`savedMemoryContent`). A tool done as a sequence declares it
 (`serviceports.RecipeTool`), and the order is shown in the prompt's tool
 section and under the tool in a `find_tools` answer, with the prerequisite
-reads that were loaded alongside it. That is the only place the order of a
+reads that were loaded alongside it. A `find_tools` need that names a tool the
+agent holds outright (`search_worker`) loads that tool first, ahead of the ranked
+matches, since the prompt lists what can be loaded by name. That is the only place the order of a
 piece of work is written: a template's starter instructions
 (`agentdefinition.Template.StarterInstructions`) hold its persona, what it puts
 first, its rules and what is always a person's decision, and name none of its
@@ -1119,6 +1197,18 @@ run carries `OutputAltered` and `OutputRule`, and the turn's decision is the
 altered one. The reply as recorded is sent in a `reply_replaced` event, which
 replaces the streamed one without a retry.
 
+### An oversized tool result
+
+A result over 12,000 characters (`maxToolResultChars`, `agentruntime/fence.go`) is
+shortened before the model reads it. A JSON object keeps every field that is not a list
+whole and writes those first, then shortens its top-level lists to fit, with a note
+saying how many records each list shows and to answer counts from the totals. Cutting
+by bytes dropped exactly those fields: keys arrive sorted, so the dispatch board kept
+its drivers and moves and lost the summary that held the uncovered and late counts.
+A result that is not a JSON object, or does not fit even with its lists shortened, is
+still cut at a character boundary, with a note saying records are missing and not to
+count or infer from them.
+
 ### History replay
 
 A turn replays the newest 120 messages, and their tool results are most of it.
@@ -1135,7 +1225,7 @@ grounding guard above still counts them as read.
 
 The system prompt names today's date only, so its cached prefix is the same all
 day. The question the model reads (never what the conversation keeps) opens with
-`Now: YYYY-MM-DD HH:MM zone` in the organization's zone, UTC when the zone is
+`Now: Weekday YYYY-MM-DD HH:MM zone` (the weekday so "next Friday" needs no asking) in the organization's zone, UTC when the zone is
 unknown, for an agent that reads the clock. `ask_user` option labels that carry a
 date read "Tue Oct 6 (in 7 days)", counted from the turn's own clock
 (`TurnEffects.Now`) in that zone; a past date on a scheduling question adds a note
@@ -1161,7 +1251,7 @@ request is laid out stable first:
   decision. Precedence is the order on the page: Trenova's sections bind the
   organization's, which bind memories, which bind the message. The turn
   carries the shared part's length (`TurnState.SystemStable`) to the adapter.
-  `agentdefinition.PromptVersion` names this shape (v6) on runs, evaluation
+  `agentdefinition.PromptVersion` names this shape (v7) on runs, evaluation
   cases and fingerprints; the snapshots under
   `domain/agentdefinition/testdata/prompts` are regenerated with
   `go test -run TestPromptSnapshots ./internal/core/domain/agentdefinition/ -update`.
@@ -1270,7 +1360,7 @@ it.
   interval, ending at its end date, paused while it is disabled, overlap
   skipped, catch-up window five minutes. Saving an agent syncs its schedule;
   `ReconcileDefinitionSchedulesWorkflow` runs when a worker starts and every
-  quarter hour, backfilling schedules and removing orphans. A firing starts
+  hour, backfilling schedules and removing orphans. A firing starts
   `AgentScheduledRunWorkflow`, which checks the agent may run now and starts
   the run for that slot; the slot keys the run, so it starts once however often
   the start is retried. The static schedule registry leaves these alone: they
@@ -1609,6 +1699,7 @@ before the change:
 | `agent-loop-in-workflow` | `runInOneActivity`, `replayInOneActivity` | `RunAgentActivity`, `ReplayRunActivity`, `awaitDecision` |
 | `insight-refresh-per-organization` | `refreshInOneActivity` | `RefreshInsightsActivity` |
 | `daily-briefing-per-organization` | `writeInOneActivity` | `WriteDueBriefingsActivity` |
+| `weather-alert-poll-fetch-once` | `pollPerTenant` | `ListWeatherAlertTenantsActivity`, `PollNWSAlertsForTenantActivity`, and `WeatherAlertService.ListWeatherAlertTenants` / `PollNWSAlertsForTenant` |
 | `agent-loop-final-answer` | a turn that spends its tool budget ends on the canned `exhaustedReply` without asking the model for an answer | nothing; the check itself is the only cost |
 | `assistant-turn-close-unsaved` | a turn whose save fails on every attempt leaves its record Running, and the conversation refuses every later question | nothing; the check itself is the only cost |
 | `assistant-turn-notify-unseen` | a turn that ends with nobody reading its stream ends without telling the person who asked | nothing; the check itself is the only cost, and it is asked only of a turn nobody drained |

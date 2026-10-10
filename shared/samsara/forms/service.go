@@ -40,6 +40,9 @@ func (s *service) ListTemplates(
 	ctx context.Context,
 	params TemplateListParams,
 ) (TemplateListResponse, error) {
+	if err := params.Validate(); err != nil {
+		return TemplateListResponse{}, err
+	}
 	out := TemplateListResponse{}
 	if err := s.client.Do(ctx, httpx.Request{
 		Method: http.MethodGet,
@@ -56,6 +59,9 @@ func (s *service) ListSubmissions(
 	ctx context.Context,
 	params SubmissionListParams,
 ) (SubmissionListResponse, error) {
+	if err := params.Validate(); err != nil {
+		return SubmissionListResponse{}, err
+	}
 	out := SubmissionListResponse{}
 	if err := s.client.Do(ctx, httpx.Request{
 		Method: http.MethodGet,
@@ -130,6 +136,7 @@ func (s *service) CreateSubmission(
 	return out.Data, nil
 }
 
+//nolint:gocritic // request is copied intentionally to keep update validation side-effect free.
 func (s *service) UpdateSubmission(
 	ctx context.Context,
 	req UpdateSubmissionRequest,

@@ -1,7 +1,6 @@
 package accountingsync
 
 import (
-	"errors"
 	"strings"
 	"time"
 
@@ -9,74 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-)
-
-type SyncMode string
-
-const (
-	SyncModeDocument = SyncMode("Document")
-	SyncModeLedger   = SyncMode("Ledger")
-)
-
-func (m SyncMode) String() string { return string(m) }
-
-func (m SyncMode) IsValid() bool {
-	switch m {
-	case SyncModeDocument, SyncModeLedger:
-		return true
-	default:
-		return false
-	}
-}
-
-func AllSyncModes() []SyncMode {
-	return []SyncMode{SyncModeDocument, SyncModeLedger}
-}
-
-type LedgerGranularity string
-
-const (
-	LedgerDetailed     = LedgerGranularity("Detailed")
-	LedgerDailySummary = LedgerGranularity("DailySummary")
-)
-
-func (g LedgerGranularity) String() string { return string(g) }
-
-func (g LedgerGranularity) IsValid() bool {
-	switch g {
-	case LedgerDetailed, LedgerDailySummary:
-		return true
-	default:
-		return false
-	}
-}
-
-func AllLedgerGranularities() []LedgerGranularity {
-	return []LedgerGranularity{LedgerDetailed, LedgerDailySummary}
-}
-
-var (
-	ErrModeFixed = errors.New(
-		"what is sent is fixed for this connection once sending starts, because the books already hold what was sent",
-	)
-	ErrStartDateFixed = errors.New(
-		"the start date is fixed once opening balances are sent, because they hold every balance up to it",
-	)
-	ErrModeNotRecognized   = errors.New("the mode is not recognized")
-	ErrModeUnavailable     = errors.New("this accounting system cannot receive journal entries")
-	ErrGranularityRequired = errors.New(
-		"journal entries are sent detailed or as a daily summary",
-	)
-	ErrOpeningBalancesNeedLedger = errors.New(
-		"opening balances are sent only when journal entries are",
-	)
-)
-
-const (
-	JournalDayPrefix     = "jday_"
-	JournalOpeningPrefix = "jopen_"
-	journalDayLayout     = "20060102"
-	JournalDaySQLLayout  = "YYYYMMDD"
 )
 
 func (c *AccountingConnection) Mode() SyncMode {

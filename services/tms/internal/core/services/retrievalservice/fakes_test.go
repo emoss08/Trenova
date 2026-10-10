@@ -219,6 +219,20 @@ func (f *fakeRetrievalRepo) SwapModel(
 	}, nil
 }
 
+func (f *fakeRetrievalRepo) ListIndexedTenants(
+	context.Context,
+	repositories.ListIndexedRetrievalTenantsRequest,
+) ([]pagination.TenantInfo, error) {
+	if f.settings == nil || !f.settings.HasActiveModel() {
+		return []pagination.TenantInfo{}, nil
+	}
+
+	return []pagination.TenantInfo{{
+		OrgID: f.settings.OrganizationID,
+		BuID:  f.settings.BusinessUnitID,
+	}}, nil
+}
+
 func (f *fakeRetrievalRepo) PurgeModel(
 	context.Context,
 	repositories.PurgeAIRetrievalModelRequest,

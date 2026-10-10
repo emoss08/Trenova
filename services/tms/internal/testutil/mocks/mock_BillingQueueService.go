@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -833,6 +834,69 @@ func (_c *MockBillingQueueService_PreviewReassignCharge_Call) Return(reassignCha
 }
 
 func (_c *MockBillingQueueService_PreviewReassignCharge_Call) RunAndReturn(run func(ctx context.Context, req *services.ReassignChargeRequest, actor *services.RequestActor) (*services.ReassignChargePreview, error)) *MockBillingQueueService_PreviewReassignCharge_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CheckBiller provides a mock function for the type MockBillingQueueService
+func (_mock *MockBillingQueueService) CheckBiller(ctx context.Context, tenantInfo pagination.TenantInfo, billerID pulid.ID) error {
+	ret := _mock.Called(ctx, tenantInfo, billerID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CheckBiller")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID) error); ok {
+		r0 = returnFunc(ctx, tenantInfo, billerID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockBillingQueueService_CheckBiller_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CheckBiller'
+type MockBillingQueueService_CheckBiller_Call struct {
+	*mock.Call
+}
+
+// CheckBiller is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+//   - billerID pulid.ID
+func (_e *MockBillingQueueService_Expecter) CheckBiller(ctx any, tenantInfo any, billerID any) *MockBillingQueueService_CheckBiller_Call {
+	return &MockBillingQueueService_CheckBiller_Call{Call: _e.mock.On("CheckBiller", ctx, tenantInfo, billerID)}
+}
+
+func (_c *MockBillingQueueService_CheckBiller_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, billerID pulid.ID)) *MockBillingQueueService_CheckBiller_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 pulid.ID
+		if args[2] != nil {
+			arg2 = args[2].(pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueService_CheckBiller_Call) Return(err error) *MockBillingQueueService_CheckBiller_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockBillingQueueService_CheckBiller_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, billerID pulid.ID) error) *MockBillingQueueService_CheckBiller_Call {
 	_c.Call.Return(run)
 	return _c
 }

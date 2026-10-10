@@ -82,11 +82,12 @@ func ptoRecord(pto *worker.WorkerPTO) toolpreview.Record {
 
 func ptoDatesProperties() map[string]any {
 	return map[string]any{
-		paramPTOType:  agenttoolschema.Enum("The kind of time off.", agenttoolschema.PTOTypes),
-		paramPTOStart: agenttoolschema.Date("The first day off."),
-		paramPTOEnd:   agenttoolschema.Date("The last day off."),
-		fieldReason: stringProperty("The reason the worker gave. The driver sees it with "+
-			"the request.", maxPTOReasonChars),
+		paramPTOType: agenttoolschema.Enum("The kind of time off.", agenttoolschema.PTOTypes),
+		paramPTOStart: agenttoolschema.Date("The first day off. \"Next Friday\" is the coming " +
+			"Friday, not the one a week later."),
+		paramPTOEnd: agenttoolschema.Date("The last day off."),
+		fieldReason: stringProperty("The reason the worker gave, when one was given; the "+
+			"driver sees it with the request. Omit it rather than ask, and the kind is used.", maxPTOReasonChars),
 	}
 }
 
@@ -123,7 +124,7 @@ func applyPTODates(pto *worker.WorkerPTO, params map[string]any, required bool) 
 	case reason != nil:
 		pto.Reason = *reason
 	case required:
-		return fmt.Errorf("missing required parameter %q", fieldReason)
+		pto.Reason = string(pto.Type)
 	}
 	return nil
 }
@@ -142,7 +143,7 @@ func newRequestWorkerPTOTool(pto ptoRequester) serviceports.AgentTool {
 			"booked and the driver told at once, and cancel_worker_pto withdraws it.",
 		permission.ResourceWorkerPTO,
 		permission.OpCreate,
-	), properties, paramWorkerID, paramPTOType, paramPTOStart, paramPTOEnd, fieldReason)
+	), properties, paramWorkerID, paramPTOType, paramPTOStart, paramPTOEnd)
 	spec.egress = agent.EgressDriverVisible
 	spec.searchTerms = []string{"vacation", "time off", "PTO request", "day off"}
 

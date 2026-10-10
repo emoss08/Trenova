@@ -447,3 +447,39 @@ func TestNextApprovedPTOStart_SkipsActiveAndDistantWindows(t *testing.T) {
 		"the nearest upcoming window within the lookahead wins")
 	assert.Zero(t, nextApprovedPTOStart(nil, now))
 }
+
+func TestComputeTrip_ClosedWindowIsNotJudgedForLateness(t *testing.T) {
+	t.Parallel()
+
+	svc := &Service{}
+	now := int64(1_000_000)
+	closed := now - 20*3600
+
+	trip := svc.computeTrip(
+		&repositories.BoardDriver{},
+		&repositories.BoardMove{
+			Distance:          ptr(200),
+			OriginWindowStart: closed - 4*3600,
+			OriginWindowEnd:   &closed,
+		},
+		&FleetSnapshot{Now: now},
+	)
+
+	assert.False(t, trip.appointmentKnown, "every driver is equally late to a window already gone")
+	assert.Equal(t, closed, trip.windowClosedAt)
+	assert.Zero(t, trip.slackMinutes)
+
+	finding := appointmentFinding(trip, &dispatchcontrol.DispatchControl{
+		EnforceWorkerPTARestrictions: true,
+	})
+	require.NotNil(t, finding)
+	assert.Equal(t, dispatcheligibility.CodeWindowPassed, finding.Code)
+	assert.Equal(t, dispatcheligibility.SeverityWarn, finding.Severity,
+		"a window nobody can make does not block the one driver who ran the load")
+
+	assert.Equal(t, telematics.FeasibilityVerdictFeasible, verdictFor(&verdictInput{
+		Eval:         dispatcheligibility.NewEvaluation(0),
+		SlackMinutes: trip.slackMinutes,
+		SlackKnown:   trip.appointmentKnown,
+	}))
+}

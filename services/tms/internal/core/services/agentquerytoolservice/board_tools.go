@@ -3,9 +3,12 @@ package agentquerytoolservice
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/dispatchconsoleservice"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -36,6 +39,7 @@ type boardMoveRow struct {
 	ShipmentStatus  string  `json:"shipmentStatus"`
 	MoveStatus      string  `json:"moveStatus"`
 	Urgency         string  `json:"urgency"`
+	LateTo          string  `json:"lateTo,omitempty"`
 	MinutesToPickup int64   `json:"minutesToPickup"`
 	Covered         bool    `json:"covered"`
 	Coverage        string  `json:"coverage"`
@@ -107,9 +111,13 @@ func (t *getDispatchBoardTool) Description() string {
 		"and every driver with availability, hours remaining and last position. Urgency " +
 		"is Late, Now, Today, Tomorrow or Planned, and each move shows who covers it and " +
 		"its pickup and delivery windows. This is the one call for \"what is late\", " +
-		"\"what is uncovered\" and \"who is free\". Late means the pickup window has " +
-		"already opened with nobody there; check get_shipment_tracking on a late move " +
-		"before deciding it is a problem, since arrivals are sometimes recorded late."
+		"\"what is uncovered\" and \"who is free\". Urgency follows the pickup window, " +
+		"so each late move's lateTo says whether it is late to pick up or to deliver; " +
+		"check get_shipment_tracking on a late move " +
+		"before acting on it, since arrivals are sometimes recorded late. A rundown or " +
+		"a list answers from the board as it stands, saying what each is late to do, " +
+		"rather than tracking each move. To act on one load, such as a note or a " +
+		"change, find it with search_shipments."
 }
 
 func (t *getDispatchBoardTool) ParamSchema() map[string]any {
@@ -205,13 +213,20 @@ func boardViewOf(board *dispatchconsoleservice.Board, timezone string) boardView
 		}
 	}
 
+	late := lateTally{}
 	for _, move := range board.Moves {
 		if move == nil || move.BoardMove == nil {
 			continue
 		}
 		view.Counts[string(move.Urgency)]++
-		view.Moves = append(view.Moves, toBoardMoveRow(move, timezone))
+		row := toBoardMoveRow(move, timezone)
+		row.LateTo = lateTo(move.BoardMove, board.WindowStart)
+		late.add(&row)
+		view.Moves = append(view.Moves, row)
 	}
+	slices.SortStableFunc(view.Moves, func(a, b boardMoveRow) int {
+		return lateRank(a.LateTo) - lateRank(b.LateTo)
+	})
 	for _, driver := range board.Drivers {
 		if driver == nil || driver.BoardDriver == nil {
 			continue
@@ -220,12 +235,87 @@ func boardViewOf(board *dispatchconsoleservice.Board, timezone string) boardView
 	}
 
 	view.Note = fmt.Sprintf(
-		"%d moves and %d drivers in the window. Urgency counts: %s. Late is a pickup "+
-			"window already open with no arrival recorded.",
+		"%d moves and %d drivers in the window. Urgency counts: %s. Urgency follows the "+
+			"pickup window, so a move already picked up reads Late too; lateTo says what "+
+			"each is late to do: %d late to pick up, %d late to deliver.%s",
 		len(view.Moves), len(view.Drivers), countsText(view.Counts),
+		late.pickUp, late.deliver, late.delayedText(),
 	)
 
 	return view
+}
+
+const (
+	lateToPickUp  = "pick up"
+	lateToDeliver = "deliver"
+)
+
+// lateTo is what a move is late to do at now: pick up, when its pickup
+// window has opened with no arrival recorded, or deliver, when it was picked
+// up and its delivery window has closed. A move picked up and still inside
+// its delivery window is not late, whatever its pickup-based urgency says.
+func lateTo(move *repositories.BoardMove, now int64) string {
+	if move.OriginActualArrive == nil || *move.OriginActualArrive <= 0 {
+		if move.OriginWindowStart > 0 && move.OriginWindowStart < now {
+			return lateToPickUp
+		}
+
+		return ""
+	}
+
+	deadline := move.DestinationWindowStart
+	if move.DestinationWindowEnd != nil && *move.DestinationWindowEnd > 0 {
+		deadline = *move.DestinationWindowEnd
+	}
+	if deadline > 0 && deadline < now {
+		return lateToDeliver
+	}
+
+	return ""
+}
+
+// lateRank orders the agent's board by what a move is late to do: a load
+// late to deliver first, then one late to pick up, then the rest, so a
+// shortened board keeps the moves a "what is late" question is about.
+func lateRank(lateTo string) int {
+	switch lateTo {
+	case lateToDeliver:
+		return 0
+	case lateToPickUp:
+		return 1
+	default:
+		return 2
+	}
+}
+
+// lateTally counts the board's late moves by what they are late to do, and
+// keeps the shipments marked Delayed for the note, which list shortening
+// never cuts.
+type lateTally struct {
+	pickUp  int
+	deliver int
+	delayed []string
+}
+
+func (l *lateTally) add(row *boardMoveRow) {
+	switch row.LateTo {
+	case lateToPickUp:
+		l.pickUp++
+	case lateToDeliver:
+		l.deliver++
+	}
+	if row.ShipmentStatus == string(shipment.StatusDelayed) &&
+		!slices.Contains(l.delayed, row.ProNumber) {
+		l.delayed = append(l.delayed, row.ProNumber)
+	}
+}
+
+func (l *lateTally) delayedText() string {
+	if len(l.delayed) == 0 {
+		return ""
+	}
+
+	return " Shipments marked Delayed: " + strings.Join(l.delayed, ", ") + "."
 }
 
 func toBoardMoveRow(move *dispatchconsoleservice.BoardMove, timezone string) boardMoveRow {

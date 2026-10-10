@@ -43,7 +43,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "samsara-telematics-sweep",
 			Description:   "Sync Samsara vehicle mappings and ingest HOS violations for all enabled tenants",
-			Spec:          schedule.Every(15 * time.Minute),
+			Spec:          schedule.Every(30 * time.Minute),
 			Workflow:      TelematicsSweepWorkflow,
 			TaskQueue:     temporaltype.IntegrationTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,

@@ -10,52 +10,57 @@ func (s SeedID) String() string {
 }
 
 const (
-	SeedAIProvider SeedID = "AIProvider" // from 25_ai_provider.go
-	SeedAdminAccount SeedID = "AdminAccount" // from 01_adminaccount.go
-	SeedAgentActivity SeedID = "AgentActivity" // from 31_agent_activity.go
-	SeedAgentDefinition SeedID = "AgentDefinition" // from 26_agent_definition.go
-	SeedAssistantArtifact SeedID = "AssistantArtifact" // from 32_assistant_artifact.go
-	SeedAssistantConversation SeedID = "AssistantConversation" // from 27_assistant_conversation.go
-	SeedCarrier SeedID = "Carrier" // from 14_carrier.go
-	SeedDesk SeedID = "Desk" // from 30_desk.go
-	SeedDetention SeedID = "Detention" // from 13_detention.go
-	SeedDocumentParsingRuleExample SeedID = "DocumentParsingRuleExample" // from 08_documentparsingruleexample.go
-	SeedDocumentTemplateStarters SeedID = "DocumentTemplateStarters" // from 10_document_template_starters.go
-	SeedDocumentType SeedID = "DocumentType" // from 06_document_type.go
-	SeedDotHazmatReferences SeedID = "DotHazmatReferences" // from 03_dot_hazmat_references.go
-	SeedDriverPay SeedID = "DriverPay" // from 11_driverpay.go
-	SeedDriverPayLedger SeedID = "DriverPayLedger" // from 12_driverpay_ledger.go
-	SeedFormulaTemplate SeedID = "FormulaTemplate" // from 01_formulatemplate.go
-	SeedFuelSpendIFTA SeedID = "FuelSpendIFTA" // from 24_fuel_spend_ifta.go
-	SeedFuelSurcharge SeedID = "FuelSurcharge" // from 10_fuelsurcharge.go
-	SeedGLAccount SeedID = "GLAccount" // from 04_gl_account.go
-	SeedIFTAJurisdictions SeedID = "IFTAJurisdictions" // from 12_ifta_jurisdictions.go
-	SeedInboundMessage SeedID = "InboundMessage" // from 29_inbound_message.go
-	SeedInsight SeedID = "Insight" // from 28_insight.go
-	SeedJurisdictionRulesBaseline SeedID = "JurisdictionRulesBaseline" // from 11_jurisdiction_rules_baseline.go
-	SeedLocation SeedID = "Location" // from 05_location.go
-	SeedLocationCategory SeedID = "LocationCategory" // from 04_location_category.go
-	SeedLookupMatrix SeedID = "LookupMatrix" // from 09_lookup_matrix.go
-	SeedOrgHoliday SeedID = "OrgHoliday" // from 21_org_holiday.go
+	SeedAIProvider                      SeedID = "AIProvider"                      // from 25_ai_provider.go
+	SeedAdminAccount                    SeedID = "AdminAccount"                    // from 01_adminaccount.go
+	SeedAgentActivity                   SeedID = "AgentActivity"                   // from 31_agent_activity.go
+	SeedAgentDefinition                 SeedID = "AgentDefinition"                 // from 26_agent_definition.go
+	SeedAssistantArtifact               SeedID = "AssistantArtifact"               // from 32_assistant_artifact.go
+	SeedAssistantConversation           SeedID = "AssistantConversation"           // from 27_assistant_conversation.go
+	SeedCarrier                         SeedID = "Carrier"                         // from 14_carrier.go
+	SeedCarrierRateAgreement            SeedID = "CarrierRateAgreement"            // from 37_carrier_rate_agreement.go
+	SeedDOTRandomPool                   SeedID = "DOTRandomPool"                   // from 34_dot_random_pool.go
+	SeedDesk                            SeedID = "Desk"                            // from 30_desk.go
+	SeedDetention                       SeedID = "Detention"                       // from 13_detention.go
+	SeedDocumentParsingRuleExample      SeedID = "DocumentParsingRuleExample"      // from 08_documentparsingruleexample.go
+	SeedDocumentTemplateStarters        SeedID = "DocumentTemplateStarters"        // from 10_document_template_starters.go
+	SeedDocumentType                    SeedID = "DocumentType"                    // from 06_document_type.go
+	SeedDotHazmatReferences             SeedID = "DotHazmatReferences"             // from 03_dot_hazmat_references.go
+	SeedDriverPay                       SeedID = "DriverPay"                       // from 11_driverpay.go
+	SeedDriverPayLedger                 SeedID = "DriverPayLedger"                 // from 12_driverpay_ledger.go
+	SeedFiscalYear                      SeedID = "FiscalYear"                      // from 36_fiscal_year.go
+	SeedFormulaTemplate                 SeedID = "FormulaTemplate"                 // from 01_formulatemplate.go
+	SeedFuelSpendIFTA                   SeedID = "FuelSpendIFTA"                   // from 24_fuel_spend_ifta.go
+	SeedFuelSurcharge                   SeedID = "FuelSurcharge"                   // from 10_fuelsurcharge.go
+	SeedGLAccount                       SeedID = "GLAccount"                       // from 04_gl_account.go
+	SeedHoldReason                      SeedID = "HoldReason"                      // from 33_hold_reason.go
+	SeedIFTAJurisdictions               SeedID = "IFTAJurisdictions"               // from 12_ifta_jurisdictions.go
+	SeedInboundMessage                  SeedID = "InboundMessage"                  // from 29_inbound_message.go
+	SeedInsight                         SeedID = "Insight"                         // from 28_insight.go
+	SeedJurisdictionRulesBaseline       SeedID = "JurisdictionRulesBaseline"       // from 11_jurisdiction_rules_baseline.go
+	SeedLaneDistance                    SeedID = "LaneDistance"                    // from 35_lane_distance.go
+	SeedLocation                        SeedID = "Location"                        // from 05_location.go
+	SeedLocationCategory                SeedID = "LocationCategory"                // from 04_location_category.go
+	SeedLookupMatrix                    SeedID = "LookupMatrix"                    // from 09_lookup_matrix.go
+	SeedOrgHoliday                      SeedID = "OrgHoliday"                      // from 21_org_holiday.go
 	SeedOrganizationRolePermissionsSync SeedID = "OrganizationRolePermissionsSync" // from 08_organization_role_permissions_sync.go
-	SeedOrganizationRoles SeedID = "OrganizationRoles" // from 02_organization_roles.go
-	SeedPTOPolicy SeedID = "PTOPolicy" // from 17_pto_policy.go
-	SeedRateAgreement SeedID = "RateAgreement" // from 16_rate_agreement.go
-	SeedRoutingGuide SeedID = "RoutingGuide" // from 15_routing_guide.go
-	SeedServiceFailureReasonCode SeedID = "ServiceFailureReasonCode" // from 09_service_failure_reason_code.go
-	SeedShipment SeedID = "Shipment" // from 07_shipment.go
-	SeedSystemAccount SeedID = "SystemAccount" // from 05_system_account.go
-	SeedSystemAgentDefinitions SeedID = "SystemAgentDefinitions" // from 13_system_agent_definitions.go
-	SeedTCAAllowlistedTables SeedID = "TCAAllowlistedTables" // from 07_tca_allowlisted_tables.go
-	SeedTestData SeedID = "TestData" // from 06_test_data.go
-	SeedTestOrganizations SeedID = "TestOrganizations" // from 00_test_organizations.go
-	SeedUSStates SeedID = "USStates" // from 00_us_states.go
-	SeedWorker SeedID = "Worker" // from 03_worker.go
-	SeedWorkerChecklist SeedID = "WorkerChecklist" // from 20_worker_checklist.go
-	SeedWorkerCredential SeedID = "WorkerCredential" // from 18_worker_credential.go
-	SeedWorkerEmploymentEvent SeedID = "WorkerEmploymentEvent" // from 19_worker_employment_event.go
-	SeedWorkerSafety SeedID = "WorkerSafety" // from 23_worker_safety.go
-	SeedWorkerTraining SeedID = "WorkerTraining" // from 22_worker_training.go
+	SeedOrganizationRoles               SeedID = "OrganizationRoles"               // from 02_organization_roles.go
+	SeedPTOPolicy                       SeedID = "PTOPolicy"                       // from 17_pto_policy.go
+	SeedRateAgreement                   SeedID = "RateAgreement"                   // from 16_rate_agreement.go
+	SeedRoutingGuide                    SeedID = "RoutingGuide"                    // from 15_routing_guide.go
+	SeedServiceFailureReasonCode        SeedID = "ServiceFailureReasonCode"        // from 09_service_failure_reason_code.go
+	SeedShipment                        SeedID = "Shipment"                        // from 07_shipment.go
+	SeedSystemAccount                   SeedID = "SystemAccount"                   // from 05_system_account.go
+	SeedSystemAgentDefinitions          SeedID = "SystemAgentDefinitions"          // from 13_system_agent_definitions.go
+	SeedTCAAllowlistedTables            SeedID = "TCAAllowlistedTables"            // from 07_tca_allowlisted_tables.go
+	SeedTestData                        SeedID = "TestData"                        // from 06_test_data.go
+	SeedTestOrganizations               SeedID = "TestOrganizations"               // from 00_test_organizations.go
+	SeedUSStates                        SeedID = "USStates"                        // from 00_us_states.go
+	SeedWorker                          SeedID = "Worker"                          // from 03_worker.go
+	SeedWorkerChecklist                 SeedID = "WorkerChecklist"                 // from 20_worker_checklist.go
+	SeedWorkerCredential                SeedID = "WorkerCredential"                // from 18_worker_credential.go
+	SeedWorkerEmploymentEvent           SeedID = "WorkerEmploymentEvent"           // from 19_worker_employment_event.go
+	SeedWorkerSafety                    SeedID = "WorkerSafety"                    // from 23_worker_safety.go
+	SeedWorkerTraining                  SeedID = "WorkerTraining"                  // from 22_worker_training.go
 )
 
 var AllSeedIDs = []SeedID{
@@ -66,6 +71,8 @@ var AllSeedIDs = []SeedID{
 	SeedAssistantArtifact,
 	SeedAssistantConversation,
 	SeedCarrier,
+	SeedCarrierRateAgreement,
+	SeedDOTRandomPool,
 	SeedDesk,
 	SeedDetention,
 	SeedDocumentParsingRuleExample,
@@ -74,14 +81,17 @@ var AllSeedIDs = []SeedID{
 	SeedDotHazmatReferences,
 	SeedDriverPay,
 	SeedDriverPayLedger,
+	SeedFiscalYear,
 	SeedFormulaTemplate,
 	SeedFuelSpendIFTA,
 	SeedFuelSurcharge,
 	SeedGLAccount,
+	SeedHoldReason,
 	SeedIFTAJurisdictions,
 	SeedInboundMessage,
 	SeedInsight,
 	SeedJurisdictionRulesBaseline,
+	SeedLaneDistance,
 	SeedLocation,
 	SeedLocationCategory,
 	SeedLookupMatrix,
@@ -131,16 +141,21 @@ var DevelopmentSeedIDs = []SeedID{
 	SeedAssistantArtifact,
 	SeedAssistantConversation,
 	SeedCarrier,
+	SeedCarrierRateAgreement,
+	SeedDOTRandomPool,
 	SeedDesk,
 	SeedDetention,
 	SeedDocumentParsingRuleExample,
 	SeedDriverPay,
 	SeedDriverPayLedger,
+	SeedFiscalYear,
 	SeedFormulaTemplate,
 	SeedFuelSpendIFTA,
 	SeedFuelSurcharge,
+	SeedHoldReason,
 	SeedInboundMessage,
 	SeedInsight,
+	SeedLaneDistance,
 	SeedLocation,
 	SeedLocationCategory,
 	SeedLookupMatrix,
@@ -159,8 +174,7 @@ var DevelopmentSeedIDs = []SeedID{
 	SeedWorkerTraining,
 }
 
-var TestSeedIDs = []SeedID{
-}
+var TestSeedIDs = []SeedID{}
 
 func ValidateSeedID(id SeedID) bool {
 	for _, valid := range AllSeedIDs {

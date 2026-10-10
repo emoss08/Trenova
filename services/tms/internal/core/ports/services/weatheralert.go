@@ -58,8 +58,27 @@ type GetWeatherAlertDetailRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type WeatherAlertPollHeartbeat func(details ...any)
+
+type WeatherAlertTenantSync struct {
+	TenantInfo pagination.TenantInfo
+	Written    int
+	Unchanged  int
+	Err        error
+}
+
+type PollNWSAlertsResult struct {
+	FeedUnchanged  bool
+	AlertsInFeed   int
+	TenantsScanned int
+	Tenants        []WeatherAlertTenantSync
+}
+
 type WeatherAlertService interface {
-	PollNWSAlerts(ctx context.Context) error
+	PollNWSAlerts(
+		ctx context.Context,
+		heartbeat WeatherAlertPollHeartbeat,
+	) (*PollNWSAlertsResult, error)
 	ListWeatherAlertTenants(ctx context.Context, limit int) ([]pagination.TenantInfo, error)
 	PollNWSAlertsForTenant(ctx context.Context, tenantInfo pagination.TenantInfo) error
 	ExpireStaleWeatherAlerts(ctx context.Context) error

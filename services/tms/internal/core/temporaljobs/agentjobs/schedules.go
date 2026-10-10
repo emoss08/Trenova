@@ -11,7 +11,7 @@ import (
 // reconcileEvery is how often every agent's schedule is checked against the
 // agent. A save syncs its own schedule at once; this repairs one a failed save
 // left behind, and catches an agent changed by anything other than a save.
-const reconcileEvery = 15 * time.Minute
+const reconcileEvery = time.Hour
 
 type ScheduleProvider struct{}
 

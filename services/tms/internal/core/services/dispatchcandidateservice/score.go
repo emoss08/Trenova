@@ -37,6 +37,8 @@ type CandidateScore struct {
 	EstimatedDriveMs   int64    `json:"estimatedDriveMs"`
 	ProjectedArrival   int64    `json:"projectedArrival"`
 	MinutesOfSlack     int64    `json:"minutesOfSlack"`
+	SlackKnown         bool     `json:"slackKnown"`
+	HOSKnown           bool     `json:"hosKnown"`
 	DriveRemainingMs   int64    `json:"driveRemainingMs"`
 	ShiftRemainingMs   int64    `json:"shiftRemainingMs"`
 	CycleRemainingMs   int64    `json:"cycleRemainingMs"`
@@ -524,6 +526,7 @@ func describeLaneExperience(moves float64, customerName string) string {
 type verdictInput struct {
 	Eval         *dispatcheligibility.Evaluation
 	SlackMinutes float64
+	SlackKnown   bool
 	HOSKnown     bool
 	HOSExpected  bool
 	Projection   *hosprojection.Result
@@ -544,10 +547,10 @@ func verdictFor(in *verdictInput) string {
 	if in.Projection != nil && !in.Projection.Feasible {
 		return telematics.FeasibilityVerdictInfeasible
 	}
-	if in.SlackMinutes < 0 {
+	if in.SlackKnown && in.SlackMinutes < 0 {
 		return telematics.FeasibilityVerdictInfeasible
 	}
-	if in.SlackMinutes < 90 {
+	if in.SlackKnown && in.SlackMinutes < 90 {
 		return telematics.FeasibilityVerdictTight
 	}
 	if in.Projection != nil &&

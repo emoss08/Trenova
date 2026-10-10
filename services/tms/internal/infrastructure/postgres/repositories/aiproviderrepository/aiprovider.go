@@ -380,6 +380,8 @@ func (r *repository) Update(
 			Set(cols.ExtraBody.Set(), entity.ExtraBody).
 			Set(cols.InputCostPerMillion.Set(), entity.InputCostPerMillion).
 			Set(cols.OutputCostPerMillion.Set(), entity.OutputCostPerMillion).
+			Set(cols.CacheReadCostPerMillion.Set(), entity.CacheReadCostPerMillion).
+			Set(cols.CacheWriteCostPerMillion.Set(), entity.CacheWriteCostPerMillion).
 			Set(cols.MaxTokens.Set(), entity.MaxTokens).
 			Set(cols.ContextWindowTokens.Set(), entity.ContextWindowTokens).
 			Set(cols.Tasks.Set(), dbhelper.TextArray(entity.Tasks)).

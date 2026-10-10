@@ -16,27 +16,40 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/postgis"
+	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/paulmach/orb/geojson"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const (
-	nwsAlertsURL = "https://api.weather.gov/alerts/active"
-	nwsUserAgent = "Trenova TMS (trenova.app)"
+	nwsAlertsURL            = "https://api.weather.gov/alerts/active"
+	nwsUserAgent            = "Trenova TMS (trenova.app)"
+	nwsFeedStateTTL         = 24 * time.Hour
+	upsertHeartbeatInterval = 50
 )
 
 type Params struct {
 	fx.In
 
-	Logger *zap.Logger
-	Repo   repositories.WeatherAlertRepository
+	Logger    *zap.Logger
+	Repo      repositories.WeatherAlertRepository
+	FeedState repositories.WeatherAlertFeedStateStore
 }
 
 type Service struct {
 	logger     *zap.Logger
 	repo       repositories.WeatherAlertRepository
+	feedState  repositories.WeatherAlertFeedStateStore
 	httpClient *http.Client
+	feedURL    string
+}
+
+type nwsFeed struct {
+	state       repositories.WeatherAlertFeedState
+	notModified bool
+	alerts      []*weatheralert.WeatherAlert
+	nwsIDs      []string
 }
 
 type nwsActiveAlertsResponse struct {
@@ -71,47 +84,63 @@ type nwsAlertProperties struct {
 
 func New(p Params) *Service {
 	return &Service{
-		logger: p.Logger.Named("service.weather-alert"),
-		repo:   p.Repo,
+		logger:    p.Logger.Named("service.weather-alert"),
+		repo:      p.Repo,
+		feedState: p.FeedState,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
+		feedURL: nwsAlertsURL,
 	}
 }
 
-func (s *Service) PollNWSAlerts(ctx context.Context) error {
+func (s *Service) PollNWSAlerts(
+	ctx context.Context,
+	heartbeat serviceports.WeatherAlertPollHeartbeat,
+) (*serviceports.PollNWSAlertsResult, error) {
 	tenants, err := s.repo.ListTenants(ctx)
 	if err != nil {
-		return errortypes.NewBusinessError("failed to list tenants for weather alerts").
+		return nil, errortypes.NewBusinessError("failed to list tenants for weather alerts").
 			WithInternal(err)
 	}
 
+	result := &serviceports.PollNWSAlertsResult{TenantsScanned: len(tenants)}
 	if len(tenants) == 0 {
-		return nil
+		return result, nil
 	}
 
-	alerts, err := s.fetchActiveAlerts(ctx)
+	tenantsDigest := digestTenants(tenants)
+	feed, err := s.fetchActiveAlerts(ctx, s.knownFeedState(ctx, tenantsDigest))
 	if err != nil {
-		return err
+		return nil, err
+	}
+	if feed.notModified {
+		result.FeedUnchanged = true
+		return result, nil
 	}
 
+	result.AlertsInFeed = len(feed.alerts)
+	result.Tenants = make([]serviceports.WeatherAlertTenantSync, 0, len(tenants))
+	allSynced := true
 	for _, tenantInfo := range tenants {
-		tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
-		for _, alert := range alerts {
-			entity := cloneAlertForTenant(alert, tenantInfo)
-			if _, err = s.repo.UpsertAlert(tenantCtx, entity); err != nil {
-				return errortypes.NewBusinessError("failed to upsert weather alert").
-					WithInternal(err)
-			}
+		if err = ctx.Err(); err != nil {
+			return nil, err
 		}
+
+		beat(heartbeat, "syncing-nws-alerts", tenantInfo.OrgID.String())
+		synced := s.syncTenant(ctx, tenantInfo, feed, heartbeat)
+		if synced.Err != nil {
+			allSynced = false
+		}
+		result.Tenants = append(result.Tenants, synced)
 	}
 
-	if _, err = s.repo.ExpireStaleAlerts(ctx); err != nil {
-		return errortypes.NewBusinessError("failed to expire stale weather alerts").
-			WithInternal(err)
+	if allSynced {
+		feed.state.TenantsDigest = tenantsDigest
+		s.saveFeedState(ctx, &feed.state)
 	}
 
-	return nil
+	return result, nil
 }
 
 func (s *Service) ListWeatherAlertTenants(
@@ -134,20 +163,117 @@ func (s *Service) PollNWSAlertsForTenant(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	alerts, err := s.fetchActiveAlerts(ctx)
+	feed, err := s.fetchActiveAlerts(ctx, nil)
 	if err != nil {
 		return err
 	}
 
-	for _, alert := range alerts {
-		entity := cloneAlertForTenant(alert, tenantInfo)
-		if _, err = s.repo.UpsertAlert(ctx, entity); err != nil {
-			return errortypes.NewBusinessError("failed to upsert weather alert").
+	return s.syncTenant(ctx, tenantInfo, feed, nil).Err
+}
+
+func (s *Service) syncTenant(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	feed *nwsFeed,
+	heartbeat serviceports.WeatherAlertPollHeartbeat,
+) serviceports.WeatherAlertTenantSync {
+	synced := serviceports.WeatherAlertTenantSync{TenantInfo: tenantInfo}
+	tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
+
+	stored, err := s.repo.ListByNWSIDs(tenantCtx, repositories.ListWeatherAlertsByNWSIDsRequest{
+		TenantInfo: tenantInfo,
+		NWSIDs:     feed.nwsIDs,
+	})
+	if err != nil {
+		synced.Err = errortypes.NewBusinessError("failed to read stored weather alerts").
+			WithInternal(err)
+		return synced
+	}
+
+	storedByNWSID := make(map[string]*weatheralert.WeatherAlert, len(stored))
+	for _, alert := range stored {
+		storedByNWSID[alert.NWSID] = alert
+	}
+
+	for _, alert := range feed.alerts {
+		if alert.IsSameMessage(storedByNWSID[alert.NWSID]) {
+			synced.Unchanged++
+			continue
+		}
+
+		_, err = s.repo.UpsertAlert(tenantCtx, cloneAlertForTenant(alert, tenantInfo))
+		if err != nil {
+			synced.Err = errortypes.NewBusinessError("failed to upsert weather alert").
 				WithInternal(err)
+			return synced
+		}
+
+		synced.Written++
+		if synced.Written%upsertHeartbeatInterval == 0 {
+			beat(heartbeat, "syncing-nws-alerts", tenantInfo.OrgID.String(), synced.Written)
 		}
 	}
 
-	return nil
+	return synced
+}
+
+func (s *Service) knownFeedState(
+	ctx context.Context,
+	tenantsDigest string,
+) *repositories.WeatherAlertFeedState {
+	state, err := s.feedState.Get(ctx)
+	if err != nil {
+		s.logger.Warn("failed to read NWS feed state; fetching the full feed", zap.Error(err))
+		return nil
+	}
+	if state == nil || state.TenantsDigest != tenantsDigest {
+		return nil
+	}
+
+	return state
+}
+
+func (s *Service) saveFeedState(ctx context.Context, state *repositories.WeatherAlertFeedState) {
+	if state.ETag == "" && state.LastModified == "" {
+		return
+	}
+
+	if err := s.feedState.Save(ctx, state, nwsFeedStateTTL); err != nil {
+		s.logger.Warn("failed to save NWS feed state", zap.Error(err))
+	}
+}
+
+func digestTenants(tenants []pagination.TenantInfo) string {
+	var b strings.Builder
+	b.Grow(len(tenants) * 64)
+	for _, tenantInfo := range tenants {
+		b.WriteString(tenantInfo.OrgID.String())
+		b.WriteByte(':')
+		b.WriteString(tenantInfo.BuID.String())
+		b.WriteByte('\n')
+	}
+
+	return hashutils.SHA256Hex(b.String())
+}
+
+func isSameFeed(
+	known *repositories.WeatherAlertFeedState,
+	received *repositories.WeatherAlertFeedState,
+) bool {
+	if known == nil {
+		return false
+	}
+	if received.ETag != "" {
+		return received.ETag == known.ETag
+	}
+
+	return received.LastModified != "" && received.LastModified == known.LastModified
+}
+
+func beat(heartbeat serviceports.WeatherAlertPollHeartbeat, details ...any) {
+	if heartbeat != nil {
+		heartbeat(details...)
+	}
 }
 
 func (s *Service) ExpireStaleWeatherAlerts(ctx context.Context) error {
@@ -237,9 +363,11 @@ func (s *Service) GetAlertDetail(
 	}, nil
 }
 
-//nolint:govet // existing scoped variable reuse is local and behavior-preserving
-func (s *Service) fetchActiveAlerts(ctx context.Context) ([]*weatheralert.WeatherAlert, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, nwsAlertsURL, http.NoBody)
+func (s *Service) fetchActiveAlerts(
+	ctx context.Context,
+	known *repositories.WeatherAlertFeedState,
+) (*nwsFeed, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.feedURL, http.NoBody)
 	if err != nil {
 		return nil, errortypes.NewBusinessError("failed to build NWS weather alerts request").
 			WithInternal(err)
@@ -247,6 +375,14 @@ func (s *Service) fetchActiveAlerts(ctx context.Context) ([]*weatheralert.Weathe
 
 	req.Header.Set("User-Agent", nwsUserAgent)
 	req.Header.Set("Accept", "application/geo+json")
+	if known != nil {
+		if known.ETag != "" {
+			req.Header.Set("If-None-Match", known.ETag)
+		}
+		if known.LastModified != "" {
+			req.Header.Set("If-Modified-Since", known.LastModified)
+		}
+	}
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
@@ -255,10 +391,24 @@ func (s *Service) fetchActiveAlerts(ctx context.Context) ([]*weatheralert.Weathe
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	feed := &nwsFeed{
+		state: repositories.WeatherAlertFeedState{
+			ETag:         resp.Header.Get("ETag"),
+			LastModified: resp.Header.Get("Last-Modified"),
+		},
+	}
+
+	switch {
+	case resp.StatusCode == http.StatusNotModified && known != nil:
+		feed.notModified = true
+		return feed, nil
+	case resp.StatusCode != http.StatusOK:
 		return nil, errortypes.NewBusinessError(
 			"NWS weather alerts request failed with status {0}", resp.StatusCode,
 		)
+	case isSameFeed(known, &feed.state):
+		feed.notModified = true
+		return feed, nil
 	}
 
 	payload := new(nwsActiveAlertsResponse)
@@ -267,6 +417,22 @@ func (s *Service) fetchActiveAlerts(ctx context.Context) ([]*weatheralert.Weathe
 			WithInternal(err)
 	}
 
+	feed.alerts, err = s.parseAlerts(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	feed.nwsIDs = make([]string, 0, len(feed.alerts))
+	for _, alert := range feed.alerts {
+		feed.nwsIDs = append(feed.nwsIDs, alert.NWSID)
+	}
+
+	return feed, nil
+}
+
+func (s *Service) parseAlerts(
+	payload *nwsActiveAlertsResponse,
+) ([]*weatheralert.WeatherAlert, error) {
 	alerts := make([]*weatheralert.WeatherAlert, 0, len(payload.Features))
 	now := time.Now().UTC().Unix()
 	for _, feature := range payload.Features {

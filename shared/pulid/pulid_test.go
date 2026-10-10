@@ -432,6 +432,33 @@ func TestLooksLike(t *testing.T) {
 	}
 }
 
+func TestMisCopied(t *testing.T) {
+	t.Parallel()
+
+	prefix, length, ok := pulid.MisCopied("dto_01M49Z0FVJT4EPTT73X9PZG39")
+	assert.True(t, ok)
+	assert.Equal(t, "dto_", prefix)
+	assert.Equal(t, 25, length)
+
+	_, length, ok = pulid.MisCopied("shp_01M49Z0FVJT4EPTT73X9PZG39ZZ")
+	assert.True(t, ok)
+	assert.Equal(t, 27, length)
+
+	for _, value := range []string{
+		"",
+		"shp_1",
+		"PRO-778",
+		"dto_01M49Z0FVJT4EPTT73X9PZG39Z",
+		"Dto_01M49Z0FVJT4EPTT73X9PZG39",
+		"dto_01m49z0fvjt4eptt73x9pzg39",
+		"a_very_long_prefix_01M37R101VKZTB7TSKR30FJ0A",
+		"_01M49Z0FVJT4EPTT73X9PZG39",
+	} {
+		_, _, ok = pulid.MisCopied(value)
+		assert.False(t, ok, value)
+	}
+}
+
 func TestFirstNotNil(t *testing.T) {
 	t.Parallel()
 

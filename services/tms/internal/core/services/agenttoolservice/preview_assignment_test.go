@@ -204,3 +204,19 @@ func TestAssignMove_PreviewWarnsForAMoveAlreadyCovered(t *testing.T) {
 	assert.Empty(t, preview.Changes)
 	requireWarning(t, preview, agent.PreviewWarningWouldFail)
 }
+
+/*
+"put david park on it with trc-001 and a dry van" loaded assign_move with only
+get_shipment and rank_move_candidates. gpt-6-luna spent its four tool searches
+finding the driver and the tractor, was refused a fifth for the trailer list,
+and asked which dry van instead of choosing one. The lookups its ids name load
+with it.
+*/
+func TestAssignMove_LoadsTheLookupsItsIDsComeFrom(t *testing.T) {
+	t.Parallel()
+
+	tool := &assignMoveTool{}
+	for _, read := range []string{"search_worker", "list_tractors", "list_trailers"} {
+		assert.Contains(t, tool.Prerequisites(), read)
+	}
+}

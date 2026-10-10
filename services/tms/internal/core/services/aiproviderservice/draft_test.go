@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/optional"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -235,4 +236,36 @@ func TestRunTest_RecordsTheEndsOfAnOlderKeyAndDropsAnExpiredOne(t *testing.T) {
 	assert.Equal(t, "gsk_", keys.fingerprints[0].Prefix)
 	assert.Equal(t, "2345", keys.fingerprints[0].LastFour)
 	assert.Equal(t, 1, keys.cleared)
+}
+
+// The cache prices are edited on their own like the others: a set value
+// replaces the stored one, a set nil clears it back to the protocol default,
+// and one left out is left alone.
+func TestPatchEdits_SetsAndClearsCachePrices(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(&fakeProviderRepo{}, &fakeProber{})
+	read := decimal.RequireFromString("0.3")
+	write := decimal.RequireFromString("3.75")
+
+	edits, err := svc.patchEdits(&services.PatchAIProviderRequest{
+		CacheReadCostPerMillion: optional.Some(&read),
+	}, nil)
+	require.NoError(t, err)
+	provider := &aiprovider.Provider{CacheWriteCostPerMillion: &write}
+	for _, edit := range edits {
+		edit(provider)
+	}
+	require.NotNil(t, provider.CacheReadCostPerMillion)
+	assert.True(t, provider.CacheReadCostPerMillion.Equal(read))
+	assert.Equal(t, &write, provider.CacheWriteCostPerMillion, "a price left out is left alone")
+
+	edits, err = svc.patchEdits(&services.PatchAIProviderRequest{
+		CacheWriteCostPerMillion: optional.Some[*decimal.Decimal](nil),
+	}, nil)
+	require.NoError(t, err)
+	for _, edit := range edits {
+		edit(provider)
+	}
+	assert.Nil(t, provider.CacheWriteCostPerMillion)
 }

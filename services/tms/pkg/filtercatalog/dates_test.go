@@ -85,3 +85,19 @@ func TestCatalog_ReadsNamedAndCalendarDaysInTheOrganizationsZone(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, int64(1789790400), seconds)
 }
+
+func TestCoerceDate_TakesTheDayOfADateTime(t *testing.T) {
+	t.Parallel()
+
+	day, err := CoerceDate("stops[0].date", "2026-10-10", Clock{})
+	require.NoError(t, err)
+
+	for _, raw := range []string{"2026-10-10T14:00", "2026-10-10 14:00"} {
+		got, coerceErr := CoerceDate("stops[0].date", raw, Clock{})
+		require.NoError(t, coerceErr, raw)
+		assert.Equal(t, day, got, raw)
+	}
+
+	_, err = CoerceDate("stops[0].date", "2026-10-10X14", Clock{})
+	assert.Error(t, err)
+}

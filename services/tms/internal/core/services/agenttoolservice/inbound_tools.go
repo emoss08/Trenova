@@ -491,8 +491,8 @@ func (t *replyToInboundMessageTool) ParamSchema() map[string]any {
 				"The message being answered, from this run's subject or "+
 					"list_inbound_messages."),
 			"profileId": agenttoolschema.RecordIDText(permission.ResourceEmailProfile,
-				"The email profile to send from; list_email_profiles names them. With one "+
-					"profile there is nothing to choose."),
+				"The email profile to send from, from list_email_profiles. Leave it out to "+
+					"send from the profile the organization assigns to operations email."),
 			"body": map[string]any{
 				"type":      "string",
 				"maxLength": maxInboundReplyBody,
@@ -500,7 +500,7 @@ func (t *replyToInboundMessageTool) ParamSchema() map[string]any {
 					"shipment reference and the sign-off, so leave those out.",
 			},
 		},
-		"required":             []string{"messageId", "profileId", "body"},
+		"required":             []string{"messageId", "body"},
 		"additionalProperties": false,
 	}
 }
@@ -538,7 +538,7 @@ func (t *replyToInboundMessageTool) prepare(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) (*inboundReply, error) {
-	profileID, err := requirePulid(params.Params, "profileId")
+	profileID, err := optionalID(params.Params, "profileId")
 	if err != nil {
 		return nil, err
 	}

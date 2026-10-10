@@ -43,14 +43,19 @@ scenarios:
               note: the number of delayed shipments
 
   - name: briefing-in-plain-words
-    description: The morning summary, asked for loosely.
+    description: >
+      The morning summary, asked for loosely. Dispatch desk holds the dispatch board (DB-019) and
+      not the daily briefing, so the board is its rundown; reading it once and answering from it is
+      the job, not tracking every late move.
     tags: [briefing]
     steps:
       - say: "gimme the rundown for today"
         expect:
-          calls: ["get_daily_briefing|list_watchtower_items|list_shipments"]
+          calls: ["get_dispatch_board|get_daily_briefing|list_watchtower_items|list_shipments"]
           maxFailedCalls: 0
+          maxCalls: 5
           noProposals: true
           rubric: >
-            Summarizes what needs attention today in a few lines, leading with what is urgent,
-            and points to the briefing rather than reprinting it.
+            Summarizes what needs attention today in a few lines, leading with what is urgent
+            (late and uncovered moves, drivers who cannot take work), and says what late means on
+            the board rather than reprinting it or checking each move one by one.

@@ -565,6 +565,8 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"file_capture_items":               {agent.EgressInternal},
 		"discard_capture_item":             {agent.EgressInternal},
 		"discard_capture_batch":            {agent.EgressInternal},
+		"reschedule_stop":                  {agent.EgressExternalRecipient},
+		"add_shipment_charge":              {agent.EgressMoney},
 	}
 
 	tools := buildRegistered(t)
@@ -587,11 +589,12 @@ func TestRuntimeToolsStayInside(t *testing.T) {
 	}
 
 	assert.Equal(t, map[string]agent.EgressClass{
-		"find_tools":       agent.EgressNone,
-		"ask_user":         agent.EgressNone,
-		"publish_artifact": agent.EgressPersonal,
-		"delegate_task":    agent.EgressNone,
-		"request_decision": agent.EgressPersonal,
+		"find_tools":        agent.EgressNone,
+		"ask_user":          agent.EgressNone,
+		"publish_artifact":  agent.EgressPersonal,
+		"delegate_task":     agent.EgressNone,
+		"request_decision":  agent.EgressPersonal,
+		"withdraw_proposal": agent.EgressNone,
 	}, effects)
 }
 

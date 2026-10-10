@@ -22,13 +22,9 @@ func EnsureDriverAssignable(
 	orgRepo repositories.OrganizationRepository,
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
+	lock repositories.CapabilityLock,
 ) error {
-	enabled, err := assetOperationsEnabled(
-		ctx,
-		orgRepo,
-		tenantInfo,
-		repositories.CapabilityLockShare,
-	)
+	enabled, err := assetOperationsEnabled(ctx, orgRepo, tenantInfo, lock)
 	if err != nil {
 		return err
 	}

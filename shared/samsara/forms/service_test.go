@@ -41,16 +41,42 @@ func TestListSubmissionsQueryAndPath(t *testing.T) {
 			assert.Equal(t, http.MethodGet, req.Method)
 			assert.Equal(t, "/form-submissions", req.Path)
 			assert.Equal(t, "sub-1", req.Query.Get("ids"))
-			assert.Equal(t, "fields,assignedTo", req.Query.Get("include"))
+			assert.Equal(t, "externalIds", req.Query.Get("include"))
 			return nil
 		}},
 	)
 
 	_, err := svc.ListSubmissions(t.Context(), SubmissionListParams{
 		IDs:     []string{"sub-1"},
-		Include: []string{"fields", "assignedTo"},
+		Include: []string{IncludeExternalIDs},
 	})
 	require.NoError(t, err)
+}
+
+func TestListSubmissionsValidation(t *testing.T) {
+	t.Parallel()
+
+	svc := NewService(
+		&httpxtest.MockRequester{DoFunc: func(_ context.Context, _ httpx.Request) error {
+			t.Fatal("request must not be sent")
+			return nil
+		}},
+	)
+
+	_, err := svc.ListSubmissions(t.Context(), SubmissionListParams{})
+	require.ErrorIs(t, err, ErrSubmissionIDsRequired)
+
+	_, err = svc.ListSubmissions(t.Context(), SubmissionListParams{IDs: make([]string, 101)})
+	require.ErrorIs(t, err, ErrSubmissionIDsTooMany)
+
+	_, err = svc.ListSubmissions(t.Context(), SubmissionListParams{
+		IDs:     []string{"sub-1"},
+		Include: []string{"fields"},
+	})
+	require.ErrorIs(t, err, ErrIncludeInvalid)
+
+	_, err = svc.ListTemplates(t.Context(), TemplateListParams{IDs: make([]string, 101)})
+	require.ErrorIs(t, err, ErrTemplateIDsTooMany)
 }
 
 func TestStreamSubmissionsValidation(t *testing.T) {
@@ -69,6 +95,20 @@ func TestStreamSubmissionsValidation(t *testing.T) {
 	_, err = svc.StreamSubmissionsAll(t.Context(), SubmissionStreamParams{})
 	require.Error(t, err)
 	assert.ErrorIs(t, err, ErrStreamStartTimeRequired)
+
+	start := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+	before := start.Add(-time.Hour)
+	_, err = svc.StreamSubmissions(t.Context(), SubmissionStreamParams{
+		StartTime: &start,
+		EndTime:   &before,
+	})
+	require.ErrorIs(t, err, ErrStreamTimeRangeInvalid)
+
+	_, err = svc.StreamSubmissions(t.Context(), SubmissionStreamParams{
+		StartTime: &start,
+		DriverIDs: make([]string, 51),
+	})
+	require.ErrorIs(t, err, ErrStreamFilterTooMany)
 }
 
 func TestStreamSubmissionsQueryAndPath(t *testing.T) {
@@ -86,7 +126,7 @@ func TestStreamSubmissionsQueryAndPath(t *testing.T) {
 			assert.Equal(t, "ft-1,ft-2", req.Query.Get("formTemplateIds"))
 			assert.Equal(t, "user-1", req.Query.Get("userIds"))
 			assert.Equal(t, "driver-1", req.Query.Get("driverIds"))
-			assert.Equal(t, "fields,assignedTo", req.Query.Get("include"))
+			assert.Equal(t, "externalIds", req.Query.Get("include"))
 			assert.Equal(t, "stop-1", req.Query.Get("assignedToRouteStopIds"))
 			assert.Equal(t, "cursor-1", req.Query.Get("after"))
 			return nil
@@ -99,7 +139,7 @@ func TestStreamSubmissionsQueryAndPath(t *testing.T) {
 		FormTemplateIDs:        []string{"ft-1", "ft-2"},
 		UserIDs:                []string{"user-1"},
 		DriverIDs:              []string{"driver-1"},
-		Include:                []string{"fields", "assignedTo"},
+		Include:                []string{IncludeExternalIDs},
 		AssignedToRouteStopIDs: []string{"stop-1"},
 		After:                  "cursor-1",
 	})

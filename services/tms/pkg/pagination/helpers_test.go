@@ -1,6 +1,7 @@
 package pagination
 
 import (
+	"encoding/json" //nolint:depguard // gqlgen hands variables on as json.Number
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -873,4 +874,19 @@ func TestParseFilters_InOperator_WithNullInArray(t *testing.T) {
 	strSlice, ok := opts.FieldFilters[0].Value.([]string)
 	require.True(t, ok, "expected []string after normalization, got %T", opts.FieldFilters[0].Value)
 	assert.Equal(t, []string{"Active", "Inactive"}, strSlice)
+}
+
+/*
+gqlgen's POST transport decodes variables with UseNumber, so a filter's number
+arrives as a json.Number, and NormalizeFilterValue handed it on unchanged.
+Nothing below read it as a number: "occurred in the last 7 days" counted as
+zero days and the AI audit trail came up empty.
+*/
+func TestNormalizeFilterValue_ReadsAJSONNumberAsANumber(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, int64(7), NormalizeFilterValue(json.Number("7"), "lastndays"))
+	assert.Equal(t, 2.5, NormalizeFilterValue(json.Number("2.5"), "gt"))
+	assert.Equal(t, json.Number("1e999"), NormalizeFilterValue(json.Number("1e999"), "gt"),
+		"a number that fits neither is left as it came")
 }

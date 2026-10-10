@@ -8,6 +8,8 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/emoss08/trenova/shared/intutils"
+
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -411,17 +413,15 @@ func (qb *QueryBuilder) applyToDateFilter(fieldRef string, dateRange map[string]
 }
 
 func extractDays(value any) int {
-	switch v := value.(type) {
-	case int:
-		return v
-	case float64:
-		return int(v)
-	case map[string]any:
-		if days, ok := v["days"]; ok {
+	if v, ok := value.(map[string]any); ok {
+		if days, found := v["days"]; found {
 			return extractDays(days)
 		}
+
+		return 0
 	}
-	return 0
+
+	return intutils.IntValue(value)
 }
 
 func getDayBounds(t time.Time) (startUnix, endUnix int64) {
@@ -754,29 +754,31 @@ func (qb *QueryBuilder) applyWebsearchWithPrefix(searchQuery, tableAlias, vector
 	}
 
 	prefixQuery := strings.Join(validPrefixParts, " & ")
+	args := []any{searchQuery, searchQuery, prefixQuery, prefixQuery}
 
 	if !qb.predicatesOnly {
 		qb.query = qb.query.ColumnExpr(
-			fmt.Sprintf(
-				"ts_rank(%s%s, websearch_to_tsquery('english', ?) || to_tsquery('english', ?)) AS rank",
-				tableAlias,
-				vectorCol,
-			),
-			searchQuery,
-			prefixQuery,
+			fmt.Sprintf("ts_rank(%s%s, %s) AS rank", tableAlias, vectorCol, bothDictionaries),
+			args...,
 		)
 	}
 
 	qb.query = qb.query.Where(
-		fmt.Sprintf(
-			"%s%s @@ (websearch_to_tsquery('english', ?) || to_tsquery('english', ?))",
-			tableAlias,
-			vectorCol,
-		),
-		searchQuery,
-		prefixQuery,
+		fmt.Sprintf("%s%s @@ (%s)", tableAlias, vectorCol, bothDictionaries),
+		args...,
 	)
 }
+
+// bothDictionaries matches a search under the simple and the english
+// dictionaries. Most search vectors are built with simple (code, name and
+// description, unstemmed) and some with english, and a query stemmed only in
+// english never matched a word whose stem differs from it: "dry van" became
+// 'dri' & 'van' and found no dry van. The prefix forms keep typing-as-you-go.
+const bothDictionaries = "websearch_to_tsquery('simple', ?) || websearch_to_tsquery('english', ?)" +
+	" || to_tsquery('simple', ?) || to_tsquery('english', ?)"
+
+const bothDictionariesWebsearch = "websearch_to_tsquery('simple', ?) || " +
+	"websearch_to_tsquery('english', ?)"
 
 func isValidSearchTerm(term string) bool {
 	for _, r := range term {
@@ -790,17 +792,15 @@ func isValidSearchTerm(term string) bool {
 func (qb *QueryBuilder) applyWebsearchOnly(searchQuery, tableAlias, vectorCol string) {
 	if !qb.predicatesOnly {
 		qb.query = qb.query.ColumnExpr(
-			fmt.Sprintf(
-				"ts_rank(%s%s, websearch_to_tsquery('english', ?)) AS rank",
-				tableAlias,
-				vectorCol,
-			),
+			fmt.Sprintf("ts_rank(%s%s, %s) AS rank", tableAlias, vectorCol, bothDictionariesWebsearch),
+			searchQuery,
 			searchQuery,
 		)
 	}
 
 	qb.query = qb.query.Where(
-		fmt.Sprintf("%s%s @@ websearch_to_tsquery('english', ?)", tableAlias, vectorCol),
+		fmt.Sprintf("%s%s @@ (%s)", tableAlias, vectorCol, bothDictionariesWebsearch),
+		searchQuery,
 		searchQuery,
 	)
 }

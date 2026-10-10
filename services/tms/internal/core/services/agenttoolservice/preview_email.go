@@ -55,7 +55,7 @@ func (t *emailCustomerTool) compose(
 	if err != nil {
 		return nil, err
 	}
-	profileID, err := requirePulid(params.Params, "profileId")
+	profileID, err := optionalID(params.Params, "profileId")
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +236,7 @@ func (t *requestMissingDocsTool) compose(
 		return nil, err
 	}
 
-	profileID, err := requirePulid(params.Params, "profileId")
+	profileID, err := optionalID(params.Params, "profileId")
 	if err != nil {
 		return nil, err
 	}

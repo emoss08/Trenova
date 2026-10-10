@@ -115,7 +115,7 @@ func (s *Service) record(ctx context.Context, attempt *usageAttempt) {
 		row.ReasoningTokens = attempt.outcome.ReasoningTokens
 		row.CacheReadTokens = attempt.outcome.CacheReadTokens
 		row.CacheWriteTokens = attempt.outcome.CacheWriteTokens
-		row.CostUSD = attempt.provider.CostForTask(attempt.task, row.InputTokens, row.OutputTokens)
+		row.CostUSD = attempt.provider.CostForTask(attempt.task, attempt.outcome.tokenUsage())
 	}
 
 	providerName := attempt.provider.Name

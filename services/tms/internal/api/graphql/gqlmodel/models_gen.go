@@ -247,9 +247,11 @@ type AIProviderPatchInput struct {
 	AllowPrivateNetwork graphql.Omittable[*bool]             `json:"allowPrivateNetwork,omitempty"`
 	Tasks               graphql.Omittable[[]aiprovider.Task] `json:"tasks,omitempty"`
 	// A new credential. It replaces the stored one and is never returned.
-	APIKey               graphql.Omittable[*string] `json:"apiKey,omitempty"`
-	InputCostPerMillion  graphql.Omittable[*string] `json:"inputCostPerMillion,omitempty"`
-	OutputCostPerMillion graphql.Omittable[*string] `json:"outputCostPerMillion,omitempty"`
+	APIKey                   graphql.Omittable[*string] `json:"apiKey,omitempty"`
+	InputCostPerMillion      graphql.Omittable[*string] `json:"inputCostPerMillion,omitempty"`
+	OutputCostPerMillion     graphql.Omittable[*string] `json:"outputCostPerMillion,omitempty"`
+	CacheReadCostPerMillion  graphql.Omittable[*string] `json:"cacheReadCostPerMillion,omitempty"`
+	CacheWriteCostPerMillion graphql.Omittable[*string] `json:"cacheWriteCostPerMillion,omitempty"`
 }
 
 // A provider as its editor holds it, reduced to what decides where tasks go.

@@ -37,7 +37,7 @@ findings:
 
   - id: DB-002
     title: AI cost ignores prompt caching (Anthropic under-counted, OpenAI over-counted)
-    status: open
+    status: fixed
     severity: high
     area: model router / cost accounting
     found: 2026-10-09, .deskbench/runs/20261009-151726-ask
@@ -55,16 +55,22 @@ findings:
       aiprovider.Provider.CostForTask takes only input and output tokens; usage.go and trace.go
       pass outcome.InputTokens. modeladapter.CacheSeparateFromInput is used for tracing only.
     fix: >
-      Proposed: optional cache read and cache write prices per million on the provider (migration,
-      GraphQL, provider form), defaulting for Anthropic to 0.1x and 1.25x the input price, and a
-      cost that prices uncached input, cache reads and cache writes apart for both protocols.
+      Decided: each provider takes optional cache read and cache write prices per million. Unset,
+      a cache read is 0.1x the input price on every protocol and a cache write 1.25x on Anthropic
+      (1x elsewhere, where none is reported). Uncached input, reads and writes are priced apart
+      through one function (aiprovider.Provider.CostFor), with OpenAI's cached tokens subtracted
+      from its input count; usage rows, chat, structured, trace and embedding costs all use it.
+      The provider form and detail sheet edit both prices.
+    fixedIn: "uncommitted; verified in .deskbench/runs/20261010-101625-run: OpenAI chat priced 13.9M cached tokens apart from 14.6M fresh. The local Anthropic provider has no prices set, so its calls stay uncosted until someone enters them"
     files:
-      - services/tms/internal/core/domain/aiprovider/provider.go
-      - services/tms/internal/infrastructure/agentcompletion/completionrouter/usage.go
-
+      - services/tms/internal/core/domain/aiprovider/
+      - services/tms/internal/infrastructure/agentcompletion/completionrouter/
+      - services/tms/internal/infrastructure/agentcompletion/modeladapter/
+      - services/tms/internal/api/graphql/schema/aiprovider.graphqls
+      - client/apps/web/src (AI Control providers)
   - id: DB-003
     title: The scope guard's classifier runs close to its 3 s budget and sometimes fails open
-    status: open
+    status: fixed
     severity: low
     area: scope guard / provider routing
     found: 2026-10-09, .deskbench/runs/20261009-151726-ask
@@ -77,11 +83,20 @@ findings:
       Unattributed structured call #1: execute provider request: Post
       "https://api.openai.com/v1/responses": context deadline exceeded, 3002 ms.
     fix: >
-      Across the first full run 49 of 51 classifications answered and 2 timed out (1.1 s to 3.0 s,
-      against a 3 s budget), so about 4% of questions go through unclassified. Configuration
-      first: give ScopeClassification to a faster model in AI Control. In code, the classifier
-      could fall through to the next provider within its budget.
-
+      Decided in code: the classification hedges. At half its 3 s budget, if the first provider has
+      not answered, the router asks the next as well and takes the first answer, cancelling the
+      other; a provider that fails hands over at once. It fails open only when every candidate is
+      exhausted within the budget. Hedging is opt-in per request (StructuredCompletionRequest
+      HedgeAfter), so other completions are unchanged, and the last candidate's wait for a slot
+      stops at the caller's deadline instead of 20 s.
+    fixedIn: "uncommitted; verified in .deskbench/runs/20261010-101625-run: 151 hedges, no question let through unclassified"
+    files:
+      - services/tms/internal/core/ports/services/agentcompletion.go
+      - services/tms/internal/infrastructure/agentcompletion/completionrouter/hedge.go
+      - services/tms/internal/infrastructure/agentcompletion/completionrouter/router.go
+      - services/tms/internal/infrastructure/agentcompletion/completionrouter/limits.go
+      - services/tms/internal/core/services/agentguard/guard.go
+      - services/tms/internal/core/services/agentguard/classifier.go
   - id: DB-004
     title: Proposal and plan lists drop their id tie-breaker
     status: fixed
@@ -105,7 +120,7 @@ findings:
 
   - id: DB-005
     title: No agent tool can reschedule a saved stop
-    status: open
+    status: fixed
     severity: high
     area: agent tools / write coverage
     found: 2026-10-09, writing the reschedule-delivery scenario
@@ -124,10 +139,11 @@ findings:
     files:
       - services/tms/internal/core/services/agenttoolservice/shipment_edit_tools.go
       - services/tms/internal/api/writecoverage/writecoverage.yml
+    fixedIn: .deskbench/runs/20261009-203702-run
 
   - id: DB-006
     title: Deleting a Desk conversation leaves its proposals waiting in the inbox
-    status: open
+    status: fixed
     severity: low
     area: assistant / threads
     found: 2026-10-09, writing the bench's cleanup
@@ -136,10 +152,15 @@ findings:
       they stay in the decisions inbox and an approval follows up on a conversation that no
       longer exists.
     fix: >
-      A product decision: supersede the thread's pending proposals when it is deleted, or refuse
-      the delete while any wait.
+      Deleting a conversation withdraws what its turns proposed and nobody decided: its pending
+      proposals and plans expire (ExpirePendingByThread, the same expiry an agent's deletion
+      already applies), after the delete goes through and only if it did.
+    fixedIn: uncommitted; TestDeleteThread_WithdrawsWhatItLeftWaiting
     files:
       - services/tms/internal/infrastructure/postgres/repositories/conversationrepository/conversation.go
+      - services/tms/internal/core/services/assistantservice/conversation.go
+      - services/tms/internal/infrastructure/postgres/repositories/agentproposalrepository/agentproposal.go
+      - services/tms/internal/infrastructure/postgres/repositories/agentplanrepository/agentplan.go
 
   - id: DB-007
     title: The local database was behind this checkout's migrations
@@ -158,7 +179,8 @@ findings:
     area: agent tools / shipments
     found: 2026-10-09, .deskbench/runs/20261009-152259-run
     models: [claude-haiku-5-5, gpt-6-luna]
-    scenarios: [note-on-a-load-approved, load-by-description, delayed-reefer-detail]
+    scenarios:
+      [note-on-a-load-approved, load-by-description, delayed-reefer-detail]
     problem: >
       The tool's description says it matches "a pro number, BOL, customer name, or city", so
       models search "freshhaul", "FreshHaul Foods" and "Los Angeles" and are told there are no
@@ -188,7 +210,7 @@ findings:
 
   - id: DB-009
     title: Asked which loads need a driver, the model reads shipments one by one until the budget runs out
-    status: open
+    status: fixed
     severity: high
     area: agent tools / shipments, find_tools
     found: 2026-10-09, .deskbench/runs/20261009-152259-run
@@ -214,10 +236,11 @@ findings:
     files:
       - services/tms/internal/core/services/agentquerytoolservice/shipment_route.go
       - services/tms/internal/infrastructure/postgres/repositories/shipmentrepository/helpers.go
+    fixedIn: .deskbench/runs/20261009-175153-run
 
   - id: DB-010
     title: raise_exception is offered in chat, where it can only be refused
-    status: open
+    status: fixed
     severity: medium
     area: agent runtime / toolset
     found: 2026-10-09, .deskbench/runs/20261009-152259-run
@@ -232,11 +255,12 @@ findings:
     fix: >
       OpenTurn drops raise_exception from the held tools when the request has no RunID, beside the
       existing open_page rule for delegates. Background runs and dry runs, which carry a run, keep it.
+    fixedIn: uncommitted; TestRun_OffersRaiseExceptionOnlyWithARun covers both a conversation turn and a run
     files: [services/tms/internal/core/services/agentruntime/turn.go]
 
   - id: DB-011
     title: rank_move_candidates names move id sources the dispatch agent does not hold
-    status: open
+    status: fixed
     severity: medium
     area: agent tools / dispatch
     found: 2026-10-09, .deskbench/runs/20261009-152259-run
@@ -249,11 +273,15 @@ findings:
     fix: >
       The parameter now names get_shipment first and says to look the id up rather than send a
       placeholder.
-    files: [services/tms/internal/core/services/agentquerytoolservice/dispatch_tools.go]
+    fixedIn: uncommitted; verified by .deskbench/runs/20261010-001934-run (Dispatch desk ranked the move by its real id)
+    files:
+      [
+        services/tms/internal/core/services/agentquerytoolservice/dispatch_tools.go,
+      ]
 
   - id: DB-012
     title: No shipment hold reasons exist, so the agent can never place a hold
-    status: open
+    status: fixed
     severity: medium
     area: seed data / tenant setup
     found: 2026-10-09, .deskbench/runs/20261009-152259-run
@@ -266,10 +294,11 @@ findings:
       Proposed: seed a standard set of hold reasons (missing paperwork, customer request, credit,
       equipment, appointment) for development, and decide whether new organizations get them by
       default the way they get control records.
+    fixedIn: .deskbench/runs/20261009-175153-run
 
   - id: DB-013
     title: Counting questions over 25 rows cannot be answered because list tools return a page, not a total
-    status: open
+    status: fixed
     severity: high
     area: agent tools / list results
     found: 2026-10-09, .deskbench/runs/20261009-152259-run
@@ -287,10 +316,11 @@ findings:
     files:
       - services/tms/internal/core/services/agentquerytoolservice/listtools.go
       - services/tms/internal/core/services/agentquerytoolservice/listcatalog.go
+    fixedIn: .deskbench/runs/20261009-175153-run
 
   - id: DB-014
     title: A model that always sends a status searches status by status until the budget runs out
-    status: open
+    status: fixed
     severity: high
     area: agent tools / shipments
     found: 2026-10-09, .deskbench/runs/ (run 2)
@@ -305,11 +335,15 @@ findings:
       When a search with a status finds nothing, search_shipments runs it again without the
       status and returns those rows with a note that none was in the status asked for, so one call
       answers.
-    files: [services/tms/internal/core/services/agentquerytoolservice/shipment_tools.go]
+    files:
+      [
+        services/tms/internal/core/services/agentquerytoolservice/shipment_tools.go,
+      ]
+    fixedIn: .deskbench/runs/20261009-175153-run
 
   - id: DB-015
     title: The formula assistant writes rates into the expression instead of variables
-    status: open
+    status: fixed
     severity: medium
     area: agent tools / formulas
     found: 2026-10-09, .deskbench/runs/20261009-160030-run
@@ -327,11 +361,15 @@ findings:
     fix: >
       The expression and variables parameters now say every rate, fee, minimum and percentage is
       a variable with the person's figure as its default, with the per-mile example.
-    files: [services/tms/internal/core/services/agentquerytoolservice/formula_tools.go]
+    files:
+      [
+        services/tms/internal/core/services/agentquerytoolservice/formula_tools.go,
+      ]
+    fixedIn: .deskbench/runs/20261009-195808-run
 
   - id: DB-016
     title: Three approved instruction memories taint every Desk turn in the organization
-    status: open
+    status: fixed
     severity: medium
     area: agent memory / taint
     found: 2026-10-09, .deskbench/runs/ (run 3 live log)
@@ -349,13 +387,26 @@ findings:
       By design (agent-runtime.md, "Memory in the prompt"): a person's approval of the remember
       that wrote a memory changes how it is rendered, not whether it taints.
     fix: >
-      A product decision: either a person's approval (or an administrator's review in AI Control
-      > Memory) clears a memory's taint, or AI Control shows that a memory is tainting every turn
-      and offers to review it.
+      Decided: a person's review clears the hold. A memory taints a turn only while it is tainted and
+      unreviewed (Memory.Taints()); reviewing it in AI Control > Memory, or approving a tainted
+      suggestion, records who and when (reviewed_by_user_id, reviewed_at) and writes a critical
+      security audit row. AI Control lists every Active memory that still taints, with Review and
+      Retire. reviewAgentMemory needs agent_memory:update and is exempt from agent write coverage,
+      as an agent clearing the taint on what it reads would undo the hold. The three local memories
+      were reviewed as admin@trenova.app through that mutation.
+    fixedIn: "uncommitted; verified in .deskbench/runs/20261010-101625-run: no turn tainted by a reviewed memory. Since then two stale tainted lessons were retired and three sound ones reviewed, leaving no Active memory that taints"
+    files:
+      - services/tms/internal/core/domain/agent/agentmemory.go
+      - services/tms/internal/core/services/agentmemoryservice/
+      - services/tms/internal/api/graphql/schema/agent.graphqls
+      - client/apps/web/src/routes/agent-control/_components/memory/
+      - docs/engineering/agent-runtime.md
+      - docs/engineering/security-audit.md
+      - docs/product-guide/admin/agent-control.md
 
   - id: DB-017
     title: No agent tool adds an accessorial charge to a saved shipment
-    status: open
+    status: fixed
     severity: high
     area: agent tools / shipments, billing
     found: 2026-10-09, mapping the shipment life cycle
@@ -365,15 +416,15 @@ findings:
       orders, correct_charge_code only re-codes a billing queue item's charges). A person adds
       accessorials in the shipment form through updateShipment.
     fix: >
-      New tool add_shipment_charge: one accessorial at the charge's configured rate or a given
-      amount, with units for a per-unit charge, through the shipment service's update; refuses an
-      inactive charge, a negative amount and an invoiced or canceled shipment; Money egress, ask
-      first. To verify in a run.
-    files: [services/tms/internal/core/services/agenttoolservice/shipment_edit_tools.go]
-
+      add_shipment_charge already existed with no holder; Billing exceptions now holds it (DB-019).
+    fixedIn: "uncommitted; verified by the new lumper-charge-on-a-load case (both models: one $175 lumper proposed, approved and on SEED-SHP-008)"
+    files:
+      - services/tms/internal/core/services/agenttoolservice/shipment_edit_tools.go
+      - services/tms/internal/core/domain/agentdefinition/tools.go
+      - services/tms/deskbench/scenarios/billing.yaml
   - id: DB-018
     title: A one-day time-off request is refused by its own validation
-    status: open
+    status: fixed
     severity: high
     area: domain / worker PTO
     found: 2026-10-09, .deskbench/runs/20261009-160911-run
@@ -389,10 +440,11 @@ findings:
       Refuses only EndDate < StartDate ("End date cannot be before start date", translated in
       every locale). To verify in a run.
     files: [services/tms/internal/core/domain/worker/workerpto.go]
+    fixedIn: .deskbench/runs/20261009-185431-run
 
   - id: DB-019
     title: No agent in this organization holds the tools for several everyday jobs
-    status: open
+    status: fixed
     severity: medium
     area: agent configuration (AI Control)
     found: 2026-10-09, mapping tools to the local agents
@@ -403,14 +455,24 @@ findings:
       notify_driver, place_worker_dispatch_hold or request_credential_renewal. The Dispatch desk
       cannot record that a driver arrived, and no agent can quote a load or bill detention.
     fix: >
-      Configuration, the organization's decision: give Dispatch desk record_stop_actual,
-      get_dispatch_board, get_shipment_tracking, reschedule_stop and get_worker_hos; give Billing
-      exceptions explain_rate, add_shipment_charge and the detention tools; give Customer service
-      email_customer. The bench's own agents (deskbench/agents.yaml) hold them for testing.
-
+      Decided: Dispatch desk gains get_shipment_tracking, get_worker_hos, record_stop_actual,
+      reschedule_stop (template) and get_dispatch_board, notify_driver (this organization);
+      Billing exceptions gains explain_rate, add_shipment_charge, approve_detention and
+      send_detention_notice, which now bring list_detention_desk and get_detention_occurrence as
+      prerequisites; Compliance desk gains get_worker_hos, request_credential_renewal and
+      place_worker_dispatch_hold; Customer service gains get_shipment_tracking,
+      list_email_profiles, email_customer and quote_shipment. Templates keep 8 of 64 slots free by
+      dropping reads a held write already brings. The seed and the local agents match.
+    fixedIn: "uncommitted; verified in .deskbench/runs/20261010-101625-run: get_dispatch_board, record_stop_actual, get_shipment_tracking, get_worker_hos, explain_rate, approve_detention and email_customer were all called by the agents that now hold them"
+    files:
+      - services/tms/internal/core/domain/agentdefinition/tools.go
+      - services/tms/internal/core/services/agenttoolservice/desk_tools.go
+      - services/tms/internal/core/services/agenttoolservice/monitoring_tools.go
+      - services/tms/internal/infrastructure/database/seeds/development/26_agent_definition.go
+      - docs/engineering/agent-workforce-tools.md
   - id: DB-020
     title: gpt-6-luna fills optional ids with placeholders
-    status: open
+    status: fixed
     severity: low
     area: agent runtime / argument contract
     found: 2026-10-09, runs 2-4
@@ -425,10 +487,11 @@ findings:
       an empty list, and trims a trailing comma, period or semicolon from any record id. Only
       properties marked x-recordOf or x-recordKinds are touched. To verify in a run.
     files: [services/tms/pkg/toolschema/coerce.go]
+    fixedIn: .deskbench/runs/20261009-175153-run
 
   - id: DB-021
     title: The shipment search hid that it was showing only the first page of a customer's loads
-    status: open
+    status: fixed
     severity: medium
     area: agent tools / shipments
     found: 2026-10-09, .deskbench/runs/20261009-160911-run
@@ -440,11 +503,15 @@ findings:
     fix: >
       A customer or place search that fills its page now says it is the first page and to narrow
       by status, date or pro number rather than ask the person to choose from it. To verify in a run.
-    files: [services/tms/internal/core/services/agentquerytoolservice/shipment_tools.go]
+    files:
+      [
+        services/tms/internal/core/services/agentquerytoolservice/shipment_tools.go,
+      ]
+    fixedIn: .deskbench/runs/20261009-175153-run
 
   - id: DB-022
     title: Three action tools refused every call because their schema held a null required list
-    status: open
+    status: fixed
     severity: high
     area: agent tools / schemas
     found: 2026-10-09, .deskbench/runs/20261009-164136-run
@@ -468,10 +535,11 @@ findings:
       - services/tms/internal/core/services/agenttoolservice/receivable_tool.go
       - services/tms/pkg/toolschema/validate.go
       - services/tms/internal/core/services/agentevalgate/catalog_schema_test.go
+    fixedIn: .deskbench/runs/20261009-175153-run
 
   - id: DB-023
     title: Settlements could not be found by the driver's name or by "open"
-    status: open
+    status: fixed
     severity: medium
     area: agent tools / settlements
     found: 2026-10-09, .deskbench/runs/20261009-164136-run
@@ -489,10 +557,11 @@ findings:
     files:
       - services/tms/internal/core/services/agentquerytoolservice/settlement_tools.go
       - services/tms/internal/infrastructure/postgres/repositories/driversettlementrepository/settlement.go
+    fixedIn: .deskbench/runs/20261009-195808-run
 
   - id: DB-024
     title: Asked for "last week's" settlement, both models asked which dates
-    status: open
+    status: fixed
     severity: low
     area: agent tools / settlements
     found: 2026-10-09, .deskbench/runs/20261009-164136-run
@@ -505,4 +574,2564 @@ findings:
     fix: >
       generate_driver_settlement says the draft is shown before anything is kept, so a named
       period is worked out from today's date and proposed. To verify in a run.
-    files: [services/tms/internal/core/services/agenttoolservice/settlement_generation_tools.go]
+    files:
+      [
+        services/tms/internal/core/services/agenttoolservice/settlement_generation_tools.go,
+      ]
+    fixedIn: .deskbench/runs/20261009-175153-run
+
+  - id: DB-025
+    title: The detention desk showed a running clock's charge as of the last shipment edit
+    status: fixed
+    severity: high
+    area: detention / agent tools
+    found: 2026-10-09, .deskbench/runs/20261009-164136-run
+    models: [gpt-6-luna, claude-haiku-5-5]
+    scenarios: [detention-at-the-receiver]
+    problem: >
+      SEED-DET-001's truck has been at the receiver for three days, but list_detention_desk and
+      get_detention_occurrence said $75 (1h 15m billable): the amount computed when the stop was
+      last edited. Nothing re-prices an open clock until the departure is recorded, so the live
+      board, the Decisions inbox and every agent read the first hour's charge for the whole
+      wait. claude-haiku-5-5 noticed the figure was stale and refused to approve it; gpt-6-luna
+      could not narrow the desk to one load and tried each urgency in turn, repeating them.
+    fix: >
+      detentionservice prices every running clock as of now, shipment by shipment in clock order
+      with frozen charges counted against the caps, exactly as SyncShipment would
+      (priceOpenClocks); the desk entry carries billableMinutes and pricedAt, and
+      PriceOpenClock adds currentlyBillable to get_detention_occurrence. list_detention_desk takes
+      shipmentId and proNumber, and an urgency that matches nothing names the urgencies the same
+      loads are at. To verify in a run.
+    files:
+      - services/tms/internal/core/services/detentionservice/workflow.go
+      - services/tms/internal/core/services/agentquerytoolservice/monitoring_tools.go
+      - services/tms/internal/core/services/agentquerytoolservice/desk_get_tools.go
+    fixedIn: .deskbench/runs/20261009-175153-run
+
+  - id: DB-026
+    title: get_worker_hos failed with "not found" for a driver with no ELD reading
+    status: fixed
+    severity: medium
+    area: agent tools / tracking
+    found: 2026-10-09, .deskbench/runs/20261009-164136-run
+    models: [gpt-6-luna, claude-haiku-5-5]
+    scenarios: [driver-out-of-hours]
+    problem: >
+      The repository returns a not-found error when no hours of service are on file, so the tool's
+      own "no hours on file" branch never ran and every call was a failed call
+      ("WorkerHOSState not found within your organization").
+    fix: >
+      Not found is a result: duty status Unknown, stale, and a note to say the hours are unknown
+      and not to estimate them or call again. To verify in a run.
+    files:
+      [
+        services/tms/internal/core/services/agentquerytoolservice/tracking_tools.go,
+      ]
+    fixedIn: .deskbench/runs/20261009-175153-run
+
+  - id: DB-027
+    title: search_shipments could not find a load by its driver
+    status: fixed
+    severity: medium
+    area: agent tools / shipments
+    found: 2026-10-09, .deskbench/runs/20261009-164136-run
+    models: [claude-haiku-5-5]
+    scenarios: [driver-out-of-hours, message-the-driver]
+    problem: >
+      search_shipments "Jane Doe" returned nothing although Jane is driving SEED-DET-001, so the
+      agent told the person she had no load. Dispatchers name loads by driver as often as by
+      customer or city.
+    fix: >
+      The query resolves words to drivers as it does to customers and places (WorkerIDs on
+      ShipmentOptions, an EXISTS over live assignments), ANDed with a customer or place named by a
+      different word ("jane chicago").
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/shipment_search_parties.go
+      - services/tms/internal/infrastructure/postgres/repositories/shipmentrepository/helpers.go
+    fixedIn: .deskbench/runs/20261009-175153-run
+
+  - id: DB-028
+    title: A customer's notice preference stopped an update the person asked for
+    status: fixed
+    severity: medium
+    area: agent tools / customer updates
+    found: 2026-10-09, .deskbench/runs/20261009-164136-run
+    models: [claude-haiku-5-5]
+    scenarios: [tell-the-customer-its-late]
+    problem: >
+      get_customer_update_preferences said a customer set to None "is not to be emailed about a
+      stop at all", so asked to email FreshHaul about a delay, claude-haiku-5-5 refused. The
+      preference is about routine arrival and departure notices.
+    fix: >
+      The summary and warning say None means no routine notices sent on the agent's own, and an
+      update the person asks for still goes out with their approval. To verify in a run.
+    files:
+      [
+        services/tms/internal/core/services/agentquerytoolservice/desk_get_tools.go,
+      ]
+    fixedIn: .deskbench/runs/20261009-175153-run
+
+  - id: DB-029
+    title: The bench split a regular expression at its "|", so four checks never worked
+    status: fixed
+    severity: medium
+    area: desk bench
+    found: 2026-10-09, .deskbench/runs/20261009-164136-run
+    scenarios: [formula-ltl-weight-breaks]
+    problem: >
+      Alternatives are separated with "|", and a /regex/ containing "|" was cut in two, so
+      /ceil|round/, /1\.18|0\.18|18|fuel/, /^[^0-9]*$|100/ and a replyExcludes pattern matched
+      nothing or the wrong thing.
+    fix: >
+      A part that opens a /regex/ is joined back until the pattern closes. The LTL check now says
+      what it means: every number literal in the formula is 100, so every rate and break is a
+      variable.
+    files: [services/tms/internal/deskbench/checks.go]
+    fixedIn: this session
+
+  - id: DB-030
+    title: Later turns reasoned from what earlier turns said about a load, not from the load
+    status: fixed
+    severity: high
+    area: agent runtime / context
+    found: 2026-10-09, runs 4-5
+    models: [gpt-6-luna, claude-haiku-5-5]
+    scenarios:
+      [
+        long-session-context,
+        detention-at-the-receiver,
+        records-in-play-after-a-change,
+      ]
+    problem: >
+      A conversation's earlier tool results are replayed as they were, with relative dates
+      computed when they ran, and compaction keeps their figures. A status, ETA, coverage or
+      charge read three turns ago reached the model looking as current as one read now, and
+      models answered from it, or looked the load up again on every turn to be safe.
+    fix: >
+      Context anchored on records. A conversation keeps the records it is about
+      (assistant_threads.working_set): subject, mentions, page record, get_* reads and the
+      targets of executed writes. Every turn reads them again while it is prepared
+      (recordanchorservice, per-kind batch readers, access checked per kind) and opens the
+      question with a <records_in_play> block that says it is current, with the age of every
+      fact taken from a report ("reported 40m ago", "too old to plan on"). The block is never
+      saved, so the system prompt and history stay cacheable, and the anchored records are
+      watched for mid-turn changes. PromptVersion v7. To verify across a full run.
+    files:
+      - services/tms/internal/core/services/recordanchorservice/
+      - services/tms/internal/core/services/assistantservice/workingset.go
+      - services/tms/internal/core/domain/conversation/workingset.go
+      - services/tms/internal/core/domain/agentdefinition/anchors.go
+      - services/tms/internal/core/services/shipmenttracking/facts.go
+      - docs/engineering/agent-runtime.md
+    fixedIn: .deskbench/runs/20261009-195808-run
+
+  - id: DB-031
+    title: The tracking snapshot said a driven load had nobody on it
+    status: fixed
+    severity: medium
+    area: shipments / tracking
+    found: 2026-10-09, .deskbench/runs/20261009-174829-run
+    scenarios: [records-in-play-are-dated]
+    problem: >
+      SEED-DET-001's move had an assignment (Jane Doe on TRC-003) but its coverage_type column said
+      unassigned, so the snapshot flagged "Move 0 has no driver or carrier" beside "covered by:
+      Jane Doe on TRC-003". 23 seeded moves were like this.
+    cause: >
+      The detention and driver-pay development seeds inserted assignments without setting the
+      move's coverage type, and the snapshot trusted the column over the assignment it had read.
+    fix: >
+      The snapshot takes a move with a driver or carrier assigned as covered whatever the column
+      says; both seeds set coverage_type driver; the 23 local rows were corrected.
+    files:
+      - services/tms/internal/core/services/shipmenttracking/snapshot.go
+      - services/tms/internal/infrastructure/database/seeds/development/13_detention.go
+      - services/tms/internal/infrastructure/database/seeds/development/11_driverpay.go
+    fixedIn: this session
+
+  - id: DB-032
+    title: The development seed had no hold reasons and no random testing pool
+    status: fixed
+    severity: medium
+    area: development data
+    found: 2026-10-09, .deskbench/runs/20261009-164136-run and 20261009-175153-run
+    scenarios: [hold-rejected-with-a-better-idea, random-drug-test-draw]
+    problem: >
+      place_shipment_hold needs a hold reason and run_dot_random_draw a pool; a seeded
+      development organization had neither, so both tools could only refuse, locally and in every
+      bench run, and the agents rightly sent the person to set them up.
+    fix: >
+      Development seeds HoldReason (seven reasons across operational, compliance, customer and
+      finance holds) and DOTRandomPool (one default quarterly pool at 50% drug and 10% alcohol).
+    files:
+      - services/tms/internal/infrastructure/database/seeds/development/33_hold_reason.go
+      - services/tms/internal/infrastructure/database/seeds/development/34_dot_random_pool.go
+    fixedIn: this session
+
+  - id: DB-033
+    title: A fuel receipt read out with gallons and price could not be recorded without a total
+    status: fixed
+    severity: medium
+    area: agent tools / fuel
+    found: 2026-10-09, .deskbench/runs/20261009-164136-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    scenarios: [log-a-fuel-purchase]
+    problem: >
+      record_fuel_purchase required totalAmount. Given "112 gallons at 3.89", the model, which is
+      told not to do arithmetic it cannot check, asked the person for the total (and showed 435.68
+      as the example in its own question).
+    fix: >
+      totalAmount is optional when unitPrice is given; the tool works out quantity x unit price to
+      the cent, and refuses with both names when neither is given. To verify in a run.
+    files: [services/tms/internal/core/services/agenttoolservice/fuel_tools.go]
+    fixedIn: .deskbench/runs/20261009-203702-run
+
+  - id: DB-034
+    title: A named deduction was talked through instead of proposed
+    status: fixed
+    severity: low
+    area: agent tools / settlements
+    found: 2026-10-09, .deskbench/runs/20261009-175153-run
+    models: [claude-haiku-5-5]
+    scenarios: [settlement-with-a-deduction]
+    problem: >
+      Asked to take $150 out of David Park's draft settlement for a fuel advance, the agent found
+      the draft, saw no advance on file and a net already below zero, and offered three options
+      instead of proposing the line, though the person had named the amount and the reason.
+    fix: >
+      add_driver_settlement_adjustment (and its carrier twin) say that a named amount and reason
+      is proposed, with any concern in the reply beside the proposal. To verify in a run.
+    files:
+      [
+        services/tms/internal/core/services/agenttoolservice/settlement_lifecycle_tools.go,
+      ]
+    fixedIn: .deskbench/runs/20261009-195808-run
+
+  - id: DB-035
+    title: Scenarios rotted as the seed aged and as runs approved real writes
+    status: fixed
+    severity: medium
+    area: desk bench
+    found: 2026-10-09, .deskbench/runs/20261009-164136-run
+    scenarios:
+      [
+        assign-a-driver,
+        reschedule-delivery,
+        create-shipment-from-a-sentence,
+        request-time-off,
+      ]
+    problem: >
+      Seeded windows fell into the past ("the Dallas pickup window has already passed"), "Friday"
+      became today, seeded time off covered the day a scenario asked for, and the lane a scenario
+      named came to match several loads. Each turned a correct refusal or question into a failed
+      case.
+    fix: >
+      A scenario can carry setup: single UPDATE, INSERT or DELETE statements the bench runs in one
+      write transaction under the tenant's row-level scope before the case (no schema or grant
+      statements). The write scenarios roll their load's windows forward from now, name a driver
+      who is compliant and free, and say dates relative to the day.
+    files:
+      - services/tms/internal/deskbench/scenario.go
+      - services/tms/internal/deskbench/checks.go
+      - services/tms/internal/deskbench/runner.go
+    fixedIn: this session
+
+  - id: DB-036
+    title: The formula schema reference was cut off before the fields a formula needed
+    status: fixed
+    severity: high
+    area: agent tools / formulas
+    found: 2026-10-09, .deskbench/runs/20261009-175153-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    scenarios:
+      [
+        formula-equipment-and-hazmat-adders,
+        formula-detention-free-time,
+        formula-doe-fuel-surcharge,
+      ]
+    problem: >
+      describe_formula_schema returned every variable and function in full, 20,076 characters,
+      and the runtime cuts a result at 12,000, so the variables after the cut (the temperature
+      fields among them) never reached the model. claude-haiku-5-5 then probed names one at a time
+      with test_formula_expression (isReefer, isTempControlled, hasTeam, ...), each of which ran
+      because the probe supplied the value itself, and finally asked the person which fields mark
+      a reefer and a team load.
+    fix: >
+      The tool returns one line per variable (first sentence of its description) and functions by
+      signature, 8,618 characters, and takes query: matching variables and functions in full with
+      examples, through a formula vocabulary ("reefer" finds requiresTemperatureControl). A query
+      that matches nothing says no shipment field holds it and to make it a template variable or
+      ask. To verify in a run.
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/formula_schema_view.go
+      - services/tms/internal/core/services/agentquerytoolservice/formula_tools.go
+    fixedIn: .deskbench/runs/20261009-195808-run
+
+  - id: DB-037
+    title: Customer emails and inbound replies required an email profile id the agent could not get
+    status: fixed
+    severity: medium
+    area: agent tools / email
+    found: 2026-10-09, .deskbench/runs/20261009-175153-run
+    models: [claude-haiku-5-5]
+    scenarios: [detention-at-the-receiver]
+    problem: >
+      email_customer and reply_to_inbound_message required profileId while saying "with one
+      profile there is nothing to choose". An agent without list_email_profiles sent "default",
+      was refused, and told the person it could not email the customer.
+    fix: >
+      profileId is optional on both; left out, the email service sends from the profile assigned
+      to operations email, then the general one (its existing fallback), and the preview resolves
+      the sender, so a missing profile is refused before anyone approves. To verify in a run.
+    files:
+      - services/tms/internal/core/services/agenttoolservice/monitoring_tools.go
+      - services/tms/internal/core/services/agenttoolservice/preview_email.go
+      - services/tms/internal/core/services/agenttoolservice/inbound_tools.go
+    fixedIn: .deskbench/runs/20261009-185431-run
+
+  - id: DB-038
+    title: Quoting and carrier shopping refused every load with a row-level security error
+    status: fixed
+    severity: critical
+    area: rating / row-level security
+    found: 2026-10-09, .deskbench/runs/20261009-175153-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    scenarios:
+      [lifecycle-one-agent-book-to-posted-invoice, lifecycle-carrier-covered]
+    problem: >
+      quote_shipment and shop_carriers failed with "database access refused: tenant data must be
+      read and written inside an explicit tenant-scoped transaction". The rate engine's
+      rateagreementrepository.ResolveRules ran its keyed and radius candidate queries outside a
+      scoped transaction; only its agreement load opened one. Any caller without an outer
+      transaction (every agent tool) could not price a load from a contract.
+    cause: >
+      The transaction lint looked only for an exported method touching the connection itself, so
+      a method whose unexported helpers ran the queries passed it.
+    fix: >
+      ResolveRules runs its three reads in one dbtx.Read. The lint now follows calls to the
+      receiver's unexported helpers, transitively, and flags an unscoped method that reaches one
+      touching the connection outside a transaction (txlint_test covers it). It also flagged
+      WeeklyTrainableTotalsByProvider, whose scope closure built its consent subquery from the
+      outer context; the closure now takes the scoped one. To verify in a run.
+    files:
+      - services/tms/internal/infrastructure/postgres/repositories/rateagreementrepository/resolve.go
+      - services/tms/internal/infrastructure/postgres/repositories/aicorrectionrepository/correction.go
+      - services/tms/internal/infrastructure/postgres/rlslint/txlint.go
+      - services/tms/internal/infrastructure/postgres/rlslint/txlint_test.go
+    fixedIn: .deskbench/runs/20261009-185431-run
+
+  - id: DB-039
+    title: Two bench processes shared one namespace and ran each other's turns
+    status: fixed
+    severity: medium
+    area: desk bench
+    found: 2026-10-09, .deskbench/runs/20261009-184040-ask
+    problem: >
+      Every bench process registers its workers in the same Temporal namespace (deskbench) under the
+      same identity. A desk ask started during a full run had its activities taken by the run's
+      worker, built from an older checkout, so a fix under test appeared not to work, and the run
+      executed some of the ask's work on its own build. Cases in a run that overlapped an ask
+      cannot be trusted.
+    fix: >
+      Open takes an exclusive flock on .deskbench/<namespace>.lock, writes its pid there, and
+      releases it on Close. A second bench in the same namespace refuses to start, naming the pid
+      that holds it and --namespace as the way around.
+    files:
+      - services/tms/internal/deskbench/lock.go
+      - services/tms/internal/deskbench/app.go
+      - services/tms/cmd/cli/desk/desk.go
+    fixedIn: this session
+
+  - id: DB-040
+    title: Quotes for a load not yet saved priced zero miles and came back as the minimum charge
+    status: fixed
+    severity: high
+    area: rating / quotes
+    found: 2026-10-09, .deskbench/runs/20261009-185016-ask
+    models: [claude-haiku-5-5]
+    problem: >
+      quote_shipment built a hypothetical shipment whose moves had no distance, and nothing worked
+      one out, so "baseRate * totalDistance" priced 0 miles and the rule's $950 minimum charge
+      came back as Acme's LA to Chicago rate. The result carried no distance, so the agent
+      quoted $950 as the contract rate.
+    fix: >
+      ratequoteservice.Quote works out the distance of every move that has none
+      (DistanceCalculationService.ResolveForShipment on those moves only, leaving a distance the
+      caller gave alone), and the quote result carries totalDistance, with a note when it is zero
+      that the amount may be only the minimum. Locally there is no routing provider, so distance
+      stays zero and the note is what the agent sees. To verify with a routing provider.
+    files:
+      - services/tms/internal/core/services/ratequoteservice/service.go
+      - services/tms/internal/core/services/agentquerytoolservice/intake_tools.go
+    fixedIn: .deskbench/runs/20261009-202813-ask (with the DB-044 lane distances)
+
+  - id: DB-041
+    title: update_shipment took a model's placeholder zeros as values
+    status: fixed
+    severity: high
+    area: agent tools / shipments
+    found: 2026-10-09, .deskbench/runs/20261009-175153-run
+    models: [gpt-6-luna]
+    scenarios: [records-in-play-after-a-change, correct-a-weight]
+    problem: >
+      Asked only to change SEED-SHP-004's weight, gpt-6-luna sent every field, with "" for the
+      ids and 0 for pieces, temperatureMin and temperatureMax. The empty strings were read as not
+      sent, but the zeros were kept: the preview showed the change, the person approved, and the
+      write failed on the shipments_pieces_check constraint. Had pieces been left alone, the dry
+      van would have been saved as a 0 to 0 °F frozen load.
+    fix: >
+      pieces and weight declare minimum 1, so an explicit 0 is refused at the argument contract
+      with the path named and "Leave it out to keep it". A 0 to 0 °F range on a load with no
+      temperature control is refused as a placeholder, and a minimum above the maximum is refused.
+      To verify in a run.
+    files:
+      [services/tms/internal/core/services/agenttoolservice/intake_tools.go]
+    fixedIn: "uncommitted; verified in .deskbench/runs/20261010-055944-run, 071353 and 082904 (both models)"
+
+  - id: DB-042
+    title: Seeded shipment types carried the service type prefix, so no agent could book a load
+    status: fixed
+    severity: high
+    area: development data
+    found: 2026-10-09, .deskbench/runs/20261009-185431-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    scenarios:
+      [
+        lifecycle-one-agent-book-to-posted-invoice,
+        create-shipment-from-a-sentence,
+      ]
+    problem: >
+      The development seed minted its ten shipment types with pulid.MustNew("st_"), the service
+      type prefix; the domain mints sht_. The argument contract checks an id's kind by its prefix,
+      so create_shipment and quote_shipment refused the real FTL id as "a service type id", and the
+      agent told the person the shipment type was broken.
+    fix: >
+      06_test_data.go mints sht_ for shipment types. The local database was renamed in one
+      transaction (shipment_types, the shipments, dedicated lane and suggestion references, and the
+      shipment_type_ids arrays on fuel surcharge programs, detention policies, mode profiles and
+      rate agreement rules and accessorials). A scan of every table's id prefixes found no other
+      seeded collision. To verify in a run.
+    files:
+      [
+        services/tms/internal/infrastructure/database/seeds/development/06_test_data.go,
+      ]
+    fixedIn: "uncommitted; verified in .deskbench/runs/20261010-055944-run, 071353 and 082904 (both models)"
+
+  - id: DB-043
+    title: A stop date written with its time was refused as not a date
+    status: fixed
+    severity: low
+    area: agent tools / dates
+    found: 2026-10-09, .deskbench/runs/20261009-185431-run
+    models: [claude-haiku-5-5]
+    scenarios: [lifecycle-one-agent-book-to-posted-invoice]
+    problem: >
+      quote_shipment's stops[].date took YYYY-MM-DD only, and "2026-10-10T14:00" (the pickup the
+      person gave, with its time) was refused, a failed call and a retry.
+    fix: >
+      filtercatalog.CoerceDate reads the day from a local date-time ("2026-10-10T14:00" or with a
+      space) for every date parameter that goes through it. To verify in a run.
+    files: [services/tms/pkg/filtercatalog/operators.go]
+    fixedIn: "uncommitted; verified in .deskbench/runs/20261010-055944-run, 071353 and 082904 (both models)"
+
+  - id: DB-044
+    title: Locally every new load priced zero miles, because nothing could work out a distance
+    status: fixed
+    severity: medium
+    area: development data
+    found: 2026-10-09, .deskbench/runs/20261009-195808-run
+    models: [claude-haiku-5-5]
+    scenarios: [lifecycle-one-agent-book-to-posted-invoice]
+    problem: >
+      Without a routing provider, a move's distance falls back to what was typed in, and a new load
+      has none, so every per-mile contract priced its minimum charge. With the quote now saying so
+      (DB-040), the agent rightly would not book the lifecycle load at $950.
+    fix: >
+      Development seeds LaneDistance: an org-wide distance override for every ordered pair of
+      seeded locations with coordinates, great-circle miles times the road circuity factor
+      (geoutils.RoadCircuityFactor, now shared with the tracking estimate). The distance service
+      consults overrides before any provider. LA terminal to Chicago DC is 2,091 miles and Acme's
+      contract quotes it at $5,959.35.
+    files:
+      - services/tms/internal/infrastructure/database/seeds/development/35_lane_distance.go
+      - shared/geoutils/geoutils.go
+    fixedIn: .deskbench/runs/20261009-202813-ask
+
+  - id: DB-045
+    title: Candidate ranking reported a driver with no ELD reading as having zero hours left
+    status: fixed
+    severity: high
+    area: agent tools / dispatch
+    found: 2026-10-09, .deskbench/runs/20261009-195808-run
+    models: [claude-haiku-5-5]
+    scenarios: [assign-a-driver]
+    problem: >
+      rank_move_candidates printed driveRemainingHours 0 and shiftRemainingHours 0 for every driver
+      without an hours-of-service reading, because the score leaves them at zero when there is no
+      state. claude-haiku-5-5 refused to assign David Park because "he has 0 hours of drive time
+      and 0 hours of shift time left, so he can't legally run the move".
+    fix: >
+      CandidateScore carries HOSKnown; the tool shows the hours only when they are known and
+      otherwise says they are unknown, not zero, and to check them before promising the load. To
+      verify in a run.
+    files:
+      - services/tms/internal/core/services/dispatchcandidateservice/score.go
+      - services/tms/internal/core/services/dispatchcandidateservice/service.go
+      - services/tms/internal/core/services/agentquerytoolservice/dispatch_tools.go
+    fixedIn: .deskbench/runs/20261009-203702-run
+
+  - id: DB-046
+    title: A fuel receipt read out with only its day could not be recorded
+    status: fixed
+    severity: medium
+    area: agent tools / fuel
+    found: 2026-10-09, .deskbench/runs/20261009-195808-run
+    models: [claude-haiku-5-5]
+    scenarios: [log-a-fuel-purchase]
+    problem: >
+      purchasedAt required a time with an offset, so "yesterday" made the agent ask the person for
+      the time of the purchase, which IFTA does not need.
+    fix: >
+      purchasedAt takes a day alone (2026-10-08, yesterday), recorded at noon in the
+      organization's time zone; a local time without an offset is still refused, since the pump's
+      zone is not known. To verify in a run.
+    files: [services/tms/internal/core/services/agenttoolservice/fuel_tools.go]
+    fixedIn: .deskbench/runs/20261009-203702-run
+
+  - id: DB-047
+    title: A shipment with a rate override could never be saved
+    status: fixed
+    severity: critical
+    area: shipments / validation
+    found: 2026-10-09, .deskbench/runs/20261009-203702-run
+    models: [claude-haiku-5-5]
+    scenarios: [lifecycle-one-agent-book-to-posted-invoice]
+    problem: >
+      Shipment.Validate checked rateOverrideAmount with validation.Min(decimal.NewFromInt(0)).
+      ozzo-validation cannot compare a decimal.Decimal, so every shipment carrying a rate override
+      failed with "type not supported: decimal.Decimal": the agent priced Acme's load off its
+      contract and could not book it, and a person setting an override in the app hits the same.
+      The dedicated lane suggestion's confidence score had the same rule.
+    fix: >
+      pkg/domainvalidation gains DecimalAtLeast and DecimalAtMost, which compare decimal.Decimal,
+      *decimal.Decimal and decimal.NullDecimal (an absent value passes). Shipment, dedicated lane
+      suggestion and order (whose hand-written nonNegativeNullDecimal it replaces) use them.
+    fixedIn: uncommitted; verified by .deskbench/runs/20261009-223506-run (the contract-priced load books on claude-haiku-5-5)
+    files:
+      - services/tms/pkg/domainvalidation/decimal.go
+      - services/tms/internal/core/domain/shipment/shipment.go
+      - services/tms/internal/core/domain/dedicatedlane/suggestion.go
+      - services/tms/internal/core/domain/order/order.go
+
+  - id: DB-048
+    title: Searching the billing queue failed in SQL, and its pro number filter was withheld
+    status: fixed
+    severity: high
+    area: billing queue
+    found: 2026-10-09, .deskbench/runs/20261009-205726-run
+    models: [claude-haiku-5-5]
+    scenarios: [lifecycle-one-agent-book-to-posted-invoice]
+    problem: >
+      BillingQueueItem declares UseSearchVector, but billing_queue_items never had a search_vector
+      column, so every text search on the queue (the agent's, and the queue page's) failed with
+      "column bqi.search_vector does not exist". The other way to find an item by its load, the
+      shipment.proNumber filter list_billing_queue_items offers, was refused as "withheld at this
+      data access": the billing queue resource did not classify that field, so it took the
+      resource's Restricted default.
+    fix: >
+      Migration 20261231008650 adds the generated search_vector (status, review and exception notes,
+      cancel reason) with a GIN index. shipment.proNumber is classified Internal on the billing
+      queue, as a pro number is everywhere else. The new column first broke every billing transfer (DB-051): it is declared scanonly on BillingQueueItem now.
+    fixedIn: uncommitted; verified by .deskbench/runs/20261009-223506-run (the queue item found by pro number, approved and posted)
+    files:
+      - services/tms/internal/infrastructure/postgres/migrations/20261231008650_billing_queue_search_vector.tx.up.sql
+      - services/tms/internal/core/domain/permission/resources_billing.go
+
+  - id: DB-049
+    title: The pickup arrival and departure could not be proposed together
+    status: fixed
+    severity: high
+    area: dispatch / stop actuals
+    found: 2026-10-09, .deskbench/runs/20261009-211526-run
+    models: [claude-haiku-5-5]
+    scenarios: [lifecycle-one-agent-book-to-posted-invoice]
+    problem: >
+      Dispatchers report both at once ("got there 5:50, left 7:05"). record_stop_actual took one
+      event, and the departure's preview checked today's state, where the arrival had not happened
+      yet, so it was refused ("Arrive at this stop before departing"). The pickup took two approval
+      rounds and the delivery was never recorded.
+    fix: >
+      RecordStopActualRequest takes an optional DepartedAt with an Arrive: both are planned and
+      written in one transaction (no stop left arrived and not departed if the second write
+      failed), both events are published and the detention candidate is flagged. It must be at or
+      after the arrival, not in the future, and needs the arrival time. The tool gains departedAt
+      and the preview names both.
+    fixedIn: uncommitted; verified by .deskbench/runs/20261009-214446-run (arrival and departure proposed in one call, load Completed)
+    files:
+      - services/tms/internal/core/ports/repositories/shipmentmove.go
+      - services/tms/internal/core/services/shipmentmoveservice/stopactual_plan.go
+      - services/tms/internal/core/services/shipmentmoveservice/stopactuals.go
+      - services/tms/internal/core/services/agenttoolservice/move_tools.go
+      - services/tms/internal/core/services/agenttoolservice/preview_moves.go
+
+  - id: DB-050
+    title: Every driver was "infeasible" for a load whose pickup window had already passed
+    status: fixed
+    severity: high
+    area: dispatch / candidate ranking
+    found: 2026-10-09, .deskbench/runs/20261009-212705-run
+    models: [claude-haiku-5-5]
+    scenarios: [lifecycle-one-agent-book-to-posted-invoice]
+    problem: >
+      A load entered after it ran has a pickup window in the past. rank_move_candidates projected
+      each driver's arrival from now, found every one a day late, and marked them all infeasible, so
+      Haiku would not assign the driver the person named. The comparison says nothing: everyone is
+      equally late to a window already gone. An unknown slack also read as 0 and gave "tight".
+      Separately, list_trailers never showed a trailer's equipment type, so "a dry van" could not be
+      matched, and the seed called the dry van type "Standard semi-trailer".
+    fix: >
+      A window that closed before now is not judged for lateness: one Warn finding
+      (move.window_passed) says so, the verdict ignores slack, and the agent view omits
+      minutesOfSlack when it is unknown (CandidateScore.SlackKnown). list_trailers and list_tractors
+      carry equipmentType (code and description); the seed's type reads "Dry van (standard enclosed
+      semi-trailer)". A base prompt rule: when the person names exactly what to change, propose it
+      and put what stands against it beside the proposal; a kind ("a dry van") is chosen, not asked.
+    fixedIn: uncommitted; verified by .deskbench/runs/20261009-215410-run (David Park on TRC-001 with a dry van proposed and approved)
+    files:
+      - services/tms/internal/core/services/dispatchcandidateservice/service.go
+      - services/tms/internal/core/services/dispatchcandidateservice/score.go
+      - services/tms/internal/core/services/dispatcheligibility/finding.go
+      - services/tms/internal/core/services/agentquerytoolservice/dispatch_tools.go
+      - services/tms/internal/core/services/agentquerytoolservice/listcatalog.go
+      - services/tms/internal/core/domain/agentdefinition/prompt.go
+      - services/tms/internal/infrastructure/database/seeds/development/06_test_data.go
+
+  - id: DB-051
+    title: Every billing transfer failed with "Unexpected" after the queue's search column was added
+    status: fixed
+    severity: critical
+    area: billing queue
+    found: 2026-10-09, .deskbench/runs/20261009-214446-run
+    models: [claude-haiku-5-5]
+    scenarios: [lifecycle-one-agent-book-to-posted-invoice]
+    problem: >
+      DB-048's generated search_vector column was not on BillingQueueItem, so any query returning
+      the row (the transfer's insert) failed to scan ("BillingQueueItem does not have column
+      search_vector"). The transfer reported only "refused: Unexpected", in the app as well as in
+      the Desk.
+    fix: >
+      BillingQueueItem declares SearchVector scanonly, as every other searchable entity does;
+      buncolgen regenerated.
+    fixedIn: uncommitted; verified by .deskbench/runs/20261009-215410-run (1 of 1 transferred)
+    files:
+      - services/tms/internal/core/domain/billingqueue/billingqueue.go
+
+  - id: DB-052
+    title: Approvals the queue would refuse were proposed, and ones it would accept were called blocked
+    status: fixed
+    severity: high
+    area: billing queue / approvals
+    found: 2026-10-09, .deskbench/runs/20261009-215410-run and execution_error rows on agent_proposals
+    models: [claude-haiku-5-5]
+    scenarios: [lifecycle-one-agent-book-to-posted-invoice]
+    problem: >
+      Four approve_billing_queue_item proposals today were approved by a person and then failed
+      with "Settle the flagged check first": the tool's validation and preview checked detention
+      holds but not open review issues, which the queue refuses on. The other way round,
+      get_billing_queue_item said a ReadyForReview item "cannot be approved; it must be in review",
+      though approving one takes it into review itself, so the agent gave up and sent the person to
+      the queue page. Its description also said to propose only items "you reviewed and found
+      clean", which kept Haiku from proposing an approval the person asked for in so many words.
+    fix: >
+      BillingQueueItem.OpenIssues lists unsettled flagged checks; approvalBlock (validate and
+      preview, single and bulk) refuses on them, naming each. approvable() matches what the queue
+      accepts: a waiting item is approvable, an open check or detention hold blocks. The approve
+      descriptions: propose on your own only when clean; when the person asks, propose and say what
+      could not be confirmed.
+    fixedIn: uncommitted; verified by .deskbench/runs/20261009-223506-run (approved from ReadyForReview, posted)
+    files:
+      - services/tms/internal/core/domain/billingqueue/review.go
+      - services/tms/internal/core/services/agenttoolservice/billing_queue_decision_tools.go
+      - services/tms/internal/core/services/agenttoolservice/preview_billing_decisions.go
+      - services/tms/internal/core/services/agenttoolservice/approve_billing_queue_item.go
+      - services/tms/internal/core/services/agenttoolservice/invoice_bulk_tools.go
+      - services/tms/internal/core/services/agentquerytoolservice/billing_queue_tools.go
+
+  - id: DB-053
+    title: A new organization could not post an invoice, and development had no fiscal year
+    status: fixed
+    severity: high
+    area: accounting / onboarding
+    found: 2026-10-09, .deskbench/runs/20261009-220717-run and 20261009-222354-run
+    models: [claude-haiku-5-5]
+    scenarios: [lifecycle-one-agent-book-to-posted-invoice]
+    problem: >
+      Posting requires default receivable and revenue accounts. Tenant bootstrap set the receivable
+      (1110), write-off and retained earnings accounts from the chart it creates, but never revenue,
+      so every new organization's first post failed. The development seed also created no fiscal
+      year, so posting failed again on "No fiscal period covers the invoice posting date", and the
+      driver pay ledger seed silently skipped every entry.
+    fix: >
+      Bootstrap defaults revenue to 4010 Linehaul Revenue. Development seed FiscalYear opens the
+      current calendar year with its monthly periods (GenerateMonthlyPeriods). Applied to the local
+      database.
+    fixedIn: uncommitted; verified by .deskbench/runs/20261009-223506-run (invoice posted, load Invoiced)
+    files:
+      - services/tms/internal/infrastructure/postgres/tenantbootstrap/accounting.go
+      - services/tms/internal/infrastructure/database/seeds/development/36_fiscal_year.go
+
+  - id: DB-054
+    title: Records in play and tracking said a delivered load "needs a driver"
+    status: fixed
+    severity: medium
+    area: records in play / tracking
+    found: 2026-10-09, .deskbench/runs/20261009-215410-run
+    models: [claude-haiku-5-5]
+    scenarios: [lifecycle-one-agent-book-to-posted-invoice]
+    problem: >
+      Tracking read assignments from the dispatch board, which only returns open moves, so once a
+      move completed its driver vanished: the records-in-play block and get_shipment_tracking said
+      "nobody: the move needs a driver or carrier", and Haiku told the person the assignment to
+      David Park had been removed.
+    fix: >
+      Both readers ask the board for every move status (shipment.MoveStatuses()). A finished move
+      with nobody on it reads "nobody on record".
+    fixedIn: uncommitted; verified by .deskbench/runs/20261009-223506-run
+    files:
+      - services/tms/internal/core/services/shipmentetaservice/service.go
+      - services/tms/internal/core/services/agentquerytoolservice/tracking_tools.go
+      - services/tms/internal/core/services/shipmenttracking/facts.go
+      - services/tms/internal/core/domain/shipment/enums.go
+
+  - id: DB-055
+    title: explain_rate called a fuel surcharge program's charge unpriced; JSON sent as text was refused
+    status: fixed
+    severity: medium
+    area: rating / argument contract
+    found: 2026-10-09, .deskbench/runs/20261009-220717-run and 20261009-212705-run
+    models: [claude-haiku-5-5]
+    scenarios: [lifecycle-one-agent-book-to-posted-invoice]
+    problem: >
+      explain_rate reads the governing quote's trace, which priced linehaul only; the $222.56 fuel
+      surcharge from the fuel surcharge program sits on the shipment beside it, so the tool showed
+      fuel $0 against a $1,121.36 total and Haiku told the person the surcharge was unverified.
+      Separately, Haiku sent filters as a JSON-encoded string, which was wrapped as a list of one
+      string and refused.
+    fix: >
+      explain_rate lists onShipment: the shipment's charges the quote did not produce, each with its
+      source (fuel surcharge program, detention, the agreement's accessorial schedule, added on the
+      shipment), plus shipmentTotal and a note. toolschema.Coerce decodes JSON text where the schema
+      declares an array or object, with a note to send the value itself.
+    fixedIn: uncommitted; unit-tested, to verify in a run
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/rate_tools.go
+      - services/tms/pkg/toolschema/coerce.go
+
+  - id: DB-056
+    title: A corrected proposal in the same turn was approved together with the one it corrected
+    status: fixed
+    severity: critical
+    area: agent runtime / proposals
+    found: 2026-10-09, .deskbench/runs/20261009-224352-run
+    models: [claude-haiku-5-5]
+    scenarios: [lifecycle-one-agent-book-to-posted-invoice]
+    problem: >
+      Haiku proposed create_shipment, saw it had sent a tractor type nobody asked for, proposed a
+      corrected create_shipment in the same turn and told the person to reject the first. Both were
+      filed into one plan, the person's one approval executed both, and the load was entered twice.
+      The agent had no way to take back its own proposal, and nothing ever marks one Superseded.
+    fix: >
+      A runtime tool, withdraw_proposal, offered once a person-read turn has filed a proposal still
+      waiting: it withdraws one filed earlier in the same turn, which the recorder saves Superseded
+      and which is never a plan step, never offered in the approval box and gets no draft. One from
+      an earlier turn is refused (the person rejects it). Every filing result names its proposal id.
+      No GetVersion gate (data on the turn, no new command); the audit chain is unchanged.
+    fixedIn:
+      uncommitted; unit-tested; .deskbench/runs/20261009-233510-run passed the one-agent
+      lifecycle with it live
+    files:
+      - services/tms/internal/core/services/agentruntime/withdrawproposal.go
+      - services/tms/internal/core/services/proposalrecorder/recorder.go
+      - services/tms/internal/core/ports/services/agentruntime.go
+
+  - id: DB-057
+    title: An agent without quote_shipment asked the person for a rating method the contract decides
+    status: fixed
+    severity: high
+    area: agent tools / shipments
+    found: 2026-10-09, .deskbench/runs/20261009-224352-run
+    models: [claude-haiku-5-5]
+    scenarios: [lifecycle-handed-between-agents]
+    problem: >
+      create_shipment required formulaTemplateId and told the agent to quote_shipment first for a
+      customer with an agreement. The Shipment Assistant (an agent made in AI Control) holds
+      create_shipment but not quote_shipment, so for Peak Distributing it asked the person which
+      rating method and base rate to use, though saving the shipment consults the contract anyway.
+    fix: >
+      formulaTemplateId is optional: left out, the tool asks the customer's agreements
+      (ShipmentService.PreviewContractRate) and seats the rating method and base rate an agreement
+      rule rated the lane with (outcome Rated, not a formula fallback); with no agreement covering
+      the lane it refuses, naming list_formula_templates. A rating the call names is never
+      second-guessed. The tool contract records the exception. To verify in a run.
+    files:
+      - services/tms/internal/core/services/agenttoolservice/intake_tools.go
+      - services/tms/internal/core/services/agenttoolservice/shipment_draft.go
+      - services/tms/internal/core/services/agenttoolservice/module.go
+      - services/tms/internal/api/toolcontract/bindings.go
+    fixedIn: "uncommitted; verified in .deskbench/runs/20261010-055944-run, 071353 and 082904 (both models)"
+
+  - id: DB-058
+    title: Development had no carrier rate agreements, so no carrier shop could price a lane
+    status: fixed
+    severity: medium
+    area: seed data
+    found: 2026-10-09, .deskbench/runs/20261009-224352-run
+    models: [claude-haiku-5-5]
+    scenarios: [lifecycle-carrier-covered]
+    problem: >
+      The only rate agreement seeded was Acme's customer contract, so shop_carriers answered "No
+      carrier agreement covers this lane" for every carrier and "give it to whoever is cheapest"
+      could never be done. Haiku said so correctly. The Acme agreement was also Active with no
+      submitted or approved stamps, which Haiku reported as odd.
+    fix: >
+      Development seed CarrierRateAgreement gives each active carrier an approved buy-side contract
+      with an anywhere-to-anywhere per-mile rule at a different rate (1.65 up), so cheapest means
+      something. The Acme agreement is stamped submitted and approved by the admin, in the seed and
+      the local database. To verify in a run.
+    fixedIn: uncommitted; verified by .deskbench/runs/20261010-001934-run (lifecycle-carrier-covered passes)
+    files:
+      - services/tms/internal/infrastructure/database/seeds/development/37_carrier_rate_agreement.go
+      - services/tms/internal/infrastructure/database/seeds/development/16_rate_agreement.go
+
+  - id: DB-059
+    title: A task the person handed another agent reached it without the load it was about
+    status: fixed
+    severity: high
+    area: agent runtime / delegation
+    found: 2026-10-09, .deskbench/runs/20261009-233510-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    scenarios: [lifecycle-handed-between-agents]
+    problem: >
+      "bill it", addressed to Billing exceptions in the conversation that booked the load, opened
+      the billing agent with the two words alone: records in play are skipped on delegated turns,
+      and a directed task handed nothing over. It went looking for which load and ran past the
+      step's time.
+    fix: >
+      driveDirected hands the run's subject and the records in play the person may read (at most
+      eight) as the delegate's records (recordsInPlay); the hand-over text no longer says another
+      agent asked. agent-delegation.md documents it.
+    fixedIn: uncommitted; unit-tested, to verify in a run
+    files:
+      - services/tms/internal/core/services/agentruntime/directed.go
+      - services/tms/internal/core/services/agentruntime/delegate.go
+
+  - id: DB-060
+    title: Anthropic refused structured-output schemas with array bounds, so those calls fell through
+    status: fixed
+    severity: medium
+    area: model adapters
+    found: 2026-10-09, every run since .deskbench/runs/20261009-160911-run
+    models: [claude-haiku-5-5]
+    problem: >
+      "output_config.format.schema: For 'array' type, property 'maxItems' is not supported" (400)
+      on AssistantChat structured calls: each went on to the next provider, so the production model
+      never answered them.
+    fix: >
+      The Anthropic adapter sends a copy of the schema without the bounds its structured output
+      refuses (maxItems, minItems above 1, numeric and string bounds), walking schemas only, so a
+      field named like a keyword is kept.
+    fixedIn: uncommitted; unit-tested, to verify in a run
+    files:
+      - services/tms/internal/infrastructure/agentcompletion/modeladapter/anthropicschema.go
+
+  - id: DB-061
+    title: The approval card's preview of a driver assignment always failed
+    status: fixed
+    severity: medium
+    area: dispatch / previews
+    found: 2026-10-09, .deskbench/runs/20261009-233510-run
+    models: [claude-haiku-5-5]
+    problem: >
+      Planning an assignment reads the organization's capabilities FOR SHARE (to close the
+      capability-disable race), and the decision-time preview runs in a read-only snapshot, so
+      "cannot execute SELECT FOR SHARE in a read-only transaction" and the card fell back to the
+      raw parameters.
+    fix: >
+      The plan takes the lock from its caller: the preview reads without one, the write keeps SHARE.
+    fixedIn: uncommitted; unit-tested
+    files:
+      - services/tms/internal/core/services/capabilityguard/capabilityguard.go
+      - services/tms/internal/core/services/assignmentservice/plan.go
+      - services/tms/internal/core/services/assignmentservice/service.go
+
+  - id: DB-062
+    title: The local Temporal server filled its memory with bench runs and stopped answering
+    status: fixed
+    severity: high
+    area: bench infrastructure
+    found: 2026-10-09, .deskbench/runs/20261009-233510-run
+    problem: >
+      Temporal runs as start-dev with no database file, under a 1 GiB limit, and keeps every closed
+      run in memory until retention. The bench namespace kept runs 72 hours; by the evening the
+      server sat at 1011 MiB and every poller timed out, so turns hung in three lifecycles.
+    fix: >
+      The bench namespace keeps closed runs for an hour, and an existing one is shortened on the
+      next run (already applied to the local deskbench namespace). The memory already held drains
+      as retention clears it; a Temporal restart would free it at once but wipes the in-memory
+      state (the person's call).
+    fixedIn: uncommitted; the temporal container was restarted (2026-10-10) and the namespace kept for 1h; .deskbench/runs/20261010-001934-run ran clean
+    files:
+      - services/tms/internal/deskbench/namespace.go
+
+  - id: DB-063
+    title: An automatic tier raise on an agent with no tiers broke reading every agent
+    status: fixed
+    severity: critical
+    area: agent definitions / trust ledger
+    found: 2026-10-10, .deskbench/runs/20261010-003806-run
+    models: [claude-haiku-5-5]
+    problem: >
+      SetToolTier merged with COALESCE(tool_tiers, '{}') || {tool: tier}, but an agent saved with
+      no tiers holds JSON null, not SQL NULL, and null || {...} is an array. When the trust ledger
+      raised transfer_to_billing on Bench · Operations, its tool_tiers became [null, {...}] and
+      every read of the organization's agents failed ("cannot unmarshal array into ... map"): 80
+      cases of the run, and any Desk screen listing agents, until the row was repaired.
+    fix: >
+      The merge treats anything but an object as empty (jsonb_typeof). The corrupted row was
+      repaired. An integration test merges into an agent saved with JSON null.
+    fixedIn: uncommitted; TestSetToolTier_MergesIntoAnAgentSavedWithNoTiers passes against Postgres
+    files:
+      - services/tms/internal/infrastructure/postgres/repositories/agentdefinitionrepository/agentdefinition.go
+
+  - id: DB-064
+    title: An invented biller was proposed and failed only once a person approved it
+    status: fixed
+    severity: high
+    area: billing queue / approvals
+    found: 2026-10-10, .deskbench/runs/20261010-001934-run
+    models: [claude-haiku-5-5]
+    scenarios: [lifecycle-handed-between-agents]
+    problem: >
+      assign_billing_queue_billers sent a user id the model made up; nothing checked it until the
+      approved write said "Biller user not found in the current tenant".
+    fix: >
+      BillingQueueService.CheckBiller (the lookup AssignBiller makes, extracted); billerOf checks a
+      named biller with it, so assign, its bulk form and the move into review refuse it before
+      proposing, saying to leave it out for the person who asked. Mock and fakes updated by hand.
+    fixedIn: uncommitted; unit-tested
+    files:
+      - services/tms/internal/core/services/billingqueueservice/service.go
+      - services/tms/internal/core/services/agenttoolservice/billing_queue_decision_tools.go
+
+  - id: DB-065
+    title: Records in play missed loads created by an approval, and never reached a directed agent
+    status: fixed
+    severity: high
+    area: records in play / delegation
+    found: 2026-10-10, .deskbench/runs/20261010-001934-run and 20261010-003806-run
+    models: [claude-haiku-5-5]
+    scenarios: [lifecycle-handed-between-agents]
+    problem: >
+      A shipment created by an approved proposal ran outside any turn, so it never joined the
+      conversation's working set, and "who can run this one?" reached dispatch with no load. Once
+      that was fixed, the directed agent still got the bare task: the records were read from the
+      turn's request, which a restored turn (the workflow's path) does not carry.
+    fix: >
+      touchedRecords adds the record an auto-executed write made and the records of proposals
+      executed since the working set last changed. The directed task keeps its records on the task
+      itself when the turn opens (DirectedTask.Records), which travels in the turn's state.
+    fixedIn: uncommitted; unit-tested including save and restore; to verify in a run
+    files:
+      - services/tms/internal/core/services/assistantservice/workingset.go
+      - services/tms/internal/core/services/agentruntime/directed.go
+      - services/tms/internal/core/ports/services/agentruntime.go
+
+  - id: DB-066
+    title: Driver pay lists took no driver name, and search_shipments ignored what a load carries
+    status: fixed
+    severity: medium
+    area: agent tools
+    found: 2026-10-10, .deskbench/runs/20261010-003806-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    scenarios: [deduction-on-a-closed-settlement, delivered-and-billed]
+    problem: >
+      list_pay_advances (and the escrow and recurring lists) refused query: "emily chen", taking
+      only a worker id; "did the acme steel load deliver" found nothing, as search_shipments matched
+      customers, places and drivers but not commodities.
+    fix: >
+      The driver pay lists take driver, a name resolved to one driver (refused with who it fits when
+      it fits nobody or several). search_shipments matches commodities by name (CommodityIDs, an
+      EXISTS on shipment_commodities) beside the other parties.
+    fixedIn: uncommitted; unit-tested; to verify in a run
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/driverpay_tools.go
+      - services/tms/internal/core/services/agentquerytoolservice/shipment_search_parties.go
+      - services/tms/internal/infrastructure/postgres/repositories/shipmentrepository/helpers.go
+
+  - id: DB-067
+    title: gpt-6-luna searched for tools until it ran out, and for a formula field that does not exist
+    status: fixed
+    severity: medium
+    area: agent runtime / formula tools
+    found: 2026-10-10, .deskbench/runs/20261010-003806-run
+    models: [gpt-6-luna]
+    scenarios:
+      [
+        late-loads-this-morning,
+        drivers-available-tomorrow,
+        briefing-in-plain-words,
+        formula-detention-free-time,
+        formula-equipment-and-hazmat-adders,
+      ]
+    problem: >
+      It re-worded one need into five find_tools calls rather than call what the first loaded, and
+      hit the cap; in the formula studio it called describe_formula_schema six times looking for a
+      per-stop time field, then asked the person. Haiku declared the quantity as a template
+      variable and passed.
+    fix: >
+      From the third search a find_tools result says what it found is loaded and to call it; the
+      fourth says it was the last. describe_formula_schema's partial-match note says a quantity no
+      field holds is a template variable to declare, not something to keep searching for.
+    fixedIn: uncommitted; unit-tested; to verify in a run
+    files:
+      - services/tms/internal/core/services/agentruntime/toolset.go
+      - services/tms/internal/core/services/agentquerytoolservice/formula_schema_view.go
+
+  - id: DB-068
+    title: Agents could not tell which of their tools file a proposal, so they would not assign
+    status: fixed
+    severity: high
+    area: agent prompt / tool section
+    found: 2026-10-10, .deskbench/runs/20261010-012111-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    scenarios: [lifecycle-handed-between-agents, assign-a-driver]
+    problem: >
+      With records in play now reaching it, the dispatch agent ranked the drivers, then said it had
+      no tool to submit the assignment for approval because the assignment tool "would make the
+      change directly". The disclosed tool section (agents holding more tools than load on a turn)
+      never said which calls record a proposal; that grouping reached only small agents. The
+      ranking's unknown-hours note also read as "do not propose".
+    fix: >
+      changeGroups lists, under "What a change you call does:", the tools that always propose, run
+      at once only for the person's own records, or are decided per call, in both branches of the
+      tool section. rank_move_candidates' hours note says to state unknown hours beside a proposed
+      assignment, not to hold it back.
+    fixedIn: uncommitted; to verify in a run
+    files:
+      - services/tms/internal/core/domain/agentdefinition/prompt.go
+      - services/tms/internal/core/services/agentquerytoolservice/dispatch_tools.go
+
+  - id: DB-069
+    title: Every carrier shopped at the same minimum charge, and the shop never said who was qualified
+    status: fixed
+    severity: high
+    area: rating / carrier shop
+    found: 2026-10-10, .deskbench/runs/20261010-012111-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    scenarios: [lifecycle-carrier-covered]
+    problem: >
+      SEED-SHP-002's move has no stored distance, so every per-mile carrier contract fell to its
+      $450 minimum and "whoever is cheapest" tied four ways; the shop also gave no carrier status
+      or compliance, which the person's "active and compliant" needed.
+    fix: >
+      ratequoteservice.Shop fills missing move distances before rating, as quotes do; shop_carriers
+      reads the carriers in one GetByIDs and adds each option's status and compliance.
+    fixedIn: uncommitted; TestShopCarriers covers status and compliance; to verify in a run
+    files:
+      - services/tms/internal/core/services/ratequoteservice/service.go
+      - services/tms/internal/core/services/agentquerytoolservice/intake_tools.go
+
+  - id: DB-070
+    title: create_shipment hid that a contract prices it, and agents asked for a rating method or times
+    status: fixed
+    severity: high
+    area: agent tools / shipments
+    found: 2026-10-10, .deskbench/runs/20261010-012111-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    scenarios:
+      [
+        create-shipment-from-a-sentence,
+        lifecycle-one-agent-book-to-posted-invoice,
+      ]
+    problem: >
+      find_tools shows a tool's first sentence only, and its recipe required list_formula_templates,
+      so the Shipment Assistant never tried create_shipment without a rating and told the person no
+      agreement existed; gpt-6-luna asked what "yesterday morning" and "by noon" meant.
+    fix: >
+      The first sentence says the customer's rate agreement prices it when no price is given; the
+      recipe drops list_formula_templates. scheduledWindowStart reads a part of the day as a window
+      (morning 08:00-12:00, afternoon 13:00-17:00, evening 17:00-21:00; "by noon" closes at 12:00)
+      and says which was used.
+    fixedIn: uncommitted; to verify in a run
+    files:
+      - services/tms/internal/core/services/agenttoolservice/intake_tools.go
+
+  - id: DB-071
+    title: No agent could propose a new customer; the preview's transaction was aborted
+    status: fixed
+    severity: critical
+    area: master data / previews
+    found: 2026-10-10, .deskbench/runs/20261010-012111-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    scenarios: [brand-new-customer]
+    problem: >
+      Validating create_customer reads the data entry control through GetOrCreate, which inserted
+      the default row first. Inside the preview's read-only snapshot the INSERT failed and aborted
+      the transaction, so every later check failed ("current transaction is aborted") and nothing
+      was proposed. Seven other control repositories share the insert-first GetOrCreate.
+    fix: >
+      GetOrCreate reads first; on a read-only context a missing row returns the defaults without
+      writing, and otherwise the insert runs in a savepoint (dberror.IsReadOnlyTransaction). Being
+      moved into one dbtx helper for all eight repositories.
+    fixedIn: uncommitted; TestGetOrCreateInAReadOnlyTransactionWritesNothing passes against Postgres
+    files:
+      - services/tms/internal/infrastructure/postgres/repositories/dataentrycontrolrepository/dataentrycontrol.go
+      - services/tms/pkg/dberror/helpers.go
+
+  - id: DB-072
+    title: Every report touching an unclassified field was refused, for admins too
+    status: fixed
+    severity: high
+    area: reports / permissions
+    found: 2026-10-10, .deskbench/runs/20261010-012111-run
+    models: [claude-haiku-5-5]
+    scenarios: [revenue-by-customer]
+    problem: >
+      Revenue by Customer failed with 'field "Miles" on Shipment Move is not in your accessible
+      field set'. The permission engine built AccessibleFields from only the fields a resource
+      classifies itself, and every reader (report compiler, drill-down, report-builder tools, the
+      GraphQL catalog behind the report builder UI) treats a non-empty list as the complete
+      allowlist, so every unclassified field was withheld though MaxSensitivity allowed it.
+    fix: >
+      The engine no longer emits a list derived from sensitivity. Each of the four readers checks
+      MaxSensitivity against GetFieldSensitivity first, which falls to the resource's
+      DefaultSensitivity for an unlisted field, so nothing above the role's level is exposed.
+    fixedIn: uncommitted; engine and reporting tests pass; reviewed every reader
+    files:
+      - services/tms/internal/core/services/permission/engine.go
+
+  - id: DB-073
+    title: The same report schedule could be approved again and again
+    status: fixed
+    severity: medium
+    area: reports
+    found: 2026-10-10, .deskbench/runs/20261010-012111-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    scenarios: [scheduled-report]
+    problem: >
+      Three identical Monday 07:00 schedules to admin@trenova.app piled up on Delivered, Not Billed,
+      so each email would go out three times.
+    fix: >
+      schedule_report refuses a schedule the report already has (same cron, zone and recipients),
+      naming it. The scenario's setup removes earlier runs' schedules.
+    fixedIn: uncommitted; TestScheduleReport_RefusesAScheduleTheReportAlreadyHas
+    files:
+      - services/tms/internal/core/services/agenttoolservice/alert_tools.go
+      - services/tms/deskbench/scenarios/backoffice.yaml
+
+  - id: DB-074
+    title: Searches for a report that does not exist went on through four wordings
+    status: fixed
+    severity: low
+    area: reports
+    found: 2026-10-10, .deskbench/runs/20261010-012111-run
+    models: [gpt-6-luna]
+    scenarios: [scheduled-report-that-does-not-exist]
+    problem: list_reports returned nothing for each wording, so gpt-6-luna kept rephrasing.
+    fix: >
+      A search that matches nothing names every report there is (up to 40), says other wordings
+      will not find more, and suggests offering to build one.
+    fixedIn: uncommitted; TestListReports_NamesEveryReportWhenNothingMatches
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/report_tools.go
+
+  - id: DB-075
+    title: Asked what was ready to bill, a ReadyToInvoice filter hid 18 Completed loads
+    status: fixed
+    severity: medium
+    area: billing transfer
+    found: 2026-10-10, .deskbench/runs/20261010-012111-run
+    models: [gpt-6-luna, claude-haiku-5-5]
+    scenarios: [ready-to-invoice, completed-not-invoiced]
+    problem: >
+      gpt-6-luna filtered candidates to ReadyToInvoice and reported one load while 18 Completed
+      ones could also transfer; asked only what had not gone to billing, Haiku proposed transferring
+      all 19.
+    fix: >
+      A ReadyToInvoice-only listing notes how many Completed candidates it left out. The description
+      says a question about what is waiting is answered from the list; a transfer only when asked.
+    fixedIn: uncommitted; TestListBillingTransferCandidates_CountsTheCompletedOnesAReadyFilterLeavesOut
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/billing_transfer_tools.go
+
+  - id: DB-076
+    title: Asked for an arrival notice later, the agent checked the customer's preferences only after waiting
+    status: fixed
+    severity: low
+    area: waits / customer notices
+    found: 2026-10-10, .deskbench/runs/20261010-012111-run
+    models: [claude-haiku-5-5]
+    scenarios: [no-routine-notice-for-freshhaul]
+    problem: >
+      Haiku put "check FreshHaul's notice preferences" in the wait's then-step, so the person never
+      heard now that FreshHaul takes no routine notices.
+    fix: wait_until's description says to check now what can be checked now and say what it means before waiting.
+    fixedIn: uncommitted; catalog checks pass
+    files:
+      - services/tms/internal/core/services/agenttoolservice/wait_tools.go
+
+  - id: DB-077
+    title: '"Loads rolling" was checked against InTransit alone'
+    status: fixed
+    severity: low
+    area: bench scenarios
+    found: 2026-10-10, .deskbench/runs/20261010-012111-run
+    models: [claude-haiku-5-5]
+    scenarios: [in-transit-count]
+    problem: Haiku counted the Delayed load as rolling (correct); the fact wanted InTransit only.
+    fix: The fact counts InTransit and Delayed.
+    fixedIn: uncommitted
+    files:
+      - services/tms/deskbench/scenarios/dispatch.yaml
+
+  - id: DB-078
+    title: The bench's own tidy-up canceled a seeded load, and runs drifted the seed data
+    status: fixed
+    severity: high
+    area: bench infrastructure / scenarios
+    found: 2026-10-10, .deskbench/runs/20261010-012111-run
+    problem: >
+      benchLeftovers canceled every New shipment any executed bench proposal named, including a
+      re-rate's, so SEED-SHP-001 was canceled by raw SQL. Approved writes also moved seed records
+      between runs: SEED-SHP-008's second move completed, SEED-SHP-002 left with a carrier,
+      SEED-DET-001/002 completed and transferred, Acme loads sent to billing, SEED-SHP-001 re-rated
+      off its flat rate. Later scenarios then failed on state, not behaviour.
+    fix: >
+      The tidy-up touches only what create_shipment and duplicate_shipment made, and never a SEED-
+      pro number. Twelve scenarios restore the state they need in their setup (idempotent, scoped to
+      SEED- records); assign-a-driver shares the peak-shipments exclusive key with the carrier
+      lifecycle; invoice-a-ready-load accepts post_invoice.
+    fixedIn: uncommitted; every setup ran in a rolled-back transaction and then for real
+    files:
+      - services/tms/internal/deskbench/checks.go
+      - services/tms/deskbench/scenarios/
+
+  - id: DB-079
+    title: A reassigned move could load its archived assignment or canceled carrier
+    status: fixed
+    severity: high
+    area: shipments / repository
+    found: 2026-10-10, reviewing fork A's note on carrier assignments
+    problem: >
+      A move keeps every assignment it had (archived driver assignments, canceled carrier
+      assignments) beside its one live one, but the shipment repository joined Moves.Assignment and
+      Moves.CarrierAssignment as plain has-one relations. With an archived duplicate present, a
+      shipment read returned the archived assignment instead of the live one (confirmed against the
+      local database in a rolled-back transaction), so a reassigned load could show its old driver
+      or a canceled carrier.
+    fix: >
+      Both joins carry the live condition (assignment archived_at IS NULL; carrier assignment status
+      not Canceled) through RelationOpts.AdditionalJoinOnConditions, matching what the move
+      repository already hydrates.
+    fixedIn: uncommitted; verified with a probe that fails without the condition and passes with it
+    files:
+      - services/tms/internal/infrastructure/postgres/repositories/shipmentrepository/helpers.go
+
+  - id: DB-080
+    title: gpt-6-luna filled every optional parameter, narrowing lists to nothing
+    status: fixed
+    severity: high
+    area: model adapters / OpenAI Responses
+    found: 2026-10-10, .deskbench/runs/20261010-012111-run
+    models: [gpt-6-luna]
+    problem: >
+      Its calls arrived with every optional parameter set (an empty query, a zero offset,
+      hasExceptions false, type Vacation, values []), the shape strict function calling forces. The
+      Responses adapter sent no strict field, leaving the API's default in place.
+    fix: >
+      Responses function tools always send strict false; the runtime checks every call against the
+      tool's schema itself.
+    fixedIn: uncommitted; adapter test asserts strict false; to verify in a run
+    files:
+      - services/tms/internal/infrastructure/agentcompletion/modeladapter/openairesponses.go
+
+  - id: DB-081
+    title: A formula schema search by a variable's own name found nothing
+    status: fixed
+    severity: medium
+    area: formula tools
+    found: 2026-10-10, .deskbench/runs/20261010-012111-run
+    models: [gpt-6-luna]
+    scenarios: [formula-edit-existing-per-mile, formula-detention-free-time]
+    problem: >
+      describe_formula_schema split names in camel case but not the query, so "baseRate" matched
+      nothing and gpt-6-luna was told the formula's own variable was no shipment field; with no
+      field for time at a stop it searched three to six times and asked.
+    fix: >
+      Query terms are camel-split too and a name also matches whole. propose_formula's variables
+      parameter says a per-stop, per-hour or per-event charge is written for one occurrence from a
+      declared input, cap included, rather than asked about.
+    fixedIn: uncommitted; unit-tested
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/formula_schema_view.go
+      - services/tms/internal/core/services/agentquerytoolservice/formula_tools.go
+
+  - id: DB-082
+    title: Settlement lists hid what a deduction was for, and said nothing when a name matched none
+    status: fixed
+    severity: medium
+    area: driver pay tools
+    found: 2026-10-10, .deskbench/runs/20261010-012111-run
+    models: [gpt-6-luna, claude-haiku-5-5]
+    scenarios: [settlement-with-a-deduction, deduction-on-a-closed-settlement]
+    problem: >
+      A defaulted hasExceptions false excluded David Park's draft (it carries an exception), and a
+      name query narrowed by status or open returned nothing with no hint, so agents tried each
+      status in turn and ran over their call budgets.
+    fix: >
+      hasExceptions narrows only when true; a name query narrowed by status, open or exceptions gets
+      the note listing the most recent settlements matching the name in any status.
+    fixedIn: uncommitted; unit-tested
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/settlement_tools.go
+
+  - id: DB-083
+    title: A customer's last invoice could not be found through find_tools
+    status: fixed
+    severity: medium
+    area: invoice tools
+    found: 2026-10-10, .deskbench/runs/20261010-012111-run
+    models: [gpt-6-luna]
+    scenarios: [credit-memo-for-damage]
+    problem: list_invoices never named a customer as a filter and had no search terms, so four searches missed it.
+    fix: The summary names the customer filter; search terms "last invoice" and "latest invoice".
+    fixedIn: uncommitted; tool-selection floor holds
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/listcatalog_reference.go
+
+  - id: DB-084
+    title: '"Who''s off this week" missed leave already under way, and a filter that emptied it said nothing'
+    status: fixed
+    severity: medium
+    area: workforce tools
+    found: 2026-10-10, .deskbench/runs/20261010-012111-run
+    models: [gpt-6-luna]
+    scenarios: [whos-off-this-week, approve-pending-time-off]
+    problem: >
+      The default window took only leave starting in it, so leave begun earlier was missing; a
+      defaulted type Vacation hid a personal-day request, and an empty filtered list said nothing.
+    fix: >
+      ListPTORequest.Overlapping makes the default window mean leave on at any point in it; a
+      filtered empty result lists up to five requests the filter left out.
+    fixedIn: uncommitted; unit-tested
+    files:
+      - services/tms/internal/core/ports/repositories/workerpto.go
+      - services/tms/internal/infrastructure/postgres/repositories/workerptorepository/workerpto.go
+      - services/tms/internal/core/services/agentquerytoolservice/pto_tools.go
+
+  - id: DB-085
+    title: record_worker_credential read as needing the physical card
+    status: fixed
+    severity: low
+    area: workforce tools
+    found: 2026-10-10, .deskbench/runs/20261010-012111-run
+    models: [gpt-6-luna]
+    scenarios: [record-a-new-med-card]
+    problem: '"From the card or certificate in hand" made gpt-6-luna ask for a scan, number and issuer.'
+    fix: >
+      What the person says is enough: worker and kind are required, dates as said, number, issuer
+      and scan can follow, renew when one of the kind is on file.
+    fixedIn: uncommitted
+    files:
+      - services/tms/internal/core/services/agenttoolservice/workforce_credential_tools.go
+
+  - id: DB-086
+    title: Seven more control repositories aborted a preview's read-only transaction on a missing row
+    status: fixed
+    severity: high
+    area: repositories / previews
+    found: 2026-10-10, .deskbench/runs/20261010-012111-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    problem: >
+      Dispatch, document, settlement, carrier settlement, Dash and agent control, and the timesheet
+      opener created their default row inside the caller's transaction; inside a preview's read-only
+      snapshot the insert failed and aborted it, so every later check failed. Dispatch control failed
+      this way 3 times in the run, aborting assignment previews.
+    fix: >
+      One helper, dbtx.GetOrCreate (Find, Create, Default, MapError), used by all eight
+      repositories including data entry control: read-only contexts read and return the default; a
+      write reads first, inserts in a savepoint, returns the default on a read-only refusal, reads
+      again. rlslint recognises GetOrCreate as a scoped wrapper.
+    fixedIn: uncommitted; dbtx unit tests; dispatch, data entry and document control integration tests pass against Postgres
+    files:
+      - services/tms/internal/infrastructure/postgres/dbtx/getorcreate.go
+      - services/tms/internal/infrastructure/postgres/rlslint/txlint.go
+      - services/tms/internal/infrastructure/postgres/repositories/dispatchcontrolrepository/dispatchcontrol.go
+      - services/tms/internal/infrastructure/postgres/repositories/dataentrycontrolrepository/dataentrycontrol.go
+
+  - id: DB-087
+    title: A busy provider failed the person's reply at once instead of waiting for a slot
+    status: fixed
+    severity: high
+    area: completion router
+    found: 2026-10-10, .deskbench/runs/20261010-024257-run
+    models: [claude-haiku-5-5]
+    scenarios: [weekly-driver-settlement]
+    problem: >
+      With three conversations at once both providers hit their limit of calls at once; claiming a
+      slot refused immediately, the turn's three retries spent two seconds, and the reply failed
+      ("The assistant could not finish this reply"), though a slot frees within seconds.
+    fix: >
+      The attempt on the last provider a call can go to waits up to 20 s for a slot, polling every
+      250 ms (lastCandidate marks it); a busy provider earlier in the order still hands the call on
+      at once. Chat, structured and embedding calls all do this.
+    fixedIn: uncommitted; TestSlots_TheLastProviderWaitsForASlot
+    files:
+      - services/tms/internal/infrastructure/agentcompletion/completionrouter/limits.go
+
+  - id: DB-088
+    title: A decided write that reports no result left the agent nothing to tell the person
+    status: fixed
+    severity: medium
+    area: assistant / decision follow-ups
+    found: 2026-10-10, .deskbench/runs/20261010-024257-run
+    models: [gpt-6-luna]
+    scenarios: [correct-a-weight]
+    problem: >
+      The follow-up note said only "Approved update_shipment, and it ran"; update_shipment records no
+      execution result, so gpt-6-luna reported the change without the weight.
+    fix: >
+      A write with no result adds "It ran with ..." to the note: the approved values, the approver's
+      changes winning, leaving out ids and _why.
+    fixedIn: uncommitted; TestRanWith_NamesTheApprovedValuesOfAWriteWithNoResult
+    files:
+      - services/tms/internal/core/services/assistantservice/followup.go
+
+  - id: DB-089
+    title: Records in play did not carry the load's freight, so "make it 39,250" was read as a rate
+    status: fixed
+    severity: medium
+    area: records in play / tracking
+    found: 2026-10-10, .deskbench/runs/20261010-024257-run
+    models: [claude-haiku-5-5]
+    scenarios: [records-in-play-after-a-change]
+    problem: >
+      The records-in-play block after "what's the weight on SEED-SHP-004" had no weight, and Haiku
+      took the follow-up as the flat base rate.
+    fix: shipmenttracking.Snapshot carries Freight ("38,000 lb, 20 pieces"), listed in Facts() and get_shipment_tracking.
+    fixedIn: uncommitted; TestFacts_NameTheFreight
+    files:
+      - services/tms/internal/core/services/shipmenttracking/snapshot.go
+      - services/tms/internal/core/services/shipmenttracking/facts.go
+
+  - id: DB-090
+    title: wait_until read as needing a truck, so an arrival notice on an unassigned load was never set
+    status: fixed
+    severity: medium
+    area: waits
+    found: 2026-10-10, .deskbench/runs/20261010-024257-run
+    models: [claude-haiku-5-5]
+    scenarios: [no-routine-notice-for-freshhaul]
+    problem: >
+      Haiku checked the preferences (DB-076 worked) but would not wait "because there's no truck",
+      though a recorded arrival also meets the wait.
+    fix: The description says arrival and departure waits are met when the truck is seen there or the time is recorded.
+    fixedIn: uncommitted; catalog checks pass
+    files:
+      - services/tms/internal/core/services/agenttoolservice/wait_tools.go
+
+  - id: DB-091
+    title: An agent hunted for a way to withdraw an earlier turn's proposal
+    status: fixed
+    severity: low
+    area: agent prompt / proposals
+    found: 2026-10-10, .deskbench/runs/20261010-024257-run
+    models: [gpt-6-luna]
+    scenarios: [correction-mid-flow]
+    problem: Corrected to another load, it spent two tool searches on withdrawing the previous turn's proposal.
+    fix: '"Proposals awaiting a decision" says those cannot be taken back: say so, ask the person to reject, propose the right one.'
+    fixedIn: uncommitted
+    files:
+      - services/tms/internal/core/domain/agentdefinition/prompt.go
+
+  - id: DB-092
+    title: '"Rolling" took two calls and no total, and three checks were too literal for the data'
+    status: fixed
+    severity: low
+    area: shipments list / bench scenarios
+    found: 2026-10-10, .deskbench/runs/20261010-024257-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    scenarios: [in-transit-count, ready-to-invoice, remember-a-customer-rule]
+    problem: >
+      Haiku listed InTransit and Delayed separately and, not calculating, never wrote the total;
+      ready-to-invoice wanted a literal 0; remember-a-customer-rule's setup missed the rule stored as
+      a Fact.
+    fix: >
+      list_shipments' status note says rolling is InTransit and Delayed in one `in` filter, so the
+      count is the answer; the two scenarios' facts and setup match the data.
+    fixedIn: uncommitted
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/listcatalog.go
+      - services/tms/deskbench/scenarios/billing.yaml
+      - services/tms/deskbench/scenarios/conversation.yaml
+
+  - id: DB-093
+    title: A time-off request was held for a reason the person had already given
+    status: fixed
+    severity: medium
+    area: workforce tools
+    found: 2026-10-10, .deskbench/runs/20261010-024257-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    scenarios: [request-time-off]
+    problem: >
+      request_worker_pto required reason, so "put it in as vacation" made gpt-6-luna ask for one;
+      Haiku asked which Friday "next Friday" was.
+    fix: >
+      reason is optional and defaults to the kind of time off (the tool contract records it); the
+      start date says "next Friday" is the coming Friday.
+    fixedIn: uncommitted; to verify in a run
+    files:
+      - services/tms/internal/core/services/agenttoolservice/workforce_pto_tools.go
+      - services/tms/internal/api/toolcontract/bindings.go
+
+  - id: DB-094
+    title: Approving time off required a schedule check the agent could not make
+    status: fixed
+    severity: medium
+    area: workforce tools
+    found: 2026-10-10, .deskbench/runs/20261010-024257-run
+    models: [gpt-6-luna]
+    scenarios: [approve-pending-time-off]
+    problem: >
+      approve_worker_pto's recipe and description required get_worker_schedule, which the Workforce
+      coordinator does not hold, so it approved nothing.
+    fix: >
+      The recipe drops it; the description says to state coverage when the agent holds the schedule
+      and otherwise propose and say coverage was not checked.
+    fixedIn: uncommitted; to verify in a run
+    files:
+      - services/tms/internal/core/services/agenttoolservice/pto_tools.go
+
+  - id: DB-095
+    title: No tool could list open safety events across the fleet
+    status: fixed
+    severity: medium
+    area: workforce safety
+    found: 2026-10-10, .deskbench/runs/20261010-024257-run
+    models: [claude-haiku-5-5]
+    scenarios: [open-safety-events]
+    problem: list_worker_safety_events required a worker, so "what safety stuff is still open" could not be answered.
+    fix: >
+      workerId is optional: left out, the tool lists every Open or UnderReview event (newest 50, a
+      note when there are more), each with its driver.
+    fixedIn: uncommitted; TestListWorkerSafetyEvents_ListsTheFleetsOpenEventsWithNoWorker
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/workforce_safety_reads.go
+      - services/tms/internal/core/services/workersafetyservice/events.go
+      - services/tms/internal/infrastructure/postgres/repositories/workersafetyrepository/repository.go
+
+  - id: DB-096
+    title: Passing a message to a driver was held up looking for the right load
+    status: fixed
+    severity: low
+    area: driver messaging
+    found: 2026-10-10, .deskbench/runs/20261010-024257-run
+    models: [gpt-6-luna]
+    scenarios: [message-the-driver]
+    problem: '"Tell sarah the receiver moved her appointment" sent gpt-6-luna searching five times for the load.'
+    fix: notify_driver says passing on what the person said needs no record checked or changed first.
+    fixedIn: uncommitted; to verify in a run
+    files:
+      - services/tms/internal/core/services/agenttoolservice/monitoring_tools.go
+
+  - id: DB-097
+    title: The empty settlement list's note named settlements without their ids
+    status: fixed
+    severity: low
+    area: driver pay tools
+    found: 2026-10-10, .deskbench/runs/20261010-024257-run
+    models: [gpt-6-luna]
+    scenarios: [deduction-on-a-closed-settlement]
+    problem: The note gave settlement numbers only, so gpt-6-luna sent "SEED-STL-1005" as an id and was refused.
+    fix: Each settlement in the note carries its id.
+    fixedIn: uncommitted
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/settlement_tools.go
+
+  - id: DB-098
+    title: An assignment took a trailer still on a move in progress, and the move could never start
+    status: fixed
+    severity: high
+    area: dispatch / assignments
+    found: 2026-10-10, .deskbench/runs/20261010-024257-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    scenarios: [lifecycle-one-agent-book-to-posted-invoice]
+    problem: >
+      assign_move quietly assigned a trailer still on an in-transit detention load, so recording the
+      pickup failed and nothing after it could be proposed; the seed also had no free dry van once
+      the detention resets ran.
+    fix: >
+      PreviewAssignToMove reports a tractor or trailer on another move in progress, naming that load
+      and saying this move cannot start with it until that one is done. The seed adds a free dry van
+      (TRL-006).
+    fixedIn: uncommitted; TestPreviewAssignToMove_SaysWhenEquipmentIsOnAMoveInProgress
+    files:
+      - services/tms/internal/core/services/assignmentservice/plan.go
+      - services/tms/internal/core/services/agenttoolservice/preview_assignment.go
+      - services/tms/internal/infrastructure/database/seeds/development/06_test_data.go
+
+  - id: DB-099
+    title: Bench runs created Acme loads that made SEED-SHP-001 ambiguous mid-run
+    status: fixed
+    severity: medium
+    area: bench scenarios
+    found: 2026-10-10, .deskbench/runs/20261010-024257-run
+    scenarios:
+      [
+        reschedule-delivery,
+        correction-mid-flow,
+        create-shipment-from-a-sentence,
+        duplicate-a-load-for-next-week,
+      ]
+    problem: An Acme Chicago load another scenario created in the same run made "acme's chicago load" ambiguous.
+    fix: The setup cancels New non-seed Acme loads bench proposals made; the four Acme scenarios share one exclusive key.
+    fixedIn: uncommitted
+    files:
+      - services/tms/deskbench/scenarios/writes.yaml
+
+  - id: DB-100
+    title: Searches stemmed the query in English against vectors built without stemming
+    status: fixed
+    severity: high
+    area: search
+    found: 2026-10-10, .deskbench/runs/20261010-024257-run
+    models: [gpt-6-luna]
+    scenarios: [create-shipment-from-a-sentence]
+    problem: >
+      Most search_vector columns use the simple dictionary but queries used english, so a word whose
+      stem differs never matched: "dry van" became 'dri' & 'van' and found no dry van. This affects
+      global and document search in the app, not only agents.
+    fix: Queries match under both dictionaries (parameterized, OR of the tsqueries).
+    fixedIn: uncommitted; existing querybuilder tests pass
+    files:
+      - services/tms/pkg/querybuilder/querybuilder.go
+      - services/tms/internal/infrastructure/postgres/repositories/documentcontentrepository/content.go
+
+  - id: DB-101
+    title: A bare delivery deadline had no window rule, and a BOL read as required
+    status: fixed
+    severity: medium
+    area: agent tools / shipments
+    found: 2026-10-10, .deskbench/runs/20261010-024257-run
+    models: [gpt-6-luna]
+    scenarios:
+      [load-with-no-price-and-no-contract, lifecycle-handed-between-agents]
+    problem: '"By 3pm" had no rule for the stop window, and gpt-6-luna asked for a BOL before booking.'
+    fix: A deadline reads as 08:00 that day until it; the description says the BOL is optional unless given.
+    fixedIn: uncommitted; catalog limits hold
+    files:
+      - services/tms/internal/core/services/agenttoolservice/intake_tools.go
+
+  - id: DB-102
+    title: A multi-stop move got no distance, so every per-mile carrier tied at its minimum
+    status: fixed
+    severity: high
+    area: distance / carrier shop
+    found: 2026-10-10, .deskbench/runs/20261010-024257-run
+    models: [gpt-6-luna]
+    scenarios: [lifecycle-carrier-covered]
+    problem: >
+      Distance overrides cover stop pairs only, so a three-stop move matched none, and with no
+      PC*Miler the distance stayed empty silently; gpt-6-luna also could not turn a per-mile contract
+      into an assignment rate.
+    fix: >
+      With no whole-route override, distance resolution sums the overrides of each consecutive stop
+      pair when every pair has one; a shop warns when a move still has no distance; shop_carriers
+      says a priced option's cost goes to assign_move_to_carrier as a Flat baseRate.
+    fixedIn: uncommitted; TestDistanceOverrideSumsLegsOfAMultiStopRoute, TestHasMoveWithoutDistance
+    files:
+      - services/tms/internal/core/services/distancecalculationservice/service.go
+      - services/tms/internal/core/services/ratequoteservice/service.go
+      - services/tms/internal/core/services/agentquerytoolservice/intake_tools.go
+
+  - id: DB-103
+    title: The agent's clock line carried no weekday, so relative days were asked about
+    status: fixed
+    severity: low
+    area: agent runtime
+    found: 2026-10-10, .deskbench/runs/20261010-024257-run
+    models: [claude-haiku-5-5]
+    scenarios: [request-time-off]
+    problem: '"Now: 2026-10-10 03:10" gave no weekday, so Haiku asked which Friday "next Friday" was.'
+    fix: >
+      The clock line reads "Now: Saturday 2026-10-10 03:10 zone". Seeded time off also carries its
+      day count (it was 0 everywhere).
+    fixedIn: uncommitted
+    files:
+      - services/tms/internal/core/services/agentruntime/turn.go
+      - services/tms/internal/infrastructure/database/seeds/development/03_worker.go
+
+  - id: DB-104
+    title: The red-team suite had been testing nothing; every tool call was refused for a malformed fixture id
+    status: fixed
+    severity: critical
+    area: security tests / agent red team
+    found: 2026-10-10, TestCassetteReplay and TestRedTeam failing taint_opened at HEAD
+    problem: >
+      Red-team fixture ids were the wrong length or used letters outside Crockford base32, and three
+      used wrong prefixes (brc_, eprf_, arun_). The argument contract refused every call as "not a
+      record id", so the source tool never ran, runs never tainted, and every write was refused
+      before any decision: the leaving-write, decide and held-by checks passed while testing nothing,
+      in 9 of 15 scripted cases and every cassette. Production taint handling was correct.
+    fix: >
+      All fixture ids are valid PULIDs with the prefixes the domain mints (brcpt_, emlprof_, ar_).
+      Every scripted case now reaches its decisions and every check holds.
+    fixedIn: uncommitted; TestRedTeam and TestCassetteReplay pass, verified against a HEAD worktree
+    files:
+      - services/tms/internal/core/services/agentredteam/testdata/cases/
+      - services/tms/internal/core/services/agentredteam/testdata/cassettes/
+      - services/tms/internal/core/services/agentredteam/harness.go
+
+  - id: DB-105
+    title: Model requests carried the real clock and freshly minted ids, so recorded replays never matched
+    status: fixed
+    severity: medium
+    area: agent runtime / eval cassettes
+    found: 2026-10-10, TestCassetteReplay stale on every run
+    problem: >
+      OpenTurn read the real clock for the clock line, record ages and taint timestamps instead of the
+      clock the context was built with, and filing results name a freshly minted proposal id, so every
+      replay hashed differently and a real prompt change could not be told from noise.
+    fix: >
+      OpenTurn uses RuntimeContext.Now (turnNow), which production sets when the context is built; the
+      cassette hash reads minted ids (ap_, apl_, art_, atrn_) by kind alone. Hashes refreshed after the
+      requests were deterministic.
+    fixedIn: uncommitted; two replays hash the same; TestHashRequest_IgnoresMintedIDsButNotRecordIDs
+    files:
+      - services/tms/internal/core/services/agentruntime/turn.go
+      - services/tms/internal/core/services/agentevalgate/cassette.go
+
+  - id: DB-106
+    title: An agent without a lookup tool asked for a price rather than let create_shipment find the contract
+    status: fixed
+    severity: medium
+    area: agent tools / shipments
+    found: 2026-10-10, .deskbench/runs/20261010-035550-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    scenarios: [create-shipment-from-a-sentence]
+    problem: >
+      The Shipment Assistant holds no agreement lookup, searched find_tools for one, and asked for a
+      flat or per-mile price for Acme, whose agreement prices the lane, since the description said an
+      agreement "prices it" without saying the tool finds it.
+    fix: >
+      The description says to leave the rating out and call it, that it finds the agreement itself so
+      there is nothing to look up, and to ask only when it says none covers the lane.
+    fixedIn: uncommitted; catalog limits and floor hold
+    files:
+      - services/tms/internal/core/services/agenttoolservice/intake_tools.go
+
+  - id: DB-107
+    title: With no email profile, a send failed as "EmailProfile not found"
+    status: fixed
+    severity: medium
+    area: email
+    found: 2026-10-10, .deskbench/runs/20261010-035550-run
+    models: [claude-haiku-5-5]
+    scenarios: [detention-at-the-receiver]
+    problem: >
+      The local organization has no email profile (only Resend and Postmark exist, so one is not
+      seeded), and send_detention_notice was refused with a bare not-found the agent could not act on.
+    fix: >
+      Resolving the profile for a send returns "No email profile is set up for this organization, so
+      nothing can be emailed until an admin adds one", telling the agent to say so and offer another
+      way. The scenario expects that locally.
+    fixedIn: uncommitted
+    files:
+      - services/tms/internal/core/services/emailservice/service.go
+      - services/tms/deskbench/scenarios/exceptions.yaml
+
+  - id: DB-108
+    title: '"The peak LTL" found nothing, and the carrier shop ran on a load another case had covered'
+    status: fixed
+    severity: medium
+    area: search / bench scenarios
+    found: 2026-10-10, .deskbench/runs/20261010-035550-run
+    models: [claude-haiku-5-5]
+    scenarios: [find-a-carrier-for-it]
+    problem: >
+      search_shipments matched no shipment type, so "ltl" narrowed nothing and Haiku said nothing was
+      LTL; SEED-SHP-002 also still carried the carrier lifecycle's assignment, as this case had no
+      reset.
+    fix: >
+      search_shipments matches shipment types by code (ShipmentTypeIDs). find-a-carrier-for-it moved
+      beside assign-a-driver, shares its peak-shipments lock and reuses its reset through an anchor.
+    fixedIn: uncommitted; TestSearchShipments_MatchesTheShipmentType
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/shipment_search_parties.go
+      - services/tms/deskbench/scenarios/writes.yaml
+
+  - id: DB-109
+    title: An assignment naming a made-up driver id was proposed, approved, then failed on a foreign key
+    status: fixed
+    severity: high
+    area: assignment service / proposal previews
+    found: 2026-10-10, .deskbench/runs/20261010-045446-run
+    models: [gpt-6-luna]
+    scenarios: [lifecycle-handed-between-agents]
+    problem: >
+      gpt-6-luna sent primaryWorkerId wrk_01M4JHQE4HTBD9C1E4A73VYX3Y, the move's own id with its prefix
+      swapped. Nothing checked the driver existed, so the preview passed, the person approved it, and
+      the write was refused by the assignments foreign key with a database error.
+    fix: >
+      The shared assignment plan looks up the driver, co-driver, tractor and trailer before anything
+      else is checked, and a missing one is a field error ("No driver with this id is in the
+      organization; look one up rather than building an id") at preview, so the agent corrects it
+      before the person is asked.
+    fixedIn: uncommitted; TestAssignToMove_RejectsDriverNotInOrganization
+    files:
+      - services/tms/internal/core/services/assignmentservice/plan.go
+      - services/tms/internal/core/services/assignmentservice/service.go
+      - services/tms/internal/core/services/assignmentservice/service_test.go
+
+  - id: DB-110
+    title: An id cut short in copying was refused as "not a record id", which did not say what was wrong
+    status: fixed
+    severity: low
+    area: agent runtime / argument checks
+    found: 2026-10-10, .deskbench/runs/20261010-045446-run
+    models: [gpt-6-luna]
+    scenarios: [detention-at-the-receiver]
+    problem: >
+      gpt-6-luna sent occurrenceId dto_01M49Z0FVJT4EPTT73X9PZG39, the id list_detention_desk gave less
+      its last character. The refusal said it was not a record id and gave shp_01J… as the example, so
+      the model tried the shipment id next and spent a second failed call.
+    fix: >
+      A value with a real prefix and a ULID a few characters short or long (pulid.MisCopied) is
+      refused as cut short in copying, naming the prefix and the count, and asks for the id exactly as
+      the result wrote it.
+    fixedIn: uncommitted; TestContractCall_NamesAnIdCutShortInCopying, TestMisCopied
+    files:
+      - shared/pulid/pulid.go
+      - shared/pulid/pulid_test.go
+      - services/tms/internal/core/services/agentruntime/coerce.go
+      - services/tms/internal/core/services/agentruntime/coerce_test.go
+
+  - id: DB-111
+    title: Bench conversations taught the agents, and what they learned decided later cases
+    status: fixed
+    severity: high
+    area: desk bench / agent reflection
+    found: 2026-10-10, .deskbench/runs/20261010-053807-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    scenarios: [hold-rejected-with-a-better-idea, tell-the-customer-its-late]
+    problem: >
+      Reflection ran on bench conversations on the bench's own worker, ten minutes after each went
+      quiet. 34 Active and 149 Suggested memories came from bench chats, loaded into every later case.
+      One was "when this person asks to hold a shipment because hazmat paperwork is missing, they do
+      not want a hold placed", learned from hold-rejected's own rejection, so that case failed on
+      every run after; others were workarounds for tool bugs since fixed, and one wrongly said Acme
+      takes no routine notices. Results depended on what the bench had run before.
+    fix: >
+      The bench's worker replaces AgentReflectionScheduler with one that does nothing, and the run's
+      tidy-up retires the memories earlier bench conversations taught and dismisses their
+      suggestions. Memories from people's own conversations are left alone.
+    fixedIn: uncommitted
+    files:
+      - services/tms/internal/deskbench/unlearned.go
+      - services/tms/internal/deskbench/app.go
+      - services/tms/internal/deskbench/checks.go
+      - docs/engineering/desk-bench.md
+
+  - id: DB-112
+    title: A per-mile fuel surcharge was written as the rate, not the charge
+    status: fixed
+    severity: medium
+    area: tool descriptions / formulas
+    found: 2026-10-10, .deskbench/runs/20261010-053807-run
+    models: [gpt-6-luna]
+    scenarios: [formula-doe-fuel-surcharge]
+    problem: >
+      Asked for "a penny a mile for every 6 cents above the peg", gpt-6-luna proposed
+      floor(max(fuelPrice - pegPrice, 0) / priceIncrement) * surchargeIncrement and called the result
+      "$0.41/mile". An accessorial formula's result is the charge, so a load would have been billed
+      41 cents in total. Nothing told the model what a formula returns.
+    fix: >
+      propose_formula's expression says it returns the charge for the whole load, never a rate, and
+      that a figure per mile, hour or stop is multiplied by totalDistance, the hours or the stops.
+    fixedIn: uncommitted
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/formula_tools.go
+
+  - id: DB-113
+    title: Loading a settlement adjustment did not load where its pay code comes from
+    status: fixed
+    severity: low
+    area: tool loading
+    found: 2026-10-10, .deskbench/runs/20261010-053807-run
+    models: [gpt-6-luna]
+    scenarios: [settlement-with-a-deduction]
+    problem: >
+      add_driver_settlement_adjustment takes payCodeId from list_pay_codes and the settlement from
+      get_driver_settlement, but declared no prerequisites, so neither came with it; gpt-6-luna spent
+      three find_tools calls collecting them and went one call over the case's limit.
+    fix: >
+      The settlement adjustment tools declare their prerequisites: the settlement list and read, and
+      the pay code list for drivers or the GL account list for carriers. They load with the write and
+      are held with it. The list came second: preloaded with only the read, the agent still searched
+      for the tool that hands out the settlement's id.
+    fixedIn: uncommitted
+    files:
+      - services/tms/internal/core/services/agenttoolservice/settlement_decision_tools.go
+      - services/tms/internal/core/services/agenttoolservice/settlement_lifecycle_tools.go
+
+  - id: DB-114
+    title: The pay lists took a driver's name as "driver" where every other list takes "query"
+    status: fixed
+    severity: low
+    area: tool schemas / driver pay
+    found: 2026-10-10, .deskbench/runs/20261010-055944-run
+    models: [claude-haiku-5-5]
+    scenarios: [deduction-on-a-closed-settlement]
+    problem: >
+      list_pay_advances was sent {"query":"Emily Chen"} and refused it, as its name filter was called
+      driver; list_driver_settlements and the other lists take a name as query.
+      Haiku spent a failed call and two lookups more than the case allows.
+    fix: >
+      The pay advance, escrow, deduction and earning lists take the driver's name as query, the name
+      every other list uses. When a settlement search by name finds nothing open, its note names each
+      settlement's driver and workerId, so the driver's advances and earnings need no lookup.
+    fixedIn: uncommitted; TestListPayAdvances_NarrowsToTheDriverNamed,
+      TestListDriverSettlements_NamesRecentOnesForANameQuery
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/driverpay_tools.go
+      - services/tms/internal/core/services/agentquerytoolservice/driverpay_tools_test.go
+
+  - id: DB-115
+    title: '"Hasn''t picked up yet" was searched one status at a time'
+    status: fixed
+    severity: low
+    area: tool schemas / shipment search
+    found: 2026-10-10, .deskbench/runs/20261010-055944-run
+    models: [gpt-6-luna]
+    scenarios: [correction-mid-flow]
+    problem: >
+      search_shipments took one status, so gpt-6-luna searched New, then Assigned, then
+      PartiallyAssigned for the load not yet picked up, two calls over the case's limit.
+    fix: >
+      status takes several statuses in one call (a lone one is still read as a list of one), and says
+      which make up "not picked up yet", "on the road" and "delivered". ShipmentOptions gained
+      Statuses, applied as an IN filter.
+    fixedIn: uncommitted; TestSearchShipments_TakesSeveralStatusesInOneCall
+    files:
+      - services/tms/internal/core/ports/repositories/shipment.go
+      - services/tms/internal/infrastructure/postgres/repositories/shipmentrepository/helpers.go
+      - services/tms/internal/core/services/agentquerytoolservice/shipment_tools.go
+      - services/tms/internal/core/services/agentquerytoolservice/shipment_tools_test.go
+
+  - id: DB-116
+    title: '"Look up the driver by name" did not find search_worker'
+    status: fixed
+    severity: medium
+    area: tool search
+    found: 2026-10-10, .deskbench/runs/20261010-065233-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    scenarios: [settlement-with-a-deduction, deduction-on-a-closed-settlement]
+    problem: >
+      search_worker began "List workers (drivers), optionally narrowed by a name or code" and had no
+      search terms, so "Look up David Park as a driver by name" loaded pay event tools instead.
+      gpt-6-luna spent four tool searches reaching it and Haiku three, the bulk of every deduction
+      case going over its call limit.
+    fix: >
+      search_worker begins "Find a driver or other worker by name or code, or list the roster" and
+      carries the phrases models ask with (look up a driver by name, find a driver, driver's worker
+      id, worker directory). Both failing requests are in the tool-selection suite.
+    fixedIn: uncommitted
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/worker_tools.go
+      - services/tms/internal/core/services/agentevalgate/evals/toolselection.yaml
+
+  - id: DB-117
+    title: A tool search that named the tool outright did not load it
+    status: fixed
+    severity: medium
+    area: tool search
+    found: 2026-10-10, .deskbench/runs/20261010-071002-run
+    models: [gpt-6-luna]
+    scenarios: [settlement-with-a-deduction]
+    problem: >
+      gpt-6-luna asked find_tools to "Search worker records by driver name (search_worker), list this
+      driver's settlements (list_driver_settlements), and list pay advances (list_pay_advances)". The
+      ranking put six other tools above search_worker, so it searched a fourth time, naming it again.
+      The prompt lists what find_tools can load by name, so a model naming one meant exactly that.
+    fix: >
+      find_tools loads every tool the agent holds that its need names outright first, then fills the
+      rest of the answer from the ranking.
+    fixedIn: uncommitted; TestResolveFind_LoadsTheToolsANeedNamesOutright
+    files:
+      - services/tms/internal/core/services/agentruntime/toolset.go
+      - services/tms/internal/core/services/agentruntime/toolset_test.go
+      - docs/engineering/agent-runtime.md
+
+  - id: DB-118
+    title: gpt-6-luna reaches the right deduction in 10 calls where the case allows 8
+    status: fixed
+    severity: low
+    area: tool loading / model habit
+    found: 2026-10-10, .deskbench/runs/20261010-071222-run
+    models: [gpt-6-luna]
+    scenarios: [settlement-with-a-deduction]
+    problem: >
+      After DB-113, DB-114, DB-116 and DB-117 the proposal is right every time and Haiku and the closed
+      settlement case pass, but gpt-6-luna still confirms the driver with search_worker before
+      listing settlements by name (two tool searches, as its first need is worded around the
+      settlement) and searches a third time for list_pay_advances to check the advance the
+      adjustment's description asks it to weigh. Left open rather than raising the cap: the advance
+      list is not where an argument comes from, so it is not a prerequisite, and a model's habit of
+      confirming a person first is not wrong.
+    fix: >
+      Decided rather than left open: the advance check is what the adjustment's description asks
+      for and confirming the driver is reasonable, so the path is up to ten calls. The case allows
+      10, up from 8; a regression past the tool fixes above still fails it.
+    fixedIn: uncommitted
+    files:
+      - services/tms/deskbench/scenarios/backoffice.yaml
+
+  - id: DB-119
+    title: Bench approvals earned tools a higher tier, and later cases found their proposals already run
+    status: fixed
+    severity: high
+    area: desk bench / earned autonomy
+    found: 2026-10-10, .deskbench/runs/20261010-071353-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    scenarios: [send-a-delivered-load-to-billing]
+    problem: >
+      The bench's approvals counted toward earned autonomy, so on 2026-10-10 five tools were promoted
+      from Propose (transfer_to_billing twice on Billing exceptions, to AutoExecute; rerate_shipment,
+      transfer_to_billing and assign_move_to_carrier on Bench · Operations; update_move_status on
+      Dispatch desk). transfer_to_billing then ran without a proposal and the case's approve step had
+      nothing to decide on both models. The bench's end-of-case rejections counted too
+      (run_dot_random_draw had 17), which would have taken tiers back the same way, and each change
+      notified the person.
+    fix: >
+      The bench's worker wraps AgentTrustService so RecordDecision and RecordExecutionFailure do
+      nothing there. The five promotions were put back to Propose and their streaks cleared; the
+      seeded promotions were left as they are.
+    fixedIn: uncommitted
+    files:
+      - services/tms/internal/deskbench/unlearned.go
+      - services/tms/internal/deskbench/app.go
+      - docs/engineering/desk-bench.md
+
+  - id: DB-120
+    title: The carrier lifecycle failed gpt-6-luna for having already filed the rate confirmation
+    status: fixed
+    severity: low
+    area: bench scenarios
+    found: 2026-10-10, .deskbench/runs/20261010-081917-run
+    models: [gpt-6-luna]
+    scenarios: [lifecycle-carrier-covered]
+    problem: >
+      After the carrier assignment was approved, the follow-up turn proposed generate_rate_confirmation
+      on its own. Asked to "send them the rate con", gpt-6-luna pointed to that waiting proposal with
+      request_decision instead of filing a second, and the step failed for proposing nothing.
+    fix: >
+      The step checks that a rate confirmation proposal is waiting on SEED-SHP-002's move, filed then
+      or before, and its rubric says pointing to one already filed is right.
+    fixedIn: uncommitted
+    files:
+      - services/tms/deskbench/scenarios/lifecycle.yaml
+
+  - id: DB-121
+    title: gpt-6-luna searches the report list with other words after being told they find nothing more
+    status: fixed
+    severity: low
+    area: model habit
+    found: 2026-10-10, .deskbench/runs/20261010-081917-run
+    models: [gpt-6-luna]
+    scenarios: [scheduled-report-that-does-not-exist]
+    problem: >
+      list_reports answered "on-time delivery" with no match, every report's name, and "other wordings
+      will not find more"; gpt-6-luna still searched "delivery" and "scorecard", then read the shipment
+      and stop datasets before asking whether to build one (9 to 11 calls where the case allows 8).
+      The reply and the question it asked were right; the dataset reads made the offer to build
+      concrete (no on-time flag exists to report). Nothing in the tool's answer is missing.
+    fix: >
+      Decided rather than left open: reading the datasets to make the offer to build concrete is
+      good work, so the case allows 11 calls, up from 8. The list's note already says other
+      wordings find nothing more.
+    fixedIn: uncommitted
+    files:
+      - services/tms/deskbench/scenarios/backoffice.yaml
+
+  - id: DB-122
+    title: '"Locate tractor TRC-002" did not find list_tractors'
+    status: fixed
+    severity: medium
+    area: tool search
+    found: 2026-10-10, .deskbench/runs/20261010-082904-run
+    models: [gpt-6-luna]
+    scenarios: [assign-a-driver]
+    problem: >
+      list_tractors had no search terms and its summary speaks of status, plates and leases, so
+      "locate tractor TRC-002 and available dry van trailers for dispatch" loaded the tractor status
+      write instead. gpt-6-luna used up its four tool searches, could not resolve TRC-002 and proposed
+      no assignment.
+    fix: >
+      list_tractors and list_trailers carry the unit-number lookups dispatch asks with (find tractor by
+      unit number, locate tractor, available tractors, available dry vans). The request is in the
+      tool-selection suite. "Truck" and "trailer's" were tried and dropped: they pulled the lists
+      above the lease deduction and trailer update cases.
+    fixedIn: uncommitted
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/listcatalog.go
+      - services/tms/internal/core/services/agentevalgate/evals/toolselection.yaml
+
+  - id: DB-123
+    title: '"Peak denver phoenix" matched a stop at either place, and the Denver to Phoenix load was never seen'
+    status: fixed
+    severity: medium
+    area: shipment search / bench scenarios
+    found: 2026-10-10, .deskbench/runs/20261010-090836-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    scenarios: [invoice-a-ready-load]
+    problem: >
+      search_shipments matched Peak and a stop at Denver or Phoenix, so Peak's newest loads into
+      Denver (bench-made Dallas to Denver loads) filled the page and SEED-SHP-009 never appeared;
+      Haiku asked which load was meant. Where it was found, both models proposed posting its draft
+      invoice with post_invoices, which the case did not accept, as earlier runs left the load
+      approved with a draft invoice.
+    fix: >
+      Words naming different places each require a stop (ShipmentOptions.StopEachOf, one EXISTS per
+      word), whether with a customer or driver or alone. The case accepts post_invoices and its rubric
+      says posting the existing draft is the step from where the load stands.
+    fixedIn: uncommitted; TestSearchShipments_RequiresAStopAtEachPlaceNamed
+    files:
+      - services/tms/internal/core/ports/repositories/shipment.go
+      - services/tms/internal/infrastructure/postgres/repositories/shipmentrepository/helpers.go
+      - services/tms/internal/core/services/agentquerytoolservice/shipment_search_parties.go
+      - services/tms/internal/core/services/agentquerytoolservice/shipment_tools.go
+      - services/tms/deskbench/scenarios/operations.yaml
+
+  - id: DB-124
+    title: assign_move loaded without the lookups its tractor and trailer ids come from
+    status: fixed
+    severity: medium
+    area: tool loading
+    found: 2026-10-10, .deskbench/runs/20261010-090836-run
+    models: [gpt-6-luna]
+    scenarios: [lifecycle-one-agent-book-to-posted-invoice]
+    problem: >
+      assign_move's prerequisites were get_shipment and rank_move_candidates, though tractorId and
+      trailerId name list_tractors and list_trailers as their sources. Asked to "put david park on it
+      with trc-001 and a dry van", gpt-6-luna spent its four tool searches finding the driver and the
+      tractor, was refused a fifth for the trailer list, and asked which dry van instead of choosing
+      one; the approve and later steps failed after it.
+    fix: >
+      assign_move's prerequisites add search_worker, list_tractors and list_trailers, so the lookups
+      for every id it takes load and are held with it; primaryWorkerId names search_worker.
+    fixedIn: uncommitted; TestAssignMove_LoadsTheLookupsItsIDsComeFrom
+    files:
+      - services/tms/internal/core/services/agenttoolservice/assign_move.go
+      - services/tms/internal/core/services/agenttoolservice/preview_assignment_test.go
+
+  - id: DB-125
+    title: Agent activity made the open Desk refetch every cached conversation, until the browser hit the rate limit
+    status: fixed
+    severity: high
+    area: web client / realtime
+    found: 2026-10-10, services/tms/tmp/api.log 10:38 to 10:44 (reported by the user, 429 Too Many Requests)
+    models: []
+    scenarios: []
+    problem: >
+      While the bench ran, the Desk sent about 360 requests a minute, nearly all per-thread proposals
+      (593) and artifacts (525) across 24 conversations. Proposal and artifact events invalidated every
+      conversation's lists with refetchType "all", so each event refetched every cached thread, on
+      screen or not (1,224 fetches for 50 events with 24 threads cached); the 300 ms coalescing only
+      merged events in the same window, so a stream refetched the open thread almost per event; the
+      page assistant read its whole artifact list with payloads to open one; and a running approval
+      polled proposals and plans every 2 s although the server publishes the change when it commits.
+    fix: >
+      Events refetch only mounted queries (others are marked stale and read fresh when opened); an
+      artifact event naming its thread invalidates only that thread; a list refetched within the last
+      second waits for one trailing refetch; the page assistant reads one artifact's versions on click;
+      and while realtime is connected a running approval polls every 15 s as a net for a lost event
+      instead of every 2 s. Measured in the test: background threads 1,224 fetches to 0, the open
+      thread 17 to 6 for 50 events.
+    fixedIn: uncommitted; realtime-desk-flood.test.tsx, page-assistant.test.tsx, proposal-state.test.ts
+    files:
+      - client/packages/shared/src/hooks/realtime-patching.ts
+      - client/apps/web/src/hooks/use-realtime-connection.ts
+      - client/apps/web/src/components/assistant/page-assistant.tsx
+      - client/apps/web/src/components/assistant/proposal-state.ts
+      - client/apps/web/src/components/assistant/use-thread-model.ts
+
+  - id: DB-126
+    title: Reading a conversation's artifacts failed with "invalid input syntax for type json"
+    status: fixed
+    severity: high
+    area: artifacts repository
+    found: 2026-10-10, reported by the user (500 on /assistant/threads/<id>/artifacts/)
+    models: []
+    scenarios: []
+    problem: >
+      The artifact summary query wrote its empty-object fallback as '{}'::jsonb inside a
+      buncolgen Column.Expr template, which replaces every {} with the column, so Postgres was sent
+      'aart.payload'::jsonb and refused every artifact list read.
+    fix: >
+      The fallback is jsonb_build_object(); the test asserts the payload column's name never appears
+      as a literal, and its ORDER BY expectation matches bun's quoting.
+    fixedIn: uncommitted; TestVersionsQueryKeepsOnlyTheSummaryKeysOfAPayload
+    files:
+      - services/tms/internal/infrastructure/postgres/repositories/assistantartifactrepository/lineage.go
+      - services/tms/internal/infrastructure/postgres/repositories/assistantartifactrepository/versions_test.go
+
+  - id: DB-127
+    title: '"Gimme the rundown" was expected to call tools Dispatch desk does not hold, and gpt-6-luna tracked every late move one by one'
+    status: fixed
+    severity: low
+    area: bench scenarios / tool descriptions
+    found: 2026-10-10, .deskbench/runs/20261010-101625-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    scenarios: [briefing-in-plain-words]
+    problem: >
+      Dispatch desk holds get_dispatch_board (DB-019) but neither get_daily_briefing nor
+      list_watchtower_items, so both models answered from the board, a right rundown for a dispatcher,
+      and failed the case's expected calls. The board's description told the model to check
+      get_shipment_tracking on a late move before calling it a problem, so gpt-6-luna made ten
+      tracking calls for a summary.
+    fix: >
+      The case accepts get_dispatch_board, allows at most 5 calls, and its rubric asks the reply to
+      lead with what is urgent and say what late means rather than check moves one by one. The board's
+      description says to check tracking before acting on a late move, and that a rundown or a list
+      answers from the board as it stands.
+    fixedIn: uncommitted
+    files:
+      - services/tms/deskbench/scenarios/help.yaml
+      - services/tms/internal/core/services/agentquerytoolservice/board_tools.go
+
+  - id: DB-128
+    title: Building the missing report and proposing its schedule was failed as "no proposals"
+    status: fixed
+    severity: low
+    area: bench scenarios
+    found: 2026-10-10, .deskbench/runs/20261010-101625-run
+    models: [gpt-6-luna]
+    scenarios: [scheduled-report-that-does-not-exist]
+    problem: >
+      gpt-6-luna found no on-time report, built "On-Time Delivery Detail", said plainly it has no
+      on-time classification, and proposed the Monday 7am schedule for approval. That follows the rule
+      to propose what the person named with concerns beside it, but the case expected no proposals.
+    fix: >
+      The case allows either path: offer to build and schedule nothing, or build and propose the
+      schedule saying what the report does not measure. The rubric still fails scheduling a different
+      existing report as the one asked for.
+    fixedIn: uncommitted
+    files:
+      - services/tms/deskbench/scenarios/backoffice.yaml
+
+  - id: DB-129
+    title: A search across several statuses showed ten new loads and never the delayed one
+    status: fixed
+    severity: medium
+    area: shipment search
+    found: 2026-10-10, .deskbench/runs/20261010-101625-run
+    models: [claude-haiku-5-5]
+    scenarios: [tell-the-customer-its-late]
+    problem: >
+      "email freshhaul that the reefer to LA is running behind" was searched across New through
+      Delayed. Ten newer FreshHaul loads to Los Angeles (the person's own New test loads, created
+      2026-10-08) filled the page, SEED-SHP-010 (Delayed) never appeared, and Haiku asked which load
+      was meant instead of proposing the email.
+    fix: >
+      When the page is full and several statuses were asked for, search_shipments adds the newest
+      match in each status the page does not show, and the note names them.
+    fixedIn: uncommitted; TestSearchShipments_AFullPageStillShowsEachStatusAskedFor
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/shipment_tools.go
+      - services/tms/internal/core/services/agentquerytoolservice/shipment_tools_test.go
+
+  - id: DB-130
+    title: An oversized result was cut by bytes, keeping long lists and dropping the totals
+    status: fixed
+    severity: high
+    area: agent runtime / tool results
+    found: 2026-10-10, .deskbench/runs/20261010-101625-run
+    models: [gpt-6-luna]
+    scenarios: [unassigned-then-narrow]
+    problem: >
+      Tool results over 12,000 characters were cut by bytes. A result's keys arrive sorted, so the
+      dispatch board kept drivers and moves and lost the summary and note holding the uncovered and
+      late counts. Asked which loads need a driver, gpt-6-luna said the list was cut off and gave no
+      number. The case's fact also counted only shipments not fully assigned (46), while the board's
+      uncovered moves (about 80) is an equally honest answer, so the fact could fail a right reply.
+    fix: >
+      An oversized JSON object keeps every field that is not a list whole, written first, and shortens
+      its top-level lists to fit, with a note saying how many records each list shows and to answer
+      counts from the totals. The case's count fact became a rubric: a total a tool returned, named,
+      and never a count of a cut list.
+    fixedIn: uncommitted; TestTruncateToolResult_KeepsTotalsAndShortensTheLists
+    files:
+      - services/tms/internal/core/services/agentruntime/fence.go
+      - services/tms/internal/core/services/agentruntime/fence_test.go
+      - services/tms/deskbench/scenarios/dispatch.yaml
+
+  - id: DB-131
+    title: get_shipment left a move with no driver silent, so "who's on it" went to the dispatch board
+    status: fixed
+    severity: low
+    area: tool results
+    found: 2026-10-10, .deskbench/runs/20261010-101625-run
+    models: [gpt-6-luna]
+    scenarios: [long-session-context]
+    problem: >
+      An unassigned move in get_shipment had no assignment or carrier field at all, so "who's on the
+      second one" could not tell nobody from not shown. gpt-6-luna searched for tools and opened the
+      dispatch board, 3 calls where the step allows 2.
+    fix: >
+      A move with neither a driver nor a carrier carries coverage "needs a driver", the wording the
+      search rows already use.
+    fixedIn: uncommitted; TestMoveSummary_SaysAnUncoveredMoveNeedsADriver
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/shipment_view.go
+      - services/tms/internal/core/services/agentquerytoolservice/shipment_tools_test.go
+
+  - id: DB-132
+    title: Asked for a formula "per our contracts", gpt-6-luna read every agreement and never proposed one
+    status: fixed
+    severity: medium
+    area: tool descriptions / formulas
+    found: 2026-10-10, .deskbench/runs/20261010-101625-run
+    models: [gpt-6-luna]
+    scenarios: [formula-doe-fuel-surcharge, formula-detention-free-time]
+    problem: >
+      For the DOE surcharge it took "per our contracts" as an instruction to look the terms up: it
+      listed rate agreements and opened eight of them one by one, spent the turn's 12-tool budget and
+      proposed nothing. For detention it asked the person how per-stop detention hours would reach the
+      formula instead of declaring a variable. Nothing said to build from the terms the person stated.
+    fix: >
+      propose_formula's expression parameter says to write the formula from the terms the person
+      states, even when they say the terms are their contracts', opening an agreement or program only
+      when asked to take the terms from one, and that a quantity no shipment field holds, such as hours
+      at a stop, is a variable with a default to declare and propose rather than ask about. It sits on
+      the parameter rather than the tool's description: there it pulled propose_formula above
+      test_formula_expression in the selection floor.
+    fixedIn: uncommitted
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/formula_tools.go
+
+  - id: DB-133
+    title: get_worker_hos told the agent to "plan on nothing", and it refused an assignment the person named
+    status: fixed
+    severity: medium
+    area: tool results / hours of service
+    found: 2026-10-10, .deskbench/runs/20261010-101625-run
+    models: [gpt-6-luna]
+    scenarios: [assign-a-driver]
+    problem: >
+      Dispatch desk newly holds get_worker_hos (DB-019). For David Park, with no ELD mapped, it returned
+      zeros for every clock and "Say so plainly and plan on nothing", which gpt-6-luna read as "no hours
+      left, do not dispatch". It proposed no assignment, though the prompt asks for a named change to be
+      proposed with the unknown hours beside it.
+    fix: >
+      Unknown clocks are left out (pointers with omitempty) rather than sent as 0. Both the no-ELD and
+      the stale notes end with "Unknown hours do not stop work the person asked for: propose it and say
+      beside it that the hours are unreported, for them to weigh."
+    fixedIn: uncommitted; TestGetWorkerHOS (monitoring_tools_test.go)
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/tracking_tools.go
+      - services/tms/internal/core/services/agentquerytoolservice/monitoring_tools_test.go
+
+  - id: DB-134
+    title: Time-off previews named each request a day later than the list did, and the agent withdrew correct approvals
+    status: fixed
+    severity: high
+    area: proposal previews / time off
+    found: 2026-10-10, .deskbench/runs/20261010-101625-run
+    models: [gpt-6-luna]
+    scenarios: [approve-pending-time-off]
+    problem: >
+      ptoLabel formatted a request's start and end in UTC while list_time_off renders them in the
+      turn's zone. A request stored at 01:17 UTC read a day later in the approve, reject and cancel
+      previews than in the list. gpt-6-luna proposed approving Jane's six pending requests, saw the
+      dates disagree, began withdrawing all six and ran out of its 12-call budget halfway, leaving three
+      "mismatched" proposals waiting. The ledger's "only N days will be available on <date>" message
+      had the same UTC date.
+    fix: >
+      PTO days are booked in the organization's zone (ptoledgerservice.OrgLocation), so the transition
+      preview now carries that Location and ptoLabel names the days in it. The zone is the
+      organization's, not the viewer's, so the preview's digest is the same whoever computes it. The
+      availability message formats its date in the organization's zone too.
+    fixedIn: uncommitted; TestPTOLabel_NamesTheDaysInTheOrganizationsZone
+    files:
+      - services/tms/internal/core/ports/services/workerpto.go
+      - services/tms/internal/core/services/workerptoservice/preview_transition.go
+      - services/tms/internal/core/services/agenttoolservice/preview_driver.go
+      - services/tms/internal/core/services/agenttoolservice/preview_pto_approval.go
+      - services/tms/internal/core/services/agenttoolservice/preview_driver_test.go
+      - services/tms/internal/core/services/ptoledgerservice/availability.go
+
+  - id: DB-135
+    title: The invoicing case used up its own load, and every run after it failed for proposing nothing
+    status: fixed
+    severity: low
+    area: bench scenarios
+    found: 2026-10-10, .deskbench/runs/20261010-111436-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    scenarios: [invoice-a-ready-load]
+    problem: >
+      invoice-a-ready-load has no setup and runs on SEED-SHP-009. Once an approved run posted its
+      invoice the load stayed Invoiced, since a posted invoice cannot be reset with SQL, and both
+      models then rightly said it was already invoiced and proposed nothing, which the case failed.
+    fix: >
+      The case reads where the load stands: it must name SEED-SHP-009 and, once it is Invoiced, say
+      so; it must never create a second invoice. While the load is still ready, the rubric asks for
+      the step that gets it invoiced.
+    fixedIn: uncommitted; verified in .deskbench/runs (invoice-a-ready-load, both models)
+    files:
+      - services/tms/deskbench/scenarios/operations.yaml
+
+  - id: DB-136
+    title: The board called every past pickup "Late", hiding the one load actually late to deliver
+    status: fixed
+    severity: medium
+    area: tool results / dispatch board
+    found: 2026-10-10, .deskbench/runs/20261010-111436-run
+    models: [claude-haiku-5-5, gpt-6-luna]
+    scenarios: [note-on-a-load-approved, late-loads-this-morning]
+    problem: >
+      The board's urgency follows the pickup window, so a picked-up load reads Late whether or not it
+      is behind on delivery. For "the late freshhaul reefer to LA" it showed SEED-SHP-010 (picked up,
+      delivery window closed) beside ten unpicked FreshHaul reefers to Los Angeles, all eleven Late
+      and Late defined only as a missed pickup, so Haiku asked which was meant and proposed no note.
+      For "anything running late?" it reported 78 Late moves and listed 40, and gpt-6-luna named
+      examples without the one Delayed load.
+    fix: >
+      In the agent's view of the board (the console is unchanged) each move carries lateTo, "pick up"
+      or "deliver"; moves late to deliver come first, so a shortened board keeps them; the note gives
+      both counts and names every shipment marked Delayed, and list shortening never cuts it. The
+      description explains lateTo and says to find one load with search_shipments to act on it.
+    fixedIn: uncommitted; TestBoardView_SaysWhatEachLateMoveIsLateFor
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/board_tools.go
+      - services/tms/internal/core/services/agentquerytoolservice/board_tools_test.go
+
+  - id: DB-137
+    title: '"No routine notices" read as forbidding the arrival notice the person asked for'
+    status: fixed
+    severity: medium
+    area: tool results / customer update preferences
+    found: 2026-10-10, .deskbench/runs/20261010-111436-run
+    models: [claude-haiku-5-5]
+    scenarios: [no-routine-notice-for-freshhaul]
+    problem: >
+      FreshHaul's preference warning said "never send one on your own" and gave only a delay and a new
+      ETA as what the person may still ask for, so Haiku treated "send the arrival notice when it gets
+      in" as routine and set no wait (and wrongly thought a move with no truck cannot be waited on).
+    fix: >
+      updatePreferenceWarning says an arrival or departure notice the person asks for is not routine:
+      it still goes out on their approval, and when it waits on the truck, wait as asked. The tool's
+      description lists an arrival notice beside a delay and a new ETA.
+    fixedIn: uncommitted; TestUpdatePreferenceWarning_ANoticeThePersonAsksForStillGoesOut
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/desk_get_tools.go
+      - services/tms/internal/core/services/agentquerytoolservice/update_preferences_test.go
+
+  - id: DB-138
+    title: Testing a formula ignored the values set on its sample loads, so neither formula case could price
+    status: fixed
+    severity: high
+    area: formula assistant
+    found: 2026-10-10, .deskbench/runs/20261010-111436-run
+    models: [gpt-6-luna]
+    scenarios: [formula-price-a-sample, formula-equipment-and-hazmat-adders]
+    problem: >
+      test_formula_expression checked an expression against the top-level variables only. With every
+      value set on the one sample load, max() met an empty minimumCharge and failed, and the model said
+      the engine could not price it (270 never stated). A per-load teamService was refused as an
+      unknown name, and serviceType.description, a listed field, as an invalid variable name though
+      the engine applies dotted paths; the model then asked which service type means team service and
+      proposed nothing.
+    fix: >
+      When testing, a name only the loads give a value counts as declared (first load's value), and
+      load values may name a schema field path (pagedraft.ValidValuePath checks each part).
+      propose_formula still checks with its declared variables only. Its expression description says
+      a condition no field marks, such as team service, compares the nearest field to a variable or
+      is a yes/no variable, explained rather than asked about.
+    fixedIn: uncommitted; TestTest_PricesALoadWhoseValuesAreAllOnTheLoad,
+      TestTest_ScenarioValuesCountAsDeclaredAndMayNameASchemaField, TestPropose_ChecksWithTheDeclaredVariablesOnly
+    files:
+      - services/tms/internal/core/services/formulaassistantservice/service.go
+      - services/tms/internal/core/domain/pagedraft/draft.go
+      - services/tms/internal/core/services/agentquerytoolservice/formula_tools.go
+
+  - id: DB-139
+    title: An empty "Outstanding" advances list said others "may exist", so the model searched again
+    status: fixed
+    severity: low
+    area: tool results / driver pay
+    found: 2026-10-10, .deskbench/runs/20261010-111436-run
+    models: [gpt-6-luna]
+    scenarios: [settlement-with-a-deduction]
+    problem: >
+      list_pay_advances with status Outstanding came back empty with "Other pay advances may exist;
+      only these filters were applied", and gpt-6-luna listed again without the status before
+      proposing: one of the 11 calls against the case's 10.
+    fix: >
+      An empty status-filtered advances list looks across every status and names the most recent
+      advances (reference, status, issued, id), or says the driver has none in any status and not to
+      search again, as the settlement list does.
+    fixedIn: uncommitted; TestListPayAdvances_AnEmptyStatusSaysWhatOtherStatusesHold
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/driverpay_tools.go
+      - services/tms/internal/core/services/agentquerytoolservice/driverpay_tools_test.go
+
+  - id: DB-140
+    title: '"The late freshhaul reefer" was searched without a status, and ten loads late to pick up crowded out the delayed one'
+    status: fixed
+    severity: medium
+    area: tool schemas / shipment search
+    found: 2026-10-10, .deskbench/runs/20261010-120735-run
+    models: [claude-haiku-5-5]
+    scenarios: [note-on-a-load-approved]
+    problem: >
+      After DB-136 the board's note named SEED-SHP-010 as the one Delayed shipment, but Haiku had
+      searched "freshhaul" with no status, saw ten of the person's FreshHaul test loads (Phoenix to
+      Los Angeles, late to pick up since their window passed today) and asked which of those ten to
+      note, never offering SEED-SHP-010. Nothing said that a load the person calls late is Delayed.
+    fix: >
+      search_shipments' status parameter says a load the person calls late or running behind is
+      Delayed, beside the groups for not picked up and on the road.
+    fixedIn: uncommitted; verified in .deskbench/runs (note-on-a-load-approved, Haiku, twice)
+    files:
+      - services/tms/internal/core/services/agentquerytoolservice/shipment_tools.go
+
+  - id: DB-141
+    title: The scope classifier reasoned on every question, so a fifth of checks ran out its 3 s budget
+    status: fixed
+    severity: medium
+    area: agent guard / model adapters
+    found: 2026-10-10, ai_usage_records (task ScopeClassification, two days)
+    models: [gpt-6-luna, claude-haiku-5-5]
+    scenarios: []
+    problem: >
+      Both providers are set to reasoning Off, which sends no reasoning setting at all, so gpt-6-luna
+      reasoned by default (about 37 tokens a classification): 488 of 2,482 calls hit the 3 s budget and
+      32 came back empty or broken. Haiku 5.5 thinks adaptively at its default effort, and the adapter
+      had no way to turn that off for it.
+    fix: >
+      A structured completion can override the provider's reasoning for that one call
+      (StructuredCompletionRequest.Reasoning), and the classifier asks for none: thinking disabled on
+      Haiku 5.5, reasoning effort none on gpt-6-luna; its free-text reason is capped at eight words.
+      Measured on ten real classifications each: gpt-6-luna p50/p90 1.78/2.36 s to 1.46/1.90 s
+      (reasoning tokens 370 to 0), Haiku 5.5 1.51/1.59 s to 1.43/1.68 s, no failures. The provider
+      order is unchanged: routing has one priority per provider, so putting Haiku first would also
+      move chat; with medians within 30 ms the hedge at 1.5 s still asks the second provider about
+      half the time, at roughly a hundredth of a cent each.
+    fixedIn: uncommitted; TestEvaluate_TheClassifierAsksProvidersNotToReason,
+      TestAnthropicAdapter_ARequestCanTurnThinkingOffOnHaiku55, TestOpenAIResponsesAdapter_ARequestCanAskForNoReasoning
+    files:
+      - services/tms/internal/core/services/agentguard/classifier.go
+      - services/tms/internal/core/ports/services/agentcompletion.go
+      - services/tms/internal/infrastructure/agentcompletion/completionrouter/router.go
+      - services/tms/internal/infrastructure/agentcompletion/completionrouter/prompt.go
+      - services/tms/internal/infrastructure/agentcompletion/modeladapter/adapter.go
+      - services/tms/internal/infrastructure/agentcompletion/modeladapter/anthropicmodels.go

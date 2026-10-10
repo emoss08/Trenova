@@ -38,6 +38,7 @@ type turnChecks struct {
 
 	proposals []services.ProposalOutcome
 	subject   *agentdefinition.RuntimeSubject
+	anchors   []agentdefinition.RuntimeAnchor
 }
 
 // err is the first check that failed, in the order the checks were always
@@ -116,6 +117,15 @@ func (s *Service) checkTurn(
 	})
 	wg.Go(func() {
 		checks.subject = s.describeSubject(ctx, thread, actor, req.TenantInfo)
+	})
+	wg.Go(func() {
+		checks.anchors = s.anchorRecords(ctx, &anchorScope{
+			thread:   thread,
+			page:     page,
+			mentions: req.Mentions,
+			actor:    actor,
+			tenant:   req.TenantInfo,
+		})
 	})
 	wg.Wait()
 

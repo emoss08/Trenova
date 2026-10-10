@@ -235,6 +235,10 @@ func newApproveDetentionTool(detention detentionApprover) serviceports.AgentTool
 
 func (t *approveDetentionTool) Name() string { return "approve_detention" }
 
+func (t *approveDetentionTool) Prerequisites() []string {
+	return []string{"list_detention_desk", "get_detention_occurrence"}
+}
+
 func (t *approveDetentionTool) Recipe() []string {
 	return []string{"list_detention_desk", "get_detention_occurrence", "approve_detention"}
 }

@@ -23,10 +23,8 @@ import (
 )
 
 const (
-	samsaraWorkerExternalIDKey       = "trenovaWorkerId"
-	samsaraOrganizationExternalIDKey = "trenovaOrganizationId"
-	samsaraBusinessUnitExternalIDKey = "trenovaBusinessUnitId"
-	samsaraWorkerSyncPageLimit       = 100
+	samsaraWorkerExternalIDKey = "trenovaWorkerId"
+	samsaraWorkerSyncPageLimit = 100
 )
 
 var (
@@ -102,9 +100,7 @@ func (s *Service) SyncWorkersToSamsara(
 		return nil, err
 	}
 
-	remoteDrivers, err := samsaraClient.Drivers.ListAll(ctx, drivers.ListParams{
-		Limit: 512,
-	})
+	remoteDrivers, err := listSamsaraDrivers(ctx, samsaraClient)
 	if err != nil {
 		return nil, errortypes.NewBusinessError("failed to list Samsara drivers").WithInternal(err)
 	}
@@ -144,9 +140,7 @@ func (s *Service) DetectWorkerSyncDrift(
 		return nil, err
 	}
 
-	remoteDrivers, err := samsaraClient.Drivers.ListAll(ctx, drivers.ListParams{
-		Limit: 512,
-	})
+	remoteDrivers, err := listSamsaraDrivers(ctx, samsaraClient)
 	if err != nil {
 		return nil, errortypes.NewBusinessError("failed to list Samsara drivers").WithInternal(err)
 	}
@@ -246,9 +240,7 @@ func (s *Service) RepairWorkerSyncDrift(
 	}
 	workersByID := buildWorkersByID(workers)
 
-	remoteDrivers, err := samsaraClient.Drivers.ListAll(ctx, drivers.ListParams{
-		Limit: 512,
-	})
+	remoteDrivers, err := listSamsaraDrivers(ctx, samsaraClient)
 	if err != nil {
 		return nil, errortypes.NewBusinessError("failed to list Samsara drivers").WithInternal(err)
 	}
@@ -754,6 +746,29 @@ func (s *Service) resolveSamsaraClient(
 	return s.integrationService.SamsaraClient(ctx, tenantInfo)
 }
 
+func listSamsaraDrivers(
+	ctx context.Context,
+	samsaraClient *sharedsamsara.Client,
+) ([]drivers.Driver, error) {
+	deactivated, err := samsaraClient.Drivers.ListAll(ctx, drivers.ListParams{
+		Limit:                  drivers.MaxListLimit,
+		DriverActivationStatus: drivers.ActivationStatusDeactivated,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("list deactivated samsara drivers: %w", err)
+	}
+
+	active, err := samsaraClient.Drivers.ListAll(ctx, drivers.ListParams{
+		Limit:                  drivers.MaxListLimit,
+		DriverActivationStatus: drivers.ActivationStatusActive,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("list active samsara drivers: %w", err)
+	}
+
+	return append(deactivated, active...), nil
+}
+
 func buildSamsaraDriverCreateRequest(currentWorker *worker.Worker) drivers.CreateRequest {
 	name := strings.TrimSpace(currentWorker.FullName())
 	if name == "" {
@@ -794,16 +809,9 @@ func buildSamsaraDriverCreateRequest(currentWorker *worker.Worker) drivers.Creat
 }
 
 func buildSamsaraWorkerExternalIDs(currentWorker *worker.Worker) map[string]string {
-	externalIDs := map[string]string{
+	return map[string]string{
 		samsaraWorkerExternalIDKey: currentWorker.ID.String(),
 	}
-	if !currentWorker.OrganizationID.IsNil() {
-		externalIDs[samsaraOrganizationExternalIDKey] = currentWorker.OrganizationID.String()
-	}
-	if !currentWorker.BusinessUnitID.IsNil() {
-		externalIDs[samsaraBusinessUnitExternalIDKey] = currentWorker.BusinessUnitID.String()
-	}
-	return externalIDs
 }
 
 func buildSamsaraUsername(currentWorker *worker.Worker) string {

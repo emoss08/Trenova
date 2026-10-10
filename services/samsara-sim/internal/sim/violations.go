@@ -1,11 +1,15 @@
 package sim
 
 import (
-	"github.com/emoss08/trenova/shared/stringutils"
+	"fmt"
 	"net/http"
+	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const (
@@ -30,16 +34,70 @@ func hosViolationTypeForSimEvent(simEventType string) string {
 	}
 }
 
-func hosViolationDescription(violationType string) string {
+var hosViolationTypes = []string{
+	"NONE",
+	"californiaMealbreakMissed",
+	hosViolationTypeCycle,
+	"cycleOffHoursAfterOnDutyHours",
+	"dailyDrivingHours",
+	"dailyOffDutyDeferralAddToDay2Consecutive",
+	"dailyOffDutyDeferralNotPartMandatory",
+	"dailyOffDutyDeferralTwoDayDrivingLimit",
+	"dailyOffDutyDeferralTwoDayOffDuty",
+	"dailyOffDutyNonResetHours",
+	"dailyOffDutyTotalHours",
+	"dailyOnDutyHours",
+	"mandatory24HoursOffDuty",
+	hosViolationTypeRestBreak,
+	hosViolationTypeShiftDriving,
+	hosViolationTypeShift,
+	"shiftOnDutyHours",
+	"unsubmittedLogs",
+}
+
+type hosRulesetLimits struct {
+	Region     string
+	ShiftHours int
+	DriveHours int
+	CycleHours int
+}
+
+func hosRulesetLimitsFor(driver Record) hosRulesetLimits {
+	limits := hosRulesetLimits{Region: "USA Property", ShiftHours: 14, DriveHours: 11, CycleHours: 70}
+	rulesets := listOf(nestedAny(driver, fieldEldSettings, "rulesets"))
+	if len(rulesets) == 0 {
+		rulesets = listOf(nestedAny(Record(eldSettingsFor(driver)), "rulesets"))
+	}
+	if len(rulesets) == 0 {
+		return limits
+	}
+	ruleset := Record(mapOf(rulesets[0]))
+	switch stringValue(ruleset, "shift") {
+	case "US Interstate Passenger":
+		limits = hosRulesetLimits{Region: "USA Passenger", ShiftHours: 15, DriveHours: 10}
+	case "Texas Intrastate":
+		limits = hosRulesetLimits{Region: "Texas Intrastate", ShiftHours: 15, DriveHours: 12}
+	}
+	limits.CycleHours = 70
+	cycle := stringValue(ruleset, keyCycle)
+	if fields := strings.Fields(cycle); len(fields) >= 2 {
+		if hours, err := strconv.Atoi(fields[1]); err == nil {
+			limits.CycleHours = hours
+		}
+	}
+	return limits
+}
+
+func hosViolationDescription(violationType string, limits hosRulesetLimits) string {
 	switch violationType {
 	case hosViolationTypeRestBreak:
-		return "Rest Break Missed Violation"
+		return "Rest Break Missed (8 hours)"
 	case hosViolationTypeShift:
-		return "Shift Hours Violation"
+		return fmt.Sprintf("Shift Hours (%s-%d hours)", limits.Region, limits.ShiftHours)
 	case hosViolationTypeShiftDriving:
-		return "Shift Driving Hours Violation"
+		return fmt.Sprintf("Shift Driving Hours (%s-%d hours)", limits.Region, limits.DriveHours)
 	case hosViolationTypeCycle:
-		return "Cycle Hours On Violation"
+		return fmt.Sprintf("Cycle Hours On (%s-%d hours)", limits.Region, limits.CycleHours)
 	default:
 		return "HOS Violation"
 	}
@@ -52,20 +110,45 @@ func (l *LiveSimulator) HOSViolations(
 	violationTypes []string,
 ) []Record {
 	allowedTypes := toStringSet(violationTypes)
+	snapshot := l.fleet()
 	roster := l.loadDriverRoster()
-	events := l.EventsWindow(windowStart, windowEnd, driverIDs, nil, 0)
+	events := l.EventsWindow(windowStart, windowEnd.Add(time.Second), driverIDs, nil, 0)
 
 	out := make([]Record, 0, len(events))
 	for idx := range events {
 		event := &events[idx]
 		violationType := hosViolationTypeForSimEvent(event.Type)
-		if violationType == "" {
+		if violationType == "" || !matchesStringFilter(allowedTypes, violationType) {
 			continue
 		}
-		if !matchesStringFilter(allowedTypes, violationType) {
+		reportedStart := event.StartsAt.UTC().Truncate(time.Second)
+		if reportedStart.Before(windowStart) || reportedStart.After(windowEnd) {
 			continue
 		}
-		out = append(out, l.hosViolationRecord(event, violationType, roster))
+		driverID := strings.TrimSpace(event.DriverID)
+		driver := snapshot.driverByID[driverID]
+		dayStart, dayEnd := driverLogDayAt(driver, event.StartsAt)
+		name := stringutils.FirstNonEmptyTrimmed(
+			stringValue(driver, keyName),
+			roster[driverID].Name,
+			driverID,
+		)
+		driverRef := map[string]any{keyID: driverID, keyName: name}
+		if externalIDs := externalIDsOf(driver); len(externalIDs) > 0 {
+			driverRef[fieldExternalIDs] = renderExternalIDs(driver, nil)
+		}
+		out = append(out, Record{
+			keyID:                event.ID,
+			keyType:              violationType,
+			keyDescription:       hosViolationDescription(violationType, hosRulesetLimitsFor(driver)),
+			"durationMs":         event.EndsAt.Sub(event.StartsAt).Milliseconds(),
+			"violationStartTime": reportedStart.Format(time.RFC3339),
+			keyDriver:            driverRef,
+			"day": map[string]any{
+				fieldStartTime: dayStart.Format(time.RFC3339),
+				fieldEndTime:   dayEnd.Format(time.RFC3339),
+			},
+		})
 	}
 
 	sort.Slice(out, func(i, j int) bool {
@@ -79,66 +162,77 @@ func (l *LiveSimulator) HOSViolations(
 	return out
 }
 
-func (l *LiveSimulator) hosViolationRecord(
-	event *SimEvent,
-	violationType string,
-	roster map[string]driverRoster,
-) Record {
-	driverID := strings.TrimSpace(event.DriverID)
-	dayStart := event.StartsAt.UTC().Truncate(24 * time.Hour)
-	dayCtx := l.buildDailyEventContext(driverID, event.VehicleID, dayStart)
-	workdayStart := l.shiftStartForDay(driverID, dayStart)
-
-	return Record{
-		"id":                 event.ID,
-		"type":               violationType,
-		"description":        hosViolationDescription(violationType),
-		"durationMs":         event.EndsAt.Sub(event.StartsAt).Milliseconds(),
-		"violationStartTime": event.StartsAt.UTC().Format(time.RFC3339),
-		"driver": map[string]any{
-			"id":   driverID,
-			"name": stringutils.FirstNonEmptyTrimmed(roster[driverID].Name, driverID),
-		},
-		"day": map[string]any{
-			"startTime": workdayStart.UTC().Format(time.RFC3339),
-			"endTime":   dayCtx.DayEnd.UTC().Format(time.RFC3339),
-		},
-	}
-}
-
 func (s *Server) handleHOSViolationList(writer http.ResponseWriter, request *http.Request) {
 	startTime, endTime, err := parseTimeRange(request)
 	if err != nil {
-		s.writeAPIError(writer, http.StatusBadRequest, err)
+		s.writeError(writer, err)
+		return
+	}
+	values := request.URL.Query()
+	view := s.fleetView()
+	windowStart, windowEnd := view.now, view.now
+	if startTime != nil {
+		windowStart = *startTime
+	}
+	if endTime != nil {
+		windowEnd = *endTime
+	}
+	if windowEnd.Before(windowStart) {
+		s.writeError(writer, invalidParameter(fieldEndTime, "must not be before startTime"))
+		return
+	}
+	violationTypes := csvQueryValues(values, paramTypes)
+	for _, violationType := range violationTypes {
+		if !slices.Contains(hosViolationTypes, violationType) {
+			s.writeError(writer, invalidParameter(
+				paramTypes,
+				fmt.Sprintf("%q is not a supported violation type", violationType),
+			))
+			return
+		}
+	}
+	drivers, err := view.hosDrivers(values, hosDriverQuery{ExternalRefs: true})
+	if err != nil {
+		s.writeError(writer, err)
 		return
 	}
 
-	now := s.simNow()
-	if endTime == nil {
-		windowEnd := now
-		endTime = &windowEnd
-	}
-	if startTime == nil {
-		windowStart := endTime.Add(-24 * time.Hour)
-		startTime = &windowStart
-	}
-
-	driverIDs := idsFromQuery(request.URL.Query(), "driverIds")
-	violationTypes := idsFromQuery(request.URL.Query(), "types")
-
 	records := []Record{}
-	if s.live != nil {
-		records = s.live.HOSViolations(*startTime, *endTime, driverIDs, violationTypes)
+	if len(drivers) > 0 {
+		records = s.live.HOSViolations(windowStart, windowEnd, driverIDsOf(drivers), violationTypes)
 	}
-
-	page, pagination, err := paginate(records, request.URL.Query(), 512)
+	page, pagination, err := paginate(records, request)
 	if err != nil {
-		s.writeAPIError(writer, http.StatusBadRequest, err)
+		s.writeError(writer, err)
 		return
 	}
 	payload := map[string]any{
-		"data":       recordsAsAny(page),
-		"pagination": pagination,
+		keyData:       groupHOSViolationsByDriver(page),
+		keyPagination: pagination,
 	}
 	s.respondJSON(writer, request, requestSignature(request)+"|hos-violations", payload)
+}
+
+func groupHOSViolationsByDriver(records []Record) []any {
+	groupIndex := make(map[string]int, len(records))
+	grouped := make([][]any, 0, len(records))
+	for _, record := range records {
+		violation := cloneRecord(record)
+		delete(violation, "id")
+
+		driverID := nestedString(record, "driver", "id")
+		idx, ok := groupIndex[driverID]
+		if !ok {
+			idx = len(grouped)
+			groupIndex[driverID] = idx
+			grouped = append(grouped, make([]any, 0, 1))
+		}
+		grouped[idx] = append(grouped[idx], violation)
+	}
+
+	data := make([]any, 0, len(grouped))
+	for _, violations := range grouped {
+		data = append(data, map[string]any{"violations": violations})
+	}
+	return data
 }

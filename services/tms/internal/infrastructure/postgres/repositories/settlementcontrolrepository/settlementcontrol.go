@@ -2,8 +2,6 @@ package settlementcontrolrepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -42,16 +40,8 @@ func (r *repository) GetOrCreate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*tenant.SettlementControl, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.SettlementControl, error) {
-		entity, err := r.selectControl(ctx, tenantInfo)
-		if err == nil {
-			return entity, nil
-		}
-		if !errors.Is(err, sql.ErrNoRows) {
-			return nil, dberror.HandleNotFoundError(err, "SettlementControl")
-		}
-
-		control := &tenant.SettlementControl{
+	newDefault := func() *tenant.SettlementControl {
+		return &tenant.SettlementControl{
 			ID:                            pulid.MustNew("stlc_"),
 			BusinessUnitID:                tenantInfo.BuID,
 			OrganizationID:                tenantInfo.OrgID,
@@ -65,19 +55,27 @@ func (r *repository) GetOrCreate(
 			VarianceLookbackWeeks:         8,
 			EscrowInterestFrequencyMonths: 3,
 		}
-		if _, err = r.db.DBForContext(ctx).
-			NewInsert().
-			Model(control).
-			On("CONFLICT (organization_id, business_unit_id) DO NOTHING").
-			Exec(ctx); err != nil {
-			return nil, fmt.Errorf("create default settlement control: %w", err)
-		}
+	}
 
-		entity, err = r.selectControl(ctx, tenantInfo)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "SettlementControl")
-		}
-		return entity, nil
+	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*tenant.SettlementControl]{
+		Find: func(ctx context.Context) (*tenant.SettlementControl, error) {
+			return r.selectControl(ctx, tenantInfo)
+		},
+		Create: func(ctx context.Context) error {
+			if _, insertErr := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(newDefault()).
+				On("CONFLICT (organization_id, business_unit_id) DO NOTHING").
+				Exec(ctx); insertErr != nil {
+				return fmt.Errorf("create default settlement control: %w", insertErr)
+			}
+
+			return nil
+		},
+		Default: newDefault,
+		MapError: func(err error) error {
+			return dberror.HandleNotFoundError(err, "SettlementControl")
+		},
 	})
 }
 

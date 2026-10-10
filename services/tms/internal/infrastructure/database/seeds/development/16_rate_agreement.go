@@ -133,6 +133,7 @@ type rateSeedRefs struct {
 	programID  *pulid.ID
 	matrixID   pulid.ID
 	densityID  pulid.ID
+	approverID pulid.ID
 }
 
 func (s *RateAgreementSeed) Run(ctx context.Context, tx bun.Tx) error {
@@ -164,6 +165,11 @@ func (s *RateAgreementSeed) Run(ctx context.Context, tx bun.Tx) error {
 			if err != nil {
 				return err
 			}
+			admin, err := sc.GetUserByUsername(ctx, "admin")
+			if err != nil {
+				return err
+			}
+			refs.approverID = admin.ID
 
 			if err = s.createZones(ctx, tx, sc, refs); err != nil {
 				return err
@@ -679,6 +685,8 @@ func (s *RateAgreementSeed) createAgreement(
 	refs *rateSeedRefs,
 ) error {
 	customerID := refs.customer.ID
+	approverID := refs.approverID
+	stamped := refs.now
 
 	agreement := &rateagreement.RateAgreement{
 		ID:                pulid.MustNew("rag_"),
@@ -696,6 +704,10 @@ func (s *RateAgreementSeed) createAgreement(
 		Currency:          "USD",
 		RoundingMode:      ratetypes.RoundingModeHalfUp,
 		RoundingPrecision: 2,
+		SubmittedByID:     &approverID,
+		SubmittedAt:       &stamped,
+		ApprovedByID:      &approverID,
+		ApprovedAt:        &stamped,
 		CreatedAt:         refs.now,
 		UpdatedAt:         refs.now,
 	}

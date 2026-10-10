@@ -131,9 +131,12 @@ func newDescribeFormulaSchemaTool(workbench formulaWorkbench) serviceports.Agent
 func (t *describeFormulaSchemaTool) Name() string { return "describe_formula_schema" }
 
 func (t *describeFormulaSchemaTool) Description() string {
-	return "Describe what a rating formula may use: the shipment variables, the functions " +
-		"and the rate tables it can look up. Read it before writing or explaining a formula, " +
-		"so every name you use is one the engine knows."
+	return "Describe what a rating formula may use: every shipment variable (one line each), " +
+		"the functions by signature, and the rate tables it can look up. Read it before " +
+		"writing or explaining a formula, so every name you use is one the engine knows. " +
+		"Give query (\"reefer\", \"stops\", \"round\") for the matching variables and " +
+		"functions in full, with examples. A name not listed is not a shipment field: make " +
+		"it a template variable or ask, never guess."
 }
 
 func (t *describeFormulaSchemaTool) ParamSchema() map[string]any {
@@ -141,6 +144,8 @@ func (t *describeFormulaSchemaTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"schemaId": map[string]any{"type": "string", "description": schemaIDDescription},
+			paramQuery: stringParam("Words for what the formula needs, such as \"reefer\" or " +
+				"\"weight\": only the variables and functions that match, described in full."),
 		},
 		"additionalProperties": false,
 	}
@@ -164,8 +169,13 @@ func (t *describeFormulaSchemaTool) Query(
 		return nil, err
 	}
 
-	return t.workbench.Reference(ctx, formulaTenant(params),
+	reference, err := t.workbench.Reference(ctx, formulaTenant(params),
 		optionalString(params.Params, "schemaId"))
+	if err != nil {
+		return nil, err
+	}
+
+	return schemaView(reference, optionalString(params.Params, paramQuery)), nil
 }
 
 type scenarioParam struct {
@@ -186,8 +196,10 @@ func scenarioSchema() map[string]any {
 				"name":        map[string]any{"type": "string", "description": "A short name."},
 				"description": map[string]any{"type": "string", "description": "One sentence."},
 				"variables": map[string]any{
-					"type":        "object",
-					"description": "Variable values for this load, by variable name.",
+					"type": "object",
+					"description": "Values for this load, by variable name or schema field " +
+						"path (serviceType.code), so a load can say which service or " +
+						"equipment it is.",
 				},
 			},
 			"required":             []string{"name", "variables"},
@@ -382,17 +394,32 @@ func (t *proposeFormulaTool) ParamSchema() map[string]any {
 			"expression": map[string]any{
 				"type": "string",
 				"description": "The expression, built only from describe_formula_schema's names " +
-					"and this formula's variables. Write every rate, fee, minimum or percentage " +
-					"as a variable, never as a number in the expression: one template prices " +
-					"every customer, and a figure written into it can only be changed by editing " +
-					"the formula. baseRate * totalDistance, not 2.85 * totalDistance.",
+					"and this formula's variables. Write every rate, fee, minimum, percentage " +
+					"and weight or mileage break as a variable, never as a number in the " +
+					"expression: one template prices every customer, and a figure written into " +
+					"it can only be changed by editing the formula. baseRate * totalDistance, not " +
+					"2.85 * totalDistance; totalWeight < breakOne, not totalWeight < 500. Only a " +
+					"unit conversion such as / 100 for hundredweight stays a number. It returns " +
+					"the charge for the whole load, never a rate: a figure per mile, hour or stop " +
+					"is multiplied by totalDistance, the hours or the stops in the expression. " +
+					"Write it from the terms the person states, even when they say the terms are " +
+					"their contracts': open an agreement or program only when they ask you to take " +
+					"the terms from one. A quantity no shipment field holds, such as hours at a " +
+					"stop, is a variable with a default: declare it and propose rather than asking " +
+					"how it will arrive. So is a condition no field marks directly, such as team " +
+					"service: compare the nearest field to a variable (serviceType.code == " +
+					"teamServiceCode) or make it a yes/no variable, and say in the explanation " +
+					"what to set it to.",
 			},
 			"schemaId": map[string]any{"type": "string", "description": schemaIDDescription},
 			"variables": map[string]any{
 				"type": "array",
-				"description": "The formula's own variables: every rate, fee, minimum and " +
-					"percentage the expression uses, and any other input that is not a shipment " +
-					"variable. Give the figure the person named as its default.",
+				"description": "The formula's own variables: every rate, fee, minimum, " +
+					"percentage and break the expression uses, and any input no shipment " +
+					"variable holds, such as hours at a stop. Something billed per stop, per " +
+					"hour or per event is written for one occurrence from such an input, cap " +
+					"included; say so in the explanation rather than asking how the data " +
+					"arrives. Give the figure the person named as its default.",
 				"maxItems": pagedraft.MaxFormulaVariables,
 				"items": map[string]any{
 					"type": "object",

@@ -906,7 +906,40 @@ func (s *Service) distanceOverride(
 		return 0, false, err
 	}
 
-	return 0, false, nil
+	return s.legDistanceOverrides(ctx, entity, signature)
+}
+
+func (s *Service) legDistanceOverrides(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	signature string,
+) (float64, bool, error) {
+	scope, route, ok := strings.Cut(signature, "|")
+	if !ok {
+		return 0, false, nil
+	}
+	locations := strings.Split(route, ">")
+	if len(locations) <= 2 {
+		return 0, false, nil
+	}
+
+	var total float64
+	for i := 1; i < len(locations); i++ {
+		if locations[i-1] == locations[i] {
+			continue
+		}
+		leg, found, err := s.distanceOverride(
+			ctx,
+			entity,
+			scope+"|"+locations[i-1]+">"+locations[i],
+		)
+		if err != nil || !found {
+			return 0, false, err
+		}
+		total += leg
+	}
+
+	return total, true, nil
 }
 
 func (s *Service) storedMileage(

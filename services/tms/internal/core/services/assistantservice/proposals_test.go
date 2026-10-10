@@ -125,6 +125,8 @@ type stubProposalRepo struct {
 
 	byRun   []*agent.AgentProposal
 	lastRun repositories.ListAgentProposalsByRunRequest
+
+	expiredThreads []pulid.ID
 }
 
 func (r *stubProposalRepo) ListByRun(
@@ -640,4 +642,13 @@ func TestListThreadProposals_HoldsOnlyWhatIsStillPending(t *testing.T) {
 	assert.Equal(t, "Dispatch desk", result[0].Hold.AgentName)
 	assert.Nil(t, result[1].Hold, "a decided proposal is never held")
 	assert.Equal(t, 1, runs.reads, "only the pending proposal's run is read")
+}
+
+func (r *stubProposalRepo) ExpirePendingByThread(
+	_ context.Context,
+	req repositories.ExpireAgentProposalsByThreadRequest,
+) (int, error) {
+	r.expiredThreads = append(r.expiredThreads, req.ThreadID)
+
+	return 0, nil
 }

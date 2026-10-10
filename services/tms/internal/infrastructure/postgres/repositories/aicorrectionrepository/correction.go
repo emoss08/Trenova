@@ -308,7 +308,7 @@ func (r *repository) WeeklyTotalsByProvider(
 	ctx context.Context,
 	req *repositories.WeeklyAICorrectionTotalsRequest,
 ) ([]aicorrection.WeekTotal, error) {
-	return r.weeklyTotals(ctx, req.Task, req.Since, func(sq *bun.SelectQuery) *bun.SelectQuery {
+	return r.weeklyTotals(ctx, req.Task, req.Since, func(_ context.Context, sq *bun.SelectQuery) *bun.SelectQuery {
 		return buncolgen.CorrectionScopeTenant(sq, req.TenantInfo)
 	})
 }
@@ -317,7 +317,7 @@ func (r *repository) WeeklyTrainableTotalsByProvider(
 	ctx context.Context,
 	req *repositories.WeeklyTrainableAICorrectionTotalsRequest,
 ) ([]aicorrection.WeekTotal, error) {
-	return r.weeklyTotals(ctx, req.Task, req.Since, func(sq *bun.SelectQuery) *bun.SelectQuery {
+	return r.weeklyTotals(ctx, req.Task, req.Since, func(ctx context.Context, sq *bun.SelectQuery) *bun.SelectQuery {
 		return sq.Where("EXISTS (?)", r.trainingConsent(ctx))
 	})
 }
@@ -326,7 +326,7 @@ func (r *repository) weeklyTotals(
 	ctx context.Context,
 	task aicorrection.Task,
 	since int64,
-	scope func(*bun.SelectQuery) *bun.SelectQuery,
+	scope func(context.Context, *bun.SelectQuery) *bun.SelectQuery,
 ) ([]aicorrection.WeekTotal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]aicorrection.WeekTotal, error) {
 		cols := buncolgen.CorrectionColumns
@@ -344,7 +344,7 @@ func (r *repository) weeklyTotals(
 			ColumnExpr(cols.ScoredCount.Expr("COALESCE(SUM({}), 0) AS scored")).
 			ColumnExpr(cols.CorrectCount.Expr("COALESCE(SUM({}), 0) AS correct")).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return scope(sq).
+				return scope(ctx, sq).
 					Where(cols.Task.Eq(), task).
 					Where(cols.CapturedAt.Gte(), since).
 					Where(cols.ExtractionProviderID.IsNotNull())

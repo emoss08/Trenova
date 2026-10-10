@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -257,11 +258,7 @@ func (s *Shipment) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(
 			&s.RateOverrideAmount,
-			validation.When(
-				s.RateOverrideAmount.Valid,
-				validation.Min(decimal.NewFromInt(0)).
-					Error("An overridden rate cannot be negative"),
-			),
+			domainvalidation.DecimalAtLeast(decimal.Zero, "An overridden rate cannot be negative"),
 		),
 		validation.Field(
 			&s.TenderStatus,

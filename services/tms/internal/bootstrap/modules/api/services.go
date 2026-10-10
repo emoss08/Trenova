@@ -75,6 +75,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/billingtransferservice"
 	"github.com/emoss08/trenova/internal/core/services/briefingservice"
 	"github.com/emoss08/trenova/internal/core/services/briefingservice/briefingwriter"
+	"github.com/emoss08/trenova/internal/core/services/bulkeditservice"
 	"github.com/emoss08/trenova/internal/core/services/capturereleaseservice"
 	"github.com/emoss08/trenova/internal/core/services/captureservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
@@ -193,6 +194,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/ratesimulationservice"
 	"github.com/emoss08/trenova/internal/core/services/ratezoneservice"
 	"github.com/emoss08/trenova/internal/core/services/realtimeservice"
+	"github.com/emoss08/trenova/internal/core/services/recordanchorservice"
 	"github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
 	"github.com/emoss08/trenova/internal/core/services/referencedataguard"
 	reportingservice "github.com/emoss08/trenova/internal/core/services/reporting"
@@ -226,13 +228,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentwatchlistservice"
 	"github.com/emoss08/trenova/internal/core/services/sidebarpreferenceservice"
-	"github.com/emoss08/trenova/internal/core/services/tableinsightservice"
-	"github.com/emoss08/trenova/internal/core/services/tablelayoutservice"
-	"github.com/emoss08/trenova/internal/core/services/bulkeditservice"
-	"github.com/emoss08/trenova/internal/core/services/tableexportservice"
 	"github.com/emoss08/trenova/internal/core/services/storedmileageservice"
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
+	"github.com/emoss08/trenova/internal/core/services/tableexportservice"
+	"github.com/emoss08/trenova/internal/core/services/tableinsightservice"
+	"github.com/emoss08/trenova/internal/core/services/tablelayoutservice"
 	"github.com/emoss08/trenova/internal/core/services/tablequeryservice"
 	"github.com/emoss08/trenova/internal/core/services/tenanttimezone"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
@@ -651,6 +652,8 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	shipmentsuggestionservice.NewDecider,
 	shipmentsuggestionservice.NewCandidates,
 	shipmentetaservice.New,
+	shipmentetaservice.NewTrackingReader,
+	recordanchorservice.New,
 	shipmentwatchlistservice.New,
 	shipmentbriefingservice.New,
 	shipmentbriefingservice.NewReader,

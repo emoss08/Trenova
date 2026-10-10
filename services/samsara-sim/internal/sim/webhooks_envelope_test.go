@@ -55,7 +55,7 @@ func TestDispatcherEmitsRealSamsaraEnvelopeAndSignature(t *testing.T) {
 	store := NewStore(&Fixture{
 		Webhooks: []Record{
 			{
-				"id":         "wh-real",
+				"id":         "524001",
 				"name":       "real envelope sink",
 				"url":        server.URL,
 				"secretKey":  base64.StdEncoding.EncodeToString([]byte(rawKey)),
@@ -77,7 +77,7 @@ func TestDispatcherEmitsRealSamsaraEnvelopeAndSignature(t *testing.T) {
 	defer dispatcher.Shutdown()
 
 	if err := dispatcher.Dispatch("default", "VehicleCreated", map[string]any{
-		"id":   "veh-9",
+		"id":   "281474976710665",
 		"name": "Truck 9",
 	}); err != nil {
 		t.Fatalf("dispatch webhook: %v", err)
@@ -115,8 +115,8 @@ func TestDispatcherEmitsRealSamsaraEnvelopeAndSignature(t *testing.T) {
 	if got := int64(floatFromAny(envelope["orgId"])); got != webhookOrgID {
 		t.Fatalf("expected orgId %d, got %d", webhookOrgID, got)
 	}
-	if got := stringValue(envelope, "webhookId"); got != "wh-real" {
-		t.Fatalf("expected webhookId wh-real, got %q", got)
+	if got := stringValue(envelope, "webhookId"); got != "524001" {
+		t.Fatalf("expected webhookId 524001, got %q", got)
 	}
 	eventTime := stringValue(envelope, "eventTime")
 	if _, err := time.Parse(webhookEventTimeLayout, eventTime); err != nil {
@@ -126,8 +126,8 @@ func TestDispatcherEmitsRealSamsaraEnvelopeAndSignature(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected data payload, got %T", envelope["data"])
 	}
-	if got := stringValue(data, "id"); got != "veh-9" {
-		t.Fatalf("expected data id veh-9, got %q", got)
+	if got := stringValue(data, "id"); got != "281474976710665" {
+		t.Fatalf("expected data id 281474976710665, got %q", got)
 	}
 
 	if _, err := time.Parse(time.RFC3339, capture.Timestamp); err != nil {

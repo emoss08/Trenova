@@ -19,12 +19,15 @@ default `admin@trenova.app`) with the Desk surface, and is answered by `Assistan
 on Temporal: prepare, the agent loop, the tool activities, finish. Decision follow-ups, queued
 messages and delegated tasks run exactly as they do for a person.
 
-Three things make that observable and repeatable:
+Four things make that observable and repeatable:
 
 - **Its own worker, on its own namespace.** The command builds the worker's graph
   (`bootstrap.UnscheduledWorkerOptions`: every queue's workers, none of the start-up schedule
   and reconcile workflows) and runs it in-process against the Temporal namespace `deskbench`,
-  which it registers when missing. A dev worker on `default` running older code never answers
+  which it registers when missing, keeping closed runs for an hour. The local dev server holds
+  every run in memory until retention lets it go, and three days of bench runs filled its 1 GiB
+  limit until it stopped answering polls; a run's files under `.deskbench/` hold all it needs, so
+  an older namespace's longer retention is shortened on the next run. A dev worker on `default` running older code never answers
   a bench turn, and a bench run never touches the dev worker's work. Edit a tool description,
   run the bench again, and the new description is what the model reads. The edition's
   worker-only options are left out, since they add schedules of their own.
@@ -39,6 +42,18 @@ Three things make that observable and repeatable:
   the bench or by the application (a decision follow-up), is seen the moment it starts. The
   bench follows each one's stream from the first frame, waits for its result, and keeps
   waiting a few seconds for another turn the last one started.
+- **No learning.** `serviceports.AgentReflectionScheduler` is replaced with one that does
+  nothing, so a bench conversation is never looked back over. A conversation goes quiet after
+  ten minutes, so a run longer than that fed what its early cases taught to the cases after them:
+  a rejected hold taught "this person does not want a hold for missing paperwork", and the case
+  that asks for that hold failed on every run after. Before a run, the tidy-up
+  (`benchLeftovers`) also retires the memories earlier bench conversations taught and dismisses
+  what they suggested; memories from people's own conversations are never touched. Reflection
+  itself is covered by its own tests, not by the bench. For the same reason
+  `serviceports.AgentTrustService` is wrapped so the bench's approvals, its end-of-case
+  rejections and its failed executions are not outcomes for earned autonomy: its streaks
+  promoted `transfer_to_billing` to AutoExecute on Billing exceptions, and the case that
+  approves that proposal found it had already run.
 
 The worker's own log goes to `worker.log` in the run directory, so a tool's error that never
 reached the model is there too.
@@ -47,6 +62,12 @@ reached the model is there too.
 
 Run from `services/tms`, with Postgres, Redis and Temporal up (`task docker-up`). The API and
 the dev worker do not need to be running.
+
+One bench runs per namespace at a time. Every bench process registers its workers in the same
+Temporal namespace under the same identity, so a second one would take the first one's turns and
+run them on its own build: an `ask` during a `run` once made a fix look broken because the run's
+older binary answered it. Open holds an exclusive lock on `.deskbench/<namespace>.lock` (with the
+holder's pid in it) and a second bench refuses to start; pass `--namespace` to run one beside it.
 
 ```bash
 trenova desk ask "whats running late today"                    # one message, full transcript
@@ -197,6 +218,15 @@ and is stopped after ten seconds. Facts are what keep a scenario honest without 
 values the seed may change: the question is "is the number the agent said the number the
 database holds", not "is it 4".
 
+A scenario can put the data where it needs it before it starts with `setup`: single
+`UPDATE`, `INSERT` or `DELETE` statements run in one write transaction under the tenant's
+row-level scope (nothing that touches the schema or grants is accepted). The seed is written
+once and ages; the bench approves real writes. A load whose windows have passed, time off the
+seed put on the day a scenario asks for, or a lane that has come to match several loads turns a
+correct refusal or question into a failed case, so a write scenario rolls its load's windows
+forward from `now()` rather than trusting the seed's dates. Pair `setup` with `exclusive` when
+two scenarios touch the same rows.
+
 ### Writing them
 
 - **Write like the people who use it.** Lower case, abbreviations, half-sentences, two
@@ -206,6 +236,8 @@ database holds", not "is it 4".
   be checked mechanically in `rubric`.
 - **Scenarios are regression cases.** When a run finds something and it is fixed, keep the
   scenario that found it, so the next change to a prompt or a description is held to it.
+- **Say dates relative to the day the run happens** ("four days later", "next Tuesday"), never
+  a weekday that may be today.
 - **Run more than once.** A model's answer varies; `--repeat 3` turns one pass into a rate,
   which is what a comparison can trust.
 

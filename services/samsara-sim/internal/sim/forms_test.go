@@ -26,8 +26,8 @@ func newFormTestFixture(driverCount int) *Fixture {
 			"title":         "Fuel Receipt",
 			"createdAtTime": "2026-01-05T08:00:00Z",
 			"updatedAtTime": "2026-02-12T09:30:00Z",
-			"createdBy":     map[string]any{"id": "user-1", "type": "user"},
-			"updatedBy":     map[string]any{"id": "user-1", "type": "user"},
+			"createdBy":     map[string]any{"id": fixtureUserID, "type": "user"},
+			"updatedBy":     map[string]any{"id": fixtureUserID, "type": "user"},
 			"fields": []any{
 				map[string]any{
 					"id":               "aaaa1111-0000-4000-8000-00000000f001",
@@ -58,8 +58,8 @@ func newFormTestFixture(driverCount int) *Fixture {
 			"title":         "Incident Report",
 			"createdAtTime": "2026-01-05T08:15:00Z",
 			"updatedAtTime": "2026-02-12T09:45:00Z",
-			"createdBy":     map[string]any{"id": "user-1", "type": "user"},
-			"updatedBy":     map[string]any{"id": "user-1", "type": "user"},
+			"createdBy":     map[string]any{"id": fixtureUserID, "type": "user"},
+			"updatedBy":     map[string]any{"id": fixtureUserID, "type": "user"},
 			"fields": []any{
 				map[string]any{
 					"id":         "bbbb2222-0000-4000-8000-00000000f001",
@@ -87,8 +87,8 @@ func newFormTestFixture(driverCount int) *Fixture {
 			"title":         "Trip Inspection Checklist",
 			"createdAtTime": "2026-01-05T08:00:00Z",
 			"updatedAtTime": "2026-02-12T09:30:00Z",
-			"createdBy":     map[string]any{"id": "user-1", "type": "user"},
-			"updatedBy":     map[string]any{"id": "user-1", "type": "user"},
+			"createdBy":     map[string]any{"id": fixtureUserID, "type": "user"},
+			"updatedBy":     map[string]any{"id": fixtureUserID, "type": "user"},
 			"fields": []any{
 				map[string]any{
 					"id":         "cccc3333-0000-4000-8000-00000000f001",
@@ -107,7 +107,7 @@ func newFormTestFixture(driverCount int) *Fixture {
 	}
 	fixture.FormSubmissions = []Record{
 		{
-			"id":            "form-sub-1",
+			"id":            "3f9a6c2e-7b41-4d8a-9e15-c2b7d04f8a61",
 			"title":         "Truck 1 Daily Inspection",
 			"status":        "notStarted",
 			"isRequired":    true,
@@ -127,6 +127,7 @@ func newFormTestServer(t *testing.T, driverCount int, webhookURL string) *Server
 	t.Helper()
 
 	cfg := config.Default()
+	cfg.RateLimits.Enabled = false
 	cfg.Auth.Tokens = []string{"dev-samsara-token"}
 	cfg.Webhooks.Enabled = false
 
@@ -137,7 +138,7 @@ func newFormTestServer(t *testing.T, driverCount int, webhookURL string) *Server
 		cfg.Webhooks.InitialBackoff = 10 * time.Millisecond
 		fixture.Webhooks = []Record{
 			{
-				"id":   "wh-form-test",
+				"id":   "524003",
 				"name": "form event sink",
 				"url":  webhookURL,
 				"simDelivery": map[string]any{
@@ -291,9 +292,7 @@ func TestServerFormSubmissionStreamValidationFiltersAndPagination(t *testing.T) 
 	if missingStart.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400 for missing startTime, got %d", missingStart.Code)
 	}
-	if code := mustReadErrorCode(t, missingStart.Body.Bytes()); code != "TIME_RANGE_REQUIRED" {
-		t.Fatalf("expected TIME_RANGE_REQUIRED code, got %q", code)
-	}
+	assertAPIErrorMessage(t, missingStart.Body.Bytes(), ErrInvalidParameter)
 
 	malformed := performAuthorizedRequest(
 		srv,
@@ -311,8 +310,8 @@ func TestServerFormSubmissionStreamValidationFiltersAndPagination(t *testing.T) 
 			now.Add(-40*24*time.Hour).Format(time.RFC3339),
 		),
 	)
-	if tooWide.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400 for oversized window, got %d", tooWide.Code)
+	if tooWide.Code != http.StatusOK {
+		t.Fatalf("expected the spec's unbounded stream window to succeed, got %d", tooWide.Code)
 	}
 
 	all := performAuthorizedRequest(srv, http.MethodGet, base)
@@ -324,13 +323,13 @@ func TestServerFormSubmissionStreamValidationFiltersAndPagination(t *testing.T) 
 		t.Fatal("expected generated submissions in stream window")
 	}
 
-	byDriver := performAuthorizedRequest(srv, http.MethodGet, base+"&driverIds=drv-1")
+	byDriver := performAuthorizedRequest(srv, http.MethodGet, base+"&driverIds=1654973")
 	driverRecords := mustReadDataRecords(t, byDriver.Body.Bytes())
 	if len(driverRecords) == 0 {
 		t.Fatal("expected submissions for filtered driver")
 	}
 	for _, record := range driverRecords {
-		if nestedString(record, "submittedBy", "id") != "drv-1" {
+		if nestedString(record, "submittedBy", "id") != testDriverID {
 			t.Fatalf("unexpected submitter %q", nestedString(record, "submittedBy", "id"))
 		}
 	}
@@ -347,29 +346,19 @@ func TestServerFormSubmissionStreamValidationFiltersAndPagination(t *testing.T) 
 		}
 	}
 
-	firstPage := performAuthorizedRequest(srv, http.MethodGet, base+"&limit=1")
-	firstRecords, firstPagination := mustReadDailyLogPage(t, firstPage.Body.Bytes())
-	if len(firstRecords) != 1 {
-		t.Fatalf("expected 1 record on first page, got %d", len(firstRecords))
+	unlimited := performAuthorizedRequest(srv, http.MethodGet, base+"&limit=1")
+	if unlimited.Code != http.StatusOK {
+		t.Fatalf("expected limit to be ignored on the stream, got %d", unlimited.Code)
 	}
-	if hasNext, ok := firstPagination["hasNextPage"].(bool); !ok || !hasNext {
-		t.Fatalf("expected hasNextPage true, got %v", firstPagination["hasNextPage"])
+	streamRecords, streamPagination := mustReadDailyLogPage(t, unlimited.Body.Bytes())
+	if len(streamRecords) < 2 {
+		t.Fatalf("expected the full stream window despite limit=1, got %d", len(streamRecords))
 	}
-	endCursor, ok := firstPagination["endCursor"].(string)
-	if !ok || endCursor == "" {
-		t.Fatalf("expected endCursor, got %v", firstPagination["endCursor"])
+	if hasNext, ok := streamPagination["hasNextPage"].(bool); !ok || hasNext {
+		t.Fatalf("expected hasNextPage false, got %v", streamPagination["hasNextPage"])
 	}
-	secondPage := performAuthorizedRequest(
-		srv,
-		http.MethodGet,
-		base+"&limit=1&after="+url.QueryEscape(endCursor),
-	)
-	secondRecords, _ := mustReadDailyLogPage(t, secondPage.Body.Bytes())
-	if len(secondRecords) != 1 {
-		t.Fatalf("expected 1 record on second page, got %d", len(secondRecords))
-	}
-	if stringValue(secondRecords[0], "id") == stringValue(firstRecords[0], "id") {
-		t.Fatal("expected second page to advance past first page")
+	if endCursor, ok := streamPagination["endCursor"].(string); !ok || endCursor != "" {
+		t.Fatalf("expected empty endCursor on the last page, got %v", streamPagination["endCursor"])
 	}
 }
 
@@ -379,19 +368,27 @@ func TestServerFormSubmissionListIncludesFixtureAndGeneratedRecords(t *testing.T
 	srv := newFormTestServer(t, 3, "")
 	now := srv.simNow()
 
-	listResponse := performAuthorizedRequest(srv, http.MethodGet, "/form-submissions")
+	missingIDs := performAuthorizedRequest(srv, http.MethodGet, "/form-submissions")
+	if missingIDs.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 without the required ids parameter, got %d", missingIDs.Code)
+	}
+	listResponse := performAuthorizedRequest(
+		srv,
+		http.MethodGet,
+		"/form-submissions?ids=3f9a6c2e-7b41-4d8a-9e15-c2b7d04f8a61",
+	)
 	if listResponse.Code != http.StatusOK {
 		t.Fatalf("expected 200 for submission list, got %d", listResponse.Code)
 	}
 	listRecords := mustReadDataRecords(t, listResponse.Body.Bytes())
 	foundFixture := false
 	for _, record := range listRecords {
-		if stringValue(record, "id") == "form-sub-1" {
+		if stringValue(record, "id") == "3f9a6c2e-7b41-4d8a-9e15-c2b7d04f8a61" {
 			foundFixture = true
 		}
 	}
 	if !foundFixture {
-		t.Fatal("expected fixture submission form-sub-1 in list response")
+		t.Fatal("expected fixture submission 3f9a6c2e-7b41-4d8a-9e15-c2b7d04f8a61 in list response")
 	}
 
 	generated := srv.live.GeneratedFormSubmissions(now, now.Add(-24*time.Hour), now, nil, nil)
@@ -438,7 +435,11 @@ func TestServerDispatchFormWebhooksDeduplicated(t *testing.T) {
 		t.Fatal("expected at least one submission inside the lazy dispatch window")
 	}
 
-	request := httptest.NewRequest(http.MethodGet, "/fleet/vehicles/stats?vehicleIds=veh-1", nil)
+	request := httptest.NewRequest(
+		http.MethodGet,
+		"/fleet/vehicles/stats?vehicleIds=281474976710657",
+		nil,
+	)
 	request.Header.Set("Authorization", "Bearer dev-samsara-token")
 	srv.dispatchFormEvents(request, at)
 	srv.dispatchFormEvents(request, at)

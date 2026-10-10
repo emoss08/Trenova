@@ -43,7 +43,8 @@ type TurnRequest struct {
 	Taint *agent.RunTaint
 	// Facts are what the person pinned for the agents to keep in mind for
 	// the whole conversation.
-	Facts []string
+	Facts   []string
+	Anchors []agentdefinition.RuntimeAnchor
 }
 
 type TurnResult struct {
@@ -89,6 +90,7 @@ func (s *Service) admit(
 	}
 
 	runtimeContext.PendingProposals = pendingProposals(req.Proposals)
+	runtimeContext.Anchors = req.Anchors
 
 	return decision, &serviceports.RunRequest{
 		Definition:          req.Definition,

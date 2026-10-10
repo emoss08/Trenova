@@ -39,6 +39,10 @@ var Bindings = []Binding{
 			"commodities":       "ShipmentCommodityInput",
 			"additionalCharges": "ShipmentAdditionalChargeInput",
 		},
+		Defaulted: map[string]string{
+			"formulaTemplateId": "left out, the tool seats the rating method and base rate the " +
+				"customer's rate agreement prices the lane with, and refuses when none does",
+		},
 	},
 	{
 		Tool:  "update_shipment",
@@ -137,6 +141,10 @@ var Bindings = []Binding{
 	{
 		Tool:  "request_worker_pto",
 		Input: "CreateWorkerPTOInput",
+		Defaulted: map[string]string{
+			"reason": "left out, the kind of time off is the reason: \"put it in as vacation\" " +
+				"says why, and asking for a reason only delayed the request",
+		},
 	},
 	{
 		Tool:  "schedule_dot_test",
@@ -225,7 +233,10 @@ var Bindings = []Binding{
 		},
 		Extra: map[string]string{"safetyEventId": namedID("safetyEventId")},
 	},
-	{Tool: "record_fuel_purchase", Input: "FuelPurchaseInput"},
+	{Tool: "record_fuel_purchase", Input: "FuelPurchaseInput", Defaulted: map[string]string{
+		"totalAmount": "the tool works the total out from quantity and unitPrice when a receipt " +
+			"is read out as gallons and a price, and refuses when it has neither",
+	}},
 	{
 		Tool:  "correct_fuel_purchase",
 		Input: "FuelPurchaseInput",

@@ -420,7 +420,10 @@ the agent they chose takes the task inside it.
   - it writes a `delegate_task` call with a fresh id (`fx.NewCallID`),
     holding `agentId` and `task`, into the assistant message;
   - it runs that call through `handTask`, the body `delegate` uses, with
-    `DelegateCall.Directed` set;
+    `DelegateCall.Directed` set and the conversation's records handed over
+    (`recordsInPlay`: the run's subject and the records in play it may read, at
+    most eight), so "bill it" reaches the billing agent with the load it is
+    about rather than as two words;
   - it records the result as any delegate result is recorded;
   - it closes with the delegate's answer, or with the reason when it was
     declined, failed or stopped.

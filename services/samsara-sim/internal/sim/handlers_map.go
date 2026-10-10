@@ -188,6 +188,21 @@ const simMapHTML = `<!doctype html>
       font-size: 13px;
       font-weight: 700;
     }
+    .trailer-marker {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      border: 2px solid #0f172a;
+      box-sizing: border-box;
+    }
+    .trailer-marker.reefer {
+      border-color: #38bdf8;
+    }
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
     .pill {
       font-size: 11px;
       border-radius: 999px;
@@ -281,6 +296,7 @@ const simMapHTML = `<!doctype html>
       <button class="secondary" id="pause">Pause</button>
       <button class="secondary" id="focus">Focus Fleet</button>
       <button class="secondary" id="clear-webhooks">Clear Inbox</button>
+      <label class="toggle"><input id="show-trailers" type="checkbox" checked /> Trailers</label>
       <div class="chips" id="route-filters">
         <button class="chip active" type="button" data-route-filter="all">all</button>
         <button class="chip" type="button" data-route-filter="planned">planned</button>
@@ -322,6 +338,10 @@ const simMapHTML = `<!doctype html>
         busy: false,
         timer: null,
         assetIDs: [],
+        trailerIDs: [],
+        trailerMarkers: new Map(),
+        trailerStats: new Map(),
+        showTrailers: true,
         markers: new Map(),
         vehicleStats: new Map(),
         routeLifecycleByVehicle: new Map(),
@@ -352,6 +372,7 @@ const simMapHTML = `<!doctype html>
       const btnPause = document.getElementById("pause");
       const btnFocus = document.getElementById("focus");
       const btnClearWebhooks = document.getElementById("clear-webhooks");
+      const elShowTrailers = document.getElementById("show-trailers");
 
       const routeStatusFilters = [
         "all",
@@ -451,7 +472,7 @@ const simMapHTML = `<!doctype html>
         }
         const marker = state.markers.get(cleanAssetID);
         if (!marker) {
-          setStatus("asset " + cleanAssetID + " is not visible yet");
+          setStatus("asset " + assetLabel(cleanAssetID) + " is not visible yet");
           return;
         }
         if (state.selectedAssetID !== cleanAssetID) {
@@ -475,7 +496,7 @@ const simMapHTML = `<!doctype html>
         renderAssets(Array.from(state.vehicleStats.values()));
 
         const via = sourceLabel ? " via " + sourceLabel : "";
-        setStatus("tracking " + cleanAssetID + via);
+        setStatus("tracking " + assetLabel(cleanAssetID) + via);
       }
 
       function bindAssetCardClicks() {
@@ -535,6 +556,25 @@ const simMapHTML = `<!doctype html>
         if (value === "hos.violation.shift") return "shift vio";
         if (value === "hos.violation.cycle") return "cycle vio";
         return value.replaceAll(".", " ");
+      }
+
+      function assetLabel(assetID) {
+        const cleanAssetID = String(assetID || "").trim();
+        const stat = state.vehicleStats.get(cleanAssetID);
+        const name = String((stat || {}).name || "").trim();
+        return name || cleanAssetID;
+      }
+
+      function stopLabel(route, stopID) {
+        const cleanStopID = String(stopID || "").trim();
+        if (!cleanStopID) return "";
+        const stops = Array.isArray((route || {}).stops) ? route.stops : [];
+        for (const stop of stops) {
+          if (String(stop.id || "").trim() === cleanStopID) {
+            return String(stop.name || cleanStopID);
+          }
+        }
+        return cleanStopID;
       }
 
       function escapeHTML(value) {
@@ -809,10 +849,33 @@ const simMapHTML = `<!doctype html>
         return res.json();
       }
 
+      async function fetchAllIDs(path) {
+        const ids = [];
+        let after = "";
+        for (let page = 0; page < 20; page++) {
+          const params = new URLSearchParams();
+          params.set("limit", "512");
+          if (after !== "") {
+            params.set("after", after);
+          }
+          const payload = await fetchJSON(path + "?" + params.toString());
+          const data = Array.isArray(payload.data) ? payload.data : [];
+          for (const item of data) {
+            const id = String(item.id || "").trim();
+            if (id) ids.push(id);
+          }
+          const pagination = payload.pagination || {};
+          after = String(pagination.endCursor || "").trim();
+          if (!pagination.hasNextPage || after === "") {
+            break;
+          }
+        }
+        return ids;
+      }
+
       async function loadAssets() {
-        const payload = await fetchJSON("/assets?limit=512");
-        const list = Array.isArray(payload.data) ? payload.data : [];
-        state.assetIDs = list.map((item) => String(item.id || "").trim()).filter(Boolean);
+        state.assetIDs = await fetchAllIDs("/fleet/vehicles");
+        state.trailerIDs = await fetchAllIDs("/fleet/trailers");
       }
 
       function chunk(values, size) {
@@ -849,8 +912,6 @@ const simMapHTML = `<!doctype html>
         for (let page = 0; page < 20; page++) {
           const params = new URLSearchParams();
           params.set("limit", "256");
-          params.set("sortBy", "id");
-          params.set("sortOrder", "asc");
           if (after !== "") {
             params.set("after", after);
           }
@@ -912,6 +973,7 @@ const simMapHTML = `<!doctype html>
         for (const group of groups) {
           const params = new URLSearchParams();
           params.set("vehicleIds", group.join(","));
+          params.set("types", "gps");
           const payload = await fetchJSON("/fleet/vehicles/stats?" + params.toString());
           const data = Array.isArray(payload.data) ? payload.data : [];
           for (const item of data) {
@@ -919,6 +981,78 @@ const simMapHTML = `<!doctype html>
           }
         }
         return all;
+      }
+
+      async function loadTrailerStats() {
+        const ids = state.trailerIDs;
+        if (ids.length === 0) {
+          return [];
+        }
+        const all = [];
+        for (const group of chunk(ids, 40)) {
+          const params = new URLSearchParams();
+          params.set("trailerIds", group.join(","));
+          params.set("types", "gps,reeferSupplyAirTemperatureMilliCZone1,reeferSetPointTemperatureMilliCZone1");
+          const payload = await fetchJSON("/fleet/trailers/stats?" + params.toString());
+          const data = Array.isArray(payload.data) ? payload.data : [];
+          for (const item of data) {
+            all.push(item);
+          }
+        }
+        return all;
+      }
+
+      function formatMilliC(value) {
+        const number = Number(value);
+        if (!Number.isFinite(number)) return "-";
+        const celsius = number / 1000;
+        return celsius.toFixed(1) + " °C / " + (celsius * 9 / 5 + 32).toFixed(1) + " °F";
+      }
+
+      function renderTrailers(stats) {
+        const seen = new Set();
+        for (const record of stats) {
+          const trailerID = String(record.id || "").trim();
+          const gps = record.gps || {};
+          const lat = Number(gps.latitude);
+          const lon = Number(gps.longitude);
+          if (!trailerID || !Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+          seen.add(trailerID);
+          state.trailerStats.set(trailerID, record);
+          const supply = record.reeferSupplyAirTemperatureMilliCZone1;
+          const setPoint = record.reeferSetPointTemperatureMilliCZone1;
+          const isReefer = Boolean(supply);
+          if (!state.trailerMarkers.has(trailerID)) {
+            const icon = L.divIcon({
+              className: "",
+              html: "<div class='trailer-marker" + (isReefer ? " reefer" : "") + "' style='background:" + hashColor(trailerID) + "'></div>",
+              iconSize: [12, 12],
+              iconAnchor: [6, 6]
+            });
+            state.trailerMarkers.set(trailerID, L.marker([lat, lon], { icon: icon, keyboard: false }));
+          }
+          const marker = state.trailerMarkers.get(trailerID);
+          marker.setLatLng([lat, lon]);
+          const formatted = ((gps.reverseGeo || {}).formattedLocation) || "";
+          marker.bindPopup(
+            "<b>" + escapeHTML(String(record.name || trailerID)) + "</b><br/>" +
+            "ID: " + escapeHTML(trailerID) + "<br/>" +
+            "Speed mph: " + Number(gps.speedMilesPerHour || 0).toFixed(0) + "<br/>" +
+            (formatted ? "Near: " + escapeHTML(formatted) + "<br/>" : "") +
+            (isReefer ? "Supply air: " + formatMilliC(supply.value) + "<br/>Set point: " + formatMilliC((setPoint || {}).value) + "<br/>" : "") +
+            "Time: " + escapeHTML(String(gps.time || ""))
+          );
+          if (state.showTrailers) {
+            if (!map.hasLayer(marker)) marker.addTo(map);
+          } else {
+            marker.remove();
+          }
+        }
+        for (const [trailerID, marker] of state.trailerMarkers.entries()) {
+          if (!seen.has(trailerID)) {
+            marker.remove();
+          }
+        }
       }
 
       async function loadActiveEvents() {
@@ -1013,9 +1147,10 @@ const simMapHTML = `<!doctype html>
           const routeClass = routeStatusClass(routeStatus);
           const progress = Number(((route.progress || {}).percentComplete || 0));
           const progressText = Number.isFinite(progress) ? progress.toFixed(1) + "%" : "--";
-          const nextStop = String(((route.progress || {}).nextStopId || "")).trim();
-          const currentStop = String(((route.progress || {}).currentStopId || "")).trim();
+          const nextStop = stopLabel(route, (route.progress || {}).nextStopId);
+          const currentStop = stopLabel(route, (route.progress || {}).currentStopId);
           const isVisible = isRouteVisibleForFilter(routeStatus);
+          const assetName = escapeHTML(String(stat.name || assetID));
 
           const color = hashColor(assetID);
 
@@ -1041,7 +1176,8 @@ const simMapHTML = `<!doctype html>
           }
 
           marker.bindPopup(
-            "<b>" + assetID + "</b><br/>" +
+            "<b>" + assetName + "</b><br/>" +
+            "ID: " + escapeHTML(assetID) + "<br/>" +
             "Lat: " + lat.toFixed(6) + "<br/>" +
             "Lon: " + lon.toFixed(6) + "<br/>" +
             "Speed mph: " + Number(gps.speedMilesPerHour || 0).toFixed(2) + "<br/>" +
@@ -1064,15 +1200,16 @@ const simMapHTML = `<!doctype html>
             "<div class='card interactive asset-card" +
               (state.selectedAssetID === assetID ? " selected" : "") +
               "' data-asset-id='" + assetID + "'>" +
-              "<div class='title'><span>" + assetID + "</span><span class='pill " + routeClass + "'>" + routeStatusTextValue + "</span></div>" +
+              "<div class='title'><span>" + assetName + "</span><span class='pill " + routeClass + "'>" + routeStatusTextValue + "</span></div>" +
               eventBadges +
               "<div class='kv'>" +
+                "<div>Vehicle ID</div><b>" + escapeHTML(assetID) + "</b>" +
                 "<div>Speed</div><b>" + Number(gps.speedMilesPerHour || 0).toFixed(2) + " mph</b>" +
                 "<div>Lat/Lon</div><b>" + lat.toFixed(5) + ", " + lon.toFixed(5) + "</b>" +
                 "<div>Heading</div><b>" + Number(gps.headingDegrees || 0).toFixed(0) + "°</b>" +
                 "<div>Progress</div><b>" + progressText + "</b>" +
-                "<div>Current Stop</div><b>" + (currentStop || "-") + "</b>" +
-                "<div>Next Stop</div><b>" + (nextStop || "-") + "</b>" +
+                "<div>Current Stop</div><b>" + escapeHTML(currentStop || "-") + "</b>" +
+                "<div>Next Stop</div><b>" + escapeHTML(nextStop || "-") + "</b>" +
                 "<div>Time</div><b>" + String(gps.time || "") + "</b>" +
               "</div>" + stopChips +
             "</div>"
@@ -1129,7 +1266,8 @@ const simMapHTML = `<!doctype html>
               renderEventBadges(activeEvents) +
               "<div class='kv'>" +
                 "<div>Driver ID</div><b>" + String(driver.id || "") + "</b>" +
-                "<div>Vehicle</div><b>" + (vehicleID || "unassigned") + "</b>" +
+                "<div>Vehicle</div><b>" + escapeHTML(vehicleID ? String(vehicle.name || assetLabel(vehicleID)) : "unassigned") + "</b>" +
+                "<div>Vehicle ID</div><b>" + escapeHTML(vehicleID || "-") + "</b>" +
                 "<div>Veh Speed</div><b>" + speedMph.toFixed(2) + " mph</b>" +
                 "<div>Drive Rem</div><b>" + formatMS(drive.driveRemainingDurationMs) + "</b>" +
                 "<div>Shift Rem</div><b>" + formatMS(shift.shiftRemainingDurationMs) + "</b>" +
@@ -1160,6 +1298,7 @@ const simMapHTML = `<!doctype html>
           await loadActiveEvents();
           await loadRouteLifecycle();
           renderAssets(stats);
+          renderTrailers(await loadTrailerStats());
           await refreshHOS();
           await loadWebhookInbox();
           renderWebhookInbox();
@@ -1173,7 +1312,8 @@ const simMapHTML = `<!doctype html>
           const filterSuffix = state.routeStatusFilter === "all" ?
             " | filter all" :
             " | filter " + routeStatusText(state.routeStatusFilter);
-          const webhookSuffix = " | webhooks " + state.webhookRecords.length;
+          const webhookSuffix = " | webhooks " + state.webhookRecords.length +
+            " | trailers " + state.trailerIDs.length;
           setStatus(
             "updated " + new Date().toLocaleTimeString() +
             " | assets " + visibleAssets + "/" + state.assetIDs.length +
@@ -1246,6 +1386,17 @@ const simMapHTML = `<!doctype html>
         state.running = !state.running;
         btnPause.textContent = state.running ? "Pause" : "Resume";
         restartTimer();
+      });
+
+      elShowTrailers.addEventListener("change", function () {
+        state.showTrailers = Boolean(elShowTrailers.checked);
+        for (const marker of state.trailerMarkers.values()) {
+          if (state.showTrailers) {
+            marker.addTo(map);
+          } else {
+            marker.remove();
+          }
+        }
       });
 
       btnClearWebhooks.addEventListener("click", async function () {

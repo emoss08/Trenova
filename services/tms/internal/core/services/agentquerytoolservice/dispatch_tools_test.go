@@ -39,7 +39,8 @@ func TestRankMoveCandidates_ScoresDriversWithFindingsAndFactors(t *testing.T) {
 				"wrk_",
 			), WorkerName: "Dana Ortiz", TractorID: pulid.MustNew("trk_"),
 			Score: 88, Verdict: "Recommended", DeadheadMiles: &deadhead, ProjectedArrival: 1_790_000_000,
-			MinutesOfSlack: 40, DriveRemainingMs: 7 * 3_600_000, ShiftRemainingMs: 9 * 3_600_000,
+			MinutesOfSlack: 40, HOSKnown: true, DriveRemainingMs: 7 * 3_600_000,
+			ShiftRemainingMs: 9 * 3_600_000,
 			Factors: []dispatchcandidateservice.ScoreFactor{
 				{Label: "Deadhead", Contribution: 30, Detail: "12.5 mi"},
 			},
@@ -65,7 +66,11 @@ func TestRankMoveCandidates_ScoresDriversWithFindingsAndFactors(t *testing.T) {
 	view := result.(*candidatesView)
 	assert.Equal(t, 2, view.Count)
 	assert.Equal(t, "Dana Ortiz", view.Candidates[0].WorkerName)
-	assert.InDelta(t, 7, view.Candidates[0].DriveRemainingHours, 0.001)
+	require.NotNil(t, view.Candidates[0].DriveRemainingHours)
+	assert.InDelta(t, 7, *view.Candidates[0].DriveRemainingHours, 0.001)
+	assert.Empty(t, view.Candidates[0].Hours)
+	assert.Nil(t, view.Candidates[1].DriveRemainingHours, "no reading is not zero hours")
+	assert.Contains(t, view.Candidates[1].Hours, "unknown, not zero")
 	assert.Equal(t, "Deadhead", view.Candidates[0].Factors[0].Label)
 	assert.True(t, view.Candidates[1].Blocked)
 	assert.Equal(t, "HOS_DRIVE", view.Candidates[1].Findings[0].Code)

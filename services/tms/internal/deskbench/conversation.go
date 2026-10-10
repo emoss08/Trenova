@@ -141,25 +141,31 @@ func (c *Conversation) Say(ctx context.Context, u Utterance) ([]*TurnRecord, err
 		Origin:     conversation.AssistantTurnOriginPerson,
 		Input:      u.Content,
 	}, func(turn *conversation.AssistantTurn) (string, error) {
-		run, startErr := assistantjobs.StartTurnWorkflow(ctx, bench.watcher, turn,
-			assistantjobs.TurnStart{
-				Actor:   c.session.Actor,
-				Content: u.Content,
-				Request: assistantjobs.AssistantTurnRequest{
-					Page:                u.Page,
-					Surface:             surface,
-					Mentions:            u.Mentions,
-					PreferredProviderID: providerID(c.Provider),
-					ProviderChosen:      c.Provider != nil,
-					DirectedAgentID:     u.Directed,
-					Awaited:             true,
-				},
-			})
-		if startErr != nil {
-			return "", startErr
+		start := assistantjobs.TurnStart{
+			Actor:   c.session.Actor,
+			Content: u.Content,
+			Request: assistantjobs.AssistantTurnRequest{
+				Page:                u.Page,
+				Surface:             surface,
+				Mentions:            u.Mentions,
+				PreferredProviderID: providerID(c.Provider),
+				ProviderChosen:      c.Provider != nil,
+				DirectedAgentID:     u.Directed,
+				Awaited:             true,
+			},
 		}
+		var runID string
+		startErr := retryNamespaceLookup(ctx, func() error {
+			run, err := assistantjobs.StartTurnWorkflow(ctx, bench.watcher, turn, start)
+			if err != nil {
+				return err
+			}
+			runID = run.GetID()
 
-		return run.GetID(), nil
+			return nil
+		})
+
+		return runID, startErr
 	})
 	if err != nil {
 		return nil, fmt.Errorf("send the message: %w", err)

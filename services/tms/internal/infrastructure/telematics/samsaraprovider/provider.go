@@ -16,11 +16,19 @@ import (
 	"github.com/emoss08/trenova/shared/samsara/forms"
 	"github.com/emoss08/trenova/shared/samsara/vehicles"
 	"github.com/emoss08/trenova/shared/samsara/webhooks"
+	"golang.org/x/sync/errgroup"
 )
 
-const pageLimit = 512
+const (
+	pageLimit               = 512
+	hosDriverIDsPerRequest  = 100
+	formDriverIDsPerRequest = forms.MaxStreamFilterEntries
+)
 
-var vehicleStatsTypes = []string{"gps", "engineStates", "fuelPercents"}
+var (
+	positionStatsTypes = []string{"gps", "engineStates", "fuelPercents"}
+	odometerStatsTypes = []string{"obdOdometerMeters", "gpsOdometerMeters"}
+)
 
 type Provider struct {
 	client *sharedsamsara.Client
@@ -52,7 +60,6 @@ func (p *Provider) listAssets(
 		page, err := p.client.Assets.List(ctx, assets.ListParams{
 			Type:  assetType,
 			After: after,
-			Limit: pageLimit,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("list samsara %s assets: %w", assetType, err)
@@ -82,12 +89,37 @@ func (p *Provider) listAssets(
 }
 
 func (p *Provider) ListPositions(ctx context.Context) ([]services.ProviderPosition, error) {
-	stats, err := p.client.Vehicles.StatsAll(ctx, vehicles.StatsParams{
-		Types: vehicleStatsTypes,
-		Limit: pageLimit,
+	var stats, odometers []vehicles.StatsData
+	group, groupCtx := errgroup.WithContext(ctx)
+	group.Go(func() error {
+		page, err := p.client.Vehicles.StatsAll(groupCtx, vehicles.StatsParams{
+			Types: positionStatsTypes,
+		})
+		if err != nil {
+			return fmt.Errorf("fetch samsara vehicle stats: %w", err)
+		}
+		stats = page
+		return nil
 	})
-	if err != nil {
-		return nil, fmt.Errorf("fetch samsara vehicle stats: %w", err)
+	group.Go(func() error {
+		page, err := p.client.Vehicles.StatsAll(groupCtx, vehicles.StatsParams{
+			Types: odometerStatsTypes,
+		})
+		if err != nil {
+			return fmt.Errorf("fetch samsara vehicle odometers: %w", err)
+		}
+		odometers = page
+		return nil
+	})
+	if err := group.Wait(); err != nil {
+		return nil, err
+	}
+
+	odometerByVehicle := make(map[string]int64, len(odometers))
+	for i := range odometers {
+		if meters, ok := vehicleOdometerMeters(&odometers[i]); ok {
+			odometerByVehicle[odometers[i].Id] = meters
+		}
 	}
 
 	out := make([]services.ProviderPosition, 0, len(stats))
@@ -97,35 +129,49 @@ func (p *Provider) ListPositions(ctx context.Context) ([]services.ProviderPositi
 			continue
 		}
 
-		position := services.ProviderPosition{
-			VehicleID:  stat.Id,
-			Latitude:   stat.Gps.Latitude,
-			Longitude:  stat.Gps.Longitude,
-			RecordedAt: parseTime(stat.Gps.Time),
-		}
-		if stat.Gps.HeadingDegrees != nil {
-			position.HeadingDegrees = *stat.Gps.HeadingDegrees
-		}
-		if stat.Gps.SpeedMilesPerHour != nil {
-			position.SpeedMph = *stat.Gps.SpeedMilesPerHour
-		}
-		if stat.Gps.ReverseGeo != nil && stat.Gps.ReverseGeo.FormattedLocation != nil {
-			position.FormattedLocation = *stat.Gps.ReverseGeo.FormattedLocation
-		}
-		if stat.EngineState != nil {
-			position.EngineState = telematics.EngineState(stat.EngineState.Value)
-		}
-		if stat.FuelPercent != nil {
-			fuel := float64(stat.FuelPercent.Value)
-			position.FuelPercent = &fuel
-		}
-		if stat.ObdOdometerMeters != nil {
-			odometer := stat.ObdOdometerMeters.Value
-			position.OdometerMeters = &odometer
+		position := mapPosition(stat)
+		if meters, ok := odometerByVehicle[stat.Id]; ok {
+			position.OdometerMeters = &meters
 		}
 		out = append(out, position)
 	}
 	return out, nil
+}
+
+func mapPosition(stat *vehicles.StatsData) services.ProviderPosition {
+	position := services.ProviderPosition{
+		VehicleID:  stat.Id,
+		Latitude:   stat.Gps.Latitude,
+		Longitude:  stat.Gps.Longitude,
+		RecordedAt: parseTime(stat.Gps.Time),
+	}
+	if stat.Gps.HeadingDegrees != nil {
+		position.HeadingDegrees = *stat.Gps.HeadingDegrees
+	}
+	if stat.Gps.SpeedMilesPerHour != nil {
+		position.SpeedMph = *stat.Gps.SpeedMilesPerHour
+	}
+	if stat.Gps.ReverseGeo != nil && stat.Gps.ReverseGeo.FormattedLocation != nil {
+		position.FormattedLocation = *stat.Gps.ReverseGeo.FormattedLocation
+	}
+	if stat.EngineState != nil {
+		position.EngineState = telematics.EngineState(stat.EngineState.Value)
+	}
+	if stat.FuelPercent != nil {
+		fuel := float64(stat.FuelPercent.Value)
+		position.FuelPercent = &fuel
+	}
+	return position
+}
+
+func vehicleOdometerMeters(stat *vehicles.StatsData) (int64, bool) {
+	if stat.ObdOdometerMeters != nil {
+		return stat.ObdOdometerMeters.Value, true
+	}
+	if stat.GpsOdometerMeters != nil {
+		return stat.GpsOdometerMeters.Value, true
+	}
+	return 0, false
 }
 
 func (p *Provider) ListHOSClocks(ctx context.Context) ([]services.ProviderHOSClocks, error) {
@@ -315,22 +361,51 @@ func mapViolation(violation *compliance.HOSViolation) (services.ProviderViolatio
 	return record, true
 }
 
+type (
+	hosLogsByDriver      = map[string][]services.ProviderHOSLogEntry
+	hosDailyLogsByDriver = map[string][]services.ProviderHOSDailyLog
+)
+
 func (p *Provider) ListHOSLogs(
 	ctx context.Context,
-	driverID string,
+	driverIDs []string,
 	startAt int64,
 	endAt int64,
-) ([]services.ProviderHOSLogEntry, error) {
+) (map[string][]services.ProviderHOSLogEntry, error) {
 	startTime := time.Unix(startAt, 0).UTC()
 	endTime := time.Unix(endAt, 0).UTC()
 
-	out := make([]services.ProviderHOSLogEntry, 0)
+	out := make(hosLogsByDriver, len(driverIDs))
+	err := fetchDriverChunks(
+		ctx,
+		driverIDs,
+		hosDriverIDsPerRequest,
+		func(ctx context.Context, chunk []string) (hosLogsByDriver, error) {
+			return p.hosLogsForDrivers(ctx, chunk, &startTime, &endTime)
+		},
+		func(byDriver hosLogsByDriver) {
+			mergeByDriver(out, byDriver)
+		},
+	)
+	if err != nil && !isDriverBatchError(err) {
+		return nil, err
+	}
+	return out, err
+}
+
+func (p *Provider) hosLogsForDrivers(
+	ctx context.Context,
+	driverIDs []string,
+	startTime *time.Time,
+	endTime *time.Time,
+) (hosLogsByDriver, error) {
+	byDriver := make(hosLogsByDriver, len(driverIDs))
 	after := ""
 	for {
 		page, err := p.client.Compliance.HOSLogs(ctx, compliance.HOSLogsParams{
-			DriverIDs: []string{driverID},
-			StartTime: &startTime,
-			EndTime:   &endTime,
+			DriverIDs: driverIDs,
+			StartTime: startTime,
+			EndTime:   endTime,
 			After:     after,
 		})
 		if err != nil {
@@ -338,13 +413,21 @@ func (p *Provider) ListHOSLogs(
 		}
 
 		for i := range page.Data {
-			if page.Data[i].HosLogs == nil {
+			driverLogs := &page.Data[i]
+			if driverLogs.Driver == nil || driverLogs.Driver.Id == nil ||
+				driverLogs.HosLogs == nil {
 				continue
 			}
-			logs := *page.Data[i].HosLogs
-			for j := range logs {
-				out = append(out, mapLogEntry(&logs[j]))
+			logs := *driverLogs.HosLogs
+			driverID := *driverLogs.Driver.Id
+			entries := byDriver[driverID]
+			if entries == nil {
+				entries = make([]services.ProviderHOSLogEntry, 0, len(logs))
 			}
+			for j := range logs {
+				entries = append(entries, mapLogEntry(&logs[j]))
+			}
+			byDriver[driverID] = entries
 		}
 
 		if !page.Pagination.HasNextPage || page.Pagination.EndCursor == "" {
@@ -352,7 +435,7 @@ func (p *Provider) ListHOSLogs(
 		}
 		after = page.Pagination.EndCursor
 	}
-	return out, nil
+	return byDriver, nil
 }
 
 func mapLogEntry(entry *compliance.HOSLogEntry) services.ProviderHOSLogEntry {
@@ -396,15 +479,39 @@ func mapLogEntry(entry *compliance.HOSLogEntry) services.ProviderHOSLogEntry {
 
 func (p *Provider) ListHOSDailyLogs(
 	ctx context.Context,
-	driverID string,
+	driverIDs []string,
 	startDate string,
 	endDate string,
-) ([]services.ProviderHOSDailyLog, error) {
-	out := make([]services.ProviderHOSDailyLog, 0)
+) (map[string][]services.ProviderHOSDailyLog, error) {
+	out := make(hosDailyLogsByDriver, len(driverIDs))
+	err := fetchDriverChunks(
+		ctx,
+		driverIDs,
+		hosDriverIDsPerRequest,
+		func(ctx context.Context, chunk []string) (hosDailyLogsByDriver, error) {
+			return p.hosDailyLogsForDrivers(ctx, chunk, startDate, endDate)
+		},
+		func(byDriver hosDailyLogsByDriver) {
+			mergeByDriver(out, byDriver)
+		},
+	)
+	if err != nil && !isDriverBatchError(err) {
+		return nil, err
+	}
+	return out, err
+}
+
+func (p *Provider) hosDailyLogsForDrivers(
+	ctx context.Context,
+	driverIDs []string,
+	startDate string,
+	endDate string,
+) (hosDailyLogsByDriver, error) {
+	byDriver := make(hosDailyLogsByDriver, len(driverIDs))
 	after := ""
 	for {
 		page, err := p.client.Compliance.HOSDailyLogs(ctx, compliance.HOSDailyLogsParams{
-			DriverIDs: []string{driverID},
+			DriverIDs: driverIDs,
 			StartDate: startDate,
 			EndDate:   endDate,
 			After:     after,
@@ -414,7 +521,11 @@ func (p *Provider) ListHOSDailyLogs(
 		}
 
 		for i := range page.Data {
-			out = append(out, mapDailyLog(&page.Data[i]))
+			day := &page.Data[i]
+			if day.Driver.Id == "" {
+				continue
+			}
+			byDriver[day.Driver.Id] = append(byDriver[day.Driver.Id], mapDailyLog(day))
 		}
 
 		if !page.Pagination.HasNextPage || page.Pagination.EndCursor == "" {
@@ -422,7 +533,7 @@ func (p *Provider) ListHOSDailyLogs(
 		}
 		after = page.Pagination.EndCursor
 	}
-	return out, nil
+	return byDriver, nil
 }
 
 func mapDailyLog(day *compliance.HOSDailyLog) services.ProviderHOSDailyLog {
@@ -607,23 +718,39 @@ func mapDVIRDefects(lists ...*[]dvirs.DVIRDefect) []services.ProviderDVIRDefect 
 
 func (p *Provider) ListFormSubmissions(
 	ctx context.Context,
-	driverID string,
+	driverIDs []string,
 	startAt int64,
 	endAt int64,
 ) ([]services.ProviderFormSubmission, error) {
 	startTime := time.Unix(startAt, 0).UTC()
 	endTime := time.Unix(endAt, 0).UTC()
 
-	submissions, err := p.client.Forms.StreamSubmissionsAll(ctx, forms.SubmissionStreamParams{
-		StartTime: &startTime,
-		EndTime:   &endTime,
-		DriverIDs: []string{driverID},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("fetch samsara form submissions: %w", err)
+	submissions := make([]forms.FormSubmission, 0)
+	batchErr := fetchDriverChunks(
+		ctx,
+		driverIDs,
+		formDriverIDsPerRequest,
+		func(ctx context.Context, chunk []string) ([]forms.FormSubmission, error) {
+			page, err := p.client.Forms.StreamSubmissionsAll(ctx, forms.SubmissionStreamParams{
+				StartTime: &startTime,
+				EndTime:   &endTime,
+				DriverIDs: chunk,
+				Include:   []string{forms.IncludeExternalIDs},
+			})
+			if err != nil {
+				return nil, fmt.Errorf("fetch samsara form submissions: %w", err)
+			}
+			return page, nil
+		},
+		func(chunk []forms.FormSubmission) {
+			submissions = append(submissions, chunk...)
+		},
+	)
+	if batchErr != nil && !isDriverBatchError(batchErr) {
+		return nil, batchErr
 	}
 	if len(submissions) == 0 {
-		return []services.ProviderFormSubmission{}, nil
+		return []services.ProviderFormSubmission{}, batchErr
 	}
 
 	templateNames, err := p.formTemplateNames(ctx)
@@ -635,7 +762,7 @@ func (p *Provider) ListFormSubmissions(
 	for i := range submissions {
 		out = append(out, mapFormSubmission(&submissions[i], templateNames))
 	}
-	return out, nil
+	return out, batchErr
 }
 
 func (p *Provider) formTemplateNames(ctx context.Context) (map[string]string, error) {
@@ -668,8 +795,8 @@ func mapFormSubmission(
 		TemplateID:   templateID,
 		TemplateName: templateNames[templateID],
 		DriverID:     submission.SubmittedBy.Id,
-		RouteStopID:  forms.SubmissionRouteStopID(*submission),
-		ExternalIDs:  forms.SubmissionExternalIDs(*submission),
+		RouteStopID:  forms.SubmissionRouteStopID(submission),
+		ExternalIDs:  forms.SubmissionExternalIDs(submission),
 		Fields:       make([]services.ProviderFormField, 0, len(submission.Fields)),
 	}
 	if !submission.SubmittedAtTime.IsZero() {
@@ -680,7 +807,7 @@ func mapFormSubmission(
 	}
 	for i := range submission.Fields {
 		field := &submission.Fields[i]
-		kind, value := forms.FieldTypedValue(*field)
+		kind, value := forms.FieldTypedValue(field)
 		record := services.ProviderFormField{Type: kind, Value: value}
 		if field.Label != nil {
 			record.Label = *field.Label
@@ -778,12 +905,14 @@ func enrichStop(event *webhooks.Event, out *services.ProviderWebhookEvent) {
 	if data.Vehicle != nil {
 		stop.VehicleID = data.Vehicle.ID
 		stop.VehicleVIN = data.Vehicle.Vin
-		stop.AddressExternalIDs = data.Vehicle.ExternalIDs
 		out.VehicleID = data.Vehicle.ID
 	}
 	if data.Driver != nil {
 		stop.DriverID = data.Driver.ID
 		out.DriverID = data.Driver.ID
+	}
+	if address := data.StopAddress(); address != nil {
+		stop.AddressExternalIDs = address.ExternalIDs
 	}
 	if data.RouteStop != nil {
 		stop.RouteStopID = data.RouteStop.ID

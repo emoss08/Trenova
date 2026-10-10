@@ -126,6 +126,15 @@ type Provider struct {
 	InputCostPerMillion  *decimal.Decimal `json:"inputCostPerMillion"  bun:"input_cost_per_million,type:NUMERIC(12,6),nullzero"`
 	OutputCostPerMillion *decimal.Decimal `json:"outputCostPerMillion" bun:"output_cost_per_million,type:NUMERIC(12,6),nullzero"`
 
+	// CacheReadCostPerMillion and CacheWriteCostPerMillion price the prompt
+	// tokens a provider served from its cache and the ones it wrote to it.
+	// Nil takes the protocol's usual multiple of the input price (see
+	// CacheReadMultiple and CacheWriteMultiple): most of a Desk turn's prompt is
+	// read from the cache, so pricing it as fresh input overstated an OpenAI
+	// call and leaving it out understated an Anthropic one.
+	CacheReadCostPerMillion  *decimal.Decimal `json:"cacheReadCostPerMillion"  bun:"cache_read_cost_per_million,type:NUMERIC(12,6),nullzero"`
+	CacheWriteCostPerMillion *decimal.Decimal `json:"cacheWriteCostPerMillion" bun:"cache_write_cost_per_million,type:NUMERIC(12,6),nullzero"`
+
 	// Tasks are the units of work this provider may serve. Priority orders the
 	// candidates for a task, lowest first, which gives fallback chains without a
 	// second table.
@@ -439,38 +448,96 @@ func (p *Provider) Priced() bool {
 	return p.InputCostPerMillion != nil && p.OutputCostPerMillion != nil
 }
 
+// TokenUsage is what one call consumed, as its provider reported it. Whether
+// Input already counts the cached prompt tokens depends on the protocol
+// (Kind.CachesOutsideInput).
+type TokenUsage struct {
+	Input      int
+	Output     int
+	CacheRead  int
+	CacheWrite int
+}
+
 // CostFor prices a call. Nil without a price list: an unknown cost is not a
 // free one, and a sum that silently counted it as zero would understate spend
 // by exactly the providers nobody got round to pricing.
-func (p *Provider) CostFor(inputTokens, outputTokens int) *decimal.Decimal {
+//
+// Prompt tokens are priced in three parts: those read from the provider's
+// cache, those written to it, and the rest at the input price.
+func (p *Provider) CostFor(usage TokenUsage) *decimal.Decimal {
 	if !p.Priced() {
 		return nil
 	}
-	million := decimal.NewFromInt(1_000_000)
-	cost := p.InputCostPerMillion.Mul(decimal.NewFromInt(int64(inputTokens))).Div(million).
-		Add(p.OutputCostPerMillion.Mul(decimal.NewFromInt(int64(outputTokens))).Div(million))
+	cost := p.promptCost(usage).Add(perMillion(*p.OutputCostPerMillion, usage.Output))
 
 	return &cost
 }
 
-func (p *Provider) InputCostFor(inputTokens int) *decimal.Decimal {
+// InputCostFor prices a call that returns no generated tokens, an embedding.
+func (p *Provider) InputCostFor(usage TokenUsage) *decimal.Decimal {
 	if p.InputCostPerMillion == nil {
 		return nil
 	}
-
-	cost := p.InputCostPerMillion.Mul(decimal.NewFromInt(int64(inputTokens))).
-		Div(decimal.NewFromInt(1_000_000))
+	cost := p.promptCost(usage)
 
 	return &cost
 }
 
-func (p *Provider) CostForTask(t Task, inputTokens, outputTokens int) *decimal.Decimal {
+func (p *Provider) CostForTask(t Task, usage TokenUsage) *decimal.Decimal {
 	if !t.Generates() {
-		return p.InputCostFor(inputTokens)
+		return p.InputCostFor(usage)
 	}
 
-	return p.CostFor(inputTokens, outputTokens)
+	return p.CostFor(usage)
 }
+
+// CacheReadPrice is what a cached prompt token costs per million: the price
+// entered for it, or the protocol's usual share of the input price.
+func (p *Provider) CacheReadPrice() *decimal.Decimal {
+	return p.cachePrice(p.CacheReadCostPerMillion, p.Kind.CacheReadMultiple())
+}
+
+// CacheWritePrice is what a prompt token written to the cache costs per
+// million: the price entered for it, or the protocol's usual multiple of the
+// input price.
+func (p *Provider) CacheWritePrice() *decimal.Decimal {
+	return p.cachePrice(p.CacheWriteCostPerMillion, p.Kind.CacheWriteMultiple())
+}
+
+func (p *Provider) cachePrice(entered *decimal.Decimal, multiple decimal.Decimal) *decimal.Decimal {
+	if entered != nil {
+		return entered
+	}
+	if p.InputCostPerMillion == nil {
+		return nil
+	}
+	price := p.InputCostPerMillion.Mul(multiple)
+
+	return &price
+}
+
+func (p *Provider) promptCost(usage TokenUsage) decimal.Decimal {
+	read := max(usage.CacheRead, 0)
+	write := max(usage.CacheWrite, 0)
+	fresh := max(usage.Input, 0)
+	if !p.Kind.CachesOutsideInput() {
+		fresh = max(fresh-read-write, 0)
+	}
+
+	return perMillion(*p.InputCostPerMillion, fresh).
+		Add(perMillion(*p.CacheReadPrice(), read)).
+		Add(perMillion(*p.CacheWritePrice(), write))
+}
+
+func perMillion(price decimal.Decimal, tokens int) decimal.Decimal {
+	if tokens == 0 {
+		return decimal.Zero
+	}
+
+	return price.Mul(decimal.NewFromInt(int64(tokens))).Div(oneMillion)
+}
+
+var oneMillion = decimal.NewFromInt(1_000_000)
 
 func ClampMaxTokens(tokens int) int {
 	return min(max(tokens, minMaxTokens), maxMaxTokens)
@@ -614,6 +681,18 @@ func (p *Provider) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&p.InputCostPerMillion, validation.By(nonNegativePrice("Input cost"))),
 		validation.Field(&p.OutputCostPerMillion, validation.By(nonNegativePrice("Output cost"))),
+		validation.Field(&p.CacheReadCostPerMillion,
+			validation.By(nonNegativePrice("Cache read cost")),
+			validation.When(p.InputCostPerMillion == nil, validation.Nil.Error(
+				"Enter the input cost before a cache read cost: a cache price stands beside it",
+			)),
+		),
+		validation.Field(&p.CacheWriteCostPerMillion,
+			validation.By(nonNegativePrice("Cache write cost")),
+			validation.When(p.InputCostPerMillion == nil, validation.Nil.Error(
+				"Enter the input cost before a cache write cost: a cache price stands beside it",
+			)),
+		),
 		validation.Field(&p.MaxTokens,
 			validation.Min(minMaxTokens).
 				Error("Max tokens must be at least 256"),

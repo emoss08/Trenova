@@ -16,14 +16,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-const (
-	FailingAfterConsecutiveFailures = 3
-	RefreshTokenWarningWindow       = int64(14 * 24 * 60 * 60)
-	maxPausedReasonLength           = 500
-	maxChangesErrorMessage          = 2000
-	maxErrorMessageLength           = 2000
-)
-
 var _ bun.BeforeAppendModelHook = (*AccountingConnection)(nil)
 
 type AccountingConnection struct {

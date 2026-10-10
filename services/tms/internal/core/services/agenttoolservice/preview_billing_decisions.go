@@ -67,7 +67,7 @@ func (t *billingQueueDecisionTool) planned(
 				return planErr
 			}
 
-			return detentionHold(after, req.NewStatus)
+			return approvalBlock(after, req.NewStatus)
 		},
 		toolpreview.Only(decisionFields[t.decision.status]...),
 		toolpreview.Volatile(decisionVolatile...),
@@ -156,7 +156,7 @@ func (t *assignBillerTool) Preview(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	req, err := t.request(&params)
+	req, asker, err := t.request(ctx, &params)
 	if err != nil {
 		return nil, err
 	}
@@ -177,11 +177,6 @@ func (t *assignBillerTool) Preview(
 		toolpreview.Volatile(decisionVolatile...),
 		toolpreview.WithRefs(decisionRefs),
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	_, asker, err := billerOf(&params)
 	if err != nil {
 		return nil, err
 	}

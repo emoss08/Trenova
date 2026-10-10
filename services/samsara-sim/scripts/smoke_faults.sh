@@ -22,7 +22,7 @@ curl -fsSL "${headers[@]}" -X POST "${BASE_URL}/_sim/faults/rules" \
   }' | jq '{data: .data}'
 
 echo "Verifying faulted response..."
-status_code="$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${TOKEN}" "${BASE_URL}/fleet/vehicles/stats?vehicleIds=veh-1001")"
+status_code="$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${TOKEN}" "${BASE_URL}/fleet/vehicles/stats?types=gps&vehicleIds=281474977075805")"
 if [[ "${status_code}" != "429" ]]; then
   echo "expected 429, got ${status_code}"
   exit 1
@@ -32,7 +32,7 @@ echo "Resetting fault rules..."
 curl -fsSL "${headers[@]}" -X POST "${BASE_URL}/_sim/faults/reset" -d '{}' | jq '{data: .data}'
 
 echo "Verifying healthy response after reset..."
-status_code="$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${TOKEN}" "${BASE_URL}/fleet/vehicles/stats?vehicleIds=veh-1001")"
+status_code="$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${TOKEN}" "${BASE_URL}/fleet/vehicles/stats?types=gps&vehicleIds=281474977075805")"
 if [[ "${status_code}" != "200" ]]; then
   echo "expected 200, got ${status_code}"
   exit 1

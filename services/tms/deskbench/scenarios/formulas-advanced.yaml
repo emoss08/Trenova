@@ -15,7 +15,7 @@ scenarios:
           calls: ["propose_formula"]
           maxFailedCalls: 2
           formula:
-            - totalWeight
+            - '/\b(totalWeight|weight)\b/'
             - '/max\s*\(/'
             - '/^(?:[A-Za-z_][A-Za-z0-9_]*|[^A-Za-z0-9_]|100(?:\.0+)?)*$/'
           rubric: >
@@ -46,7 +46,7 @@ scenarios:
           adds 25 cents a mile. any combination can apply
         expect:
           calls: ["propose_formula", "describe_formula_schema"]
-          formula: ["totalDistance", "/hazmat|hasHazmat/i"]
+          formula: ["totalDistance", "/hazmat|hasHazmat/"]
           rubric: >
             Uses the schema's own names for reefer, hazmat and team (asking or saying when one does
             not exist rather than inventing a variable the shipment does not carry), applies the 15%
@@ -101,11 +101,11 @@ scenarios:
       - say: "and charge 85 for each stop past the first two"
         expect:
           calls: ["propose_formula"]
-          formula: ["totalDistance", "totalStops"]
+          formula: ["totalDistance", '/totalStops|len\(stops\)|count\(stops/']
       - say: "actually drop the minimum entirely"
         expect:
           calls: ["propose_formula"]
-          formula: ["totalDistance", "totalStops"]
+          formula: ["totalDistance", '/totalStops|len\(stops\)|count\(stops/']
           rubric: >
             Removes the minimum and keeps the per-mile and stop charge exactly as they were built,
             rather than rebuilding the formula from the first message.

@@ -3,6 +3,7 @@ package agentquerytoolservice
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
@@ -120,6 +121,12 @@ type rateExplanation struct {
 	// PricedBy is how a shipment no agreement priced got its price: the
 	// formula template it was rated with, or the amount someone entered.
 	PricedBy *pricedByRow `json:"pricedBy,omitempty"`
+	// OnShipment are the charges the shipment carries that the agreement's
+	// rating did not produce, such as a fuel surcharge program's charge, so
+	// a total that differs from the trace is explained rather than doubted.
+	OnShipment    []shipmentRateCharge `json:"onShipment,omitempty"`
+	ShipmentTotal *decimal.Decimal     `json:"shipmentTotal,omitempty"`
+	ChargesNote   string               `json:"chargesNote,omitempty"`
 	// Note is set when there is nothing to explain, so the model says that
 	// rather than reporting a zero as a price.
 	Note string `json:"note,omitempty"`
@@ -223,31 +230,89 @@ func (t *explainRateTool) Query(
 	}
 
 	explanation := rateExplanation{ShipmentID: shipmentID.String(), Side: string(side)}
-	if (quote == nil || quote.Trace == nil) && side == rateagreement.PartyTypeCustomer &&
-		t.shipments != nil {
-		record, err := t.shipments.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+	var record *shipment.Shipment
+	if side == rateagreement.PartyTypeCustomer && t.shipments != nil {
+		record, err = t.shipments.GetByID(ctx, &repositories.GetShipmentByIDRequest{
 			ID: shipmentID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  params.OrganizationID,
 				BuID:   params.BusinessUnitID,
 				UserID: params.Actor.UserID,
 			},
+			ShipmentOptions: repositories.ShipmentOptions{ExpandShipmentDetails: true},
 		})
 		if err != nil {
 			return nil, err
 		}
+	}
+	if quote == nil || quote.Trace == nil {
 		if stored, ok := explainStored(explanation, record); ok {
 			return stored, nil
 		}
-	}
-	if quote == nil || quote.Trace == nil {
 		explanation.Note = "This shipment has no rating on record for that side, so there " +
 			"is no price to explain. It may be rated manually, or not yet rated."
 
 		return explanation, nil
 	}
 
-	return explainTrace(explanation, quote.Trace), nil
+	return withShipmentCharges(explainTrace(explanation, quote.Trace), record, quote.ID), nil
+}
+
+type shipmentRateCharge struct {
+	Code        string          `json:"code,omitempty"`
+	Description string          `json:"description,omitempty"`
+	Amount      decimal.Decimal `json:"amount"`
+	Source      string          `json:"source"`
+}
+
+// withShipmentCharges lists the charges on the shipment the governing quote
+// did not produce. The trace prices what the agreement priced; a fuel
+// surcharge program or a charge a person added sits on the shipment beside it,
+// and reading only the trace reported that charge as unpriced.
+func withShipmentCharges(
+	into rateExplanation,
+	record *shipment.Shipment,
+	quoteID pulid.ID,
+) rateExplanation {
+	if record == nil {
+		return into
+	}
+	for _, charge := range record.AdditionalCharges {
+		if charge == nil || (charge.RateQuoteID != nil && *charge.RateQuoteID == quoteID) {
+			continue
+		}
+		row := shipmentRateCharge{Amount: charge.Amount, Source: chargeSource(charge)}
+		if accessorial := charge.AccessorialCharge; accessorial != nil {
+			row.Code = accessorial.Code
+			row.Description = strings.TrimSpace(accessorial.Description)
+		}
+		into.OnShipment = append(into.OnShipment, row)
+	}
+	if len(into.OnShipment) == 0 {
+		return into
+	}
+	if record.TotalChargeAmount.Valid {
+		total := record.TotalChargeAmount.Decimal
+		into.ShipmentTotal = &total
+	}
+	into.ChargesNote = "totals is what the agreement priced. The charges in onShipment are on " +
+		"the shipment too, from the source each names, and shipmentTotal includes them: they " +
+		"are priced, just not by the agreement's rating."
+
+	return into
+}
+
+func chargeSource(charge *shipment.AdditionalCharge) string {
+	switch {
+	case charge.FuelSurchargeProgramID != nil:
+		return "fuel surcharge program"
+	case charge.IsDetention:
+		return "detention"
+	case charge.RateAgreementAccessorialID != nil:
+		return "the agreement's accessorial schedule"
+	default:
+		return "added on the shipment"
+	}
 }
 
 func explainTrace(into rateExplanation, trace *ratetypes.Trace) rateExplanation {

@@ -2,6 +2,8 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -290,7 +292,10 @@ func (t *listDetentionDeskTool) Description() string {
 		"and NoticeDueSoon say what to send. send_detention_notice sends it. The list " +
 		"also carries every stopped charge waiting on approval, as AwaitingApproval: its " +
 		"shipment cannot be invoiced until someone approves or waives it, which " +
-		"approve_detention and waive_detention propose."
+		"approve_detention and waive_detention propose. A running clock is priced as of " +
+		"now, so billableMinutes and amountAtRisk are what it would bill if the truck left " +
+		"this minute. Narrow to one load with shipmentId or proNumber rather than paging " +
+		"through urgencies."
 }
 
 func (t *listDetentionDeskTool) ParamSchema() map[string]any {
@@ -300,6 +305,13 @@ func (t *listDetentionDeskTool) ParamSchema() map[string]any {
 			"urgency": agenttoolschema.Enum(
 				"Optional: only occurrences at this urgency.", detentionUrgencies,
 			),
+			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
+				"Optional: only this shipment's occurrences, from search_shipments or "+
+					"get_shipment."),
+			"proNumber": map[string]any{
+				"type":        "string",
+				"description": "Optional: only the shipment with this pro number, such as SEED-DET-001.",
+			},
 		},
 		"additionalProperties": false,
 	}
@@ -320,54 +332,90 @@ func (t *listDetentionDeskTool) Query(
 	}
 
 	urgency := optionalString(params.Params, "urgency")
+	shipmentID, err := optionalID(params.Params, "shipmentId")
+	if err != nil {
+		return nil, err
+	}
+	proNumber := strings.TrimSpace(optionalString(params.Params, "proNumber"))
+
 	criteria := filtercatalog.NewCriteria("open detention occurrences").At(clockFor(params))
 	criteria.Field("urgency", urgency)
+	if shipmentID.IsNotNil() {
+		criteria.Field("shipment", shipmentID.String())
+	}
+	criteria.Field("pro number", proNumber)
 
-	entries, err := t.entries(ctx, tenantOf(params), urgency)
+	entries, err := t.entries(ctx, tenantOf(params))
 	if err != nil {
 		return nil, err
 	}
 
+	onLoad := func(entry *detentionservice.DeskEntry) bool {
+		if shipmentID.IsNotNil() && entry.Occurrence.ShipmentID != shipmentID {
+			return false
+		}
+		return proNumber == "" || strings.EqualFold(entry.Occurrence.ShipmentProNumber, proNumber)
+	}
+
 	rows := make([]detentionDeskRow, 0, len(entries))
+	elsewhere := make([]string, 0, 4)
 	for _, entry := range entries {
-		if entry == nil || entry.Occurrence == nil {
+		if entry == nil || entry.Occurrence == nil || !onLoad(entry) {
 			continue
 		}
 		if urgency != "" && !strings.EqualFold(entry.Urgency, urgency) {
+			if !slices.Contains(elsewhere, entry.Urgency) {
+				elsewhere = append(elsewhere, entry.Urgency)
+			}
 			continue
 		}
 		rows = append(rows, toDetentionDeskRow(entry, params.Timezone))
 	}
 
-	return searchResult(criteria, rows, len(rows)), nil
+	found := searchResult(criteria, rows, len(rows))
+	if len(rows) == 0 && len(elsewhere) > 0 {
+		found.Note = fmt.Sprintf(
+			"Nothing is at urgency %s, but %d other occurrences match the rest of what you "+
+				"asked, at %s. Call again without urgency to read them rather than trying "+
+				"each urgency in turn.",
+			urgency, countOnLoad(entries, onLoad), strings.Join(elsewhere, ", "),
+		)
+	}
+
+	return found, nil
 }
 
-// entries reads the running clocks, the charges waiting on approval, or both,
-// as the urgency asks.
+func countOnLoad(
+	entries []*detentionservice.DeskEntry,
+	onLoad func(*detentionservice.DeskEntry) bool,
+) int {
+	count := 0
+	for _, entry := range entries {
+		if entry != nil && entry.Occurrence != nil && onLoad(entry) {
+			count++
+		}
+	}
+
+	return count
+}
+
+// entries reads the running clocks and the charges waiting on approval. Both
+// are read whatever the urgency asked, so an urgency that matches nothing can
+// say which urgencies the same load is at instead.
 func (t *listDetentionDeskTool) entries(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	urgency string,
 ) ([]*detentionservice.DeskEntry, error) {
-	awaiting := strings.EqualFold(urgency, detentionservice.UrgencyAwaitingApproval)
-
-	var entries []*detentionservice.DeskEntry
-	if urgency == "" || !awaiting {
-		open, err := t.desk.ListDesk(ctx, tenant)
-		if err != nil {
-			return nil, err
-		}
-		entries = open
+	open, err := t.desk.ListDesk(ctx, tenant)
+	if err != nil {
+		return nil, err
 	}
-	if urgency == "" || awaiting {
-		held, err := t.desk.ListAwaitingApproval(ctx, tenant)
-		if err != nil {
-			return nil, err
-		}
-		entries = append(entries, held...)
+	held, err := t.desk.ListAwaitingApproval(ctx, tenant)
+	if err != nil {
+		return nil, err
 	}
 
-	return entries, nil
+	return append(open, held...), nil
 }
 
 func toDetentionDeskRow(entry *detentionservice.DeskEntry, timezone string) detentionDeskRow {
@@ -385,7 +433,7 @@ func toDetentionDeskRow(entry *detentionservice.DeskEntry, timezone string) dete
 		MinutesUntilFreeEnds:  entry.MinutesUntilFreeEnds,
 		MinutesUntilNoticeDue: entry.MinutesUntilNoticeDue,
 		NoticeWindowOpen:      entry.NoticeWindowOpen,
-		BillableMinutes:       o.BillableMinutes,
+		BillableMinutes:       entry.BillableMinutes,
 		AmountAtRisk:          entry.AmountAtRisk.StringFixed(2),
 		Currency:              o.Currency,
 		RequiresApproval:      o.RequiresApproval,

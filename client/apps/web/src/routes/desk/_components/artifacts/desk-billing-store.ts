@@ -36,7 +36,7 @@ export function isBillingCard(artifact: AssistantArtifact): boolean {
 /** The conversation's newest billing item artifact, if it has one, by lineage. */
 export function billingCardLineage(queryClient: QueryClient, threadId: string): string | null {
   const list = queryClient.getQueryData<{ results: AssistantArtifact[] }>(
-    queries.assistant.artifacts(threadId).queryKey,
+    queries.assistant.artifacts(threadId)._ctx.summary.queryKey,
   );
   const cards = (list?.results ?? []).filter(isBillingCard);
   if (cards.length === 0) return null;

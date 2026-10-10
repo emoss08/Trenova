@@ -402,6 +402,24 @@ func (r *MutationResolver) SetAgentMemoryStatus(ctx context.Context, id string, 
 	}, actorutil.FromAuthContext(authCtx))
 }
 
+func (r *MutationResolver) ReviewAgentMemory(ctx context.Context, id string, version int) (*agent.Memory, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	memoryID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AgentMemoryService.Review(ctx, services.ReviewAgentMemoryRequest{
+		ID:         memoryID,
+		TenantInfo: base.TenantInfo(authCtx),
+		Version:    int64(version),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
 func (r *MutationResolver) ApproveAgentMemorySuggestion(ctx context.Context, id string, input gqlmodel.ApproveAgentMemorySuggestionInput) (*agent.Memory, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpUpdate)
 	if err != nil {

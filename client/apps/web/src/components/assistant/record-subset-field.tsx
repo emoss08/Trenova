@@ -1,3 +1,4 @@
+"use no memo";
 import { VirtualRows, type VirtualRow } from "@/components/virtual-rows";
 import type { ProposalField } from "@/types/assistant";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";

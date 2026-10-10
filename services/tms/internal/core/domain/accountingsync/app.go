@@ -16,48 +16,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
-const (
-	maxAppClientIDLength = 255
-	appFingerprintLength = 32
-)
-
 var appClientIDPattern = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
-
-type AppSource string
-
-const (
-	AppSourceInstance = AppSource("Instance")
-	AppSourceTenant   = AppSource("Tenant")
-)
-
-func (s AppSource) String() string { return string(s) }
-
-func (s AppSource) IsValid() bool {
-	switch s {
-	case AppSourceInstance, AppSourceTenant:
-		return true
-	default:
-		return false
-	}
-}
-
-type AppEnvironment string
-
-const (
-	AppEnvironmentSandbox    = AppEnvironment("Sandbox")
-	AppEnvironmentProduction = AppEnvironment("Production")
-)
-
-func (e AppEnvironment) String() string { return string(e) }
-
-func (e AppEnvironment) IsValid() bool {
-	switch e {
-	case AppEnvironmentSandbox, AppEnvironmentProduction:
-		return true
-	default:
-		return false
-	}
-}
 
 func ParseAppEnvironment(value string) (AppEnvironment, bool) {
 	switch strings.ToLower(strings.TrimSpace(value)) {

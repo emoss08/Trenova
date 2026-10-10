@@ -100,11 +100,17 @@ type responsesMessagePart struct {
 	Refusal string `json:"refusal,omitempty"`
 }
 
+// responsesTool always says strict false. Left out, the Responses API applies
+// its own default, and gpt-6-luna's calls arrived with every optional
+// parameter filled (an empty query, a zero offset, hasExceptions false,
+// type Vacation), narrowing lists to nothing. The runtime checks every call
+// against the tool's schema itself.
 type responsesTool struct {
 	Type        string         `json:"type"`
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
 	Parameters  map[string]any `json:"parameters"`
+	Strict      bool           `json:"strict"`
 }
 
 type responsesTextConfig struct {

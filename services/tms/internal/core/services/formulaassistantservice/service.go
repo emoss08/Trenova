@@ -76,6 +76,9 @@ type TestRequest struct {
 	Variables  map[string]any
 	ShipmentID pulid.ID
 	Scenarios  []Scenario
+	// declaredOnly checks the expression with Variables alone, for a proposal:
+	// the studio holds only its declared variables.
+	declaredOnly bool
 }
 
 type TestOutcome struct {
@@ -175,7 +178,7 @@ func (s *Service) Test(ctx context.Context, req *TestRequest) (*TestOutcome, err
 	check := &formulatemplateservice.TestExpressionRequest{
 		Expression: req.Expression,
 		SchemaID:   schemaID,
-		Variables:  maps.Clone(req.Variables),
+		Variables:  checkVariables(req),
 		TenantInfo: req.TenantInfo,
 	}
 	if req.ShipmentID.IsNotNil() {
@@ -200,6 +203,30 @@ func (s *Service) Test(ctx context.Context, req *TestRequest) (*TestOutcome, err
 	return outcome, nil
 }
 
+// checkVariables are the values the expression is checked with: the shared
+// ones, and for a name only the loads set, the first load's value. A template
+// variable given a value per load is as declared as one given once; checking
+// with the shared values alone refused the expression as naming an unknown
+// variable before any load was priced.
+func checkVariables(req *TestRequest) map[string]any {
+	values := maps.Clone(req.Variables)
+	if req.declaredOnly {
+		return values
+	}
+	if values == nil {
+		values = make(map[string]any)
+	}
+	for _, scenario := range req.Scenarios {
+		for name, value := range scenario.Variables {
+			if _, set := values[name]; !set && value != nil {
+				values[name] = value
+			}
+		}
+	}
+
+	return values
+}
+
 func (s *Service) Propose(
 	ctx context.Context,
 	req *ProposeRequest,
@@ -216,11 +243,12 @@ func (s *Service) Propose(
 	}
 
 	outcome, err := s.Test(ctx, &TestRequest{
-		TenantInfo: req.TenantInfo,
-		SchemaID:   req.SchemaID,
-		Expression: req.Expression,
-		Variables:  defaults,
-		Scenarios:  req.Scenarios,
+		TenantInfo:   req.TenantInfo,
+		SchemaID:     req.SchemaID,
+		Expression:   req.Expression,
+		Variables:    defaults,
+		Scenarios:    req.Scenarios,
+		declaredOnly: true,
 	})
 	if err != nil {
 		return nil, err
@@ -364,8 +392,10 @@ func validateValues(multiErr *errortypes.MultiError, field string, values map[st
 		return
 	}
 	for name, value := range values {
-		if !pagedraft.ValidVariableName(name) {
-			multiErr.Add(field+"."+name, errortypes.ErrInvalid, "Variable name is invalid")
+		if !pagedraft.ValidValuePath(name) {
+			multiErr.Add(field+"."+name, errortypes.ErrInvalid,
+				"Variable name is invalid: use a formula variable's name or a schema field "+
+					"path such as serviceType.code")
 			continue
 		}
 		if !pagedraft.ScalarValue(value, pagedraft.MaxVariableTextLength) {

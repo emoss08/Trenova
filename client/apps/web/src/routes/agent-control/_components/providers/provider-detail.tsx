@@ -12,6 +12,7 @@ import { Ic } from "../kit/ic";
 import { Switch } from "../kit/layout";
 import type { ProviderWeek } from "./provider-line";
 import { formatLatency, formatTokens, type TaskMeta } from "./provider-model";
+import { cachePriceDefault, reportsCacheWrites } from "./provider-editor-model";
 import { Button } from "@trenova/shared/components/ui/button";
 
 /** A test someone ran from this page, until the list reloads with its outcome. */
@@ -92,7 +93,7 @@ type ProviderDetailProps = {
   onSaveKey: (key: string) => void;
   onToggleTask: (task: AITask) => void;
   onAccess: (patch: { trusted?: boolean; allowPrivateNetwork?: boolean }) => void;
-  onPrices: (prices: { input: string | null; output: string | null }) => void;
+  onPrices: (prices: ProviderPrices) => void;
   onEdit: () => void;
   onMove: (delta: -1 | 1) => void;
   onRemove: () => void;
@@ -314,14 +315,35 @@ export function ProviderDetail({
 const PRICE = /^\d{0,6}(\.\d{0,6})?$/;
 const DOLLAR = <span className="text-muted-foreground text-xs">$</span>;
 
-type PriceValues = { input: string; output: string };
+type PriceKey = "input" | "output" | "cacheRead" | "cacheWrite";
+type PriceValues = Record<PriceKey, string>;
+
+/**
+ * The prices a provider is saved with. cacheWrite is left out for a protocol
+ * that reports no cache writes, so nothing about it is sent.
+ */
+export type ProviderPrices = {
+  input: string | null;
+  output: string | null;
+  cacheRead: string | null;
+  cacheWrite?: string | null;
+};
+
+function storedPrices(provider: AIProviderRow): PriceValues {
+  return {
+    input: provider.inputCostPerMillion ?? "",
+    output: provider.outputCostPerMillion ?? "",
+    cacheRead: provider.cacheReadCostPerMillion ?? "",
+    cacheWrite: provider.cacheWriteCostPerMillion ?? "",
+  };
+}
 
 function normalizedPrice(text: string): string | null {
   const trimmed = text.trim();
   return trimmed === "" ? null : String(Number(trimmed));
 }
 
-/** The two prices, saved when a box is left with a different, valid amount. */
+/** The prices, saved when a box is left with a different, valid amount. */
 function Prices({
   provider,
   disabled,
@@ -329,64 +351,62 @@ function Prices({
 }: {
   provider: AIProviderRow;
   disabled: boolean;
-  onSave: (prices: { input: string | null; output: string | null }) => void;
+  onSave: (prices: ProviderPrices) => void;
 }) {
   const t = useT();
-  const form = useForm<PriceValues>({
-    defaultValues: {
-      input: provider.inputCostPerMillion ?? "",
-      output: provider.outputCostPerMillion ?? "",
-    },
-  });
+  const writes = reportsCacheWrites(provider.kind);
+  const keys: PriceKey[] = writes
+    ? ["input", "output", "cacheRead", "cacheWrite"]
+    : ["input", "output", "cacheRead"];
+  const form = useForm<PriceValues>({ defaultValues: storedPrices(provider) });
+  const input = useWatch({ control: form.control, name: "input" });
 
   const commit = () => {
-    const { input, output } = form.getValues();
-    if (!PRICE.test(input.trim()) || !PRICE.test(output.trim())) {
-      form.reset({
-        input: provider.inputCostPerMillion ?? "",
-        output: provider.outputCostPerMillion ?? "",
-      });
+    const entered = form.getValues();
+    if (keys.some((key) => !PRICE.test(entered[key].trim()))) {
+      form.reset(storedPrices(provider));
       return;
     }
-    const next = { input: normalizedPrice(input), output: normalizedPrice(output) };
-    const current = {
-      input: normalizedPrice(provider.inputCostPerMillion ?? ""),
-      output: normalizedPrice(provider.outputCostPerMillion ?? ""),
-    };
-    if (next.input !== current.input || next.output !== current.output) {
-      onSave(next);
+    const stored = storedPrices(provider);
+    if (keys.every((key) => normalizedPrice(entered[key]) === normalizedPrice(stored[key]))) {
+      return;
     }
+    onSave({
+      input: normalizedPrice(entered.input),
+      output: normalizedPrice(entered.output),
+      cacheRead: normalizedPrice(entered.cacheRead),
+      ...(writes ? { cacheWrite: normalizedPrice(entered.cacheWrite) } : {}),
+    });
   };
   const blurOnEnter = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Enter") event.currentTarget.blur();
   };
+  const field = (name: PriceKey, label: string, placeholder = "—") => (
+    <InputField<PriceValues>
+      control={form.control}
+      name={name}
+      label={label}
+      inputMode="decimal"
+      placeholder={placeholder}
+      disabled={disabled}
+      leftElement={DOLLAR}
+      inputClassProps={aicFieldTrigger}
+      onBlur={commit}
+      onKeyDown={blurOnEnter}
+    />
+  );
 
   return (
     <div className="grid grid-cols-2 gap-3">
-      <InputField<PriceValues>
-        control={form.control}
-        name="input"
-        label={t("Input")}
-        inputMode="decimal"
-        placeholder="—"
-        disabled={disabled}
-        leftElement={DOLLAR}
-        inputClassProps={aicFieldTrigger}
-        onBlur={commit}
-        onKeyDown={blurOnEnter}
-      />
-      <InputField<PriceValues>
-        control={form.control}
-        name="output"
-        label={t("Output")}
-        inputMode="decimal"
-        placeholder="—"
-        disabled={disabled}
-        leftElement={DOLLAR}
-        inputClassProps={aicFieldTrigger}
-        onBlur={commit}
-        onKeyDown={blurOnEnter}
-      />
+      {field("input", t("Input"))}
+      {field("output", t("Output"))}
+      {field("cacheRead", t("Cache read"), cachePriceDefault(provider.kind, input, "read") || "—")}
+      {writes &&
+        field(
+          "cacheWrite",
+          t("Cache write"),
+          cachePriceDefault(provider.kind, input, "write") || "—",
+        )}
     </div>
   );
 }

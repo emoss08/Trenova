@@ -32,7 +32,11 @@ type SaveAIProviderRequest struct {
 	ExtraBody            map[string]any
 	InputCostPerMillion  *decimal.Decimal
 	OutputCostPerMillion *decimal.Decimal
-	MaxTokens            int
+	// CacheReadCostPerMillion and CacheWriteCostPerMillion price cached
+	// prompt tokens; nil takes the protocol's multiple of the input price.
+	CacheReadCostPerMillion  *decimal.Decimal
+	CacheWriteCostPerMillion *decimal.Decimal
+	MaxTokens                int
 	// ContextWindow is the model's window in tokens; nil reads it off Model.
 	ContextWindow       *int
 	Tasks               []aiprovider.Task
@@ -58,16 +62,18 @@ type SaveAIProviderRequest struct {
 // their own. An unset field is left alone; a set nil clears a nullable field
 // and fails validation for a required one.
 type PatchAIProviderRequest struct {
-	ID                   pulid.ID
-	Version              int64
-	TenantInfo           pagination.TenantInfo
-	Enabled              optional.Value[*bool]
-	Trusted              optional.Value[*bool]
-	AllowPrivateNetwork  optional.Value[*bool]
-	Tasks                optional.Value[[]aiprovider.Task]
-	APIKey               optional.Value[*string]
-	InputCostPerMillion  optional.Value[*decimal.Decimal]
-	OutputCostPerMillion optional.Value[*decimal.Decimal]
+	ID                       pulid.ID
+	Version                  int64
+	TenantInfo               pagination.TenantInfo
+	Enabled                  optional.Value[*bool]
+	Trusted                  optional.Value[*bool]
+	AllowPrivateNetwork      optional.Value[*bool]
+	Tasks                    optional.Value[[]aiprovider.Task]
+	APIKey                   optional.Value[*string]
+	InputCostPerMillion      optional.Value[*decimal.Decimal]
+	OutputCostPerMillion     optional.Value[*decimal.Decimal]
+	CacheReadCostPerMillion  optional.Value[*decimal.Decimal]
+	CacheWriteCostPerMillion optional.Value[*decimal.Decimal]
 }
 
 // AIProviderEndpoint is an endpoint as an editor holds it, before it is

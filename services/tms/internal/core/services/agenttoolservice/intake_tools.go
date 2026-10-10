@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/ratequote"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -46,6 +47,14 @@ type shipmentCreator interface {
 	) (*serviceports.ShipmentCreatePlan, error)
 }
 
+type contractRatePreviewer interface {
+	PreviewContractRate(
+		ctx context.Context,
+		entity *shipment.Shipment,
+		actor *serviceports.RequestActor,
+	) (*serviceports.ContractRateApplication, error)
+}
+
 // importCompleter closes the import assistant's conversation for a document
 // once the shipment it was about exists, the way the shipment form does.
 type importCompleter interface {
@@ -59,6 +68,7 @@ type importCompleter interface {
 // validated by exactly the rules a person's entry is.
 type createShipmentTool struct {
 	shipments shipmentCreator
+	contracts contractRatePreviewer
 	imports   importCompleter
 	locations locationZoneReader
 	logger    *zap.Logger
@@ -66,6 +76,7 @@ type createShipmentTool struct {
 
 type createShipmentDeps struct {
 	Shipments shipmentCreator
+	Contracts contractRatePreviewer
 	Imports   importCompleter
 	Locations locationZoneReader
 	Logger    *zap.Logger
@@ -79,6 +90,7 @@ func newCreateShipmentTool(deps createShipmentDeps) serviceports.AgentTool {
 
 	return &createShipmentTool{
 		shipments: deps.Shipments,
+		contracts: deps.Contracts,
 		imports:   deps.Imports,
 		locations: deps.Locations,
 		logger:    logger.Named("tool.create-shipment"),
@@ -109,24 +121,24 @@ func (t *createShipmentTool) Recipe() []string {
 		"list_customers",
 		"list_service_types",
 		"list_shipment_types",
-		"list_formula_templates",
 		"list_locations",
 		"create_shipment",
 	}
 }
 
 func (t *createShipmentTool) Description() string {
-	return "Enter a new shipment. To copy an existing shipment use duplicate_shipment instead, " +
-		"which carries its stops, commodities, charges and rating exactly. Give the customer, " +
-		"service type, shipment type and rating method (formulaTemplateId, from " +
-		"list_formula_templates) by id: the rating method is required, and a shipment nothing " +
-		"can price is refused. Add the freight (pieces, weight, commodities, temperatures " +
-		"when it matters), any accessorial charges, and one move with its stops in travel order: " +
-		"each stop has a location id from list_locations, a type, and a scheduled window in " +
-		"local time at the stop, such as 2026-10-01T08:00. Stops and moves count from 0. For a " +
-		"shipment read from an uploaded document, pass sourceDocumentId to link it and close " +
-		"its import conversation. The pro number is assigned by the system. A " +
-		"BOL must be unique among open shipments, so never reuse one; ask the person for it."
+	return "Enter a new shipment, priced by the customer's rate agreement when no price is " +
+		"given; to copy one, use duplicate_shipment. Give the customer, " +
+		"service type and shipment type by id. Price it the way the person did: \"$2,450 " +
+		"flat\" is the Flat Rate template with baseRate 2450, \"$2.10 a mile\" Per Mile with " +
+		"2.10, and charges they name are accessorial charges. Given no price, leave the rating " +
+		"out and call it: it finds the agreement itself, so do not look one up. Only when " +
+		"it says none covers the lane, ask the person for the price, offering " +
+		"one to react to. Add the freight (pieces, weight, " +
+		"commodities, temperatures) and one move with its stops in travel order, each with a " +
+		"location id, a type and a local window such as 2026-10-01T08:00, from 0. Pass " +
+		"sourceDocumentId for a shipment read from an uploaded document. The system assigns " +
+		"the pro number; the BOL is optional, and a BOL must be unique."
 }
 
 func (t *createShipmentTool) ParamSchema() map[string]any {
@@ -169,11 +181,11 @@ func shipmentDraftSchema() map[string]any {
 			"formulaTemplateId": agenttoolschema.RecordIDText(
 				permission.ResourceFormulaTemplate,
 				"The rating method that prices the freight, from "+
-					"list_formula_templates. Required: a rate agreement covering the lane may "+
-					"replace it with its own when the shipment is saved.",
+					"list_formula_templates. Leave it out when the customer's rate agreement "+
+					"covers the lane, and the contract's is used.",
 			),
-			"baseRate": amountProperty("The rate the rating method multiplies, as a decimal " +
-				"such as 2.45, only when the customer agreed one."),
+			"baseRate": amountProperty("The rate the rating method prices with, as the person " +
+				"gave it: 2450 for a $2,450 flat load, 2.10 for $2.10 a mile."),
 			"freightTerms": agenttoolschema.Enum(
 				"Who pays the freight. Defaults to Prepaid.",
 				agenttoolschema.FreightTerms,
@@ -225,7 +237,6 @@ func shipmentDraftSchema() map[string]any {
 			paramCustomerID,
 			fieldServiceTypeID,
 			fieldShipmentTypeID,
-			fieldFormulaTemplateID,
 			"moves",
 		},
 		toolschema.KeyAdditionalProperties: false,
@@ -269,9 +280,14 @@ func stopDraftSchema() map[string]any {
 			),
 			"sequence": integerProperty("The stop's place in the move, counting from 0. "+
 				"Leave it out to take the order given.", 0, 100),
-			"scheduledWindowStart": agenttoolschema.LocalDateTime("When the stop's window opens."),
+			"scheduledWindowStart": agenttoolschema.LocalDateTime("When the stop's window " +
+				"opens. A part of the day the person named is a window, not a question: " +
+				"morning 08:00 to 12:00, afternoon 13:00 to 17:00, evening 17:00 to 21:00. " +
+				"A deadline alone (\"by 3pm\", \"by noon\") opens at 08:00 that day and closes " +
+				"at the deadline. Use it and say which you used."),
 			"scheduledWindowEnd": agenttoolschema.LocalDateTime(
-				"When the stop's window closes, if it has one.",
+				"When the stop's window closes: the deadline the person gave, or the end of " +
+					"the part of the day they named.",
 			),
 			fieldPieces:   integerProperty("Pieces handled at the stop.", 0, 1_000_000),
 			fieldWeight:   integerProperty("Pounds handled at the stop.", 0, 10_000_000),
@@ -421,6 +437,9 @@ func (t *createShipmentTool) draft(
 	if err != nil {
 		return nil, err
 	}
+	if err = t.contractRating(ctx, entity, params.Actor); err != nil {
+		return nil, err
+	}
 
 	if sourceDocumentID := optionalString(
 		params.Params,
@@ -437,6 +456,56 @@ func (t *createShipmentTool) draft(
 	}
 
 	return entity, nil
+}
+
+// contractRating seats the rating the customer's agreement prices the lane
+// with when the call named none, as quote_shipment would have returned it, so
+// the shipment is saved on the contract's rate rather than asking the person
+// for a rating method the contract already decides.
+func (t *createShipmentTool) contractRating(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	actor *serviceports.RequestActor,
+) error {
+	if entity.FormulaTemplateID.IsNotNil() {
+		return nil
+	}
+	if t.contracts == nil {
+		return errNoRatingMethod("")
+	}
+
+	priced, err := t.contracts.PreviewContractRate(ctx, entity, actor)
+	if err != nil {
+		return err
+	}
+	if priced == nil || !priced.Applied || priced.Outcome != ratequote.OutcomeRated ||
+		priced.FormulaTemplateID == nil || priced.FormulaTemplateID.IsNil() {
+		reason := ""
+		if priced != nil {
+			reason = string(priced.Outcome)
+		}
+
+		return errNoRatingMethod(reason)
+	}
+
+	entity.FormulaTemplateID = *priced.FormulaTemplateID
+	if !entity.BaseRate.Valid && priced.BaseRate.Valid {
+		entity.BaseRate = priced.BaseRate
+	}
+
+	return nil
+}
+
+func errNoRatingMethod(outcome string) error {
+	message := "No rate agreement prices this lane for this customer, so the price is the " +
+		"person's to give. Ask them for it, offering one to react to (a figure from " +
+		"quote_shipment or their recent loads on the lane, if you can get one), then send it " +
+		"as formulaTemplateId from list_formula_templates and baseRate"
+	if outcome != "" {
+		message += " (the agreements answered " + outcome + ")"
+	}
+
+	return errortypes.NewValidationError("formulaTemplateId", errortypes.ErrRequired, message)
 }
 
 // updateShipmentTool changes the details of a saved shipment that a person
@@ -500,11 +569,23 @@ func (t *updateShipmentTool) ParamSchema() map[string]any {
 			},
 			"pieces": map[string]any{
 				"type":        "integer",
-				"description": "The total piece or handling-unit count.",
+				"minimum":     1,
+				"description": "The total piece or handling-unit count. Leave it out to keep it.",
 			},
-			"weight":         map[string]any{"type": "integer", "description": "Pounds."},
-			"temperatureMin": map[string]any{"type": "integer", "description": "Fahrenheit."},
-			"temperatureMax": map[string]any{"type": "integer", "description": "Fahrenheit."},
+			"weight": map[string]any{
+				"type":        "integer",
+				"minimum":     1,
+				"description": "Pounds. Leave it out to keep it.",
+			},
+			"temperatureMin": map[string]any{
+				"type": "integer",
+				"description": "Fahrenheit, with temperatureMax, for a load that needs temperature " +
+					"control. Leave both out to keep the load as it is.",
+			},
+			"temperatureMax": map[string]any{
+				"type":        "integer",
+				"description": "Fahrenheit, with temperatureMin.",
+			},
 		},
 		"required":             []string{"shipmentId"},
 		"additionalProperties": false,
@@ -642,11 +723,32 @@ func applyShipmentPatch(entity *shipment.Shipment, patch shipmentPatch) error {
 	if patch.Weight != nil {
 		entity.Weight = patch.Weight
 	}
+	if err := placeholderTemperatures(entity, patch); err != nil {
+		return err
+	}
 	if patch.TemperatureMin != nil {
 		entity.TemperatureMin = patch.TemperatureMin
 	}
 	if patch.TemperatureMax != nil {
 		entity.TemperatureMax = patch.TemperatureMax
+	}
+	if entity.TemperatureMin != nil && entity.TemperatureMax != nil &&
+		*entity.TemperatureMin > *entity.TemperatureMax {
+		return errortypes.NewValidationError("temperatureMin", errortypes.ErrInvalid,
+			"The minimum temperature is above the maximum")
+	}
+
+	return nil
+}
+
+func placeholderTemperatures(entity *shipment.Shipment, patch shipmentPatch) error {
+	unset := entity.TemperatureMin == nil && entity.TemperatureMax == nil
+	zero := func(value *int16) bool { return value != nil && *value == 0 }
+	if unset && zero(patch.TemperatureMin) && zero(patch.TemperatureMax) {
+		return errortypes.NewValidationError("temperatureMin", errortypes.ErrInvalid,
+			"The load has no temperature control, and 0 to 0 °F would make it a frozen load. "+
+				"Leave both temperatures out to keep it as it is, or give the range the "+
+				"person asked for")
 	}
 
 	return nil

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/integration"
@@ -192,6 +193,31 @@ type ProviderWebhookEvent struct {
 	DriverID   string
 }
 
+type ProviderDriverBatchError struct {
+	DriverIDs []string
+	Err       error
+}
+
+func (e *ProviderDriverBatchError) Error() string {
+	return fmt.Sprintf(
+		"telematics provider request failed for %d drivers: %v",
+		len(e.DriverIDs),
+		e.Err,
+	)
+}
+
+func (e *ProviderDriverBatchError) Unwrap() error {
+	return e.Err
+}
+
+func (e *ProviderDriverBatchError) FailedDriverSet() map[string]struct{} {
+	set := make(map[string]struct{}, len(e.DriverIDs))
+	for _, driverID := range e.DriverIDs {
+		set[driverID] = struct{}{}
+	}
+	return set
+}
+
 type TelematicsProvider interface {
 	Type() integration.Type
 	ListVehicles(ctx context.Context) ([]ProviderVehicle, error)
@@ -205,16 +231,16 @@ type TelematicsProvider interface {
 	) ([]ProviderViolation, error)
 	ListHOSLogs(
 		ctx context.Context,
-		driverID string,
+		driverIDs []string,
 		startAt int64,
 		endAt int64,
-	) ([]ProviderHOSLogEntry, error)
+	) (map[string][]ProviderHOSLogEntry, error)
 	ListHOSDailyLogs(
 		ctx context.Context,
-		driverID string,
+		driverIDs []string,
 		startDate string,
 		endDate string,
-	) ([]ProviderHOSDailyLog, error)
+	) (map[string][]ProviderHOSDailyLog, error)
 	ListTrailers(ctx context.Context) ([]ProviderVehicle, error)
 	ListDVIRs(
 		ctx context.Context,
@@ -223,7 +249,7 @@ type TelematicsProvider interface {
 	) ([]ProviderDVIR, error)
 	ListFormSubmissions(
 		ctx context.Context,
-		driverID string,
+		driverIDs []string,
 		startAt int64,
 		endAt int64,
 	) ([]ProviderFormSubmission, error)

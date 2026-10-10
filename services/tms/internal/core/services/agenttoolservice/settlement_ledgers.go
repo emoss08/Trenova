@@ -41,6 +41,8 @@ func driverSettlementLedger() settlementLedger[driversettlement.Settlement] {
 		artifact: driverSettlementEntity,
 		noun:     nounDriverSettlement,
 		sources:  driverSettlementReads,
+		byName: " list_driver_settlements finds it by the driver's name as query, with no " +
+			"lookup before it.",
 		sensitive: []string{
 			"grossEarningsMinor",
 			"reimbursementsMinor",

@@ -2,7 +2,6 @@ package dvirs
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -25,7 +24,6 @@ func NewService(client httpx.Requester) Service {
 	return &service{client: client}
 }
 
-//nolint:gocritic // params is intentionally passed by value.
 func (s *service) Stream(ctx context.Context, params StreamParams) (StreamResponse, error) {
 	if err := params.Validate(); err != nil {
 		return StreamResponse{}, err
@@ -43,13 +41,12 @@ func (s *service) Stream(ctx context.Context, params StreamParams) (StreamRespon
 	return out, nil
 }
 
-//nolint:gocritic // params is intentionally passed by value.
 func (s *service) StreamAll(ctx context.Context, params StreamParams) ([]DVIR, error) {
 	if err := params.Validate(); err != nil {
 		return nil, err
 	}
 	if params.Limit == 0 {
-		params.Limit = 200
+		params.Limit = maxStreamLimit
 	}
 
 	items := make([]DVIR, 0)
@@ -67,7 +64,6 @@ func (s *service) StreamAll(ctx context.Context, params StreamParams) ([]DVIR, e
 	return items, nil
 }
 
-//nolint:gocritic // params is intentionally passed by value.
 func (s *service) Get(ctx context.Context, id string, params GetParams) (DVIRDetail, error) {
 	id = strings.TrimSpace(id)
 	if id == "" {
@@ -77,7 +73,7 @@ func (s *service) Get(ctx context.Context, id string, params GetParams) (DVIRDet
 	out := DVIRDetail{}
 	if err := s.client.Do(ctx, httpx.Request{
 		Method: http.MethodGet,
-		Path:   fmt.Sprintf("/dvirs/%s", id),
+		Path:   httpx.PathWithID("/dvirs", id),
 		Query:  params.Query(),
 		Out:    &out,
 	}); err != nil {
@@ -110,7 +106,7 @@ func (s *service) HistoryAll(ctx context.Context, params HistoryParams) ([]Histo
 		return nil, err
 	}
 	if params.Limit == 0 {
-		params.Limit = 512
+		params.Limit = maxHistoryLimit
 	}
 
 	items := make([]HistoryDVIR, 0)

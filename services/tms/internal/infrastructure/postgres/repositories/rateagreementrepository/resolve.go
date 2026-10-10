@@ -70,40 +70,41 @@ func (r *repository) ResolveRules(
 		limit = DefaultCandidateLimit
 	}
 
-	keyed, err := r.resolveKeyedRules(ctx, req, limit)
-	if err != nil {
-		log.Error("failed to resolve keyed rate rules", zap.Error(err))
-		return nil, err
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*repositories.ResolveRateRulesResult, error) {
+		keyed, err := r.resolveKeyedRules(ctx, req, limit)
+		if err != nil {
+			log.Error("failed to resolve keyed rate rules", zap.Error(err))
+			return nil, err
+		}
 
-	radius, err := r.resolveRadiusRules(ctx, req, limit)
-	if err != nil {
-		log.Error("failed to resolve radius rate rules", zap.Error(err))
-		return nil, err
-	}
+		radius, err := r.resolveRadiusRules(ctx, req, limit)
+		if err != nil {
+			log.Error("failed to resolve radius rate rules", zap.Error(err))
+			return nil, err
+		}
 
-	merged := mergeCandidates(keyed, radius)
+		merged := mergeCandidates(keyed, radius)
+		if err = r.attachAgreements(ctx, req.TenantInfo, merged); err != nil {
+			log.Error("failed to load agreements for candidates", zap.Error(err))
+			return nil, err
+		}
 
-	if err = r.attachAgreements(ctx, req.TenantInfo, merged); err != nil {
-		log.Error("failed to load agreements for candidates", zap.Error(err))
-		return nil, err
-	}
+		// Agreement priority only enters the ordering once the agreements are
+		// loaded, so the final sort happens after they are attached.
+		sortCandidates(merged)
 
-	// Agreement priority only enters the ordering once the agreements are
-	// loaded, so the final sort happens after they are attached.
-	sortCandidates(merged)
+		total := len(merged)
+		capped := total > limit
+		if capped {
+			merged = merged[:limit]
+		}
 
-	total := len(merged)
-	capped := total > limit
-	if capped {
-		merged = merged[:limit]
-	}
-
-	return &repositories.ResolveRateRulesResult{
-		Rules:  merged,
-		Total:  total,
-		Capped: capped,
-	}, nil
+		return &repositories.ResolveRateRulesResult{
+			Rules:  merged,
+			Total:  total,
+			Capped: capped,
+		}, nil
+	})
 }
 
 // candidateOrder is the ordering the database applies. It stops short of

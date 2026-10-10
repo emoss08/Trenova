@@ -425,3 +425,10 @@ func (s *stubProposalRepo) ListByRun(
 ) ([]*agent.AgentProposal, error) {
 	return nil, nil
 }
+
+func (m *stubProposalRepo) ExpirePendingByThread(
+	context.Context,
+	repositories.ExpireAgentProposalsByThreadRequest,
+) (int, error) {
+	return 0, nil
+}

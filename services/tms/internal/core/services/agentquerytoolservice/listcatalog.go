@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
+	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -186,12 +187,9 @@ func newListShipmentsTool(repo repositories.ShipmentRepository) serviceports.Age
 	return newListTool(listSpec{
 		name:         "list_shipments",
 		entityPlural: "shipments",
-		summary: "List shipments by status, billing state, dates or charges: anything with " +
-			"a date or threshold, such as picking up today or delivered yesterday. " +
-			"Each row carries its first pickup and last delivery (place and window) and " +
-			"who is driving each move (or that it needs a driver), so ordering by pickup or " +
-			"finding loads that need a driver needs no get_shipment. search_shipments matches words like a " +
-			"pro number, customer or city.",
+		summary: "List shipments by status, billing state, dates or charges, such as " +
+			"picking up today. Rows carry the first pickup, last delivery and each move's " +
+			"driver. Pro numbers and cities: search_shipments.",
 		resource: permission.ResourceShipment,
 		config:   querybuilder.GetFieldConfiguration((*shipment.Shipment)(nil)),
 		fields: []listField{
@@ -199,8 +197,8 @@ func newListShipmentsTool(repo repositories.ShipmentRepository) serviceports.Age
 				Name:   "status",
 				Kind:   filterEnum,
 				Values: shipmentStatuses,
-				Note: "no Delivered; a delivered load is Completed, then ReadyToInvoice, " +
-					"then Invoiced. For when it delivered, filter actualDeliveryDate",
+				Note: "rolling is InTransit and Delayed, one in filter; no Delivered: a " +
+					"delivered load is Completed, ReadyToInvoice, then Invoiced",
 			},
 			{
 				Name:   "billingTransferStatus",
@@ -307,7 +305,19 @@ type equipmentRow struct {
 	OwnershipType      string       `json:"ownershipType,omitempty"`
 	RegistrationExpiry optionalDate `json:"registrationExpiry"`
 	LastInspectionDate optionalDate `json:"lastInspectionDate"`
+	EquipmentType      string       `json:"equipmentType,omitempty"`
 	AssignedTo         string       `json:"assignedTo,omitempty"`
+}
+
+func equipmentTypeName(kind *equipmenttype.EquipmentType) string {
+	switch {
+	case kind == nil:
+		return ""
+	case kind.Description == "":
+		return kind.Code
+	default:
+		return kind.Code + " — " + kind.Description
+	}
 }
 
 func equipmentFields() []listField {
@@ -347,6 +357,10 @@ func newListTractorsTool(
 		summary: "List tractors (power units) narrowed by status, ownership, or a " +
 			"registration or lease date. Use it for questions about which units are out " +
 			"of service or coming due for plates.",
+		searchTerms: []string{
+			"find tractor by unit number", "locate tractor", "tractor unit number",
+			"available tractors",
+		},
 		resource: permission.ResourceTractor,
 		config:   querybuilder.GetFieldConfiguration((*tractor.Tractor)(nil)),
 		fields:   equipmentFields(),
@@ -361,6 +375,7 @@ func newListTractorsTool(
 				Filter: opts,
 				TractorRelationIncludes: repositories.TractorRelationIncludes{
 					IncludePrimaryWorker: nameDrivers,
+					IncludeEquipmentType: true,
 				},
 			})
 			if err != nil {
@@ -381,6 +396,7 @@ func newListTractorsTool(
 					row.Year = *item.Year
 				}
 				row.RegistrationExpiry = pointerDate(item.RegistrationExpiry)
+				row.EquipmentType = equipmentTypeName(item.EquipmentType)
 				if nameDrivers {
 					row.AssignedTo = workerName(item.PrimaryWorker)
 				}
@@ -403,13 +419,22 @@ func newListTrailersTool(repo repositories.TrailerRepository) serviceports.Agent
 		name:         "list_trailers",
 		entityPlural: "trailers",
 		summary: "List trailers narrowed by status, ownership, or a registration, " +
-			"lease or inspection date. Use it for questions about which trailers are " +
-			"out of service or overdue for inspection.",
+			"lease or inspection date, each with its equipment type (dry van, reefer, " +
+			"flatbed). Use it for questions about which trailers are out of service or " +
+			"overdue for inspection.",
+		searchTerms: []string{
+			"find trailer by unit number", "available dry vans",
+		},
 		resource: permission.ResourceTrailer,
 		config:   querybuilder.GetFieldConfiguration((*trailer.Trailer)(nil)),
 		fields:   fields,
 		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
-			result, err := repo.List(ctx, &repositories.ListTrailersRequest{Filter: opts})
+			result, err := repo.List(ctx, &repositories.ListTrailersRequest{
+				Filter: opts,
+				TrailerRelationIncludes: repositories.TrailerRelationIncludes{
+					IncludeEquipmentType: true,
+				},
+			})
 			if err != nil {
 				return nil, err
 			}
@@ -429,6 +454,7 @@ func newListTrailersTool(repo repositories.TrailerRepository) serviceports.Agent
 				}
 				row.RegistrationExpiry = pointerDate(item.RegistrationExpiry)
 				row.LastInspectionDate = pointerDate(item.LastInspectionDate)
+				row.EquipmentType = equipmentTypeName(item.EquipmentType)
 
 				return row
 			}), nil

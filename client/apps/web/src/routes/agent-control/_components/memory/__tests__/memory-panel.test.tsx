@@ -11,6 +11,7 @@ const api = vi.hoisted(() => ({
   createAgentMemory: vi.fn(),
   updateAgentMemory: vi.fn(),
   setAgentMemoryStatus: vi.fn(),
+  reviewAgentMemory: vi.fn(),
 }));
 
 vi.mock("@/lib/graphql/agent-memories", async (importOriginal) => ({
@@ -30,6 +31,9 @@ function memory(overrides: Partial<AgentMemoryRow> = {}): AgentMemoryRow {
     toolName: "",
     content: "Dock 4 closes at 15:00 on Fridays.",
     tainted: false,
+    taints: false,
+    reviewedAt: null,
+    reviewedByUserId: null,
     useCount: 6,
     createdAt: 1_790_000_000,
     expiresAt: null,
@@ -62,6 +66,9 @@ beforeEach(() => {
     memory({ ...input, id, version: 5 }),
   );
   api.setAgentMemoryStatus.mockResolvedValue({});
+  api.reviewAgentMemory.mockImplementation(async (id) =>
+    memory({ id, tainted: true, taints: false, reviewedAt: 1_791_600_000, version: 5 }),
+  );
 });
 
 afterEach(() => {
@@ -123,5 +130,48 @@ describe("MemoryPanel", () => {
     await userEvent.click(screen.getByRole("button", { name: "Restore memory" }));
 
     await waitFor(() => expect(api.setAgentMemoryStatus).toHaveBeenCalledWith("amem_1", "Active"));
+  });
+
+  it("keeps a memory written after outside content at the version that was read", async () => {
+    const { onOpenChange } = renderPanel({
+      mode: "edit",
+      row: memory({ id: "amem_7", tainted: true, taints: true, version: 9 }),
+    });
+
+    expect(screen.getByText(/Not reviewed; every turn that reads it waits/)).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Reviewed, keep it" }));
+
+    await waitFor(() => expect(api.reviewAgentMemory).toHaveBeenCalledWith("amem_7", 9));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("offers no review for one already reviewed, and says when it was", () => {
+    renderPanel({
+      mode: "edit",
+      row: memory({ tainted: true, taints: false, reviewedAt: 1_791_600_000 }),
+    });
+
+    expect(screen.queryByRole("button", { name: "Reviewed, keep it" })).toBeNull();
+    expect(screen.getByText(/^Reviewed .*no longer holds the writes/)).toBeTruthy();
+  });
+
+  it("keeps the review out of reach while the text has unsaved changes", async () => {
+    renderPanel({ mode: "edit", row: memory({ tainted: true, taints: true }) });
+
+    await userEvent.type(screen.getByRole("textbox", { name: "Memory" }), " Edited.");
+
+    expect(
+      (screen.getByRole("button", { name: "Reviewed, keep it" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(api.reviewAgentMemory).not.toHaveBeenCalled();
+  });
+
+  it("shows a refused review in the editor", async () => {
+    api.reviewAgentMemory.mockRejectedValue(new Error("AgentMemory has been changed"));
+    renderPanel({ mode: "edit", row: memory({ tainted: true, taints: true }) });
+
+    await userEvent.click(screen.getByRole("button", { name: "Reviewed, keep it" }));
+
+    expect((await screen.findByRole("alert")).textContent).toContain("has been changed");
   });
 });

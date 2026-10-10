@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/bytedance/sonic"
 )
 
 // Coercion is one value read the way the schema declares it rather than the
@@ -277,12 +279,24 @@ func (c *coercer) value(property map[string]any, value any, path string) (any, b
 	switch kind {
 	case "object":
 		object, ok := value.(map[string]any)
-		properties, _ := property["properties"].(map[string]any)
-		if !ok || len(properties) == 0 {
+		decoded := false
+		if !ok {
+			object, decoded = encodedJSON[map[string]any](value, '{')
+		}
+		if !ok && !decoded {
 			return value, false
 		}
+		if decoded {
+			c.note(path, "%s was sent as JSON text and read as the object it holds; "+
+				"send the object itself", path)
+		}
+		properties, _ := property["properties"].(map[string]any)
+		if len(properties) == 0 {
+			return object, decoded
+		}
+		read, changed := c.object(property, properties, object, path)
 
-		return c.object(property, properties, object, path)
+		return read, changed || decoded
 	case "array":
 		return c.array(property, value, path)
 	case "integer", "number":
@@ -342,6 +356,12 @@ func (c *coercer) array(property map[string]any, value any, path string) (any, b
 func (c *coercer) asList(items map[string]any, value any, path string) ([]any, bool) {
 	if list, isList := value.([]any); isList {
 		return list, false
+	}
+	if list, decoded := encodedJSON[[]any](value, '['); decoded {
+		c.note(path, "%s was sent as JSON text and read as the list it holds; "+
+			"send the array itself", path)
+
+		return list, true
 	}
 	if isScalar(value) {
 		if text, ok := value.(string); ok && DeclaredType(items) == "string" &&
@@ -589,4 +609,21 @@ func isScalar(value any) bool {
 	default:
 		return false
 	}
+}
+
+func encodedJSON[T map[string]any | []any](value any, opener byte) (T, bool) {
+	var decoded T
+	text, ok := value.(string)
+	if !ok {
+		return decoded, false
+	}
+	trimmed := strings.TrimSpace(text)
+	if trimmed == "" || trimmed[0] != opener {
+		return decoded, false
+	}
+	if err := sonic.UnmarshalString(trimmed, &decoded); err != nil {
+		return decoded, false
+	}
+
+	return decoded, decoded != nil
 }

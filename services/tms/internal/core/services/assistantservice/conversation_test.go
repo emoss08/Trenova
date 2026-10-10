@@ -2,6 +2,8 @@ package assistantservice
 
 import (
 	"context"
+	"errors"
+	"go.uber.org/zap"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -346,4 +348,41 @@ func TestSendMessageStream_KeepsTheSavedModelUnlessTheSendChoosesOne(t *testing.
 		"choosing automatic clears the saved model",
 	)
 	assert.False(t, completion.LastReq.PinPreferred)
+}
+
+type deletingConversations struct {
+	repositories.ConversationRepository
+
+	err error
+}
+
+func (d *deletingConversations) DeleteThread(context.Context, repositories.GetThreadRequest) error {
+	return d.err
+}
+
+// A deleted conversation's undecided proposals stayed in the decisions inbox,
+// and approving one followed up into a thread that no longer existed. They are
+// withdrawn with it, and only once the delete has gone through.
+func TestDeleteThread_WithdrawsWhatItLeftWaiting(t *testing.T) {
+	t.Parallel()
+
+	threadID := pulid.MustNew("athr_")
+	proposals := &stubProposalRepo{}
+	svc := &Service{
+		logger:        zap.NewNop(),
+		conversations: &deletingConversations{},
+		proposals:     proposals,
+	}
+
+	require.NoError(t, svc.DeleteThread(t.Context(), repositories.GetThreadRequest{ID: threadID}))
+	assert.Equal(t, []pulid.ID{threadID}, proposals.expiredThreads)
+
+	refused := &stubProposalRepo{}
+	svc = &Service{
+		logger:        zap.NewNop(),
+		conversations: &deletingConversations{err: errors.New("not yours")},
+		proposals:     refused,
+	}
+	require.Error(t, svc.DeleteThread(t.Context(), repositories.GetThreadRequest{ID: threadID}))
+	assert.Empty(t, refused.expiredThreads, "a delete that did not happen withdraws nothing")
 }

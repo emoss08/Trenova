@@ -117,3 +117,35 @@ func TestAnthropicAdapter_SendsNoThinkingSettingForOff(t *testing.T) {
 		assert.Nil(t, output, model)
 	}
 }
+
+/*
+The scope classifier has three seconds to answer. Haiku 5.5 thinks unless told
+not to, and a provider set to Off says nothing, so the classifier asks for None
+on the request itself: Haiku 5.5 is sent thinking "disabled" (it takes that at
+its default effort), while a call that leaves the override empty still follows
+the provider and sends nothing.
+*/
+func TestAnthropicAdapter_ARequestCanTurnThinkingOffOnHaiku55(t *testing.T) {
+	t.Parallel()
+
+	sent := func(override aiprovider.ReasoningEffort) map[string]any {
+		server, captured := streamServer(t, "text/event-stream", sse(
+			[2]string{"message_start", `{"type":"message_start","message":{"model":"m","usage":{"input_tokens":1}}}`},
+			[2]string{"message_stop", `{"type":"message_stop"}`},
+		))
+		call := reasoningCall(aiprovider.KindAnthropicMessages, server.URL, aiprovider.ReasoningOff,
+			&Request{Messages: UserMessage("hi"), Reasoning: override})
+		call.Provider.Model = "claude-haiku-5-5"
+		_, _ = streamWith(t, NewAnthropicAdapter(), call)
+
+		return *captured
+	}
+
+	off := sent(aiprovider.ReasoningNone)
+	thinking, _ := off["thinking"].(map[string]any)
+	require.NotNil(t, thinking)
+	assert.Equal(t, "disabled", thinking["type"])
+	assert.NotContains(t, off, "output_config", "disabled is accepted at the default effort")
+
+	assert.NotContains(t, sent(""), "thinking", "no override follows the provider, which is Off")
+}

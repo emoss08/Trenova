@@ -1329,6 +1329,7 @@ func (s *DriverPaySeed) createPaidShipments(
 				Sequence:       int64(moveIdx),
 				Distance:       &miles,
 				DistanceUnits:  "miles",
+				CoverageType:   shipment.MoveCoverageTypeDriver,
 			}
 			if _, err = tx.NewInsert().Model(move).Exec(ctx); err != nil {
 				return nil, fmt.Errorf("insert move for %s: %w", def.pro, err)

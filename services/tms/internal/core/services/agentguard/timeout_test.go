@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/stretchr/testify/require"
@@ -82,4 +83,62 @@ func TestEvaluate_TheStricterPostureStillRefusesOnATimeout(t *testing.T) {
 
 	require.False(t, decision.Allowed)
 	require.Equal(t, agentguard.ReasonClassifierUnavailable, decision.Reason)
+}
+
+type hedgeRecorder struct {
+	serviceports.CompletionService
+
+	hedge     time.Duration
+	reasoning aiprovider.ReasoningEffort
+}
+
+func (h *hedgeRecorder) CompleteStructured(
+	_ context.Context,
+	req *serviceports.StructuredCompletionRequest,
+) (*serviceports.StructuredCompletionResult, error) {
+	h.hedge = req.HedgeAfter
+	h.reasoning = req.Reasoning
+
+	return &serviceports.StructuredCompletionResult{
+		Text: `{"category":"TransportationOperations","reasoning":"stub"}`,
+	}, nil
+}
+
+/*
+DB-003: with its providers asked one after another, a first provider that
+answered in 3.0 s spent the whole budget and about one question in twenty-five
+went through unclassified. The classification asks the next provider as well
+at half the budget.
+*/
+func TestEvaluate_TheClassifierAsksTheNextProviderAtHalfItsBudget(t *testing.T) {
+	t.Parallel()
+
+	stub := &hedgeRecorder{}
+	guard := &agentguard.Service{ClassifierTimeout: 3 * time.Second}
+	agentguard.SetCompletionForTest(guard, stub)
+
+	decision := guard.Evaluate(t.Context(), agentguard.EvaluateRequest{
+		Input: "how many shipments are in transit",
+	})
+
+	require.True(t, decision.Allowed)
+	require.Equal(t, 1500*time.Millisecond, stub.hedge)
+}
+
+/*
+The classifier has three seconds. With reasoning left to each provider, which
+is Off and so says nothing, gpt-6-luna reasoned on every call and Haiku 5.5
+thought at its default effort; 488 of 2,482 classifications hit the budget.
+The classification asks every provider not to reason.
+*/
+func TestEvaluate_TheClassifierAsksProvidersNotToReason(t *testing.T) {
+	t.Parallel()
+
+	stub := &hedgeRecorder{}
+	guard := &agentguard.Service{ClassifierTimeout: 3 * time.Second}
+	agentguard.SetCompletionForTest(guard, stub)
+
+	guard.Evaluate(t.Context(), agentguard.EvaluateRequest{Input: "how many shipments are in transit"})
+
+	require.Equal(t, aiprovider.ReasoningNone, stub.reasoning)
 }

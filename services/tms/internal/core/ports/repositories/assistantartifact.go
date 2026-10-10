@@ -24,6 +24,10 @@ type ListArtifactsRequest struct {
 	Family assistantartifact.Family
 	// PinnedOnly narrows to pinned lineages.
 	PinnedOnly bool
+	// Summary leaves each payload with only the keys that say what an
+	// artifact is (assistantartifact.SummaryPayloadKeys); the full payload is
+	// read with its lineage when it is shown.
+	Summary bool
 }
 
 // ArtifactCounts is how many lineages match the query, in all, pinned and by

@@ -2,8 +2,6 @@ package dashcontrolrepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -40,16 +38,8 @@ func (r *repository) GetOrCreate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*tenant.DashControl, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.DashControl, error) {
-		entity, err := r.selectControl(ctx, tenantInfo)
-		if err == nil {
-			return entity, nil
-		}
-		if !errors.Is(err, sql.ErrNoRows) {
-			return nil, dberror.HandleNotFoundError(err, "DashControl")
-		}
-
-		control := &tenant.DashControl{
+	newDefault := func() *tenant.DashControl {
+		return &tenant.DashControl{
 			ID:                             pulid.MustNew("dashc_"),
 			BusinessUnitID:                 tenantInfo.BuID,
 			OrganizationID:                 tenantInfo.OrgID,
@@ -69,19 +59,27 @@ func (r *repository) GetOrCreate(
 			EnableDetentionAlerts:          true,
 			DetentionAlertThresholdMinutes: 120,
 		}
-		if _, err = r.db.DBForContext(ctx).
-			NewInsert().
-			Model(control).
-			On("CONFLICT (organization_id, business_unit_id) DO NOTHING").
-			Exec(ctx); err != nil {
-			return nil, fmt.Errorf("create default dash control: %w", err)
-		}
+	}
 
-		entity, err = r.selectControl(ctx, tenantInfo)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "DashControl")
-		}
-		return entity, nil
+	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*tenant.DashControl]{
+		Find: func(ctx context.Context) (*tenant.DashControl, error) {
+			return r.selectControl(ctx, tenantInfo)
+		},
+		Create: func(ctx context.Context) error {
+			if _, insertErr := r.db.DBForContext(ctx).
+				NewInsert().
+				Model(newDefault()).
+				On("CONFLICT (organization_id, business_unit_id) DO NOTHING").
+				Exec(ctx); insertErr != nil {
+				return fmt.Errorf("create default dash control: %w", insertErr)
+			}
+
+			return nil
+		},
+		Default: newDefault,
+		MapError: func(err error) error {
+			return dberror.HandleNotFoundError(err, "DashControl")
+		},
 	})
 }
 

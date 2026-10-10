@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/services/samsarasyncservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.temporal.io/sdk/activity"
 	"go.uber.org/fx"
@@ -34,6 +35,9 @@ func (a *Activities) SyncWorkersToSamsaraActivity(
 		logger.Error("Samsara sync payload is required")
 		return nil, errInvalidPayload
 	}
+
+	stopHeartbeat := modelcall.Heartbeat(ctx)
+	defer stopHeartbeat()
 
 	result, err := a.syncService.SyncWorkersToSamsara(ctx, pagination.TenantInfo{
 		OrgID:  payload.OrganizationID,

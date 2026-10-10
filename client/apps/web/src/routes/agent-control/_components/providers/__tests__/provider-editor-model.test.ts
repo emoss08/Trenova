@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { AIProviderPreset } from "@/types/ai-provider";
 import {
+  cachePriceDefault,
   draftTestInput,
   editorBlocker,
   editorValuesFromPreset,
   providerEditorSchema,
+  reportsCacheWrites,
   toSaveRequest,
   type ProviderEditorValues,
 } from "../provider-editor-model";
@@ -178,5 +180,32 @@ describe("draftTestInput", () => {
       draftTestInput(values({ tasks: ["Embedding"], embeddingDimensionsChoice: "1024" }), null)
         .embeddingDimensions,
     ).toBe(1024);
+  });
+});
+
+/**
+ * An empty cache price charges a multiple of the input price on the server;
+ * the field's placeholder shows that figure so nobody has to work it out.
+ */
+describe("cachePriceDefault", () => {
+  it("reads a cached token at a tenth of input on every protocol", () => {
+    expect(cachePriceDefault("AnthropicMessages", "3", "read")).toBe("0.3");
+    expect(cachePriceDefault("OpenAIResponses", "1.25", "read")).toBe("0.125");
+  });
+
+  it("writes at one and a quarter times input for Anthropic, at input otherwise", () => {
+    expect(cachePriceDefault("AnthropicMessages", "3", "write")).toBe("3.75");
+    expect(cachePriceDefault("OpenAIChat", "3", "write")).toBe("3");
+  });
+
+  it("is blank until the input price is a number", () => {
+    expect(cachePriceDefault("AnthropicMessages", "", "read")).toBe("");
+    expect(cachePriceDefault("AnthropicMessages", "abc", "write")).toBe("");
+  });
+
+  it("knows only the Anthropic protocol reports cache writes", () => {
+    expect(reportsCacheWrites("AnthropicMessages")).toBe(true);
+    expect(reportsCacheWrites("OpenAIResponses")).toBe(false);
+    expect(reportsCacheWrites("Ollama")).toBe(false);
   });
 });

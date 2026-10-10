@@ -2,6 +2,8 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/bytedance/sonic"
@@ -79,7 +81,7 @@ func TestSearchShipments_KeepsTheStatusFilter(t *testing.T) {
 	_, err := tool.Query(t.Context(), testParams(map[string]any{"status": "Completed"}))
 	require.NoError(t, err)
 
-	assert.Equal(t, "Completed", repo.captured.ShipmentOptions.Status)
+	assert.Equal(t, []shipment.Status{shipment.StatusCompleted}, repo.captured.ShipmentOptions.Statuses)
 }
 
 func TestSearchShipments_EmptyResultNamesEveryFilterItApplied(t *testing.T) {
@@ -195,7 +197,26 @@ func TestSearchShipments_AcceptsAStatusThatExists(t *testing.T) {
 	}))
 
 	require.NoError(t, err)
-	assert.Equal(t, "InTransit", repo.captured.ShipmentOptions.Status)
+	assert.Equal(t, []shipment.Status{shipment.StatusInTransit}, repo.captured.ShipmentOptions.Statuses)
+}
+
+/*
+Asked for "the LA to chicago one that hasn't been picked up yet", gpt-6-luna
+searched New, then Assigned, then PartiallyAssigned, one call each. The
+statuses are taken together, so the search is one call.
+*/
+func TestSearchShipments_TakesSeveralStatusesInOneCall(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeShipmentRepo{}
+	_, err := newSearchShipmentsTool(repo, shipmentPartySources{}).Query(t.Context(), testParams(map[string]any{
+		"status": []any{"New", "PartiallyAssigned", "Assigned", "New"},
+	}))
+
+	require.NoError(t, err)
+	assert.Equal(t, []shipment.Status{
+		shipment.StatusNew, shipment.StatusPartiallyAssigned, shipment.StatusAssigned,
+	}, repo.captured.ShipmentOptions.Statuses)
 }
 
 // Every status the schema offers has to be one the tool accepts, or the model
@@ -206,7 +227,9 @@ func TestSearchShipmentsSchema_OffersOnlyStatusesTheToolAccepts(t *testing.T) {
 	properties, ok := newSearchShipmentsTool(&fakeShipmentRepo{}, shipmentPartySources{}).
 		ParamSchema()["properties"].(map[string]any)
 	require.True(t, ok)
-	offered, ok := properties["status"].(map[string]any)["enum"].([]string)
+	items, ok := properties["status"].(map[string]any)["items"].(map[string]any)
+	require.True(t, ok)
+	offered, ok := items["enum"].([]string)
 	require.True(t, ok)
 	require.NotEmpty(t, offered)
 
@@ -804,4 +827,249 @@ func TestGetShipment_SummaryIsUnchangedByTheUsersOnTheRecord(t *testing.T) {
 	assert.Equal(t, "Lakeshore Freight", objectAt(t, document, "moves", 0, "carrier")["carrier"])
 	assert.NotContains(t, document, "withheldByAccess",
 		"the summary names people and withholds nothing it did not name")
+}
+
+type recordingShipmentRepo struct {
+	repositories.ShipmentRepository
+
+	requests []*repositories.ListShipmentsRequest
+}
+
+func (f *recordingShipmentRepo) List(
+	_ context.Context,
+	req *repositories.ListShipmentsRequest,
+) (*pagination.CursorListResult[*shipment.Shipment], error) {
+	f.requests = append(f.requests, req)
+
+	return &pagination.CursorListResult[*shipment.Shipment]{}, nil
+}
+
+type namedCommodities struct {
+	repositories.CommodityRepository
+
+	items []*commodity.Commodity
+}
+
+func (f *namedCommodities) List(
+	_ context.Context,
+	req *repositories.ListCommodityRequest,
+) (*pagination.ListResult[*commodity.Commodity], error) {
+	matched := make([]*commodity.Commodity, 0, len(f.items))
+	for _, item := range f.items {
+		if strings.Contains(strings.ToLower(item.Name), strings.ToLower(req.Filter.Query)) {
+			matched = append(matched, item)
+		}
+	}
+
+	return &pagination.ListResult[*commodity.Commodity]{Items: matched}, nil
+}
+
+/*
+"did the acme steel load deliver yet?" found nothing: search_shipments matched
+customers, places and drivers but not what a load carries. SEED-SHP-005 is
+Acme's load of steel coils.
+*/
+func TestSearchShipments_MatchesWhatALoadCarries(t *testing.T) {
+	t.Parallel()
+
+	steel := &commodity.Commodity{ID: pulid.MustNew("com_"), Name: "Steel Coils"}
+	repo := &recordingShipmentRepo{}
+	tool := newSearchShipmentsTool(repo, shipmentPartySources{
+		commodities: &namedCommodities{items: []*commodity.Commodity{steel}},
+	})
+
+	_, err := tool.Query(t.Context(), agentParams(map[string]any{"query": "steel"},
+		permission.SensitivityRestricted))
+	require.NoError(t, err)
+
+	var carried []pulid.ID
+	for _, req := range repo.requests {
+		if len(req.ShipmentOptions.CommodityIDs) > 0 {
+			carried = req.ShipmentOptions.CommodityIDs
+		}
+	}
+	assert.Equal(t, []pulid.ID{steel.ID}, carried)
+}
+
+type namedShipmentTypes struct {
+	repositories.ShipmentTypeRepository
+
+	items []*shipmenttype.ShipmentType
+}
+
+func (f *namedShipmentTypes) List(
+	_ context.Context,
+	req *repositories.ListShipmentTypesRequest,
+) (*pagination.ListResult[*shipmenttype.ShipmentType], error) {
+	matched := make([]*shipmenttype.ShipmentType, 0, len(f.items))
+	for _, item := range f.items {
+		if strings.EqualFold(item.Code, req.Filter.Query) {
+			matched = append(matched, item)
+		}
+	}
+
+	return &pagination.ListResult[*shipmenttype.ShipmentType]{Items: matched}, nil
+}
+
+// "the peak ltl going to chicago" found nothing tagged LTL: search matched no
+// shipment type, though LTL is one.
+func TestSearchShipments_MatchesTheShipmentType(t *testing.T) {
+	t.Parallel()
+
+	ltl := &shipmenttype.ShipmentType{ID: pulid.MustNew("sht_"), Code: "LTL"}
+	repo := &recordingShipmentRepo{}
+	tool := newSearchShipmentsTool(repo, shipmentPartySources{
+		types: &namedShipmentTypes{items: []*shipmenttype.ShipmentType{ltl}},
+	})
+
+	_, err := tool.Query(t.Context(), agentParams(map[string]any{"query": "ltl"},
+		permission.SensitivityRestricted))
+	require.NoError(t, err)
+
+	var typed []pulid.ID
+	for _, req := range repo.requests {
+		if len(req.ShipmentOptions.ShipmentTypeIDs) > 0 {
+			typed = req.ShipmentOptions.ShipmentTypeIDs
+		}
+	}
+	assert.Equal(t, []pulid.ID{ltl.ID}, typed)
+}
+
+type namedLocations struct {
+	repositories.LocationRepository
+
+	items []*location.Location
+}
+
+func (f *namedLocations) List(
+	_ context.Context,
+	req *repositories.ListLocationRequest,
+) (*pagination.ListResult[*location.Location], error) {
+	matched := make([]*location.Location, 0, len(f.items))
+	for _, item := range f.items {
+		if strings.Contains(strings.ToLower(item.City), strings.ToLower(req.Filter.Query)) {
+			matched = append(matched, item)
+		}
+	}
+
+	return &pagination.ListResult[*location.Location]{Items: matched}, nil
+}
+
+/*
+"invoice the peak denver to phoenix load" matched Peak and a stop at Denver or
+Phoenix, so Peak's newest loads into Denver filled the page and SEED-SHP-009,
+Denver to Phoenix, was never seen. Two words naming places each have to be a
+stop on the load.
+*/
+func TestSearchShipments_RequiresAStopAtEachPlaceNamed(t *testing.T) {
+	t.Parallel()
+
+	denver := &location.Location{ID: pulid.MustNew("loc_"), Name: "Denver Drop Point", City: "Denver"}
+	phoenix := &location.Location{
+		ID: pulid.MustNew("loc_"), Name: "Phoenix Cold Storage", City: "Phoenix",
+	}
+	repo := &recordingShipmentRepo{}
+	tool := newSearchShipmentsTool(repo, shipmentPartySources{
+		locations: &namedLocations{items: []*location.Location{denver, phoenix}},
+	})
+
+	_, err := tool.Query(t.Context(), agentParams(map[string]any{"query": "denver phoenix"},
+		permission.SensitivityRestricted))
+	require.NoError(t, err)
+
+	var each [][]pulid.ID
+	for _, req := range repo.requests {
+		if len(req.ShipmentOptions.StopEachOf) > 0 {
+			each = req.ShipmentOptions.StopEachOf
+		}
+		assert.Empty(t, req.ShipmentOptions.StopLocationIDs,
+			"either place alone is not the load meant")
+	}
+	assert.Equal(t, [][]pulid.ID{{denver.ID}, {phoenix.ID}}, each)
+}
+
+type statusShipmentRepo struct {
+	repositories.ShipmentRepository
+
+	items []*shipment.Shipment
+}
+
+func (f *statusShipmentRepo) List(
+	_ context.Context,
+	req *repositories.ListShipmentsRequest,
+) (*pagination.CursorListResult[*shipment.Shipment], error) {
+	out := make([]*shipment.Shipment, 0, len(f.items))
+	for _, item := range f.items {
+		statuses := req.ShipmentOptions.Statuses
+		if len(statuses) > 0 && !slices.Contains(statuses, item.Status) {
+			continue
+		}
+		out = append(out, item)
+		if limit := req.Filter.Pagination.Limit; limit > 0 && len(out) >= limit {
+			break
+		}
+	}
+
+	return &pagination.CursorListResult[*shipment.Shipment]{Items: out}, nil
+}
+
+/*
+"email freshhaul that the reefer to LA is running behind" was searched across
+New through Delayed. Ten new FreshHaul loads to Los Angeles filled the page,
+the one delayed load never appeared, and Haiku asked which load was meant. A
+full page across several statuses also carries the newest match in each status
+it does not show.
+*/
+func TestSearchShipments_AFullPageStillShowsEachStatusAskedFor(t *testing.T) {
+	t.Parallel()
+
+	items := make([]*shipment.Shipment, 0, 11)
+	for range defaultSearchLimit {
+		items = append(items, &shipment.Shipment{
+			ID: pulid.MustNew("shp_"), ProNumber: "NEW", Status: shipment.StatusNew,
+		})
+	}
+	delayed := &shipment.Shipment{
+		ID: pulid.MustNew("shp_"), ProNumber: "SEED-SHP-010", Status: shipment.StatusDelayed,
+	}
+	items = append(items, delayed)
+
+	result, err := newSearchShipmentsTool(&statusShipmentRepo{items: items}, shipmentPartySources{}).
+		Query(t.Context(), testParams(map[string]any{
+			"query":  "freshhaul los angeles",
+			"status": []any{"New", "InTransit", "Delayed"},
+		}))
+	require.NoError(t, err)
+
+	outcome, ok := result.(searchOutcome)
+	require.True(t, ok)
+	rows, ok := outcome.Items.([]shipmentRow)
+	require.True(t, ok)
+	pros := make([]string, 0, len(rows))
+	for idx := range rows {
+		pros = append(pros, rows[idx].ProNumber)
+	}
+	assert.Contains(t, pros, "SEED-SHP-010")
+	assert.Contains(t, outcome.Note, "Delayed")
+	assert.True(t, outcome.HasMore)
+}
+
+/*
+Asked "who's on the second one", gpt-6-luna read SEED-SHP-006, found no
+assignment on its second move, could not tell nobody from not shown, and went
+looking on the dispatch board. A move with neither a driver nor a carrier says
+it needs a driver.
+*/
+func TestMoveSummary_SaysAnUncoveredMoveNeedsADriver(t *testing.T) {
+	t.Parallel()
+
+	input := &shipmentSummaryInput{}
+	open := moveSummary(&shipment.ShipmentMove{ID: pulid.MustNew("sm_")}, input)
+	assert.Equal(t, coverageNone, open.Coverage)
+
+	covered := moveSummary(&shipment.ShipmentMove{
+		ID:         pulid.MustNew("sm_"),
+		Assignment: &shipment.Assignment{ID: pulid.MustNew("a_")},
+	}, input)
+	assert.Empty(t, covered.Coverage)
 }

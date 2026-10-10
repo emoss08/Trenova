@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/telematicsservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/activity"
@@ -124,6 +125,8 @@ func (a *Activities) PollTenantTelematicsActivity(
 ) (*PollTenantResult, error) {
 	tenantInfo := payload.TenantInfo()
 	recordActivityHeartbeat(ctx, "polling-telematics", tenantInfo.OrgID.String())
+	stopHeartbeat := modelcall.Heartbeat(ctx)
+	defer stopHeartbeat()
 
 	result, err := a.service.PollTenant(ctx, tenantInfo)
 	if err != nil {
@@ -147,6 +150,8 @@ func (a *Activities) SweepTenantTelematicsActivity(
 ) (*SweepTenantResult, error) {
 	tenantInfo := payload.TenantInfo()
 	recordActivityHeartbeat(ctx, "sweeping-telematics", tenantInfo.OrgID.String())
+	stopHeartbeat := modelcall.Heartbeat(ctx)
+	defer stopHeartbeat()
 
 	result, err := a.service.SweepTenant(ctx, tenantInfo)
 	if err != nil {

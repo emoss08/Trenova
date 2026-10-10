@@ -214,7 +214,12 @@ func (r *repository) ListPage(
 		for _, row := range rows {
 			roots = append(roots, row.Root)
 		}
-		artifacts, err := r.versionsOf(ctx, req.TenantInfo, req.ThreadID, roots)
+		artifacts, err := r.versionsOf(ctx, versionsRequest{
+			tenant:   req.TenantInfo,
+			threadID: req.ThreadID,
+			roots:    roots,
+			summary:  req.Summary,
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -276,30 +281,50 @@ func boolInt(value bool) int {
 	return 0
 }
 
-// versionsOf reads every version of the given lineages, oldest first.
+type versionsRequest struct {
+	tenant   pagination.TenantInfo
+	threadID pulid.ID
+	roots    []string
+	summary  bool
+}
+
 func (r *repository) versionsOf(
 	ctx context.Context,
-	tenant pagination.TenantInfo,
-	threadID pulid.ID,
-	roots []string,
+	req versionsRequest,
 ) ([]*assistantartifact.Artifact, error) {
-	cols := buncolgen.ArtifactColumns
-	artifacts := make([]*assistantartifact.Artifact, 0, len(roots))
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&artifacts).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.ArtifactScopeTenant(sq, tenant).
-				Where(cols.ThreadID.Eq(), threadID).
-				Where(rootExpr+" IN (?)", bun.List(roots))
-		}).
-		Order(cols.LineageSeq.OrderAsc(), cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
-		Scan(ctx)
-	if err != nil {
+	artifacts := make([]*assistantartifact.Artifact, 0, len(req.roots))
+	if err := versionsQuery(r.db.DBForContext(ctx), &artifacts, &req).Scan(ctx); err != nil {
 		return nil, fmt.Errorf("read artifact versions: %w", err)
 	}
 
 	return artifacts, nil
+}
+
+func versionsQuery(
+	db bun.IDB,
+	dest *[]*assistantartifact.Artifact,
+	req *versionsRequest,
+) *bun.SelectQuery {
+	cols := buncolgen.ArtifactColumns
+	query := db.NewSelect().Model(dest)
+	if req.summary {
+		query = query.
+			ExcludeColumn(cols.Payload.String()).
+			ColumnExpr(
+				cols.Payload.Expr(
+					"COALESCE((SELECT jsonb_object_agg(e.key, e.value) FROM jsonb_each({}) AS e WHERE e.key IN (?)), jsonb_build_object()) AS payload",
+				),
+				bun.List(assistantartifact.SummaryPayloadKeys()),
+			)
+	}
+
+	return query.
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.ArtifactScopeTenant(sq, req.tenant).
+				Where(cols.ThreadID.Eq(), req.threadID).
+				Where(rootExpr+" IN (?)", bun.List(req.roots))
+		}).
+		Order(cols.LineageSeq.OrderAsc(), cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc())
 }
 
 // rootOf is the lineage an artifact belongs to, read from the artifact.
@@ -337,7 +362,11 @@ func (r *repository) ListLineage(
 			return nil, err
 		}
 
-		return r.versionsOf(ctx, req.TenantInfo, req.ThreadID, []string{root})
+		return r.versionsOf(ctx, versionsRequest{
+			tenant:   req.TenantInfo,
+			threadID: req.ThreadID,
+			roots:    []string{root},
+		})
 	})
 }
 

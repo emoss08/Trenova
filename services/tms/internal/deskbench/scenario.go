@@ -24,6 +24,7 @@ type Scenario struct {
 	Provider    string       `yaml:"provider"    json:"provider,omitempty"`
 	Formula     *FormulaPage `yaml:"formula"     json:"formula,omitempty"`
 	Exclusive   string       `yaml:"exclusive"   json:"exclusive,omitempty"`
+	Setup       []string     `yaml:"setup"       json:"setup,omitempty"`
 	Steps       []Step       `yaml:"steps"       json:"steps"`
 	Source      string       `yaml:"-"           json:"source,omitempty"`
 }
@@ -232,6 +233,11 @@ func (s *Scenario) Validate() error {
 	if len(s.Steps) == 0 {
 		return fmt.Errorf("%s: %w", s.Name, ErrScenarioEmpty)
 	}
+	for idx, statement := range s.Setup {
+		if err := validSetup(statement); err != nil {
+			return fmt.Errorf("%s setup %d: %w", s.Name, idx+1, err)
+		}
+	}
 
 	for idx := range s.Steps {
 		step := &s.Steps[idx]
@@ -265,6 +271,27 @@ func (s *Scenario) Validate() error {
 			if err := fact.validate(); err != nil {
 				return fmt.Errorf("%s: %w", where, err)
 			}
+		}
+	}
+
+	return nil
+}
+
+var setupVerbs = []string{"update", "insert", "delete", "with"}
+
+var setupForbidden = []string{"drop ", "alter ", "truncate ", "grant ", "revoke ", "create "}
+
+func validSetup(statement string) error {
+	text := strings.ToLower(strings.TrimSpace(statement))
+	if !slices.ContainsFunc(setupVerbs, func(verb string) bool { return strings.HasPrefix(text, verb) }) {
+		return fmt.Errorf("setup is an UPDATE, INSERT or DELETE: %q", statement)
+	}
+	if strings.Contains(strings.TrimRight(text, "; \n\t"), ";") {
+		return fmt.Errorf("setup is one statement each: %q", statement)
+	}
+	for _, word := range setupForbidden {
+		if strings.Contains(text, word) {
+			return fmt.Errorf("setup changes rows, not the schema or grants: %q", statement)
 		}
 	}
 

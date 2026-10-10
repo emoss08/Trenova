@@ -6,8 +6,16 @@ type Message = samsaraspec.V1MessageResponse
 
 type SentMessage = samsaraspec.V1Message
 
-type CreateRequest = samsaraspec.InlineObject2
-
 type ListResponse = samsaraspec.InlineResponse2005
 
 type CreateResponse = samsaraspec.InlineResponse2006
+
+type CreateRequest struct {
+	DriverIDs []string
+	Text      string
+}
+
+type createRequestBody struct {
+	DriverIDs []int64 `json:"driverIds"`
+	Text      string  `json:"text"`
+}

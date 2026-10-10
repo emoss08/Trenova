@@ -928,6 +928,9 @@ func TestGetResourcePermissions_RegularUser(t *testing.T) {
 	assert.Equal(t, "shipment", result.Resource)
 	assert.Equal(t, permission.DataScopeOwn, result.DataScope)
 	assert.Contains(t, result.Operations, permission.OpRead)
+	assert.Empty(t, result.AccessibleFields,
+		"a list of only the classified fields would withhold every unclassified one; "+
+			"MaxSensitivity governs")
 	userRepo.AssertExpectations(t)
 	roleRepo.AssertExpectations(t)
 	cacheRepo.AssertExpectations(t)

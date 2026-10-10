@@ -577,7 +577,12 @@ func replyStates(reply, value string) bool {
 		return numberguard.Cites(reply, number)
 	}
 
-	return strings.Contains(strings.ToLower(reply), strings.ToLower(strings.TrimSpace(value)))
+	if strings.Contains(strings.ToLower(reply), strings.ToLower(strings.TrimSpace(value))) {
+		return true
+	}
+	folded := stringutils.NormalizeIdentifier(value)
+
+	return folded != "" && strings.Contains(stringutils.NormalizeIdentifier(reply), folded)
 }
 
 func (b *Bench) FactValues(ctx context.Context, session *Session, statement string) ([]string, error) {
@@ -596,6 +601,77 @@ func (b *Bench) FactValues(ctx context.Context, session *Session, statement stri
 		defer rows.Close()
 
 		return firstColumn(rows)
+	})
+}
+
+// benchLeftovers cancels the shipments earlier bench conversations created and
+// left New, before a run starts. A load a scenario booked and never ran made
+// "this one" and "the acme load" ambiguous for every run after it. Only a load a
+// bench thread's create or duplicate made is touched: an edit's result names
+// the seed load it changed, and reading every executed proposal canceled
+// SEED-SHP-001 after a re-rate. Loads people entered are never touched.
+//
+// It also retires what earlier bench conversations taught the agents, and
+// dismisses what they suggested. A rejected hold taught "this person does not
+// want a hold for missing paperwork", and the case that asks for that hold
+// failed on every run after. Memories from people's own conversations are
+// never touched.
+var benchLeftovers = []string{
+	`CREATE TEMP TABLE bench_leftovers ON COMMIT DROP AS
+	SELECT s.id FROM shipments s
+	WHERE s.status = 'New' AND s.pro_number NOT LIKE 'SEED-%' AND s.id IN (
+		SELECT p.execution_result->'record'->>'id'
+		FROM agent_proposals p
+		JOIN agent_runs r ON r.id = p.run_id
+		JOIN assistant_threads t ON t.id = r.subject_id
+		WHERE t.title LIKE '[bench]%'
+			AND p.status = 'Executed'
+			AND p.tool_name IN ('create_shipment', 'duplicate_shipment')
+			AND p.execution_result->'record'->>'entityType' = 'shipment')`,
+	`UPDATE assignments a SET status = 'Canceled' FROM shipment_moves sm
+	WHERE a.shipment_move_id = sm.id AND sm.shipment_id IN (SELECT id FROM bench_leftovers)`,
+	`UPDATE shipment_moves SET status = 'Canceled'
+	WHERE shipment_id IN (SELECT id FROM bench_leftovers)`,
+	`UPDATE shipments SET status = 'Canceled' WHERE id IN (SELECT id FROM bench_leftovers)`,
+	`CREATE TEMP TABLE bench_lessons ON COMMIT DROP AS
+	SELECT m.id FROM agent_memories m
+	WHERE m.status IN ('Active', 'Paused', 'Suggested') AND (
+		m.reflection_id IN (
+			SELECT rf.id FROM agent_reflections rf
+			LEFT JOIN agent_runs r ON r.id = rf.run_id
+			JOIN assistant_threads t ON t.id = COALESCE(rf.thread_id, r.subject_id)
+			WHERE t.title LIKE '[bench]%')
+		OR m.source_run_id IN (
+			SELECT r.id FROM agent_runs r
+			JOIN assistant_threads t ON t.id = r.subject_id
+			WHERE t.title LIKE '[bench]%'))`,
+	`UPDATE agent_memories SET
+		status = CASE WHEN status = 'Suggested' THEN 'Dismissed' ELSE 'Retired' END,
+		retired_at = CASE WHEN status = 'Suggested' THEN retired_at
+			ELSE extract(epoch FROM now())::bigint END,
+		version = version + 1,
+		updated_at = extract(epoch FROM now())::bigint
+	WHERE id IN (SELECT id FROM bench_lessons)`,
+}
+
+func (b *Bench) runSetup(ctx context.Context, session *Session, statements []string) error {
+	if len(statements) == 0 {
+		return nil
+	}
+	ctx = session.Context(ctx)
+
+	return dbtx.WriteErr(ctx, b.DB, func(ctx context.Context) error {
+		db := b.DB.DBForContext(ctx)
+		if _, err := db.ExecContext(ctx, "SET LOCAL statement_timeout = '"+factTimeout+"'"); err != nil {
+			return fmt.Errorf("bound the setup: %w", err)
+		}
+		for idx, statement := range statements {
+			if _, err := db.ExecContext(ctx, statement); err != nil {
+				return fmt.Errorf("setup %d: %w", idx+1, err)
+			}
+		}
+
+		return nil
 	})
 }
 

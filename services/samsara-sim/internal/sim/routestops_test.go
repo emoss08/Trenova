@@ -14,7 +14,7 @@ func newRouteStopFixture() *Fixture {
 	fixture := newGeofenceFixture()
 	fixture.Drivers = []Record{
 		{
-			"id":   "drv-geo",
+			"id":   "1700101",
 			"name": "Casey Rivera",
 			"externalIds": map[string]any{
 				"tmsWorkerId": "worker-geo",
@@ -23,11 +23,11 @@ func newRouteStopFixture() *Fixture {
 	}
 	fixture.Routes = []Record{
 		{
-			"id":     "route-geo",
+			"id":     "4130000101",
 			"name":   "Geo Corridor Route",
-			"driver": map[string]any{"id": "drv-geo", "name": "Casey Rivera"},
+			"driver": map[string]any{"id": "1700101", "name": "Casey Rivera"},
 			"vehicle": map[string]any{
-				"id":   "veh-geo",
+				"id":   "281474976720101",
 				"name": "Truck Geo",
 			},
 			"externalIds": map[string]any{
@@ -88,21 +88,24 @@ func TestRouteStopWebhookEmissionsArrivalAndDeparture(t *testing.T) {
 		if got := stringValue(Record(emission.Data), "operation"); got != wantOperation {
 			t.Fatalf("expected operation %q, got %q", wantOperation, got)
 		}
-		if got := stringValue(Record(emission.Data), "assignedToRoute"); got != "route-geo" {
-			t.Fatalf("expected assignedToRoute route-geo, got %q", got)
+		if got := stringValue(Record(emission.Data), "assignedToRoute"); got != "4130000101" {
+			t.Fatalf("expected assignedToRoute 4130000101, got %q", got)
 		}
 
 		route, ok := anyAsMap(emission.Data["route"])
-		if !ok || stringValue(Record(route), "id") != "route-geo" {
-			t.Fatalf("expected route payload with id route-geo, got %v", emission.Data["route"])
+		if !ok || stringValue(Record(route), "id") != "4130000101" {
+			t.Fatalf("expected route payload with id 4130000101, got %v", emission.Data["route"])
 		}
 		driver, ok := anyAsMap(emission.Data["driver"])
-		if !ok || stringValue(Record(driver), "id") != "drv-geo" {
-			t.Fatalf("expected driver payload with id drv-geo, got %v", emission.Data["driver"])
+		if !ok || stringValue(Record(driver), "id") != "1700101" {
+			t.Fatalf("expected driver payload with id 1700101, got %v", emission.Data["driver"])
 		}
 		vehicle, ok := anyAsMap(emission.Data["vehicle"])
-		if !ok || stringValue(Record(vehicle), "id") != "veh-geo" {
-			t.Fatalf("expected vehicle payload with id veh-geo, got %v", emission.Data["vehicle"])
+		if !ok || stringValue(Record(vehicle), "id") != "281474976720101" {
+			t.Fatalf(
+				"expected vehicle payload with id 281474976720101, got %v",
+				emission.Data["vehicle"],
+			)
 		}
 		if got := stringValue(Record(vehicle), "vin"); got != "1FUJGLDR5CLBP9999" {
 			t.Fatalf("expected fixture vin, got %q", got)
@@ -209,6 +212,7 @@ func newRouteStopTestServer(t *testing.T, webhookURL string) *Server {
 	t.Helper()
 
 	cfg := config.Default()
+	cfg.RateLimits.Enabled = false
 	cfg.Auth.Tokens = []string{"dev-samsara-token"}
 	cfg.Simulation.FleetSize = 1
 	cfg.Simulation.TripHoursMin = 1
@@ -220,7 +224,7 @@ func newRouteStopTestServer(t *testing.T, webhookURL string) *Server {
 	fixture := newRouteStopFixture()
 	fixture.Webhooks = []Record{
 		{
-			"id":   "wh-route-stop",
+			"id":   "524004",
 			"name": "route stop sink",
 			"url":  webhookURL,
 			"simDelivery": map[string]any{

@@ -30,6 +30,14 @@ func (r *AIProviderResolver) OutputCostPerMillion(ctx context.Context, obj *aipr
 	return base.DecimalPtrToStringPtr(obj.OutputCostPerMillion), nil
 }
 
+func (r *AIProviderResolver) CacheReadCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error) {
+	return base.DecimalPtrToStringPtr(obj.CacheReadCostPerMillion), nil
+}
+
+func (r *AIProviderResolver) CacheWriteCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error) {
+	return base.DecimalPtrToStringPtr(obj.CacheWriteCostPerMillion), nil
+}
+
 func (r *QueryResolver) AiProviders(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIProviderConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpRead)
 	if err != nil {

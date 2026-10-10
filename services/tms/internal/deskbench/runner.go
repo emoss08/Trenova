@@ -175,6 +175,19 @@ func (b *Bench) runCase(ctx context.Context, opts *RunOptions, planned plannedCa
 	result.Provider = ProviderLabel(provider)
 	result.Model = providerModel(provider)
 
+	b.tidied.Do(func() {
+		if tidyErr := b.runSetup(ctx, session, benchLeftovers); tidyErr != nil {
+			b.live.Line("bench", "could not cancel what earlier bench runs left open: %v", tidyErr)
+		}
+	})
+	if err = b.runSetup(ctx, session, scenario.Setup); err != nil {
+		result.Error = err.Error()
+		return result
+	}
+	if len(scenario.Setup) > 0 {
+		b.live.Line(planned.label(), "setup: %d statement(s) put the data in place", len(scenario.Setup))
+	}
+
 	conv, err := b.openCase(ctx, session, opts, planned, provider)
 	if err != nil {
 		result.Error = err.Error()

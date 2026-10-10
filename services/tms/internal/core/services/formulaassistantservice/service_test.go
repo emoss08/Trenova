@@ -53,7 +53,12 @@ const testSchema = `{
 	"x-data-source": {"table": "shipments", "preloads": []},
 	"properties": {
 		"totalDistance": {"description": "Distance", "type": "number"},
-		"baseRate": {"description": "Rate", "type": "number"}
+		"baseRate": {"description": "Rate", "type": "number"},
+		"serviceType": {
+			"description": "Service type",
+			"type": "object",
+			"properties": {"code": {"description": "Service type code", "type": "string"}}
+		}
 	}
 }`
 
@@ -167,6 +172,63 @@ func TestTest_TheEnginePricesEveryScenario(t *testing.T) {
 	assert.Equal(t, "A cheaper lane", outcome.Scenarios[1].Description)
 }
 
+/*
+gpt-6-luna gave a template variable a value in each scenario but not in
+variables, and the check refused the expression as "unknown name teamService".
+It then set serviceType.code per scenario, a schema field the reference had
+listed, and was told the variable name was invalid. It asked the person which
+service type meant team service instead of proposing the formula.
+*/
+func TestTest_ScenarioValuesCountAsDeclaredAndMayNameASchemaField(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(t)
+
+	outcome, err := svc.Test(t.Context(), &TestRequest{
+		TenantInfo: tenant(),
+		Expression: `totalDistance * baseRate + (teamService ? teamRate * totalDistance : 0) + ` +
+			`(serviceType.code == "TEAM" ? 10 : 0)`,
+		Variables: map[string]any{"baseRate": 2, "teamRate": 0.25},
+		Scenarios: []Scenario{
+			{Name: "Solo", Variables: map[string]any{
+				"totalDistance": 100, "teamService": false, "serviceType.code": "STD",
+			}},
+			{Name: "Team", Variables: map[string]any{
+				"totalDistance": 100, "teamService": true, "serviceType.code": "TEAM",
+			}},
+		},
+	})
+	require.NoError(t, err)
+
+	assert.True(t, outcome.Check.Valid, outcome.Check.Error)
+	require.Len(t, outcome.Scenarios, 2)
+	assert.Equal(t, "200", outcome.Scenarios[0].Amount)
+	assert.Equal(t, "235", outcome.Scenarios[1].Amount)
+}
+
+// Asked what the studio's per-mile-with-minimum template comes to on a 90-mile
+// run at 3 a mile, gpt-6-luna set every value on the one load it described.
+// The check ran without them, max met an empty minimum, and the model said the
+// engine could not price it.
+func TestTest_PricesALoadWhoseValuesAreAllOnTheLoad(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(t)
+
+	outcome, err := svc.Test(t.Context(), &TestRequest{
+		TenantInfo: tenant(),
+		Expression: "max(minimumCharge, baseRate * totalDistance)",
+		Scenarios: []Scenario{{Name: "90-mile run", Variables: map[string]any{
+			"baseRate": 3, "minimumCharge": 250, "totalDistance": 90,
+		}}},
+	})
+	require.NoError(t, err)
+
+	assert.True(t, outcome.Check.Valid, outcome.Check.Error)
+	require.Len(t, outcome.Scenarios, 1)
+	assert.Equal(t, "270", outcome.Scenarios[0].Amount)
+}
+
 func TestTest_ReportsAnExpressionThatWillNotEvaluate(t *testing.T) {
 	t.Parallel()
 
@@ -197,6 +259,7 @@ func TestTest_RefusesWhatCannotBeAFormulaValue(t *testing.T) {
 	cases := map[string]*TestRequest{
 		"no expression":  {Expression: "  "},
 		"a bad name":     {Expression: "1", Variables: map[string]any{"9lives": 1}},
+		"a bad path":     {Expression: "1", Variables: map[string]any{"serviceType..code": 1}},
 		"a list value":   {Expression: "1", Variables: map[string]any{"rate": []any{1, 2}}},
 		"a nameless one": {Expression: "1", Scenarios: []Scenario{{Name: " "}}},
 		"too many":       {Expression: "1", Scenarios: scenarios},
@@ -236,6 +299,26 @@ func TestPropose_PricesTheDraftWithItsOwnDefaults(t *testing.T) {
 	assert.Equal(t, "350", proposal.Scenarios[0].Amount, "the minimum holds on a short run")
 	assert.Equal(t, "2850", proposal.Scenarios[1].Amount)
 	assert.Len(t, proposal.Variables, 2)
+}
+
+// A proposal goes into the studio, where only its declared variables exist,
+// so a name only its sample loads give a value is still unknown there.
+func TestPropose_ChecksWithTheDeclaredVariablesOnly(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(t)
+
+	proposal, err := svc.Propose(t.Context(), &ProposeRequest{
+		TenantInfo:  tenant(),
+		Expression:  "totalDistance * perMile",
+		Explanation: "Charges per mile.",
+		Scenarios: []Scenario{
+			{Name: "Run", Variables: map[string]any{"totalDistance": 10, "perMile": 2}},
+		},
+	})
+	require.NoError(t, err)
+
+	assert.False(t, proposal.Check.Valid, "perMile is not declared, so the studio could not run it")
 }
 
 func TestPropose_RefusesADraftTheStudioCouldNotHold(t *testing.T) {

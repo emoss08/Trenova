@@ -125,6 +125,9 @@ export const aiProviderSchema = z.object({
   extraBody: extraBodySchema,
   inputCostPerMillion: pricePerMillionSchema,
   outputCostPerMillion: pricePerMillionSchema,
+  /** Null charges the protocol's usual share of the input price. */
+  cacheReadCostPerMillion: pricePerMillionSchema,
+  cacheWriteCostPerMillion: pricePerMillionSchema,
   maxTokens: z.number().default(8192),
   /** `[]Task` with nullzero on the server: a provider with no tasks arrives as null. */
   tasks: z.preprocess((value) => value ?? [], z.array(aiTaskSchema)),
@@ -167,6 +170,8 @@ export const saveAIProviderRequestSchema = z.object({
   extraBody: extraBodySchema,
   inputCostPerMillion: z.number().min(0).nullable().default(null),
   outputCostPerMillion: z.number().min(0).nullable().default(null),
+  cacheReadCostPerMillion: z.number().min(0).nullable().default(null),
+  cacheWriteCostPerMillion: z.number().min(0).nullable().default(null),
   maxTokens: z.number().min(256).max(200000).default(8192),
   tasks: z.array(aiTaskSchema).default([]),
   priority: z.number().min(0).default(100),

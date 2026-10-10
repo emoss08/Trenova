@@ -361,7 +361,11 @@ func DefinitionJSONSchema() map[string]any {
 				"items": map[string]any{
 					"type": "object",
 					"properties": map[string]any{
-						"columnId": map[string]any{"type": "string"},
+						"columnId": map[string]any{
+							"type": "string",
+							"description": "The id of one of this definition's columns, " +
+								"or of a column describe_report lists.",
+						},
 						"direction": map[string]any{
 							"type": "string",
 							"enum": []string{"asc", "desc"},

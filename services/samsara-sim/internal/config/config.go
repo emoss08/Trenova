@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strings"
 	"time"
@@ -47,6 +48,16 @@ type WebhooksConfig struct {
 	InitialBackoff time.Duration `yaml:"initialBackoff"`
 }
 
+type RateLimitsConfig struct {
+	Enabled    bool    `yaml:"enabled"`
+	Multiplier float64 `yaml:"multiplier"`
+}
+
+type StateConfig struct {
+	Path       string        `yaml:"path"`
+	FlushDelay time.Duration `yaml:"flushDelay"`
+}
+
 type Config struct {
 	Server     ServerConfig     `yaml:"server"`
 	Auth       AuthConfig       `yaml:"auth"`
@@ -54,7 +65,14 @@ type Config struct {
 	Scenario   ScenarioConfig   `yaml:"scenario"`
 	Simulation SimulationConfig `yaml:"simulation"`
 	Webhooks   WebhooksConfig   `yaml:"webhooks"`
+	RateLimits RateLimitsConfig `yaml:"rateLimits"`
+	State      StateConfig      `yaml:"state"`
 }
+
+const (
+	defaultRateLimitMultiplier = 1.0
+	defaultStateFlushDelay     = 250 * time.Millisecond
+)
 
 func Default() Config {
 	return Config{
@@ -90,6 +108,13 @@ func Default() Config {
 			MaxAttempts:    3,
 			InitialBackoff: 200 * time.Millisecond,
 		},
+		RateLimits: RateLimitsConfig{
+			Enabled:    true,
+			Multiplier: defaultRateLimitMultiplier,
+		},
+		State: StateConfig{
+			FlushDelay: defaultStateFlushDelay,
+		},
 	}
 }
 
@@ -122,6 +147,8 @@ func normalizeConfig(cfg *Config) {
 	normalizeScenarioConfig(&cfg.Scenario)
 	normalizeSimulationConfig(&cfg.Simulation)
 	normalizeWebhooksConfig(&cfg.Webhooks)
+	normalizeRateLimitsConfig(&cfg.RateLimits)
+	normalizeStateConfig(&cfg.State)
 }
 
 func normalizeServerConfig(server *ServerConfig) {
@@ -215,6 +242,26 @@ func normalizeWebhooksConfig(webhooks *WebhooksConfig) {
 	}
 	if webhooks.InitialBackoff <= 0 {
 		webhooks.InitialBackoff = 200 * time.Millisecond
+	}
+}
+
+func normalizeRateLimitsConfig(rateLimits *RateLimitsConfig) {
+	if rateLimits == nil {
+		return
+	}
+	if rateLimits.Multiplier <= 0 || math.IsNaN(rateLimits.Multiplier) ||
+		math.IsInf(rateLimits.Multiplier, 0) {
+		rateLimits.Multiplier = defaultRateLimitMultiplier
+	}
+}
+
+func normalizeStateConfig(state *StateConfig) {
+	if state == nil {
+		return
+	}
+	state.Path = strings.TrimSpace(state.Path)
+	if state.FlushDelay <= 0 {
+		state.FlushDelay = defaultStateFlushDelay
 	}
 }
 

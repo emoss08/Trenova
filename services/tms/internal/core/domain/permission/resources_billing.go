@@ -207,6 +207,7 @@ func (r *Registry) registerBillingResources() {
 			"businessUnitId":            SensitivityInternal,
 			"organizationId":            SensitivityInternal,
 			"shipmentId":                SensitivityInternal,
+			"shipment.proNumber":        SensitivityInternal,
 			"orderId":                   SensitivityInternal,
 			"billToCustomerId":          SensitivityInternal,
 			"assignedBillerId":          SensitivityInternal,
@@ -304,7 +305,7 @@ func (r *Registry) registerBillingResources() {
 			{
 				Operation:   OpUpdate,
 				DisplayName: "Update",
-				Description: "Change, retire or restore a memory",
+				Description: "Change, retire, restore or review a memory",
 			},
 		},
 		DefaultSensitivity: SensitivityRestricted,

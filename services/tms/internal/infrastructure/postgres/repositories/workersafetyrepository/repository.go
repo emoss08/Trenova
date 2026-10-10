@@ -45,8 +45,15 @@ func (r *repository) ListEvents(
 			NewSelect().
 			Model(&entities).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = buncolgen.WorkerSafetyEventScopeTenant(sq, req.TenantInfo).
-					Where(cols.WorkerID.Eq(), req.WorkerID)
+				sq = buncolgen.WorkerSafetyEventScopeTenant(sq, req.TenantInfo)
+				if req.WorkerID.IsNotNil() {
+					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
+				}
+				if req.OpenOnly {
+					sq = sq.Where(cols.Status.In(), bun.List([]worker.SafetyEventStatus{
+						worker.SafetyEventStatusOpen, worker.SafetyEventStatusUnderReview,
+					}))
+				}
 				if req.Since > 0 {
 					sq = sq.Where(cols.OccurredAt.Gte(), req.Since)
 				}
@@ -60,6 +67,12 @@ func (r *repository) ListEvents(
 		if req.IncludeActors {
 			q = q.Relation(buncolgen.WorkerSafetyEventRelations.RecordedBy).
 				Relation(buncolgen.WorkerSafetyEventRelations.ClosedBy)
+		}
+		if req.IncludeWorker {
+			q = q.Relation(buncolgen.WorkerSafetyEventRelations.Worker)
+		}
+		if req.Limit > 0 {
+			q = q.Limit(req.Limit)
 		}
 
 		if err := q.Scan(ctx); err != nil {

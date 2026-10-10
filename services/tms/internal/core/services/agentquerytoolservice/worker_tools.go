@@ -206,8 +206,15 @@ func newSearchWorkerTool(
 
 func (t *searchWorkerTool) Name() string { return "search_worker" }
 
+func (t *searchWorkerTool) SearchTerms() []string {
+	return []string{
+		"look up a driver by name", "find a driver", "driver's worker id", "who is this driver",
+		"driver roster", "worker directory", "employee by name",
+	}
+}
+
 func (t *searchWorkerTool) Description() string {
-	return "List workers (drivers), optionally narrowed by a name or code. " +
+	return "Find a driver or other worker by name or code, or list the roster. " +
 		"Call it with no query to see who is on the roster; pass a query only when " +
 		"you already have a name. Returns matches with their ids, which get_worker " +
 		"can then expand. To find drivers by a licence or medical card date, use " +

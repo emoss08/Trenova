@@ -21,9 +21,13 @@ type ShipmentOptions struct {
 	IncludeCustomer         bool   `form:"includeCustomer"         json:"includeCustomer"         query:"includeCustomer"`
 	IncludeRoute            bool   `form:"-"                       json:"-"                       query:"-"`
 
+	Statuses         []shipment.Status          `form:"-" json:"-" query:"-"`
 	CustomerIDs      []pulid.ID                 `form:"-" json:"-" query:"-"`
 	StopLocationIDs  []pulid.ID                 `form:"-" json:"-" query:"-"`
+	StopEachOf       [][]pulid.ID               `form:"-" json:"-" query:"-"`
 	WorkerIDs        []pulid.ID                 `form:"-" json:"-" query:"-"`
+	CommodityIDs     []pulid.ID                 `form:"-" json:"-" query:"-"`
+	ShipmentTypeIDs  []pulid.ID                 `form:"-" json:"-" query:"-"`
 	QuickFilters     []shipment.QuickFilterSpec `form:"-" json:"-" query:"-"`
 	Timezone         string                     `form:"-" json:"-" query:"-"`
 	QuickFilterBasis *ShipmentQuickFilterBasis  `form:"-" json:"-" query:"-"`

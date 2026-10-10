@@ -608,6 +608,11 @@ func applyTaint(
 }
 
 func applyExecution(proposal *agent.AgentProposal, action serviceports.PendingAction, now int64) {
+	if action.Withdrawn {
+		proposal.Status = agent.ProposalStatusSuperseded
+
+		return
+	}
 	if action.Simulated {
 		simulatedAt := now
 		proposal.SimulatedAt = &simulatedAt

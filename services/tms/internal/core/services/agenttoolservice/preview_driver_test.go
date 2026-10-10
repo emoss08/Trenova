@@ -3,6 +3,7 @@ package agenttoolservice
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
@@ -243,4 +244,27 @@ func TestRequestCredentialRenewalPreview_ShowsTheAskAndWhoCannotReadIt(t *testin
 	assert.Equal(t, "Your CDL is due this month.", send.Message.Body)
 	require.Len(t, preview.Warnings, 1)
 	assert.Equal(t, agent.PreviewWarningDriverUnreachable, preview.Warnings[0].Code)
+}
+
+/*
+A request stored at 01:17 UTC is the evening before in Chicago, the zone its
+days are booked in. Labelled in UTC, every request read a day later than
+list_time_off showed it, and gpt-6-luna withdrew six correct approvals as
+mismatched.
+*/
+func TestPTOLabel_NamesTheDaysInTheOrganizationsZone(t *testing.T) {
+	t.Parallel()
+
+	chicago, err := time.LoadLocation("America/Chicago")
+	require.NoError(t, err)
+	start := time.Date(2027, 5, 3, 1, 17, 50, 0, time.UTC).Unix()
+	pto := &worker.WorkerPTO{
+		Type:      worker.PTOTypeVacation,
+		StartDate: start,
+		EndDate:   start + 86_400,
+	}
+
+	assert.Equal(t, "Vacation time off from 2027-05-02 to 2027-05-03", ptoLabel(pto, chicago))
+	assert.Equal(t, "Vacation time off from 2027-05-03 to 2027-05-04", ptoLabel(pto, nil),
+		"with no zone known it falls back to UTC")
 }

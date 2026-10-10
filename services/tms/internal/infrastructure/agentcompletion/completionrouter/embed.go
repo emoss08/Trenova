@@ -270,7 +270,9 @@ func (s *Service) embedBatch(
 			attribution: req.Attribution,
 		})
 		started := time.Now()
-		served, attemptErr := s.attemptEmbed(attemptCtx, provider, req.Purpose, batch)
+		served, attemptErr := s.attemptEmbed(
+			lastCandidate(attemptCtx, idx, len(candidates)), provider, req.Purpose, batch,
+		)
 		latency := time.Since(started)
 		attemptErr = stopped(ctx, attemptErr)
 		s.observe(ctx, provider, attemptErr)
@@ -295,7 +297,7 @@ func (s *Service) embedBatch(
 
 		if attemptErr == nil {
 			s.touchKey(ctx, provider, req.TenantInfo)
-			served.cost = provider.InputCostFor(served.tokens)
+			served.cost = provider.InputCostFor(aiprovider.TokenUsage{Input: served.tokens})
 
 			return served, nil
 		}

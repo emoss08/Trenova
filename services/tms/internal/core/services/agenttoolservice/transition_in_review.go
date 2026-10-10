@@ -197,7 +197,7 @@ func (t *transitionToInReviewTool) move(
 		},
 	}
 	if move.needsBiller() {
-		move.biller, move.asker, err = billerOf(params)
+		move.biller, move.asker, err = billerOf(ctx, t.billing, params)
 		if err != nil {
 			return nil, err
 		}

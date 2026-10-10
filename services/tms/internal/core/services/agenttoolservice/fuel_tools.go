@@ -16,7 +16,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/fuelpurchaseservice"
 	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -29,6 +31,7 @@ const (
 	paramTractorID            = "tractorId"
 	paramJurisdictionID       = "jurisdictionId"
 	paramPurchasedAt          = "purchasedAt"
+	noonOffsetSeconds         = 12 * 3600
 	paramVendor               = "vendor"
 	paramVendorCity           = "vendorCity"
 	paramFuelType             = "fuelType"
@@ -192,9 +195,13 @@ func fuelPurchaseProperties(forCorrection bool) map[string]any {
 		paramJurisdictionID: agenttoolschema.KindID("The state or province the fuel was "+
 			"bought in, from list_ifta_jurisdictions; it decides which line of the return the "+
 			"tax-paid gallons credit."+keep, permission.KindIFTAJurisdiction),
-		paramPurchasedAt: agenttoolschema.DateTime(
-			"When it was bought, as the receipt says." + keep,
-		),
+		paramPurchasedAt: map[string]any{
+			toolschema.KeyType: toolschema.TypeString,
+			toolschema.KeyDescription: "When it was bought: the receipt's date and time with its " +
+				"offset, such as 2026-10-08T14:30:00-05:00, or the day alone (2026-10-08, " +
+				"yesterday) when nobody gave a time; a day is recorded at noon in the " +
+				"organization's time zone, which is what the IFTA quarter needs." + keep,
+		},
 		paramVendor:     stringProperty("The truck stop or vendor."+keep, maxFuelVendorText),
 		paramVendorCity: stringProperty("The vendor's city."+keep, maxFuelVendorText),
 		paramFuelType: agenttoolschema.Enum("The fuel as IFTA classifies it; DEF, Reefer "+
@@ -205,8 +212,9 @@ func fuelPurchaseProperties(forCorrection bool) map[string]any {
 			"Gallon."+keep, quantityUnits),
 		paramUnitPrice: stringProperty("The price per unit as a decimal such as 3.899."+
 			keep, 0),
-		paramTotalAmount: stringProperty("The total paid as a decimal such as 389.90."+
-			keep, 0),
+		paramTotalAmount: stringProperty("The total paid as a decimal such as 389.90, as "+
+			"the receipt says. Leave it out when you have unitPrice and the quantity: it is "+
+			"worked out to the cent from them."+keep, 0),
 		paramCurrencyCode: stringProperty("The ISO currency code. Defaults to USD."+keep,
 			currencyCodeLength),
 		paramOdometer: integerProperty("The odometer reading at the pump."+keep, 0,
@@ -233,7 +241,8 @@ func fuelPurchaseProperties(forCorrection bool) map[string]any {
 }
 
 type fuelPurchaseInput struct {
-	values map[string]any
+	values   map[string]any
+	timezone string
 }
 
 func (in fuelPurchaseInput) given(key string) bool {
@@ -325,9 +334,30 @@ func (in fuelPurchaseInput) applyAmounts(purchase *fuelpurchase.FuelPurchase) er
 	return nil
 }
 
+func (in fuelPurchaseInput) purchasedAt() (int64, error) {
+	raw, err := requireString(in.values, paramPurchasedAt)
+	if err != nil {
+		return 0, err
+	}
+	if instant, parseErr := parseDateTime(paramPurchasedAt, raw); parseErr == nil {
+		return instant, nil
+	}
+
+	if strings.Contains(raw, ":") {
+		return 0, dateRefusal(paramPurchasedAt, raw, toolschema.FormatDateTime)
+	}
+	clk := filtercatalog.NewClock(in.timezone)
+	day, err := filtercatalog.CoerceDate(paramPurchasedAt, raw, clk)
+	if err != nil {
+		return 0, dateRefusal(paramPurchasedAt, raw, toolschema.FormatDateTime)
+	}
+
+	return clk.DayStart(day) + noonOffsetSeconds, nil
+}
+
 func (in fuelPurchaseInput) applyChoices(purchase *fuelpurchase.FuelPurchase) error {
 	if in.given(paramPurchasedAt) {
-		purchasedAt, err := requireDateTime(in.values, paramPurchasedAt)
+		purchasedAt, err := in.purchasedAt()
 		if err != nil {
 			return err
 		}
@@ -390,8 +420,20 @@ func newFuelPurchaseDraft(
 		CurrencyCode:   money.DefaultCurrencyCode,
 		TaxPaid:        true,
 	}
-	if err := (fuelPurchaseInput{values: params.Params}).apply(purchase); err != nil {
+	input := fuelPurchaseInput{values: params.Params, timezone: params.Timezone}
+	if err := input.apply(purchase); err != nil {
 		return nil, err
+	}
+	if purchase.TotalAmountMinor == 0 {
+		if !purchase.UnitPrice.Valid || !purchase.Quantity.IsPositive() {
+			return nil, fmt.Errorf(
+				"give %q, the total paid, or %q with %q so the total can be worked out",
+				paramTotalAmount, paramUnitPrice, paramQuantity,
+			)
+		}
+		purchase.TotalAmountMinor = money.MinorUnits(
+			purchase.Quantity.Mul(purchase.UnitPrice.Decimal).Round(2),
+		)
 	}
 
 	return &fuelpurchaseservice.CreatePurchaseRequest{
@@ -533,7 +575,6 @@ func newRecordFuelPurchaseTool(
 			paramPurchasedAt,
 			paramFuelType,
 			paramQuantity,
-			paramTotalAmount,
 		},
 		searchTerms: []string{"fuel", "receipt", "diesel", "gallons", searchTermIFTA, "pump"},
 	}), receivablePlan[*fuelpurchaseservice.CreatePurchaseRequest, *labelledPurchase]{
@@ -639,7 +680,7 @@ func (c *fuelPurchaseCorrection) request(
 	corrected.FuelCard = nil
 	corrected.Jurisdiction = nil
 	corrected.ImportBatch = nil
-	if err = (fuelPurchaseInput{values: c.values}).apply(&corrected); err != nil {
+	if err = (fuelPurchaseInput{values: c.values, timezone: params.Timezone}).apply(&corrected); err != nil {
 		return nil, err
 	}
 

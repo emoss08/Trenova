@@ -20,6 +20,13 @@ const (
 	MaxPayloadBytes = 256 * 1024
 )
 
+// SummaryPayloadKeys are the payload keys a summary keeps: the tool that made
+// the artifact, the entity it shows and the page it points at, which are what
+// a list needs to name and draw it without its contents.
+func SummaryPayloadKeys() []string {
+	return []string{"tool", "entity", "path"}
+}
+
 // Artifact is what a turn produced besides words: the rows a report preview
 // returned, a run to download, the email an agent wants to send, the plan it
 // wants to carry out, the record it looked up. The transcript refers to it;

@@ -52,6 +52,7 @@ func (s *Service) ListThreadArtifacts(
 		Query:      opts.Query,
 		Family:     opts.Family,
 		PinnedOnly: opts.PinnedOnly,
+		Summary:    opts.Summary,
 	})
 	if err != nil {
 		return nil, err

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agenttoolschema"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -59,6 +60,7 @@ type billingQueueDecider interface {
 		req *serviceports.AssignBillerRequest,
 		actor *serviceports.RequestActor,
 	) (*billingqueue.BillingQueueItem, error)
+	CheckBiller(ctx context.Context, tenantInfo pagination.TenantInfo, billerID pulid.ID) error
 }
 
 // queueDecision is one decision a biller makes on a queue item. The tools
@@ -252,22 +254,45 @@ func (t *billingQueueDecisionTool) Validate(
 		return err
 	}
 
-	return detentionHold(item, req.NewStatus)
+	return approvalBlock(item, req.NewStatus)
 }
 
-// detentionHold refuses an approval while a detention charge on the shipment
-// waits on its own approval, as the billing queue does.
-func detentionHold(item *billingqueue.BillingQueueItem, status billingqueue.Status) error {
-	if status != billingqueue.StatusApproved || len(item.DetentionHolds) == 0 {
+// approvalBlock refuses an approval the billing queue would refuse when it
+// ran: a detention charge on the shipment waiting on its own approval, or a
+// flagged check nobody has settled.
+func approvalBlock(item *billingqueue.BillingQueueItem, status billingqueue.Status) error {
+	if status != billingqueue.StatusApproved {
 		return nil
 	}
+	if len(item.DetentionHolds) > 0 {
+		return errortypes.NewValidationError(
+			"detentionHolds",
+			errortypes.ErrInvalidOperation,
+			"{0} on this item's shipment still waits on approval; approve or waive it first",
+			countOf(len(item.DetentionHolds), "detention charge"),
+		)
+	}
+	if open := item.OpenIssues(); len(open) > 0 {
+		return errortypes.NewValidationError(
+			"issues",
+			errortypes.ErrInvalidOperation,
+			"{0} on this item still need settling before it can be approved: {1}. "+
+				"A biller settles each in the item's review",
+			countOf(len(open), "flagged check"),
+			issueSummaries(open),
+		)
+	}
 
-	return errortypes.NewValidationError(
-		"detentionHolds",
-		errortypes.ErrInvalidOperation,
-		"{0} on this item's shipment still waits on approval; approve or waive it first",
-		countOf(len(item.DetentionHolds), "detention charge"),
-	)
+	return nil
+}
+
+func issueSummaries(issues []*billingqueue.Issue) string {
+	summaries := make([]string, 0, len(issues))
+	for _, issue := range issues {
+		summaries = append(summaries, issue.Summary)
+	}
+
+	return strings.Join(summaries, "; ")
 }
 
 func (t *billingQueueDecisionTool) Execute(
@@ -533,8 +558,14 @@ func billerProperty() map[string]any {
 
 // billerOf reads the biller a call names, or the person asking when it names
 // none. An unattended agent is nobody's biller, so a call from one that
-// names nobody is refused with the parameter it needs.
-func billerOf(params *serviceports.ToolExecuteParams) (biller pulid.ID, asker bool, err error) {
+// names nobody is refused with the parameter it needs. A named biller is
+// checked as the queue will check it: a made-up user id was proposed, and
+// failed only once a person had approved it.
+func billerOf(
+	ctx context.Context,
+	billing billingQueueDecider,
+	params *serviceports.ToolExecuteParams,
+) (biller pulid.ID, asker bool, err error) {
 	named, ok, err := optionalPulid(params.Params, paramBillerID)
 	if err != nil {
 		return pulid.Nil, false, errortypes.NewValidationError(
@@ -542,6 +573,17 @@ func billerOf(params *serviceports.ToolExecuteParams) (biller pulid.ID, asker bo
 		)
 	}
 	if ok {
+		if err = billing.CheckBiller(ctx, tenantFrom(*params), named); err != nil {
+			if errortypes.IsError(err) {
+				return pulid.Nil, false, errortypes.NewValidationError(paramBillerID,
+					errortypes.ErrInvalid, "billerId is not a user in this organization. "+
+						"Leave it out to assign the person who asked, or use an id a tool "+
+						"returned; never make one up")
+			}
+
+			return pulid.Nil, false, err
+		}
+
 		return named, false, nil
 	}
 	if params.Actor == nil || params.Actor.IsAgent() || params.Actor.UserID.IsNil() {
@@ -586,26 +628,27 @@ func (t *assignBillerTool) Target(params map[string]any) (serviceports.ToolTarge
 }
 
 func (t *assignBillerTool) request(
+	ctx context.Context,
 	params *serviceports.ToolExecuteParams,
-) (*serviceports.AssignBillerRequest, error) {
-	if err := guardPreview(t, params); err != nil {
-		return nil, err
+) (req *serviceports.AssignBillerRequest, asker bool, err error) {
+	if err = guardPreview(t, params); err != nil {
+		return nil, false, err
 	}
 
 	itemID, err := requirePulid(params.Params, paramBillingQueueItemID)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	billerID, _, err := billerOf(params)
+	billerID, asker, err := billerOf(ctx, t.billing, params)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	return &serviceports.AssignBillerRequest{
 		ItemID:     itemID,
 		BillerID:   billerID,
 		TenantInfo: tenantFrom(*params),
-	}, nil
+	}, asker, nil
 }
 
 func (t *assignBillerTool) load(
@@ -622,7 +665,7 @@ func (t *assignBillerTool) Validate(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
 ) error {
-	req, err := t.request(&params)
+	req, _, err := t.request(ctx, &params)
 	if err != nil {
 		return err
 	}
@@ -643,7 +686,7 @@ func (t *assignBillerTool) Execute(
 		return err
 	}
 
-	req, err := t.request(&params)
+	req, _, err := t.request(ctx, &params)
 	if err != nil {
 		return err
 	}

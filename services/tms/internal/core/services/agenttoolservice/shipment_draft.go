@@ -157,7 +157,7 @@ func (d *shipmentDraft) build(
 		CustomerID:        read.requiredID("customerId", d.CustomerID),
 		ServiceTypeID:     read.requiredID("serviceTypeId", d.ServiceTypeID),
 		ShipmentTypeID:    read.requiredID("shipmentTypeId", d.ShipmentTypeID),
-		FormulaTemplateID: read.requiredID("formulaTemplateId", d.FormulaTemplateID),
+		FormulaTemplateID: read.id("formulaTemplateId", d.FormulaTemplateID),
 		TractorTypeID:     read.id("tractorTypeId", d.TractorTypeID),
 		TrailerTypeID:     read.id("trailerTypeId", d.TrailerTypeID),
 		BaseRate:          read.decimal("baseRate", d.BaseRate),

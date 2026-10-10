@@ -2501,6 +2501,8 @@ var MemoryColumns = struct {
 	CreatedByUserID   Column // "created_by_user_id" → qualified: "amem.created_by_user_id"
 	RetiredByUserID   Column // "retired_by_user_id" → qualified: "amem.retired_by_user_id"
 	RetiredAt         Column // "retired_at" → qualified: "amem.retired_at"
+	ReviewedByUserID  Column // "reviewed_by_user_id" → qualified: "amem.reviewed_by_user_id"
+	ReviewedAt        Column // "reviewed_at" → qualified: "amem.reviewed_at"
 	ExpiresAt         Column // "expires_at" → qualified: "amem.expires_at"
 	UseCount          Column // "use_count" → qualified: "amem.use_count"
 	LastUsedAt        Column // "last_used_at" → qualified: "amem.last_used_at"
@@ -2535,6 +2537,8 @@ var MemoryColumns = struct {
 	CreatedByUserID:   NewColumn("created_by_user_id", "amem"),
 	RetiredByUserID:   NewColumn("retired_by_user_id", "amem"),
 	RetiredAt:         NewColumn("retired_at", "amem"),
+	ReviewedByUserID:  NewColumn("reviewed_by_user_id", "amem"),
+	ReviewedAt:        NewColumn("reviewed_at", "amem"),
 	ExpiresAt:         NewColumn("expires_at", "amem"),
 	UseCount:          NewColumn("use_count", "amem"),
 	LastUsedAt:        NewColumn("last_used_at", "amem"),
@@ -2575,6 +2579,8 @@ var MemoryFieldMap = map[string]string{
 	"createdByUserId":   "created_by_user_id",
 	"retiredByUserId":   "retired_by_user_id",
 	"retiredAt":         "retired_at",
+	"reviewedByUserId":  "reviewed_by_user_id",
+	"reviewedAt":        "reviewed_at",
 	"expiresAt":         "expires_at",
 	"useCount":          "use_count",
 	"lastUsedAt":        "last_used_at",
@@ -2612,6 +2618,8 @@ var MemoryInsertableColumns = []string{
 	"created_by_user_id",
 	"retired_by_user_id",
 	"retired_at",
+	"reviewed_by_user_id",
+	"reviewed_at",
 	"expires_at",
 	"use_count",
 	"last_used_at",
@@ -2709,6 +2717,8 @@ var MemoryFilter = struct {
 	CreatedByUserID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdByUserId" → DB: "created_by_user_id"
 	RetiredByUserID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "retiredByUserId" → DB: "retired_by_user_id"
 	RetiredAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "retiredAt" → DB: "retired_at"
+	ReviewedByUserID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reviewedByUserId" → DB: "reviewed_by_user_id"
+	ReviewedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reviewedAt" → DB: "reviewed_at"
 	ExpiresAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
 	UseCount          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "useCount" → DB: "use_count"
 	LastUsedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastUsedAt" → DB: "last_used_at"
@@ -2791,6 +2801,12 @@ var MemoryFilter = struct {
 	},
 	RetiredAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("retiredAt", op, value)
+	},
+	ReviewedByUserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("reviewedByUserId", op, value)
+	},
+	ReviewedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("reviewedAt", op, value)
 	},
 	ExpiresAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("expiresAt", op, value)

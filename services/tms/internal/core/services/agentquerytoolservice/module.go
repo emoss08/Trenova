@@ -101,7 +101,7 @@ func coreToolProviders() []any {
 		newGetBillingQueueItemTool,
 		newGetBillingQueueItemsTool,
 		newListBillingTransferCandidatesTool,
-		newGetDetentionOccurrenceTool,
+		provideGetDetentionOccurrenceTool,
 		newGetCarrierIntelEventTool,
 		newGetCustomerUpdatePreferencesTool,
 		newGetAgentRunTool,
@@ -283,8 +283,11 @@ func provideQuoteShipmentTool(
 	return newQuoteShipmentTool(quotes, locations)
 }
 
-func provideShopCarriersTool(quotes *ratequoteservice.Service) services.AgentQueryTool {
-	return newShopCarriersTool(quotes)
+func provideShopCarriersTool(
+	quotes *ratequoteservice.Service,
+	carriers repositories.CarrierRepository,
+) services.AgentQueryTool {
+	return newShopCarriersTool(quotes, carriers)
 }
 
 func provideRankMoveCandidatesTool(
