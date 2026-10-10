@@ -2,7 +2,6 @@ package addresses
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -80,24 +79,9 @@ func (s *service) Create(
 	ctx context.Context,
 	req CreateRequest,
 ) (Address, error) {
-	if strings.TrimSpace(req.Name) == "" {
-		return Address{}, ErrNameRequired
+	if err := ValidateCreateRequest(req); err != nil {
+		return Address{}, err
 	}
-	if strings.TrimSpace(req.FormattedAddress) == "" {
-		return Address{}, ErrFormattedAddressRequired
-	}
-	if req.Geofence.Circle == nil && req.Geofence.Polygon == nil {
-		return Address{}, ErrGeofenceRequired
-	}
-	if req.Geofence.Circle != nil && req.Geofence.Polygon != nil {
-		return Address{}, ErrGeofenceMutuallyExclusive
-	}
-	if req.Geofence.Polygon != nil {
-		if len(req.Geofence.Polygon.Vertices) < 3 || len(req.Geofence.Polygon.Vertices) > 40 {
-			return Address{}, ErrGeofencePolygonVerticesBounds
-		}
-	}
-
 	out := AddressResponse{}
 	if err := s.client.Do(ctx, httpx.Request{
 		Method: http.MethodPost,
@@ -120,7 +104,7 @@ func (s *service) Get(ctx context.Context, id string) (Address, error) {
 	out := AddressResponse{}
 	if err := s.client.Do(ctx, httpx.Request{
 		Method: http.MethodGet,
-		Path:   fmt.Sprintf("/addresses/%s", id),
+		Path:   httpx.PathWithID("/addresses", id),
 		Out:    &out,
 	}); err != nil {
 		return Address{}, err
@@ -142,7 +126,7 @@ func (s *service) Update(
 	out := AddressResponse{}
 	if err := s.client.Do(ctx, httpx.Request{
 		Method: http.MethodPatch,
-		Path:   fmt.Sprintf("/addresses/%s", id),
+		Path:   httpx.PathWithID("/addresses", id),
 		Body:   req,
 		Out:    &out,
 	}); err != nil {
@@ -159,7 +143,7 @@ func (s *service) Delete(ctx context.Context, id string) error {
 
 	return s.client.Do(ctx, httpx.Request{
 		Method:         http.MethodDelete,
-		Path:           fmt.Sprintf("/addresses/%s", id),
+		Path:           httpx.PathWithID("/addresses", id),
 		ExpectedStatus: []int{http.StatusNoContent},
 	})
 }

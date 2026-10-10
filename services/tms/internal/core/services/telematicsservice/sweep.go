@@ -3,6 +3,7 @@ package telematicsservice
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/telematics"
@@ -37,11 +38,17 @@ func (s *Service) SweepTenant(
 	result := new(TenantSweepResult)
 	mapErr := s.syncVehicleMappings(ctx, tenantInfo, provider, result)
 	trailerErr := s.syncTrailerMappings(ctx, tenantInfo, provider, result)
-	rulesetErr := s.syncDriverRulesets(ctx, tenantInfo, provider, result)
-	violationErr := s.pollHOSViolations(ctx, tenantInfo, provider, result)
-	logErr := s.syncHOSLogs(ctx, tenantInfo, provider, result)
-	dvirErr := s.syncDVIRs(ctx, tenantInfo, provider, result)
-	formErr := s.syncForms(ctx, tenantInfo, provider, result)
+
+	drivers, err := s.loadSweepDrivers(ctx, tenantInfo)
+	if err != nil {
+		return result, errors.Join(mapErr, trailerErr, err)
+	}
+
+	rulesetErr := s.syncDriverRulesets(ctx, tenantInfo, provider, drivers, result)
+	violationErr := s.pollHOSViolations(ctx, tenantInfo, provider, drivers, result)
+	logErr := s.syncHOSLogs(ctx, tenantInfo, provider, drivers, result)
+	dvirErr := s.syncDVIRs(ctx, tenantInfo, provider, drivers, result)
+	formErr := s.syncForms(ctx, tenantInfo, provider, drivers, result)
 	return result, errors.Join(
 		mapErr,
 		trailerErr,
@@ -51,6 +58,32 @@ func (s *Service) SweepTenant(
 		dvirErr,
 		formErr,
 	)
+}
+
+type sweepDrivers struct {
+	workersByExternalID map[string]pulid.ID
+	externalIDs         []string
+}
+
+func (s *Service) loadSweepDrivers(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*sweepDrivers, error) {
+	workersByExternalID, err := s.workersByExternalID(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	externalIDs := make([]string, 0, len(workersByExternalID))
+	for externalID := range workersByExternalID {
+		externalIDs = append(externalIDs, externalID)
+	}
+	slices.Sort(externalIDs)
+
+	return &sweepDrivers{
+		workersByExternalID: workersByExternalID,
+		externalIDs:         externalIDs,
+	}, nil
 }
 
 type unitMappingCandidate struct {
@@ -274,12 +307,10 @@ func (s *Service) syncDriverRulesets(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	provider services.TelematicsProvider,
+	drivers *sweepDrivers,
 	result *TenantSweepResult,
 ) error {
-	workersByExternalID, err := s.workersByExternalID(ctx, tenantInfo)
-	if err != nil {
-		return err
-	}
+	workersByExternalID := drivers.workersByExternalID
 	if len(workersByExternalID) == 0 {
 		return nil
 	}
@@ -328,12 +359,10 @@ func (s *Service) pollHOSViolations(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	provider services.TelematicsProvider,
+	drivers *sweepDrivers,
 	result *TenantSweepResult,
 ) error {
-	workersByExternalID, err := s.workersByExternalID(ctx, tenantInfo)
-	if err != nil {
-		return err
-	}
+	workersByExternalID := drivers.workersByExternalID
 	if len(workersByExternalID) == 0 {
 		return nil
 	}
@@ -384,16 +413,14 @@ func (s *Service) syncDVIRs(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	provider services.TelematicsProvider,
+	drivers *sweepDrivers,
 	result *TenantSweepResult,
 ) error {
 	tractorsByExternalID, err := s.tractorsByExternalID(ctx, tenantInfo)
 	if err != nil {
 		return err
 	}
-	workersByExternalID, err := s.workersByExternalID(ctx, tenantInfo)
-	if err != nil {
-		return err
-	}
+	workersByExternalID := drivers.workersByExternalID
 
 	now := timeutils.NowUnix()
 	records, err := provider.ListDVIRs(ctx, now-dvirLookbackSeconds, now)

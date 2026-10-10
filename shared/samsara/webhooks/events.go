@@ -218,6 +218,7 @@ func decodeEntityData(data RawData, key entityKey) (EntityEventData, error) {
 
 type RouteStopEventData struct {
 	Operation       string            `json:"operation"`
+	Type            string            `json:"type"`
 	Time            string            `json:"time"`
 	AssignedToRoute string            `json:"assignedToRoute"`
 	Driver          *EntityEventRef   `json:"driver,omitempty"`
@@ -229,15 +230,39 @@ type RouteStopEventData struct {
 type RouteStopVehicle struct {
 	ID           string            `json:"id"`
 	Name         string            `json:"name"`
+	AssetType    string            `json:"assetType,omitempty"`
 	Vin          string            `json:"vin,omitempty"`
 	LicensePlate string            `json:"licensePlate,omitempty"`
 	ExternalIDs  map[string]string `json:"externalIds,omitempty"`
 }
 
 type RouteStopRoute struct {
+	ID          string               `json:"id"`
+	Name        string               `json:"name"`
+	ExternalIDs map[string]string    `json:"externalIds,omitempty"`
+	Stops       []RouteStopRouteStop `json:"stops,omitempty"`
+}
+
+type RouteStopRouteStop struct {
+	ID                string                      `json:"id"`
+	Name              string                      `json:"name,omitempty"`
+	State             string                      `json:"state,omitempty"`
+	ExternalIDs       map[string]string           `json:"externalIds,omitempty"`
+	Address           *RouteStopAddress           `json:"address,omitempty"`
+	SingleUseLocation *RouteStopSingleUseLocation `json:"singleUseLocation,omitempty"`
+}
+
+type RouteStopAddress struct {
 	ID          string            `json:"id"`
 	Name        string            `json:"name"`
 	ExternalIDs map[string]string `json:"externalIds,omitempty"`
+}
+
+type RouteStopSingleUseLocation struct {
+	Address      string  `json:"address"`
+	Latitude     float64 `json:"latitude"`
+	Longitude    float64 `json:"longitude"`
+	RadiusMeters float64 `json:"radiusMeters"`
 }
 
 type RouteStopDetails struct {
@@ -247,8 +272,23 @@ type RouteStopDetails struct {
 	EnRouteTime         string            `json:"enRouteTime,omitempty"`
 	ActualArrivalTime   string            `json:"actualArrivalTime,omitempty"`
 	ActualDepartureTime string            `json:"actualDepartureTime,omitempty"`
+	SkippedTime         string            `json:"skippedTime,omitempty"`
+	LiveSharingURL      string            `json:"liveSharingUrl,omitempty"`
 	ExternalIDs         map[string]string `json:"externalIds,omitempty"`
 	Orders              []RouteStopOrder  `json:"orders,omitempty"`
+}
+
+func (d *RouteStopEventData) StopAddress() *RouteStopAddress {
+	if d.RouteStop == nil || d.Route == nil || d.RouteStop.ID == "" {
+		return nil
+	}
+	for i := range d.Route.Stops {
+		stop := &d.Route.Stops[i]
+		if stop.ID == d.RouteStop.ID {
+			return stop.Address
+		}
+	}
+	return nil
 }
 
 type RouteStopOrder struct {

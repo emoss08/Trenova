@@ -377,6 +377,126 @@ func TestRouteStopDataDeparture(t *testing.T) {
 	assert.Nil(t, data.Vehicle)
 }
 
+func TestRouteStopDataStopAddressFromRouteStops(t *testing.T) {
+	t.Parallel()
+
+	event := Event{
+		EventID:   "evt-rs-3",
+		EventType: EventTypeRouteStopArrival,
+		Data: RawData(`{
+			"operation": "stop arrived",
+			"type": "route tracking",
+			"time": "2026-02-01T09:59:30Z",
+			"vehicle": {
+				"id": "281474977075805",
+				"name": "Truck 42",
+				"assetType": "vehicle",
+				"externalIds": {"trenovaTractorId": "trac_1"}
+			},
+			"route": {
+				"id": "4291022",
+				"name": "Morning Run",
+				"stops": [
+					{
+						"id": "8818201",
+						"name": "Origin",
+						"address": {
+							"id": "22410013",
+							"name": "Origin DC",
+							"externalIds": {"trenovaLocationId": "loc_origin"}
+						}
+					},
+					{
+						"id": "8818202",
+						"name": "Consignee",
+						"address": {
+							"id": "22410014",
+							"name": "Consignee DC",
+							"externalIds": {"trenovaLocationId": "loc_consignee"}
+						}
+					},
+					{
+						"id": "8818203",
+						"singleUseLocation": {
+							"address": "1 Main St",
+							"latitude": 37.1,
+							"longitude": -122.2,
+							"radiusMeters": 50
+						}
+					}
+				]
+			},
+			"routeStopDetails": {
+				"id": "8818202",
+				"state": "arrived",
+				"actualArrivalTime": "2026-02-01T09:59:30Z",
+				"externalIds": {"trenovaStopId": "stp_2"}
+			}
+		}`),
+	}
+
+	data, err := event.RouteStopData()
+	require.NoError(t, err)
+	assert.Equal(t, "route tracking", data.Type)
+	require.NotNil(t, data.Vehicle)
+	assert.Equal(t, "vehicle", data.Vehicle.AssetType)
+	require.NotNil(t, data.Route)
+	require.Len(t, data.Route.Stops, 3)
+	require.NotNil(t, data.Route.Stops[2].SingleUseLocation)
+	assert.Equal(t, "1 Main St", data.Route.Stops[2].SingleUseLocation.Address)
+
+	address := data.StopAddress()
+	require.NotNil(t, address)
+	assert.Equal(t, "22410014", address.ID)
+	assert.Equal(t, map[string]string{"trenovaLocationId": "loc_consignee"}, address.ExternalIDs)
+}
+
+func TestRouteStopDataStopAddressMissing(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		data RouteStopEventData
+	}{
+		{name: "no route", data: RouteStopEventData{RouteStop: &RouteStopDetails{ID: "1"}}},
+		{name: "no stop details", data: RouteStopEventData{Route: &RouteStopRoute{ID: "r"}}},
+		{
+			name: "empty stop id",
+			data: RouteStopEventData{
+				Route: &RouteStopRoute{
+					Stops: []RouteStopRouteStop{{Address: &RouteStopAddress{ID: "a"}}},
+				},
+				RouteStop: &RouteStopDetails{},
+			},
+		},
+		{
+			name: "stop not on route",
+			data: RouteStopEventData{
+				Route: &RouteStopRoute{
+					Stops: []RouteStopRouteStop{{ID: "2", Address: &RouteStopAddress{ID: "a"}}},
+				},
+				RouteStop: &RouteStopDetails{ID: "1"},
+			},
+		},
+		{
+			name: "single use stop",
+			data: RouteStopEventData{
+				Route: &RouteStopRoute{
+					Stops: []RouteStopRouteStop{{ID: "1"}},
+				},
+				RouteStop: &RouteStopDetails{ID: "1"},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Nil(t, tt.data.StopAddress())
+		})
+	}
+}
+
 func TestRouteStopDataTypeMismatch(t *testing.T) {
 	t.Parallel()
 

@@ -21,7 +21,9 @@ WORKDIR /app
 
 COPY --from=builder /out/samsara-sim /app/samsara-sim
 COPY services/samsara-sim/config /app/config
-RUN cp /app/config/config.example.yaml /app/config/config.yaml && chown -R sim:sim /app
+RUN cp /app/config/config.example.yaml /app/config/config.yaml \
+    && mkdir -p /app/data \
+    && chown -R sim:sim /app
 
 USER sim
 

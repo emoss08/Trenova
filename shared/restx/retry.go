@@ -2,6 +2,7 @@ package restx
 
 import (
 	"context"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -13,6 +14,7 @@ const (
 	defaultInitialBackoff = 250 * time.Millisecond
 	defaultMaxBackoff     = 10 * time.Second
 	maxRetryAfter         = 30 * time.Second
+	maxDelaySeconds       = float64(math.MaxInt64) / float64(time.Second)
 )
 
 type RetryConfig struct {
@@ -69,9 +71,8 @@ func ParseRetryAfter(value string) (time.Duration, bool) {
 		return 0, false
 	}
 
-	seconds, err := strconv.Atoi(value)
-	if err == nil && seconds >= 0 {
-		return time.Duration(seconds) * time.Second, true
+	if isDelaySeconds(value) {
+		return parseDelaySeconds(value)
 	}
 
 	t, err := http.ParseTime(value)
@@ -83,6 +84,33 @@ func ParseRetryAfter(value string) (time.Duration, bool) {
 		return 0, true
 	}
 	return until, true
+}
+
+func isDelaySeconds(value string) bool {
+	digits := 0
+	dots := 0
+	for i := range len(value) {
+		switch c := value[i]; {
+		case c >= '0' && c <= '9':
+			digits++
+		case c == '.':
+			dots++
+		default:
+			return false
+		}
+	}
+	return digits > 0 && dots <= 1
+}
+
+func parseDelaySeconds(value string) (time.Duration, bool) {
+	seconds, err := strconv.ParseFloat(value, 64)
+	if err != nil || math.IsNaN(seconds) || math.IsInf(seconds, 0) || seconds < 0 {
+		return 0, false
+	}
+	if seconds >= maxDelaySeconds {
+		return time.Duration(math.MaxInt64), true
+	}
+	return time.Duration(math.Round(seconds * float64(time.Second))), true
 }
 
 func retryableStatus(status int) bool {

@@ -1,163 +1,201 @@
 package sim
 
 import (
-	"github.com/emoss08/trenova/shared/stringutils"
 	"math"
 	"net/http"
-	"sort"
+	"net/url"
 	"strings"
 	"time"
+
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const (
-	dailyLogDateLayout         = "2006-01-02"
-	dailyLogDefaultRangeDays   = 7
-	dailyLogMaxRangeDays       = 30
-	dailyLogCarrierName        = "Trenova Logistics"
-	dailyLogCarrierUsDotNumber = int64(1234567)
-	dailyLogDriverTimezone     = "America/Chicago"
-	dailyLogCertifyGrace       = 24 * time.Hour
-	dailyLogCertifyRate        = 0.85
+	dailyLogDateLayout          = "2006-01-02"
+	dailyLogCarrierName         = "Trenova Logistics"
+	dailyLogCarrierUsDotNumber  = int64(1234567)
+	dailyLogCarrierAddress      = "100 Fleet Ave, Austin, TX 78701"
+	dailyLogDefaultTerminalName = "Austin Terminal"
+	dailyLogCertifyGrace        = 24 * time.Hour
+	dailyLogCertifyRate         = 0.85
 )
 
-var dailyLogHomeTerminals = []string{
-	"Austin Terminal",
-	"Dallas Terminal",
-	"Houston Terminal",
+var dailyLogTerminalAddresses = map[string]string{
+	"Austin Terminal":            "100 Fleet Ave, Austin, TX 78701",
+	"San Antonio Terminal":       "4100 SE Loop 410, San Antonio, TX 78222",
+	"Dallas-Fort Worth Terminal": "200 Warehouse Rd, Dallas, TX 75201",
+	"Houston Terminal":           "860 Bay Area Blvd, Houston, TX 77058",
+	"Rio Grande Valley Terminal": "3500 N 23rd St, McAllen, TX 78501",
+	"El Paso Terminal":           "9400 Gateway Blvd N, El Paso, TX 79924",
+	"Permian Basin Terminal":     "2700 W Interstate 20, Odessa, TX 79763",
+	"Panhandle Terminal":         "5100 E Amarillo Blvd, Amarillo, TX 79107",
 }
 
 type dailyLogDriverContext struct {
-	DriverID   string
-	DriverName string
-	VehicleID  string
-	Timeline   []timelineSegment
-	Events     []SimEvent
-	Geometry   *routeGeometry
-	Assets     map[string]Record
+	DriverID  string
+	Driver    Record
+	VehicleID string
+	Timeline  []timelineSegment
+	Events    []SimEvent
+	Geometry  *routeGeometry
+	Assets    map[string]Record
+	Expand    map[string]struct{}
+}
+
+type dailyLogKey struct {
+	Driver Record
+	Start  time.Time
+	End    time.Time
+	Date   string
 }
 
 func (s *Server) handleHOSDailyLogList(writer http.ResponseWriter, request *http.Request) {
-	now := s.simNow()
-	startDate, endDate, err := parseDailyLogDateRange(request, now)
+	values := request.URL.Query()
+	startDate, endDate, err := parseDailyLogDateRange(values)
 	if err != nil {
-		s.writeAPIError(writer, http.StatusBadRequest, err)
+		s.writeError(writer, err)
+		return
+	}
+	view := s.fleetView()
+	drivers, err := view.hosDrivers(values, hosDriverQuery{ExternalRefs: true, ActivationParam: true})
+	if err != nil {
+		s.writeError(writer, err)
 		return
 	}
 
-	driverIDs := idsFromQuery(request.URL.Query(), "driverIds")
-	records := []Record{}
-	if s.live != nil {
-		records = s.live.HOSDailyLogs(now, driverIDs, startDate, endDate)
+	keys := dailyLogKeys(drivers, startDate, endDate, view.now)
+	index := make(map[string]dailyLogKey, len(keys))
+	placeholders := make([]Record, 0, len(keys))
+	for _, key := range keys {
+		placeholder := Record{
+			keyDriver:      map[string]any{keyID: recordID(key.Driver)},
+			fieldStartTime: key.Start.Format(time.RFC3339),
+		}
+		index[recordIdentityKey(placeholder)] = key
+		placeholders = append(placeholders, placeholder)
 	}
-
-	page, pagination, err := paginate(records, request.URL.Query(), 512)
+	page, pagination, err := paginate(placeholders, request)
 	if err != nil {
-		s.writeAPIError(writer, http.StatusBadRequest, err)
+		s.writeError(writer, err)
 		return
 	}
-	payload := map[string]any{
-		"data":       recordsAsAny(page),
-		"pagination": pagination,
+	pageKeys := make([]dailyLogKey, 0, len(page))
+	for _, placeholder := range page {
+		pageKeys = append(pageKeys, index[recordIdentityKey(placeholder)])
 	}
+	records := s.live.dailyLogRecords(pageKeys, view.now, parseExpand(values))
+	payload := map[string]any{keyData: recordsAsAny(records), keyPagination: pagination}
 	s.respondJSON(writer, request, requestSignature(request)+"|hos-daily-logs", payload)
 }
 
-func parseDailyLogDateRange(
-	request *http.Request,
-	now time.Time,
-) (startDate, endDate time.Time, err error) {
-	endDate = now.UTC().Truncate(24 * time.Hour)
-	rawEnd := queryValue(request, "endDate")
-	if rawEnd != "" {
-		parsed, parseErr := time.Parse(dailyLogDateLayout, rawEnd)
-		if parseErr != nil {
-			return time.Time{}, time.Time{}, ErrInvalidBody
-		}
-		endDate = parsed.UTC()
+func parseDailyLogDate(values url.Values, name string) (time.Time, error) {
+	raw := strings.TrimSpace(values.Get(name))
+	if raw == "" {
+		return time.Time{}, invalidParameter(name, "is required")
 	}
-
-	startDate = endDate.Add(-time.Duration(dailyLogDefaultRangeDays-1) * 24 * time.Hour)
-	rawStart := queryValue(request, "startDate")
-	if rawStart != "" {
-		parsed, parseErr := time.Parse(dailyLogDateLayout, rawStart)
-		if parseErr != nil {
-			return time.Time{}, time.Time{}, ErrInvalidBody
-		}
-		startDate = parsed.UTC()
+	parsed, err := time.Parse(dailyLogDateLayout, raw)
+	if err != nil {
+		return time.Time{}, invalidParameter(name, "must be a YYYY-MM-DD date")
 	}
+	return parsed, nil
+}
 
+func parseDailyLogDateRange(values url.Values) (startDate, endDate time.Time, err error) {
+	startDate, err = parseDailyLogDate(values, paramStartDate)
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
+	endDate, err = parseDailyLogDate(values, paramEndDate)
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
 	if endDate.Before(startDate) {
-		return time.Time{}, time.Time{}, ErrInvalidBody
-	}
-	if endDate.Sub(startDate) > dailyLogMaxRangeDays*24*time.Hour {
-		return time.Time{}, time.Time{}, ErrInvalidBody
+		return time.Time{}, time.Time{}, invalidParameter(
+			paramEndDate,
+			"must be greater than or equal to startDate",
+		)
 	}
 	return startDate, endDate, nil
 }
 
+func dailyLogKeys(drivers []Record, startDate, endDate, now time.Time) []dailyLogKey {
+	dayCount := int(endDate.Sub(startDate)/(24*time.Hour)) + 1
+	out := make([]dailyLogKey, 0, len(drivers)*dayCount)
+	for _, driver := range drivers {
+		for date := endDate; !date.Before(startDate); date = date.AddDate(0, 0, -1) {
+			start, end := driverLogDay(driver, date.Year(), date.Month(), date.Day())
+			if start.After(now) {
+				continue
+			}
+			out = append(out, dailyLogKey{
+				Driver: driver,
+				Start:  start,
+				End:    end,
+				Date:   date.Format(dailyLogDateLayout),
+			})
+		}
+	}
+	return out
+}
+
 func (l *LiveSimulator) HOSDailyLogs(
 	now time.Time,
-	driverIDs []string,
+	drivers []Record,
 	startDate time.Time,
 	endDate time.Time,
+	expand map[string]struct{},
+) []Record {
+	return l.dailyLogRecords(dailyLogKeys(drivers, startDate, endDate, now.UTC()), now, expand)
+}
+
+func (l *LiveSimulator) dailyLogRecords(
+	keys []dailyLogKey,
+	now time.Time,
+	expand map[string]struct{},
 ) []Record {
 	now = now.UTC()
-	startDate = startDate.UTC().Truncate(24 * time.Hour)
-	endDate = endDate.UTC().Truncate(24 * time.Hour)
-	if endDate.Before(startDate) {
+	if len(keys) == 0 {
 		return []Record{}
 	}
-
 	roster := l.loadDriverRoster()
-	ids := selectDriverIDs(driverIDs, map[string]Record{}, roster)
-	if len(ids) == 0 {
-		return []Record{}
-	}
-
 	assets := l.loadAssetMetadata()
 	waypoints := l.loadAssetWaypoints()
 	geometryCache := map[string]*routeGeometry{}
-	dayCount := int(endDate.Sub(startDate)/(24*time.Hour)) + 1
-
-	out := make([]Record, 0, len(ids)*dayCount)
-	for _, driverID := range ids {
-		entry := roster[driverID]
-		vehicleID := strings.TrimSpace(entry.VehicleID)
-		ctx := dailyLogDriverContext{
-			DriverID:   driverID,
-			DriverName: stringutils.FirstNonEmptyTrimmed(entry.Name, driverID),
-			VehicleID:  vehicleID,
-			Timeline: l.driverTimelineSegments(
-				driverID,
-				startDate.Add(-24*time.Hour),
-				endDate.Add(48*time.Hour),
-				now,
-			),
-			Events: l.pairEventsInWindow(
-				driverID,
-				vehicleID,
-				startDate.Add(-2*time.Hour),
-				endDate.Add(26*time.Hour),
-			),
-			Geometry: l.cachedRouteGeometry(geometryCache, waypoints, vehicleID),
-			Assets:   assets,
-		}
-		for day := endDate; !day.Before(startDate); day = day.Add(-24 * time.Hour) {
-			if day.After(now) {
-				continue
+	contexts := map[string]*dailyLogDriverContext{}
+	out := make([]Record, 0, len(keys))
+	for idx := range keys {
+		key := &keys[idx]
+		driverID := recordID(key.Driver)
+		ctx, ok := contexts[driverID]
+		if !ok {
+			first, last := key.Start, key.End
+			for other := idx + 1; other < len(keys); other++ {
+				if recordID(keys[other].Driver) != driverID {
+					continue
+				}
+				first = minTime(first, keys[other].Start)
+				last = maxTime(last, keys[other].End)
 			}
-			out = append(out, l.dailyLogRecord(&ctx, day, now))
+			vehicleID := strings.TrimSpace(roster[driverID].VehicleID)
+			ctx = &dailyLogDriverContext{
+				DriverID:  driverID,
+				Driver:    key.Driver,
+				VehicleID: vehicleID,
+				Timeline:  l.driverTimelineSegments(driverID, first.Add(-24*time.Hour), last.Add(24*time.Hour), now),
+				Events: l.pairEventsInWindow(
+					driverID,
+					vehicleID,
+					first.Add(-2*time.Hour),
+					last.Add(2*time.Hour),
+				),
+				Geometry: l.cachedRouteGeometry(geometryCache, waypoints, vehicleID),
+				Assets:   assets,
+				Expand:   expand,
+			}
+			contexts[driverID] = ctx
 		}
+		out = append(out, l.dailyLogRecord(ctx, key, now))
 	}
-
-	sort.Slice(out, func(i, j int) bool {
-		left := nestedString(out[i], "driver", "id")
-		right := nestedString(out[j], "driver", "id")
-		if left != right {
-			return left < right
-		}
-		return stringValue(out[i], "startTime") > stringValue(out[j], "startTime")
-	})
 	return out
 }
 
@@ -179,42 +217,43 @@ func (l *LiveSimulator) cachedRouteGeometry(
 
 func (l *LiveSimulator) dailyLogRecord(
 	ctx *dailyLogDriverContext,
-	day time.Time,
+	key *dailyLogKey,
 	now time.Time,
 ) Record {
-	dayCtx := l.buildDailyEventContext(ctx.DriverID, ctx.VehicleID, day)
-	shiftStart := l.shiftStartForDay(ctx.DriverID, day).Truncate(time.Second)
-	dayEnd := dayCtx.DayEnd.Truncate(time.Second)
-	effectiveEnd := minTime(dayEnd, now).Truncate(time.Second)
-	if effectiveEnd.Before(shiftStart) {
-		effectiveEnd = shiftStart
-	}
-
+	effectiveEnd := minTime(key.End, now)
 	durations := map[string]time.Duration{}
 	driveMeters := 0.0
 	for idx := range ctx.Timeline {
 		segment := &ctx.Timeline[idx]
-		overlapStart := maxTime(segment.Start, shiftStart)
-		overlapEnd := minTime(segment.End, effectiveEnd)
+		overlapStart := maxTime(segment.Start, key.Start).Truncate(time.Millisecond)
+		overlapEnd := minTime(segment.End, effectiveEnd).Truncate(time.Millisecond)
 		if !overlapEnd.After(overlapStart) {
 			continue
 		}
 		status := l.dailyLogSegmentStatus(ctx, segment, now)
 		durations[status] += overlapEnd.Sub(overlapStart)
 		if status == hosStatusDriving {
-			driveMeters += l.integrateDriveDistance(ctx, overlapStart, overlapEnd, shiftStart, now)
+			driveMeters += l.integrateDriveDistance(ctx, overlapStart, overlapEnd, key.Start, now)
 		}
 	}
 
 	durationsPayload := dailyLogDurationsPayload(durations)
+	driver := map[string]any{
+		keyID:            ctx.DriverID,
+		keyName:          stringValue(ctx.Driver, keyName),
+		keyTimezone:      driverTimezoneName(ctx.Driver),
+		fieldEldSettings: eldSettingsFor(ctx.Driver),
+	}
+	if stored, ok := anyAsMap(ctx.Driver[fieldEldSettings]); ok {
+		driver[fieldEldSettings] = cloneMap(stored)
+	}
+	if externalIDs := externalIDsOf(ctx.Driver); len(externalIDs) > 0 {
+		driver[fieldExternalIDs] = renderExternalIDs(ctx.Driver, nil)
+	}
 	return Record{
-		"driver": map[string]any{
-			"id":       ctx.DriverID,
-			"name":     ctx.DriverName,
-			"timezone": dailyLogDriverTimezone,
-		},
-		"startTime": shiftStart.UTC().Format(time.RFC3339),
-		"endTime":   effectiveEnd.UTC().Format(time.RFC3339),
+		keyDriver:      driver,
+		fieldStartTime: key.Start.Format(time.RFC3339),
+		fieldEndTime:   key.End.Format(time.RFC3339),
 		"distanceTraveled": map[string]any{
 			"driveDistanceMeters":              int64(math.Round(driveMeters)),
 			"personalConveyanceDistanceMeters": int64(0),
@@ -222,7 +261,7 @@ func (l *LiveSimulator) dailyLogRecord(
 		},
 		"dutyStatusDurations":        durationsPayload,
 		"pendingDutyStatusDurations": cloneMap(durationsPayload),
-		"logMetaData":                l.dailyLogMetadata(ctx, day, dayEnd, now),
+		"logMetaData":                l.dailyLogMetadata(ctx, key, now),
 	}
 }
 
@@ -315,28 +354,51 @@ func dailyLogDurationsPayload(durations map[string]time.Duration) map[string]any
 
 func (l *LiveSimulator) dailyLogMetadata(
 	ctx *dailyLogDriverContext,
-	day time.Time,
-	dayEnd time.Time,
+	key *dailyLogKey,
 	now time.Time,
 ) map[string]any {
 	vehicles := []any{}
+	trailerNames := []any{}
 	if ctx.VehicleID != "" {
-		vehicles = append(vehicles, map[string]any{
-			"id":   ctx.VehicleID,
-			"name": vehicleIDToName(ctx.VehicleID, ctx.Assets),
-		})
+		vehicles = append(vehicles, dailyLogVehicle(ctx, ctx.VehicleID))
+		if trailer := coupledTrailer(ctx.Assets, ctx.VehicleID); trailer != nil {
+			trailerNames = append(trailerNames, stringValue(trailer, keyName))
+		}
 	}
 
-	metadata := map[string]any{
-		"isCertified":        false,
-		"carrierName":        dailyLogCarrierName,
-		"carrierUsDotNumber": dailyLogCarrierUsDotNumber,
-		"homeTerminalName":   l.dailyLogHomeTerminal(ctx.DriverID),
-		"shippingDocs":       dailyLogShippingDoc(ctx.DriverID, day),
-		"trailerNames":       []any{},
-		"vehicles":           vehicles,
+	carrier := Record(mapOf(ctx.Driver[keyCarrierSettings]))
+	terminalName, terminalAddress := l.driverHomeTerminal(ctx.Driver)
+	dotNumber := dailyLogCarrierUsDotNumber
+	if value, ok := int64Value(carrier["dotNumber"]); ok {
+		dotNumber = value
 	}
-	certified, certifiedAt := l.dailyLogCertification(ctx.DriverID, day, dayEnd, now)
+	metadata := map[string]any{
+		"adverseDrivingClaimed": false,
+		"bigDayClaimed":         false,
+		"isCertified":           false,
+		"isUsShortHaulActive":   false,
+		"carrierName": stringutils.FirstNonEmptyTrimmed(
+			stringValue(carrier, "carrierName"),
+			dailyLogCarrierName,
+		),
+		"carrierUsDotNumber": dotNumber,
+		"carrierFormattedAddress": stringutils.FirstNonEmptyTrimmed(
+			stringValue(carrier, "mainOfficeAddress"),
+			dailyLogCarrierAddress,
+		),
+		"homeTerminalName": stringutils.FirstNonEmptyTrimmed(
+			stringValue(carrier, "homeTerminalName"),
+			terminalName,
+		),
+		"homeTerminalFormattedAddress": stringutils.FirstNonEmptyTrimmed(
+			stringValue(carrier, "homeTerminalAddress"),
+			terminalAddress,
+		),
+		"shippingDocs": dailyLogShippingDoc(ctx.DriverID, key.Start),
+		"trailerNames": trailerNames,
+		"vehicles":     vehicles,
+	}
+	certified, certifiedAt := l.dailyLogCertification(ctx.DriverID, key.Date, key.End, now)
 	if certified {
 		metadata["isCertified"] = true
 		metadata["certifiedAtTime"] = certifiedAt.UTC().Format(time.RFC3339)
@@ -344,13 +406,68 @@ func (l *LiveSimulator) dailyLogMetadata(
 	return metadata
 }
 
+func dailyLogVehicle(ctx *dailyLogDriverContext, vehicleID string) map[string]any {
+	if _, expanded := ctx.Expand[expandVehicle]; !expanded {
+		return map[string]any{keyID: vehicleID}
+	}
+	asset := ctx.Assets[vehicleID]
+	out := map[string]any{
+		keyID:            vehicleID,
+		keyName:          vehicleIDToName(vehicleID, ctx.Assets),
+		"assetType":      assetType(asset),
+		fieldExternalIDs: renderExternalIDs(asset, vehicleAutoExternalIDs),
+	}
+	if plate := stringValue(asset, keyLicensePlate); plate != "" {
+		out[keyLicensePlate] = plate
+	}
+	if vin := stringValue(asset, keyVIN); vin != "" {
+		out["vehicleVin"] = vin
+	}
+	return out
+}
+
+func coupledTrailer(assets map[string]Record, vehicleID string) Record {
+	var selected Record
+	for _, asset := range assets {
+		if assetType(asset) != assetTypeTrailer ||
+			stringValue(asset, fieldSimCoupledVehicleID) != vehicleID {
+			continue
+		}
+		if selected == nil || recordID(asset) < recordID(selected) {
+			selected = asset
+		}
+	}
+	return selected
+}
+
+func (l *LiveSimulator) driverHomeTerminal(driver Record) (name, address string) {
+	snapshot := l.fleet()
+	for _, field := range []string{keyVehicleGroupTagID, keyPeerGroupTagID} {
+		tagID := stringValue(driver, field)
+		if tagID == "" {
+			continue
+		}
+		tag, ok := snapshot.tags.byID[tagID]
+		if !ok {
+			continue
+		}
+		tagName := stringValue(tag, keyName)
+		if terminalAddress, known := dailyLogTerminalAddresses[tagName]; known {
+			return tagName, terminalAddress
+		}
+	}
+	return dailyLogDefaultTerminalName, dailyLogTerminalAddresses[dailyLogDefaultTerminalName]
+}
+
 func (l *LiveSimulator) dailyLogCertification(
 	driverID string,
-	day time.Time,
+	dayKey string,
 	dayEnd time.Time,
 	now time.Time,
 ) (bool, time.Time) {
-	dayKey := day.UTC().Format(dailyLogDateLayout)
+	if dayEnd.After(now) {
+		return false, time.Time{}
+	}
 	certified := now.Sub(dayEnd) > dailyLogCertifyGrace
 	if !certified {
 		certified = l.hashFraction("daily-log-certified", driverID, dayKey) < dailyLogCertifyRate
@@ -362,16 +479,6 @@ func (l *LiveSimulator) dailyLogCertification(
 	offsetMinutes := 30 + 90*l.hashFraction("daily-log-certified-at", driverID, dayKey)
 	certifiedAt := dayEnd.Add(time.Duration(offsetMinutes * float64(time.Minute)))
 	return true, minTime(certifiedAt, now)
-}
-
-func (l *LiveSimulator) dailyLogHomeTerminal(driverID string) string {
-	index := int(
-		float64(len(dailyLogHomeTerminals)) * l.hashFraction("daily-log-terminal", driverID),
-	)
-	if index >= len(dailyLogHomeTerminals) {
-		index = len(dailyLogHomeTerminals) - 1
-	}
-	return dailyLogHomeTerminals[index]
 }
 
 func dailyLogShippingDoc(driverID string, day time.Time) string {

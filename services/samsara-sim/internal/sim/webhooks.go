@@ -6,7 +6,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"hash/fnv"
@@ -132,6 +131,9 @@ func (d *Dispatcher) Dispatch(profile, eventType string, data any) error {
 	if trimmedType == "" {
 		return ErrWebhookEventTypeRequired
 	}
+	if !isWebhookEventType(trimmedType) {
+		return fmt.Errorf("%w: %q", ErrWebhookEventTypeUnknown, trimmedType)
+	}
 
 	targets := d.store.WebhookTargets(trimmedType)
 	if len(targets) == 0 {
@@ -140,7 +142,7 @@ func (d *Dispatcher) Dispatch(profile, eventType string, data any) error {
 
 	eventTime := d.nowUTC()
 	identity := eventIdentity(data)
-	eventID := deterministicEventID(
+	eventID := deterministicUUID(
 		trimmedType,
 		identity,
 		eventTime.UTC().Format(webhookEventTimeLayout),
@@ -297,7 +299,11 @@ func (d *Dispatcher) sendOnce(ctx context.Context, job *deliveryJob, attempt int
 	if err != nil {
 		return fmt.Errorf("build webhook request: %w", err)
 	}
+	for _, header := range job.Target.CustomHeaders {
+		request.Header.Set(header.Key, header.Value)
+	}
 	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("X-Samsara-Event-Type", job.EventType)
 	request.Header.Set("X-Samsara-Sim-Delivery-Id", job.DeliveryID)
 	request.Header.Set("X-Samsara-Sim-Delivery-Sequence", strconv.Itoa(job.DeliverySequence))
 	request.Header.Set("X-Samsara-Sim-Delivery-Attempt", strconv.Itoa(attempt))
@@ -387,22 +393,6 @@ func signWebhookPayload(secret, timestamp string, payload []byte) string {
 	_, _ = mac.Write([]byte(":"))
 	_, _ = mac.Write(payload)
 	return "v1=" + hex.EncodeToString(mac.Sum(nil))
-}
-
-func deterministicEventID(parts ...string) string {
-	key := strings.Join(parts, "|")
-	var raw [16]byte
-	binary.BigEndian.PutUint64(raw[:8], fnvHash64(key+"|event-id-high"))
-	binary.BigEndian.PutUint64(raw[8:], fnvHash64(key+"|event-id-low"))
-	raw[6] = (raw[6] & 0x0f) | 0x40
-	raw[8] = (raw[8] & 0x3f) | 0x80
-	return fmt.Sprintf("%x-%x-%x-%x-%x", raw[:4], raw[4:6], raw[6:8], raw[8:10], raw[10:])
-}
-
-func fnvHash64(value string) uint64 {
-	hasher := fnv.New64a()
-	_, _ = hasher.Write([]byte(value))
-	return hasher.Sum64()
 }
 
 func (d *Dispatcher) nowUTC() time.Time {

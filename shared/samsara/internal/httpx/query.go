@@ -48,3 +48,7 @@ func SetTime(values url.Values, key string, t *time.Time) {
 	}
 	values.Set(key, t.Format(time.RFC3339))
 }
+
+func PathWithID(base, id string) string {
+	return base + "/" + url.PathEscape(id)
+}

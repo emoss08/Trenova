@@ -8,7 +8,7 @@ func TestStoreCRUD(t *testing.T) {
 	store := NewStore(&Fixture{
 		Addresses: []Record{
 			{
-				"id":   "addr-1",
+				"id":   "41226316",
 				"name": "HQ",
 			},
 		},
@@ -53,13 +53,13 @@ func TestStoreWebhookTargetsFilter(t *testing.T) {
 	store := NewStore(&Fixture{
 		Webhooks: []Record{
 			{
-				"id":         "wh-1",
+				"id":         "523918",
 				"name":       "Address hook",
 				"url":        "http://localhost/hook-1",
 				"eventTypes": []any{"AddressCreated"},
 			},
 			{
-				"id":   "wh-2",
+				"id":   "523925",
 				"name": "Catch all",
 				"url":  "http://localhost/hook-2",
 			},
@@ -75,7 +75,7 @@ func TestStoreWebhookTargetsFilter(t *testing.T) {
 	if len(targets) != 1 {
 		t.Fatalf("expected 1 target, got %d", len(targets))
 	}
-	if targets[0].ID != "wh-2" {
-		t.Fatalf("expected wh-2 fallback target, got %s", targets[0].ID)
+	if targets[0].ID != "523925" {
+		t.Fatalf("expected 523925 fallback target, got %s", targets[0].ID)
 	}
 }

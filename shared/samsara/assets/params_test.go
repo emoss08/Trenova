@@ -8,12 +8,42 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestListParamsValidateLimit(t *testing.T) {
+func TestListParamsValidateType(t *testing.T) {
 	t.Parallel()
 
-	err := ListParams{Limit: 513}.Validate()
+	err := ListParams{Type: Type("boat")}.Validate()
 	require.Error(t, err)
-	assert.ErrorIs(t, err, ErrListLimitInvalid)
+	assert.ErrorIs(t, err, ErrAssetTypeInvalid)
+
+	for _, valid := range []Type{
+		"",
+		TypeUncategorized,
+		TypeTrailer,
+		TypeEquipment,
+		TypeUnpowered,
+		TypeVehicle,
+	} {
+		require.NoError(t, ListParams{Type: valid}.Validate())
+	}
+}
+
+func TestListParamsQueryNeverSendsLimit(t *testing.T) {
+	t.Parallel()
+
+	query := ListParams{Type: TypeVehicle, After: "c1"}.Query()
+	assert.False(t, query.Has("limit"))
+	assert.Equal(t, "vehicle", query.Get("type"))
+	assert.Equal(t, "c1", query.Get("after"))
+}
+
+func TestLocationStreamParamsValidateLimit(t *testing.T) {
+	t.Parallel()
+
+	start := time.Date(2026, 3, 1, 8, 0, 0, 0, time.UTC)
+	err := LocationStreamParams{StartTime: &start, Limit: 513}.Validate()
+	require.Error(t, err)
+	assert.ErrorIs(t, err, ErrLocationStreamLimitInvalid)
+	require.NoError(t, LocationStreamParams{StartTime: &start, Limit: 512}.Validate())
 }
 
 func TestListParamsQuery(t *testing.T) {
@@ -29,9 +59,10 @@ func TestListParamsQuery(t *testing.T) {
 		TagIDs:             []string{"t1", "t2"},
 		ParentTagIDs:       []string{"p1", "p2"},
 		IDs:                []string{"a1", "a2"},
+		ExternalIDs:        []string{"trenovaTractorId:trac_1", "payrollId:7"},
 		AttributeValueIDs:  []string{"av1", "av2"},
 		Attributes:         []string{"Length:range(8,10)", "Date:range(2025-01-01,2025-01-31)"},
-		Limit:              100,
+		IncludeAttributes:  true,
 	}
 
 	query := params.Query()
@@ -44,7 +75,9 @@ func TestListParamsQuery(t *testing.T) {
 	assert.Equal(t, "p1,p2", query.Get("parentTagIds"))
 	assert.Equal(t, "a1,a2", query.Get("ids"))
 	assert.Equal(t, "av1,av2", query.Get("attributeValueIds"))
-	assert.Equal(t, "100", query.Get("limit"))
+	assert.Equal(t, "trenovaTractorId:trac_1,payrollId:7", query.Get("externalIds"))
+	assert.Equal(t, "true", query.Get("includeAttributes"))
+	assert.False(t, query.Has("limit"))
 	assert.Equal(
 		t,
 		[]string{"Length:range(8,10)", "Date:range(2025-01-01,2025-01-31)"},

@@ -2,7 +2,6 @@ package sim
 
 import (
 	"net/http"
-	"net/url"
 	"reflect"
 	"strings"
 	"testing"
@@ -11,303 +10,212 @@ import (
 	"github.com/bytedance/sonic"
 )
 
-func TestServerHOSDailyLogsDateParamValidation(t *testing.T) {
-	t.Parallel()
+func dailyLogsQuery(params map[string]string) string {
+	return query("/fleet/hos/daily-logs", params)
+}
 
-	tests := []struct {
-		name       string
-		target     string
-		wantStatus int
-		wantCode   string
+func TestHOSDailyLogsParameterValidation(t *testing.T) {
+	srv := newFleetTestServer(t, fleetServerOptions{Dataset: true})
+
+	cases := []struct {
+		name     string
+		params   map[string]string
+		fragment string
 	}{
+		{name: "missing both dates", params: map[string]string{}, fragment: "startDate: is required"},
+		{name: "missing end date", params: map[string]string{"startDate": "2026-03-01"}, fragment: "endDate: is required"},
 		{
-			name:       "malformed start date",
-			target:     "/fleet/hos/daily-logs?startDate=2026-13-99",
-			wantStatus: http.StatusBadRequest,
-			wantCode:   "INVALID_BODY",
+			name:     "malformed start date",
+			params:   map[string]string{"startDate": "2026-13-99", "endDate": "2026-03-01"},
+			fragment: "YYYY-MM-DD",
 		},
 		{
-			name:       "malformed end date",
-			target:     "/fleet/hos/daily-logs?endDate=not-a-date",
-			wantStatus: http.StatusBadRequest,
-			wantCode:   "INVALID_BODY",
+			name:     "rfc3339 rejected",
+			params:   map[string]string{"startDate": "2026-03-01T00:00:00Z", "endDate": "2026-03-02"},
+			fragment: "startDate",
 		},
 		{
-			name:       "rfc3339 rejected",
-			target:     "/fleet/hos/daily-logs?startDate=2026-07-01T00:00:00Z",
-			wantStatus: http.StatusBadRequest,
-			wantCode:   "INVALID_BODY",
+			name:     "end before start",
+			params:   map[string]string{"startDate": "2026-03-04", "endDate": "2026-03-01"},
+			fragment: "greater than or equal to startDate",
 		},
 		{
-			name:       "end date before start date",
-			target:     "/fleet/hos/daily-logs?startDate=2026-07-10&endDate=2026-07-01",
-			wantStatus: http.StatusBadRequest,
-			wantCode:   "INVALID_BODY",
+			name: "activation status enum",
+			params: map[string]string{
+				"startDate":              "2026-03-01",
+				"endDate":                "2026-03-02",
+				"driverActivationStatus": "retired",
+			},
+			fragment: "driverActivationStatus",
 		},
 		{
-			name:       "range wider than 30 days",
-			target:     "/fleet/hos/daily-logs?startDate=2026-01-01&endDate=2026-06-01",
-			wantStatus: http.StatusBadRequest,
-			wantCode:   "INVALID_BODY",
-		},
-		{
-			name:       "valid explicit range",
-			target:     "/fleet/hos/daily-logs?startDate=2026-07-01&endDate=2026-07-05",
-			wantStatus: http.StatusOK,
-		},
-		{
-			name:       "default range",
-			target:     "/fleet/hos/daily-logs",
-			wantStatus: http.StatusOK,
+			name:     "foreign cursor",
+			params:   map[string]string{"startDate": "2026-03-01", "endDate": "2026-03-02", "after": "missing"},
+			fragment: "after",
 		},
 	}
-
-	srv := newEventTestServer(t, "")
-	for _, testCase := range tests {
+	for _, testCase := range cases {
 		t.Run(testCase.name, func(t *testing.T) {
-			response := performAuthorizedRequest(srv, http.MethodGet, testCase.target)
-			if response.Code != testCase.wantStatus {
-				t.Fatalf("expected status %d, got %d", testCase.wantStatus, response.Code)
-			}
-			if testCase.wantCode == "" {
-				return
-			}
-			if code := mustReadErrorCode(t, response.Body.Bytes()); code != testCase.wantCode {
-				t.Fatalf("expected error code %q, got %q", testCase.wantCode, code)
-			}
+			callAPI(t, srv, http.MethodGet, dailyLogsQuery(testCase.params), nil).
+				expectError(t, http.StatusBadRequest, testCase.fragment)
 		})
 	}
+
+	callAPI(t, srv, http.MethodGet, dailyLogsQuery(map[string]string{
+		"startDate": "2026-03-01",
+		"endDate":   "2026-03-01",
+		"expand":    "vehicle,unsupported",
+		"limit":     "9999",
+	}), nil).expect(t, http.StatusOK)
 }
 
-func TestLiveSimulatorHOSDailyLogsDeterministic(t *testing.T) {
-	t.Parallel()
-
-	simulator := newTestLiveSimulator()
-	now := simulator.anchorTime.Add(50 * time.Hour)
-	endDate := now.UTC().Truncate(24 * time.Hour)
-	startDate := endDate.Add(-3 * 24 * time.Hour)
-
-	first := simulator.HOSDailyLogs(now, []string{"drv-1"}, startDate, endDate)
-	second := simulator.HOSDailyLogs(now, []string{"drv-1"}, startDate, endDate)
-	if len(first) == 0 {
-		t.Fatal("expected daily log records")
+func TestHOSDailyLogsUseDriverTimezoneDays(t *testing.T) {
+	srv := newFleetTestServer(t, fleetServerOptions{Dataset: true})
+	records := callAPI(t, srv, http.MethodGet, dailyLogsQuery(map[string]string{
+		"startDate": "2026-02-26",
+		"endDate":   "2026-03-04",
+		"driverIds": fixtureDriverRiley,
+	}), nil).expect(t, http.StatusOK).list(t)
+	if len(records) != 7 {
+		t.Fatalf("expected 7 days for the Denver driver, got %d", len(records))
 	}
-	if !reflect.DeepEqual(first, second) {
-		t.Fatal("expected identical daily log output for identical sim time")
+	if got := stringValue(records[0], "startTime"); got != "2026-03-04T07:00:00Z" {
+		t.Fatalf("expected newest day first starting at Denver midnight, got %s", got)
 	}
-}
-
-func TestLiveSimulatorHOSDailyLogsDurationsCoverDayWindow(t *testing.T) {
-	t.Parallel()
-
-	simulator := newTestLiveSimulator()
-	now := simulator.anchorTime.Add(72 * time.Hour)
-	endDate := now.UTC().Truncate(24 * time.Hour).Add(-2 * 24 * time.Hour)
-	startDate := endDate.Add(-5 * 24 * time.Hour)
-
-	records := simulator.HOSDailyLogs(now, []string{"drv-1"}, startDate, endDate)
-	if len(records) != 6 {
-		t.Fatalf("expected 6 completed-day records, got %d", len(records))
-	}
-
-	sawDriving := false
-	for _, record := range records {
-		startTime := mustParseRecordTime(t, record, "startTime")
-		endTime := mustParseRecordTime(t, record, "endTime")
-		windowMs := endTime.Sub(startTime).Milliseconds()
-		if windowMs <= 0 {
-			t.Fatalf("expected positive day window, got %dms", windowMs)
+	now := srv.simNow()
+	for idx, record := range records {
+		if nestedString(record, "driver", "timezone") != "America/Denver" {
+			t.Fatalf("expected the driver's own timezone, got %v", record["driver"])
 		}
-
-		driveMs := floatFromAny(nestedAny(record, "dutyStatusDurations", "driveDurationMs"))
-		onDutyMs := floatFromAny(nestedAny(record, "dutyStatusDurations", "onDutyDurationMs"))
-		offDutyMs := floatFromAny(nestedAny(record, "dutyStatusDurations", "offDutyDurationMs"))
-		sleeperMs := floatFromAny(
-			nestedAny(record, "dutyStatusDurations", "sleeperBerthDurationMs"),
-		)
-		activeMs := floatFromAny(nestedAny(record, "dutyStatusDurations", "activeDurationMs"))
-
-		sumMs := int64(driveMs + onDutyMs + offDutyMs + sleeperMs)
-		if diff := sumMs - windowMs; diff < -5 || diff > 5 {
-			t.Fatalf(
-				"expected duty durations (%dms) to cover day window (%dms), diff %dms",
-				sumMs,
-				windowMs,
-				diff,
-			)
+		if _, ok := mapOf(record["driver"])["eldSettings"]; !ok {
+			t.Fatalf("expected driver eldSettings, got %v", record["driver"])
 		}
-		if activeMs != driveMs+onDutyMs {
-			t.Fatalf("expected activeDurationMs %f, got %f", driveMs+onDutyMs, activeMs)
+		start := mustParseRecordTime(t, record, "startTime")
+		end := mustParseRecordTime(t, record, "endTime")
+		if end.Sub(start) != 24*time.Hour {
+			t.Fatalf("expected a 24-hour log day, got %s", end.Sub(start))
 		}
-
-		durations, ok := anyAsMap(record["dutyStatusDurations"])
-		if !ok {
-			t.Fatal("expected dutyStatusDurations object")
+		covered := minTime(end, now).Sub(start).Milliseconds()
+		durations := mapOf(record["dutyStatusDurations"])
+		sum := int64(0)
+		for _, key := range []string{"driveDurationMs", "onDutyDurationMs", "offDutyDurationMs", "sleeperBerthDurationMs"} {
+			sum += int64(floatFromAny(durations[key]))
 		}
-		pending, ok := anyAsMap(record["pendingDutyStatusDurations"])
-		if !ok {
-			t.Fatal("expected pendingDutyStatusDurations object")
+		if sum != covered {
+			t.Fatalf("day %d: expected durations to cover %dms, got %dms", idx, covered, sum)
 		}
-		if !reflect.DeepEqual(durations, pending) {
-			t.Fatal("expected pending durations to mirror duty status durations")
+		if floatFromAny(durations["activeDurationMs"]) !=
+			floatFromAny(durations["driveDurationMs"])+floatFromAny(durations["onDutyDurationMs"]) {
+			t.Fatalf("expected activeDurationMs = drive + onDuty, got %v", durations)
 		}
-
-		distanceMeters := floatFromAny(
-			nestedAny(record, "distanceTraveled", "driveDistanceMeters"),
-		)
-		if driveMs > 0 {
-			sawDriving = true
-			if distanceMeters <= 0 {
-				t.Fatalf("expected positive drive distance for %fms driving", driveMs)
+		if !reflect.DeepEqual(record["dutyStatusDurations"], record["pendingDutyStatusDurations"]) {
+			t.Fatal("expected pending durations to match with no pending carrier edits")
+		}
+		metadata := Record(mapOf(record["logMetaData"]))
+		if stringValue(metadata, "homeTerminalName") != "El Paso Terminal" ||
+			!strings.Contains(stringValue(metadata, "homeTerminalFormattedAddress"), "El Paso, TX") {
+			t.Fatalf("expected the El Paso home terminal, got %v", metadata)
+		}
+		if names := listOf(metadata["trailerNames"]); len(names) != 1 || stringOf(names[0]) != "Trailer 2046" {
+			t.Fatalf("expected the coupled trailer name, got %v", metadata["trailerNames"])
+		}
+		vehicles := listOf(metadata["vehicles"])
+		if len(vehicles) != 1 || len(mapOf(vehicles[0])) != 1 {
+			t.Fatalf("expected unexpanded vehicles to carry only an id, got %v", vehicles)
+		}
+		for _, key := range []string{"carrierName", "carrierFormattedAddress", "shippingDocs"} {
+			if stringValue(metadata, key) == "" {
+				t.Fatalf("expected logMetaData.%s, got %v", key, metadata)
 			}
 		}
-
-		metadata, ok := anyAsMap(record["logMetaData"])
-		if !ok {
-			t.Fatal("expected logMetaData object")
-		}
-		if stringValue(Record(metadata), "carrierName") != dailyLogCarrierName {
-			t.Fatalf("unexpected carrier name %q", stringValue(Record(metadata), "carrierName"))
-		}
-		if stringValue(Record(metadata), "homeTerminalName") == "" {
-			t.Fatal("expected homeTerminalName to be populated")
-		}
-		if !strings.HasPrefix(stringValue(Record(metadata), "shippingDocs"), "SD-") {
-			t.Fatalf("unexpected shippingDocs %q", stringValue(Record(metadata), "shippingDocs"))
-		}
-		if now.Sub(endTime) > dailyLogCertifyGrace {
-			certified, isBool := metadata["isCertified"].(bool)
-			if !isBool || !certified {
-				t.Fatalf(
-					"expected day older than 24h to be certified, got %v",
-					metadata["isCertified"],
-				)
-			}
-			if stringValue(Record(metadata), "certifiedAtTime") == "" {
-				t.Fatal("expected certifiedAtTime on certified day")
+		if idx == 0 {
+			if metadata["isCertified"] != false {
+				t.Fatal("expected the day in progress to be uncertified")
 			}
 		}
-		vehicles, ok := metadata["vehicles"].([]any)
-		if !ok || len(vehicles) != 1 {
-			t.Fatalf("expected one vehicle in logMetaData, got %v", metadata["vehicles"])
+		if idx >= 2 && metadata["isCertified"] != true {
+			t.Fatalf("expected days older than the certification grace to be certified, got %v", metadata)
 		}
-		vehicle, ok := anyAsMap(vehicles[0])
-		if !ok || stringValue(Record(vehicle), "id") != "veh-1" {
-			t.Fatalf("expected assigned vehicle veh-1, got %v", vehicles[0])
-		}
-
-		if nestedString(record, "driver", "timezone") != dailyLogDriverTimezone {
-			t.Fatalf("unexpected driver timezone %q", nestedString(record, "driver", "timezone"))
-		}
-	}
-	if !sawDriving {
-		t.Fatal("expected at least one day with driving duration")
 	}
 }
 
-func TestLiveSimulatorHOSDailyLogsDriverFilterAndOrder(t *testing.T) {
-	t.Parallel()
+func TestHOSDailyLogsExpandActivationTagsAndExternalIDs(t *testing.T) {
+	srv := newFleetTestServer(t, fleetServerOptions{Dataset: true})
+	window := map[string]string{"startDate": "2026-03-03", "endDate": "2026-03-04"}
 
-	fixture := &Fixture{
-		Drivers: []Record{
-			{"id": "drv-a", "name": "Driver A"},
-			{"id": "drv-b", "name": "Driver B"},
-		},
+	expanded := callAPI(t, srv, http.MethodGet, dailyLogsQuery(mergeParams(window, map[string]string{
+		"driverIds": "workerId:worker-1001",
+		"expand":    "vehicle",
+	})), nil).expect(t, http.StatusOK).list(t)
+	if len(expanded) != 2 || nestedString(expanded[0], "driver", "id") != fixtureDriverAlex {
+		t.Fatalf("expected two days for Alex via external ID, got %d", len(expanded))
 	}
-	simulator := NewLiveSimulator(NewStore(fixture), "daily-logs-filter-seed")
-	now := simulator.anchorTime.Add(48 * time.Hour)
-	endDate := now.UTC().Truncate(24 * time.Hour).Add(-24 * time.Hour)
-	startDate := endDate.Add(-2 * 24 * time.Hour)
-
-	filtered := simulator.HOSDailyLogs(now, []string{"drv-a"}, startDate, endDate)
-	if len(filtered) != 3 {
-		t.Fatalf("expected 3 records for filtered driver, got %d", len(filtered))
-	}
-	for _, record := range filtered {
-		if nestedString(record, "driver", "id") != "drv-a" {
-			t.Fatalf("unexpected driver id %q", nestedString(record, "driver", "id"))
+	vehicle := mapOf(listOf(nestedAny(expanded[0], "logMetaData", "vehicles"))[0])
+	for _, key := range []string{"id", "name", "assetType", "externalIds", "licensePlate", "vehicleVin"} {
+		if _, ok := vehicle[key]; !ok {
+			t.Fatalf("expected expanded vehicle.%s, got %v", key, vehicle)
 		}
 	}
 
-	all := simulator.HOSDailyLogs(now, nil, startDate, endDate)
-	if len(all) != 6 {
-		t.Fatalf("expected 6 records for both drivers, got %d", len(all))
+	tagged := taggedDriverIDs(t, srv, tagAustinTerminal)
+	byTag := callAPI(t, srv, http.MethodGet, dailyLogsQuery(mergeParams(window, map[string]string{
+		"tagIds": tagAustinTerminal,
+	})), nil).expect(t, http.StatusOK).list(t)
+	if len(byTag) != 2*len(tagged) {
+		t.Fatalf("expected two days per Austin driver, got %d for %v", len(byTag), tagged)
 	}
 
-	previousDriver := ""
-	previousStart := ""
-	for _, record := range all {
+	callAPI(t, srv, http.MethodPatch, "/fleet/drivers/"+fixtureDriverCameron, map[string]any{
+		"driverActivationStatus": "deactivated",
+	}).expect(t, http.StatusOK)
+	active := callAPI(t, srv, http.MethodGet, dailyLogsQuery(window), nil).expect(t, http.StatusOK).list(t)
+	for _, record := range active {
+		if nestedString(record, "driver", "id") == fixtureDriverCameron {
+			t.Fatal("expected deactivated drivers to be excluded by default")
+		}
+	}
+	deactivated := callAPI(t, srv, http.MethodGet, dailyLogsQuery(mergeParams(window, map[string]string{
+		"driverActivationStatus": "deactivated",
+	})), nil).expect(t, http.StatusOK).list(t)
+	if len(deactivated) != 2 || nestedString(deactivated[0], "driver", "id") != fixtureDriverCameron {
+		t.Fatalf("expected only the deactivated driver, got %d records", len(deactivated))
+	}
+}
+
+func TestHOSDailyLogsPaginationAndDeterminism(t *testing.T) {
+	srv := newFleetTestServer(t, fleetServerOptions{Dataset: true})
+	params := map[string]string{"startDate": "2026-01-01", "endDate": "2026-03-04"}
+	full := callAPI(t, srv, http.MethodGet, dailyLogsQuery(params), nil).expect(t, http.StatusOK)
+	records := full.list(t)
+	if len(records) != 512 || full.pagination(t)["hasNextPage"] != true {
+		t.Fatalf("expected a full 512-record page, got %d", len(records))
+	}
+	collected := append([]Record{}, records...)
+	after := stringOf(full.pagination(t)["endCursor"])
+	for after != "" {
+		page := callAPI(t, srv, http.MethodGet, dailyLogsQuery(mergeParams(params, map[string]string{"after": after})), nil).
+			expect(t, http.StatusOK)
+		collected = append(collected, page.list(t)...)
+		after = stringOf(page.pagination(t)["endCursor"])
+	}
+	if len(collected) != 12*63 {
+		t.Fatalf("expected 63 days for 12 drivers, got %d", len(collected))
+	}
+	again := callAPI(t, srv, http.MethodGet, dailyLogsQuery(params), nil).expect(t, http.StatusOK).list(t)
+	if !reflect.DeepEqual(records, again) {
+		t.Fatal("expected identical daily logs for identical sim time")
+	}
+	previousDriver, previousStart := "", ""
+	for _, record := range collected {
 		driverID := nestedString(record, "driver", "id")
-		startTime := stringValue(record, "startTime")
+		start := stringValue(record, "startTime")
 		if driverID < previousDriver {
-			t.Fatalf(
-				"expected driver ids in ascending order, got %q after %q",
-				driverID,
-				previousDriver,
-			)
+			t.Fatalf("expected drivers in ascending ID order, got %s after %s", driverID, previousDriver)
 		}
-		if driverID == previousDriver && startTime >= previousStart {
-			t.Fatalf(
-				"expected newest day first per driver, got %q after %q",
-				startTime,
-				previousStart,
-			)
+		if driverID == previousDriver && start >= previousStart {
+			t.Fatalf("expected newest day first per driver, got %s after %s", start, previousStart)
 		}
-		previousDriver = driverID
-		previousStart = startTime
-	}
-}
-
-func TestServerHOSDailyLogsPagination(t *testing.T) {
-	t.Parallel()
-
-	srv := newEventTestServer(t, "")
-	first := performAuthorizedRequest(
-		srv,
-		http.MethodGet,
-		"/fleet/hos/daily-logs?driverIds=drv-1&limit=2",
-	)
-	if first.Code != http.StatusOK {
-		t.Fatalf("expected 200 for first page, got %d", first.Code)
-	}
-	firstRecords, firstPagination := mustReadDailyLogPage(t, first.Body.Bytes())
-	if len(firstRecords) != 2 {
-		t.Fatalf("expected 2 records on first page, got %d", len(firstRecords))
-	}
-	if hasNext, ok := firstPagination["hasNextPage"].(bool); !ok || !hasNext {
-		t.Fatalf("expected hasNextPage true on first page, got %v", firstPagination["hasNextPage"])
-	}
-	endCursor, ok := firstPagination["endCursor"].(string)
-	if !ok || endCursor == "" {
-		t.Fatalf("expected non-empty endCursor, got %v", firstPagination["endCursor"])
-	}
-
-	second := performAuthorizedRequest(
-		srv,
-		http.MethodGet,
-		"/fleet/hos/daily-logs?driverIds=drv-1&limit=2&after="+url.QueryEscape(endCursor),
-	)
-	if second.Code != http.StatusOK {
-		t.Fatalf("expected 200 for second page, got %d", second.Code)
-	}
-	secondRecords, _ := mustReadDailyLogPage(t, second.Body.Bytes())
-	if len(secondRecords) != 2 {
-		t.Fatalf("expected 2 records on second page, got %d", len(secondRecords))
-	}
-	if stringValue(firstRecords[1], "startTime") <= stringValue(secondRecords[0], "startTime") {
-		t.Fatal("expected second page to continue with older days")
-	}
-
-	invalidCursor := performAuthorizedRequest(
-		srv,
-		http.MethodGet,
-		"/fleet/hos/daily-logs?driverIds=drv-1&limit=2&after=missing-cursor",
-	)
-	if invalidCursor.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400 for invalid cursor, got %d", invalidCursor.Code)
-	}
-	if code := mustReadErrorCode(t, invalidCursor.Body.Bytes()); code != "INVALID_CURSOR" {
-		t.Fatalf("expected INVALID_CURSOR code, got %q", code)
+		previousDriver, previousStart = driverID, start
 	}
 }
 
@@ -319,28 +227,18 @@ func TestLiveSimulatorHOSLogsIncludeEntriesOverlappingWindowStart(t *testing.T) 
 	start := now.Add(-time.Hour)
 	end := now
 
-	records := simulator.HOSLogs(now, []string{"drv-1"}, &start, &end)
+	records := simulator.HOSLogs(now, []string{testDriverID}, &start, &end)
 	if len(records) != 1 {
 		t.Fatalf("expected one HOS log record, got %d", len(records))
 	}
 	rawLogs, ok := records[0]["hosLogs"].([]any)
-	if !ok {
-		t.Fatal("expected hosLogs array")
-	}
-	if len(rawLogs) == 0 {
+	if !ok || len(rawLogs) == 0 {
 		t.Fatal("expected at least one entry overlapping the window")
 	}
-
 	coversWindowStart := false
 	for _, raw := range rawLogs {
-		entry, entryOK := raw.(map[string]any)
-		if !entryOK {
-			continue
-		}
-		logStart, err := time.Parse(time.RFC3339, stringValue(entry, "logStartTime"))
-		if err != nil {
-			t.Fatalf("failed parsing logStartTime: %v", err)
-		}
+		entry := Record(mapOf(raw))
+		logStart := mustParseRecordTime(t, entry, "logStartTime")
 		if logStart.After(end) {
 			t.Fatalf("entry starting at %s is outside the window", logStart.Format(time.RFC3339))
 		}

@@ -125,7 +125,10 @@ func (s *Server) handleAssetRouteGeometry(writer http.ResponseWriter, request *h
 }
 
 func (s *Server) handleStateReset(writer http.ResponseWriter, request *http.Request) {
-	s.store.Reset()
+	if err := s.store.Reset(); err != nil {
+		s.writeAPIError(writer, http.StatusInternalServerError, err)
+		return
+	}
 	s.eventMu.Lock()
 	s.eventSentAt = map[string]time.Time{}
 	s.eventMu.Unlock()
@@ -133,6 +136,7 @@ func (s *Server) handleStateReset(writer http.ResponseWriter, request *http.Requ
 	s.dvirWindow.reset()
 	s.formWindow.reset()
 	s.routeStopWindow.reset()
+	s.documentWindow.reset()
 	s.geofenceEntries.Store(0)
 	s.geofenceExits.Store(0)
 	s.clearWebhookInbox()

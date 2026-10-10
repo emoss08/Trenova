@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/shared/samsara/dvirs"
 	"github.com/emoss08/trenova/shared/samsara/forms"
 	"github.com/emoss08/trenova/shared/samsara/internal/httpx"
+	"github.com/emoss08/trenova/shared/samsara/internal/ratelimit"
 	"github.com/emoss08/trenova/shared/samsara/liveshares"
 	"github.com/emoss08/trenova/shared/samsara/messages"
 	"github.com/emoss08/trenova/shared/samsara/routes"
@@ -49,6 +50,11 @@ func New(apiKey string, opts ...Option) (*Client, error) {
 		return nil, err
 	}
 
+	var limiter ratelimit.Limiter
+	if mergedCfg.RateLimit {
+		limiter = ratelimit.Shared(mergedCfg.BaseURL, mergedCfg.Token)
+	}
+
 	transport, err := httpx.New(httpx.Config{
 		Token:      mergedCfg.Token,
 		BaseURL:    mergedCfg.BaseURL,
@@ -61,6 +67,7 @@ func New(apiKey string, opts ...Option) (*Client, error) {
 			InitialBackoff: mergedCfg.Retry.InitialBackoff,
 			MaxBackoff:     mergedCfg.Retry.MaxBackoff,
 		},
+		Limiter: limiter,
 	})
 	if err != nil {
 		return nil, err
@@ -87,10 +94,11 @@ type mergedConfig struct {
 	Timeout    time.Duration
 	Retry      RetryConfig
 	UserAgent  string
+	RateLimit  bool
 	httpClient *http.Client
 }
 
-//nolint:cyclop,funlen,gocognit,nestif,gocritic // constructor validation intentionally centralizes all defaults and guardrails.
+//nolint:nestif // constructor validation intentionally centralizes all defaults and guardrails.
 func applyConfigDefaults(apiKey string, opts ...Option) (*mergedConfig, error) {
 	cfg := &mergedConfig{
 		Token:   strings.TrimSpace(apiKey),
@@ -102,6 +110,7 @@ func applyConfigDefaults(apiKey string, opts ...Option) (*mergedConfig, error) {
 			InitialBackoff: defaultInitialBackoff,
 			MaxBackoff:     defaultMaxBackoff,
 		},
+		RateLimit: true,
 	}
 
 	if cfg.Token == "" {
@@ -159,6 +168,10 @@ func applyConfigDefaults(apiKey string, opts ...Option) (*mergedConfig, error) {
 		if cfg.Retry.InitialBackoff > cfg.Retry.MaxBackoff {
 			return nil, ErrRetryBackoffOrderInvalid
 		}
+	}
+
+	if optSet.rateLimit != nil {
+		cfg.RateLimit = *optSet.rateLimit
 	}
 
 	if optSet.httpClient != nil && optSet.httpClient.Transport == nil {

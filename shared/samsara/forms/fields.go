@@ -20,15 +20,16 @@ const (
 	FieldKindPerson         = "person"
 	FieldKindGeofence       = "geofence"
 	FieldKindTable          = "table"
+	FieldKindBarcode        = "barcode"
 	FieldKindUnknown        = "unknown"
 )
 
-func FieldDisplayValue(field FormField) string {
+func FieldDisplayValue(field *FormField) string {
 	_, value := FieldTypedValue(field)
 	return value
 }
 
-func FieldTypedValue(field FormField) (kind string, value string) {
+func FieldTypedValue(field *FormField) (kind, value string) {
 	switch field.Type {
 	case samsaraspec.FormsFieldInputObjectResponseBodyTypeText:
 		return FieldKindText, textFieldValue(field)
@@ -52,54 +53,56 @@ func FieldTypedValue(field FormField) (kind string, value string) {
 		return FieldKindGeofence, geofenceFieldValue(field)
 	case samsaraspec.FormsFieldInputObjectResponseBodyTypeTable:
 		return FieldKindTable, ""
+	case samsaraspec.FormsFieldInputObjectResponseBodyTypeBarcode:
+		return FieldKindBarcode, barcodeFieldValue(field)
 	default:
 		return FieldKindUnknown, ""
 	}
 }
 
-func textFieldValue(field FormField) string {
+func textFieldValue(field *FormField) string {
 	if field.TextValue == nil {
 		return ""
 	}
 	return field.TextValue.Value
 }
 
-func numberFieldValue(field FormField) string {
+func numberFieldValue(field *FormField) string {
 	if field.NumberValue == nil {
 		return ""
 	}
 	return strconv.FormatFloat(field.NumberValue.Value, 'f', -1, 64)
 }
 
-func multipleChoiceFieldValue(field FormField) string {
+func multipleChoiceFieldValue(field *FormField) string {
 	if field.MultipleChoiceValue == nil {
 		return ""
 	}
 	return field.MultipleChoiceValue.Value
 }
 
-func checkBoxesFieldValue(field FormField) string {
+func checkBoxesFieldValue(field *FormField) string {
 	if field.CheckBoxesValue == nil {
 		return ""
 	}
 	return strings.Join(field.CheckBoxesValue.Value, ", ")
 }
 
-func dateTimeFieldValue(field FormField) string {
+func dateTimeFieldValue(field *FormField) string {
 	if field.DateTimeValue == nil {
 		return ""
 	}
 	return field.DateTimeValue.Value.Format(time.RFC3339)
 }
 
-func signatureFieldValue(field FormField) string {
+func signatureFieldValue(field *FormField) string {
 	if field.SignatureValue == nil {
 		return ""
 	}
 	return mediaRecordURL(field.SignatureValue.Media)
 }
 
-func mediaFieldValue(field FormField) string {
+func mediaFieldValue(field *FormField) string {
 	if field.MediaValue != nil {
 		for i := range field.MediaValue.MediaList {
 			if url := mediaRecordURL(field.MediaValue.MediaList[i]); url != "" {
@@ -117,14 +120,14 @@ func mediaFieldValue(field FormField) string {
 	return ""
 }
 
-func assetFieldValue(field FormField) string {
+func assetFieldValue(field *FormField) string {
 	if field.AssetValue == nil {
 		return ""
 	}
 	return derefString(field.AssetValue.Asset.Name, field.AssetValue.Asset.Id)
 }
 
-func personFieldValue(field FormField) string {
+func personFieldValue(field *FormField) string {
 	if field.PersonValue == nil {
 		return ""
 	}
@@ -138,7 +141,7 @@ func personFieldValue(field FormField) string {
 	return ""
 }
 
-func geofenceFieldValue(field FormField) string {
+func geofenceFieldValue(field *FormField) string {
 	if field.GeofenceValue == nil {
 		return ""
 	}
@@ -153,6 +156,19 @@ func geofenceFieldValue(field FormField) string {
 		return *geofence.Id
 	}
 	return ""
+}
+
+func barcodeFieldValue(field *FormField) string {
+	if field.BarcodeValue == nil || len(field.BarcodeValue.Barcodes) == 0 {
+		return ""
+	}
+	values := make([]string, 0, len(field.BarcodeValue.Barcodes))
+	for i := range field.BarcodeValue.Barcodes {
+		if value := field.BarcodeValue.Barcodes[i].Value; value != "" {
+			values = append(values, value)
+		}
+	}
+	return strings.Join(values, ", ")
 }
 
 func mediaRecordURL(media MediaRecord) string {
@@ -171,27 +187,27 @@ func derefString(values ...*string) string {
 	return ""
 }
 
-func SubmissionRouteStopID(s FormSubmission) string {
+func SubmissionRouteStopID(s *FormSubmission) string {
 	if s.RouteStopId == nil {
 		return ""
 	}
 	return *s.RouteStopId
 }
 
-func SubmissionRouteID(s FormSubmission) string {
+func SubmissionRouteID(s *FormSubmission) string {
 	if s.RouteId == nil {
 		return ""
 	}
 	return *s.RouteId
 }
 
-func SubmissionExternalIDs(s FormSubmission) map[string]string {
+func SubmissionExternalIDs(s *FormSubmission) map[string]string {
 	if s.ExternalIds == nil {
 		return nil
 	}
 	return *s.ExternalIds
 }
 
-func SubmissionLocationOf(s FormSubmission) *SubmissionLocation {
+func SubmissionLocationOf(s *FormSubmission) *SubmissionLocation {
 	return s.Location
 }

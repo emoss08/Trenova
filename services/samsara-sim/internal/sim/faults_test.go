@@ -103,7 +103,7 @@ func TestFaultEngineWebhookProfileMatch(t *testing.T) {
 	_, ok := engine.EvaluateWebhook(
 		"default",
 		"VehicleSpeeding",
-		"VehicleSpeeding|evt-1|wh-1",
+		"VehicleSpeeding|evt-1|523918",
 	)
 	if !ok {
 		t.Fatal("expected webhook rule match for default profile")
@@ -112,7 +112,7 @@ func TestFaultEngineWebhookProfileMatch(t *testing.T) {
 	_, mismatch := engine.EvaluateWebhook(
 		"partial",
 		"VehicleSpeeding",
-		"VehicleSpeeding|evt-1|wh-1",
+		"VehicleSpeeding|evt-1|523918",
 	)
 	if mismatch {
 		t.Fatal("did not expect webhook rule match for non-default profile")

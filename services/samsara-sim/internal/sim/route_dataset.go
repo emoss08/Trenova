@@ -84,7 +84,7 @@ func ApplyRouteDataset(store *Store, datasetPath string) error {
 
 	combined := append([]Record{}, preserved...)
 	combined = append(combined, records...)
-	return store.Replace(ResourceAssetLocation, combined)
+	return store.ReplaceBaseline(ResourceAssetLocation, combined)
 }
 
 func routeDatasetToAssetLocations(

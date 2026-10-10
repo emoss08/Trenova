@@ -1,9 +1,9 @@
 version: 1
 timezone: UTC
 scenarios:
-  - id: drv-1-sample-day
-    driverId: drv-1
-    vehicleId: veh-1001
+  - id: alex-rivera-sample-day
+    driverId: "1654973"
+    vehicleId: "281474977075805"
     baseDate: 2026-03-01
     events:
       - type: speeding.burst_major

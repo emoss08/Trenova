@@ -70,6 +70,22 @@ func (f *fakeSamsaraDriverService) Update(
 	return f.updateFunc(id, req)
 }
 
+func activeDrivers(
+	t *testing.T,
+	active []drivers.Driver,
+) func(params drivers.ListParams) ([]drivers.Driver, error) {
+	t.Helper()
+	return func(params drivers.ListParams) ([]drivers.Driver, error) {
+		assert.Equal(t, drivers.MaxListLimit, params.Limit)
+		require.NoError(t, params.Validate())
+		if params.DriverActivationStatus == drivers.ActivationStatusActive {
+			return active, nil
+		}
+		assert.Equal(t, drivers.ActivationStatusDeactivated, params.DriverActivationStatus)
+		return []drivers.Driver{}, nil
+	}
+}
+
 func setupTestService(t *testing.T) (*Service, *mocks.MockWorkerRepository) {
 	t.Helper()
 	repo := mocks.NewMockWorkerRepository(t)
@@ -124,14 +140,13 @@ func TestSyncWorkersToSamsara(t *testing.T) {
 		w := newTestWorker()
 		w.ExternalID = ""
 
-		driverID := "drv-42"
+		driverID := "1654973"
 		externalIDs := map[string]any{samsaraWorkerExternalIDKey: w.ID.String()}
 		svc.samsaraClient = &sharedsamsara.Client{
 			Drivers: &fakeSamsaraDriverService{
-				listAllFunc: func(params drivers.ListParams) ([]drivers.Driver, error) {
-					assert.Equal(t, 512, params.Limit)
-					return []drivers.Driver{{Id: &driverID, ExternalIds: &externalIDs}}, nil
-				},
+				listAllFunc: activeDrivers(t, []drivers.Driver{
+					{Id: &driverID, ExternalIds: &externalIDs},
+				}),
 			},
 		}
 
@@ -163,14 +178,11 @@ func TestSyncWorkersToSamsara(t *testing.T) {
 		t.Parallel()
 		svc, repo := setupTestService(t)
 		w := newTestWorker()
-		w.ExternalID = "drv-77"
+		w.ExternalID = "1654977"
 
 		svc.samsaraClient = &sharedsamsara.Client{
 			Drivers: &fakeSamsaraDriverService{
-				listAllFunc: func(params drivers.ListParams) ([]drivers.Driver, error) {
-					assert.Equal(t, 512, params.Limit)
-					return []drivers.Driver{{Id: &w.ExternalID}}, nil
-				},
+				listAllFunc: activeDrivers(t, []drivers.Driver{{Id: &w.ExternalID}}),
 				updateFunc: func(id string, req drivers.UpdateRequest) (drivers.Driver, error) {
 					assert.Equal(t, w.ExternalID, id)
 					require.NotNil(t, req.ExternalIds)
@@ -207,14 +219,11 @@ func TestSyncWorkersToSamsara(t *testing.T) {
 		w.PhoneNumber = "(555) 123-4567"
 		w.ExternalID = ""
 
-		createdDriverID := "drv-1001"
+		createdDriverID := "1655001"
 		var capturedCreateReq drivers.CreateRequest
 		svc.samsaraClient = &sharedsamsara.Client{
 			Drivers: &fakeSamsaraDriverService{
-				listAllFunc: func(params drivers.ListParams) ([]drivers.Driver, error) {
-					assert.Equal(t, 512, params.Limit)
-					return []drivers.Driver{}, nil
-				},
+				listAllFunc: activeDrivers(t, []drivers.Driver{}),
 				createFunc: func(req drivers.CreateRequest) (drivers.Driver, error) {
 					capturedCreateReq = req
 					return drivers.Driver{Id: &createdDriverID}, nil
@@ -245,10 +254,88 @@ func TestSyncWorkersToSamsara(t *testing.T) {
 		assert.Equal(t, 1, result.UpdatedMappings)
 		assert.Equal(t, w.FullName(), capturedCreateReq.Name)
 		require.NotNil(t, capturedCreateReq.ExternalIds)
-		assert.Equal(t, w.ID.String(), (*capturedCreateReq.ExternalIds)[samsaraWorkerExternalIDKey])
+		assert.Equal(
+			t,
+			map[string]string{samsaraWorkerExternalIDKey: w.ID.String()},
+			*capturedCreateReq.ExternalIds,
+		)
 		require.NotNil(t, capturedCreateReq.Phone)
 		assert.Equal(t, "+15551234567", *capturedCreateReq.Phone)
 	})
+}
+
+func TestSyncWorkersToSamsaraMapsDeactivatedDriverInsteadOfCreating(t *testing.T) {
+	t.Parallel()
+
+	svc, repo := setupTestService(t)
+	w := newTestWorker()
+	w.ExternalID = ""
+
+	driverID := "1654999"
+	externalIDs := map[string]any{samsaraWorkerExternalIDKey: w.ID.String()}
+	statuses := make([]string, 0, 2)
+	svc.samsaraClient = &sharedsamsara.Client{
+		Drivers: &fakeSamsaraDriverService{
+			listAllFunc: func(params drivers.ListParams) ([]drivers.Driver, error) {
+				require.NoError(t, params.Validate())
+				statuses = append(statuses, params.DriverActivationStatus)
+				if params.DriverActivationStatus == drivers.ActivationStatusDeactivated {
+					return []drivers.Driver{{Id: &driverID, ExternalIds: &externalIDs}}, nil
+				}
+				return []drivers.Driver{}, nil
+			},
+			createFunc: func(drivers.CreateRequest) (drivers.Driver, error) {
+				t.Fatal("a driver already carrying the worker external id must not be recreated")
+				return drivers.Driver{}, nil
+			},
+		},
+	}
+
+	total := 1
+	repo.On("List", mock.Anything, mock.Anything).
+		Return(&pagination.CursorListResult[*worker.Worker]{
+			Items:      []*worker.Worker{w},
+			TotalCount: &total,
+		}, nil).
+		Once()
+	repo.On("Update", mock.Anything, mock.Anything).Return(
+		func(_ context.Context, entity *worker.Worker) *worker.Worker { return entity },
+		nil,
+	).Once()
+
+	result, err := svc.SyncWorkersToSamsara(t.Context(), pagination.TenantInfo{
+		OrgID: w.OrganizationID,
+		BuID:  w.BusinessUnitID,
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.ElementsMatch(
+		t,
+		[]string{drivers.ActivationStatusActive, drivers.ActivationStatusDeactivated},
+		statuses,
+	)
+	assert.Equal(t, 1, result.RemoteDrivers)
+	assert.Equal(t, 1, result.MappedFromExternalIDs)
+	assert.Equal(t, 0, result.CreatedDrivers)
+	assert.Equal(t, driverID, w.ExternalID)
+}
+
+func TestBuildSamsaraDriverCreateRequestSatisfiesSpec(t *testing.T) {
+	t.Parallel()
+
+	w := newTestWorker()
+	w.Email = "John Doe+ops@trenova.app"
+	req := buildSamsaraDriverCreateRequest(w)
+	require.NoError(t, drivers.ValidateCreateRequest(req))
+	assert.NotContains(t, req.Username, "@")
+	assert.NotContains(t, req.Username, " ")
+
+	w.Email = ""
+	w.FirstName = ""
+	w.LastName = ""
+	req = buildSamsaraDriverCreateRequest(w)
+	require.NoError(t, drivers.ValidateCreateRequest(req))
 }
 
 func TestGetWorkerSyncReadiness(t *testing.T) {

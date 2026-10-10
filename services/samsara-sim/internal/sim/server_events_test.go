@@ -22,8 +22,8 @@ func TestServerEventsWindowAndActiveEndpoints(t *testing.T) {
 	window := srv.live.EventsWindow(
 		time.Now().UTC().Add(-36*time.Hour),
 		time.Now().UTC().Add(36*time.Hour),
-		[]string{"drv-1"},
-		[]string{"veh-1"},
+		[]string{testDriverID},
+		[]string{testVehicleID},
 		0,
 	)
 	if len(window) == 0 {
@@ -34,7 +34,7 @@ func TestServerEventsWindowAndActiveEndpoints(t *testing.T) {
 	startRaw := target.StartsAt.Add(-20 * time.Minute).UTC().Format(time.RFC3339)
 	endRaw := target.EndsAt.Add(20 * time.Minute).UTC().Format(time.RFC3339)
 	windowURL := fmt.Sprintf(
-		"/_sim/events/window?driverIds=drv-1&vehicleIds=veh-1&startTime=%s&endTime=%s&limit=64",
+		"/_sim/events/window?driverIds=1654973&vehicleIds=281474976710657&startTime=%s&endTime=%s&limit=64",
 		url.QueryEscape(startRaw),
 		url.QueryEscape(endRaw),
 	)
@@ -53,7 +53,7 @@ func TestServerEventsWindowAndActiveEndpoints(t *testing.T) {
 
 	activeAt := target.StartsAt.Add(time.Minute).UTC().Format(time.RFC3339)
 	activeURL := fmt.Sprintf(
-		"/_sim/events/active?driverIds=drv-1&vehicleIds=veh-1&atTime=%s",
+		"/_sim/events/active?driverIds=1654973&vehicleIds=281474976710657&atTime=%s",
 		url.QueryEscape(activeAt),
 	)
 	activeResponse := performAuthorizedRequest(srv, http.MethodGet, activeURL)
@@ -85,8 +85,8 @@ func TestServerDispatchLiveEventsDeduplicatesWebhookByEvent(t *testing.T) {
 	events := srv.live.EventsWindow(
 		time.Now().UTC().Add(-36*time.Hour),
 		time.Now().UTC().Add(36*time.Hour),
-		[]string{"drv-1"},
-		[]string{"veh-1"},
+		[]string{testDriverID},
+		[]string{testVehicleID},
 		0,
 	)
 	if len(events) == 0 {
@@ -94,19 +94,23 @@ func TestServerDispatchLiveEventsDeduplicatesWebhookByEvent(t *testing.T) {
 	}
 
 	at := events[0].StartsAt.Add(time.Minute)
-	request := httptest.NewRequest(http.MethodGet, "/fleet/vehicles/stats?vehicleIds=veh-1", nil)
+	request := httptest.NewRequest(
+		http.MethodGet,
+		"/fleet/vehicles/stats?vehicleIds=281474976710657",
+		nil,
+	)
 	request.Header.Set("Authorization", "Bearer dev-samsara-token")
 
 	// The number of emissions in the window depends on the simulated clock, so
 	// assert the dedupe property itself: replaying the same dispatch must not
 	// deliver any webhook a second time.
-	srv.dispatchLiveEvents(request, at, []string{"veh-1"})
+	srv.dispatchLiveEvents(request, at, []string{testVehicleID})
 	first := waitForSettledDeliveries(t, &deliveryCount)
 	if first == 0 {
 		t.Fatal("expected the first dispatch to deliver at least one webhook")
 	}
 
-	srv.dispatchLiveEvents(request, at, []string{"veh-1"})
+	srv.dispatchLiveEvents(request, at, []string{testVehicleID})
 	second := waitForSettledDeliveries(t, &deliveryCount)
 	if second != first {
 		t.Fatalf(
@@ -180,8 +184,8 @@ func TestServerDispatchLiveEventsHonorsWebhookFaultDrop(t *testing.T) {
 	events := srv.live.EventsWindow(
 		time.Now().UTC().Add(-36*time.Hour),
 		time.Now().UTC().Add(36*time.Hour),
-		[]string{"drv-1"},
-		[]string{"veh-1"},
+		[]string{testDriverID},
+		[]string{testVehicleID},
 		0,
 	)
 	if len(events) == 0 {
@@ -189,9 +193,13 @@ func TestServerDispatchLiveEventsHonorsWebhookFaultDrop(t *testing.T) {
 	}
 
 	at := events[0].StartsAt.Add(time.Minute)
-	request := httptest.NewRequest(http.MethodGet, "/fleet/vehicles/stats?vehicleIds=veh-1", nil)
+	request := httptest.NewRequest(
+		http.MethodGet,
+		"/fleet/vehicles/stats?vehicleIds=281474976710657",
+		nil,
+	)
 	request.Header.Set("Authorization", "Bearer dev-samsara-token")
-	srv.dispatchLiveEvents(request, at, []string{"veh-1"})
+	srv.dispatchLiveEvents(request, at, []string{testVehicleID})
 
 	time.Sleep(200 * time.Millisecond)
 	if got := deliveryCount.Load(); got != 0 {
@@ -203,6 +211,7 @@ func newEventTestServer(t *testing.T, webhookURL string) *Server {
 	t.Helper()
 
 	cfg := config.Default()
+	cfg.RateLimits.Enabled = false
 	cfg.Auth.Tokens = []string{"dev-samsara-token", "dev-samsara-token-readonly"}
 	cfg.Simulation.FleetSize = 1
 	cfg.Simulation.TripHoursMin = 8
@@ -222,14 +231,14 @@ func newEventTestServer(t *testing.T, webhookURL string) *Server {
 	fixture := &Fixture{
 		Assets: []Record{
 			{
-				"id":   "veh-1",
+				"id":   testVehicleID,
 				"name": "Truck 1001",
 				"type": "vehicle",
 			},
 		},
 		AssetLocation: []Record{
 			{
-				"asset": map[string]any{"id": "veh-1"},
+				"asset": map[string]any{"id": testVehicleID},
 				"location": map[string]any{
 					"latitude":       30.2672,
 					"longitude":      -97.7431,
@@ -241,7 +250,7 @@ func newEventTestServer(t *testing.T, webhookURL string) *Server {
 				"happenedAtTime": "2026-03-01T14:00:00Z",
 			},
 			{
-				"asset": map[string]any{"id": "veh-1"},
+				"asset": map[string]any{"id": testVehicleID},
 				"location": map[string]any{
 					"latitude":       30.3001,
 					"longitude":      -97.7004,
@@ -255,38 +264,38 @@ func newEventTestServer(t *testing.T, webhookURL string) *Server {
 		},
 		Drivers: []Record{
 			{
-				"id":   "drv-1",
+				"id":   testDriverID,
 				"name": "Alex Rivera",
 			},
 		},
 		Routes: []Record{
 			{
-				"id":   "route-1",
+				"id":   fixtureRouteID,
 				"name": "Austin Loop",
 				"driver": map[string]any{
-					"id":   "drv-1",
+					"id":   testDriverID,
 					"name": "Alex Rivera",
 				},
 				"vehicle": map[string]any{
-					"id":   "veh-1",
+					"id":   testVehicleID,
 					"name": "Truck 1001",
 				},
 			},
 		},
 		VehicleStats: []Record{
 			{
-				"id":   "veh-1",
+				"id":   testVehicleID,
 				"name": "Truck 1001",
 			},
 		},
 		HOSClocks: []Record{
 			{
 				"driver": map[string]any{
-					"id":   "drv-1",
+					"id":   testDriverID,
 					"name": "Alex Rivera",
 				},
 				"currentVehicle": map[string]any{
-					"id":   "veh-1",
+					"id":   testVehicleID,
 					"name": "Truck 1001",
 				},
 			},
@@ -298,7 +307,7 @@ func newEventTestServer(t *testing.T, webhookURL string) *Server {
 		cfg.Webhooks.InitialBackoff = 10 * time.Millisecond
 		fixture.Webhooks = []Record{
 			{
-				"id":   "wh-test",
+				"id":   "524002",
 				"name": "event sink",
 				"url":  webhookURL,
 				"simDelivery": map[string]any{

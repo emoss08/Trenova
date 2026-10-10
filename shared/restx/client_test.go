@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -475,8 +476,25 @@ func TestParseRetryAfter(t *testing.T) {
 			ok:    true,
 			exact: 0,
 		},
+		{name: "decimal seconds", value: "0.40235", ok: true, exact: 402350 * time.Microsecond},
+		{name: "decimal whole", value: "2.5", ok: true, exact: 2500 * time.Millisecond},
+		{name: "decimal padded", value: "\t1.25 ", ok: true, exact: 1250 * time.Millisecond},
+		{name: "leading dot", value: ".5", ok: true, exact: 500 * time.Millisecond},
+		{name: "trailing dot", value: "7.", ok: true, exact: 7 * time.Second},
+		{name: "decimal zero", value: "0.0", ok: true, exact: 0},
+		{name: "huge", value: "99999999999999999999", ok: true, exact: time.Duration(math.MaxInt64)},
 		{name: "empty", value: "", ok: false},
 		{name: "negative", value: "-5", ok: false},
+		{name: "negative decimal", value: "-0.5", ok: false},
+		{name: "explicit plus", value: "+3", ok: false},
+		{name: "nan", value: "NaN", ok: false},
+		{name: "inf", value: "Inf", ok: false},
+		{name: "infinity", value: "+Infinity", ok: false},
+		{name: "exponent", value: "1e3", ok: false},
+		{name: "hex float", value: "0x1p-2", ok: false},
+		{name: "two dots", value: "1.2.3", ok: false},
+		{name: "lone dot", value: ".", ok: false},
+		{name: "unit suffix", value: "5s", ok: false},
 		{name: "garbage", value: "bad", ok: false},
 	}
 

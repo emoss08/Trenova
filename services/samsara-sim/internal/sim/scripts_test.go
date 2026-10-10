@@ -16,9 +16,9 @@ func TestScriptEngineLoadsAndBuildsEvents(t *testing.T) {
 version: 1
 timezone: UTC
 scenarios:
-  - id: "drv-1-day"
-    driverId: "drv-1"
-    vehicleId: "veh-1001"
+  - id: "alex-rivera-day"
+    driverId: "1654973"
+    vehicleId: "281474977075805"
     baseDate: "2026-03-02"
     events:
       - type: "speeding.burst_major"
@@ -52,8 +52,8 @@ scenarios:
 	events := engine.EventsWindow(
 		start,
 		end,
-		map[string]struct{}{"drv-1": {}},
-		map[string]struct{}{"veh-1001": {}},
+		map[string]struct{}{testDriverID: {}},
+		map[string]struct{}{fixtureVehicleID: {}},
 	)
 	if len(events) != 1 {
 		t.Fatalf("expected one scripted event in range, got %d", len(events))
@@ -72,9 +72,9 @@ func TestScriptEngineRejectsDutyOverlap(t *testing.T) {
 version: 1
 timezone: UTC
 scenarios:
-  - id: "drv-1-day"
-    driverId: "drv-1"
-    vehicleId: "veh-1001"
+  - id: "alex-rivera-day"
+    driverId: "1654973"
+    vehicleId: "281474977075805"
     baseDate: "2026-03-02"
     events:
       - type: "duty.off_duty_pause"

@@ -282,6 +282,8 @@ services:
             - samsara-sim
         ports:
             - "8091:8091"
+        volumes:
+            - samsara_sim_data:/app/data
         restart: unless-stopped
         healthcheck:
             test:
@@ -296,3 +298,4 @@ volumes:
     redisinsight_data: {}
     minio_data: {}
     meilisearch_data: {}
+    samsara_sim_data: {}

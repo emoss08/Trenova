@@ -22,9 +22,44 @@ func TestStatsValidation(t *testing.T) {
 		}},
 	)
 
-	_, err := svc.Stats(t.Context(), StatsParams{Limit: 513})
+	_, err := svc.Stats(t.Context(), StatsParams{})
 	require.Error(t, err)
-	assert.ErrorIs(t, err, ErrListLimitInvalid)
+	assert.ErrorIs(t, err, ErrStatsTypesRequired)
+
+	_, err = svc.Stats(t.Context(), StatsParams{Types: []string{"engineState"}})
+	require.Error(t, err)
+	assert.ErrorIs(t, err, ErrStatsTypeInvalid)
+}
+
+func TestStatsGroupedAuxInputsCountOnce(t *testing.T) {
+	t.Parallel()
+
+	svc := NewService(
+		&httpxtest.MockRequester{DoFunc: func(_ context.Context, _ httpx.Request) error {
+			return nil
+		}},
+	)
+
+	_, err := svc.Stats(t.Context(), StatsParams{
+		Types: []string{
+			"engineStates",
+			"obdOdometerMeters",
+			"auxInput3",
+			"auxInput4",
+			"auxInput10",
+		},
+	})
+	require.NoError(t, err)
+
+	_, err = svc.Stats(t.Context(), StatsParams{
+		Types: []string{"engineStates", "obdOdometerMeters", "auxInput1", "auxInput2"},
+	})
+	require.ErrorIs(t, err, ErrStatsTypesTooMany)
+
+	_, err = svc.Stats(t.Context(), StatsParams{
+		Types: []string{"engineStates", "obdOdometerMeters", "auxInput3", "auxInput11"},
+	})
+	require.ErrorIs(t, err, ErrStatsTypesTooMany)
 }
 
 func TestStatsQueryAndPath(t *testing.T) {
@@ -34,15 +69,16 @@ func TestStatsQueryAndPath(t *testing.T) {
 		&httpxtest.MockRequester{DoFunc: func(_ context.Context, req httpx.Request) error {
 			assert.Equal(t, http.MethodGet, req.Method)
 			assert.Equal(t, "/fleet/vehicles/stats", req.Path)
-			assert.Equal(t, "veh-1,veh-2", req.Query.Get("vehicleIds"))
-			assert.Equal(t, "gps,engineState", req.Query.Get("types"))
+			assert.Equal(t, "281474977075805,281474977075806", req.Query.Get("vehicleIds"))
+			assert.Equal(t, "gps,engineStates", req.Query.Get("types"))
+			assert.False(t, req.Query.Has("limit"))
 			return nil
 		}},
 	)
 
 	_, err := svc.Stats(t.Context(), StatsParams{
-		VehicleIDs: []string{"veh-1", "veh-2"},
-		Types:      []string{"gps", "engineState"},
+		VehicleIDs: []string{"281474977075805", "281474977075806"},
+		Types:      []string{"gps", "engineStates"},
 	})
 	require.NoError(t, err)
 }
@@ -78,7 +114,7 @@ func TestStatsAllPaginates(t *testing.T) {
 		}},
 	)
 
-	items, err := svc.StatsAll(t.Context(), StatsParams{})
+	items, err := svc.StatsAll(t.Context(), StatsParams{Types: []string{"gps"}})
 	require.NoError(t, err)
 	assert.Len(t, items, 3)
 	assert.Equal(t, 2, calls)
@@ -121,12 +157,27 @@ func TestStatsFeedValidation(t *testing.T) {
 			wantErr: ErrStatsTypesTooMany,
 		},
 		{
-			name: "limit too large",
+			name: "unknown type",
 			params: StatsFeedParams{
-				Types: []string{"gps"},
-				Limit: 513,
+				Types: []string{"odometer"},
 			},
-			wantErr: ErrListLimitInvalid,
+			wantErr: ErrStatsTypeInvalid,
+		},
+		{
+			name: "too many decorations",
+			params: StatsFeedParams{
+				Types:       []string{"engineStates"},
+				Decorations: []string{"gps", "fuelPercents", "obdOdometerMeters"},
+			},
+			wantErr: ErrStatsDecorationsTooMany,
+		},
+		{
+			name: "unknown decoration",
+			params: StatsFeedParams{
+				Types:       []string{"engineStates"},
+				Decorations: []string{"gpsOdometerMeters"},
+			},
+			wantErr: ErrStatsDecorationInvalid,
 		},
 	}
 
@@ -155,24 +206,23 @@ func TestStatsFeedQueryAndPath(t *testing.T) {
 			assert.Equal(t, http.MethodGet, req.Method)
 			assert.Equal(t, "/fleet/vehicles/stats/feed", req.Path)
 			assert.Equal(t, "cursor-1", req.Query.Get("after"))
-			assert.Equal(t, "veh-1,veh-2", req.Query.Get("vehicleIds"))
+			assert.Equal(t, "281474977075805,281474977075806", req.Query.Get("vehicleIds"))
 			assert.Equal(t, "tag-1", req.Query.Get("tagIds"))
 			assert.Equal(t, "ptag-1", req.Query.Get("parentTagIds"))
 			assert.Equal(t, "gps,engineStates", req.Query.Get("types"))
 			assert.Equal(t, "obdOdometerMeters", req.Query.Get("decorations"))
-			assert.Equal(t, "100", req.Query.Get("limit"))
+			assert.False(t, req.Query.Has("limit"))
 			return nil
 		}},
 	)
 
 	_, err := svc.StatsFeed(t.Context(), StatsFeedParams{
 		After:        "cursor-1",
-		VehicleIDs:   []string{"veh-1", "veh-2"},
+		VehicleIDs:   []string{"281474977075805", "281474977075806"},
 		TagIDs:       []string{"tag-1"},
 		ParentTagIDs: []string{"ptag-1"},
 		Types:        []string{"gps", "engineStates"},
 		Decorations:  []string{"obdOdometerMeters"},
-		Limit:        100,
 	})
 	require.NoError(t, err)
 }
@@ -219,14 +269,13 @@ func TestStatsHistoryValidation(t *testing.T) {
 			wantErr: ErrStatsTypesTooMany,
 		},
 		{
-			name: "limit too large",
+			name: "end before start",
 			params: StatsHistoryParams{
-				StartTime: start,
-				EndTime:   end,
+				StartTime: end,
+				EndTime:   start,
 				Types:     []string{"gps"},
-				Limit:     513,
 			},
-			wantErr: ErrListLimitInvalid,
+			wantErr: ErrStatsTimeRangeInvalid,
 		},
 	}
 
@@ -258,7 +307,7 @@ func TestStatsHistoryQueryAndPath(t *testing.T) {
 			assert.Equal(t, "/fleet/vehicles/stats/history", req.Path)
 			assert.Equal(t, start.Format(time.RFC3339), req.Query.Get("startTime"))
 			assert.Equal(t, end.Format(time.RFC3339), req.Query.Get("endTime"))
-			assert.Equal(t, "veh-1", req.Query.Get("vehicleIds"))
+			assert.Equal(t, "281474977075805", req.Query.Get("vehicleIds"))
 			assert.Equal(t, "gps,fuelPercents", req.Query.Get("types"))
 			return nil
 		}},
@@ -267,7 +316,7 @@ func TestStatsHistoryQueryAndPath(t *testing.T) {
 	_, err := svc.StatsHistory(t.Context(), StatsHistoryParams{
 		StartTime:  start,
 		EndTime:    end,
-		VehicleIDs: []string{"veh-1"},
+		VehicleIDs: []string{"281474977075805"},
 		Types:      []string{"gps", "fuelPercents"},
 	})
 	require.NoError(t, err)

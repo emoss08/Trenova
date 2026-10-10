@@ -13,6 +13,7 @@ type options struct {
 	userAgent  *string
 	retry      *RetryConfig
 	timeout    *time.Duration
+	rateLimit  *bool
 }
 
 func WithHTTPClient(client *http.Client) Option {
@@ -42,5 +43,11 @@ func WithRetry(retry RetryConfig) Option {
 func WithTimeout(timeout time.Duration) Option {
 	return func(opts *options) {
 		opts.timeout = &timeout
+	}
+}
+
+func WithRateLimiting(enabled bool) Option {
+	return func(opts *options) {
+		opts.rateLimit = &enabled
 	}
 }

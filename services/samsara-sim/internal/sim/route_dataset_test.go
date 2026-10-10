@@ -12,19 +12,19 @@ func TestApplyRouteDatasetReplacesManagedAssets(t *testing.T) {
 
 	store := NewStore(&Fixture{
 		Assets: []Record{
-			{"id": "veh-1001", "type": "vehicle"},
-			{"id": "veh-1002", "type": "vehicle"},
+			{"id": fixtureVehicleID, "type": "vehicle"},
+			{"id": "281474977075819", "type": "vehicle"},
 		},
 		AssetLocation: []Record{
 			{
-				"asset": map[string]any{"id": "veh-1001"},
+				"asset": map[string]any{"id": fixtureVehicleID},
 				"location": map[string]any{
 					"latitude":  30.0,
 					"longitude": -97.0,
 				},
 			},
 			{
-				"asset": map[string]any{"id": "veh-1002"},
+				"asset": map[string]any{"id": "281474977075819"},
 				"location": map[string]any{
 					"latitude":  31.0,
 					"longitude": -96.0,
@@ -38,7 +38,7 @@ func TestApplyRouteDatasetReplacesManagedAssets(t *testing.T) {
 		"features": [
 			{
 				"type": "Feature",
-				"properties": {"assetId": "veh-1001", "speedMps": 20},
+				"properties": {"assetId": "281474977075805", "speedMps": 20},
 				"geometry": {
 					"type": "LineString",
 					"coordinates": [[-97.7431,30.2672],[-97.7004,30.3001],[-97.6102,30.3499]]
@@ -65,18 +65,18 @@ func TestApplyRouteDatasetReplacesManagedAssets(t *testing.T) {
 	vehTwo := 0
 	for _, record := range records {
 		switch nestedString(record, "asset", "id") {
-		case "veh-1001":
+		case fixtureVehicleID:
 			vehOne++
-		case "veh-1002":
+		case "281474977075819":
 			vehTwo++
 		}
 	}
 
 	if vehOne != 3 {
-		t.Fatalf("expected 3 generated records for veh-1001, got %d", vehOne)
+		t.Fatalf("expected 3 generated records for 281474977075805, got %d", vehOne)
 	}
 	if vehTwo != 1 {
-		t.Fatalf("expected preserved record for veh-1002, got %d", vehTwo)
+		t.Fatalf("expected preserved record for 281474977075819, got %d", vehTwo)
 	}
 }
 
@@ -85,12 +85,16 @@ func TestApplyRouteDatasetInvalidReturnsError(t *testing.T) {
 
 	store := NewStore(&Fixture{
 		Assets: []Record{
-			{"id": "veh-1001", "type": "vehicle"},
+			{"id": fixtureVehicleID, "type": "vehicle"},
 		},
 	})
 
 	path := filepath.Join(t.TempDir(), "bad.geojson")
-	if err := os.WriteFile(path, []byte(`{"type":"FeatureCollection","features":[]}`), 0o600); err != nil {
+	if err := os.WriteFile(
+		path,
+		[]byte(`{"type":"FeatureCollection","features":[]}`),
+		0o600,
+	); err != nil {
 		t.Fatalf("write bad dataset: %v", err)
 	}
 

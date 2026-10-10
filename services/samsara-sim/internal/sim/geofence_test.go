@@ -15,7 +15,7 @@ func newGeofenceFixture() *Fixture {
 	return &Fixture{
 		Addresses: []Record{
 			{
-				"id":               "addr-geo",
+				"id":               "41230101",
 				"name":             "Austin Geofenced Yard",
 				"formattedAddress": "1 Yard Rd, Austin, TX 78701",
 				"externalIds": map[string]any{
@@ -32,7 +32,7 @@ func newGeofenceFixture() *Fixture {
 		},
 		Assets: []Record{
 			{
-				"id":           "veh-geo",
+				"id":           "281474976720101",
 				"name":         "Truck Geo",
 				"type":         "vehicle",
 				"licensePlate": "TX-GEO1",
@@ -44,7 +44,7 @@ func newGeofenceFixture() *Fixture {
 		},
 		AssetLocation: []Record{
 			{
-				"asset": map[string]any{"id": "veh-geo"},
+				"asset": map[string]any{"id": "281474976720101"},
 				"location": map[string]any{
 					"latitude":       30.0,
 					"longitude":      -97.0,
@@ -56,7 +56,7 @@ func newGeofenceFixture() *Fixture {
 				"happenedAtTime": "2026-03-01T14:00:00Z",
 			},
 			{
-				"asset": map[string]any{"id": "veh-geo"},
+				"asset": map[string]any{"id": "281474976720101"},
 				"location": map[string]any{
 					"latitude":       30.0,
 					"longitude":      -96.8,
@@ -106,8 +106,8 @@ func TestGeofenceWebhookEmissionsDetectsEntryAndExit(t *testing.T) {
 		if !ok {
 			t.Fatalf("expected address payload, got %T", emission.Data["address"])
 		}
-		if got := stringValue(address, "id"); got != "addr-geo" {
-			t.Fatalf("expected address addr-geo, got %q", got)
+		if got := stringValue(address, "id"); got != "41230101" {
+			t.Fatalf("expected address 41230101, got %q", got)
 		}
 		circle, ok := anyAsMap(nestedAny(Record(address), "geofence", "circle"))
 		if !ok {
@@ -121,8 +121,8 @@ func TestGeofenceWebhookEmissionsDetectsEntryAndExit(t *testing.T) {
 		if !ok {
 			t.Fatalf("expected vehicle payload, got %T", emission.Data["vehicle"])
 		}
-		if got := stringValue(vehicle, "id"); got != "veh-geo" {
-			t.Fatalf("expected vehicle veh-geo, got %q", got)
+		if got := stringValue(vehicle, "id"); got != "281474976720101" {
+			t.Fatalf("expected vehicle 281474976720101, got %q", got)
 		}
 		if got := stringValue(vehicle, "assetType"); got != "vehicle" {
 			t.Fatalf("expected assetType vehicle, got %q", got)
@@ -163,6 +163,7 @@ func TestGeofenceWebhookEmissionsAreDeterministic(t *testing.T) {
 
 func TestServerDispatchGeofenceEventsCountsAndDedupes(t *testing.T) {
 	cfg := config.Default()
+	cfg.RateLimits.Enabled = false
 	cfg.Auth.Tokens = []string{"dev-samsara-token"}
 	cfg.Simulation.FleetSize = 1
 	cfg.Simulation.TripHoursMin = 1

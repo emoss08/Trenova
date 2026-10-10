@@ -1,9 +1,10 @@
 package sim
 
 import (
-	"github.com/emoss08/trenova/shared/stringutils"
 	"strings"
 	"time"
+
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const (
@@ -108,7 +109,7 @@ func (l *LiveSimulator) routeStopWebhookData(
 	arrival bool,
 ) map[string]any {
 	circle := &transition.Circle
-	stopID := strings.Join([]string{route.RouteID, "stop", circle.AddressID}, "-")
+	stopID := routeStopIDForAddress(route.RouteID, circle.AddressID)
 
 	operation := routeStopOperationDeparted
 	state := routeStopStateDeparted

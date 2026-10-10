@@ -1,7 +1,6 @@
 package samsara
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
@@ -9,6 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/shared/samsara/addresses"
+	"github.com/emoss08/trenova/shared/samsara/drivers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -104,7 +104,7 @@ func TestRequestReturnsTypedAPIError(t *testing.T) {
 	client, err := New("bad-token", WithBaseURL(server.URL))
 	require.NoError(t, err)
 
-	_, err = client.Addresses.List(context.Background(), addresses.ListParams{})
+	_, err = client.Addresses.List(t.Context(), addresses.ListParams{})
 	require.Error(t, err)
 	assert.True(t, IsUnauthorized(err))
 
@@ -112,4 +112,55 @@ func TestRequestReturnsTypedAPIError(t *testing.T) {
 	require.ErrorAs(t, err, &apiErr)
 	assert.Equal(t, 401, apiErr.StatusCode)
 	assert.Equal(t, "abc123", apiErr.RequestID)
+}
+
+func TestClientPacesLevelOneWritesPerToken(t *testing.T) {
+	t.Parallel()
+
+	var calls atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		calls.Add(1)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"id":"1654973","name":"Driver"}}`))
+	}))
+	defer server.Close()
+
+	token := "pacing-token-" + t.Name()
+	first, err := New(token, WithBaseURL(server.URL))
+	require.NoError(t, err)
+	second, err := New(token, WithBaseURL(server.URL))
+	require.NoError(t, err)
+
+	started := time.Now()
+	_, err = first.Drivers.Update(t.Context(), "1654973", drivers.UpdateRequest{})
+	require.NoError(t, err)
+	_, err = second.Drivers.Update(t.Context(), "1654974", drivers.UpdateRequest{})
+	require.NoError(t, err)
+
+	assert.GreaterOrEqual(t, time.Since(started), 590*time.Millisecond)
+	assert.Equal(t, int32(2), calls.Load())
+}
+
+func TestClientWithoutRateLimitingDoesNotPace(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"id":"1654973","name":"Driver"}}`))
+	}))
+	defer server.Close()
+
+	client, err := New(
+		"unpaced-token-"+t.Name(),
+		WithBaseURL(server.URL),
+		WithRateLimiting(false),
+	)
+	require.NoError(t, err)
+
+	started := time.Now()
+	for _, id := range []string{"1654973", "1654974", "1654975"} {
+		_, err = client.Drivers.Update(t.Context(), id, drivers.UpdateRequest{})
+		require.NoError(t, err)
+	}
+	assert.Less(t, time.Since(started), 500*time.Millisecond)
 }

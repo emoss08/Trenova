@@ -31,3 +31,11 @@ webhooks:
   signingSecret: c2ltLXNpZ25pbmctc2VjcmV0
   maxAttempts: 3
   initialBackoff: 200ms
+
+rateLimits:
+  enabled: true
+  multiplier: 1
+
+state:
+  path: ./data/state.json
+  flushDelay: 250ms
